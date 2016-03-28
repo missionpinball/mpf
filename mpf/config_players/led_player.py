@@ -36,12 +36,17 @@ class LedPlayer(ConfigPlayer):
                     self.caller_target_map[caller].add(led)
 
             except AttributeError:
-                if not led.startswith('('):
-                    self.machine.leds[led].color(**s)
+                try:
+                    self._led_color(led, caller, **s)
+                except KeyError:
+                    for led1 in self.machine.leds.sitems_tagged(led):
+                        self._led_color(led1, caller, **s)
 
-                    if caller:
-                        self.caller_target_map[caller].add(
-                            self.machine.leds[led])
+    def _led_color(self, led_name, caller=None, **s):
+        self.machine.leds[led_name].color(**s)
+        if caller:
+            self.caller_target_map[caller].add(
+                self.machine.leds[led_name])
 
     def clear(self, caller, priority):
 

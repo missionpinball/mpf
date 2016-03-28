@@ -351,59 +351,108 @@ class TestShowController(MpfTestCase):
         # priorities
         # TODO: Test show playback rate
 
-    def test_token_processing(self):
-
-        data = '''
-                - time: 0
-                  (leds): red
-                - time: +1
-                  (leds): off
-                - time: +1
-                  (leds):
-                    some: setting
-                    (other): setting
-                    this: (foo)
-            '''
-
-        data = yaml.load(data)
-        show = Show(self.machine, name='test', data=data)
-
-        self.assertIn('leds', show.token_keys)
-        self.assertIn('other', show.token_keys)
-        self.assertIn('foo', show.token_values)
-
-        self.assertIn([0], show.token_keys['leds'])
-        self.assertIn([1], show.token_keys['leds'])
-        self.assertIn([2], show.token_keys['leds'])
-
-        self.assertIn([2, '(leds)', 'this'], show.token_values['foo'])
-
-        test_show = show._replace_tokens(foo='hello')
-        self.assertEqual(test_show[2]['(leds)']['this'], 'hello')
-
-        test_show = show._replace_tokens(leds='hello')
-        self.assertIn('hello', test_show[0])
-        self.assertIn('hello', test_show[1])
-        self.assertIn('hello', test_show[2])
-
-        # test multiples at the same time
-        test_show = show._replace_tokens(leds='hello', other='other',
-                                             foo='hello')
-        self.assertEqual('hello', test_show[2]['hello']['this'])
-        self.assertIn('hello', test_show[0])
-        self.assertIn('hello', test_show[1])
-        self.assertIn('hello', test_show[2])
-
     def test_tokens_in_shows(self):
-        self.assertIn('leds_basic', self.machine.shows)
-        self.assertIn('leds_basic_fade', self.machine.shows)
+        self.assertIn('leds_name_token', self.machine.shows)
         self.assertIn('leds_color_token', self.machine.shows)
         self.assertIn('leds_extended', self.machine.shows)
         self.assertIn('lights_basic', self.machine.shows)
         self.assertIn('multiple_tokens', self.machine.shows)
 
-        self.machine.events.post('play_leds_basic_single')
+        # test keys passed via method calls
+
+        # test one LED
+        self.machine.shows['leds_name_token'].play(leds='led_01')
         self.advance_time_and_run(.5)
+
+        self.assertEqual(self.machine.leds.led_01.hw_driver.current_color,
+                         RGBColor('red'))
+
+        # test passing tag instead of LED name
+        self.machine.leds.led_01.clear_stack()
+        self.advance_time_and_run()
+
+        self.machine.shows['leds_name_token'].play(leds='tag1')
+        self.advance_time_and_run(.5)
+        self.assertEqual(self.machine.leds.led_01.hw_driver.current_color,
+                         RGBColor('red'))
+        self.assertEqual(self.machine.leds.led_02.hw_driver.current_color,
+                         RGBColor('red'))
+
+        # test passing color as a token
+        self.machine.leds.led_01.clear_stack()
+        self.machine.leds.led_02.clear_stack()
+        self.advance_time_and_run()
+
+        show = self.machine.shows['leds_color_token'].play(color1='blue',
+                                                           color2='green')
+        self.advance_time_and_run(2)
+        self.assertEqual(self.machine.leds.led_01.hw_driver.current_color,
+                         RGBColor('blue'))
+        self.assertEqual(self.machine.leds.led_02.hw_driver.current_color,
+                         RGBColor('green'))
+
+        show.stop()
+
+        # test single LED in show with extended LED config
+        self.machine.leds.led_01.clear_stack()
+        self.machine.leds.led_02.clear_stack()
+        self.advance_time_and_run()
+
+        self.machine.shows['leds_extended'].play(leds='led_01')
+        self.advance_time_and_run(.5)
+
+        # show has fade of 1s, so after 0.5s it should be halfway to red
+        self.assertEqual(self.machine.leds.led_01.hw_driver.current_color,
+                         RGBColor((127, 0, 0)))
+
+        # test tag in show with extended LED config
+        self.machine.leds.led_01.clear_stack()
+        self.machine.leds.led_02.clear_stack()
+        self.advance_time_and_run()
+
+        self.machine.shows['leds_extended'].play(leds='tag1')
+        self.advance_time_and_run(.5)
+
+        # show has fade of 1s, so after 0.5s it should be halfway to red
+        self.assertEqual(self.machine.leds.led_01.hw_driver.current_color,
+                         RGBColor((127, 0, 0)))
+        self.assertEqual(self.machine.leds.led_02.hw_driver.current_color,
+                         RGBColor((127, 0, 0)))
+
+        # test single light in show
+        self.machine.shows['lights_basic'].play(lights='light_01')
+        self.advance_time_and_run(.5)
+
+        self.assertEqual(255,
+            self.machine.lights.light_01.hw_driver.current_brightness)
+
+        # test light tag in show
+        self.machine.lights.light_01.off(force=True)
+        self.advance_time_and_run()
+
+        self.machine.shows['lights_basic'].play(lights='tag1')
+        self.advance_time_and_run(.5)
+
+        self.assertEqual(255,
+            self.machine.lights.light_01.hw_driver.current_brightness)
+        self.assertEqual(255,
+            self.machine.lights.light_02.hw_driver.current_brightness)
+
+        # test led and light tags in the same show
+        self.machine.leds.led_01.clear_stack()
+        self.machine.leds.led_02.clear_stack()
+        self.machine.lights.light_01.off(force=True)
+        self.machine.lights.light_02.off(force=True)
+        self.advance_time_and_run()
+
+        self.machine.shows['multiple_tokens'].play(leds='led_01',
+                                                   lights='light_01')
+        self.advance_time_and_run(.5)
+        self.assertEqual(self.machine.leds.led_01.hw_driver.current_color,
+                         RGBColor('blue'))
+        self.assertEqual(255,
+            self.machine.lights.light_01.hw_driver.current_brightness)
+
 
     def test_get_show_copy(self):
         copied_show = self.machine.shows['test_show1'].get_show_steps()

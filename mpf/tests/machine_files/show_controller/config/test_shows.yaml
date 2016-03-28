@@ -54,44 +54,34 @@ assets:
             preload: yes
 
 shows:
-  leds_basic:
+  leds_name_token:
     - time: 0
-      (leds): red
-    - time: +1
-      (leds): off
-    - time: +1
-  leds_basic_fade:
-    - time: 0
-      (leds): red-f1s
-    - time: +1
-      (leds): off-f1s
-    - time: +1
+      leds:
+        (leds): red
   leds_color_token:
     - time: 0
-      led_01: (color1)
+      leds:
+        led_01: (color1)
     - time: +1
-      led_02: (color2)
+      leds:
+        led_02: (color2)
     - time: +1
   leds_extended:
     - time: 0
-      (leds):
-        color: red
-        fade: 1s
-    - time: +1
-      (leds):
-        color: red
-        fade: 1s
-    - time: +1
+      leds:
+        (leds):
+          color: red
+          fade: 1s
   lights_basic:
     - time: 0
-      (lights): ff
-    - time: +1
-      (lights): ff
-    - time: +1
+      lights:
+        (lights): ff
   multiple_tokens:
     - time: 0
-      (leds): blue
-      (lights): ff
+      leds:
+        (leds): blue
+      lights:
+        (lights): ff
 
 show_player:
   play_leds_basic_single:

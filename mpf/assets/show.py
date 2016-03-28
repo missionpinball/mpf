@@ -232,34 +232,34 @@ class Show(Asset):
                 self.token_values[token] = list()
             self.token_values[token].append(path)
 
-    def _replace_tokens(self, **kwargs):
-        keys_replaced = dict()
-        show = deepcopy(self.show_steps)
-
-        for token, replacement in kwargs.items():
-            if token in self.token_values:
-                for token_path in self.token_values[token]:
-                    target = show
-                    for x in token_path[:-1]:
-                        target = target[x]
-
-                    target[token_path[-1]] = replacement
-
-        for token, replacement in kwargs.items():
-            if token in self.token_keys:
-                key_name = '({})'.format(token)
-                for token_path in self.token_keys[token]:
-                    target = show
-                    for x in token_path:
-                        if x in keys_replaced:
-                            x = keys_replaced[x]
-
-                        target = target[x]
-
-                    target[replacement] = target.pop(key_name)
-                    keys_replaced[key_name] = replacement
-
-        return show
+    # def _replace_tokens(self, **kwargs):
+    #     keys_replaced = dict()
+    #     show = deepcopy(self.show_steps)
+    #
+    #     for token, replacement in kwargs.items():
+    #         if token in self.token_values:
+    #             for token_path in self.token_values[token]:
+    #                 target = show
+    #                 for x in token_path[:-1]:
+    #                     target = target[x]
+    #
+    #                 target[token_path[-1]] = replacement
+    #
+    #     for token, replacement in kwargs.items():
+    #         if token in self.token_keys:
+    #             key_name = '({})'.format(token)
+    #             for token_path in self.token_keys[token]:
+    #                 target = show
+    #                 for x in token_path:
+    #                     if x in keys_replaced:
+    #                         x = keys_replaced[x]
+    #
+    #                     target = target[x]
+    #
+    #                 target[replacement] = target.pop(key_name)
+    #                 keys_replaced[key_name] = replacement
+    #
+    #     return show
 
     # pylint: disable-msg=too-many-arguments
     def play(self, priority=0, hold=None,
@@ -407,6 +407,9 @@ class RunningShow(object):
         self.name = show.name
         self._total_steps = len(show_steps)
 
+        if play_kwargs and show.tokens:
+            self._replace_tokens(**play_kwargs)
+
         show.running.add(self)
         self.machine.show_controller.notify_show_starting(self)
 
@@ -422,6 +425,32 @@ class RunningShow(object):
 
     def __repr__(self):
         return "Running Show Instance: {}".format(self.name)
+
+    def _replace_tokens(self, **kwargs):
+        keys_replaced = dict()
+
+        for token, replacement in kwargs.items():
+            if token in self.show.token_values:
+                for token_path in self.show.token_values[token]:
+                    target = self.show_steps
+                    for x in token_path[:-1]:
+                        target = target[x]
+
+                    target[token_path[-1]] = replacement
+
+        for token, replacement in kwargs.items():
+            if token in self.show.token_keys:
+                key_name = '({})'.format(token)
+                for token_path in self.show.token_keys[token]:
+                    target = self.show_steps
+                    for x in token_path:
+                        if x in keys_replaced:
+                            x = keys_replaced[x]
+
+                        target = target[x]
+
+                    target[replacement] = target.pop(key_name)
+                    keys_replaced[key_name] = replacement
 
     def stop(self, hold=None):
         if self._stopped:

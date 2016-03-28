@@ -391,7 +391,11 @@ class Led(SystemWideDevice):
         if not self.fade_in_progress:
             return
 
-        color_settings = self.stack[0]
+        try:
+            color_settings = self.stack[0]
+        except IndexError:
+            self._stop_fade_task()
+            return
 
         # todo
         if not color_settings['dest_time']:

@@ -29,12 +29,17 @@ class LightPlayer(ConfigPlayer):
                     self.caller_target_map[caller].add(light)
 
             except AttributeError:
-                if not light.startswith('('):
-                    self.machine.lights[light].on(**s)
+                try:
+                    self._light_on(light, caller, **s)
+                except KeyError:
+                    for light1 in self.machine.lights.sitems_tagged(light):
+                        self._light_on(light1, caller, **s)
 
-                    if caller:
-                        self.caller_target_map[caller].add(
-                            self.machine.lights[light])
+    def _light_on(self, light_name, caller=None, **s):
+        self.machine.lights[light_name].on(**s)
+        if caller:
+            self.caller_target_map[caller].add(
+                self.machine.lights[light_name])
 
     def clear(self, caller, priority):
         try:
