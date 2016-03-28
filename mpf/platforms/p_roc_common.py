@@ -118,7 +118,7 @@ class PROCBasePlatform(Platform):
         if sw_rule_string in self.hw_switch_rules:
             for driver in self.hw_switch_rules[sw_rule_string]:
                 final_driver.append(driver)
-            self.hw_switch_rules[sw_rule_string].extend(driver)
+            self.hw_switch_rules[sw_rule_string].append(driver)
         else:
             self.hw_switch_rules[sw_rule_string] = driver
 
@@ -222,6 +222,7 @@ class PROCBasePlatform(Platform):
 
         self.log.debug("Clearing HW rule for switch: %s", sw_num)
 
+        # TODO: consider switch configuration in config. reuse code!
         self.proc.switch_update_rule(sw_num, 'open_nondebounced',
                                      {'notifyHost': False,
                                       'reloadActive': False}, [])
