@@ -23,3 +23,7 @@ autofire_coils:
     ac_test_inverted:
         coil: c_test2
         switch: s_test_nc
+    ac_test_inverted2:
+        coil: c_test2
+        switch: s_test
+        reverse_switch: True
