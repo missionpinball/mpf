@@ -30,6 +30,7 @@ class Diverter(SystemWideDevice):
         self.eject_attempt_queue = deque()
 
         self.trigger_type = 'software'  # 'software' or 'hardware'
+        # TODO: make hardware the only options and let the platform do the work
 
         # Create a list of ball device objects when active and inactive. We need
         # this because ball eject attempts pass the target device as an object
@@ -202,6 +203,7 @@ class Diverter(SystemWideDevice):
             self.disable_sw_switches()
 
     def enable_hw_switches(self):
+        # TODO: not used. probably broken
         """Enables the hardware switch rule which causes this diverter to
         activate when the switch is hit.
 
@@ -267,6 +269,7 @@ class Diverter(SystemWideDevice):
                     switch_name=switch.name, callback=self.activate)
 
     def disable_hw_switches(self):
+        # TODO: not used
         """Removes the hardware rule to disable the hardware activation switch
         for this diverter.
         """
