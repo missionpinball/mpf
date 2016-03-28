@@ -729,7 +729,7 @@ switch_player:
 switches:
     number: single|str|
     number_str: single|str|
-    type: single|str|NO
+    type: single|enum(NC,NO)|NO
     debounce: single|bool|True
     recycle_time: single|secs|0
     events_when_activated: list|str|None
