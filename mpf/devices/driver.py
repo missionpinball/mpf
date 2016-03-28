@@ -121,7 +121,14 @@ class Driver(SystemWideDevice):
         del kwargs
         self.pulse(milliseconds)
 
+    def _check_platform(self, switch):
+        # TODO: handle stuff in software if platforms differ
+        if self.platform != switch.platform:
+            raise AssertionError("Switch and Coil have to use the same platform")
+
     def set_pulse_on_hit_and_release_rule(self, enable_switch):
+        self._check_platform(enable_switch)
+
         self.platform.set_hw_rule(
             switch_obj=enable_switch,
             sw_name=False,
@@ -132,6 +139,8 @@ class Driver(SystemWideDevice):
             **self.config)
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch):
+        self._check_platform(enable_switch)
+
         self.platform.set_hw_rule(
             switch_obj=enable_switch,
             sw_name=False,
@@ -142,6 +151,8 @@ class Driver(SystemWideDevice):
             **self.config)
 
     def set_pulse_on_hit_rule(self, enable_switch):
+        self._check_platform(enable_switch)
+
         self.platform.set_hw_rule(
             switch_obj=enable_switch,
             sw_name=False,

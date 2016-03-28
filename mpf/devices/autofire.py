@@ -25,24 +25,7 @@ class AutofireCoil(SystemWideDevice):
         self.coil = ReconfiguredDriver(self.config['coil'], self.config)
         self.switch = ReconfiguredSwitch(self.config['switch'], self.config, self.config['reverse_switch'])
 
-        self.validate()
-
         self.debug_log('Platform Driver: %s', self.platform)
-
-    def validate(self):
-        """Autofire rules only work if the switch is on the same platform as the
-        coil.
-
-        In the future we may expand this to support other rules various platform
-        vendors might have.
-
-        """
-
-        if self.switch.platform == self.coil.platform:
-            self.platform = self.coil.platform
-            return True
-        else:
-            return False
 
     def enable(self, **kwargs):
         """Enables the autofire coil rule."""
