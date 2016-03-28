@@ -194,7 +194,6 @@ class Led(SystemWideDevice):
                 fade_ms = 0
 
         if priority < self._get_priority_from_key(key):
-
             if self.debug:
                 self.log.debug("Incoming priority is lower than an existing "
                                "stack item with the same key. Not adding to "
@@ -203,8 +202,6 @@ class Led(SystemWideDevice):
             return
 
         self._add_to_stack(color, fade_ms, priority, key)
-
-        Led.leds_to_update.add(self)
 
     def _add_to_stack(self, color, fade_ms, priority, key):
         curr_color = self.get_color()
@@ -242,7 +239,7 @@ class Led(SystemWideDevice):
 
     def clear_stack(self):
         """Removes all entries from the stack and resets this LED to 'off'."""
-        self.stack = list()
+        self.stack[:] = []
 
         if self.debug:
             self.log.debug("Clearing Stack")
