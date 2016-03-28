@@ -123,7 +123,8 @@ class Driver(SystemWideDevice):
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch):
         self.platform.set_hw_rule(
-            sw_name=enable_switch.name,
+            switch_obj=enable_switch,
+            sw_name=False,
             sw_activity=1,
             driver_name=self.name,
             driver_action='pulse',
@@ -132,7 +133,8 @@ class Driver(SystemWideDevice):
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch):
         self.platform.set_hw_rule(
-            sw_name=enable_switch.name,
+            switch_obj=enable_switch,
+            sw_name=False,
             sw_activity=1,
             driver_name=self.name,
             driver_action='hold',
