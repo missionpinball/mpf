@@ -479,3 +479,116 @@ class TestP3Roc(MpfTestCase):
 
         # check correct decoding of 2 complement
         self.machine.accelerometers.p3_roc_accelerometer.update_acceleration.assert_called_once_with(1.0, 0.0, -2.0)
+
+    def test_flipper_single_coil(self):
+        # enable
+        self.machine.default_platform.proc.switch_update_rule = MagicMock()
+        self.machine.flippers.f_test_single.enable()
+
+        self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
+            call(
+                1, 'open_nondebounced',
+                 {'reloadActive': False, 'notifyHost': False},
+                [{'state': False,
+                  'waitForFirstTimeSlot': False,
+                  'patterOnTime': 0,
+                  'timeslots': 0,
+                  'polarity': True,
+                  'patterOffTime': 0,
+                  'patterEnable': False,
+                  'driverNum': 10,
+                  'outputDriveTime': 0,
+                  'futureEnable': False}],
+                False),
+            call(
+                1, 'closed_nondebounced',
+                {'notifyHost': False, 'reloadActive': False},
+                [{'patterEnable': False,
+                  'patterOnTime': 0,
+                  'timeslots': 0,
+                  'futureEnable': False,
+                  'state': False,
+                  'patterOffTime': 0,
+                  'outputDriveTime': 0,
+                  'driverNum': 8,
+                  'polarity': True,
+                  'waitForFirstTimeSlot': False},
+                 ],
+                False),
+        ], any_order=True)
+
+        # disable
+        self.machine.default_platform.proc.switch_update_rule = MagicMock()
+        self.machine.flippers.f_test_single.disable()
+        self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
+            call(1, 'open_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
+            call(1, 'closed_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
+            call(1, 'open_debounced', {'notifyHost': True, 'reloadActive': False}, []),
+            call(1, 'closed_debounced', {'notifyHost': True, 'reloadActive': False}, []),
+        ], any_order=False)
+
+    def test_flipper_two_coils(self):
+        # we pulse the main coil (20)
+        # hold coil (21) is pulsed + enabled
+        # TODO: why do we pulse it?
+        self.machine.default_platform.proc.switch_update_rule = MagicMock()
+        self.machine.flippers.f_test_hold.enable()
+        self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
+            call(
+                1, 'open_nondebounced',
+                {'notifyHost': False, 'reloadActive': False},
+                [{'patterEnable': False,
+                  'patterOnTime': 0,
+                  'timeslots': 0,
+                  'futureEnable': False,
+                  'state': False,
+                  'patterOffTime': 0,
+                  'outputDriveTime': 0,
+                  'driverNum': 10,
+                  'polarity': True,
+                  'waitForFirstTimeSlot': False},
+                 {'patterEnable': False,
+                  'patterOnTime': 0,
+                  'timeslots': 0,
+                  'futureEnable': False,
+                  'state': False,
+                  'patterOffTime': 0,
+                  'outputDriveTime': 0,
+                  'driverNum': 10,
+                  'polarity': True,
+                  'waitForFirstTimeSlot': False},
+                 ],
+                False),
+            call(
+                1, 'closed_nondebounced',
+                {'notifyHost': False, 'reloadActive': False},
+                [{'patterEnable': False,
+                  'patterOnTime': 0,
+                  'timeslots': 0,
+                  'futureEnable': False,
+                  'state': False,
+                  'patterOffTime': 0,
+                  'outputDriveTime': 0,
+                  'driverNum': 11,
+                  'polarity': True,
+                  'waitForFirstTimeSlot': False},
+                 {'patterEnable': False,
+                  'patterOnTime': 0,
+                  'timeslots': 0,
+                  'futureEnable': False,
+                  'state': False,
+                  'patterOffTime': 0,
+                  'outputDriveTime': 0,
+                  'driverNum': 8,
+                  'polarity': True,
+                  'waitForFirstTimeSlot': False},
+                 ],
+                False),
+        ], any_order=True)
+
+
+        self.machine.flippers.f_test_hold.disable()
+
+    def test_flipper_two_coils_with_eos(self):
+        # Currently broken in the FAST platform
+        self.machine.flippers.f_test_hold_eos.enable()

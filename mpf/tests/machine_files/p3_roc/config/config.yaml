@@ -20,6 +20,10 @@ switches:
     s_test_nc:
         number: A2-B1-1
         type: 'NC'
+    s_flipper:
+        number: 1
+    s_flipper_eos:
+        number: 2
 
 coils:
     c_test:
@@ -35,6 +39,12 @@ coils:
         number: A0-B1-1
         pwm_on_ms: 2
         pwm_off_ms: 8
+    c_flipper_main:
+        number: A0-B0-1
+        pulse_ms: 10
+    c_flipper_hold:
+        number: A0-B0-2
+        hold_power: 1
 
 autofire_coils:
     ac_slingshot_test:
@@ -54,3 +64,24 @@ servos:
 accelerometers:
     p3_roc_accelerometer:
         number: 1
+
+flippers:
+    f_test_single:
+        debug: true
+        pulse_ms: 11
+        main_coil: c_flipper_main
+        activation_switch: s_flipper
+
+    f_test_hold:
+        debug: true
+        main_coil: c_flipper_main
+        hold_coil: c_flipper_hold
+        activation_switch: s_flipper
+
+    f_test_hold_eos:
+        debug: true
+        main_coil: c_flipper_main
+        hold_coil: c_flipper_hold
+        activation_switch: s_flipper
+        eos_switch: s_flipper_eos
+        use_eos: true
