@@ -438,11 +438,16 @@ class HardwarePlatform(Platform):
         self.hw_switch_data = hw_states
 
     def configure_driver(self, config, device_type='coil'):
+        # dont modify the config. make a copy
+        config = deepcopy(config)
 
         if not self.net_connection:
             raise AssertionError('A request was made to configure a FAST driver, '
                                  'but no connection to a NET processor is '
                                  'available')
+
+        if not config['number']:
+            raise AssertionError("Driver needs a number")
 
         # If we have WPC driver boards, look up the driver number
         if self.machine_type == 'wpc':
