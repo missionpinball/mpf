@@ -1,5 +1,5 @@
 """ Contains the base class for flippers."""
-from mpf.devices.driver import DriverConfig
+from mpf.devices.driver import ReconfiguredDriver
 
 from mpf.core.system_wide_device import SystemWideDevice
 
@@ -33,10 +33,10 @@ class Flipper(SystemWideDevice):
     def _initialize(self):
         self.flipper_switches.append(self.config['activation_switch'].name)
         self.platform = self.config['main_coil'].platform
-        self.main_coil = DriverConfig(self.config['main_coil'], self.config)
+        self.main_coil = ReconfiguredDriver(self.config['main_coil'], self.config)
 
         if self.config['hold_coil']:
-            self.hold_coil = DriverConfig(self.config['hold_coil'], self.config)
+            self.hold_coil = ReconfiguredDriver(self.config['hold_coil'], self.config)
 
         if self.debug:
             self.log.debug('Platform Driver: %s', self.platform)

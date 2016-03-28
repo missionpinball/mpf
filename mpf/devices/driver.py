@@ -121,7 +121,7 @@ class Driver(SystemWideDevice):
         del kwargs
         self.pulse(milliseconds)
 
-    def add_pulse_and_release_rule (self, enable_switch):
+    def add_pulse_and_release_rule(self, enable_switch):
         self.platform.set_hw_rule(
             sw_name=enable_switch.name,
             sw_activity=1,
@@ -140,17 +140,19 @@ class Driver(SystemWideDevice):
             **self.config)
 
 
-class DriverConfig(Driver):
+class ReconfiguredDriver(Driver):
     def __init__(self, driver, config_overwrite):
-        self.driver = driver
-        self.name = driver.name
-        self.config_overwrite = config_overwrite
-        self.platform = driver.platform
+        # no call to super init
+        self._driver = driver
+        self._config_overwrite = config_overwrite
+
+    def __getattr__(self, item):
+        return getattr(self._driver, item)
 
     @property
     def config(self):
-        config = copy.deepcopy(self.driver.config)
-        for name, item in self.config_overwrite.items():
+        config = copy.deepcopy(self._driver.config)
+        for name, item in self._config_overwrite.items():
             if item is not None:
                 config[name] = item
 
