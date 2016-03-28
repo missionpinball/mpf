@@ -664,9 +664,9 @@ show_player:
     action: single|str|play
     step_num: single|int|0
     loops: single|int|-1
-    blend: single|bool|False
+    # blend: single|bool|False
     speed: single|float|1
-    hold: single|bool|False
+    hold: single|bool|None
     __allow_others__:
 show_step:
     time: single|str|
@@ -1302,7 +1302,9 @@ class ConfigValidator(object):
             return item
 
     def _validate_type_bool(self, item):
-        if isinstance(item, str):
+        if item is None:
+            return None
+        elif isinstance(item, str):
             return item.lower() not in ['false', 'f', 'no', 'disable', 'off']
         elif not item:
             return False
