@@ -248,6 +248,13 @@ class TestFast(MpfTestCase):
         self.machine.flippers.f_test_hold.enable()
         self.assertFalse(MockSerialCommunicator.expected_commands)
 
+        MockSerialCommunicator.expected_commands = {
+            "DN:20,81": False,
+            "DN:21,81": False
+        }
+        self.machine.flippers.f_test_hold.disable()
+        self.assertFalse(MockSerialCommunicator.expected_commands)
+
     def test_flipper_two_coils_with_eos(self):
         # Currently broken in the FAST platform
         return
