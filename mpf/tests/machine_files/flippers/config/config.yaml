@@ -6,15 +6,17 @@ game:
 coils:
     c_flipper_main:
         number:
+        pulse_ms: 10
     c_flipper_hold:
         number:
+        hold_power: 1
 
 
 switches:
     s_flipper:
-        number:
+        number: 1
     s_flipper_eos:
-        number:
+        number: 2
 
 flippers:
     f_test_single:
