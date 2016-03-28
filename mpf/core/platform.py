@@ -48,7 +48,7 @@ class Platform(object):
 
     # pylint: disable-msg=too-many-arguments
     def set_hw_rule(self, sw_name, sw_activity, driver_name, driver_action,
-                    disable_on_release=True, drive_now=False,
+                    disable_on_release=True, drive_now=False, switch_obj=None,
                     **driver_settings_overrides):
         """Writes a hardware rule to the controller.
 
@@ -75,7 +75,8 @@ class Platform(object):
         """
         self.log.debug("Writing HW Rule to controller")
 
-        switch_obj = self.machine.switches[sw_name]  # todo make a nice error
+        if not switch_obj:
+            switch_obj = self.machine.switches[sw_name]  # todo make a nice error
         driver_obj = self.machine.coils[driver_name]  # here too
 
         if switch_obj.invert:
