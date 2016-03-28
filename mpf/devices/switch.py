@@ -55,7 +55,7 @@ class Switch(SystemWideDevice):
             self.platform.configure_switch(self.config))
 
 
-class ReconfigureSwitch():
+class ReconfiguredSwitch():
     # can overwrite platform specific config parameters and invert
 
     def __init__(self, switch, config_switch_overwrite, invert):

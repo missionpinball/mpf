@@ -1,6 +1,6 @@
 """ Contains the base class for autofire coil devices."""
-from mpf.devices.switch import ReconfigureSwitch
-
+from mpf.devices.driver import ReconfiguredDriver
+from mpf.devices.switch import ReconfiguredSwitch
 from mpf.core.system_wide_device import SystemWideDevice
 
 
@@ -22,8 +22,8 @@ class AutofireCoil(SystemWideDevice):
     class_label = 'autofire'
 
     def _initialize(self):
-        self.coil = self.config['coil']
-        self.switch = ReconfigureSwitch(self.config['switch'], self.config, self.config['reverse_switch'])
+        self.coil = ReconfiguredDriver(self.config['coil'], self.config)
+        self.switch = ReconfiguredSwitch(self.config['switch'], self.config, self.config['reverse_switch'])
 
         self.validate()
 
@@ -50,13 +50,7 @@ class AutofireCoil(SystemWideDevice):
 
         self.log.debug("Enabling")
 
-        self.platform.set_hw_rule(switch_obj=self.switch,
-                                  sw_name=False,
-                                  sw_activity=1,
-                                  driver_name=self.coil.name,
-                                  driver_action='pulse',
-                                  disable_on_release=False,
-                                  **self.config)
+        self.coil.set_pulse_on_hit_rule(self.switch)
 
     def disable(self, **kwargs):
         """Disables the autofire coil rule."""

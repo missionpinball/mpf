@@ -141,6 +141,16 @@ class Driver(SystemWideDevice):
             disable_on_release=True,
             **self.config)
 
+    def set_pulse_on_hit_rule(self, enable_switch):
+        self.platform.set_hw_rule(
+            switch_obj=enable_switch,
+            sw_name=False,
+            sw_activity=1,
+            driver_name=self.name,
+            driver_action='pulse',
+            disable_on_release=False,
+            **self.config)
+
 
 class ReconfiguredDriver(Driver):
     def __init__(self, driver, config_overwrite):
