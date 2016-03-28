@@ -1,4 +1,6 @@
 """ Contains the base class for autofire coil devices."""
+from mpf.devices.switch import ReconfigureSwitch
+
 from mpf.core.system_wide_device import SystemWideDevice
 
 
@@ -21,14 +23,9 @@ class AutofireCoil(SystemWideDevice):
 
     def _initialize(self):
         self.coil = self.config['coil']
-        self.switch = self.config['switch']
+        self.switch = ReconfigureSwitch(self.config['switch'], self.config, self.config['reverse_switch'])
 
         self.validate()
-
-        if self.config['reverse_switch']:
-            self.switch_activity = 0
-        else:
-            self.switch_activity = 1
 
         self.debug_log('Platform Driver: %s', self.platform)
 
@@ -51,14 +48,11 @@ class AutofireCoil(SystemWideDevice):
         """Enables the autofire coil rule."""
         del kwargs
 
-        # todo disable first to clear any old rules?
-
         self.log.debug("Enabling")
 
-        # todo make this work for holds too?
-
-        self.platform.set_hw_rule(sw_name=self.switch.name,
-                                  sw_activity=self.switch_activity,
+        self.platform.set_hw_rule(switch_obj=self.switch,
+                                  sw_name=False,
+                                  sw_activity=1,
                                   driver_name=self.coil.name,
                                   driver_action='pulse',
                                   disable_on_release=False,
