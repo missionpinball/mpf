@@ -26,12 +26,10 @@ class Flipper(SystemWideDevice):
     def __init__(self, machine, name):
         super().__init__(machine, name)
 
-        self.flipper_switches = []
         self.main_coil = None
         self.hold_coil = None
 
     def _initialize(self):
-        self.flipper_switches.append(self.config['activation_switch'].name)
         self.platform = self.config['main_coil'].platform
         self.main_coil = ReconfiguredDriver(self.config['main_coil'], self.config)
 
@@ -112,10 +110,12 @@ class Flipper(SystemWideDevice):
 
         """
         del kwargs
-        if self.flipper_switches:
-            self.log.debug("Disabling")
-            for switch in self.flipper_switches:
-                self.platform.clear_hw_rule(switch)
+        self.log.debug("Disabling")
+        self.main_coil.clear_hw_rule(self.config['activation_switch'])
+
+        # TODO: currently clear_hw_rule will clear all coils for that switch. fix that
+        #if self.hold_coil:
+        #    self.hold_coil.clear_hw_rule(self.config['activation_switch'])
 
     def _enable_single_coil_rule(self):
         self.log.debug('Enabling single coil rule')
