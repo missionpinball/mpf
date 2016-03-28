@@ -502,6 +502,12 @@ class HardwarePlatform(Platform):
 
         """
 
+        # dont modify the config. make a copy
+        config = deepcopy(config)
+
+        if not config['number']:
+            raise AssertionError("Switch needs a number")
+
         if not self.net_connection:
             raise AssertionError("A request was made to configure a FAST switch, "
                                  "but no connection to a NET processor is "
