@@ -144,7 +144,7 @@ class Flipper(SystemWideDevice):
         # TODO: did that ever work? only a disable rule?
 
         self.platform.set_hw_rule(
-                sw_name=self.config['eos_switch'],
+                sw_name=self.config['eos_switch'].name,
                 sw_activity=1,
                 driver_name=self.config['main_coil'].name,
                 driver_action='disable',
