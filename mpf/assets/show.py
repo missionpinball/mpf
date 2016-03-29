@@ -377,10 +377,7 @@ class RunningShow(object):
         self._total_steps = len(show_steps)
 
         if self.hold is None:
-            if self._total_steps == 1:
-                self.hold = True
-            else:
-                self.hold = False
+            self.hold = self._total_steps == 1
 
         if play_kwargs and show.tokens:
             self._replace_tokens(**play_kwargs)
