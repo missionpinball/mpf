@@ -27,7 +27,7 @@ class Flasher(SystemWideDevice):
             self.config['flash_ms'] = (
                 self.machine.config['mpf']['default_flash_ms'])
 
-    def flash(self, milliseconds=None):
+    def flash(self, milliseconds=None, **kwargs):
         """Flashes the flasher.
 
         Args:
@@ -37,6 +37,7 @@ class Flasher(SystemWideDevice):
                 wide default_flash_ms settings. (Current default is 50ms.)
 
         """
+        del kwargs
 
         if milliseconds is None:
             milliseconds = self.config['flash_ms']
