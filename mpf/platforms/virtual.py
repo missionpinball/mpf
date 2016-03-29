@@ -1,7 +1,7 @@
 """Contains code for a virtual hardware platform."""
 
 import logging
-from mpf.core.platform import Platform
+from mpf.core.platform import *
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
@@ -10,7 +10,8 @@ from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInt
 from mpf.core.rgb_color import RGBColor
 
 
-class HardwarePlatform(Platform):
+class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, MatrixLightsPlatform, GiPlatform,
+                       DmdPlatform, LedPlatform, SwitchPlatform, DriverPlatform):
     """Base class for the virtual hardware platform."""
 
     def __init__(self, machine):
@@ -111,12 +112,7 @@ class HardwarePlatform(Platform):
         pass
 
     def clear_hw_rule(self, sw_name):
-        sw_num = self.machine.switches[sw_name].number
-
-        for entry in list(self.hw_switch_rules.keys()):  # slice for copy
-            if entry.startswith(
-                    self.machine.switches.number(sw_num).name):
-                del self.hw_switch_rules[entry]
+        pass
 
     def i2c_write8(self, address, register, value):
         pass
@@ -185,6 +181,9 @@ class VirtualGI(GIPlatformInterface):
 
 
 class VirtualDriver(DriverPlatformInterface):
+    def get_pulse_ms(self):
+        return self.driver_settings['pulse_ms']
+
     def __init__(self, number):
         self.log = logging.getLogger('VirtualDriver')
         self.number = number

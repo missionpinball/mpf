@@ -1,7 +1,7 @@
 import logging
 from copy import deepcopy
 import time
-from mpf.core.platform import Platform
+from mpf.core.platform import MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlatform, DriverPlatform
 from mpf.core.rgb_color import RGBColor
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
@@ -16,7 +16,7 @@ except ImportError:
     pinproc = None
 
 
-class PROCBasePlatform(Platform):
+class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlatform, DriverPlatform):
     """Platform class for the P-Roc and P3-ROC hardware controller.
 
     Args:
@@ -39,6 +39,7 @@ class PROCBasePlatform(Platform):
         self.pinproc = pinproc
         self.proc = None
         self.log = None
+        self.hw_switch_rules = {}
 
         self.machine_type = pinproc.normalize_machine_type(
             self.machine.config['hardware']['driverboards'])

@@ -10,7 +10,7 @@ name of your own platform.
 """
 
 import logging
-from mpf.core.platform import Platform
+from mpf.core.platform import MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatform, SwitchPlatform, DriverPlatform
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
@@ -22,7 +22,7 @@ from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInt
 # platform
 
 
-class HardwarePlatform(Platform):
+class HardwarePlatform( MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatform, SwitchPlatform, DriverPlatform):
     """This is the base class for your hardware platform. Note that at this
     time, this class *must* be called HardwarePlatform."""
 
@@ -85,6 +85,7 @@ class HardwarePlatform(Platform):
         # TemplateDriver constructor so it can set itself up as needed. You
         # might choose to only pass certain k/v pairs, or whatever else you
         # want.
+        del device_type
         driver = TemplateDriver(config['number'])
 
         driver.driver_settings = config

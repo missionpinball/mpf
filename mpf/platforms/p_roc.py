@@ -16,6 +16,8 @@ https://github.com/preble/pyprocgame
 """
 
 import logging
+
+from mpf.core.platform import DmdPlatform
 from mpf.platforms.p_roc_common import PDBConfig, PROCDriver, PROCMatrixLight, PROCBasePlatform
 from mpf.core.utility_functions import Util
 
@@ -25,7 +27,7 @@ except ImportError:
     pinproc = None
 
 
-class HardwarePlatform(PROCBasePlatform):
+class HardwarePlatform(PROCBasePlatform, DmdPlatform):
     """Platform class for the P-ROC hardware controller.
 
     Args:

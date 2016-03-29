@@ -13,7 +13,8 @@ import io
 from distutils.version import StrictVersion
 from copy import deepcopy
 
-from mpf.core.platform import Platform
+from mpf.core.platform import ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatform, \
+                              SwitchPlatform, DriverPlatform
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
@@ -40,7 +41,8 @@ RGB_LATEST_FW = '0.88'
 IO_LATEST_FW = '0.89'
 
 
-class HardwarePlatform(Platform):
+class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatform, SwitchPlatform,
+                       DriverPlatform):
     """Platform class for the FAST hardware controller.
 
     Args:

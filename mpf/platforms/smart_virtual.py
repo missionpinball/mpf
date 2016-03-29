@@ -79,21 +79,6 @@ class HardwarePlatform(VirtualPlatform):
 
         return driver, config['number']
 
-    def write_hw_rule(self, *args, **kwargs):
-        pass
-
-    def clear_hw_rule(self, sw_name):
-        sw_num = self.machine.switches[sw_name].number
-
-        for entry in list(self.hw_switch_rules.keys()):  # slice for copy
-            if entry.startswith(
-                    self.machine.switches.number(sw_num).name):
-                del self.hw_switch_rules[entry]
-
-    def tick(self, dt):
-        # ticks every hw loop (typically hundreds of times per sec)
-        pass
-
     def confirm_eject_via_switch(self, switch):
         self.machine.switch_controller.process_switch(switch.name, 1)
         self.machine.switch_controller.process_switch(switch.name, 0)

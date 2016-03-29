@@ -11,12 +11,12 @@ import threading
 import sys
 import traceback
 
-from mpf.core.platform import Platform
+from mpf.core.platform import LedPlatform
 from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 from mpf.core.rgb_color import RGBColor
 
 
-class HardwarePlatform(Platform):
+class HardwarePlatform(LedPlatform):
     """Base class for the open pixel hardware platform.
 
     Args:

@@ -13,10 +13,12 @@ https://github.com/preble/pyprocgame
 
 import logging
 import math
+
+from mpf.core.platform import I2cPlatform, AccelerometerPlatform
 from mpf.platforms.p_roc_common import PDBConfig, PROCDriver, PROCMatrixLight, PROCBasePlatform
 
 
-class HardwarePlatform(PROCBasePlatform):
+class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
     """Platform class for the P3-ROC hardware controller.
 
     Args:

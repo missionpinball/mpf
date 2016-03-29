@@ -6,10 +6,10 @@ import sys
 import threading
 import traceback
 from queue import Queue
-from mpf.core.platform import Platform
+from mpf.core.platform import DmdPlatform
 
 
-class HardwarePlatform(Platform):
+class HardwarePlatform(DmdPlatform):
 
     def __init__(self, machine):
 
@@ -20,6 +20,9 @@ class HardwarePlatform(Platform):
 
         self.dmd_frame = bytearray()
         self.queue = None
+        self.serial_port = None
+        self.dmd_thread = None
+        self.update = None
 
         self.config = self.machine.config_validator.validate_config(
             config_spec='smartmatrix',
@@ -60,6 +63,7 @@ class HardwarePlatform(Platform):
         self.queue.put(bytearray(data))
 
     def tick(self, dt):
+        del dt
         self.serial_port.write(bytearray([0x01]))
         self.serial_port.write(self.dmd_frame)
 
