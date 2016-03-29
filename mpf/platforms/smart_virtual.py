@@ -68,7 +68,7 @@ class HardwarePlatform(VirtualPlatform):
                 if device.config['confirm_eject_switch']:
                     device.config['hold_coil'].hw_driver.confirm_eject_switch = device.config['confirm_eject_switch']
 
-    def configure_driver(self, config, device_type='coil'):
+    def configure_driver(self, config):
         # todo should probably throw out the number that we get since it could
         # be a weird string and just return an incremental int?
 

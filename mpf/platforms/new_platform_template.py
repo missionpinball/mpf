@@ -49,7 +49,7 @@ class HardwarePlatform( MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatfo
         reference to this platform is printed."""
         return '<Platform.Template>'
 
-    def configure_driver(self, config, device_type='coil'):
+    def configure_driver(self, config):
         """This method is called once per driver when MPF is starting up. It
         passes the config for the driver and returns a hardware driver object
         that can be used to control the driver.
@@ -59,13 +59,6 @@ class HardwarePlatform( MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatfo
                 passed on to your driver class to create an instance of your
                 driver. These can be whatever you want--whatever you need to
                 setup a driver.
-            device_type: String name of the type of MPF device that's being
-                configured. This is needed since some platforms (like Williams
-                WPC) use "drivers" to control coils, lights, GI, flashers, etc.
-                Whether you need to act on this is up to you. Just know that
-                when MPF calls this method, it will pass the config dict for
-                this device as well as a string name of what type of device
-                it's trying to setup.
 
         Returns:
             driver object, config number. The driver object that is returned
@@ -85,7 +78,6 @@ class HardwarePlatform( MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatfo
         # TemplateDriver constructor so it can set itself up as needed. You
         # might choose to only pass certain k/v pairs, or whatever else you
         # want.
-        del device_type
         driver = TemplateDriver(config['number'])
 
         driver.driver_settings = config

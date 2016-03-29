@@ -251,18 +251,13 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
                 # todo need to read in the notifyHost settings and reapply those
                 # appropriately.
 
-    def configure_matrixlight(self, config):
-        """Configures a P-ROC matrix light."""
-        # On the P-ROC, matrix lights are drivers
-        return self.configure_driver(config, 'light')
-
     def configure_gi(self, config):
         """Configures a P-ROC GI string light."""
-        # On the P-ROC, GI strings are drivers
-        return self.configure_driver(config, 'light')
+        # On the P/P3-ROC, GI strings are drivers
+        return self.configure_driver(config)
 
     def configure_led(self, config):
-        """ Configures a P3-ROC RGB LED controlled via a PD-LED."""
+        """ Configures a P/P3-ROC RGB LED controlled via a PD-LED."""
 
         # split the number (which comes in as a string like w-x-y-z) into parts
         config['number'] = config['number_str'].split('-')

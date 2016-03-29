@@ -91,7 +91,7 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
     def stop(self):
         self.proc.reset(1)
 
-    def configure_driver(self, config, device_type='coil'):
+    def configure_driver(self, config):
         """Creates a P-ROC driver.
 
         Typically drivers are coils or flashers, but for the P-ROC this is
@@ -115,28 +115,25 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
         # can provide the number.
 
         if self.machine_type == self.pinproc.MachineTypePDB:
-            proc_num = self.pdbconfig.get_proc_number(device_type,
-                                                      str(config['number']))
+            proc_num = self.pdbconfig.get_proc_number("coil", str(config['number']))
             if proc_num == -1:
-                raise AssertionError("Coil %s cannot be controlled by the P-ROC. ",
-                                     str(config['number']))
+                raise AssertionError("Driver {} cannot be controlled by the P-ROC. ".format(str(config['number'])))
+        else:
+            proc_num = self.pinproc.decode(self.machine_type, str(config['number']))
+
+        return PROCDriver(proc_num, self.proc, config, self.machine), proc_num
+
+    def configure_matrixlight(self, config):
+        if self.machine_type == self.pinproc.MachineTypePDB:
+            proc_num = self.pdbconfig.get_proc_number("light", str(config['number']))
+            if proc_num == -1:
+                raise AssertionError("Matrixlight {} cannot be controlled by the P-ROC. ".format(
+                    str(config['number'])))
 
         else:
             proc_num = self.pinproc.decode(self.machine_type, str(config['number']))
 
-        if device_type in ['coil', 'flasher']:
-            proc_driver_object = PROCDriver(proc_num, self.proc, config, self.machine)
-        elif device_type == 'light':
-            proc_driver_object = PROCMatrixLight(proc_num, self.proc)
-        else:
-            raise AssertionError("Invalid device type {}".format(device_type))
-
-        if 'polarity' in config:
-            state = proc_driver_object.proc.driver_get_state(config['number'])
-            state['polarity'] = config['polarity']
-            proc_driver_object.proc.driver_update_state(state)
-
-        return proc_driver_object, config['number']
+        return PROCMatrixLight(proc_num, self.proc), proc_num
 
     def configure_switch(self, config):
         """Configures a P-ROC switch.

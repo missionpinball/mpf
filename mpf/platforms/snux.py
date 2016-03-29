@@ -142,7 +142,7 @@ class Snux(object):
         del dt
         self.diag_led.pulse(250)
 
-    def configure_driver(self, config, device_type='coil'):
+    def configure_driver(self, config):
         # If the user has configured one of the special drivers in their
         # machine config, don't set it up since that could let them do weird
         # things.
@@ -157,7 +157,7 @@ class Snux(object):
             config['number'] = config['number'][:-1]
 
             platform_driver, _ = (
-                self.platform_configure_driver(config, device_type))
+                self.platform_configure_driver(config))
 
             snux_driver = SnuxDriver(orig_number, platform_driver, self)
 
@@ -169,7 +169,7 @@ class Snux(object):
             return snux_driver, orig_number
 
         else:
-            return self.platform_configure_driver(config, device_type)
+            return self.platform_configure_driver(config)
 
     # pylint: disable-msg=too-many-arguments
     def write_hw_rule(self, switch_obj, sw_activity, driver_obj, driver_action,

@@ -439,7 +439,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
 
         self.hw_switch_data = hw_states
 
-    def configure_driver(self, config, device_type='coil'):
+    def configure_driver(self, config):
         # dont modify the config. make a copy
         config = deepcopy(config)
 

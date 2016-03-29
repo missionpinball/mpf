@@ -19,13 +19,10 @@ class Flasher(SystemWideDevice):
     def _initialize(self):
         self.load_platform_section('flashers')
 
-        self.hw_driver, self.number = (
-            self.platform.configure_driver(config=self.config,
-                                           device_type='flasher'))
+        self.hw_driver, self.number = self.platform.configure_driver(config=self.config)
 
         if self.config['flash_ms'] is None:
-            self.config['flash_ms'] = (
-                self.machine.config['mpf']['default_flash_ms'])
+            self.config['flash_ms'] = self.machine.config['mpf']['default_flash_ms']
 
     def flash(self, milliseconds=None, **kwargs):
         """Flashes the flasher.

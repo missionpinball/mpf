@@ -42,7 +42,7 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
     def __repr__(self):
         return '<Platform.Virtual>'
 
-    def configure_driver(self, config, device_type='coil'):
+    def configure_driver(self, config):
         # todo should probably throw out the number that we get since it could
         # be a weird string and just return an incremental int?
 

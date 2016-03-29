@@ -198,14 +198,13 @@ class DriverPlatform(BasePlatform):
         if self.driver_overlay:  # can't use try since it could swallow errors
             self.driver_overlay.initialize()
 
-    def configure_driver(self, config, device_type='coil'):
+    def configure_driver(self, config):
         """Subclass this method in a platform module to configure a driver.
 
         This method should return a reference to the driver's platform interface
         object which will be called to access the hardware.
 
         """
-        # TODO: remove device_type. Its p_roc only
         raise NotImplementedError
 
     # pylint: disable-msg=too-many-arguments

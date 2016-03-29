@@ -164,7 +164,7 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
         # flush data to proc
         self.proc.flush()
 
-    def configure_driver(self, config, device_type='coil'):
+    def configure_driver(self, config):
         """ Creates a P3-ROC driver.
 
         Typically drivers are coils or flashers, but for the P3-ROC this is
@@ -172,7 +172,6 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
 
         Args:
             config: Dictionary of settings for the driver.
-            device_type: String with value of either 'coil' or 'switch'.
 
         Returns:
             A reference to the PROCDriver object which is the actual object you
@@ -184,23 +183,21 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
         # Find the P3-ROC number for each driver. For P3-ROC driver boards, the
         # P3-ROC number is specified via the Ax-By-C format.
 
-        proc_num = self.pdbconfig.get_proc_number(device_type,
-                                                  str(config['number']))
+        proc_num = self.pdbconfig.get_proc_number("coil", str(config['number']))
         if proc_num == -1:
-            raise AssertionError("Coil %s cannot be controlled by the P3-ROC. ",
-                                 str(config['number']))
+            raise AssertionError("Driver {} cannot be controlled by the P3-ROC. ".format(str(config['number'])))
 
-        if device_type in ['coil', 'flasher']:
-            proc_driver_object = PROCDriver(proc_num, self.proc, config, self.machine)
-        elif device_type == 'light':
-            proc_driver_object = PROCMatrixLight(proc_num, self.proc)
-        else:
-            raise AssertionError("Invalid device type {}".format(device_type))
+        proc_driver_object = PROCDriver(proc_num, self.proc, config, self.machine)
 
-        if 'polarity' in config:
-            state = proc_driver_object.proc.driver_get_state(config['number'])
-            state['polarity'] = config['polarity']
-            proc_driver_object.proc.driver_update_state(state)
+        return proc_driver_object, config['number']
+
+    def configure_matrixlight(self, config):
+        proc_num = self.pdbconfig.get_proc_number("light", str(config['number']))
+
+        if proc_num == -1:
+            raise AssertionError("Matrixlight {} cannot be controlled by the P3-ROC. ".format(str(config['number'])))
+
+        proc_driver_object = PROCMatrixLight(proc_num, self.proc)
 
         return proc_driver_object, config['number']
 
