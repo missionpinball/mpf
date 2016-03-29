@@ -85,7 +85,7 @@ class MatrixLight(SystemWideDevice):
 
     # pylint: disable-msg=too-many-arguments
     def on(self, brightness=255, fade_ms=0, priority=0, cache=True,
-           force=False):
+           force=False, **kwargs):
         """Turns on this matrix light.
 
         Args:
@@ -113,6 +113,7 @@ class MatrixLight(SystemWideDevice):
         light instead of sending a stream of conflicting  values.
 
         """
+        del kwargs
         # First, if this incoming command is at a lower priority than what the
         # light is doing now, we don't proceed (unless force is True).
 
@@ -177,7 +178,7 @@ class MatrixLight(SystemWideDevice):
                     handler(light_name=self.name,
                             brightness=self.state['brightness'])
 
-    def off(self, fade_ms=0, priority=0, cache=True, force=False):
+    def off(self, fade_ms=0, priority=0, cache=True, force=False, **kwargs):
         """Turns this light off.
 
         Args:
@@ -193,6 +194,7 @@ class MatrixLight(SystemWideDevice):
                 regardless of the incoming and current priority. Default is
                 False.
         """
+        del kwargs
         self.on(brightness=0, fade_ms=fade_ms, priority=priority, cache=cache,
                 force=force)
 
