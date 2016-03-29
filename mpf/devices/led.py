@@ -347,11 +347,13 @@ class Led(SystemWideDevice):
 
             return self._color_correction_profile.apply(color)
 
-    def on(self, fade_ms=None, priority=0, key=None):
+    def on(self, fade_ms=None, priority=0, key=None, **kwargs):
+        del kwargs
         self.color(color=self.config['default_color'], fade_ms=fade_ms,
                    priority=priority, key=key)
 
-    def off(self, fade_ms=None, priority=0, key=None):
+    def off(self, fade_ms=None, priority=0, key=None, **kwargs):
+        del kwargs
         self.color(color=RGBColor(), fade_ms=fade_ms, priority=priority,
                    key=key)
 
