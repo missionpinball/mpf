@@ -56,7 +56,7 @@ class MatrixLight(Device):
             self.y = config['y']
 
     def on(self, brightness=255, fade_ms=0, start_brightness=None,
-           priority=0, cache=True, force=False):
+           priority=0, cache=True, force=False, **kwargs):
         """Turns on this matrix light.
 
         Args:
@@ -102,7 +102,7 @@ class MatrixLight(Device):
 
     def off(self, fade_ms=0, priority=0, cache=True, force=False):
         self.on(brightness=0, fade_ms=fade_ms, priority=priority, cache=cache,
-                force=force)
+                force=force, **kwargs)
         """Turns this light off.
 
         Args:
