@@ -1,6 +1,4 @@
 import re
-from copy import deepcopy
-
 from mpf.core.assets import Asset, AssetPool
 from mpf.core.config_player import ConfigPlayer
 from mpf.core.file_manager import FileManager
