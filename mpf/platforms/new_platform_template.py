@@ -22,7 +22,7 @@ from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInt
 # platform
 
 
-class HardwarePlatform( MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatform, SwitchPlatform, DriverPlatform):
+class HardwarePlatform(MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatform, SwitchPlatform, DriverPlatform):
     """This is the base class for your hardware platform. Note that at this
     time, this class *must* be called HardwarePlatform."""
 
@@ -254,6 +254,9 @@ class TemplateDriver(DriverPlatformInterface):
 
     """
 
+    def get_pulse_ms(self, coil):
+        pass
+
     def __init__(self, number):
         self.log = logging.getLogger('VirtualDriver')
         self.number = number
@@ -261,10 +264,10 @@ class TemplateDriver(DriverPlatformInterface):
     def __repr__(self):
         return "VirtualDriver.{}".format(self.number)
 
-    def disable(self):
+    def disable(self, coil):
         pass
 
-    def enable(self):
+    def enable(self, coil):
         """Enables this driver, which means it's held "on" indefinitely until
         it's explicitly disabled.
 
@@ -285,7 +288,7 @@ class TemplateDriver(DriverPlatformInterface):
 
         pass
 
-    def pulse(self, milliseconds=None):
+    def pulse(self, coil, milliseconds=None):
         """Pulses this driver for a pre-determined amount of time, after which
         this driver is turned off automatically. Note that on most platforms,
         pulse times are a max of 255ms. (Beyond that MPF will send separate
@@ -305,6 +308,7 @@ class TemplateDriver(DriverPlatformInterface):
             many drivers aren't activated at once.
 
         """
+        del coil
         if not milliseconds:
             milliseconds = self.driver_settings['pulse_ms']
 

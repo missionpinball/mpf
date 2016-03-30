@@ -958,12 +958,12 @@ class PROCDriver(DriverPlatformInterface):
 
         return return_dict
 
-    def disable(self):
+    def disable(self, coil):
         """Disables (turns off) this driver."""
         self.log.debug('Disabling Driver')
         self.proc.driver_disable(self.number)
 
-    def enable(self):
+    def enable(self, coil):
         """Enables (turns on) this driver."""
 
         if self.driver_settings['pwm_on_ms'] and self.driver_settings['pwm_off_ms']:
@@ -988,22 +988,19 @@ class PROCDriver(DriverPlatformInterface):
             self.proc.driver_schedule(number=self.number, schedule=0xffffffff,
                                       cycle_seconds=0, now=True)
 
-    def pulse(self, milliseconds=None):
+    def pulse(self, coil, milliseconds):
         """Enables this driver for `milliseconds`.
 
         ``ValueError`` will be raised if `milliseconds` is outside of the range
         0-255.
         """
 
-        if not milliseconds:
-            milliseconds = self.driver_settings['pulse_ms']
-
         self.log.debug('Pulsing for %sms', milliseconds)
         self.proc.driver_pulse(self.number, milliseconds)
 
         return milliseconds
 
-    def get_pulse_ms(self):
+    def get_pulse_ms(self, coil):
         return self.driver_settings['pulse_ms']
 
     def state(self):

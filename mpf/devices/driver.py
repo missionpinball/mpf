@@ -72,7 +72,7 @@ class Driver(SystemWideDevice):
         self.time_when_done = -1
         self.time_last_changed = self.machine.clock.get_time()
         self.log.debug("Enabling Driver")
-        self.hw_driver.enable()
+        self.hw_driver.enable(self)
 
     def disable(self, **kwargs):
         """ Disables this driver """
@@ -81,7 +81,7 @@ class Driver(SystemWideDevice):
         self.time_last_changed = self.machine.clock.get_time()
         self.time_when_done = self.time_last_changed
         self.machine.delay.remove(name='{}_timed_enable'.format(self.name))
-        self.hw_driver.disable()
+        self.hw_driver.disable(self)
 
     def pulse(self, milliseconds=None, power=None, **kwargs):
         """ Pulses this driver.
@@ -99,7 +99,10 @@ class Driver(SystemWideDevice):
         # todo power is broken with fast since they come in as strings
 
         if not milliseconds:
-            milliseconds = self.hw_driver.driver_settings['pulse_ms']
+            if self.config['pulse_ms']:
+                milliseconds = self.config['pulse_ms']
+            else:
+                milliseconds = self.machine.config['mpf']['default_pulse_ms']
 
         if power and isinstance(milliseconds, int):
             milliseconds *= power
@@ -110,7 +113,7 @@ class Driver(SystemWideDevice):
                 isinstance(milliseconds, int) and 0 < milliseconds <= self.platform.features['max_pulse']):
             self.log.debug("Pulsing Driver. %sms (%s power)", milliseconds,
                            power)
-            ms_actual = self.hw_driver.pulse(milliseconds)
+            ms_actual = self.hw_driver.pulse(self, milliseconds)
         else:
             self.log.debug("Enabling Driver for %sms (%s power)", milliseconds,
                            power)

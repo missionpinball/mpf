@@ -116,11 +116,12 @@ class SmartVirtualDriver(VirtualDriver):
     def __repr__(self):
         return "SmartVirtualDriver.{}".format(self.number)
 
-    def disable(self):
+    def disable(self, coil):
+        del coil
         if self.type == 'hold':
             self._handle_ball()
 
-    def enable(self):
+    def enable(self, coil):
         pass
 
     def _handle_ball(self):
@@ -140,14 +141,12 @@ class SmartVirtualDriver(VirtualDriver):
                                     callback=self.platform.add_ball_to_device,
                                     device=self.target_device)
 
-    def pulse(self, milliseconds=None):
+    def pulse(self, coil, milliseconds):
+        del coil
         if self.type == 'eject':
             self._handle_ball()
 
-        if milliseconds:
-            return milliseconds
-        else:
-            return self.driver_settings['pulse_ms']
+        return milliseconds
 
     def register_ball_switches(self, switches):
         self.ball_switches.extend(switches)

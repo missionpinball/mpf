@@ -182,7 +182,8 @@ class VirtualGI(GIPlatformInterface):
 
 
 class VirtualDriver(DriverPlatformInterface):
-    def get_pulse_ms(self):
+    def get_pulse_ms(self, coil):
+        del coil
         return self.driver_settings['pulse_ms']
 
     def __init__(self, number):
@@ -197,18 +198,14 @@ class VirtualDriver(DriverPlatformInterface):
         del kwargs
         return dict()
 
-    def disable(self):
+    def disable(self, coil):
         pass
 
-    def enable(self):
+    def enable(self, coil):
         pass
 
-    def pulse(self, milliseconds=None):
-
-        if milliseconds:
-            return milliseconds
-        else:
-            return self.driver_settings['pulse_ms']
+    def pulse(self, coil, milliseconds):
+        return milliseconds
 
     def state(self):
         pass
