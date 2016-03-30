@@ -144,14 +144,8 @@ coils:
     number: single|str|
     number_str: single|str|
     pulse_ms: single|int|None
-    pwm_on_ms: single|int|None
-    pwm_off_ms: single|int|None
     pulse_power: single|int|None
     hold_power: single|int|None
-    pulse_power32: single|int|None
-    hold_power32: single|int|None
-    pulse_pwm_mask: single|int|None
-    hold_pwm_mask: single|int|None
     recycle_ms: single|int|None
     allow_enable: single|bool|False
     tags: list|str|None
@@ -161,6 +155,15 @@ coils:
     disable_events: dict|str:ms|None
     pulse_events: dict|str:ms|None
     platform: single|str|None
+fast_coils:
+    pulse_power32: single|int|None
+    hold_power32: single|int|None
+    pulse_pwm_mask: single|int|None
+    hold_pwm_mask: single|int|None
+    connection: single|enum(network,local,auto)|auto
+p_roc_coils:
+    pwm_on_ms: single|int|None
+    pwm_off_ms: single|int|None
 coil_player:
     action: single|lstr|pulse
     ms: single|ms|None

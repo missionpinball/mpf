@@ -112,7 +112,7 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
     def write_hw_rule(self, *args, **kwargs):
         pass
 
-    def clear_hw_rule(self, sw_name):
+    def clear_hw_rule(self, switch, coil):
         pass
 
     def i2c_write8(self, address, register, value):

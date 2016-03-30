@@ -155,6 +155,9 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
         else:
             raise AssertionError("Invalid proc_action {}".format(proc_action))
 
+    def get_coil_config_section(self):
+        return "p_roc_coils"
+
     # pylint: disable-msg=too-many-arguments
     def write_hw_rule(self, switch_obj, sw_activity, driver_obj, driver_action,
                       disable_on_release, drive_now,
@@ -206,7 +209,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
             self.proc.switch_update_rule(switch_obj.number, event_type, rule,
                                          this_driver, drive_now)
 
-    def clear_hw_rule(self, sw_name):
+    def clear_hw_rule(self, switch, coil):
         """Clears a hardware rule.
 
         This is used if you want to remove the linkage between a switch and
@@ -219,7 +222,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
             sw_name : Name of the switch whose rule you want to clear.
         """
 
-        sw_num = self.machine.switches[sw_name].number
+        sw_num = switch.number
 
         self.log.debug("Clearing HW rule for switch: %s", sw_num)
 
@@ -238,7 +241,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
                                       'reloadActive': False}, [])
 
         for entry in list(self.hw_switch_rules.keys()):  # slice for copy
-            if entry.startswith(sw_name):
+            if entry.startswith(switch.name):
 
                 # disable any drivers from this rule which are active now
                 # todo make this an option?

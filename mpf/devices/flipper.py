@@ -113,9 +113,8 @@ class Flipper(SystemWideDevice):
         self.log.debug("Disabling")
         self.main_coil.clear_hw_rule(self.config['activation_switch'])
 
-        # TODO: currently clear_hw_rule will clear all coils for that switch. fix that
-        #if self.hold_coil:
-        #    self.hold_coil.clear_hw_rule(self.config['activation_switch'])
+        if self.hold_coil:
+            self.hold_coil.clear_hw_rule(self.config['activation_switch'])
 
     def _enable_single_coil_rule(self):
         self.log.debug('Enabling single coil rule')

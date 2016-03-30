@@ -70,7 +70,6 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         self.machine.config['platform'] = self.features
         # ----------------------------------------------------------------------
 
-        self.hw_rules = dict()
         self.dmd_connection = None
         self.net_connection = None
         self.rgb_connection = None
@@ -641,119 +640,117 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
 
         self.net_connection.send(self.watchdog_command)
 
-    # pylint: disable-msg=too-many-arguments
-    def write_hw_rule(self, switch_obj, sw_activity, driver_obj, driver_action,
-                      disable_on_release=True, drive_now=False,
-                      **driver_settings_overrides):
-        """Used to write (or update) a hardware rule to the FAST controller.
+    def get_coil_config_section(self):
+        return "fast_coils"
 
-        *Hardware Rules* are used to configure the hardware controller to
-        automatically change driver states based on switch changes. These rules
-        are completely handled by the hardware (i.e. with no interaction from
-        the Python game code). They're used for things that you want to happen
-        fast, like firing coils when flipper buttons are pushed, slingshots, pop
-        bumpers, etc.
-
-        You can overwrite existing hardware rules at any time to change or
-        remove them.
-
-        Args:
-            switch_obj: Which switch you're creating this rule for. The
-                parameter is a reference to the switch object itself.
-            sw_activity: Int which specifies whether this coil should fire when
-                the switch becomes active (1) or inactive (0)
-            driver_obj: Driver object this rule is being set for.
-            driver_action: String 'pulse' or 'hold' which describe what action
-                will be applied to this driver
-            drive_now: Should the hardware check the state of the switches when
-                this rule is first applied, and fire the coils if they should
-                be? Typically this is True, especially with flippers because you
-                want them to fire if the player is holding in the buttons when
-                the machine enables the flippers (which is done via several
-                calls to this method.)
-
-        """
-
-        driver_settings = deepcopy(driver_obj.hw_driver.driver_settings)
-
-        driver_settings.update(driver_obj.hw_driver.merge_driver_settings(
-            **driver_settings_overrides))
-
-        self.log.debug("Setting HW Rule. Switch: %s, Switch_action: %s, Driver:"
-                       " %s, Driver settings: %s", switch_obj.name, sw_activity,
-                       driver_obj.name, driver_settings)
-
-        control = 0x01  # Driver enabled
-        if drive_now:
-            control += 0x08
-
-        if sw_activity == 0:
-            control += 0x10
-
-        control = Util.int_to_hex_string(int(control))
-
-        # todo need to implement disable_on_release
-        param = {}
-
-        if isinstance(driver_settings['pulse_ms'], int):
-            driver_settings['pulse_ms'] = 'ff'
-
-        if driver_action == 'pulse':
-            mode = '10'                               # Mode 10 settings
-            param[1] = driver_settings['pulse_ms']      # initial pulse ms
-            param[2] = driver_settings['pwm1']          # intial pwm
-            param[3] = '00'                             # pulse 2 time
-            param[4] = '00'                             # pulse 2 pwm
-            param[5] = driver_settings['recycle_ms']    # recycle ms
-
-        elif driver_action == 'hold':
-            mode = '18'                               # Mode 18 settings
-            param[1] = driver_settings['pulse_ms']      # intiial pulse ms
-            param[2] = driver_settings['pwm1']          # intial pwm
-            param[3] = driver_settings['pwm2']          # hold pwm
-            param[4] = driver_settings['recycle_ms']    # recycle ms
-            param[5] = '00'                             # not used with Mode 18
-
-        elif driver_action == 'timed_hold':
-            # fast hold time is ms*100
-            hold_value = driver_settings['activation_time']
-
-            mode = '70'                               # Mode 70 settings
-            param[1] = driver_settings['pulse_ms']      # intiial pulse ms
-            param[2] = driver_settings['pwm1']          # intial pwm
-            param[3] = hold_value                       # hold time
-            param[4] = driver_settings['pwm2']          # hold pwm
-            param[5] = driver_settings['recycle_ms']    # recycle ms
-
+    def _get_pulse_ms_for_cmd(self, coil):
+        if coil.config['pulse_ms'] is None:
+            return Util.int_to_hex_string(self.machine.config['mpf']['default_pulse_ms'])
         else:
-            raise ValueError("Invalid driver action: '%s'. Expected 'hold', "
-                             "'timed_hold', or 'pulse'" % driver_action)
+            if coil.config['pulse_ms'] > 255:
+                return coil.config['pulse_ms']
+            else:
+                return Util.int_to_hex_string(coil.config['pulse_ms'])
 
-        self.hw_rules[driver_obj] = {'mode': mode,
-                                     'param1': param[1],
-                                     'param2': param[2],
-                                     'param3': param[3],
-                                     'param4': param[4],
-                                     'param5': param[5],
-                                     'switch': switch_obj.number}
+    def _get_pwm1_for_cmd(self, coil):
+        if coil.config['pulse_pwm_mask']:
+            pulse_pwm_mask = str(coil.config['pulse_pwm_mask'])
+            if len(pulse_pwm_mask) == 32:
+                return Util.bin_str_to_hex_str(pulse_pwm_mask, 8)
+            elif len(pulse_pwm_mask) == 8:
+                return Util.bin_str_to_hex_str(pulse_pwm_mask, 2)
+            else:
+                raise ValueError("pulse_pwm_mask must either be 8 or 32 bits")
+        elif coil.config['pulse_power32'] is not None:
+            return "ff"
+        elif coil.config['pulse_power'] is not None:
+            return Util.pwm8_to_hex_string(coil.config['pulse_power'])
+        else:
+            return "ff"
 
-        cmd = (driver_settings['config_cmd'] +
-               driver_obj.number[0] + ',' +
-               control + ',' +
-               switch_obj.number[0] + ',' +
-               mode + ',' +
-               param[1] + ',' +
-               param[2] + ',' +
-               param[3] + ',' +
-               param[4] + ',' +
-               param[5])
+    def _get_pwm2_for_cmd(self, coil):
+        if coil.config['hold_pwm_mask']:
+            hold_pwm_mask = str(coil.config['hold_pwm_mask'])
+            if len(hold_pwm_mask) == 32:
+                return Util.bin_str_to_hex_str(hold_pwm_mask, 8)
+            elif len(hold_pwm_mask) == 8:
+                return Util.bin_str_to_hex_str(hold_pwm_mask, 2)
+            else:
+                raise ValueError("hold_pwm_mask must either be 8 or 32 bits")
+        elif coil.config['hold_power32'] is not None:
+            return "ff"
+        elif coil.config['hold_power'] is not None:
+            return Util.pwm8_to_hex_string(coil.config['hold_power'])
+        else:
+            return "ff"
 
-        driver_obj.autofire = cmd
+    def _get_recycle_ms_for_cmd(self, coil):
+        if coil.config['recycle_ms'] is not None:
+            return Util.int_to_hex_string(coil.config['recycle_ms'])
+        else:
+            return "00"
+
+    def _get_config_cmd(self, coil):
+        if coil.config['connection'] == "network":
+            return 'DN:'
+        elif coil.config['connection'] == "local" :
+            return 'DL:'
+        elif self.machine_type == 'wpc':
+            return "DL:"    # on wpc auto mean local
+        else:
+            return "DN:"    # otherwise auto mean network
+
+    def _get_control_for_cmd(self, switch):
+        control = 0x01  # Driver enabled
+        if switch.invert:
+            control += 0x10
+        return Util.int_to_hex_string(int(control))
+
+    def set_pulse_on_hit_rule(self, enable_switch, coil):
+        # TODO: this is not correct but the same as before
+        self.set_pulse_on_hit_and_release_rule(enable_switch, coil)
+
+    def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
+        self.log.debug("Setting Pulse on hit and release HW Rule. Switch: %s, Driver: %s",
+                       enable_switch.name, coil.name)
+
+        cmd = (self._get_config_cmd(coil) +
+               coil.number[0] + ',' +
+               self._get_control_for_cmd(enable_switch) + ',' +
+               enable_switch.number[0] + ',' +
+               "10" + ',' +                                 # Mode 10 settings
+               self._get_pulse_ms_for_cmd(coil) + ',' +     # initial pulse ms
+               self._get_pwm1_for_cmd(coil) + ',' +         # intial pwm
+               '00' + ',' +                                 # pulse 2 time
+               '00' + ',' +                                 # pulse 2 pwm
+               self._get_recycle_ms_for_cmd(coil))          # recycle ms
+
+        coil.autofire = cmd
         self.log.debug("Writing hardware rule: %s", cmd)
 
         self.net_connection.send(cmd)
 
-    def clear_hw_rule(self, sw_name):
+    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
+        self.log.debug("Setting Pulse on hit and enable and release HW Rule. Switch: %s, Driver: %s",
+                       enable_switch.name, coil.name)
+
+        cmd = (self._get_config_cmd(coil) +
+               coil.number[0] + ',' +
+               self._get_control_for_cmd(enable_switch) + ',' +
+               enable_switch.number[0] + ',' +
+               "18" + ',' +                                 # Mode 18 settings
+               self._get_pulse_ms_for_cmd(coil) + ',' +     # initial pulse ms
+               self._get_pwm1_for_cmd(coil) + ',' +         # intial pwm
+               self._get_pwm2_for_cmd(coil) + ',' +         # pulse 2 time
+               self._get_recycle_ms_for_cmd(coil) + ',' +   # recycle ms
+               "00")                                        # not used with Mode 18
+
+        coil.autofire = cmd
+        self.log.debug("Writing hardware rule: %s", cmd)
+
+        self.net_connection.send(cmd)
+
+    def clear_hw_rule(self, switch, coil):
         """Clears a hardware rule.
 
         This is used if you want to remove the linkage between a switch and
@@ -763,32 +760,21 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         as the *sw_num*.
 
         Args:
-            sw_name: The string name of the switch whose rule you want to clear.
+            switch: The switch whose rule you want to clear.
+            coil: The coil whose rule you want to clear.
 
         """
-        sw_num = self.machine.switches[sw_name].number
+        self.log.debug("Clearing HW Rule for switch: %s, coils: %s", switch.name, coil.name)
 
-        # find the rule(s) based on this switch
-        coils = [k for k, v in self.hw_rules.items() if v['switch'] == sw_num]
+        cmd = (self._get_config_cmd(coil) +
+               coil.number[0] + ',' +
+               '81')
 
-        self.log.debug("Clearing HW Rule for switch: %s %s, coils: %s", sw_name,
-                       sw_num, coils)
+        coil.autofire = None
 
-        for coil in coils:
+        self.log.debug("Clearing hardware rule: %s", cmd)
 
-            del self.hw_rules[coil]
-
-            driver_settings = coil.hw_driver.driver_settings
-
-            cmd = (driver_settings['config_cmd'] +
-                   driver_settings['number'] + ',' +
-                   '81')
-
-            coil.autofire = None
-
-            self.log.debug("Clearing hardware rule: %s", cmd)
-
-            self.net_connection.send(cmd)
+        self.net_connection.send(cmd)
 
     def servo_go_to_position(self, number, position):
         """Sets a servo position. """
