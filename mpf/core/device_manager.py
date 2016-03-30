@@ -102,8 +102,7 @@ class DeviceManager(object):
                 # validate config
                 for device_name in config:
                     config[device_name] = collection[device_name].prepare_config(config[device_name], False)
-                    self.machine.config_validator.validate_config(
-                        device_cls.config_section, config[device_name], device_name)
+                    config[device_name] = collection[device_name].validate_and_parse_config(config[device_name], False)
 
         for device_type in self.machine.config['mpf']['device_modules']:
 
