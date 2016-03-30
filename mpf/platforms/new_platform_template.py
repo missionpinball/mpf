@@ -168,8 +168,8 @@ class HardwarePlatform( MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatfo
     def write_hw_rule(self, *args, **kwargs):
         pass
 
-    def clear_hw_rule(self, sw_name):
-        sw_num = self.machine.switches[sw_name].number
+    def clear_hw_rule(self, switch, coil):
+        sw_num = switch.number
 
         for entry in list(self.hw_switch_rules.keys()):  # slice for copy
             if entry.startswith(
