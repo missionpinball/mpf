@@ -87,126 +87,126 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
 
         self.wpc_switch_map = {
 
-        #    WPC   HEX    DEC
-            'S11': '00',  #00
-            'S12': '01',  #01
-            'S13': '02',  #02
-            'S14': '03',  #03
-            'S15': '04',  #04
-            'S16': '05',  #05
-            'S17': '06',  #06
-            'S18': '07',  #07
+            # WPC   HEX    DEC
+            'S11': '00',  # 00
+            'S12': '01',  # 01
+            'S13': '02',  # 02
+            'S14': '03',  # 03
+            'S15': '04',  # 04
+            'S16': '05',  # 05
+            'S17': '06',  # 06
+            'S18': '07',  # 07
 
-            'S21': '08',  #08
-            'S22': '09',  #09
-            'S23': '0A',  #10
-            'S24': '0B',  #11
-            'S25': '0C',  #12
-            'S26': '0D',  #13
-            'S27': '0E',  #14
-            'S28': '0F',  #15
+            'S21': '08',  # 08
+            'S22': '09',  # 09
+            'S23': '0A',  # 10
+            'S24': '0B',  # 11
+            'S25': '0C',  # 12
+            'S26': '0D',  # 13
+            'S27': '0E',  # 14
+            'S28': '0F',  # 15
 
-            'S31': '10',  #16
-            'S32': '11',  #17
-            'S33': '12',  #18
-            'S34': '13',  #19
-            'S35': '14',  #20
-            'S36': '15',  #21
-            'S37': '16',  #22
-            'S38': '17',  #23
+            'S31': '10',  # 16
+            'S32': '11',  # 17
+            'S33': '12',  # 18
+            'S34': '13',  # 19
+            'S35': '14',  # 20
+            'S36': '15',  # 21
+            'S37': '16',  # 22
+            'S38': '17',  # 23
 
-            'S41': '18',  #24
-            'S42': '19',  #25
-            'S43': '1A',  #26
-            'S44': '1B',  #27
-            'S45': '1C',  #28
-            'S46': '1D',  #29
-            'S47': '1E',  #30
-            'S48': '1F',  #31
+            'S41': '18',  # 24
+            'S42': '19',  # 25
+            'S43': '1A',  # 26
+            'S44': '1B',  # 27
+            'S45': '1C',  # 28
+            'S46': '1D',  # 29
+            'S47': '1E',  # 30
+            'S48': '1F',  # 31
 
-            'S51': '20',  #32
-            'S52': '21',  #33
-            'S53': '22',  #34
-            'S54': '23',  #35
-            'S55': '24',  #36
-            'S56': '25',  #37
-            'S57': '26',  #38
-            'S58': '27',  #39
+            'S51': '20',  # 32
+            'S52': '21',  # 33
+            'S53': '22',  # 34
+            'S54': '23',  # 35
+            'S55': '24',  # 36
+            'S56': '25',  # 37
+            'S57': '26',  # 38
+            'S58': '27',  # 39
 
-            'S61': '28',  #40
-            'S62': '29',  #41
-            'S63': '2A',  #42
-            'S64': '2B',  #43
-            'S65': '2C',  #44
-            'S66': '2D',  #45
-            'S67': '2E',  #46
-            'S68': '2F',  #47
+            'S61': '28',  # 40
+            'S62': '29',  # 41
+            'S63': '2A',  # 42
+            'S64': '2B',  # 43
+            'S65': '2C',  # 44
+            'S66': '2D',  # 45
+            'S67': '2E',  # 46
+            'S68': '2F',  # 47
 
-            'S71': '30',  #48
-            'S72': '31',  #49
-            'S73': '32',  #50
-            'S74': '33',  #51
-            'S75': '34',  #52
-            'S76': '35',  #53
-            'S77': '36',  #54
-            'S78': '37',  #55
+            'S71': '30',  # 48
+            'S72': '31',  # 49
+            'S73': '32',  # 50
+            'S74': '33',  # 51
+            'S75': '34',  # 52
+            'S76': '35',  # 53
+            'S77': '36',  # 54
+            'S78': '37',  # 55
 
-            'S81': '38',  #56
-            'S82': '39',  #57
-            'S83': '3A',  #58
-            'S84': '3B',  #59
-            'S85': '3C',  #60
-            'S86': '3D',  #61
-            'S87': '3E',  #62
-            'S88': '3F',  #63
+            'S81': '38',  # 56
+            'S82': '39',  # 57
+            'S83': '3A',  # 58
+            'S84': '3B',  # 59
+            'S85': '3C',  # 60
+            'S86': '3D',  # 61
+            'S87': '3E',  # 62
+            'S88': '3F',  # 63
 
-            'S91': '40',  #64
-            'S92': '41',  #65
-            'S93': '42',  #66
-            'S94': '43',  #67
-            'S95': '44',  #68
-            'S96': '45',  #69
-            'S97': '46',  #70
-            'S98': '47',  #71
+            'S91': '40',  # 64
+            'S92': '41',  # 65
+            'S93': '42',  # 66
+            'S94': '43',  # 67
+            'S95': '44',  # 68
+            'S96': '45',  # 69
+            'S97': '46',  # 70
+            'S98': '47',  # 71
 
-            'S101': '48',  #72
-            'S102': '49',  #73
-            'S103': '4A',  #74
-            'S104': '4B',  #75
-            'S105': '4C',  #76
-            'S106': '4D',  #77
-            'S107': '4E',  #78
-            'S108': '4F',  #79
+            'S101': '48',  # 72
+            'S102': '49',  # 73
+            'S103': '4A',  # 74
+            'S104': '4B',  # 75
+            'S105': '4C',  # 76
+            'S106': '4D',  # 77
+            'S107': '4E',  # 78
+            'S108': '4F',  # 79
 
             # Directs
-            'SD1': '50',  #80
-            'SD2': '51',  #81
-            'SD3': '52',  #82
-            'SD4': '53',  #83
-            'SD5': '54',  #84
-            'SD6': '55',  #85
-            'SD7': '56',  #86
-            'SD8': '57',  #87
+            'SD1': '50',  # 80
+            'SD2': '51',  # 81
+            'SD3': '52',  # 82
+            'SD4': '53',  # 83
+            'SD5': '54',  # 84
+            'SD6': '55',  # 85
+            'SD7': '56',  # 86
+            'SD8': '57',  # 87
 
             # DIP switches
-            'DIP1': '58',  #88
-            'DIP2': '59',  #89
-            'DIP3': '5A',  #90
-            'DIP4': '5B',  #91
-            'DIP5': '5C',  #92
-            'DIP6': '5D',  #93
-            'DIP7': '5E',  #94
-            'DIP8': '5F',  #95
+            'DIP1': '58',  # 88
+            'DIP2': '59',  # 89
+            'DIP3': '5A',  # 90
+            'DIP4': '5B',  # 91
+            'DIP5': '5C',  # 92
+            'DIP6': '5D',  # 93
+            'DIP7': '5E',  # 94
+            'DIP8': '5F',  # 95
 
             # Fliptronics
-            'SF1': '60',  #96
-            'SF2': '61',  #97
-            'SF3': '62',  #98
-            'SF4': '63',  #99
-            'SF5': '64',  #100
-            'SF6': '65',  #101
-            'SF7': '66',  #102
-            'SF8': '67',  #103
+            'SF1': '60',  # 96
+            'SF2': '61',  # 97
+            'SF3': '62',  # 98
+            'SF4': '63',  # 99
+            'SF5': '64',  # 100
+            'SF6': '65',  # 101
+            'SF7': '66',  # 102
+            'SF8': '67',  # 103
 
             }
 
@@ -478,7 +478,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         else:
             raise AssertionError("Invalid machine type: {}".format(self.machine_type))
 
-        return (FASTDriver(config, self.net_connection.send, self.machine, self),
+        return (FASTDriver(config, self.net_connection.send, self.machine),
                 (config['number'], config['connection']))
 
     def configure_switch(self, config):
@@ -653,18 +653,18 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
 
         driver = coil.hw_driver
 
-        cmd = (driver.get_config_cmd(coil) +
+        cmd = (driver.get_config_cmd() +
                coil.number[0] + ',' +
                driver.get_control_for_cmd(enable_switch) + ',' +
                enable_switch.number[0] + ',' +
                "10" + ',' +                                 # Mode 10 settings
-               driver.get_pulse_ms_for_cmd(coil) + ',' +     # initial pulse ms
-               driver.get_pwm1_for_cmd(coil) + ',' +         # intial pwm
+               driver.get_pulse_ms_for_cmd(coil) + ',' +    # initial pulse ms
+               driver.get_pwm1_for_cmd(coil) + ',' +        # intial pwm
                '00' + ',' +                                 # pulse 2 time
                '00' + ',' +                                 # pulse 2 pwm
-               driver.get_recycle_ms_for_cmd(coil))          # recycle ms
+               driver.get_recycle_ms_for_cmd(coil))         # recycle ms
 
-        coil.autofire = cmd
+        driver.autofire = True
         self.log.debug("Writing hardware rule: %s", cmd)
 
         self.net_connection.send(cmd)
@@ -675,18 +675,18 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
 
         driver = coil.hw_driver
 
-        cmd = (driver.get_config_cmd(coil) +
+        cmd = (driver.get_config_cmd() +
                coil.number[0] + ',' +
                driver.get_control_for_cmd(enable_switch) + ',' +
                enable_switch.number[0] + ',' +
                "18" + ',' +                                 # Mode 18 settings
-               driver.get_pulse_ms_for_cmd(coil) + ',' +     # initial pulse ms
-               driver.get_pwm1_for_cmd(coil) + ',' +         # intial pwm
-               driver.get_pwm2_for_cmd(coil) + ',' +         # pulse 2 time
-               driver.get_recycle_ms_for_cmd(coil) + ',' +   # recycle ms
+               driver.get_pulse_ms_for_cmd(coil) + ',' +    # initial pulse ms
+               driver.get_pwm1_for_cmd(coil) + ',' +        # intial pwm
+               driver.get_pwm2_for_cmd(coil) + ',' +        # pulse 2 time
+               driver.get_recycle_ms_for_cmd(coil) + ',' +  # recycle ms
                "00")                                        # not used with Mode 18
 
-        coil.autofire = cmd
+        driver.autofire = True
         self.log.debug("Writing hardware rule: %s", cmd)
 
         self.net_connection.send(cmd)
@@ -711,7 +711,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
 
         driver = coil.hw_driver
 
-        cmd = (driver.get_config_cmd(coil) +
+        cmd = (driver.get_config_cmd() +
                coil.number[0] + ',' +
                '81')
 
@@ -764,18 +764,14 @@ class FASTDriver(DriverPlatformInterface):
 
     """
 
-    def __init__(self, config, sender, machine, platform):
+    def __init__(self, config, sender, machine):
         """
 
         """
 
         self.autofire = None
         self.machine = machine
-        self.platform = platform
-        self.config = dict()
-        self.driver_settings = self.create_driver_settings(machine, **config)
-
-        self.driver_settings['mode'] = '10'     # pulsed
+        self.driver_settings = dict()
 
         self.log = logging.getLogger('FASTDriver')
 
@@ -790,8 +786,6 @@ class FASTDriver(DriverPlatformInterface):
             self.driver_settings['config_cmd'] = 'DL:'
             self.driver_settings['trigger_cmd'] = 'TL:'
 
-        self.driver_settings.update(self.merge_driver_settings(**config))
-
         self.log.debug("Driver Settings: %s", self.driver_settings)
         self.reset()
 
@@ -800,7 +794,7 @@ class FASTDriver(DriverPlatformInterface):
             return Util.int_to_hex_string(self.machine.config['mpf']['default_pulse_ms'])
         else:
             if coil.config['pulse_ms'] > 255:
-                return coil.config['pulse_ms']
+                return "00"
             else:
                 return Util.int_to_hex_string(coil.config['pulse_ms'])
 
@@ -842,15 +836,11 @@ class FASTDriver(DriverPlatformInterface):
         else:
             return "00"
 
-    def get_config_cmd(self, coil):
-        if coil.config['connection'] == "network":
-            return 'DN:'
-        elif coil.config['connection'] == "local":
-            return 'DL:'
-        elif self.platform.machine_type == 'wpc':
-            return "DL:"    # on wpc auto mean local
-        else:
-            return "DN:"    # otherwise auto mean network
+    def get_config_cmd(self):
+        return self.driver_settings['config_cmd']
+
+    def get_trigger_cmd(self):
+        return self.driver_settings['trigger_cmd']
 
     def get_control_for_cmd(self, switch):
         control = 0x01  # Driver enabled
@@ -865,136 +855,29 @@ class FASTDriver(DriverPlatformInterface):
 
         """
         self.log.debug("Resetting driver %s", self.driver_settings)
-        cmd = (self.driver_settings['config_cmd'] +
+        cmd = (self.get_config_cmd() +
                self.driver_settings['number'] +
                ',00,00,00')
         self.send(cmd)
 
-    def create_driver_settings(self, machine, pulse_ms=None, **kwargs):
-        return_dict = dict()
-        if pulse_ms is None:
-            pulse_ms = machine.config['mpf']['default_pulse_ms']
-
-        try:
-            return_dict['allow_enable'] = kwargs['allow_enable']
-        except KeyError:
-            return_dict['allow_enable'] = False
-
-        if pulse_ms > 255:
-            return_dict['pulse_ms'] = pulse_ms
-        else:
-            return_dict['pulse_ms'] = Util.int_to_hex_string(pulse_ms)
-
-        return_dict['pwm1'] = 'ff'
-        return_dict['pwm2'] = 'ff'
-        return_dict['recycle_ms'] = '00'
-
-        return return_dict
-
-    def _merge_pulse_pwm_mask(self, return_dict, pulse_pwm_mask, pulse_power, pulse_power32):
-        if pulse_pwm_mask:
-            pulse_pwm_mask = str(pulse_pwm_mask)
-            if len(pulse_pwm_mask) == 32:
-                return_dict['pwm1'] = Util.bin_str_to_hex_str(pulse_pwm_mask, 8)
-            elif len(pulse_pwm_mask) == 8:
-                return_dict['pwm1'] = Util.bin_str_to_hex_str(pulse_pwm_mask, 2)
-            else:
-                raise ValueError("pulse_pwm_mask must either be 8 or 32 bits")
-        elif pulse_power32 is not None:
-            return_dict['pwm32'] = Util.pwm32_to_hex_string(pulse_power32)
-        elif pulse_power is not None:
-            return_dict['pwm1'] = Util.pwm8_to_hex_string(pulse_power)
-
-    def _merge_hold_pwm_mask(self, return_dict, hold_pwm_mask, hold_power, hold_power32):
-        if hold_pwm_mask:
-            hold_pwm_mask = str(hold_pwm_mask)
-            if len(hold_pwm_mask) == 32:
-                return_dict['pwm2'] = Util.bin_str_to_hex_str(hold_pwm_mask, 8)
-            elif len(hold_pwm_mask) == 8:
-                return_dict['pwm2'] = Util.bin_str_to_hex_str(hold_pwm_mask, 2)
-            else:
-                raise ValueError("hold_pwm_mask must either be 8 or 32 bits")
-        elif hold_power32 is not None:
-            return_dict['pwm32'] = Util.pwm32_to_hex_string(hold_power32)
-        elif hold_power is not None:
-            return_dict['pwm2'] = Util.pwm8_to_hex_string(hold_power)
-
-    # pylint: disable-msg=too-many-arguments
-    def merge_driver_settings(self,
-                              pulse_ms=None,
-                              pwm_on_ms=None,
-                              pwm_off_ms=None,
-                              pulse_power=None,
-                              hold_power=None,
-                              pulse_power32=None,
-                              hold_power32=None,
-                              pulse_pwm_mask=None,
-                              hold_pwm_mask=None,
-                              recycle_ms=None,
-                              activation_time=None,
-                              **kwargs):
-
-        del kwargs
-
-        if pwm_on_ms:
-            raise ValueError("The setting 'pwm_on_ms' is not valid with the "
-                             "FAST platform. Use a hold_power or hold_pwm_mask"
-                             " instead.")
-        if pwm_off_ms:
-            raise ValueError("The setting 'pwm_off_ms' is not valid with the "
-                             "FAST platform. Use a hold_power or hold_pwm_mask"
-                             " instead.")
-
-        if pulse_power32:
-            raise NotImplementedError('"pulse_power32" has not been '
-                                      'implemented yet')
-
-        if hold_power32:
-            raise NotImplementedError('"hold_power32" has not been '
-                                      'implemented yet')
-
-        return_dict = dict()
-        return_dict['pwm32'] = None
-
-        if activation_time is not None:
-            if activation_time > 25500:
-                raise ValueError('Max FAST timed_hold time is 25.5s')
-
-            # FAST activation times are ms * 100
-            return_dict['activation_time'] = str(activation_time / 100)
-
-        if recycle_ms is not None:
-            return_dict['recycle_ms'] = (Util.int_to_hex_string(recycle_ms))
-
-        if pulse_ms is not None:
-            if pulse_ms > 255:
-                return_dict['pulse_ms'] = pulse_ms
-            else:
-                return_dict['pulse_ms'] = Util.int_to_hex_string(pulse_ms)
-
-        self._merge_pulse_pwm_mask(return_dict, pulse_pwm_mask, pulse_power, pulse_power32)
-
-        self._merge_hold_pwm_mask(return_dict, hold_pwm_mask, hold_power, hold_power32)
-
-        return return_dict
-
-    def disable(self):
+    def disable(self, coil):
         """Disables (turns off) this driver. """
+        del coil
 
-        cmd = (self.driver_settings['trigger_cmd'] +
+        cmd = (self.get_trigger_cmd() +
                self.driver_settings['number'] + ',' + '02')
 
         self.log.debug("Sending Disable Command: %s", cmd)
         self.send(cmd)
         self.check_auto()
 
-    def enable(self):
+    def enable(self, coil):
         """Enables (turns on) this driver. """
 
         if self.autofire:
             # If this driver is also configured for an autofire rule, we just
             # manually trigger it with the trigger_cmd and manual on ('03')
-            cmd = (self.driver_settings['trigger_cmd'] +
+            cmd = (self.get_trigger_cmd() +
                    self.driver_settings['number'] + ',' +
                    '03')
             self.log.warning("Recived a command to enable this driver, but "
@@ -1006,10 +889,9 @@ class FASTDriver(DriverPlatformInterface):
             # Otherwise we send a full config command, trigger C1 (logic triggered
             # and drive now) switch ID 00, mode 18 (latched)
 
-            if (self.driver_settings['pwm1'] == 'ff' and
-                    self.driver_settings['pwm2'] == 'ff' and
-                    not ('allow_enable' in self.driver_settings and
-                         self.driver_settings['allow_enable'])):
+            if (self.get_pwm1_for_cmd(coil) == 'ff' and
+                    self.get_pwm2_for_cmd(coil) == 'ff' and
+                    not coil.config['allow_enable']):
 
                 raise AssertionError("Received a command to enable this coil "
                                      "without pwm, but 'allow_enable' has not been"
@@ -1017,18 +899,15 @@ class FASTDriver(DriverPlatformInterface):
 
             else:
 
-                if isinstance(self.driver_settings['pulse_ms'], int):
-                    pulse_ms = '00'
-                else:
-                    pulse_ms = self.driver_settings['pulse_ms']
+                pulse_ms = self.get_pulse_ms_for_cmd(coil)
 
-                cmd = (self.driver_settings['config_cmd'] +
+                cmd = (self.get_config_cmd() +
                        self.driver_settings['number'] +
                        ',C1,00,18,' +
-                       pulse_ms + ',' +
-                       self.driver_settings['pwm1'] + ',' +
-                       self.driver_settings['pwm2'] + ',' +
-                       self.driver_settings['recycle_ms'])
+                       str(pulse_ms) + ',' +
+                       self.get_pwm1_for_cmd(coil) + ',' +
+                       self.get_pwm2_for_cmd(coil) + ',' +
+                       self.get_recycle_ms_for_cmd(coil))
 
         # todo pwm32
 
@@ -1036,19 +915,15 @@ class FASTDriver(DriverPlatformInterface):
         self.send(cmd)
         # todo change hold to pulse with re-ups
 
-        # self.check_auto()
-
-    def pulse(self, milliseconds=None):
+    def pulse(self, coil, milliseconds):
         """Pulses this driver. """
-        if not milliseconds:
-            hex_ms_string = self.driver_settings['pulse_ms']
-        elif isinstance(milliseconds, int):
+        if isinstance(milliseconds, int):
             hex_ms_string = Util.int_to_hex_string(milliseconds)
         else:
             hex_ms_string = milliseconds
 
         if self.autofire:
-            cmd = (self.driver_settings['trigger_cmd'] +
+            cmd = (self.get_trigger_cmd() +
                    self.driver_settings['number'] + ',' +
                    '01')
             if milliseconds:
@@ -1056,12 +931,12 @@ class FASTDriver(DriverPlatformInterface):
                                "this driver is configured with an autofire rule"
                                ", so that pulse value will be used instead.")
         else:
-            cmd = (self.driver_settings['config_cmd'] +
+            cmd = (self.get_config_cmd() +
                    self.driver_settings['number'] +
                    ',89,00,10,' +
                    hex_ms_string + ',' +
-                   self.driver_settings['pwm1'] + ',00,00,' +
-                   self.driver_settings['recycle_ms'])
+                   self.get_pwm1_for_cmd(coil) + ',00,00,' +
+                   self.get_recycle_ms_for_cmd(coil))
 
         self.log.debug("Sending Pulse Command: %s", cmd)
         self.send(cmd)
@@ -1069,13 +944,13 @@ class FASTDriver(DriverPlatformInterface):
 
         return Util.hex_string_to_int(hex_ms_string)
 
-    def get_pulse_ms(self):
-        return Util.hex_string_to_int(self.driver_settings['pulse_ms'])
+    def get_pulse_ms(self, coil):
+        return Util.hex_string_to_int(self.get_pulse_ms_for_cmd(coil))
 
     def check_auto(self):
 
         if self.autofire:
-            cmd = (self.driver_settings['trigger_cmd'] +
+            cmd = (self.get_trigger_cmd() +
                    self.driver_settings['number'] +
                    ',00')
 
@@ -1242,7 +1117,7 @@ class FASTDMD(object):
 
     def tick(self, dt):
         del dt
-        self.send('BM:' + self.dmd_frame)
+        self.send('BM:' + str(self.dmd_frame))
 
 
 class SerialCommunicator(object):
