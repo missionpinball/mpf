@@ -960,11 +960,13 @@ class PROCDriver(DriverPlatformInterface):
 
     def disable(self, coil):
         """Disables (turns off) this driver."""
+        del coil
         self.log.debug('Disabling Driver')
         self.proc.driver_disable(self.number)
 
     def enable(self, coil):
         """Enables (turns on) this driver."""
+        del coil
 
         if self.driver_settings['pwm_on_ms'] and self.driver_settings['pwm_off_ms']:
             self.log.debug('Enabling. Initial pulse_ms:%s, pwm_on_ms: %s'
@@ -994,6 +996,7 @@ class PROCDriver(DriverPlatformInterface):
         ``ValueError`` will be raised if `milliseconds` is outside of the range
         0-255.
         """
+        del coil
 
         self.log.debug('Pulsing for %sms', milliseconds)
         self.proc.driver_pulse(self.number, milliseconds)
@@ -1001,6 +1004,7 @@ class PROCDriver(DriverPlatformInterface):
         return milliseconds
 
     def get_pulse_ms(self, coil):
+        del coil
         return self.driver_settings['pulse_ms']
 
     def state(self):

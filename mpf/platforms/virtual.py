@@ -205,6 +205,7 @@ class VirtualDriver(DriverPlatformInterface):
         pass
 
     def pulse(self, coil, milliseconds):
+        del coil
         return milliseconds
 
     def state(self):
