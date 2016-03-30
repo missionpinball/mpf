@@ -478,7 +478,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         else:
             raise AssertionError("Invalid machine type: {}".format(self.machine_type))
 
-        return (FASTDriver(config, self.net_connection.send, self.machine),
+        return (FASTDriver(config, self.net_connection.send, self.machine, self),
                 (config['number'], config['connection']))
 
     def configure_switch(self, config):
@@ -643,69 +643,6 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
     def get_coil_config_section(self):
         return "fast_coils"
 
-    def _get_pulse_ms_for_cmd(self, coil):
-        if coil.config['pulse_ms'] is None:
-            return Util.int_to_hex_string(self.machine.config['mpf']['default_pulse_ms'])
-        else:
-            if coil.config['pulse_ms'] > 255:
-                return coil.config['pulse_ms']
-            else:
-                return Util.int_to_hex_string(coil.config['pulse_ms'])
-
-    def _get_pwm1_for_cmd(self, coil):
-        if coil.config['pulse_pwm_mask']:
-            pulse_pwm_mask = str(coil.config['pulse_pwm_mask'])
-            if len(pulse_pwm_mask) == 32:
-                return Util.bin_str_to_hex_str(pulse_pwm_mask, 8)
-            elif len(pulse_pwm_mask) == 8:
-                return Util.bin_str_to_hex_str(pulse_pwm_mask, 2)
-            else:
-                raise ValueError("pulse_pwm_mask must either be 8 or 32 bits")
-        elif coil.config['pulse_power32'] is not None:
-            return "ff"
-        elif coil.config['pulse_power'] is not None:
-            return Util.pwm8_to_hex_string(coil.config['pulse_power'])
-        else:
-            return "ff"
-
-    def _get_pwm2_for_cmd(self, coil):
-        if coil.config['hold_pwm_mask']:
-            hold_pwm_mask = str(coil.config['hold_pwm_mask'])
-            if len(hold_pwm_mask) == 32:
-                return Util.bin_str_to_hex_str(hold_pwm_mask, 8)
-            elif len(hold_pwm_mask) == 8:
-                return Util.bin_str_to_hex_str(hold_pwm_mask, 2)
-            else:
-                raise ValueError("hold_pwm_mask must either be 8 or 32 bits")
-        elif coil.config['hold_power32'] is not None:
-            return "ff"
-        elif coil.config['hold_power'] is not None:
-            return Util.pwm8_to_hex_string(coil.config['hold_power'])
-        else:
-            return "ff"
-
-    def _get_recycle_ms_for_cmd(self, coil):
-        if coil.config['recycle_ms'] is not None:
-            return Util.int_to_hex_string(coil.config['recycle_ms'])
-        else:
-            return "00"
-
-    def _get_config_cmd(self, coil):
-        if coil.config['connection'] == "network":
-            return 'DN:'
-        elif coil.config['connection'] == "local" :
-            return 'DL:'
-        elif self.machine_type == 'wpc':
-            return "DL:"    # on wpc auto mean local
-        else:
-            return "DN:"    # otherwise auto mean network
-
-    def _get_control_for_cmd(self, switch):
-        control = 0x01  # Driver enabled
-        if switch.invert:
-            control += 0x10
-        return Util.int_to_hex_string(int(control))
-
     def set_pulse_on_hit_rule(self, enable_switch, coil):
         # TODO: this is not correct but the same as before
         self.set_pulse_on_hit_and_release_rule(enable_switch, coil)
@@ -714,16 +651,18 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         self.log.debug("Setting Pulse on hit and release HW Rule. Switch: %s, Driver: %s",
                        enable_switch.name, coil.name)
 
-        cmd = (self._get_config_cmd(coil) +
+        driver = coil.hw_driver
+
+        cmd = (driver.get_config_cmd(coil) +
                coil.number[0] + ',' +
-               self._get_control_for_cmd(enable_switch) + ',' +
+               driver.get_control_for_cmd(enable_switch) + ',' +
                enable_switch.number[0] + ',' +
                "10" + ',' +                                 # Mode 10 settings
-               self._get_pulse_ms_for_cmd(coil) + ',' +     # initial pulse ms
-               self._get_pwm1_for_cmd(coil) + ',' +         # intial pwm
+               driver.get_pulse_ms_for_cmd(coil) + ',' +     # initial pulse ms
+               driver.get_pwm1_for_cmd(coil) + ',' +         # intial pwm
                '00' + ',' +                                 # pulse 2 time
                '00' + ',' +                                 # pulse 2 pwm
-               self._get_recycle_ms_for_cmd(coil))          # recycle ms
+               driver.get_recycle_ms_for_cmd(coil))          # recycle ms
 
         coil.autofire = cmd
         self.log.debug("Writing hardware rule: %s", cmd)
@@ -734,15 +673,17 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         self.log.debug("Setting Pulse on hit and enable and release HW Rule. Switch: %s, Driver: %s",
                        enable_switch.name, coil.name)
 
-        cmd = (self._get_config_cmd(coil) +
+        driver = coil.hw_driver
+
+        cmd = (driver.get_config_cmd(coil) +
                coil.number[0] + ',' +
-               self._get_control_for_cmd(enable_switch) + ',' +
+               driver.get_control_for_cmd(enable_switch) + ',' +
                enable_switch.number[0] + ',' +
                "18" + ',' +                                 # Mode 18 settings
-               self._get_pulse_ms_for_cmd(coil) + ',' +     # initial pulse ms
-               self._get_pwm1_for_cmd(coil) + ',' +         # intial pwm
-               self._get_pwm2_for_cmd(coil) + ',' +         # pulse 2 time
-               self._get_recycle_ms_for_cmd(coil) + ',' +   # recycle ms
+               driver.get_pulse_ms_for_cmd(coil) + ',' +     # initial pulse ms
+               driver.get_pwm1_for_cmd(coil) + ',' +         # intial pwm
+               driver.get_pwm2_for_cmd(coil) + ',' +         # pulse 2 time
+               driver.get_recycle_ms_for_cmd(coil) + ',' +   # recycle ms
                "00")                                        # not used with Mode 18
 
         coil.autofire = cmd
@@ -766,7 +707,11 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         """
         self.log.debug("Clearing HW Rule for switch: %s, coils: %s", switch.name, coil.name)
 
-        cmd = (self._get_config_cmd(coil) +
+        # TODO: check that the rule is switch + coil and not another switch + this coil
+
+        driver = coil.hw_driver
+
+        cmd = (driver.get_config_cmd(coil) +
                coil.number[0] + ',' +
                '81')
 
@@ -819,12 +764,14 @@ class FASTDriver(DriverPlatformInterface):
 
     """
 
-    def __init__(self, config, sender, machine):
+    def __init__(self, config, sender, machine, platform):
         """
 
         """
 
         self.autofire = None
+        self.machine = machine
+        self.platform = platform
         self.config = dict()
         self.driver_settings = self.create_driver_settings(machine, **config)
 
@@ -847,6 +794,69 @@ class FASTDriver(DriverPlatformInterface):
 
         self.log.debug("Driver Settings: %s", self.driver_settings)
         self.reset()
+
+    def get_pulse_ms_for_cmd(self, coil):
+        if coil.config['pulse_ms'] is None:
+            return Util.int_to_hex_string(self.machine.config['mpf']['default_pulse_ms'])
+        else:
+            if coil.config['pulse_ms'] > 255:
+                return coil.config['pulse_ms']
+            else:
+                return Util.int_to_hex_string(coil.config['pulse_ms'])
+
+    def get_pwm1_for_cmd(self, coil):
+        if coil.config['pulse_pwm_mask']:
+            pulse_pwm_mask = str(coil.config['pulse_pwm_mask'])
+            if len(pulse_pwm_mask) == 32:
+                return Util.bin_str_to_hex_str(pulse_pwm_mask, 8)
+            elif len(pulse_pwm_mask) == 8:
+                return Util.bin_str_to_hex_str(pulse_pwm_mask, 2)
+            else:
+                raise ValueError("pulse_pwm_mask must either be 8 or 32 bits")
+        elif coil.config['pulse_power32'] is not None:
+            return "ff"
+        elif coil.config['pulse_power'] is not None:
+            return Util.pwm8_to_hex_string(coil.config['pulse_power'])
+        else:
+            return "ff"
+
+    def get_pwm2_for_cmd(self, coil):
+        if coil.config['hold_pwm_mask']:
+            hold_pwm_mask = str(coil.config['hold_pwm_mask'])
+            if len(hold_pwm_mask) == 32:
+                return Util.bin_str_to_hex_str(hold_pwm_mask, 8)
+            elif len(hold_pwm_mask) == 8:
+                return Util.bin_str_to_hex_str(hold_pwm_mask, 2)
+            else:
+                raise ValueError("hold_pwm_mask must either be 8 or 32 bits")
+        elif coil.config['hold_power32'] is not None:
+            return "ff"
+        elif coil.config['hold_power'] is not None:
+            return Util.pwm8_to_hex_string(coil.config['hold_power'])
+        else:
+            return "ff"
+
+    def get_recycle_ms_for_cmd(self, coil):
+        if coil.config['recycle_ms'] is not None:
+            return Util.int_to_hex_string(coil.config['recycle_ms'])
+        else:
+            return "00"
+
+    def get_config_cmd(self, coil):
+        if coil.config['connection'] == "network":
+            return 'DN:'
+        elif coil.config['connection'] == "local":
+            return 'DL:'
+        elif self.platform.machine_type == 'wpc':
+            return "DL:"    # on wpc auto mean local
+        else:
+            return "DN:"    # otherwise auto mean network
+
+    def get_control_for_cmd(self, switch):
+        control = 0x01  # Driver enabled
+        if switch.invert:
+            control += 0x10
+        return Util.int_to_hex_string(int(control))
 
     def reset(self):
         """
