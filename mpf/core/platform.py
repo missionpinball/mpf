@@ -247,21 +247,7 @@ class DriverPlatform(BasePlatform):
                            disable_on_release, drive_now,
                            **driver_settings_overrides)
 
-    # pylint: disable-msg=too-many-arguments
-    def write_hw_rule(self, switch_obj, sw_activity, driver_obj, driver_action,
-                      disable_on_release, drive_now,
-                      **driver_settings_overrides):
-        """Subclass this method in a platform interface to write a hardware
-        switch rule to the controller.
-
-        Game programmers will typically use `set_hw_rule` instead of this method
-        because `set_hw_rule` takes switch NC and NO settings into account, so
-        it's a bit more convenient.
-
-        """
-        raise NotImplementedError
-
-    def clear_hw_rule(self, sw_name):
+    def clear_hw_rule(self, switch, coil):
         """Subclass this method in a platform module to clear a hardware switch
         rule for this switch.
 
@@ -274,3 +260,36 @@ class DriverPlatform(BasePlatform):
 
         """
         raise NotImplementedError
+
+    def get_coil_config_section(self):
+        return None
+
+    def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
+        self.set_hw_rule(
+            switch_obj=enable_switch,
+            sw_name=False,
+            sw_activity=1,
+            driver_name=coil.name,
+            driver_action='pulse',
+            disable_on_release=True,
+            **coil.config)
+
+    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
+        self.set_hw_rule(
+            switch_obj=enable_switch,
+            sw_name=False,
+            sw_activity=1,
+            driver_name=coil.name,
+            driver_action='hold',
+            disable_on_release=True,
+            **coil.config)
+
+    def set_pulse_on_hit_rule(self, enable_switch, coil):
+        self.set_hw_rule(
+            switch_obj=enable_switch,
+            sw_name=False,
+            sw_activity=1,
+            driver_name=coil.name,
+            driver_action='pulse',
+            disable_on_release=False,
+            **coil.config)

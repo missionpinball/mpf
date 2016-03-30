@@ -34,6 +34,16 @@ class Driver(SystemWideDevice):
         config['number_str'] = str(config['number']).upper()
         return config
 
+    def validate_and_parse_config(self, config, is_mode_config):
+        platform = self.machine.get_platform_sections('coils', getattr(config, "platform", None))
+        if platform.get_coil_config_section():
+            self.machine.config_validator.validate_config(
+                self.config_section, config, self.name, base_spec=platform.get_coil_config_section())
+        else:
+            super().validate_and_parse_config(config, is_mode_config)
+
+        return config
+
     def _initialize(self):
         self.load_platform_section('coils')
 
@@ -129,41 +139,20 @@ class Driver(SystemWideDevice):
     def set_pulse_on_hit_and_release_rule(self, enable_switch):
         self._check_platform(enable_switch)
 
-        self.platform.set_hw_rule(
-            switch_obj=enable_switch,
-            sw_name=False,
-            sw_activity=1,
-            driver_name=self.name,
-            driver_action='pulse',
-            disable_on_release=True,
-            **self.config)
+        self.platform.set_pulse_on_hit_and_release_rule(enable_switch, self)
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch):
         self._check_platform(enable_switch)
 
-        self.platform.set_hw_rule(
-            switch_obj=enable_switch,
-            sw_name=False,
-            sw_activity=1,
-            driver_name=self.name,
-            driver_action='hold',
-            disable_on_release=True,
-            **self.config)
+        self.platform.set_pulse_on_hit_and_enable_and_release_rule(enable_switch, self)
 
     def set_pulse_on_hit_rule(self, enable_switch):
         self._check_platform(enable_switch)
 
-        self.platform.set_hw_rule(
-            switch_obj=enable_switch,
-            sw_name=False,
-            sw_activity=1,
-            driver_name=self.name,
-            driver_action='pulse',
-            disable_on_release=False,
-            **self.config)
+        self.platform.set_pulse_on_hit_rule(enable_switch, self)
 
     def clear_hw_rule(self, switch):
-        self.platform.clear_hw_rule(switch.name)
+        self.platform.clear_hw_rule(switch, self)
 
 
 class ReconfiguredDriver(Driver):

@@ -24,7 +24,8 @@ class TestAutofire(MpfTestCase):
         self.machine.default_platform.clear_hw_rule = MagicMock()
         self.machine.autofires.ac_test.disable()
 
-        self.machine.default_platform.clear_hw_rule.assert_called_once_with("s_test")
+        self.machine.default_platform.clear_hw_rule.assert_called_once_with(
+            self.machine.autofires.ac_test.switch, self.machine.autofires.ac_test.coil)
 
     def test_hw_rule_pulse_inverted_switch(self):
         self.machine.default_platform.write_hw_rule = MagicMock()
@@ -41,7 +42,8 @@ class TestAutofire(MpfTestCase):
         self.machine.default_platform.clear_hw_rule = MagicMock()
         self.machine.autofires.ac_test_inverted.disable()
 
-        self.machine.default_platform.clear_hw_rule.assert_called_once_with("s_test_nc")
+        self.machine.default_platform.clear_hw_rule.assert_called_once_with(
+            self.machine.autofires.ac_test_inverted.switch, self.machine.autofires.ac_test_inverted.coil)
 
     def test_hw_rule_pulse_inverted_autofire(self):
         self.machine.default_platform.write_hw_rule = MagicMock()
@@ -56,6 +58,7 @@ class TestAutofire(MpfTestCase):
              False), self.machine.default_platform.write_hw_rule._mock_call_args_list[0][0])
 
         self.machine.default_platform.clear_hw_rule = MagicMock()
-        self.machine.autofires.ac_test_inverted.disable()
+        self.machine.autofires.ac_test_inverted2.disable()
 
-        self.machine.default_platform.clear_hw_rule.assert_called_once_with("s_test_nc")
+        self.machine.default_platform.clear_hw_rule.assert_called_once_with(
+            self.machine.autofires.ac_test_inverted2.switch, self.machine.autofires.ac_test_inverted2.coil)
