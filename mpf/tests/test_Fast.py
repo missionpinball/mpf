@@ -223,12 +223,57 @@ class TestFast(MpfTestCase):
         self.switch_hit = False
 
     def test_flipper_single_coil(self):
+        # manual flip no hw rule
+        MockSerialCommunicator.expected_commands = {
+            "DN:20,89,00,10,0A,ff,00,00,00": False
+        }
+        self.machine.coils.c_flipper_main.pulse()
+        self.assertFalse(MockSerialCommunicator.expected_commands)
+
+        # manual enable no hw rule
+        MockSerialCommunicator.expected_commands = {
+            "DN:20,C1,00,18,0A,ff,01,00": False
+        }
+        self.machine.coils.c_flipper_main.enable()
+        self.assertFalse(MockSerialCommunicator.expected_commands)
+
+        # manual disable no hw rule
+        MockSerialCommunicator.expected_commands = {
+            "TN:20,02": False
+        }
+        self.machine.coils.c_flipper_main.disable()
+        self.assertFalse(MockSerialCommunicator.expected_commands)
+
         # enable
         MockSerialCommunicator.expected_commands = {
-            "DN:20,01,01,18,0B,ff,ff,00,00": False
+            "DN:20,01,01,18,0B,ff,01,00,00": False
         }
         self.machine.flippers.f_test_single.enable()
         self.assertFalse(MockSerialCommunicator.expected_commands)
+
+        # manual flip with hw rule in action
+        MockSerialCommunicator.expected_commands = {
+            "TN:20,01": False,  # pulse
+            "TN:20,00": False   # reenable autofire rule
+        }
+        self.machine.coils.c_flipper_main.pulse()
+        self.assertFalse(MockSerialCommunicator.expected_commands)
+
+        # manual enable with hw rule
+        MockSerialCommunicator.expected_commands = {
+            "TN:20,03": False
+        }
+        self.machine.coils.c_flipper_main.enable()
+        self.assertFalse(MockSerialCommunicator.expected_commands)
+
+        # manual disable with hw rule
+        MockSerialCommunicator.expected_commands = {
+            "TN:20,02": False,
+            "TN:20,00": False   # reenable autofire rule
+        }
+        self.machine.coils.c_flipper_main.disable()
+        self.assertFalse(MockSerialCommunicator.expected_commands)
+
 
         # disable
         MockSerialCommunicator.expected_commands = {
