@@ -355,10 +355,9 @@ class SnuxDriver(object):
     def __repr__(self):
         return "SnuxDriver.{}".format(self.number)
 
-    def pulse(self, coil, milliseconds=None, **kwargs):
+    def pulse(self, coil, milliseconds, **kwargs):
         del kwargs
-        if milliseconds is None:
-            milliseconds = self.platform_driver.get_pulse_ms(coil)
+        del coil
 
         self.overlay.driver_action(self.platform_driver, milliseconds)
 

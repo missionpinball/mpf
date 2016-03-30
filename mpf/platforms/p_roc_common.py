@@ -1003,10 +1003,6 @@ class PROCDriver(DriverPlatformInterface):
 
         return milliseconds
 
-    def get_pulse_ms(self, coil):
-        del coil
-        return self.driver_settings['pulse_ms']
-
     def state(self):
         """Returns a dictionary representing this driver's current
         configuration state.

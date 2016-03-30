@@ -182,10 +182,6 @@ class VirtualGI(GIPlatformInterface):
 
 
 class VirtualDriver(DriverPlatformInterface):
-    def get_pulse_ms(self, coil):
-        del coil
-        return self.driver_settings['pulse_ms']
-
     def __init__(self, number):
         self.log = logging.getLogger('VirtualDriver')
         self.number = number

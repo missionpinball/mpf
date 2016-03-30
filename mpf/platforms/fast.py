@@ -944,9 +944,6 @@ class FASTDriver(DriverPlatformInterface):
 
         return Util.hex_string_to_int(hex_ms_string)
 
-    def get_pulse_ms(self, coil):
-        return Util.hex_string_to_int(self.get_pulse_ms_for_cmd(coil))
-
     def check_auto(self):
 
         if self.autofire:

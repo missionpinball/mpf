@@ -254,9 +254,6 @@ class TemplateDriver(DriverPlatformInterface):
 
     """
 
-    def get_pulse_ms(self, coil):
-        pass
-
     def __init__(self, number):
         self.log = logging.getLogger('VirtualDriver')
         self.number = number
