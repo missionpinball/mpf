@@ -66,11 +66,6 @@ class MatrixLight(SystemWideDevice):
         self.x = None
         self.y = None
 
-    def prepare_config(self, config, is_mode_config):
-        del is_mode_config
-        config['number_str'] = str(config['number']).upper()
-        return config
-
     def _initialize(self):
         self.load_platform_section('matrix_lights')
 

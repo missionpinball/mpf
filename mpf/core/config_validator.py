@@ -142,7 +142,6 @@ bcp_player:                                          # todo
     __allow_others__:
 coils:
     number: single|str|
-    number_str: single|str|
     pulse_ms: single|int|None
     pulse_power: single|int|None
     hold_power: single|int|None
@@ -242,7 +241,6 @@ diverters:
     drive_now: single|bool|False
 driver_enabled:
     number: single|str|
-    number_str: single|str|
     allow_enable: single|bool|True
     tags: list|str|None
     label: single|str|%
@@ -291,7 +289,6 @@ flasher_player:
     ms: single|int|None
 flashers:
     number: single|str|
-    number_str: single|str|
     flash_ms: single|ms|None
     tags: list|str|None
     label: single|str|%
@@ -347,7 +344,6 @@ gi_player:
     __allow_others__:
 gis:
     number: single|str|
-    number_str: single|str|
     dimmable: single|bool|False
     tags: list|str|None
     label: single|str|%
@@ -389,7 +385,6 @@ led_settings:
     brightness_compensation: ignore                              # todo
 leds:
     number: single|str|
-    number_str: single|str|
     polarity: single|bool|False
     default_color: single|color|ffffff
     color_correction_profile: single|str|None
@@ -438,7 +433,6 @@ machine:
     glass_off_mode: single|bool|True
 matrix_lights:
     number: single|str|
-    number_str: single|str|
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False
@@ -731,10 +725,9 @@ switch_player:
     steps: ignore
 switches:
     number: single|str|
-    number_str: single|str|
     type: single|enum(NC,NO)|NO
     debounce: single|bool|True
-    recycle_time: single|secs|0
+    recycle_time: single|ms|0
     events_when_activated: list|str|None
     events_when_deactivated: list|str|None
     tags: list|str|None

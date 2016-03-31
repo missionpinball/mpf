@@ -29,11 +29,6 @@ class Driver(SystemWideDevice):
         self.time_last_changed = 0
         self.time_when_done = 0
 
-    def prepare_config(self, config, is_mode_config):
-        del is_mode_config
-        config['number_str'] = str(config['number']).upper()
-        return config
-
     def validate_and_parse_config(self, config, is_mode_config):
         platform = self.machine.get_platform_sections('coils', getattr(config, "platform", None))
         if platform.get_coil_config_section():

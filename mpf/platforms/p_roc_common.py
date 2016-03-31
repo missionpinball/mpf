@@ -179,7 +179,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
         """ Configures a P/P3-ROC RGB LED controlled via a PD-LED."""
 
         # split the number (which comes in as a string like w-x-y-z) into parts
-        config['number'] = config['number_str'].split('-')
+        config['number'] = str(config['number']).split('-')
 
         if 'polarity' in config:
             invert = not config['polarity']

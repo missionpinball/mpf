@@ -515,8 +515,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
                                  "available")
 
         if self.machine_type == 'wpc':  # translate switch number to FAST switch
-            config['number'] = self.wpc_switch_map.get(
-                                                config['number_str'].upper())
+            config['number'] = self.wpc_switch_map.get(str(config['number']).upper())
             if 'connection' not in config:
                 config['connection'] = 0  # local switch (default for WPC)
             else:
@@ -557,6 +556,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         return switch, config['number']
 
     def configure_led(self, config):
+        # TODO: dont modify config here
 
         if not self.rgb_connection:
             raise AssertionError('A request was made to configure a FAST LED, '
@@ -570,8 +570,8 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
 
         # if the LED number is in <channel> - <led> format, convert it to a
         # FAST hardware number
-        if '-' in config['number_str']:
-            num = config['number_str'].split('-')
+        if '-' in str(config['number']):
+            num = str(config['number']).split('-')
             config['number'] = (int(num[0]) * 64) + int(num[1])
             self.config['config_number_format'] = 'int'
         else:
@@ -589,6 +589,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
 
     def configure_gi(self, config):
         # TODO: Add support for driver-based GI strings
+        # TODO: dont modify config here
 
         if not self.net_connection:
             raise AssertionError('A request was made to configure a FAST GI, '
@@ -596,21 +597,20 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
                                  'available')
 
         if self.machine_type == 'wpc':  # translate switch number to FAST switch
-            config['number'] = self.wpc_gi_map.get(config['number_str'].upper())
+            config['number'] = self.wpc_gi_map.get(str(config['number']).upper())
 
         return (FASTGIString(config['number'], self.net_connection.send),
                 config['number'])
 
     def configure_matrixlight(self, config):
-
+        # TODO: dont modify config here
         if not self.net_connection:
             raise AssertionError('A request was made to configure a FAST matrix '
                                  'light, but no connection to a NET processor is '
                                  'available')
 
         if self.machine_type == 'wpc':  # translate number to FAST light num
-            config['number'] = self.wpc_light_map.get(
-                                                config['number_str'].upper())
+            config['number'] = self.wpc_light_map.get(str(config['number']).upper())
         elif self.config['config_number_format'] == 'int':
             config['number'] = Util.int_to_hex_string(config['number'])
         else:

@@ -535,7 +535,6 @@ class TestP3Roc(MpfTestCase):
     def test_flipper_two_coils(self):
         # we pulse the main coil (20)
         # hold coil (21) is pulsed + enabled
-        # TODO: why do we pulse it?
         self.machine.default_platform.proc.switch_update_rule = MagicMock()
         self.machine.flippers.f_test_hold.enable()
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([

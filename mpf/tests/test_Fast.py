@@ -281,7 +281,6 @@ class TestFast(MpfTestCase):
         self.machine.coils.c_flipper_main.disable()
         self.assertFalse(MockSerialCommunicator.expected_commands)
 
-
         # disable
         MockSerialCommunicator.expected_commands = {
             "DN:20,81": False
@@ -292,7 +291,6 @@ class TestFast(MpfTestCase):
     def test_flipper_two_coils(self):
         # we pulse the main coil (20)
         # hold coil (21) is pulsed + enabled
-        # TODO: why do we pulse it?
         MockSerialCommunicator.expected_commands = {
             "DN:20,01,01,10,0A,ff,00,00,00": False,
             "DN:21,01,01,18,0A,ff,01,00,00": False,
@@ -310,4 +308,4 @@ class TestFast(MpfTestCase):
     def test_flipper_two_coils_with_eos(self):
         # Currently broken in the FAST platform
         return
-        self.machine.flippers.f_test_hold_eos.enable()
+        # self.machine.flippers.f_test_hold_eos.enable()
