@@ -58,22 +58,6 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
 
         self.log.info("Successfully connected to P-ROC/P3-ROC")
 
-    def _get_merged_driver_settings(self, driver_obj, driver_settings_overrides):
-        driver_settings = deepcopy(driver_obj.hw_driver.driver_settings)
-
-        driver_settings.update(driver_obj.hw_driver.merge_driver_settings(
-            **driver_settings_overrides))
-
-        return driver_settings
-
-    def _get_debounce_setting(self, driver_settings_overrides, switch_obj):
-        if 'debounced' in driver_settings_overrides:
-            return bool(driver_settings_overrides['debounced'])
-        elif switch_obj.config['debounce']:
-            return True
-        else:
-            return False
-
     def _get_event_type(self, sw_activity, debounced):
         if sw_activity == 0 and debounced:
             return "open_debounced"
