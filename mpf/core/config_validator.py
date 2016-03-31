@@ -51,7 +51,7 @@ autofire_coils:
 #    latch: single|bool|False
     reverse_switch: single|bool|False
     delay: single|int|0
-    recycle_ms: single|int|125
+    recycle_ms: single|ms|125
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False
@@ -67,7 +67,7 @@ autofire_coils:
     hold_power32: single|int|None
     pulse_pwm_mask: single|int|None
     hold_pwm_mask: single|int|None
-    recycle_ms: single|int|None
+    recycle_ms: single|ms|None              # TODO: We override out own default here. fix!
     debounce: single|bool|False
     drive_now: single|bool|False
 ball_devices:
@@ -145,7 +145,7 @@ coils:
     pulse_ms: single|int|None
     pulse_power: single|int|None
     hold_power: single|int|None
-    recycle_ms: single|int|None
+    recycle_ms: single|ms|None
     allow_enable: single|bool|False
     tags: list|str|None
     label: single|str|%
@@ -236,7 +236,7 @@ diverters:
     hold_power32: single|int|None
     pulse_pwm_mask: single|int|None
     hold_pwm_mask: single|int|None
-    recycle_ms: single|int|None
+    recycle_ms: single|ms|None
     debounce: single|bool|False
     drive_now: single|bool|False
 driver_enabled:
@@ -305,7 +305,7 @@ flashers:
     hold_power32: single|int|None
     pulse_pwm_mask: single|int|None
     hold_pwm_mask: single|int|None
-    recycle_ms: single|int|None
+    recycle_ms: single|ms|None
 flippers:
     main_coil: single|machine(coils)|
     hold_coil: single|machine(coils)|None
@@ -329,7 +329,7 @@ flippers:
     hold_power32: single|int|None
     pulse_pwm_mask: single|int|None
     hold_pwm_mask: single|int|None
-    recycle_ms: single|int|None
+    recycle_ms: single|ms|None
     debounce: single|bool|False
     drive_now: single|bool|False
 game:
@@ -734,6 +734,7 @@ switches:
     label: single|str|%
     debug: single|bool|False
     platform: single|str|None
+fast_switches:
     debounce_open: single|ms|None
     debounce_close: single|ms|None
 system11:

@@ -643,6 +643,9 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
     def get_coil_config_section(self):
         return "fast_coils"
 
+    def get_switch_config_section(self):
+        return "fast_switches"
+
     def set_pulse_on_hit_rule(self, enable_switch, coil):
         # TODO: this is not correct but the same as before
         self.set_pulse_on_hit_and_release_rule(enable_switch, coil)

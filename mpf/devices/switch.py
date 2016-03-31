@@ -38,6 +38,16 @@ class Switch(SystemWideDevice):
         # register switch so other devices can add handlers to it
         self.machine.switch_controller.register_switch(name)
 
+    def validate_and_parse_config(self, config, is_mode_config):
+        platform = self.machine.get_platform_sections('switches', getattr(config, "platform", None))
+        if platform.get_switch_config_section():
+            self.machine.config_validator.validate_config(
+                self.config_section, config, self.name, base_spec=platform.get_switch_config_section())
+        else:
+            super().validate_and_parse_config(config, is_mode_config)
+
+        return config
+
     def _initialize(self):
         self.load_platform_section('switches')
 
