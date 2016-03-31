@@ -45,9 +45,6 @@ class Driver(SystemWideDevice):
         self.hw_driver, self.number = (
             self.platform.configure_driver(self.config))
 
-    def validate_driver_settings(self, **kwargs):
-        return self.hw_driver.validate_driver_settings(**kwargs)
-
     def enable(self, **kwargs):
         """Enables a driver by holding it 'on'.
 

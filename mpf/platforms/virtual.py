@@ -196,10 +196,6 @@ class VirtualDriver(DriverPlatformInterface):
     def __repr__(self):
         return "VirtualDriver.{}".format(self.number)
 
-    def validate_driver_settings(self, **kwargs):
-        del kwargs
-        return dict()
-
     def disable(self, coil):
         pass
 
