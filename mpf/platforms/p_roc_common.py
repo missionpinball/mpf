@@ -88,6 +88,10 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
                     coil.hw_driver.get_pulse_ms(coil), True))
             )
         else:
+            if not coil.config['allow_enable']:
+                raise AssertionError("Coil {} may not be enabled at 100% without allow_enabled or pwm settings".format(
+                    coil.name
+                ))
             switch.hw_switch.hw_rules[self._get_event_type(not switch.invert, switch.config['debounce'])].append(
                 (switch.number, coil.number, self.pinproc.driver_state_pulse(coil.hw_driver.state(), 0))
             )

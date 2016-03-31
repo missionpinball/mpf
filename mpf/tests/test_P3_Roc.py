@@ -225,7 +225,7 @@ class TestP3Roc(MpfTestCase):
         p_roc_common.pinproc.driver_state_disable.assert_called_with(8)
 
     def test_hw_rule_hold_pwm(self):
-        return # currently not cupported
+        return  # currently not cupported
         self.machine.coils.c_coil_pwm_test.hw_driver.state = MagicMock(return_value=8)
         self.machine.default_platform.set_hw_rule(
                 sw_name="s_test",
@@ -280,11 +280,11 @@ class TestP3Roc(MpfTestCase):
 
         p_roc_common.pinproc.driver_state_disable.assert_called_with(8)
 
-    def test_hw_rule_hold(self):
-        self.machine.coils.c_test.hw_driver.state = MagicMock(return_value=8)
+    def test_hw_rule_hold_allow_enable(self):
+        self.machine.coils.c_test_allow_enable.hw_driver.state = MagicMock(return_value=8)
         self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule(
                 self.machine.switches.s_test,
-                self.machine.coils.c_test)
+                self.machine.coils.c_test_allow_enable)
 
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
             call(
@@ -319,6 +319,13 @@ class TestP3Roc(MpfTestCase):
 
         p_roc_common.pinproc.driver_state_pulse.assert_called_with(8, 0)
         p_roc_common.pinproc.driver_state_disable.assert_called_with(8)
+
+    def test_hw_rule_hold_no_allow_enable(self):
+        # enable coil which does not have allow_enable
+        with self.assertRaises(AssertionError):
+            self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule(
+                self.machine.switches.s_test,
+                self.machine.coils.c_test)
 
     def test_hw_rule_multiple_pulse(self):
         self.machine.coils.c_test.hw_driver.state = MagicMock(return_value=8)
@@ -486,7 +493,7 @@ class TestP3Roc(MpfTestCase):
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
             call(
                 1, 'open_nondebounced',
-                 {'reloadActive': False, 'notifyHost': False},
+                {'reloadActive': False, 'notifyHost': False},
                 [{'state': False,
                   'waitForFirstTimeSlot': False,
                   'patterOnTime': 0,
@@ -508,7 +515,7 @@ class TestP3Roc(MpfTestCase):
                   'state': False,
                   'patterOffTime': 0,
                   'outputDriveTime': 0,
-                  'driverNum': 8,
+                  'driverNum': 11,
                   'polarity': True,
                   'waitForFirstTimeSlot': False},
                  ],
@@ -585,9 +592,8 @@ class TestP3Roc(MpfTestCase):
                 False),
         ], any_order=True)
 
-
         self.machine.flippers.f_test_hold.disable()
 
     def test_flipper_two_coils_with_eos(self):
-        return # currently not supported
-        self.machine.flippers.f_test_hold_eos.enable()
+        return  # currently not supported
+        # self.machine.flippers.f_test_hold_eos.enable()

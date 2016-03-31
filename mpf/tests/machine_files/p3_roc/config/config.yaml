@@ -42,6 +42,7 @@ coils:
     c_flipper_main:
         number: A0-B0-1
         pulse_ms: 10
+        hold_power: 3
     c_flipper_hold:
         number: A0-B0-2
         hold_power: 1
