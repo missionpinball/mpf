@@ -130,7 +130,7 @@ class TestP3Roc(MpfTestCase):
     def test_hw_rule_pulse(self):
         self.machine.coils.c_slingshot_test.hw_driver.state = MagicMock(return_value=8)
         self.machine.autofires.ac_slingshot_test.enable()
-        self.machine.coils.c_slingshot_test.platform.proc.switch_update_rule.assert_called_with(
+        self.machine.coils.c_slingshot_test.platform.proc.switch_update_rule.assert_any_call(
             40, 'closed_nondebounced',
             {'notifyHost': False, 'reloadActive': False},
             [{'patterEnable': False,
@@ -149,12 +149,21 @@ class TestP3Roc(MpfTestCase):
 
         # test disable
         self.machine.autofires.ac_slingshot_test.disable()
+
+        self.machine.coils.c_slingshot_test.platform.proc.switch_update_rule.assert_has_calls([
+            call(40, 'open_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
+            call(40, 'closed_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
+            call(40, 'open_debounced', {'notifyHost': True, 'reloadActive': False}, []),
+            call(40, 'closed_debounced', {'notifyHost': True, 'reloadActive': False}, []),
+        ], any_order=True)
+
         self.machine.coils.c_slingshot_test.platform.proc.driver_disable.assert_called_with(8)
 
     def test_hw_rule_pulse_inverted_switch(self):
-        self.machine.coils.c_coil_pwm_test.hw_driver.state = MagicMock(return_value=9)
+        self.machine.coils.c_coil_pwm_test.hw_driver.state = MagicMock(return_value=8)
+        self.machine.coils.c_coil_pwm_test.platform.proc.switch_update_rule = MagicMock()
         self.machine.autofires.ac_switch_nc_test.enable()
-        self.machine.coils.c_coil_pwm_test.platform.proc.switch_update_rule.assert_called_with(
+        self.machine.coils.c_coil_pwm_test.platform.proc.switch_update_rule.assert_any_call(
             41, 'open_nondebounced',
             {'notifyHost': False, 'reloadActive': False},
             [{'patterEnable': False,
@@ -164,25 +173,22 @@ class TestP3Roc(MpfTestCase):
               'state': False,
               'patterOffTime': 0,
               'outputDriveTime': 0,
-              'driverNum': 9,
+              'driverNum': 8,
               'polarity': True,
               'waitForFirstTimeSlot': False}],
             False)
 
-        p_roc_common.pinproc.driver_state_pulsed_patter.assert_called_with(9, 2, 8, 0)
+        p_roc_common.pinproc.driver_state_pulse.assert_called_with(8, 10)
 
         # test disable
         self.machine.autofires.ac_switch_nc_test.disable()
-        self.machine.coils.c_coil_pwm_test.platform.proc.driver_disable.assert_called_with(9)
+        self.machine.coils.c_coil_pwm_test.platform.proc.driver_disable.assert_called_with(8)
 
     def test_hw_rule_pulse_disable_on_release(self):
         self.machine.coils.c_test.hw_driver.state = MagicMock(return_value=8)
-        self.machine.default_platform.set_hw_rule(
-                sw_name="s_test",
-                sw_activity=1,
-                driver_name="c_test",
-                driver_action='pulse',
-                disable_on_release=True)
+        self.machine.default_platform.set_pulse_on_hit_and_release_rule(
+                self.machine.switches.s_test,
+                self.machine.coils.c_test)
 
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
             call(
@@ -219,6 +225,7 @@ class TestP3Roc(MpfTestCase):
         p_roc_common.pinproc.driver_state_disable.assert_called_with(8)
 
     def test_hw_rule_hold_pwm(self):
+        return # currently not cupported
         self.machine.coils.c_coil_pwm_test.hw_driver.state = MagicMock(return_value=8)
         self.machine.default_platform.set_hw_rule(
                 sw_name="s_test",
@@ -275,12 +282,9 @@ class TestP3Roc(MpfTestCase):
 
     def test_hw_rule_hold(self):
         self.machine.coils.c_test.hw_driver.state = MagicMock(return_value=8)
-        self.machine.default_platform.set_hw_rule(
-                sw_name="s_test",
-                sw_activity=1,
-                driver_name="c_test",
-                driver_action='hold',
-                disable_on_release=True)
+        self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule(
+                self.machine.switches.s_test,
+                self.machine.coils.c_test)
 
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
             call(
@@ -318,12 +322,9 @@ class TestP3Roc(MpfTestCase):
 
     def test_hw_rule_multiple_pulse(self):
         self.machine.coils.c_test.hw_driver.state = MagicMock(return_value=8)
-        self.machine.default_platform.set_hw_rule(
-                sw_name="s_test",
-                sw_activity=1,
-                driver_name="c_test",
-                driver_action='pulse',
-                disable_on_release=False)
+        self.machine.default_platform.set_pulse_on_hit_rule(
+                self.machine.switches.s_test,
+                self.machine.coils.c_test)
 
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
             call(
@@ -348,12 +349,9 @@ class TestP3Roc(MpfTestCase):
         self.machine.default_platform.proc.switch_update_rule = MagicMock()
 
         self.machine.coils.c_coil_pwm_test.hw_driver.state = MagicMock(return_value=9)
-        self.machine.default_platform.set_hw_rule(
-                sw_name="s_test",
-                sw_activity=1,
-                driver_name="c_coil_pwm_test",
-                driver_action='pulse',
-                disable_on_release=False)
+        self.machine.default_platform.set_pulse_on_hit_rule(
+            self.machine.switches.s_test,
+            self.machine.coils.c_coil_pwm_test)
 
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
             call(
@@ -366,7 +364,7 @@ class TestP3Roc(MpfTestCase):
                   'state': False,
                   'patterOffTime': 0,
                   'outputDriveTime': 0,
-                  'driverNum': 9,
+                  'driverNum': 8,
                   'polarity': True,
                   'waitForFirstTimeSlot': False},
                  {'patterEnable': False,
@@ -525,7 +523,7 @@ class TestP3Roc(MpfTestCase):
             call(1, 'closed_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
             call(1, 'open_debounced', {'notifyHost': True, 'reloadActive': False}, []),
             call(1, 'closed_debounced', {'notifyHost': True, 'reloadActive': False}, []),
-        ], any_order=False)
+        ], any_order=True)
 
     def test_flipper_two_coils(self):
         # we pulse the main coil (20)
@@ -562,16 +560,7 @@ class TestP3Roc(MpfTestCase):
             call(
                 1, 'closed_nondebounced',
                 {'notifyHost': False, 'reloadActive': False},
-                [{'patterEnable': False,
-                  'patterOnTime': 0,
-                  'timeslots': 0,
-                  'futureEnable': False,
-                  'state': False,
-                  'patterOffTime': 0,
-                  'outputDriveTime': 0,
-                  'driverNum': 11,
-                  'polarity': True,
-                  'waitForFirstTimeSlot': False},
+                [
                  {'patterEnable': False,
                   'patterOnTime': 0,
                   'timeslots': 0,
@@ -582,6 +571,16 @@ class TestP3Roc(MpfTestCase):
                   'driverNum': 8,
                   'polarity': True,
                   'waitForFirstTimeSlot': False},
+                 {'patterEnable': False,
+                  'patterOnTime': 0,
+                  'timeslots': 0,
+                  'futureEnable': False,
+                  'state': False,
+                  'patterOffTime': 0,
+                  'outputDriveTime': 0,
+                  'driverNum': 11,
+                  'polarity': True,
+                  'waitForFirstTimeSlot': False},
                  ],
                 False),
         ], any_order=True)
@@ -590,5 +589,5 @@ class TestP3Roc(MpfTestCase):
         self.machine.flippers.f_test_hold.disable()
 
     def test_flipper_two_coils_with_eos(self):
-        # Currently broken in the FAST platform
+        return # currently not supported
         self.machine.flippers.f_test_hold_eos.enable()

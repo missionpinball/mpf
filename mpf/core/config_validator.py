@@ -68,7 +68,7 @@ autofire_coils:
     pulse_pwm_mask: single|int|None
     hold_pwm_mask: single|int|None
     recycle_ms: single|int|None
-    debounced: single|bool|False
+    debounce: single|bool|False
     drive_now: single|bool|False
 ball_devices:
     exit_count_delay: single|ms|500ms
@@ -238,7 +238,7 @@ diverters:
     pulse_pwm_mask: single|int|None
     hold_pwm_mask: single|int|None
     recycle_ms: single|int|None
-    debounced: single|bool|False
+    debounce: single|bool|False
     drive_now: single|bool|False
 driver_enabled:
     number: single|str|
@@ -333,7 +333,7 @@ flippers:
     pulse_pwm_mask: single|int|None
     hold_pwm_mask: single|int|None
     recycle_ms: single|int|None
-    debounced: single|bool|False
+    debounce: single|bool|False
     drive_now: single|bool|False
 game:
     balls_per_game: single|int|3

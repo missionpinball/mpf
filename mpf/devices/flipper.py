@@ -2,6 +2,7 @@
 from mpf.devices.driver import ReconfiguredDriver
 
 from mpf.core.system_wide_device import SystemWideDevice
+from mpf.devices.switch import ReconfiguredSwitch
 
 
 class Flipper(SystemWideDevice):
@@ -28,10 +29,12 @@ class Flipper(SystemWideDevice):
 
         self.main_coil = None
         self.hold_coil = None
+        self.switch = None
 
     def _initialize(self):
         self.platform = self.config['main_coil'].platform
         self.main_coil = ReconfiguredDriver(self.config['main_coil'], self.config)
+        self.switch = ReconfiguredSwitch(self.config['activation_switch'], self.config, False)
 
         if self.config['hold_coil']:
             self.hold_coil = ReconfiguredDriver(self.config['hold_coil'], self.config)
@@ -111,27 +114,27 @@ class Flipper(SystemWideDevice):
         """
         del kwargs
         self.log.debug("Disabling")
-        self.main_coil.clear_hw_rule(self.config['activation_switch'])
+        self.main_coil.clear_hw_rule(self.switch)
 
         if self.hold_coil:
-            self.hold_coil.clear_hw_rule(self.config['activation_switch'])
+            self.hold_coil.clear_hw_rule(self.switch)
 
     def _enable_single_coil_rule(self):
         self.log.debug('Enabling single coil rule')
 
-        self.main_coil.set_pulse_on_hit_and_enable_and_release_rule(self.config['activation_switch'])
+        self.main_coil.set_pulse_on_hit_and_enable_and_release_rule(self.switch)
 
     def _enable_main_coil_pulse_rule(self):
         self.log.debug('Enabling main coil pulse rule')
 
-        self.main_coil.set_pulse_on_hit_and_release_rule(self.config['activation_switch'])
+        self.main_coil.set_pulse_on_hit_and_release_rule(self.switch)
 
     def _enable_hold_coil_rule(self):
         self.log.debug('Enabling hold coil rule')
 
         # TODO: why are we pulsing the hold coil?
 
-        self.hold_coil.set_pulse_on_hit_and_enable_and_release_rule(self.config['activation_switch'])
+        self.hold_coil.set_pulse_on_hit_and_enable_and_release_rule(self.switch)
 
     def _enable_main_coil_eos_cutoff_rule(self):
         self.log.debug('Enabling main coil EOS cutoff rule')

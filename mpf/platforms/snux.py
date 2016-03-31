@@ -63,8 +63,15 @@ class Snux(object):
         self.platform_configure_driver = self.platform.configure_driver
         self.platform.configure_driver = self.configure_driver
 
-        self.platform_write_hw_rule = self.platform.write_hw_rule
-        self.platform.write_hw_rule = self.write_hw_rule
+        self.platform_set_pulse_on_hit_and_release_rule = self.platform.set_pulse_on_hit_and_release_rule
+        self.platform.set_pulse_on_hit_and_release_rule = self.set_pulse_on_hit_and_release_rule
+
+        self.platform_set_pulse_on_hit_rule = self.platform.set_pulse_on_hit_rule
+        self.platform.set_pulse_on_hit_rule = self.set_pulse_on_hit_rule
+
+        self.platform_set_pulse_on_hit_and_enable_and_release_rule = \
+            self.platform.set_pulse_on_hit_and_enable_and_release_rule
+        self.platform.set_pulse_on_hit_and_enable_and_release_rule = self.set_pulse_on_hit_and_enable_and_release_rule
 
     def initialize(self):
         """Automatically called by the Platform class after all the core
@@ -171,22 +178,26 @@ class Snux(object):
         else:
             return self.platform_configure_driver(config)
 
-    # pylint: disable-msg=too-many-arguments
-    def write_hw_rule(self, switch_obj, sw_activity, driver_obj, driver_action,
-                      disable_on_release, drive_now,
-                      **driver_settings_overrides):
-        """On core 11 machines, Switched drivers cannot be configured with
-        autofire hardware rules.
-
-        """
-        if driver_obj in self.a_drivers or driver_obj in self.c_drivers:
+    def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
+        if coil in self.a_drivers or coil in self.c_drivers:
             self.log.warning("Received a request to set a hardware rule for a"
                              "switched driver. Ignoring")
         else:
-            self.platform_write_hw_rule(switch_obj, sw_activity, driver_obj,
-                                        driver_action, disable_on_release,
-                                        drive_now,
-                                        **driver_settings_overrides)
+            self.platform_set_pulse_on_hit_and_release_rule(enable_switch, coil)
+
+    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
+        if coil in self.a_drivers or coil in self.c_drivers:
+            self.log.warning("Received a request to set a hardware rule for a"
+                             "switched driver. Ignoring")
+        else:
+            self.platform_set_pulse_on_hit_and_enable_and_release_rule(enable_switch, coil)
+
+    def set_pulse_on_hit_rule(self, enable_switch, coil):
+        if coil in self.a_drivers or coil in self.c_drivers:
+            self.log.warning("Received a request to set a hardware rule for a"
+                             "switched driver. Ignoring")
+        else:
+            self.platform_set_pulse_on_hit_rule(enable_switch, coil)
 
     def driver_action(self, driver, milliseconds):
         """Adds a driver action for a switched driver to the queue (for either

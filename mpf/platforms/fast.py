@@ -675,6 +675,8 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
 
         driver = coil.hw_driver
 
+        # TODO: check allow_enable or pwm. same as on enable
+
         cmd = (driver.get_config_cmd() +
                coil.number[0] + ',' +
                driver.get_control_for_cmd(enable_switch) + ',' +

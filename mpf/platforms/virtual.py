@@ -109,9 +109,6 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
     def configure_dmd(self):
         return VirtualDMD(self.machine)
 
-    def write_hw_rule(self, *args, **kwargs):
-        pass
-
     def clear_hw_rule(self, switch, coil):
         pass
 
@@ -129,6 +126,15 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
         return None
 
     def servo_go_to_position(self, number, position):
+        pass
+
+    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
+        pass
+
+    def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
+        pass
+
+    def set_pulse_on_hit_rule(self, enable_switch, coil):
         pass
 
 

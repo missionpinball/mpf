@@ -165,9 +165,6 @@ class HardwarePlatform(MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatfor
     def configure_dmd(self):
         return VirtualDMD(self.machine)
 
-    def write_hw_rule(self, *args, **kwargs):
-        pass
-
     def clear_hw_rule(self, switch, coil):
         sw_num = switch.number
 

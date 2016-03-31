@@ -265,31 +265,10 @@ class DriverPlatform(BasePlatform):
         return None
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
-        self.set_hw_rule(
-            switch_obj=enable_switch,
-            sw_name=False,
-            sw_activity=1,
-            driver_name=coil.name,
-            driver_action='pulse',
-            disable_on_release=True,
-            **coil.config)
+        raise NotImplementedError
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
-        self.set_hw_rule(
-            switch_obj=enable_switch,
-            sw_name=False,
-            sw_activity=1,
-            driver_name=coil.name,
-            driver_action='hold',
-            disable_on_release=True,
-            **coil.config)
+        raise NotImplementedError
 
     def set_pulse_on_hit_rule(self, enable_switch, coil):
-        self.set_hw_rule(
-            switch_obj=enable_switch,
-            sw_name=False,
-            sw_activity=1,
-            driver_name=coil.name,
-            driver_action='pulse',
-            disable_on_release=False,
-            **coil.config)
+        raise NotImplementedError
