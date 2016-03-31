@@ -105,6 +105,13 @@ class TestFast(MpfTestCase):
         with self.assertRaises(AssertionError):
             self.machine.coils.c_test.enable()
 
+    def test_enable_exception_hw_rule(self):
+        # enable coil which does not have allow_enable
+        with self.assertRaises(AssertionError):
+            self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule(
+                self.machine.switches.s_test,
+                self.machine.coils.c_test)
+
     def test_allow_enable(self):
         MockSerialCommunicator.expected_commands = {
             "DN:06,C1,00,18,17,ff,ff,00": False

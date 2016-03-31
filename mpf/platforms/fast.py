@@ -674,8 +674,11 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
                        enable_switch.name, coil.name)
 
         driver = coil.hw_driver
-
-        # TODO: check allow_enable or pwm. same as on enable
+        if driver.get_pwm1_for_cmd(coil) == "ff" and driver.get_pwm2_for_cmd(coil) == "ff" and \
+                not coil.config['allow_enable']:
+            raise AssertionError("Coil {} may not be enabled at 100% without allow_enabled or pwm settings".format(
+                coil.name
+            ))
 
         cmd = (driver.get_config_cmd() +
                coil.number[0] + ',' +
