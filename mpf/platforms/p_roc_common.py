@@ -1,5 +1,4 @@
 import logging
-from copy import deepcopy
 import time
 from mpf.core.platform import MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlatform, DriverPlatform
 from mpf.core.rgb_color import RGBColor
