@@ -715,8 +715,8 @@ slides:
     tags: list|str|None
     __allow_others__:
 snux:
-    flipper_enable_driver_number: single|int|c23
-    diag_led_driver_number: single|str|c24
+    flipper_enable_driver: single|machine(coils)|
+    diag_led_driver: single|machine(coils)|
 smartmatrix:
     port: single|str|
     use_separate_thread: single|bool|true
@@ -765,8 +765,8 @@ fast_switches:
     debounce_open: single|ms|None
     debounce_close: single|ms|None
 system11:
-    ac_relay_delay_ms: single|int|75
-    ac_relay_driver_number: single|str|
+    ac_relay_delay_ms: single|ms|75ms
+    ac_relay_driver: single|machine(coils)|
 text_styles:
     font_name: single|str|None
     font_size: single|num|None

@@ -5,6 +5,9 @@ Mark Sunnucks's System 11 interface board.
 """
 
 import logging
+
+from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
+
 from mpf.core.delays import DelayManager
 
 
@@ -78,44 +81,48 @@ class Snux(object):
         modules are loaded.
 
         """
+        # we have to wait for coils to be initialized
+        self.machine.events.add_handler("init_phase_1", self._initialize)
+
+    def _initialize(self):
         self._validate_config()
 
+        self.diag_led = self.snux_config['diag_led_driver']
+
         self.log.debug("Configuring Snux Diag LED for driver %s",
-                       self.snux_config['diag_led_driver_number'])
+                       self.diag_led.name)
 
-        self.diag_led, _ = self.platform_configure_driver(
-            {'number': self.snux_config['diag_led_driver_number'],
-             'allow_enable': True})
-
-        self.diag_led.log.info = self.null_log_handler
-        self.diag_led.log.debug = self.null_log_handler
+        # Hack to silence logging of P_ROC
+        # TODO: clean this up
+        self.diag_led.hw_driver.log.info = self.null_log_handler
+        self.diag_led.hw_driver.log.debug = self.null_log_handler
 
         self.diag_led.enable()
 
-        self.special_drivers.add(
-            self.snux_config['diag_led_driver_number'].lower())
+        self.special_drivers.add(self.diag_led.number)
+
+        self.ac_relay = self.system11_config['ac_relay_driver']
 
         self.log.debug("Configuring A/C Select Relay for driver %s",
-                       self.system11_config['ac_relay_driver_number'])
+                       self.ac_relay.name)
 
-        self.ac_relay, _ = self.platform_configure_driver(
-            {'number': self.system11_config['ac_relay_driver_number'],
-             'allow_enable': True})
+        if not self.ac_relay.config['allow_enable']:
+            raise AssertionError("AC Relay has to have allow_enable set to true")
 
-        self.special_drivers.add(
-            self.system11_config['ac_relay_driver_number'].lower())
+        self.special_drivers.add(self.ac_relay.number)
 
         self.log.debug("Configuring A/C Select Relay transition delay for "
                        "%sms", self.system11_config['ac_relay_delay_ms'])
 
         self.ac_relay_delay_ms = self.system11_config['ac_relay_delay_ms']
 
-        self.flipper_relay, _ = self.platform_configure_driver(
-            {'number': self.snux_config['flipper_enable_driver_number'],
-             'allow_enable': True})
+        self.flipper_relay = self.snux_config['flipper_enable_driver']
 
         self.log.debug("Configuring Flipper Enable for driver %s",
-                       self.snux_config['flipper_enable_driver_number'])
+                       self.flipper_relay.name)
+
+        if not self.flipper_relay.config['allow_enable']:
+            raise AssertionError("Flipper Relay has to have allow_enable set to true")
 
         self.machine.events.add_handler('init_phase_5',
                                         self._initialize_phase_2)
@@ -131,9 +138,8 @@ class Snux(object):
         self.system11_config = self.machine.config_validator.validate_config(
             'system11', self.machine.config['system11'])
 
-        snux = self.machine.config.get('snux', dict())
         self.snux_config = self.machine.config_validator.validate_config(
-            'snux', snux)
+            'snux', self.machine.config['snux'])
 
     def _tick(self, dt):
         # Called based on the timer_tick event
@@ -179,27 +185,27 @@ class Snux(object):
             return self.platform_configure_driver(config)
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
-        if coil in self.a_drivers or coil in self.c_drivers:
+        if coil.hw_driver in self.a_drivers or coil.hw_driver in self.c_drivers:
             self.log.warning("Received a request to set a hardware rule for a"
                              "switched driver. Ignoring")
         else:
             self.platform_set_pulse_on_hit_and_release_rule(enable_switch, coil)
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
-        if coil in self.a_drivers or coil in self.c_drivers:
+        if coil.hw_driver in self.a_drivers or coil.hw_driver in self.c_drivers:
             self.log.warning("Received a request to set a hardware rule for a"
                              "switched driver. Ignoring")
         else:
             self.platform_set_pulse_on_hit_and_enable_and_release_rule(enable_switch, coil)
 
     def set_pulse_on_hit_rule(self, enable_switch, coil):
-        if coil in self.a_drivers or coil in self.c_drivers:
+        if coil.hw_driver in self.a_drivers or coil.hw_driver in self.c_drivers:
             self.log.warning("Received a request to set a hardware rule for a"
                              "switched driver. Ignoring")
         else:
             self.platform_set_pulse_on_hit_rule(enable_switch, coil)
 
-    def driver_action(self, driver, milliseconds):
+    def driver_action(self, driver, coil, milliseconds):
         """Adds a driver action for a switched driver to the queue (for either
         the A-side or C-side queue).
 
@@ -213,10 +219,10 @@ class Snux(object):
 
         """
         if driver in self.a_drivers:
-            self.a_side_queue.add((driver, milliseconds))
+            self.a_side_queue.add((driver, coil, milliseconds))
             self._service_a_side()
         elif driver in self.c_drivers:
-            self.c_side_queue.add((driver, milliseconds))
+            self.c_side_queue.add((driver, coil, milliseconds))
             if not self.ac_relay_in_transition and not self.a_side_busy:
                 self._service_c_side()
 
@@ -245,6 +251,7 @@ class Snux(object):
 
             if self.c_side_active:
                 self._disable_all_c_side_drivers()
+                self._disable_ac_relay()
                 self.delay.add(ms=self.ac_relay_delay_ms,
                                callback=self._enable_a_side,
                                name='enable_a_side')
@@ -271,19 +278,19 @@ class Snux(object):
             return
 
         while self.a_side_queue:
-            driver, ms = self.a_side_queue.pop()
+            driver, coil, ms = self.a_side_queue.pop()
 
             if ms > 0:
-                driver.pulse(ms)
+                driver.pulse(coil, ms)
                 self.a_side_done_time = max(self.a_side_done_time,
                                             self.machine.clock.get_time() + (ms / 1000.0))
 
             elif ms == -1:
-                driver.enable()
+                driver.enable(coil)
                 self.drivers_holding_a_side.add(driver)
 
             else:  # ms == 0
-                driver.disable()
+                driver.disable(coil)
                 try:
                     self.drivers_holding_a_side.remove(driver)
                 except KeyError:
@@ -326,18 +333,18 @@ class Snux(object):
             return
 
         while self.c_side_queue:
-            driver, ms = self.c_side_queue.pop()
+            driver, coil, ms = self.c_side_queue.pop()
 
             if ms > 0:
-                driver.pulse(ms)
+                driver.pulse(coil, ms)
                 self.c_side_done_time = max(self.c_side_done_time,
                                             self.machine.clock.get_time() + (ms / 1000.))
             elif ms == -1:
-                driver.enable()
+                driver.enable(coil)
                 self.drivers_holding_c_side.add(driver)
 
             else:  # ms == 0
-                driver.disable()
+                driver.disable(coil)
                 try:
                     self.drivers_holding_c_side.remove(driver)
                 except KeyError:
@@ -349,13 +356,13 @@ class Snux(object):
     def _disable_all_c_side_drivers(self):
         if self.c_side_active:
             for driver in self.c_drivers:
-                driver.disable()
+                driver.disable(None)    # TODO: this is not right
             self.drivers_holding_c_side = set()
             self.c_side_done_time = 0
             self.c_side_enabled = False
 
 
-class SnuxDriver(object):
+class SnuxDriver(DriverPlatformInterface):
 
     def __init__(self, number, platform_driver, overlay):
         self.number = number
@@ -366,24 +373,20 @@ class SnuxDriver(object):
     def __repr__(self):
         return "SnuxDriver.{}".format(self.number)
 
-    def pulse(self, coil, milliseconds, **kwargs):
-        del kwargs
-        del coil
+    def pulse(self, coil, milliseconds):
 
-        self.overlay.driver_action(self.platform_driver, milliseconds)
+        self.overlay.driver_action(self.platform_driver, coil, milliseconds)
 
         # Usually pulse() returns the value (in ms) that the driver will pulse
         # for so we can update Driver.time_when_done. But with A/C switched
         # coils, we don't know when exactly that will be, so we return -1
         return -1
 
-    def enable(self, **kwargs):
-        del kwargs
-        self.overlay.driver_action(self.platform_driver, -1)
+    def enable(self, coil):
+        self.overlay.driver_action(self.platform_driver, coil, -1)
 
-    def disable(self, **kwargs):
-        del kwargs
-        self.overlay.driver_action(self.platform_driver, 0)
+    def disable(self, coil):
+        self.overlay.driver_action(self.platform_driver, coil, 0)
 
 
 driver_overlay_class = Snux
