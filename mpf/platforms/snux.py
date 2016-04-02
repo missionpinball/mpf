@@ -23,7 +23,6 @@ class Snux(object):
         self.system11_config = None
         self.snux_config = None
         self.ac_relay_delay_ms = 100
-        self.special_drivers = set()
 
         self.diag_led = None
         '''Diagnostics LED (LED 3) on the Snux board turns on solid when MPF
@@ -99,8 +98,6 @@ class Snux(object):
 
         self.diag_led.enable()
 
-        self.special_drivers.add(self.diag_led.number)
-
         self.ac_relay = self.system11_config['ac_relay_driver']
 
         self.log.debug("Configuring A/C Select Relay for driver %s",
@@ -108,8 +105,6 @@ class Snux(object):
 
         if not self.ac_relay.config['allow_enable']:
             raise AssertionError("AC Relay has to have allow_enable set to true")
-
-        self.special_drivers.add(self.ac_relay.number)
 
         self.log.debug("Configuring A/C Select Relay transition delay for "
                        "%sms", self.system11_config['ac_relay_delay_ms'])
@@ -156,12 +151,6 @@ class Snux(object):
         self.diag_led.pulse(250)
 
     def configure_driver(self, config):
-        # If the user has configured one of the special drivers in their
-        # machine config, don't set it up since that could let them do weird
-        # things.
-        if config['number'].lower() in self.special_drivers:
-            return
-
         orig_number = config['number']
 
         if (config['number'].lower().endswith('a') or
