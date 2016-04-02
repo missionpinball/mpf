@@ -207,46 +207,6 @@ class DriverPlatform(BasePlatform):
         """
         raise NotImplementedError
 
-    # pylint: disable-msg=too-many-arguments
-    def set_hw_rule(self, sw_name, sw_activity, driver_name, driver_action,
-                    disable_on_release=True, drive_now=False, switch_obj=None,
-                    **driver_settings_overrides):
-        """Writes a hardware rule to the controller.
-
-        Args:
-            sw_name: String name of the switch.
-            sw_activity: Int representing the switch state this rule will be set
-                for. 1 is active, 0 is inactive.
-            driver_name: String name of the driver.
-            driver_action: String 'pulse', 'hold', or 'disable' which describe
-                what action will be applied to this driver
-            disable_on_release: If set to True, the driver will disable when the
-                switch is released
-            drive_now: Boolean which controls whether the coil should activate
-                immediately when this rule is applied if the switch currently in
-                in the state set in this rule.
-            **driver_settings_overrides: Platform-specific settings
-
-        Note that this method provides several convenience processing to convert
-        the incoming parameters into a format that is more widely-used by
-        hardware controls. It's intended that platform interfaces subclass
-        `write_hw_rule()` instead of this method, though this method may be
-        subclassed if you wish.
-
-        """
-        self.log.debug("Writing HW Rule to controller")
-
-        if not switch_obj:
-            switch_obj = self.machine.switches[sw_name]  # todo make a nice error
-        driver_obj = self.machine.coils[driver_name]  # here too
-
-        if switch_obj.invert:
-            sw_activity ^= 1
-
-        self.write_hw_rule(switch_obj, sw_activity, driver_obj, driver_action,
-                           disable_on_release, drive_now,
-                           **driver_settings_overrides)
-
     def clear_hw_rule(self, switch, coil):
         """Subclass this method in a platform module to clear a hardware switch
         rule for this switch.
