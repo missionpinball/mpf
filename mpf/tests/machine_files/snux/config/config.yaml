@@ -1,0 +1,33 @@
+#config_version=4
+
+hardware:
+    platform: virtual
+    driverboards: snux
+
+system11:
+    ac_relay_delay_ms: 75
+    ac_relay_driver: c_ac_relay
+
+snux:
+    flipper_enable_driver: c_flipper_enable_driver
+    diag_led_driver: c_diag_led_driver
+
+coils:
+    c_diag_led_driver:
+        number: c24
+    c_flipper_enable_driver:
+        number: c23
+        allow_enable: true
+    c_ac_relay:
+        number: c25
+        allow_enable: true
+    c_side_a1:
+        number: c11a
+    c_side_a2:
+        number: c12a
+        hold_power: 4
+    c_side_c1:
+        number: c11c
+    c_side_c2:
+        number: c12c
+        hold_power: 4
