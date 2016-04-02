@@ -71,6 +71,12 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
     def get_coil_config_section(self):
         return "p_roc_coils"
 
+    def get_switch_overwrite_section(self):
+        return "p_roc_switch_overwrites"
+
+    def get_coil_overwrite_section(self):
+        return "p_roc_coil_overwrites"
+
     def add_pulse_rule_to_switch(self, switch, coil):
         # TODO: properly implement pulse_power. previously implemented pwm_on_ms/pwm_off_ms were incorrect here
 

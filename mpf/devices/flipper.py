@@ -33,14 +33,24 @@ class Flipper(SystemWideDevice):
 
     def _initialize(self):
         self.platform = self.config['main_coil'].platform
-        self.main_coil = ReconfiguredDriver(self.config['main_coil'], self.config)
-        self.switch = ReconfiguredSwitch(self.config['activation_switch'], self.config, False)
+        self.main_coil = ReconfiguredDriver(self.config['main_coil'], self.config['main_coil_overwrite'])
+        self.switch = ReconfiguredSwitch(self.config['activation_switch'], self.config['switch_overwrite'], False)
 
         if self.config['hold_coil']:
-            self.hold_coil = ReconfiguredDriver(self.config['hold_coil'], self.config)
+            self.hold_coil = ReconfiguredDriver(self.config['hold_coil'], self.config['hold_coil_overwrite'])
 
         if self.debug:
             self.log.debug('Platform Driver: %s', self.platform)
+
+    def prepare_config(self, config, is_mode_config):
+        config = super().prepare_config(config, is_mode_config)
+        if "main_coil_overwrite" not in config:
+            config['main_coil_overwrite'] = ReconfiguredDriver.filter_from_config(config)
+        if "hold_coil_overwrite" not in config:
+            config['hold_coil_overwrite'] = ReconfiguredDriver.filter_from_config(config)
+        if "switch_overwrite" not in config:
+            config['switch_overwrite'] = ReconfiguredSwitch.filter_from_config(config)
+        return config
 
     def enable(self, **kwargs):
         """Enables the flipper by writing the necessary hardware rules to the

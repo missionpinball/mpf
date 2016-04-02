@@ -154,7 +154,24 @@ class ReconfiguredDriver(Driver):
     def __init__(self, driver, config_overwrite):
         # no call to super init
         self._driver = driver
+        driver.machine.config_validator.validate_config(
+            "coil_overwrites", config_overwrite, driver.name,
+            base_spec=driver.platform.get_switch_overwrite_section())
         self._config_overwrite = config_overwrite
+
+    @staticmethod
+    def filter_from_config(config):
+        # for transition
+        # TODO: remove in 0.31
+        whitelist = ["recycle", "pulse_ms", "pulse_power", "hold_power", "pulse_power32",
+                     "hold_power32", "pulse_pwm_mask", "hold_pwm_mask", "recycle_ms", "pwm_on_ms",
+                     "pwm_off_ms"]
+        filtered_config = {}
+        for key in config:
+            if key in whitelist:
+                filtered_config[key] = config[key]
+
+        return filtered_config
 
     def __getattr__(self, item):
         return getattr(self._driver, item)

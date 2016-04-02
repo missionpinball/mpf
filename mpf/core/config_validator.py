@@ -48,15 +48,14 @@ auditor:
 autofire_coils:
     coil: single|machine(coils)|
     switch: single|machine(switches)|
-#    latch: single|bool|False
     reverse_switch: single|bool|False
-    delay: single|int|0
-    recycle_ms: single|ms|125
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False
     enable_events: dict|str:ms|ball_started
     disable_events: dict|str:ms|ball_ending
+    coil_overwrite: dict|str:str|None
+    switch_overwrite: dict|str:str|None
     # hw rules settings overrides
     pulse_ms: single|int|None
     pwm_on_ms: single|int|None
@@ -68,8 +67,31 @@ autofire_coils:
     pulse_pwm_mask: single|int|None
     hold_pwm_mask: single|int|None
     recycle_ms: single|ms|None              # TODO: We override out own default here. fix!
-    debounce: single|bool|False
-    drive_now: single|bool|False
+    debounce: single|bool|None
+    drive_now: single|bool|None
+
+switch_overwrites:
+    debounce: single|bool|None
+fast_switch_overwrites:
+    label: single|str|None
+p_roc_switch_overwrites:
+    label: single|str|None
+
+coil_overwrites:
+    recycle: single|bool|None
+    pulse_ms: single|ms|None
+    pulse_power: single|int|None
+    hold_power: single|int|None
+fast_coil_overwrites:
+    pulse_power32: single|int|None
+    hold_power32: single|int|None
+    pulse_pwm_mask: single|int|None
+    hold_pwm_mask: single|int|None
+    recycle_ms: single|ms|None
+p_roc_coil_overwrites:
+    pwm_on_ms: single|int|None
+    pwm_off_ms: single|int|None
+
 ball_devices:
     exit_count_delay: single|ms|500ms
     entrance_count_delay: single|ms|500ms
@@ -145,7 +167,8 @@ coils:
     pulse_ms: single|int|None
     pulse_power: single|int|None
     hold_power: single|int|None
-    recycle_ms: single|ms|None
+    recycle_ms: single|ms|None  # TODO: this is fast specific:
+    recycle: single|bool|False
     allow_enable: single|bool|False
     tags: list|str|None
     label: single|str|%
@@ -319,6 +342,10 @@ flippers:
     disable_events: dict|str:ms|ball_ending
     # enable_no_hold_events: dict|str:ms|None
     # invert_events: dict|str:ms|None
+    main_coil_overwrite: dict|str:str|None
+    hold_coil_overwrite: dict|str:str|None
+    switch_overwrite: dict|str:str|None
+
     # hw rules settings overrides
     pulse_ms: single|int|None
     pwm_on_ms: single|int|None

@@ -267,6 +267,12 @@ class DriverPlatform(BasePlatform):
     def get_switch_config_section(self):
         return None
 
+    def get_switch_overwrite_section(self):
+        return None
+
+    def get_coil_overwrite_section(self):
+        return None
+
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
         raise NotImplementedError
 
