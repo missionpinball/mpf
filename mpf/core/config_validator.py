@@ -358,8 +358,8 @@ flippers:
     pulse_pwm_mask: single|int|None
     hold_pwm_mask: single|int|None
     recycle_ms: single|ms|None
-    debounce: single|bool|False
-    drive_now: single|bool|False
+    debounce: single|bool|None
+    drive_now: single|bool|None
 game:
     balls_per_game: single|int|3
     max_players: single|int|4

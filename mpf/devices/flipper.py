@@ -56,6 +56,11 @@ class Flipper(SystemWideDevice):
             config['switch_overwrite'] = ReconfiguredSwitch.filter_from_config(config)
         if "eos_switch_overwrite" not in config:
             config['eos_switch_overwrite'] = ReconfiguredSwitch.filter_from_config(config)
+        if "debounce" not in config['switch_overwrite']:
+            config['switch_overwrite']['debounce'] = False
+        if "debounce" not in config['eos_switch_overwrite']:
+            config['eos_switch_overwrite']['debounce'] = False
+
         return config
 
     def enable(self, **kwargs):
