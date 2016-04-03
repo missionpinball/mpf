@@ -1,9 +1,5 @@
-import unittest
-
-from mpf.core.machine import MachineController
 from mpf.tests.MpfTestCase import MpfTestCase
 from mock import MagicMock
-import time
 
 
 class TestBallDeviceSwitchConfirmation(MpfTestCase):
@@ -25,12 +21,16 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self._missing += 1
 
     def _requesting_ball(self, balls, **kwargs):
+        del kwargs
         self._requesting += balls
 
     def _ball_enter(self, new_balls, unclaimed_balls, **kwargs):
+        del unclaimed_balls
+        del kwargs
         self._enter += new_balls
 
     def _captured_from_pf(self, balls, **kwargs):
+        del kwargs
         self._captured += balls
 
     def _hit_confirm(self):
@@ -44,7 +44,6 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         coil2 = self.machine.coils['eject_coil2']
         coil3 = self.machine.coils['eject_coil3']
         coil4 = self.machine.coils['eject_coil4']
-        coil_diverter = self.machine.coils['c_diverter']
         device1 = self.machine.ball_devices['test_trough']
         device2 = self.machine.ball_devices['test_launcher']
         device4 = self.machine.ball_devices['test_target2']
@@ -112,16 +111,6 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self._hit_confirm()
         self.advance_time_and_run(1)
 
-        # ball passes diverter switch
-        coil_diverter.enable = MagicMock()
-        coil_diverter.disable = MagicMock()
-        self.machine.switch_controller.process_switch("s_diverter", 1)
-        self.advance_time_and_run(0.01)
-        self.machine.switch_controller.process_switch("s_diverter", 0)
-        self.advance_time_and_run(1)
-        coil_diverter.enable.assert_called_once_with()
-        assert not coil_diverter.disable.called
-
         # target2 receives and keeps ball
         self.machine.switch_controller.process_switch(
             "s_ball_switch_target2_1", 1)
@@ -132,8 +121,6 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         coil2.pulse.assert_called_once_with()
         assert not coil3.pulse.called
         assert not coil4.pulse.called
-
-        assert not coil_diverter.disable.called
 
         self.assertEqual(0, self._enter)
         self.assertEqual(-1, self._captured)
@@ -146,7 +133,6 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         coil2 = self.machine.coils['eject_coil2']
         coil3 = self.machine.coils['eject_coil3']
         coil4 = self.machine.coils['eject_coil4']
-        coil_diverter = self.machine.coils['c_diverter']
         device1 = self.machine.ball_devices['test_trough']
         device2 = self.machine.ball_devices['test_launcher']
         device4 = self.machine.ball_devices['test_target2']
@@ -210,16 +196,6 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
                                                       0)
         self.advance_time_and_run(1)
         self.assertEqual(0, device2.balls)
-
-        # ball passes diverter switch
-        coil_diverter.enable = MagicMock()
-        coil_diverter.disable = MagicMock()
-        self.machine.switch_controller.process_switch("s_diverter", 1)
-        self.advance_time_and_run(0.01)
-        self.machine.switch_controller.process_switch("s_diverter", 0)
-        self.advance_time_and_run(1)
-        coil_diverter.enable.assert_called_once_with()
-        assert not coil_diverter.disable.called
 
         # target2 receives and keeps ball
         self.machine.switch_controller.process_switch(
@@ -586,7 +562,6 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self._requesting = 0
         coil2 = self.machine.coils['eject_coil2']
         device2 = self.machine.ball_devices['test_launcher']
-        playfield = self.machine.ball_devices['playfield']
         coil2.pulse = MagicMock()
         self._missing = 0
 
