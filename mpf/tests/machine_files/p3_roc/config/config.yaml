@@ -86,3 +86,7 @@ flippers:
         activation_switch: s_flipper
         eos_switch: s_flipper_eos
         use_eos: true
+
+matrix_lights:
+  test_pdb_light:
+    number: C-A2-B0-0:R-A2-B1-0

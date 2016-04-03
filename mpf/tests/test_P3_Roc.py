@@ -50,8 +50,8 @@ class TestP3Roc(MpfTestCase):
     def setUp(self):
         p_roc_common.pinproc_imported = True
         p_roc_common.pinproc = MockPinProcModule()
-        pinproc = MagicMock()
-        p_roc_common.pinproc.PinPROC = MagicMock(return_value=pinproc)
+        self.pinproc = MagicMock()
+        p_roc_common.pinproc.PinPROC = MagicMock(return_value=self.pinproc)
         p_roc_common.pinproc.normalize_machine_type = MagicMock(return_value=7)
         p_roc_common.pinproc.decode = None  # should not be called and therefore fail
         p_roc_common.pinproc.driver_state_pulse = MagicMock(
@@ -102,7 +102,8 @@ class TestP3Roc(MpfTestCase):
                           'patterEnable': False,
                           'futureEnable': False})
 
-        pinproc.switch_get_states = MagicMock(return_value=[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+        self.pinproc.switch_get_states = MagicMock(return_value=[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+        self.pinproc.driver_update_group_config = MagicMock()
         super().setUp()
 
     def test_pulse(self):
@@ -679,3 +680,23 @@ class TestP3Roc(MpfTestCase):
             call(2, 'open_debounced', {'notifyHost': True, 'reloadActive': False}, []),
             call(2, 'closed_debounced', {'notifyHost': True, 'reloadActive': False}, []),
         ], any_order=True)
+
+    def test_pdb_matrix_light(self):
+        # very simple check for matrix config
+        self.pinproc.driver_update_group_config.assert_has_call(
+            4, 100, 5, 0, 0, True, True, True, True
+        )
+
+        # test enable of matrix light
+        assert not self.machine.lights.test_pdb_light.hw_driver.proc.driver_schedule.called
+        self.machine.lights.test_pdb_light.on()
+        self.machine_run()
+        self.machine.lights.test_pdb_light.hw_driver.proc.driver_schedule.assert_called_with(
+            cycle_seconds=0, schedule=4294967295, now=True, number=32
+        )
+
+        # test disable of matrix light
+        assert not self.machine.lights.test_pdb_light.hw_driver.proc.driver_disable.called
+        self.machine.lights.test_pdb_light.off()
+        self.machine_run()
+        self.machine.lights.test_pdb_light.hw_driver.proc.driver_disable.assert_called_with(32)
