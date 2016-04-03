@@ -16,13 +16,13 @@ class TestSnux(MpfTestCase):
 
     def _get_a_driver(self, coil):
         for driver in self._get_snux_platform().a_drivers:
-            if driver.number + "a" == coil.number:
+            if driver.number + "a" == coil.hw_driver.number:
                 return driver
         return False
 
     def _get_c_driver(self, coil):
         for driver in self._get_snux_platform().c_drivers:
-            if driver.number + "c" == coil.number:
+            if driver.number + "c" == coil.hw_driver.number:
                 return driver
         return False
 

@@ -663,7 +663,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         driver = coil.hw_driver
 
         cmd = (driver.get_config_cmd() +
-               coil.number[0] + ',' +
+               coil.hw_driver.number + ',' +
                driver.get_control_for_cmd(enable_switch) + ',' +
                enable_switch.number[0] + ',' +
                "10" + ',' +                                 # Mode 10 settings
@@ -690,7 +690,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
             ))
 
         cmd = (driver.get_config_cmd() +
-               coil.number[0] + ',' +
+               coil.hw_driver.number + ',' +
                driver.get_control_for_cmd(enable_switch) + ',' +
                enable_switch.number[0] + ',' +
                "18" + ',' +                                 # Mode 18 settings
@@ -726,7 +726,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         driver = coil.hw_driver
 
         cmd = (driver.get_config_cmd() +
-               coil.number[0] + ',' +
+               coil.hw_driver.number + ',' +
                '81')
 
         coil.autofire = None
@@ -790,7 +790,7 @@ class FASTDriver(DriverPlatformInterface):
         self.log = logging.getLogger('FASTDriver')
 
         # Number is already normalized FAST hex string at this point
-        self.driver_settings['number'] = config['number']
+        self.number = config['number']
         self.send = sender
 
         if config['connection'] == 1:
@@ -870,7 +870,7 @@ class FASTDriver(DriverPlatformInterface):
         """
         self.log.debug("Resetting driver %s", self.driver_settings)
         cmd = (self.get_config_cmd() +
-               self.driver_settings['number'] +
+               self.number +
                ',00,00,00')
         self.send(cmd)
 
@@ -879,7 +879,7 @@ class FASTDriver(DriverPlatformInterface):
         del coil
 
         cmd = (self.get_trigger_cmd() +
-               self.driver_settings['number'] + ',' + '02')
+               self.number + ',' + '02')
 
         self.log.debug("Sending Disable Command: %s", cmd)
         self.send(cmd)
@@ -892,7 +892,7 @@ class FASTDriver(DriverPlatformInterface):
             # If this driver is also configured for an autofire rule, we just
             # manually trigger it with the trigger_cmd and manual on ('03')
             cmd = (self.get_trigger_cmd() +
-                   self.driver_settings['number'] + ',' +
+                   self.number + ',' +
                    '03')
             self.log.warning("Recived a command to enable this driver, but "
                              "this driver is configured with an autofire rule,"
@@ -916,7 +916,7 @@ class FASTDriver(DriverPlatformInterface):
                 pulse_ms = self.get_pulse_ms_for_cmd(coil)
 
                 cmd = (self.get_config_cmd() +
-                       self.driver_settings['number'] +
+                       self.number +
                        ',C1,00,18,' +
                        str(pulse_ms) + ',' +
                        self.get_pwm1_for_cmd(coil) + ',' +
@@ -938,7 +938,7 @@ class FASTDriver(DriverPlatformInterface):
 
         if self.autofire:
             cmd = (self.get_trigger_cmd() +
-                   self.driver_settings['number'] + ',' +
+                   self.number + ',' +
                    '01')
             if milliseconds:
                 self.log.debug("Received command to pulse driver for %sms, but"
@@ -946,7 +946,7 @@ class FASTDriver(DriverPlatformInterface):
                                ", so that pulse value will be used instead.")
         else:
             cmd = (self.get_config_cmd() +
-                   self.driver_settings['number'] +
+                   self.number +
                    ',89,00,10,' +
                    hex_ms_string + ',' +
                    self.get_pwm1_for_cmd(coil) + ',00,00,' +
@@ -962,7 +962,7 @@ class FASTDriver(DriverPlatformInterface):
 
         if self.autofire:
             cmd = (self.get_trigger_cmd() +
-                   self.driver_settings['number'] +
+                   self.number +
                    ',00')
 
             self.log.debug("Re-enabling auto fire mode: %s", cmd)
