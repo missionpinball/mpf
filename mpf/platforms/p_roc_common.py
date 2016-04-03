@@ -95,7 +95,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
         else:
             if not coil.config['allow_enable']:
                 raise AssertionError("Coil {} may not be enabled at 100% without allow_enabled or pwm settings".format(
-                    coil.name
+                    coil.hw_driver.number
                 ))
             switch.hw_switch.hw_rules[self._get_event_type(not switch.invert, switch.config['debounce'])].append(
                 (switch.hw_switch.number, coil.hw_driver.number, self.pinproc.driver_state_pulse(coil.hw_driver.state(), 0))
@@ -120,7 +120,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
 
     def set_pulse_on_hit_rule(self, enable_switch, coil):
         self.log.debug("Setting HW Rule on pulse on hit. Switch: %s, Driver: %s",
-                       enable_switch.name, coil.name)
+                       enable_switch.name, coil.hw_driver.number)
 
         self.add_pulse_rule_to_switch(enable_switch, coil)
 
@@ -128,7 +128,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
         self.log.debug("Setting HW Rule on pulse on hit and relesae. Switch: %s, Driver: %s",
-                       enable_switch.name, coil.name)
+                       enable_switch.name, coil.hw_driver.number)
 
         self.add_pulse_rule_to_switch(enable_switch, coil)
         self.add_relase_disable_rule_to_switch(enable_switch, coil)
@@ -137,7 +137,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
         self.log.debug("Setting Pulse on hit and enable and release HW Rule. Switch: %s, Driver: %s",
-                       enable_switch.name, coil.name)
+                       enable_switch.name, coil.hw_driver.number)
 
         self.add_pulse_and_hold_rule_to_switch(enable_switch, coil)
         self.add_relase_disable_rule_to_switch(enable_switch, coil)
@@ -158,7 +158,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
             coil: Coil object
         """
 
-        self.log.debug("Clearing HW rule for switch: %s coil: %s", switch.name, coil.name)
+        self.log.debug("Clearing HW rule for switch: %s coil: %s", switch.name, coil.hw_driver.number)
 
         coil_number = False
         for entry, element in switch.hw_switch.hw_rules.items():
@@ -784,11 +784,11 @@ class PROCDriver(DriverPlatformInterface):
     """
 
     def __init__(self, number, proc_driver, config, machine):
-        del config
         self.log = logging.getLogger('PROCDriver')
         self.number = number
         self.proc = proc_driver
         self.machine = machine
+        self.config = config
 
         self.log.debug("Driver Settings for %s", self.number)
 

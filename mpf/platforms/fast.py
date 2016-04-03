@@ -658,7 +658,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
         self.log.debug("Setting Pulse on hit and release HW Rule. Switch: %s, Driver: %s",
-                       enable_switch.name, coil.name)
+                       enable_switch.name, coil.hw_driver.number)
 
         driver = coil.hw_driver
 
@@ -680,13 +680,13 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
         self.log.debug("Setting Pulse on hit and enable and release HW Rule. Switch: %s, Driver: %s",
-                       enable_switch.name, coil.name)
+                       enable_switch.name, coil.hw_driver.number)
 
         driver = coil.hw_driver
         if driver.get_pwm1_for_cmd(coil) == "ff" and driver.get_pwm2_for_cmd(coil) == "ff" and \
                 not coil.config['allow_enable']:
             raise AssertionError("Coil {} may not be enabled at 100% without allow_enabled or pwm settings".format(
-                coil.name
+                coil.hw_driver.number
             ))
 
         cmd = (driver.get_config_cmd() +
@@ -719,7 +719,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
             coil: The coil whose rule you want to clear.
 
         """
-        self.log.debug("Clearing HW Rule for switch: %s, coils: %s", switch.name, coil.name)
+        self.log.debug("Clearing HW Rule for switch: %s, coils: %s", switch.name, coil.hw_driver.number)
 
         # TODO: check that the rule is switch + coil and not another switch + this coil
 
