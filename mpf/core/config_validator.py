@@ -314,8 +314,8 @@ flippers:
     debug: single|bool|False
     enable_events: dict|str:ms|ball_started
     disable_events: dict|str:ms|ball_ending
-    enable_no_hold_events: dict|str:ms|None
-    invert_events: dict|str:ms|None
+    # enable_no_hold_events: dict|str:ms|None
+    # invert_events: dict|str:ms|None
     # hw rules settings overrides
     pulse_ms: single|int|None
     pwm_on_ms: single|int|None
