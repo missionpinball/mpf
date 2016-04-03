@@ -72,10 +72,7 @@ class HardwarePlatform(VirtualPlatform):
         # todo should probably throw out the number that we get since it could
         # be a weird string and just return an incremental int?
 
-        driver = SmartVirtualDriver(config['number'], self.machine, self)
-
-        driver.driver_settings = config
-        driver.driver_settings['pulse_ms'] = 30
+        driver = SmartVirtualDriver(config, self.machine, self)
 
         return driver, config['number']
 
@@ -103,9 +100,10 @@ class HardwarePlatform(VirtualPlatform):
 
 
 class SmartVirtualDriver(VirtualDriver):
-    def __init__(self, number, machine, platform):
+    def __init__(self, config, machine, platform):
         self.log = logging.getLogger('SmartVirtualDriver')
-        self.number = number
+        self.number = config['number']
+        self.config = config
         self.machine = machine
         self.platform = platform
         self.ball_switches = list()

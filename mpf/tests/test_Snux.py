@@ -1,3 +1,5 @@
+from mpf.devices.driver import ConfiguredHwDriver
+
 from mpf.tests.MpfTestCase import MpfTestCase, MagicMock
 
 
@@ -108,16 +110,16 @@ class TestSnux(MpfTestCase):
         c_ac_relay.enable = MagicMock()
         assert not c_side_c2.enable.called
         self.advance_time_and_run(0.075)
-        c_side_c2.enable.assert_called_with(self.machine.coils.c_side_c2)
+        c_side_c2.enable.assert_called_with(self.machine.coils.c_side_c2.get_configured_driver())
 
         # a side has preference. it should transition
         self.machine.coils.c_side_a2.enable()
         self.machine_run()
-        c_side_c2.disable.assert_called_with(None)
+        c_side_c2.disable.assert_called_with(ConfiguredHwDriver(c_side_c2, {}))
         c_ac_relay.disable.assert_called_with()
         assert not c_side_a2.enable.called
 
         # it should enable a side coils now
         self.advance_time_and_run(0.075)
-        c_side_a2.enable.assert_called_with(self.machine.coils.c_side_a2)
+        c_side_a2.enable.assert_called_with(self.machine.coils.c_side_a2.get_configured_driver())
 

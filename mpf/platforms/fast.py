@@ -548,9 +548,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
 
         self.log.debug("FAST Switch hardware tuple: %s", config['number'])
 
-        switch = FASTSwitch(number=config['number'],
-                            debounce_open=config['debounce_open'],
-                            debounce_close=config['debounce_close'],
+        switch = FASTSwitch(config=config,
                             sender=self.net_connection.send)
 
         return switch, config['number']
@@ -658,7 +656,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
         self.log.debug("Setting Pulse on hit and release HW Rule. Switch: %s, Driver: %s",
-                       enable_switch.name, coil.hw_driver.number)
+                       enable_switch.hw_switch.number, coil.hw_driver.number)
 
         driver = coil.hw_driver
 
@@ -680,7 +678,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
         self.log.debug("Setting Pulse on hit and enable and release HW Rule. Switch: %s, Driver: %s",
-                       enable_switch.name, coil.hw_driver.number)
+                       enable_switch.hw_switch.number, coil.hw_driver.number)
 
         driver = coil.hw_driver
         if driver.get_pwm1_for_cmd(coil) == "ff" and driver.get_pwm2_for_cmd(coil) == "ff" and \
@@ -719,7 +717,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
             coil: The coil whose rule you want to clear.
 
         """
-        self.log.debug("Clearing HW Rule for switch: %s, coils: %s", switch.name, coil.hw_driver.number)
+        self.log.debug("Clearing HW Rule for switch: %s, coils: %s", switch.hw_switch.number, coil.hw_driver.number)
 
         # TODO: check that the rule is switch + coil and not another switch + this coil
 
@@ -754,10 +752,11 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
 
 class FASTSwitch(object):
 
-    def __init__(self, number, debounce_open, debounce_close, sender):
+    def __init__(self, config, sender):
+        self.config = config
         self.log = logging.getLogger('FASTSwitch')
-        self.number = number
-        self.connection = number[1]
+        self.number = config['number']
+        self.connection = config['number'][1]
         self.send = sender
 
         if self.connection:
@@ -765,8 +764,8 @@ class FASTSwitch(object):
         else:
             cmd = 'SL:'
 
-        debounce_open = str(hex(debounce_open))[2:]
-        debounce_close = str(hex(debounce_close))[2:]
+        debounce_open = str(hex(config['debounce_open']))[2:]
+        debounce_close = str(hex(config['debounce_close']))[2:]
 
         cmd += str(self.number[0]) + ',01,' + debounce_open + ',' + debounce_close
 
@@ -786,6 +785,7 @@ class FASTDriver(DriverPlatformInterface):
         self.autofire = None
         self.machine = machine
         self.driver_settings = dict()
+        self.config = config
 
         self.log = logging.getLogger('FASTDriver')
 

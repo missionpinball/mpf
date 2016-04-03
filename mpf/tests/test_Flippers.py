@@ -23,8 +23,8 @@ class TestTilt(MpfTestCase):
         self.assertEqual(1, len(self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule.
                                 _mock_call_args_list))
         self.assertEqual(
-            (self.machine.flippers.f_test_single.switch,
-             self.machine.flippers.f_test_single.main_coil),
+            (self.machine.flippers.f_test_single.switch.get_configured_switch(),
+             self.machine.flippers.f_test_single.main_coil.get_configured_driver()),
             self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule._mock_call_args_list[0][0])
 
         self.machine.default_platform.clear_hw_rule = MagicMock()
@@ -32,7 +32,8 @@ class TestTilt(MpfTestCase):
 
         self.assertEqual(1, self.machine.default_platform.clear_hw_rule.called)
         self.machine.default_platform.clear_hw_rule.assert_called_once_with(
-            self.machine.flippers.f_test_single.switch, self.machine.flippers.f_test_single.main_coil)
+            self.machine.flippers.f_test_single.switch.get_configured_switch(),
+            self.machine.flippers.f_test_single.main_coil.get_configured_driver())
 
     def test_hold_no_eos(self):
         self.machine.default_platform.set_pulse_on_hit_and_release_rule = MagicMock()
@@ -52,8 +53,10 @@ class TestTilt(MpfTestCase):
         self.machine.flippers.f_test_hold.disable()
 
         self.machine.default_platform.clear_hw_rule.assert_has_calls(
-            [call(self.machine.flippers.f_test_hold.switch, self.machine.flippers.f_test_hold.main_coil),
-             call(self.machine.flippers.f_test_hold.switch, self.machine.flippers.f_test_hold.hold_coil)]
+            [call(self.machine.flippers.f_test_hold.switch.get_configured_switch(),
+                  self.machine.flippers.f_test_hold.main_coil.get_configured_driver()),
+             call(self.machine.flippers.f_test_hold.switch.get_configured_switch(),
+                  self.machine.flippers.f_test_hold.hold_coil.get_configured_driver())]
         )
 
     def test_hold_with_eos(self):

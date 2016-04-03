@@ -46,10 +46,7 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
         # todo should probably throw out the number that we get since it could
         # be a weird string and just return an incremental int?
 
-        driver = VirtualDriver(config['number'])
-
-        driver.driver_settings = config
-        driver.driver_settings['pulse_ms'] = 30
+        driver = VirtualDriver(config)
 
         return driver, config['number']
 
@@ -64,9 +61,7 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
 
         self.hw_switches[config['number']] = state
 
-        switch = VirtualSwitch(config['number'])
-
-        switch.driver_settings = config
+        switch = VirtualSwitch(config)
 
         return switch, config['number']
 
@@ -140,9 +135,10 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
 
 class VirtualSwitch(object):
     """Represents a switch in a pinball machine used with virtual hardware."""
-    def __init__(self, number):
+    def __init__(self, config):
         self.log = logging.getLogger('VirtualSwitch')
-        self.number = number
+        self.number = config['number']
+        self.config = config
 
 
 class VirtualMatrixLight(MatrixLightPlatformInterface):
@@ -188,10 +184,10 @@ class VirtualGI(GIPlatformInterface):
 
 
 class VirtualDriver(DriverPlatformInterface):
-    def __init__(self, number):
+    def __init__(self, config):
         self.log = logging.getLogger('VirtualDriver')
-        self.number = number
-        self.driver_settings = {}
+        self.number = config['number']
+        self.config = config
 
     def __repr__(self):
         return "VirtualDriver.{}".format(self.number)

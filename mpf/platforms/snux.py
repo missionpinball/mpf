@@ -6,6 +6,8 @@ Mark Sunnucks's System 11 interface board.
 
 import logging
 
+from mpf.devices.driver import ConfiguredHwDriver
+
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
 
 from mpf.core.delays import DelayManager
@@ -345,7 +347,7 @@ class Snux(object):
     def _disable_all_c_side_drivers(self):
         if self.c_side_active:
             for driver in self.c_drivers:
-                driver.disable(None)    # TODO: this is not right
+                driver.disable(ConfiguredHwDriver(driver, {}))
             self.drivers_holding_c_side = set()
             self.c_side_done_time = 0
             self.c_side_enabled = False
@@ -356,8 +358,8 @@ class SnuxDriver(DriverPlatformInterface):
     def __init__(self, number, platform_driver, overlay):
         self.number = number
         self.platform_driver = platform_driver
-        self.driver_settings = platform_driver.driver_settings
         self.overlay = overlay
+        self.config = platform_driver.config
 
     def __repr__(self):
         return "SnuxDriver.{}".format(self.number)

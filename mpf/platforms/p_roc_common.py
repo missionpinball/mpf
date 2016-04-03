@@ -120,7 +120,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
 
     def set_pulse_on_hit_rule(self, enable_switch, coil):
         self.log.debug("Setting HW Rule on pulse on hit. Switch: %s, Driver: %s",
-                       enable_switch.name, coil.hw_driver.number)
+                       enable_switch.hw_switch.number, coil.hw_driver.number)
 
         self.add_pulse_rule_to_switch(enable_switch, coil)
 
@@ -128,7 +128,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
         self.log.debug("Setting HW Rule on pulse on hit and relesae. Switch: %s, Driver: %s",
-                       enable_switch.name, coil.hw_driver.number)
+                       enable_switch.hw_switch.number, coil.hw_driver.number)
 
         self.add_pulse_rule_to_switch(enable_switch, coil)
         self.add_relase_disable_rule_to_switch(enable_switch, coil)
@@ -137,7 +137,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
         self.log.debug("Setting Pulse on hit and enable and release HW Rule. Switch: %s, Driver: %s",
-                       enable_switch.name, coil.hw_driver.number)
+                       enable_switch.hw_switch.number, coil.hw_driver.number)
 
         self.add_pulse_and_hold_rule_to_switch(enable_switch, coil)
         self.add_relase_disable_rule_to_switch(enable_switch, coil)
@@ -158,7 +158,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
             coil: Coil object
         """
 
-        self.log.debug("Clearing HW rule for switch: %s coil: %s", switch.name, coil.hw_driver.number)
+        self.log.debug("Clearing HW rule for switch: %s coil: %s", switch.hw_switch.number, coil.hw_driver.number)
 
         coil_number = False
         for entry, element in switch.hw_switch.hw_rules.items():
@@ -216,7 +216,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
             raise AssertionError("Switch %s cannot be controlled by the "
                                  "P-ROC/P3-ROC.", str(config['number']))
 
-        switch = PROCSwitch(proc_num, not config['debounce'])
+        switch = PROCSwitch(config, proc_num, not config['debounce'])
         # The P3-ROC needs to be configured to notify the host computers of
         # switch events. (That notification can be for open or closed,
         # debounced or nondebounced.)
@@ -766,8 +766,9 @@ def decode_pdb_address(addr):
 
 
 class PROCSwitch(object):
-    def __init__(self, number, notify_on_debounce):
+    def __init__(self, config, number, notify_on_debounce):
         self.log = logging.getLogger('PROCSwitch')
+        self.config = config
         self.number = number
         self.notify_on_debounce = notify_on_debounce
         self.hw_rules = {"closed_debounced": [],

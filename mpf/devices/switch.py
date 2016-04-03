@@ -34,6 +34,7 @@ class Switch(SystemWideDevice):
 
         self.last_changed = None
         self.hw_timestamp = None
+        self._configured_switch = None
 
         # register switch so other devices can add handlers to it
         self.machine.switch_controller.register_switch(name)
@@ -59,6 +60,27 @@ class Switch(SystemWideDevice):
         self.hw_switch, _ = (
             self.platform.configure_switch(self.config))
 
+    def get_configured_switch(self):
+        if not self._configured_switch:
+            self._configured_switch = ConfiguredHwSwitch(self.hw_switch, {}, self.invert)
+        return self._configured_switch
+
+
+class ConfiguredHwSwitch:
+    def __init__(self, hw_switch, config_overwrite, invert):
+        self.hw_switch = hw_switch
+        self.invert = invert
+        self.config = copy.deepcopy(self.hw_switch.config)
+        for name, item in config_overwrite.items():
+            if item is not None:
+                self.config[name] = item
+
+        def __eq__(self, other):
+            return self.hw_switch == other.hw_switch and self.config == other.config
+
+        def __hash__(self):
+            return id((self.hw_switch, self.config))
+
 
 class ReconfiguredSwitch():
     # can overwrite platform specific config parameters and invert
@@ -69,6 +91,7 @@ class ReconfiguredSwitch():
             "switch_overwrites", config_switch_overwrite, switch.name,
             base_spec=switch.platform.get_switch_overwrite_section())
         self._switch = switch
+        self._configured_switch = None
         self._invert = invert
 
     @staticmethod
@@ -92,6 +115,11 @@ class ReconfiguredSwitch():
             return 1
         else:
             return 0
+
+    def get_configured_switch(self):
+        if not self._configured_switch:
+            self._configured_switch = ConfiguredHwSwitch(self.hw_switch, self._config_overwrite, self.invert)
+        return self._configured_switch
 
     @property
     def config(self):

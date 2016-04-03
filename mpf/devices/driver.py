@@ -28,6 +28,7 @@ class Driver(SystemWideDevice):
 
         self.time_last_changed = 0
         self.time_when_done = 0
+        self._configured_driver = None
 
     def validate_and_parse_config(self, config, is_mode_config):
         platform = self.machine.get_platform_sections('coils', getattr(config, "platform", None))
@@ -64,7 +65,7 @@ class Driver(SystemWideDevice):
         self.time_when_done = -1
         self.time_last_changed = self.machine.clock.get_time()
         self.log.debug("Enabling Driver")
-        self.hw_driver.enable(self)
+        self.hw_driver.enable(self.get_configured_driver())
 
     def disable(self, **kwargs):
         """ Disables this driver """
@@ -73,7 +74,12 @@ class Driver(SystemWideDevice):
         self.time_last_changed = self.machine.clock.get_time()
         self.time_when_done = self.time_last_changed
         self.machine.delay.remove(name='{}_timed_enable'.format(self.name))
-        self.hw_driver.disable(self)
+        self.hw_driver.disable(self.get_configured_driver())
+
+    def get_configured_driver(self):
+        if not self._configured_driver:
+            self._configured_driver = ConfiguredHwDriver(self.hw_driver, {})
+        return self._configured_driver
 
     def pulse(self, milliseconds=None, power=None, **kwargs):
         """ Pulses this driver.
@@ -105,7 +111,7 @@ class Driver(SystemWideDevice):
                 isinstance(milliseconds, int) and 0 < milliseconds <= self.platform.features['max_pulse']):
             self.log.debug("Pulsing Driver. %sms (%s power)", milliseconds,
                            power)
-            ms_actual = self.hw_driver.pulse(self, milliseconds)
+            ms_actual = self.hw_driver.pulse(self.get_configured_driver(), milliseconds)
         else:
             self.log.debug("Enabling Driver for %sms (%s power)", milliseconds,
                            power)
@@ -134,20 +140,35 @@ class Driver(SystemWideDevice):
     def set_pulse_on_hit_and_release_rule(self, enable_switch):
         self._check_platform(enable_switch)
 
-        self.platform.set_pulse_on_hit_and_release_rule(enable_switch, self)
+        self.platform.set_pulse_on_hit_and_release_rule(enable_switch.get_configured_switch(), self.get_configured_driver())
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch):
         self._check_platform(enable_switch)
 
-        self.platform.set_pulse_on_hit_and_enable_and_release_rule(enable_switch, self)
+        self.platform.set_pulse_on_hit_and_enable_and_release_rule(enable_switch.get_configured_switch(), self.get_configured_driver())
 
     def set_pulse_on_hit_rule(self, enable_switch):
         self._check_platform(enable_switch)
 
-        self.platform.set_pulse_on_hit_rule(enable_switch, self)
+        self.platform.set_pulse_on_hit_rule(enable_switch.get_configured_switch(), self.get_configured_driver())
 
     def clear_hw_rule(self, switch):
-        self.platform.clear_hw_rule(switch, self)
+        self.platform.clear_hw_rule(switch.get_configured_switch(), self.get_configured_driver())
+
+
+class ConfiguredHwDriver:
+    def __init__(self, hw_driver, config_overwrite):
+        self.hw_driver = hw_driver
+        self.config = copy.deepcopy(self.hw_driver.config)
+        for name, item in config_overwrite.items():
+            if item is not None:
+                self.config[name] = item
+
+    def __eq__(self, other):
+        return self.hw_driver == other.hw_driver and self.config == other.config
+
+    def __hash__(self):
+        return id((self.hw_driver, self.config))
 
 
 class ReconfiguredDriver(Driver):
@@ -156,8 +177,9 @@ class ReconfiguredDriver(Driver):
         self._driver = driver
         driver.machine.config_validator.validate_config(
             "coil_overwrites", config_overwrite, driver.name,
-            base_spec=driver.platform.get_switch_overwrite_section())
+            base_spec=driver.platform.get_coil_overwrite_section())
         self._config_overwrite = config_overwrite
+        self._configured_driver = None
 
     @staticmethod
     def filter_from_config(config):
@@ -175,6 +197,11 @@ class ReconfiguredDriver(Driver):
 
     def __getattr__(self, item):
         return getattr(self._driver, item)
+
+    def get_configured_driver(self):
+        if not self._configured_driver:
+            self._configured_driver = ConfiguredHwDriver(self.hw_driver, self._config_overwrite)
+        return self._configured_driver
 
     @property
     def config(self):
