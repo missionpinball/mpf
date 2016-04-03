@@ -11,10 +11,11 @@ class TestSnux(MpfTestCase):
         return 'tests/machine_files/snux/'
 
     def get_platform(self):
-        return 'virtual'
+        # no force platform. we are testing virtual + snux
+        return False
 
     def _get_snux_platform(self):
-        return self.machine.default_platform.driver_overlay
+        return self.machine.hardware_platforms['snux']
 
     def _get_a_driver(self, coil):
         for driver in self._get_snux_platform().a_drivers:
@@ -39,8 +40,8 @@ class TestSnux(MpfTestCase):
         c_diag_led_driver.pulse.assert_called_with(250)
 
         # test if a and c side relays were properly loaded
-        self.assertEqual(2, len(self.machine.default_platform.driver_overlay.a_drivers))
-        self.assertEqual(2, len(self.machine.default_platform.driver_overlay.c_drivers))
+        self.assertEqual(2, len(self._get_snux_platform().a_drivers))
+        self.assertEqual(2, len(self._get_snux_platform().c_drivers))
         c_side_a1 = self._get_a_driver(self.machine.coils.c_side_a1)
         c_side_a2 = self._get_a_driver(self.machine.coils.c_side_a2)
         c_side_c1 = self._get_c_driver(self.machine.coils.c_side_c1)

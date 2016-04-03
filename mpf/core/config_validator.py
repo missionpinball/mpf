@@ -717,6 +717,7 @@ slides:
 snux:
     flipper_enable_driver: single|machine(coils)|
     diag_led_driver: single|machine(coils)|
+    platform: single|str|None
 smartmatrix:
     port: single|str|
     use_separate_thread: single|bool|true

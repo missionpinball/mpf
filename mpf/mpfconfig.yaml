@@ -32,9 +32,6 @@ mpf:
         show: mpf.config_players.show_player
         trigger: mpf.config_players.trigger_player
 
-    platform_overlays:
-        - snux: mpf.platform.snux.Snux
-
     device_modules:
         driver.Driver
         switch.Switch

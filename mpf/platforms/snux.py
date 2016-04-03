@@ -6,6 +6,8 @@ Mark Sunnucks's System 11 interface board.
 
 import logging
 
+from mpf.core.platform import DriverPlatform
+
 from mpf.devices.driver import ConfiguredHwDriver
 
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
@@ -13,14 +15,15 @@ from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInt
 from mpf.core.delays import DelayManager
 
 
-class Snux(object):
+class HardwarePlatform(DriverPlatform):
 
-    def __init__(self, machine, platform):
+    def __init__(self, machine):
+        super().__init__(machine)
+
         self.log = logging.getLogger('Platform.Snux')
         self.delay = DelayManager(machine.delayRegistry)
 
-        self.machine = machine
-        self.platform = platform
+        self.platform = None
 
         self.system11_config = None
         self.snux_config = None
@@ -50,8 +53,6 @@ class Snux(object):
 
         self.ac_relay_in_transition = False
 
-        self._morph()
-
     @property
     def a_side_busy(self):
         return self.drivers_holding_a_side or self.a_side_done_time > self.machine.clock.get_time() or self.a_side_queue
@@ -63,25 +64,15 @@ class Snux(object):
     def null_log_handler(self, *args, **kwargs):
         pass
 
-    def _morph(self):
-        self.platform_configure_driver = self.platform.configure_driver
-        self.platform.configure_driver = self.configure_driver
-
-        self.platform_set_pulse_on_hit_and_release_rule = self.platform.set_pulse_on_hit_and_release_rule
-        self.platform.set_pulse_on_hit_and_release_rule = self.set_pulse_on_hit_and_release_rule
-
-        self.platform_set_pulse_on_hit_rule = self.platform.set_pulse_on_hit_rule
-        self.platform.set_pulse_on_hit_rule = self.set_pulse_on_hit_rule
-
-        self.platform_set_pulse_on_hit_and_enable_and_release_rule = \
-            self.platform.set_pulse_on_hit_and_enable_and_release_rule
-        self.platform.set_pulse_on_hit_and_enable_and_release_rule = self.set_pulse_on_hit_and_enable_and_release_rule
-
     def initialize(self):
         """Automatically called by the Platform class after all the core
         modules are loaded.
 
         """
+        # load coil platform
+        self.platform = self.machine.get_platform_sections(
+            "platform", getattr(self.machine.config['snux'], 'platform', None))
+
         # we have to wait for coils to be initialized
         self.machine.events.add_handler("init_phase_1", self._initialize)
 
@@ -161,7 +152,7 @@ class Snux(object):
             config['number'] = config['number'][:-1]
 
             platform_driver, _ = (
-                self.platform_configure_driver(config))
+                self.platform.configure_driver(config))
 
             snux_driver = SnuxDriver(orig_number, platform_driver, self)
 
@@ -173,28 +164,31 @@ class Snux(object):
             return snux_driver, orig_number
 
         else:
-            return self.platform_configure_driver(config)
+            return self.platform.configure_driver(config)
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
         if coil.hw_driver in self.a_drivers or coil.hw_driver in self.c_drivers:
             self.log.warning("Received a request to set a hardware rule for a"
                              "switched driver. Ignoring")
         else:
-            self.platform_set_pulse_on_hit_and_release_rule(enable_switch, coil)
+            self.platform.set_pulse_on_hit_and_release_rule(enable_switch, coil)
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
         if coil.hw_driver in self.a_drivers or coil.hw_driver in self.c_drivers:
             self.log.warning("Received a request to set a hardware rule for a"
                              "switched driver. Ignoring")
         else:
-            self.platform_set_pulse_on_hit_and_enable_and_release_rule(enable_switch, coil)
+            self.platform.set_pulse_on_hit_and_enable_and_release_rule(enable_switch, coil)
 
     def set_pulse_on_hit_rule(self, enable_switch, coil):
         if coil.hw_driver in self.a_drivers or coil.hw_driver in self.c_drivers:
             self.log.warning("Received a request to set a hardware rule for a"
                              "switched driver. Ignoring")
         else:
-            self.platform_set_pulse_on_hit_rule(enable_switch, coil)
+            self.platform.set_pulse_on_hit_rule(enable_switch, coil)
+
+    def clear_hw_rule(self, switch, coil):
+        self.platform.clear_hw_rule(switch, coil)
 
     def driver_action(self, driver, coil, milliseconds):
         """Adds a driver action for a switched driver to the queue (for either
@@ -378,6 +372,3 @@ class SnuxDriver(DriverPlatformInterface):
 
     def disable(self, coil):
         self.overlay.driver_action(self.platform_driver, coil, 0)
-
-
-driver_overlay_class = Snux

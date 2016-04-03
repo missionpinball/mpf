@@ -1,6 +1,7 @@
 from mock import MagicMock
 from mpf.tests.MpfTestCase import MpfTestCase
 
+
 class TestShots(MpfTestCase):
 
     def getConfigFile(self):

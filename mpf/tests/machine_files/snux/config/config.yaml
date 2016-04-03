@@ -2,7 +2,8 @@
 
 hardware:
     platform: virtual
-    driverboards: snux
+    driverboards: wpc
+    coils: snux
 
 system11:
     ac_relay_delay_ms: 75
@@ -11,6 +12,7 @@ system11:
 snux:
     flipper_enable_driver: c_flipper_enable_driver
     diag_led_driver: c_diag_led_driver
+    platform:
 
 coils:
     c_diag_led_driver:

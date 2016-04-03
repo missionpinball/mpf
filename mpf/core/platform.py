@@ -178,7 +178,6 @@ class SwitchPlatform(BasePlatform):
 class DriverPlatform(BasePlatform):
     def __init__(self, machine):
         super().__init__(machine)
-        self.driver_overlay = None
 
         # Set default platform features. Each platform interface can change
         # these to notify the framework of the specific features it supports.
@@ -186,17 +185,6 @@ class DriverPlatform(BasePlatform):
         self.features['max_pulse'] = 255
         self.features['hw_rule_coil_delay'] = False
         self.features['variable_recycle_time'] = False
-
-        # todo change this to be dynamic for any overlay
-        if self.machine.config['hardware']['driverboards'] == 'snux':
-            from mpf.platforms.snux import Snux
-            self.driver_overlay = Snux(self.machine, self)
-            self.machine.config['hardware']['driverboards'] = 'wpc'
-
-    def initialize(self):
-        super().initialize()
-        if self.driver_overlay:  # can't use try since it could swallow errors
-            self.driver_overlay.initialize()
 
     def configure_driver(self, config):
         """Subclass this method in a platform module to configure a driver.
