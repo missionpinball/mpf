@@ -2,11 +2,11 @@
 """
 
 import logging
-from mpf.core.platform import I2cPlatform
+from mpf.core.platform import ServoPlatform
 import time
 
 
-class HardwarePlatform(I2cPlatform):
+class HardwarePlatform(ServoPlatform):
     """Supports the PCA9685/PCA9635 chip via I2C"""
 
     def __init__(self, machine):
