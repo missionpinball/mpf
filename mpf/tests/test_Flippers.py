@@ -60,19 +60,21 @@ class TestTilt(MpfTestCase):
         )
 
     def test_hold_with_eos(self):
-        return # this is broken
-        self.machine.default_platform.set_hw_rule = MagicMock()
+        self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_and_disable_rule = MagicMock()
+        self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule = MagicMock()
 
         self.machine.flippers.f_test_hold_eos.enable()
-        self.assertEqual(2, len(self.machine.default_platform.set_hw_rule._mock_call_args_list))
-        # TODO: check parameter for rule main enable
-        # TODO: check parameter for rule hold pwm
+        self.assertEqual(1, len(self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_and_disable_rule
+                                ._mock_call_args_list))
+        self.assertEqual(1, len(self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule.
+                                _mock_call_args_list))
 
         self.machine.default_platform.clear_hw_rule = MagicMock()
         self.machine.flippers.f_test_hold_eos.disable()
 
         self.machine.default_platform.clear_hw_rule.assert_has_calls(
             [call(self.machine.flippers.f_test_hold_eos.switch, self.machine.flippers.f_test_hold_eos.main_coil),
+             call(self.machine.flippers.f_test_hold_eos.eos_switch, self.machine.flippers.f_test_hold_eos.main_coil),
              call(self.machine.flippers.f_test_hold_eos.switch, self.machine.flippers.f_test_hold_eos.hold_coil)]
         )
 

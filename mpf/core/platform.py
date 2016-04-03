@@ -227,5 +227,8 @@ class DriverPlatform(BasePlatform):
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
         raise NotImplementedError
 
+    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
+        raise NotImplementedError
+
     def set_pulse_on_hit_rule(self, enable_switch, coil):
         raise NotImplementedError

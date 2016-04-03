@@ -345,6 +345,7 @@ flippers:
     main_coil_overwrite: dict|str:str|None
     hold_coil_overwrite: dict|str:str|None
     switch_overwrite: dict|str:str|None
+    eos_switch_overwrite: dict|str:str|None
 
     # hw rules settings overrides
     pulse_ms: single|int|None

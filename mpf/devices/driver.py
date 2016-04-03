@@ -152,6 +152,16 @@ class Driver(SystemWideDevice):
 
         self.platform.set_pulse_on_hit_rule(enable_switch.get_configured_switch(), self.get_configured_driver())
 
+    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch):
+        self._check_platform(enable_switch)
+        self._check_platform(disable_switch)
+
+        self.platform.set_pulse_on_hit_and_enable_and_release_and_disable_rule(
+            enable_switch.get_configured_switch(),
+            disable_switch.get_configured_switch(),
+            self.get_configured_driver()
+        )
+
     def clear_hw_rule(self, switch):
         self.platform.clear_hw_rule(switch.get_configured_switch(), self.get_configured_driver())
 

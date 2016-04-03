@@ -30,6 +30,7 @@ class Flipper(SystemWideDevice):
         self.main_coil = None
         self.hold_coil = None
         self.switch = None
+        self.eos_switch = None
 
     def _initialize(self):
         self.platform = self.config['main_coil'].platform
@@ -38,6 +39,9 @@ class Flipper(SystemWideDevice):
 
         if self.config['hold_coil']:
             self.hold_coil = ReconfiguredDriver(self.config['hold_coil'], self.config['hold_coil_overwrite'])
+
+        if self.config['eos_switch']:
+            self.eos_switch = ReconfiguredSwitch(self.config['eos_switch'], self.config['eos_switch_overwrite'], False)
 
         if self.debug:
             self.log.debug('Platform Driver: %s', self.platform)
@@ -50,6 +54,8 @@ class Flipper(SystemWideDevice):
             config['hold_coil_overwrite'] = ReconfiguredDriver.filter_from_config(config)
         if "switch_overwrite" not in config:
             config['switch_overwrite'] = ReconfiguredSwitch.filter_from_config(config)
+        if "eos_switch_overwrite" not in config:
+            config['eos_switch_overwrite'] = ReconfiguredSwitch.filter_from_config(config)
         return config
 
     def enable(self, **kwargs):
@@ -125,6 +131,8 @@ class Flipper(SystemWideDevice):
         del kwargs
         self.log.debug("Disabling")
         self.main_coil.clear_hw_rule(self.switch)
+        if self.eos_switch:
+            self.main_coil.clear_hw_rule(self.eos_switch)
 
         if self.hold_coil:
             self.hold_coil.clear_hw_rule(self.switch)
@@ -149,14 +157,8 @@ class Flipper(SystemWideDevice):
     def _enable_main_coil_eos_cutoff_rule(self):
         self.log.debug('Enabling main coil EOS cutoff rule')
 
-        # TODO: did that ever work? only a disable rule?
-
-        self.platform.set_hw_rule(
-                sw_name=self.config['eos_switch'].name,
-                sw_activity=1,
-                driver_name=self.config['main_coil'].name,
-                driver_action='disable',
-                **self.config)
+        self.main_coil.set_pulse_on_hit_and_enable_and_release_and_disable_rule(
+            self.switch, self.eos_switch)
 
     def sw_flip(self):
         """Activates the flipper via software as if the flipper button was
