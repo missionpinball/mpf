@@ -75,11 +75,11 @@ class ConfiguredHwSwitch:
             if item is not None:
                 self.config[name] = item
 
-        def __eq__(self, other):
-            return self.hw_switch == other.hw_switch and self.config == other.config
+    def __eq__(self, other):
+        return self.hw_switch == other.hw_switch and self.config == other.config
 
-        def __hash__(self):
-            return id((self.hw_switch, self.config))
+    def __hash__(self):
+        return id((self.hw_switch, self.config))
 
 
 class ReconfiguredSwitch():
