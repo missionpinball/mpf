@@ -180,6 +180,13 @@ class HardwarePlatform(DriverPlatform):
         else:
             self.platform.set_pulse_on_hit_and_enable_and_release_rule(enable_switch, coil)
 
+    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
+        if coil.hw_driver in self.a_drivers or coil.hw_driver in self.c_drivers:
+            self.log.warning("Received a request to set a hardware rule for a"
+                             "switched driver. Ignoring")
+        else:
+            self.platform.set_pulse_on_hit_and_enable_and_release_and_disable_rule(enable_switch, disable_switch, coil)
+
     def set_pulse_on_hit_rule(self, enable_switch, coil):
         if coil.hw_driver in self.a_drivers or coil.hw_driver in self.c_drivers:
             self.log.warning("Received a request to set a hardware rule for a"

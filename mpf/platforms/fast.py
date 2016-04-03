@@ -654,6 +654,10 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         # TODO: this is not correct but the same as before
         self.set_pulse_on_hit_and_release_rule(enable_switch, coil)
 
+    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
+        # TODO implement
+        raise NotImplementedError
+
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
         self.log.debug("Setting Pulse on hit and release HW Rule. Switch: %s, Driver: %s",
                        enable_switch.hw_switch.number, coil.hw_driver.number)

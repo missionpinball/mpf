@@ -106,6 +106,12 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
             (switch.hw_switch.number, coil.hw_driver.number, self.pinproc.driver_state_disable(coil.hw_driver.state()))
         )
 
+    def add_disable_rule_to_switch(self, switch, coil):
+        switch.hw_switch.hw_rules[self._get_event_type(not switch.invert, switch.config['debounce'])].append(
+            (switch.hw_switch.number, coil.hw_driver.number,
+             self.pinproc.driver_state_disable(coil.hw_driver.state()))
+        )
+
     def write_rules_to_switch(self, switch, coil, drive_now):
         for event_type, driver_rules in switch.hw_switch.hw_rules.items():
             driver = []
@@ -143,6 +149,18 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
         self.add_relase_disable_rule_to_switch(enable_switch, coil)
 
         self.write_rules_to_switch(enable_switch, coil, False)
+
+    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
+        self.log.debug("Setting Pulse on hit and enable and release and disable HW Rule. Enable Switch: %s,"
+                       "Disable Switch: %s, Driver: %s", enable_switch.hw_switch.number,
+                       disable_switch.hw_switch.number, coil.hw_driver.number)
+
+        self.add_pulse_and_hold_rule_to_switch(enable_switch, coil)
+        self.add_relase_disable_rule_to_switch(enable_switch, coil)
+        self.add_disable_rule_to_switch(disable_switch, coil)
+
+        self.write_rules_to_switch(enable_switch, coil, False)
+        self.write_rules_to_switch(disable_switch, coil, False)
 
     def clear_hw_rule(self, switch, coil):
         """Clears a hardware rule.

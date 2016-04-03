@@ -594,5 +594,88 @@ class TestP3Roc(MpfTestCase):
         self.machine.flippers.f_test_hold.disable()
 
     def test_flipper_two_coils_with_eos(self):
-        return  # currently not supported
-        # self.machine.flippers.f_test_hold_eos.enable()
+        self.machine.default_platform.proc.switch_update_rule = MagicMock()
+        self.machine.flippers.f_test_hold_eos.enable()
+        self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
+            call(
+                1, 'open_nondebounced',
+                {'notifyHost': False, 'reloadActive': False},
+                [{'patterEnable': False,
+                  'patterOnTime': 0,
+                  'timeslots': 0,
+                  'futureEnable': False,
+                  'state': False,
+                  'patterOffTime': 0,
+                  'outputDriveTime': 0,
+                  'driverNum': 10,
+                  'polarity': True,
+                  'waitForFirstTimeSlot': False},
+                 {'patterEnable': False,
+                  'patterOnTime': 0,
+                  'timeslots': 0,
+                  'futureEnable': False,
+                  'state': False,
+                  'patterOffTime': 0,
+                  'outputDriveTime': 0,
+                  'driverNum': 10,
+                  'polarity': True,
+                  'waitForFirstTimeSlot': False},
+                 ],
+                False),
+            call(
+                1, 'closed_nondebounced',
+                {'notifyHost': False, 'reloadActive': False},
+                [
+                 {'patterEnable': False,
+                  'patterOnTime': 0,
+                  'timeslots': 0,
+                  'futureEnable': False,
+                  'state': False,
+                  'patterOffTime': 0,
+                  'outputDriveTime': 0,
+                  'driverNum': 11,
+                  'polarity': True,
+                  'waitForFirstTimeSlot': False},
+                 {'patterEnable': False,
+                  'patterOnTime': 0,
+                  'timeslots': 0,
+                  'futureEnable': False,
+                  'state': False,
+                  'patterOffTime': 0,
+                  'outputDriveTime': 0,
+                  'driverNum': 11,
+                  'polarity': True,
+                  'waitForFirstTimeSlot': False},
+                 ],
+                False),
+            call(
+                2, 'closed_nondebounced',
+                {'notifyHost': False, 'reloadActive': False},
+                [
+                 {'patterEnable': False,
+                  'patterOnTime': 0,
+                  'timeslots': 0,
+                  'futureEnable': False,
+                  'state': False,
+                  'patterOffTime': 0,
+                  'outputDriveTime': 0,
+                  'driverNum': 10,
+                  'polarity': True,
+                  'waitForFirstTimeSlot': False},
+                 ],
+                False)
+        ], any_order=True)
+
+        # disable
+        self.machine.default_platform.proc.switch_update_rule = MagicMock()
+        self.machine.flippers.f_test_hold_eos.disable()
+        self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
+            call(1, 'open_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
+            call(1, 'closed_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
+            call(1, 'open_debounced', {'notifyHost': True, 'reloadActive': False}, []),
+            call(1, 'closed_debounced', {'notifyHost': True, 'reloadActive': False}, []),
+            call(2, 'open_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
+            call(2, 'closed_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
+            call(2, 'open_debounced', {'notifyHost': True, 'reloadActive': False}, []),
+            call(2, 'closed_debounced', {'notifyHost': True, 'reloadActive': False}, []),
+        ], any_order=True)
