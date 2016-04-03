@@ -12,9 +12,11 @@ class TestShotGroups(MpfTestCase):
 
     def start_game(self):
         # shots only work in games so we have to do this a lot
+        self.machine.playfield.add_ball = MagicMock()
         self.machine.events.post('game_start')
         self.advance_time_and_run()
         self.machine.game.balls_in_play = 1
+        self.assertIsNotNone(self.machine.game)
 
     def stop_game(self):
         # stop game
