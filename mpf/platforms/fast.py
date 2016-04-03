@@ -665,7 +665,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         cmd = (driver.get_config_cmd() +
                coil.hw_driver.number + ',' +
                driver.get_control_for_cmd(enable_switch) + ',' +
-               enable_switch.number[0] + ',' +
+               enable_switch.hw_switch.number[0] + ',' +
                "10" + ',' +                                 # Mode 10 settings
                driver.get_pulse_ms_for_cmd(coil) + ',' +    # initial pulse ms
                driver.get_pwm1_for_cmd(coil) + ',' +        # intial pwm
@@ -692,7 +692,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         cmd = (driver.get_config_cmd() +
                coil.hw_driver.number + ',' +
                driver.get_control_for_cmd(enable_switch) + ',' +
-               enable_switch.number[0] + ',' +
+               enable_switch.hw_switch.number[0] + ',' +
                "18" + ',' +                                 # Mode 18 settings
                driver.get_pulse_ms_for_cmd(coil) + ',' +    # initial pulse ms
                driver.get_pwm1_for_cmd(coil) + ',' +        # intial pwm
@@ -756,7 +756,7 @@ class FASTSwitch(object):
 
     def __init__(self, number, debounce_open, debounce_close, sender):
         self.log = logging.getLogger('FASTSwitch')
-        self.number = number[0]
+        self.number = number
         self.connection = number[1]
         self.send = sender
 
@@ -768,7 +768,7 @@ class FASTSwitch(object):
         debounce_open = str(hex(debounce_open))[2:]
         debounce_close = str(hex(debounce_close))[2:]
 
-        cmd += str(self.number) + ',01,' + debounce_open + ',' + debounce_close
+        cmd += str(self.number[0]) + ',01,' + debounce_open + ',' + debounce_close
 
         self.send(cmd)
 

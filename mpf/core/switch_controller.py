@@ -126,7 +126,7 @@ class SwitchController(object):
 
         for switch in self.machine.switches:
             platforms.add(switch.platform)
-            switches.add((switch, switch.number))
+            switches.add((switch, switch.hw_switch.number))
 
         for platform in platforms:
             switch_states = platform.get_hw_switch_states()
@@ -241,7 +241,7 @@ class SwitchController(object):
 
     def process_switch_by_num(self, num, state=1, logical=False, debounced=True):
         for switch in self.machine.switches:
-            if switch.number == num:
+            if switch.hw_switch.number == num:
                 self.process_switch(name=switch.name, state=state, logical=logical, debounced=debounced)
                 return
 

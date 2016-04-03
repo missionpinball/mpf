@@ -76,7 +76,7 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
 
             if 'virtual_platform_start_active_switches' in self.machine.config:
 
-                initial_active_switches = [self.machine.switches[x].number for x in
+                initial_active_switches = [self.machine.switches[x].hw_switch.number for x in
                                            Util.string_to_list(
                         self.machine.config['virtual_platform_start_active_switches'])]
 
@@ -90,7 +90,7 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
             switches = [x for x in self.machine.switches if x.platform == self]
 
             for switch in switches:
-                self.hw_switches[switch.number] = switch.state ^ switch.invert
+                self.hw_switches[switch.hw_switch.number] = switch.state ^ switch.invert
 
         return self.hw_switches
 

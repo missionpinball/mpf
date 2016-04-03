@@ -56,7 +56,7 @@ class Switch(SystemWideDevice):
 
         self.recycle_secs = self.config['recycle_time']
 
-        self.hw_switch, self.number = (
+        self.hw_switch, _ = (
             self.platform.configure_switch(self.config))
 
 
