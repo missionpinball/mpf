@@ -3,7 +3,6 @@
 from collections import deque
 from mpf.core.delays import DelayManager
 from mpf.core.system_wide_device import SystemWideDevice
-from mpf.core.utility_functions import Util
 
 
 class Diverter(SystemWideDevice):
