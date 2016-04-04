@@ -1,0 +1,14 @@
+#config_version=4
+
+config:
+- config.yaml
+
+diverters:
+    d_test_hold:
+        activation_coil: c_diverter
+        activation_switches: s_diverter
+        type: hold
+        feeder_devices: test_trough
+        targets_when_active: playfield
+        targets_when_inactive: test_target
+        debug: True

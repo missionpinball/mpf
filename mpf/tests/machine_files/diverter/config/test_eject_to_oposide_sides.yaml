@@ -1,0 +1,35 @@
+#config_version=4
+
+config:
+- config.yaml
+
+diverters:
+    d_test_hold:
+        activation_coil: c_diverter
+        type: hold
+        feeder_devices: test_trough, test_trough2
+        targets_when_active: playfield
+        targets_when_inactive: test_target
+        debug: True
+
+coils:
+    eject_coil3:
+        number: 10
+
+switches:
+    s_ball_switch3:
+        number: 10
+    s_ball_switch4:
+        number: 11
+
+ball_devices:
+    test_trough2:
+        eject_coil: eject_coil3
+        ball_switches: s_ball_switch3, s_ball_switch4
+        confirm_eject_type: target
+        eject_targets: test_target, playfield
+        tags: trough, drain, home
+
+virtual_platform_start_active_switches:
+  - s_ball_switch3
+  - s_ball_switch4

@@ -1,0 +1,41 @@
+#config_version=4
+
+coils:
+    eject_coil1:
+        number: 1
+    eject_coil2:
+        number: 2
+    c_diverter:
+        number: 3
+    c_diverter_disable:
+        number: 4
+
+switches:
+    s_ball_switch1:
+        number: 1
+    s_ball_switch2:
+        number: 2
+    s_diverter:
+        number: 3
+    s_playfield:
+        number: 4
+        tags: playfield_active
+    s_target:
+        number: 5
+
+ball_devices:
+    test_trough:
+        eject_coil: eject_coil1
+        ball_switches: s_ball_switch1, s_ball_switch2
+        confirm_eject_type: target
+        eject_targets: test_target, playfield
+        tags: trough, drain, home
+    test_target:
+        eject_coil: eject_coil2
+        ball_switches: s_target
+        confirm_eject_type: target
+        eject_targets: playfield
+
+virtual_platform_start_active_switches:
+  - s_ball_switch1
+  - s_ball_switch2
