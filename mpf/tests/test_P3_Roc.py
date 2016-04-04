@@ -683,8 +683,8 @@ class TestP3Roc(MpfTestCase):
 
     def test_pdb_matrix_light(self):
         # very simple check for matrix config
-        self.pinproc.driver_update_group_config.assert_has_call(
-            4, 100, 5, 0, 0, True, True, True, True
+        self.pinproc.driver_update_group_config.assert_has_calls(
+            [call(4, 100, 5, 0, 0, True, True, True, True)]
         )
 
         # test enable of matrix light
