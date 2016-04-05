@@ -671,6 +671,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
                "00")                                        # not used with Mode 18
 
         driver.autofire = True
+        enable_switch.hw_switch.configure_debounce(enable_switch.config)
         self.log.debug("Writing hardware rule: %s", cmd)
 
         self.net_connection.send(cmd)
@@ -712,6 +713,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
                driver.get_recycle_ms_for_cmd(coil))         # recycle ms
 
         driver.autofire = True
+        enable_switch.hw_switch.configure_debounce(enable_switch.config)
         self.log.debug("Writing hardware rule: %s", cmd)
 
         self.net_connection.send(cmd)
@@ -739,6 +741,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
                "00")                                        # not used with Mode 18
 
         driver.autofire = True
+        enable_switch.hw_switch.configure_debounce(enable_switch.config)
         self.log.debug("Writing hardware rule: %s", cmd)
 
         self.net_connection.send(cmd)
@@ -799,6 +802,7 @@ class FASTSwitch(object):
         self.connection = config['number'][1]
         self.send = sender
         self.platform = platform
+        self._configured_debounce = False
         self.configure_debounce(config)
 
     def configure_debounce(self, config):
@@ -813,6 +817,12 @@ class FASTSwitch(object):
             cmd = 'SN:'
         else:
             cmd = 'SL:'
+
+        new_setting = (debounce_open, debounce_close)
+        if new_setting == self._configured_debounce:
+            return
+
+        self._configured_debounce = new_setting
 
         cmd += str(self.number[0]) + ',01,' + Util.int_to_hex_string(debounce_open) + ',' +\
                Util.int_to_hex_string(debounce_close)

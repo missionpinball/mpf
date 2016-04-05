@@ -121,7 +121,8 @@ class TestFast(MpfTestCase):
 
     def test_hw_rule_pulse(self):
         MockSerialCommunicator.expected_commands = {
-            "DN:09,01,16,10,0A,ff,00,00,14": False
+            "DN:09,01,16,10,0A,ff,00,00,14": False,  # hw rule
+            "SN:16,01,02,02": False                  # debounce quick on switch
         }
         self.machine.autofires.ac_slingshot_test.enable()
         self.assertFalse(MockSerialCommunicator.expected_commands)
@@ -160,7 +161,8 @@ class TestFast(MpfTestCase):
 
     def test_hw_rule_pulse_inverted_switch(self):
         MockSerialCommunicator.expected_commands = {
-                "DN:09,11,1A,10,0A,ff,00,00,14": False
+            "DN:09,11,1A,10,0A,ff,00,00,14": False,
+            "SN:1A,01,02,02": False
         }
         self.machine.autofires.ac_inverted_switch.enable()
         self.assertFalse(MockSerialCommunicator.expected_commands)
@@ -253,7 +255,8 @@ class TestFast(MpfTestCase):
 
         # enable
         MockSerialCommunicator.expected_commands = {
-            "DN:20,01,01,18,0B,ff,01,16,00": False
+            "DN:20,01,01,18,0B,ff,01,16,00": False,
+            "SN:01,01,02,02": False
         }
         self.machine.flippers.f_test_single.enable()
         self.assertFalse(MockSerialCommunicator.expected_commands)
@@ -294,6 +297,7 @@ class TestFast(MpfTestCase):
         MockSerialCommunicator.expected_commands = {
             "DN:20,01,01,18,0A,ff,00,14,00": False,
             "DN:21,01,01,18,0A,ff,01,14,00": False,
+            "SN:01,01,02,02": False,
         }
         self.machine.flippers.f_test_hold.enable()
         self.assertFalse(MockSerialCommunicator.expected_commands)
