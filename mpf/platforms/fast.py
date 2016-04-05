@@ -675,8 +675,8 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
         # Potential command from Dave:
         # Command
-        #                                                        Param1           Param2            Param3              P4        Param5
-        # [DL/DN]:<DRIVER_ID>,<CONTROL>,<SWITCH_ID_ON>,<75>,<SWITCH_ID_OFF>,<Driver On Time1>,<Driver On Time2 X 100mS>,<PWM2><Driver Rest Time><CR>#
+        # [DL/DN]:<DRIVER_ID>,<CONTROL>,<SWITCH_ID_ON>,<75>,<SWITCH_ID_OFF>,<Driver On Time1>,<Driver On Time2 X 100mS>,
+        # <PWM2><Driver Rest Time><CR>#
         # SWITCH_ID_ON would be the flipper switch
         # SWITCH_ID_OFF would be the EOS switch.
         # So for the flipper, Driver On Time1 will = the maximum time the coil can be held on if the EOS fails.
@@ -687,6 +687,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
                        enable_switch.hw_switch.number, coil.hw_driver.number)
 
         # map this to pulse without eos for now
+        # TODO: implement correctly
         del disable_switch
         self.set_pulse_on_hit_and_release_rule(enable_switch, coil)
 
