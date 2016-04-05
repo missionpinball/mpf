@@ -58,7 +58,7 @@ autofire_coils:
     switch_overwrite: dict|str:str|None
 
 switch_overwrites:
-    debounce: single|bool|None
+    debounce: single|enum(quick,slow)|None
 fast_switch_overwrites:
     label: single|str|None
 p_roc_switch_overwrites:
@@ -715,7 +715,7 @@ switch_player:
 switches:
     number: single|str|
     type: single|enum(NC,NO)|NO
-    debounce: single|bool|True
+    debounce: single|enum(auto,quick,slow)|auto
     recycle_time: single|ms|0
     events_when_activated: list|str|None
     events_when_deactivated: list|str|None

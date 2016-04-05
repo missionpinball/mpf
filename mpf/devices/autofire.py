@@ -23,7 +23,7 @@ class AutofireCoil(SystemWideDevice):
 
     def _initialize(self):
         if "debounce" not in self.config['switch_overwrite']:
-            self.config['switch_overwrite']['debounce'] = False
+            self.config['switch_overwrite']['debounce'] = "quick"
         if "recycle" not in self.config['coil_overwrite']:
             self.config['coil_overwrite']['recycle'] = True
 

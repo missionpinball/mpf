@@ -58,11 +58,11 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
         self.log.info("Successfully connected to P-ROC/P3-ROC")
 
     def _get_event_type(self, sw_activity, debounced):
-        if sw_activity == 0 and debounced:
+        if sw_activity == 0 and debounced in ("slow", "auto"):
             return "open_debounced"
-        elif sw_activity == 0 and not debounced:
+        elif sw_activity == 0 and debounced == "quick":
             return "open_nondebounced"
-        elif sw_activity == 1 and debounced:
+        elif sw_activity == 1 and debounced in ("slow", "auto"):
             return "closed_debounced"
         else:  # if sw_activity == 1 and not debounced:
             return "closed_nondebounced"
@@ -234,7 +234,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
             raise AssertionError("Switch %s cannot be controlled by the "
                                  "P-ROC/P3-ROC.", str(config['number']))
 
-        switch = PROCSwitch(config, proc_num, not config['debounce'])
+        switch = PROCSwitch(config, proc_num, config['debounce'] == "slow")
         # The P3-ROC needs to be configured to notify the host computers of
         # switch events. (That notification can be for open or closed,
         # debounced or nondebounced.)

@@ -215,6 +215,18 @@ class DriverPlatform(BasePlatform):
     def get_switch_config_section(self):
         return None
 
+    def validate_switch_overwrite_section(self, switch, config_overwrite):
+        switch.machine.config_validator.validate_config(
+            "switch_overwrites", config_overwrite, switch.name,
+            base_spec=self.get_switch_overwrite_section())
+        return config_overwrite
+
+    def validate_coil_overwrite_section(self, driver, config_overwrite):
+        driver.machine.config_validator.validate_config(
+            "coil_overwrites", config_overwrite, driver.name,
+            base_spec=self.get_coil_overwrite_section())
+        return config_overwrite
+
     def get_switch_overwrite_section(self):
         return None
 

@@ -185,10 +185,7 @@ class ReconfiguredDriver(Driver):
     def __init__(self, driver, config_overwrite):
         # no call to super init
         self._driver = driver
-        driver.machine.config_validator.validate_config(
-            "coil_overwrites", config_overwrite, driver.name,
-            base_spec=driver.platform.get_coil_overwrite_section())
-        self._config_overwrite = config_overwrite
+        self._config_overwrite = driver.platform.validate_coil_overwrite_section(driver, config_overwrite)
         self._configured_driver = None
 
     def __getattr__(self, item):

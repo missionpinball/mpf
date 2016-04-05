@@ -14,7 +14,7 @@ switches:
         number: A1-B0-7
     s_test_no_debounce:
         number: A1-B1-0
-        debounce: false
+        debounce: quick
     s_slingshot_test:
         number: A2-B1-0
     s_test_nc:

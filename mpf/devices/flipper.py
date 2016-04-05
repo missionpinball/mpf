@@ -34,9 +34,9 @@ class Flipper(SystemWideDevice):
 
     def _initialize(self):
         if "debounce" not in self.config['switch_overwrite']:
-            self.config['switch_overwrite']['debounce'] = False
+            self.config['switch_overwrite']['debounce'] = "quick"
         if "debounce" not in self.config['eos_switch_overwrite']:
-            self.config['eos_switch_overwrite']['debounce'] = False
+            self.config['eos_switch_overwrite']['debounce'] = "quick"
         if "recycle" not in self.config['main_coil_overwrite']:
             self.config['main_coil_overwrite']['recycle'] = True
         if "recycle" not in self.config['hold_coil_overwrite']:

@@ -86,10 +86,7 @@ class ReconfiguredSwitch():
     # can overwrite platform specific config parameters and invert
 
     def __init__(self, switch, config_switch_overwrite, invert):
-        self._config_overwrite = config_switch_overwrite
-        switch.machine.config_validator.validate_config(
-            "switch_overwrites", config_switch_overwrite, switch.name,
-            base_spec=switch.platform.get_switch_overwrite_section())
+        self._config_overwrite = switch.platform.validate_switch_overwrite_section(switch, config_switch_overwrite)
         self._switch = switch
         self._configured_switch = None
         self._invert = invert
