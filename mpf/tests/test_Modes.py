@@ -141,6 +141,7 @@ class TestModes(MpfTestCase):
                 self.machine.modes.mode3.config['mode']['stop_on_ball_end'])
 
         # start a game
+        self.machine.playfield.add_ball = MagicMock()
         self.machine.events.post('game_start')
         self.advance_time_and_run()
         self.machine.game.balls_in_play = 1

@@ -5,7 +5,6 @@ game:
 machine:
     glass_off_mode: False
 
-
 coils:
     eject_coil1:
         number:
@@ -17,10 +16,6 @@ coils:
         number:
     eject_coil5:
         number:
-    c_diverter:
-        number:
-
-
 
 switches:
     s_start:
@@ -40,13 +35,9 @@ switches:
         number:
     s_ball_switch_target3:
         number:
-    s_diverter:
-        number:
     s_playfield:
         number:
         tags: playfield_active
-
-
 
 ball_devices:
     test_trough:
@@ -81,14 +72,3 @@ ball_devices:
         eject_coil: eject_coil5
         ball_switches: s_ball_switch_target3
         debug: true
-
-diverters:
-    d_test:
-        activation_coil: c_diverter
-        activation_switches: s_diverter
-        type: hold
-        feeder_devices: test_launcher
-        targets_when_active: test_target2
-        targets_when_inactive: test_target1
-        activation_time: 4s
-        debug: True

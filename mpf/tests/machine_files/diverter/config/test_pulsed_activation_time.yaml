@@ -1,0 +1,14 @@
+#config_version=4
+
+config:
+- config.yaml
+
+diverters:
+    d_test_pulse:
+        activation_coil: c_diverter
+        deactivation_coil: c_diverter_disable
+        type: pulse
+        feeder_devices: test_trough
+        targets_when_active: playfield
+        targets_when_inactive: test_target
+        debug: True

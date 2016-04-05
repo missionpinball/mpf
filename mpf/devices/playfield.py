@@ -245,11 +245,10 @@ class Playfield(SystemWideDevice):
                     break
 
         if not source_device:
-            self.log.critical("Received request to add a ball to the playfield"
-                              ", but no source device was passed and no ball "
-                              "devices are tagged with 'ball_add_live'. Cannot"
-                              " add a ball.")
-            return False
+            raise AssertionError("Received request to add a ball to the playfield"
+                                 ", but no source device was passed and no ball "
+                                 "devices are tagged with 'ball_add_live'. Cannot"
+                                 " add a ball.")
 
         if reset:
             source_device.stop()

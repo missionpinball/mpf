@@ -25,14 +25,13 @@ class HardwarePlatform(VirtualPlatform):
 
     def set_target(self, source, target, **kwargs):
         del kwargs
-        if not target.is_playfield():
-            driver = None
-            if source.config['eject_coil']:
-                driver = source.config['eject_coil'].hw_driver
-            elif source.config['hold_coil']:
-                driver = source.config['hold_coil'].hw_driver
-            if driver:
-                driver.set_target_device(target)
+        driver = None
+        if source.config['eject_coil']:
+            driver = source.config['eject_coil'].hw_driver
+        elif source.config['hold_coil']:
+            driver = source.config['hold_coil'].hw_driver
+        if driver:
+            driver.set_target_device(target)
 
     def _initialize2(self):
         for device in self.machine.ball_devices:
@@ -151,7 +150,7 @@ class SmartVirtualDriver(VirtualDriver):
                                     callback=self.platform.confirm_eject_via_switch,
                                     switch=self.confirm_eject_switch)
 
-        if self.target_device:
+        if self.target_device and not self.target_device.is_playfield():
             self.platform.delay.add(ms=100,
                                     callback=self.platform.add_ball_to_device,
                                     device=self.target_device)

@@ -3,7 +3,6 @@
 from collections import deque
 from mpf.core.delays import DelayManager
 from mpf.core.system_wide_device import SystemWideDevice
-from mpf.core.utility_functions import Util
 
 
 class Diverter(SystemWideDevice):
@@ -136,7 +135,7 @@ class Diverter(SystemWideDevice):
             self.config['activation_coil'].pulse()
         elif self.config['type'] == 'hold':
             self.config['activation_coil'].enable()
-            self.schedule_deactivation()
+        self.schedule_deactivation()
 
     def deactivate(self, **kwargs):
         """Deactivates this diverter.
@@ -148,34 +147,21 @@ class Diverter(SystemWideDevice):
         self.log.debug("Deactivating Diverter")
         self.active = False
 
+        if self.config['activation_time']:
+            self.delay.remove('deactivate_timed')
+
         self.machine.events.post('diverter_' + self.name + '_deactivating')
         self.config['activation_coil'].disable()
 
         if self.config['deactivation_coil']:
             self.config['deactivation_coil'].pulse()
 
-    def schedule_deactivation(self, time=None):
+    def schedule_deactivation(self):
         """Schedules a delay to deactivate this diverter.
-
-        Args:
-            time: The MPF string time of how long you'd like the delay before
-                deactivating the diverter. Default is None which means it uses
-                the 'activation_time' setting configured for this diverter. If
-                there is no 'activation_time' setting and no delay is passed,
-                it will disable the diverter immediately.
         """
-        if time is not None:
-            delay = Util.string_to_ms(time)
-        elif self.config['activation_time']:
-            delay = self.config['activation_time']
-        else:
-            delay = False
-
-        if delay:
-            self.delay.add(name='disable_held_coil', ms=delay,
-                           callback=self.disable_held_coil)
-        else:
-            self.disable_held_coil()
+        if self.config['activation_time']:
+            self.delay.add(name='deactivate_timed', ms=self.config['activation_time'],
+                           callback=self.deactivate)
 
     def enable_switches(self):
         if self.trigger_type == 'hardware':
@@ -263,11 +249,6 @@ class Diverter(SystemWideDevice):
 
             # todo this should not clear all the rules for this switch
 
-    def disable_held_coil(self):
-        """Physically disables the coil holding this diverter open."""
-        self.log.debug("Disabling Activation Coil")
-        self.config['activation_coil'].disable()
-
     def _feeder_eject_count_decrease(self, target, **kwargs):
         del target
         del kwargs
@@ -289,11 +270,14 @@ class Diverter(SystemWideDevice):
                         "Enabling diverter since eject target is on the "
                         "inactive target list")
                     self.disable()
-            # And perform those ejects
-            while len(self.eject_attempt_queue) > 0:
-                self.diverting_ejects_count += 1
-                queue = self.eject_attempt_queue.pop()
-                queue.clear()
+                # And perform those ejects
+                while len(self.eject_attempt_queue) > 0:
+                    self.diverting_ejects_count += 1
+                    queue = self.eject_attempt_queue.pop()
+                    queue.clear()
+            elif self.active:
+                # if diverter is active and no more ejects are ongoing
+                self.deactivate()
 
     def _feeder_eject_attempt(self, queue, target, **kwargs):
         # Event handler which is called when one of this diverter's feeder

@@ -204,7 +204,7 @@ displays:
     default: single|bool|False
     fps: single|int|0
 diverters:
-    type: single|str|hold
+    type: single|enum(hold,pulse)|hold
     activation_time: single|ms|0
     activation_switches: list|machine(switches)|None
     disable_switches: list|machine(switches)|None
