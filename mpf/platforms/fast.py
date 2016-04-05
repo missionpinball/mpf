@@ -673,8 +673,22 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         self.net_connection.send(cmd)
 
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
-        # TODO implement
-        raise NotImplementedError
+        # Potential command from Dave:
+        # Command
+        #                                                        Param1           Param2            Param3              P4        Param5
+        # [DL/DN]:<DRIVER_ID>,<CONTROL>,<SWITCH_ID_ON>,<75>,<SWITCH_ID_OFF>,<Driver On Time1>,<Driver On Time2 X 100mS>,<PWM2><Driver Rest Time><CR>#
+        # SWITCH_ID_ON would be the flipper switch
+        # SWITCH_ID_OFF would be the EOS switch.
+        # So for the flipper, Driver On Time1 will = the maximum time the coil can be held on if the EOS fails.
+        # Driver On Time2 X 100mS would not be used for a flipper, so set it to 0.
+        # And PWM2 should be left on full 0xff unless you need less power for some reason.
+        # No release so far :-(
+        self.log.debug("Setting Pulse on hit and release with HW Rule. Switch: %s, Driver: %s",
+                       enable_switch.hw_switch.number, coil.hw_driver.number)
+
+        # map this to pulse without eos for now
+        del disable_switch
+        self.set_pulse_on_hit_and_release_rule(enable_switch, coil)
 
     def set_pulse_on_hit_rule(self, enable_switch, coil):
         self.log.debug("Setting Pulse on hit and release HW Rule. Switch: %s, Driver: %s",
