@@ -37,6 +37,10 @@ class Flipper(SystemWideDevice):
             self.config['switch_overwrite']['debounce'] = False
         if "debounce" not in self.config['eos_switch_overwrite']:
             self.config['eos_switch_overwrite']['debounce'] = False
+        if "recycle" not in self.config['main_coil_overwrite']:
+            self.config['main_coil_overwrite']['recycle'] = True
+        if "recycle" not in self.config['hold_coil_overwrite']:
+            self.config['hold_coil_overwrite']['recycle'] = True
 
         self.platform = self.config['main_coil'].platform
         self.main_coil = ReconfiguredDriver(self.config['main_coil'], self.config['main_coil_overwrite'])
