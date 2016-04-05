@@ -124,16 +124,37 @@ class MachineController(object):
 
     def _run_init_phases(self):
         self.events.post("init_phase_1")
+        '''event: init_phase_1
+
+        desc: Posted during the initial boot up of MPF.
+        '''
+
         self.events.process_event_queue()
         self.events.post("init_phase_2")
+        '''event: init_phase_2
+
+        desc: Posted during the initial boot up of MPF.
+        '''
         self.events.process_event_queue()
         self._load_plugins()
         self.events.post("init_phase_3")
+        '''event: init_phase_3
+
+        desc: Posted during the initial boot up of MPF.
+        '''
         self.events.process_event_queue()
         self._load_scriptlets()
         self.events.post("init_phase_4")
+        '''event: init_phase_4
+
+        desc: Posted during the initial boot up of MPF.
+        '''
         self.events.process_event_queue()
         self.events.post("init_phase_5")
+        '''event: init_phase_5
+
+        desc: Posted during the initial boot up of MPF.
+        '''
         self.events.process_event_queue()
 
     def _initialize_platforms(self):
@@ -410,13 +431,40 @@ class MachineController(object):
         Note: This method is not yet implemented.
 
         """
-        self.events.post('Resetting...')
+        self.log.debug('Resetting...')
         self.events.process_event_queue()
         self.events.post('machine_reset_phase_1')
+        '''Event: machine_reset_phase_1
+
+        Desc: The first phase of resetting the machine.
+
+        These events are posted when MPF boots (after the init_phase events are
+        posted), and they're also posted subsequently when the machine is reset
+        (after existing the service mode, for example).
+
+        '''
         self.events.process_event_queue()
         self.events.post('machine_reset_phase_2')
+        '''Event: machine_reset_phase_2
+
+        Desc: The second phase of resetting the machine.
+
+        These events are posted when MPF boots (after the init_phase events are
+        posted), and they're also posted subsequently when the machine is reset
+        (after existing the service mode, for example).
+
+        '''
         self.events.process_event_queue()
         self.events.post('machine_reset_phase_3')
+        '''Event: machine_reset_phase_3
+
+        Desc: The third phase of resetting the machine.
+
+        These events are posted when MPF boots (after the init_phase events are
+        posted), and they're also posted subsequently when the machine is reset
+        (after existing the service mode, for example).
+
+        '''
         self.events.process_event_queue()
         self.log.debug('Reset Complete')
         self._reset_complete()
@@ -499,6 +547,11 @@ class MachineController(object):
         """Performs a graceful exit of MPF."""
         self.log.info("Shutting down...")
         self.events.post('shutdown')
+        '''event: shutdown
+        desc: Posted when the machine is shutting down to give all modules a
+        chance to shut down gracefully.
+
+        '''
         self.events.process_event_queue()
         self.thread_stopper.set()
         # todo change this to look for the shutdown event
@@ -577,6 +630,11 @@ class MachineController(object):
     def _reset_complete(self):
         self.log.debug('Reset Complete')
         self.events.post('reset_complete')
+        '''event: reset_complete
+
+        desc: The machine reset process is complete
+
+        '''
         # self.clock.unschedule(self._loading_tick)
 
     def configure_debugger(self):
@@ -637,6 +695,24 @@ class MachineController(object):
                              value=value,
                              prev_value=prev_value,
                              change=change)
+            '''event: machine_var_(name)
+
+            desc: Posted when a machine variable is added or changes value.
+            (Machine variables are like player variables, except they're
+            maintained machine-wide instead of per-player or per-game.)
+
+            args:
+
+            value: The new value of this machine variable.
+
+            prev_value: The previous value of this machine variable, e.g. what
+            it was before the current value.
+
+            change: If the machine variable just changed, this will be the
+            amount of the change. If it's not possible to determine a numeric
+            change (for example, if this machine variable is a list), then this
+            *change* value will be set to the boolean *True*.
+            '''
 
             if self.machine_var_monitor:
                 for callback in self.monitors['machine_vars']:

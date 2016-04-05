@@ -65,6 +65,13 @@ class BallSearch(object):
         # disables ball search. will stop the ball search if it is running
         if self.started:
             self.machine.events.post('ball_search_stopped')
+        '''event: ball_search_stopped
+
+        desc: The ball search process has been disabled. This event is posted
+            any time ball search stops, regardless of whether it found a ball
+            or gave up. (If the ball search failed to find the ball, it will
+            also post the *ball_search_failed* event.)
+        '''
 
         self.started = False
         self.enabled = False
@@ -84,6 +91,10 @@ class BallSearch(object):
         self.iterator = iter(self.callbacks)
         self.log.info("Starting ball search")
         self.machine.events.post('ball_search_started')
+        '''event: ball_search_started
+
+        desc: The ball search process has been begun.
+        '''
         self.run()
 
     def run(self):
@@ -118,6 +129,12 @@ class BallSearch(object):
         self.log.warning("Ball Search failed to find ball. Giving up!")
         self.disable()
         self.machine.events.post('ball_search_failed')
+        '''event: ball_search_failed
+
+        desc: The ball search process has failed to locate a missing or stuck
+            ball and has given up. This event will be posted immediately after
+            the *ball_search_stopped* event.
+        '''
 
         lost_balls = self.playfield.balls
         self.machine.ball_controller.num_balls_known -= lost_balls

@@ -202,6 +202,12 @@ class BallController(object):
 
         if balls_to_collect:
             self.machine.events.post('collecting_balls')
+            '''event: collecting_balls
+
+            desc: Posted by the ball controller when it starts the collecting
+                balls process.
+
+            '''
 
             for device in target_devices:
                 self.machine.events.replace_handler(
@@ -225,6 +231,12 @@ class BallController(object):
     def _collecting_balls_complete(self):
         self.machine.events.remove_handler(self._collecting_balls_complete)
         self.machine.events.post('collecting_balls_complete')
+        '''event: collecting_balls_complete
+
+        desc: Posted by the ball controller when it has finished the collecting
+            balls process.
+
+        '''
 
     def _ball_drained_handler(self, new_balls, unclaimed_balls, device, **kwargs):
         del kwargs
