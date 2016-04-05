@@ -221,6 +221,13 @@ class Mode(object):
 
         self.machine.events.post('mode_' + self.name + '_started',
                                  callback=self._mode_started_callback)
+        '''event: event_(mode_name)_started
+
+        desc: Posted when a mode has started. The "mode_name" part is replaced
+        with the actual name of the mode, so the actual event posted is
+        something like *mode_attract_started*, *mode_base_started*, etc.
+
+        '''
 
     def _mode_started_callback(self, **kwargs):
         # Called after the mode_<name>_started queue event has finished.
@@ -287,6 +294,13 @@ class Mode(object):
 
         self.machine.events.post('mode_' + self.name + '_stopped',
                                  callback=self._mode_stopped_callback)
+        '''event: event_(mode_name)_stopped
+
+        desc: Posted when a mode has stopped. The "mode_name" part is replaced
+        with the actual name of the mode, so the actual event posted is
+        something like *mode_attract_stopped*, *mode_base_stopped*, etc.
+
+        '''
 
         if self._mode_start_wait_queue:
 
@@ -592,7 +606,8 @@ class ModeTimer(object):
                 handler = self.change_tick_interval
                 kwargs = {'change': entry['value']}
             else:
-                raise AssertionError("Invalid control_event action {} in mode".format(entry['action']), self.name)
+                raise AssertionError("Invalid control_event action {} in mode".
+                                     format(entry['action']), self.name)
 
             if kwargs:
                 self.event_keys.add(self.machine.events.add_handler(
@@ -602,7 +617,6 @@ class ModeTimer(object):
                                     entry['event'], handler))
 
     def _remove_control_events(self):
-
         if self.debug:
             self.log.debug("Removing control events")
 
@@ -651,6 +665,14 @@ class ModeTimer(object):
         self.machine.events.post('timer_' + self.name + '_started',
                                  ticks=self.mode.player[self.tick_var],
                                  ticks_remaining=self.ticks_remaining)
+        '''event: timer_(name)_started
+
+        desc: The timer named (name) has just started.
+
+        args:
+            ticks: The current tick number this timer is at.
+            ticks_remaining: The number of ticks in this timer remaining.
+        '''
 
         if self.bcp:
             self.machine.bcp.send('timer', name=self.name, action='started',
@@ -692,6 +714,17 @@ class ModeTimer(object):
         self.machine.events.post('timer_' + self.name + '_stopped',
                                  ticks=self.mode.player[self.tick_var],
                                  ticks_remaining=self.ticks_remaining)
+        '''event: timer_(name)_stopped
+
+        desc: The timer named (name) has stopped.
+
+        This event is posted any time the timer stops, whether it stops because
+        it ended or because it was stopped early by some other event.
+
+        args:
+            ticks: The current tick number this timer is at.
+            ticks_remaining: The number of ticks in this timer remaining.
+        '''
 
         if self.bcp:
             self.machine.bcp.send('timer', name=self.name, action='stopped',
@@ -722,6 +755,14 @@ class ModeTimer(object):
         self.machine.events.post('timer_' + self.name + '_paused',
                                  ticks=self.mode.player[self.tick_var],
                                  ticks_remaining=self.ticks_remaining)
+        '''event: timer_(name)_paused
+
+        desc: The timer named (name) has paused.
+
+        args:
+            ticks: The current tick number this timer is at.
+            ticks_remaining: The number of ticks in this timer remaining.
+        '''
         if self.bcp:
             self.machine.bcp.send('timer', name=self.name, action='paused',
                                   ticks=self.mode.player[self.tick_var],
@@ -755,6 +796,17 @@ class ModeTimer(object):
         self.machine.events.post('timer_' + self.name + '_complete',
                                  ticks=self.mode.player[self.tick_var],
                                  ticks_remaining=self.ticks_remaining)
+        '''event: timer_(name)_complete
+
+        desc: The timer named (name) has completed.
+
+        Note that this timer may reset and start again after this event is
+        posted, depending on its settings.
+
+        args:
+            ticks: The current tick number this timer is at.
+            ticks_remaining: The number of ticks in this timer remaining.
+        '''
 
         if self.restart_on_complete:
 
@@ -772,7 +824,6 @@ class ModeTimer(object):
             self.log.debug("Timer Tick")
 
         if not self.running:
-
             if self.debug:
                 self.log.debug("Timer is not running. Will remove.")
 
@@ -788,6 +839,16 @@ class ModeTimer(object):
             self.machine.events.post('timer_' + self.name + '_tick',
                                      ticks=self.mode.player[self.tick_var],
                                      ticks_remaining=self.ticks_remaining)
+            '''event: timer_(name)_tick
+
+            desc: The timer named (name) has just counted down (or up,
+            depending on its settings).
+
+            args:
+                ticks: The new tick number this timer is at.
+                ticks_remaining: The new number of ticks in this timer
+                    remaining.
+            '''
 
             if self.debug:
                 self.log.debug("Ticks: %s, Remaining: %s",
@@ -825,6 +886,15 @@ class ModeTimer(object):
                                  ticks=self.mode.player[self.tick_var],
                                  ticks_added=ticks_added,
                                  ticks_remaining=self.ticks_remaining)
+        '''event: timer_(name)_time_added
+
+        desc: The timer named (name) has just had time added to it.
+
+        args:
+            ticks: The new tick number this timer is at.
+            ticks_remaining: The new number of ticks in this timer remaining.
+            ticks_added: How many ticks were just added.
+        '''
 
         if self.bcp:
             self.machine.bcp.send('timer', name=self.name, action='time_added',
@@ -854,6 +924,17 @@ class ModeTimer(object):
                                  ticks=self.mode.player[self.tick_var],
                                  ticks_subtracted=ticks_subtracted,
                                  ticks_remaining=self.ticks_remaining)
+        '''event: timer_(name)_time_subtracted
+
+        desc: The timer named (name) just had some ticks removed.
+
+        args:
+            ticks: The new current tick number this timer is at.
+            ticks_remaining: The new number of ticks in this timer remaining.
+            time_subtracted: How many ticks were just subtracted from this
+                timer. (This number will be positive, indicating the ticks
+                subtracted.)
+        '''
 
         if self.bcp:
             self.machine.bcp.send('timer', name=self.name,

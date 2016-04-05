@@ -88,3 +88,21 @@ class ScoreController(object):
                                                'score')), value=value,
                                      prev_value=prev_value,
                                      change=value-prev_value)
+            '''event: mode_(mode_name)_(var_name)_score
+
+            desc: A scoring event was just processed to add (or remove) value
+            from a player variable. (Remember that scoring events can affect
+            the value of *any* player variable, not just the *score* player
+            variable.
+
+            For example, if a scoring event in the "base" mode added to the
+            player variable called *ramps*, the event posted would be
+            *mode_base_ramps_score*.
+
+            args:
+            value: The new value of the player variable.
+            prev_value: The previous value of this player variable before the
+                new *value* was added.
+            change: The numeric value of the change. (*value* minus
+                *prev_value*).
+            '''

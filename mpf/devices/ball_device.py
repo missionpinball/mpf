@@ -250,9 +250,20 @@ class BallDevice(SystemWideDevice):
 
     def _handle_unexpected_balls(self, balls):
         self.log.debug("Received %s unexpected balls", balls)
+        # todo is this event name right? I think it should include the name of
+        # the device that did the capturing too?
         self.machine.events.post('balldevice_captured_from_{}'.format(
                 self.config['captures_from'].name),
                 balls=balls)
+        '''event: balldevice_captured_from_(device)
+
+        desc: A ball device has just captured a ball from the device called
+        (device)
+
+        args:
+        balls: The number of balls that were captured.
+
+        '''
 
     def _handle_new_balls(self, balls):
         while len(self._incoming_balls) > 0 and balls > 0:
@@ -401,6 +412,17 @@ class BallDevice(SystemWideDevice):
                                  balls=1,
                                  target=self.eject_in_progress_target,
                                  num_attempts=self.num_eject_attempts)
+        '''event: balldevice_(name)_ball_left
+
+        desc: A ball (or balls) just left the device (name).
+
+        args:
+            balls: The number of balls that just left
+            target: The device the ball is heading to.
+            num_attempts: The current count of how many eject attempts have
+                been made.
+
+        '''
 
         if self.config['confirm_eject_type'] == 'target':
             self._notify_target_of_incoming_ball(
@@ -501,6 +523,11 @@ class BallDevice(SystemWideDevice):
             "Ball device is unable to eject ball. Stopping device")
         self.machine.events.post('balldevice_' + self.name +
                                  '_eject_broken', source=self)
+        '''event: balldevice_(name)_eject_broken
+
+        desc: The ball device called (name) is broken and cannot eject balls.
+
+        '''
 
     # ------------------------ State: failed_confirm --------------------------
 
@@ -586,6 +613,17 @@ class BallDevice(SystemWideDevice):
         # ripple this to the next device/register handler
         self.machine.events.post('balldevice_{}_ball_lost'.format(self.name),
                                  target=target)
+        '''event: balldevice_(name)_ball_lost
+
+        desc: A ball has been lost from the device (name), meaning the ball
+            never made it to the target when this device attempted to eject
+            it.
+
+        args:
+            target: The target device which was expecting to receive a ball
+            from this device.
+
+        '''
 
     def _source_device_eject_failed(self, balls, target, retry, **kwargs):
         del balls
@@ -1001,8 +1039,17 @@ class BallDevice(SystemWideDevice):
 
         self.machine.events.post('balldevice_{}_ball_missing'.format(
                 abs(balls)))
+        '''event: balldevice_(balls)_ball_missing.
+        desc: The number of (balls) is missing. Note this event is
+        posted in addition to the generic *balldevice_ball_missing* event.
+        '''
         self.machine.events.post('balldevice_ball_missing',
                                  balls=abs(balls))
+        '''event: balldevice_ball_missing
+        desc: A ball is missing from a device.
+        args:
+            balls: The number of balls that are missing
+        '''
 
         # add ball to default target
         self.config['ball_missing_target'].add_missing_balls(balls)
@@ -1630,6 +1677,14 @@ class BallDevice(SystemWideDevice):
                                  '_ball_eject_success',
                                  balls=balls_ejected,
                                  target=eject_target)
+        '''event: balldevice_(name)_ball_eject_success
+        desc: One or more balls has successfully ejected from the device
+            (name).
+        args:
+            balls: The number of balls that have successfully ejected.
+            target: The target device that has received (or will be receiving)
+                the ejected ball(s).
+        '''
 
         return self._switch_state("eject_confirmed")
 
@@ -1694,12 +1749,27 @@ class BallDevice(SystemWideDevice):
                                  balls=balls,
                                  retry=retry,
                                  num_attempts=self.num_eject_attempts)
+        '''event: balldevice_(name)_ball_eject_failed
+        desc: A ball (or balls) has failed to eject from the device (name).
+        args:
+            target: The target device that was supposed to receive the ejected
+                balls.
+            balls: The number of balls that failed to eject.
+            retry: Boolean as to whether this eject will be retried.
+            num_attempts: How many attemps have been made to eject this ball
+                (or balls).
+        '''
 
     def _eject_permanently_failed(self):
         self.log.warning("Eject failed %s times. Permanently giving up.",
                          self.config['max_eject_attempts'])
         self.machine.events.post('balldevice_' + self.name +
                                  'ball_eject_permanent_failure')
+        # todo: Check this event name. Add an underscore?
+        '''event: balldevice_(name)ball_eject_permanent_failure
+        desc: The device (name) failed to eject a ball and the number of
+            retries has been met, so it will not try to eject further.
+        '''
 
     def _ok_to_receive(self):
         # Post an event announcing that it's ok for this device to receive a
@@ -1707,6 +1777,13 @@ class BallDevice(SystemWideDevice):
         self.machine.events.post(
                 'balldevice_{}_ok_to_receive'.format(self.name),
                 balls=self.get_additional_ball_capacity())
+        '''event: balldevice_(name)_ok_to_receive
+        desc: The ball device (name) now has capicity to receive a ball (or
+            balls). This event is posted after a device that was full has
+            successfully ejected and is now able to receive balls.
+        args:
+            balls: The number of balls this device can now receive.
+        '''
 
     def is_playfield(self):
         """Returns True if this ball device is a Playfield-type device, False
