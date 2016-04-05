@@ -840,14 +840,18 @@ class FASTDriver(DriverPlatformInterface):
         self.log.debug("Driver Settings: %s", self.driver_settings)
         self.reset()
 
-    def get_pulse_ms_for_cmd(self, coil):
+    def _get_pulse_ms(self, coil):
         if coil.config['pulse_ms'] is None:
-            return Util.int_to_hex_string(self.machine.config['mpf']['default_pulse_ms'])
+            return self.machine.config['mpf']['default_pulse_ms']
         else:
-            if coil.config['pulse_ms'] > 255:
-                return "00"
-            else:
-                return Util.int_to_hex_string(coil.config['pulse_ms'])
+            return coil.config['pulse_ms']
+
+    def get_pulse_ms_for_cmd(self, coil):
+        pulse_ms = self._get_pulse_ms(coil)
+        if pulse_ms > 255:
+            return "00"
+        else:
+            return Util.int_to_hex_string(pulse_ms)
 
     def get_pwm1_for_cmd(self, coil):
         if coil.config['pulse_pwm_mask']:
@@ -887,8 +891,12 @@ class FASTDriver(DriverPlatformInterface):
         elif coil.config['recycle_ms'] is not None:
             return Util.int_to_hex_string(coil.config['recycle_ms'])
         else:
-            # TODO: default is 2 times the pulse time
-            return "00"
+            # default recycle_ms to pulse_ms * 2
+            pulse_ms = self._get_pulse_ms(coil)
+            if pulse_ms * 2 > 255:
+                return "FF"
+            else:
+                return Util.int_to_hex_string(pulse_ms * 2)
 
     def get_config_cmd(self):
         return self.driver_settings['config_cmd']
