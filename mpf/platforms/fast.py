@@ -650,15 +650,33 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
     def get_coil_overwrite_section(self):
         return "fast_coil_overwrites"
 
-    def set_pulse_on_hit_rule(self, enable_switch, coil):
-        # TODO: this is not correct but the same as before
-        self.set_pulse_on_hit_and_release_rule(enable_switch, coil)
+    def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
+        self.log.debug("Setting Pulse on hit and release HW Rule. Switch: %s, Driver: %s",
+                       enable_switch.hw_switch.number, coil.hw_driver.number)
+
+        driver = coil.hw_driver
+
+        cmd = (driver.get_config_cmd() +
+               coil.hw_driver.number + ',' +
+               driver.get_control_for_cmd(enable_switch) + ',' +
+               enable_switch.hw_switch.number[0] + ',' +
+               "18" + ',' +                                 # Mode 18 settings
+               driver.get_pulse_ms_for_cmd(coil) + ',' +    # initial pulse ms
+               driver.get_pwm1_for_cmd(coil) + ',' +        # intial pwm
+               "00" + ',' +        # pulse 2 time
+               driver.get_recycle_ms_for_cmd(coil) + ',' +  # recycle ms
+               "00")                                        # not used with Mode 18
+
+        driver.autofire = True
+        self.log.debug("Writing hardware rule: %s", cmd)
+
+        self.net_connection.send(cmd)
 
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
         # TODO implement
         raise NotImplementedError
 
-    def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
+    def set_pulse_on_hit_rule(self, enable_switch, coil):
         self.log.debug("Setting Pulse on hit and release HW Rule. Switch: %s, Driver: %s",
                        enable_switch.hw_switch.number, coil.hw_driver.number)
 

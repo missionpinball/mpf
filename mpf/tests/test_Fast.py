@@ -292,7 +292,7 @@ class TestFast(MpfTestCase):
         # we pulse the main coil (20)
         # hold coil (21) is pulsed + enabled
         MockSerialCommunicator.expected_commands = {
-            "DN:20,01,01,10,0A,ff,00,00,00": False,
+            "DN:20,01,01,18,0A,ff,00,00,00": False,
             "DN:21,01,01,18,0A,ff,01,00,00": False,
         }
         self.machine.flippers.f_test_hold.enable()
