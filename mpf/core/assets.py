@@ -62,7 +62,8 @@ class AssetManager(object):
         self.machine.events.add_handler('init_phase_3', self._create_assets)
 
         # Picks up asset load information from connected BCP client(s)
-        self.machine.events.add_handler('assets_to_load', self._bcp_client_asset_load)
+        self.machine.events.add_handler('assets_to_load',
+                                        self._bcp_client_asset_load)
 
     @property
     def num_assets_remaining(self):
@@ -557,9 +558,9 @@ class AssetManager(object):
         remaining = total - self.num_assets_loaded - self.num_bcp_assets_loaded
 
         self.machine.events.post('loading_assets', total=total,
-                                 loaded=self.num_assets_loaded + self.num_bcp_assets_loaded,
-                                 remaining=remaining,
-                                 percent=self.loading_percent)
+            loaded=self.num_assets_loaded + self.num_bcp_assets_loaded,
+            remaining=remaining,
+            percent=self.loading_percent)
 
         '''event: loading_assets
 
@@ -570,11 +571,11 @@ class AssetManager(object):
 
         args:
 
-        total: The total number of assets that need to be loaded. This is equal
-            to the sum of the *loaded* and *remaining* values below. It also
-            includes assets that MPF is loading itself as well as any assets
-            that have been reported from remotely connected BCP hosts (e.g. the
-             media controller).
+        total: The total number of assets that need to be loaded. This is
+        equal to the sum of the *loaded* and *remaining* values below. It
+        also includes assets that MPF is loading itself as well as any
+        assets that have been reported from remotely connected BCP hosts
+        (e.g. the media controller).
 
         loaded: The number of assets that have been loaded so far.
 
@@ -584,6 +585,26 @@ class AssetManager(object):
             in the range of 0 to 100.
 
         '''
+
+        if not remaining:
+            self.machine.events.post('asset_loading_complete')
+            '''event: asset_loading_complete
+            desc: Posted when the asset manager has loaded all the assets in
+            its queue.
+
+            Note that this event does *NOT* necessarily mean that all asset
+            loading is complete. Rather is just means that the asset manager
+            has loaded everything in its queue.
+
+            For example, when the MPF-MC boots, it will load the assets it is
+            configured to load on start. However, if the MPF MC is started but
+            MPF is not, then the MPF MC will load its assets and then post this
+            *asset_loading_complete* event when it's done. Then when MPF is
+            started and connects, MPF will need to load its own assets, which
+            means the MPF MC will post more *loading_assets* and then
+            a final *asset_loading_complete* event a second time for the
+            MPF-based assets.
+            '''
 
         # TODO temp until logging is implemented properly
         # print('Loading assets: {}/{} ({}%)'.format(self.num_assets_loaded +
