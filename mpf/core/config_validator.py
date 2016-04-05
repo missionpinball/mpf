@@ -277,8 +277,10 @@ fast:
     baud: single|int|921600
     config_number_format: single|str|hex
     watchdog: single|ms|1000
-    default_debounce_open: single|ms|30
-    default_debounce_close: single|ms|30
+    default_quick_debounce_open: single|ms|
+    default_quick_debounce_close: single|ms|
+    default_normal_debounce_open: single|ms|
+    default_normal_debounce_close: single|ms|
     hardware_led_fade_time: single|ms|0
     debug: single|bool|False
 flasher_player:

@@ -540,16 +540,11 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         # (switch number, connection)
         config['number'] = (config['number'], config['connection'])
 
-        if not config['debounce_open']:
-            config['debounce_open'] = self.config['default_debounce_open']
-
-        if not config['debounce_close']:
-            config['debounce_close'] = self.config['default_debounce_close']
-
         self.log.debug("FAST Switch hardware tuple: %s", config['number'])
 
         switch = FASTSwitch(config=config,
-                            sender=self.net_connection.send)
+                            sender=self.net_connection.send,
+                            platform=self)
 
         return switch, config['number']
 
@@ -649,6 +644,14 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
 
     def get_coil_overwrite_section(self):
         return "fast_coil_overwrites"
+
+    def validate_switch_overwrite_section(self, switch, config_overwrite):
+        if "debounce" in config_overwrite and switch.config['debounce'] != "auto" and \
+                switch.config['debounce'] != config_overwrite['debounce']:
+            raise AssertionError("Cannot overwrite debounce for switch %s for FAST interface", switch.name)
+
+        config_overwrite = super().validate_switch_overwrite_section(switch, config_overwrite)
+        return config_overwrite
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
         self.log.debug("Setting Pulse on hit and release HW Rule. Switch: %s, Driver: %s",
@@ -789,22 +792,30 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
 
 class FASTSwitch(object):
 
-    def __init__(self, config, sender):
+    def __init__(self, config, sender, platform):
         self.config = config
         self.log = logging.getLogger('FASTSwitch')
         self.number = config['number']
         self.connection = config['number'][1]
         self.send = sender
+        self.platform = platform
+        self.configure_debounce(config)
+
+    def configure_debounce(self, config):
+        if config['debounce'] in ("normal", "auto"):
+            debounce_open = self.platform.config['default_normal_debounce_open']
+            debounce_close = self.platform.config['default_normal_debounce_close']
+        else:
+            debounce_open = self.platform.config['default_quick_debounce_open']
+            debounce_close = self.platform.config['default_quick_debounce_close']
 
         if self.connection:
             cmd = 'SN:'
         else:
             cmd = 'SL:'
 
-        debounce_open = str(hex(config['debounce_open']))[2:]
-        debounce_close = str(hex(config['debounce_close']))[2:]
-
-        cmd += str(self.number[0]) + ',01,' + debounce_open + ',' + debounce_close
+        cmd += str(self.number[0]) + ',01,' + Util.int_to_hex_string(debounce_open) + ',' +\
+               Util.int_to_hex_string(debounce_close)
 
         self.send(cmd)
 
