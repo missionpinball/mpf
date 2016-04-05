@@ -639,9 +639,6 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
     def get_switch_config_section(self):
         return "fast_switches"
 
-    def get_switch_overwrite_section(self):
-        return "fast_switch_overwrites"
-
     def get_coil_overwrite_section(self):
         return "fast_coil_overwrites"
 

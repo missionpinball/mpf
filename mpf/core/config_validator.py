@@ -59,10 +59,6 @@ autofire_coils:
 
 switch_overwrites:
     debounce: single|enum(quick,normal)|None
-fast_switch_overwrites:
-    label: single|str|None
-p_roc_switch_overwrites:
-    label: single|str|None
 
 coil_overwrites:
     recycle: single|bool|None

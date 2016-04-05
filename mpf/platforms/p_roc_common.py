@@ -70,9 +70,6 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
     def get_coil_config_section(self):
         return "p_roc_coils"
 
-    def get_switch_overwrite_section(self):
-        return "p_roc_switch_overwrites"
-
     def get_coil_overwrite_section(self):
         return "p_roc_coil_overwrites"
 
