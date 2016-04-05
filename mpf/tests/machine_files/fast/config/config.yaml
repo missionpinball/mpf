@@ -65,7 +65,8 @@ servos:
 flippers:
     f_test_single:
         debug: true
-        pulse_ms: 11
+        main_coil_overwrite:
+            pulse_ms: 11
         main_coil: c_flipper_main
         activation_switch: s_flipper
 

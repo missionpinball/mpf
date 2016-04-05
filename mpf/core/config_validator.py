@@ -56,19 +56,6 @@ autofire_coils:
     disable_events: dict|str:ms|ball_ending
     coil_overwrite: dict|str:str|None
     switch_overwrite: dict|str:str|None
-    # hw rules settings overrides
-    pulse_ms: single|int|None
-    pwm_on_ms: single|int|None
-    pwm_off_ms: single|int|None
-    pulse_power: single|int|None
-    hold_power: single|int|None
-    pulse_power32: single|int|None
-    hold_power32: single|int|None
-    pulse_pwm_mask: single|int|None
-    hold_pwm_mask: single|int|None
-    recycle_ms: single|ms|None              # TODO: We override out own default here. fix!
-    debounce: single|bool|None
-    drive_now: single|bool|None
 
 switch_overwrites:
     debounce: single|bool|None
@@ -249,19 +236,6 @@ diverters:
     disable_events: dict|str:ms|None
     activate_events: dict|str:ms|None
     deactivate_events: dict|str:ms|None
-    # hw rules settings overrides
-    pulse_ms: single|int|None
-    pwm_on_ms: single|int|None
-    pwm_off_ms: single|int|None
-    pulse_power: single|int|None
-    hold_power: single|int|None
-    pulse_power32: single|int|None
-    hold_power32: single|int|None
-    pulse_pwm_mask: single|int|None
-    hold_pwm_mask: single|int|None
-    recycle_ms: single|ms|None
-    debounce: single|bool|False
-    drive_now: single|bool|False
 driver_enabled:
     number: single|str|
     allow_enable: single|bool|True
@@ -310,7 +284,7 @@ fast:
 flasher_player:
     __allow_others__:
     ms: single|int|None
-flashers:
+flashers:   # TODO: this should be a coil + x. actually extend coil config
     number: single|str|
     flash_ms: single|ms|None
     tags: list|str|None
@@ -346,20 +320,6 @@ flippers:
     hold_coil_overwrite: dict|str:str|None
     switch_overwrite: dict|str:str|None
     eos_switch_overwrite: dict|str:str|None
-
-    # hw rules settings overrides
-    pulse_ms: single|int|None
-    pwm_on_ms: single|int|None
-    pwm_off_ms: single|int|None
-    pulse_power: single|int|None
-    hold_power: single|int|None
-    pulse_power32: single|int|None
-    hold_power32: single|int|None
-    pulse_pwm_mask: single|int|None
-    hold_pwm_mask: single|int|None
-    recycle_ms: single|ms|None
-    debounce: single|bool|None
-    drive_now: single|bool|None
 game:
     balls_per_game: single|int|3
     max_players: single|int|4
