@@ -191,20 +191,6 @@ class ReconfiguredDriver(Driver):
         self._config_overwrite = config_overwrite
         self._configured_driver = None
 
-    @staticmethod
-    def filter_from_config(config):
-        # for transition
-        # TODO: remove in 0.31
-        whitelist = ["recycle", "pulse_ms", "pulse_power", "hold_power", "pulse_power32",
-                     "hold_power32", "pulse_pwm_mask", "hold_pwm_mask", "recycle_ms", "pwm_on_ms",
-                     "pwm_off_ms"]
-        filtered_config = {}
-        for key in config:
-            if key in whitelist:
-                filtered_config[key] = config[key]
-
-        return filtered_config
-
     def __getattr__(self, item):
         return getattr(self._driver, item)
 

@@ -94,18 +94,6 @@ class ReconfiguredSwitch():
         self._configured_switch = None
         self._invert = invert
 
-    @staticmethod
-    def filter_from_config(config):
-        # for transition
-        # TODO: remove in 0.31
-        whitelist = ["debounce"]
-        filtered_config = {}
-        for key in config:
-            if key in whitelist:
-                filtered_config[key] = config[key]
-
-        return filtered_config
-
     def __getattr__(self, item):
         return getattr(self._switch, item)
 

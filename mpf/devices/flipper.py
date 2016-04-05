@@ -33,6 +33,11 @@ class Flipper(SystemWideDevice):
         self.eos_switch = None
 
     def _initialize(self):
+        if "debounce" not in self.config['switch_overwrite']:
+            self.config['switch_overwrite']['debounce'] = False
+        if "debounce" not in self.config['eos_switch_overwrite']:
+            self.config['eos_switch_overwrite']['debounce'] = False
+
         self.platform = self.config['main_coil'].platform
         self.main_coil = ReconfiguredDriver(self.config['main_coil'], self.config['main_coil_overwrite'])
         self.switch = ReconfiguredSwitch(self.config['activation_switch'], self.config['switch_overwrite'], False)
@@ -45,23 +50,6 @@ class Flipper(SystemWideDevice):
 
         if self.debug:
             self.log.debug('Platform Driver: %s', self.platform)
-
-    def prepare_config(self, config, is_mode_config):
-        config = super().prepare_config(config, is_mode_config)
-        if "main_coil_overwrite" not in config:
-            config['main_coil_overwrite'] = ReconfiguredDriver.filter_from_config(config)
-        if "hold_coil_overwrite" not in config:
-            config['hold_coil_overwrite'] = ReconfiguredDriver.filter_from_config(config)
-        if "switch_overwrite" not in config:
-            config['switch_overwrite'] = ReconfiguredSwitch.filter_from_config(config)
-        if "eos_switch_overwrite" not in config:
-            config['eos_switch_overwrite'] = ReconfiguredSwitch.filter_from_config(config)
-        if "debounce" not in config['switch_overwrite']:
-            config['switch_overwrite']['debounce'] = False
-        if "debounce" not in config['eos_switch_overwrite']:
-            config['eos_switch_overwrite']['debounce'] = False
-
-        return config
 
     def enable(self, **kwargs):
         """Enables the flipper by writing the necessary hardware rules to the
