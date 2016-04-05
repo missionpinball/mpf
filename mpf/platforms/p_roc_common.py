@@ -118,7 +118,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
             for x in driver_rules:
                 driver.append(x[2])
             rule = {'notifyHost': bool(switch.hw_switch.notify_on_debounce) == event_type.endswith("nondebounced"),
-                    'reloadActive': bool(coil.config['recycle_ms'])}
+                    'reloadActive': bool(coil.config['recycle'])}
             if drive_now is None:
                 self.proc.switch_update_rule(switch.hw_switch.number, event_type, rule, driver)
             else:

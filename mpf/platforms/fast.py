@@ -882,9 +882,12 @@ class FASTDriver(DriverPlatformInterface):
             return "ff"
 
     def get_recycle_ms_for_cmd(self, coil):
-        if coil.config['recycle_ms'] is not None:
+        if not coil.config['recycle']:
+            return "00"
+        elif coil.config['recycle_ms'] is not None:
             return Util.int_to_hex_string(coil.config['recycle_ms'])
         else:
+            # TODO: default is 2 times the pulse time
             return "00"
 
     def get_config_cmd(self):

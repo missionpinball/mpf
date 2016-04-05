@@ -133,7 +133,7 @@ class TestP3Roc(MpfTestCase):
         self.machine.autofires.ac_slingshot_test.enable()
         self.machine.coils.c_slingshot_test.platform.proc.switch_update_rule.assert_any_call(
             40, 'closed_nondebounced',
-            {'notifyHost': False, 'reloadActive': False},
+            {'notifyHost': False, 'reloadActive': True},
             [{'patterEnable': False,
               'patterOnTime': 0,
               'timeslots': 0,
@@ -152,10 +152,10 @@ class TestP3Roc(MpfTestCase):
         self.machine.autofires.ac_slingshot_test.disable()
 
         self.machine.coils.c_slingshot_test.platform.proc.switch_update_rule.assert_has_calls([
-            call(40, 'open_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
-            call(40, 'closed_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
-            call(40, 'open_debounced', {'notifyHost': True, 'reloadActive': False}, []),
-            call(40, 'closed_debounced', {'notifyHost': True, 'reloadActive': False}, []),
+            call(40, 'open_nondebounced', {'notifyHost': False, 'reloadActive': True}, []),
+            call(40, 'closed_nondebounced', {'notifyHost': False, 'reloadActive': True}, []),
+            call(40, 'open_debounced', {'notifyHost': True, 'reloadActive': True}, []),
+            call(40, 'closed_debounced', {'notifyHost': True, 'reloadActive': True}, []),
         ], any_order=True)
 
         self.machine.coils.c_slingshot_test.platform.proc.driver_disable.assert_called_with(8)
@@ -166,7 +166,7 @@ class TestP3Roc(MpfTestCase):
         self.machine.autofires.ac_switch_nc_test.enable()
         self.machine.coils.c_coil_pwm_test.platform.proc.switch_update_rule.assert_any_call(
             41, 'open_nondebounced',
-            {'notifyHost': False, 'reloadActive': False},
+            {'notifyHost': False, 'reloadActive': True},
             [{'patterEnable': False,
               'patterOnTime': 0,
               'timeslots': 0,

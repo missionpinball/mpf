@@ -154,7 +154,6 @@ coils:
     pulse_ms: single|int|None
     pulse_power: single|int|None
     hold_power: single|int|None
-    recycle_ms: single|ms|None  # TODO: this is fast specific:
     recycle: single|bool|False
     allow_enable: single|bool|False
     tags: list|str|None
@@ -170,6 +169,7 @@ fast_coils:
     pulse_pwm_mask: single|int|None
     hold_pwm_mask: single|int|None
     connection: single|enum(network,local,auto)|auto
+    recycle_ms: single|ms|None
 p_roc_coils:
     pwm_on_ms: single|int|None
     pwm_off_ms: single|int|None
@@ -302,7 +302,7 @@ flashers:   # TODO: this should be a coil + x. actually extend coil config
     hold_power32: single|int|None
     pulse_pwm_mask: single|int|None
     hold_pwm_mask: single|int|None
-    recycle_ms: single|ms|None
+    recycle: single|ms|None
 flippers:
     main_coil: single|machine(coils)|
     hold_coil: single|machine(coils)|None

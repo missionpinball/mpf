@@ -84,7 +84,7 @@ class TestPRoc(MpfTestCase):
         self.machine.autofires.ac_slingshot_test.enable()
         self.machine.coils.c_slingshot_test.platform.proc.switch_update_rule.assert_any_call(
                 40, 'closed_nondebounced',
-                {'notifyHost': False, 'reloadActive': False},
+                {'notifyHost': False, 'reloadActive': True},
                 ["driver_state_pulse"], False)
 
     def test_initial_switches(self):
