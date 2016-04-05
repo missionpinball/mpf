@@ -291,7 +291,7 @@ class SwitchController(object):
         # If this update is not debounced, only proceed if this switch is
         # configured to not be debounced.
 
-        if not debounced and obj.config['debounce'] in ("slow", "auto"):
+        if not debounced and obj.config['debounce'] in ("normal", "auto"):
             return
 
         # We need int, but this lets it come in as boolean also

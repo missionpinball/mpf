@@ -58,11 +58,11 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
         self.log.info("Successfully connected to P-ROC/P3-ROC")
 
     def _get_event_type(self, sw_activity, debounced):
-        if sw_activity == 0 and debounced in ("slow", "auto"):
+        if sw_activity == 0 and debounced in ("normal", "auto"):
             return "open_debounced"
         elif sw_activity == 0 and debounced == "quick":
             return "open_nondebounced"
-        elif sw_activity == 1 and debounced in ("slow", "auto"):
+        elif sw_activity == 1 and debounced in ("normal", "auto"):
             return "closed_debounced"
         else:  # if sw_activity == 1 and not debounced:
             return "closed_nondebounced"
@@ -117,7 +117,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
             driver = []
             for x in driver_rules:
                 driver.append(x[2])
-            rule = {'notifyHost': bool(switch.hw_switch.notify_on_debounce) == event_type.endswith("nondebounced"),
+            rule = {'notifyHost': bool(switch.hw_switch.notify_on_nondebounce) == event_type.endswith("nondebounced"),
                     'reloadActive': bool(coil.config['recycle'])}
             if drive_now is None:
                 self.proc.switch_update_rule(switch.hw_switch.number, event_type, rule, driver)
@@ -234,7 +234,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
             raise AssertionError("Switch %s cannot be controlled by the "
                                  "P-ROC/P3-ROC.", str(config['number']))
 
-        switch = PROCSwitch(config, proc_num, config['debounce'] == "slow")
+        switch = PROCSwitch(config, proc_num, config['debounce'] == "quick")
         # The P3-ROC needs to be configured to notify the host computers of
         # switch events. (That notification can be for open or closed,
         # debounced or nondebounced.)
@@ -784,11 +784,11 @@ def decode_pdb_address(addr):
 
 
 class PROCSwitch(object):
-    def __init__(self, config, number, notify_on_debounce):
+    def __init__(self, config, number, notify_on_nondebounce):
         self.log = logging.getLogger('PROCSwitch')
         self.config = config
         self.number = number
-        self.notify_on_debounce = notify_on_debounce
+        self.notify_on_nondebounce = notify_on_nondebounce
         self.hw_rules = {"closed_debounced": [],
                          "closed_nondebounced": [],
                          "open_debounced": [],
