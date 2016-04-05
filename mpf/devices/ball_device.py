@@ -250,8 +250,6 @@ class BallDevice(SystemWideDevice):
 
     def _handle_unexpected_balls(self, balls):
         self.log.debug("Received %s unexpected balls", balls)
-        # todo is this event name right? I think it should include the name of
-        # the device that did the capturing too?
         self.machine.events.post('balldevice_captured_from_{}'.format(
                 self.config['captures_from'].name),
                 balls=balls)

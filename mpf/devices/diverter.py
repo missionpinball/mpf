@@ -91,6 +91,17 @@ class Diverter(SystemWideDevice):
 
         self.machine.events.post('diverter_' + self.name + '_enabling',
                                  auto=auto)
+        '''event: diverter_(name)_enabling
+        desc: The diverter called (name) is enabling itself. Note that if this
+            diverter has ``activation_switches:`` configured, it will not
+            physically activate until one of those switches is hit. Otherwise
+            this diverter will activate immediately.
+
+        args:
+            auto: Boolean which indicates whether this diverter enabled itself
+                automatically for the purpose of routing balls to their proper
+                location(s).
+        '''
 
         if self.config['activation_switches']:
             self.enable_switches()
@@ -117,6 +128,17 @@ class Diverter(SystemWideDevice):
 
         self.machine.events.post('diverter_' + self.name + '_disabling',
                                  auto=auto)
+        '''event: diverter_(name)_disabling
+        desc: The diverter called (name) is disabling itself. Note that if this
+            diverter has ``activation_switches:`` configured, it will not
+            physically deactivate now, instead deactivating based on switch
+            hits and timing. Otherwise this diverter will deactivate immediately.
+
+        args:
+            auto: Boolean which indicates whether this diverter disabled itself
+                automatically for the purpose of routing balls to their proper
+                location(s).
+        '''
 
         self.log.debug("Disabling Diverter")
         if self.config['activation_switches']:
@@ -151,6 +173,10 @@ class Diverter(SystemWideDevice):
             self.delay.remove('deactivate_timed')
 
         self.machine.events.post('diverter_' + self.name + '_deactivating')
+        '''event: diverter_(name)_deactivating
+        desc: The diverter called (name) is deativating itself.
+
+        '''
         self.config['activation_coil'].disable()
 
         if self.config['deactivation_coil']:

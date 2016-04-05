@@ -82,6 +82,11 @@ class Multiball(SystemWideDevice, ModeDevice):
 
         self.machine.events.post("multiball_" + self.name + "_started",
                                  balls=self.config['ball_count'])
+        '''event: multiball_(name)_started
+        desc: The multiball called (name) has just started.
+        args:
+            balls: The number of balls in this multiball
+        '''
 
     def _ball_drain_shoot_again(self, balls, **kwargs):
         del kwargs
@@ -90,6 +95,14 @@ class Multiball(SystemWideDevice, ModeDevice):
 
         self.machine.events.post("multiball_" + self.name + "_shoot_again",
                                  balls=balls)
+        '''event: multiball_(name)_shoot_again
+        desc: A ball has drained during the multiball called (name) while the
+        ball save timer for that multiball was running, so a ball (or balls)
+        will be saved and re-added into play.
+
+        args:
+            balls: The number of balls that are being saved.
+        '''
 
         self.log.debug("Ball drained during MB. Requesting a new one")
         self.source_playfield.add_ball(balls=balls)
@@ -109,6 +122,9 @@ class Multiball(SystemWideDevice, ModeDevice):
             self.balls_ejected = 0
             self.machine.events.remove_handler(self._ball_drain_count_balls)
             self.machine.events.post("multiball_" + self.name + "_ended")
+            '''event: multiball_(name)_ended
+            desc: The multiball called (name) has just ended.
+            '''
             self.log.debug("Ball drained. MB ended.")
         else:
             self.balls_ejected -= available_balls

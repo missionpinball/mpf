@@ -113,6 +113,13 @@ class BallLock(SystemWideDevice):
             self.machine.events.post(
                 'ball_lock_' + self.name + '_balls_released',
                 balls_released=balls_released)
+            '''event: ball_lock_(name)_balls_released
+
+            desc: The ball lock device (name) has just released a ball(s).
+
+            args:
+                balls_released: The number of balls that were just released.
+            '''
 
         self.balls_locked -= balls_released
         return balls_released
@@ -166,11 +173,24 @@ class BallLock(SystemWideDevice):
         self.machine.events.post('ball_lock_' + self.name + '_locked_ball',
                                  balls_locked=balls_to_lock,
                                  total_balls_locked=self.balls_locked)
+        '''event: ball_lock_(name)_locked_ball
+        desc: The ball lock device (name) has just locked additional ball(s).
+
+        args:
+            balls_locked: The number of new balls just locked.
+            total_balls_locked: The current total number of balls this device
+                has locked.
+        '''
 
         # check if we are full now and post event if yes
         if self.is_full():
             self.machine.events.post('ball_lock_' + self.name + '_full',
                                      balls=self.balls_locked)
+        '''event: ball_lock_(name)_full
+        desc: The ball lock device (name) is now full.
+        args:
+            balls: The number of balls currently locked in this device.
+        '''
 
         self.lock_queue.append((device, unclaimed_balls))
 

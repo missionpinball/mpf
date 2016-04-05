@@ -46,6 +46,9 @@ class BallSave(SystemWideDevice, ModeDevice):
             self.timer_start()
 
         self.machine.events.post('ball_save_{}_enabled'.format(self.name))
+        '''event: ball_save_(name)_enabled:
+        desc: The ball save called (name) has just been enabled.
+        '''
 
     def disable(self, **kwargs):
         del kwargs
@@ -61,6 +64,9 @@ class BallSave(SystemWideDevice, ModeDevice):
         self.delay.remove('grace_period')
 
         self.machine.events.post('ball_save_{}_disabled'.format(self.name))
+        '''event: ball_save_(name)_disabled:
+        desc: The ball save called (name) has just been disabled.
+        '''
 
     def timer_start(self, **kwargs):
         del kwargs
@@ -68,6 +74,9 @@ class BallSave(SystemWideDevice, ModeDevice):
             return
 
         self.machine.events.post('ball_save_{}_timer_start'.format(self.name))
+        '''event: ball_save_(name)_timer_start:
+        desc: The ball save called (name) has just start its countdown timer.
+        '''
 
         if self.config['active_time'] > 0:
             if self.debug:
@@ -91,12 +100,19 @@ class BallSave(SystemWideDevice, ModeDevice):
             self.log.debug("Starting Hurry Up")
 
         self.machine.events.post('ball_save_{}_hurry_up'.format(self.name))
+        '''event: ball_save_(name)_hurry_up:
+        desc: The ball save called (name) has just entered its hurry up mode.
+        '''
 
     def _grace_period(self):
         if self.debug:
             self.log.debug("Starting Grace Period")
 
         self.machine.events.post('ball_save_{}_grace_period'.format(self.name))
+        '''event: ball_save_(name)_grace_period:
+        desc: The ball save called (name) has just entered its grace period
+            time.
+        '''
 
     def _ball_drain_while_active(self, balls, **kwargs):
         del kwargs
@@ -129,6 +145,12 @@ class BallSave(SystemWideDevice, ModeDevice):
 
         self.machine.events.post('ball_save_{}_saving_ball'.format(self.name),
                                  balls=balls_to_save)
+        '''event: ball_save_(name)_saving_ball:
+        desc: The ball save called (name) has just saved one (or more) balls.
+
+        args:
+            balls: The number of balls this ball saver is saving.
+        '''
 
         self.source_playfield.add_ball(balls=balls_to_save,
                                        player_controlled=self.config[
