@@ -1764,9 +1764,8 @@ class BallDevice(SystemWideDevice):
         self.log.warning("Eject failed %s times. Permanently giving up.",
                          self.config['max_eject_attempts'])
         self.machine.events.post('balldevice_' + self.name +
-                                 'ball_eject_permanent_failure')
-        # todo: Check this event name. Add an underscore?
-        '''event: balldevice_(name)ball_eject_permanent_failure
+                                 '_ball_eject_permanent_failure')
+        '''event: balldevice_(name)_ball_eject_permanent_failure
         desc: The device (name) failed to eject a ball and the number of
             retries has been met, so it will not try to eject further.
         '''
