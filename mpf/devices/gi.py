@@ -24,7 +24,7 @@ class Gi(SystemWideDevice):
     def _initialize(self):
         self.load_platform_section('gis')
 
-        self.hw_driver, self.number = self.platform.configure_gi(self.config)
+        self.hw_driver = self.platform.configure_gi(self.config)
 
     def enable(self, brightness=255, **kwargs):
         """Enables this GI string.

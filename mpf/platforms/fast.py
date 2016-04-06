@@ -587,8 +587,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         else:
             number = Util.int_to_hex_string(config['number'])
 
-        return (FASTGIString(number, self.net_connection.send),
-                number)
+        return FASTGIString(number, self.net_connection.send)
 
     def configure_matrixlight(self, config):
         if not self.net_connection:

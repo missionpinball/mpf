@@ -133,7 +133,7 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
             proc_num = self.pinproc.decode(self.machine_type, str(config['number']))
         proc_driver_object = PROCGiString(proc_num, self.proc, config)
 
-        return proc_driver_object, proc_num
+        return proc_driver_object
 
     def configure_matrixlight(self, config):
         if self.machine_type == self.pinproc.MachineTypePDB:

@@ -199,7 +199,7 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
 
         proc_driver_object = PROCGiString(proc_num, self.proc, config)
 
-        return proc_driver_object, proc_num
+        return proc_driver_object
 
     def configure_matrixlight(self, config):
         proc_num = self.pdbconfig.get_proc_number("light", str(config['number']))

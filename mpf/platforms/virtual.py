@@ -97,7 +97,7 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
         return VirtualLED(config['number'])
 
     def configure_gi(self, config):
-        return VirtualGI(config['number']), config['number']
+        return VirtualGI(config['number'])
 
     def configure_dmd(self):
         return VirtualDMD(self.machine)
