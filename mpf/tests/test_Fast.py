@@ -1,3 +1,4 @@
+from mpf.core.rgb_color import RGBColor
 from mpf.tests.MpfTestCase import MpfTestCase
 from mpf.platforms import fast
 import time
@@ -5,6 +6,7 @@ import time
 
 class MockSerialCommunicator:
     expected_commands = {}
+    leds = {}
 
     def __init__(self, machine, send_queue, receive_queue, platform, baud,
                  port):
@@ -13,11 +15,14 @@ class MockSerialCommunicator:
         self.platform = platform
         self.receive_queue = receive_queue
         if port == "com4":
-            self.platform.register_processor_connection("NET", self)
             self.type = 'NET'
+            self.platform.register_processor_connection("NET", self)
         elif port == "com5":
-            self.platform.register_processor_connection("DMD", self)
             self.type = 'DMD'
+            self.platform.register_processor_connection("DMD", self)
+        elif port == "com6":
+            self.type = 'RGB'
+            self.platform.register_processor_connection("RGB", self)
         else:
             raise AssertionError("invalid port for test")
 
@@ -25,6 +30,10 @@ class MockSerialCommunicator:
         cmd = str(cmd)
 
         if cmd[:3] == "WD:":
+            return
+
+        if self.type == "RGB" and cmd[:3] == "RS:":
+            MockSerialCommunicator.leds[cmd[3:5]] = cmd[5:]
             return
 
         if cmd in MockSerialCommunicator.expected_commands[self.type]:
@@ -51,6 +60,11 @@ class TestFast(MpfTestCase):
         fast.SerialCommunicator = MockSerialCommunicator
         fast.serial_imported = True
         MockSerialCommunicator.expected_commands['DMD'] = {}
+        MockSerialCommunicator.expected_commands['RGB'] = {
+            "RF:0": False,
+            "RA:000000": False,
+            "RF:00": False,
+        }
         MockSerialCommunicator.expected_commands['NET'] = {
             "SA:": "SA:1,00,8,00000000",
             "SN:01,01,0A,0A": "SN:",
@@ -352,3 +366,22 @@ class TestFast(MpfTestCase):
         self.assertFalse(MockSerialCommunicator.expected_commands['DMD'])
 
         # TODO: test broken frames (see P-ROC test)
+
+    def test_rdb_led(self):
+        device = self.machine.leds.test_led
+        self.assertEqual("000000", MockSerialCommunicator.leds['97'])
+        MockSerialCommunicator.leds = {}
+        # test led on
+        device.on()
+        self.advance_time_and_run(1)
+        self.assertEqual("ffffff", MockSerialCommunicator.leds['97'])
+
+        # test led off
+        device.off()
+        self.advance_time_and_run(1)
+        self.assertEqual("000000", MockSerialCommunicator.leds['97'])
+
+        # test led color
+        device.color(RGBColor((2, 23, 42)))
+        self.advance_time_and_run(1)
+        self.assertEqual("02172a", MockSerialCommunicator.leds['97'])

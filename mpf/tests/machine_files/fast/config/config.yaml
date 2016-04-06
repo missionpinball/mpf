@@ -5,7 +5,7 @@ hardware:
     driverboards: fast
 
 fast:
-    ports: com4, com5
+    ports: com4, com5, com6
 
 switches:
     s_test:
@@ -83,3 +83,7 @@ flippers:
         activation_switch: s_flipper
         eos_switch: s_flipper_eos
         use_eos: true
+
+leds:
+  test_led:
+    number: 2-23

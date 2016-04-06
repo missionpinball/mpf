@@ -821,8 +821,10 @@ class FASTSwitch(object):
 
         self._configured_debounce = new_setting
 
-        cmd += str(self.number[0]) + ',01,' + Util.int_to_hex_string(debounce_open) + ',' +\
-               Util.int_to_hex_string(debounce_close)
+        cmd += str(self.number[0])
+        cmd += ',01,'
+        cmd += Util.int_to_hex_string(debounce_open) + ','
+        cmd += Util.int_to_hex_string(debounce_close)
 
         self.send(cmd)
 
