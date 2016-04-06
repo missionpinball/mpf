@@ -1048,13 +1048,10 @@ class FASTGIString(GIPlatformInterface):
 
     def on(self, brightness=255):
         if brightness >= 255:
-            self.log.debug("Turning On GI String")
-            self.send('GI:' + self.number + ',FF')
-        elif brightness == 0:
-            self.off()
-        else:
-            brightness = str(hex(brightness))[2:]
-            self.send('GI:' + self.number + ',' + brightness)
+            brightness = 255
+
+        self.log.debug("Turning On GI String to brightness %s", brightness)
+        self.send('GI:' + self.number + ',' + Util.int_to_hex_string(brightness))
 
 
 class FASTMatrixLight(MatrixLightPlatformInterface):
