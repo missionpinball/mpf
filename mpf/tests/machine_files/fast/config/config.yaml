@@ -88,6 +88,10 @@ matrix_lights:
   test_pdb_light:
     number: 23
 
+gis:
+  test_gi:
+    number: 42
+
 leds:
   test_led:
     number: 2-23

@@ -80,6 +80,7 @@ class TestFast(MpfTestCase):
             "DN:12,00,00,00": False,
             "DN:20,00,00,00": False,
             "DN:21,00,00,00": False,
+            "GI:42,FF": False,
         }
         # FAST should never call sleep. Make it fail
         self.sleep = time.sleep
@@ -381,6 +382,38 @@ class TestFast(MpfTestCase):
             "L1:23,00": False,
         }
         self.machine.lights.test_pdb_light.off()
+        self.machine_run()
+        self.assertFalse(MockSerialCommunicator.expected_commands['NET'])
+
+    def test_pdb_gi_light(self):
+        # test gi on
+        device = self.machine.gis.test_gi
+        MockSerialCommunicator.expected_commands['NET'] = {
+            "GI:42,FF": False,
+        }
+        device.enable()
+        self.machine_run()
+        self.assertFalse(MockSerialCommunicator.expected_commands['NET'])
+
+        MockSerialCommunicator.expected_commands['NET'] = {
+            "GI:42,80": False,
+        }
+        device.enable(brightness=128)
+        self.machine_run()
+        self.assertFalse(MockSerialCommunicator.expected_commands['NET'])
+
+        MockSerialCommunicator.expected_commands['NET'] = {
+            "GI:42,F5": False,
+        }
+        device.enable(brightness=245)
+        self.machine_run()
+        self.assertFalse(MockSerialCommunicator.expected_commands['NET'])
+
+        # test gi off
+        MockSerialCommunicator.expected_commands['NET'] = {
+            "GI:42,00": False,
+        }
+        device.disable()
         self.machine_run()
         self.assertFalse(MockSerialCommunicator.expected_commands['NET'])
 
