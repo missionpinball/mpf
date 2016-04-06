@@ -592,21 +592,20 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
                 number)
 
     def configure_matrixlight(self, config):
-        # TODO: dont modify config here
         if not self.net_connection:
             raise AssertionError('A request was made to configure a FAST matrix '
                                  'light, but no connection to a NET processor is '
                                  'available')
 
         if self.machine_type == 'wpc':  # translate number to FAST light num
-            config['number'] = self.wpc_light_map.get(str(config['number']).upper())
+            number = self.wpc_light_map.get(str(config['number']).upper())
         elif self.config['config_number_format'] == 'int':
-            config['number'] = Util.int_to_hex_string(config['number'])
+            number = Util.int_to_hex_string(config['number'])
         else:
-            config['number'] = Util.normalize_hex_string(config['number'])
+            number = Util.normalize_hex_string(config['number'])
 
-        return (FASTMatrixLight(config['number'], self.net_connection.send),
-                config['number'])
+        return (FASTMatrixLight(number, self.net_connection.send),
+                number)
 
     def configure_dmd(self):
         """Configures a hardware DMD connected to a FAST controller."""
