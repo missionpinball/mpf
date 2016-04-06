@@ -18,7 +18,7 @@ https://github.com/preble/pyprocgame
 import logging
 
 from mpf.core.platform import DmdPlatform
-from mpf.platforms.p_roc_common import PDBConfig, PROCDriver, PROCMatrixLight, PROCBasePlatform
+from mpf.platforms.p_roc_common import PDBConfig, PROCDriver, PROCMatrixLight, PROCBasePlatform, PROCGiString
 from mpf.core.utility_functions import Util
 
 try:
@@ -122,6 +122,18 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
             proc_num = self.pinproc.decode(self.machine_type, str(config['number']))
 
         return PROCDriver(proc_num, self.proc, config, self.machine), proc_num
+
+    def configure_gi(self, config):
+        # GIs are coils in P-Roc
+        if self.machine_type == self.pinproc.MachineTypePDB:
+            proc_num = self.pdbconfig.get_proc_number("coil", str(config['number']))
+            if proc_num == -1:
+                raise AssertionError("Gi Driver {} cannot be controlled by the P-ROC. ".format(str(config['number'])))
+        else:
+            proc_num = self.pinproc.decode(self.machine_type, str(config['number']))
+        proc_driver_object = PROCGiString(proc_num, self.proc, config)
+
+        return proc_driver_object, proc_num
 
     def configure_matrixlight(self, config):
         if self.machine_type == self.pinproc.MachineTypePDB:
