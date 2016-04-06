@@ -195,19 +195,16 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
         """ Configures a P/P3-ROC RGB LED controlled via a PD-LED."""
 
         # split the number (which comes in as a string like w-x-y-z) into parts
-        config['number'] = str(config['number']).split('-')
+        number_parts = str(config['number']).split('-')
 
-        if 'polarity' in config:
-            invert = not config['polarity']
-        else:
-            invert = False
+        if len(number_parts) != 4:
+            raise AssertionError("Invalid address for LED {}".format(config['number']))
 
-        return PDBLED(board=int(config['number'][0]),
-                      address=[int(config['number'][1]),
-                               int(config['number'][2]),
-                               int(config['number'][3])],
-                      proc_driver=self.proc,
-                      invert=invert)
+        return PDBLED(board=int(number_parts[0]),
+                      address=[int(number_parts[1]),
+                               int(number_parts[2]),
+                               int(number_parts[3])],
+                      proc_driver=self.proc)
 
     def _configure_switch(self, config, proc_num):
         """Configures a P3-ROC switch.
@@ -705,14 +702,15 @@ class PDBLight(object):
 class PDBLED(RGBLEDPlatformInterface):
     """Represents an RGB LED connected to a PD-LED board."""
 
-    def __init__(self, board, address, proc_driver, invert=False):
+    def __init__(self, board, address, proc_driver):
         self.log = logging.getLogger('PDBLED')
         self.board = board
         self.address = address
         self.proc = proc_driver
-        self.invert = invert
 
-        # todo make sure self.address is a 3-element list
+        # make sure self.address is a 3-element list
+        if len(self.address) != 3:
+            raise AssertionError("Invalid address for LED {}".format(str(self.address)))
 
         self.log.debug("Creating PD-LED item: board: %s, "
                        "RGB outputs: %s", self.board,
