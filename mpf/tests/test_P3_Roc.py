@@ -482,7 +482,7 @@ class TestP3Roc(MpfTestCase):
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
             call(
                 1, 'open_nondebounced',
-                {'reloadActive': True, 'notifyHost': False},
+                {'reloadActive': False, 'notifyHost': False},
                 [{'state': False,
                   'waitForFirstTimeSlot': False,
                   'patterOnTime': 0,
@@ -496,7 +496,7 @@ class TestP3Roc(MpfTestCase):
                 False),
             call(
                 1, 'closed_nondebounced',
-                {'notifyHost': False, 'reloadActive': True},
+                {'notifyHost': False, 'reloadActive': False},
                 [{'patterEnable': False,
                   'patterOnTime': 0,
                   'timeslots': 0,
@@ -515,10 +515,10 @@ class TestP3Roc(MpfTestCase):
         self.machine.default_platform.proc.switch_update_rule = MagicMock()
         self.machine.flippers.f_test_single.disable()
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
-            call(1, 'open_nondebounced', {'notifyHost': False, 'reloadActive': True}, []),
-            call(1, 'closed_nondebounced', {'notifyHost': False, 'reloadActive': True}, []),
-            call(1, 'open_debounced', {'notifyHost': True, 'reloadActive': True}, []),
-            call(1, 'closed_debounced', {'notifyHost': True, 'reloadActive': True}, []),
+            call(1, 'open_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
+            call(1, 'closed_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
+            call(1, 'open_debounced', {'notifyHost': True, 'reloadActive': False}, []),
+            call(1, 'closed_debounced', {'notifyHost': True, 'reloadActive': False}, []),
         ], any_order=True)
 
     def test_flipper_two_coils(self):
@@ -529,7 +529,7 @@ class TestP3Roc(MpfTestCase):
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
             call(
                 1, 'open_nondebounced',
-                {'notifyHost': False, 'reloadActive': True},
+                {'notifyHost': False, 'reloadActive': False},
                 [{'patterEnable': False,
                   'patterOnTime': 0,
                   'timeslots': 0,
@@ -554,7 +554,7 @@ class TestP3Roc(MpfTestCase):
                 False),
             call(
                 1, 'closed_nondebounced',
-                {'notifyHost': False, 'reloadActive': True},
+                {'notifyHost': False, 'reloadActive': False},
                 [
                  {'patterEnable': False,
                   'patterOnTime': 0,
@@ -588,7 +588,7 @@ class TestP3Roc(MpfTestCase):
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
             call(
                 1, 'open_nondebounced',
-                {'notifyHost': False, 'reloadActive': True},
+                {'notifyHost': False, 'reloadActive': False},
                 [{'patterEnable': False,
                   'patterOnTime': 0,
                   'timeslots': 0,
@@ -613,7 +613,7 @@ class TestP3Roc(MpfTestCase):
                 False),
             call(
                 1, 'closed_nondebounced',
-                {'notifyHost': False, 'reloadActive': True},
+                {'notifyHost': False, 'reloadActive': False},
                 [
                  {'patterEnable': False,
                   'patterOnTime': 0,
@@ -639,7 +639,7 @@ class TestP3Roc(MpfTestCase):
                 False),
             call(
                 2, 'closed_nondebounced',
-                {'notifyHost': False, 'reloadActive': True},
+                {'notifyHost': False, 'reloadActive': False},
                 [
                  {'patterEnable': False,
                   'patterOnTime': 0,
@@ -659,14 +659,14 @@ class TestP3Roc(MpfTestCase):
         self.machine.default_platform.proc.switch_update_rule = MagicMock()
         self.machine.flippers.f_test_hold_eos.disable()
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
-            call(1, 'open_nondebounced', {'notifyHost': False, 'reloadActive': True}, []),
-            call(1, 'closed_nondebounced', {'notifyHost': False, 'reloadActive': True}, []),
-            call(1, 'open_debounced', {'notifyHost': True, 'reloadActive': True}, []),
-            call(1, 'closed_debounced', {'notifyHost': True, 'reloadActive': True}, []),
-            call(2, 'open_nondebounced', {'notifyHost': False, 'reloadActive': True}, []),
-            call(2, 'closed_nondebounced', {'notifyHost': False, 'reloadActive': True}, []),
-            call(2, 'open_debounced', {'notifyHost': True, 'reloadActive': True}, []),
-            call(2, 'closed_debounced', {'notifyHost': True, 'reloadActive': True}, []),
+            call(1, 'open_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
+            call(1, 'closed_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
+            call(1, 'open_debounced', {'notifyHost': True, 'reloadActive': False}, []),
+            call(1, 'closed_debounced', {'notifyHost': True, 'reloadActive': False}, []),
+            call(2, 'open_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
+            call(2, 'closed_nondebounced', {'notifyHost': False, 'reloadActive': False}, []),
+            call(2, 'open_debounced', {'notifyHost': True, 'reloadActive': False}, []),
+            call(2, 'closed_debounced', {'notifyHost': True, 'reloadActive': False}, []),
         ], any_order=True)
 
     def test_pdb_matrix_light(self):
