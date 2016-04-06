@@ -4,6 +4,7 @@ from mpf.core.platform import MatrixLightsPlatform, GiPlatform, LedPlatform, Swi
 from mpf.core.rgb_color import RGBColor
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
+from mpf.platforms.interfaces.gi_platform_interface import GIPlatformInterface
 from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
 from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 
@@ -189,11 +190,6 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
             self.write_rules_to_switch(switch, coil, None)
 
         return bool(coil_number)
-
-    def configure_gi(self, config):
-        """Configures a P-ROC GI string light."""
-        # On the P/P3-ROC, GI strings are drivers
-        return self.configure_driver(config)
 
     def configure_led(self, config):
         """ Configures a P/P3-ROC RGB LED controlled via a PD-LED."""
@@ -448,6 +444,14 @@ class PDBConfig(object):
         if 'coils' in config:
             for name in config['coils']:
                 item_dict = config['coils'][name]
+                coil = PDBCoil(self, str(item_dict['number']))
+                if coil.bank() not in coil_bank_list:
+                    coil_bank_list.append(coil.bank())
+
+        # gis are also coils
+        if 'gis' in config:
+            for name in config['gis']:
+                item_dict = config['gis'][name]
                 coil = PDBCoil(self, str(item_dict['number']))
                 if coil.bank() not in coil_bank_list:
                     coil_bank_list.append(coil.bank())
@@ -886,6 +890,29 @@ class PROCDriver(DriverPlatformInterface):
         configuration state.
         """
         return self.proc.driver_get_state(self.number)
+
+
+class PROCGiString(GIPlatformInterface):
+    def __init__(self, number, proc_driver, config):
+        self.log = logging.getLogger('PROCGiString')
+        self.number = number
+        self.proc = proc_driver
+        self.config = config
+
+    def on(self, brightness=255):
+        if brightness > 255:
+            brightness = 255
+
+        # run the GIs at 50Hz
+        duty_on = int(brightness/12.75)
+        duty_off = 20 - duty_on
+        self.proc.driver_patter(self.number,
+                                int(duty_on),
+                                int(duty_off),
+                                0, True)
+
+    def off(self):
+        self.proc.driver_disable(self.number)
 
 
 class PROCMatrixLight(MatrixLightPlatformInterface):
