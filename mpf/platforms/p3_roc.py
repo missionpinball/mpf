@@ -15,7 +15,7 @@ import logging
 import math
 
 from mpf.core.platform import I2cPlatform, AccelerometerPlatform
-from mpf.platforms.p_roc_common import PDBConfig, PROCDriver, PROCMatrixLight, PROCBasePlatform
+from mpf.platforms.p_roc_common import PDBConfig, PROCDriver, PROCMatrixLight, PROCBasePlatform, PROCGiString
 
 
 class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
@@ -188,6 +188,16 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
             raise AssertionError("Driver {} cannot be controlled by the P3-ROC. ".format(str(config['number'])))
 
         proc_driver_object = PROCDriver(proc_num, self.proc, config, self.machine)
+
+        return proc_driver_object, proc_num
+
+    def configure_gi(self, config):
+        # GIs are coils in P3-Roc
+        proc_num = self.pdbconfig.get_proc_number("coil", str(config['number']))
+        if proc_num == -1:
+            raise AssertionError("Gi Driver {} cannot be controlled by the P3-ROC. ".format(str(config['number'])))
+
+        proc_driver_object = PROCGiString(proc_num, self.proc, config)
 
         return proc_driver_object, proc_num
 
