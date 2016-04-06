@@ -384,7 +384,7 @@ leds:
     x: single|int|None
     y: single|int|None
     z: single|int|None
-    color_channel_map: single|str|rgb
+    # color_channel_map: single|str|rgb     # not implemented
 light_player:
     brightness: single|int_from_hex|ff
     fade_ms: single|ms|0
@@ -486,7 +486,7 @@ physical_rgb_dmd:
     source_display: single|str|dmd
     color_adjust: list|float|1, 1, 1
     channel_bits: list|int|8, 8, 8
-    color_channel_map: single|str|rgb
+    # color_channel_map: single|str|rgb     # not implemented
 playfields:
     tags: list|str|None
     label: single|str|%
