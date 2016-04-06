@@ -47,4 +47,6 @@ flashers:
         number: 2
         label: Test flasher 2
         flash_ms: 100
+    flasher_03:
+        number: 3
 

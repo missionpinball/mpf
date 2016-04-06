@@ -31,4 +31,12 @@ class TestDeviceDriver(MpfTestCase):
         self.machine.flashers.flasher_01.flash()
         self.machine.flashers.flasher_01.hw_driver.pulse.assert_called_with(40)
 
-        # TODO: Add some more comprehensive tests
+    def testFlasherDefaults(self):
+        # Make sure hardware devices have been configured for tests
+        self.assertIn('flasher_03', self.machine.flashers)
+        self.assertEqual(self.machine.flashers.flasher_03.config['number'], "3")
+        self.assertEqual(self.machine.flashers.flasher_03.config['flash_ms'], 50)
+
+        self.machine.flashers.flasher_03.hw_driver.pulse = MagicMock()
+        self.machine.flashers.flasher_03.flash()
+        self.machine.flashers.flasher_03.hw_driver.pulse.assert_called_with(50)
