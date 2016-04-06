@@ -1,7 +1,6 @@
 import logging
 import time
 from mpf.core.platform import MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlatform, DriverPlatform
-from mpf.core.rgb_color import RGBColor
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
 from mpf.platforms.interfaces.gi_platform_interface import GIPlatformInterface
@@ -729,18 +728,6 @@ class PDBLED(RGBLEDPlatformInterface):
         self.proc.led_color(self.board, self.address[0], color.red)
         self.proc.led_color(self.board, self.address[1], color.green)
         self.proc.led_color(self.board, self.address[2], color.blue)
-
-    def disable(self):
-        """Disables (turns off) this LED instantly. For multi-color LEDs it
-        turns all elements off.
-        """
-        self.color(RGBColor())
-
-    def enable(self):
-        """Enables (turns on) this LED instantly. For multi-color LEDs it turns
-        all elements on.
-        """
-        self.color(RGBColor('White'))
 
 
 def is_pdb_address(addr):

@@ -1156,15 +1156,6 @@ class FASTDirectLED(RGBLEDPlatformInterface):
         """
         self._current_color = self._color_order_function(color)
 
-    def disable(self):
-        """Disables (turns off) this LED instantly. For multi-color LEDs it
-        turns all elements off.
-        """
-        self._current_color = '000000'
-
-    def enable(self):
-        self._current_color = 'ffffff'
-
     @property
     def current_color(self):
         return self._current_color

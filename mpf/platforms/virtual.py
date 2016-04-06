@@ -166,12 +166,6 @@ class VirtualLED(RGBLEDPlatformInterface):
     def color(self, color):
         self.current_color = color
 
-    def disable(self):
-        pass
-
-    def enable(self):
-        pass
-
 
 class VirtualGI(GIPlatformInterface):
     def __init__(self, number):

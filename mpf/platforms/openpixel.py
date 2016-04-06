@@ -13,7 +13,6 @@ import traceback
 
 from mpf.core.platform import LedPlatform
 from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
-from mpf.core.rgb_color import RGBColor
 
 
 class HardwarePlatform(LedPlatform):
@@ -70,12 +69,6 @@ class OpenPixelLED(RGBLEDPlatformInterface):
     def color(self, color):
         self.log.debug("Setting color: %s", color)
         self.opc_client.set_pixel_color(self.channel, self.led, color.rgb)
-
-    def enable(self):
-        self.color(RGBColor(color=(255, 255, 255)))
-
-    def disable(self):
-        self.color(RGBColor())
 
 
 class OpenPixelClient(object):
@@ -252,7 +245,7 @@ class OPCThread(threading.Thread):
             self.log.debug('Trying to connect to OPC server: %s:%s. Attempt '
                            'number %s', self.host, self.port,
                            self.connection_attempts)
-            self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.socket = socket.socket()
             self.socket.connect((self.host, self.port))
             self.log.debug('Connected to the OPC server.')
             self.connection_attempts = 0
