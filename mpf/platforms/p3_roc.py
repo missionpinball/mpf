@@ -266,9 +266,7 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
         for event in self.proc.get_events():
             event_type = event['type']
             event_value = event['value']
-            if event_type == 99:  # CTRL-C to quit todo does this go here?
-                self.machine.stop()
-            elif event_type == self.pinproc.EventTypeSwitchClosedDebounced:
+            if event_type == self.pinproc.EventTypeSwitchClosedDebounced:
                 self.machine.switch_controller.process_switch_by_num(state=1,
                                                                      num=event_value)
             elif event_type == self.pinproc.EventTypeSwitchOpenDebounced:
