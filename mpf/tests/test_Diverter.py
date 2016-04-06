@@ -245,3 +245,70 @@ class TestDiverter(MpfTestCase):
 
         self.advance_time_and_run(4)
         assert not self.machine.coils.c_diverter.pulse.called
+
+    def test_diverter_with_switch(self):
+        diverter = self.machine.diverters.d_test
+
+        self.assertFalse(diverter.enabled)
+        self.assertFalse(diverter.active)
+
+        # it should not activate
+        self.hit_and_release_switch("s_activate")
+        self.advance_time_and_run(1)
+        self.assertFalse(diverter.enabled)
+        self.assertFalse(diverter.active)
+
+        # nothing should happen
+        self.hit_and_release_switch("s_deactivate")
+        self.hit_and_release_switch("s_disable")
+        self.advance_time_and_run(1)
+        self.assertFalse(diverter.enabled)
+        self.assertFalse(diverter.active)
+
+        # enable diverter
+        diverter.enable()
+        self.assertTrue(diverter.enabled)
+        self.assertFalse(diverter.active)
+
+        self.hit_and_release_switch("s_activate")
+        self.advance_time_and_run(1)
+        self.assertTrue(diverter.enabled)
+        self.assertTrue(diverter.active)
+
+        self.hit_and_release_switch("s_deactivate")
+        self.advance_time_and_run(1)
+        self.assertTrue(diverter.enabled)
+        self.assertFalse(diverter.active)
+
+        self.hit_and_release_switch("s_activate")
+        self.advance_time_and_run(1)
+        self.assertTrue(diverter.enabled)
+        self.assertTrue(diverter.active)
+
+        self.hit_and_release_switch("s_disable")
+        self.advance_time_and_run(1)
+        self.assertFalse(diverter.enabled)
+        self.assertTrue(diverter.active)
+
+        self.hit_and_release_switch("s_deactivate")
+        self.advance_time_and_run(1)
+        self.assertFalse(diverter.enabled)
+        self.assertFalse(diverter.active)
+
+    def test_diverter_auto_disable(self):
+        diverter = self.machine.diverters.d_test
+
+        # enable diverter
+        diverter.enable()
+        self.assertTrue(diverter.enabled)
+        self.assertFalse(diverter.active)
+
+        self.hit_and_release_switch("s_activate")
+        self.advance_time_and_run(1)
+        self.assertTrue(diverter.enabled)
+        self.assertTrue(diverter.active)
+
+        self.hit_and_release_switch("s_disable")
+        self.advance_time_and_run(1)
+        self.assertFalse(diverter.enabled)
+        self.assertFalse(diverter.active)

@@ -144,7 +144,9 @@ class Diverter(SystemWideDevice):
         self.log.debug("Disabling Diverter")
         if self.config['activation_switches']:
             self.disable_switches()
-        else:
+        # if there is no deactivation way
+        if not (self.config['activation_time'] or self.config['deactivation_switches'] or
+                    self.config['deactivate_events']):
             self.deactivate()
 
     def activate(self, **kwargs):

@@ -1,0 +1,19 @@
+#config_version=4
+
+diverters:
+    d_test:
+        activation_coil: c_diverter
+        type: hold
+        debug: True
+        activation_switches: s_activate
+        disable_switches: s_disable
+
+coils:
+    c_diverter:
+        number: 10
+
+switches:
+    s_activate:
+        number: 1
+    s_disable:
+        number: 2
