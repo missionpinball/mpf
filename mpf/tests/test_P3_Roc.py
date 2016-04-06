@@ -1,3 +1,4 @@
+from mpf.core.rgb_color import RGBColor
 from mpf.tests.MpfTestCase import MpfTestCase
 from mock import MagicMock, call
 from mpf.platforms import p_roc_common
@@ -710,3 +711,31 @@ class TestP3Roc(MpfTestCase):
         device.disable()
         self.machine_run()
         device.hw_driver.proc.driver_disable.assert_called_with(67)
+
+    def test_leds(self):
+        device = self.machine.leds.test_led
+        device.hw_driver.proc.led_color = MagicMock()
+        # test led on
+        device.on()
+        self.advance_time_and_run(1)
+        device.hw_driver.proc.led_color.assert_has_calls([
+            call(2, 1, 255),
+            call(2, 2, 255),
+            call(2, 3, 255)])
+        device.hw_driver.proc.led_color = MagicMock()
+
+        # test led off
+        device.off()
+        self.advance_time_and_run(1)
+        device.hw_driver.proc.led_color.assert_has_calls([
+            call(2, 1, 0),
+            call(2, 2, 0),
+            call(2, 3, 0)])
+
+        # test led color
+        device.color(RGBColor((2, 23, 42)))
+        self.advance_time_and_run(1)
+        device.hw_driver.proc.led_color.assert_has_calls([
+            call(2, 1, 2),
+            call(2, 2, 23),
+            call(2, 3, 42)])

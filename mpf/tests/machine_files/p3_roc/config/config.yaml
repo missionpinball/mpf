@@ -95,3 +95,7 @@ matrix_lights:
 gis:
   test_gi:
     number: A2-B0-3
+
+leds:
+  test_led:
+    number: 2-1-2-3
