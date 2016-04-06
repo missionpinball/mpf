@@ -91,3 +91,7 @@ flippers:
 matrix_lights:
   test_pdb_light:
     number: C-A2-B0-0:R-A2-B1-0
+
+gis:
+  test_gi:
+    number: A2-B0-3

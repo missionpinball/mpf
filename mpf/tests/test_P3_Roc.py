@@ -688,3 +688,25 @@ class TestP3Roc(MpfTestCase):
         self.machine.lights.test_pdb_light.off()
         self.machine_run()
         self.machine.lights.test_pdb_light.hw_driver.proc.driver_disable.assert_called_with(32)
+
+    def test_pdb_gi_light(self):
+        # test gi on
+        device = self.machine.gi.test_gi
+        device.hw_driver.proc.driver_patter = MagicMock()
+        device.enable()
+        self.machine_run()
+        device.hw_driver.proc.driver_patter.assert_called_with(67, 20, 0, 0, True)
+
+        device.enable(brightness=128)
+        self.machine_run()
+        device.hw_driver.proc.driver_patter.assert_called_with(67, 10, 10, 0, True)
+
+        device.enable(brightness=245)
+        self.machine_run()
+        device.hw_driver.proc.driver_patter.assert_called_with(67, 19, 1, 0, True)
+
+        # test gi off
+        device.hw_driver.proc.driver_disable = MagicMock()
+        device.disable()
+        self.machine_run()
+        device.hw_driver.proc.driver_disable.assert_called_with(67)
