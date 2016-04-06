@@ -61,9 +61,7 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
 
         self.hw_switches[config['number']] = state
 
-        switch = VirtualSwitch(config)
-
-        return switch, config['number']
+        return VirtualSwitch(config)
 
     def get_hw_switch_states(self):
 

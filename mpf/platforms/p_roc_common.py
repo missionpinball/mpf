@@ -244,7 +244,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
             self.proc.switch_update_rule(proc_num, 'open_debounced',
                                          {'notifyHost': True,
                                           'reloadActive': False}, [], False)
-        return switch, proc_num
+        return switch
 
 
 class PDBConfig(object):

@@ -57,8 +57,7 @@ class Switch(SystemWideDevice):
 
         self.recycle_secs = self.config['ignore_window_ms']
 
-        self.hw_switch, _ = (
-            self.platform.configure_switch(self.config))
+        self.hw_switch = self.platform.configure_switch(self.config)
 
     def get_configured_switch(self):
         if not self._configured_switch:

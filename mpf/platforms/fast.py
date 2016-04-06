@@ -546,7 +546,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
                             sender=self.net_connection.send,
                             platform=self)
 
-        return switch, config['number']
+        return switch
 
     def configure_led(self, config):
         if not self.rgb_connection:

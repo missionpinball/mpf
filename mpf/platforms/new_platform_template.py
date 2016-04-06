@@ -122,7 +122,7 @@ class HardwarePlatform(MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatfor
 
         switch.driver_settings = config
 
-        return switch, config['number']
+        return switch
 
     def get_hw_switch_states(self):
 
