@@ -549,8 +549,6 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         return switch, config['number']
 
     def configure_led(self, config):
-        # TODO: dont modify config here
-
         if not self.rgb_connection:
             raise AssertionError('A request was made to configure a FAST LED, '
                                  'but no connection to an LED processor is '
@@ -565,17 +563,14 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         # FAST hardware number
         if '-' in str(config['number']):
             num = str(config['number']).split('-')
-            config['number'] = (int(num[0]) * 64) + int(num[1])
-            self.config['config_number_format'] = 'int'
+            number = Util.int_to_hex_string((int(num[0]) * 64) + int(num[1]))
         else:
-            config['number'] = str(config['number'])
+            if self.config['config_number_format'] == 'int':
+                number = Util.int_to_hex_string(config['number'])
+            else:
+                number = Util.normalize_hex_string(config['number'])
 
-        if self.config['config_number_format'] == 'int':
-            config['number'] = Util.int_to_hex_string(config['number'])
-        else:
-            config['number'] = Util.normalize_hex_string(config['number'])
-
-        this_fast_led = FASTDirectLED(config['number'])
+        this_fast_led = FASTDirectLED(number)
         self.fast_leds.add(this_fast_led)
 
         return this_fast_led
