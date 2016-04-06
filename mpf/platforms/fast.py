@@ -616,16 +616,10 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         """Configures a hardware DMD connected to a FAST controller."""
 
         if not self.dmd_connection:
-            self.log.warning("A request was made to configure a FAST DMD, "
-                             "but no connection to a DMD processor is "
-                             "available. No hardware DMD will be used.")
-
-            return FASTDMD(self.machine, self.null_dmd_sender)
+            raise AssertionError("A request was made to configure a FAST DMD, "
+                                 "but no connection to a DMD processor is available.")
 
         return FASTDMD(self.machine, self.dmd_connection.send)
-
-    def null_dmd_sender(self, *args, **kwargs):
-        pass
 
     def tick(self, dt):
         while not self.receive_queue.empty():
