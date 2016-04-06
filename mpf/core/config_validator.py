@@ -714,7 +714,7 @@ switches:
     number: single|str|
     type: single|enum(NC,NO)|NO
     debounce: single|enum(auto,quick,normal)|auto
-    recycle_time: single|ms|0
+    ignore_window_ms: single|ms|0
     events_when_activated: list|str|None
     events_when_deactivated: list|str|None
     tags: list|str|None
