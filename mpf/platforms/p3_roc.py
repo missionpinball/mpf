@@ -209,7 +209,7 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
 
         proc_driver_object = PROCMatrixLight(proc_num, self.proc)
 
-        return proc_driver_object, proc_num
+        return proc_driver_object
 
     def configure_switch(self, config):
         """Configures a P3-ROC switch.

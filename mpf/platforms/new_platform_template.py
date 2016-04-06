@@ -83,7 +83,7 @@ class HardwarePlatform(MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatfor
         driver.driver_settings = config
         driver.driver_settings['pulse_ms'] = 30
 
-        return driver, config['number']
+        return driver
 
     def configure_switch(self, config):
         """Called once per switch when MPF boots. It's used to setup the
@@ -154,13 +154,13 @@ class HardwarePlatform(MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatfor
         pass
 
     def configure_matrixlight(self, config):
-        return VirtualMatrixLight(config['number']), config['number']
+        return VirtualMatrixLight(config['number'])
 
     def configure_led(self, config):
         return VirtualLED(config['number'])
 
     def configure_gi(self, config):
-        return VirtualGI(config['number']), config['number']
+        return VirtualGI(config['number'])
 
     def configure_dmd(self):
         return VirtualDMD(self.machine)

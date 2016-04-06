@@ -69,8 +69,7 @@ class MatrixLight(SystemWideDevice):
     def _initialize(self):
         self.load_platform_section('matrix_lights')
 
-        self.hw_driver, self.number = (
-            self.platform.configure_matrixlight(self.config))
+        self.hw_driver = self.platform.configure_matrixlight(self.config)
 
         if 'x' in self.config:
             self.x = self.config['x']

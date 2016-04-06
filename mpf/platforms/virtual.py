@@ -91,7 +91,7 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
         pass
 
     def configure_matrixlight(self, config):
-        return VirtualMatrixLight(config['number']), config['number']
+        return VirtualMatrixLight(config['number'])
 
     def configure_led(self, config):
         return VirtualLED(config['number'])

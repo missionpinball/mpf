@@ -145,7 +145,7 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
         else:
             proc_num = self.pinproc.decode(self.machine_type, str(config['number']))
 
-        return PROCMatrixLight(proc_num, self.proc), proc_num
+        return PROCMatrixLight(proc_num, self.proc)
 
     def configure_switch(self, config):
         """Configures a P-ROC switch.

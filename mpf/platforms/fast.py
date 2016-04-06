@@ -602,8 +602,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         else:
             number = Util.normalize_hex_string(config['number'])
 
-        return (FASTMatrixLight(number, self.net_connection.send),
-                number)
+        return FASTMatrixLight(number, self.net_connection.send)
 
     def configure_dmd(self):
         """Configures a hardware DMD connected to a FAST controller."""
