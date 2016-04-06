@@ -94,21 +94,9 @@ class TestPRoc(MpfTestCase):
 
     def test_switches(self):
         self.assertFalse(self.machine.switch_controller.is_active("s_test"))
-        # closed non debounced -> nothing should happen
-        self.machine.default_platform.proc.get_events = MagicMock(return_value=[
-            {'type': 3, 'value': 23}])
-        self.machine_run()
-        self.assertFalse(self.machine.switch_controller.is_active("s_test"))
-
         # closed debounced -> switch active
         self.machine.default_platform.proc.get_events = MagicMock(return_value=[
             {'type': 1, 'value': 23}])
-        self.machine_run()
-        self.assertTrue(self.machine.switch_controller.is_active("s_test"))
-
-        # open non debounces -> still active
-        self.machine.default_platform.proc.get_events = MagicMock(return_value=[
-            {'type': 4, 'value': 23}])
         self.machine_run()
         self.assertTrue(self.machine.switch_controller.is_active("s_test"))
 
