@@ -80,7 +80,7 @@ class TestFast(MpfTestCase):
             "DN:12,00,00,00": False,
             "DN:20,00,00,00": False,
             "DN:21,00,00,00": False,
-            "GI:42,FF": False,
+            "GI:2A,FF": False,
         }
         # FAST should never call sleep. Make it fail
         self.sleep = time.sleep
@@ -389,21 +389,21 @@ class TestFast(MpfTestCase):
         # test gi on
         device = self.machine.gis.test_gi
         MockSerialCommunicator.expected_commands['NET'] = {
-            "GI:42,FF": False,
+            "GI:2A,FF": False,
         }
         device.enable()
         self.machine_run()
         self.assertFalse(MockSerialCommunicator.expected_commands['NET'])
 
         MockSerialCommunicator.expected_commands['NET'] = {
-            "GI:42,80": False,
+            "GI:2A,80": False,
         }
         device.enable(brightness=128)
         self.machine_run()
         self.assertFalse(MockSerialCommunicator.expected_commands['NET'])
 
         MockSerialCommunicator.expected_commands['NET'] = {
-            "GI:42,F5": False,
+            "GI:2A,F5": False,
         }
         device.enable(brightness=245)
         self.machine_run()
@@ -411,7 +411,7 @@ class TestFast(MpfTestCase):
 
         # test gi off
         MockSerialCommunicator.expected_commands['NET'] = {
-            "GI:42,00": False,
+            "GI:2A,00": False,
         }
         device.disable()
         self.machine_run()

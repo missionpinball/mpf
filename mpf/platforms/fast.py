@@ -577,7 +577,6 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
 
     def configure_gi(self, config):
         # TODO: Add support for driver-based GI strings
-        # TODO: dont modify config here
 
         if not self.net_connection:
             raise AssertionError('A request was made to configure a FAST GI, '
@@ -585,10 +584,12 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
                                  'available')
 
         if self.machine_type == 'wpc':  # translate switch number to FAST switch
-            config['number'] = self.wpc_gi_map.get(str(config['number']).upper())
+            number = self.wpc_gi_map.get(str(config['number']).upper())
+        else:
+            number = Util.int_to_hex_string(config['number'])
 
-        return (FASTGIString(config['number'], self.net_connection.send),
-                config['number'])
+        return (FASTGIString(number, self.net_connection.send),
+                number)
 
     def configure_matrixlight(self, config):
         # TODO: dont modify config here
