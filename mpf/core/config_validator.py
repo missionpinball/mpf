@@ -58,7 +58,7 @@ autofire_coils:
     switch_overwrite: dict|str:str|None
 
 switch_overwrites:
-    debounce: single|enum(quick,normal)|None
+    debounce: single|enum(quick,normal,None)|None
 
 coil_overwrites:
     recycle: single|bool|None
@@ -1236,7 +1236,9 @@ class ConfigValidator(object):
     def _validate_type_enum(self, item, param, validation_failure_info):
         del validation_failure_info
         enum_values = param.split(",")
-        if item in enum_values:
+        if item is None and "None" in enum_values:
+            return None
+        elif item in enum_values:
             return item
         else:
             raise ValueError("{} is not in list of allowed values {}".format(item, str(param)))
