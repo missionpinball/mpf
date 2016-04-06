@@ -151,8 +151,7 @@ class HardwarePlatform(DriverPlatform):
 
             config['number'] = config['number'][:-1]
 
-            platform_driver, _ = (
-                self.platform.configure_driver(config))
+            platform_driver = self.platform.configure_driver(config)
 
             snux_driver = SnuxDriver(orig_number, platform_driver, self)
 
@@ -161,7 +160,7 @@ class HardwarePlatform(DriverPlatform):
             elif orig_number.lower().endswith('c'):
                 self._add_c_driver(snux_driver.platform_driver)
 
-            return snux_driver, orig_number
+            return snux_driver
 
         else:
             return self.platform.configure_driver(config)

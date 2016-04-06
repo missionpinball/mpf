@@ -74,7 +74,7 @@ class HardwarePlatform(VirtualPlatform):
 
         driver = SmartVirtualDriver(config, self.machine, self)
 
-        return driver, config['number']
+        return driver
 
     def confirm_eject_via_switch(self, switch):
         self.machine.switch_controller.process_switch(switch.name, 1)

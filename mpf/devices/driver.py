@@ -43,8 +43,7 @@ class Driver(SystemWideDevice):
     def _initialize(self):
         self.load_platform_section('coils')
 
-        self.hw_driver, _ = (
-            self.platform.configure_driver(self.config))
+        self.hw_driver = self.platform.configure_driver(self.config)
 
     def enable(self, **kwargs):
         """Enables a driver by holding it 'on'.

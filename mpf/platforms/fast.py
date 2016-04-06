@@ -478,8 +478,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         else:
             raise AssertionError("Invalid machine type: {}".format(self.machine_type))
 
-        return (FASTDriver(config, self.net_connection.send, self.machine),
-                (config['number'], config['connection']))
+        return FASTDriver(config, self.net_connection.send, self.machine)
 
     def configure_switch(self, config):
         """Configures the switch object for a FAST Pinball controller.

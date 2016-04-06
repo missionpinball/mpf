@@ -48,7 +48,7 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
 
         driver = VirtualDriver(config)
 
-        return driver, config['number']
+        return driver
 
     def configure_switch(self, config):
         # We want to have the virtual platform set all the initial switch states

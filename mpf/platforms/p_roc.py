@@ -121,7 +121,7 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
         else:
             proc_num = self.pinproc.decode(self.machine_type, str(config['number']))
 
-        return PROCDriver(proc_num, self.proc, config, self.machine), proc_num
+        return PROCDriver(proc_num, self.proc, config, self.machine)
 
     def configure_gi(self, config):
         # GIs are coils in P-Roc

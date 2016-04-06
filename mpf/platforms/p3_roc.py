@@ -189,7 +189,7 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
 
         proc_driver_object = PROCDriver(proc_num, self.proc, config, self.machine)
 
-        return proc_driver_object, proc_num
+        return proc_driver_object
 
     def configure_gi(self, config):
         # GIs are coils in P3-Roc
