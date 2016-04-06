@@ -84,6 +84,10 @@ flippers:
         eos_switch: s_flipper_eos
         use_eos: true
 
+matrix_lights:
+  test_pdb_light:
+    number: 23
+
 leds:
   test_led:
     number: 2-23

@@ -367,6 +367,23 @@ class TestFast(MpfTestCase):
 
         # TODO: test broken frames (see P-ROC test)
 
+    def test_matrix_light(self):
+        # test enable of matrix light
+        MockSerialCommunicator.expected_commands['NET'] = {
+            "L1:23,FF": False,
+        }
+        self.machine.lights.test_pdb_light.on()
+        self.machine_run()
+        self.assertFalse(MockSerialCommunicator.expected_commands['NET'])
+
+        # test disable of matrix light
+        MockSerialCommunicator.expected_commands['NET'] = {
+            "L1:23,00": False,
+        }
+        self.machine.lights.test_pdb_light.off()
+        self.machine_run()
+        self.assertFalse(MockSerialCommunicator.expected_commands['NET'])
+
     def test_rdb_led(self):
         device = self.machine.leds.test_led
         self.assertEqual("000000", MockSerialCommunicator.leds['97'])
