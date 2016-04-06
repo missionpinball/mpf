@@ -1194,7 +1194,7 @@ class FASTDMD(object):
 
     def tick(self, dt):
         del dt
-        self.send('BM:' + str(self.dmd_frame))
+        self.send('BM:'.encode() + bytes(self.dmd_frame))
 
 
 class SerialCommunicator(object):

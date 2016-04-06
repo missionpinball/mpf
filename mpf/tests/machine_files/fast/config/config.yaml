@@ -5,7 +5,7 @@ hardware:
     driverboards: fast
 
 fast:
-    ports: com4
+    ports: com4, com5
 
 switches:
     s_test:
