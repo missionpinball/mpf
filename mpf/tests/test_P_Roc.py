@@ -125,7 +125,9 @@ class TestPRoc(MpfTestCase):
         dmd.proc.dmd_update_config.assert_called_with(high_cycles=[1, 2, 3, 4])
 
         # test set frame to buffer
-        frame = range(4096)
+        frame = bytearray()
+        for i in range(4096):
+            frame.append(i % 256)
         dmd.update(frame)
         dmd.dmd.set_data.assert_called_with(frame)
 
@@ -144,7 +146,10 @@ class TestPRoc(MpfTestCase):
 
         # draw broken frame
         dmd.dmd.set_data = MagicMock()
-        frame = range(1234)
+        # test set frame to buffer
+        frame = bytearray()
+        for i in range(1234):
+            frame.append(i % 256)
         dmd.update(frame)
         # should not be rendered
         assert not dmd.dmd.set_data.called
