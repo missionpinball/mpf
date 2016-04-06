@@ -13,7 +13,7 @@ class Gi(SystemWideDevice):
     """
 
     config_section = 'gis'
-    collection = 'gi'
+    collection = 'gis'
     class_label = 'gi'
 
     def __init__(self, machine, name):

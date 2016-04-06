@@ -691,7 +691,7 @@ class TestP3Roc(MpfTestCase):
 
     def test_pdb_gi_light(self):
         # test gi on
-        device = self.machine.gi.test_gi
+        device = self.machine.gis.test_gi
         device.hw_driver.proc.driver_patter = MagicMock()
         device.enable()
         self.machine_run()
