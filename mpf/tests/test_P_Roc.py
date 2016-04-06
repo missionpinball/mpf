@@ -1,5 +1,5 @@
 from mpf.tests.MpfTestCase import MpfTestCase
-from mock import MagicMock
+from mock import MagicMock, call
 from mpf.platforms import p_roc_common, p_roc
 
 
@@ -51,12 +51,12 @@ class TestPRoc(MpfTestCase):
         p_roc_common.pinproc_imported = True
         p_roc_common.pinproc = MockPinProcModule()
         p_roc.pinproc = p_roc_common.pinproc
-        pinproc = MagicMock()
-        p_roc_common.pinproc.PinPROC = MagicMock(return_value=pinproc)
+        self.pinproc = MagicMock()
+        p_roc_common.pinproc.PinPROC = MagicMock(return_value=self.pinproc)
         p_roc_common.pinproc.normalize_machine_type = MagicMock(return_value=7)
         p_roc_common.pinproc.driver_state_pulse = MagicMock(
             return_value="driver_state_pulse")
-        pinproc.switch_get_states = MagicMock(return_value=[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+        self.pinproc.switch_get_states = MagicMock(return_value=[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
         super().setUp()
 
     def test_pulse(self):
@@ -141,3 +141,52 @@ class TestPRoc(MpfTestCase):
         dmd.proc.dmd_draw = MagicMock()
         self.advance_time_and_run(0.04)
         dmd.proc.dmd_draw.assert_called_with(dmd.dmd)
+
+        # draw broken frame
+        dmd.dmd.set_data = MagicMock()
+        frame = range(1234)
+        dmd.update(frame)
+        # should not be rendered
+        assert not dmd.dmd.set_data.called
+
+    def test_pdb_matrix_light(self):
+        # very simple check for matrix config
+        self.pinproc.driver_update_group_config.assert_has_calls(
+            [call(4, 100, 5, 0, 0, True, True, True, True)]
+        )
+
+        # test enable of matrix light
+        assert not self.machine.lights.test_pdb_light.hw_driver.proc.driver_schedule.called
+        self.machine.lights.test_pdb_light.on()
+        self.machine_run()
+        self.machine.lights.test_pdb_light.hw_driver.proc.driver_schedule.assert_called_with(
+            cycle_seconds=0, schedule=4294967295, now=True, number=32
+        )
+
+        # test disable of matrix light
+        assert not self.machine.lights.test_pdb_light.hw_driver.proc.driver_disable.called
+        self.machine.lights.test_pdb_light.off()
+        self.machine_run()
+        self.machine.lights.test_pdb_light.hw_driver.proc.driver_disable.assert_called_with(32)
+
+    def test_pdb_gi_light(self):
+        # test gi on
+        device = self.machine.gi.test_gi
+        device.hw_driver.proc.driver_patter = MagicMock()
+        device.enable()
+        self.machine_run()
+        device.hw_driver.proc.driver_patter.assert_called_with(67, 20, 0, 0, True)
+
+        device.enable(brightness=128)
+        self.machine_run()
+        device.hw_driver.proc.driver_patter.assert_called_with(67, 10, 10, 0, True)
+
+        device.enable(brightness=245)
+        self.machine_run()
+        device.hw_driver.proc.driver_patter.assert_called_with(67, 19, 1, 0, True)
+
+        # test gi off
+        device.hw_driver.proc.driver_disable = MagicMock()
+        device.disable()
+        self.machine_run()
+        device.hw_driver.proc.driver_disable.assert_called_with(67)
