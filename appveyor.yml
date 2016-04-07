@@ -2,9 +2,13 @@ environment:
 
   matrix:
     - PYTHON: "C:\\Python34"
+      DEPLOY_TO_PYPI: "1"
     - PYTHON: "C:\\Python34-x64"
+      DEPLOY_TO_PYPI: "0"
     - PYTHON: "C:\\Python35"
+      DEPLOY_TO_PYPI: "0"
     - PYTHON: "C:\\Python35-x64"
+      DEPLOY_TO_PYPI: "0"
 
   pypi_user:
     secure: kxNKBuVMdOz6LjJPQb7PMQ==
@@ -28,16 +32,16 @@ test_script:
 
 after_test:
   # mpf packages are universal, so only need to build wheels & tarball once
-  - "if %PYTHON% == 'C:\\Python34' %PYTHON%\\python.exe setup.py sdist --formats=gztar"
-  - "if %PYTHON% == 'C:\\Python34' %PYTHON%\\python.exe setup.py bdist_wheel"
+  - "if %DEPLOY_TO_PYPI% == 1 %PYTHON%\\python.exe setup.py sdist --formats=gztar"
+  - "if %DEPLOY_TO_PYPI% == 1 %PYTHON%\\python.exe setup.py bdist_wheel"
 
 artifacts:
   - path: dist\*
 
 deploy_script:
   - "echo %DEPLOY_TO_PYPI%"
-  - "if %PYTHON% == 'C:\\Python34' cd dist"
-  - "if %PYTHON% == 'C:\\Python34' dir"
-  - "if %PYTHON% == 'C:\\Python34' if %DEPLOY_TO_PYPI% == 1 echo Deploying"
-  - "if %PYTHON% == 'C:\\Python34' if %DEPLOY_TO_PYPI% == 1 %PYTHON%\\python.exe -m pip install twine"
-  - "if %PYTHON% == 'C:\\Python34' if %DEPLOY_TO_PYPI% == 1 %PYTHON%\\python.exe -m twine upload -u %pypi_user% -p %pypi_password% *"
+  - "if %DEPLOY_TO_PYPI% == 1 cd dist"
+  - "if %DEPLOY_TO_PYPI% == 1 dir"
+  - "if %DEPLOY_TO_PYPI% == 1 echo Deploying"
+  - "if %DEPLOY_TO_PYPI% == 1 %PYTHON%\\python.exe -m pip install twine"
+  - "if %DEPLOY_TO_PYPI% == 1 %PYTHON%\\python.exe -m twine upload -u %pypi_user% -p %pypi_password% *"
