@@ -32,16 +32,22 @@ test_script:
 
 after_test:
   # mpf packages are universal, so only need to build wheels & tarball once
-  - "if %DEPLOY_TO_PYPI% == 1 %PYTHON%\\python.exe setup.py sdist --formats=gztar"
-  - "if %DEPLOY_TO_PYPI% == 1 %PYTHON%\\python.exe setup.py bdist_wheel"
+#  - "if %DEPLOY_TO_PYPI% == 1 %PYTHON%\\python.exe setup.py sdist --formats=gztar"
+#  - "if %DEPLOY_TO_PYPI% == 1 %PYTHON%\\python.exe setup.py bdist_wheel"
+  - "%PYTHON%\\python.exe setup.py sdist --formats=gztar"
+  - "%PYTHON%\\python.exe setup.py bdist_wheel"
 
 artifacts:
   - path: dist\*
 
 deploy_script:
-  - "echo %DEPLOY_TO_PYPI%"
-  - "if %DEPLOY_TO_PYPI% == 1 cd dist"
-  - "if %DEPLOY_TO_PYPI% == 1 dir"
-  - "if %DEPLOY_TO_PYPI% == 1 echo Deploying"
-  - "if %DEPLOY_TO_PYPI% == 1 %PYTHON%\\python.exe -m pip install twine"
-  - "if %DEPLOY_TO_PYPI% == 1 %PYTHON%\\python.exe -m twine upload -u %pypi_user% -p %pypi_password% *"
+#  - "echo %DEPLOY_TO_PYPI%"
+#  - "if %DEPLOY_TO_PYPI% == 1 cd dist"
+#  - "if %DEPLOY_TO_PYPI% == 1 dir"
+#  - "if %DEPLOY_TO_PYPI% == 1 echo Deploying"
+#  - "if %DEPLOY_TO_PYPI% == 1 %PYTHON%\\python.exe -m pip install twine"
+#  - "if %DEPLOY_TO_PYPI% == 1 %PYTHON%\\python.exe -m twine upload -u %pypi_user% -p %pypi_password% --skip-existing *"
+  - "cd dist"
+  - "dir"
+  - "%PYTHON%\\python.exe -m pip install twine"
+  - "%PYTHON%\\python.exe -m twine upload -u %pypi_user% -p %pypi_password% --skip-existing *"
