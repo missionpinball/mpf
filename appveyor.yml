@@ -36,6 +36,8 @@ artifacts:
 
 deploy_script:
   - "echo %DEPLOY_TO_PYPI%"
-  - "if %PYTHON% == 'C:\\Python34' if %DEPLOY_TO_PYPI% == 1 cd dist"
+  - "cd dist"
+  - "dir"
+  - "if %PYTHON% == 'C:\\Python34' if %DEPLOY_TO_PYPI% == 1 echo Deploying"
   - "if %PYTHON% == 'C:\\Python34' if %DEPLOY_TO_PYPI% == 1 %PYTHON%\\python.exe -m pip install twine"
   - "if %PYTHON% == 'C:\\Python34' if %DEPLOY_TO_PYPI% == 1 %PYTHON%\\python.exe -m twine upload -u %pypi_user% -p %pypi_password%"
