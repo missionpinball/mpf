@@ -13,8 +13,7 @@ environment:
     secure: nmmwU7UgFbrGUJwIr0Vo6cHzCuxlvW4vjg9TjkwrjmE=
 
 install:
-  - "%PYTHON%\\python.exe -m pip install wheel"
-  - "%PYTHON%\\python.exe -m pip install -U setuptools"
+  - "%PYTHON%\\python.exe -m pip install -U setuptools wheel pip mock gitpython"
 
   - "cd build_scripts"
     # sets whether we should deploy to pypi (if there's a change to _version.py)
