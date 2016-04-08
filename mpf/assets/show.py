@@ -232,9 +232,9 @@ class Show(Asset):
 
     # pylint: disable-msg=too-many-arguments
     def play(self, priority=0, hold=None,
-             speed=1.0, start_step=0, callback=None,
+             speed=1.0, start_step=1, callback=None,
              loops=-1, sync_ms=0, reset=True, mode=None,
-             manual_advance=False, **kwargs):
+             manual_advance=False, key=None, **kwargs):
         """Plays a Show. There are many parameters you can use here which
         affect how the show is played. This includes things like the playback
         speed, priority, etc. These are
@@ -288,7 +288,6 @@ class Show(Asset):
                 event handler which might include additional kwargs.
 
         """
-        self.name = '{}.{}'.format(self.name, self.get_id())
 
         if not self.loaded:
             self._autoplay_settings = dict(
@@ -302,6 +301,7 @@ class Show(Asset):
                     reset=reset,
                     mode=mode,
                     manual_advance=manual_advance,
+                    key=key,
                     play_kwargs=kwargs
                    )
 
@@ -331,6 +331,7 @@ class Show(Asset):
                            reset=bool(reset),
                            mode=mode,
                            manual_advance=manual_advance,
+                           key=key,
                            play_kwargs=kwargs)
 
     def _autoplay(self, *args, **kwargs):
@@ -355,7 +356,8 @@ class RunningShow(object):
     # pylint: disable-msg=too-many-arguments
     def __init__(self, machine, show, show_steps, priority,
                  hold, speed, start_step, callback, loops,
-                 sync_ms, reset, mode, manual_advance, play_kwargs):
+                 sync_ms, reset, mode, manual_advance, key,
+                 play_kwargs):
 
         self.machine = machine
         self.show = show
@@ -363,18 +365,25 @@ class RunningShow(object):
         self.priority = priority
         self.hold = hold
         self.speed = speed
-        self.current_step = start_step
         self.callback = callback
         self.loops = loops
         self.reset = reset
         self.mode = mode
         self.manual_advance = manual_advance
+        self.key = key
         self.play_kwargs = play_kwargs
         self.debug = False
         self._stopped = False
 
         self.name = show.name
         self._total_steps = len(show_steps)
+
+        if start_step > 0:
+            self.next_step_index = start_step - 1
+        elif start_step < 0:
+            self.next_step_index = self._total_steps + start_step
+        else:
+            self.next_step_index = 0
 
         if self.hold is None:
             self.hold = self._total_steps == 1
@@ -389,11 +398,13 @@ class RunningShow(object):
         self.next_step_time = self.machine.clock.get_time()
 
         if sync_ms:
-            self.next_step_time += show.sync_ms / 1000.0
-            self.machine.clock.schedule_once(self._run_current_step,
-                                             show.sync_ms / 1000.0)
+            delay_secs = (sync_ms / 1000.0) - (self.next_step_time % (sync_ms /
+                                               1000.0))
+            self.next_step_time += delay_secs
+            self.machine.clock.schedule_once(self._run_next_step,
+                                             delay_secs)
         else:  # run now
-            self._run_current_step()
+            self._run_next_step()
 
     def __repr__(self):
         return "Running Show Instance: {}".format(self.name)
@@ -435,7 +446,7 @@ class RunningShow(object):
 
         self.machine.show_controller.notify_show_stopping(self)
         self.show.running.remove(self)
-        self.machine.clock.unschedule(self._run_current_step, True)
+        self.machine.clock.unschedule(self._run_next_step, True)
 
         if hold is None:
             hold = self.hold
@@ -447,7 +458,22 @@ class RunningShow(object):
         if self.callback and callable(self.callback):
             self.callback()
 
-    def _run_current_step(self, dt=None):
+    def pause(self):
+        self.machine.clock.unschedule(self._run_next_step, True)
+
+    def resume(self):
+        # todo this needs work
+        self._run_next_step()
+
+    def advance(self):
+        self.machine.clock.unschedule(self._run_next_step, True)
+        self._run_next_step()
+
+    def update(self, **kwargs):
+        raise NotImplementedError("Show update is not implemented yet. It's "
+                                  "coming though...")
+
+    def _run_next_step(self, dt=None):
         del dt
 
         # todo dunno why we have to do this. It's needed with unit tests
@@ -455,7 +481,7 @@ class RunningShow(object):
             return
 
         for item_type, item_dict in (
-                iter(self.show_steps[self.current_step].items())):
+                iter(self.show_steps[self.next_step_index].items())):
 
             if item_type == 'time':
                 continue
@@ -473,26 +499,26 @@ class RunningShow(object):
                     play_kwargs=self.play_kwargs)
 
         # if we're at the end of the show
-        if self.current_step == self._total_steps - 1:
+        if self.next_step_index == self._total_steps - 1:
 
             if self.loops > 0:
                 self.loops -= 1
             elif self.loops < 0:
-                self.current_step = 0
+                self.next_step_index = 0
             else:
                 self.stop()
                 return False
 
         else:  # we're in the middle of a show
-            self.current_step += 1
+            self.next_step_index += 1
 
         if not self.manual_advance:
             time_to_next_step = (
-                self.show_steps[self.current_step]['time'] / self.speed)
+                self.show_steps[self.next_step_index]['time'] / self.speed)
             self.next_step_time = (
                 self.machine.clock.get_time() + time_to_next_step)
 
-            self.machine.clock.schedule_once(self._run_current_step,
+            self.machine.clock.schedule_once(self._run_next_step,
                                              time_to_next_step)
 
             return time_to_next_step
@@ -506,9 +532,9 @@ class RunningShow(object):
         # show and it's not set to loop?
 
         if steps_to_advance:
-            self.current_step = self._total_steps % steps_to_advance
+            self.next_step_index = self._total_steps % steps_to_advance
         elif show_step is not None:
-            self.current_step = show_step - 1
+            self.next_step_index = show_step - 1
 
-        self._run_current_step()
-        return self.current_step - 1  # current step is actually the next step
+        self._run_next_step()
+        return self.next_step_index - 1  # current step is actually the next step

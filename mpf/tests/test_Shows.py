@@ -1,19 +1,17 @@
 import time
 
 from mock import MagicMock
-from ruamel import yaml
 
-from mpf.assets.show import Show
 from mpf.core.rgb_color import RGBColor
 from mpf.tests.MpfTestCase import MpfTestCase
 
 
-class TestShowController(MpfTestCase):
+class TestShows(MpfTestCase):
     def getConfigFile(self):
         return 'test_shows.yaml'
 
     def getMachinePath(self):
-        return 'tests/machine_files/show_controller/'
+        return 'tests/machine_files/shows/'
 
     def get_platform(self):
         return 'smart_virtual'
@@ -494,3 +492,160 @@ class TestShowController(MpfTestCase):
                          dict(color='cccccc', fade_ms=0, priority=0))
         self.assertEqual(copied_show[3]['leds'][self.machine.leds.led_01],
                          dict(color='midnightblue', fade_ms=500, priority=0))
+
+    def _stop_shows(self):
+        while self.machine.show_controller.running_shows:
+            for show in self.machine.show_controller.running_shows:
+                show.stop()
+                self.advance_time_and_run()
+        self.assertFalse(self.machine.show_controller.running_shows)
+
+    def test_show_player(self):
+        # Basic show
+        self.machine.events.post('play_test_show1')
+        self.advance_time_and_run()
+        self.assertEqual(1, len(self.machine.show_controller.get_running_shows(
+                         'test_show1')))
+        self._stop_shows()
+
+        # Test priority
+        self.machine.events.post('play_with_priority')
+        self.advance_time_and_run()
+        self.assertEqual(15,
+            self.machine.show_controller.running_shows[0].priority)
+        self._stop_shows()
+
+        # Test hold
+        self.machine.events.post('play_with_hold')
+        self.advance_time_and_run()
+        self.assertTrue(self.machine.show_controller.running_shows[0].hold)
+        self._stop_shows()
+
+        # Test speed
+        self.machine.events.post('play_with_speed')
+        self.advance_time_and_run()
+        self.assertEqual(2,
+                         self.machine.show_controller.running_shows[0].speed)
+        self._stop_shows()
+
+        # Test start step
+        self.machine.events.post('play_with_start_step')
+        self.advance_time_and_run(.1)
+        self.assertEqual(2,
+            self.machine.show_controller.running_shows[0].next_step_index)
+        self._stop_shows()
+
+        # Test start step
+        self.machine.events.post('play_with_neg_start_step')
+        self.advance_time_and_run(.1)
+        self.assertEqual(5,
+            self.machine.show_controller.running_shows[0].next_step_index)
+        self._stop_shows()
+
+        # Test loops
+        self.machine.events.post('play_with_loops')
+        self.advance_time_and_run(.1)
+        self.assertEqual(2,
+            self.machine.show_controller.running_shows[0].loops)
+        self._stop_shows()
+
+        # Test sync_ms 1000ms
+        self.machine.events.post('play_with_sync_ms_1000')
+        self.advance_time_and_run(.1)
+        self.assertEqual(0.0,
+            self.machine.show_controller.running_shows[0].next_step_time % 1.0)
+        self._stop_shows()
+
+        # Test sync_ms 500ms
+        self.machine.events.post('play_with_sync_ms_500')
+        self.advance_time_and_run(.1)
+        self.assertEqual(0.0,
+            self.machine.show_controller.running_shows[0].next_step_time % 0.5)
+        self._stop_shows()
+
+        # Test reset
+        self.machine.events.post('play_with_reset')
+        self.advance_time_and_run()
+        self.assertFalse(self.machine.show_controller.running_shows[0].reset)
+        self._stop_shows()
+
+        # Test manual advance
+        self.machine.events.post('play_with_manual_advance')
+        self.advance_time_and_run(10)
+        self.assertEqual(1,
+            self.machine.show_controller.running_shows[0].next_step_index)
+
+    def test_show_player_keys(self):
+        # Make sure keys are right
+        self.machine.events.post('play_with_keys')
+        self.advance_time_and_run()
+        self.assertEqual(2, len(self.machine.show_controller.get_running_shows(
+            'key1')))
+        self.assertEqual(1, len(self.machine.show_controller.get_running_shows(
+            'key2')))
+
+        # stop shows based on key
+        self.machine.events.post('stop_key1')
+        self.advance_time_and_run()
+        self.assertFalse(self.machine.show_controller.get_running_shows('key1'))
+        self.assertEqual(1, len(self.machine.show_controller.get_running_shows(
+            'key2')))
+
+        self.machine.events.post('stop_key2')
+        self.advance_time_and_run()
+        self.assertFalse(self.machine.show_controller.running_shows)
+
+        # stop by show name
+        self.machine.events.post('play_with_keys')
+        self.advance_time_and_run()
+        self.assertTrue(
+            self.machine.show_controller.get_running_shows('test_show1'))
+
+        self.machine.events.post('stop_test_show1')
+        self.advance_time_and_run()
+        self.assertFalse(
+            self.machine.show_controller.get_running_shows('test_show1'))
+        self._stop_shows()
+
+        # test invalid show stop name
+        self.machine.events.post('invalid_show_stop_name')
+
+    def test_pause_resume_shows(self):
+        self.machine.events.post('play_test_show1')
+        # make sure show is advancing
+        self.advance_time_and_run(1)
+        self.assertEqual(2,
+            self.machine.show_controller.running_shows[0].next_step_index)
+        self.advance_time_and_run(1)
+        self.assertEqual(3,
+            self.machine.show_controller.running_shows[0].next_step_index)
+
+        self.machine.events.post('pause_test_show1')
+
+        # make sure show stops advancing
+        self.advance_time_and_run(1)
+        self.assertEqual(3,
+            self.machine.show_controller.running_shows[0].next_step_index)
+        self.advance_time_and_run(1)
+        self.assertEqual(3,
+            self.machine.show_controller.running_shows[0].next_step_index)
+        self.advance_time_and_run(1)
+        self.assertEqual(3,
+            self.machine.show_controller.running_shows[0].next_step_index)
+
+        # make sure show starts advanving again
+        self.machine.events.post('resume_test_show1')
+        self.advance_time_and_run(1)
+        self.assertEqual(5,
+            self.machine.show_controller.running_shows[0].next_step_index)
+        self.advance_time_and_run(2)
+        self.assertEqual(0,
+            self.machine.show_controller.running_shows[0].next_step_index)
+
+    # todo need to implement this
+    # def test_updating_shows(self):
+    #     self.machine.events.post('play_with_keys')
+    #     self.advance_time_and_run()
+    #
+    #     self.machine.events.post('adjust_running_show_by_key')
+    #     self.advance_time_and_run()

@@ -65,6 +65,22 @@ class ShowController(object):
         for show, settings in config.items():
             self.register_show(show, settings)
 
+    def get_running_shows(self, name):
+        """Returns a list of running shows by show name or instance name.
+
+        Args:
+            name: String name of the running shows you want to get. This can
+                be a show name (which will return all running instances of that
+                show) or a key (which will also return all running
+                show instances that have that instance name).
+
+        Returns:
+            A list of RunningShow() objects.
+
+        """
+        return [x for x in self.running_shows if x.name == name or
+                x.key == name]
+
     def register_show(self, name, settings):
         if name in self.machine.shows:
             raise ValueError("Show named '{}' was just registered, but "

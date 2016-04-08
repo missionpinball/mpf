@@ -661,19 +661,23 @@ shot_profiles:
         sync_ms:  single|int|0
         __allow_others__:
 show_player:
-    action: single|str|play
-    step_num: single|int|0
-    loops: single|int|-1
-    # blend: single|bool|False
-    speed: single|float|1
+    action: single|enum(play,stop,pause,resume,advance,update)|play
+    priority: single|int|0
     hold: single|bool|None
+    speed: single|float|1
+    start_step: single|int|1
+    loops: single|int|-1
+    sync_ms: single|int|0
+    reset: single|bool|True
+    manual_advance: single|bool|False
+    key: single|str|None
     __allow_others__:
 show_step:
     time: single|str|
     __allow_others__:
 slide_player:
     target: single|str|None
-    priority: single|int|None
+    priority: single|int|None                      # todo should this be 0?
     show: single|bool|True
     force: single|bool|False
     transition: ignore

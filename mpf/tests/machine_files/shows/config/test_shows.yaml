@@ -84,29 +84,72 @@ shows:
         (lights): ff
 
 show_player:
-  play_leds_basic_single:
-    leds_basic:
-      leds: led_01
-  play_leds_basic_multiple:
-    leds_basic:
-      leds: led_01
-  play_leds_basic_tag:
-    leds_basic:
-      leds: tag1
-  event1:
-    light_01:
-      show: script2
-  event2:
-    script1:
-      lights: light_01
-    script2:
-      lights: light_02
-  event3:
-    script2:
-      lights: tag1
-  event4:
-    script:
-      leds: tag1
-  event4:
-    script3:
-      leds: led_01
+  play_test_show1: test_show1
+  play_with_priority:
+    test_show1:
+      priority: 15
+  play_with_hold:
+    test_show1:
+      hold: True
+  play_with_speed:
+    test_show1:
+      speed: 2
+  play_with_start_step:
+    test_show1:
+      start_step: 2
+  play_with_neg_start_step:
+    test_show1:
+      start_step: -2
+  play_with_loops:
+    test_show1:
+      loops: 2
+  play_with_sync_ms_1000:
+    test_show1:
+      sync_ms: 1000
+  play_with_sync_ms_500:
+    test_show1:
+      sync_ms: 500
+  play_with_reset:
+    test_show1:
+      reset: False
+  play_with_manual_advance:
+    test_show1:
+      manual_advance: True
+  play_with_keys:
+    test_show1:
+      key: key1
+    test_show2:
+      key: key1
+    test_show3:
+      key: key2
+  stop_key1:
+    key1:
+      action: stop
+  stop_key2:
+    key2:
+      action: stop
+  stop_test_show1:
+    test_show1:
+      action: stop
+  pause_test_show1:
+    test_show1:
+      action: pause
+  resume_test_show1:
+    test_show1:
+      action: resume
+  invalid_show_stop_name:
+    fake_show:
+      action: stop
+  adjust_running_show_by_key:
+    key1:
+      action: update
+      speed: 2
+  stop_by_multiple_keys:
+    key1:
+      action: stop
+    key2:
+      action: stop
+  stop_by_show_name:
+    leds_extended:
+      action: stop
+

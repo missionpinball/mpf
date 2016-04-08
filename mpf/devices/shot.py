@@ -262,7 +262,7 @@ class Shot(ModeDevice, SystemWideDevice):
                 self.running_show.advance(show_step=show_step)
                 self.debug_log("Running show: %s, step: %s",
                                self.running_show,
-                               self.running_show.current_step - 1)
+                               self.running_show.next_step_index - 1)
 
     def player_turn_start(self, player, **kwargs):
         """Called by the shot profile manager when a player's turn starts to

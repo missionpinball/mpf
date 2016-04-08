@@ -30,11 +30,37 @@ class ShowPlayer(ConfigPlayer):
                 s['priority'] = priority
 
             if s['action'].lower() == 'play':
-                self.machine.shows[show].play(mode=mode,
-                                              play_kwargs=play_kwargs, **s)
+                try:
+                    self.machine.shows[show].play(mode=mode,
+                                                  play_kwargs=play_kwargs, **s)
+                except KeyError:
+                    raise KeyError("Cannot play show '{}'. No show with that "
+                                   "name.".format(show))
 
             elif s['action'].lower() == 'stop':
-                self.machine.shows[show].stop(play_kwargs=play_kwargs, **s)
+                for running_show in (
+                        self.machine.show_controller.get_running_shows(show)):
+                    running_show.stop(s['hold'])
+
+            elif s['action'].lower() == 'pause':
+                for running_show in (
+                        self.machine.show_controller.get_running_shows(show)):
+                    running_show.pause()
+
+            elif s['action'].lower() == 'resume':
+                for running_show in (
+                        self.machine.show_controller.get_running_shows(show)):
+                    running_show.resume()
+
+            elif s['action'].lower() == 'advance':
+                for running_show in (
+                        self.machine.show_controller.get_running_shows(show)):
+                    running_show.advance()
+
+            elif s['action'].lower() == 'update':
+                for running_show in (
+                        self.machine.show_controller.get_running_shows(show)):
+                    running_show.update(play_kwargs=play_kwargs, **s)
 
     def clear(self, caller, priority):
         self.machine.show_controller.stop_shows_by_mode(caller)
