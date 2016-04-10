@@ -1,0 +1,5 @@
+#config_version=4
+mode:
+  priority: 200
+
+banana_player:

@@ -146,3 +146,9 @@ class TestConfigPlayers(MpfTestCase):
         # todo make sure it stops when the mode ends, that banana clear is
         # called when it stops, and that it doesn't start again once the mode
         # is not running
+
+    def test_empty_config_player_section(self):
+        self.machine.modes.mode2.start()
+        self.advance_time_and_run()
+        self.machine.modes.mode2.stop()
+        self.advance_time_and_run()

@@ -180,7 +180,7 @@ class ConfigPlayer(object):
         return self.mode_stop, mode
 
     def mode_stop(self, mode):
-        event_keys = self.mode_keys.pop(mode)
+        event_keys = self.mode_keys.pop(mode, list())
 
         self.unload_player_events(event_keys)
         self.clear(mode, mode.priority)
@@ -189,13 +189,14 @@ class ConfigPlayer(object):
         # config is localized
         key_list = list()
 
-        for event, settings in config.items():
-            key_list.append(self.machine.events.add_handler(
-                    event=event,
-                    handler=self.config_play_callback,
-                    priority=priority,
-                    mode=mode,
-                    settings=settings))
+        if config:
+            for event, settings in config.items():
+                key_list.append(self.machine.events.add_handler(
+                        event=event,
+                        handler=self.config_play_callback,
+                        priority=priority,
+                        mode=mode,
+                        settings=settings))
 
         return key_list
 
