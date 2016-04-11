@@ -1286,9 +1286,7 @@ class BallDevice(SystemWideDevice):
     def eject(self, balls=1, target=None, **kwargs):
         del kwargs
         if not target:
-            target = self.config['eject_targets'][0]
-
-        # timeout = self.config['eject_timeouts'][target]
+            target = self._target_on_unexpected_ball
 
         if self.debug:
             self.log.debug('Adding %s ball(s) to the eject_queue.',
@@ -1316,8 +1314,8 @@ class BallDevice(SystemWideDevice):
         del kwargs
         if self.debug:
             self.log.debug("Ejecting all balls")
-        if self.balls > 0:
-            self.eject(balls=self.balls, target=target)
+        if self.available_balls > 0:
+            self.eject(balls=self.available_balls, target=target)
             return True
         else:
             return False
