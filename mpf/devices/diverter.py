@@ -306,7 +306,7 @@ class Diverter(SystemWideDevice):
                     self.diverting_ejects_count += 1
                     queue = self.eject_attempt_queue.pop()
                     queue.clear()
-            elif self.active:
+            elif self.active and not self.config['activation_time']:
                 # if diverter is active and no more ejects are ongoing
                 self.deactivate()
 
