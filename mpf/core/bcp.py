@@ -38,9 +38,9 @@ def decode_command_string(bcp_string):
 
     """
     bcp_command = urllib.parse.urlsplit(bcp_string)
+
     try:
         kwargs = urllib.parse.parse_qs(bcp_command.query)
-
         if 'json' in kwargs:
             kwargs = json.loads(kwargs['json'][0])
             return bcp_command.path.lower(), kwargs
@@ -48,9 +48,25 @@ def decode_command_string(bcp_string):
     except AttributeError:
         kwargs = dict()
 
+    for k, v in kwargs.items():
+        if isinstance(v[0], str):
+            if v[0].startswith('int:'):
+                v[0] = int(v[0][4:])
+            elif v[0].startswith('float:'):
+                v[0] = float(v[0][6:])
+            elif v[0].lower() == 'bool:true':
+                v[0] = True
+            elif v[0].lower() == 'bool:false':
+                v[0] = False
+            elif v[0] == 'NoneType:':
+                v[0] = None
+            else:
+                v[0] = urllib.parse.unquote(v[0])
+
+            kwargs[k] = v
+
     return (bcp_command.path.lower(),
-            dict((k.lower(), urllib.parse.unquote(v[0]))
-            for k, v in kwargs.items()))
+            dict((k.lower(), v[0]) for k, v in kwargs.items()))
 
 
 def encode_command_string(bcp_command, **kwargs):
@@ -77,20 +93,26 @@ def encode_command_string(bcp_command, **kwargs):
     kwarg_string = ''
     json_needed = False
 
-    try:
-        for k, v in kwargs.items():
+    for k, v in kwargs.items():
+        if isinstance(v, dict) or isinstance(v, list):
+            json_needed = True
+            break
 
-            if isinstance(v, dict) or isinstance(v, list):
-                json_needed = True
-                break
+        value = urllib.parse.quote(str(v), '')
 
-            kwarg_string += (urllib.parse.quote(k.lower(), '') + '=' +
-                             urllib.parse.quote(str(v), '') + '&')
+        if isinstance(v, bool):  # bool isinstance of int, so this goes first
+            value = 'bool:{}'.format(value)
+        elif isinstance(v, int):
+            value = 'int:{}'.format(value)
+        elif isinstance(v, float):
+            value = 'float:{}'.format(value)
+        elif v is None:
+            value = 'NoneType:'
 
-        kwarg_string = kwarg_string[:-1]
+        kwarg_string += '{}={}&'.format(urllib.parse.quote(k.lower(), ''),
+                                        value)
 
-    except (TypeError, AttributeError):
-        pass
+    kwarg_string = kwarg_string[:-1]
 
     if json_needed:
         kwarg_string = 'json={}'.format(json.dumps(kwargs))
