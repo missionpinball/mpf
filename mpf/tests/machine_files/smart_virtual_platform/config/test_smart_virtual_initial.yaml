@@ -1,0 +1,6 @@
+#config_version=4
+
+config: test_smart_virtual.yaml
+
+virtual_platform_start_active_switches:
+  - device1_s1

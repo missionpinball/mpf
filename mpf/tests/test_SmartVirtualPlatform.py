@@ -5,7 +5,10 @@ from mock import MagicMock
 class TestSmartVirtualPlatform(MpfTestCase):
 
     def getConfigFile(self):
-        return 'test_smart_virtual.yaml'
+        if self._testMethodName == "test_eject":
+            return "test_smart_virtual_initial.yaml"
+        else:
+            return 'test_smart_virtual.yaml'
 
     def getMachinePath(self):
         return 'tests/machine_files/smart_virtual_platform/'
@@ -14,15 +17,7 @@ class TestSmartVirtualPlatform(MpfTestCase):
         return 'smart_virtual'
 
     def test_eject(self):
-        # tests that firing a coil in a ball device with a ball in it
-        # successfully activates the right switches to simulate the ball
-        # leaving that device and entering the target device.
-        self.machine.switch_controller.process_switch('device1_s1', 1)
-
-        # have to stop() it since the ball is unexpected and it will eject it
-        # otherwise.
-        self.machine.ball_devices.device1.stop()
-
+        # device1_s1 is active in this test initially
         self.advance_time_and_run(.6)
         self.assertEqual(1, self.machine.ball_devices.device1.balls)
         self.assertEqual(0, self.machine.ball_devices.device2.balls)
