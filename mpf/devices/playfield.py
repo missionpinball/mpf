@@ -168,7 +168,7 @@ class Playfield(SystemWideDevice):
         return 999
 
     def add_ball(self, balls=1, source_device=None,
-                 player_controlled=False, reset=False):
+                 player_controlled=False):
         """Adds live ball(s) to the playfield.
 
         Args:
@@ -177,8 +177,6 @@ class Playfield(SystemWideDevice):
                 ball(s) from.
             player_controlled: Boolean which specifies whether this event is
                 player controlled. (See not below for details)
-            reset: Boolean which controls whether the source device should
-                reset its state to idle
 
         Returns:
             True if it's able to process the add_ball() request, False if it
@@ -249,9 +247,6 @@ class Playfield(SystemWideDevice):
                                  ", but no source device was passed and no ball "
                                  "devices are tagged with 'ball_add_live'. Cannot"
                                  " add a ball.")
-
-        if reset:
-            source_device.stop()
 
         self.log.debug("Received request to add %s ball(s). Source device: %s."
                        " Player-controlled: %s", balls,

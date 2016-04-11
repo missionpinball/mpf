@@ -104,7 +104,6 @@ ball_devices:
     label: single|str|%
     debug: single|bool|False
     request_ball_events: list|str|None
-    stop_events: dict|str:ms|None
     eject_events: dict|str:ms|None
     eject_all_events: dict|str:ms|None
     mechanical_eject: single|bool|False

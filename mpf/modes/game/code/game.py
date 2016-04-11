@@ -209,7 +209,7 @@ class Game(Mode):
             self.machine.events.post(
                     'player_{}_ball_started'.format(self.player.number))
 
-        self.machine.playfield.add_ball(player_controlled=True, reset=True)
+        self.machine.playfield.add_ball(player_controlled=True)
 
     def ball_drained(self, balls=0, **kwargs):
         self.log.debug("Entering Game.ball_drained()")
