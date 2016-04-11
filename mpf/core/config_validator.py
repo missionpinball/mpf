@@ -137,7 +137,7 @@ bcp:
         connection_attempts: single|int|-1
         require_connection: single|bool|False
 bcp_player:                                          # todo
-
+    __allow_others__:
 coils:
     number: single|str|
     number_str: single|str|
@@ -282,7 +282,7 @@ fast:
     hardware_led_fade_time: single|ms|0
     debug: single|bool|False
 flasher_player:
-    __allow_others:
+    __allow_others__:
     ms: single|int|None
 flashers:
     number: single|str|
@@ -403,7 +403,7 @@ light_player:
     brightness: single|int_from_hex|ff
     fade_ms: single|ms|0
     force: single|bool|False
-    __allow_others:
+    __allow_others__:
 logic_block:
     common:
         enable_events: list|str|None
