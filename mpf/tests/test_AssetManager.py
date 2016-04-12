@@ -1,6 +1,4 @@
 import time
-
-from mpf.core.config_validator import ConfigValidator
 from mpf.tests.MpfTestCase import MpfTestCase
 
 
@@ -10,14 +8,6 @@ class TestAssets(MpfTestCase):
 
     def getConfigFile(self):
         return 'test_asset_loading.yaml'
-
-    def setUp(self):
-        ConfigValidator.load_config_spec()
-
-        if not ConfigValidator.config_spec['assets']['shows']:
-            ConfigValidator.config_spec['assets']['shows'] = dict()
-        ConfigValidator.config_spec['assets']['shows']['test_key'] = 'single|str|None'
-        super().setUp()
 
     def test_machine_wide_asset_loading(self):
 

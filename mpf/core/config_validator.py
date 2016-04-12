@@ -31,7 +31,9 @@ assets:
         file: single|str|None
         priority: single|int|0
     images: # no image-specific config items
+        __allow_others__:
     shows:  # no show-specific config items
+        __allow_others__:
     sounds:
         __allow_others__:
     videos:
