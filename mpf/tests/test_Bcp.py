@@ -10,6 +10,7 @@ class TestBcp(MpfTestCase):
         del self.machine_config_patches['bcp']
 
     def test_decode_command_string(self):
+        # test strings
         string_in = 'play?some_value=7&another_value=2'
         command = 'play'
         kwargs = dict(some_value='7', another_value='2')
@@ -19,7 +20,20 @@ class TestBcp(MpfTestCase):
         self.assertEqual(command, actual_command)
         self.assertEqual(kwargs, actual_kwargs)
 
+        # test ints, floats, bools, and none
+        string_in = 'play?some_int=int:7&some_float=float:2.0&some_none' \
+                    '=NoneType:&some_true=bool:True&some_false=bool:False'
+        command = 'play'
+        kwargs = dict(some_int=7, some_float=2.0, some_none=None,
+                      some_true=True, some_false=False)
+
+        actual_command, actual_kwargs = decode_command_string(string_in)
+
+        self.assertEqual(command, actual_command)
+        self.assertEqual(kwargs, actual_kwargs)
+
     def test_encode_command_string(self):
+        # test strings
         command = 'play'
         kwargs = dict(some_value='7', another_value='2')
         expected_strings = ('play?some_value=7&another_value=2',
@@ -28,6 +42,22 @@ class TestBcp(MpfTestCase):
         actual_string = encode_command_string(command, **kwargs)
 
         self.assertIn(actual_string, expected_strings)
+
+        # test ints, floats, bools, and none
+        command = 'play'
+        kwargs = dict(some_int=7, some_float=2.0, some_none=None,
+                      some_true=True, some_false=False)
+        expected_snippets = ('play?',
+                             'some_int=int:7',
+                             'some_float=float:2.0',
+                             'some_none=NoneType:',
+                             'some_true=bool:True',
+                             'some_false=bool:False')
+
+        actual_string = encode_command_string(command, **kwargs)
+
+        for snippet in expected_snippets:
+            self.assertIn(snippet, actual_string)
 
     def test_json_encoding_decoding(self):
         # test with dicts
