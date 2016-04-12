@@ -20,10 +20,16 @@ class TestDeviceManager(MpfTestCase):
                 method = getattr(device_cls, method_name, None)
                 self.assertIsNotNone(method, "Method {}.{} is missing for {}".format(device_type, method_name, k))
 
-                argspec = inspect.getargspec(method)
+                sig = inspect.signature(method)
 
-                self.assertEqual("self", argspec.args[0], "Method {}.{} is missing self. Argspec: {}".format(
-                    device_type, method_name, argspec))
+                self.assertTrue(sig.parameters['self'],
+                    "Method {}.{} is missing self. Actual signature: {}".format(
+                    device_type, method_name, sig))
 
-                self.assertTrue(argspec.keywords, "Method {}.{} is missing kwargs. Argspec: {}".format(
-                    device_type, method_name, argspec))
+                self.assertTrue(sig.parameters['kwargs'],
+                    "Method {}.{} is missing **kwargs. Actual signature: {}".format(
+                    device_type, method_name, sig))
+
+                self.assertEqual(sig.parameters['kwargs'].kind, inspect._VAR_KEYWORD,
+                    "Method {}.{} kwargs param is missing '**'".format(
+                    device_type, method_name))
