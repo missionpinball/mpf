@@ -24,9 +24,7 @@ class CommandLineUtility(object):
 
     def get_external_commands(self):
         for entry_point in iter_entry_points(group='mpf.command', name=None):
-            print("Found entry point", entry_point)
             command, function = entry_point.load()()
-            print(command, function)
             self.external_commands[command] = function
 
     def check_python_version(self):
@@ -37,7 +35,7 @@ class CommandLineUtility(object):
             sys.exit()
 
     def execute(self):
-        """Actually runs the command that was just setup."""
+        """Actually runs the command that was just set up."""
 
         self.check_python_version()
 
@@ -61,7 +59,7 @@ class CommandLineUtility(object):
 
         machine_path, remaining_args = self.parse_args()
 
-        return module.Command(self.mpf_path, machine_path, remaining_args)
+        module.Command(self.mpf_path, machine_path, remaining_args)
 
     def parse_args(self):
 
@@ -82,7 +80,7 @@ class CommandLineUtility(object):
 
     def get_machine_path(self, machine_path_hint):
 
-        print('get machine path', machine_path_hint)
+        # print('get machine path', machine_path_hint)
 
         machine_path = None
 
