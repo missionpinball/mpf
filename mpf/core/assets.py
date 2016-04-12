@@ -1,6 +1,7 @@
 """Contains AssetManager, AssetLoader, and Asset parent classes."""
 
 import copy
+import logging
 import os
 import random
 import sys
@@ -24,8 +25,8 @@ class AssetManager(object):
 
     def __init__(self, machine):
 
-        # self.log = logging.getLogger(config_section + ' Asset Manager')
-        # self.log.debug("Initializing...")
+        self.log = logging.getLogger('AssetManager')
+        self.log.debug("Initializing...")
 
         self.machine = machine
 
@@ -100,10 +101,10 @@ class AssetManager(object):
         self.loader_thread.stop()
 
     def _start_loader_thread(self):
-        self.loader_thread = AssetLoader(self.loader_queue,
-                                         self.loaded_queue,
-                                         self.machine.crash_queue,
-                                         self.machine.thread_stopper)
+        self.loader_thread = AssetLoader(loader_queue=self.loader_queue,
+                                         loaded_queue=self.loaded_queue,
+                                         exception_queue=self.machine.crash_queue,
+                                         thread_stopper=self.machine.thread_stopper)
         self.loader_thread.daemon = True
         self.loader_thread.start()
 
@@ -366,7 +367,7 @@ class AssetManager(object):
             config = dict()
 
         root_path = os.path.join(path, asset_class['path_string'])
-        # self.log.debug("Processing assets from base folder: %s", root_path)
+        self.log.debug("Processing assets from base folder: %s", root_path)
 
         for path, _, files in os.walk(root_path, followlinks=True):
             valid_files = [f for f in files if f.endswith(
@@ -415,9 +416,9 @@ class AssetManager(object):
                 # Update the config for that asset
                 config[name] = built_up_config
 
-                # self.log.debug("Registering Asset: %s, File: %s, Default
-                # Group: %s, Final Config: %s", name, file_name,
-                #                default_string, built_up_config)
+                self.log.debug("Registering Asset: %s, File: %s, Default "
+                               "Group: %s, Final Config: %s", name, file_name,
+                               default_string, built_up_config)
         return config
 
     def locate_asset_file(self, file_name, path_string, path=None):
@@ -448,8 +449,6 @@ class AssetManager(object):
             if os.path.isfile(full_path):
                 return full_path
 
-        # self.log.critical("Could not locate asset file '%s'. Quitting...",
-        #                   file_name)
         raise ValueError("Could not locate image '{}'".format(file_name))
 
     def _create_asset_groups(self, config, mode=None):
@@ -606,11 +605,9 @@ class AssetManager(object):
             MPF-based assets.
             '''
 
-        # TODO temp until logging is implemented properly
-        # print('Loading assets: {}/{} ({}%)'.format(self.num_assets_loaded +
-        #                                            self.num_bcp_assets_loaded,
-        #                                            total,
-        #                                            self.loading_percent))
+        self.log.debug('Loading assets: %s/%s (%s%)',
+                       self.num_assets_loaded + self.num_bcp_assets_loaded,
+                       total, self.loading_percent)
 
         if not remaining and not self.machine.is_init_done:
             self.machine.clear_boot_hold('assets')
@@ -638,7 +635,7 @@ class AssetLoader(threading.Thread):
                  thread_stopper):
 
         threading.Thread.__init__(self)
-        # self.log = logging.getLogger('Asset Loader')
+        self.log = logging.getLogger('Asset Loader')
         self.loader_queue = loader_queue
         self.loaded_queue = loaded_queue
         self.exception_queue = exception_queue
@@ -659,6 +656,9 @@ class AssetLoader(threading.Thread):
                         with asset.lock:
                             asset.do_load()
                     self.loaded_queue.put(asset)
+
+            print("Stopping AssetLoader thread")
+            return
 
         except Exception:  # pragma no cover
             exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -705,7 +705,7 @@ class AssetPool(object):
                     getattr(self.machine, self.member_cls.attribute)[name],
                     number))
             except KeyError:
-                print("No asset named {}", name)
+                raise ValueError("No asset named {}".format(name))
 
         self._configure_return_asset()
 
