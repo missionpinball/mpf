@@ -184,7 +184,7 @@ class AssetManager(object):
 
                     # then merge in this section's specific settings
                     default_config_dict[default_section_name].update(
-                            this_config[default_section_name])
+                        this_config[default_section_name])
 
         asset_class['defaults'] = default_config_dict
 
@@ -205,8 +205,8 @@ class AssetManager(object):
 
         for ac in self._asset_classes:
             preload_assets.extend(
-                    [x for x in getattr(self.machine, ac['attribute']).values() if
-                     x.config['load'] == 'preload'])
+                [x for x in getattr(self.machine, ac['attribute']).values() if
+                 x.config['load'] == 'preload'])
 
         for asset in preload_assets:
             asset.load()
@@ -295,18 +295,18 @@ class AssetManager(object):
             # Populate the config section for this asset class with all the
             # assets found on disk
             config[ac['disk_asset_section']] = self._create_asset_config_entries(
-                    asset_class=ac,
-                    config=config[ac['disk_asset_section']],
-                    mode_name=mode_name,
-                    path=path)
+                asset_class=ac,
+                config=config[ac['disk_asset_section']],
+                mode_name=mode_name,
+                path=path)
 
             # create the actual instance of the Asset object and add it
             # to the self.machine asset attribute dict for that asset class
             for asset in config[ac['disk_asset_section']]:
                 getattr(self.machine, ac['attribute'])[asset] = ac['cls'](
-                        self.machine, name=asset,
-                        file=config[ac['disk_asset_section']][asset]['file'],
-                        config=config[ac['disk_asset_section']][asset])
+                    self.machine, name=asset,
+                    file=config[ac['disk_asset_section']][asset]['file'],
+                    config=config[ac['disk_asset_section']][asset])
 
         return config
 
@@ -371,7 +371,7 @@ class AssetManager(object):
 
         for path, _, files in os.walk(root_path, followlinks=True):
             valid_files = [f for f in files if f.endswith(
-                    asset_class['extensions'])]
+                           asset_class['extensions'])]
             for file_name in valid_files:
                 folder = os.path.basename(path)
                 name = os.path.splitext(file_name)[0].lower()
@@ -657,7 +657,6 @@ class AssetLoader(threading.Thread):
                             asset.do_load()
                     self.loaded_queue.put(asset)
 
-            print("Stopping AssetLoader thread")
             return
 
         except Exception:  # pragma no cover
