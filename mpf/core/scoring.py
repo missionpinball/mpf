@@ -27,7 +27,7 @@ class ScoreController(object):
 
     def validate_entry(self, entry, mode):
         # TODO: better validation at mode loading time
-        for var_name, value in entry.items():
+        for value in entry.values():
             if isinstance(value, int):
                 continue
             elif isinstance(value, str):
