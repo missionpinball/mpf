@@ -844,6 +844,10 @@ widgets:
         animations: ignore
         color: single|kivycolor|ffffffff
         brightness: single|int|None
+        adjust_top: single|int|0
+        adjust_bottom: single|int|0
+        adjust_left: single|int|0
+        adjust_right: single|int|0
     animations:
         property: list|str|
         value: list|str|
