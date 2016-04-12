@@ -100,7 +100,7 @@ class MatrixLight(Device):
 
         self.hw_driver.on(brightness, fade_ms, start_brightness)
 
-    def off(self, fade_ms=0, priority=0, cache=True, force=False):
+    def off(self, fade_ms=0, priority=0, cache=True, force=False, **kwargs):
         self.on(brightness=0, fade_ms=fade_ms, priority=priority, cache=cache,
                 force=force, **kwargs)
         """Turns this light off.
