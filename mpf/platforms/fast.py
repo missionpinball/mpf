@@ -410,7 +410,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
 
     def receive_sa(self, msg):
 
-        self.log.info("Received SA: %s", msg)
+        self.log.debug("Received SA: %s", msg)
 
         hw_states = dict()
 
@@ -642,16 +642,25 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
 
         driver = coil.hw_driver
 
-        cmd = (driver.get_config_cmd() +
-               coil.hw_driver.number + ',' +
-               driver.get_control_for_cmd(enable_switch) + ',' +
-               enable_switch.hw_switch.number[0] + ',' +
-               "18" + ',' +                                 # Mode 18 settings
-               driver.get_pulse_ms_for_cmd(coil) + ',' +    # initial pulse ms
-               driver.get_pwm1_for_cmd(coil) + ',' +        # intial pwm
-               "00" + ',' +        # pulse 2 time
-               driver.get_recycle_ms_for_cmd(coil) + ',' +  # recycle ms
-               "00")                                        # not used with Mode 18
+        # cmd = (driver.get_config_cmd() +
+        #        coil.hw_driver.number + ',' +
+        #        driver.get_control_for_cmd(enable_switch) + ',' +
+        #        enable_switch.hw_switch.number[0] + ',' +
+        #        "18" + ',' +                                 # Mode 18 settings
+        #        driver.get_pulse_ms_for_cmd(coil) + ',' +    # initial pulse ms
+        #        driver.get_pwm1_for_cmd(coil) + ',' +        # intial pwm
+        #        "00" + ',' +        # pulse 2 time
+        #        driver.get_recycle_ms_for_cmd(coil) + ',' +  # recycle ms
+        #        "00")                                        # not used with Mode 18
+
+        cmd = '{}{},{},{},18,{},{},00,{},00'.format(
+            driver.get_config_cmd(),
+            coil.hw_driver.number,
+            driver.get_control_for_cmd(enable_switch),
+            enable_switch.hw_switch.number[0],
+            driver.get_pulse_ms_for_cmd(coil),
+            driver.get_pwm1_for_cmd(coil),
+            driver.get_recycle_ms_for_cmd(coil))
 
         driver.autofire = True
         enable_switch.hw_switch.configure_debounce(enable_switch.config)
@@ -684,16 +693,25 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
 
         driver = coil.hw_driver
 
-        cmd = (driver.get_config_cmd() +
-               coil.hw_driver.number + ',' +
-               driver.get_control_for_cmd(enable_switch) + ',' +
-               enable_switch.hw_switch.number[0] + ',' +
-               "10" + ',' +                                 # Mode 10 settings
-               driver.get_pulse_ms_for_cmd(coil) + ',' +    # initial pulse ms
-               driver.get_pwm1_for_cmd(coil) + ',' +        # intial pwm
-               '00' + ',' +                                 # pulse 2 time
-               '00' + ',' +                                 # pulse 2 pwm
-               driver.get_recycle_ms_for_cmd(coil))         # recycle ms
+        # cmd = (driver.get_config_cmd() +
+        #        coil.hw_driver.number + ',' +
+        #        driver.get_control_for_cmd(enable_switch) + ',' +
+        #        enable_switch.hw_switch.number[0] + ',' +
+        #        "10" + ',' +                                 # Mode 10 settings
+        #        driver.get_pulse_ms_for_cmd(coil) + ',' +    # initial pulse ms
+        #        driver.get_pwm1_for_cmd(coil) + ',' +        # intial pwm
+        #        '00' + ',' +                                 # pulse 2 time
+        #        '00' + ',' +                                 # pulse 2 pwm
+        #        driver.get_recycle_ms_for_cmd(coil))         # recycle ms
+
+        cmd = '{}{},{},{},10,{},{},00,00,{}'.format(
+            driver.get_config_cmd(),
+            coil.hw_driver.number,
+            driver.get_control_for_cmd(enable_switch),
+            enable_switch.hw_switch.number[0],
+            driver.get_pulse_ms_for_cmd(coil),
+            driver.get_pwm1_for_cmd(coil),
+            driver.get_recycle_ms_for_cmd(coil))
 
         driver.autofire = True
         enable_switch.hw_switch.configure_debounce(enable_switch.config)
@@ -708,20 +726,31 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         driver = coil.hw_driver
         if driver.get_pwm1_for_cmd(coil) == "ff" and driver.get_pwm2_for_cmd(coil) == "ff" and \
                 not coil.config['allow_enable']:
+            # todo figure how to show the friendly name of this driver
             raise AssertionError("Coil {} may not be enabled at 100% without allow_enabled or pwm settings".format(
                 coil.hw_driver.number
             ))
 
-        cmd = (driver.get_config_cmd() +
-               coil.hw_driver.number + ',' +
-               driver.get_control_for_cmd(enable_switch) + ',' +
-               enable_switch.hw_switch.number[0] + ',' +
-               "18" + ',' +                                 # Mode 18 settings
-               driver.get_pulse_ms_for_cmd(coil) + ',' +    # initial pulse ms
-               driver.get_pwm1_for_cmd(coil) + ',' +        # intial pwm
-               driver.get_pwm2_for_cmd(coil) + ',' +        # pulse 2 time
-               driver.get_recycle_ms_for_cmd(coil) + ',' +  # recycle ms
-               "00")                                        # not used with Mode 18
+        # cmd = (driver.get_config_cmd() +
+        #        coil.hw_driver.number + ',' +
+        #        driver.get_control_for_cmd(enable_switch) + ',' +
+        #        enable_switch.hw_switch.number[0] + ',' +
+        #        "18" + ',' +                                 # Mode 18 settings
+        #        driver.get_pulse_ms_for_cmd(coil) + ',' +    # initial pulse ms
+        #        driver.get_pwm1_for_cmd(coil) + ',' +        # intial pwm
+        #        driver.get_pwm2_for_cmd(coil) + ',' +        # pulse 2 time
+        #        driver.get_recycle_ms_for_cmd(coil) + ',' +  # recycle ms
+        #        "00")                                        # not used with Mode 18
+
+        cmd = '{}{},{},{},18,{},{},{},{},00'.format(
+            driver.get_config_cmd(),
+            coil.hw_driver.number,
+            driver.get_control_for_cmd(enable_switch),
+            enable_switch.hw_switch.number[0],
+            driver.get_pulse_ms_for_cmd(coil),
+            driver.get_pwm1_for_cmd(coil),
+            driver.get_pwm2_for_cmd(coil),
+            driver.get_recycle_ms_for_cmd(coil))
 
         driver.autofire = True
         enable_switch.hw_switch.configure_debounce(enable_switch.config)
@@ -749,9 +778,11 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
 
         driver = coil.hw_driver
 
-        cmd = (driver.get_config_cmd() +
-               coil.hw_driver.number + ',' +
-               '81')
+        # cmd = (driver.get_config_cmd() +
+        #        coil.hw_driver.number + ',' +
+        #        '81')
+
+        cmd = '{}{},81'.format(driver.get_config_cmd(), coil.hw_driver.number)
 
         coil.autofire = None
 
@@ -772,7 +803,12 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         position_numeric = int(position * 255)
 
         # build command and send it
-        cmd = 'XO:' + Util.int_to_hex_string(number) + ',' + Util.int_to_hex_string(position_numeric)
+        # cmd = 'XO:' + Util.int_to_hex_string(number) + ',' + Util.int_to_hex_string(position_numeric)
+
+        cmd = 'XO:{},{}'.format(
+            Util.int_to_hex_string(number),
+            Util.int_to_hex_string(position_numeric))
+
         self.net_connection.send(cmd)
 
 
@@ -807,10 +843,16 @@ class FASTSwitch(object):
 
         self._configured_debounce = new_setting
 
-        cmd += str(self.number[0])
-        cmd += ',01,'
-        cmd += Util.int_to_hex_string(debounce_open) + ','
-        cmd += Util.int_to_hex_string(debounce_close)
+        # cmd += str(self.number[0])
+        # cmd += ',01,'
+        # cmd += Util.int_to_hex_string(debounce_open) + ','
+        # cmd += Util.int_to_hex_string(debounce_close)
+
+        cmd = '{}{},01,{},{}'.format(
+            cmd,
+            self.number[0],
+            Util.int_to_hex_string(debounce_open),
+            Util.int_to_hex_string(debounce_close))
 
         self.send(cmd)
 
@@ -923,17 +965,22 @@ class FASTDriver(DriverPlatformInterface):
 
         """
         self.log.debug("Resetting driver %s", self.driver_settings)
-        cmd = (self.get_config_cmd() +
-               self.number +
-               ',00,00,00')
+        # cmd = (self.get_config_cmd() +
+        #        self.number +
+        #        ',00,00,00')
+
+        cmd = '{}{},00,00,00'.format(self.get_config_cmd(), self.number)
+
         self.send(cmd)
 
     def disable(self, coil):
         """Disables (turns off) this driver. """
         del coil
 
-        cmd = (self.get_trigger_cmd() +
-               self.number + ',' + '02')
+        # cmd = (self.get_trigger_cmd() +
+        #        self.number + ',' + '02')
+
+        cmd = '{}{},02'.format(self.get_trigger_cmd(), self.number)
 
         self.log.debug("Sending Disable Command: %s", cmd)
         self.send(cmd)
@@ -945,9 +992,12 @@ class FASTDriver(DriverPlatformInterface):
         if self.autofire:
             # If this driver is also configured for an autofire rule, we just
             # manually trigger it with the trigger_cmd and manual on ('03')
-            cmd = (self.get_trigger_cmd() +
-                   self.number + ',' +
-                   '03')
+            # cmd = (self.get_trigger_cmd() +
+            #        self.number + ',' +
+            #        '03')
+
+            cmd = '{}{},03'.format(self.get_trigger_cmd(), self.number)
+
             self.log.warning("Recived a command to enable this driver, but "
                              "this driver is configured with an autofire rule,"
                              " so this enable will reset that rule. We need to"
@@ -969,13 +1019,21 @@ class FASTDriver(DriverPlatformInterface):
 
                 pulse_ms = self.get_pulse_ms_for_cmd(coil)
 
-                cmd = (self.get_config_cmd() +
-                       self.number +
-                       ',C1,00,18,' +
-                       str(pulse_ms) + ',' +
-                       self.get_pwm1_for_cmd(coil) + ',' +
-                       self.get_pwm2_for_cmd(coil) + ',' +
-                       self.get_recycle_ms_for_cmd(coil))
+                # cmd = (self.get_config_cmd() +
+                #        self.number +
+                #        ',C1,00,18,' +
+                #        str(pulse_ms) + ',' +
+                #        self.get_pwm1_for_cmd(coil) + ',' +
+                #        self.get_pwm2_for_cmd(coil) + ',' +
+                #        self.get_recycle_ms_for_cmd(coil))
+
+                cmd = '{}{},C1,00,18,{},{},{},{}'.format(
+                    self.get_config_cmd(),
+                    self.number,
+                    pulse_ms,
+                    self.get_pwm1_for_cmd(coil),
+                    self.get_pwm2_for_cmd(coil),
+                    self.get_recycle_ms_for_cmd(coil))
 
         # todo pwm32
 
@@ -985,26 +1043,37 @@ class FASTDriver(DriverPlatformInterface):
 
     def pulse(self, coil, milliseconds):
         """Pulses this driver. """
+
         if isinstance(milliseconds, int):
             hex_ms_string = Util.int_to_hex_string(milliseconds)
         else:
             hex_ms_string = milliseconds
 
         if self.autofire:
-            cmd = (self.get_trigger_cmd() +
-                   self.number + ',' +
-                   '01')
+            # cmd = (self.get_trigger_cmd() +
+            #        self.number + ',' +
+            #        '01')
+
+            cmd = '{}{},01'.format(self.get_trigger_cmd(), self.number)
+
             if milliseconds:
                 self.log.debug("Received command to pulse driver for %sms, but"
                                "this driver is configured with an autofire rule"
                                ", so that pulse value will be used instead.")
         else:
-            cmd = (self.get_config_cmd() +
-                   self.number +
-                   ',89,00,10,' +
-                   hex_ms_string + ',' +
-                   self.get_pwm1_for_cmd(coil) + ',00,00,' +
-                   self.get_recycle_ms_for_cmd(coil))
+            # cmd = (self.get_config_cmd() +
+            #        self.number +
+            #        ',89,00,10,' +
+            #        hex_ms_string + ',' +
+            #        self.get_pwm1_for_cmd(coil) + ',00,00,' +
+            #        self.get_recycle_ms_for_cmd(coil))
+
+            cmd = '{}{},89,00,10,{},{},00,00,{}'.format(
+                self.get_config_cmd(),
+                self.number,
+                hex_ms_string,
+                self.get_pwm1_for_cmd(coil),
+                self.get_recycle_ms_for_cmd(coil))
 
         self.log.debug("Sending Pulse Command: %s", cmd)
         self.send(cmd)
@@ -1015,9 +1084,11 @@ class FASTDriver(DriverPlatformInterface):
     def check_auto(self):
 
         if self.autofire:
-            cmd = (self.get_trigger_cmd() +
-                   self.number +
-                   ',00')
+            # cmd = (self.get_trigger_cmd() +
+            #        self.number +
+            #        ',00')
+
+            cmd = '{}{},00'.format(self.get_trigger_cmd(), self.number)
 
             self.log.debug("Re-enabling auto fire mode: %s", cmd)
             self.send(cmd)
@@ -1043,7 +1114,10 @@ class FASTGIString(GIPlatformInterface):
             brightness = 255
 
         self.log.debug("Turning On GI String to brightness %s", brightness)
-        self.send('GI:' + self.number + ',' + Util.int_to_hex_string(brightness))
+        # self.send('GI:' + self.number + ',' + Util.int_to_hex_string(brightness))
+
+        self.send('GI:{},{}'.format(self.number,
+                                    Util.int_to_hex_string(brightness)))
 
 
 class FASTMatrixLight(MatrixLightPlatformInterface):
@@ -1055,12 +1129,14 @@ class FASTMatrixLight(MatrixLightPlatformInterface):
 
     def off(self):
         """Disables (turns off) this matrix light."""
-        self.send('L1:' + self.number + ',00')
+        # self.send('L1:' + self.number + ',00')
+        self.send('L1:{},00'.format(self.number))
 
     def on(self, brightness=255):
         """Enables (turns on) this driver."""
         if brightness >= 255:
-            self.send('L1:' + self.number + ',FF')
+            # self.send('L1:' + self.number + ',FF')
+            self.send('L1:{},FF'.format(self.number))
         elif brightness == 0:
             self.off()
         else:
