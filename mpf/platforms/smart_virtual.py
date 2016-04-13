@@ -68,31 +68,13 @@ class HardwarePlatform(VirtualPlatform):
                 if device.config['confirm_eject_switch']:
                     device.config['hold_coil'].hw_driver.confirm_eject_switch = device.config['confirm_eject_switch']
 
-    def configure_driver(self, config, device_type='coil'):
+    def configure_driver(self, config):
         # todo should probably throw out the number that we get since it could
         # be a weird string and just return an incremental int?
 
-        driver = SmartVirtualDriver(config['number'], self.machine, self)
+        driver = SmartVirtualDriver(config, self.machine, self)
 
-        driver.driver_settings = config
-        driver.driver_settings['pulse_ms'] = 30
-
-        return driver, config['number']
-
-    def write_hw_rule(self, *args, **kwargs):
-        pass
-
-    def clear_hw_rule(self, sw_name):
-        sw_num = self.machine.switches[sw_name].number
-
-        for entry in list(self.hw_switch_rules.keys()):  # slice for copy
-            if entry.startswith(
-                    self.machine.switches.number(sw_num).name):
-                del self.hw_switch_rules[entry]
-
-    def tick(self, dt):
-        # ticks every hw loop (typically hundreds of times per sec)
-        pass
+        return driver
 
     def confirm_eject_via_switch(self, switch):
         self.machine.switch_controller.process_switch(switch.name, 1)
@@ -118,9 +100,10 @@ class HardwarePlatform(VirtualPlatform):
 
 
 class SmartVirtualDriver(VirtualDriver):
-    def __init__(self, number, machine, platform):
+    def __init__(self, config, machine, platform):
         self.log = logging.getLogger('SmartVirtualDriver')
-        self.number = number
+        self.number = config['number']
+        self.config = config
         self.machine = machine
         self.platform = platform
         self.ball_switches = list()
@@ -131,11 +114,12 @@ class SmartVirtualDriver(VirtualDriver):
     def __repr__(self):
         return "SmartVirtualDriver.{}".format(self.number)
 
-    def disable(self):
+    def disable(self, coil):
+        del coil
         if self.type == 'hold':
             self._handle_ball()
 
-    def enable(self):
+    def enable(self, coil):
         pass
 
     def _handle_ball(self):
@@ -155,14 +139,12 @@ class SmartVirtualDriver(VirtualDriver):
                                     callback=self.platform.add_ball_to_device,
                                     device=self.target_device)
 
-    def pulse(self, milliseconds=None):
+    def pulse(self, coil, milliseconds):
+        del coil
         if self.type == 'eject':
             self._handle_ball()
 
-        if milliseconds:
-            return milliseconds
-        else:
-            return self.driver_settings['pulse_ms']
+        return milliseconds
 
     def register_ball_switches(self, switches):
         self.ball_switches.extend(switches)

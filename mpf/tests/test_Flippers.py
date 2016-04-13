@@ -17,51 +17,66 @@ class TestTilt(MpfTestCase):
         return 'virtual'
 
     def test_single(self):
-        self.machine.default_platform.write_hw_rule = MagicMock()
+        self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule = MagicMock()
 
         self.machine.flippers.f_test_single.enable()
-        self.assertEqual(1, self.machine.default_platform.write_hw_rule.called)
-        # TODO: check parameter for rule main pulse
+        self.assertEqual(1, len(self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule.
+                                _mock_call_args_list))
+        self.assertEqual(
+            (self.machine.flippers.f_test_single.switch.get_configured_switch(),
+             self.machine.flippers.f_test_single.main_coil.get_configured_driver()),
+            self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule._mock_call_args_list[0][0])
 
         self.machine.default_platform.clear_hw_rule = MagicMock()
         self.machine.flippers.f_test_single.disable()
 
         self.assertEqual(1, self.machine.default_platform.clear_hw_rule.called)
-        self.machine.default_platform.clear_hw_rule.assert_called_once_with("s_flipper")
+        self.machine.default_platform.clear_hw_rule.assert_called_once_with(
+            self.machine.flippers.f_test_single.switch.get_configured_switch(),
+            self.machine.flippers.f_test_single.main_coil.get_configured_driver())
 
     def test_hold_no_eos(self):
-        self.machine.default_platform.set_hw_rule = MagicMock()
+        self.machine.default_platform.set_pulse_on_hit_and_release_rule = MagicMock()
+        self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule = MagicMock()
 
         self.machine.flippers.f_test_hold.enable()
         #     def set_hw_rule(self, sw_name, sw_activity, driver_name, driver_action,
         #                     disable_on_release=True, drive_now=False,
         #                     **driver_settings_overrides):
-        self.assertEqual(2, len(self.machine.default_platform.set_hw_rule._mock_call_args_list))
+        self.assertEqual(1, len(self.machine.default_platform.set_pulse_on_hit_and_release_rule._mock_call_args_list))
+        self.assertEqual(1, len(self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule.
+                                _mock_call_args_list))
         # TODO: check parameter for rule main pulse
         # TODO: check parameter for rule hold pwm
 
         self.machine.default_platform.clear_hw_rule = MagicMock()
         self.machine.flippers.f_test_hold.disable()
 
-        self.assertEqual(1, self.machine.default_platform.clear_hw_rule.called)
-        self.machine.default_platform.clear_hw_rule.assert_called_once_with("s_flipper")
+        self.machine.default_platform.clear_hw_rule.assert_has_calls(
+            [call(self.machine.flippers.f_test_hold.switch.get_configured_switch(),
+                  self.machine.flippers.f_test_hold.main_coil.get_configured_driver()),
+             call(self.machine.flippers.f_test_hold.switch.get_configured_switch(),
+                  self.machine.flippers.f_test_hold.hold_coil.get_configured_driver())]
+        )
 
     def test_hold_with_eos(self):
-        self.machine.default_platform.set_hw_rule = MagicMock()
+        self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_and_disable_rule = MagicMock()
+        self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule = MagicMock()
 
         self.machine.flippers.f_test_hold_eos.enable()
-        self.assertEqual(2, len(self.machine.default_platform.set_hw_rule._mock_call_args_list))
-        # TODO: check parameter for rule main enable
-        # TODO: check parameter for rule hold pwm
+        self.assertEqual(1, len(self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_and_disable_rule
+                                ._mock_call_args_list))
+        self.assertEqual(1, len(self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule.
+                                _mock_call_args_list))
 
         self.machine.default_platform.clear_hw_rule = MagicMock()
         self.machine.flippers.f_test_hold_eos.disable()
 
-        self.assertEqual(1, len(self.machine.default_platform.clear_hw_rule._mock_call_args_list))
-        self.machine.default_platform.clear_hw_rule.assert_has_calls([call("s_flipper")])
-        # TODO: this should be clear_hw_rule on s_flipper and s_flipper_eos
-        #self.assertEqual(2, len(self.machine.default_platform.clear_hw_rule._mock_call_args_list))
-        #self.machine.default_platform.clear_hw_rule.assert_has_calls([call("s_flipper"), call("s_flipper_eos")])
+        self.machine.default_platform.clear_hw_rule.assert_has_calls(
+            [call(self.machine.flippers.f_test_hold_eos.switch, self.machine.flippers.f_test_hold_eos.main_coil),
+             call(self.machine.flippers.f_test_hold_eos.eos_switch, self.machine.flippers.f_test_hold_eos.main_coil),
+             call(self.machine.flippers.f_test_hold_eos.switch, self.machine.flippers.f_test_hold_eos.hold_coil)]
+        )
 
     def test_sw_flip_and_release(self):
 

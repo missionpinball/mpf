@@ -13,7 +13,7 @@ class Gi(SystemWideDevice):
     """
 
     config_section = 'gis'
-    collection = 'gi'
+    collection = 'gis'
     class_label = 'gi'
 
     def __init__(self, machine, name):
@@ -21,15 +21,10 @@ class Gi(SystemWideDevice):
 
         self.registered_handlers = []
 
-    def prepare_config(self, config, is_mode_config):
-        del is_mode_config
-        config['number_str'] = str(config['number']).upper()
-        return config
-
     def _initialize(self):
         self.load_platform_section('gis')
 
-        self.hw_driver, self.number = self.platform.configure_gi(self.config)
+        self.hw_driver = self.platform.configure_gi(self.config)
 
     def enable(self, brightness=255, **kwargs):
         """Enables this GI string.

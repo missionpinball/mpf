@@ -1160,32 +1160,6 @@ class BallDevice(SystemWideDevice):
 
         return balls
 
-    def stop(self, **kwargs):
-        """Stops all activity in this device.
-
-        Cancels all pending eject requests. Cancels eject confirmation checks.
-        You have to call stop on all connected devices to really reset
-        everything
-
-        Args:
-            **kwargs: unused
-
-        """
-        del kwargs
-        if self.debug:
-            self.log.debug("Stopping all activity via stop()")
-
-        # this will just work if you reset all devices
-        # TODO: properly cancel at target depending on state
-
-        self.eject_in_progress_target = None
-        self.balls = 0
-        self.eject_queue = deque()
-        self._incoming_balls = deque()
-        self._cancel_eject_confirmation()
-
-        return self._switch_state("invalid")
-
     def _setup_or_queue_eject_to_target(self, target, player_controlled=False):
         if self.available_balls > 0 and self != target:
             path = deque()
@@ -1312,9 +1286,7 @@ class BallDevice(SystemWideDevice):
     def eject(self, balls=1, target=None, **kwargs):
         del kwargs
         if not target:
-            target = self.config['eject_targets'][0]
-
-        # timeout = self.config['eject_timeouts'][target]
+            target = self._target_on_unexpected_ball
 
         if self.debug:
             self.log.debug('Adding %s ball(s) to the eject_queue.',
@@ -1342,8 +1314,8 @@ class BallDevice(SystemWideDevice):
         del kwargs
         if self.debug:
             self.log.debug("Ejecting all balls")
-        if self.balls > 0:
-            self.eject(balls=self.balls, target=target)
+        if self.available_balls > 0:
+            self.eject(balls=self.available_balls, target=target)
             return True
         else:
             return False

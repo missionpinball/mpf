@@ -17,7 +17,7 @@ switches:
         number: 23
     s_test_no_debounce:
         number: 24
-        debounce: false
+        debounce: quick
     s_slingshot_test:
         number: 40
 
@@ -32,7 +32,8 @@ coils:
         allow_enable: true
     c_slingshot_test:
         number: A0-B1-0
-
+    c_test2:  # unused. just to configure bank 0
+        number: A0-B0-0
 
 autofire_coils:
     ac_slingshot_test:
@@ -45,3 +46,11 @@ servo_controller:
 servos:
     servo1:
         number: 3
+
+matrix_lights:
+  test_pdb_light:
+    number: C-A2-B0-0:R-A2-B1-0
+
+gis:
+  test_gi:
+    number: A2-B0-3

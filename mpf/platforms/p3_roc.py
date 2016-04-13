@@ -13,10 +13,12 @@ https://github.com/preble/pyprocgame
 
 import logging
 import math
-from mpf.platforms.p_roc_common import PDBConfig, PROCDriver, PROCMatrixLight, PROCBasePlatform
+
+from mpf.core.platform import I2cPlatform, AccelerometerPlatform
+from mpf.platforms.p_roc_common import PDBConfig, PROCDriver, PROCMatrixLight, PROCBasePlatform, PROCGiString
 
 
-class HardwarePlatform(PROCBasePlatform):
+class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
     """Platform class for the P3-ROC hardware controller.
 
     Args:
@@ -162,7 +164,7 @@ class HardwarePlatform(PROCBasePlatform):
         # flush data to proc
         self.proc.flush()
 
-    def configure_driver(self, config, device_type='coil'):
+    def configure_driver(self, config):
         """ Creates a P3-ROC driver.
 
         Typically drivers are coils or flashers, but for the P3-ROC this is
@@ -170,7 +172,6 @@ class HardwarePlatform(PROCBasePlatform):
 
         Args:
             config: Dictionary of settings for the driver.
-            device_type: String with value of either 'coil' or 'switch'.
 
         Returns:
             A reference to the PROCDriver object which is the actual object you
@@ -182,25 +183,33 @@ class HardwarePlatform(PROCBasePlatform):
         # Find the P3-ROC number for each driver. For P3-ROC driver boards, the
         # P3-ROC number is specified via the Ax-By-C format.
 
-        proc_num = self.pdbconfig.get_proc_number(device_type,
-                                                  str(config['number']))
+        proc_num = self.pdbconfig.get_proc_number("coil", str(config['number']))
         if proc_num == -1:
-            raise AssertionError("Coil %s cannot be controlled by the P3-ROC. ",
-                                 str(config['number']))
+            raise AssertionError("Driver {} cannot be controlled by the P3-ROC. ".format(str(config['number'])))
 
-        if device_type in ['coil', 'flasher']:
-            proc_driver_object = PROCDriver(proc_num, self.proc, config, self.machine)
-        elif device_type == 'light':
-            proc_driver_object = PROCMatrixLight(proc_num, self.proc)
-        else:
-            raise AssertionError("Invalid device type {}".format(device_type))
+        proc_driver_object = PROCDriver(proc_num, self.proc, config, self.machine)
 
-        if 'polarity' in config:
-            state = proc_driver_object.proc.driver_get_state(config['number'])
-            state['polarity'] = config['polarity']
-            proc_driver_object.proc.driver_update_state(state)
+        return proc_driver_object
 
-        return proc_driver_object, config['number']
+    def configure_gi(self, config):
+        # GIs are coils in P3-Roc
+        proc_num = self.pdbconfig.get_proc_number("coil", str(config['number']))
+        if proc_num == -1:
+            raise AssertionError("Gi Driver {} cannot be controlled by the P3-ROC. ".format(str(config['number'])))
+
+        proc_driver_object = PROCGiString(proc_num, self.proc, config)
+
+        return proc_driver_object
+
+    def configure_matrixlight(self, config):
+        proc_num = self.pdbconfig.get_proc_number("light", str(config['number']))
+
+        if proc_num == -1:
+            raise AssertionError("Matrixlight {} cannot be controlled by the P3-ROC. ".format(str(config['number'])))
+
+        proc_driver_object = PROCMatrixLight(proc_num, self.proc)
+
+        return proc_driver_object
 
     def configure_switch(self, config):
         """Configures a P3-ROC switch.
@@ -257,9 +266,7 @@ class HardwarePlatform(PROCBasePlatform):
         for event in self.proc.get_events():
             event_type = event['type']
             event_value = event['value']
-            if event_type == 99:  # CTRL-C to quit todo does this go here?
-                self.machine.stop()
-            elif event_type == self.pinproc.EventTypeSwitchClosedDebounced:
+            if event_type == self.pinproc.EventTypeSwitchClosedDebounced:
                 self.machine.switch_controller.process_switch_by_num(state=1,
                                                                      num=event_value)
             elif event_type == self.pinproc.EventTypeSwitchOpenDebounced:
@@ -267,12 +274,10 @@ class HardwarePlatform(PROCBasePlatform):
                                                                      num=event_value)
             elif event_type == self.pinproc.EventTypeSwitchClosedNondebounced:
                 self.machine.switch_controller.process_switch_by_num(state=1,
-                                                                     num=event_value,
-                                                                     debounced=False)
+                                                                     num=event_value)
             elif event_type == self.pinproc.EventTypeSwitchOpenNondebounced:
                 self.machine.switch_controller.process_switch_by_num(state=0,
-                                                                     num=event_value,
-                                                                     debounced=False)
+                                                                     num=event_value)
 
             # The P3-ROC will always send all three values sequentially.
             # Therefore, we will trigger after the Z value

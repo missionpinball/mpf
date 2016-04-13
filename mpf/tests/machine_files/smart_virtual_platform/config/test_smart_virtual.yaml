@@ -1,9 +1,9 @@
 #config_version=4
 
 virtual_platform_start_active_switches:
-  trough1
-  trough2
-  trough3
+  - trough1
+  - trough2
+  - trough3
 
 coils:
     outhole:
@@ -13,37 +13,37 @@ coils:
         number: C10
         pulse_ms: 20
     plunger:
-        number:
+        number: 1
     device1:
-      number:
+      number: 2
     device2:
-      number:
+      number: 3
 
 switches:
     start:
-        number: S13
+        number: 1
         tags: start
     outhole:
-        number: S15
+        number: 2
     trough1:
-        number: S16
+        number: 3
     trough2:
-        number: S17
+        number: 4
     trough3:
-        number: S18
+        number: 5
     plunger:
-        number: S28
+        number: 6
     playfield:
-        number:
+        number: 7
         tags: playfield_active
     device1_s1:
-      number:
+      number: 8
     device1_s2:
-      number:
+      number: 9
     device2_s1:
-      number:
+      number: 10
     device2_s2:
-      number:
+      number: 11
 
 ball_devices:
     outhole:
@@ -70,6 +70,7 @@ ball_devices:
         eject_coil: device1
         eject_targets: device2
         confirm_eject_type: target
+        tags: home # has to be home or attract will collect the balls
     device2:
         ball_switches: device2_s1 #, device2_s2
 #        eject_coil: device2

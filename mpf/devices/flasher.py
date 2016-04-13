@@ -1,6 +1,7 @@
 """ Contains the Flasher parent class. """
 
 from mpf.core.system_wide_device import SystemWideDevice
+from mpf.devices.driver import ConfiguredHwDriver
 
 
 class Flasher(SystemWideDevice):
@@ -11,21 +12,22 @@ class Flasher(SystemWideDevice):
     collection = 'flashers'
     class_label = 'flasher'
 
-    def prepare_config(self, config, is_mode_config):
-        del is_mode_config
-        config['number_str'] = str(config['number']).upper()
-        return config
+    def __init__(self, machine, name):
+        super().__init__(machine, name)
+        self._configured_driver = None
 
     def _initialize(self):
         self.load_platform_section('flashers')
 
-        self.hw_driver, self.number = (
-            self.platform.configure_driver(config=self.config,
-                                           device_type='flasher'))
+        self.hw_driver = self.platform.configure_driver(config=self.config)
 
         if self.config['flash_ms'] is None:
-            self.config['flash_ms'] = (
-                self.machine.config['mpf']['default_flash_ms'])
+            self.config['flash_ms'] = self.machine.config['mpf']['default_flash_ms']
+
+    def get_configured_driver(self):
+        if not self._configured_driver:
+            self._configured_driver = ConfiguredHwDriver(self.hw_driver, {})
+        return self._configured_driver
 
     def flash(self, milliseconds=None, **kwargs):
         """Flashes the flasher.
@@ -42,4 +44,4 @@ class Flasher(SystemWideDevice):
         if milliseconds is None:
             milliseconds = self.config['flash_ms']
 
-        self.hw_driver.pulse(int(milliseconds))
+        self.hw_driver.pulse(self.get_configured_driver(), int(milliseconds))

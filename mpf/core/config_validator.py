@@ -48,28 +48,33 @@ auditor:
 autofire_coils:
     coil: single|machine(coils)|
     switch: single|machine(switches)|
-#    latch: single|bool|False
     reverse_switch: single|bool|False
-    delay: single|int|0
-    recycle_ms: single|int|125
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False
     enable_events: dict|str:ms|ball_started
     disable_events: dict|str:ms|ball_ending
-    # hw rules settings overrides
-    pulse_ms: single|int|None
-    pwm_on_ms: single|int|None
-    pwm_off_ms: single|int|None
+    coil_overwrite: dict|str:str|None
+    switch_overwrite: dict|str:str|None
+
+switch_overwrites:
+    debounce: single|enum(quick,normal,None)|None
+
+coil_overwrites:
+    recycle: single|bool|None
+    pulse_ms: single|ms|None
     pulse_power: single|int|None
     hold_power: single|int|None
+fast_coil_overwrites:
     pulse_power32: single|int|None
     hold_power32: single|int|None
     pulse_pwm_mask: single|int|None
     hold_pwm_mask: single|int|None
-    recycle_ms: single|int|None
-    debounced: single|bool|False
-    drive_now: single|bool|False
+    recycle_ms: single|ms|None
+p_roc_coil_overwrites:
+    pwm_on_ms: single|int|None
+    pwm_off_ms: single|int|None
+
 ball_devices:
     exit_count_delay: single|ms|500ms
     entrance_count_delay: single|ms|500ms
@@ -99,7 +104,6 @@ ball_devices:
     label: single|str|%
     debug: single|bool|False
     request_ball_events: list|str|None
-    stop_events: dict|str:ms|None
     eject_events: dict|str:ms|None
     eject_all_events: dict|str:ms|None
     mechanical_eject: single|bool|False
@@ -142,17 +146,10 @@ bcp_player:                                          # todo
     __allow_others__:
 coils:
     number: single|str|
-    number_str: single|str|
     pulse_ms: single|int|None
-    pwm_on_ms: single|int|None
-    pwm_off_ms: single|int|None
     pulse_power: single|int|None
     hold_power: single|int|None
-    pulse_power32: single|int|None
-    hold_power32: single|int|None
-    pulse_pwm_mask: single|int|None
-    hold_pwm_mask: single|int|None
-    recycle_ms: single|int|None
+    recycle: single|bool|False
     allow_enable: single|bool|False
     tags: list|str|None
     label: single|str|%
@@ -161,6 +158,16 @@ coils:
     disable_events: dict|str:ms|None
     pulse_events: dict|str:ms|None
     platform: single|str|None
+fast_coils:
+    pulse_power32: single|int|None
+    hold_power32: single|int|None
+    pulse_pwm_mask: single|int|None
+    hold_pwm_mask: single|int|None
+    connection: single|enum(network,local,auto)|auto
+    recycle_ms: single|ms|None
+p_roc_coils:
+    pwm_on_ms: single|int|None
+    pwm_off_ms: single|int|None
 coil_player:
     action: single|lstr|pulse
     ms: single|ms|None
@@ -224,22 +231,8 @@ diverters:
     disable_events: dict|str:ms|None
     activate_events: dict|str:ms|None
     deactivate_events: dict|str:ms|None
-    # hw rules settings overrides
-    pulse_ms: single|int|None
-    pwm_on_ms: single|int|None
-    pwm_off_ms: single|int|None
-    pulse_power: single|int|None
-    hold_power: single|int|None
-    pulse_power32: single|int|None
-    hold_power32: single|int|None
-    pulse_pwm_mask: single|int|None
-    hold_pwm_mask: single|int|None
-    recycle_ms: single|int|None
-    debounced: single|bool|False
-    drive_now: single|bool|False
 driver_enabled:
     number: single|str|
-    number_str: single|str|
     allow_enable: single|bool|True
     tags: list|str|None
     label: single|str|%
@@ -279,16 +272,17 @@ fast:
     baud: single|int|921600
     config_number_format: single|str|hex
     watchdog: single|ms|1000
-    default_debounce_open: single|ms|30
-    default_debounce_close: single|ms|30
+    default_quick_debounce_open: single|ms|
+    default_quick_debounce_close: single|ms|
+    default_normal_debounce_open: single|ms|
+    default_normal_debounce_close: single|ms|
     hardware_led_fade_time: single|ms|0
     debug: single|bool|False
 flasher_player:
     __allow_others__:
     ms: single|int|None
-flashers:
+flashers:   # TODO: this should be a coil + x. actually extend coil config
     number: single|str|
-    number_str: single|str|
     flash_ms: single|ms|None
     tags: list|str|None
     label: single|str|%
@@ -305,7 +299,7 @@ flashers:
     hold_power32: single|int|None
     pulse_pwm_mask: single|int|None
     hold_pwm_mask: single|int|None
-    recycle_ms: single|int|None
+    recycle: single|ms|None
 flippers:
     main_coil: single|machine(coils)|
     hold_coil: single|machine(coils)|None
@@ -319,19 +313,10 @@ flippers:
     disable_events: dict|str:ms|ball_ending
     # enable_no_hold_events: dict|str:ms|None
     # invert_events: dict|str:ms|None
-    # hw rules settings overrides
-    pulse_ms: single|int|None
-    pwm_on_ms: single|int|None
-    pwm_off_ms: single|int|None
-    pulse_power: single|int|None
-    hold_power: single|int|None
-    pulse_power32: single|int|None
-    hold_power32: single|int|None
-    pulse_pwm_mask: single|int|None
-    hold_pwm_mask: single|int|None
-    recycle_ms: single|int|None
-    debounced: single|bool|False
-    drive_now: single|bool|False
+    main_coil_overwrite: dict|str:str|None
+    hold_coil_overwrite: dict|str:str|None
+    switch_overwrite: dict|str:str|None
+    eos_switch_overwrite: dict|str:str|None
 game:
     balls_per_game: single|int|3
     max_players: single|int|4
@@ -344,7 +329,6 @@ gi_player:
     __allow_others__:
 gis:
     number: single|str|
-    number_str: single|str|
     dimmable: single|bool|False
     tags: list|str|None
     label: single|str|%
@@ -386,7 +370,6 @@ led_settings:
     brightness_compensation: ignore                              # todo
 leds:
     number: single|str|
-    number_str: single|str|
     polarity: single|bool|False
     default_color: single|color|ffffff
     color_correction_profile: single|str|None
@@ -400,7 +383,7 @@ leds:
     x: single|int|None
     y: single|int|None
     z: single|int|None
-    color_channel_map: single|str|rgb
+    # color_channel_map: single|str|rgb     # not implemented
 light_player:
     brightness: single|int_from_hex|ff
     fade_ms: single|ms|0
@@ -435,7 +418,6 @@ machine:
     glass_off_mode: single|bool|True
 matrix_lights:
     number: single|str|
-    number_str: single|str|
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False
@@ -503,7 +485,7 @@ physical_rgb_dmd:
     source_display: single|str|dmd
     color_adjust: list|float|1, 1, 1
     channel_bits: list|int|8, 8, 8
-    color_channel_map: single|str|rgb
+    # color_channel_map: single|str|rgb     # not implemented
 playfields:
     tags: list|str|None
     label: single|str|%
@@ -691,8 +673,9 @@ slides:
     tags: list|str|None
     __allow_others__:
 snux:
-    flipper_enable_driver_number: single|int|c23
-    diag_led_driver_number: single|str|c24
+    flipper_enable_driver: single|machine(coils)|
+    diag_led_driver: single|machine(coils)|
+    platform: single|str|None
 smartmatrix:
     port: single|str|
     use_separate_thread: single|bool|true
@@ -728,21 +711,44 @@ switch_player:
     steps: ignore
 switches:
     number: single|str|
-    number_str: single|str|
-    type: single|str|NO
-    debounce: single|bool|True
-    recycle_time: single|secs|0
+    type: single|enum(NC,NO)|NO
+    debounce: single|enum(auto,quick,normal)|auto
+    ignore_window_ms: single|ms|0
     events_when_activated: list|str|None
     events_when_deactivated: list|str|None
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False
     platform: single|str|None
+fast_switches:
     debounce_open: single|ms|None
     debounce_close: single|ms|None
 system11:
-    ac_relay_delay_ms: single|int|75
-    ac_relay_driver_number: single|str|
+    ac_relay_delay_ms: single|ms|75ms
+    ac_relay_driver: single|machine(coils)|
+text_styles:
+    font_name: single|str|None
+    font_size: single|num|None
+    bold: single|bool|None
+    italtic: single|bool|None
+    halign: single|str|None
+    valign: single|str|None
+    padding_x: single|num|None
+    padding_y: single|num|None
+    # text_size: single||None
+    shorten: single|bool|None
+    mipmap: single|bool|None
+    markup: single|bool|None
+    line_height: single|float|None
+    max_lines: single|int|None
+    strip: single|bool|None
+    shorten_from: single|str|None
+    split_str: single|str|None
+    unicode_errors: single|str|None
+    color: single|kivycolor|ffffffff
+    crop_top: single|int|0            # todo
+    crop_bottom: single|int|0         # todo
+    antialias: single|bool|False      # todo
 tilt:
     tilt_slam_tilt_events: list|str|None
     tilt_warning_events: list|str|None
@@ -1254,7 +1260,9 @@ class ConfigValidator(object):
     def _validate_type_enum(self, item, param, validation_failure_info):
         del validation_failure_info
         enum_values = param.split(",")
-        if item in enum_values:
+        if item is None and "None" in enum_values:
+            return None
+        elif item in enum_values:
             return item
         else:
             raise ValueError("{} is not in list of allowed values {}".format(item, str(param)))

@@ -711,28 +711,4 @@ class ClockBase(_ClockBase):
 
     time = staticmethod(partial(_default_time))
 
-    def get_next_event_time(self):
-        """
-        Gets the time of the next event scheduled in the event queue.  Used primarily
-        for testing.
-
-        Returns:
-            The time of the next scheduled clock event (float) or None if there are
-            no scheduled events.
-
-        Notes:
-            This method was added specifically for MPF and is not in the original Kivy class.
-        """
-        next_event_time = None
-        for events in self.events:
-            remove = events.remove
-            for event in events[:]:
-                # event may be already removed from original list
-                if event in events:
-                    if event.timeout > 0 and (not next_event_time or event.next_event_time < next_event_time):
-                        next_event_time = event.next_event_time
-            del remove
-
-        return next_event_time
-
 ClockBase.time.__doc__ = '''Proxy method for :func:`~kivy.compat.clock`. '''

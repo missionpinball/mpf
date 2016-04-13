@@ -10,7 +10,7 @@ name of your own platform.
 """
 
 import logging
-from mpf.core.platform import Platform
+from mpf.core.platform import MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatform, SwitchPlatform, DriverPlatform
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
@@ -22,7 +22,7 @@ from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInt
 # platform
 
 
-class HardwarePlatform(Platform):
+class HardwarePlatform(MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatform, SwitchPlatform, DriverPlatform):
     """This is the base class for your hardware platform. Note that at this
     time, this class *must* be called HardwarePlatform."""
 
@@ -49,7 +49,7 @@ class HardwarePlatform(Platform):
         reference to this platform is printed."""
         return '<Platform.Template>'
 
-    def configure_driver(self, config, device_type='coil'):
+    def configure_driver(self, config):
         """This method is called once per driver when MPF is starting up. It
         passes the config for the driver and returns a hardware driver object
         that can be used to control the driver.
@@ -59,13 +59,6 @@ class HardwarePlatform(Platform):
                 passed on to your driver class to create an instance of your
                 driver. These can be whatever you want--whatever you need to
                 setup a driver.
-            device_type: String name of the type of MPF device that's being
-                configured. This is needed since some platforms (like Williams
-                WPC) use "drivers" to control coils, lights, GI, flashers, etc.
-                Whether you need to act on this is up to you. Just know that
-                when MPF calls this method, it will pass the config dict for
-                this device as well as a string name of what type of device
-                it's trying to setup.
 
         Returns:
             driver object, config number. The driver object that is returned
@@ -90,7 +83,7 @@ class HardwarePlatform(Platform):
         driver.driver_settings = config
         driver.driver_settings['pulse_ms'] = 30
 
-        return driver, config['number']
+        return driver
 
     def configure_switch(self, config):
         """Called once per switch when MPF boots. It's used to setup the
@@ -129,7 +122,7 @@ class HardwarePlatform(Platform):
 
         switch.driver_settings = config
 
-        return switch, config['number']
+        return switch
 
     def get_hw_switch_states(self):
 
@@ -161,22 +154,19 @@ class HardwarePlatform(Platform):
         pass
 
     def configure_matrixlight(self, config):
-        return VirtualMatrixLight(config['number']), config['number']
+        return VirtualMatrixLight(config['number'])
 
     def configure_led(self, config):
         return VirtualLED(config['number'])
 
     def configure_gi(self, config):
-        return VirtualGI(config['number']), config['number']
+        return VirtualGI(config['number'])
 
     def configure_dmd(self):
         return VirtualDMD(self.machine)
 
-    def write_hw_rule(self, *args, **kwargs):
-        pass
-
-    def clear_hw_rule(self, sw_name):
-        sw_num = self.machine.switches[sw_name].number
+    def clear_hw_rule(self, switch, coil):
+        sw_num = switch.number
 
         for entry in list(self.hw_switch_rules.keys()):  # slice for copy
             if entry.startswith(
@@ -268,10 +258,10 @@ class TemplateDriver(DriverPlatformInterface):
     def __repr__(self):
         return "VirtualDriver.{}".format(self.number)
 
-    def disable(self):
+    def disable(self, coil):
         pass
 
-    def enable(self):
+    def enable(self, coil):
         """Enables this driver, which means it's held "on" indefinitely until
         it's explicitly disabled.
 
@@ -292,7 +282,7 @@ class TemplateDriver(DriverPlatformInterface):
 
         pass
 
-    def pulse(self, milliseconds=None):
+    def pulse(self, coil, milliseconds=None):
         """Pulses this driver for a pre-determined amount of time, after which
         this driver is turned off automatically. Note that on most platforms,
         pulse times are a max of 255ms. (Beyond that MPF will send separate
@@ -312,6 +302,7 @@ class TemplateDriver(DriverPlatformInterface):
             many drivers aren't activated at once.
 
         """
+        del coil
         if not milliseconds:
             milliseconds = self.driver_settings['pulse_ms']
 

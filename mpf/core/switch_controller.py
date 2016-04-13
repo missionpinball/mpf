@@ -126,7 +126,7 @@ class SwitchController(object):
 
         for switch in self.machine.switches:
             platforms.add(switch.platform)
-            switches.add((switch, switch.number))
+            switches.add((switch, switch.hw_switch.number))
 
         for platform in platforms:
             switch_states = platform.get_hw_switch_states()
@@ -239,13 +239,13 @@ class SwitchController(object):
         # rid of it, or move the switch device settings from process_switch()
         # to here.
 
-    def process_switch_by_num(self, num, state=1, logical=False, debounced=True):
+    def process_switch_by_num(self, num, state=1, logical=False):
         for switch in self.machine.switches:
-            if switch.number == num:
-                self.process_switch(name=switch.name, state=state, logical=logical, debounced=debounced)
+            if switch.hw_switch.number == num:
+                self.process_switch(name=switch.name, state=state, logical=logical)
                 return
 
-    def process_switch(self, name, state=1, logical=False, debounced=True):
+    def process_switch(self, name, state=1, logical=False):
         """Processes a new switch state change.
 
         Args:
@@ -262,8 +262,6 @@ class SwitchController(object):
                 hardware will send switch states in their raw (logical=False)
                 states, but other interfaces like the keyboard and OSC will use
                 logical=True.
-            debounced: Whether or not the update for the switch you're sending
-                has been debounced or not. Default is True
 
         Note that there are three different paramter options to specify the
         switch: 'name', 'num', and 'obj'. You only need to pass one of them.
@@ -279,20 +277,13 @@ class SwitchController(object):
 
         """
 
-        self.log.debug("Processing switch. Name: %s, state: %s, logical: %s,"
-                       "debounced: %s", name, state, logical, debounced)
+        self.log.debug("Processing switch. Name: %s, state: %s, logical: %s,", name, state, logical)
 
         try:
             obj = self.machine.switches[name]
         except KeyError:
             raise AssertionError("Cannot process switch \"" + name + "\" as "
                                  "this is not a valid switch name.")
-
-        # If this update is not debounced, only proceed if this switch is
-        # configured to not be debounced.
-
-        if not debounced and obj.config['debounce']:
-            return
 
         # We need int, but this lets it come in as boolean also
         if state:

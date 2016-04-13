@@ -1,3 +1,4 @@
+from mpf.devices.driver import ConfiguredHwDriver
 from mpf.tests.MpfTestCase import MpfTestCase
 from mock import MagicMock
 
@@ -24,11 +25,21 @@ class TestDeviceDriver(MpfTestCase):
         self.machine.flashers.flasher_01.hw_driver.disable = MagicMock()
         self.machine.flashers.flasher_01.hw_driver.enable = MagicMock()
         self.machine.flashers.flasher_01.hw_driver.pulse = MagicMock()
+        driver = ConfiguredHwDriver(self.machine.flashers.flasher_01.hw_driver, {})
 
         # Flash
         self.machine.flashers.flasher_01.flash(100)
-        self.machine.flashers.flasher_01.hw_driver.pulse.assert_called_with(100)
+        self.machine.flashers.flasher_01.hw_driver.pulse.assert_called_with(driver, 100)
         self.machine.flashers.flasher_01.flash()
-        self.machine.flashers.flasher_01.hw_driver.pulse.assert_called_with(40)
+        self.machine.flashers.flasher_01.hw_driver.pulse.assert_called_with(driver, 40)
 
-        # TODO: Add some more comprehensive tests
+    def testFlasherDefaults(self):
+        # Make sure hardware devices have been configured for tests
+        self.assertIn('flasher_03', self.machine.flashers)
+        self.assertEqual(self.machine.flashers.flasher_03.config['number'], "3")
+        self.assertEqual(self.machine.flashers.flasher_03.config['flash_ms'], 50)
+        driver = ConfiguredHwDriver(self.machine.flashers.flasher_03.hw_driver, {})
+
+        self.machine.flashers.flasher_03.hw_driver.pulse = MagicMock()
+        self.machine.flashers.flasher_03.flash()
+        self.machine.flashers.flasher_03.hw_driver.pulse.assert_called_with(driver, 50)

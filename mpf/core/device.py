@@ -43,6 +43,13 @@ class Device(object):
         # returns the prepared config
         return config
 
+    def validate_and_parse_config(self, config, is_mode_config):
+        del is_mode_config
+        # returns the parsed and validated config
+        self.machine.config_validator.validate_config(
+            self.config_section, config, self.name)
+        return config
+
     def load_config(self, config):
         self.config = config
 

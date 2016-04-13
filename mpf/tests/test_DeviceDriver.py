@@ -24,10 +24,10 @@ class TestDeviceDriver(MpfTestCase):
         self.machine.coils.coil_01.hw_driver.pulse = MagicMock(return_value=45)
 
         self.machine.coils.coil_01.enable()
-        self.machine.coils.coil_01.hw_driver.enable.assert_called_with()
+        self.machine.coils.coil_01.hw_driver.enable.assert_called_with(self.machine.coils.coil_01)
         self.machine.coils.coil_01.pulse(100)
-        self.machine.coils.coil_01.hw_driver.pulse.assert_called_with(100)
+        self.machine.coils.coil_01.hw_driver.pulse.assert_called_with(self.machine.coils.coil_01, 100)
         self.machine.coils.coil_01.disable()
-        self.machine.coils.coil_01.hw_driver.disable.assert_called_with()
+        self.machine.coils.coil_01.hw_driver.disable.assert_called_with(self.machine.coils.coil_01)
 
         # TODO: Add some more comprehensive tests

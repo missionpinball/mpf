@@ -35,7 +35,7 @@ class TestShows(MpfTestCase):
         self.assertIn('led_02', self.machine.leds)
         self.assertIn('light_01', self.machine.lights)
         self.assertIn('light_02', self.machine.lights)
-        self.assertIn('gi_01', self.machine.gi)
+        self.assertIn('gi_01', self.machine.gis)
         self.assertIn('coil_01', self.machine.coils)
         self.assertIn('flasher_01', self.machine.flashers)
 
@@ -59,7 +59,7 @@ class TestShows(MpfTestCase):
 
         # GI should start out enabled/on (brightness is 255)
         self.assertEqual(255,
-                         self.machine.gi.gi_01.hw_driver.current_brightness)
+                         self.machine.gis.gi_01.hw_driver.current_brightness)
 
         # Make sure all required shows are loaded
         start_time = time.time()
@@ -103,7 +103,7 @@ class TestShows(MpfTestCase):
                     self.machine.lights.light_02.hw_driver.current_brightness)
         self.assertEqual(200, self.machine.lights.light_02.state['priority'])
         self.assertEqual(255,
-                         self.machine.gi.gi_01.hw_driver.current_brightness)
+                         self.machine.gis.gi_01.hw_driver.current_brightness)
 
         # Check LEDs, lights, and GI after 2nd step
         self.advance_time_and_run(1.0)
@@ -121,7 +121,7 @@ class TestShows(MpfTestCase):
                     self.machine.lights.light_02.hw_driver.current_brightness)
         self.assertEqual(200, self.machine.lights.light_02.state['priority'])
         self.assertEqual(255,
-                         self.machine.gi.gi_01.hw_driver.current_brightness)
+                         self.machine.gis.gi_01.hw_driver.current_brightness)
 
         # Check LEDs, lights, and GI after 3rd step
         self.advance_time_and_run(1.0)
@@ -140,7 +140,7 @@ class TestShows(MpfTestCase):
                          .current_brightness)
         self.assertEqual(200, self.machine.lights.light_02.state['priority'])
         self.assertEqual(153,
-                         self.machine.gi.gi_01.hw_driver.current_brightness)
+                         self.machine.gis.gi_01.hw_driver.current_brightness)
 
         # Check LEDs, lights, and GI after 4th step (includes a fade to next
         #  color)
@@ -160,7 +160,7 @@ class TestShows(MpfTestCase):
                          .current_brightness)
         self.assertEqual(200, self.machine.lights.light_02.state['priority'])
         self.assertEqual(51,
-                         self.machine.gi.gi_01.hw_driver.current_brightness)
+                         self.machine.gis.gi_01.hw_driver.current_brightness)
 
         # Advance time so fade should have completed
         self.advance_time_and_run(0.1)
@@ -201,7 +201,7 @@ class TestShows(MpfTestCase):
         self.assertEqual(0,
                          self.machine.lights.light_02.hw_driver
                          .current_brightness)
-        self.assertEqual(0, self.machine.gi.gi_01.hw_driver.current_brightness)
+        self.assertEqual(0, self.machine.gis.gi_01.hw_driver.current_brightness)
 
         # Make sure show loops back to the first step
         self.advance_time_and_run(1.1)
@@ -216,7 +216,7 @@ class TestShows(MpfTestCase):
                          self.machine.lights.light_02.hw_driver
                          .current_brightness)
         self.assertEqual(255,
-                         self.machine.gi.gi_01.hw_driver.current_brightness)
+                         self.machine.gis.gi_01.hw_driver.current_brightness)
 
         # TODO: Add tests for reset and hold
 
@@ -247,7 +247,7 @@ class TestShows(MpfTestCase):
                          .current_brightness)
         self.assertEqual(0, self.machine.lights.light_02.state['priority'])
         self.assertEqual(255,
-                         self.machine.gi.gi_01.hw_driver.current_brightness)
+                         self.machine.gis.gi_01.hw_driver.current_brightness)
 
         # --------------------------------------------------------
         # test_show2 - Show with events and triggers

@@ -297,14 +297,12 @@ class OSC(object):
     def client_update_switch(self, switch_name, ms, state):
         del ms
         if self.client_mode == 'wpc':
-            switch_name = self.machine.switches[switch_name].config[
-                                                        'number_str'].lower()
+            switch_name = str(self.machine.switches[switch_name].config['number']).lower()
         self.client_send_osc_message("sw", switch_name, state)
 
     def client_update_light(self, light_name, brightness):
         if self.client_mode == 'wpc':
-            light_name = self.machine.lights[light_name].config[
-                                                        'number_str'].lower()
+            light_name = str(self.machine.lights[light_name].config['number']).lower()
         self.client_send_osc_message("light", light_name, float(brightness/255))
 
     def client_update_all_switches(self):
@@ -324,8 +322,7 @@ class OSC(object):
                     data = 1
                 else:
                     data = 0
-                self.client_send_osc_message("sw", switch.config[
-                                             'number_str'].lower(), data)
+                self.client_send_osc_message("sw", str(switch.config['number']).lower(), data)
 
     def client_send_osc_message(self, category, name, data):
         """Sends an OSC message to the client to update it

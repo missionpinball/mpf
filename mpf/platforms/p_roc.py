@@ -16,7 +16,9 @@ https://github.com/preble/pyprocgame
 """
 
 import logging
-from mpf.platforms.p_roc_common import PDBConfig, PROCDriver, PROCMatrixLight, PROCBasePlatform
+
+from mpf.core.platform import DmdPlatform
+from mpf.platforms.p_roc_common import PDBConfig, PROCDriver, PROCMatrixLight, PROCBasePlatform, PROCGiString
 from mpf.core.utility_functions import Util
 
 try:
@@ -25,7 +27,7 @@ except ImportError:
     pinproc = None
 
 
-class HardwarePlatform(PROCBasePlatform):
+class HardwarePlatform(PROCBasePlatform, DmdPlatform):
     """Platform class for the P-ROC hardware controller.
 
     Args:
@@ -89,7 +91,7 @@ class HardwarePlatform(PROCBasePlatform):
     def stop(self):
         self.proc.reset(1)
 
-    def configure_driver(self, config, device_type='coil'):
+    def configure_driver(self, config):
         """Creates a P-ROC driver.
 
         Typically drivers are coils or flashers, but for the P-ROC this is
@@ -113,28 +115,37 @@ class HardwarePlatform(PROCBasePlatform):
         # can provide the number.
 
         if self.machine_type == self.pinproc.MachineTypePDB:
-            proc_num = self.pdbconfig.get_proc_number(device_type,
-                                                      str(config['number']))
+            proc_num = self.pdbconfig.get_proc_number("coil", str(config['number']))
             if proc_num == -1:
-                raise AssertionError("Coil %s cannot be controlled by the P-ROC. ",
-                                     str(config['number']))
+                raise AssertionError("Driver {} cannot be controlled by the P-ROC. ".format(str(config['number'])))
+        else:
+            proc_num = self.pinproc.decode(self.machine_type, str(config['number']))
+
+        return PROCDriver(proc_num, self.proc, config, self.machine)
+
+    def configure_gi(self, config):
+        # GIs are coils in P-Roc
+        if self.machine_type == self.pinproc.MachineTypePDB:
+            proc_num = self.pdbconfig.get_proc_number("coil", str(config['number']))
+            if proc_num == -1:
+                raise AssertionError("Gi Driver {} cannot be controlled by the P-ROC. ".format(str(config['number'])))
+        else:
+            proc_num = self.pinproc.decode(self.machine_type, str(config['number']))
+        proc_driver_object = PROCGiString(proc_num, self.proc, config)
+
+        return proc_driver_object
+
+    def configure_matrixlight(self, config):
+        if self.machine_type == self.pinproc.MachineTypePDB:
+            proc_num = self.pdbconfig.get_proc_number("light", str(config['number']))
+            if proc_num == -1:
+                raise AssertionError("Matrixlight {} cannot be controlled by the P-ROC. ".format(
+                    str(config['number'])))
 
         else:
             proc_num = self.pinproc.decode(self.machine_type, str(config['number']))
 
-        if device_type in ['coil', 'flasher']:
-            proc_driver_object = PROCDriver(proc_num, self.proc, config, self.machine)
-        elif device_type == 'light':
-            proc_driver_object = PROCMatrixLight(proc_num, self.proc)
-        else:
-            raise AssertionError("Invalid device type {}".format(device_type))
-
-        if 'polarity' in config:
-            state = proc_driver_object.proc.driver_get_state(config['number'])
-            state['polarity'] = config['polarity']
-            proc_driver_object.proc.driver_update_state(state)
-
-        return proc_driver_object, config['number']
+        return PROCMatrixLight(proc_num, self.proc)
 
     def configure_switch(self, config):
         """Configures a P-ROC switch.
@@ -188,9 +199,7 @@ class HardwarePlatform(PROCBasePlatform):
         for event in self.proc.get_events():
             event_type = event['type']
             event_value = event['value']
-            if event_type == 99:  # CTRL-C to quit todo does this go here?
-                self.machine.stop()
-            elif event_type == self.pinproc.EventTypeDMDFrameDisplayed:
+            if event_type == self.pinproc.EventTypeDMDFrameDisplayed:
                 pass
             elif event_type == self.pinproc.EventTypeSwitchClosedDebounced:
                 self.machine.switch_controller.process_switch_by_num(state=1,
@@ -200,12 +209,10 @@ class HardwarePlatform(PROCBasePlatform):
                                                                      num=event_value)
             elif event_type == self.pinproc.EventTypeSwitchClosedNondebounced:
                 self.machine.switch_controller.process_switch_by_num(state=1,
-                                                                     num=event_value,
-                                                                     debounced=False)
+                                                                     num=event_value)
             elif event_type == self.pinproc.EventTypeSwitchOpenNondebounced:
                 self.machine.switch_controller.process_switch_by_num(state=0,
-                                                                     num=event_value,
-                                                                     debounced=False)
+                                                                     num=event_value)
             else:
                 self.log.warning("Received unrecognized event from the P-ROC. "
                                  "Type: %s, Value: %s", event_type, event_value)

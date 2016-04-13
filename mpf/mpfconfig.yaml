@@ -32,9 +32,6 @@ mpf:
         show: mpf.config_players.show_player
         trigger: mpf.config_players.trigger_player
 
-    platform_overlays:
-        - snux: mpf.platform.snux.Snux
-
     device_modules:
         driver.Driver
         switch.Switch
@@ -156,8 +153,10 @@ fast:
     ports: com3, com4, com5
     baud: 921600
     watchdog: 1s
-    default_debounce_close: 10ms
-    default_debounce_open: 10ms
+    default_normal_debounce_close: 10ms
+    default_normal_debounce_open: 10ms
+    default_quick_debounce_close: 2ms
+    default_quick_debounce_open: 2ms
 
 fadecandy:
     gamma: 2.5

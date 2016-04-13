@@ -1,7 +1,8 @@
 """Contains code for a virtual hardware platform."""
 
 import logging
-from mpf.core.platform import Platform
+from mpf.core.platform import ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatform, \
+                              SwitchPlatform, DriverPlatform, AccelerometerPlatform, I2cPlatform
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
@@ -10,7 +11,8 @@ from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInt
 from mpf.core.rgb_color import RGBColor
 
 
-class HardwarePlatform(Platform):
+class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, MatrixLightsPlatform, GiPlatform,
+                       DmdPlatform, LedPlatform, SwitchPlatform, DriverPlatform):
     """Base class for the virtual hardware platform."""
 
     def __init__(self, machine):
@@ -40,16 +42,13 @@ class HardwarePlatform(Platform):
     def __repr__(self):
         return '<Platform.Virtual>'
 
-    def configure_driver(self, config, device_type='coil'):
+    def configure_driver(self, config):
         # todo should probably throw out the number that we get since it could
         # be a weird string and just return an incremental int?
 
-        driver = VirtualDriver(config['number'])
+        driver = VirtualDriver(config)
 
-        driver.driver_settings = config
-        driver.driver_settings['pulse_ms'] = 30
-
-        return driver, config['number']
+        return driver
 
     def configure_switch(self, config):
         # We want to have the virtual platform set all the initial switch states
@@ -62,11 +61,7 @@ class HardwarePlatform(Platform):
 
         self.hw_switches[config['number']] = state
 
-        switch = VirtualSwitch(config['number'])
-
-        switch.driver_settings = config
-
-        return switch, config['number']
+        return VirtualSwitch(config)
 
     def get_hw_switch_states(self):
 
@@ -74,7 +69,7 @@ class HardwarePlatform(Platform):
 
             if 'virtual_platform_start_active_switches' in self.machine.config:
 
-                initial_active_switches = [self.machine.switches[x].number for x in
+                initial_active_switches = [self.machine.switches[x].hw_switch.number for x in
                                            Util.string_to_list(
                         self.machine.config['virtual_platform_start_active_switches'])]
 
@@ -88,7 +83,7 @@ class HardwarePlatform(Platform):
             switches = [x for x in self.machine.switches if x.platform == self]
 
             for switch in switches:
-                self.hw_switches[switch.number] = switch.state ^ switch.invert
+                self.hw_switches[switch.hw_switch.number] = switch.state ^ switch.invert
 
         return self.hw_switches
 
@@ -96,27 +91,19 @@ class HardwarePlatform(Platform):
         pass
 
     def configure_matrixlight(self, config):
-        return VirtualMatrixLight(config['number']), config['number']
+        return VirtualMatrixLight(config['number'])
 
     def configure_led(self, config):
         return VirtualLED(config['number'])
 
     def configure_gi(self, config):
-        return VirtualGI(config['number']), config['number']
+        return VirtualGI(config['number'])
 
     def configure_dmd(self):
         return VirtualDMD(self.machine)
 
-    def write_hw_rule(self, *args, **kwargs):
+    def clear_hw_rule(self, switch, coil):
         pass
-
-    def clear_hw_rule(self, sw_name):
-        sw_num = self.machine.switches[sw_name].number
-
-        for entry in list(self.hw_switch_rules.keys()):  # slice for copy
-            if entry.startswith(
-                    self.machine.switches.number(sw_num).name):
-                del self.hw_switch_rules[entry]
 
     def i2c_write8(self, address, register, value):
         pass
@@ -134,12 +121,25 @@ class HardwarePlatform(Platform):
     def servo_go_to_position(self, number, position):
         pass
 
+    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
+        pass
+
+    def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
+        pass
+
+    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
+        pass
+
+    def set_pulse_on_hit_rule(self, enable_switch, coil):
+        pass
+
 
 class VirtualSwitch(object):
     """Represents a switch in a pinball machine used with virtual hardware."""
-    def __init__(self, number):
+    def __init__(self, config):
         self.log = logging.getLogger('VirtualSwitch')
-        self.number = number
+        self.number = config['number']
+        self.config = config
 
 
 class VirtualMatrixLight(MatrixLightPlatformInterface):
@@ -164,12 +164,6 @@ class VirtualLED(RGBLEDPlatformInterface):
     def color(self, color):
         self.current_color = color
 
-    def disable(self):
-        pass
-
-    def enable(self):
-        pass
-
 
 class VirtualGI(GIPlatformInterface):
     def __init__(self, number):
@@ -185,30 +179,23 @@ class VirtualGI(GIPlatformInterface):
 
 
 class VirtualDriver(DriverPlatformInterface):
-    def __init__(self, number):
+    def __init__(self, config):
         self.log = logging.getLogger('VirtualDriver')
-        self.number = number
-        self.driver_settings = {}
+        self.number = config['number']
+        self.config = config
 
     def __repr__(self):
         return "VirtualDriver.{}".format(self.number)
 
-    def validate_driver_settings(self, **kwargs):
-        del kwargs
-        return dict()
-
-    def disable(self):
+    def disable(self, coil):
         pass
 
-    def enable(self):
+    def enable(self, coil):
         pass
 
-    def pulse(self, milliseconds=None):
-
-        if milliseconds:
-            return milliseconds
-        else:
-            return self.driver_settings['pulse_ms']
+    def pulse(self, coil, milliseconds):
+        del coil
+        return milliseconds
 
     def state(self):
         pass

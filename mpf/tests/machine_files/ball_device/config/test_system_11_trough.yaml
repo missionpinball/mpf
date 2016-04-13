@@ -47,7 +47,7 @@ ball_devices:
         confirm_eject_type: target
         debug: true
     plunger:
-        tags: ball_add_live, home
+        tags: ball_add_live
         ball_switches: plunger
         mechanical_eject: true
         eject_timeouts: 4s

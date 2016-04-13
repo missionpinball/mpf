@@ -1,10 +1,9 @@
 import logging
-from copy import deepcopy
 import time
-from mpf.core.platform import Platform
-from mpf.core.rgb_color import RGBColor
+from mpf.core.platform import MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlatform, DriverPlatform
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
+from mpf.platforms.interfaces.gi_platform_interface import GIPlatformInterface
 from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
 from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 
@@ -16,7 +15,7 @@ except ImportError:
     pinproc = None
 
 
-class PROCBasePlatform(Platform):
+class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlatform, DriverPlatform):
     """Platform class for the P-Roc and P3-ROC hardware controller.
 
     Args:
@@ -39,6 +38,7 @@ class PROCBasePlatform(Platform):
         self.pinproc = pinproc
         self.proc = None
         self.log = None
+        self.hw_switch_rules = {}
 
         self.machine_type = pinproc.normalize_machine_type(
             self.machine.config['hardware']['driverboards'])
@@ -57,155 +57,109 @@ class PROCBasePlatform(Platform):
 
         self.log.info("Successfully connected to P-ROC/P3-ROC")
 
-    def _get_merged_driver_settings(self, driver_obj, driver_settings_overrides):
-        driver_settings = deepcopy(driver_obj.hw_driver.driver_settings)
-
-        driver_settings.update(driver_obj.hw_driver.merge_driver_settings(
-            **driver_settings_overrides))
-
-        return driver_settings
-
-    def _get_debounce_setting(self, driver_settings_overrides, switch_obj):
-        if 'debounced' in driver_settings_overrides:
-            return bool(driver_settings_overrides['debounced'])
-        elif switch_obj.config['debounce']:
-            return True
-        else:
-            return False
-
     def _get_event_type(self, sw_activity, debounced):
-        if sw_activity == 0 and debounced:
+        if sw_activity == 0 and debounced in ("normal", "auto"):
             return "open_debounced"
-        elif sw_activity == 0 and not debounced:
+        elif sw_activity == 0 and debounced == "quick":
             return "open_nondebounced"
-        elif sw_activity == 1 and debounced:
+        elif sw_activity == 1 and debounced in ("normal", "auto"):
             return "closed_debounced"
         else:  # if sw_activity == 1 and not debounced:
             return "closed_nondebounced"
 
-    def _get_proc_actions(self, driver_action, driver_settings, disable_on_release):
-        proc_actions = set()
+    def get_coil_config_section(self):
+        return "p_roc_coils"
 
-        if driver_action == 'pulse':
-            if (driver_settings['pwm_on_ms'] and
-                    driver_settings['pwm_off_ms']):
-                proc_actions.add('pulsed_patter')
-            else:
-                proc_actions.add('pulse')
+    def get_coil_overwrite_section(self):
+        return "p_roc_coil_overwrites"
 
-            if disable_on_release:
-                proc_actions.add('disable_inverted')
+    def add_pulse_rule_to_switch(self, switch, coil):
+        # TODO: properly implement pulse_power. previously implemented pwm_on_ms/pwm_off_ms were incorrect here
 
-        elif driver_action == 'hold':
-            if (driver_settings['pwm_on_ms'] and
-                    driver_settings['pwm_off_ms']):
-                proc_actions.add('patter')
-            else:
-                proc_actions.add('enable')
+        switch.hw_switch.hw_rules[self._get_event_type(not switch.invert, switch.config['debounce'])].append(
+            (switch.hw_switch.number, coil.hw_driver.number,
+             self.pinproc.driver_state_pulse(coil.hw_driver.state(), coil.hw_driver.get_pulse_ms(coil)))
+        )
 
-            if disable_on_release:
-                proc_actions.add('disable_inverted')
-
-        elif driver_action == 'disable':
-            proc_actions.add('disable')
-
-        return proc_actions
-
-    def _get_final_driver_and_update_hw_switches(self, driver, event_type, switch_obj):
-        # merge in any previously-configured driver rules for this switch
-        final_driver = list(driver)  # need to make an actual copy
-        sw_rule_string = str(switch_obj.name) + str(event_type)
-        if sw_rule_string in self.hw_switch_rules:
-            for driver in self.hw_switch_rules[sw_rule_string]:
-                final_driver.append(driver)
-            self.hw_switch_rules[sw_rule_string].extend(driver)
+    def add_pulse_and_hold_rule_to_switch(self, switch, coil):
+        if coil.hw_driver.get_pwm_on_ms(coil) and coil.hw_driver.get_pwm_off_ms(coil):
+            switch.hw_switch.hw_rules[self._get_event_type(not switch.invert, switch.config['debounce'])].append(
+                (switch.hw_switch.number, coil.hw_driver.number,
+                 self.pinproc.driver_state_patter(
+                    coil.hw_driver.state(), coil.hw_driver.get_pwm_on_ms(coil), coil.hw_driver.get_pwm_off_ms(coil),
+                    coil.hw_driver.get_pulse_ms(coil), True))
+            )
         else:
-            self.hw_switch_rules[sw_rule_string] = driver
+            if not coil.config['allow_enable']:
+                raise AssertionError("Coil {} may not be enabled at 100% without allow_enabled or pwm settings".format(
+                    coil.hw_driver.number
+                ))
+            switch.hw_switch.hw_rules[self._get_event_type(not switch.invert, switch.config['debounce'])].append(
+                (switch.hw_switch.number, coil.hw_driver.number, self.pinproc.driver_state_pulse(coil.hw_driver.state(), 0))
+            )
 
-        return final_driver
+    def add_relase_disable_rule_to_switch(self, switch, coil):
+        switch.hw_switch.hw_rules[self._get_event_type(switch.invert, switch.config['debounce'])].append(
+            (switch.hw_switch.number, coil.hw_driver.number, self.pinproc.driver_state_disable(coil.hw_driver.state()))
+        )
 
-    def _get_proc_driver(self, proc_action, driver_obj, driver_settings):
-        if proc_action == 'pulse':
-            return [self.pinproc.driver_state_pulse(
-                driver_obj.hw_driver.state(), driver_settings['pulse_ms'])]
+    def add_disable_rule_to_switch(self, switch, coil):
+        switch.hw_switch.hw_rules[self._get_event_type(not switch.invert, switch.config['debounce'])].append(
+            (switch.hw_switch.number, coil.hw_driver.number,
+             self.pinproc.driver_state_disable(coil.hw_driver.state()))
+        )
 
-        elif proc_action == 'patter':
-            return [self.pinproc.driver_state_patter(
-                driver_obj.hw_driver.state(), driver_settings['pwm_on_ms'], driver_settings['pwm_off_ms'],
-                driver_settings['pulse_ms'], True)]
-            # todo above param True should not be there. Change to now?
-
-        elif proc_action == 'enable':
-            return [self.pinproc.driver_state_pulse(
-                driver_obj.hw_driver.state(), 0)]
-
-        elif proc_action == 'disable':
-            return [self.pinproc.driver_state_disable(
-                driver_obj.hw_driver.state())]
-
-        elif proc_action == 'disable_inverted':
-            return [self.pinproc.driver_state_disable(
-                driver_obj.hw_driver.state())]
-
-        elif proc_action == 'pulsed_patter':
-            return [self.pinproc.driver_state_pulsed_patter(
-                driver_obj.hw_driver.state(), driver_settings['pwm_on_ms'], driver_settings['pwm_off_ms'],
-                driver_settings['pulse_ms'])]
-        else:
-            raise AssertionError("Invalid proc_action {}".format(proc_action))
-
-    # pylint: disable-msg=too-many-arguments
-    def write_hw_rule(self, switch_obj, sw_activity, driver_obj, driver_action,
-                      disable_on_release, drive_now,
-                      **driver_settings_overrides):
-
-        driver_settings = self._get_merged_driver_settings(driver_obj, driver_settings_overrides)
-
-        self.log.debug("Setting HW Rule. Switch: %s, Switch_action: %s, Driver:"
-                       " %s, Driver action: %s. Driver settings: %s",
-                       switch_obj.name, sw_activity, driver_obj.name,
-                       driver_action, driver_settings)
-
-        debounced = self._get_debounce_setting(driver_settings_overrides, switch_obj)
-
-        # Note the P-ROC uses a 125ms non-configurable recycle time. So any
-        # non-zero value passed here will enable the 125ms recycle.
-        # PinPROC calls this "reload active" (it's an "active reload timer")
-        # We only want to notify_host for debounced switch events. We use non-
-        # debounced for hw_rules since they're faster, but we don't want to
-        # notify the host on them since the host would then get two events
-        # one for the nondebounced followed by one for the debounced.
-
-        rule = {'notifyHost': debounced, 'reloadActive': bool(driver_settings['recycle_ms'])}
-
-        # Now let's figure out what type of P-ROC action we need to take.
-
-        proc_actions = self._get_proc_actions(driver_action, driver_settings, disable_on_release)
-
-        for proc_action in proc_actions:
-            # The P-ROC ties hardware rules to switches, with a list of linked
-            # drivers that should change state based on a switch activity.
-            # Since MPF applies the rules one-at-a-time, we have to read the
-            # existing linked drivers from the hardware for that switch, add
-            # our new driver to the list, then re-update the rule on the hw.
-
-            this_driver = self._get_proc_driver(proc_action, driver_obj, driver_settings)
-
-            if proc_action == 'disable_inverted':
-                event_type = self._get_event_type(sw_activity ^ 1, debounced)
+    def write_rules_to_switch(self, switch, coil, drive_now):
+        for event_type, driver_rules in switch.hw_switch.hw_rules.items():
+            driver = []
+            for x in driver_rules:
+                driver.append(x[2])
+            rule = {'notifyHost': bool(switch.hw_switch.notify_on_nondebounce) == event_type.endswith("nondebounced"),
+                    'reloadActive': bool(coil.config['recycle'])}
+            if drive_now is None:
+                self.proc.switch_update_rule(switch.hw_switch.number, event_type, rule, driver)
             else:
-                event_type = self._get_event_type(sw_activity, debounced)
+                self.proc.switch_update_rule(switch.hw_switch.number, event_type, rule, driver, drive_now)
 
-            this_driver = self._get_final_driver_and_update_hw_switches(this_driver, event_type, switch_obj)
+    def set_pulse_on_hit_rule(self, enable_switch, coil):
+        self.log.debug("Setting HW Rule on pulse on hit. Switch: %s, Driver: %s",
+                       enable_switch.hw_switch.number, coil.hw_driver.number)
 
-            self.log.debug("Writing HW rule for switch: %s, driver: %s, event_type: %s, "
-                           "rule: %s, final_driver: %s, drive now: %s",
-                           switch_obj.name, driver_obj.name, event_type,
-                           rule, this_driver, drive_now)
-            self.proc.switch_update_rule(switch_obj.number, event_type, rule,
-                                         this_driver, drive_now)
+        self.add_pulse_rule_to_switch(enable_switch, coil)
 
-    def clear_hw_rule(self, sw_name):
+        self.write_rules_to_switch(enable_switch, coil, False)
+
+    def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
+        self.log.debug("Setting HW Rule on pulse on hit and relesae. Switch: %s, Driver: %s",
+                       enable_switch.hw_switch.number, coil.hw_driver.number)
+
+        self.add_pulse_rule_to_switch(enable_switch, coil)
+        self.add_relase_disable_rule_to_switch(enable_switch, coil)
+
+        self.write_rules_to_switch(enable_switch, coil, False)
+
+    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
+        self.log.debug("Setting Pulse on hit and enable and release HW Rule. Switch: %s, Driver: %s",
+                       enable_switch.hw_switch.number, coil.hw_driver.number)
+
+        self.add_pulse_and_hold_rule_to_switch(enable_switch, coil)
+        self.add_relase_disable_rule_to_switch(enable_switch, coil)
+
+        self.write_rules_to_switch(enable_switch, coil, False)
+
+    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
+        self.log.debug("Setting Pulse on hit and enable and release and disable HW Rule. Enable Switch: %s,"
+                       "Disable Switch: %s, Driver: %s", enable_switch.hw_switch.number,
+                       disable_switch.hw_switch.number, coil.hw_driver.number)
+
+        self.add_pulse_and_hold_rule_to_switch(enable_switch, coil)
+        self.add_relase_disable_rule_to_switch(enable_switch, coil)
+        self.add_disable_rule_to_switch(disable_switch, coil)
+
+        self.write_rules_to_switch(enable_switch, coil, False)
+        self.write_rules_to_switch(disable_switch, coil, False)
+
+    def clear_hw_rule(self, switch, coil):
         """Clears a hardware rule.
 
         This is used if you want to remove the linkage between a switch and
@@ -215,67 +169,41 @@ class PROCBasePlatform(Platform):
         as the *sw_num*.
 
         Args:
-            sw_name : Name of the switch whose rule you want to clear.
+            switch: Switch object
+            coil: Coil object
         """
 
-        sw_num = self.machine.switches[sw_name].number
+        self.log.debug("Clearing HW rule for switch: %s coil: %s", switch.hw_switch.number, coil.hw_driver.number)
 
-        self.log.debug("Clearing HW rule for switch: %s", sw_num)
+        coil_number = False
+        for entry, element in switch.hw_switch.hw_rules.items():
+            if not element:
+                continue
+            for rule_num, rule in enumerate(element):
+                if rule[0] == switch.hw_switch.number and rule[1] == coil.hw_driver.number:
+                    coil_number = rule[2]['driverNum']
+                    del switch.hw_switch.hw_rules[entry][rule_num]
 
-        self.proc.switch_update_rule(sw_num, 'open_nondebounced',
-                                     {'notifyHost': False,
-                                      'reloadActive': False}, [])
-        self.proc.switch_update_rule(sw_num, 'closed_nondebounced',
-                                     {'notifyHost': False,
-                                      'reloadActive': False}, [])
-        self.proc.switch_update_rule(sw_num, 'open_debounced',
-                                     {'notifyHost': True,
-                                      'reloadActive': False}, [])
-        self.proc.switch_update_rule(sw_num, 'closed_debounced',
-                                     {'notifyHost': True,
-                                      'reloadActive': False}, [])
+        if coil_number:
+            self.proc.driver_disable(coil_number)
+            self.write_rules_to_switch(switch, coil, None)
 
-        for entry in list(self.hw_switch_rules.keys()):  # slice for copy
-            if entry.startswith(sw_name):
-
-                # disable any drivers from this rule which are active now
-                # todo make this an option?
-                for driver_dict in self.hw_switch_rules[entry]:
-                    self.proc.driver_disable(driver_dict['driverNum'])
-
-                # Remove this rule from our list
-                del self.hw_switch_rules[entry]
-
-                # todo need to read in the notifyHost settings and reapply those
-                # appropriately.
-
-    def configure_matrixlight(self, config):
-        """Configures a P-ROC matrix light."""
-        # On the P-ROC, matrix lights are drivers
-        return self.configure_driver(config, 'light')
-
-    def configure_gi(self, config):
-        """Configures a P-ROC GI string light."""
-        # On the P-ROC, GI strings are drivers
-        return self.configure_driver(config, 'light')
+        return bool(coil_number)
 
     def configure_led(self, config):
-        """ Configures a P3-ROC RGB LED controlled via a PD-LED."""
+        """ Configures a P/P3-ROC RGB LED controlled via a PD-LED."""
 
         # split the number (which comes in as a string like w-x-y-z) into parts
-        config['number'] = config['number_str'].split('-')
+        number_parts = str(config['number']).split('-')
 
-        if 'polarity' in config:
-            invert = not config['polarity']
-        else:
-            invert = False
+        if len(number_parts) != 4:
+            raise AssertionError("Invalid address for LED {}".format(config['number']))
 
-        return PDBLED(board=int(config['number'][0]),
-                      address=[int(config['number'][1]),
-                               int(config['number'][2]),
-                               int(config['number'][3])],
-                      proc_driver=self.proc,
-                      invert=invert)
+        return PDBLED(board=int(number_parts[0]),
+                      address=[int(number_parts[1]),
+                               int(number_parts[2]),
+                               int(number_parts[3])],
+                      proc_driver=self.proc)
 
     def _configure_switch(self, config, proc_num):
         """Configures a P3-ROC switch.
@@ -295,7 +223,7 @@ class PROCBasePlatform(Platform):
             raise AssertionError("Switch %s cannot be controlled by the "
                                  "P-ROC/P3-ROC.", str(config['number']))
 
-        switch = PROCSwitch(proc_num)
+        switch = PROCSwitch(config, proc_num, config['debounce'] == "quick")
         # The P3-ROC needs to be configured to notify the host computers of
         # switch events. (That notification can be for open or closed,
         # debounced or nondebounced.)
@@ -316,7 +244,7 @@ class PROCBasePlatform(Platform):
             self.proc.switch_update_rule(proc_num, 'open_debounced',
                                          {'notifyHost': True,
                                           'reloadActive': False}, [], False)
-        return switch, proc_num
+        return switch
 
 
 class PDBConfig(object):
@@ -512,6 +440,14 @@ class PDBConfig(object):
         if 'coils' in config:
             for name in config['coils']:
                 item_dict = config['coils'][name]
+                coil = PDBCoil(self, str(item_dict['number']))
+                if coil.bank() not in coil_bank_list:
+                    coil_bank_list.append(coil.bank())
+
+        # gis are also coils
+        if 'gis' in config:
+            for name in config['gis']:
+                item_dict = config['gis'][name]
                 coil = PDBCoil(self, str(item_dict['number']))
                 if coil.bank() not in coil_bank_list:
                     coil_bank_list.append(coil.bank())
@@ -765,14 +701,15 @@ class PDBLight(object):
 class PDBLED(RGBLEDPlatformInterface):
     """Represents an RGB LED connected to a PD-LED board."""
 
-    def __init__(self, board, address, proc_driver, invert=False):
+    def __init__(self, board, address, proc_driver):
         self.log = logging.getLogger('PDBLED')
         self.board = board
         self.address = address
         self.proc = proc_driver
-        self.invert = invert
 
-        # todo make sure self.address is a 3-element list
+        # make sure self.address is a 3-element list
+        if len(self.address) != 3:
+            raise AssertionError("Invalid address for LED {}".format(str(self.address)))
 
         self.log.debug("Creating PD-LED item: board: %s, "
                        "RGB outputs: %s", self.board,
@@ -791,18 +728,6 @@ class PDBLED(RGBLEDPlatformInterface):
         self.proc.led_color(self.board, self.address[0], color.red)
         self.proc.led_color(self.board, self.address[1], color.green)
         self.proc.led_color(self.board, self.address[2], color.blue)
-
-    def disable(self):
-        """Disables (turns off) this LED instantly. For multi-color LEDs it
-        turns all elements off.
-        """
-        self.color(RGBColor())
-
-    def enable(self):
-        """Enables (turns on) this LED instantly. For multi-color LEDs it turns
-        all elements on.
-        """
-        self.color(RGBColor('White'))
 
 
 def is_pdb_address(addr):
@@ -845,9 +770,15 @@ def decode_pdb_address(addr):
 
 
 class PROCSwitch(object):
-    def __init__(self, number):
+    def __init__(self, config, number, notify_on_nondebounce):
         self.log = logging.getLogger('PROCSwitch')
+        self.config = config
         self.number = number
+        self.notify_on_nondebounce = notify_on_nondebounce
+        self.hw_rules = {"closed_debounced": [],
+                         "closed_nondebounced": [],
+                         "open_debounced": [],
+                         "open_nondebounced": []}
 
 
 class PROCDriver(DriverPlatformInterface):
@@ -861,126 +792,64 @@ class PROCDriver(DriverPlatformInterface):
         self.log = logging.getLogger('PROCDriver')
         self.number = number
         self.proc = proc_driver
+        self.machine = machine
+        self.config = config
 
-        self.driver_settings = self.create_driver_settings(machine, **config)
+        self.log.debug("Driver Settings for %s", self.number)
 
-        self.driver_settings['number'] = number
-
-        self.driver_settings.update(self.merge_driver_settings(**config))
-
-        self.log.debug("Driver Settings for %s: %s", self.number,
-                       self.driver_settings)
-
-    def create_driver_settings(self, machine, pulse_ms=None, **kwargs):
-        return_dict = dict()
-        if pulse_ms is None:
-            pulse_ms = machine.config['mpf']['default_pulse_ms']
-
-        try:
-            return_dict['allow_enable'] = kwargs['allow_enable']
-        except KeyError:
-            return_dict['allow_enable'] = False
-
-        return_dict['pulse_ms'] = int(pulse_ms)
-        return_dict['recycle_ms'] = 0
-        return_dict['pwm_on_ms'] = 0
-        return_dict['pwm_off_ms'] = 0
-
-        return return_dict
-
-    # pylint: disable-msg=too-many-arguments
-    def merge_driver_settings(self,
-                              pulse_ms=None,
-                              pwm_on_ms=None,
-                              pwm_off_ms=None,
-                              pulse_power=None,
-                              hold_power=None,
-                              pulse_power32=None,
-                              hold_power32=None,
-                              pulse_pwm_mask=None,
-                              hold_pwm_mask=None,
-                              recycle_ms=None,
-                              **kwargs
-                              ):
-        del kwargs
-
-        if pulse_power:
-            raise NotImplementedError('"pulse_power" has not been '
-                                      'implemented yet')
-
-        if pulse_power32:
-            raise NotImplementedError('"pulse_power32" has not been '
-                                      'implemented yet')
-
-        if hold_power32:
-            raise NotImplementedError('"hold_power32" has not been '
-                                      'implemented yet')
-
-        if pulse_pwm_mask:
-            raise NotImplementedError('"pulse_pwm_mask" has not been '
-                                      'implemented yet')
-
-        if hold_pwm_mask:
-            raise NotImplementedError('"hold_pwm_mask" has not been '
-                                      'implemented yet')
-
-        return_dict = dict()
-
+    def get_pwm_on_ms(self, coil):
         # figure out what kind of enable we need:
-        if hold_power:
-            return_dict['pwm_on_ms'], return_dict['pwm_off_ms'] = (Util.pwm8_to_on_off(hold_power))
+        if coil.config['hold_power']:
+            pwm_on_ms, pwm_off_ms = (Util.pwm8_to_on_off(coil.config['hold_power']))
+            del pwm_off_ms
+            return pwm_on_ms
 
-        elif pwm_off_ms and pwm_on_ms:
-            return_dict['pwm_on_ms'] = int(pwm_on_ms)
-            return_dict['pwm_off_ms'] = int(pwm_off_ms)
+        elif coil.config['pwm_on_ms'] and coil.config['pwm_off_ms']:
+            return int(coil.config['pwm_on_ms'])
+        else:
+            return 0
 
-        if pulse_ms is not None:
-            return_dict['pulse_ms'] = int(pulse_ms)
-        elif 'pwm_on_ms' in return_dict:
-            return_dict['pulse_ms'] = 0
+    def get_pwm_off_ms(self, coil):
+        # figure out what kind of enable we need:
+        if coil.config['hold_power']:
+            pwm_on_ms, pwm_off_ms = (Util.pwm8_to_on_off(coil.config['hold_power']))
+            del pwm_on_ms
+            return pwm_off_ms
 
-        if recycle_ms and int(recycle_ms) == 125:
-            return_dict['recycle_ms'] = 125
-        elif recycle_ms and recycle_ms is not None:
-            raise ValueError('P-ROC requires recycle_ms of 0 or 125')
+        elif coil.config['pwm_on_ms'] and coil.config['pwm_off_ms']:
+            return int(coil.config['pwm_off_ms'])
+        else:
+            return 0
 
-        found_pwm_on = False
-        found_pwm_off = False
-        if 'pwm_on_ms' in return_dict and return_dict['pwm_on_ms']:
-            found_pwm_on = True
-        if 'pwm_off_ms' in return_dict and return_dict['pwm_off_ms']:
-            found_pwm_off = True
+    def get_pulse_ms(self, coil):
+        if coil.config['pulse_ms']:
+            return int(coil.config['pulse_ms'])
+        else:
+            return self.machine.config['mpf']['default_pulse_ms']
 
-        if (found_pwm_off and not found_pwm_on) or (
-                    found_pwm_on and not found_pwm_off):
-            raise ValueError("Error: Using pwm requires both pwm_on and "
-                             "pwm_off values.")
-
-        return return_dict
-
-    def disable(self):
+    def disable(self, coil):
         """Disables (turns off) this driver."""
+        del coil
         self.log.debug('Disabling Driver')
         self.proc.driver_disable(self.number)
 
-    def enable(self):
+    def enable(self, coil):
         """Enables (turns on) this driver."""
-
-        if self.driver_settings['pwm_on_ms'] and self.driver_settings['pwm_off_ms']:
+        if self.get_pwm_on_ms(coil) and self.get_pwm_off_ms(coil):
             self.log.debug('Enabling. Initial pulse_ms:%s, pwm_on_ms: %s'
                            'pwm_off_ms: %s',
-                           self.driver_settings['pwm_on_ms'],
-                           self.driver_settings['pwm_off_ms'],
-                           self.driver_settings['pulse_ms'])
+                           self.get_pwm_on_ms(coil),
+                           self.get_pwm_off_ms(coil),
+                           self.get_pulse_ms(coil))
 
             self.proc.driver_patter(self.number,
-                                    self.driver_settings['pwm_on_ms'],
-                                    self.driver_settings['pwm_off_ms'],
-                                    self.driver_settings['pulse_ms'], True)
+                                    self.get_pwm_on_ms(coil),
+                                    self.get_pwm_off_ms(coil),
+                                    self.get_pulse_ms(coil), True)
         else:
             self.log.debug('Enabling at 100%')
 
-            if not ('allow_enable' in self.driver_settings and self.driver_settings['allow_enable']):
+            if not coil.config['allow_enable']:
                 raise AssertionError("Received a command to enable this coil "
                                      "without pwm, but 'allow_enable' has not been"
                                      "set to True in this coil's configuration.")
@@ -988,29 +857,47 @@ class PROCDriver(DriverPlatformInterface):
             self.proc.driver_schedule(number=self.number, schedule=0xffffffff,
                                       cycle_seconds=0, now=True)
 
-    def pulse(self, milliseconds=None):
+    def pulse(self, coil, milliseconds):
         """Enables this driver for `milliseconds`.
 
         ``ValueError`` will be raised if `milliseconds` is outside of the range
         0-255.
         """
-
-        if not milliseconds:
-            milliseconds = self.driver_settings['pulse_ms']
+        del coil
 
         self.log.debug('Pulsing for %sms', milliseconds)
         self.proc.driver_pulse(self.number, milliseconds)
 
         return milliseconds
 
-    def get_pulse_ms(self):
-        return self.driver_settings['pulse_ms']
-
     def state(self):
         """Returns a dictionary representing this driver's current
         configuration state.
         """
         return self.proc.driver_get_state(self.number)
+
+
+class PROCGiString(GIPlatformInterface):
+    def __init__(self, number, proc_driver, config):
+        self.log = logging.getLogger('PROCGiString')
+        self.number = number
+        self.proc = proc_driver
+        self.config = config
+
+    def on(self, brightness=255):
+        if brightness > 255:
+            brightness = 255
+
+        # run the GIs at 50Hz
+        duty_on = int(brightness/12.75)
+        duty_off = 20 - duty_on
+        self.proc.driver_patter(self.number,
+                                int(duty_on),
+                                int(duty_off),
+                                0, True)
+
+    def off(self):
+        self.proc.driver_disable(self.number)
 
 
 class PROCMatrixLight(MatrixLightPlatformInterface):

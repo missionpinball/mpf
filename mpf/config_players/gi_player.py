@@ -18,7 +18,7 @@ class GiPlayer(ConfigPlayer):
             try:
                 gi.enable(**s)
             except AttributeError:
-                self.machine.gi[gi].enable(**s)
+                self.machine.gis[gi].enable(**s)
 
     def get_express_config(self, value):
         value = str(value)

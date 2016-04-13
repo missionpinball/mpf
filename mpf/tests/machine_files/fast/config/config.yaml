@@ -5,7 +5,7 @@ hardware:
     driverboards: fast
 
 fast:
-    ports: com4
+    ports: com4, com5, com6
 
 switches:
     s_test:
@@ -15,6 +15,10 @@ switches:
         type: 'NC'
     s_slingshot_test:
         number: 16
+    s_flipper:
+        number: 1
+    s_flipper_eos:
+        number: 2
 
 coils:
     c_test:
@@ -38,6 +42,13 @@ coils:
         number: 12
         pulse_ms: 2000
         allow_enable: true
+    c_flipper_main:
+        number: 20
+        pulse_ms: 10
+        hold_power: 1
+    c_flipper_hold:
+        number: 21
+        hold_power: 1
 
 autofire_coils:
     ac_slingshot_test:
@@ -50,3 +61,37 @@ autofire_coils:
 servos:
     servo1:
         number: 3
+
+flippers:
+    f_test_single:
+        debug: true
+        main_coil_overwrite:
+            pulse_ms: 11
+        main_coil: c_flipper_main
+        activation_switch: s_flipper
+
+    f_test_hold:
+        debug: true
+        main_coil: c_flipper_main
+        hold_coil: c_flipper_hold
+        activation_switch: s_flipper
+
+    f_test_hold_eos:
+        debug: true
+        main_coil: c_flipper_main
+        hold_coil: c_flipper_hold
+        activation_switch: s_flipper
+        eos_switch: s_flipper_eos
+        use_eos: true
+
+matrix_lights:
+  test_pdb_light:
+    number: 23
+
+gis:
+  test_gi:
+    number: 42
+
+leds:
+  test_led:
+    number: 2-23

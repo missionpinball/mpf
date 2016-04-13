@@ -1,5 +1,5 @@
 from mpf.tests.MpfTestCase import MpfTestCase
-from mock import MagicMock
+from mock import MagicMock, call
 from mpf.platforms import p_roc_common, p_roc
 
 
@@ -51,12 +51,12 @@ class TestPRoc(MpfTestCase):
         p_roc_common.pinproc_imported = True
         p_roc_common.pinproc = MockPinProcModule()
         p_roc.pinproc = p_roc_common.pinproc
-        pinproc = MagicMock()
-        p_roc_common.pinproc.PinPROC = MagicMock(return_value=pinproc)
+        self.pinproc = MagicMock()
+        p_roc_common.pinproc.PinPROC = MagicMock(return_value=self.pinproc)
         p_roc_common.pinproc.normalize_machine_type = MagicMock(return_value=7)
         p_roc_common.pinproc.driver_state_pulse = MagicMock(
             return_value="driver_state_pulse")
-        pinproc.switch_get_states = MagicMock(return_value=[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+        self.pinproc.switch_get_states = MagicMock(return_value=[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
         super().setUp()
 
     def test_pulse(self):
@@ -82,9 +82,9 @@ class TestPRoc(MpfTestCase):
 
     def test_hw_rule_pulse(self):
         self.machine.autofires.ac_slingshot_test.enable()
-        self.machine.autofires.ac_slingshot_test.platform.proc.switch_update_rule.assert_called_with(
+        self.machine.coils.c_slingshot_test.platform.proc.switch_update_rule.assert_any_call(
                 40, 'closed_nondebounced',
-                {'notifyHost': False, 'reloadActive': False},
+                {'notifyHost': False, 'reloadActive': True},
                 ["driver_state_pulse"], False)
 
     def test_initial_switches(self):
@@ -94,21 +94,9 @@ class TestPRoc(MpfTestCase):
 
     def test_switches(self):
         self.assertFalse(self.machine.switch_controller.is_active("s_test"))
-        # closed non debounced -> nothing should happen
-        self.machine.default_platform.proc.get_events = MagicMock(return_value=[
-            {'type': 3, 'value': 23}])
-        self.machine_run()
-        self.assertFalse(self.machine.switch_controller.is_active("s_test"))
-
         # closed debounced -> switch active
         self.machine.default_platform.proc.get_events = MagicMock(return_value=[
             {'type': 1, 'value': 23}])
-        self.machine_run()
-        self.assertTrue(self.machine.switch_controller.is_active("s_test"))
-
-        # open non debounces -> still active
-        self.machine.default_platform.proc.get_events = MagicMock(return_value=[
-            {'type': 4, 'value': 23}])
         self.machine_run()
         self.assertTrue(self.machine.switch_controller.is_active("s_test"))
 
@@ -137,7 +125,9 @@ class TestPRoc(MpfTestCase):
         dmd.proc.dmd_update_config.assert_called_with(high_cycles=[1, 2, 3, 4])
 
         # test set frame to buffer
-        frame = range(4096)
+        frame = bytearray()
+        for i in range(4096):
+            frame.append(i % 256)
         dmd.update(frame)
         dmd.dmd.set_data.assert_called_with(frame)
 
@@ -153,3 +143,55 @@ class TestPRoc(MpfTestCase):
         dmd.proc.dmd_draw = MagicMock()
         self.advance_time_and_run(0.04)
         dmd.proc.dmd_draw.assert_called_with(dmd.dmd)
+
+        # draw broken frame
+        dmd.dmd.set_data = MagicMock()
+        # test set frame to buffer
+        frame = bytearray()
+        for i in range(1234):
+            frame.append(i % 256)
+        dmd.update(frame)
+        # should not be rendered
+        assert not dmd.dmd.set_data.called
+
+    def test_pdb_matrix_light(self):
+        # very simple check for matrix config
+        self.pinproc.driver_update_group_config.assert_has_calls(
+            [call(4, 100, 5, 0, 0, True, True, True, True)]
+        )
+
+        # test enable of matrix light
+        assert not self.machine.lights.test_pdb_light.hw_driver.proc.driver_schedule.called
+        self.machine.lights.test_pdb_light.on()
+        self.machine_run()
+        self.machine.lights.test_pdb_light.hw_driver.proc.driver_schedule.assert_called_with(
+            cycle_seconds=0, schedule=4294967295, now=True, number=32
+        )
+
+        # test disable of matrix light
+        assert not self.machine.lights.test_pdb_light.hw_driver.proc.driver_disable.called
+        self.machine.lights.test_pdb_light.off()
+        self.machine_run()
+        self.machine.lights.test_pdb_light.hw_driver.proc.driver_disable.assert_called_with(32)
+
+    def test_pdb_gi_light(self):
+        # test gi on
+        device = self.machine.gis.test_gi
+        device.hw_driver.proc.driver_patter = MagicMock()
+        device.enable()
+        self.machine_run()
+        device.hw_driver.proc.driver_patter.assert_called_with(67, 20, 0, 0, True)
+
+        device.enable(brightness=128)
+        self.machine_run()
+        device.hw_driver.proc.driver_patter.assert_called_with(67, 10, 10, 0, True)
+
+        device.enable(brightness=245)
+        self.machine_run()
+        device.hw_driver.proc.driver_patter.assert_called_with(67, 19, 1, 0, True)
+
+        # test gi off
+        device.hw_driver.proc.driver_disable = MagicMock()
+        device.disable()
+        self.machine_run()
+        device.hw_driver.proc.driver_disable.assert_called_with(67)

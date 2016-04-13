@@ -9,19 +9,19 @@ class DriverPlatformInterface(metaclass=abc.ABCMeta):
     """
 
     @abc.abstractmethod
-    def disable(self):
+    def disable(self, coil):
         """Disabled the driver"""
         raise NotImplementedError('disable method must be defined to use this base class')
 
     @abc.abstractmethod
-    def enable(self):
+    def enable(self, coil):
         """Enables this driver, which means it's held "on" indefinitely until
         it's explicitly disabled.
         """
         raise NotImplementedError('enable method must be defined to use this base class')
 
     @abc.abstractmethod
-    def pulse(self, milliseconds=None):
+    def pulse(self, coil, milliseconds):
         """Pulses this driver for a pre-determined amount of time, after which
         this driver is turned off automatically. Note that on most platforms,
         pulse times are a max of 255ms. (Beyond that MPF will send separate
@@ -30,10 +30,7 @@ class DriverPlatformInterface(metaclass=abc.ABCMeta):
         Args:
             milliseconds: The number of ms to pulse this driver for. You should
                 raise a ValueError if the value is out of range for your
-                platform. If this value is None, you should pulse this driver
-                with a default setting. You can set the default in the driver
-                config via your __init__() method, or you can pick some default
-                that's hard coded.
+                platform.
 
         Returns:
             A integer of the actual time this driver is going to be pulsed for.
@@ -41,8 +38,4 @@ class DriverPlatformInterface(metaclass=abc.ABCMeta):
             many drivers aren't activated at once.
 
         """
-        raise NotImplementedError('pulse method must be defined to use this base class')
-
-    def get_pulse_ms(self):
-        # returns the pulse_ms for this driver. needed by snux
         raise NotImplementedError('pulse method must be defined to use this base class')

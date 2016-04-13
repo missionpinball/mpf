@@ -5,6 +5,7 @@ exclude_lines =
 
     raise AssertionError
     raise NotImplementedError
+    def __repr__
 
 omit =
     *__init__.py

@@ -1,4 +1,6 @@
 """ Contains the base class for autofire coil devices."""
+from mpf.devices.driver import ReconfiguredDriver
+from mpf.devices.switch import ReconfiguredSwitch
 from mpf.core.system_wide_device import SystemWideDevice
 
 
@@ -20,52 +22,27 @@ class AutofireCoil(SystemWideDevice):
     class_label = 'autofire'
 
     def _initialize(self):
-        self.coil = self.config['coil']
-        self.switch = self.config['switch']
+        if "debounce" not in self.config['switch_overwrite']:
+            self.config['switch_overwrite']['debounce'] = "quick"
+        if "recycle" not in self.config['coil_overwrite']:
+            self.config['coil_overwrite']['recycle'] = True
 
-        self.validate()
-
-        if self.config['reverse_switch']:
-            self.switch_activity = 0
-        else:
-            self.switch_activity = 1
+        self.coil = ReconfiguredDriver(self.config['coil'], self.config['coil_overwrite'])
+        self.switch = ReconfiguredSwitch(self.config['switch'], self.config['switch_overwrite'],
+                                         self.config['reverse_switch'])
 
         self.debug_log('Platform Driver: %s', self.platform)
-
-    def validate(self):
-        """Autofire rules only work if the switch is on the same platform as the
-        coil.
-
-        In the future we may expand this to support other rules various platform
-        vendors might have.
-
-        """
-
-        if self.switch.platform == self.coil.platform:
-            self.platform = self.coil.platform
-            return True
-        else:
-            return False
 
     def enable(self, **kwargs):
         """Enables the autofire coil rule."""
         del kwargs
 
-        # todo disable first to clear any old rules?
-
         self.log.debug("Enabling")
 
-        # todo make this work for holds too?
-
-        self.platform.set_hw_rule(sw_name=self.switch.name,
-                                  sw_activity=self.switch_activity,
-                                  driver_name=self.coil.name,
-                                  driver_action='pulse',
-                                  disable_on_release=False,
-                                  **self.config)
+        self.coil.set_pulse_on_hit_rule(self.switch)
 
     def disable(self, **kwargs):
         """Disables the autofire coil rule."""
         del kwargs
         self.log.debug("Disabling")
-        self.platform.clear_hw_rule(self.switch.name)
+        self.coil.clear_hw_rule(self.switch)
