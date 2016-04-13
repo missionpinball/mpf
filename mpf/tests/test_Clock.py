@@ -20,7 +20,7 @@ class ClockTestCase(unittest.TestCase):
     def setUp(self):
         global counter
         counter = 0
-        self.clock = ClockBase()
+        self.clock = ClockBase(60)
         self.clock._events = [[] for i in range(256)]
         self.callback_order = []
 

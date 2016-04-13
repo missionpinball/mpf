@@ -46,17 +46,24 @@ class MachineController(object):
 
     """
     def __init__(self, mpf_path, machine_path, options):
-        self.mpf_path = mpf_path
-        self.machine_path = machine_path
-        self.options = options
         self.log = logging.getLogger("Machine")
-        self.log.info("Mission Pinball Framework v%s", __version__)
+        self.log.info("Mission Pinball Framework Core Engine v%s", __version__)
+
+        self.log.debug("Command line arguments: %s", options)
+        self.options = options
+
+        self.log.debug("MPF path: %s", mpf_path)
+        self.mpf_path = mpf_path
+
+        self.log.info("Machine path: %s", machine_path)
+        self.machine_path = machine_path
+
         self.log.debug("Command line arguments: %s", self.options)
         self.verify_system_info()
 
         self._boot_holds = set()
         self.register_boot_hold('init')
-        self.clock = ClockBase()
+
         self.loop_start_time = 0
         self.tick_num = 0
         self.done = False
@@ -76,7 +83,7 @@ class MachineController(object):
         self.delay = DelayManager(self.delayRegistry)
 
         self.crash_queue = queue.Queue()
-        self.clock.schedule_interval(self._check_crash_queue, 1)
+
         self.is_init_done = False
         self.config = None
         self.events = None
@@ -84,6 +91,9 @@ class MachineController(object):
         self._set_machine_path()
         self._load_config()
 
+        self.clock = ClockBase(self.config['mpf']['hz'])
+        self.log.info("Starting clock at %sHz", self.clock._max_fps)
+        self.clock.schedule_interval(self._check_crash_queue, 1)
         self.configure_debugger()
 
         self.config_validator = ConfigValidator(self)

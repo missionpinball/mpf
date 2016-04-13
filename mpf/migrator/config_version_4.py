@@ -23,7 +23,7 @@ class V4Migrator(VersionMigrator):
     - old: tocks_per_sec
       new: speed
     - old: fonts
-      new: text_styles
+      new: widget_styles
     - old: movies
       new: videos
     - old: lights_when_disabled
@@ -343,11 +343,11 @@ class V4Migrator(VersionMigrator):
             pass
 
     def _migrate_fonts(self):
-        # Fonts to text_styles was already renamed, now update contents
-        if 'text_styles' in self.fc:
-            self.log.debug("Converting text_styles: from the old fonts: "
+        # Fonts to widget_styles was already renamed, now update contents
+        if 'widget_styles' in self.fc:
+            self.log.debug("Converting widget_styles: from the old fonts: "
                            "settings")
-            for settings in self.fc['text_styles'].values():
+            for settings in self.fc['widget_styles'].values():
                 YamlInterface.rename_key('size', 'font_size', settings, self.log)
                 YamlInterface.rename_key('file', 'font_name', settings, self.log)
 
@@ -357,17 +357,17 @@ class V4Migrator(VersionMigrator):
                         settings['font_name'])[0]
 
         if self.base_name == V4Migrator.MAIN_CONFIG_FILE:
-            if 'text_styles' not in self.fc:
+            if 'widget_styles' not in self.fc:
                 self.log.debug("Creating old default font settings as "
-                               "text_styles: section")
-                self.fc['text_styles'] = self._get_old_default_text_styles()
+                               "widget_styles: section")
+                self.fc['widget_styles'] = self._get_old_default_widget_styles()
 
             else:
                 self.log.debug("Merging old default font settings into "
-                               "text_styles: section")
-                self.fc['text_styles'] = (
-                    self._get_old_default_text_styles().update(
-                        self.fc['text_styles']))
+                               "widget_styles: section")
+                self.fc['widget_styles'] = (
+                    self._get_old_default_widget_styles().update(
+                        self.fc['widget_styles']))
 
     def _migrate_asset_defaults(self):
         # convert asset_defaults to assets:
@@ -864,9 +864,9 @@ class V4Migrator(VersionMigrator):
                                      'events_when_deactivated',
                                      switch_settings, self.log)
 
-    def _get_old_default_text_styles(self):
+    def _get_old_default_widget_styles(self):
         # these are from MPF 0.21, but they are in the new v4 format
-        text_styles = '''
+        widget_styles = '''
           default:
             font_name: Quadrit
             font_size: 10
@@ -899,7 +899,7 @@ class V4Migrator(VersionMigrator):
             font_size: 20
         '''
 
-        return yaml.load(text_styles, Loader=MpfRoundTripLoader)
+        return yaml.load(widget_styles, Loader=MpfRoundTripLoader)
 
     def is_show_file(self):
         # Verify we have a show file and that it's an old version

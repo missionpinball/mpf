@@ -75,7 +75,7 @@ slide_player:
     machine_reset_phase_3:
         window_slide_1:
             target: window
-text_styles:
+widget_styles:
     default:
         font_name: Quadrit
         font_size: 10

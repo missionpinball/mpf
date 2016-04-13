@@ -25,6 +25,22 @@ class ScoreController(object):
         self.mode_configs = OrderedDict()
         self.mode_scores = dict()
 
+    def validate_entry(self, entry, mode):
+        # TODO: better validation at mode loading time
+        for value in entry.values():
+            if isinstance(value, int):
+                continue
+            elif isinstance(value, str):
+                try:
+                    value, block = value.split('|')
+                    int(value)
+                    if block != "block":
+                        raise AssertionError("Invalid action in scoring entry: {} in mode {}".format(
+                            entry, mode.name))
+                except ValueError:
+                    raise AssertionError("Invalid scoring entry: {} in mode {}".format(
+                        entry, mode.name))
+
     def mode_start(self, config, mode, priority, **kwargs):
         del kwargs
         self.mode_configs[mode] = config
@@ -32,7 +48,10 @@ class ScoreController(object):
         self.mode_configs = OrderedDict(sorted(iter(self.mode_configs.items()),
                                                key=lambda x: x[0].priority,
                                                reverse=True))
+
         for event in list(config.keys()):
+            self.validate_entry(config[event], mode)
+
             mode.add_mode_event_handler(event, self._score_event_callback,
                                         priority, event_name=event)
 
