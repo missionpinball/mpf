@@ -743,29 +743,6 @@ switches:
 system11:
     ac_relay_delay_ms: single|int|75
     ac_relay_driver_number: single|str|
-text_styles:
-    font_name: single|str|None
-    font_size: single|num|None
-    bold: single|bool|None
-    italtic: single|bool|None
-    halign: single|str|None
-    valign: single|str|None
-    padding_x: single|num|None
-    padding_y: single|num|None
-    # text_size: single||None
-    shorten: single|bool|None
-    mipmap: single|bool|None
-    markup: single|bool|None
-    line_height: single|float|None
-    max_lines: single|int|None
-    strip: single|bool|None
-    shorten_from: single|str|None
-    split_str: single|str|None
-    unicode_errors: single|str|None
-    color: single|kivycolor|ffffffff
-    crop_top: single|int|0            # todo
-    crop_bottom: single|int|0         # todo
-    antialias: single|bool|False      # todo
 tilt:
     tilt_slam_tilt_events: list|str|None
     tilt_warning_events: list|str|None
@@ -832,6 +809,28 @@ videos:
     load: single|str|None
     fps: single|num|None
     auto_play: single|bool|True
+widget_styles:
+    font_name: single|str|None
+    font_size: single|num|None
+    bold: single|bool|None
+    italtic: single|bool|None
+    halign: single|str|None
+    valign: single|str|None
+    padding_x: single|num|None
+    padding_y: single|num|None
+    # text_size: single||None
+    shorten: single|bool|None
+    mipmap: single|bool|None
+    markup: single|bool|None
+    line_height: single|float|None
+    max_lines: single|int|None
+    strip: single|bool|None
+    shorten_from: single|str|None
+    split_str: single|str|None
+    unicode_errors: single|str|None
+    color: single|kivycolor|ffffffff
+    antialias: single|bool|False      # todo
+    __allow_others__:
 widgets:
     common:
         type: single|str|slide_frame
@@ -843,11 +842,11 @@ widgets:
         z: single|int|0
         animations: ignore
         color: single|kivycolor|ffffffff
-        brightness: single|int|None
-        adjust_top: single|int|0
-        adjust_bottom: single|int|0
-        adjust_left: single|int|0
-        adjust_right: single|int|0
+        style: single|str|None
+        adjust_top: single|int|None
+        adjust_bottom: single|int|None
+        adjust_left: single|int|None
+        adjust_right: single|int|None
     animations:
         property: list|str|
         value: list|str|
@@ -974,7 +973,6 @@ widgets:
         padding_y: single|int|0
         number_grouping: single|bool|True
         min_digits: single|int|1
-        style: single|str|None
   #      text_size:
   #      shorten:
   #      mipmap:
