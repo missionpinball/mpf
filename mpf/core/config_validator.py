@@ -1258,14 +1258,20 @@ class ConfigValidator(object):
         return self.validate_config(param, item)
 
     def _validate_type_enum(self, item, param, validation_failure_info):
-        del validation_failure_info
         enum_values = param.split(",")
         if item is None and "None" in enum_values:
             return None
         elif item in enum_values:
             return item
         else:
-            raise ValueError("{} is not in list of allowed values {}".format(item, str(param)))
+            raise ValueError(
+                "Config validation error: Entry {}:{}:{} \"{}\" is not valid. Valid values are: {}".format(
+                    validation_failure_info[0][0],
+                    validation_failure_info[0][1],
+                    validation_failure_info[1],
+                    item,
+                    str(param)
+                ))
 
     def _validate_type_machine(self, item, param, validation_failure_info):
         if item is None:
