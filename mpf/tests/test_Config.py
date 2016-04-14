@@ -361,3 +361,24 @@ class TestConfig(MpfTestCase):
         with self.assertRaises(ValueError):
             self.machine.config_validator.validate_config_item(
                 validation_string, 'test_failure_info', '127')
+
+        # test enum
+        validation_failure_info = (("key", "entry"), "subkey")
+        validation_string = 'single|enum(None,test)|None'
+        results = self.machine.config_validator.validate_config_item(
+            validation_string, validation_failure_info, None)
+        self.assertEqual(None, results)
+
+        results = self.machine.config_validator.validate_config_item(
+            validation_string, validation_failure_info, "None")
+        self.assertEqual(None, results)
+
+        results = self.machine.config_validator.validate_config_item(
+            validation_string, validation_failure_info, "test")
+        self.assertEqual("test", results)
+
+        with self.assertRaises(ValueError) as e:
+            self.machine.config_validator.validate_config_item(
+                validation_string, validation_failure_info, 'something else')
+        self.assertEqual('Config validation error: Entry key:entry:subkey "something else" '
+                         'is not valid. Valid values are: None,test', str(e.exception))
