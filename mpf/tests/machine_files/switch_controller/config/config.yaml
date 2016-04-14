@@ -7,3 +7,6 @@ switches:
         number: 2
         events_when_activated: test_active|100ms, test_active2
         events_when_deactivated: test_inactive, test_inactive2|2s
+    s_test_window_ms:
+        number: 3
+        ignore_window_ms: 100ms
