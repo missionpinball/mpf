@@ -55,7 +55,7 @@ class Switch(SystemWideDevice):
         if self.config['type'].upper() == 'NC':
             self.invert = 1
 
-        self.recycle_secs = self.config['ignore_window_ms']
+        self.recycle_secs = self.config['ignore_window_ms']/1000.0
 
         self.hw_switch = self.platform.configure_switch(self.config)
 
