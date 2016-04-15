@@ -6,10 +6,10 @@ import sys
 import threading
 import traceback
 from queue import Queue
-from mpf.core.platform import DmdPlatform
+from mpf.core.platform import RgbDmdPlatform
 
 
-class HardwarePlatform(DmdPlatform):
+class HardwarePlatform(RgbDmdPlatform):
 
     def __init__(self, machine):
 
@@ -22,7 +22,6 @@ class HardwarePlatform(DmdPlatform):
         self.queue = None
         self.serial_port = None
         self.dmd_thread = None
-        self.update = None
 
         self.config = self.machine.config_validator.validate_config(
             config_spec='smartmatrix',
@@ -31,53 +30,41 @@ class HardwarePlatform(DmdPlatform):
     def __repr__(self):
         return '<Platform.SmartMatrix>'
 
-    def configure_dmd(self):
+    def configure_rgb_dmd(self):
         self.log.debug("Configuring SmartMatrix DMD")
         self.serial_port = serial.Serial(port=self.config['port'],
                                          baudrate=2500000)
 
         if self.config['use_separate_thread']:
-            self.update = self.update_separate_thread
-
             self.queue = Queue()
-
             self.dmd_thread = threading.Thread(target=self.dmd_sender_thread)
             self.dmd_thread.daemon = True
             self.dmd_thread.start()
+            self.machine.bcp.register_rgb_dmd(self.update_separate_thread)
         else:
-            self.update = self.update_non_thread
-            # Update display 30 times per second
-            # TODO: Add display update interval to config
-            # TODO: Want this to update last, figure out priority scheme
-            self.machine.clock.schedule_interval(self.tick, 1/30.0)
-
-        return self
+            self.machine.bcp.register_rgb_dmd(self.update_non_thread)
 
     def update_non_thread(self, data):
         try:
-            self.dmd_frame = bytearray(data)
+            self.serial_port.write(bytearray([0x01]))
+            self.serial_port.write(bytearray(data))
         except TypeError:
             pass
 
     def update_separate_thread(self, data):
         self.queue.put(bytearray(data))
 
-    def tick(self, dt):
-        del dt
-        self.serial_port.write(bytearray([0x01]))
-        self.serial_port.write(self.dmd_frame)
-
     def dmd_sender_thread(self):
-
         while True:
             data = self.queue.get()  # this will block
 
             try:
                 self.serial_port.write(bytearray([0x01]))
-                self.serial_port.write(data)
+                self.serial_port.write(bytearray(data))
 
             except Exception:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
-                lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
+                lines = traceback.format_exception(exc_type, exc_value,
+                                                   exc_traceback)
                 msg = ''.join(line for line in lines)
                 self.machine.crash_queue.put(msg)

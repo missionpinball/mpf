@@ -41,7 +41,8 @@ RGB_LATEST_FW = '0.88'
 IO_LATEST_FW = '0.89'
 
 
-class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatform, SwitchPlatform,
+class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
+                       DmdPlatform, LedPlatform, SwitchPlatform,
                        DriverPlatform):
     """Platform class for the FAST hardware controller.
 
@@ -56,8 +57,8 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         self.log.info("Configuring FAST hardware.")
 
         if not serial_imported:
-            raise AssertionError('Could not import "pySerial". This is required for '
-                                 'the FAST platform interface')
+            raise AssertionError('Could not import "pySerial". This is '
+                                 'required for the FAST platform interface')
 
         # ----------------------------------------------------------------------
         # Platform-specific hardware features. WARNING: Do not edit these. They
@@ -263,7 +264,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
                               '/N': self.receive_nw_open,    # nw switch open
                               '-N': self.receive_nw_closed,  # nw switch closed
                               '/L': self.receive_local_open,    # local sw open
-                              '-L': self.receive_local_closed,  # local sw close
+                              '-L': self.receive_local_closed,  # local sw cls
                               'WD': self.receive_wd,  # watchdog
                               }
 
@@ -310,8 +311,8 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         if cmd in self.fast_commands:
             self.fast_commands[cmd](payload)
         else:
-            self.log.warning("Received unknown serial command? %s. (This is ok "
-                             "to ignore for now while the FAST platform is in "
+            self.log.warning("Received unknown serial command? %s. (This is ok"
+                             " to ignore for now while the FAST platform is in "
                              "development)", msg)
 
     def _connect_to_hardware(self):
@@ -319,9 +320,10 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         # connection threads to figure out which processor they've connected to
         # and to register themselves.
         for port in self.config['ports']:
-            self.connection_threads.add(SerialCommunicator(machine=self.machine,
-                                                           platform=self, port=port, baud=self.config['baud'],
-                                                           send_queue=queue.Queue(), receive_queue=self.receive_queue))
+            self.connection_threads.add(SerialCommunicator(
+                machine=self.machine, platform=self, port=port,
+                baud=self.config['baud'], send_queue=queue.Queue(),
+                receive_queue=self.receive_queue))
 
     def register_processor_connection(self, name, communicator):
         """Once a communication link has been established with one of the
@@ -339,7 +341,8 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
             self.rgb_connection = communicator
             self.rgb_connection.send('RF:0')
             self.rgb_connection.send('RA:000000')  # turn off all LEDs
-            self.rgb_connection.send('RF:' + Util.int_to_hex_string(self.config['hardware_led_fade_time']))
+            self.rgb_connection.send('RF:{}'.format(
+                Util.int_to_hex_string(self.config['hardware_led_fade_time'])))
 
     def update_leds(self, dt):
         """Updates all the LEDs connected to a FAST controller. This is done
@@ -351,7 +354,8 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         update every loop, it will only be the wrong color for one tick.
         """
         del dt
-        msg = 'RS:' + ','.join(["%s%s" % (led.number, led.current_color) for led in self.fast_leds])
+        msg = 'RS:' + ','.join(["%s%s" % (led.number, led.current_color)
+                                for led in self.fast_leds])
         self.rgb_connection.send(msg)
 
     def get_hw_switch_states(self):
@@ -443,9 +447,9 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         config = deepcopy(config)
 
         if not self.net_connection:
-            raise AssertionError('A request was made to configure a FAST driver, '
-                                 'but no connection to a NET processor is '
-                                 'available')
+            raise AssertionError('A request was made to configure a FAST '
+                                 'driver, but no connection to a NET processor'
+                                 'is available')
 
         if not config['number']:
             raise AssertionError("Driver needs a number")
@@ -453,7 +457,8 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         # If we have WPC driver boards, look up the driver number
         if self.machine_type == 'wpc':
             config['number'] = self.wpc_driver_map.get(
-                                                config['number'].upper())
+                config['number'].upper())
+
             if ('connection' in config and
                     config['connection'].lower() == 'network'):
                 config['connection'] = 1
@@ -476,7 +481,8 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
                 config['connection'] = 1  # network driver (default for FAST)
 
         else:
-            raise AssertionError("Invalid machine type: {}".format(self.machine_type))
+            raise AssertionError("Invalid machine type: {}".format(
+                self.machine_type))
 
         return FASTDriver(config, self.net_connection.send, self.machine)
 
@@ -509,12 +515,13 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
             raise AssertionError("Switch needs a number")
 
         if not self.net_connection:
-            raise AssertionError("A request was made to configure a FAST switch, "
-                                 "but no connection to a NET processor is "
-                                 "available")
+            raise AssertionError("A request was made to configure a FAST "
+                                 "switch, but no connection to a NET processor"
+                                 "is available")
 
-        if self.machine_type == 'wpc':  # translate switch number to FAST switch
-            config['number'] = self.wpc_switch_map.get(str(config['number']).upper())
+        if self.machine_type == 'wpc':  # translate switch num to FAST switch
+            config['number'] = self.wpc_switch_map.get(
+                str(config['number']).upper())
             if 'connection' not in config:
                 config['connection'] = 0  # local switch (default for WPC)
             else:
@@ -530,10 +537,12 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
                 if self.config['config_number_format'] == 'int':
                     config['number'] = Util.int_to_hex_string(config['number'])
                 else:
-                    config['number'] = Util.normalize_hex_string(config['number'])
+                    config['number'] = Util.normalize_hex_string(
+                        config['number'])
             except ValueError:
-                raise AssertionError("Could not parse switch number " + config['number'] + ". Seems to be not a "
-                                     " a valid switch number for the FAST platform.")
+                raise AssertionError("Could not parse switch number %s. Seems "
+                                     "to be not a valid switch number for the"
+                                     "FAST platform.", config['number'])
 
         # convert the switch number into a tuple which is:
         # (switch number, connection)
@@ -582,7 +591,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
                                  'but no connection to a NET processor is '
                                  'available')
 
-        if self.machine_type == 'wpc':  # translate switch number to FAST switch
+        if self.machine_type == 'wpc':  # translate switch num to FAST switch
             number = self.wpc_gi_map.get(str(config['number']).upper())
         else:
             number = Util.int_to_hex_string(config['number'])
@@ -591,9 +600,9 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
 
     def configure_matrixlight(self, config):
         if not self.net_connection:
-            raise AssertionError('A request was made to configure a FAST matrix '
-                                 'light, but no connection to a NET processor is '
-                                 'available')
+            raise AssertionError('A request was made to configure a FAST '
+                                 'matrix light, but no connection to a NET '
+                                 'processor is available')
 
         if self.machine_type == 'wpc':  # translate number to FAST light num
             number = self.wpc_light_map.get(str(config['number']).upper())
@@ -609,9 +618,13 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
 
         if not self.dmd_connection:
             raise AssertionError("A request was made to configure a FAST DMD, "
-                                 "but no connection to a DMD processor is available.")
+                                 "but no connection to a DMD processor is "
+                                 "available.")
 
-        return FASTDMD(self.machine, self.dmd_connection.send)
+        self.machine.bcp.register_dmd(
+            FASTDMD(self.machine, self.dmd_connection.send).update)
+
+        return
 
     def tick(self, dt):
         while not self.receive_queue.empty():
@@ -629,16 +642,20 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         return "fast_coil_overwrites"
 
     def validate_switch_overwrite_section(self, switch, config_overwrite):
-        if "debounce" in config_overwrite and switch.config['debounce'] != "auto" and \
-                switch.config['debounce'] != config_overwrite['debounce']:
-            raise AssertionError("Cannot overwrite debounce for switch %s for FAST interface", switch.name)
+        if ("debounce" in config_overwrite and
+                switch.config['debounce'] != "auto" and
+                switch.config['debounce'] != config_overwrite['debounce']):
+            raise AssertionError("Cannot overwrite debounce for switch %s for"
+                                 "FAST interface", switch.name)
 
-        config_overwrite = super().validate_switch_overwrite_section(switch, config_overwrite)
+        config_overwrite = super().validate_switch_overwrite_section(
+            switch, config_overwrite)
         return config_overwrite
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
-        self.log.debug("Setting Pulse on hit and release HW Rule. Switch: %s, Driver: %s",
-                       enable_switch.hw_switch.number, coil.hw_driver.number)
+        self.log.debug("Setting Pulse on hit and release HW Rule. Switch: %s,"
+                       "Driver: %s", enable_switch.hw_switch.number,
+                       coil.hw_driver.number)
 
         driver = coil.hw_driver
 
@@ -668,7 +685,8 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
 
         self.net_connection.send(cmd)
 
-    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
+    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self,
+            enable_switch, disable_switch, coil):
         # Potential command from Dave:
         # Command
         # [DL/DN]:<DRIVER_ID>,<CONTROL>,<SWITCH_ID_ON>,<75>,<SWITCH_ID_OFF>,<Driver On Time1>,<Driver On Time2 X 100mS>,
@@ -679,8 +697,9 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         # Driver On Time2 X 100mS would not be used for a flipper, so set it to 0.
         # And PWM2 should be left on full 0xff unless you need less power for some reason.
         # No release so far :-(
-        self.log.debug("Setting Pulse on hit and release with HW Rule. Switch: %s, Driver: %s",
-                       enable_switch.hw_switch.number, coil.hw_driver.number)
+        self.log.debug("Setting Pulse on hit and release with HW Rule. Switch:"
+                       "%s, Driver: %s", enable_switch.hw_switch.number,
+                       coil.hw_driver.number)
 
         # map this to pulse without eos for now
         # TODO: implement correctly
@@ -688,8 +707,9 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         self.set_pulse_on_hit_and_release_rule(enable_switch, coil)
 
     def set_pulse_on_hit_rule(self, enable_switch, coil):
-        self.log.debug("Setting Pulse on hit and release HW Rule. Switch: %s, Driver: %s",
-                       enable_switch.hw_switch.number, coil.hw_driver.number)
+        self.log.debug("Setting Pulse on hit and release HW Rule. Switch: %s,"
+                       "Driver: %s", enable_switch.hw_switch.number,
+                       coil.hw_driver.number)
 
         driver = coil.hw_driver
 
@@ -720,16 +740,18 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
         self.net_connection.send(cmd)
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
-        self.log.debug("Setting Pulse on hit and enable and release HW Rule. Switch: %s, Driver: %s",
+        self.log.debug("Setting Pulse on hit and enable and release HW Rule. "
+                       "Switch: %s, Driver: %s",
                        enable_switch.hw_switch.number, coil.hw_driver.number)
 
         driver = coil.hw_driver
-        if driver.get_pwm1_for_cmd(coil) == "ff" and driver.get_pwm2_for_cmd(coil) == "ff" and \
-                not coil.config['allow_enable']:
+        if (driver.get_pwm1_for_cmd(coil) == "ff" and
+                driver.get_pwm2_for_cmd(coil) == "ff" and
+                not coil.config['allow_enable']):
+
             # todo figure how to show the friendly name of this driver
-            raise AssertionError("Coil {} may not be enabled at 100% without allow_enabled or pwm settings".format(
-                coil.hw_driver.number
-            ))
+            raise AssertionError("Coil {} may not be enabled at 100% without"
+                "allow_enabled or pwm settings".format(coil.hw_driver.number))
 
         # cmd = (driver.get_config_cmd() +
         #        coil.hw_driver.number + ',' +
@@ -772,7 +794,8 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatf
             coil: The coil whose rule you want to clear.
 
         """
-        self.log.debug("Clearing HW Rule for switch: %s, coils: %s", switch.hw_switch.number, coil.hw_driver.number)
+        self.log.debug("Clearing HW Rule for switch: %s, coils: %s",
+                       switch.hw_switch.number, coil.hw_driver.number)
 
         # TODO: check that the rule is switch + coil and not another switch + this coil
 
@@ -1233,20 +1256,10 @@ class FASTDMD(object):
 
         self.dmd_frame = bytearray()
 
-        # Update DMD 30 times per second
-        # TODO: Add DMD update interval to config
-        self.machine.clock.schedule_interval(self.tick, 1/30.0)
-
     def update(self, data):
-
-        try:
-            self.dmd_frame = bytearray(data)
-        except TypeError:
-            pass
-
-    def tick(self, dt):
-        del dt
-        self.send('BM:'.encode() + bytes(self.dmd_frame))
+        self.dmd_frame = data
+        self.send('BM:'.encode())
+        self.send(data)
 
 
 class SerialCommunicator(object):

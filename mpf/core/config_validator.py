@@ -344,6 +344,7 @@ hardware:
     matrix_lights: single|str|default
     leds: single|str|default
     dmd: single|str|default
+    rgb_dmd: single|str|default
     gis: single|str|default
     flashers: single|str|default
     driverboards: single|str|
@@ -468,24 +469,18 @@ p3_roc:
     watchdog_time: single|ms|1s
     use_watchdog: single|bool|True
 physical_dmd:
-    width: single|int|128
-    height: single|int|32
     shades: single|pow2|16
     fps: single|int|0
-    platform: single|str|None
     source_display: single|str|dmd
     luminosity: list|float|.299, .587, .114
-    gain: single|float|1.0
+    brightness: single|float|1.0
+    only_send_changes: single|bool|False
 physical_rgb_dmd:
-    width: single|int|128
-    height: single|int|32
-    shades: single|pow2|16
     fps: single|int|0
-    platform: single|str|None
     source_display: single|str|dmd
     color_adjust: list|float|1, 1, 1
-    channel_bits: list|int|8, 8, 8
-    # color_channel_map: single|str|rgb     # not implemented
+    only_send_changes: single|bool|False
+    brightness: single|float|1.0
 playfields:
     tags: list|str|None
     label: single|str|%

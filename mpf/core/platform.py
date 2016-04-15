@@ -13,6 +13,7 @@ class BasePlatform(object):
         # Set default platform features. Each platform interface can change
         # these to notify the framework of the specific features it supports.
         self.features['has_dmd'] = False
+        self.features['has_rgb_dmd'] = False
         self.features['has_accelerometers'] = False
         self.features['has_i2c'] = False
         self.features['has_servos'] = False
@@ -62,7 +63,22 @@ class DmdPlatform(BasePlatform):
         """Subclass this method in a platform module to configure the DMD.
 
         This method should return a reference to the DMD's platform interface
-        object which will be called to access the hardware.
+        method will will receive the frame data.
+
+        """
+        raise NotImplementedError
+
+
+class RgbDmdPlatform(BasePlatform):
+    def __init__(self, machine):
+        super().__init__(machine)
+        self.features['has_rgb_dmd'] = True
+
+    def configure_rgb_dmd(self):
+        """Subclass this method in a platform module to configure the DMD.
+
+        This method should return a reference to the DMD's platform interface
+        method will will receive the frame data.
 
         """
         raise NotImplementedError

@@ -185,7 +185,8 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
 
     def configure_dmd(self):
         """Configures a hardware DMD connected to a classic P-ROC."""
-        return PROCDMD(self.proc, self.machine)
+
+        self.machine.bcp.register_dmd(PROCDMD(self.proc, self.machine).update)
 
     def tick(self, dt):
         """Checks the P-ROC for any events (switch state changes or notification
@@ -202,17 +203,17 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
             if event_type == self.pinproc.EventTypeDMDFrameDisplayed:
                 pass
             elif event_type == self.pinproc.EventTypeSwitchClosedDebounced:
-                self.machine.switch_controller.process_switch_by_num(state=1,
-                                                                     num=event_value)
+                self.machine.switch_controller.process_switch_by_num(
+                    state=1, num=event_value)
             elif event_type == self.pinproc.EventTypeSwitchOpenDebounced:
-                self.machine.switch_controller.process_switch_by_num(state=0,
-                                                                     num=event_value)
+                self.machine.switch_controller.process_switch_by_num(
+                    state=0, num=event_value)
             elif event_type == self.pinproc.EventTypeSwitchClosedNondebounced:
-                self.machine.switch_controller.process_switch_by_num(state=1,
-                                                                     num=event_value)
+                self.machine.switch_controller.process_switch_by_num(
+                    state=1, num=event_value)
             elif event_type == self.pinproc.EventTypeSwitchOpenNondebounced:
-                self.machine.switch_controller.process_switch_by_num(state=0,
-                                                                     num=event_value)
+                self.machine.switch_controller.process_switch_by_num(
+                    state=0, num=event_value)
             else:
                 self.log.warning("Received unrecognized event from the P-ROC. "
                                  "Type: %s, Value: %s", event_type, event_value)
@@ -236,19 +237,16 @@ class PROCDMD(object):
     def __init__(self, proc, machine):
         self.proc = proc
         self.machine = machine
-        self.dmd = pinproc.DMDBuffer(128, 32)
+
         # size is hardcoded here since 128x32 is all the P-ROC hw supports
+        self.dmd = pinproc.DMDBuffer(128, 32)
 
         # dmd_timing defaults should be 250, 400, 180, 800
-
         if self.machine.config['p_roc']['dmd_timing_cycles']:
-
-            dmd_timing = Util.string_to_list(self.machine.config['p_roc']['dmd_timing_cycles'])
+            dmd_timing = Util.string_to_list(
+                self.machine.config['p_roc']['dmd_timing_cycles'])
 
             self.proc.dmd_update_config(high_cycles=dmd_timing)
-
-        # Schedule DMD updates
-        self.machine.clock.schedule_interval(self.tick, self.machine.config['p_roc']['dmd_update_interval'] / 1000.0)
 
     def update(self, data):
         """Updates the DMD with a new frame.
@@ -259,14 +257,7 @@ class PROCDMD(object):
         """
         if len(data) == 4096:
             self.dmd.set_data(data)
+            self.proc.dmd_draw(self.dmd)
         else:
-            self.machine.log.warning("Received a DMD frame of length %s instead"
+            self.machine.log.warning("Received DMD frame of length %s instead"
                                      "of 4096. Discarding...", len(data))
-
-    def tick(self, dt):
-        """Updates the physical DMD with the latest frame data. Meant to be
-        called once per machine tick.
-
-        """
-        del dt
-        self.proc.dmd_draw(self.dmd)
