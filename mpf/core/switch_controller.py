@@ -307,6 +307,8 @@ class SwitchController(object):
 
         # if the switch is active, check to see if it's recycle_time has passed
         if state and not self._check_recycle_time(obj, state):
+            self.machine.clock.schedule_once(lambda dt: self._recycle_passed(obj, state, logical, obj.hw_state),
+                                             timeout=obj.recycle_clear_time - self.machine.clock.get_time())
             return
 
         obj.state = state  # update the switch device
@@ -340,6 +342,10 @@ class SwitchController(object):
             monitor(name, state)
 
         self._post_switch_events(name, state)
+
+    def _recycle_passed(self, obj, state, logical, hw_state):
+        if obj.hw_state == hw_state:
+            self.process_switch(obj.name, state, logical)
 
     def _cancel_timed_handlers(self, name, state):
         # now check if the opposite state is in the active timed switches list

@@ -95,3 +95,23 @@ class TestSwitchController(MpfTestCase):
         self.assertEqual(1, self._events['test_active2'])
         self.assertEqual(1, self._events['test_inactive'])
         self.assertEqual(1, self._events['test_inactive2'])
+
+    def test_ignore_window_ms(self):
+        # first hit. switch gets active
+        self.machine.switch_controller.process_switch("s_test_window_ms", 1)
+        self.advance_time_and_run(.001)
+        self.assertTrue(self.machine.switch_controller.is_active("s_test_window_ms"))
+
+        # an disables instantly
+        self.machine.switch_controller.process_switch("s_test_window_ms", 0)
+        self.advance_time_and_run(.001)
+        self.assertFalse(self.machine.switch_controller.is_active("s_test_window_ms"))
+
+        # and enables again
+        self.machine.switch_controller.process_switch("s_test_window_ms", 1)
+        self.advance_time_and_run(.01)
+        self.assertFalse(self.machine.switch_controller.is_active("s_test_window_ms"))
+        self.advance_time_and_run(.05)
+        self.assertFalse(self.machine.switch_controller.is_active("s_test_window_ms"))
+        self.advance_time_and_run(.05)
+        self.assertTrue(self.machine.switch_controller.is_active("s_test_window_ms"))
