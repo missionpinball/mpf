@@ -127,10 +127,6 @@ class Driver(SystemWideDevice):
         else:
             self.time_when_done = -1
 
-    def timed_enable(self, milliseconds, **kwargs):
-        del kwargs
-        self.pulse(milliseconds)
-
     def _check_platform(self, switch):
         # TODO: handle stuff in software if platforms differ
         if self.platform != switch.platform:
@@ -139,12 +135,14 @@ class Driver(SystemWideDevice):
     def set_pulse_on_hit_and_release_rule(self, enable_switch):
         self._check_platform(enable_switch)
 
-        self.platform.set_pulse_on_hit_and_release_rule(enable_switch.get_configured_switch(), self.get_configured_driver())
+        self.platform.set_pulse_on_hit_and_release_rule(enable_switch.get_configured_switch(),
+                                                        self.get_configured_driver())
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch):
         self._check_platform(enable_switch)
 
-        self.platform.set_pulse_on_hit_and_enable_and_release_rule(enable_switch.get_configured_switch(), self.get_configured_driver())
+        self.platform.set_pulse_on_hit_and_enable_and_release_rule(enable_switch.get_configured_switch(),
+                                                                   self.get_configured_driver())
 
     def set_pulse_on_hit_rule(self, enable_switch):
         self._check_platform(enable_switch)
