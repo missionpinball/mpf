@@ -134,17 +134,6 @@ class Playfield(SystemWideDevice):
         else:
             self.ball_search.enable()
 
-    def count_balls(self, **kwargs):
-        """Used to count the number of balls that are contained in a ball
-        device. Since this is the playfield device, this method always returns
-        zero.
-
-        Returns: 0
-
-        """
-        del kwargs
-        return 0
-
     def get_additional_ball_capacity(self):
         """Used to find out how many more balls this device can hold. Since this
         is the playfield device, this method always returns 999.
