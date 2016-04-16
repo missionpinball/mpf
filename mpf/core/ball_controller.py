@@ -220,6 +220,7 @@ class BallController(object):
                     device.eject_all()
         else:
             self.log.debug("All balls are collected")
+            self._collecting_balls_complete()
 
     def _collecting_balls_entered_callback(self, target, new_balls, unclaimed_balls, **kwargs):
         del kwargs
