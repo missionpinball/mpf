@@ -38,23 +38,10 @@ class Playfield(SystemWideDevice):
         self.queued_balls = list()
         self._playfield = True
 
-    def load_config(self, config):
-        # do not call super here
-
-        self.config = config
-
-        if self.config['debug']:
-            self.debug = True
-            self.log.debug("Enabling debug logging for this device")
-            self.log.debug("Configuring device with settings: '%s'", config)
-
-        self.tags = self.config['tags']
-        self.label = self.config['label']
-
+    def _initialize(self):
         if 'default' in self.config['tags']:
             self.machine.playfield = self
 
-    def _initialize(self):
         self.ball_controller = self.machine.ball_controller
 
         # Set up event handlers
