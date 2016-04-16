@@ -288,8 +288,11 @@ class BCP(object):
         if self.machine.config['hardware']['dmd'] == 'default':
             platform = self.machine.default_platform
         else:
-            platform = self.machine.hardware_platforms[
-                self.machine.config['hardware']['dmd']]
+            try:
+                platform = self.machine.hardware_platforms[
+                    self.machine.config['hardware']['dmd']]
+            except KeyError:
+                return
 
         if platform.features['has_dmd']:
             self.register_connection_callback(platform.configure_dmd)
@@ -298,8 +301,11 @@ class BCP(object):
         if self.machine.config['hardware']['rgb_dmd'] == 'default':
             platform = self.machine.default_platform
         else:
-            platform = self.machine.hardware_platforms[
-                self.machine.config['hardware']['rgb_dmd']]
+            try:
+                platform = self.machine.hardware_platforms[
+                    self.machine.config['hardware']['rgb_dmd']]
+            except KeyError:
+                return
 
         if platform.features['has_rgb_dmd']:
             # print("RGB DMD PLATFORM ", platform)
