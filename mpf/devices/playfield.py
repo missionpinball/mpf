@@ -308,12 +308,6 @@ class Playfield(SystemWideDevice):
             if self.num_balls_requested < 0:
                 raise AssertionError("num_balls_requested is smaller 0, which doesn't make sense. Quitting...")
 
-    def eject(self, *args, **kwargs):
-        pass
-
-    def eject_all(self, *args, **kwargs):
-        pass
-
     def is_playfield(self):
         return True
 
