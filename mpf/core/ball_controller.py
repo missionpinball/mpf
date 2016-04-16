@@ -216,7 +216,8 @@ class BallController(object):
                     target=target)
 
             for device in source_devices:
-                device.eject_all()
+                if not device.is_playfield():
+                    device.eject_all()
         else:
             self.log.debug("All balls are collected")
 
