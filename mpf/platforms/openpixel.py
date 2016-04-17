@@ -187,7 +187,7 @@ class OpenPixelClient(object):
         self.sending_queue.put(message)
 
 
-class OPCThread(threading.Thread):
+class OPCThread(threading.Thread):  # pragma: no cover
     """Base class for the thread that connects to the OPC server.
 
     Args:
