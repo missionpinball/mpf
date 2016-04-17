@@ -49,8 +49,3 @@ class DriverEnabled(SystemWideDevice):
         self.log.warning("Received request to pulse a driver-enabled device. "
                          "Ignoring...")
 
-    def timed_enable(self, *args, **kwargs):
-        del args
-        del kwargs
-        self.log.warning("Received request to timed-enable a driver-enabled "
-                         "device. Ignoring...")
