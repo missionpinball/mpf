@@ -93,6 +93,13 @@ class TestPRoc(MpfTestCase):
         self.assertTrue(self.machine.switch_controller.is_active("s_test_001"))
 
     def test_switches(self):
+        self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
+            call(23, 'closed_debounced', {'notifyHost': True, 'reloadActive': False}, [], False),
+            call(23, 'open_debounced', {'notifyHost': True, 'reloadActive': False}, [], False),
+            call(24, 'closed_nondebounced', {'notifyHost': True, 'reloadActive': False}, [], False),
+            call(24, 'open_nondebounced', {'notifyHost': True, 'reloadActive': False}, [], False),
+        ], any_order=True)
+
         self.assertFalse(self.machine.switch_controller.is_active("s_test"))
         # closed debounced -> switch active
         self.machine.default_platform.proc.get_events = MagicMock(return_value=[
