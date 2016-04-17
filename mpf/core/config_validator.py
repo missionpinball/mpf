@@ -1083,15 +1083,16 @@ class ConfigValidator(object):
             this_spec = dict()
 
         if base_spec:
-            this_base_spec = self.config_spec
-            base_spec = base_spec.split(':')
-            for spec in base_spec:
-                # need to deepcopy so the orig base spec doesn't get polluted
-                # with this widget's spec
-                this_base_spec = deepcopy(this_base_spec[spec])
+            for spec_element in base_spec.split(","):
+                this_base_spec = self.config_spec
+                spec_element = spec_element.split(':')
+                for spec in spec_element:
+                    # need to deepcopy so the orig base spec doesn't get polluted
+                    # with this widget's spec
+                    this_base_spec = deepcopy(this_base_spec[spec])
 
-            this_base_spec.update(this_spec)
-            this_spec = this_base_spec
+                this_base_spec.update(this_spec)
+                this_spec = this_base_spec
 
         return this_spec
 
