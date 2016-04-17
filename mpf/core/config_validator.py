@@ -664,6 +664,7 @@ slide_player:
     transition_out: ignore
     widgets: ignore
     expire: single|secs|None
+    action: single|enum(add,remove)|add
 slides:
     debug: single|bool|False
     tags: list|str|None
