@@ -813,6 +813,14 @@ videos:
     load: single|str|None
     fps: single|num|None
     auto_play: single|bool|True
+widget_player:
+    # widget: list|str|
+    target: single|str|None
+    slide: single|str|None
+    expire: single|secs|None
+    action: single|enum(add,remove)|add
+    z: single|int|0
+    key: single|str|None
 widget_styles:
     font_name: single|str|None
     font_size: single|num|None
@@ -851,6 +859,7 @@ widgets:
         adjust_bottom: single|int|None
         adjust_left: single|int|None
         adjust_right: single|int|None
+        expire: single|secs|None
     animations:
         property: list|str|
         value: list|str|
@@ -993,11 +1002,6 @@ widgets:
         video: single|str|
         height: single|int|0
         width: single|int|0
-
-widget_player:
-    # widget: list|str|
-    target: single|str|None
-    slide: single|str|None
 
 window:
     icon: single|str|None
