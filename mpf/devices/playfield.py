@@ -38,23 +38,10 @@ class Playfield(SystemWideDevice):
         self.queued_balls = list()
         self._playfield = True
 
-    def load_config(self, config):
-        # do not call super here
-
-        self.config = config
-
-        if self.config['debug']:
-            self.debug = True
-            self.log.debug("Enabling debug logging for this device")
-            self.log.debug("Configuring device with settings: '%s'", config)
-
-        self.tags = self.config['tags']
-        self.label = self.config['label']
-
+    def _initialize(self):
         if 'default' in self.config['tags']:
             self.machine.playfield = self
 
-    def _initialize(self):
         self.ball_controller = self.machine.ball_controller
 
         # Set up event handlers
@@ -146,17 +133,6 @@ class Playfield(SystemWideDevice):
             self.ball_search.disable()
         else:
             self.ball_search.enable()
-
-    def count_balls(self, **kwargs):
-        """Used to count the number of balls that are contained in a ball
-        device. Since this is the playfield device, this method always returns
-        zero.
-
-        Returns: 0
-
-        """
-        del kwargs
-        return 0
 
     def get_additional_ball_capacity(self):
         """Used to find out how many more balls this device can hold. Since this
@@ -330,14 +306,7 @@ class Playfield(SystemWideDevice):
             self.num_balls_requested -= balls
 
             if self.num_balls_requested < 0:
-                raise Exception("num_balls_requested is smaller 0, which doesn't make "
-                                "sense. Quitting...")
-
-    def eject(self, *args, **kwargs):
-        pass
-
-    def eject_all(self, *args, **kwargs):
-        pass
+                raise AssertionError("num_balls_requested is smaller 0, which doesn't make sense. Quitting...")
 
     def is_playfield(self):
         return True

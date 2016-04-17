@@ -93,6 +93,7 @@ class TestBallController(MpfTestCase):
         self.assertEqual("ejecting", self.machine.ball_devices.test_launcher._state)
 
     def test_ball_collect_after_game(self):
+        self.mock_event("collecting_balls_complete")
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
         self.machine.switch_controller.process_switch("s_ball_switch2", 1)
         self.machine.switch_controller.process_switch("s_ball_switch3", 1)
@@ -126,3 +127,23 @@ class TestBallController(MpfTestCase):
         self.assertEqual(0, self.machine.ball_devices.test_launcher.available_balls)
         self.assertEqual(3, self.machine.ball_devices.test_trough.balls)
         self.assertEqual(0, self.machine.ball_devices.test_launcher.balls)
+        self.assertEqual(0, self._events['collecting_balls_complete'])
+
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.test_trough)
+        self.advance_time_and_run(1)
+
+        self.assertEqual(1, self._events['collecting_balls_complete'])
+
+    def test_ball_collect_without_balls_on_pf(self):
+        self.mock_event("collecting_balls_complete")
+        self.machine.switch_controller.process_switch("s_ball_switch1", 1)
+        self.machine.switch_controller.process_switch("s_ball_switch2", 1)
+        self.machine.switch_controller.process_switch("s_ball_switch3", 1)
+        self.machine.switch_controller.process_switch("s_ball_switch4", 1)
+        self.advance_time_and_run(1)
+        self.assertEqual(4, self.machine.ball_controller.num_balls_known)
+
+        self.machine.ball_controller.collect_balls()
+        self.advance_time_and_run(1)
+
+        self.assertEqual(1, self._events['collecting_balls_complete'])
