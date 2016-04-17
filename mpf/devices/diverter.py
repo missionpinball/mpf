@@ -29,13 +29,6 @@ class Diverter(SystemWideDevice):
         self.eject_state = False
         self.eject_attempt_queue = deque()
 
-        self.trigger_type = 'software'  # 'software' or 'hardware'
-        # TODO: make hardware the only options and let the platform do the work
-
-        # Create a list of ball device objects when active and inactive. We need
-        # this because ball eject attempts pass the target device as an object
-        # rather than by name.
-
     def _initialize(self):
         # register for feeder device eject events
         for feeder_device in self.config['feeder_devices']:
@@ -146,7 +139,7 @@ class Diverter(SystemWideDevice):
             self.disable_switches()
         # if there is no deactivation way
         if not (self.config['activation_time'] or self.config['deactivation_switches'] or
-                    self.config['deactivate_events']):
+           self.config['deactivate_events']):
             self.deactivate()
 
     def activate(self, **kwargs):
@@ -193,68 +186,6 @@ class Diverter(SystemWideDevice):
                            callback=self.deactivate)
 
     def enable_switches(self):
-        if self.trigger_type == 'hardware':
-            self.enable_hw_switches()
-        else:
-            self.enable_sw_switches()
-
-    def disable_switches(self):
-        if self.trigger_type == 'hardware':
-            self.disable_hw_switches()
-        else:
-            self.disable_sw_switches()
-
-    def enable_hw_switches(self):
-        # TODO: not used. probably broken
-        """Enables the hardware switch rule which causes this diverter to
-        activate when the switch is hit.
-
-        This is typically used for diverters on loops and ramps where you don't
-        want the diverter to phsyically activate until the ramp entry switch is
-        activated.
-
-        If this diverter is configured with a activation_time, this method will
-        also set switch handlers which will set a delay to deactivate the
-        diverter once the activation activation_time expires.
-
-        If this diverter is configured with a deactivation switch, this method
-        will set up the switch handlers to deactivate the diverter when the
-        deactivation switch is activated.
-        """
-        self.log.debug("Enabling Diverter for hw switch: %s",
-                       self.config['activation_switches'])
-        if self.config['type'] == 'hold':
-
-            for switch in self.config['activation_switches']:
-
-                self.platform.set_hw_rule(
-                        sw_name=switch.name,
-                        sw_activity=1,
-                        driver_name=self.config['activation_coil'].name,
-                        driver_action='hold',
-                        disable_on_release=False,
-                        **self.config)
-
-                # If there's a activation_time then we need to watch for the hw
-                # switch to be activated so we can disable the diverter
-
-                if self.config['activation_time']:
-                    self.machine.switch_controller.add_switch_handler(
-                            switch.name,
-                            self.schedule_deactivation)
-
-        elif self.config['type'] == 'pulse':
-
-            for switch in self.config['activation_switches']:
-                self.platform.set_hw_rule(
-                        sw_name=switch.name,
-                        sw_activity=1,
-                        driver_name=self.config['activation_coil'].name,
-                        driver_action='pulse',
-                        disable_on_release=False,
-                        **self.config)
-
-    def enable_sw_switches(self):
         self.log.debug("Enabling Diverter sw switches: %s",
                        self.config['activation_switches'])
 
@@ -262,23 +193,13 @@ class Diverter(SystemWideDevice):
             self.machine.switch_controller.add_switch_handler(
                     switch_name=switch.name, callback=self.activate)
 
-    def disable_sw_switches(self):
+    def disable_switches(self):
         self.log.debug("Disabling Diverter sw switches: %s",
                        self.config['activation_switches'])
 
         for switch in self.config['activation_switches']:
             self.machine.switch_controller.remove_switch_handler(
                     switch_name=switch.name, callback=self.activate)
-
-    def disable_hw_switches(self):
-        # TODO: not used
-        """Removes the hardware rule to disable the hardware activation switch
-        for this diverter.
-        """
-        for switch in self.config['activation_switches']:
-            self.platform.clear_hw_rule(switch.name)
-
-            # todo this should not clear all the rules for this switch
 
     def _feeder_eject_count_decrease(self, target, **kwargs):
         del target
