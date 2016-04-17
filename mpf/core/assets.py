@@ -605,7 +605,7 @@ class AssetManager(object):
             MPF-based assets.
             '''
 
-        self.log.debug('Loading assets: %s/%s (%s%)',
+        self.log.debug('Loading assets: %s/%s (%s%%)',
                        self.num_assets_loaded + self.num_bcp_assets_loaded,
                        total, self.loading_percent)
 

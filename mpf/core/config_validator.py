@@ -860,6 +860,7 @@ widgets:
         adjust_left: single|int|None
         adjust_right: single|int|None
         expire: single|secs|None
+        key: single|str|None
     animations:
         property: list|str|
         value: list|str|
