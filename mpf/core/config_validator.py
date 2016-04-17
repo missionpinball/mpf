@@ -661,11 +661,13 @@ slide_player:
     show: single|bool|True
     force: single|bool|False
     transition: ignore
+    transition_out: ignore
     widgets: ignore
-    expire: single|secs|None                            # todo
+    expire: single|secs|None
 slides:
     debug: single|bool|False
     tags: list|str|None
+    expire: single|secs|None
     __allow_others__:
 snux:
     flipper_enable_driver: single|machine(coils)|
