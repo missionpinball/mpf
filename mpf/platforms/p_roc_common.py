@@ -230,7 +230,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
         self.log.debug("Configuring switch's host notification settings. P3-ROC"
                        "number: %s, debounce: %s", proc_num,
                        config['debounce'])
-        if config['debounce'] is False:
+        if config['debounce'] == "quick":
             self.proc.switch_update_rule(proc_num, 'closed_nondebounced',
                                          {'notifyHost': True,
                                           'reloadActive': False}, [], False)
