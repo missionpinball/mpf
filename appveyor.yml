@@ -45,7 +45,8 @@ artifacts:
   - path: docs/_build/html
     name: html
 
-deploy_script:
+# can't use deploy_script: because that will override deploy:
+after_deploy:
   - "%PYTHON%\\python.exe -m twine upload -u %pypi_user% -p %pypi_password% --skip-existing dist/*"
 
 deploy:
