@@ -1,0 +1,159 @@
+{% extends "basic/layout.html" %}
+
+{% set theme_css_files = [] %}
+{% if theme_bootstrap_version == "3" %}
+  {% set bootstrap_version, bootstrap_additional_css, navbar_version = "3.3.6", "theme", "" %}
+  {% set bs_span_prefix = "col-md-" %}
+{% else %}
+  {% set bootstrap_version, bootstrap_additional_css, navbar_version = "2.3.2", "responsive", "-2" %}
+  {% set bs_span_prefix = "span" %}
+{% endif %}
+
+{% if theme_bootswatch_theme and theme_bootswatch_theme != "\"\"" %}
+  {# BS2 needs "bootstrap-responsive.css". BS3 doesn't. #}
+  {% if theme_bootstrap_version == "3" %}
+    {% set theme_css_files = theme_css_files + [
+        '_static/bootswatch-' + bootstrap_version + '/' + theme_bootswatch_theme + '/bootstrap.min.css',
+        '_static/bootstrap-sphinx.css',
+        'https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css',
+        '_static/mpf-api.css',
+      ]
+    %}
+  {% else %}
+    {% set theme_css_files = theme_css_files + [
+        '_static/bootswatch-' + bootstrap_version + '/' + theme_bootswatch_theme + '/bootstrap.min.css',
+        '_static/bootstrap-' + bootstrap_version + '/css/bootstrap-' + bootstrap_additional_css + '.min.css',
+        '_static/bootstrap-sphinx.css'
+      ]
+    %}
+  {% endif %}
+{% else %}
+  {% set theme_css_files = theme_css_files + [
+      '_static/bootstrap-' + bootstrap_version + '/css/bootstrap.min.css',
+      '_static/bootstrap-' + bootstrap_version + '/css/bootstrap-' + bootstrap_additional_css + '.min.css',
+      '_static/bootstrap-sphinx.css',
+    ]
+  %}
+{% endif %}
+
+{% if not bootswatch_css_custom %}
+  {% set bootswatch_css_custom = [] %}
+{% endif %}
+{% set css_files = css_files + theme_css_files + bootswatch_css_custom %}
+
+{% set script_files = script_files + [
+    '_static/js/jquery-1.11.0.min.js',
+    '_static/js/jquery-fix.js',
+    '_static/bootstrap-' + bootstrap_version + '/js/bootstrap.min.js',
+    '_static/bootstrap-sphinx.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/jstree.min.js',
+    '_static/mpf-api.js',
+  ]
+%}
+
+{%- block doctype -%}
+<!DOCTYPE html>
+{%- endblock %}
+
+{# Sidebar: Rework into our Bootstrap nav section. #}
+{% macro navBar() %}
+{% include "navbar" + navbar_version + ".html" %}
+{% endmacro %}
+
+{%- block extrahead %}
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+{% endblock %}
+
+{# Silence the sidebar's, relbar's #}
+{% block header %}{% endblock %}
+{% block relbar1 %}{% endblock %}
+{% block relbar2 %}{% endblock %}
+{% block sidebarsourcelink %}{% endblock %}
+
+{%- block content %}
+{{ navBar() }}
+<div class="container">
+    <div class="row row-offcanvas row-offcanvas-left">
+        <div class="col-xs-6 col-sm-3 sidebar-offcanvas" id="sidebar" role="navigation">
+            <div id="jstree">
+                {{ toctree(maxdepth=4, titles_only=True, collapse=False)|
+                replace("a class=\"current", "a class=\"jstree-clicked")|
+                replace("current", "jstree-open") }}
+            </div>
+        </div>
+    <div class="col-xs-12 col-sm-9">
+      {% block body %}{% endblock %}
+        <ul class="pager">
+        {% if prev %}
+          <li class="previous"><a href={{ prev.link|e }}>Previous: <em>{{ prev.title }}</em></a></li>
+        {% endif %}
+        {% if next %}
+          <li class="next"><a href={{ next.link|e }}>Next: <em>{{ next.title }}</em></a></li>
+        {% endif %}
+        </ul>
+
+        <div class="alert alert-warning">
+          <strong>Help us improve this documentation!</strong><br />
+          <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+          Something wrong on this page? Found a typo? You can
+          <a href="https://github.com/missionpinball/">edit the docstrings on GitHub</a>
+          and send us a pull request!<br />
+          Is there additional documentation you'd like to see? <a href="https://github.com/missionpinball/mpf/issues">
+          Create a New Issue on GitHub</a> and we'll add it!
+        </div>
+
+    </div>
+    {% block sidebar2 %} {# possible location for sidebar #} {% endblock %}
+  </div>
+</div>
+{%- endblock %}
+
+{%- block footer %}
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      {% if theme_source_link_position == "footer" %}
+        <br/>
+        {% include "sourcelink.html" %}
+      {% endif %}
+    </p>
+      Code licensed <a href="https://opensource.org/licenses/MIT">MIT</a>. Docs <a href="http://creativecommons.org/licenses/by/4.0/">CC BY 4.0.</a>
+    {%- if last_updated %}
+      {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}<br/>
+    {%- endif %}
+    {%- if show_sphinx %}
+      {% trans sphinx_version=sphinx_version|e %}Created with <a href="http://sphinx-doc.org/">Sphinx</a>,
+      <a href="http://getbootstrap.com/">Bootstrap</a>, <a href="https://www.jstree.com/">jsTree</a>{% endtrans %}, &amp Love. &hearts;<br/>
+    {%- endif %}
+    </p>
+  </div>
+</footer>
+    <script>
+    $.jstree.defaults.core.themes.dots = false;
+    $.jstree.defaults.core.themes.icons = false;
+    $(function () {
+        $('#jstree').jstree({
+            "plugins" : [ "wholerow" ]
+        });
+
+        $('#jstree').on("changed.jstree", function (e, data) {
+            console.log(data.selected);
+        });
+
+        $('button').on('click', function () {
+            $('#jstree').jstree('select_node', 'child_node_1');
+        });
+    });
+
+    $("#jstree").jstree().bind("select_node.jstree", function (e, data) {
+     var href = data.node.a_attr.href;
+     document.location.href = href;
+    });
+
+
+    </script>
+{%- endblock %}

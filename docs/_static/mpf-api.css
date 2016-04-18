@@ -1,0 +1,158 @@
+#sidebar {
+  height: 100%;
+  padding-top: 25px;
+}
+#sidebar .nav {
+  width: 95%;
+}
+#sidebar li {
+  list-style-type: none;
+}
+
+/* collapsed sidebar styles */
+@media screen and (max-width: 767px) {
+  .row-offcanvas {
+    position: relative;
+    -webkit-transition: all 0.25s ease-out;
+    -moz-transition: all 0.25s ease-out;
+    transition: all 0.25s ease-out;
+  }
+  .row-offcanvas-right
+  .sidebar-offcanvas {
+    right: -41.6%;
+  }
+
+  .row-offcanvas-left
+  .sidebar-offcanvas {
+    left: -41.6%;
+  }
+  .row-offcanvas-right.active {
+    right: 41.6%;
+  }
+  .row-offcanvas-left.active {
+    left: 41.6%;
+  }
+  .sidebar-offcanvas {
+    position: absolute;
+    top: 0;
+    width: 41.6%;
+  }
+  #sidebar {
+    padding-top:0;
+  }
+}
+
+/* Align the logo in the navbar */
+.navbar-brand img {
+  margin-top: -7px;
+  margin-right: 10px;
+}
+
+.navbar-brand {
+  padding: 15px 15px;
+  font-size: 30px;
+}
+
+.navbar-default .navbar-brand:hover, .navbar-default .navbar-brand:focus {
+    color: #fff;
+    background-color: #9954bb;
+}
+
+.navbar-default .navbar-nav > li > a:hover, .navbar-default .navbar-nav > li > a:focus {
+    color: #fff;
+    background-color: #9954bb;
+}
+
+.navbar-default .navbar-nav > .open > a:hover, .navbar-default .navbar-nav > .open > a:focus {
+    background-color: #9954bb;
+    color: #fff;
+}
+
+/* Make h2 <em> not italics */
+h2 em {
+  font-style: normal;
+}
+
+/* General text */
+body ul ol {
+  color: #666;
+}
+
+body {
+  color: #666;
+  background-color: #ffeeff;
+}
+
+.alert a {
+    color: #fff;
+    text-decoration: underline;
+}
+
+.alert > .close {
+    text-decoration: none;
+}
+
+.section img {
+    vertical-align: middle;
+    padding-bottom: 40px;
+    display: block;
+    margin: 0 auto;
+}
+
+.mode-yes.admonition {
+    background-color: #00bb00;
+    width: 49%;
+    float: right;
+    margin-left: 1%;
+}
+
+.mode-no.admonition {
+    background-color: red;
+    width: 49%;
+    float: right;
+    margin-left: 1%;
+}
+
+.machine-yes.admonition {
+    background-color: #00c300;
+    width: 49%;
+    float: left;
+    margin-right: 1%;
+}
+
+.machine-no.admonition {
+    background-color: red;
+    width: 49%;
+    float: left;
+    margin-right: 1%;
+}
+
+.alert-warning {
+    background-color: red;
+}
+
+.jstree-default .jstree-anchor {
+  line-height: 13px;
+  white-space: normal !important;
+  height: auto;
+  padding: 1px 2px;
+  margin-block-end: 9px;
+  font-size: 13px;
+}
+
+.jstree-default .jstree-clicked {
+  box-shadow: none;
+}
+
+.jstree-default > .jstree-no-dots .jstree-open > .jstree-ocl {
+    background-position: -36px -6px;
+}
+
+.jstree-default > .jstree-no-dots .jstree-closed > .jstree-ocl {
+    background-position: -4px -9px;
+}
+
+.jstree .jstree-open > .jstree-children {
+    display: block;
+    margin-left: -8px;
+}
