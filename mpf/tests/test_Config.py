@@ -219,7 +219,6 @@ class TestConfig(MpfTestCase):
         self.assertEqual(results, 1000)
 
         # test sec conversions
-
         validation_string = 'single|secs|'
         results = self.machine.config_validator.validate_config_item(
             validation_string, 'test_failure_info', 100)
@@ -382,3 +381,9 @@ class TestConfig(MpfTestCase):
                 validation_string, validation_failure_info, 'something else')
         self.assertEqual('Config validation error: Entry key:entry:subkey "something else" '
                          'is not valid. Valid values are: None,test', str(e.exception))
+
+        # test enum with 'NO' setting
+        validation_string = 'single|enum(nc,no)|no'
+        results = self.machine.config_validator.validate_config_item(
+            validation_string, validation_failure_info, False)
+        self.assertEqual('no', results)

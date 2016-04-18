@@ -1261,11 +1261,24 @@ class ConfigValidator(object):
         return self.validate_config(param, item)
 
     def _validate_type_enum(self, item, param, validation_failure_info):
-        enum_values = param.split(",")
-        if item is None and "None" in enum_values:
+        enum_values = param.lower().split(",")
+
+        try:
+            item = item.lower()
+        except AttributeError:
+            pass
+
+        if item is None and "none" in enum_values:
             return None
         elif item in enum_values:
             return item
+
+        elif item is False and 'no' in enum_values:
+                return 'no'
+
+        elif item is True and 'yes' in enum_values:
+            return 'yes'
+
         else:
             raise ValueError(
                 "Config validation error: Entry {}:{}:{} \"{}\" is not valid. Valid values are: {}".format(

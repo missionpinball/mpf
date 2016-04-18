@@ -42,7 +42,7 @@ after_test:
 
 artifacts:
   - path: dist\*
-  - path: _build/html
+  - path: docs/_build/html
     name: html
 
 deploy_script:
