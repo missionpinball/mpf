@@ -35,6 +35,7 @@ after_test:
   - "if %BUILD_DOCS%==1 %PYTHON%\\python.exe -m pip install sphinx"
   - "if %BUILD_DOCS%==1 %PYTHON%\\python.exe -m pip install sphinxcontrib-napoleon"
   - "if %BUILD_DOCS%==1 %PYTHON%\\python.exe -m pip install sphinx-bootstrap-theme==0.4.9"
+  - "if %BUILD_DOCS%==1 mkdir mpf"
   - "if %BUILD_DOCS%==1 %PYTHON%\\python.exe autobuild.py"
   - "if %BUILD_DOCS%==1 make html"
   - "if %BUILD_DOCS%==1 cd .."
