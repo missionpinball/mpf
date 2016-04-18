@@ -8,6 +8,7 @@ This is based on the autobuild.py script in Kivy.
 
 '''
 import importlib
+import importlib.util
 
 ignore_list = list()
 
@@ -52,12 +53,15 @@ for x, y, z in os.walk('../mpf'):
             module_list.append(os.path.join(x, f).replace(os.sep, '.')[3:-3])
             print(os.path.join(x, f).replace(os.sep, '.')[3:-3])
 
+module_list.sort()
+
 for m in module_list:
     print("Importing", m)
+    print('spec', importlib.util.find_spec(m))
     try:
         importlib.import_module(m)
     except ImportError:
-        pass
+        print("ERROR: could not import", m)
 
 # Search all mpf modules
 # l = [(x, sys.modules[x],
