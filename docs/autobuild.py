@@ -53,7 +53,11 @@ for x, y, z in os.walk('../mpf'):
             print(os.path.join(x, f).replace(os.sep, '.')[3:-3])
 
 for m in module_list:
-    importlib.import_module(m)
+    print("Importing", m)
+    try:
+        importlib.import_module(m)
+    except ImportError:
+        pass
 
 # Search all mpf modules
 l = [(x, sys.modules[x],
