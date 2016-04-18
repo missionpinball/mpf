@@ -60,9 +60,21 @@ for m in module_list:
         pass
 
 # Search all mpf modules
-l = [(x, sys.modules[x],
-      os.path.basename(sys.modules[x].__file__).rsplit('.', 1)[0])
-      for x in sys.modules if x.startswith('mpf') and sys.modules[x]]
+# l = [(x, sys.modules[x],
+#       os.path.basename(sys.modules[x].__file__).rsplit('.', 1)[0])
+#       for x in sys.modules if x.startswith('mpf') and sys.modules[x]]
+
+l = list()
+for x in sys.modules:
+    if x.startswith('mpf') and sys.modules[x]:
+        print("checking", x)
+        try:
+            print(sys.modules[x].__file__)
+            l.append((x, sys.modules[x],
+                  os.path.basename(sys.modules[x].__file__).rsplit('.', 1)[0]))
+        except AttributeError:
+            print("ERROR:", x)
+
 
 # Extract packages from modules
 packages = []  # high level packages (e.g. folders)
