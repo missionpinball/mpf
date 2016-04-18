@@ -52,6 +52,10 @@ for x, y, z in os.walk('../mpf'):
             print('adding', x, f)
             module_list.append(os.path.join(x, f).replace(os.sep, '.')[3:-3])
             print(os.path.join(x, f).replace(os.sep, '.')[3:-3])
+        elif f == '__init__.py':
+            print('adding', x)
+            module_list.append(x.replace(os.sep, '.')[3:])
+
 
 module_list.sort()
 
