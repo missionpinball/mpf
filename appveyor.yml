@@ -1,6 +1,8 @@
-version: 0.30
-
 environment:
+
+  global:
+    MPF_VERSION: 0.30
+
   matrix:
     - PYTHON: "C:\\Python34"
       BUILD_DOCS: 1
