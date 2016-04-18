@@ -1,10 +1,21 @@
-environment:
+APPVEYOR_BUILD_VERSION
 
+version: 0.30
+
+environment:
   matrix:
     - PYTHON: "C:\\Python34"
+      environment:
+        BUILD_DOCS: 1
     - PYTHON: "C:\\Python34-x64"
+      environment:
+        BUILD_DOCS: 0
     - PYTHON: "C:\\Python35"
+      environment:
+        BUILD_DOCS: 0
     - PYTHON: "C:\\Python35-x64"
+      environment:
+        BUILD_DOCS: 0
 
   pypi_user:
     secure: kxNKBuVMdOz6LjJPQb7PMQ==
@@ -23,9 +34,21 @@ test_script:
 after_test:
   - "%PYTHON%\\python.exe setup.py sdist --formats=gztar"
   - "%PYTHON%\\python.exe setup.py bdist_wheel"
+  - "cd docs"
+  - "if %BUILD_DOCS%==1 %PYTHON%\\python.exe -m pip install sphinx"
+  - "if %BUILD_DOCS%==1 %PYTHON%\\python.exe -m pip install sphinxcontrib-napoleon"
+  - "if %BUILD_DOCS%==1 %PYTHON%\\python.exe -m pip install sphinx-bootstrap-theme==0.4.9"
+  - "if %BUILD_DOCS%==1 %PYTHON%\\python.exe autobuild.py"
+  - "if %BUILD_DOCS%==1 make html"
 
 artifacts:
   - path: dist\*
+  - path: _build/html
+    name: html
 
 deploy_script:
   - "%PYTHON%\\python.exe -m twine upload -u %pypi_user% -p %pypi_password% --skip-existing dist/*"
+
+deploy:
+  provider: Environment
+  name: mpf-apidocs
