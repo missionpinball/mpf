@@ -30,13 +30,13 @@ test_script:
 after_test:
   - "%PYTHON%\\python.exe setup.py sdist --formats=gztar"
   - "%PYTHON%\\python.exe setup.py bdist_wheel"
-  - "if %BUILD_DOCS%==1 %PYTHON%\\python.exe -m pip install ."
+  - "if %BUILD_DOCS%==1 %PYTHON%\\python.exe -m pip install -e ."
   - "if %BUILD_DOCS%==1 cd docs"
   - "if %BUILD_DOCS%==1 %PYTHON%\\python.exe -m pip install sphinx"
   - "if %BUILD_DOCS%==1 %PYTHON%\\python.exe -m pip install sphinxcontrib-napoleon"
   - "if %BUILD_DOCS%==1 %PYTHON%\\python.exe -m pip install sphinx-bootstrap-theme==0.4.9"
   - "if %BUILD_DOCS%==1 mkdir mpf"
-  - "if %BUILD_DOCS%==1 %PYTHON%\\python.exe autobuild.py"
+  - "if %BUILD_DOCS%==1 %PYTHON%\\python.exe autobuild.py verbose=yes"
   - "if %BUILD_DOCS%==1 %PYTHON%\\python.exe -m sphinx . _build/html"
   - "if %BUILD_DOCS%==1 cd .."
 

@@ -1,40 +1,44 @@
-'''
+"""
 Script to generate MPF API from source code.
 
 This essentially does what sphinx-apidoc does, except it gives us more
 flexibility with doc titles and templates.
 
 This is based on the autobuild.py script in Kivy.
+"""
 
-'''
 import importlib
 import importlib.util
-
-ignore_list = list()
-
 import os
 import sys
 from glob import glob
 
-# check for silenced build
-BE_QUIET = False
+ignore_list = list()
+
+# check for verbose
+VERBOSE = False
 for arg in sys.argv:
-    if "silenced=" in arg:
+    if "verbose=" in arg:
         if arg.split("=")[1] == "yes":
-            BE_QUIET = True
+            VERBOSE = True
 
 # Directory of doc
 base_dir = os.path.dirname(os.path.abspath(__file__))
 dest_dir = os.path.join(base_dir, 'mpf')
 
+if VERBOSE:
+    print("Base directory:", base_dir)
+    print("Dest directory:", dest_dir)
+
 # examples_framework_dir = os.path.join(base_dir, '..', 'examples', 'framework')
 
-def writefile(filename, data):
+
+def writefile(file_name, data):
     global dest_dir
-    # avoid to rewrite the file if the content didn't change
-    f = os.path.join(dest_dir, filename)
-    if not BE_QUIET:
-        print('write', filename)
+    # avoid rewriting the file if its content didn't change
+    f = os.path.join(dest_dir, file_name)
+    if VERBOSE:
+        print('writing file', file_name)
     if os.path.exists(f):
         with open(f) as fd:
             if fd.read() == data:
@@ -49,19 +53,21 @@ module_list = list()
 for x, y, z in os.walk('../mpf'):
     for f in z:
         if f.endswith('.py') and 'tests' not in x and not f.startswith('_'):
-            print('adding', x, f)
             module_list.append(os.path.join(x, f).replace(os.sep, '.')[3:-3])
-            print(os.path.join(x, f).replace(os.sep, '.')[3:-3])
+            if VERBOSE:
+                print('Adding', os.path.join(x, f).replace(os.sep, '.')[3:-3])
         elif f == '__init__.py':
-            print('adding', x)
+            if VERBOSE:
+                print('Adding', x.replace(os.sep, '.')[3:])
             module_list.append(x.replace(os.sep, '.')[3:])
 
 
 module_list.sort()
 
 for m in module_list:
-    print("Importing", m)
-    print('spec', importlib.util.find_spec(m))
+    if VERBOSE:
+        print("Importing", m)
+        print('Import Spec', importlib.util.find_spec(m))
     try:
         importlib.import_module(m)
     except ImportError:
@@ -75,9 +81,9 @@ for m in module_list:
 l = list()
 for x in sys.modules:
     if x.startswith('mpf') and sys.modules[x]:
-        print("checking", x)
+        if VERBOSE:
+            print("Analyzing", x)
         try:
-            print(sys.modules[x].__file__)
             l.append((x, sys.modules[x],
                   os.path.basename(sys.modules[x].__file__).rsplit('.', 1)[0]))
         except AttributeError:
