@@ -11,6 +11,7 @@ import importlib
 import importlib.util
 import os
 import sys
+from collections import OrderedDict
 
 ignore_list = ['tests']
 force_in_toc = ['mpf', 'mpf._version']
@@ -93,9 +94,11 @@ for x in sys.modules:
         except AttributeError:
             print("ERROR:", x)
 
+l.sort()
+
 # Extract packages from modules
 packages = []  # high level packages (e.g. folders)
-modules = {}  # individual modules
+modules = OrderedDict()  # individual modules
 api_modules = []  # combo of both
 for name, module, filename in l:
     if name in ignore_list:
@@ -111,6 +114,7 @@ for name, module, filename in l:
             modules[name] = [x for x in dir(module) if not x.startswith('__')]
 
 packages.sort()
+api_modules.sort()
 
 # Create index
 api_index = '''.. include:: ../mpf-index.rst
@@ -120,7 +124,7 @@ api_index = '''.. include:: ../mpf-index.rst
    :titlesonly:
 
 '''
-api_modules.sort()
+
 for package in api_modules:
     api_index += "   %s.rst\n" % package
 
@@ -209,7 +213,8 @@ for package in packages:
 
     # search modules
     m = list(modules.keys())
-    m.sort(key=lambda x: format_module_docstring(sys.modules[x].__doc__, package))
+    # m.sort(key=lambda x: format_module_docstring(sys.modules[x].__doc__, package))
+    m.sort()
     for module in m:
         packagemodule = module.rsplit('.', 1)[0]
         if packagemodule != package:
