@@ -11,9 +11,9 @@ import importlib
 import importlib.util
 import os
 import sys
-from glob import glob
 
-ignore_list = list()
+ignore_list = ['tests']
+force_in_toc = ['mpf', 'mpf._version']
 
 # check for verbose
 VERBOSE = False
@@ -29,8 +29,6 @@ dest_dir = os.path.join(base_dir, 'mpf')
 if VERBOSE:
     print("Base directory:", base_dir)
     print("Dest directory:", dest_dir)
-
-# examples_framework_dir = os.path.join(base_dir, '..', 'examples', 'framework')
 
 
 def writefile(file_name, data):
@@ -52,7 +50,7 @@ module_list = list()
 # import all the mpf modules
 for x, y, z in os.walk('../mpf'):
     for f in z:
-        if f.endswith('.py') and 'tests' not in x and not f.startswith('_'):
+        if f.endswith('.py') and not f.startswith('_'):
             module_list.append(os.path.join(x, f).replace(os.sep, '.')[3:-3])
             if VERBOSE:
                 print('Adding', os.path.join(x, f).replace(os.sep, '.')[3:-3])
@@ -61,6 +59,17 @@ for x, y, z in os.walk('../mpf'):
                 print('Adding', x.replace(os.sep, '.')[3:])
             module_list.append(x.replace(os.sep, '.')[3:])
 
+# remove the things we're ignoring
+items_to_remove = list()
+
+for mod in module_list:
+    for item in ignore_list:
+        if item in mod:
+            items_to_remove.append(mod)
+            continue
+
+for x in items_to_remove:
+    module_list.remove(x)
 
 module_list.sort()
 
@@ -73,11 +82,6 @@ for m in module_list:
     except ImportError:
         print("ERROR: could not import", m)
 
-# Search all mpf modules
-# l = [(x, sys.modules[x],
-#       os.path.basename(sys.modules[x].__file__).rsplit('.', 1)[0])
-#       for x in sys.modules if x.startswith('mpf') and sys.modules[x]]
-
 l = list()
 for x in sys.modules:
     if x.startswith('mpf') and sys.modules[x]:
@@ -88,7 +92,6 @@ for x in sys.modules:
                   os.path.basename(sys.modules[x].__file__).rsplit('.', 1)[0]))
         except AttributeError:
             print("ERROR:", x)
-
 
 # Extract packages from modules
 packages = []  # high level packages (e.g. folders)
@@ -110,14 +113,11 @@ for name, module, filename in l:
 packages.sort()
 
 # Create index
-api_index = '''MPF API Reference
------------------
-
-Here's everything that's in the MPF package. Note there are separate indexes
-for MPF-MC.
+api_index = '''.. include:: ../mpf-index.rst
 
 .. toctree::
    :maxdepth: 1
+   :titlesonly:
 
 '''
 api_modules.sort()
@@ -125,7 +125,6 @@ for package in api_modules:
     api_index += "   %s.rst\n" % package
 
 writefile('index.rst', api_index)
-
 
 api_contents = '''API Reference
 -------------
@@ -135,25 +134,19 @@ api_contents = '''API Reference
    :titlesonly:
 
 '''
-api_modules.sort()
+
 for package in packages:
-    api_contents += "   %s </mpf/%s.rst>\n" % (package, package)
+    if package.count('.') == 1 or package in force_in_toc:
+        api_contents += "   %s </mpf/%s.rst>\n" % (package, package)
 
 writefile('../contents.rst', api_contents)
 
-
 # Create index for all packages
-# Note on displaying inherited members;
-#     Adding the directive ':inherited-members:' to automodule achieves this
-#     but is not always desired. Please see
-#         https://github.com/kivy/kivy/pull/3870
 
-template = '\n'.join((
-    '=' * 100,
-    '$SUMMARY',
-    '=' * 100,
-    '''
-$EXAMPLES_REF
+template = '''$SUMMARY
+
+API
+---
 
 .. automodule:: $PACKAGE
    :members:
@@ -165,47 +158,47 @@ $EXAMPLES_REF
    :maxdepth: 1
    :titlesonly:
 
-$EXAMPLES
-'''))
-
-
-template_examples = '''.. _example-reference%d:
-
-Examples
---------
-
-%s
 '''
 
-template_examples_ref = ('# :ref:`Jump directly to Examples'
-                         ' <example-reference%d>`')
 
+def format_module_docstring(docstring, module):
 
-def extract_summary_line(doc):
-    """
-    :param doc: the __doc__ field of a module
-    :return: a doc string suitable for a header or empty string
-    """
-    if doc is None:
-        return ''
-    for line in doc.split('\n'):
-        line = line.strip()
-        # don't take empty line
-        if len(line) < 1:
-            continue
-        # ref mark
-        if line.startswith('.. _'):
-            continue
-        return line
+    if not docstring:
+        docstring = '''NO SUMMARY ({1})
+{0}
+
+Module: ``{1}``
+
+.. todo::
+
+   This module contains no summary. It will be added automatically once we add
+   a summary to the actual module file.
+
+'''.format(('=' * (len(module) + 13)), module)
+
+    else:
+
+        lines = docstring.split('\n')
+
+        found = False
+        for index, line in enumerate(lines):
+            chars = {x for x in line}
+            if chars == set('='):
+                found = True
+                break
+
+        if found:
+            lines.insert(index + 1, "\nModule: ``{}``".format(module))
+
+        docstring = '\n'.join(lines)
+
+    return docstring
 
 for package in packages:
-    summary = extract_summary_line(sys.modules[package].__doc__)
-    if summary is None or summary == '':
-        summary = 'NO SUMMARY (package %s)' % package
+    summary = format_module_docstring(sys.modules[package].__doc__, package)
+
     t = template.replace('$SUMMARY', summary)
     t = t.replace('$PACKAGE', package)
-    t = t.replace('$EXAMPLES_REF', '')
-    t = t.replace('$EXAMPLES', '')
 
     # search packages
     for subpackage in packages:
@@ -216,7 +209,7 @@ for package in packages:
 
     # search modules
     m = list(modules.keys())
-    m.sort(key=lambda x: extract_summary_line(sys.modules[x].__doc__))
+    m.sort(key=lambda x: format_module_docstring(sys.modules[x].__doc__, package))
     for module in m:
         packagemodule = module.rsplit('.', 1)[0]
         if packagemodule != package:
@@ -230,53 +223,14 @@ for package in packages:
 m = list(modules.keys())
 m.sort()
 refid = 0
-for module in m:
-    summary = extract_summary_line(sys.modules[module].__doc__)
-    if summary is None or summary == '':
-        summary = 'NO SUMMARY (module %s)' % package
 
-    # # search examples
-    # example_output = []
-    # example_prefix = module
-    # if module.startswith('mpf.'):
-    #     example_prefix = module[5:]
-    # example_prefix = example_prefix.replace('.', '_')
-    #
-    # # try to found any example in framework directory
-    # list_examples = glob('%s*.py' % os.path.join(
-    #     examples_framework_dir, example_prefix))
-    # for x in list_examples:
-    #     # extract filename without directory
-    #     xb = os.path.basename(x)
-    #
-    #     # add a section !
-    #     example_output.append('File :download:`%s <%s>` ::' % (
-    #         xb, os.path.join('..', x)))
-    #
-    #     # put the file in
-    #     with open(x, 'r') as fd:
-    #         d = fd.read().strip()
-    #         d = '\t' + '\n\t'.join(d.split('\n'))
-    #         example_output.append(d)
+for module in m:
+    summary = format_module_docstring(sys.modules[module].__doc__, module)
 
     t = template.replace('$SUMMARY', summary)
     t = t.replace('$PACKAGE', module)
-    # if len(example_output):
-    #     refid += 1
-    #     example_output = template_examples % (
-    #             refid, '\n\n\n'.join(example_output))
-    #     t = t.replace('$EXAMPLES_REF', template_examples_ref % refid)
-    #     t = t.replace('$EXAMPLES', example_output)
-    # else:
-    #     t = t.replace('$EXAMPLES_REF', '')
-    #     t = t.replace('$EXAMPLES', '')
-
-    t = t.replace('$EXAMPLES_REF', '')
-    t = t.replace('$EXAMPLES', '')
-
 
     writefile('%s.rst' % module, t)
 
 
-# Generation finished
 print('Auto-generation finished')

@@ -1,4 +1,10 @@
-"""Contains the Task, DelayManager, and DelayManagerRegistry base classes."""
+"""
+Delays
+======
+
+MPF contains a Delay Manager.
+
+"""
 
 import logging
 import uuid

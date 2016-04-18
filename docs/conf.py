@@ -125,7 +125,7 @@ html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 html_theme_options = {
 
     'navbar_title': "MPF API Reference",
-    'navbar_site_name': "All Modules",
+    'navbar_site_name': "Packages",
     'navbar_pagenav_name': "This Page",
     'globaltoc_depth': -1,
     'bootswatch_theme': "cosmo",
@@ -380,3 +380,14 @@ epub_exclude_files = ['search.html']
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {'https://docs.python.org/': None}
 
+
+
+# Our autobuild.py script builds and formats the module-level summaries, so we
+# need to hook autodoc so we can tell it not to add module level docstrings
+
+def process_docstring(app, what, name, obj, options, lines):
+    if what == 'module':
+        lines.clear()  # need to modify the existing list in place
+
+def setup(app):
+    app.connect('autodoc-process-docstring', process_docstring)

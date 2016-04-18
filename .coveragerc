@@ -12,6 +12,7 @@ omit =
     mpf/devices/new_device_template.py
     mpf/platforms/new_platform_template.py
     mpf/tests/*
+    docs/*
 
 [run]
 source = mpf
