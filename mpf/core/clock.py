@@ -1,3 +1,201 @@
+'''
+Clock object
+============
+
+The :class:`Clock` object allows you to schedule a function call in the
+future; once or repeatedly at specified intervals. It's heavily based on
+Kivy's Clock object. (Almost 100% identical.) An instance of the clock is
+available in MPF set `self.machine.clock`.
+
+You can get the time elapsed between the scheduling and the calling of the
+callback via the `dt` argument::
+
+    # dt means delta-time
+    def my_callback(self, dt):
+        pass
+
+    # call my_callback every 0.5 seconds
+    self.machine.clock.schedule_interval(my_callback, 0.5)
+
+    # call my_callback in 5 seconds
+    self.machine.clock..schedule_once(my_callback, 5)
+
+    # call my_callback as soon as possible (usually next frame.)
+    self.machine.clock..schedule_once(my_callback)
+
+.. note::
+
+    If the callback returns False, the schedule will be removed.
+
+If you want to schedule a function to call with default arguments, you can use
+the `functools.partial
+<http://docs.python.org/library/functools.html#functools.partial>`_ python
+module::
+
+    from functools import partial
+
+    def my_callback(value, key, *largs):
+        pass
+
+    self.machine.clock.schedule_interval(partial(my_callback, 'my value', 'my key'), 0.5)
+
+Conversely, if you want to schedule a function that doesn't accept the dt
+argument, you can use a `lambda
+<http://docs.python.org/2/reference/expressions.html#lambda>`_ expression
+to write a short function that does accept dt. For Example::
+
+    def no_args_func():
+        print("I accept no arguments, so don't schedule me in the clock")
+
+    self.machine.clock..schedule_once(lambda dt: no_args_func(), 0.5)
+
+.. note::
+
+    You cannot unschedule an anonymous function unless you keep a
+    reference to it. It's better to add \*args to your function
+    definition so that it can be called with an arbitrary number of
+    parameters.
+
+.. important::
+
+    The callback is weak-referenced: you are responsible for keeping a
+    reference to your original object/callback. If you don't keep a
+    reference, the ClockBase will never execute your callback. For
+    example::
+
+        class Foo(object):
+            def start(self):
+                self.machine.clock..schedule_interval(self.callback, 0.5)
+
+            def callback(self, dt):
+                print('In callback')
+
+        # A Foo object is created and the method start is called.
+        # Because no reference is kept to the instance returned from Foo(),
+        # the object will be collected by the Python Garbage Collector and
+        # your callback will be never called.
+        Foo().start()
+
+        # So you should do the following and keep a reference to the instance
+        # of foo until you don't need it anymore!
+        foo = Foo()
+        foo.start()
+
+
+.. _schedule-before-frame:
+
+Schedule before frame
+---------------------
+
+Sometimes you need to schedule a callback BEFORE the next frame. Starting
+from 1.0.5, you can use a timeout of -1::
+
+    self.machine.clock.schedule_once(my_callback, 0) # call after the next frame
+    self.machine.clock.schedule_once(my_callback, -1) # call before the next frame
+
+The Clock will execute all the callbacks with a timeout of -1 before the
+next frame even if you add a new callback with -1 from a running
+callback. However, :class:`Clock` has an iteration limit for these
+callbacks: it defaults to 10.
+
+If you schedule a callback that schedules a callback that schedules a .. etc
+more than 10 times, it will leave the loop and send a warning to the console,
+then continue after the next frame. This is implemented to prevent bugs from
+hanging or crashing the application.
+
+If you need to increase the limit, set the :attr:`max_iteration` property::
+
+    self.machine.clock.max_iteration = 20
+
+.. _triggered-events:
+
+Triggered Events
+----------------
+
+A triggered event is a way to defer a callback exactly like schedule_once(),
+but with some added convenience. The callback will only be scheduled once per
+frame even if you call the trigger twice (or more). This is not the case
+with :meth:`Clock.schedule_once`::
+
+    # will run the callback twice before the next frame
+    self.machine.clock.schedule_once(my_callback)
+    self.machine.clock.schedule_once(my_callback)
+
+    # will run the callback once before the next frame
+    t = self.machine.clock.create_trigger(my_callback)
+    t()
+    t()
+
+Before triggered events, you may have used this approach in a widget::
+
+    def trigger_callback(self, *largs):
+        self.machine.clock.unschedule(self.callback)
+        self.machine.clock.schedule_once(self.callback)
+
+As soon as you call `trigger_callback()`, it will correctly schedule the
+callback once in the next frame. It is more convenient to create and bind to
+the triggered event than using :meth:`Clock.schedule_once` in a function::
+
+    class Foo(object):
+        def __init__(self, **kwargs):
+            self._trigger = self.machine.clock.create_trigger(self.cb)
+
+        def cb(self, *largs):
+            pass
+
+.. note::
+
+    :meth:`ClockBase.create_trigger` also has a timeout parameter that
+    behaves exactly like :meth:`ClockBase.schedule_once`.
+
+Threading
+----------
+
+Often, other threads are used to schedule callbacks with MPF's main thread
+using :class:`ClockBase`. Therefore, it's important to know what is thread safe
+and what isn't.
+
+All the :class:`ClockBase` and :class:`ClockEvent` methods are safe with
+respect to MPF's thread. That is, it's always safe to call these methods
+from a single thread that is not the main thread. However, there are no
+guarantees as to the order in which these callbacks will be executed.
+
+Calling a previously created trigger from two different threads (even if one
+of them is the main thread), or calling the trigger and its
+:meth:`ClockEvent.cancel` method from two different threads at the same time is
+not safe. That is, although no exception will be raised, there no guarantees
+that calling the trigger from two different threads will not result in the
+callback being executed twice, or not executed at all. Similarly, such issues
+might arise when calling the trigger and canceling it with
+:meth:`ClockBase.unschedule` or :meth:`ClockEvent.cancel` from two threads
+simultaneously.
+
+Therefore, it is safe to call :meth:`ClockBase.create_trigger`,
+:meth:`ClockBase.schedule_once`, :meth:`ClockBase.schedule_interval`, or
+call or cancel a previously created trigger from an external thread.
+The following code, though, is not safe because it calls or cancels
+from two threads simultaneously without any locking mechanism::
+
+    event = self.machine.clock.create_trigger(func)
+
+    # in thread 1
+    event()
+    # in thread 2
+    event()
+    # now, the event may be scheduled twice or once
+
+    # the following is also unsafe
+    # in thread 1
+    event()
+    # in thread 2
+    event.cancel()
+    # now, the event may or may not be scheduled and a subsequent call
+    # may schedule it twice
+
+Note, in the code above, thread 1 or thread 2 could be the main thread, not
+just an external thread.
+'''
+
 from sys import platform
 from functools import partial
 

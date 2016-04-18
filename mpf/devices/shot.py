@@ -1,4 +1,10 @@
-""" Contains Shots device base class."""
+"""
+Shot
+====
+
+A shot in MPF is a cool thing.
+
+"""
 
 import uuid
 from collections import OrderedDict

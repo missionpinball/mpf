@@ -1,3 +1,17 @@
+'''
+Version string
+==============
+
+This modules holds the MPF version strings, including the version of BCP it
+needs and the config file version it needs.
+
+It's used internally for all sorts of things, from printing the output of the
+`mpf --version` command, to making sure any processes connected via BCP are
+the proper versions, to automatically triggering new builds and deployments to
+PyPI.
+
+'''
+
 __version__ = '0.30.0.dev1057'
 __bcp_version__ = '1.0'
 __config_version__ = '4'
