@@ -1,0 +1,23 @@
+#config_version=4
+
+switches:
+    s_test:
+        number: 1
+        debounce_open: 20ms
+
+coils:
+    c_test:
+        pulse_power32: 123
+        pwm_on_ms: 5
+        pwm_off_ms: 1
+        number: 1
+
+autofire_coils:
+    ac_test:
+        coil: c_test
+        switch: s_test
+        coil_overwrite:
+            pwm_off_ms: 20
+            pulse_pwm_mask: 123
+        switch_overwrite:
+            debounce: quick
