@@ -822,26 +822,7 @@ widget_player:
     z: single|int|0
     key: single|str|None
 widget_styles:
-    font_name: single|str|None
-    font_size: single|num|None
-    bold: single|bool|None
-    italtic: single|bool|None
-    halign: single|str|None
-    valign: single|str|None
-    padding_x: single|num|None
-    padding_y: single|num|None
-    # text_size: single||None
-    shorten: single|bool|None
-    mipmap: single|bool|None
-    markup: single|bool|None
-    line_height: single|float|None
-    max_lines: single|int|None
-    strip: single|bool|None
-    shorten_from: single|str|None
-    split_str: single|str|None
-    unicode_errors: single|str|None
     color: single|kivycolor|ffffffff
-    antialias: single|bool|False      # todo
     __allow_others__:
 widgets:
     common:
@@ -877,32 +858,6 @@ widgets:
         joint_precision: single|int|10
         close: single|bool|False
         precision: single|int|180
-    character_picker:
-        style: single|str|default
-        name: single|str|
-        selected_char_color: single|kivycolor|black
-        selected_char_bg: single|kivycolor|white
-        char_x_offset: single|int|1
-        char_y_offset: single|int|1
-        char_width: single|int|7
-        char_list: single|str|"ABCDEFGHIJKLMNOPQRSTUVWXYZ_- "
-        back_char: single|str|
-        end_char: single|str|
-        back_char_selected: single|str|
-        end_char_selected: single|str|
-        image_padding: single|int|1
-        shift_left_tag: single|str|left_flipper
-        shift_right_tag: single|str|right_flipper
-        select_tag: single|str|start
-        max_chars: single|int|3
-        timeout: single|secs|30
-        return_param: single|str|
-        width: single|num|None
-        height: single|num|None
-        clear_slide: ignore                             # todo
-        persist: ignore                                 # todo
-        cursor_animations: ignore                       # todo
-        slide_name: ignore                              # todo
     color_dmd:
         width: single|num|
         height: single|num|
@@ -927,12 +882,6 @@ widgets:
         blur: single|float|0.1
         pixel_size: single|float|0.5
         dot_filter: single|bool|True
-    entered_chars:
-        character_picker: single|str|
-        cursor_char: single|str|_
-        cursor_offset_x: single|int|0
-        cursor_offset_y: single|int|0
-        cursor_animations: ignore                         # todo
     ellipse:
         width: single|num|
         height: single|num|
@@ -979,24 +928,42 @@ widgets:
         font_name: ignore
         bold: single|bool|False
         italic: single|bool|False
-        halign: single|str|center
-        valign: single|str|middle
-        anchor_x: single|str|None
-        anchor_y: single|str|None
-        padding_x: single|int|0
-        padding_y: single|int|0
         number_grouping: single|bool|True
         min_digits: single|int|1
-  #      text_size:
-  #      shorten:
-  #      mipmap:
-  #      markup:
-  #      line_height:
-  #      max_lines:
-  #      strip:
-  #      shorten_from:
-  #      split_str:
-  #      unicode_errors:
+        halign: single|str|center
+        valign: single|str|middle
+        # text_size: single|int|None  # sets width of bounding box, not font
+        # shorten: single|bool|None
+        # mipmap: single|bool|None
+        # markup: single|bool|None
+        # line_height: single|float|None
+        # max_lines: single|int|None
+        # strip: single|bool|None
+        # shorten_from: single|str|None
+        # split_str: single|str|None
+        # unicode_errors: single|str|None
+        # antialias: single|bool|False      # todo
+    text_input:
+        key: single|str|
+        initial_char: single|str|A
+        font_size: single|num|15
+        font_name: ignore
+        halign: single|str|center
+        valign: single|str|middle
+        shift_left_event: single|str|None
+        shift_right_event: single|str|None
+        select_event: single|str|None
+        abort_event: single|str|None
+        force_complete_event: single|str|None
+        bold: single|bool|False
+        italic: single|bool|False
+        max_chars: single|int|3
+        char_list: single|str|"ABCDEFGHIJKLMNOPQRSTUVWXYZ_- "
+        keep_selected_char: single|bool|True
+        dynamic_x: single|bool|True
+        dynamic_x_pad: single|int|0
+        number_grouping: single|bool|False
+        min_digits: single|int|0
     triangle:
         points: list|num|
     video:
