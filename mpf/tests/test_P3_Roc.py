@@ -739,3 +739,31 @@ class TestP3Roc(MpfTestCase):
             call(2, 1, 2),
             call(2, 2, 23),
             call(2, 3, 42)])
+
+    def test_leds_inverted(self):
+        device = self.machine.leds.test_led_inverted
+        device.hw_driver.proc.led_color = MagicMock()
+        # test led on
+        device.on()
+        self.advance_time_and_run(1)
+        device.hw_driver.proc.led_color.assert_has_calls([
+            call(2, 4, 0),
+            call(2, 5, 0),
+            call(2, 6, 0)])
+        device.hw_driver.proc.led_color = MagicMock()
+
+        # test led off
+        device.off()
+        self.advance_time_and_run(1)
+        device.hw_driver.proc.led_color.assert_has_calls([
+            call(2, 4, 255),
+            call(2, 5, 255),
+            call(2, 6, 255)])
+
+        # test led color
+        device.color(RGBColor((2, 23, 42)))
+        self.advance_time_and_run(1)
+        device.hw_driver.proc.led_color.assert_has_calls([
+            call(2, 4, 255 - 2),
+            call(2, 5, 255 -23),
+            call(2, 6, 255 - 42)])
