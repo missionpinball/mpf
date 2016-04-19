@@ -203,6 +203,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
                       address=[int(number_parts[1]),
                                int(number_parts[2]),
                                int(number_parts[3])],
+                      polarity=config['polarity'],
                       proc_driver=self.proc)
 
     def _configure_switch(self, config, proc_num):
@@ -701,11 +702,12 @@ class PDBLight(object):
 class PDBLED(RGBLEDPlatformInterface):
     """Represents an RGB LED connected to a PD-LED board."""
 
-    def __init__(self, board, address, proc_driver):
+    def __init__(self, board, address, polarity, proc_driver):
         self.log = logging.getLogger('PDBLED')
         self.board = board
         self.address = address
         self.proc = proc_driver
+        self.polarity = polarity
 
         # make sure self.address is a 3-element list
         if len(self.address) != 3:
@@ -714,6 +716,13 @@ class PDBLED(RGBLEDPlatformInterface):
         self.log.debug("Creating PD-LED item: board: %s, "
                        "RGB outputs: %s", self.board,
                        self.address)
+
+    def normalise_color(self, value):
+        if self.polarity:
+            return 255 - value
+        else:
+            return value
+
 
     def color(self, color):
         """Instantly sets this LED to the color passed.
@@ -725,9 +734,9 @@ class PDBLED(RGBLEDPlatformInterface):
         # self.log.debug("Setting Color. Board: %s, Address: %s, Color: %s",
         #               self.board, self.address, color)
 
-        self.proc.led_color(self.board, self.address[0], color.red)
-        self.proc.led_color(self.board, self.address[1], color.green)
-        self.proc.led_color(self.board, self.address[2], color.blue)
+        self.proc.led_color(self.board, self.address[0], self.normalise_color(color.red))
+        self.proc.led_color(self.board, self.address[1], self.normalise_color(color.green))
+        self.proc.led_color(self.board, self.address[2], self.normalise_color(color.blue))
 
 
 def is_pdb_address(addr):
