@@ -1074,25 +1074,25 @@ class ConfigValidator(object):
             self.load_config_spec()
 
         # build up the actual config spec we're going to use
-        this_spec = self.config_spec
-        config_spec = config_spec.split(':')
-        for config in config_spec:
-            this_spec = this_spec[config]
-
-        if not isinstance(this_spec, dict):
-            this_spec = dict()
+        spec_list = [config_spec]
 
         if base_spec:
-            for spec_element in base_spec.split(","):
-                this_base_spec = self.config_spec
-                spec_element = spec_element.split(':')
-                for spec in spec_element:
-                    # need to deepcopy so the orig base spec doesn't get polluted
-                    # with this widget's spec
-                    this_base_spec = deepcopy(this_base_spec[spec])
+            if isinstance(base_spec, list):
+                spec_list.extend(base_spec)
+            else:
+                spec_list.append(base_spec)
 
-                this_base_spec.update(this_spec)
-                this_spec = this_base_spec
+        this_spec = dict()
+        for spec_element in spec_list:
+            this_base_spec = self.config_spec
+            spec_element = spec_element.split(':')
+            for spec in spec_element:
+                # need to deepcopy so the orig base spec doesn't get polluted
+                # with this widget's spec
+                this_base_spec = deepcopy(this_base_spec[spec])
+
+            this_base_spec.update(this_spec)
+            this_spec = this_base_spec
 
         return this_spec
 
