@@ -89,10 +89,6 @@ class Game(Mode):
         self.add_mode_event_handler('ball_ended', self.ball_ended)
         self.add_mode_event_handler('game_ended', self.game_ended)
 
-        if ('restart on long press' in self.machine.config['game'] and
-                self.machine.config['game']['restart on long press']):
-            self.setup_midgame_restart()
-
         self.machine.events.post('enable_volume_keys')
 
         self.machine.events.post_queue('game_starting',
@@ -101,33 +97,13 @@ class Game(Mode):
     def mode_stop(self, **kwargs):
         self.machine.game = None
 
-    def setup_midgame_restart(self, tag='start', time='1s', min_ball=0):
-        """Allows a long button press to restart the game."""
-        pass
-        '''
-        self.min_restart_ball = min_ball
-
-        for switch in self.machine.switches.items_tagged(tag):
-            self.switch_handlers.append(
-                self.machine.switch_controller.add_switch_handler(
-                    switch_name=switch.name,
-                    callback=self._midgame_restart_handler,
-                    state=1,
-                    ms=Util.string_to_ms(time))
-            )
-        '''
-
-    def _midgame_restart_handler(self, **kwargs):
-        if self.player and self.player.ball > self.min_restart_ball:
-            self.log.debug("------Restarting game via long button press------")
-
-            # todo this should post the request to start game event first
-
     def game_started(self, ev_result=True, **kwargs):
         """All the modules that needed to do something on game start are done,
         so our game is officially 'started'.
 
         """
+
+        del kwargs
 
         if ev_result:
             self.machine.remove_machine_var_search(startswith='player',
@@ -150,6 +126,8 @@ class Game(Mode):
         (including when the first player is added).
 
         """
+        del player
+        del kwargs
         self.log.info("Player added successfully. Total players: %s",
                       self.num_players)
 
@@ -212,6 +190,7 @@ class Game(Mode):
         self.machine.playfield.add_ball(player_controlled=True)
 
     def ball_drained(self, balls=0, **kwargs):
+        del kwargs
         self.log.debug("Entering Game.ball_drained()")
 
         if balls:
@@ -254,6 +233,7 @@ class Game(Mode):
         # Callback for when the ball_ending queue is clear. All this does is
         # post ball_ended, but we do it this way so that ball_ended slots in
         # properly after other existing events have been posted.
+        del kwargs
         self.machine.events.post('ball_ended')
 
     def ball_ended(self, ev_result=True, **kwargs):
@@ -269,6 +249,7 @@ class Game(Mode):
         are done.
 
         """
+        del kwargs
         self.log.debug("Entering Game.ball_ended()")
         if ev_result is False:
             return
@@ -281,8 +262,9 @@ class Game(Mode):
             self.shoot_again()
             return
 
-        if (self.player.ball == self.machine.config['game']['balls_per_game']
-            and self.player.number == self.num_players):
+        if (self.player.ball ==
+                self.machine.config['game']['balls_per_game'] and
+                self.player.number == self.num_players):
             self.game_ending()
         else:
             self.player_rotate()
@@ -305,6 +287,7 @@ class Game(Mode):
         # Callback for when the game_ending queue is clear. All this does is
         # post game_ended, but we do it this way so that game_ended slots in
         # properly after other existing events have been posted.
+        del kwargs
         self.player_turn_stop()
         self.machine.events.post('game_ended')
 
@@ -316,9 +299,10 @@ class Game(Mode):
         :class:`Attract` mode.
 
         """
+        del kwargs
         self.log.debug("Entering Game.game_ended()")
 
-    def award_extra_ball(self, num=1, force=False):
+    def award_extra_ball(self, num=1):
         """Awards the player an extra ball.
 
         Args:
@@ -487,11 +471,11 @@ class Game(Mode):
             self.player = self.player_list[0]
 
     def _player_turn_started(self, **kwargs):
+        del kwargs
         self.player.ball += 1
-
         self.ball_starting()
 
-    def player_rotate(self, player_num=None):
+    def player_rotate(self):
         """Rotates the game to the next player.
 
         This method is called after a player's turn is over, so it's even used

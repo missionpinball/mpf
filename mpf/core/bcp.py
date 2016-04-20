@@ -15,7 +15,6 @@ import json
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.player import Player
 from mpf.core.utility_functions import Util
-from mpf.devices.shot import Shot
 from mpf._version import __version__, __bcp_version__
 
 
@@ -313,10 +312,12 @@ class BCP(object):
 
     def register_dmd(self, dmd_update_meth):
         self.physical_dmd_update_callback = dmd_update_meth
+        # pylint: disable-msg=too-many-arguments
         self.send('dmd_start', fps=self.machine.clock._max_fps)
 
     def register_rgb_dmd(self, dmd_update_meth):
         self.physical_rgb_dmd_update_callback = dmd_update_meth
+        # pylint: disable-msg=protected_access
         self.send('rgb_dmd_start', fps=self.machine.clock._max_fps)
 
     def _parse_filters_from_config(self):

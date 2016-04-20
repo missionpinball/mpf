@@ -1242,7 +1242,7 @@ class ConfigValidator(object):
             return item
 
         elif item is False and 'no' in enum_values:
-                return 'no'
+            return 'no'
 
         elif item is True and 'yes' in enum_values:
             return 'yes'

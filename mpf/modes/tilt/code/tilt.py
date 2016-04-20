@@ -100,6 +100,7 @@ class Tilt(Mode):
 
     def reset_warnings(self, **kwargs):
         """Resets the tilt warnings for the current player."""
+        del kwargs
         try:
             self.player[self.tilt_config['tilt_warnings_player_var']] = 0
         except AttributeError:
@@ -107,6 +108,7 @@ class Tilt(Mode):
 
     def tilt(self, **kwargs):
         """Causes the ball to tilt."""
+        del kwargs
         if not self.machine.game:
             return
 
@@ -145,6 +147,9 @@ class Tilt(Mode):
             autofire.disable()
 
     def _tilted_ball_drain(self, new_balls, unclaimed_balls, device):
+        del new_balls
+        del device
+
         self._balls_to_collect -= unclaimed_balls
 
         self.log.debug("Tilted ball drain. Balls to collect: %s",
@@ -160,8 +165,9 @@ class Tilt(Mode):
 
     def _tilt_warning_switch_handler(self):
         if (not self._last_warning or
-             (self._last_warning + (self.tilt_config['multiple_hit_window']*0.001)
-              <= self.machine.clock.get_time())):
+                (self._last_warning +
+                (self.tilt_config['multiple_hit_window'] * 0.001) <=
+                self.machine.clock.get_time())):
 
             self.tilt_warning()
 

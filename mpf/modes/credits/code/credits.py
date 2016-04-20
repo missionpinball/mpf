@@ -110,6 +110,7 @@ class Credits(Mode):
             self.pricing_tiers.add((credit_units, bonus))
 
     def enable_credit_play(self, post_event=True, **kwargs):
+        del kwargs
 
         self.credits_config['free_play'] = False
 
@@ -155,6 +156,7 @@ class Credits(Mode):
             self.machine.events.post('enabling_credit_play')
 
     def enable_free_play(self, post_event=True, **kwargs):
+        del kwargs
         self.credits_config['free_play'] = True
 
         self.machine.events.remove_handler(self._player_add_request)
@@ -172,6 +174,7 @@ class Credits(Mode):
             self.machine.events.post('enabling_free_play')
 
     def toggle_credit_play(self, **kwargs):
+        del kwargs
 
         if self.credits_config['free_play']:
             self.enable_credit_play()
@@ -201,6 +204,7 @@ class Credits(Mode):
             return False
 
     def _player_add_success(self, **kwargs):
+        del kwargs
         new_credit_units = (self.machine.get_machine_var('credit_units') -
                 self.credit_units_per_game)
 
@@ -294,6 +298,7 @@ class Credits(Mode):
             self.reset_pricing_tier_count_this_game = True
 
     def _ball_starting(self, **kwargs):
+        del kwargs
         if self.player.number == 1 and self.player.ball == 2:
             self._reset_pricing_tier_credits()
 

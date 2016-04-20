@@ -81,6 +81,8 @@ class HighScore(Mode):
                 # scan through and see if any of our players are in this list
                 self.new_high_score_list[category_name] = new_list
 
+                # todo broken
+
                 if player in [x[0] for x in new_list]:
                     high_score_change = True
 
@@ -124,6 +126,7 @@ class HighScore(Mode):
                                   value=value)
 
     def _receive_player_name(self, award, player_name=None, **kwargs):
+        del kwargs
         self.pending_request = False
 
         valid_update = False
@@ -184,40 +187,40 @@ class HighScore(Mode):
 
     def _start_sending_switches(self):
         for switch in self.machine.switches.items_tagged(
-            self.high_score_config['shift_left_tag']):
-                self.machine.switch_controller.add_switch_handler(
-                    switch_name=switch.name,
-                    callback=self.send_left)
+                self.high_score_config['shift_left_tag']):
+            self.machine.switch_controller.add_switch_handler(
+                switch_name=switch.name,
+                callback=self.send_left)
 
         for switch in self.machine.switches.items_tagged(
-            self.high_score_config['shift_right_tag']):
-                self.machine.switch_controller.add_switch_handler(
-                    switch_name=switch.name,
-                    callback=self.send_right)
+                self.high_score_config['shift_right_tag']):
+            self.machine.switch_controller.add_switch_handler(
+                switch_name=switch.name,
+                callback=self.send_right)
 
         for switch in self.machine.switches.items_tagged(
-            self.high_score_config['select_tag']):
-                self.machine.switch_controller.add_switch_handler(
-                    switch_name=switch.name,
-                    callback=self.send_select)
+                self.high_score_config['select_tag']):
+            self.machine.switch_controller.add_switch_handler(
+                switch_name=switch.name,
+                callback=self.send_select)
 
     def _stop_sending_switches(self):
         for switch in self.machine.switches.items_tagged(
-            self.high_score_config['shift_left_tag']):
-                self.machine.switch_controller.remove_switch_handler(
-                    switch_name=switch.name,
-                    callback=self.send_left)
+                self.high_score_config['shift_left_tag']):
+            self.machine.switch_controller.remove_switch_handler(
+                switch_name=switch.name,
+                callback=self.send_left)
         for switch in self.machine.switches.items_tagged(
-            self.high_score_config['shift_right_tag']):
-                self.machine.switch_controller.remove_switch_handler(
-                    switch_name=switch.name,
-                    callback=self.send_right)
+                self.high_score_config['shift_right_tag']):
+            self.machine.switch_controller.remove_switch_handler(
+                switch_name=switch.name,
+                callback=self.send_right)
 
         for switch in self.machine.switches.items_tagged(
-            self.high_score_config['select_tag']):
-                self.machine.switch_controller.remove_switch_handler(
-                    switch_name=switch.name,
-                    callback=self.send_select)
+                self.high_score_config['select_tag']):
+            self.machine.switch_controller.remove_switch_handler(
+                switch_name=switch.name,
+                callback=self.send_select)
 
     def send_left(self):
         self.machine.bcp.send(bcp_command='trigger',
