@@ -67,10 +67,12 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
         else:  # if sw_activity == 1 and not debounced:
             return "closed_nondebounced"
 
-    def get_coil_config_section(self):
+    @classmethod
+    def get_coil_config_section(cls):
         return "p_roc_coils"
 
-    def get_coil_overwrite_section(self):
+    @classmethod
+    def get_coil_overwrite_section(cls):
         return "p_roc_coil_overwrites"
 
     def add_pulse_rule_to_switch(self, switch, coil):

@@ -177,6 +177,26 @@ class SwitchPlatform(BasePlatform):
         """
         raise NotImplementedError
 
+    @classmethod
+    def get_switch_config_section(cls):
+        return None
+
+    @classmethod
+    def get_switch_overwrite_section(cls):
+        return None
+
+    def validate_switch_overwrite_section(self, switch, config_overwrite):
+        switch.machine.config_validator.validate_config(
+            "switch_overwrites", config_overwrite, switch.name,
+            base_spec=self.__class__.get_switch_overwrite_section())
+        return config_overwrite
+
+    def validate_switch_section(self, switch, config):
+        switch.machine.config_validator.validate_config(
+            "switches", config, switch.name,
+            base_spec=self.__class__.get_switch_config_section())
+        return config
+
     def get_hw_switch_states(self):
         """Subclass this method in a platform module to return the hardware
         states of all the switches on that platform.
@@ -225,17 +245,13 @@ class DriverPlatform(BasePlatform):
         """
         raise NotImplementedError
 
-    def get_coil_config_section(self):
+    @classmethod
+    def get_coil_config_section(cls):
         return None
 
-    def get_switch_config_section(self):
+    @classmethod
+    def get_coil_overwrite_section(cls):
         return None
-
-    def validate_switch_overwrite_section(self, switch, config_overwrite):
-        switch.machine.config_validator.validate_config(
-            "switch_overwrites", config_overwrite, switch.name,
-            base_spec=self.get_switch_overwrite_section())
-        return config_overwrite
 
     def validate_coil_overwrite_section(self, driver, config_overwrite):
         driver.machine.config_validator.validate_config(
@@ -243,11 +259,11 @@ class DriverPlatform(BasePlatform):
             base_spec=self.get_coil_overwrite_section())
         return config_overwrite
 
-    def get_switch_overwrite_section(self):
-        return None
-
-    def get_coil_overwrite_section(self):
-        return None
+    def validate_coil_section(self, driver, config):
+        driver.machine.config_validator.validate_config(
+            "coils", config, driver.name,
+            base_spec=self.__class__.get_coil_config_section())
+        return config
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
         raise NotImplementedError

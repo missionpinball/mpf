@@ -87,6 +87,54 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
 
         return self.hw_switches
 
+    def _get_platforms(self):
+        platforms = []
+        for name, platform in self.machine.config['mpf']['platforms'].items():
+            if name == "virtual" or name == "smart_virtual":
+                continue
+            platforms.append(Util.string_to_class(platform))
+        return platforms
+
+    def validate_switch_section(self, switch, config):
+        sections = []
+        for platform in self._get_platforms():
+            if hasattr(platform, "get_switch_config_section") and platform.get_switch_config_section():
+                sections.append(platform.get_switch_config_section())
+        self.machine.config_validator.validate_config(
+            "switches", config, switch.name,
+            base_spec=sections)
+        return config
+
+    def validate_switch_overwrite_section(self, switch, config_overwrite):
+        sections = []
+        for platform in self._get_platforms():
+            if hasattr(platform, "get_switch_overwrite_section") and platform.get_switch_overwrite_section():
+                sections.append(platform.get_switch_overwrite_section())
+        self.machine.config_validator.validate_config(
+            "switch_overwrites", config_overwrite, switch.name,
+            base_spec=sections)
+        return config_overwrite
+
+    def validate_coil_overwrite_section(self, driver, config_overwrite):
+        sections = []
+        for platform in self._get_platforms():
+            if hasattr(platform, "get_coil_overwrite_section") and platform.get_coil_overwrite_section():
+                sections.append(platform.get_coil_overwrite_section())
+        self.machine.config_validator.validate_config(
+            "coil_overwrites", config_overwrite, driver.name,
+            base_spec=sections)
+        return config_overwrite
+
+    def validate_coil_section(self, driver, config):
+        sections = []
+        for platform in self._get_platforms():
+            if hasattr(platform, "get_coil_config_section") and platform.get_coil_config_section():
+                sections.append(platform.get_coil_config_section())
+        self.machine.config_validator.validate_config(
+            "coils", config, driver.name,
+            base_spec=sections)
+        return config
+
     def configure_accelerometer(self, device, number, use_high_pass):
         pass
 

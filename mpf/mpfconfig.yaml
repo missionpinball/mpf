@@ -66,15 +66,15 @@ mpf:
         mpf.plugins.switch_player.SwitchPlayer
 
     platforms:
-        fadecandy: mpf.platform.fadecandy.HardwarePlatform
-        fast: mpf.platform.fast.HardwarePlatform
-        p_roc:  mpf.platform.p_roc.HardwarePlatform
-        p3_roc:  mpf.platform.p3_roc.HardwarePlatform
-        smartmatrix: mpf.platform.smartmatrix.HardwarePlatform
-        snux: mpf.platform.snux.Snux
-        virtual: mpf.platform.virtual.HardwarePlatform
-        smart_virtual: mpf.platform.smart_virtual.HardwarePlatform
-        i2c_servo_controller: mpf.platform.i2c_servo_controller.HardwarePlatform
+        fadecandy: mpf.platforms.fadecandy.HardwarePlatform
+        fast: mpf.platforms.fast.HardwarePlatform
+        p_roc:  mpf.platforms.p_roc.HardwarePlatform
+        p3_roc:  mpf.platforms.p3_roc.HardwarePlatform
+        smartmatrix: mpf.platforms.smartmatrix.HardwarePlatform
+        snux: mpf.platforms.snux.HardwarePlatform
+        virtual: mpf.platforms.virtual.HardwarePlatform
+        smart_virtual: mpf.platforms.smart_virtual.HardwarePlatform
+        i2c_servo_controller: mpf.platforms.i2c_servo_controller.HardwarePlatform
 
     paths:
         scriptlets: scriptlets

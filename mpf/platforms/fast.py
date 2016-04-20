@@ -632,13 +632,16 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         self.net_connection.send(self.watchdog_command)
 
-    def get_coil_config_section(self):
+    @classmethod
+    def get_coil_config_section(cls):
         return "fast_coils"
 
-    def get_switch_config_section(self):
+    @classmethod
+    def get_switch_config_section(cls):
         return "fast_switches"
 
-    def get_coil_overwrite_section(self):
+    @classmethod
+    def get_coil_overwrite_section(cls):
         return "fast_coil_overwrites"
 
     def validate_switch_overwrite_section(self, switch, config_overwrite):

@@ -32,12 +32,7 @@ class Driver(SystemWideDevice):
 
     def validate_and_parse_config(self, config, is_mode_config):
         platform = self.machine.get_platform_sections('coils', getattr(config, "platform", None))
-        if platform.get_coil_config_section():
-            self.machine.config_validator.validate_config(
-                self.config_section, config, self.name, base_spec=platform.get_coil_config_section())
-        else:
-            super().validate_and_parse_config(config, is_mode_config)
-
+        platform.validate_coil_section(self, config)
         return config
 
     def _initialize(self):
