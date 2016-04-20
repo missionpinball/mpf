@@ -87,7 +87,7 @@ class ConfigPlayer(object):
 
         return validated_config
 
-    def validate_show_config(self, device, device_settings, serializable=True):
+    def validate_show_config(self, device, device_settings):
         # override if you need a different show processor from config file
         # processor
 
@@ -96,7 +96,6 @@ class ConfigPlayer(object):
         # keys are device names
         # vales are either scalars with express settings, or dicts with full
         # settings
-        del serializable
 
         if device_settings is None:
             device_settings = device
