@@ -5,13 +5,9 @@ environment:
 
   matrix:
     - PYTHON: "C:\\Python34"
-      BUILD_DOCS: 1
     - PYTHON: "C:\\Python34-x64"
-      BUILD_DOCS: 0
     - PYTHON: "C:\\Python35"
-      BUILD_DOCS: 0
     - PYTHON: "C:\\Python35-x64"
-      BUILD_DOCS: 0
 
   pypi_user:
     secure: kxNKBuVMdOz6LjJPQb7PMQ==
@@ -30,7 +26,6 @@ test_script:
 after_test:
   - "%PYTHON%\\python.exe setup.py sdist --formats=gztar"
   - "%PYTHON%\\python.exe setup.py bdist_wheel"
-  - "if %BUILD_DOCS%==1 %PYTHON%\\python.exe -m pip install -e ."
 
 artifacts:
   - path: dist\*
