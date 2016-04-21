@@ -182,7 +182,6 @@ class DeviceManager(object):
                 event, priority = event.split('|')
             except ValueError:
                 priority = 0
-
             self.machine.events.add_handler(
                     event=event,
                     handler=self._control_event_handler,
@@ -196,7 +195,6 @@ class DeviceManager(object):
 
             for event in events:
                 event_name = collection + '_' + event
-
                 self.machine.events.add_handler(event_name,
                                                 self._collection_control_event_handler,
                                                 collection=collection,

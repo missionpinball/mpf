@@ -43,6 +43,11 @@ class Shot(ModeDevice, SystemWideDevice):
 
         self.active_mode = None
         self.active_settings = None
+        self._enabled = False
+
+    @property
+    def enabled(self):
+        return self._enabled
 
     def prepare_config(self, config, is_mode_config):
         if not is_mode_config:
@@ -121,7 +126,7 @@ class Shot(ModeDevice, SystemWideDevice):
 
         self.switch_handlers_active = False
 
-    def advance(self, steps=1, mode=None, **kwargs):
+    def advance(self, steps=1, mode=None, force=False, **kwargs):
         """Advances a shot profile forward.
 
         If this profile is at the last step and configured to loop, it will
@@ -130,6 +135,9 @@ class Shot(ModeDevice, SystemWideDevice):
 
         """
         del kwargs
+
+        if not (self._enabled or force):
+            return
 
         profile_name = self.enable_table[mode]['profile']
         profile = self.enable_table[mode]['settings']
@@ -320,7 +328,7 @@ class Shot(ModeDevice, SystemWideDevice):
         """
 
         self.debug_log("Removing...")
-
+        self._enabled = False
         self._remove_switch_handlers()
         self._stop_show()
 
@@ -337,11 +345,13 @@ class Shot(ModeDevice, SystemWideDevice):
 
         """
         del kwargs
-        # stop if there is no game or no balls in process
-        # also stop if there is an active delay but no sequence
-        if (not self.machine.game or
-                (self.machine.game and not self.machine.game.balls_in_play) or
-                (self.active_delay_switches and not len(self.config['switch_sequence']))):
+
+        if not self._enabled:
+            return
+
+        # Stop if there is an active delay but no sequence
+        if (self.active_delay_switches and
+                not len(self.config['switch_sequence'])):
             return
 
         if mode == 'default#$%':
@@ -349,7 +359,8 @@ class Shot(ModeDevice, SystemWideDevice):
 
         profile, state = self.get_mode_state(mode)
 
-        self.debug_log("Hit! Mode: %s, Profile: %s, State: %s", mode, profile, state)
+        self.debug_log("Hit! Mode: %s, Profile: %s, State: %s",
+                       mode, profile, state)
 
         # do this before the events are posted since events could change the
         # profile
@@ -547,7 +558,7 @@ class Shot(ModeDevice, SystemWideDevice):
 
         self.active_sequences = list()
 
-    def jump(self, mode, state, show_step=0):
+    def jump(self, mode, state, show_step=0, force=True):
         """Jumps to a certain state in the active shot profile.
 
         Args:
@@ -558,7 +569,7 @@ class Shot(ModeDevice, SystemWideDevice):
                 pick up right where it left off. Default is 0.
 
         """
-        if not self.machine.game:
+        if not (self._enabled or force):
             return
 
         self.debug_log(
@@ -603,6 +614,8 @@ class Shot(ModeDevice, SystemWideDevice):
 
         self.debug_log("Enabling...")
 
+        self._enabled = True
+
         self._register_switch_handlers()
 
         # TODO should this see if this shot is configured to allow lights while
@@ -624,7 +637,7 @@ class Shot(ModeDevice, SystemWideDevice):
     def _disable(self):
 
         self.debug_log("Disabling...")
-
+        self._enabled = False
         self._reset_all_sequences()
         self._remove_switch_handlers()
         self.delay.clear()
@@ -726,9 +739,11 @@ class Shot(ModeDevice, SystemWideDevice):
                        mode, self.enable_table[mode]['current_state_name'])
 
         try:
-            self.enable_table[mode]['current_state_name'] = (self.enable_table[mode]['settings']['states']
-                                                             [self.player[self.enable_table[mode]['settings']
-                                                                          ['player_variable']]]['name'])
+            self.enable_table[mode]['current_state_name'] = (
+                self.enable_table[mode]['settings']['states']
+                [self.player[self.enable_table[mode]['settings']
+                          ['player_variable']]]['name'])
+
         except TypeError:
             self.enable_table[mode]['current_state_name'] = None
 

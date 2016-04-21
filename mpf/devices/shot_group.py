@@ -24,6 +24,11 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         super().__init__(machine, name)
 
         self.rotation_enabled = True
+        self._enabled = False
+
+    @property
+    def enabled(self):
+        return self._enabled
 
     def prepare_config(self, config, is_mode_config):
         if not is_mode_config:
@@ -47,7 +52,6 @@ class ShotGroup(ModeDevice, SystemWideDevice):
                                          mode=None)
 
     def _enable_related_device_debugging(self):
-
         self.log.debug(
             "Enabling debugging for this shot groups's member shots")
 
@@ -70,6 +74,10 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         """
         del mode
         del kwargs
+
+        if not self._enabled:
+            return
+
         self.debug_log('Hit! Active profile: %s, Current state: %s',
                        profile, profile)
 
@@ -82,16 +90,50 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         self.machine.events.post(self.name + '_' + profile + '_' + state +
                                  '_hit', profile=profile, state=state)
 
-    def enable(self, mode=None, **kwargs):
+    def enable(self, mode=None, profile=None, **kwargs):
         """Enables this shot group. Also enables all the shots in this
         group.
 
         """
         del kwargs
+
+        if mode:
+            self._enable_from_mode(mode, profile)
+        else:
+            self._enable_from_systemwide(profile)
+
+        self._enabled = True
         self.debug_log('Enabling from mode: %s', mode)
 
         for shot in self.config['shots']:
             shot.enable(mode)
+            shot.add_to_group(self)
+
+    def _enable_from_mode(self, mode, profile=None):
+        # If we weren't passed a profile, use the one from the mode config
+        if not profile and mode.config['shot_groups'][self.name]['profile']:
+            profile = mode.config['shot_groups'][self.name]['profile']
+
+        for shot in self.config['shots']:
+            if mode not in shot.enable_table:
+                # if the mode is not in the shot's enable_table, that means we
+                # have no entry for this shot in this mode config. Therefore
+                # there is no chance of a blank enable_events:, which means we
+                # want to enable this shot.
+
+                if profile:
+                    shot.update_enable_table(profile=profile,
+                                             enable=True,
+                                             mode=mode)
+
+                else:
+                    shot.update_enable_table(profile=shot.config['profile'],
+                                             enable=True,
+                                             mode=mode)
+
+    def _enable_from_systemwide(self, profile=None):
+        for shot in self.config['shots']:
+            shot.enable(profile=profile)
             shot.add_to_group(self)
 
     def disable(self, mode=None, **kwargs):
@@ -100,6 +142,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
         """
         del kwargs
+        self._enabled = False
         self.debug_log('Disabling from mode: %s', mode)
 
         for shot in self.config['shots']:
@@ -144,12 +187,16 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         for shot in self.config['shots']:
             shot.remove_active_profile(mode)
 
-    def advance(self, mode=None, **kwargs):
+    def advance(self, mode=None, force=False, **kwargs):
         """Advances the current active profile from every shot in the group
         one step forward.
 
         """
         del kwargs
+
+        if not (self._enabled or force):
+            return
+
         self.debug_log('Advancing')
         for shot in self.config['shots']:
             shot.advance(mode)
@@ -185,8 +232,8 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
         """
         del kwargs
-        if not self.rotation_enabled:
 
+        if not (self._enabled and self.rotation_enabled):
             self.debug_log("Received rotation request. "
                                "Rotation Enabled: %s. Will NOT rotate",
                                self.rotation_enabled)
@@ -295,6 +342,9 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
         # TODO should be made to work for lower priority things too?
 
+        if not self._enabled:
+            return
+
         shot_states = set()
 
         self.debug_log("Checking for complete. mode: %s", mode)
@@ -329,30 +379,10 @@ class ShotGroup(ModeDevice, SystemWideDevice):
     def device_added_to_mode(self, mode, player):
         super().device_added_to_mode(mode, player)
 
-        enable = not mode.config['shot_groups'][self.name]['enable_events']
-
-        if mode.config['shot_groups'][self.name]['profile']:
-            profile = mode.config['shot_groups'][self.name]['profile']
-        else:
-            profile = None
-
-        for shot in self.config['shots']:
-            if mode not in shot.enable_table:
-
-                # if the mode is not in the shot's enable_table, that means we
-                # have no entry for this shot in this mode config. Therefore
-                # there is no chance of a blank enable_events:, which means we
-                # want to enable this shot.
-
-                if profile:
-                    shot.update_enable_table(profile=profile,
-                                             enable=enable,
-                                             mode=mode)
-
-                else:
-                    shot.update_enable_table(profile=shot.config['profile'],
-                                             enable=enable,
-                                             mode=mode)
+        # If there are no enable_events configured, then we enable this shot
+        # group when its created on mode start
+        if not mode.config['shot_groups'][self.name]['enable_events']:
+            self.enable(mode)
 
     def control_events_in_mode(self, mode):
         # called if any control_events for this shot_group exist in the mode
@@ -378,4 +408,5 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
     def remove(self):
         self.debug_log("Removing this shot group")
+        self._enabled = False
         del self.machine.shot_groups[self.name]

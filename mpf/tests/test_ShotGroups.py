@@ -24,6 +24,18 @@ class TestShotGroups(MpfTestCase):
         self.advance_time_and_run()
         self.assertIsNone(self.machine.game)
 
+    def test_disabled_when_no_game(self):
+        # all shot group functionality should be disabled if there is not a
+        # game in progress. Really we're just making sure this doesn't crash.
+
+        self.machine.events.post('s_rotate_l_active')
+        self.advance_time()
+
+        self.hit_and_release_switch("switch_1")
+        self.hit_and_release_switch("switch_2")
+        self.hit_and_release_switch("switch_3")
+        self.hit_and_release_switch("switch_4")
+
     def test_events_and_complete(self):
         self.start_game()
 
@@ -44,7 +56,7 @@ class TestShotGroups(MpfTestCase):
 
         self.hit_and_release_switch("switch_1")
 
-        # it posts the oposite state
+        # it posts the opposite state
         self.assertEqual(0, self._events['test_group_default_lit_complete'])
         self.assertEqual(0, self._events['test_group_default_unlit_complete'])
         self.assertEqual(1, self._events['test_group_default_lit_hit'])
@@ -70,87 +82,175 @@ class TestShotGroups(MpfTestCase):
 
         self.mock_event("test_group_default_lit_complete")
 
-        self.assertEqual("unlit", self.machine.shots.shot_1.active_settings['current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_2.active_settings['current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_3.active_settings['current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings['current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_1.active_settings[
+            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_2.active_settings[
+            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_3.active_settings[
+            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings[
+            'current_state_name'])
 
         self.hit_and_release_switch("switch_1")
 
-        self.assertEqual("lit", self.machine.shots.shot_1.active_settings['current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_2.active_settings['current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_3.active_settings['current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings['current_state_name'])
+        self.assertEqual("lit", self.machine.shots.shot_1.active_settings[
+            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_2.active_settings[
+            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_3.active_settings[
+            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings[
+            'current_state_name'])
 
         self.hit_and_release_switch("s_rotate_r")
 
-        self.assertEqual("unlit", self.machine.shots.shot_1.active_settings['current_state_name'])
-        self.assertEqual("lit", self.machine.shots.shot_2.active_settings['current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_3.active_settings['current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings['current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_1.active_settings[
+            'current_state_name'])
+        self.assertEqual("lit", self.machine.shots.shot_2.active_settings[
+            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_3.active_settings[
+            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings[
+            'current_state_name'])
 
         self.hit_and_release_switch("switch_1")
 
-        self.assertEqual("lit", self.machine.shots.shot_1.active_settings['current_state_name'])
-        self.assertEqual("lit", self.machine.shots.shot_2.active_settings['current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_3.active_settings['current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings['current_state_name'])
+        self.assertEqual("lit", self.machine.shots.shot_1.active_settings[
+            'current_state_name'])
+        self.assertEqual("lit", self.machine.shots.shot_2.active_settings[
+            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_3.active_settings[
+            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings[
+            'current_state_name'])
 
         self.hit_and_release_switch("s_rotate_r")
 
-        self.assertEqual("unlit", self.machine.shots.shot_1.active_settings['current_state_name'])
-        self.assertEqual("lit", self.machine.shots.shot_2.active_settings['current_state_name'])
-        self.assertEqual("lit", self.machine.shots.shot_3.active_settings['current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings['current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_1.active_settings[
+            'current_state_name'])
+        self.assertEqual("lit", self.machine.shots.shot_2.active_settings[
+            'current_state_name'])
+        self.assertEqual("lit", self.machine.shots.shot_3.active_settings[
+            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings[
+            'current_state_name'])
 
         self.hit_and_release_switch("s_rotate_r")
 
-        self.assertEqual("unlit", self.machine.shots.shot_1.active_settings['current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_2.active_settings['current_state_name'])
-        self.assertEqual("lit", self.machine.shots.shot_3.active_settings['current_state_name'])
-        self.assertEqual("lit", self.machine.shots.shot_4.active_settings['current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_1.active_settings[
+            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_2.active_settings[
+            'current_state_name'])
+        self.assertEqual("lit", self.machine.shots.shot_3.active_settings[
+            'current_state_name'])
+        self.assertEqual("lit", self.machine.shots.shot_4.active_settings[
+            'current_state_name'])
 
         self.hit_and_release_switch("s_rotate_r")
 
-        self.assertEqual("lit", self.machine.shots.shot_1.active_settings['current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_2.active_settings['current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_3.active_settings['current_state_name'])
-        self.assertEqual("lit", self.machine.shots.shot_4.active_settings['current_state_name'])
+        self.assertEqual("lit", self.machine.shots.shot_1.active_settings[
+            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_2.active_settings[
+            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_3.active_settings[
+            'current_state_name'])
+        self.assertEqual("lit", self.machine.shots.shot_4.active_settings[
+            'current_state_name'])
 
         self.hit_and_release_switch("s_rotate_l")
 
-        self.assertEqual("unlit", self.machine.shots.shot_1.active_settings['current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_2.active_settings['current_state_name'])
-        self.assertEqual("lit", self.machine.shots.shot_3.active_settings['current_state_name'])
-        self.assertEqual("lit", self.machine.shots.shot_4.active_settings['current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_1.active_settings[
+            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_2.active_settings[
+            'current_state_name'])
+        self.assertEqual("lit", self.machine.shots.shot_3.active_settings[
+            'current_state_name'])
+        self.assertEqual("lit", self.machine.shots.shot_4.active_settings[
+            'current_state_name'])
 
     def test_shot_group_in_mode(self):
         self.start_game()
 
         self.hit_and_release_switch("switch_1")
 
-        self.assertEqual("lit", self.machine.shots.shot_1.active_settings['current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_2.active_settings['current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_3.active_settings['current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings['current_state_name'])
+        self.assertEqual("lit", self.machine.shots.shot_1.active_settings[
+            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_2.active_settings[
+            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_3.active_settings[
+            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings[
+            'current_state_name'])
 
         # Start the mode
         self.machine.modes.mode_shot_groups.start()
         self.advance_time_and_run()
 
-        self.assertEqual("one", self.machine.shots.shot_1.active_settings['current_state_name'])
-        self.assertEqual("one", self.machine.shots.shot_2.active_settings['current_state_name'])
-        self.assertEqual("one", self.machine.shots.shot_3.active_settings['current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings['current_state_name'])
+        self.assertEqual("one", self.machine.shots.shot_1.active_settings[
+            'current_state_name'])
+        self.assertEqual("one", self.machine.shots.shot_2.active_settings[
+            'current_state_name'])
+        self.assertEqual("one", self.machine.shots.shot_3.active_settings[
+            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings[
+            'current_state_name'])
 
         self.hit_and_release_switch("switch_1")
-        self.assertEqual("two", self.machine.shots.shot_1.active_settings['current_state_name'])
-        self.assertEqual("one", self.machine.shots.shot_2.active_settings['current_state_name'])
-        self.assertEqual("one", self.machine.shots.shot_3.active_settings['current_state_name'])
+        self.assertEqual("two", self.machine.shots.shot_1.active_settings[
+            'current_state_name'])
+        self.assertEqual("one", self.machine.shots.shot_2.active_settings[
+            'current_state_name'])
+        self.assertEqual("one", self.machine.shots.shot_3.active_settings[
+            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings[
+            'current_state_name'])
 
         self.hit_and_release_switch("s_rotate_l")
+        self.assertEqual("one", self.machine.shots.shot_1.active_settings[
+            'current_state_name'])
+        self.assertEqual("one", self.machine.shots.shot_2.active_settings[
+            'current_state_name'])
+        self.assertEqual("two", self.machine.shots.shot_3.active_settings[
+            'current_state_name'])
+        self.assertEqual("lit", self.machine.shots.shot_4.active_settings[
+            'current_state_name'])
 
-        self.assertEqual("one", self.machine.shots.shot_1.active_settings['current_state_name'])
-        self.assertEqual("one", self.machine.shots.shot_2.active_settings['current_state_name'])
-        self.assertEqual("two", self.machine.shots.shot_3.active_settings['current_state_name'])
-        self.assertEqual("lit", self.machine.shots.shot_4.active_settings['current_state_name'])
+        self.hit_and_release_switch("s_rotate_l")
+        self.assertEqual("one", self.machine.shots.shot_1.active_settings[
+            'current_state_name'])
+        self.assertEqual("two", self.machine.shots.shot_2.active_settings[
+            'current_state_name'])
+        self.assertEqual("one", self.machine.shots.shot_3.active_settings[
+            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings[
+            'current_state_name'])
+
+        self.hit_and_release_switch("s_rotate_l")
+        self.assertEqual("two", self.machine.shots.shot_1.active_settings[
+            'current_state_name'])
+        self.assertEqual("one", self.machine.shots.shot_2.active_settings[
+            'current_state_name'])
+        self.assertEqual("one", self.machine.shots.shot_3.active_settings[
+            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings[
+            'current_state_name'])
+
+        self.hit_and_release_switch("s_rotate_l")
+        self.assertEqual("one", self.machine.shots.shot_1.active_settings[
+            'current_state_name'])
+        self.assertEqual("one", self.machine.shots.shot_2.active_settings[
+            'current_state_name'])
+        self.assertEqual("two", self.machine.shots.shot_3.active_settings[
+            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings[
+            'current_state_name'])
+
+        self.hit_and_release_switch("s_rotate_r")
+        self.assertEqual("two", self.machine.shots.shot_1.active_settings[
+            'current_state_name'])
+        self.assertEqual("one", self.machine.shots.shot_2.active_settings[
+            'current_state_name'])
+        self.assertEqual("one", self.machine.shots.shot_3.active_settings[
+            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings[
+            'current_state_name'])

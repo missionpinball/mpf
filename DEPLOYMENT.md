@@ -17,7 +17,7 @@ automatically built and deployed to PyPI.
 
 Commits to mpf are sent to AppVeyor, Travis, Landscape, and Coveralls.
 
-* AppveYor does 4 builds, Windows x86/x64 and Pythong 3.4/3.5. Unittests are run
+* AppVeyor does 4 builds, Windows x86/x64 and Pythong 3.4/3.5. Unittests are run
 on all four. Wheels and gz.tar files are and uploaded to PyPI via twine.
 Currently MPF does not contain any compiled components, meaning that the tars
 and wheels of all four builds are identical. The twine upload to PyPI process
@@ -31,8 +31,8 @@ _version.py automatically triggers an update to PyPI.
 coveralls on a successful test. We should add Python 3.5 as well as OS X to the
 travis config.
 
-* Landcape is used for code quality checks. It's triggered directly from commits
-to GitHub.
+* Landscape is used for code quality checks. It's triggered directly from
+commits to GitHub.
 
 * Coveralls checks test coverage. It's triggered from a successful test run on
 Travis.

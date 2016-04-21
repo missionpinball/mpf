@@ -7,7 +7,6 @@ shot_groups:
     rotate_left_events: s_rotate_l_active
     rotate_right_events: s_rotate_r_active
     reset_events: shot_group_in_mode_reset
-    debug: True
 
 shot_profiles:
     three_states_loop:
