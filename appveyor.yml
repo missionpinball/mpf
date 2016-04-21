@@ -31,24 +31,9 @@ after_test:
   - "%PYTHON%\\python.exe setup.py sdist --formats=gztar"
   - "%PYTHON%\\python.exe setup.py bdist_wheel"
   - "if %BUILD_DOCS%==1 %PYTHON%\\python.exe -m pip install -e ."
-  - "if %BUILD_DOCS%==1 cd docs"
-  - "if %BUILD_DOCS%==1 %PYTHON%\\python.exe -m pip install sphinx"
-  - "if %BUILD_DOCS%==1 %PYTHON%\\python.exe -m pip install sphinxcontrib-napoleon"
-  - "if %BUILD_DOCS%==1 %PYTHON%\\python.exe -m pip install sphinx-bootstrap-theme==0.4.9"
-  - "if %BUILD_DOCS%==1 mkdir mpf"
-  - "if %BUILD_DOCS%==1 %PYTHON%\\python.exe autobuild.py verbose=yes"
-  - "if %BUILD_DOCS%==1 %PYTHON%\\python.exe -m sphinx -d _build/doctrees -b html . _build/html"
-  - "if %BUILD_DOCS%==1 cd .."
 
 artifacts:
   - path: dist\*
-  - path: docs/_build/html
-    name: html
 
-# can't use deploy_script: because that will override deploy:
-after_deploy:
+deploy_script:
   - "%PYTHON%\\python.exe -m twine upload -u %pypi_user% -p %pypi_password% --skip-existing dist/*"
-
-deploy:
-  provider: Environment
-  name: mpf-apidocs
