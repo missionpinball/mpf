@@ -539,31 +539,6 @@ score_reel_groups:
     label: single|str|%
     debug: single|bool|False
     lights_tag: single|str|None
-script_player:
-    bcps: list|str|None
-    coils: list|str|None
-    displays: list|str|None
-    events: list|str|None
-    flashers: list|str|None
-    gis: list|str|None
-    leds: list|str|None
-    lights: list|str|None
-    random_events: list|str|None
-    shows: list|str|None
-    triggers: list|str|None
-    script: single|str|
-    action: single|str|play
-    priority: single|int|0
-    step_num: single|int|0
-    loops: single|int|-1
-    blend: single|bool|False
-    speed: single|float|1
-    key: single|str|None
-scripts:
-    time: ignore
-    key: single|str|None
-    loops: single|int|-1
-    __allow_others__:
 servo_controllers:
     platform: single|str|None
     address: single|int|64
@@ -592,8 +567,6 @@ shots:
     cancel_switch: list|machine(switches)|None
     delay_switch: dict|machine(switches):ms|None
     time: single|ms|0
-    # light: list|machine(lights)|None
-    # led: list|machine(leds)|None
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False
@@ -631,14 +604,19 @@ shot_profiles:
     show_when_disabled: single|bool|True
     block: single|bool|true
     states:
-        name: single|str|
         show: single|str|None
-        hold: single|bool|True
-        reset: single|bool|False
-        repeat: single|bool|True
-        blend: single|bool|False
+        # These settings are same as show_player. Could probably get fancy with
+        # the validator to make this automatically pull them in.
+        action: single|enum(play,stop,pause,resume,advance,update)|play
+        priority: single|int|0
+        hold: single|bool|None
         speed: single|float|1
-        sync_ms:  single|int|0
+        start_step: single|int|1
+        loops: single|int|-1
+        sync_ms: single|int|0
+        reset: single|bool|True
+        manual_advance: single|bool|False
+        key: single|str|None
         __allow_others__:
 show_player:
     action: single|enum(play,stop,pause,resume,advance,update)|play
@@ -1128,8 +1106,9 @@ class ConfigValidator(object):
 
         try:
             item_type, validation, default = spec.split('|')
-        except ValueError:
-            raise ValueError('Error in validator config: {}'.format(spec))
+        except (ValueError, AttributeError):
+            raise ValueError('Error in validator spec: {}:{}'.format(
+                validation_failure_info, spec))
 
         if default.lower() == 'none':
             default = None

@@ -8,11 +8,12 @@ A shot in MPF is a cool thing.
 
 import uuid
 from collections import OrderedDict
-from copy import copy, deepcopy
+from copy import copy
 
 import mpf.core.delays
 from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
+from mpf.core.config_validator import ConfigValidator
 
 
 class Shot(ModeDevice, SystemWideDevice):
@@ -44,6 +45,7 @@ class Shot(ModeDevice, SystemWideDevice):
         self.active_mode = None
         self.active_settings = None
         self._enabled = False
+        self.tokens = dict()
 
     @property
     def enabled(self):
@@ -67,6 +69,20 @@ class Shot(ModeDevice, SystemWideDevice):
                                  enable=False,
                                  mode=None)
 
+    def device_added_to_mode(self, mode, player):
+        """Called when this shot is dynamically added to a mode that was
+        already started. Automatically enables the shot and calls the the method
+        that's usually called when a player's turn starts since that was missed
+        since the mode started after that.
+
+        """
+        super().device_added_to_mode(mode, player)
+
+        self.player_turn_start(player)
+
+        if not self.config['enable_events']:
+            self.enable(mode)
+
     def _validate_config(self):
         if len(self.config['switch_sequence']) and (len(self.config['switch']) or len(self.config['switches'])):
             raise AssertionError("A shot can have either switch_sequence or switch/switches")
@@ -78,9 +94,16 @@ class Shot(ModeDevice, SystemWideDevice):
             self.config['profile'] = 'default'
 
         for switch in self.config['switch']:
-
             if switch not in self.config['switches']:
                 self.config['switches'].append(switch)
+
+        self._create_tokens()
+
+    def _create_tokens(self):
+        # anything in this shot's config that is not a standard shot config
+        # item is a token that's later passed to shows
+        self.tokens = {x: self.config[x] for x in self.config
+                       if x not in ConfigValidator.config_spec['shots']}
 
     def _register_switch_handlers(self):
         if self.switch_handlers_active:
@@ -194,18 +217,18 @@ class Shot(ModeDevice, SystemWideDevice):
 
         self.debug_log("Stopping current show: %s", self.running_show)
 
-        self.running_show.stop(hold=False, reset=False)
+        self.running_show.stop(hold=False)
 
         self.debug_log("Setting current show to: None")
 
         self.running_show = None
 
-    def _update_show(self, show_step=0):
+    def _update_show(self, show_step=None):
         if not self.player:
             return
 
-        self.debug_log("Updating lights 1: Profile: %s, "
-                       "lightshow_step: %s, Enabled: %s, Config "
+        self.debug_log("Updating show 1: Profile: %s, "
+                       "show_step: %s, Enabled: %s, Config "
                        "setting for 'show_when_disabled': %s",
                        self.active_settings['profile'], show_step,
                        self.active_settings['enable'],
@@ -220,7 +243,7 @@ class Shot(ModeDevice, SystemWideDevice):
                           self.active_settings['settings']['player_variable']]])
 
         self.debug_log(
-                "Updating lights 2: Profile: '%s', State: %s, State "
+                "Updating show 2: Profile: '%s', State: %s, State "
                 "settings: %s, Priority: %s",
                 self.active_settings['profile'],
                 self.enable_table[self.active_mode]['current_state_name'],
@@ -233,50 +256,28 @@ class Shot(ModeDevice, SystemWideDevice):
                 self.running_show.stop(hold=False)
 
             s = copy(state_settings)
+            s.update(self.tokens)
             s.pop('show')
 
-            if 'priority' not in s:
-                s['priority'] = self.active_settings['priority']
-
             self.running_show = (
-                self.machine.shows[state_settings['show']].play(**s))
+                self.machine.shows[state_settings['show']].play(
+                    mode=self.active_mode, **s))
 
-        elif not self.running_show and 'show' in self.config and self.config['show']:
-            # Pop all the shot settings so we're left with any settings that
-            # should be passed to the show
-            s = deepcopy(self.config)
-            s.pop('profile', None)
-            s.pop('switch', None)
-            s.pop('switches', None)
-            s.pop('switch_sequence', None)
-            s.pop('cancel_switch', None)
-            s.pop('delay_switch', None)
-            s.pop('time', None)
-            s.pop('tags', None)
-            s.pop('label', None)
-            s.pop('debug', None)
-            s.pop('enable_events', None)
-            s.pop('disable_events', None)
-            s.pop('reset_events', None)
-            s.pop('advance_events', None)
-            s.pop('hit_events', None)
-            s.pop('remove_active_profile_events', None)
+        elif self.running_show:
+            self.running_show.advance(show_step=show_step)
+            self.debug_log("Running show: %s, step: %s",
+                           self.running_show,
+                           self.running_show.next_step_index - 1)
 
-            if 'priority' not in s:
-                s['priority'] = self.active_settings['priority']
+        elif self.active_settings['settings']['show']:
+            s = copy(state_settings)
+            s.update(self.tokens)
+            s.pop('show')
+            s['manual_advance'] = True
 
-            if 'manual_advance' not in s:
-                s['manual_advance'] = True
-
-            self.running_show = self.machine.shows[self.config['show']].play(
-                **s)
-
-        else:
-            if self.running_show:
-                self.running_show.advance(show_step=show_step)
-                self.debug_log("Running show: %s, step: %s",
-                               self.running_show,
-                               self.running_show.next_step_index - 1)
+            self.running_show = (self.machine.shows[
+                self.active_settings['settings']['show']].play(
+                mode=self.active_mode, **s))
 
     def player_turn_start(self, player, **kwargs):
         """Called by the shot profile manager when a player's turn starts to
@@ -297,29 +298,14 @@ class Shot(ModeDevice, SystemWideDevice):
         self.remove_from_enable_table(None)
         self.active_settings['priority'] = -1
 
-    def device_added_to_mode(self, mode, player):
-        """Called when this shot is dynamically added to a mode that was
-        already started. Automatically enables the shot and calls the the method
-        that's usually called when a player's turn starts since that was missed
-        since the mode started after that.
-
-        """
-        super().device_added_to_mode(mode, player)
-
-        self.player_turn_start(player)
-
-        # if not self.config['enable_events']:
-        #     self.enable(mode)
-
     def control_events_in_mode(self, mode):
 
-        self.debug_log('Control events found in %s config. Updating'
-                       ' enable_table', mode)
+        self.debug_log('Control events found in %s config. Updating '
+                       'enable_table', mode)
 
         enable = not mode.config['shots'][self.name]['enable_events']
 
-        self.update_enable_table(enable=enable,
-                                 mode=mode)
+        self.update_enable_table(enable=enable, mode=mode)
 
     def remove(self):
         """Remove this shot device. Destroys it and removes it from the shots
@@ -328,7 +314,7 @@ class Shot(ModeDevice, SystemWideDevice):
         """
 
         self.debug_log("Removing...")
-        self._enabled = False
+        self.disable()
         self._remove_switch_handlers()
         self._stop_show()
 
@@ -558,7 +544,7 @@ class Shot(ModeDevice, SystemWideDevice):
 
         self.active_sequences = list()
 
-    def jump(self, mode, state, show_step=0, force=True):
+    def jump(self, mode, state, show_step=1, force=True):
         """Jumps to a certain state in the active shot profile.
 
         Args:
@@ -566,7 +552,8 @@ class Shot(ModeDevice, SystemWideDevice):
                 are zero-based, so the first state is 0.
             show_step: The step number that the associated light script
                 should start playing at. Useful with rotations so this shot can
-                pick up right where it left off. Default is 0.
+                pick up right where it left off. Default is 1 (the first step
+                in the show)
 
         """
         if not (self._enabled or force):
@@ -744,7 +731,7 @@ class Shot(ModeDevice, SystemWideDevice):
                 [self.player[self.enable_table[mode]['settings']
                           ['player_variable']]]['name'])
 
-        except TypeError:
+        except (TypeError, IndexError):
             self.enable_table[mode]['current_state_name'] = None
 
         self.debug_log("New current state name for mode %s: %s",

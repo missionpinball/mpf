@@ -1,4 +1,6 @@
 from mock import MagicMock
+
+from mpf.core.rgb_color import RGBColor
 from mpf.tests.MpfTestCase import MpfTestCase
 
 
@@ -209,8 +211,92 @@ class TestShots(MpfTestCase):
         self.assertEqual("two", self.machine.shots.shot_2.active_settings['current_state_name'])
         self.assertEqual(1, self.machine.game.player["shot_2_three_states_loop"])
 
-    def test_show_in_profile_root(self):
-        pass
+    def test_default_show_light(self):
+        self.start_game()
+        self.assertEqual(0,
+            self.machine.lights.light_1.hw_driver.current_brightness)
+
+        self.hit_and_release_switch("switch_5")
+        self.advance_time_and_run()
+        self.assertEqual(255,
+            self.machine.lights.light_1.hw_driver.current_brightness)
+
+    def test_default_show_lights(self):
+        self.start_game()
+        self.assertEqual(0,
+            self.machine.lights.light_1.hw_driver.current_brightness)
+        self.assertEqual(0,
+            self.machine.lights.light_2.hw_driver.current_brightness)
+
+        self.hit_and_release_switch("switch_6")
+        self.advance_time_and_run()
+        self.assertEqual(255,
+            self.machine.lights.light_1.hw_driver.current_brightness)
+        self.assertEqual(255,
+            self.machine.lights.light_2.hw_driver.current_brightness)
+
+    def test_default_show_led(self):
+        self.start_game()
+        self.assertEqual(RGBColor('off'),
+                         self.machine.leds.led_1.hw_driver.current_color)
+
+        self.hit_and_release_switch("switch_7")
+        self.advance_time_and_run()
+
+        self.assertEqual(RGBColor('white'),
+                         self.machine.leds.led_1.hw_driver.current_color)
+
+    def test_default_show_leds(self):
+        self.start_game()
+        self.assertEqual(RGBColor('off'),
+                         self.machine.leds.led_1.hw_driver.current_color)
+        self.assertEqual(RGBColor('off'),
+                         self.machine.leds.led_2.hw_driver.current_color)
+
+        self.hit_and_release_switch("switch_8")
+        self.advance_time_and_run()
+
+        self.assertEqual(RGBColor('white'),
+                         self.machine.leds.led_1.hw_driver.current_color)
+        self.assertEqual(RGBColor('white'),
+                         self.machine.leds.led_2.hw_driver.current_color)
+
+    def test_show_in_shot_profile_root(self):
+
+        self.start_game()
+        self.advance_time_and_run()
+        self.assertEqual(RGBColor('red'),
+            self.machine.leds.led_3.hw_driver.current_color)
+
+        # make sure the show is not auto advancing
+        self.advance_time_and_run(5)
+        self.assertEqual(RGBColor('red'),
+            self.machine.leds.led_3.hw_driver.current_color)
+
+        self.advance_time_and_run(5)
+        self.assertEqual(RGBColor('red'),
+            self.machine.leds.led_3.hw_driver.current_color)
+
+        self.hit_and_release_switch("switch_9")
+        self.advance_time_and_run()
+        self.assertEqual(RGBColor('orange'),
+            self.machine.leds.led_3.hw_driver.current_color)
+
+        self.hit_and_release_switch("switch_9")
+        self.advance_time_and_run()
+        self.assertEqual(RGBColor('yellow'),
+            self.machine.leds.led_3.hw_driver.current_color)
+
+        self.hit_and_release_switch("switch_9")
+        self.advance_time_and_run()
+        self.assertEqual(RGBColor('green'),
+            self.machine.leds.led_3.hw_driver.current_color)
+
+        # show's over, make sure it stays on green
+
+        self.advance_time_and_run(5)
+        self.assertEqual(RGBColor('green'),
+            self.machine.leds.led_3.hw_driver.current_color)
 
     def test_show_in_step(self):
         pass

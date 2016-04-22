@@ -12,6 +12,16 @@ switches:
     number:
   switch_4:
     number:
+  switch_5:
+    number:
+  switch_6:
+    number:
+  switch_7:
+    number:
+  switch_8:
+    number:
+  switch_9:
+    number:
   s_delay:
     number:
 
@@ -28,36 +38,51 @@ matrix_lights:
 leds:
   led_1:
     number:
+  led_2:
+    number:
+  led_3:
+    number:
 
 shots:
   shot_1:
     switch: switch_1
     light: light_1
-    debug: True
   shot_2:
     switch: switch_2
     light: light_2
-    debug: True
     profile: three_states_loop
   shot_3:
     switch: switch_3
     light: tag1
-    debug: True
   shot_4:
     switch: switch_1
     light: light_1, light_2
     led: led_1
-    debug: True
   led_1:
     switch: switch_1
     led: led_1
-    debug: True
   shot_sequence:
     switch_sequence: switch_1, switch_2, switch_3
     delay_switch:
       s_delay: 2s
     time: 2s
-    debug: True
+  default_show_light:
+    switch: switch_5
+    light: light_1
+  default_show_lights:
+    switch: switch_6
+    lights: light_1, light_2
+  default_show_led:
+    switch: switch_7
+    led: led_1
+  default_show_leds:
+    switch: switch_8
+    leds: led_1, led_2
+  show_in_profile_root:
+    switch: switch_9
+    leds: led_3
+    profile: rainbow
+
 
 shot_profiles:
     three_states_loop:
@@ -66,10 +91,21 @@ shot_profiles:
         - name: one
         - name: two
         - name: three
+    rainbow:
+      show: rainbow
+      states:
+        - name: red
+        - name: orange
+        - name: yellow
+        - name: green
 
 shows:
-    flash:
-        - time: +1
-          color: off
-        - time: +1
-          color: (color)
+    rainbow:
+      - leds:
+          (leds): red
+      - leds:
+          (leds): orange
+      - leds:
+          (leds): yellow
+      - leds:
+          (leds): green

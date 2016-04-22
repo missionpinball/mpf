@@ -51,6 +51,14 @@ class ShotGroup(ModeDevice, SystemWideDevice):
                 shot.update_enable_table(profile=self.config['profile'],
                                          mode=None)
 
+    def device_added_to_mode(self, mode, player):
+        super().device_added_to_mode(mode, player)
+
+        # If there are no enable_events configured, then we enable this shot
+        # group when its created on mode start
+        if not mode.config['shot_groups'][self.name]['enable_events']:
+            self.enable(mode)
+
     def _enable_related_device_debugging(self):
         self.log.debug(
             "Enabling debugging for this shot groups's member shots")
@@ -100,7 +108,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         if mode:
             self._enable_from_mode(mode, profile)
         else:
-            self._enable_from_systemwide(profile)
+            self._enable_from_system_wide(profile)
 
         self._enabled = True
         self.debug_log('Enabling from mode: %s', mode)
@@ -131,7 +139,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
                                              enable=True,
                                              mode=mode)
 
-    def _enable_from_systemwide(self, profile=None):
+    def _enable_from_system_wide(self, profile=None):
         for shot in self.config['shots']:
             shot.enable(profile=profile)
             shot.add_to_group(self)
@@ -310,7 +318,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         # step through all our shots and update their states
         for i, shot in enumerate(shot_list):
             shot.jump(mode=mode, state=shot_state_list[i][0],
-                      show_step=shot_state_list[i][1])
+                      show_step=shot_state_list[i][1] + 1)
 
     def rotate_right(self, mode=None, **kwargs):
         """Rotates the state of the shots to the right. This method is the
@@ -375,14 +383,6 @@ class ShotGroup(ModeDevice, SystemWideDevice):
             self.machine.events.post(self.name + '_' + profile + '_complete')
             self.machine.events.post(self.name + '_' + profile + '_' + state +
                                      '_complete')
-
-    def device_added_to_mode(self, mode, player):
-        super().device_added_to_mode(mode, player)
-
-        # If there are no enable_events configured, then we enable this shot
-        # group when its created on mode start
-        if not mode.config['shot_groups'][self.name]['enable_events']:
-            self.enable(mode)
 
     def control_events_in_mode(self, mode):
         # called if any control_events for this shot_group exist in the mode
