@@ -21,12 +21,16 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         self._missing += 1
 
     def _requesting_ball(self, balls, **kwargs):
+        del kwargs
         self._requesting += balls
 
     def _ball_enter(self, new_balls, unclaimed_balls, **kwargs):
+        del kwargs
+        del unclaimed_balls
         self._enter += new_balls
 
     def _captured_from_pf(self, balls, **kwargs):
+        del kwargs
         self._captured += balls
 
     def test_manual_successful_eject_to_pf(self):
@@ -1032,6 +1036,7 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         playfield = self.machine.ball_devices['playfield']
 
         # add ball to pf
+        self.machine.ball_controller.num_balls_known = 1
         playfield.balls = 1
         self.assertEqual(1, playfield.balls)
         coil4.pulse = MagicMock()
@@ -1074,6 +1079,7 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         playfield = self.machine.ball_devices['playfield']
 
         # add ball to pf
+        self.machine.ball_controller.num_balls_known = 1
         playfield.balls = 1
         coil5.pulse = MagicMock()
         coil2.pulse = MagicMock()
@@ -1119,7 +1125,6 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         self.assertEqual(0, playfield.balls)
         self.assertEqual(1, launcher.balls)
         self.assertEqual(0, vuk.balls)
-
 
         # it should stay there and wait for manual eject
         self.assertEqual(0, playfield.balls)
