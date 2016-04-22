@@ -298,7 +298,27 @@ class TestShots(MpfTestCase):
             self.machine.leds.led_3.hw_driver.current_color)
 
     def test_show_in_step(self):
-        pass
+        self.start_game()
+        self.advance_time_and_run()
+
+        show1_colors = (RGBColor('red'), RGBColor('orange'),
+                        RGBColor('yellow'), RGBColor('green'))
+
+        show2_colors = (RGBColor('aliceblue'), RGBColor('antiquewhite'),
+                        RGBColor('aquamarine'), RGBColor('azure'))
+
+        self.assertIn(self.machine.leds.led_4.hw_driver.current_color,
+                      show1_colors)
+
+        self.hit_and_release_switch('switch_10')
+        self.advance_time_and_run()
+        self.assertIn(self.machine.leds.led_4.hw_driver.current_color,
+                      show2_colors)
+
+        self.hit_and_release_switch('switch_10')
+        self.advance_time_and_run()
+        self.assertIn(self.machine.leds.led_4.hw_driver.current_color,
+                      show1_colors)
 
     def test_combined_show_in_profile_root_and_step(self):
         pass
