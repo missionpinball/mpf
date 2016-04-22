@@ -310,9 +310,9 @@ shot_profiles:
     default:
         states:
           - name: unlit
-            script: "off"
+            show: "off"
           - name: lit
-            script: "on"
+            show: "on"
 
 shows:
     flash:
@@ -320,33 +320,54 @@ shows:
           lights:
             (light):
               brightness: ff
+            (lights):
+              brightness: ff
           leds:
             (led):
-              color: ffffff
+              color: white
+            (leds):
+              color: white
         - time: 1
           lights:
             (light):
               brightness: 0
+            (lights):
+              brightness: 0
           leds:
             (led):
-              color: 000000
+              color: 0
+            (leds):
+              color: 0
         - time: 2
     on:
         - time: 0
           lights:
             (light):
               brightness: ff
+            (lights):
+              brightness: ff
           leds:
             (led):
-              color: ffffff
+              color: white
+            (leds):
+              color: white
     off:
         - time: 0
           lights:
             (light):
               brightness: 0
+            (lights):
+              brightness: 0
           leds:
             (led):
               color: 0
+            (leds):
+              color: 0
+    led_color:
+        - time: 0
+          leds:
+            (led): (color)
+            (leds): (color)
 
 playfields:
     playfield:
