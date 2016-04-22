@@ -45,10 +45,18 @@ class BallController(object):
             if 'ball_switches' not in device.config:
                 continue
             for switch in device.config['ball_switches']:
-                self.machine.switch_controller.add_switch_handler(switch.name, self._count_balls, ms=100)
+                self.machine.switch_controller.add_switch_handler(switch.name,
+                                                                  self._update_num_balls_known,
+                                                                  ms=device.config['entrance_count_delay'])
 
         # run initial count
-        self._count_balls()
+        self._update_num_balls_known()
+
+    def _update_num_balls_known(self):
+        balls = self._count_balls()
+        if balls > self.num_balls_known:
+            self.log.debug("Setting known balls to %s", balls)
+            self.num_balls_known = balls
 
     def _count_balls(self):
         self.log.debug("Counting Balls")
@@ -63,13 +71,9 @@ class BallController(object):
                 balls += device.balls
             else:
                 for switch in device.config['ball_switches']:
-                    if self.machine.switch_controller.is_active(switch.name, ms=100):
+                    if self.machine.switch_controller.is_active(
+                            switch.name, ms=device.config['entrance_count_delay']):
                         balls += 1
-
-        self.log.debug("Setting known balls to %s", balls)
-        if balls > self.num_balls_known:
-            self.log.debug("Setting known balls to %s", balls)
-            self.num_balls_known = balls
 
         return balls
 
