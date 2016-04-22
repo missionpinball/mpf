@@ -14,7 +14,6 @@ class TestTooLongExitCountDelay(MpfTestCase):
         self._num_balls_drained += 1
 
     def put_four_balls_in_trough(self):
-        self.machine.ball_controller.num_balls_known = 4
         self.machine.switch_controller.process_switch('s_trough_1', 1)
         self.machine.switch_controller.process_switch('s_trough_2', 1)
         self.machine.switch_controller.process_switch('s_trough_3', 1)

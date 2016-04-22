@@ -213,7 +213,6 @@ class TestBallSave(MpfTestCase):
 
     def testBallDoubleDrain(self):
         # prepare game
-        self.machine.ball_controller.num_balls_known = 0
         self.machine.switch_controller.process_switch('s_ball_switch1', 1)
         self.advance_time_and_run(10)
         self.assertEqual(1, self.machine.ball_controller.num_balls_known)

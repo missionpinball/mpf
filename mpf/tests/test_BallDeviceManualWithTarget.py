@@ -198,7 +198,6 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         self._enter = 0
         self._captured = 0
         self._missing = 0
-        self.machine.ball_controller.num_balls_known = 1
 
         # add an initial ball to trough
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
@@ -630,7 +629,6 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         self._enter = 0
         self._captured = 0
         self._missing = 0
-        self.machine.ball_controller.num_balls_known = 2
 
         # add two initial ball to trough
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)

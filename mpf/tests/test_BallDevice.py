@@ -1576,7 +1576,6 @@ class TestBallDevice(MpfTestCase):
         self._captured = 0
         self._missing = 0
         self._collecting_balls_complete = 0
-        self.machine.ball_controller.num_balls_known = 2
 
         # add an initial ball to trough
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
@@ -1675,7 +1674,6 @@ class TestBallDevice(MpfTestCase):
         self._captured = 0
         self._missing = 0
         self._collecting_balls_complete = 0
-        self.machine.ball_controller.num_balls_known = 2
 
         # add an initial ball to trough
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
@@ -1823,7 +1821,6 @@ class TestBallDevice(MpfTestCase):
         self._captured = 0
         self._missing = 0
         self._collecting_balls_complete = 0
-        self.machine.ball_controller.num_balls_known = 2
 
         # add initial balls to trough
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
