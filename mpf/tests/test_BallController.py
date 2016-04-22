@@ -75,7 +75,7 @@ class TestBallController(MpfTestCase):
 
         self.machine.switch_controller.process_switch("s_ball_switch_launcher",
                                                       1)
-        self.advance_time_and_run(.5)
+        self.advance_time_and_run(1)
         self.assertEqual(4, self.machine.ball_controller.num_balls_known)
 
         self.assertEqual("idle", self.machine.ball_devices.test_trough._state)
