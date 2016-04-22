@@ -17,6 +17,7 @@ class TestPlayfieldTransfer(MpfTestCase):
         pf1 = self.machine.ball_devices['playfield1']
         pf2 = self.machine.ball_devices['playfield2']
 
+        self.machine.ball_controller.num_balls_known = 4
         pf1.balls = 2
         pf1.available_balls = 2
         pf2.balls = 2
