@@ -591,6 +591,9 @@ class Shot(ModeDevice, SystemWideDevice):
     def enable(self, mode=None, profile=None, **kwargs):
         del kwargs
 
+        if self._enabled:
+            return
+
         self.debug_log(
                 "Received command to enable this shot from mode: %s "
                 "with profile: %s", mode, profile)
@@ -615,6 +618,9 @@ class Shot(ModeDevice, SystemWideDevice):
 
         """
         del kwargs
+
+        if not self._enabled:
+            return
 
         # we still want the profile here in case the shot is configured to have
         # lights even when disabled
@@ -692,8 +698,13 @@ class Shot(ModeDevice, SystemWideDevice):
             except KeyError:
                 enable = False
 
-        profile_settings = (
-            self.machine.shot_profile_manager.profiles[profile].copy())
+        try:
+            profile_settings = (
+                self.machine.shot_profile_manager.profiles[profile].copy())
+        except KeyError:
+            raise KeyError('Cannot apply shot profile "{}" to shot "{}" as '
+                           'there is no profile with that name.'.format(
+                           profile, self.name))
 
         profile_settings['player_variable'] = (
             profile_settings['player_variable'].replace('%', self.name))
