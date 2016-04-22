@@ -817,6 +817,9 @@ class TestBallDevice(MpfTestCase):
         self.assertEqual(2, self._captured)
         self._captured = 0
 
+        # assume there are more balls in the machine
+        self.machine.ball_controller.num_balls_known = 4
+
         self.assertEqual(0, playfield.balls)
 
         # it should keep the ball
