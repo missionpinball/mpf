@@ -163,6 +163,9 @@ class BallController(object):
                            self.machine.ball_controller.num_balls_known)
             return False
 
+    def get_free_balls(self):
+        return self.num_balls_known - self._count_balls()
+
     def collect_balls(self, target='home, trough'):
         """Used to ensure that all balls are in contained in ball devices with
         the tag or list of tags you pass.
