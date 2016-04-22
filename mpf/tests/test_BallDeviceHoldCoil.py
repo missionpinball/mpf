@@ -1,9 +1,6 @@
-import unittest
-
-from mpf.core.machine import MachineController
 from mpf.tests.MpfTestCase import MpfTestCase
 from mock import MagicMock
-import time
+
 
 class TestBallDevicesHoldCoil(MpfTestCase):
 
@@ -12,6 +9,10 @@ class TestBallDevicesHoldCoil(MpfTestCase):
 
   def getMachinePath(self):
       return 'tests/machine_files/ball_device/'
+
+  def setUp(self):
+      super().setUp()
+      self.machine.ball_controller.num_balls_known = 99
 
   def test_holdcoil_with_direct_release(self):
       self.machine.coils['hold_coil'].enable = MagicMock()

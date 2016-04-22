@@ -205,7 +205,6 @@ class MpfTestCase(unittest.TestCase):
             while not self.machine.test_init_complete:
                 self.advance_time_and_run(0.01)
 
-            self.machine.ball_controller.num_balls_known = 99
             self.advance_time_and_run(300)
 
         except Exception as e:
