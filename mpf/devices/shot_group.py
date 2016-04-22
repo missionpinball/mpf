@@ -113,10 +113,6 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         self._enabled = True
         self.debug_log('Enabling from mode: %s', mode)
 
-        for shot in self.config['shots']:
-            shot.enable(mode)
-            shot.add_to_group(self)
-
     def _enable_from_mode(self, mode, profile=None):
         # If we weren't passed a profile, use the one from the mode config
         if not profile and mode.config['shot_groups'][self.name]['profile']:
@@ -130,14 +126,12 @@ class ShotGroup(ModeDevice, SystemWideDevice):
                 # want to enable this shot.
 
                 if profile:
-                    shot.update_enable_table(profile=profile,
-                                             enable=True,
-                                             mode=mode)
-
+                    shot.enable(profile=profile, enable=True, mode=mode)
                 else:
-                    shot.update_enable_table(profile=shot.config['profile'],
-                                             enable=True,
-                                             mode=mode)
+                    shot.enable(profile=shot.config['profile'], enable=True,
+                                mode=mode)
+
+                shot.add_to_group(self)
 
     def _enable_from_system_wide(self, profile=None):
         for shot in self.config['shots']:
@@ -274,16 +268,12 @@ class ShotGroup(ModeDevice, SystemWideDevice):
                     shot.enable_table[mode]['current_state_name'] not in exclude_states):
                 shot_list.append(shot)
 
-        # shot_state_list is deque of tuples (state num, light show step num)
+        # shot_state_list is deque of tuples (state num, show step num)
         shot_state_list = deque()
 
         for shot in shot_list:
 
-            try:
-                current_state = shot.running_light_show.current_location
-
-            except AttributeError:
-                current_state = -1
+            current_state = shot.running_show.next_step_index
 
             shot_state_list.append(
                     (shot.player[shot.enable_table[mode]['settings'][
@@ -318,7 +308,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         # step through all our shots and update their states
         for i, shot in enumerate(shot_list):
             shot.jump(mode=mode, state=shot_state_list[i][0],
-                      show_step=shot_state_list[i][1] + 1)
+                      show_step=shot_state_list[i][1])
 
     def rotate_right(self, mode=None, **kwargs):
         """Rotates the state of the shots to the right. This method is the

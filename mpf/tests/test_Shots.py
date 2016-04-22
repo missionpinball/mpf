@@ -262,7 +262,6 @@ class TestShots(MpfTestCase):
                          self.machine.leds.led_2.hw_driver.current_color)
 
     def test_show_in_shot_profile_root(self):
-
         self.start_game()
         self.advance_time_and_run()
         self.assertEqual(RGBColor('red'),

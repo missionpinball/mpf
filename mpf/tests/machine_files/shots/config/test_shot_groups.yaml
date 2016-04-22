@@ -16,6 +16,16 @@ switches:
     number:
   s_rotate_r:
     number:
+  switch_10:
+    number:
+  switch_11:
+    number:
+
+leds:
+  led_10:
+    number:
+  led_11:
+    number:
 
 shots:
   shot_1:
@@ -26,6 +36,13 @@ shots:
     switch: switch_3
   shot_4:
     switch: switch_4
+  shot_10:
+    switch: switch_10
+    leds: led_10
+  shot_11:
+    switch: switch_11
+    leds: led_11
+
 
 shot_groups:
   test_group:
@@ -34,3 +51,30 @@ shot_groups:
     rotate_right_events: s_rotate_r_active
     reset_events: shot_group_reset
     debug: True
+  test_group_2:
+    shots: shot_10, shot_11
+    rotate_left_events: rotate_11_left
+    profile: rainbow
+
+shows:
+    rainbow:
+      - leds:
+          (leds): off
+      - leds:
+          (leds): red
+      - leds:
+          (leds): orange
+      - leds:
+          (leds): yellow
+      - leds:
+          (leds): green
+
+shot_profiles:
+    rainbow:
+      show: rainbow
+      states:
+        - name: unlit
+        - name: red
+        - name: orange
+        - name: yellow
+        - name: green

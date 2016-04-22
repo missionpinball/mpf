@@ -83,7 +83,6 @@ shots:
     leds: led_3
     profile: rainbow
 
-
 shot_profiles:
     three_states_loop:
       loop: True

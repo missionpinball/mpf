@@ -1,4 +1,6 @@
 from mock import MagicMock
+
+from mpf.core.rgb_color import RGBColor
 from mpf.tests.MpfTestCase import MpfTestCase
 
 
@@ -254,3 +256,63 @@ class TestShotGroups(MpfTestCase):
             'current_state_name'])
         self.assertEqual("unlit", self.machine.shots.shot_4.active_settings[
             'current_state_name'])
+
+    def test_rotate_with_shows_in_progress(self):
+        self.start_game()
+        self.advance_time_and_run()
+
+        # advance the shots a bit
+
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_10.hw_driver.current_color)
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_11.hw_driver.current_color)
+
+        self.hit_and_release_switch('switch_10')
+        self.advance_time_and_run()
+        self.assertEqual(RGBColor('red'),
+            self.machine.leds.led_10.hw_driver.current_color)
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_11.hw_driver.current_color)
+
+        self.hit_and_release_switch('switch_10')
+        self.advance_time_and_run()
+        self.assertEqual(RGBColor('orange'),
+            self.machine.leds.led_10.hw_driver.current_color)
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_11.hw_driver.current_color)
+
+        self.hit_and_release_switch('switch_11')
+        self.advance_time_and_run()
+        self.assertEqual(RGBColor('orange'),
+            self.machine.leds.led_10.hw_driver.current_color)
+        self.assertEqual(RGBColor('red'),
+            self.machine.leds.led_11.hw_driver.current_color)
+
+        # rotate
+        self.machine.events.post('rotate_11_left')
+        self.advance_time_and_run()
+        self.assertEqual(RGBColor('red'),
+            self.machine.leds.led_10.hw_driver.current_color)
+        self.assertEqual(RGBColor('orange'),
+            self.machine.leds.led_11.hw_driver.current_color)
+
+        # make sure they don't auto advance since the shows should be set to
+        # manual advance
+        self.advance_time_and_run()
+        self.assertEqual(RGBColor('red'),
+            self.machine.leds.led_10.hw_driver.current_color)
+        self.assertEqual(RGBColor('orange'),
+            self.machine.leds.led_11.hw_driver.current_color)
+
+        self.advance_time_and_run()
+        self.assertEqual(RGBColor('red'),
+            self.machine.leds.led_10.hw_driver.current_color)
+        self.assertEqual(RGBColor('orange'),
+            self.machine.leds.led_11.hw_driver.current_color)
+
+
+
+
+    def test_no_profile_in_shot_group_uses_profile_from_shot(self):
+        pass  # todo
