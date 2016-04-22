@@ -11,6 +11,10 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self._requesting = 0
         self._queue = False
 
+    def setUp(self):
+        super().setUp()
+        self.machine.ball_controller.num_balls_known = 99
+
     def getConfigFile(self):
         return 'test_ball_device_switch_confirmation.yaml'
 
