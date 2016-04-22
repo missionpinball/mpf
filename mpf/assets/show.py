@@ -94,8 +94,10 @@ class Show(Asset):
 
             # Make sure there is a time entry for each step in the show file.
             if 'time' not in step:
-                raise ValueError("Show '%s' is missing a 'time:' value in step"
-                                 " %s. " % (self.name, step_num))
+                if step_num:
+                    step['time'] = '+1'
+                else:
+                    step['time'] = 0
 
             step_time = Util.string_to_secs(step['time'])
 
@@ -423,7 +425,7 @@ class RunningShow(object):
             self._run_next_step()
 
     def __repr__(self):
-        return "Running Show Instance: {}".format(self.name)
+        return 'Running Show Instance: "{}"'.format(self.name)
 
     def _replace_tokens(self, **kwargs):
         keys_replaced = dict()
@@ -447,6 +449,7 @@ class RunningShow(object):
                             x = keys_replaced[x]
 
                         target = target[x]
+
 
                     target[replacement] = target.pop(key_name)
                     keys_replaced[key_name] = replacement
@@ -488,6 +491,11 @@ class RunningShow(object):
 
     def advance(self, steps=1, show_step=None):
         """Manually advances this show to the next step."""
+
+        if type(show_step) is int and show_step < 0:
+            raise ValueError('Cannot advance {} to step "{}" as that is'
+                             'not a valid step number.'.format(self, show_step))
+
         self.machine.clock.unschedule(self._run_next_step, True)
         steps_to_advance = steps - 1  # since current_step is really next step
 
