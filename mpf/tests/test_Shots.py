@@ -789,7 +789,66 @@ class TestShots(MpfTestCase):
                          self.machine.leds.led_20.hw_driver.current_color)
 
     def test_block(self):
-        pass  # waterfall hits
+        # test shot profiles from a higher priority mode to block hits to lower
+        # modes
+
+        self.start_game()
+        self.machine.modes.mode1.start()
+
+        self.machine.shots.shot_21.hit()
+
+        # check the states of the shots.
+        # player vars for shots are <shot>_<profile>
+        # shot_21, mode1_shot_21 should have advanced
+        self.assertEqual(1, self.machine.game.player.shot_21_mode1_shot_21)
+
+        # but since it was set to block, the machine base profile should not
+        self.assertEqual(0, self.machine.game.player.shot_21_profile_21)
+
+    def test_no_block(self):
+        # test shot profiles from a higher priority mode when block == false
+
+        # internally this is called "waterfalling" hits, since the hit is
+        # always registered by the highest priority profile, and then if it
+        # does not block, it waterfalls down to the next one, etc.
+
+        self.start_game()
+        self.machine.modes.mode1.start()
+
+        self.machine.shots.shot_22.hit()
+
+        # check the states of the shots.
+        self.assertEqual(1, self.machine.game.player.shot_22_mode1_shot_22)
+
+        # no blocking, so the base profile should have advanced too
+        self.assertEqual(1, self.machine.game.player.shot_22_profile_22)
+
+    def test_multi_level_blocking(self):
+        # test highest mode does not block, next mode blocks
+
+        self.start_game()
+        self.machine.modes.mode1.start()
+        self.machine.modes.mode2.start()
+
+        self.machine.shots.shot_21.hit()
+        # mode2 should hit, does not block
+        self.assertEqual(1, self.machine.game.player.shot_21_mode2_shot_21)
+
+        # mode1 should hit, but blocks
+        self.assertEqual(1, self.machine.game.player.shot_21_mode1_shot_21)
+
+        # base mode should not hit
+        self.assertEqual(0, self.machine.game.player.shot_21_profile_21)
+
+        self.machine.shots.shot_22.hit()
+        # mode2 should hit, does not block
+        self.assertEqual(1, self.machine.game.player.shot_22_mode2_shot_22)
+
+        # mode1 should hit, does not block
+        self.assertEqual(1, self.machine.game.player.shot_22_mode1_shot_22)
+
+        # base mode should hit
+        self.assertEqual(1, self.machine.game.player.shot_22_profile_22)
 
     def test_remove_active_profile(self):
         pass

@@ -2,6 +2,7 @@
 
 modes:
   - mode1
+  - mode2
 
 switches:
   switch_1:
@@ -47,6 +48,8 @@ switches:
   switch_20:
     number:
   switch_21:
+    number:
+  switch_22:
     number:
 
 matrix_lights:
@@ -172,6 +175,12 @@ shots:
     profile: profile_20
     enable_events: None
     leds: led_20
+  shot_21:
+    switch: switch_21
+    profile: profile_21
+  shot_22:
+    switch: switch_22
+    profile: profile_22
 
 shot_profiles:
     three_states_loop:
@@ -249,6 +258,16 @@ shot_profiles:
           show: rainbow
         - name: two
           show: rainbow2
+    profile_21:
+      states:
+        - name: base_one
+        - name: base_two
+        - name: base_three
+    profile_22:
+      states:
+        - name: base_one
+        - name: base_two
+        - name: base_three
 
 shows:
     rainbow:

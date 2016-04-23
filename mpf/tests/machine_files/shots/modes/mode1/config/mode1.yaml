@@ -1,5 +1,8 @@
 #config_version=4
 
+mode:
+  priority: 100
+
 shots:
   mode1_shot_1:
     switch: switch_3
@@ -10,3 +13,21 @@ shots:
     disable_events: custom_disable_17
     reset_events: custom_reset_17
     hit_events: custom_hit_17
+  shot_21:
+    profile: mode1_shot_21
+  shot_22:
+    profile: mode1_shot_22
+
+shot_profiles:
+  mode1_shot_21:
+    block: true
+    states:
+      - name: mode1_one
+      - name: mode1_two
+      - name: mode1_three
+  mode1_shot_22:
+    block: false
+    states:
+      - name: mode1_one
+      - name: mode1_two
+      - name: mode1_three

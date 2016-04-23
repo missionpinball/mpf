@@ -1,0 +1,24 @@
+#config_version=4
+
+mode:
+  priority: 200
+
+shots:
+  shot_21:
+    profile: mode2_shot_21
+  shot_22:
+    profile: mode2_shot_22
+
+shot_profiles:
+  mode2_shot_21:
+    block: false
+    states:
+      - name: mode2_one
+      - name: mode2_two
+      - name: mode2_three
+  mode2_shot_22:
+    block: false
+    states:
+      - name: mode2_one
+      - name: mode2_two
+      - name: mode2_three

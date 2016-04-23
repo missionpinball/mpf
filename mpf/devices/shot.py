@@ -343,11 +343,22 @@ class Shot(ModeDevice, SystemWideDevice):
 
         del self.machine.shots[self.name]
 
-    def hit(self, mode='default#$%', waterfall_hits=None, **kwargs):
+    def hit(self, mode='default#$%', _wf=None, **kwargs):
         """Method which is called to indicate this shot was just hit. This
         method will advance the currently-active shot profile.
 
         Args:
+            mode: (Optional) The mode instance that was hit. If this is not
+                specified, this hit is registered via the highest-priority mode
+                that this shot is active it. A value of None represents the
+                base machine config (e.g. no Mode). The crazy default string
+                it so this method can differentiate between no mode specified
+                (where it uses the highest one) and a value of "None" which is
+                the base machine-wide config.
+            _wf: (Internal use only) A list of remaining modes from the enable
+                table of the original hit. Used to waterfall hits (which is
+                where hits are cascaded down to this shot in lower priority
+                modes if blocking is not set.
 
         Note that the shot must be enabled in order for this hit to be
         processed.
@@ -373,7 +384,19 @@ class Shot(ModeDevice, SystemWideDevice):
 
         # do this before the events are posted since events could change the
         # profile
-        need_to_waterfall = not self.enable_table[mode]['settings']['block']
+        if not _wf and not self.enable_table[mode]['settings']['block']:
+            _wf = list()
+            found = False
+
+            for _mode in self.enable_table:
+                if _mode == mode:
+                    found = True
+                elif found:
+                    _wf.append(_mode)
+                    if self.enable_table[_mode]['settings']['block']:
+                        break
+        elif _wf:
+            _wf.pop(0)
 
         # post events
         self.machine.events.post('{}_hit'.format(self.name),
@@ -410,38 +433,11 @@ class Shot(ModeDevice, SystemWideDevice):
             for callback in self.machine.monitors['shots']:
                 callback(name=self.name, profile=profile, state=state)
 
-        if need_to_waterfall:
-            self._waterfall_hits(mode, waterfall_hits.add(profile))
+        if _wf:
+            self.hit(_wf[0], _wf)
 
         else:
             self.debug_log('%s settings has block enabled', mode)
-
-    def _waterfall_hits(self, mode, waterfall_hits):
-        self.debug_log('%s block: False. Waterfalling hits', mode)
-
-        if not waterfall_hits:
-            waterfall_hits = set()
-
-        # check for waterfall_hits here because the current active profile
-        # could have been changed and we know for sure we want to look for
-        # waterfall_hits regardless of what it is since we're here.
-        if waterfall_hits and mode.enable_table[mode]['settings']['block']:
-            return
-
-        found = False
-
-        for _mode in self.enable_table:
-            # only care about hits lower than this mode
-
-            if found:
-                self.hit(mode=_mode, waterfall_hits=waterfall_hits)
-                return
-
-            elif _mode != mode:
-                continue
-
-            elif _mode == mode:
-                found = True
 
     def get_mode_state(self, mode):
         # returns a tuple of profile_name, current_state_name
