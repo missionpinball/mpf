@@ -291,7 +291,7 @@ class TestShots(MpfTestCase):
         self.assertEqual(RGBColor('green'),
             self.machine.leds.led_3.hw_driver.current_color)
 
-        # show's over, make sure it stays on green
+        # make sure it stays on green
 
         self.advance_time_and_run(5)
         self.assertEqual(RGBColor('green'),
@@ -321,18 +321,103 @@ class TestShots(MpfTestCase):
                       show1_colors)
 
     def test_combined_show_in_profile_root_and_step(self):
+        # tests a show defined in a profile root which is used for most steps,
+        # but a separate show in certain steps that is used just for that step
+
+        self.start_game()
+        self.advance_time_and_run()
+
+        # we're on step 1
+        self.assertEqual(RGBColor('red'),
+            self.machine.leds.led_12.hw_driver.current_color)
+
+        # step 2
+        self.hit_and_release_switch("switch_12")
+        self.advance_time_and_run()
+        self.assertEqual(RGBColor('orange'),
+            self.machine.leds.led_12.hw_driver.current_color)
+
+        # since this is a root show, it should not be advancing on its own, so
+        # advance the time a few times and make sure the led doesn't change
+        self.advance_time_and_run()
+        self.assertEqual(RGBColor('orange'),
+            self.machine.leds.led_12.hw_driver.current_color)
+
+        self.advance_time_and_run()
+        self.assertEqual(RGBColor('orange'),
+            self.machine.leds.led_12.hw_driver.current_color)
+
+        self.advance_time_and_run()
+        self.assertEqual(RGBColor('orange'),
+            self.machine.leds.led_12.hw_driver.current_color)
+
+        # step 3 is rainbow 2 show, so make sure it switches
+        self.hit_and_release_switch("switch_12")
+        self.advance_time_and_run(.1)
+        self.assertEqual(RGBColor('aliceblue'),
+            self.machine.leds.led_12.hw_driver.current_color)
+
+        # since this is a show in a step, it should be auto advancing, so keep
+        # checking every sec to make sure the colors are changing
+        self.advance_time_and_run(1)
+        self.assertEqual(RGBColor('antiquewhite'),
+            self.machine.leds.led_12.hw_driver.current_color)
+
+        self.advance_time_and_run(1)
+        self.assertEqual(RGBColor('aquamarine'),
+            self.machine.leds.led_12.hw_driver.current_color)
+
+        self.advance_time_and_run(1)
+        self.assertEqual(RGBColor('azure'),
+            self.machine.leds.led_12.hw_driver.current_color)
+
+        # it should loop
+        self.advance_time_and_run(.5)
+        # .5 because the time drifts due to how LEDs are updated and how the
+        # advance_time_and_run() test method works
+
+        self.assertEqual(RGBColor('aliceblue'),
+            self.machine.leds.led_12.hw_driver.current_color)
+        self.advance_time_and_run(1)
+        self.assertEqual(RGBColor('antiquewhite'),
+            self.machine.leds.led_12.hw_driver.current_color)
+
+        # hit the switch, should advance to step 4, which is back to the
+        # rainbow show
+        self.hit_and_release_switch("switch_12")
+        self.advance_time_and_run(1)
+        self.assertEqual(RGBColor('green'),
+            self.machine.leds.led_12.hw_driver.current_color)
+
+        # show should not be advancing without a hit
+        self.advance_time_and_run(1)
+        self.assertEqual(RGBColor('green'),
+            self.machine.leds.led_12.hw_driver.current_color)
+
+        # hit to verify advance
+        self.hit_and_release_switch("switch_12")
+        self.advance_time_and_run(1)
+        self.assertEqual(RGBColor('blue'),
+            self.machine.leds.led_12.hw_driver.current_color)
+
+    def test_step_with_no_show_after_step_with_show(self):
         pass
+
+    def test_show_ending_no_loop(self):
+        pass
+
 
     def test_multiple_switches(self):
         pass
 
-    def test_switch_sequence(self):
+    def test_shot_sequence_cancel(self):
         pass
-
-        # include cancel switch, delay switch, time
 
     def test_control_events(self):
         pass
+
+        # test both in base and mode
+
 
         # enable_events
         # disable_events
@@ -341,20 +426,11 @@ class TestShots(MpfTestCase):
         # advance_events
         # remove_active_profile_events
 
-        # shot groups
-        # enable_events
-        # disable_events
-        # reset_events
-        # rotate_left_events
-        # rotate_right_events
-        # enable_rotation_events
-        # disable_rotation_events
-        # advance_events
-        # remove_active_profile_events
-
     def test_shot_profiles(self):
         pass
         # loop
+        # show
+        # advance_on_hit
         # state_names_to_rotate
         # state_names_to_not_rotate
         # rotation_pattern
@@ -362,3 +438,8 @@ class TestShots(MpfTestCase):
         # show_when_disabled
         # block
         # states (with various show params and tokens)
+        # remove active profile
+        # remove from groups
+
+    def test_waterfall_hits(self):
+        pass

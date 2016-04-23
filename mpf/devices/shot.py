@@ -250,7 +250,7 @@ class Shot(ModeDevice, SystemWideDevice):
                 state_settings, self.active_settings['priority'])
 
         if state_settings['show']:
-            # If there's a show specified in a state, run that show and stop
+            # If there's a show specified this state, run that show and stop
             # the current one
             if self.running_show:
                 self.running_show.stop(hold=False)
@@ -263,21 +263,43 @@ class Shot(ModeDevice, SystemWideDevice):
                 self.machine.shows[state_settings['show']].play(
                     mode=self.active_mode, **s))
 
-        elif self.running_show:
-            self.running_show.advance(show_step=show_step)
-            self.debug_log("Running show: %s, step: %s",
-                           self.running_show,
-                           self.running_show.next_step_index - 1)
-
         elif self.active_settings['settings']['show']:
-            s = copy(state_settings)
-            s.update(self.tokens)
-            s.pop('show')
-            s['manual_advance'] = True
+            # no show for this state, but we have a profile root show
+            if self.running_show:
+                # is the running show the profile root one or a step-specific
+                # one from the previous step?
+                if (self.running_show.show.name !=
+                        self.active_settings['settings']['show']):  # not ours
+                    self._stop_show()
 
-            self.running_show = (self.machine.shows[
-                self.active_settings['settings']['show']].play(
-                mode=self.active_mode, **s))
+                    # start the new show at this step
+                    s = copy(state_settings)
+                    s.update(self.tokens)
+                    s['manual_advance'] = True
+                    s['start_step'] = self.player[self.active_settings[
+                        'settings']['player_variable']] + 1
+                    # +1 above because show steps are 1-based while player var
+                    # profile index is 0-based
+                    s.pop('show')
+                    self.running_show = (self.machine.shows[
+                        self.active_settings['settings']['show']].play(
+                        mode=self.active_mode, **s))
+
+                else:  # our show is the current one, so just advance it
+                    self.running_show.advance(show_step=show_step)
+
+            else:  # no running show, so start the profile root show
+                s = copy(state_settings)
+                s.update(self.tokens)
+                s.pop('show')
+                s['manual_advance'] = True
+
+                self.running_show = (self.machine.shows[
+                    self.active_settings['settings']['show']].play(
+                    mode=self.active_mode, **s))
+
+        else:
+            self._stop_show()
 
     def player_turn_start(self, player, **kwargs):
         """Called by the shot profile manager when a player's turn starts to

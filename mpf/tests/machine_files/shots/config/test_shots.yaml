@@ -26,6 +26,26 @@ switches:
     number:
   s_delay:
     number:
+  switch_12:
+    number:
+  switch_13:
+    number:
+  switch_14:
+    number:
+  switch_15:
+    number:
+  switch_16:
+    number:
+  switch_17:
+    number:
+  switch_18:
+    number:
+  switch_19:
+    number:
+  switch_20:
+    number:
+  switch_21:
+    number:
 
 matrix_lights:
   light_1:
@@ -45,6 +65,26 @@ leds:
   led_3:
     number:
   led_4:
+    number:
+  led_12:
+    number:
+  led_13:
+    number:
+  led_14:
+    number:
+  led_15:
+    number:
+  led_16:
+    number:
+  led_17:
+    number:
+  led_18:
+    number:
+  led_19:
+    number:
+  led_20:
+    number:
+  led_21:
     number:
 
 shots:
@@ -90,6 +130,10 @@ shots:
     switch: switch_10
     leds: led_4
     profile: show_in_step
+  shot_12:
+    switch: switch_12
+    leds: led_12
+    profile: profile_12
 
 shot_profiles:
     three_states_loop:
@@ -105,6 +149,8 @@ shot_profiles:
         - name: orange
         - name: yellow
         - name: green
+        - name: blue
+        - name: purple
     show_in_step:
       loop: true
       states:
@@ -112,6 +158,17 @@ shot_profiles:
           show: rainbow
         - name: step2
           show: rainbow2
+    profile_12:
+      show: rainbow
+      states:
+        - name: one
+        - name: two
+        - name: three
+          show: rainbow2
+          loops: -1
+        - name: four
+        - name: five
+
 
 shows:
     rainbow:
@@ -123,6 +180,10 @@ shows:
           (leds): yellow
       - leds:
           (leds): green
+      - leds:
+          (leds): blue
+      - leds:
+          (leds): purple
     rainbow2:
       - leds:
           (leds): aliceblue
