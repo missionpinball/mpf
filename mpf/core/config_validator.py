@@ -610,7 +610,7 @@ shot_profiles:
         # the validator to make this automatically pull them in.
         action: single|enum(play,stop,pause,resume,advance,update)|play
         priority: single|int|0
-        hold: single|bool|None
+        hold: single|bool|True
         speed: single|float|1
         start_step: single|int|1
         loops: single|int|-1

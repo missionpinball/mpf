@@ -72,16 +72,14 @@ class TestShots(MpfTestCase):
                                         self.mode1_shot_1_hit)
 
         # make sure shot does not work with no game in progress
-        self.machine.switch_controller.process_switch('switch_1', 1)
-        self.machine.switch_controller.process_switch('switch_1', 0)
+        self.hit_and_release_switch('switch_1')
         self.advance_time_and_run()
         self.shot_1_hit.assert_not_called()
 
         self.start_game()
 
         # hit shot_1, test all three event variations
-        self.machine.switch_controller.process_switch('switch_1', 1)
-        self.machine.switch_controller.process_switch('switch_1', 0)
+        self.hit_and_release_switch('switch_1')
         self.advance_time_and_run()
 
         self.shot_1_hit.assert_called_once_with(profile='default',
@@ -92,8 +90,7 @@ class TestShots(MpfTestCase):
                 profile='default', state='unlit')
 
         # hit the mode shot and make sure it doesn't fire
-        self.machine.switch_controller.process_switch('switch_3', 1)
-        self.machine.switch_controller.process_switch('switch_3', 0)
+        self.hit_and_release_switch('switch_3')
         self.advance_time_and_run()
         self.mode1_shot_1_hit.assert_not_called()
 
@@ -102,8 +99,7 @@ class TestShots(MpfTestCase):
         self.advance_time_and_run()
 
         # hit the mode shot and make sure it was called
-        self.machine.switch_controller.process_switch('switch_3', 1)
-        self.machine.switch_controller.process_switch('switch_3', 0)
+        self.hit_and_release_switch('switch_3')
         self.advance_time_and_run()
         self.mode1_shot_1_hit.assert_called_once_with(profile='default',
                                                       state='unlit')
@@ -114,13 +110,33 @@ class TestShots(MpfTestCase):
 
         # hit the mode shot and make sure it was not called
         self.mode1_shot_1_hit = MagicMock()
-        self.machine.switch_controller.process_switch('switch_3', 1)
-        self.machine.switch_controller.process_switch('switch_3', 0)
+        self.hit_and_release_switch('switch_3')
         self.advance_time_and_run()
         self.mode1_shot_1_hit.assert_not_called()
 
         # stop the game (should not crash)
         self.stop_game()
+
+        # hit the shot and make sure it was not called again
+        self.hit_and_release_switch('switch_1')
+        self.advance_time_and_run()
+        self.mode1_shot_1_hit.assert_not_called()
+
+    def test_shot_with_multiple_switches(self):
+        self.shot_15_hit = MagicMock()
+        self.machine.events.add_handler('shot_15_hit', self.shot_15_hit)
+        self.start_game()
+
+        # hit shot_15 via switch_13
+        self.hit_and_release_switch('switch_13')
+        self.shot_15_hit.assert_called_once_with(profile='default',
+                                                state='unlit')
+
+        # hit shot_15 via switch_14
+        self.shot_15_hit.reset_mock()
+        self.hit_and_release_switch('switch_14')
+        self.shot_15_hit.assert_called_once_with(profile='default',
+                                                state='lit')
 
     def test_shot_sequence(self):
         self.mock_event("shot_sequence_hit")
@@ -170,6 +186,25 @@ class TestShots(MpfTestCase):
         self.hit_and_release_switch("switch_3")
         self.advance_time_and_run(1)
         self.assertEqual(1, self._events["shot_sequence_hit"])
+
+    def test_shot_sequence_cancel(self):
+        self.mock_event("shot_sequence_hit")
+        self.start_game()
+
+        # start the sequence
+        self.hit_and_release_switch("switch_1")
+        self.advance_time_and_run(.5)
+        self.hit_and_release_switch("switch_2")
+        self.advance_time_and_run(.5)
+
+        # hit the cancel switch
+        self.hit_and_release_switch("switch_4")
+
+        # hit the final switch in the sequence, shot should not be hit since it
+        # was canceled
+        self.hit_and_release_switch("switch_3")
+        self.advance_time_and_run(1)
+        self.assertEqual(0, self._events["shot_sequence_hit"])
 
     def test_profile_advancing_no_loop(self):
         self.start_game()
@@ -438,14 +473,36 @@ class TestShots(MpfTestCase):
             self.machine.leds.led_13.hw_driver.current_color)
 
     def test_show_ending_no_loop(self):
-        pass
+        # tests that if a show is set to loops: 0, that it truly stops on the
+        # last step. Note that loops here is really a setting of the show
+        # player, so if this works, that means that all of the show player
+        # settings will work in a show tied to a shot.
 
+        self.start_game()
+        self.assertEqual(RGBColor('orange'),
+            self.machine.leds.led_14.hw_driver.current_color)
 
-    def test_multiple_switches(self):
-        pass
+        self.advance_time_and_run(1)
+        self.assertEqual(RGBColor('yellow'),
+            self.machine.leds.led_14.hw_driver.current_color)
 
-    def test_shot_sequence_cancel(self):
-        pass
+        self.advance_time_and_run(1)
+        self.assertEqual(RGBColor('green'),
+            self.machine.leds.led_14.hw_driver.current_color)
+
+        self.advance_time_and_run(1)
+        self.assertEqual(RGBColor('blue'),
+            self.machine.leds.led_14.hw_driver.current_color)
+
+        self.advance_time_and_run(1)
+        self.assertEqual(RGBColor('purple'),
+            self.machine.leds.led_14.hw_driver.current_color)
+
+        # show is done, but hold is true by default in shows started from shots
+        # so make sure the led stays in its final state
+        self.advance_time_and_run(1)
+        self.assertEqual(RGBColor('purple'),
+            self.machine.leds.led_14.hw_driver.current_color)
 
     def test_control_events(self):
         pass

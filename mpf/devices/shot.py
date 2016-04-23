@@ -47,6 +47,9 @@ class Shot(ModeDevice, SystemWideDevice):
         self._enabled = False
         self.tokens = dict()
 
+        # todo is this a hack??
+        self.machine.events.add_handler('game_ended', self.disable)
+
     @property
     def enabled(self):
         return self._enabled

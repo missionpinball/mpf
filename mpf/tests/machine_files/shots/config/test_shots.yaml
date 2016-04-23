@@ -114,6 +114,7 @@ shots:
     delay_switch:
       s_delay: 2s
     time: 2s
+    cancel_switch: switch_4
   default_show_light:
     switch: switch_5
     light: light_1
@@ -142,6 +143,12 @@ shots:
     switch: switch_13
     leds: led_13
     profile: profile_13
+  shot_14:
+    switch: switch_14
+    leds: led_14
+    profile: profile_14
+  shot_15:
+    switches: switch_13, switch_14
 
 shot_profiles:
     three_states_loop:
@@ -183,6 +190,12 @@ shot_profiles:
         - name: two
         - name: three
           show: rainbow2
+    profile_14:
+      states:
+        - name: one
+          show: rainbow
+          loops: 0
+        - name: two
 
 shows:
     rainbow:
