@@ -26,6 +26,8 @@ switches:
     number:
   s_delay:
     number:
+  switch_11:
+    number:
   switch_12:
     number:
   switch_13:
@@ -65,6 +67,8 @@ leds:
   led_3:
     number:
   led_4:
+    number:
+  led_11:
     number:
   led_12:
     number:
@@ -127,13 +131,17 @@ shots:
     leds: led_3
     profile: rainbow
   shot_11:
-    switch: switch_10
-    leds: led_4
-    profile: show_in_step
+    switch: switch_11
+    leds: led_11
+    profile: profile_11
   shot_12:
     switch: switch_12
     leds: led_12
     profile: profile_12
+  shot_13:
+    switch: switch_13
+    leds: led_13
+    profile: profile_13
 
 shot_profiles:
     three_states_loop:
@@ -151,7 +159,7 @@ shot_profiles:
         - name: green
         - name: blue
         - name: purple
-    show_in_step:
+    profile_11:
       loop: true
       states:
         - name: step1
@@ -168,7 +176,13 @@ shot_profiles:
           loops: -1
         - name: four
         - name: five
-
+    profile_13:
+      states:
+        - name: one
+          show: rainbow
+        - name: two
+        - name: three
+          show: rainbow2
 
 shows:
     rainbow:

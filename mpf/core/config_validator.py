@@ -605,6 +605,7 @@ shot_profiles:
     block: single|bool|true
     states:
         show: single|str|None
+        show_when_disabled: single|bool|False
         # These settings are same as show_player. Could probably get fancy with
         # the validator to make this automatically pull them in.
         action: single|enum(play,stop,pause,resume,advance,update)|play

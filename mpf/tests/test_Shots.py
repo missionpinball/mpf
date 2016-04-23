@@ -299,26 +299,27 @@ class TestShots(MpfTestCase):
 
     def test_show_in_step(self):
         self.start_game()
-        self.advance_time_and_run()
+        # start_game() advances the time 1 sec, so by now we're already on
+        # step 2 of the rainbow show
 
-        show1_colors = (RGBColor('red'), RGBColor('orange'),
-                        RGBColor('yellow'), RGBColor('green'))
+        self.assertEqual(RGBColor('orange'),
+            self.machine.leds.led_11.hw_driver.current_color)
 
-        show2_colors = (RGBColor('aliceblue'), RGBColor('antiquewhite'),
-                        RGBColor('aquamarine'), RGBColor('azure'))
+        # make sure show is advancing on its own
+        self.advance_time_and_run(1)
+        self.assertEqual(RGBColor('yellow'),
+            self.machine.leds.led_11.hw_driver.current_color)
 
-        self.assertIn(self.machine.leds.led_4.hw_driver.current_color,
-                      show1_colors)
+        # hit the shot, changes to show1
+        self.hit_and_release_switch("switch_11")
+        self.advance_time_and_run(0.1)
+        self.assertEqual(RGBColor('aliceblue'),
+            self.machine.leds.led_11.hw_driver.current_color)
 
-        self.hit_and_release_switch('switch_10')
-        self.advance_time_and_run()
-        self.assertIn(self.machine.leds.led_4.hw_driver.current_color,
-                      show2_colors)
-
-        self.hit_and_release_switch('switch_10')
-        self.advance_time_and_run()
-        self.assertIn(self.machine.leds.led_4.hw_driver.current_color,
-                      show1_colors)
+        # make sure show is advancing on its own
+        self.advance_time_and_run(1)
+        self.assertEqual(RGBColor('antiquewhite'),
+            self.machine.leds.led_11.hw_driver.current_color)
 
     def test_combined_show_in_profile_root_and_step(self):
         # tests a show defined in a profile root which is used for most steps,
@@ -401,7 +402,40 @@ class TestShots(MpfTestCase):
             self.machine.leds.led_12.hw_driver.current_color)
 
     def test_step_with_no_show_after_step_with_show(self):
-        pass
+        self.start_game()
+
+        # start_game() advances the time 1 sec, so by now we're already on
+        # step 2 of the rainbow show
+
+        # profile step 1, show1 is running
+        self.assertEqual(RGBColor('orange'),
+            self.machine.leds.led_13.hw_driver.current_color)
+
+        # step 2 has no show, so rainbow should still be running
+        self.hit_and_release_switch("switch_13")
+        self.advance_time_and_run(1)
+        self.assertEqual(RGBColor('yellow'),
+            self.machine.leds.led_13.hw_driver.current_color)
+
+        # make sure it's still advancing even with no switch hits
+        self.advance_time_and_run(1)
+        self.assertEqual(RGBColor('green'),
+            self.machine.leds.led_13.hw_driver.current_color)
+
+        # hit the shot again, we switch to show 2
+        self.hit_and_release_switch("switch_13")
+        self.advance_time_and_run(0.1)
+        self.assertEqual(RGBColor('aliceblue'),
+            self.machine.leds.led_13.hw_driver.current_color)
+
+        # make sure that show is running with no more hits
+        self.advance_time_and_run(1)
+        self.assertEqual(RGBColor('antiquewhite'),
+            self.machine.leds.led_13.hw_driver.current_color)
+
+        self.advance_time_and_run(1)
+        self.assertEqual(RGBColor('aquamarine'),
+            self.machine.leds.led_13.hw_driver.current_color)
 
     def test_show_ending_no_loop(self):
         pass
@@ -440,6 +474,7 @@ class TestShots(MpfTestCase):
         # states (with various show params and tokens)
         # remove active profile
         # remove from groups
+        # show when disabled
 
     def test_waterfall_hits(self):
         pass

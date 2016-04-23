@@ -298,8 +298,9 @@ class Shot(ModeDevice, SystemWideDevice):
                     self.active_settings['settings']['show']].play(
                     mode=self.active_mode, **s))
 
-        else:
-            self._stop_show()
+        # if neither if/elif above happens, it means the current step has no
+        # show but the previous step had one. That means we do nothing for the
+        # show. Leave it alone doing whatever it was doing before.
 
     def player_turn_start(self, player, **kwargs):
         """Called by the shot profile manager when a player's turn starts to
@@ -309,7 +310,6 @@ class Shot(ModeDevice, SystemWideDevice):
         """
         del kwargs
         self.player = player
-        # self.update_enable_table(self.config['profile'], False)
 
     def player_turn_stop(self):
         """Called by the shot profile manager when the player's turn ends.
