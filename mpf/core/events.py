@@ -54,6 +54,11 @@ class EventManager(object):
 
         """
 
+        if not callable(handler):
+            raise ValueError('Cannot add handler "{}" for event "{}". Did you '
+                             'accidentally add parenthesis to the end of the '
+                             'handler you passed?'.format(handler, event))
+
         event = event.lower()
 
         # Add an entry for this event if it's not there already
