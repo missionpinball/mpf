@@ -4,3 +4,9 @@ shots:
   mode1_shot_1:
     switch: switch_3
     light: light_3
+  mode1_shot_17:
+    switch: switch_17
+    enable_events: custom_enable_17
+    disable_events: custom_disable_17
+    reset_events: custom_reset_17
+    hit_events: custom_hit_17

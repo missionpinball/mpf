@@ -87,8 +87,10 @@ class Shot(ModeDevice, SystemWideDevice):
             self.enable(mode)
 
     def _validate_config(self):
-        if len(self.config['switch_sequence']) and (len(self.config['switch']) or len(self.config['switches'])):
-            raise AssertionError("A shot can have either switch_sequence or switch/switches")
+        if len(self.config['switch_sequence']) and (
+                    len(self.config['switch']) or len(self.config['switches'])):
+            raise AssertionError("A shot can have either switch_sequence or "
+                                 "switch/switches, not both")
 
     def _initialize(self):
         self._validate_config()
@@ -226,38 +228,33 @@ class Shot(ModeDevice, SystemWideDevice):
 
         self.running_show = None
 
-    def _update_show(self, show_step=None):
+    def _update_show(self, show_step=None, advance=True):
         if not self.player:
             return
 
-        self.debug_log("Updating show 1: Profile: %s, "
-                       "show_step: %s, Enabled: %s, Config "
-                       "setting for 'show_when_disabled': %s",
-                       self.active_settings['profile'], show_step,
-                       self.active_settings['enable'],
-                       self.active_settings['settings'][
-                           'show_when_disabled'])
-
-        if (not self.active_settings['enable'] and
-                not self.active_settings['settings']['show_when_disabled']):
+        try:
+            if (not self.active_settings['enable'] and
+                    not self.active_settings['settings']['show_when_disabled']):
+                return
+        except TypeError:  # catches no active_settings
             return
 
         state_settings = (self.active_settings['settings']['states'][self.player[
                           self.active_settings['settings']['player_variable']]])
 
-        self.debug_log(
-                "Updating show 2: Profile: '%s', State: %s, State "
-                "settings: %s, Priority: %s",
-                self.active_settings['profile'],
-                self.enable_table[self.active_mode]['current_state_name'],
-                state_settings, self.active_settings['priority'])
+        if state_settings['show']:  # there's a show specified this state
 
-        if state_settings['show']:
-            # If there's a show specified this state, run that show and stop
-            # the current one
             if self.running_show:
-                self.running_show.stop(hold=False)
+                if (self.running_show.show.name != state_settings['show']):
+                    # if there's a show running and it's not the show for this
+                    # state, stop it (and then continue)
+                    self._stop_show()
+                else:
+                    # if there's a show running and it is the one for this
+                    # state, do nothing. Let it continue
+                    return
 
+            # If we're here then we need to start the show from this state
             s = copy(state_settings)
             s.update(self.tokens)
             s.pop('show')
@@ -288,7 +285,7 @@ class Shot(ModeDevice, SystemWideDevice):
                         self.active_settings['settings']['show']].play(
                         mode=self.active_mode, **s))
 
-                else:  # our show is the current one, so just advance it
+                elif advance:  # our show is the current one, just advance it
                     self.running_show.advance(show_step=show_step)
 
             else:  # no running show, so start the profile root show
@@ -313,6 +310,7 @@ class Shot(ModeDevice, SystemWideDevice):
         """
         del kwargs
         self.player = player
+        self._update_show(advance=False)
 
     def player_turn_stop(self):
         """Called by the shot profile manager when the player's turn ends.
@@ -635,7 +633,7 @@ class Shot(ModeDevice, SystemWideDevice):
 
         # TODO should this see if this shot is configured to allow lights while
         # not enabled, and then not do this if they're already going?
-        self._update_show()
+        self._update_show(advance=False)
 
     def disable(self, mode=None, **kwargs):
         """Disables this shot. If the shot is not enabled, hits to it will
@@ -643,7 +641,6 @@ class Shot(ModeDevice, SystemWideDevice):
 
         """
         del kwargs
-
         if not self._enabled:
             return
 
@@ -653,7 +650,6 @@ class Shot(ModeDevice, SystemWideDevice):
         self.update_enable_table(enable=False, mode=mode)
 
     def _disable(self):
-
         self.debug_log("Disabling...")
         self._enabled = False
         self._reset_all_sequences()
@@ -662,6 +658,8 @@ class Shot(ModeDevice, SystemWideDevice):
 
         if not self.active_settings['settings']['show_when_disabled']:
             self._stop_show()
+        else:
+            self._update_show(advance=False)
 
     def reset(self, mode=None, **kwargs):
         """Resets the shot profile for the passed mode back to the first state (State 0) and
@@ -717,7 +715,7 @@ class Shot(ModeDevice, SystemWideDevice):
             except KeyError:
                 profile = self.config['profile']
 
-        if not enable:
+        if enable is None:
             try:
                 enable = self.enable_table[mode]['enable']
             except KeyError:
@@ -776,7 +774,7 @@ class Shot(ModeDevice, SystemWideDevice):
     def remove_active_profile(self, mode, **kwargs):
         del kwargs
         # this has the effect of changing out this mode's profile in the
-        # enable_table with the next highest visable one.
+        # enable_table with the next highest visible one.
 
         self.debug_log("Removing active profile for mode %s", mode)
 

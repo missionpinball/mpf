@@ -149,6 +149,29 @@ shots:
     profile: profile_14
   shot_15:
     switches: switch_13, switch_14
+  shot_16:
+    switch: switch_16
+    enable_events: custom_enable_16
+    disable_events: custom_disable_16
+    reset_events: custom_reset_16
+    hit_events: custom_hit_16
+    advance_events: custom_advance_16
+  shot_17:
+    switch: switch_17
+    profile: profile_17
+  shot_18:
+    switch: switch_18
+    profile: profile_18
+  shot_19:
+    switch: switch_19
+    profile: profile_19
+    enable_events: None
+    leds: led_19
+  shot_20:
+    switch: switch_20
+    profile: profile_20
+    enable_events: None
+    leds: led_20
 
 shot_profiles:
     three_states_loop:
@@ -196,6 +219,36 @@ shot_profiles:
           show: rainbow
           loops: 0
         - name: two
+    profile_17:
+      advance_on_hit: false
+      states:
+        - name: one
+        - name: two
+        - name: three
+        - name: four
+        - name: five
+    profile_18:
+      player_variable: hello
+      states:
+        - name: one
+        - name: two
+        - name: three
+        - name: four
+        - name: five
+    profile_19:
+      show_when_disabled: true
+      states:
+        - name: one
+          show: rainbow
+        - name: two
+          show: rainbow2
+    profile_20:
+      show_when_disabled: false
+      states:
+        - name: one
+          show: rainbow
+        - name: two
+          show: rainbow2
 
 shows:
     rainbow:
