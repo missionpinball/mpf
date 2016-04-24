@@ -272,6 +272,7 @@ class TestShotGroups(MpfTestCase):
             'current_state_name'])
 
     def test_rotate_with_shows_in_progress(self):
+        # also tests profile from shot_group with no profile in shots
         self.start_game()
         self.advance_time_and_run()
 
@@ -325,26 +326,151 @@ class TestShotGroups(MpfTestCase):
         self.assertEqual(RGBColor('orange'),
             self.machine.leds.led_11.hw_driver.current_color)
 
-
-
-
     def test_no_profile_in_shot_group_uses_profile_from_shot(self):
-        pass  # todo
+        self.start_game()
+        self.advance_time_and_run()
+
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_30.hw_driver.current_color)
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_31.hw_driver.current_color)
+
+        self.hit_and_release_switch('switch_30')
+        self.advance_time_and_run()
+        self.assertEqual(RGBColor('red'),
+            self.machine.leds.led_30.hw_driver.current_color)
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_31.hw_driver.current_color)
+
+        self.hit_and_release_switch('switch_30')
+        self.advance_time_and_run()
+        self.assertEqual(RGBColor('orange'),
+            self.machine.leds.led_30.hw_driver.current_color)
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_31.hw_driver.current_color)
+
+        self.hit_and_release_switch('switch_31')
+        self.advance_time_and_run()
+        self.assertEqual(RGBColor('orange'),
+            self.machine.leds.led_30.hw_driver.current_color)
+        self.assertEqual(RGBColor('red'),
+            self.machine.leds.led_31.hw_driver.current_color)
 
     def test_control_events(self):
-        pass
+        # tests control events at the shot_group level
 
-        # test both in base and mode
+        shot32 = self.machine.shots.shot_32
+        shot33 = self.machine.shots.shot_33
+        group32 = self.machine.shot_groups.shot_group_32
 
-        # enable_events
-        # disable_events
-        # reset_events
-        # rotate_left_events
-        # rotate_right_events
-        # enable_rotation_events
-        # disable_rotation_events
-        # advance_events
+        self.mock_event("shot_32_hit")
+        self.mock_event("shot_33_hit")
+        self.mock_event("shot_group_32_hit")
 
+        self.start_game()
+
+        # Since this shot has custom enable events, it should not be enabled on
+        # game start
+        self.assertFalse(shot32.enabled)
+        self.assertFalse(shot33.enabled)
+        self.assertFalse(group32.enabled)
+
+        # test enabling via event
+        self.machine.events.post('group32_enable')
+        self.advance_time_and_run()
+
+        self.assertTrue(shot32.enabled)
+        self.assertTrue(shot33.enabled)
+        self.assertTrue(group32.enabled)
+
+        # test advance event
+        self.assertEqual(shot32.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_32.hw_driver.current_color)
+        self.assertEqual(shot33.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_33.hw_driver.current_color)
+
+        self.machine.events.post('group32_advance')
+        self.advance_time_and_run()
+        self.assertEqual(shot32.profiles[0]['current_state_name'], 'red')
+        self.assertEqual(shot33.profiles[0]['current_state_name'], 'red')
+        self.assertEqual(RGBColor('red'),
+            self.machine.leds.led_32.hw_driver.current_color)
+        self.assertEqual(RGBColor('red'),
+            self.machine.leds.led_33.hw_driver.current_color)
+
+        # test reset event
+        self.machine.events.post('group32_reset')
+        self.advance_time_and_run()
+        self.assertEqual(shot32.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(shot33.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_32.hw_driver.current_color)
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_33.hw_driver.current_color)
+
+        # test rotate without rotation enabled
+        shot32.advance()
+        self.advance_time_and_run()
+        self.assertEqual(shot32.profiles[0]['current_state_name'], 'red')
+        self.assertEqual(shot33.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(RGBColor('red'),
+            self.machine.leds.led_32.hw_driver.current_color)
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_33.hw_driver.current_color)
+        self.assertFalse(group32.rotation_enabled)
+
+        self.machine.events.post('group32_rotate')
+        self.advance_time_and_run()
+        self.assertEqual(shot32.profiles[0]['current_state_name'], 'red')
+        self.assertEqual(shot33.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(RGBColor('red'),
+            self.machine.leds.led_32.hw_driver.current_color)
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_33.hw_driver.current_color)
+
+        # test rotation enable
+        self.machine.events.post('group32_enable_rotation')
+        self.advance_time_and_run()
+        self.assertTrue(group32.rotation_enabled)
+
+        # test that rotate works now
+        self.machine.events.post('group32_rotate')
+        self.advance_time_and_run()
+        self.assertEqual(shot32.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(shot33.profiles[0]['current_state_name'], 'red')
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_32.hw_driver.current_color)
+        self.assertEqual(RGBColor('red'),
+            self.machine.leds.led_33.hw_driver.current_color)
+
+        # test disable rotation
+        self.machine.events.post('group32_disable_rotation')
+        self.advance_time_and_run()
+        self.assertFalse(group32.rotation_enabled)
+
+        # test that rotate works now
+        self.machine.events.post('group32_rotate')
+        self.advance_time_and_run()
+
+        # test that rotate did not happen
+        self.assertEqual(shot32.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(shot33.profiles[0]['current_state_name'], 'red')
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_32.hw_driver.current_color)
+        self.assertEqual(RGBColor('red'),
+            self.machine.leds.led_33.hw_driver.current_color)
+
+        # test disable event
+        self.machine.events.post('group32_disable')
+        self.advance_time_and_run()
+        self.assertFalse(shot32.enabled)
+        self.assertFalse(shot33.enabled)
+        self.assertFalse(group32.enabled)
+
+    def test_control_events_in_mode(self):
+        pass  # todo
 
     def test_state_names_to_rotate(self):
         pass

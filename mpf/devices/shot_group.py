@@ -58,6 +58,9 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         # group when its created on mode start
         if not mode.config['shot_groups'][self.name]['enable_events']:
             self.enable(mode)
+        else:
+            # manually call disable here so it disables the member shots
+            self.disable(mode)
 
     def _enable_related_device_debugging(self):
         self.log.debug(
@@ -111,6 +114,12 @@ class ShotGroup(ModeDevice, SystemWideDevice):
             self._enable_from_system_wide(profile)
 
         self._enabled = True
+
+        if not self.config['enable_rotation_events']:
+            self.rotation_enabled = True
+        else:
+            self.rotation_enabled = False
+
         self.debug_log('Enabling from mode: %s', mode)
 
     def _enable_from_mode(self, mode, profile=None):
@@ -189,7 +198,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         for shot in self.config['shots']:
             shot.remove_active_profile(mode)
 
-    def advance(self, mode=None, force=False, **kwargs):
+    def advance(self, steps=1, mode=None, force=False, **kwargs):
         """Advances the current active profile from every shot in the group
         one step forward.
 
@@ -201,7 +210,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
         self.debug_log('Advancing')
         for shot in self.config['shots']:
-            shot.advance(mode)
+            shot.advance(steps=steps, mode=mode, force=force)
 
     def rotate(self, direction=None, states=None,
                exclude_states=None, mode=None, **kwargs):

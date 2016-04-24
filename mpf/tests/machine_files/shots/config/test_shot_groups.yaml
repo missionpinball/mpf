@@ -20,11 +20,39 @@ switches:
     number:
   switch_11:
     number:
+  switch_30:
+    number:
+  switch_31:
+    number:
+  switch_32:
+    number:
+  switch_33:
+    number:
+  switch_34:
+    number:
+  switch_35:
+    number:
+  switch_36:
+    number:
 
 leds:
   led_10:
     number:
   led_11:
+    number:
+  led_30:
+    number:
+  led_31:
+    number:
+  led_32:
+    number:
+  led_33:
+    number:
+  led_34:
+    number:
+  led_35:
+    number:
+  led_36:
     number:
 
 shots:
@@ -42,7 +70,34 @@ shots:
   shot_11:
     switch: switch_11
     leds: led_11
-
+  shot_30:
+    switch: switch_30
+    leds: led_30
+    profile: rainbow
+  shot_31:
+    switch: switch_31
+    leds: led_31
+    profile: rainbow
+  shot_32:
+    switch: switch_32
+    leds: led_32
+    enable_events: None
+  shot_33:
+    switch: switch_33
+    leds: led_33
+    enable_events: None
+  shot_34:
+    switch: switch_34
+    leds: led_34
+    profile: rainbow
+  shot_35:
+    switch: switch_35
+    leds: led_35
+    enable_events: None
+  shot_36:
+    switch: switch_36
+    leds: led_36
+    enable_events: None
 
 shot_groups:
   test_group:
@@ -55,6 +110,23 @@ shot_groups:
     shots: shot_10, shot_11
     rotate_left_events: rotate_11_left
     profile: rainbow
+  shot_group_30:
+    shots: shot_30, shot_31
+  shot_group_32:
+    shots: shot_32, shot_33
+    enable_events: group32_enable
+    disable_events: group32_disable
+    reset_events: group32_reset
+    rotate_left_events: group32_rotate_left
+    rotate_right_events: group32_rotate_right
+    rotate_events: group32_rotate
+    enable_rotation_events: group32_enable_rotation
+    disable_rotation_events: group32_disable_rotation
+    advance_events: group32_advance
+    remove_active_profile_events: group32_remove_active_profile
+    profile: rainbow_no_hold
+  shot_group_33:
+    shots: shot_34, shot_35, shot_36
 
 shows:
     rainbow:
@@ -72,6 +144,24 @@ shows:
 shot_profiles:
     rainbow:
       show: rainbow
+      states:
+        - name: unlit
+        - name: red
+        - name: orange
+        - name: yellow
+        - name: green
+    rainbow_no_hold:
+      show: rainbow
+      hold: no
+      states:
+        - name: unlit
+        - name: red
+        - name: orange
+        - name: yellow
+        - name: green
+    shot_profile_33:
+      show: rainbow
+      state_names_to_rotate: red, green
       states:
         - name: unlit
         - name: red
