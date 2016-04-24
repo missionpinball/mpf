@@ -596,6 +596,7 @@ shot_groups:
 shot_profiles:
     loop: single|bool|False
     show: single|str|None
+    hold: single|bool|None
     advance_on_hit: single|bool|True
     state_names_to_rotate: list|str|None
     state_names_to_not_rotate: list|str|None

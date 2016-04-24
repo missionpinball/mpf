@@ -899,5 +899,45 @@ class TestShots(MpfTestCase):
         self.assertEqual(RGBColor('purple'),
                          self.machine.leds.led_23.hw_driver.current_color)
 
-    def test_holds(self):
-        pass
+    def test_hold_true(self):
+        self.start_game()
+        self.assertEqual(RGBColor('orange'),
+                         self.machine.leds.led_24.hw_driver.current_color)
+
+        # advance the time past the end of the show and make sure that the
+        # led is still on
+        # all these separate entries are needed due to the way the tests run
+        self.advance_time_and_run(1)
+        self.advance_time_and_run(1)
+        self.advance_time_and_run(1)
+        self.advance_time_and_run(1)
+        self.advance_time_and_run(1)
+        self.advance_time_and_run(1)
+        self.advance_time_and_run(1)
+        self.advance_time_and_run(1)
+        self.advance_time_and_run(1)
+        self.advance_time_and_run(1)
+        self.advance_time_and_run(1)
+        self.assertEqual(RGBColor('purple'),
+                         self.machine.leds.led_24.hw_driver.current_color)
+
+    def test_hold_false(self):
+        self.start_game()
+        self.assertEqual(RGBColor('orange'),
+                         self.machine.leds.led_25.hw_driver.current_color)
+
+        # advance the time past the end of the show and make sure that the
+        # led is off
+        self.advance_time_and_run(1)
+        self.advance_time_and_run(1)
+        self.advance_time_and_run(1)
+        self.advance_time_and_run(1)
+        self.advance_time_and_run(1)
+        self.advance_time_and_run(1)
+        self.advance_time_and_run(1)
+        self.advance_time_and_run(1)
+        self.advance_time_and_run(1)
+        self.advance_time_and_run(1)
+        self.advance_time_and_run(1)
+        self.assertEqual(RGBColor('off'),
+                         self.machine.leds.led_25.hw_driver.current_color)

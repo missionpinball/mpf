@@ -95,6 +95,10 @@ leds:
     number:
   led_23:
     number:
+  led_24:
+    number:
+  led_25:
+    number:
 
 shots:
   shot_1:
@@ -186,6 +190,12 @@ shots:
   shot_23:
     leds: led_23
     profile: profile_23
+  shot_24:
+    leds: led_24
+    profile: profile_24
+  shot_25:
+    leds: led_25
+    profile: profile_25
 
 shot_profiles:
     three_states_loop:
@@ -281,6 +291,21 @@ shot_profiles:
           show: rainbow
         - name: base_three
           show: rainbow
+    profile_24:
+        hold: true
+        states:
+        - name: base_one
+          show: rainbow
+          loops: 0
+        - name: base_two
+          show: rainboww
+    profile_25:
+        hold: false
+        states:
+        - name: base_one
+          show: rainbow
+        - name: base_two
+          show: rainboww
 
 shows:
     rainbow:
