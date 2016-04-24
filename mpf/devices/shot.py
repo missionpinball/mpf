@@ -250,6 +250,13 @@ class Shot(ModeDevice, SystemWideDevice):
             s['priority'] += profile['priority']
             s.pop('show')
 
+            # todo kind of a hack, but hold is the only setting from the
+            # profile root that we can pass to any show, so we grab it here.
+            # might want to make a list of settings that can be passed and do
+            # all of them.
+            if profile['settings']['hold'] is not None:
+                s['hold'] = profile['settings']['hold']
+
             profile['running_show'] = (
                 self.machine.shows[state_settings['show']].play(
                     mode=profile['mode'], **s))
@@ -272,6 +279,10 @@ class Shot(ModeDevice, SystemWideDevice):
                         'settings']['player_variable']] + 1
                     # +1 above because show steps are 1-based while player var
                     # profile index is 0-based
+
+                    if profile['settings']['hold'] is not None:
+                        s['hold'] = profile['settings']['hold']
+
                     s.pop('show')
                     profile['running_show'] = (self.machine.shows[
                         profile['settings']['show']].play(
@@ -286,6 +297,8 @@ class Shot(ModeDevice, SystemWideDevice):
                 s['priority'] += profile['priority']
                 s.pop('show')
                 s['manual_advance'] = True
+                if profile['settings']['hold'] is not None:
+                    s['hold'] = profile['settings']['hold']
 
                 profile['running_show'] = (self.machine.shows[
                     profile['settings']['show']].play(

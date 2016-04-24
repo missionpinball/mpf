@@ -304,6 +304,7 @@ shot_profiles:
         states:
         - name: base_one
           show: rainbow
+          loops: 0
         - name: base_two
           show: rainboww
 
