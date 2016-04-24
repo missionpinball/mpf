@@ -84,90 +84,90 @@ class TestShotGroups(MpfTestCase):
 
         self.mock_event("test_group_default_lit_complete")
 
-        self.assertEqual("unlit", self.machine.shots.shot_1.active_settings[
+        self.assertEqual("unlit", self.machine.shots.shot_1.get_profile_by_key('mode', None)[
             'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_2.active_settings[
+        self.assertEqual("unlit", self.machine.shots.shot_2.get_profile_by_key('mode', None)[
             'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_3.active_settings[
+        self.assertEqual("unlit", self.machine.shots.shot_3.get_profile_by_key('mode', None)[
             'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings[
-            'current_state_name'])
-
-        self.hit_and_release_switch("switch_1")
-
-        self.assertEqual("lit", self.machine.shots.shot_1.active_settings[
-            'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_2.active_settings[
-            'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_3.active_settings[
-            'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings[
-            'current_state_name'])
-
-        self.hit_and_release_switch("s_rotate_r")
-
-        self.assertEqual("unlit", self.machine.shots.shot_1.active_settings[
-            'current_state_name'])
-        self.assertEqual("lit", self.machine.shots.shot_2.active_settings[
-            'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_3.active_settings[
-            'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings[
+        self.assertEqual("unlit", self.machine.shots.shot_4.get_profile_by_key('mode', None)[
             'current_state_name'])
 
         self.hit_and_release_switch("switch_1")
 
-        self.assertEqual("lit", self.machine.shots.shot_1.active_settings[
+        self.assertEqual("lit", self.machine.shots.shot_1.get_profile_by_key('mode', None)[
             'current_state_name'])
-        self.assertEqual("lit", self.machine.shots.shot_2.active_settings[
+        self.assertEqual("unlit", self.machine.shots.shot_2.get_profile_by_key('mode', None)[
             'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_3.active_settings[
+        self.assertEqual("unlit", self.machine.shots.shot_3.get_profile_by_key('mode', None)[
             'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings[
-            'current_state_name'])
-
-        self.hit_and_release_switch("s_rotate_r")
-
-        self.assertEqual("unlit", self.machine.shots.shot_1.active_settings[
-            'current_state_name'])
-        self.assertEqual("lit", self.machine.shots.shot_2.active_settings[
-            'current_state_name'])
-        self.assertEqual("lit", self.machine.shots.shot_3.active_settings[
-            'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings[
+        self.assertEqual("unlit", self.machine.shots.shot_4.get_profile_by_key('mode', None)[
             'current_state_name'])
 
         self.hit_and_release_switch("s_rotate_r")
 
-        self.assertEqual("unlit", self.machine.shots.shot_1.active_settings[
+        self.assertEqual("unlit", self.machine.shots.shot_1.get_profile_by_key('mode', None)[
             'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_2.active_settings[
+        self.assertEqual("lit", self.machine.shots.shot_2.get_profile_by_key('mode', None)[
             'current_state_name'])
-        self.assertEqual("lit", self.machine.shots.shot_3.active_settings[
+        self.assertEqual("unlit", self.machine.shots.shot_3.get_profile_by_key('mode', None)[
             'current_state_name'])
-        self.assertEqual("lit", self.machine.shots.shot_4.active_settings[
+        self.assertEqual("unlit", self.machine.shots.shot_4.get_profile_by_key('mode', None)[
+            'current_state_name'])
+
+        self.hit_and_release_switch("switch_1")
+
+        self.assertEqual("lit", self.machine.shots.shot_1.get_profile_by_key('mode', None)[
+            'current_state_name'])
+        self.assertEqual("lit", self.machine.shots.shot_2.get_profile_by_key('mode', None)[
+            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_3.get_profile_by_key('mode', None)[
+            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_4.get_profile_by_key('mode', None)[
             'current_state_name'])
 
         self.hit_and_release_switch("s_rotate_r")
 
-        self.assertEqual("lit", self.machine.shots.shot_1.active_settings[
+        self.assertEqual("unlit", self.machine.shots.shot_1.get_profile_by_key('mode', None)[
             'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_2.active_settings[
+        self.assertEqual("lit", self.machine.shots.shot_2.get_profile_by_key('mode', None)[
             'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_3.active_settings[
+        self.assertEqual("lit", self.machine.shots.shot_3.get_profile_by_key('mode', None)[
             'current_state_name'])
-        self.assertEqual("lit", self.machine.shots.shot_4.active_settings[
+        self.assertEqual("unlit", self.machine.shots.shot_4.get_profile_by_key('mode', None)[
+            'current_state_name'])
+
+        self.hit_and_release_switch("s_rotate_r")
+
+        self.assertEqual("unlit", self.machine.shots.shot_1.get_profile_by_key('mode', None)[
+            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_2.get_profile_by_key('mode', None)[
+            'current_state_name'])
+        self.assertEqual("lit", self.machine.shots.shot_3.get_profile_by_key('mode', None)[
+            'current_state_name'])
+        self.assertEqual("lit", self.machine.shots.shot_4.get_profile_by_key('mode', None)[
+            'current_state_name'])
+
+        self.hit_and_release_switch("s_rotate_r")
+
+        self.assertEqual("lit", self.machine.shots.shot_1.get_profile_by_key('mode', None)[
+            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_2.get_profile_by_key('mode', None)[
+            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_3.get_profile_by_key('mode', None)[
+            'current_state_name'])
+        self.assertEqual("lit", self.machine.shots.shot_4.get_profile_by_key('mode', None)[
             'current_state_name'])
 
         self.hit_and_release_switch("s_rotate_l")
 
-        self.assertEqual("unlit", self.machine.shots.shot_1.active_settings[
+        self.assertEqual("unlit", self.machine.shots.shot_1.get_profile_by_key('mode', None)[
             'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_2.active_settings[
+        self.assertEqual("unlit", self.machine.shots.shot_2.get_profile_by_key('mode', None)[
             'current_state_name'])
-        self.assertEqual("lit", self.machine.shots.shot_3.active_settings[
+        self.assertEqual("lit", self.machine.shots.shot_3.get_profile_by_key('mode', None)[
             'current_state_name'])
-        self.assertEqual("lit", self.machine.shots.shot_4.active_settings[
+        self.assertEqual("lit", self.machine.shots.shot_4.get_profile_by_key('mode', None)[
             'current_state_name'])
 
     def test_shot_group_in_mode(self):
@@ -175,86 +175,100 @@ class TestShotGroups(MpfTestCase):
 
         self.hit_and_release_switch("switch_1")
 
-        self.assertEqual("lit", self.machine.shots.shot_1.active_settings[
+        self.assertEqual("lit", self.machine.shots.shot_1.get_profile_by_key('mode', None)[
             'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_2.active_settings[
+        self.assertEqual("unlit", self.machine.shots.shot_2.get_profile_by_key('mode', None)[
             'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_3.active_settings[
+        self.assertEqual("unlit", self.machine.shots.shot_3.get_profile_by_key('mode', None)[
             'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings[
+        self.assertEqual("unlit", self.machine.shots.shot_4.get_profile_by_key('mode', None)[
             'current_state_name'])
 
         # Start the mode
         self.machine.modes.mode_shot_groups.start()
         self.advance_time_and_run()
 
-        self.assertEqual("one", self.machine.shots.shot_1.active_settings[
+        self.assertEqual("one", self.machine.shots.shot_1.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
             'current_state_name'])
-        self.assertEqual("one", self.machine.shots.shot_2.active_settings[
+        self.assertEqual("one", self.machine.shots.shot_2.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
             'current_state_name'])
-        self.assertEqual("one", self.machine.shots.shot_3.active_settings[
+        self.assertEqual("one", self.machine.shots.shot_3.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
             'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings[
+        self.assertEqual("unlit",
+                         self.machine.shots.shot_4.get_profile_by_key(
+                             'mode', None)[
             'current_state_name'])
 
         self.hit_and_release_switch("switch_1")
-        self.assertEqual("two", self.machine.shots.shot_1.active_settings[
+        self.assertEqual("two", self.machine.shots.shot_1.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
             'current_state_name'])
-        self.assertEqual("one", self.machine.shots.shot_2.active_settings[
+        self.assertEqual("one", self.machine.shots.shot_2.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
             'current_state_name'])
-        self.assertEqual("one", self.machine.shots.shot_3.active_settings[
+        self.assertEqual("one", self.machine.shots.shot_3.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
             'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings[
-            'current_state_name'])
-
-        self.hit_and_release_switch("s_rotate_l")
-        self.assertEqual("one", self.machine.shots.shot_1.active_settings[
-            'current_state_name'])
-        self.assertEqual("one", self.machine.shots.shot_2.active_settings[
-            'current_state_name'])
-        self.assertEqual("two", self.machine.shots.shot_3.active_settings[
-            'current_state_name'])
-        self.assertEqual("lit", self.machine.shots.shot_4.active_settings[
+        self.assertEqual("unlit",
+                         self.machine.shots.shot_4.get_profile_by_key(
+                             'mode', None)[
             'current_state_name'])
 
         self.hit_and_release_switch("s_rotate_l")
-        self.assertEqual("one", self.machine.shots.shot_1.active_settings[
+        self.assertEqual("one", self.machine.shots.shot_1.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
             'current_state_name'])
-        self.assertEqual("two", self.machine.shots.shot_2.active_settings[
+        self.assertEqual("one", self.machine.shots.shot_2.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
             'current_state_name'])
-        self.assertEqual("one", self.machine.shots.shot_3.active_settings[
+        self.assertEqual("two", self.machine.shots.shot_3.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
             'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings[
-            'current_state_name'])
-
-        self.hit_and_release_switch("s_rotate_l")
-        self.assertEqual("two", self.machine.shots.shot_1.active_settings[
-            'current_state_name'])
-        self.assertEqual("one", self.machine.shots.shot_2.active_settings[
-            'current_state_name'])
-        self.assertEqual("one", self.machine.shots.shot_3.active_settings[
-            'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings[
+        self.assertEqual("lit",
+                         self.machine.shots.shot_4.get_profile_by_key(
+                             'mode', None)[
             'current_state_name'])
 
         self.hit_and_release_switch("s_rotate_l")
-        self.assertEqual("one", self.machine.shots.shot_1.active_settings[
+        self.assertEqual("one", self.machine.shots.shot_1.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
             'current_state_name'])
-        self.assertEqual("one", self.machine.shots.shot_2.active_settings[
+        self.assertEqual("two", self.machine.shots.shot_2.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
             'current_state_name'])
-        self.assertEqual("two", self.machine.shots.shot_3.active_settings[
+        self.assertEqual("one", self.machine.shots.shot_3.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
             'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings[
+        self.assertEqual("unlit",
+                         self.machine.shots.shot_4.get_profile_by_key(
+                             'mode', None)[
+            'current_state_name'])
+
+        self.hit_and_release_switch("s_rotate_l")
+        self.assertEqual("two", self.machine.shots.shot_1.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
+            'current_state_name'])
+        self.assertEqual("one", self.machine.shots.shot_2.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
+            'current_state_name'])
+        self.assertEqual("one", self.machine.shots.shot_3.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
+            'current_state_name'])
+        self.assertEqual("unlit",
+                         self.machine.shots.shot_4.get_profile_by_key(
+                             'mode', None)[
+            'current_state_name'])
+
+        self.hit_and_release_switch("s_rotate_l")
+        self.assertEqual("one", self.machine.shots.shot_1.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
+            'current_state_name'])
+        self.assertEqual("one", self.machine.shots.shot_2.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
+            'current_state_name'])
+        self.assertEqual("two", self.machine.shots.shot_3.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
+            'current_state_name'])
+        self.assertEqual("unlit",
+                         self.machine.shots.shot_4.get_profile_by_key(
+                             'mode', None)[
             'current_state_name'])
 
         self.hit_and_release_switch("s_rotate_r")
-        self.assertEqual("two", self.machine.shots.shot_1.active_settings[
+        self.assertEqual("two", self.machine.shots.shot_1.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
             'current_state_name'])
-        self.assertEqual("one", self.machine.shots.shot_2.active_settings[
+        self.assertEqual("one", self.machine.shots.shot_2.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
             'current_state_name'])
-        self.assertEqual("one", self.machine.shots.shot_3.active_settings[
+        self.assertEqual("one", self.machine.shots.shot_3.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
             'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_4.active_settings[
+        self.assertEqual("unlit",
+                         self.machine.shots.shot_4.get_profile_by_key(
+                             'mode', None)[
             'current_state_name'])
 
     def test_rotate_with_shows_in_progress(self):
@@ -316,3 +330,30 @@ class TestShotGroups(MpfTestCase):
 
     def test_no_profile_in_shot_group_uses_profile_from_shot(self):
         pass  # todo
+
+    def test_control_events(self):
+        pass
+
+        # test both in base and mode
+
+        # enable_events
+        # disable_events
+        # reset_events
+        # rotate_left_events
+        # rotate_right_events
+        # enable_rotation_events
+        # disable_rotation_events
+        # advance_events
+
+
+    def test_state_names_to_rotate(self):
+        pass
+
+    def test_state_names_to_not_rotate(self):
+        pass
+
+    def test_rotation_pattern(self):
+        pass
+
+    def test_adding_and_removing_from_group(self):
+        pass

@@ -7,7 +7,6 @@ A shot in MPF is a cool thing.
 """
 
 import uuid
-from collections import OrderedDict
 from copy import copy
 
 import mpf.core.delays
@@ -41,9 +40,6 @@ class Shot(ModeDevice, SystemWideDevice):
         self.profiles = list()
         self.groups = set()  # shot_groups this shot belongs to
 
-        self.active_mode = None
-        self.active_settings = None
-        self._enabled = False
         self.tokens = dict()
 
         # todo is this a hack??
@@ -51,7 +47,7 @@ class Shot(ModeDevice, SystemWideDevice):
 
     @property
     def enabled(self):
-        return self._enabled
+        return [x for x in self.profiles if x['enable']]
 
     def prepare_config(self, config, is_mode_config):
         if not is_mode_config:
@@ -134,6 +130,9 @@ class Shot(ModeDevice, SystemWideDevice):
         if not self.switch_handlers_active:
             return
 
+        self._reset_all_sequences()
+        self.delay.clear()
+
         for switch in self.config['switches']:
             self.machine.switch_controller.remove_switch_handler(
                 switch.name, self.hit, 1)
@@ -162,10 +161,10 @@ class Shot(ModeDevice, SystemWideDevice):
         """
         del kwargs
 
-        if not (self._enabled or force):
-            return
-
         profile_settings = self.get_profile_by_key('mode', mode)
+
+        if not (profile_settings['enable'] or force):
+            return
 
         profile_name = profile_settings['profile']
         profile = profile_settings['settings']
@@ -178,22 +177,9 @@ class Shot(ModeDevice, SystemWideDevice):
         if self.player[player_var] + steps >= len(profile['states']):
 
             if profile['loop']:
-                self.debug_log("Profile '%s' is in its final state "
-                               "based a player variable %s=%s. Profile "
-                               "setting for loop is True, so resetting to "
-                               "the first state.",
-                               self.active_settings['profile'],
-                               player_var, self.player[player_var])
-
                 self.player[profile['player_variable']] = 0
 
             else:
-                self.debug_log("Profile '%s' is in its final state "
-                               "based a player variable %s=%s. Profile "
-                               "setting for loop=0, so state is not "
-                               "advancing.",
-                               self.active_settings['profile'],
-                               player_var, self.player[player_var])
                 return
         else:
 
@@ -241,7 +227,7 @@ class Shot(ModeDevice, SystemWideDevice):
                 self._stop_show(profile['mode'])
                 return
 
-        except TypeError:  # catches no active_settings
+        except TypeError:
             return
 
         state_settings = (profile['settings']['states'][self.player[
@@ -326,7 +312,6 @@ class Shot(ModeDevice, SystemWideDevice):
         """
         self.player = None
         self.remove_profile_by_mode(None)
-        # self.active_settings['priority'] = -1
 
     def control_events_in_mode(self, mode):
         enable = not mode.config['shots'][self.name]['enable_events']
@@ -368,18 +353,24 @@ class Shot(ModeDevice, SystemWideDevice):
         """
         del kwargs
 
-        if not self._enabled:
-            return
-
         # Stop if there is an active delay but no sequence
         if (self.active_delay_switches and
                 not len(self.config['switch_sequence'])):
             return
 
         if mode == 'default#$%':
-            mode = self.active_mode
+            mode = self.get_profile_by_key('enable', True)['mode']
+
+        try:
+            if not self.get_profile_by_key('enable', True)['enable']:
+                return
+        except TypeError:
+            return
 
         profile_settings = self.get_profile_by_key('mode', mode)
+
+        if not profile_settings:
+            return
 
         profile = profile_settings['profile']
         state = profile_settings['current_state_name']
@@ -569,7 +560,7 @@ class Shot(ModeDevice, SystemWideDevice):
                 in the show)
 
         """
-        if not (self._enabled or force):
+        if not (self.get_profile_by_key('mode', mode)['enable'] or force):
             return
 
         try:
@@ -586,21 +577,12 @@ class Shot(ModeDevice, SystemWideDevice):
             self.get_profile_by_key('mode', mode)['settings']['player_variable']] = state
         self.update_current_state_name(mode)
 
-        if mode == self.active_mode:
+        self.debug_log("Jump is for active mode. Updating lights")
 
-            self.debug_log("Jump is for active mode. Updating lights")
-
-            self._update_show(mode=mode, show_step=show_step)
-
-        else:
-            self.debug_log("Jump mode: %s, Active mode: %s. Not updating "
-                           "lights", mode, self.active_mode)
+        self._update_show(mode=mode, show_step=show_step)
 
     def enable(self, mode=None, profile=None, **kwargs):
         del kwargs
-
-        if self._enabled:
-            return
 
         self.debug_log(
                 "Received command to enable this shot from mode: %s "
@@ -608,29 +590,13 @@ class Shot(ModeDevice, SystemWideDevice):
 
         self.update_profile(profile=profile, enable=True, mode=mode)
 
-    def _enable(self):
-        self.debug_log("Enabling...")
-        self._enabled = True
-        self._register_switch_handlers()
-        # self._update_shows(advance=False)
-
     def disable(self, mode=None, **kwargs):
         """Disables this shot. If the shot is not enabled, hits to it will
         not be processed.
 
         """
         del kwargs
-        if not self._enabled:
-            return
-
         self.update_profile(enable=False, mode=mode)
-
-    def _disable(self):
-        self.debug_log("Disabling...")
-        self._enabled = False
-        self._reset_all_sequences()
-        self._remove_switch_handlers()
-        self.delay.clear()
 
     def reset(self, mode=None, **kwargs):
         """Resets the shot profile for the passed mode back to the first state (State 0) and
@@ -664,15 +630,56 @@ class Shot(ModeDevice, SystemWideDevice):
         # profiles list with the next highest visible one.
 
         if mode == 'default#$%':
-            mode = self.active_mode
+            mode = self.get_profile_by_key('enable', True)['mode']
 
-        self.get_profile_by_key('mode', mode)['enable'] = False
+        self.update_profile(enable=False, mode=mode)
+
+        # self.get_profile_by_key('mode', mode)['enable'] = False
+
 
         self.debug_log("Removing active profile for mode %s", mode)
 
         # todo
 
     def update_profile(self, profile=None, enable=None, mode=None):
+        existing_profile = self.get_profile_by_key('mode', mode)
+
+        if not existing_profile:  # we're adding, not updating
+            self.add_profile2(profile=profile, enable=enable, mode=mode)
+            return
+
+        update_needed = False
+
+        if profile and profile != existing_profile['profile']:
+            update_needed = True
+            try:
+                existing_profile['settings'] = (
+                    self.machine.shot_profile_manager.profiles[profile].copy())
+                existing_profile['settings']['player_variable'] = (
+                    existing_profile['settings']['player_variable'].replace(
+                        '%', self.name))
+                existing_profile['profile'] = profile
+
+            except KeyError:
+                raise KeyError('Cannot apply shot profile "{}" to shot "{}" as'
+                               ' there is no profile with that name.'.format(
+                               profile, self.name))
+
+        if isinstance(enable, bool) and enable != existing_profile['enable']:
+            update_needed = True
+            existing_profile['enable'] = enable
+
+        if update_needed:
+            self._process_changed_profiles()
+            self._update_show(mode=mode, advance=False)
+            self.update_current_state_name(mode)  # todo
+
+    def add_profile(self, profile_dict):
+        self.profiles.append(profile_dict)
+        self._update_show(mode=profile_dict['mode'], advance=False)
+        self._sort_profiles()
+
+    def add_profile2(self, profile=None, enable=None, mode=None):
         if mode:
             priority = mode.priority
         else:
@@ -685,10 +692,7 @@ class Shot(ModeDevice, SystemWideDevice):
                 profile = self.config['profile']
 
         if enable is None:
-            try:
-                enable = self.get_profile_by_key('enable', mode)['enable']
-            except TypeError:
-                enable = False
+            enable = False
 
         try:
             profile_settings = (
@@ -701,34 +705,18 @@ class Shot(ModeDevice, SystemWideDevice):
         profile_settings['player_variable'] = (
             profile_settings['player_variable'].replace('%', self.name))
 
-        this_entry = self.get_profile_by_key('mode', mode)
-
-        if not this_entry:
-            this_entry = dict(current_state_name=None,
-                              running_show=None,
-                              mode=mode)
-            show_step = 1
-        else:
-            try:
-                show_step = this_entry['running_show'].next_step_index
-            except AttributeError:
-                show_step = 1
+        this_entry = dict(current_state_name=None,
+                          running_show=None,
+                          mode=mode)
 
         this_entry['priority'] = priority
         this_entry['profile'] = profile
         this_entry['settings'] = profile_settings
         this_entry['enable'] = enable
 
-        self.remove_profile_by_mode(mode)
-        self.add_profile(this_entry, show_step=show_step)
+        self.add_profile(this_entry)
 
         self.update_current_state_name(mode)  # todo
-
-    def add_profile(self, profile_dict, show_step=1):
-        self.profiles.append(profile_dict)
-        self._update_show(mode=profile_dict['mode'], show_step=show_step,
-                          advance=False)
-        self._sort_profiles()
 
     def remove_profile_by_mode(self, mode):
         self._stop_show(mode, hold=False)  # todo
@@ -750,17 +738,10 @@ class Shot(ModeDevice, SystemWideDevice):
     def _process_changed_profiles(self):
         # todo bug? profile[0] disabled should still allow lower ones to work?
 
-        self.active_settings = self.get_profile_by_key('enable', True)
-
-        if self.active_settings:
-            self.active_mode = self.active_settings['mode']
+        if self.get_profile_by_key('enable', True):
+            self._register_switch_handlers()
         else:
-            self.active_mode = None
-
-        if self.active_settings and not self._enabled:
-            self._enable()
-        else:
-            self._disable()
+            self._remove_switch_handlers()
 
     def add_to_group(self, group):
         self.debug_log("Received request to add this shot to the %s group",

@@ -210,52 +210,52 @@ class TestShots(MpfTestCase):
         self.start_game()
 
         # unlit and two states in the beginning
-        self.assertEqual(2, len(self.machine.shots.shot_1.active_settings[
+        self.assertEqual(2, len(self.machine.shots.shot_1.get_profile_by_key('mode', None)[
                                     'settings']['states']))
-        self.assertEqual("unlit", self.machine.shots.shot_1.active_settings[
+        self.assertEqual("unlit", self.machine.shots.shot_1.get_profile_by_key('mode', None)[
             'current_state_name'])
 
         # one hit and it lits
         self.hit_and_release_switch("switch_1")
-        self.assertEqual("lit", self.machine.shots.shot_1.active_settings[
+        self.assertEqual("lit", self.machine.shots.shot_1.get_profile_by_key('mode', None)[
             'current_state_name'])
         self.assertEqual(1, self.machine.game.player["shot_1_default"])
 
         # it stays lit
         self.hit_and_release_switch("switch_1")
-        self.assertEqual("lit", self.machine.shots.shot_1.active_settings[
+        self.assertEqual("lit", self.machine.shots.shot_1.get_profile_by_key('mode', None)[
             'current_state_name'])
         self.assertEqual(1, self.machine.game.player["shot_1_default"])
 
     def test_profile_advancing_with_loop(self):
         self.start_game()
 
-        self.assertEqual(3, len(self.machine.shots.shot_2.active_settings[
+        self.assertEqual(3, len(self.machine.shots.shot_2.get_profile_by_key('mode', None)[
                                     'settings']['states']))
 
-        self.assertEqual("one", self.machine.shots.shot_2.active_settings[
+        self.assertEqual("one", self.machine.shots.shot_2.get_profile_by_key('mode', None)[
             'current_state_name'])
 
         self.hit_and_release_switch("switch_2")
-        self.assertEqual("two", self.machine.shots.shot_2.active_settings[
+        self.assertEqual("two", self.machine.shots.shot_2.get_profile_by_key('mode', None)[
             'current_state_name'])
         self.assertEqual(1,
                          self.machine.game.player["shot_2_three_states_loop"])
 
         self.hit_and_release_switch("switch_2")
-        self.assertEqual("three", self.machine.shots.shot_2.active_settings[
+        self.assertEqual("three", self.machine.shots.shot_2.get_profile_by_key('mode', None)[
             'current_state_name'])
         self.assertEqual(2,
                          self.machine.game.player["shot_2_three_states_loop"])
 
         self.hit_and_release_switch("switch_2")
-        self.assertEqual("one", self.machine.shots.shot_2.active_settings[
+        self.assertEqual("one", self.machine.shots.shot_2.get_profile_by_key('mode', None)[
             'current_state_name'])
         self.assertEqual(0,
                          self.machine.game.player["shot_2_three_states_loop"])
 
         self.hit_and_release_switch("switch_2")
-        self.assertEqual("two", self.machine.shots.shot_2.active_settings[
+        self.assertEqual("two", self.machine.shots.shot_2.get_profile_by_key('mode', None)[
             'current_state_name'])
         self.assertEqual(1,
                          self.machine.game.player["shot_2_three_states_loop"])
@@ -650,21 +650,22 @@ class TestShots(MpfTestCase):
         self.hit_and_release_switch("switch_17")
         # verify it was hit, but it didn't advance
         self.assertEqual(1, self._events["shot_17_hit"])
-        self.assertEqual("one", shot17.active_settings['current_state_name'])
+        self.assertEqual("one", shot17.get_profile_by_key('mode', None)[
+            'current_state_name'])
 
         # again
         self.hit_and_release_switch("switch_17")
         self.assertEqual(2, self._events["shot_17_hit"])
-        self.assertEqual("one", shot17.active_settings['current_state_name'])
+        self.assertEqual("one", shot17.get_profile_by_key('mode', None)['current_state_name'])
 
         # manual advance
         shot17.advance(steps=2)
-        self.assertEqual("three", shot17.active_settings['current_state_name'])
+        self.assertEqual("three", shot17.get_profile_by_key('mode', None)['current_state_name'])
 
         # hit still doesn't advance
         self.hit_and_release_switch("switch_17")
         self.assertEqual(3, self._events["shot_17_hit"])
-        self.assertEqual("three", shot17.active_settings['current_state_name'])
+        self.assertEqual("three", shot17.get_profile_by_key('mode', None)['current_state_name'])
 
         # disable the shot, advance should be disabled too
         shot17.disable()
@@ -706,7 +707,7 @@ class TestShots(MpfTestCase):
         self.advance_time_and_run(.1)
 
         self.assertTrue(
-            shot19.active_settings['settings']['show_when_disabled'])
+            shot19.get_profile_by_key('mode', None)['settings']['show_when_disabled'])
 
         # show should still be at the same step
         self.assertEqual(RGBColor('yellow'),
@@ -758,7 +759,7 @@ class TestShots(MpfTestCase):
         shot20.enable()
 
         self.assertFalse(
-            shot20.active_settings['settings']['show_when_disabled'])
+            shot20.get_profile_by_key('mode', None)['settings']['show_when_disabled'])
 
         self.advance_time_and_run(.1)
         self.assertEqual(RGBColor('red'),
@@ -795,7 +796,6 @@ class TestShots(MpfTestCase):
 
         self.start_game()
         self.machine.modes.mode1.start()
-
         self.machine.shots.shot_21.hit()
 
         # check the states of the shots.
