@@ -211,21 +211,17 @@ class Shot(ModeDevice, SystemWideDevice):
 
         self._update_show(mode=mode)
 
-    def _stop_shows(self):
+    def _stop_shows(self, hold=False):
         for profile in self.profiles:
-            try:
-                profile['running_show'].stop()
-                # todo respect hold options?
-            except AttributeError:
-                pass
+            self._stop_show(profile['mode'], hold=hold)
 
-    def _stop_show(self, mode):
+    def _stop_show(self, mode, hold=False):
         profile = self.get_profile_by_key('mode', mode)
 
-        if not profile['running_show']:
+        if not profile or not profile['running_show']:
             return
 
-        profile['running_show'].stop(hold=False)
+        profile['running_show'].stop(hold=hold)
         profile['running_show'] = None
 
     def _update_shows(self, show_step=None, advance=None):
@@ -265,6 +261,7 @@ class Shot(ModeDevice, SystemWideDevice):
             # If we're here then we need to start the show from this state
             s = copy(state_settings)
             s.update(self.tokens)
+            s['priority'] += profile['priority']
             s.pop('show')
 
             profile['running_show'] = (
@@ -284,6 +281,7 @@ class Shot(ModeDevice, SystemWideDevice):
                     s = copy(state_settings)
                     s.update(self.tokens)
                     s['manual_advance'] = True
+                    s['priority'] += profile['priority']
                     s['start_step'] = self.player[profile[
                         'settings']['player_variable']] + 1
                     # +1 above because show steps are 1-based while player var
@@ -299,6 +297,7 @@ class Shot(ModeDevice, SystemWideDevice):
             else:  # no running show, so start the profile root show
                 s = copy(state_settings)
                 s.update(self.tokens)
+                s['priority'] += profile['priority']
                 s.pop('show')
                 s['manual_advance'] = True
 
@@ -687,7 +686,7 @@ class Shot(ModeDevice, SystemWideDevice):
 
         if enable is None:
             try:
-                enable = self.get_profile_by_key('enable', mode)['key']
+                enable = self.get_profile_by_key('enable', mode)['enable']
             except TypeError:
                 enable = False
 
@@ -708,6 +707,12 @@ class Shot(ModeDevice, SystemWideDevice):
             this_entry = dict(current_state_name=None,
                               running_show=None,
                               mode=mode)
+            show_step = 1
+        else:
+            try:
+                show_step = this_entry['running_show'].next_step_index
+            except AttributeError:
+                show_step = 1
 
         this_entry['priority'] = priority
         this_entry['profile'] = profile
@@ -715,16 +720,18 @@ class Shot(ModeDevice, SystemWideDevice):
         this_entry['enable'] = enable
 
         self.remove_profile_by_mode(mode)
-        self.add_profile(this_entry)
+        self.add_profile(this_entry, show_step=show_step)
 
         self.update_current_state_name(mode)  # todo
 
-    def add_profile(self, profile_dict):
+    def add_profile(self, profile_dict, show_step=1):
         self.profiles.append(profile_dict)
-        self._update_show(mode=profile_dict['mode'], advance=False)
+        self._update_show(mode=profile_dict['mode'], show_step=show_step,
+                          advance=False)
         self._sort_profiles()
 
     def remove_profile_by_mode(self, mode):
+        self._stop_show(mode, hold=False)  # todo
         self.profiles[:] = [x for x in self.profiles if x['mode'] != mode]
         self._process_changed_profiles()
 

@@ -703,6 +703,7 @@ class TestShots(MpfTestCase):
 
         # enable the shot
         shot19.enable()
+        self.advance_time_and_run(.1)
 
         self.assertTrue(
             shot19.active_settings['settings']['show_when_disabled'])
@@ -712,7 +713,7 @@ class TestShots(MpfTestCase):
                          self.machine.leds.led_19.hw_driver.current_color)
 
         # but it should also still be running
-        self.advance_time_and_run()
+        self.advance_time_and_run(1)
         self.assertEqual(RGBColor('green'),
                          self.machine.leds.led_19.hw_driver.current_color)
 
@@ -851,6 +852,52 @@ class TestShots(MpfTestCase):
         self.assertEqual(1, self.machine.game.player.shot_22_profile_22)
 
     def test_remove_active_profile(self):
-        pass
+        self.start_game()
+        self.machine.modes.mode1.start()
+        self.machine.modes.mode2.start()
 
-        # remove_active_profile_events
+        shot22 = self.machine.shots.shot_22
+
+        shot22.remove_active_profile()
+
+    def test_show_in_higher_profile(self):
+        self.start_game()
+        shot23 = self.machine.shots.shot_23
+
+        # make sure show is running from base config
+        self.assertEqual(RGBColor('orange'),
+                         self.machine.leds.led_23.hw_driver.current_color)
+
+        # advance to make sure show is running
+        self.advance_time_and_run()
+        self.assertEqual(RGBColor('yellow'),
+                         self.machine.leds.led_23.hw_driver.current_color)
+
+        # start mode1, should flip to show 2 colors
+        self.machine.modes.mode1.start()
+        self.advance_time_and_run(.5)
+
+        self.assertEqual(RGBColor('aliceblue'),
+                         self.machine.leds.led_23.hw_driver.current_color)
+
+        # advance to make sure show is running
+        self.advance_time_and_run(1)
+        self.assertEqual(RGBColor('antiquewhite'),
+                         self.machine.leds.led_23.hw_driver.current_color)
+
+        self.advance_time_and_run(1)
+        self.assertEqual(RGBColor('aquamarine'),
+                         self.machine.leds.led_23.hw_driver.current_color)
+
+        # stop the mode, make sure the show from the base is still running
+        self.machine.modes.mode1.stop()
+        self.advance_time_and_run(.1)
+        self.assertEqual(RGBColor('blue'),
+                         self.machine.leds.led_23.hw_driver.current_color)
+
+        self.advance_time_and_run(1)
+        self.assertEqual(RGBColor('purple'),
+                         self.machine.leds.led_23.hw_driver.current_color)
+
+    def test_holds(self):
+        pass
