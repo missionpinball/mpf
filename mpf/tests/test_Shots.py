@@ -542,12 +542,12 @@ class TestShots(MpfTestCase):
         self.machine.events.post('custom_hit_16')
         self.advance_time_and_run()
         self.assertEqual(1, self._events["shot_16_hit"])
-        self.assertEqual(shot16.get_mode_state(None)[1], 'lit')
+        self.assertEqual(shot16.profiles[0]['current_state_name'], 'lit')
 
         # test reset event
         self.machine.events.post('custom_reset_16')
         self.advance_time_and_run()
-        self.assertEqual(shot16.get_mode_state(None)[1], 'unlit')
+        self.assertEqual(shot16.profiles[0]['current_state_name'], 'unlit')
 
         # test advance event
         self.machine.events.post('custom_advance_16')
@@ -555,7 +555,7 @@ class TestShots(MpfTestCase):
         # hit should not be posted again (still 1 from before)
         self.assertEqual(1, self._events["shot_16_hit"])
         # profile should have advanced though
-        self.assertEqual(shot16.get_mode_state(None)[1], 'lit')
+        self.assertEqual(shot16.profiles[0]['current_state_name'], 'lit')
 
         # test disable event
         self.machine.events.post('custom_disable_16')
@@ -566,7 +566,7 @@ class TestShots(MpfTestCase):
         self.machine.events.post('custom_hit_16')
         self.advance_time_and_run()
         self.assertEqual(1, self._events["shot_16_hit"])  # still 1 from before
-        self.assertEqual(shot16.get_mode_state(None)[1], 'lit')
+        self.assertEqual(shot16.profiles[0]['current_state_name'], 'lit')
 
         # mode1 is not active, so make sure none of the events from
         # mode1_shot_17
@@ -619,14 +619,14 @@ class TestShots(MpfTestCase):
         self.machine.events.post('custom_hit_17')
         self.advance_time_and_run()
         self.assertEqual(1, self._events["mode1_shot_17_hit"])
-        self.assertEqual(
-            shot17.get_mode_state(self.machine.modes.mode1)[1], 'lit')
+        self.assertEqual(shot17.profiles[0]['current_state_name'], 'lit')
+
 
         # test reset event
         self.machine.events.post('custom_reset_17')
         self.advance_time_and_run()
-        self.assertEqual(
-            shot17.get_mode_state(self.machine.modes.mode1)[1], 'unlit')
+        self.assertEqual(shot17.profiles[0]['current_state_name'], 'unlit')
+
 
         # test disable event
         self.machine.events.post('custom_disable_17')
@@ -638,8 +638,7 @@ class TestShots(MpfTestCase):
         self.advance_time_and_run()
         # since it's disabled, there should still only be 1 from before
         self.assertEqual(1, self._events["mode1_shot_17_hit"])
-        self.assertEqual(
-            shot17.get_mode_state(self.machine.modes.mode1)[1], 'unlit')
+        self.assertEqual(shot17.profiles[0]['current_state_name'], 'unlit')
 
     def test_advance(self):
         self.mock_event("shot_17_hit")
@@ -670,11 +669,11 @@ class TestShots(MpfTestCase):
         # disable the shot, advance should be disabled too
         shot17.disable()
         shot17.advance()
-        self.assertEqual("three", shot17.active_settings['current_state_name'])
+        self.assertEqual(2, self.machine.game.player.shot_17_profile_17)
 
         # though we can force it to advance
         shot17.advance(force=True)
-        self.assertEqual("four", shot17.active_settings['current_state_name'])
+        self.assertEqual(3, self.machine.game.player.shot_17_profile_17)
 
     def test_custom_player_variable(self):
         self.start_game()
@@ -687,9 +686,6 @@ class TestShots(MpfTestCase):
         # first test show_when_disabled == true
 
         shot19 = self.machine.shots.shot_19
-
-        self.assertTrue(
-            shot19.active_settings['settings']['show_when_disabled'])
 
         self.start_game()
         # shot19 config has enable_events: none, so it should be disabled
@@ -707,6 +703,9 @@ class TestShots(MpfTestCase):
 
         # enable the shot
         shot19.enable()
+
+        self.assertTrue(
+            shot19.active_settings['settings']['show_when_disabled'])
 
         # show should still be at the same step
         self.assertEqual(RGBColor('yellow'),
@@ -742,14 +741,11 @@ class TestShots(MpfTestCase):
         self.assertEqual(RGBColor('aquamarine'),
                          self.machine.leds.led_19.hw_driver.current_color)
 
-
     def test_no_show_when_disabled(self):
         shot20 = self.machine.shots.shot_20
 
-        self.assertFalse(
-            shot20.active_settings['settings']['show_when_disabled'])
-
         self.start_game()
+
         # shot20 config has enable_events: none, so it should be disabled
         self.assertFalse(shot20.enabled)
 
@@ -759,6 +755,10 @@ class TestShots(MpfTestCase):
 
         # enable the shot, show should start
         shot20.enable()
+
+        self.assertFalse(
+            shot20.active_settings['settings']['show_when_disabled'])
+
         self.advance_time_and_run(.1)
         self.assertEqual(RGBColor('red'),
                          self.machine.leds.led_20.hw_driver.current_color)

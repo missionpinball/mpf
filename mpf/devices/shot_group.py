@@ -48,7 +48,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
         if 'profile' in self.config:
             for shot in self.config['shots']:
-                shot.update_enable_table(profile=self.config['profile'],
+                shot.update_profile(profile=self.config['profile'],
                                          mode=None)
 
     def device_added_to_mode(self, mode, player):
@@ -119,8 +119,8 @@ class ShotGroup(ModeDevice, SystemWideDevice):
             profile = mode.config['shot_groups'][self.name]['profile']
 
         for shot in self.config['shots']:
-            if mode not in shot.enable_table:
-                # if the mode is not in the shot's enable_table, that means we
+            if not shot.get_profile_by_key('mode', mode):
+                # if the mode is not in the shot's profiles list, that means we
                 # have no entry for this shot in this mode config. Therefore
                 # there is no chance of a blank enable_events:, which means we
                 # want to enable this shot.
@@ -249,14 +249,14 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         if states:
             states = Util.string_to_lowercase_list(states)
         else:
-            states = self.config['shots'][0].enable_table[mode]['settings'][
+            states = self.config['shots'][0].get_profile_by_key('mode', mode)['settings'][
                 'state_names_to_rotate']
 
         if exclude_states:
             exclude_states = Util.string_to_lowercase_list(exclude_states)
         else:
             exclude_states = (
-                self.config['shots'][0].enable_table[mode]['settings'][
+                self.config['shots'][0].get_profile_by_key('mode', mode)['settings'][
                     'state_names_to_not_rotate'])
 
         shot_list = list()
@@ -264,8 +264,8 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         # build of a list of shots we're actually going to rotate
         for shot in self.config['shots']:
 
-            if ((not states or shot.enable_table[mode]['current_state_name'] in states) and
-                    shot.enable_table[mode]['current_state_name'] not in exclude_states):
+            if ((not states or shot.get_profile_by_key('mode', mode)['current_state_name'] in states) and
+                    shot.get_profile_by_key('mode', mode)['current_state_name'] not in exclude_states):
                 shot_list.append(shot)
 
         # shot_state_list is deque of tuples (state num, show step num)
@@ -273,12 +273,15 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
         for shot in shot_list:
 
-            current_state = shot.running_show.next_step_index
+            try:
+                current_show_step = shot.get_profile_by_key('mode', mode)[
+                    'running_show'].next_step_index
+            except AttributeError:
+                current_show_step = None
 
             shot_state_list.append(
-                    (shot.player[shot.enable_table[mode]['settings'][
-                        'player_variable']],
-                     current_state))
+                    (shot.player[shot.get_profile_by_key('mode', mode)['settings'][
+                        'player_variable']], current_show_step))
 
         if self.debug:
             self.log.debug('Rotating. Mode: %s, Direction: %s, Include states:'
@@ -289,12 +292,12 @@ class ShotGroup(ModeDevice, SystemWideDevice):
             for shot in shot_list:
                 shot.log.debug("This shot is part of a rotation event. Current"
                                " state: %s",
-                               shot.enable_table[mode]['current_state_name'])
+                               shot.get_profile_by_key('mode', mode)['current_state_name'])
 
         # figure out which direction we're going to rotate
         if not direction:
-            direction = shot_list[0].enable_table[mode]['settings']['rotation_pattern'][0]
-            shot_list[0].enable_table[mode]['settings']['rotation_pattern'].rotate(-1)
+            direction = shot_list[0].get_profile_by_key('mode', mode)['settings']['rotation_pattern'][0]
+            shot_list[0].get_profile_by_key('mode', mode)['settings']['rotation_pattern'].rotate(-1)
 
             self.debug_log("Since no direction was specified, pulling from"
                            " rotation pattern: '%s'", direction)
@@ -308,7 +311,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         # step through all our shots and update their states
         for i, shot in enumerate(shot_list):
             shot.jump(mode=mode, state=shot_state_list[i][0],
-                      show_step=shot_state_list[i][1])
+                      show_step=shot_state_list[i][1], force=True)
 
     def rotate_right(self, mode=None, **kwargs):
         """Rotates the state of the shots to the right. This method is the
@@ -349,13 +352,11 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
         for shot in self.config['shots']:
 
-            mode_state = shot.get_mode_state(mode)
+            mode_state = shot.get_profile_by_key('mode', mode)
 
             if mode_state:
-                shot_states.add(mode_state)
-
-                self.debug_log("%s state: %s", shot.name,
-                               shot.get_mode_state(mode))
+                shot_states.add((mode_state['profile'],
+                                 mode_state['current_state_name']))
 
             else:
                 self.debug_log("Shot %s is not used in this mode. Aborting"
@@ -379,10 +380,10 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         # config, regardless of whether or not the shot_group device was
         # initially created in this mode
         for shot in self.config['shots']:
-            if mode not in shot.enable_table:
+            if not shot.get_profile_by_key('mode', mode):
 
                 self.debug_log('Control events found in %s '
-                               'config. Adding enable_table entries to '
+                               'config. Adding profile list entries to '
                                'member shots', mode)
 
                 enable = not self.config['enable_events']
@@ -392,9 +393,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
                 else:
                     profile = shot.config['profile']
 
-                shot.update_enable_table(profile=profile,
-                                         enable=enable,
-                                         mode=mode)
+                shot.update_profile(profile=profile, enable=enable, mode=mode)
 
     def remove(self):
         self.debug_log("Removing this shot group")

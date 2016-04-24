@@ -126,14 +126,15 @@ class ShotProfileManager(object):
                 self.machine.shots[shot].enable_debugging()
 
             if self.debug:
-                self.log.debug('Updating shot enable_table from config: profile'
+                self.log.debug('Updating shot profiles list from config: '
+                               'profile'
                                ': %s, enable: %s, mode: %s', profile, enable,
                                mode)
                 self.machine.shots[shot].log.debug('Updating shot enable_table '
                                                    'from config: profile: %s, enable: %s, mode: %s', profile,
                                                    enable, mode)
 
-            self.machine.shots[shot].update_enable_table(profile, enable, mode)
+            self.machine.shots[shot].update_profile(profile, enable, mode)
 
         return self.mode_stop_for_shots, mode
 
@@ -149,7 +150,7 @@ class ShotProfileManager(object):
         # pass the mode to remove it from the enable_table
 
         for shot in self.machine.shots:
-            shot.remove_from_enable_table(mode)
+            shot.remove_profile_by_mode(mode)
 
     def mode_start_for_shot_groups(self, config, priority, mode, **kwargs):
         """Applies profiles to member shots of a dict of shot groups.
@@ -208,7 +209,7 @@ class ShotProfileManager(object):
                                    "config: profile: %s, enable: %s, mode: %s",
                                    settings['profile'], enable, mode)
 
-                shot.update_enable_table(settings['profile'], enable, mode)
+                shot.update_profile(settings['profile'], enable, mode)
 
         return self.mode_stop_for_shot_groups, mode
 
@@ -226,4 +227,4 @@ class ShotProfileManager(object):
         # this mode's config? meh.. premature optimization though?
 
         for shot in self.machine.shots:
-            shot.remove_from_enable_table(mode)
+            shot.remove_profile_by_mode(mode)
