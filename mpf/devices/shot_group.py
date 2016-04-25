@@ -140,12 +140,12 @@ class ShotGroup(ModeDevice, SystemWideDevice):
                     shot.enable(profile=shot.config['profile'], enable=True,
                                 mode=mode)
 
-                shot.add_to_group(self)
+                shot.register_group(self)
 
     def _enable_from_system_wide(self, profile=None):
         for shot in self.config['shots']:
             shot.enable(profile=profile)
-            shot.add_to_group(self)
+            shot.register_group(self)
 
     def disable(self, mode=None, **kwargs):
         """Disables this shot group. Also disables all the shots in this
@@ -158,7 +158,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
         for shot in self.config['shots']:
             shot.disable(mode)
-            shot.remove_from_group(self)
+            shot.deregister_group(self)
 
     def enable_rotation(self, **kwargs):
         """Enables shot rotation. If disabled, rotation events do not actually
@@ -258,30 +258,31 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         if states:
             states = Util.string_to_lowercase_list(states)
         else:
-            states = self.config['shots'][0].get_profile_by_key('mode', mode)['settings'][
-                'state_names_to_rotate']
+            states = self.config['shots'][0].get_profile_by_key(
+                'mode', mode)['settings']['state_names_to_rotate']
 
         if exclude_states:
             exclude_states = Util.string_to_lowercase_list(exclude_states)
         else:
             exclude_states = (
-                self.config['shots'][0].get_profile_by_key('mode', mode)['settings'][
-                    'state_names_to_not_rotate'])
+                self.config['shots'][0].get_profile_by_key(
+                    'mode', mode)['settings']['state_names_to_not_rotate'])
 
         shot_list = list()
 
         # build of a list of shots we're actually going to rotate
         for shot in self.config['shots']:
 
-            if ((not states or shot.get_profile_by_key('mode', mode)['current_state_name'] in states) and
-                    shot.get_profile_by_key('mode', mode)['current_state_name'] not in exclude_states):
+            if ((not states or shot.get_profile_by_key(
+                    'mode', mode)['current_state_name'] in states) and
+                    shot.get_profile_by_key(
+                    'mode', mode)['current_state_name'] not in exclude_states):
                 shot_list.append(shot)
 
         # shot_state_list is deque of tuples (state num, show step num)
         shot_state_list = deque()
 
         for shot in shot_list:
-
             try:
                 current_show_step = shot.get_profile_by_key('mode', mode)[
                     'running_show'].next_step_index
@@ -289,8 +290,8 @@ class ShotGroup(ModeDevice, SystemWideDevice):
                 current_show_step = None
 
             shot_state_list.append(
-                    (shot.player[shot.get_profile_by_key('mode', mode)['settings'][
-                        'player_variable']], current_show_step))
+                (shot.player[shot.get_profile_by_key('mode',
+                mode)['settings']['player_variable']], current_show_step))
 
         if self.debug:
             self.log.debug('Rotating. Mode: %s, Direction: %s, Include states:'
@@ -300,13 +301,15 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
             for shot in shot_list:
                 shot.log.debug("This shot is part of a rotation event. Current"
-                               " state: %s",
-                               shot.get_profile_by_key('mode', mode)['current_state_name'])
+                               " state: %s", shot.get_profile_by_key(
+                    'mode', mode)['current_state_name'])
 
         # figure out which direction we're going to rotate
         if not direction:
-            direction = shot_list[0].get_profile_by_key('mode', mode)['settings']['rotation_pattern'][0]
-            shot_list[0].get_profile_by_key('mode', mode)['settings']['rotation_pattern'].rotate(-1)
+            direction = shot_list[0].get_profile_by_key(
+                'mode', mode)['settings']['rotation_pattern'][0]
+            shot_list[0].get_profile_by_key(
+                'mode', mode)['settings']['rotation_pattern'].rotate(-1)
 
             self.debug_log("Since no direction was specified, pulling from"
                            " rotation pattern: '%s'", direction)

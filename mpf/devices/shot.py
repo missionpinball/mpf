@@ -756,9 +756,13 @@ class Shot(ModeDevice, SystemWideDevice):
         else:
             self._remove_switch_handlers()
 
-    def add_to_group(self, group):
-        self.debug_log("Received request to add this shot to the %s group",
-                       group)
+    def register_group(self, group):
+        """Notifies this shot that it has been added to a group, meaning it
+        will update this group of its state changes. Note this is called by
+        :class:``ShotGroup``. If you want to manually add a shot to a group,
+        do it from there."""
+        self.debug_log("Received request to register this shot to the %s "
+                       "group", group)
 
         if isinstance(group, str):
 
@@ -771,8 +775,11 @@ class Shot(ModeDevice, SystemWideDevice):
 
         self.groups.add(group)
 
-    def remove_from_group(self, group):
-        self.debug_log("Received request to remove this shot from the %s "
+    def deregister_group(self, group):
+        """Notifies this shot that it is no longer part of this group. Note
+        this is called by :class:``ShotGroup``. If you want to manually
+        remove a shot from a group, do it from there."""
+        self.debug_log("Received request to deregister this shot from the %s "
                        "group", group)
 
         if isinstance(group, str):
@@ -785,7 +792,3 @@ class Shot(ModeDevice, SystemWideDevice):
                 return
 
         self.groups.discard(group)
-
-    def _update_groups(self, profile, state):
-        for group in self.groups:
-            group.update_member_shot(shot=self, profile=profile, state=state)

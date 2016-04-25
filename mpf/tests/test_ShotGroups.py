@@ -473,13 +473,151 @@ class TestShotGroups(MpfTestCase):
         pass  # todo
 
     def test_state_names_to_rotate(self):
-        pass
+        shot34 = self.machine.shots.shot_34
+        shot35 = self.machine.shots.shot_35
+        shot36 = self.machine.shots.shot_36
+        group34 = self.machine.shot_groups.shot_group_34
+
+        self.start_game()
+
+        # create some mixed states to test
+        shot34.advance()
+        shot35.advance(4)  # also tests profile base show advances properly
+        self.advance_time_and_run()
+        self.assertEqual(shot34.profiles[0]['current_state_name'], 'red')
+        self.assertEqual(shot35.profiles[0]['current_state_name'], 'green')
+        self.assertEqual(shot36.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(RGBColor('red'),
+            self.machine.leds.led_34.hw_driver.current_color)
+        self.assertEqual(RGBColor('green'),
+            self.machine.leds.led_35.hw_driver.current_color)
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_36.hw_driver.current_color)
+
+        # rotate, only the red and green states should be rotated
+        group34.rotate()
+        self.advance_time_and_run()
+        self.assertEqual(shot34.profiles[0]['current_state_name'], 'green')
+        self.assertEqual(shot35.profiles[0]['current_state_name'], 'red')
+        self.assertEqual(shot36.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(RGBColor('green'),
+            self.machine.leds.led_34.hw_driver.current_color)
+        self.assertEqual(RGBColor('red'),
+            self.machine.leds.led_35.hw_driver.current_color)
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_36.hw_driver.current_color)
 
     def test_state_names_to_not_rotate(self):
-        pass
+        shot37 = self.machine.shots.shot_37
+        shot38 = self.machine.shots.shot_38
+        shot39 = self.machine.shots.shot_39
+        group37 = self.machine.shot_groups.shot_group_37
+
+        self.start_game()
+
+        # create some mixed states to test
+        shot37.advance()
+        shot38.advance(2)
+        self.advance_time_and_run()
+        self.assertEqual(shot37.profiles[0]['current_state_name'], 'red')
+        self.assertEqual(shot38.profiles[0]['current_state_name'], 'orange')
+        self.assertEqual(shot39.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(RGBColor('red'),
+            self.machine.leds.led_37.hw_driver.current_color)
+        self.assertEqual(RGBColor('orange'),
+            self.machine.leds.led_38.hw_driver.current_color)
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_39.hw_driver.current_color)
+
+        # rotate, only the red and green states should be rotated
+        group37.rotate()
+        self.advance_time_and_run()
+        self.assertEqual(shot37.profiles[0]['current_state_name'], 'orange')
+        self.assertEqual(shot38.profiles[0]['current_state_name'], 'red')
+        self.assertEqual(shot39.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(RGBColor('orange'),
+            self.machine.leds.led_37.hw_driver.current_color)
+        self.assertEqual(RGBColor('red'),
+            self.machine.leds.led_38.hw_driver.current_color)
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_39.hw_driver.current_color)
 
     def test_rotation_pattern(self):
-        pass
+        shot40 = self.machine.shots.shot_40
+        shot41 = self.machine.shots.shot_41
+        shot42 = self.machine.shots.shot_42
+        group40 = self.machine.shot_groups.shot_group_40
 
-    def test_adding_and_removing_from_group(self):
-        pass
+        self.start_game()
+
+        shot40.advance()
+        self.advance_time_and_run()
+        self.assertEqual(shot40.profiles[0]['current_state_name'], 'red')
+        self.assertEqual(shot41.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(shot42.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(RGBColor('red'),
+            self.machine.leds.led_40.hw_driver.current_color)
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_41.hw_driver.current_color)
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_42.hw_driver.current_color)
+
+        group40.rotate()
+        self.advance_time_and_run()
+        self.assertEqual(shot40.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(shot41.profiles[0]['current_state_name'], 'red')
+        self.assertEqual(shot42.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_40.hw_driver.current_color)
+        self.assertEqual(RGBColor('red'),
+            self.machine.leds.led_41.hw_driver.current_color)
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_42.hw_driver.current_color)
+
+        group40.rotate()
+        self.advance_time_and_run()
+        self.assertEqual(shot40.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(shot41.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(shot42.profiles[0]['current_state_name'], 'red')
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_40.hw_driver.current_color)
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_41.hw_driver.current_color)
+        self.assertEqual(RGBColor('red'),
+            self.machine.leds.led_42.hw_driver.current_color)
+
+        group40.rotate()
+        self.advance_time_and_run()
+        self.assertEqual(shot40.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(shot41.profiles[0]['current_state_name'], 'red')
+        self.assertEqual(shot42.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_40.hw_driver.current_color)
+        self.assertEqual(RGBColor('red'),
+            self.machine.leds.led_41.hw_driver.current_color)
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_42.hw_driver.current_color)
+
+        group40.rotate()
+        self.advance_time_and_run()
+        self.assertEqual(shot40.profiles[0]['current_state_name'], 'red')
+        self.assertEqual(shot41.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(shot42.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(RGBColor('red'),
+            self.machine.leds.led_40.hw_driver.current_color)
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_41.hw_driver.current_color)
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_42.hw_driver.current_color)
+
+        group40.rotate()
+        self.advance_time_and_run()
+        self.assertEqual(shot40.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(shot41.profiles[0]['current_state_name'], 'red')
+        self.assertEqual(shot42.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_40.hw_driver.current_color)
+        self.assertEqual(RGBColor('red'),
+            self.machine.leds.led_41.hw_driver.current_color)
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.led_42.hw_driver.current_color)
