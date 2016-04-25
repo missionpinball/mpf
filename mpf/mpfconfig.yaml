@@ -62,7 +62,6 @@ mpf:
         mpf.plugins.auditor.Auditor
         mpf.plugins.info_lights.InfoLights
         mpf.plugins.osc.OSC
-        mpf.plugins.socket_events.SocketClient
         mpf.plugins.switch_player.SwitchPlayer
 
     platforms:
