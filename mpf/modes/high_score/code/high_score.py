@@ -3,7 +3,7 @@
 from collections import OrderedDict
 from mpf.core.data_manager import DataManager
 from mpf.core.mode import Mode
-
+from mpf.core.player import Player
 
 class HighScore(Mode):
 
@@ -19,7 +19,7 @@ class HighScore(Mode):
         self.player_name_handler = None
 
         self._create_machine_vars()
-        self.pending_request = False
+        self.pending_award = None
 
     def _create_machine_vars(self):
         for category in self.high_score_config['categories']:
@@ -50,7 +50,6 @@ class HighScore(Mode):
             self.stop()
 
     def _check_for_high_scores(self):
-
         if not self.machine.game.player_list:
             return False
 
@@ -78,19 +77,19 @@ class HighScore(Mode):
                 # trim it so that it's the length specified in the config
                 new_list = new_list[:len(award_names)]
 
-                # scan through and see if any of our players are in this list
+                # save the new list for this category
                 self.new_high_score_list[category_name] = new_list
 
-                # todo broken
-
-                if player in [x[0] for x in new_list]:
-                    high_score_change = True
+                # scan through and see if any of our players are in this list
+                for entry in new_list:
+                    if isinstance(entry[0], Player):
+                        high_score_change = True
 
         return high_score_change
 
     def _get_player_names(self):
         if not self.player_name_handler:
-            self.machine.events.add_handler('high_score_complete',
+            self.machine.events.add_handler('text_input_high_score_complete',
                                             self._receive_player_name)
 
         for category_name, top_scores in self.new_high_score_list.items():
@@ -104,74 +103,78 @@ class HighScore(Mode):
                                 award_label = (
                                     category_dict[config_cat_name][index])
 
-                    if not self.pending_request:
-                        self._get_player_name(player, award_label, value)
-                    return
+                                if not self.pending_award:
+                                    self._get_player_name(player, award_label, value)
+                                return
 
         self.high_scores_done()
 
     def _get_player_name(self, player, award_label, value):
-
-        if not self.pending_request:
+        if not self.pending_award:
 
             self.log.info("New high score. Player: %s, award_label: %s"
                        ", Value: %s", player, award_label, value)
 
-            self.pending_request = True
+            self.pending_award = award_label
+
+            self.machine.create_machine_var(name='new_high_score_award',
+                                            value=award_label)
+            self.machine.create_machine_var(name='new_high_score_player_num',
+                                            value=player.number)
+            self.machine.create_machine_var(name='new_high_score_value',
+                                            value=value)
 
             self.machine.bcp.send(bcp_command='trigger',
-                                  name='high_score',
+                                  name='new_high_score',
                                   award=award_label,
                                   player_num=player.number,
                                   value=value)
 
-    def _receive_player_name(self, award, player_name=None, **kwargs):
-        del kwargs
-        self.pending_request = False
+    def _receive_player_name(self, text):
 
-        valid_update = False
-
-        if not player_name:
-            player_name = ''
+        if not text:
+            text = ''
 
         for category_scores in self.high_score_config['categories']:
 
             for category_name in list(category_scores.keys()):
                 for index, local_award in (
                         enumerate(category_scores[category_name])):
-                    if local_award == award:
+                    if local_award == self.pending_award:
 
                         if (self.new_high_score_list[category_name][index][0]
                                 in self.machine.game.player_list):
-                            valid_update = True
                             value = (self.new_high_score_list[category_name]
                                                             [index][1])
                             self.new_high_score_list[category_name][index] = (
-                                (player_name, value))
+                                (text, value))
 
-        # valid update is because if the MC sends multiple complete events for
-        # the same award then this will send multiple requests for the next one
-        # This is kind of a hack.. we'll revisit some day.
-        if valid_update:
+                            if self.high_score_config[
+                                    'award_slide_display_time']:
 
-            if self.high_score_config['award_slide_display_time']:
-                self.send_award_slide_event(
-                    award_slide_name='high_score_award_display',
-                    player_name=player_name,
-                    award=award,
-                    value=value)
-                self.send_award_slide_event(
-                    award_slide_name=award + '_award_display',
-                    player_name=player_name,
-                    award=award,
-                    value=value)
+                                self._send_award_slide(text,
+                                                       self.pending_award,
+                                                       value)
 
-                self.delay.add(name='award_timer',
-                    ms=self.high_score_config['award_slide_display_time'],
-                    callback=self._get_player_names)
+        else:
+            self.pending_award = None
+            self._get_player_names()
 
-            else:
-                self._get_player_names()
+    def _send_award_slide(self, player_name, award, value):
+        self.send_award_slide_event(
+            award_slide_name='high_score_award_display',
+            player_name=player_name,
+            award=award,
+            value=value)
+        self.send_award_slide_event(
+            award_slide_name='{}_award_display'.format(award),
+            player_name=player_name,
+            award=award,
+            value=value)
+
+        self.delay.add(name='award_timer',
+            ms=self.high_score_config['award_slide_display_time'],
+            callback=self._get_player_names)
 
     def high_scores_done(self):
         self._stop_sending_switches()

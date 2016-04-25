@@ -1,0 +1,17 @@
+# config_version=4
+
+modes:
+  - high_score
+
+high_score:
+  shift_left_tag: left_flipper
+  shift_right_tag: right_flipper
+  select_tag: start
+  award_slide_display_time: 4s
+  categories:
+  - score:
+      - GRAND CHAMPION
+      - HIGH SCORE 1
+      - HIGH SCORE 2
+      - HIGH SCORE 3
+      - HIGH SCORE 4

@@ -80,10 +80,8 @@ class Game(Mode):
 
         if self.machine.config['game']['add_player_switch_tag']:
             self.add_mode_event_handler(
-                    self.machine.config['mpf']['switch_tag_event'].replace('%',
-                                                                           self.machine.config[
-                                                                               'game'][
-                                                                               'add_player_switch_tag']),
+                self.machine.config['mpf']['switch_tag_event'].replace(
+                    '%', self.machine.config['game']['add_player_switch_tag']),
                     self.request_player_add)
 
         self.add_mode_event_handler('ball_ended', self.ball_ended)

@@ -929,10 +929,10 @@ widgets:
         font_name: ignore
         halign: single|str|center
         valign: single|str|middle
-        shift_left_event: single|str|None
-        shift_right_event: single|str|None
-        select_event: single|str|None
-        abort_event: single|str|None
+        shift_left_event: single|str|sw_left_flipper
+        shift_right_event: single|str|sw_right_flipper
+        select_event: single|str|sw_start
+        abort_event: single|str|sw_esc
         force_complete_event: single|str|None
         bold: single|bool|False
         italic: single|bool|False
