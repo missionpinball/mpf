@@ -195,7 +195,7 @@ class Shot(ModeDevice, SystemWideDevice):
             group.check_for_complete(mode)
             # TODO should be made to work for lower priority things too?
 
-        self._update_show(mode=mode)
+        self._update_show(mode=mode, show_step=self.player[player_var] + 1)
 
     def _stop_shows(self, hold=False):
         for profile in self.profiles:
