@@ -14,3 +14,10 @@ show_player:
   mode_mode1_stopped:
     test_show1:
       action: stop
+
+shows:
+  show_from_mode:
+    - time: 0
+      leds:
+        (leds): red
+    - time: 1

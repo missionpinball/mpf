@@ -642,6 +642,12 @@ class TestShows(MpfTestCase):
         self.assertEqual(0,
             self.machine.show_controller.running_shows[0].next_step_index)
 
+    def test_show_from_mode_config(self):
+        self.assertIn('show_from_mode', self.machine.shows)
+
+        self.assertEqual(2, len(self.machine.shows[
+                                    'show_from_mode'].show_steps))
+
     # todo need to implement this
     # def test_updating_shows(self):
     #     self.machine.events.post('play_with_keys')
