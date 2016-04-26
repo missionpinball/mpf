@@ -602,7 +602,7 @@ shot_profiles:
     state_names_to_not_rotate: list|str|None
     rotation_pattern: list|str|R
     player_variable: single|str|None
-    show_when_disabled: single|bool|True
+    show_when_disabled: single|bool|False
     block: single|bool|true
     states:
         show: single|str|None

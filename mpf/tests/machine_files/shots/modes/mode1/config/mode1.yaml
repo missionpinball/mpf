@@ -19,6 +19,8 @@ shots:
     profile: mode1_shot_22
   shot_23:
     profile: mode1_shot_23
+  shot_26:
+    profile: mode1_shot_26
 
 shot_profiles:
   mode1_shot_21:
@@ -34,6 +36,15 @@ shot_profiles:
       - name: mode1_two
       - name: mode1_three
   mode1_shot_23:
+    states:
+    - name: mode1_one
+      show: rainbow2
+    - name: mode1_two
+      show: rainbow2
+    - name: mode1_three
+      show: rainbow2
+  mode1_shot_26:
+    block: false
     states:
     - name: mode1_one
       show: rainbow2

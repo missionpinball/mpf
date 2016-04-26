@@ -393,8 +393,8 @@ class Shot(ModeDevice, SystemWideDevice):
 
         # do this before the events are posted since events could change the
         # profile
-        if not _wf and not self.get_profile_by_key('mode', mode)['settings'][
-            'block']:
+        if not _wf and not self.get_profile_by_key(
+                'mode', mode)['settings']['block']:
             _wf = list()
             found = False
 
@@ -410,8 +410,10 @@ class Shot(ModeDevice, SystemWideDevice):
             _wf.pop(0)
 
         # post events
-        self.machine.events.post('{}_hit'.format(self.name),
-                                 profile=profile, state=state)
+        if not _wf:
+            # if this is a waterfall, this event would have already been posted
+            self.machine.events.post('{}_hit'.format(self.name),
+                                     profile=profile, state=state)
 
         self.machine.events.post('{}_{}_hit'.format(self.name, profile),
                                  profile=profile, state=state)

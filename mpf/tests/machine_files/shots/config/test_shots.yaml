@@ -51,6 +51,8 @@ switches:
     number:
   switch_22:
     number:
+  switch_26:
+    number:
 
 matrix_lights:
   light_1:
@@ -98,6 +100,8 @@ leds:
   led_24:
     number:
   led_25:
+    number:
+  led_26:
     number:
 
 shots:
@@ -196,6 +200,10 @@ shots:
   shot_25:
     leds: led_25
     profile: profile_25
+  shot_26:
+    switch: switch_26
+    leds: led_26
+    profile: profile_26
 
 shot_profiles:
     three_states_loop:
@@ -306,7 +314,15 @@ shot_profiles:
           show: rainbow
           loops: 0
         - name: base_two
-          show: rainboww
+          show: rainbow
+    profile_26:
+        states:
+        - name: base_one
+          show: rainbow
+        - name: base_two
+          show: rainbow
+        - name: base_three
+          show: rainbow
 
 shows:
     rainbow:
@@ -331,3 +347,12 @@ shows:
           (leds): aquamarine
       - leds:
           (leds): azure
+    rainbow3:
+      - leds:
+          (leds): beige
+      - leds:
+          (leds): blueviolet
+      - leds:
+          (leds): brown
+      - leds:
+          (leds): burlywood

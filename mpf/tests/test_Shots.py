@@ -860,6 +860,8 @@ class TestShots(MpfTestCase):
 
         shot22.remove_active_profile()
 
+        # todo need to finish this
+
     def test_show_in_higher_profile(self):
         self.start_game()
         shot23 = self.machine.shots.shot_23
@@ -941,3 +943,63 @@ class TestShots(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEqual(RGBColor('off'),
                          self.machine.leds.led_25.hw_driver.current_color)
+
+    def test_hit_in_lower_priority_profile_with_higher_disabled_profile(self):
+        shot26 = self.machine.shots.shot_26
+
+        # posted by profile from any mode
+        self.mock_event("shot_26_hit")
+
+        # posted by base profile
+        self.mock_event("shot_26_profile_26_hit")
+        self.mock_event("shot_26_profile_26_base_one_hit")
+
+        # posted by mode 1 profile
+        self.mock_event("shot_26_mode1_shot_26_hit")
+        self.mock_event("shot_26_mode1_shot_26_mode1_one_hit")
+
+        # posted by mode 2 profile
+        self.mock_event("shot_26_mode2_shot_26_hit")
+        self.mock_event("shot_26_mode2_shot_26_mode2_one_hit")
+
+        self.start_game()
+        self.machine.modes.mode1.start()
+        self.machine.modes.mode2.start()
+
+        self.assertTrue(shot26.profiles[0]['enable'])  # mode 2
+        self.assertTrue(shot26.profiles[1]['enable'])  # mode 1
+        self.assertTrue(shot26.profiles[2]['enable'])  # base
+
+        # disable the shot in mode 2
+
+        shot26.disable(mode=self.machine.modes.mode2)
+        self.advance_time_and_run(.1)
+
+        # check the enable values in the profile table
+        self.assertFalse(shot26.profiles[0]['enable'])  # mode 2
+        self.assertTrue(shot26.profiles[1]['enable'])  # mode 1
+        self.assertTrue(shot26.profiles[2]['enable'])  # base
+
+        # make sure the led is a color from mode 1
+        self.assertEqual(RGBColor('aliceblue'),
+                         self.machine.leds.led_26.hw_driver.current_color)
+
+        self.hit_and_release_switch('switch_26')
+
+        # make sure none of the events from mode 2 posted
+        self.assertEqual(0, self._events["shot_26_mode2_shot_26_hit"])
+        self.assertEqual(0, self._events[
+            "shot_26_mode2_shot_26_mode2_one_hit"])
+
+        # make sure the events from mode 1 posted
+        self.assertEqual(1, self._events["shot_26_mode1_shot_26_hit"])
+        self.assertEqual(1, self._events[
+            "shot_26_mode1_shot_26_mode1_one_hit"])
+
+        # make sure the events from the base mode posted
+        self.assertEqual(1, self._events["shot_26_hit"])
+        self.assertEqual(1, self._events["shot_26_profile_26_hit"])
+        self.assertEqual(1, self._events["shot_26_profile_26_base_one_hit"])
+
+        self.reset_mock_events()
+

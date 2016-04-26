@@ -227,6 +227,10 @@ class MpfTestCase(unittest.TestCase):
                                         handler=self._mock_event_handler,
                                         event_name=event_name)
 
+    def reset_mock_events(self):
+        for event in self._events.keys():
+            self._events[event] = 0
+
     def hit_switch_and_run(self, name, delta):
         self.machine.switch_controller.process_switch(name, 1)
         self.advance_time_and_run(delta)
