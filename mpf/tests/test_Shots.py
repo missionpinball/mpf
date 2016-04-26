@@ -1000,6 +1000,3 @@ class TestShots(MpfTestCase):
         self.assertEqual(1, self._events["shot_26_hit"])
         self.assertEqual(1, self._events["shot_26_profile_26_hit"])
         self.assertEqual(1, self._events["shot_26_profile_26_base_one_hit"])
-
-        self.reset_mock_events()
-

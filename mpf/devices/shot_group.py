@@ -56,7 +56,10 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
         # If there are no enable_events configured, then we enable this shot
         # group when its created on mode start
-        if not mode.config['shot_groups'][self.name]['enable_events']:
+
+        if ((not mode.config['shot_groups'][self.name]['enable_events']) or
+                'mode_{}_started'.format(mode.name) in
+                mode.config['shot_groups'][self.name]['enable_events']):
             self.enable(mode)
         else:
             # manually call disable here so it disables the member shots
@@ -124,23 +127,20 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
     def _enable_from_mode(self, mode, profile=None):
         # If we weren't passed a profile, use the one from the mode config
+
         if not profile and mode.config['shot_groups'][self.name]['profile']:
             profile = mode.config['shot_groups'][self.name]['profile']
 
         for shot in self.config['shots']:
-            if not shot.get_profile_by_key('mode', mode):
-                # if the mode is not in the shot's profiles list, that means we
-                # have no entry for this shot in this mode config. Therefore
-                # there is no chance of a blank enable_events:, which means we
-                # want to enable this shot.
+            if profile:
+                # this is a passed profile or the profile in the shot group
+                # in the mode config
+                shot.update_profile(profile=profile, mode=mode, enable=True)
 
-                if profile:
-                    shot.enable(profile=profile, enable=True, mode=mode)
-                else:
-                    shot.enable(profile=shot.config['profile'], enable=True,
-                                mode=mode)
+            else:
+                shot.update_profile(mode=mode, enable=True)
 
-                shot.register_group(self)
+            shot.register_group(self)
 
     def _enable_from_system_wide(self, profile=None):
         for shot in self.config['shots']:

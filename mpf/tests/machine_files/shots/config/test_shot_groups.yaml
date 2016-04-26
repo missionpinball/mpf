@@ -46,6 +46,20 @@ switches:
     number:
   switch_42:
     number:
+  switch_43:
+    number:
+  switch_44:
+    number:
+  switch_45:
+    number:
+  switch_46:
+    number:
+  s_GAS_G:
+    number:
+  s_GAS_A:
+    number:
+  s_GAS_S:
+    number:
 
 leds:
   led_10:
@@ -77,6 +91,12 @@ leds:
   led_41:
     number:
   led_42:
+    number:
+  l_GAS_G:
+    number:
+  l_GAS_A:
+    number:
+  l_GAS_S:
     number:
 
 shots:
@@ -146,6 +166,25 @@ shots:
     switch: switch_42
     leds: led_42
     enable_events: None
+  shot_43:
+    switch: switch_43
+  shot_44:
+    switch: switch_44
+  shot_45:
+    switch: switch_45
+    profile: rainbow
+  shot_46:
+    switch: switch_46
+    profile: rainbow
+  shot_GAS_G:
+    switch: s_GAS_G
+    led: l_GAS_G
+  shot_GAS_A:
+    switch: s_GAS_A
+    led: l_GAS_A
+  shot_GAS_S:
+    switch: s_GAS_S
+    led: l_GAS_S
 
 shot_groups:
   test_group:
@@ -182,6 +221,15 @@ shot_groups:
   shot_group_40:
     shots: shot_40, shot_41, shot_42
     profile: shot_profile_40
+  shot_group_43:
+    shots: shot_43, shot_44
+  shot_group_45:
+    profile: rainbow_no_hold
+    shots: shot_45, shot_46
+  group_GAS:
+   shots: shot_GAS_G, shot_GAS_A, shot_GAS_S
+   reset_events:
+     group_GAS_default_lit_complete: 2s
 
 shows:
     rainbow:
@@ -195,6 +243,12 @@ shows:
           (leds): yellow
       - leds:
           (leds): green
+    leds_off:
+      - leds:
+          (led): off
+    leds_on:
+      - leds:
+          (led): white
 
 shot_profiles:
     rainbow:

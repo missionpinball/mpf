@@ -469,9 +469,6 @@ class TestShotGroups(MpfTestCase):
         self.assertFalse(shot33.enabled)
         self.assertFalse(group32.enabled)
 
-    def test_control_events_in_mode(self):
-        pass  # todo
-
     def test_state_names_to_rotate(self):
         shot34 = self.machine.shots.shot_34
         shot35 = self.machine.shots.shot_35
@@ -621,3 +618,76 @@ class TestShotGroups(MpfTestCase):
             self.machine.leds.led_41.hw_driver.current_color)
         self.assertEqual(RGBColor('off'),
             self.machine.leds.led_42.hw_driver.current_color)
+
+    def test_block_in_shot_group_profile(self):
+        self.mock_event('shot_43_hit')
+        self.mock_event('shot_43_default_hit')
+        self.mock_event('shot_43_default_unlit_hit')
+        self.mock_event('shot_43_profile_43_hit')
+        self.mock_event('shot_43_profile_43_one_hit')
+
+        self.start_game()
+        self.machine.modes.mode_shot_groups.start()
+
+        self.hit_and_release_switch('switch_43')
+
+        # events from the mode should be posted
+        self.assertEqual(1, self._events['shot_43_hit'])
+        self.assertEqual(1, self._events['shot_43_profile_43_hit'])
+        self.assertEqual(1, self._events['shot_43_profile_43_one_hit'])
+
+        # shot group in mode config is set to block, so base events should not
+        # have been posted
+        self.assertEqual(0, self._events['shot_43_default_unlit_hit'])
+        self.assertEqual(0, self._events['shot_43_default_hit'])
+
+    def test_profile_in_shot_group_overwrites_profile_in_shot(self):
+        self.mock_event('shot_45_rainbow_hit')  # from the shot config
+        self.mock_event('shot_45_rainbow_no_hold_hit')  # from the shot_group
+
+        self.start_game()
+
+        self.hit_and_release_switch('switch_45')
+
+        self.assertEqual(0, self._events['shot_45_rainbow_hit'])
+        self.assertEqual(1, self._events['shot_45_rainbow_no_hold_hit'])
+
+        # also test this with a shot profile in base and a shot_group
+        # profile in a higher mode
+        # todo
+
+    def test_control_events_in_mode(self):
+        pass  # todo
+
+    def test_gas(self):
+        self.start_game()
+
+        self.machine.modes.mode_shot_groups.start()
+        self.advance_time_and_run()
+
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.l_gas_g.hw_driver.current_color)
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.l_gas_a.hw_driver.current_color)
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.l_gas_s.hw_driver.current_color)
+
+        self.hit_and_release_switch('s_gas_g')
+        self.advance_time_and_run()
+
+        self.assertEqual(RGBColor('white'),
+            self.machine.leds.l_gas_g.hw_driver.current_color)
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.l_gas_a.hw_driver.current_color)
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.l_gas_s.hw_driver.current_color)
+
+        self.machine.events.post('s_upper_left_flipper_active')
+        self.advance_time_and_run()
+
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.l_gas_g.hw_driver.current_color)
+        self.assertEqual(RGBColor('off'),
+            self.machine.leds.l_gas_a.hw_driver.current_color)
+        self.assertEqual(RGBColor('white'),
+            self.machine.leds.l_gas_s.hw_driver.current_color)
