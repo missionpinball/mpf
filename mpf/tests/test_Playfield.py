@@ -14,7 +14,7 @@ class TestPlayfield(MpfTestCase):
         return 'tests/machine_files/playfield/'
 
     def test_unexpected_ball_on_pf(self):
-        self.machine.ball_controller.num_balls_known = 1
+        self.set_num_balls_known(1)
         self.assertEqual(0, self.machine.ball_devices.playfield.balls)
         self.assertEqual(False, self.machine.config['machine']['glass_off_mode'])
 
@@ -25,7 +25,7 @@ class TestPlayfield(MpfTestCase):
         self.assertEqual(1, self.machine.ball_devices.playfield.balls)
 
     def test_unexpected_ball_on_pf_glass_off_mode(self):
-        self.machine.ball_controller.num_balls_known = 1
+        self.set_num_balls_known(1)
         self.machine.config['machine']['glass_off_mode'] = True
 
         self.assertEqual(0, self.machine.ball_devices.playfield.balls)
