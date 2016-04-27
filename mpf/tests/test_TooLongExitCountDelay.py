@@ -1,6 +1,6 @@
-
 from mpf.tests.MpfTestCase import MpfTestCase
 from mock import MagicMock
+
 
 class TestTooLongExitCountDelay(MpfTestCase):
 
@@ -11,6 +11,7 @@ class TestTooLongExitCountDelay(MpfTestCase):
         return 'tests/machine_files/ball_device/'
 
     def _ball_drained(self, *kwargs):
+        del kwargs
         self._num_balls_drained += 1
 
     def put_four_balls_in_trough(self):
