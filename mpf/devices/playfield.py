@@ -57,6 +57,9 @@ class Playfield(SystemWideDevice):
                         '_ball_eject_success',
                         handler=self._source_device_eject_success)
                     self.machine.events.add_handler(
+                        event='balldevice_{}_ball_lost'.format(device.name),
+                        handler=self._source_device_ball_lost)
+                    self.machine.events.add_handler(
                         event='balldevice_' + device.name +
                         '_ball_eject_failed',
                         handler=self._source_device_eject_failed)
@@ -273,6 +276,11 @@ class Playfield(SystemWideDevice):
     def _ball_removed_handler2(self, balls):
         self.log.debug("%s ball(s) removed from the playfield", balls)
         self.balls -= balls
+
+    def _source_device_ball_lost(self, target, **kwargs):
+        del kwargs
+        if target == self:
+            self.available_balls -= 1
 
     def _source_device_eject_attempt(self, balls, target, **kwargs):
         # A source device is attempting to eject a ball. We need to know if it's
