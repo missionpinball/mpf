@@ -1,4 +1,6 @@
 import logging
+import platform
+import sys
 import time
 from mpf.core.platform import MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlatform, DriverPlatform
 from mpf.core.utility_functions import Util
@@ -13,6 +15,22 @@ try:
 except ImportError:
     pinproc_imported = False
     pinproc = None
+
+if not pinproc_imported:
+    try:
+        if sys.platform == 'darwin':
+            from mpf.platforms.pinproc.osx import pinproc
+        elif sys.platform == 'win32':
+            if platform.architecture()[0] == '32bit':
+                from mpf.platforms.pinproc.x86 import pinproc
+            elif platform.architecture()[0] == '64bit':
+                from mpf.platforms.pinproc.x64 import pinproc
+
+        pinproc_imported = True
+
+    except ImportError:
+        pinproc_imported = False
+        pinproc = None
 
 
 class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlatform, DriverPlatform):

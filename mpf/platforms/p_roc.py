@@ -21,11 +21,6 @@ from mpf.core.platform import DmdPlatform
 from mpf.platforms.p_roc_common import PDBConfig, PROCDriver, PROCMatrixLight, PROCBasePlatform, PROCGiString
 from mpf.core.utility_functions import Util
 
-try:
-    import pinproc
-except ImportError:
-    pinproc = None
-
 
 class HardwarePlatform(PROCBasePlatform, DmdPlatform):
     """Platform class for the P-ROC hardware controller.

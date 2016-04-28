@@ -1,9 +1,6 @@
-# Byte-compiled / optimized / DLL files
+# Byte-compiled / optimized
 __pycache__/
-*.py[cod]
-
-# C extensions
-*.so
+*.py[co]
 
 # Distribution / packaging
 .Python
