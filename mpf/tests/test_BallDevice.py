@@ -845,6 +845,7 @@ class TestBallDevice(MpfTestCase):
 
         # assume there are already two balls on the playfield
         playfield.balls = 2
+        playfield.available_balls = 2
 
         # request an ball to pf
         playfield.add_ball()
@@ -1659,8 +1660,9 @@ class TestBallDevice(MpfTestCase):
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
 
         # no more balls on pf
-        self.assertEqual(0, playfield.available_balls)
         self.assertEqual(0, playfield.balls)
+        # eject is not failed yet
+        self.assertEqual(1, playfield.available_balls)
 
         self.advance_time_and_run(30)
 
