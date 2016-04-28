@@ -1,4 +1,3 @@
-
 from mpf.tests.MpfTestCase import MpfTestCase
 from mock import MagicMock
 
@@ -12,6 +11,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         return 'tests/machine_files/ball_device/'
 
     def _captured_from_pf(self, balls, **kwargs):
+        del kwargs
         self._captured += balls
 
     def put_four_balls_in_trough(self):
@@ -24,6 +24,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEqual(4, self.machine.ball_devices.trough.balls)
         self.assertEqual(4, self._captured)
+        self.assertEqual(0, self.machine.playfield.unexpected_balls)
         self._captured = 0
 
         self.trough_coil = self.machine.coils.trough_eject
@@ -176,7 +177,6 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.machine.switch_controller.process_switch('s_plunger', 1)
         self.advance_time_and_run(1)
 
-
         self.advance_time_and_run(100)
         self.assertEqual("idle", self.machine.ball_devices.trough._state)
         self.assertEqual("ejecting", self.machine.ball_devices.plunger._state)
@@ -304,7 +304,6 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.machine.switch_controller.process_switch('s_plunger', 1)
         self.advance_time_and_run(1)
 
-
         self.advance_time_and_run(100)
         self.assertEqual("idle", self.machine.ball_devices.trough._state)
         self.assertEqual("ejecting", self.machine.ball_devices.plunger._state)
@@ -339,6 +338,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         # ball goes into plunger
         self.machine.switch_controller.process_switch('s_plunger', 1)
         self.advance_time_and_run(1)
+        self.assertEqual(0, self.machine.playfield.unexpected_balls)
 
         self.assertEqual(self.machine.ball_devices.trough.balls, 3)
         self.assertEqual(self.machine.ball_devices.plunger.balls, 1)
@@ -397,7 +397,6 @@ class TestBallDeviceJamSwitch(MpfTestCase):
 
         self.machine.switch_controller.process_switch('s_plunger', 1)
         self.advance_time_and_run(1)
-
 
         self.assertEqual("idle", self.machine.ball_devices.trough._state)
         self.assertEqual("ejecting", self.machine.ball_devices.plunger._state)
