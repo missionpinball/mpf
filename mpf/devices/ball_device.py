@@ -1618,8 +1618,9 @@ class BallDevice(SystemWideDevice):
             # remove eject from queue if we have one
             if len(self.eject_queue):
                 self.eject_queue.popleft()
-            # because the path was not set up. just add the ball
-            self.eject_in_progress_target.available_balls += 1
+            else:
+                # because the path was not set up. just add the ball
+                self.eject_in_progress_target.available_balls += 1
             self._incoming_balls.popleft()
         elif self._state != "ball_left" and self._state != "failed_confirm":
             raise AssertionError(
