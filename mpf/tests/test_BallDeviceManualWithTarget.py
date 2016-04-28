@@ -934,12 +934,16 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         self.machine.switch_controller.process_switch("s_playfield", 0)
         self.advance_time_and_run(1)
 
+        self.assertEqual(1, playfield.balls)
+        self.assertEqual(1, playfield.available_balls)
+
         # no launcher eject
         coil1.pulse.assert_called_once_with()
         assert not coil2.pulse.called
         self.advance_time_and_run(100)
 
         self.assertEqual(1, playfield.balls)
+        self.assertEqual(1, playfield.available_balls)
         self.assertEqual(0, self._captured)
         self.assertEqual(0, self._missing)
         self.assertEqual("idle", device2._state)
@@ -966,6 +970,7 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         self.assertEqual(2, self._captured)
         self._captured = 0
         self.assertEqual(0, playfield.balls)
+        self.assertEqual(0, playfield.available_balls)
 
         # it should keep the ball
         coil1.pulse = MagicMock()
@@ -1022,6 +1027,7 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
 
         self.advance_time_and_run(100)
         self.assertEqual(1, playfield.balls)
+        self.assertEqual(1, playfield.available_balls)
         self.assertEqual(0, self._captured)
         self.assertEqual(0, self._missing)
 
