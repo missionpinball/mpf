@@ -334,9 +334,9 @@ shows:
               brightness: 0
           leds:
             (led):
-              color: 0
+              color: black
             (leds):
-              color: 0
+              color: black
         - time: 2
     on:
         - time: 0
@@ -359,9 +359,9 @@ shows:
               brightness: 0
           leds:
             (led):
-              color: 0
+              color: black
             (leds):
-              color: 0
+              color: black
     led_color:
         - time: 0
           leds:

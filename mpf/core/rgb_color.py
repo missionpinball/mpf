@@ -460,7 +460,7 @@ class RGBColor(object):
         """
         Converts a string which could be either a standard color name or a hex value to
         an RGB value (tuple). If the name is not found and the supplied value is not a
-        valid hex string, the default value is returned.
+        valid hex string it raises an error.
         :param value: A standard color name or hex value.
         :param default: The default value to return if the color name is not found and
         the supplied value is not a valid hex color string.
@@ -468,13 +468,16 @@ class RGBColor(object):
         :rtype: tuple
         """
 
+        if not value:
+            return default
+
         rgb = named_rgb_colors.get(value)
         if rgb is not None:
             return rgb
 
         rgb = RGBColor.hex_to_rgb(value)
         if rgb is None:
-            rgb = default
+            raise AssertionError("Invalid RGB string: {}".format(value))
 
         return rgb
 

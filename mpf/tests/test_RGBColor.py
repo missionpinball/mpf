@@ -24,7 +24,8 @@ class TestRGBColor(MpfTestCase):
         self.assertEqual((240, 248, 255), RGBColor.name_to_rgb('aliceblue'))
         self.assertEqual((240, 248, 255), RGBColor.hex_to_rgb('F0F8FF'))
         self.assertEqual((240, 248, 255), RGBColor.string_to_rgb('F0F8FF'))
-        self.assertEqual((0, 0, 0), RGBColor.string_to_rgb('non_existant'))
+        with self.assertRaises(AssertionError):
+            RGBColor.string_to_rgb('non_existant')
         self.assertEqual((0, 0, 0), RGBColor.name_to_rgb('non_existant'))
         self.assertEqual((240, 248, 255), RGBColor.hex_to_rgb('f0f8ff'))
         self.assertEqual((240, 248, 255), RGBColor.string_to_rgb('f0f8ff'))

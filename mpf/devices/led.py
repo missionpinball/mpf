@@ -110,9 +110,7 @@ class Led(SystemWideDevice):
     def _initialize(self):
         self.load_platform_section('leds')
 
-        self.config['default_color'] = RGBColor(
-            RGBColor.string_to_rgb(self.config['default_color'],
-                                   (255, 255, 255)))
+        self.config['default_color'] = RGBColor(self.config['default_color'])
 
         self.hw_driver = self.platform.configure_led(self.config)
 

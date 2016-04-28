@@ -13,9 +13,6 @@ shot_groups:
   shot_group_43:
     profile: profile_43
   group_GAS:
-    shots: shot_GAS_G, shot_GAS_A, shot_GAS_S
-    reset_events:
-      group_GAS_default_lit_complete: 2s
     profile: gas_lane_profile
     rotate_left_events: s_upper_left_flipper_active
     rotate_right_events: s_upper_right_flipper_active
