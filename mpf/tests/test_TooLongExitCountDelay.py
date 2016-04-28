@@ -21,6 +21,7 @@ class TestTooLongExitCountDelay(MpfTestCase):
         self.machine.switch_controller.process_switch('s_trough_4', 1)
         self.advance_time_and_run(1)
         self.assertEqual(4, self.machine.ball_devices.trough.balls)
+        self.assertEqual(0, self.machine.playfield.balls)
 
         self.trough_coil = self.machine.coils.trough_eject
         self.plunger_coil = self.machine.coils.plunger_eject
