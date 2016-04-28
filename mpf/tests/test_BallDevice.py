@@ -814,6 +814,7 @@ class TestBallDevice(MpfTestCase):
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
         self.machine.switch_controller.process_switch("s_ball_switch2", 1)
         self.advance_time_and_run(1)
+        self.assertEqual(0, playfield.unexpected_balls)
         self.assertEqual(2, self._captured)
         self._captured = 0
 
