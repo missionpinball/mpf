@@ -1654,6 +1654,7 @@ class TestBallDevice(MpfTestCase):
         self.advance_time_and_run(30)
 
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
+        self.assertEqual(0, playfield.balls)
         self.assertEqual(0, playfield.available_balls)
 
     def test_ball_missing_to_pf_and_drain_with_pf_switch(self):
