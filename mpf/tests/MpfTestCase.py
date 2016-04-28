@@ -82,7 +82,6 @@ class MpfTestCase(unittest.TestCase):
     def set_num_balls_known(self, balls):
         # in case the test does not have any ball devices
         self.machine.ball_controller.num_balls_known = balls
-        self.machine.ball_controller.last_balls = 0
 
     def get_platform(self):
         return 'virtual'
