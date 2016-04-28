@@ -1634,7 +1634,6 @@ class TestBallDevice(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEqual(0, launcher.balls)
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(1, self.machine.ball_controller.get_free_balls())
         self.assertEqual(1, playfield.available_balls)
         self.assertEqual(0, playfield.balls)
 
