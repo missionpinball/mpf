@@ -29,11 +29,18 @@ class TestBallDevice(MpfTestCase):
                                         self._missing_ball)
 
         self._missing = 0
+        self.assertEqual(0, self.machine.playfield.balls)
+        self.assertEqual(0, self.machine.playfield.available_balls)
+        self.assertEqual(0, self.machine.playfield.unexpected_balls)
 
         self.machine.switch_controller.process_switch("s_ball_switch_launcher",
                                                       1)
         self.advance_time_and_run(1)
         self.assertEqual(1, device2.balls)
+        self.assertEqual(1, self.machine.ball_controller.num_balls_known)
+        self.assertEqual(0, self.machine.playfield.balls)
+        self.assertEqual(0, self.machine.playfield.unexpected_balls)
+        self.assertEqual(1, self.machine.playfield.available_balls)
 
         coil2.pulse.assert_called_once_with()
 
@@ -44,6 +51,9 @@ class TestBallDevice(MpfTestCase):
         self.assertEqual(0, self._missing)
         self.advance_time_and_run(300)
         self.assertEqual(1, self._missing)
+        self.assertEqual(1, self.machine.playfield.balls)
+        self.assertEqual(0, self.machine.playfield.unexpected_balls)
+        self.assertEqual(1, self.machine.playfield.available_balls)
 
     def _requesting_ball(self, balls, **kwargs):
         del kwargs
@@ -765,6 +775,7 @@ class TestBallDevice(MpfTestCase):
         self.assertEqual(1, self._missing)
         self.assertEqual(0, self._captured)
         self.assertEqual(1, playfield.balls)
+        self.assertEqual(1, playfield.available_balls)
 
         # count should be on less and one ball missing
         self.assertEqual(1, device1.balls)
