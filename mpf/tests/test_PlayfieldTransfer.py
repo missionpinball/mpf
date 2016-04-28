@@ -26,3 +26,4 @@ class TestPlayfieldTransfer(MpfTestCase):
         self.assertEqual(1, pf1.available_balls)
         self.assertEqual(3, pf2.balls)
         self.assertEqual(3, pf2.available_balls)
+
