@@ -262,20 +262,21 @@ class Playfield(SystemWideDevice):
                                    "setting playfield ball count to 1")
 
                     self.balls = 1
+                    self.available_balls += 1
                     self.unexpected_balls += 1
                     self.machine.events.post('unexpected_ball_on_' + self.name)
 
     def _ball_removed_handler(self, balls, **kwargs):
         del kwargs
-        self.available_balls -= balls
-        if self.available_balls < 0:
-            self.available_balls = 0
         # somebody got a ball from us so we obviously had one
         self.machine.events.post('sw_' + self.name + "_active", callback=self._ball_removed_handler2, balls=balls)
 
     def _ball_removed_handler2(self, balls):
         self.log.debug("%s ball(s) removed from the playfield", balls)
         self.balls -= balls
+        self.available_balls -= balls
+        if self.available_balls < 0:
+            self.available_balls = 0
 
     def _source_device_ball_lost(self, target, **kwargs):
         del kwargs
