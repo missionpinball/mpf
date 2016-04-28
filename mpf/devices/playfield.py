@@ -114,7 +114,7 @@ class Playfield(SystemWideDevice):
             self.log.warning("Playfield balls went to %s. Resetting to 0, but "
                              "FYI that something's weird", balls)
             self._balls = 0
-            self.unexpected_balls = 0
+            self.unexpected_balls += -balls
 
         self.log.debug("New Ball Count: %s. (Prior count: %s)",
                        self._balls, prior_balls)
@@ -250,7 +250,7 @@ class Playfield(SystemWideDevice):
 
             if not self.num_balls_requested:
                 if self.machine.game:
-                    self.unexpected_balls = 1
+                    self.unexpected_balls += 1
 
                 if self.machine.config['machine']['glass_off_mode']:
                     self.log.debug("Playfield_active switch hit with no balls "

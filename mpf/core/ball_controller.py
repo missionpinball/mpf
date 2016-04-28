@@ -55,8 +55,16 @@ class BallController(object):
     def _update_num_balls_known(self):
         balls = self._count_balls()
         if balls > self.num_balls_known:
-            self.log.debug("Setting known balls to %s", balls)
+            self.log.debug("Found new balls. Setting known balls to %s", balls)
+            self.delay.add(1, self._handle_new_balls, new_balls=balls - self.num_balls_known)
             self.num_balls_known = balls
+
+    def _handle_new_balls(self, new_balls):
+        for dummy_i in range(new_balls):
+            for playfield in self.machine.playfields:
+                if playfield.unexpected_balls > 0:
+                    playfield.unexpected_balls -= 1
+                    break
 
     def _count_balls(self):
         self.log.debug("Counting Balls")
