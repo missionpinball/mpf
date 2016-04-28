@@ -657,6 +657,7 @@ smartmatrix:
     port: single|str|
     use_separate_thread: single|bool|true
 sound_player:
+    action: single|enum(play,stop)|play
     track: single|str|None
     volume: single|gain|None
     loops: single|int|None
