@@ -222,6 +222,8 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
 
         # no ball on pf because the pf saw an unexpected ball
         self.assertEqual(0, playfield.balls)
+        self.assertEqual(0, playfield.available_balls)
+        self.assertEqual(0, playfield.unexpected_balls)
         self.assertEqual(1, self._missing)
 
     def test_eject_successful_but_ball_never_arrives(self):
