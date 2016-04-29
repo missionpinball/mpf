@@ -1095,7 +1095,7 @@ class BallDevice(SystemWideDevice):
             self._handle_new_balls(1)
 
     def is_ball_count_stable(self):
-        return self._state == "idle" and self._idle_counted
+        return self._state == "idle" and self._idle_counted and not len(self._incoming_balls)
 
     def is_ready_to_receive(self):
         return ((self._state == "idle" and self._idle_counted) or
