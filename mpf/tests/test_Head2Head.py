@@ -12,19 +12,23 @@ class TestHead2Head(MpfTestCase):
     def get_platform(self):
         return 'smart_virtual'
 
-    def testEject(self):
-        self.hit_switch_and_run("s_trough1_front", 1)
-        self.hit_switch_and_run("s_trough2_front", 1)
-        self.hit_switch_and_run("s_trough3_front", 1)
-        self.hit_switch_and_run("s_trough1_back", 1)
-        self.hit_switch_and_run("s_trough2_back", 1)
-        self.hit_switch_and_run("s_trough3_back", 1)
+    def _prepare_trought(self):
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_trough_front)
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_trough_front)
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_trough_front)
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_trough_back)
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_trough_back)
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_trough_back)
+
+        self.advance_time_and_run()
 
         self.assertEqual(3, self.machine.ball_devices.bd_trough_front.balls)
         self.assertEqual(3, self.machine.ball_devices.bd_trough_back.balls)
         self.assertEqual(0, self.machine.playfields.playfield_front.balls)
         self.assertEqual(0, self.machine.playfields.playfield_back.balls)
 
+    def testEject(self):
+        self._prepare_trought()
         self.machine.playfields.playfield_front.add_ball()
         self.machine.playfields.playfield_back.add_ball()
 
@@ -86,3 +90,66 @@ class TestHead2Head(MpfTestCase):
         self.advance_time_and_run(20)
         self.assertEqual(2, self.machine.playfields.playfield_front.balls)
         self.assertEqual(2, self.machine.playfields.playfield_back.balls)
+
+    def testPhantomballsAndGameStart(self):
+        self._prepare_trought()
+        self.machine.playfields.playfield_front.add_ball()
+        self.machine.playfields.playfield_back.add_ball()
+        self.advance_time_and_run(10)
+
+        # test pass from pf1 to pf2 but switch triggers twice
+        pf1 = self.machine.ball_devices['playfield_front']
+        pf2 = self.machine.ball_devices['playfield_back']
+
+        self.assertEqual(1, pf1.balls)
+        self.assertEqual(1, pf1.available_balls)
+        self.assertEqual(0, pf1.unexpected_balls)
+        self.assertEqual(1, pf2.balls)
+        self.assertEqual(1, pf2.available_balls)
+        self.assertEqual(0, pf2.unexpected_balls)
+
+        # game should not start. there are balls on pf
+        self.assertFalse(self.machine.ball_controller.request_to_start_game())
+
+        self.machine.switch_controller.process_switch("s_transfer_front_back", 1)
+        self.advance_time_and_run(2)
+
+        self.assertEqual(0, pf1.balls)
+        self.assertEqual(0, pf1.available_balls)
+        self.assertEqual(0, pf1.unexpected_balls)
+        self.assertEqual(2, pf2.balls)
+        self.assertEqual(2, pf2.available_balls)
+        self.assertEqual(0, pf2.unexpected_balls)
+
+        self.machine.switch_controller.process_switch("s_transfer_front_back", 1)
+        self.advance_time_and_run(2)
+
+        self.assertEqual(0, pf1.balls)
+        self.assertEqual(0, pf1.available_balls)
+        self.assertEqual(0, pf1.unexpected_balls)
+        self.assertEqual(2, pf2.balls)
+        self.assertEqual(2, pf2.available_balls)
+        self.assertEqual(0, pf2.unexpected_balls)
+
+        # ball drains in front
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_trough_front)
+        self.advance_time_and_run()
+
+        self.assertEqual(0, pf1.balls)
+        self.assertEqual(0, pf1.available_balls)
+        self.assertEqual(1, pf2.balls)
+        self.assertEqual(1, pf2.available_balls)
+
+        self.assertFalse(self.machine.ball_controller.request_to_start_game())
+
+        # second ball also drains
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_trough_front)
+        self.advance_time_and_run()
+
+        self.assertEqual(0, pf1.balls)
+        self.assertEqual(0, pf1.available_balls)
+        self.assertEqual(0, pf2.balls)
+        self.assertEqual(0, pf2.available_balls)
+
+        # game should start
+        self.assertIsNone(self.machine.ball_controller.request_to_start_game())
