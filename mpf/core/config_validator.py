@@ -416,7 +416,6 @@ logic_block:
 machine:
     balls_installed: single|int|1
     min_balls: single|int|1
-    glass_off_mode: single|bool|True
 matrix_lights:
     number: single|str|
     tags: list|str|None
