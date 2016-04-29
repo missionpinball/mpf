@@ -158,6 +158,7 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self.machine.ball_controller.num_balls_known = 5
 
         self.assertEqual(0, playfield.balls)
+        self.assertEqual(0, playfield.available_balls)
         self.assertEqual(0, playfield.unexpected_balls)
 
         # it should keep the ball
@@ -207,6 +208,8 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEqual(1, device4.balls)
         self.assertEqual(1, playfield.unexpected_balls)
+        self.assertEqual(-1, playfield.available_balls)
+        self.assertEqual(0, playfield.balls)
 
         # eject will fail since the eject_confirm switch was not hit
         self.advance_time_and_run(30)
