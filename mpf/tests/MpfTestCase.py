@@ -79,6 +79,10 @@ class MpfTestCase(unittest.TestCase):
         self.machine.events.post(event_name)
         self.machine_run()
 
+    def set_num_balls_known(self, balls):
+        # in case the test does not have any ball devices
+        self.machine.ball_controller.num_balls_known = balls
+
     def get_platform(self):
         return 'virtual'
 
@@ -205,7 +209,6 @@ class MpfTestCase(unittest.TestCase):
             while not self.machine.test_init_complete:
                 self.advance_time_and_run(0.01)
 
-            self.machine.ball_controller.num_balls_known = 99
             self.advance_time_and_run(300)
 
         except Exception as e:

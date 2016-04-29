@@ -139,6 +139,7 @@ class BallSearch(object):
         lost_balls = self.playfield.balls
         self.machine.ball_controller.num_balls_known -= lost_balls
         self.playfield.balls = 0
+        self.playfield.available_balls = 0
 
         if self.playfield.config['ball_search_failed_action'] == "new_ball":
             if self.machine.ball_controller.num_balls_known > 0:

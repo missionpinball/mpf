@@ -57,6 +57,9 @@ class Playfield(SystemWideDevice):
                         '_ball_eject_success',
                         handler=self._source_device_eject_success)
                     self.machine.events.add_handler(
+                        event='balldevice_{}_ball_lost'.format(device.name),
+                        handler=self._source_device_ball_lost)
+                    self.machine.events.add_handler(
                         event='balldevice_' + device.name +
                         '_ball_eject_failed',
                         handler=self._source_device_eject_failed)
@@ -114,7 +117,7 @@ class Playfield(SystemWideDevice):
             self.log.warning("Playfield balls went to %s. Resetting to 0, but "
                              "FYI that something's weird", balls)
             self._balls = 0
-            self.unexpected_balls = 0
+            self.unexpected_balls += -balls
 
         self.log.debug("New Ball Count: %s. (Prior count: %s)",
                        self._balls, prior_balls)
@@ -249,9 +252,6 @@ class Playfield(SystemWideDevice):
             self.mark_playfield_active()
 
             if not self.num_balls_requested:
-                if self.machine.game:
-                    self.unexpected_balls = 1
-
                 if self.machine.config['machine']['glass_off_mode']:
                     self.log.debug("Playfield_active switch hit with no balls "
                                    "expected. glass_off_mode is enabled, so "
@@ -262,19 +262,26 @@ class Playfield(SystemWideDevice):
                                    "setting playfield ball count to 1")
 
                     self.balls = 1
+                    self.available_balls += 1
+                    self.unexpected_balls += 1
                     self.machine.events.post('unexpected_ball_on_' + self.name)
 
     def _ball_removed_handler(self, balls, **kwargs):
         del kwargs
-        self.available_balls -= balls
-        if self.available_balls < 0:
-            self.available_balls = 0
         # somebody got a ball from us so we obviously had one
         self.machine.events.post('sw_' + self.name + "_active", callback=self._ball_removed_handler2, balls=balls)
 
     def _ball_removed_handler2(self, balls):
         self.log.debug("%s ball(s) removed from the playfield", balls)
         self.balls -= balls
+        self.available_balls -= balls
+        if self.available_balls < 0:
+            self.available_balls = 0
+
+    def _source_device_ball_lost(self, target, **kwargs):
+        del kwargs
+        if target == self:
+            self.available_balls -= 1
 
     def _source_device_eject_attempt(self, balls, target, **kwargs):
         # A source device is attempting to eject a ball. We need to know if it's

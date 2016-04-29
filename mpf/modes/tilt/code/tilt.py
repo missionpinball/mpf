@@ -146,9 +146,10 @@ class Tilt(Mode):
         for autofire in self.machine.autofires:
             autofire.disable()
 
-    def _tilted_ball_drain(self, new_balls, unclaimed_balls, device):
+    def _tilted_ball_drain(self, new_balls, unclaimed_balls, device, **kwargs):
         del new_balls
         del device
+        del kwargs
 
         self._balls_to_collect -= unclaimed_balls
 

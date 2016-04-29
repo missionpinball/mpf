@@ -1094,6 +1094,9 @@ class BallDevice(SystemWideDevice):
             self.balls += 1
             self._handle_new_balls(1)
 
+    def is_ball_count_stable(self):
+        return self._state == "idle" and self._idle_counted
+
     def is_ready_to_receive(self):
         return ((self._state == "idle" and self._idle_counted) or
                 (self._state == "waiting_for_ball") and
@@ -1615,6 +1618,9 @@ class BallDevice(SystemWideDevice):
             # remove eject from queue if we have one
             if len(self.eject_queue):
                 self.eject_queue.popleft()
+            else:
+                # because the path was not set up. just add the ball
+                self.eject_in_progress_target.available_balls += 1
             self._incoming_balls.popleft()
         elif self._state != "ball_left" and self._state != "failed_confirm":
             raise AssertionError(

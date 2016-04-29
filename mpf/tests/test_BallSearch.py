@@ -58,7 +58,7 @@ class TestBallSearch(MpfTestCase):
 
         self.machine.switch_controller.process_switch("s_start", 1)
         self.machine.switch_controller.process_switch("s_start", 0)
-        self.advance_time_and_run(1)
+        self.advance_time_and_run(2)
         self.assertNotEqual(None, self.machine.game)
         self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.enabled)
 
@@ -101,7 +101,7 @@ class TestBallSearch(MpfTestCase):
 
         self.machine.switch_controller.process_switch("s_start", 1)
         self.machine.switch_controller.process_switch("s_start", 0)
-        self.advance_time_and_run(1)
+        self.advance_time_and_run(2)
         self.assertNotEqual(None, self.machine.game)
         self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.enabled)
 

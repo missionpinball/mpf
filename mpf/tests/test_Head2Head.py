@@ -56,18 +56,26 @@ class TestHead2Head(MpfTestCase):
     def testUnexpectedBallWithTransfer(self):
         # devices captures from one pf and ejects to another
         # tests target_on_unexpected_ball
+        self.set_num_balls_known(4)
         self.machine.playfields.playfield_front.balls = 2
+        self.machine.playfields.playfield_front.available_balls = 2
         self.machine.playfields.playfield_back.balls = 2
+        self.machine.playfields.playfield_back.available_balls = 2
 
         self.hit_switch_and_run("s_middle_back1", 15)
 
         self.assertEqual(1, self.machine.playfields.playfield_front.balls)
+        self.assertEqual(1, self.machine.playfields.playfield_front.available_balls)
         self.assertEqual(3, self.machine.playfields.playfield_back.balls)
+        self.assertEqual(3, self.machine.playfields.playfield_back.available_balls)
 
     def testUnexpectedBallWithRouting(self):
         # device captures and ejects to same pf but ball has to routed through trough
+        self.set_num_balls_known(4)
         self.machine.playfields.playfield_front.balls = 2
+        self.machine.playfields.playfield_front.available_balls = 2
         self.machine.playfields.playfield_back.balls = 2
+        self.machine.playfields.playfield_back.available_balls = 2
 
         self.hit_switch_and_run("s_launcher_lane_front", 1)
 

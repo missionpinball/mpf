@@ -213,11 +213,11 @@ class TestBallSave(MpfTestCase):
 
     def testBallDoubleDrain(self):
         # prepare game
-        self.machine.ball_controller.num_balls_known = 0
         self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
         self.advance_time_and_run(10)
-        self.assertEqual(1, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(1, self.machine.ball_devices.bd_trough.balls)
+        self.assertEqual(2, self.machine.ball_controller.num_balls_known)
+        self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
 
         self.assertFalse(self.machine.ball_saves.default.enabled)
 
@@ -227,13 +227,16 @@ class TestBallSave(MpfTestCase):
         self.machine_run()
         self.post_event("enable1")
 
+        self.machine.playfield.add_ball()
+        self.advance_time_and_run(4)
+
         # ball save should be enabled now
         self.assertTrue(self.machine.ball_saves.default.enabled)
 
         # takes roughly 4s to get ball confirmed
         self.advance_time_and_run(4)
         self.assertNotEqual(None, self.machine.game)
-        self.assertEqual(1, self.machine.playfield.balls)
+        self.assertEqual(2, self.machine.playfield.balls)
         self.assertTrue(self.machine.ball_saves.default.enabled)
 
         # double drain

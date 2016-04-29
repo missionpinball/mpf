@@ -41,7 +41,6 @@ class TestGottliebTrough(MpfTestCase):
         self.assertEqual('idle', self.machine.ball_devices.plunger._state)
 
     def test_boot_with_balls_in_drain_and_trough(self):
-        self.machine.ball_controller.num_balls_known = 0
         self.machine.coils.outhole.pulse = MagicMock()
         self.machine.coils.trough.pulse = MagicMock()
 
