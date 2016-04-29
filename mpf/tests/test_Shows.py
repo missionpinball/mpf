@@ -552,15 +552,20 @@ class TestShows(MpfTestCase):
         # Test sync_ms 1000ms
         self.machine.events.post('play_with_sync_ms_1000')
         self.advance_time_and_run(.1)
-        self.assertEqual(0.0,
-            self.machine.show_controller.running_shows[0].next_step_time % 1.0)
+
+        # should be 0 +/- the duration of a frame
+
+        self.assertAlmostEqual(0.0,
+            self.machine.show_controller.running_shows[0].next_step_time % 1.0,
+           delta=(1/30))
         self._stop_shows()
 
         # Test sync_ms 500ms
         self.machine.events.post('play_with_sync_ms_500')
         self.advance_time_and_run(.1)
-        self.assertEqual(0.0,
-            self.machine.show_controller.running_shows[0].next_step_time % 0.5)
+        self.assertAlmostEqual(0.0,
+            self.machine.show_controller.running_shows[0].next_step_time % 0.5,
+            delta=(1/30))
         self._stop_shows()
 
         # Test reset
