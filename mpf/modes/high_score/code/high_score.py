@@ -156,9 +156,8 @@ class HighScore(Mode):
                                                        self.pending_award,
                                                        value)
 
-        else:
-            self.pending_award = None
-            self._get_player_names()
+        self.pending_award = None
+        self._get_player_names()
 
     def _send_award_slide(self, player_name, award, value):
         self.send_award_slide_event(
