@@ -657,6 +657,10 @@ class ClockBase(_ClockBase):
         self.max_iteration = 10
 
     @property
+    def max_fps(self):
+        return self._max_fps
+
+    @property
     def frametime(self):
         """Time spent between the last frame and the current frame
         (in seconds).
