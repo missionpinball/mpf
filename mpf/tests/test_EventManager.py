@@ -2,6 +2,7 @@ from mpf.core.delays import DelayManager
 from mpf.tests.MpfTestCase import MpfTestCase
 from unittest.mock import patch
 
+
 class TestEventManager(MpfTestCase):
     def __init__(self, test_map):
         super().__init__(test_map)
@@ -751,7 +752,8 @@ class TestEventManager(MpfTestCase):
         self.delay.add(ms=6001, name="second", callback=self.delay_second)
         self.delay.add(ms=6000, name="first", callback=self.delay_first)
 
-        self.assertAlmostEqual(6000, (self.machine.delayRegistry.get_next_event() - self.machine.clock.get_time()) * 1000)
+        self.assertAlmostEqual(6000,
+                               (self.machine.delayRegistry.get_next_event() - self.machine.clock.get_time()) * 1000)
         self.advance_time_and_run(10)
 
     def test_delay_remove_race(self):
@@ -760,4 +762,17 @@ class TestEventManager(MpfTestCase):
 
         self.delay.add(ms=6000, name="first", callback=self.delay_first)
         self.delay.add(ms=6000, name="second", callback=self.delay_second)
+        self.advance_time_and_run(10)
+
+    def delay_zero_ms(self, start):
+        self.delay.add(ms=0, name="second", callback=self.delay_zero_ms_next_frame, start=start)
+
+    def delay_zero_ms_next_frame(self, start):
+        self.assertLessEqual(self.machine.clock.get_time(), start + self.min_frame_time)
+
+    def test_zero_ms_delay(self):
+        self.called = False
+        self.delay = DelayManager(self.machine.delayRegistry)
+
+        self.delay.add(ms=0, name="first", callback=self.delay_zero_ms, start=self.machine.clock.get_time())
         self.advance_time_and_run(10)
