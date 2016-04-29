@@ -492,7 +492,7 @@ class RunningShow(object):
     def advance(self, steps=1, show_step=None):
         """Manually advances this show to the next step."""
 
-        if type(show_step) is int and show_step < 0:
+        if isinstance(show_step, int) and show_step < 0:
             raise ValueError('Cannot advance {} to step "{}" as that is'
                              'not a valid step number.'.format(self, show_step))
 

@@ -92,7 +92,7 @@ class MachineController(object):
         self._load_config()
 
         self.clock = ClockBase(self.config['mpf']['hz'])
-        self.log.info("Starting clock at %sHz", self.clock._max_fps)
+        self.log.info("Starting clock at %sHz", self.clock.max_fps)
         self.clock.schedule_interval(self._check_crash_queue, 1)
         self.configure_debugger()
 

@@ -27,6 +27,9 @@ class Game(Mode):
         self.tilted = False
         self.slam_tilted = False
         self.player = None
+        self.buttons_held_on_start = None
+        self.start_button_hold_time = None
+        self.num_players = None
 
     @property
     def balls_in_play(self):
@@ -82,7 +85,7 @@ class Game(Mode):
             self.add_mode_event_handler(
                 self.machine.config['mpf']['switch_tag_event'].replace(
                     '%', self.machine.config['game']['add_player_switch_tag']),
-                    self.request_player_add)
+                self.request_player_add)
 
         self.add_mode_event_handler('ball_ended', self.ball_ended)
         self.add_mode_event_handler('game_ended', self.game_ended)
@@ -305,9 +308,6 @@ class Game(Mode):
 
         Args:
             num: Integer of the  number of extra balls to award. Default is 1.
-            force: Boolean which allows you to force the extra ball even if it
-                means the player would go above the max extra balls specified
-                in the config files. Default is False.
 
         TODO: The limit checking is not yet implemented
         """
@@ -392,14 +392,14 @@ class Game(Mode):
         object as a *player* kwarg.
 
         """
+        del kwargs
         self.log.debug("Received request to add player.")
 
         # There area few things we have to check first. If this all passes,
         # then we'll raise the event to ask other modules if it's ok to add a
         # player
 
-        if len(self.player_list) >= self.machine.config['game'] \
-                ['max_players']:
+        if len(self.player_list) >= self.machine.config['game']['max_players']:
             self.log.debug("Game is at max players. Cannot add another.")
             return False
 
@@ -482,9 +482,6 @@ class Game(Mode):
         All it does really is set :attr:`player` to the next player's number.
 
         Args:
-            player_num : Int which lets you specify which player you want to
-                rotate to. If None, it just rotates to the next player in order.
-
         """
         # todo  do cool stuff in the future to change order, etc.
 
