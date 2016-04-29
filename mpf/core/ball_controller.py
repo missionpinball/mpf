@@ -114,16 +114,17 @@ class BallController(object):
             balls_on_pfs += playfield.balls
 
         # fix too much balls
-        while balls_on_pfs > loose_balls:
-            for playfield in self.machine.playfields:
-                self.log.warning("Corecting balls on pf from %s to %s",
-                                 playfield.balls, playfield.balls - 1)
-                if playfield.balls > 0:
-                    if playfield.unexpected_balls > 0:
-                        playfield.unexpected_balls -= 1
-                    playfield.balls -= 1
-                    balls_on_pfs -= 1
-                    break
+        if balls_on_pfs > loose_balls:
+            for dummy_i in range(balls_on_pfs - loose_balls):
+                for playfield in self.machine.playfields:
+                    self.log.warning("Corecting balls on pf from %s to %s",
+                                     playfield.balls, playfield.balls - 1)
+                    if playfield.balls > 0:
+                        if playfield.unexpected_balls > 0:
+                            playfield.unexpected_balls -= 1
+                        playfield.balls -= 1
+                        balls_on_pfs -= 1
+                        break
 
         for playfield in self.machine.playfields:
             if playfield.balls != playfield.available_balls:

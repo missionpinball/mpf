@@ -49,7 +49,8 @@ class MpfTestCase(unittest.TestCase):
         self.machine_config_patches['mpf']['save_machine_vars_to_disk'] = False
         self.machine_config_patches['mpf']['plugins'] = list()
         self.machine_config_patches['bcp'] = []
-        self.expected_duration = 1.0
+        self.expected_duration = 0.5
+        self.min_frame_time = 1/30  # test with default Hz
 
     def getConfigFile(self):
         """Override this method in your own test class to point to the config
@@ -134,6 +135,9 @@ class MpfTestCase(unittest.TestCase):
             if not wait_until or (next_show_step and wait_until > next_show_step):
                 wait_until = next_show_step
 
+            if wait_until and wait_until - self.machine.clock.get_time() < self.min_frame_time:
+                wait_until = self.machine.clock.get_time() + self.min_frame_time
+
             if wait_until and self.machine.clock.get_time() < wait_until < end_time:
                 self.set_time(wait_until)
                 self.machine_run()
@@ -209,7 +213,7 @@ class MpfTestCase(unittest.TestCase):
             while not self.machine.test_init_complete:
                 self.advance_time_and_run(0.01)
 
-            self.advance_time_and_run(300)
+            self.advance_time_and_run(1)
 
         except Exception as e:
             # todo temp until I can figure out how to stop the asset loader
@@ -258,8 +262,10 @@ class MpfTestCase(unittest.TestCase):
         if sys.exc_info != (None, None, None):
             # disable teardown logging after error
             logging.basicConfig(level=99)
-        # fire all delays
-        self.advance_time_and_run(300)
+        else:
+            # fire all delays
+            self.min_frame_time = 20.0
+            self.advance_time_and_run(300)
         self.machine.clock.time = self.realTime
         self.machine.stop()
         self.machine = None
