@@ -310,6 +310,7 @@ class BallDevice(SystemWideDevice):
             self.mechanical_eject_in_progress = True
             # this is an unexpected eject. use default target
             self.eject_in_progress_target = self.config['eject_targets'][0]
+            self.eject_in_progress_target.available_balls += 1
             # self.eject_queue.append((target, 0))
             self._do_eject_attempt()
             return self._switch_state("ball_left")
