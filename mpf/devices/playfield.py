@@ -114,10 +114,10 @@ class Playfield(SystemWideDevice):
         if balls >= 0:
             self._balls = balls
         else:
-            self.log.warning("Playfield balls went to %s. Resetting to 0, but "
-                             "FYI that something's weird", balls)
             self._balls = 0
             self.unexpected_balls += -balls
+            self.log.warning("Playfield balls went to %s. Resetting to 0, but "
+                             "FYI that something's weird. Unexpected balls: %s", balls, self.unexpected_balls)
 
         self.log.debug("New Ball Count: %s. (Prior count: %s)",
                        self._balls, prior_balls)
