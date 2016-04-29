@@ -89,13 +89,13 @@ class Playfield(SystemWideDevice):
                     handler=self._source_device_eject_attempt)
 
     def add_missing_balls(self, balls):
+        self.available_balls += balls
         # if we catched an unexpected balls before do not add a ball
         if self.unexpected_balls:
             self.unexpected_balls -= 1
             balls -= 1
 
         self.balls += balls
-        self.available_balls += balls
 
     @property
     def balls(self):
@@ -260,7 +260,6 @@ class Playfield(SystemWideDevice):
                     self.log.debug("Playfield_active switch hit with no balls "
                                    "expected. glass_off_mode is not enabled, "
                                    "setting playfield ball count to 1")
-
                     self.balls = 1
                     self.available_balls += 1
                     self.unexpected_balls += 1
@@ -275,8 +274,6 @@ class Playfield(SystemWideDevice):
         self.log.debug("%s ball(s) removed from the playfield", balls)
         self.balls -= balls
         self.available_balls -= balls
-        if self.available_balls < 0:
-            self.available_balls = 0
 
     def _source_device_ball_lost(self, target, **kwargs):
         del kwargs
