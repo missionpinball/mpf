@@ -1,5 +1,5 @@
-
 import mpf.tests.test_BallDeviceSwitchConfirmation
+
 
 class TestBallDeviceEventConfirmation(
     mpf.tests.test_BallDeviceSwitchConfirmation
@@ -13,4 +13,3 @@ class TestBallDeviceEventConfirmation(
 
     def _hit_confirm(self):
         self.machine.events.post("launcher_confirm")
-
