@@ -2,8 +2,6 @@
 
 game:
     balls_per_game: 1
-machine:
-    glass_off_mode: False
 
 coils:
     eject_coil1:
