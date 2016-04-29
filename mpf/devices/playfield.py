@@ -252,18 +252,8 @@ class Playfield(SystemWideDevice):
             self.mark_playfield_active()
 
             if not self.num_balls_requested:
-                if self.machine.config['machine']['glass_off_mode']:
-                    self.log.debug("Playfield_active switch hit with no balls "
-                                   "expected. glass_off_mode is enabled, so "
-                                   "this will be ignored.")
-                else:
-                    self.log.debug("Playfield_active switch hit with no balls "
-                                   "expected. glass_off_mode is not enabled, "
-                                   "setting playfield ball count to 1")
-                    self.balls = 1
-                    self.available_balls += 1
-                    self.unexpected_balls += 1
-                    self.machine.events.post('unexpected_ball_on_' + self.name)
+                self.log.debug("Playfield was activated with no balls expected.")
+                self.machine.events.post('unexpected_ball_on_' + self.name)
 
     def _ball_removed_handler(self, balls, **kwargs):
         del kwargs
