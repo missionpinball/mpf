@@ -47,7 +47,12 @@ class BallController(object):
             for switch in device.config['ball_switches']:
                 self.machine.switch_controller.add_switch_handler(switch.name,
                                                                   self._update_num_balls_known,
-                                                                  ms=device.config['entrance_count_delay'])
+                                                                  ms=device.config['entrance_count_delay'],
+                                                                  state=1)
+                self.machine.switch_controller.add_switch_handler(switch.name,
+                                                                  self._update_num_balls_known,
+                                                                  ms=device.config['exit_count_delay'],
+                                                                  state=0)
                 self.machine.switch_controller.add_switch_handler(switch.name,
                                                                   self._correct_playfield_count,
                                                                   ms=device.config['entrance_count_delay'],
@@ -132,7 +137,14 @@ class BallController(object):
                 playfield.available_balls = playfield.balls
 
     def _update_num_balls_known(self):
-        balls = self._count_balls()
+        try:
+            balls = self._count_balls()
+        except ValueError:
+            self.delay.reset(ms=100, callback=self._update_num_balls_known, name="update_num_balls_known")
+            return
+
+        if self.num_balls_known < 0:
+            self.num_balls_known = 0
         if balls > self.num_balls_known:
             self.log.debug("Found new balls. Setting known balls to %s", balls)
             self.delay.add(1, self._handle_new_balls, new_balls=balls - self.num_balls_known)
@@ -161,6 +173,11 @@ class BallController(object):
                     if self.machine.switch_controller.is_active(
                             switch.name, ms=device.config['entrance_count_delay']):
                         balls += 1
+                    elif self.machine.switch_controller.is_inactive(
+                            switch.name, ms=device.config['exit_count_delay']):
+                        continue
+                    else:
+                        raise ValueError("switches not stable")
 
         return balls
 
