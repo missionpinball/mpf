@@ -108,7 +108,6 @@ class TestSystem11Trough(MpfTestCase):
         # to the plunger even though the ball hasn't made it into the trough
         # yet
 
-        self.machine.ball_controller.num_balls_known = 1
         self.machine.switch_controller.process_switch("trough1", 1)
         self.advance_time_and_run(1)
 
