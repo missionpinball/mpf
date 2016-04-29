@@ -3,6 +3,7 @@
 
 from mpf.tests.MpfTestCase import MpfTestCase
 
+
 class TestMigratedV4(MpfTestCase):
 
     def getConfigFile(self):
