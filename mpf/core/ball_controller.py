@@ -128,6 +128,7 @@ class BallController(object):
                         if playfield.unexpected_balls > 0:
                             playfield.unexpected_balls -= 1
                         playfield.balls -= 1
+                        playfield.available_balls -= 1
                         balls_on_pfs -= 1
                         break
 
@@ -156,6 +157,7 @@ class BallController(object):
             for playfield in self.machine.playfields:
                 if playfield.unexpected_balls > 0:
                     playfield.unexpected_balls -= 1
+                    playfield.available_balls += 1
                     break
 
     def _count_balls(self):
