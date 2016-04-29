@@ -138,6 +138,10 @@ class BallController(object):
                                  playfield.available_balls, playfield.balls)
                 playfield.available_balls = playfield.balls
 
+    def trigger_ball_count(self):
+        self._update_num_balls_known()
+        self._correct_playfield_count()
+
     def _update_num_balls_known(self):
         try:
             balls = self._count_balls()
