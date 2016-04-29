@@ -403,7 +403,7 @@ class TestShots(MpfTestCase):
 
         # step 3 is rainbow 2 show, so make sure it switches
         self.hit_and_release_switch("switch_12")
-        self.advance_time_and_run(.1)
+        self.machine_run()
         self.assertEqual(RGBColor('aliceblue'),
                          self.machine.leds.led_12.hw_driver.current_color)
 
@@ -877,7 +877,7 @@ class TestShots(MpfTestCase):
 
         # start mode1, should flip to show 2 colors
         self.machine.modes.mode1.start()
-        self.advance_time_and_run(.5)
+        self.machine_run()
 
         self.assertEqual(RGBColor('aliceblue'),
                          self.machine.leds.led_23.hw_driver.current_color)
@@ -893,7 +893,7 @@ class TestShots(MpfTestCase):
 
         # stop the mode, make sure the show from the base is still running
         self.machine.modes.mode1.stop()
-        self.advance_time_and_run(.1)
+        self.machine_run()
         self.assertEqual(RGBColor('blue'),
                          self.machine.leds.led_23.hw_driver.current_color)
 
