@@ -12,6 +12,10 @@ class TestShots(MpfTestCase):
     def getMachinePath(self):
         return 'tests/machine_files/shots/'
 
+    def setUp(self):
+        super(TestShots, self).setUp()
+        self.min_frame_time = 0.5
+
     def start_game(self):
         # shots only work in games so we have to do this a lot
         self.machine.playfield.add_ball = MagicMock()
