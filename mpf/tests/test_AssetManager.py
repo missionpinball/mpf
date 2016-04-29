@@ -9,7 +9,17 @@ class TestAssets(MpfTestCase):
     def getConfigFile(self):
         return 'test_asset_loading.yaml'
 
-    def test_machine_wide_asset_loading(self):
+    def test_assert_loading(self):
+        self.expected_duration = 1.0
+        self._test_machine_wide_asset_loading()
+        self._test_random_asset_group()
+        self._test_random_asset_group_with_weighting()
+        self._test_random_force_all()
+        self._test_random_force_next()
+        self._test_sequence_asset_group()
+        self._test_sequence_asset_group_with_count()
+
+    def _test_machine_wide_asset_loading(self):
 
         # test that the shows asset class gets built correctly
         self.assertTrue(self.machine, 'shows')
@@ -68,7 +78,7 @@ class TestAssets(MpfTestCase):
 
         # Make sure all the assets are loaded. Wait if not
         while (self.machine.asset_manager.num_assets_to_load <
-                   self.machine.asset_manager.num_assets_loaded):
+               self.machine.asset_manager.num_assets_loaded):
             self.advance_time_and_run()
 
         # Need to wait a bit since the loading was a separate thread
@@ -159,7 +169,7 @@ class TestAssets(MpfTestCase):
         self.assertFalse(self.machine.shows['show9'].loading)
         self.assertFalse(self.machine.shows['show9'].unloading)
 
-    def test_random_asset_group(self):
+    def _test_random_asset_group(self):
         # three assets, no weights
 
         # make sure the asset group was created
@@ -179,7 +189,7 @@ class TestAssets(MpfTestCase):
         self.assertAlmostEqual(3333, res.count(self.machine.shows['show3']),
                                delta=500)
 
-    def test_random_asset_group_with_weighting(self):
+    def _test_random_asset_group_with_weighting(self):
         # three assets, third one has a weight of 2
 
         # make sure the asset group was created
@@ -199,7 +209,7 @@ class TestAssets(MpfTestCase):
         self.assertAlmostEqual(5000, res.count(self.machine.shows['show3']),
                                delta=500)
 
-    def test_sequence_asset_group(self):
+    def _test_sequence_asset_group(self):
         # three assets, no weights
 
         self.assertIn('group3', self.machine.shows)
@@ -215,7 +225,7 @@ class TestAssets(MpfTestCase):
         self.assertIs(self.machine.shows['group3'].show, self.machine.shows['show2'])
         self.assertIs(self.machine.shows['group3'].show, self.machine.shows['show3'])
 
-    def test_sequence_asset_group_with_count(self):
+    def _test_sequence_asset_group_with_count(self):
         # three assets, no weights
 
         self.assertIn('group4', self.machine.shows)
@@ -236,7 +246,7 @@ class TestAssets(MpfTestCase):
         self.assertIs(self.machine.shows['group4'].show, self.machine.shows['show2'])
         self.assertIs(self.machine.shows['group4'].show, self.machine.shows['show3'])
 
-    def test_random_force_next(self):
+    def _test_random_force_next(self):
         # random, except it ensures the same one does not show up twice in a
         # row
 
@@ -269,7 +279,7 @@ class TestAssets(MpfTestCase):
         self.assertAlmostEqual(2733, res.count(self.machine.shows['show3']),
                                delta=500)
 
-    def test_random_force_all(self):
+    def _test_random_force_all(self):
         # random, except it ensures the same one does not show up twice before
         # they're all shown
 
