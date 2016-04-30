@@ -186,26 +186,6 @@ auditor:
     player:
         score
 
-displaydefaults:
-    text:
-        font: default
-        size: 10
-        opaque: false
-        v_pos: center
-        h_pos: center
-        x: 0
-        y: 0
-        time: 0s
-        text_color: ffffff
-        background_color: 000000
-        text_shade: 15
-        background_shade: 0
-        antialias: False
-
-textstrings:
-    volume_zero: OFF
-    volume_max: MAX
-
 assets:
 #    default:
 #        load: preload
@@ -290,14 +270,6 @@ bcp:
     shots:
       __all__
 
-volume:
-    tracks:
-        master: 20
-        voice: 20
-        sfx: 20
-        music: 20
-    steps: 20
-
 open_pixel_control:
     host: localhost
     port: 7890
@@ -371,15 +343,6 @@ shows:
 playfields:
     playfield:
         tags: default
-
-debug_profiles:
-    verbose:
-        core_modules:
-            events
-            mode_controller
-        device_collections:
-        individual_devices:
-        plugins:
 
 hardware:
   platform: smart_virtual
