@@ -17,11 +17,9 @@ import sys
 import threading
 import queue
 import traceback
-import io
 from copy import deepcopy
 
 from mpf.core.platform import MatrixLightsPlatform, LedPlatform, SwitchPlatform, DriverPlatform
-#from mpf.system.config import Config
 from mpf.core.utility_functions import Util
 
 try:
@@ -33,6 +31,7 @@ except:
 # Minimum firmware versions needed for this module
 MIN_FW = 0x00000100
 BAD_FW_VERSION = 0x01020304
+
 
 class OppRs232Intf:
     GET_SER_NUM_CMD     = '\x00'
@@ -177,7 +176,6 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self.machine.config['platform'] = self.features
         # ----------------------------------------------------------------------
 
-        self.hw_rules = dict()
         self.opp_connection = None
         self.opp_nodes = list()
         self.connection_threads = set()
@@ -241,15 +239,15 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
         """
 
-        if (len(msg) >= 1):
-            if ((ord(msg[0]) >= ord(OppRs232Intf.CARD_ID_GEN2_CARD)) and 
-                (ord(msg[0]) < (ord(OppRs232Intf.CARD_ID_GEN2_CARD) + 0x20))):
-                if (len(msg) >= 2):
+        if len(msg) >= 1:
+            if ((ord(msg[0]) >= ord(OppRs232Intf.CARD_ID_GEN2_CARD)) and
+                    (ord(msg[0]) < (ord(OppRs232Intf.CARD_ID_GEN2_CARD) + 0x20))):
+                if len(msg) >= 2:
                     cmd = msg[1]
                 else:
                     cmd = OppRs232Intf.ILLEGAL_CMD
             # Look for EOM or INV commands
-            elif (msg[0] == OppRs232Intf.INV_CMD) or (msg[0] == OppRs232Intf.EOM_CMD):
+            elif msg[0] == OppRs232Intf.INV_CMD or msg[0] == OppRs232Intf.EOM_CMD:
                 cmd = msg[0]
             else:
                 cmd = OppRs232Intf.ILLEGAL_CMD
@@ -261,14 +259,11 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         if cmd in self.opp_commands:
             self.opp_commands[cmd](msg)
         else:            
-            hex_string = "".join(" 0x%02x" % ord(b) for b in msg)
-
             self.log.warning("Received unknown serial command?%s. (This is "
                              "very worrisome.)", "".join(" 0x%02x" % ord(b) for b in msg))
             
             # TODO: This means synchronization is lost.  Send EOM characters
             #  until they come back
-
 
     def _connect_to_hardware(self):
         # Connect to each port from the config. This procuess will cause the
@@ -284,6 +279,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         OPP boards, this method sets the communicator link.
 
         """
+        del name
 
         self.opp_connection = communicator
 
@@ -303,7 +299,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         wholeMsg = []
         for incand in self.opp_incands:
             # Check if any changes have been made
-            if ((incand.oldState ^ incand.newState) != 0):
+            if (incand.oldState ^ incand.newState) != 0:
                 # Update card
                 incand.oldState = incand.newState
                 msg = []
@@ -317,7 +313,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                 msg.append(OppRs232Intf.calc_crc8_whole_msg(msg))
                 wholeMsg.extend(msg)
 
-        if (len(wholeMsg) != 0):
+        if len(wholeMsg) != 0:
             wholeMsg.append(OppRs232Intf.EOM_CMD)
             sendCmd = ''.join(wholeMsg)
 
@@ -329,8 +325,8 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         for oppInp in self.opp_inputs:
             currBit = 1
             for index in range(0, 32):
-                if ((currBit & oppInp.mask) != 0):
-                    if ((currBit & oppInp.oldState) == 0):
+                if (currBit & oppInp.mask) != 0:
+                    if (currBit & oppInp.oldState) == 0:
                         hw_states[oppInp.cardNum + '-' + str(index)] = 1
                     else:
                         hw_states[oppInp.cardNum + '-' + str(index)] = 0
@@ -342,8 +338,8 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self.log.debug("Received Inventory Response:%s", "".join(" 0x%02x" % ord(b) for b in msg))
 
         index = 1
-        while (msg[index] != OppRs232Intf.EOM_CMD):
-            if ((ord(msg[index]) & ord(OppRs232Intf.CARD_ID_TYPE_MASK)) == ord(OppRs232Intf.CARD_ID_GEN2_CARD)):
+        while msg[index] != OppRs232Intf.EOM_CMD:
+            if (ord(msg[index]) & ord(OppRs232Intf.CARD_ID_TYPE_MASK)) == ord(OppRs232Intf.CARD_ID_GEN2_CARD):
                 self.numGen2Brd += 1
                 self.gen2AddrArr.append(msg[index])
                 self.currInpData.append(0)
@@ -360,10 +356,10 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         end = False
         currIndex = 0
         wholeMsg = []
-        while (not end):
+        while not end:
             # Verify the CRC8 is correct
             crc8 = OppRs232Intf.calc_crc8_part_msg(msg, currIndex, 6)
-            if (msg[currIndex + 6] != crc8):
+            if msg[currIndex + 6] != crc8:
                 self.badCRC += 1
                 hex_string = "".join(" 0x%02x" % ord(b) for b in msg)
                 self.log.warning("Msg contains bad CRC:%s.", hex_string)
@@ -374,22 +370,22 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                 solMask = 0
                 inpMask = 0
                 incandMask = 0
-                while (wingIndex < OppRs232Intf.NUM_G2_WING_PER_BRD):
-                    if (msg[currIndex + 2 + wingIndex] == OppRs232Intf.WING_SOL):
+                while wingIndex < OppRs232Intf.NUM_G2_WING_PER_BRD:
+                    if msg[currIndex + 2 + wingIndex] == OppRs232Intf.WING_SOL:
                         solMask |= (0x0f << (4 * wingIndex))
                         inpMask |= (0x0f << (8 * wingIndex))
-                    elif (msg[currIndex + 2 + wingIndex] == OppRs232Intf.WING_INP):
+                    elif msg[currIndex + 2 + wingIndex] == OppRs232Intf.WING_INP:
                         inpMask |= (0xff << (8 * wingIndex))
-                    elif (msg[currIndex + 2 + wingIndex] == OppRs232Intf.WING_INCAND):
+                    elif msg[currIndex + 2 + wingIndex] == OppRs232Intf.WING_INCAND:
                         incandMask |= (0xff << (8 * wingIndex))
-                    elif (msg[currIndex + 2 + wingIndex] == OppRs232Intf.WING_NEO):
+                    elif msg[currIndex + 2 + wingIndex] == OppRs232Intf.WING_NEO:
                         hasNeo = True
                     wingIndex += 1
-                if (incandMask != 0):
+                if incandMask != 0:
                     self.opp_incands.append(OPPIncandCard(msg[currIndex], incandMask, self.incandDict))
-                if (solMask != 0):
+                if solMask != 0:
                     self.opp_solenoid.append(OPPSolenoidCard(msg[currIndex], solMask, self.solDict, self))
-                if (inpMask != 0):
+                if inpMask != 0:
                     # Create the input object, and add to the command to read all inputs
                     self.opp_inputs.append(OPPInputCard(msg[currIndex], inpMask, self.inpDict,
                         self.inpAddrDict, self.machine))
@@ -407,10 +403,10 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
             
                 if hasNeo:
                     self.opp_neopixels.append(OPPNeopixelCard(msg[currIndex], self.neoCardDict, self))
-            if (not end):
-                if (msg[currIndex + 7] == OppRs232Intf.EOM_CMD):
+            if not end:
+                if msg[currIndex + 7] == OppRs232Intf.EOM_CMD:
                     end = True
-                elif (msg[currIndex + 8] == OppRs232Intf.GET_GEN2_CFG):
+                elif msg[currIndex + 8] == OppRs232Intf.GET_GEN2_CFG:
                     currIndex += 7
                 else:
                     self.log.warning("Malformed GET_GEN2_CFG response:%s.",
@@ -428,10 +424,10 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self.log.debug("Received Version Response:%s", "".join(" 0x%02x" % ord(b) for b in msg))
         end = False
         currIndex = 0
-        while (not end):
+        while not end:
             # Verify the CRC8 is correct
             crc8 = OppRs232Intf.calc_crc8_part_msg(msg, currIndex, 6)
-            if (msg[currIndex + 6] != crc8):
+            if msg[currIndex + 6] != crc8:
                 self.badCRC += 1
                 hex_string = "".join(" 0x%02x" % ord(b) for b in msg)
                 self.log.warning("Msg contains bad CRC:%s.", hex_string)
@@ -513,16 +509,16 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         # Use new update individual solenoid command
         _, solenoid = config['number'].split('-')
         opp_sol = self.solDict[config['number']]
-        opp_sol.driver_settings.update(opp_sol.merge_driver_settings(**config))
+        opp_sol.config = config
         self.log.debug("Config driver %s, %s, %s", config['number'],
-            opp_sol.driver_settings['pulse_ms'], opp_sol.driver_settings['hold_power'])
+            opp_sol.config['pulse_ms'], opp_sol.config['hold_power'])
 
-        pulse_len = int(opp_sol.driver_settings['pulse_ms'])
-        hold = int(opp_sol.driver_settings['hold_power'])
+        pulse_len = self._get_pulse_ms_value(opp_sol)
+        hold = self._get_hold_value(opp_sol)
         solIndex = int(solenoid) * OppRs232Intf.CFG_BYTES_PER_SOL
 
         # If hold is 0, set the auto clear bit
-        if (hold == 0):
+        if hold == 0:
             cmd = OppRs232Intf.CFG_SOL_AUTO_CLR
         else:
             cmd = chr(0)
@@ -618,83 +614,67 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         if (currTick == 0):
             self.opp_connection.send(self.read_input_msg)
 
-    def set_pulse_on_hit_rule(self, enable_switch, coil):
-        self.write_hw_rule(enable_switch, None, coil, None)
-
-    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
-        self.write_hw_rule(enable_switch, None, coil, None)
-
-    def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
-        self.write_hw_rule(enable_switch, None, coil, None)
-
-    def write_hw_rule(self, switch_obj, sw_activity, driver_obj, driver_action,
-                      disable_on_release=True, drive_now=True,
-                      **driver_settings_overrides):
-        """Used to write (or update) a hardware rule to the OPP hardware.
-
-        *Hardware Rules* are used to configure the hardware controller to
-        automatically change driver states based on switch changes. These rules
-        are completely handled by the hardware (i.e. with no interaction from
-        the Python game code). They're used for things that you want to happen
-        fast, like firing coils when flipper buttons are pushed, slingshots, pop
-        bumpers, etc.
-
-        You can overwrite existing hardware rules at any time to change or
-        remove them.
-
-        Args:
-            switch_obj: Which switch you're creating this rule for. The
-                parameter is a reference to the switch object itself.
-                Note:  The OPP firmware currently only supports the using the
-                dedicated switch.
-            sw_activity: Int which specifies whether this coil should fire when
-                the switch becomes active (1) or inactive (0)
-                Note:  The OPP firmware currently only supports firing the
-                coil when switch becomes active.
-            driver_obj: Driver object this rule is being set for.
-            driver_action: String 'pulse' or 'hold' which describe what action
-                will be applied to this driver
-            drive_now: Should the hardware check the state of the switches when
-                this rule is first applied, and fire the coils if they should
-                be? Typically this is True, especially with flippers because you
-                want them to fire if the player is holding in the buttons when
-                the machine enables the flippers (which is done via several
-                calls to this method.)
-                Note:  The OPP firmware always assumes this is True.
-
-        """
-
-        # Verify the switch number is correct for the driver number.
-        card, solenoid = driver_obj.hw_driver.number.split('-')
-        sw_card, sw_num = switch_obj.hw_switch.number.split('-')
+    def _verify_coil_and_switch_fit(self, switch, coil):
+        card, solenoid = coil.hw_driver.number.split('-')
+        sw_card, sw_num = switch.hw_switch.number.split('-')
         matching_sw = ((int(solenoid) & 0x0c) << 1) | (int(solenoid) & 0x03)
         if (card != sw_card) or (matching_sw != int(sw_num)):
-            self.log.error('Invalid switch being configured for driver. Driver = %s '
-                           'Switch = %s' % (driver_obj.hw_driver.number, switch_obj.hw_switch.number))
-            return
+            raise AssertionError('Invalid switch being configured for driver. Driver = %s '
+                                 'Switch = %s' % (coil.hw_driver.number, switch.hw_switch.number))
 
-        driver_settings = deepcopy(driver_obj.hw_driver.driver_settings)
+    def set_pulse_on_hit_rule(self, enable_switch, coil):
+        # OPP always does the full pulse
+        self.write_hw_rule(enable_switch, coil, False)
 
-        driver_settings.update(driver_obj.hw_driver.merge_driver_settings(
-            **driver_settings_overrides))
+    def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
+        # OPP always does the full pulse. So this is not 100% correct
+        self.set_pulse_on_hit_rule(enable_switch, coil)
+
+    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
+        # OPP always does the full pulse. Therefore, this is mostly right.
+        if coil.config['hold_power'] is None and not coil.config['allow_enable']:
+            raise AssertionError("Set allow_enable if you want to enable a coil without hold_power")
+
+        self.write_hw_rule(enable_switch, coil, True)
+
+    def _get_hold_value(self, coil):
+        if coil.config['hold_power']:
+            return coil.config['hold_power']
+        elif coil.config['allow_enable']:
+            # TODO: change this in the future. allow_enable means full hold power
+            return 0
+        else:
+            return 0
+
+    def _get_pulse_ms_value(self, coil):
+        if coil.config['pulse_ms']:
+            return coil.config['pulse_ms']
+        else:
+            # TODO: load default
+            return 10
+
+    def write_hw_rule(self, switch_obj, driver_obj, use_hold):
+        if switch_obj.invert:
+            raise AssertionError("Cannot handle inverted switches")
+
+        self._verify_coil_and_switch_fit(switch_obj, driver_obj)
 
         self.log.debug("Setting HW Rule. Driver: %s, Driver settings: %s",
-                      driver_obj.hw_driver.number, driver_settings)
+                      driver_obj.hw_driver.number, driver_obj.config)
 
-        self.hw_rules[driver_obj] = {'pulse_ms': driver_settings['pulse_ms'],
-                               'hold_power': driver_settings['hold_power'],
-                               'switch': switch_obj.hw_switch.number}
+        pulse_len = self._get_pulse_ms_value(driver_obj.hw_driver)
+        hold = self._get_hold_value(driver_obj.hw_driver)
 
-        pulse_len = int(driver_settings['pulse_ms'])
-        hold = int(driver_settings['hold_power'])
+        card, solenoid = driver_obj.hw_driver.number.split('-')
         solIndex = int(solenoid) * OppRs232Intf.CFG_BYTES_PER_SOL
 
         # If hold is 0, set the auto clear bit
-        if (hold == 0):
+        if not use_hold:
             cmd = chr(ord(OppRs232Intf.CFG_SOL_USE_SWITCH) +
                 ord(OppRs232Intf.CFG_SOL_AUTO_CLR))
         else:
             cmd = OppRs232Intf.CFG_SOL_USE_SWITCH
+
         driver_obj.hw_driver.solCard.currCfgLst[solIndex] = cmd
         driver_obj.hw_driver.solCard.currCfgLst[solIndex + OppRs232Intf.INIT_KICK_OFFSET] = chr(pulse_len)
         driver_obj.hw_driver.solCard.currCfgLst[solIndex + OppRs232Intf.DUTY_CYCLE_OFFSET] = chr(hold)
@@ -746,6 +726,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self.log.debug("Clearing hardware rule: %s", "".join(" 0x%02x" % ord(b) for b in cmd))
         self.opp_connection.send(cmd)
 
+
 class OPPIncandCard(object):
 
     def __init__(self, addr, mask, incandDict):
@@ -763,7 +744,8 @@ class OPPIncandCard(object):
             if (((1 << index) & mask) != 0):
                 number = card + '-' + str(index)
                 incandDict[number] = OPPIncand(self, number)
-        
+
+
 class OPPIncand(object):
 
     def __init__(self, incandCard, number):
@@ -889,10 +871,10 @@ class OPPSolenoid(object):
     def pulse(self, coil, milliseconds):
         """Pulses this driver. """
         error = False
-        if milliseconds and (milliseconds != int(self.driver_settings['pulse_ms'])):
+        if milliseconds and milliseconds != self.config['pulse_ms']:
             self.log.warn("OPP platform doesn't allow changing pulse width using pulse call. " \
-                          "Tried %d, used %s", milliseconds, self.driver_settings['pulse_ms'])
-        if (int(self.driver_settings['hold_power']) != 0):
+                          "Tried %d, used %s", milliseconds, self.config['pulse_ms'])
+        if self.config['hold_power'] is not None:
             self.log.warn("OPP platform, trying to pulse a solenoid with a hold_power. " \
                           "That would lock the driver on.  Use enable/disable calls.")
             error = True
@@ -913,8 +895,9 @@ class OPPSolenoid(object):
             self.log.debug("Pulse driver: %s", "".join(" 0x%02x" % ord(b) for b in cmd))
             self.solCard.platform.opp_connection.send(cmd)
         
-        hex_ms_string = self.driver_settings['pulse_ms']
+        hex_ms_string = self.config['pulse_ms']
         return Util.hex_string_to_int(hex_ms_string)
+
 
 class OPPSolenoidCard(object):
 
@@ -936,7 +919,7 @@ class OPPSolenoidCard(object):
             if (((1 << index) & mask) != 0):
                 number = card + '-' + str(index)
                 opp_sol = OPPSolenoid(self, number)
-                opp_sol.driver_settings = self.create_driver_settings(platform.machine)
+                opp_sol.config = self.create_driver_settings(platform.machine)
                 solDict[card + '-' + str(index)] = opp_sol
 
     def create_driver_settings(self, machine):
@@ -993,6 +976,7 @@ class OPPNeopixelCard(object):
         pixel = OPPNeopixel(pixel_number, self)
         neoDict[pixel_number] = pixel
         return pixel
+
 
 class OPPNeopixel(object):
 
@@ -1058,6 +1042,7 @@ class OPPNeopixel(object):
             cmd = ''.join(msg)
             self.log.debug("Set Neopixel color: %s", "".join(" 0x%02x" % ord(b) for b in cmd))
             self.neoCard.platform.opp_connection.send(cmd)
+
 
 class SerialCommunicator(object):
 
@@ -1298,29 +1283,3 @@ class SerialCommunicator(object):
             self.log.critical("!!! Receive loop error exception")
             self.machine.crash_queue.put(msg)
         self.log.critical("!!! Receive loop exited")
-
-# The MIT License (MIT)
-
-# Oringal code on which this module was based:
-# Copyright (c) 2009-2011 Adam Preble and Gerry Stellenberg, but almost
-#   everything has been changed at this point.
-
-# Copyright (c) 2016 Hugh Spahr
-
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
