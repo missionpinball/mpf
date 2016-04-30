@@ -575,7 +575,7 @@ shots:
     advance_events: dict|str:ms|None
     hit_events: dict|str:ms|None
     remove_active_profile_events: dict|str:ms|None
-    __allow_others__:
+    show_tokens: dict|str:str|None
 shot_groups:
     shots: list|machine(shots)|None
     profile: single|str|None    # TODO: convert from str to machine(profiles)
@@ -605,6 +605,7 @@ shot_profiles:
     block: single|bool|true
     states:
         show: single|str|None
+        name: single|str|
         # These settings are same as show_player. Could probably get fancy with
         # the validator to make this automatically pull them in.
         action: single|enum(play,stop,pause,resume,advance,update)|play
@@ -617,7 +618,7 @@ shot_profiles:
         reset: single|bool|True
         manual_advance: single|bool|False
         key: single|str|None
-        __allow_others__:
+        show_tokens: dict|str:str|None
 show_player:
     action: single|enum(play,stop,pause,resume,advance,update)|play
     priority: single|int|0
@@ -629,7 +630,7 @@ show_player:
     reset: single|bool|True
     manual_advance: single|bool|False
     key: single|str|None
-    __allow_others__:
+    show_tokens: dict|str:str|None
 show_step:
     time: single|str|
     __allow_others__:

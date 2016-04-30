@@ -10,12 +10,14 @@ class ShowPlayer(ConfigPlayer):
 
     # pylint: disable-msg=too-many-arguments
     def play(self, settings, mode=None, caller=None, priority=0,
-             play_kwargs=None, **kwargs):
+             play_kwargs=None, show_tokens=None, **kwargs):
 
-        if not play_kwargs:
-            play_kwargs = kwargs
-        else:
-            play_kwargs.update(kwargs)
+        # if not play_kwargs:
+        #     play_kwargs = kwargs
+        # else:
+        #     play_kwargs.update(kwargs)
+
+        # todo should show_tokens be part of settings?
 
         if 'shows' in settings:
             settings = settings['shows']
@@ -32,7 +34,18 @@ class ShowPlayer(ConfigPlayer):
             if s['action'].lower() == 'play':
                 try:
                     self.machine.shows[show].play(mode=mode,
-                                                  play_kwargs=play_kwargs, **s)
+                                                  show_tokens=show_tokens,
+                                                  priority=s['priority'],
+                                                  hold=s['hold'],
+                                                  speed=s['speed'],
+                                                  start_step=s['start_step'],
+                                                  loops=s['loops'],
+                                                  sync_ms=s['sync_ms'],
+                                                  reset=s['reset'],
+                                                  manual_advance=s[
+                                                      'manual_advance'],
+                                                  key=s['key']
+                                                  )
                 except KeyError:
                     raise KeyError("Cannot play show '{}'. No show with that "
                                    "name.".format(show))
@@ -60,7 +73,8 @@ class ShowPlayer(ConfigPlayer):
             elif s['action'].lower() == 'update':
                 for running_show in (
                         self.machine.show_controller.get_running_shows(show)):
-                    running_show.update(play_kwargs=play_kwargs, **s)
+                    running_show.update(show_tokens=show_tokens,
+                                        priority=s['priority'])
 
     def clear(self, caller, priority):
         self.machine.show_controller.stop_shows_by_mode(caller)

@@ -235,7 +235,7 @@ class ConfigPlayer(object):
 
     # pylint: disable-msg=too-many-arguments
     def show_play_callback(self, settings, mode, caller, priority,
-                           play_kwargs, hold, **kwargs):
+                           hold, show_tokens):
         # called from a show step
 
         # todo add caller processing? Or stop_key?
@@ -243,8 +243,7 @@ class ConfigPlayer(object):
             self.caller_target_map[caller] = set()
 
         self.play(settings=settings, mode=mode, caller=caller,
-                  priority=priority, play_kwargs=play_kwargs, hold=hold,
-                  **kwargs)
+                  priority=priority, show_tokens=show_tokens, hold=hold)
 
     # pylint: disable-msg=too-many-arguments
     def play(self, settings, mode=None, caller=None, priority=None,

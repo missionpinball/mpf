@@ -359,7 +359,8 @@ class TestShows(MpfTestCase):
         # test keys passed via method calls
 
         # test one LED
-        self.machine.shows['leds_name_token'].play(leds='led_01')
+        self.machine.shows['leds_name_token'].play(
+            show_tokens=dict(leds='led_01'))
         self.advance_time_and_run(.5)
 
         self.assertEqual(self.machine.leds.led_01.hw_driver.current_color,
@@ -369,7 +370,8 @@ class TestShows(MpfTestCase):
         self.machine.leds.led_01.clear_stack()
         self.advance_time_and_run()
 
-        self.machine.shows['leds_name_token'].play(leds='tag1')
+        self.machine.shows['leds_name_token'].play(show_tokens=dict(
+            leds='tag1'))
         self.advance_time_and_run(.5)
         self.assertEqual(self.machine.leds.led_01.hw_driver.current_color,
                          RGBColor('red'))
@@ -380,7 +382,8 @@ class TestShows(MpfTestCase):
         self.machine.leds.led_01.clear_stack()
         self.advance_time_and_run()
 
-        self.machine.shows['leds_name_token'].play(leds='led_01, led_02')
+        self.machine.shows['leds_name_token'].play(show_tokens=dict(
+            leds='led_01, led_02'))
         self.advance_time_and_run(.5)
         self.assertEqual(self.machine.leds.led_01.hw_driver.current_color,
                          RGBColor('red'))
@@ -392,8 +395,8 @@ class TestShows(MpfTestCase):
         self.machine.leds.led_02.clear_stack()
         self.advance_time_and_run()
 
-        show = self.machine.shows['leds_color_token'].play(color1='blue',
-                                                           color2='green')
+        show = self.machine.shows['leds_color_token'].play(
+            show_tokens=dict(color1='blue', color2='green'))
         self.advance_time_and_run(2)
         self.assertEqual(self.machine.leds.led_01.hw_driver.current_color,
                          RGBColor('blue'))
@@ -407,7 +410,8 @@ class TestShows(MpfTestCase):
         self.machine.leds.led_02.clear_stack()
         self.advance_time_and_run()
 
-        self.machine.shows['leds_extended'].play(leds='led_01')
+        self.machine.shows['leds_extended'].play(
+            show_tokens=dict(leds='led_01'))
         self.advance_time_and_run(.5)
 
         # show has fade of 1s, so after 0.5s it should be halfway to red
@@ -419,7 +423,8 @@ class TestShows(MpfTestCase):
         self.machine.leds.led_02.clear_stack()
         self.advance_time_and_run()
 
-        self.machine.shows['leds_extended'].play(leds='tag1')
+        self.machine.shows['leds_extended'].play(
+            show_tokens=dict(leds='tag1'))
         self.advance_time_and_run(.5)
 
         # show has fade of 1s, so after 0.5s it should be halfway to red
@@ -429,7 +434,8 @@ class TestShows(MpfTestCase):
                          RGBColor((127, 0, 0)))
 
         # test single light in show
-        self.machine.shows['lights_basic'].play(lights='light_01')
+        self.machine.shows['lights_basic'].play(
+            show_tokens=dict(lights='light_01'))
         self.advance_time_and_run(.5)
 
         self.assertEqual(255,
@@ -439,7 +445,8 @@ class TestShows(MpfTestCase):
         self.machine.lights.light_01.off(force=True)
         self.advance_time_and_run()
 
-        self.machine.shows['lights_basic'].play(lights='tag1')
+        self.machine.shows['lights_basic'].play(
+            show_tokens=dict(lights='tag1'))
         self.advance_time_and_run(.5)
 
         self.assertEqual(255,
@@ -451,7 +458,8 @@ class TestShows(MpfTestCase):
         self.machine.lights.light_01.off(force=True)
         self.advance_time_and_run()
 
-        self.machine.shows['lights_basic'].play(lights='light_01 light_02')
+        self.machine.shows['lights_basic'].play(
+            show_tokens=dict(lights='light_01 light_02'))
         self.advance_time_and_run(.5)
 
         self.assertEqual(255,
@@ -466,8 +474,8 @@ class TestShows(MpfTestCase):
         self.machine.lights.light_02.off(force=True)
         self.advance_time_and_run()
 
-        self.machine.shows['multiple_tokens'].play(leds='led_01',
-                                                   lights='light_01')
+        self.machine.shows['multiple_tokens'].play(
+            show_tokens=dict(leds='led_01', lights='light_01'))
         self.advance_time_and_run(.5)
         self.assertEqual(self.machine.leds.led_01.hw_driver.current_color,
                          RGBColor('blue'))
