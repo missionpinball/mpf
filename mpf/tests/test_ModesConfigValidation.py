@@ -1,4 +1,6 @@
 from mock import MagicMock
+
+import mpf.core.config_validator
 from mpf.tests.MpfTestCase import MpfTestCase
 
 
@@ -11,6 +13,10 @@ class TestModesConfigValidation(MpfTestCase):
         return 'tests/machine_files/mode_tests/'
 
     def setUp(self):
+
+        self.add_to_config_validator('unrelated_section',
+                                     dict(__valid_in__= 'mode'))
+
         self.save_and_prepare_sys_path()
 
     def tearDown(self):

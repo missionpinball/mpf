@@ -1,5 +1,6 @@
 from mpf.config_players.plugin_player import PluginPlayer
 from mpf.core.config_player import ConfigPlayer
+import mpf.core.config_validator
 from mpf.tests.MpfTestCase import MpfTestCase
 from mpf.tests.MpfTestCase import TestMachineController
 
@@ -93,6 +94,15 @@ class TestPluginConfigPlayer(MpfTestCase):
 
     def getMachinePath(self):
         return 'tests/machine_files/plugin_config_player/'
+
+    def setUp(self):
+
+        self.add_to_config_validator('test_player',
+                                     dict(__valid_in__='machine, mode'))
+        self.add_to_config_validator('test2_player',
+                                     dict(__valid_in__='machine, mode'))
+
+        super().setUp()
 
     def __init__(self, methodName):
         super().__init__(methodName)
