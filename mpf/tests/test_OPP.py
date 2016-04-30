@@ -73,8 +73,8 @@ class TestOPP(MpfTestCase):
                 self._crc_message(board1_version, False) + self._crc_message(board2_version),   # get version
             self._crc_message('\x20\x14\x00\x02\x17\x00'): False,   # configure coil 0
             self._crc_message('\x20\x14\x01\x02\x17\x00'): False,   # configure coil 1
-            self._crc_message('\x20\x14\x02\x00\x0a\x03'): False,   # configure coil 2
-            self._crc_message('\x20\x14\x03\x00\x0a\x01'): False,    # configure coil 3
+            self._crc_message('\x20\x14\x02\x00\x0a\x01'): False,   # configure coil 2
+            self._crc_message('\x20\x14\x03\x00\x0a\x03'): False,    # configure coil 3
                                              }
         self.serialMock.permanent_commands = {
             '\xff': '\xff',
@@ -112,6 +112,7 @@ class TestOPP(MpfTestCase):
         self._test_matrix_lights()
         self._test_autofires()
         self._test_switches()
+        self._test_flippers()
 
     def _test_switches(self):
         # initial switches
@@ -199,5 +200,16 @@ class TestOPP(MpfTestCase):
 
         self.serialMock.expected_commands[self._crc_message('\x20\x14\x00\x02\x17\x00')] = False
         self.machine.autofires.ac_slingshot_test.disable()
+        self._write_message("\xff", False)
+        self.assertFalse(self.serialMock.expected_commands)
+
+    def _test_flippers(self):
+        self.serialMock.expected_commands[self._crc_message('\x20\x14\x03\x01\x0a\x03')] = False
+        self.machine.flippers.f_test_single.enable()
+        self._write_message("\xff", False)
+        self.assertFalse(self.serialMock.expected_commands)
+
+        self.serialMock.expected_commands[self._crc_message('\x20\x14\x03\x00\x0a\x03')] = False
+        self.machine.flippers.f_test_single.disable()
         self._write_message("\xff", False)
         self.assertFalse(self.serialMock.expected_commands)
