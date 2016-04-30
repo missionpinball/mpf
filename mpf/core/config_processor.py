@@ -7,6 +7,7 @@ import sys
 from mpf.core.file_manager import FileManager
 from mpf.core.utility_functions import Util
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
+from mpf.core.config_validator import ConfigValidator
 
 
 class ConfigProcessor(object):
@@ -86,13 +87,28 @@ class ConfigProcessor(object):
 
             machine_config = Util.dict_merge(machine_config,
                                              ConfigProcessor.load_config_file(
-                                                 config_file))
+                                                 config_file, 'machine'))
 
         return machine_config
 
     @staticmethod
-    def load_config_file(filename, verify_version=True, halt_on_error=True):
+    def load_config_file(filename, config_type, verify_version=True,
+                         halt_on_error=True):
+        # config_type is str 'machine' or 'mode', which specifies whether this
+        # file being loaded is a machine config or a mode config file
         config = FileManager.load(filename, verify_version, halt_on_error)
+
+        for k in config.keys():
+            try:
+                if config_type not in ConfigValidator.config_spec[k][
+                        '__valid_in__']:
+                    raise ValueError('Found a "{}:" section in config file {}, '
+                                     'but that section is not valid in {} config '
+                                     'files.'.format(k, filename, config_type))
+            except KeyError:
+                raise ValueError('Found a "{}:" section in config file {}, '
+                                     'but that section is not valid in {} config '
+                                     'files.'.format(k, filename, config_type))
 
         try:
             if 'config' in config:
@@ -102,7 +118,7 @@ class ConfigProcessor(object):
                     full_file = os.path.join(path, file)
                     config = Util.dict_merge(config,
                                              ConfigProcessor.load_config_file(
-                                                 full_file))
+                                                 full_file, config_type))
             return config
         except TypeError:
             return dict()
