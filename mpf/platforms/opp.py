@@ -20,8 +20,7 @@ import traceback
 import io
 from copy import deepcopy
 
-from mpf.core.platform import ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatform, \
-    SwitchPlatform, DriverPlatform
+from mpf.core.platform import MatrixLightsPlatform, LedPlatform, SwitchPlatform, DriverPlatform
 #from mpf.system.config import Config
 from mpf.core.utility_functions import Util
 
@@ -622,6 +621,12 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
     def set_pulse_on_hit_rule(self, enable_switch, coil):
         self.write_hw_rule(enable_switch, None, coil, None)
 
+    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
+        self.write_hw_rule(enable_switch, None, coil, None)
+
+    def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
+        self.write_hw_rule(enable_switch, None, coil, None)
+
     def write_hw_rule(self, switch_obj, sw_activity, driver_obj, driver_action,
                       disable_on_release=True, drive_now=True,
                       **driver_settings_overrides):
@@ -837,12 +842,12 @@ class OPPSolenoid(object):
 
         if pulse_ms is not None:
             return_dict['pulse_ms'] = str(pulse_ms)
-            
+
         if hold_power is not None:
             return_dict['hold_power'] = str(hold_power)
 
         return return_dict
-    
+
     def disable(self, coil):
         """Disables (turns off) this driver. """
         card, solenoid = self.number.split("-")
