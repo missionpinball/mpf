@@ -2,8 +2,6 @@
 
 game:
     balls_per_game: 3
-machine:
-    glass_off_mode: False
 
 coils:
     outhole:

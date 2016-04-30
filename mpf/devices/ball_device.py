@@ -310,6 +310,7 @@ class BallDevice(SystemWideDevice):
             self.mechanical_eject_in_progress = True
             # this is an unexpected eject. use default target
             self.eject_in_progress_target = self.config['eject_targets'][0]
+            self.eject_in_progress_target.available_balls += 1
             # self.eject_queue.append((target, 0))
             self._do_eject_attempt()
             return self._switch_state("ball_left")
@@ -1080,6 +1081,7 @@ class BallDevice(SystemWideDevice):
                           "balls to %s", new_balls, self.config['ball_capacity'])
             self.balls += new_balls
             self._handle_new_balls(new_balls)
+            self.machine.ball_controller.trigger_ball_count()
 
     def _entrance_switch_handler(self):
         # A ball has triggered this device's entrance switch
@@ -1093,9 +1095,10 @@ class BallDevice(SystemWideDevice):
 
             self.balls += 1
             self._handle_new_balls(1)
+            self.machine.ball_controller.trigger_ball_count()
 
     def is_ball_count_stable(self):
-        return self._state == "idle" and self._idle_counted
+        return self._state == "idle" and self._idle_counted and not len(self._incoming_balls)
 
     def is_ready_to_receive(self):
         return ((self._state == "idle" and self._idle_counted) or

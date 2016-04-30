@@ -1620,6 +1620,7 @@ class TestBallDevice(MpfTestCase):
 
         # playfield should expect to have a ball
         self.assertEqual(1, playfield.available_balls)
+        self.assertEqual(0, playfield.balls)
 
         # trough ejects
         coil1.pulse.assert_called_once_with()
@@ -1662,7 +1663,7 @@ class TestBallDevice(MpfTestCase):
         # no more balls on pf
         self.assertEqual(0, playfield.balls)
         # eject is not failed yet
-        self.assertEqual(1, playfield.available_balls)
+        #self.assertEqual(0, playfield.available_balls)
 
         self.advance_time_and_run(30)
 
@@ -1782,6 +1783,7 @@ class TestBallDevice(MpfTestCase):
         self.machine.events.add_handler('balldevice_captured_from_playfield',
                                         self._captured_from_pf)
         self._captured = 0
+        self.assertEqual(0, self.machine.ball_controller.num_balls_known)
 
         # device captures two balls
         self.machine.switch_controller.process_switch("s_ball_switch_target3",
@@ -1791,6 +1793,10 @@ class TestBallDevice(MpfTestCase):
             "s_ball_switch_target3_2", 1)
         self.advance_time_and_run(1)
         self.assertEqual(2, self._captured)
+        self.assertEqual(0, playfield.balls)
+        self.assertEqual(2, playfield.available_balls)
+        self.assertEqual(0, playfield.unexpected_balls)
+        self.assertEqual(2, self.machine.ball_controller.num_balls_known)
         self._captured = 0
 
         # it should eject one
@@ -1816,6 +1822,7 @@ class TestBallDevice(MpfTestCase):
         self.assertEqual(2, playfield.balls)
         self.assertEqual(0, self._captured)
         self.assertEqual(2, playfield.available_balls)
+        self.assertEqual(0, playfield.unexpected_balls)
 
     def test_ball_request_when_device_is_full(self):
         coil1 = self.machine.coils['eject_coil1']

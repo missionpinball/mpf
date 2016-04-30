@@ -10,6 +10,7 @@ class TestPlayfieldTransfer(MpfTestCase):
         return 'tests/machine_files/playfield_transfer/'
 
     def testBallPassThrough(self):
+        # test pass from pf1 to pf2
         pf1 = self.machine.ball_devices['playfield1']
         pf2 = self.machine.ball_devices['playfield2']
 
@@ -26,4 +27,3 @@ class TestPlayfieldTransfer(MpfTestCase):
         self.assertEqual(1, pf1.available_balls)
         self.assertEqual(3, pf2.balls)
         self.assertEqual(3, pf2.available_balls)
-

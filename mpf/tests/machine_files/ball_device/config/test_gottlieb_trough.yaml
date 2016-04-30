@@ -4,7 +4,6 @@ game:
     balls_per_game: 3
     allow_start_with_ball_in_drain: True
 machine:
-    glass_off_mode: False
     min_balls: 3
 
 coils:

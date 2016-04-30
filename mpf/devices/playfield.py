@@ -89,13 +89,13 @@ class Playfield(SystemWideDevice):
                     handler=self._source_device_eject_attempt)
 
     def add_missing_balls(self, balls):
+        self.available_balls += balls
         # if we catched an unexpected balls before do not add a ball
         if self.unexpected_balls:
             self.unexpected_balls -= 1
             balls -= 1
 
         self.balls += balls
-        self.available_balls += balls
 
     @property
     def balls(self):
@@ -114,10 +114,10 @@ class Playfield(SystemWideDevice):
         if balls >= 0:
             self._balls = balls
         else:
-            self.log.warning("Playfield balls went to %s. Resetting to 0, but "
-                             "FYI that something's weird", balls)
             self._balls = 0
             self.unexpected_balls += -balls
+            self.log.warning("Playfield balls went to %s. Resetting to 0, but "
+                             "FYI that something's weird. Unexpected balls: %s", balls, self.unexpected_balls)
 
         self.log.debug("New Ball Count: %s. (Prior count: %s)",
                        self._balls, prior_balls)
@@ -252,19 +252,8 @@ class Playfield(SystemWideDevice):
             self.mark_playfield_active()
 
             if not self.num_balls_requested:
-                if self.machine.config['machine']['glass_off_mode']:
-                    self.log.debug("Playfield_active switch hit with no balls "
-                                   "expected. glass_off_mode is enabled, so "
-                                   "this will be ignored.")
-                else:
-                    self.log.debug("Playfield_active switch hit with no balls "
-                                   "expected. glass_off_mode is not enabled, "
-                                   "setting playfield ball count to 1")
-
-                    self.balls = 1
-                    self.available_balls += 1
-                    self.unexpected_balls += 1
-                    self.machine.events.post('unexpected_ball_on_' + self.name)
+                self.log.debug("Playfield was activated with no balls expected.")
+                self.machine.events.post('unexpected_ball_on_' + self.name)
 
     def _ball_removed_handler(self, balls, **kwargs):
         del kwargs
@@ -275,8 +264,6 @@ class Playfield(SystemWideDevice):
         self.log.debug("%s ball(s) removed from the playfield", balls)
         self.balls -= balls
         self.available_balls -= balls
-        if self.available_balls < 0:
-            self.available_balls = 0
 
     def _source_device_ball_lost(self, target, **kwargs):
         del kwargs
