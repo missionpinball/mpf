@@ -107,21 +107,26 @@ leds:
 shots:
   shot_1:
     switch: switch_1
-    light: light_1
+    show_tokens:
+      light: light_1
   shot_2:
     switch: switch_2
-    light: light_2
+    show_tokens:
+      light: light_2
     profile: three_states_loop
   shot_3:
     switch: switch_3
-    light: tag1
+    show_tokens:
+      light: tag1
   shot_4:
     switch: switch_1
-    light: light_1, light_2
-    led: led_1
+    show_tokens:
+      light: light_1, light_2
+      led: led_1
   led_1:
     switch: switch_1
-    led: led_1
+    show_tokens:
+      led: led_1
   shot_sequence:
     switch_sequence: switch_1, switch_2, switch_3
     delay_switch:
@@ -130,35 +135,44 @@ shots:
     cancel_switch: switch_4
   default_show_light:
     switch: switch_5
-    light: light_1
+    show_tokens:
+      light: light_1
   default_show_lights:
     switch: switch_6
-    lights: light_1, light_2
+    show_tokens:
+      lights: light_1, light_2
   default_show_led:
     switch: switch_7
-    led: led_1
+    show_tokens:
+      led: led_1
   default_show_leds:
     switch: switch_8
-    leds: led_1, led_2
+    show_tokens:
+      leds: led_1, led_2
   show_in_profile_root:
     switch: switch_9
-    leds: led_3
+    show_tokens:
+      leds: led_3
     profile: rainbow
   shot_11:
     switch: switch_11
-    leds: led_11
+    show_tokens:
+      leds: led_11
     profile: profile_11
   shot_12:
     switch: switch_12
-    leds: led_12
+    show_tokens:
+      leds: led_12
     profile: profile_12
   shot_13:
     switch: switch_13
-    leds: led_13
+    show_tokens:
+      leds: led_13
     profile: profile_13
   shot_14:
     switch: switch_14
-    leds: led_14
+    show_tokens:
+      leds: led_14
     profile: profile_14
   shot_15:
     switches: switch_13, switch_14
@@ -179,12 +193,14 @@ shots:
     switch: switch_19
     profile: profile_19
     enable_events: None
-    leds: led_19
+    show_tokens:
+      leds: led_19
   shot_20:
     switch: switch_20
     profile: profile_20
     enable_events: None
-    leds: led_20
+    show_tokens:
+      leds: led_20
   shot_21:
     switch: switch_21
     profile: profile_21
@@ -192,17 +208,21 @@ shots:
     switch: switch_22
     profile: profile_22
   shot_23:
-    leds: led_23
+    show_tokens:
+      leds: led_23
     profile: profile_23
   shot_24:
-    leds: led_24
+    show_tokens:
+      leds: led_24
     profile: profile_24
   shot_25:
-    leds: led_25
+    show_tokens:
+      leds: led_25
     profile: profile_25
   shot_26:
     switch: switch_26
-    leds: led_26
+    show_tokens:
+      leds: led_26
     profile: profile_26
 
 shot_profiles:

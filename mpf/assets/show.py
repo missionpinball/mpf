@@ -235,7 +235,7 @@ class Show(Asset):
     def play(self, priority=0, hold=None,
              speed=1.0, start_step=1, callback=None,
              loops=-1, sync_ms=0, reset=True, mode=None,
-             manual_advance=False, key=None, **kwargs):
+             manual_advance=False, key=None, show_tokens=None):
         """Plays a Show. There are many parameters you can use here which
         affect how the show is played. This includes things like the playback
         speed, priority, etc. These are
@@ -320,7 +320,7 @@ class Show(Asset):
                                            mode=mode,
                                            manual_advance=manual_advance,
                                            key=key,
-                                           play_kwargs=kwargs
+                                           show_tokens=show_tokens
                                            )
 
             self.load(callback=self._autoplay, priority=priority)
@@ -350,7 +350,7 @@ class Show(Asset):
                            mode=mode,
                            manual_advance=manual_advance,
                            key=key,
-                           play_kwargs=kwargs)
+                           show_tokens=show_tokens)
 
     def _autoplay(self, *args, **kwargs):
         del args
@@ -375,7 +375,7 @@ class RunningShow(object):
     def __init__(self, machine, show, show_steps, priority,
                  hold, speed, start_step, callback, loops,
                  sync_ms, reset, mode, manual_advance, key,
-                 play_kwargs):
+                 show_tokens):
 
         self.machine = machine
         self.show = show
@@ -389,7 +389,12 @@ class RunningShow(object):
         self.mode = mode
         self.manual_advance = manual_advance
         self.key = key
-        self.play_kwargs = play_kwargs
+
+        if show_tokens:
+            self.show_tokens = show_tokens
+        else:
+            self.show_tokens = dict()
+
         self.debug = False
         self._stopped = False
 
@@ -406,8 +411,8 @@ class RunningShow(object):
         if self.hold is None:
             self.hold = self._total_steps == 1
 
-        if play_kwargs and show.tokens:
-            self._replace_tokens(**play_kwargs)
+        if show_tokens and show.tokens:
+            self._replace_tokens(**show_tokens)
 
         show.running.add(self)
         self.machine.show_controller.notify_show_starting(self)
@@ -534,7 +539,7 @@ class RunningShow(object):
                     caller=self,
                     priority=self.priority,
                     hold=self.hold,
-                    play_kwargs=self.play_kwargs)
+                    show_tokens=self.show_tokens)
 
         # if we're at the end of the show
         if self.next_step_index == self._total_steps - 1:
