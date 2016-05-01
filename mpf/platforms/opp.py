@@ -740,13 +740,12 @@ class OPPSolenoid(object):
         _, solenoid = self.number.split("-")
         sol_int = int(solenoid)
         mask = 1 << sol_int
-        self.solCard.procCtl &= ~mask
 
         msg = []
         msg.append(self.solCard.addr)
         msg.append(OppRs232Intf.KICK_SOL_CMD)
-        msg.append(chr((self.solCard.procCtl >> 8) & 0xff))
-        msg.append(chr(self.solCard.procCtl & 0xff))
+        msg.append(chr(0))
+        msg.append(chr(0))
         msg.append(chr((mask >> 8) & 0xff))
         msg.append(chr(mask & 0xff))
         msg.append(OppRs232Intf.calc_crc8_whole_msg(msg))
@@ -757,16 +756,16 @@ class OPPSolenoid(object):
     def enable(self, coil):
         """Enables (turns on) this driver. """
         del coil
+        # TODO: refactor to _kick_coil()
         _, solenoid = self.number.split("-")
         sol_int = int(solenoid)
         mask = 1 << sol_int
-        self.solCard.procCtl |= mask
 
         msg = []
         msg.append(self.solCard.addr)
         msg.append(OppRs232Intf.KICK_SOL_CMD)
-        msg.append(chr((self.solCard.procCtl >> 8) & 0xff))
-        msg.append(chr(self.solCard.procCtl & 0xff))
+        msg.append(chr((mask >> 8) & 0xff))
+        msg.append(chr(mask & 0xff))
         msg.append(chr((mask >> 8) & 0xff))
         msg.append(chr(mask & 0xff))
         msg.append(OppRs232Intf.calc_crc8_whole_msg(msg))
@@ -789,6 +788,7 @@ class OPPSolenoid(object):
         # TODO: either trigger off at the end or reconfigure driver
 
         if not error:
+            # TODO: refactor to _kick_coil()
             _, solenoid = self.number.split("-")
             mask = 1 << int(solenoid)
             
@@ -816,7 +816,6 @@ class OPPSolenoidCard(object):
         self.mask = mask
         self.platform = platform
         self.state = 0
-        self.procCtl = 0
         self.currCfgLst = ['\x00' for _ in range(OppRs232Intf.NUM_G2_SOL_PER_BRD *
                                                  OppRs232Intf.CFG_BYTES_PER_SOL)]
 
