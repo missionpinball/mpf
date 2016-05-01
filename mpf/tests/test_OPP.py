@@ -1,3 +1,4 @@
+import copy
 import time
 from queue import Queue
 from mpf.tests.MpfTestCase import MpfTestCase
@@ -72,7 +73,7 @@ class TestOPP(MpfTestCase):
             self._crc_message('\x20\x02\x00\x00\x00\x00', False) + self._crc_message('\x21\x02\x00\x00\x00\x00'):
                 self._crc_message(board1_version, False) + self._crc_message(board2_version),   # get version
             self._crc_message('\x20\x14\x00\x02\x17\x00'): False,   # configure coil 0
-            self._crc_message('\x20\x14\x01\x02\x17\x00'): False,   # configure coil 1
+            self._crc_message('\x20\x14\x01\x00\x17\x0f'): False,   # configure coil 1
             self._crc_message('\x20\x14\x02\x00\x0a\x01'): False,   # configure coil 2
             self._crc_message('\x20\x14\x03\x00\x0a\x03'): False,    # configure coil 3
                                              }
@@ -123,14 +124,24 @@ class TestOPP(MpfTestCase):
         self.assertTrue(self.machine.switch_controller.is_active("s_test_card2"))
 
         # switch change
+        permanent_commands = copy.deepcopy(self.serialMock.permanent_commands)
+
         inputs_message = "\x20\x08\x00\x00\x01\x08"  # inputs 0+1+2 off, 3 on, 8 off
-        self._write_message(self._crc_message(inputs_message))
+        self.serialMock.permanent_commands = {
+            '\xff': '\xff',
+            self._crc_message('\x20\x08\x00\x00\x00\x00', False) + self._crc_message('\x21\x08\x00\x00\x00\x00'):
+                self._crc_message(inputs_message)
+        }
+        for i in range(10):
+            self._write_message("\xff", False)
 
         self.assertTrue(self.machine.switch_controller.is_active("s_test"))
         self.assertTrue(self.machine.switch_controller.is_active("s_test_no_debounce"))
         self.assertFalse(self.machine.switch_controller.is_active("s_test_nc"))
         self.assertFalse(self.machine.switch_controller.is_active("s_flipper"))
         self.assertFalse(self.machine.switch_controller.is_active("s_test_card2"))
+
+        self.serialMock.permanent_commands = permanent_commands
 
     def _test_coils(self):
         # pulse coil
@@ -139,15 +150,27 @@ class TestOPP(MpfTestCase):
         self._write_message("\xff", False)
         self.assertFalse(self.serialMock.expected_commands)
 
-        # enable coil
-        self.serialMock.expected_commands[self._crc_message('\x20\x07\x00\x01\x00\x01', False)] = False
-        self.machine.coils.c_test.enable()
-        self._write_message("\xff", False)
-        self.assertFalse(self.serialMock.expected_commands)
+        # enable coil (not allowed)
+        with self.assertRaises(AssertionError):
+            self.machine.coils.c_test.enable()
 
         # disable coil
         self.serialMock.expected_commands[self._crc_message('\x20\x07\x00\x00\x00\x01', False)] = False
         self.machine.coils.c_test.disable()
+        self._write_message("\xff", False)
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # pulse coil (with allow_enable set)
+        self.serialMock.expected_commands[self._crc_message('\x20\x14\x01\x02\x17\x00')] = False
+        self.serialMock.expected_commands[self._crc_message('\x20\x07\x00\x02\x00\x02', False)] = False
+        self.machine.coils.c_test_allow_enable.pulse()
+        self._write_message("\xff", False)
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # enable coil (with allow_enable set)
+        self.serialMock.expected_commands[self._crc_message('\x20\x14\x01\x00\x17\x0f')] = False
+        self.serialMock.expected_commands[self._crc_message('\x20\x07\x00\x02\x00\x02', False)] = False
+        self.machine.coils.c_test_allow_enable.enable()
         self._write_message("\xff", False)
         self.assertFalse(self.serialMock.expected_commands)
 
