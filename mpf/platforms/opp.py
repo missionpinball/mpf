@@ -469,6 +469,41 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                         curr_bit <<= 1
             opp_inp.oldState = new_state
 
+    def reconfigure_driver(self, driver, use_hold):
+        # If hold is 0, set the auto clear bit
+        if not use_hold:
+            cmd = OppRs232Intf.CFG_SOL_AUTO_CLR
+            driver.can_be_pulsed = True
+            hold = 0
+        else:
+            cmd = chr(0)
+            driver.can_be_pulsed = False
+            hold = self.get_hold_value(driver)
+            if not hold:
+                raise AssertionError("Hold may not be 0")
+
+        _, solenoid = driver.config['number'].split('-')
+        pulse_len = self._get_pulse_ms_value(driver)
+        sol_index = int(solenoid) * OppRs232Intf.CFG_BYTES_PER_SOL
+
+        driver.solCard.currCfgLst[sol_index] = cmd
+        driver.solCard.currCfgLst[sol_index + OppRs232Intf.INIT_KICK_OFFSET] = chr(pulse_len)
+        driver.solCard.currCfgLst[sol_index + OppRs232Intf.DUTY_CYCLE_OFFSET] = chr(hold)
+
+        msg = []
+        msg.append(driver.solCard.addr)
+        msg.append(OppRs232Intf.CFG_IND_SOL_CMD)
+        msg.append(chr(int(solenoid)))
+        msg.append(cmd)
+        msg.append(chr(pulse_len))
+        msg.append(chr(hold))
+        msg.append(OppRs232Intf.calc_crc8_whole_msg(msg))
+        msg.append(OppRs232Intf.EOM_CMD)
+        cmd = ''.join(msg)
+
+        self.log.debug("Writing individual config: %s", "".join(" 0x%02x" % ord(b) for b in cmd))
+        self.opp_connection.send(cmd)
+
     def configure_driver(self, config):
         if not self.opp_connection:
             raise AssertionError("A request was made to configure an OPP solenoid, "
@@ -479,38 +514,13 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                                  "with number %s which doesn't exist", config['number'])
 
         # Use new update individual solenoid command
-        _, solenoid = config['number'].split('-')
         opp_sol = self.solDict[config['number']]
         opp_sol.config = config
         self.log.debug("Config driver %s, %s, %s", config['number'],
                        opp_sol.config['pulse_ms'], opp_sol.config['hold_power'])
 
-        pulse_len = self._get_pulse_ms_value(opp_sol)
-        hold = self._get_hold_value(opp_sol)
-        sol_index = int(solenoid) * OppRs232Intf.CFG_BYTES_PER_SOL
-
-        # If hold is 0, set the auto clear bit
-        if hold == 0:
-            cmd = OppRs232Intf.CFG_SOL_AUTO_CLR
-        else:
-            cmd = chr(0)
-        opp_sol.solCard.currCfgLst[sol_index] = cmd
-        opp_sol.solCard.currCfgLst[sol_index + OppRs232Intf.INIT_KICK_OFFSET] = chr(pulse_len)
-        opp_sol.solCard.currCfgLst[sol_index + OppRs232Intf.DUTY_CYCLE_OFFSET] = chr(hold)
-
-        msg = []
-        msg.append(opp_sol.solCard.addr)
-        msg.append(OppRs232Intf.CFG_IND_SOL_CMD)
-        msg.append(chr(int(solenoid)))
-        msg.append(cmd)
-        msg.append(chr(pulse_len))
-        msg.append(chr(hold))
-        msg.append(OppRs232Intf.calc_crc8_whole_msg(msg))
-        msg.append(OppRs232Intf.EOM_CMD)
-        cmd = ''.join(msg)
-        
-        self.log.debug("Writing individual config: %s", "".join(" 0x%02x" % ord(b) for b in cmd))
-        self.opp_connection.send(cmd)
+        hold = self.get_hold_value(opp_sol)
+        self.reconfigure_driver(opp_sol, hold != 0)
 
         return opp_sol
 
@@ -593,12 +603,11 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
         self._write_hw_rule(enable_switch, coil, True)
 
-    def _get_hold_value(self, coil):
+    def get_hold_value(self, coil):
         if coil.config['hold_power']:
             return coil.config['hold_power']
         elif coil.config['allow_enable']:
-            # TODO: change this in the future. allow_enable means full hold power
-            return 0
+            return 15
         else:
             return 0
 
@@ -619,7 +628,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                        driver_obj.hw_driver.number, driver_obj.config)
 
         pulse_len = self._get_pulse_ms_value(driver_obj.hw_driver)
-        hold = self._get_hold_value(driver_obj.hw_driver)
+        hold = self.get_hold_value(driver_obj.hw_driver)
 
         _, solenoid = driver_obj.hw_driver.number.split('-')
         sol_index = int(solenoid) * OppRs232Intf.CFG_BYTES_PER_SOL
@@ -631,7 +640,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         else:
             cmd = OppRs232Intf.CFG_SOL_USE_SWITCH
 
-        # TODO: separate hold power (0-8) and minimum off time
+        # TODO: separate hold power (0-f) and minimum off time (0-7)
 
         driver_obj.hw_driver.solCard.currCfgLst[sol_index] = cmd
         driver_obj.hw_driver.solCard.currCfgLst[sol_index + OppRs232Intf.INIT_KICK_OFFSET] = chr(pulse_len)
@@ -733,6 +742,7 @@ class OPPSolenoid(object):
         self.number = number
         self.log = sol_card.log
         self.config = {}
+        self.can_be_pulsed = False
 
     def _kick_coil(self, sol_int, on):
         mask = 1 << sol_int
@@ -763,6 +773,13 @@ class OPPSolenoid(object):
 
     def enable(self, coil):
         """Enables (turns on) this driver. """
+        if self.solCard.platform.get_hold_value(coil.hw_driver) == 0:
+            raise AssertionError("Coil {} cannot be enabled. You need to specify either allow_enable or hold_power".
+                                 format(self.number))
+
+        if coil.hw_driver.can_be_pulsed:
+            self.solCard.platform.reconfigure_driver(coil.hw_driver,True)
+
         _, solenoid = self.number.split("-")
         sol_int = int(solenoid)
         self.log.debug("Enabling solenoid %s", sol_int)
@@ -770,13 +787,12 @@ class OPPSolenoid(object):
 
     def pulse(self, coil, milliseconds):
         """Pulses this driver. """
-        del coil
+        if not coil.hw_driver.can_be_pulsed:
+            self.solCard.platform.reconfigure_driver(coil.hw_driver, False)
+
         if milliseconds and milliseconds != self.config['pulse_ms']:
             raise AssertionError("OPP platform doesn't allow changing pulse width using pulse call. "
                                  "Tried {}, used {}".format(milliseconds, self.config['pulse_ms']))
-        if self.config['hold_power'] is not None:
-            raise AssertionError("OPP platform, trying to pulse a solenoid with a hold_power. "
-                                 "That would lock the driver on.  Use enable/disable calls.")
 
         _, solenoid = self.number.split("-")
         sol_int = int(solenoid)
