@@ -723,7 +723,7 @@ class OPPSolenoid(object):
 
         _, solenoid = self.number.split("-")
         sol_int = int(solenoid)
-        self.log.debug("Disabling solenoid %s", sol_int)
+        self.log.debug("Disabling solenoid %s", self.number)
         self._kick_coil(sol_int, False)
 
     def enable(self, coil):
@@ -732,17 +732,20 @@ class OPPSolenoid(object):
             raise AssertionError("Coil {} cannot be enabled. You need to specify either allow_enable or hold_power".
                                  format(self.number))
 
-        if coil.hw_driver.can_be_pulsed:
-            self.solCard.platform.reconfigure_driver(coil.hw_driver,True)
+        if self.can_be_pulsed:
+            self.solCard.platform.reconfigure_driver(coil.hw_driver, True)
 
         _, solenoid = self.number.split("-")
         sol_int = int(solenoid)
-        self.log.debug("Enabling solenoid %s", sol_int)
+        self.log.debug("Enabling solenoid %s", self.number)
         self._kick_coil(sol_int, True)
 
     def pulse(self, coil, milliseconds):
         """Pulses this driver. """
-        if not coil.hw_driver.can_be_pulsed:
+        if not self.can_be_pulsed:
+            if self.use_switch:
+                raise AssertionError("Cannot currently pulse driver {} because hw_rule needs hold_power".
+                                     format(self.number))
             self.solCard.platform.reconfigure_driver(coil.hw_driver, False)
 
         if milliseconds and milliseconds != self.config['pulse_ms']:
@@ -751,7 +754,7 @@ class OPPSolenoid(object):
 
         _, solenoid = self.number.split("-")
         sol_int = int(solenoid)
-        self.log.debug("Pulsing solenoid %s", sol_int)
+        self.log.debug("Pulsing solenoid %s", self.number)
         self._kick_coil(sol_int, True)
         
         hex_ms_string = self.config['pulse_ms']
