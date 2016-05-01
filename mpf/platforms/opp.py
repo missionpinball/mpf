@@ -472,37 +472,37 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
     def reconfigure_driver(self, driver, use_hold):
         # If hold is 0, set the auto clear bit
         if not use_hold:
-            cmd = OppRs232Intf.CFG_SOL_AUTO_CLR
+            cmd = ord(OppRs232Intf.CFG_SOL_AUTO_CLR)
             driver.can_be_pulsed = True
             hold = 0
         else:
-            cmd = chr(0)
+            cmd = 0
             driver.can_be_pulsed = False
             hold = self.get_hold_value(driver)
             if not hold:
                 raise AssertionError("Hold may not be 0")
 
+        # TODO: implement separate hold power (0-f) and minimum off time (0-7)
+
+        if driver.use_switch:
+            cmd += ord(OppRs232Intf.CFG_SOL_USE_SWITCH)
+
         _, solenoid = driver.config['number'].split('-')
         pulse_len = self._get_pulse_ms_value(driver)
-        sol_index = int(solenoid) * OppRs232Intf.CFG_BYTES_PER_SOL
-
-        driver.solCard.currCfgLst[sol_index] = cmd
-        driver.solCard.currCfgLst[sol_index + OppRs232Intf.INIT_KICK_OFFSET] = chr(pulse_len)
-        driver.solCard.currCfgLst[sol_index + OppRs232Intf.DUTY_CYCLE_OFFSET] = chr(hold)
 
         msg = []
         msg.append(driver.solCard.addr)
         msg.append(OppRs232Intf.CFG_IND_SOL_CMD)
         msg.append(chr(int(solenoid)))
-        msg.append(cmd)
+        msg.append(chr(cmd))
         msg.append(chr(pulse_len))
         msg.append(chr(hold))
         msg.append(OppRs232Intf.calc_crc8_whole_msg(msg))
         msg.append(OppRs232Intf.EOM_CMD)
-        cmd = ''.join(msg)
+        final_cmd = ''.join(msg)
 
-        self.log.debug("Writing individual config: %s", "".join(" 0x%02x" % ord(b) for b in cmd))
-        self.opp_connection.send(cmd)
+        self.log.debug("Writing individual config: %s", "".join(" 0x%02x" % ord(b) for b in final_cmd))
+        self.opp_connection.send(final_cmd)
 
     def configure_driver(self, config):
         if not self.opp_connection:
@@ -627,38 +627,8 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self.log.debug("Setting HW Rule. Driver: %s, Driver settings: %s",
                        driver_obj.hw_driver.number, driver_obj.config)
 
-        pulse_len = self._get_pulse_ms_value(driver_obj.hw_driver)
-        hold = self.get_hold_value(driver_obj.hw_driver)
-
-        _, solenoid = driver_obj.hw_driver.number.split('-')
-        sol_index = int(solenoid) * OppRs232Intf.CFG_BYTES_PER_SOL
-
-        # If hold is 0, set the auto clear bit
-        if not use_hold:
-            cmd = chr(ord(OppRs232Intf.CFG_SOL_USE_SWITCH) +
-                      ord(OppRs232Intf.CFG_SOL_AUTO_CLR))
-        else:
-            cmd = OppRs232Intf.CFG_SOL_USE_SWITCH
-
-        # TODO: separate hold power (0-f) and minimum off time (0-7)
-
-        driver_obj.hw_driver.solCard.currCfgLst[sol_index] = cmd
-        driver_obj.hw_driver.solCard.currCfgLst[sol_index + OppRs232Intf.INIT_KICK_OFFSET] = chr(pulse_len)
-        driver_obj.hw_driver.solCard.currCfgLst[sol_index + OppRs232Intf.DUTY_CYCLE_OFFSET] = chr(hold)
-
-        msg = []
-        msg.append(driver_obj.hw_driver.solCard.addr)
-        msg.append(OppRs232Intf.CFG_IND_SOL_CMD)
-        msg.append(chr(int(solenoid)))
-        msg.append(cmd)
-        msg.append(chr(pulse_len))
-        msg.append(chr(hold))
-        msg.append(OppRs232Intf.calc_crc8_whole_msg(msg))
-        msg.append(OppRs232Intf.EOM_CMD)
-        cmd = ''.join(msg)
-
-        self.log.debug("Writing hardware rule: %s", "".join(" 0x%02x" % ord(b) for b in cmd))
-        self.opp_connection.send(cmd)
+        driver_obj.hw_driver.use_switch = True
+        self.reconfigure_driver(driver_obj.hw_driver, use_hold)
 
     def clear_hw_rule(self, switch, coil):
         """Clears a hardware rule.
@@ -673,24 +643,8 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self.log.debug("Clearing HW Rule for switch: %s, coils: %s", switch.hw_switch.number,
                        coil.hw_driver.number)
 
-        _, solenoid = coil.hw_driver.number.split('-')
-        sol_index = int(solenoid) * OppRs232Intf.CFG_BYTES_PER_SOL
-        cmd = chr(ord(coil.hw_driver.solCard.currCfgLst[sol_index]) & ~ord(OppRs232Intf.CFG_SOL_USE_SWITCH))
-        coil.hw_driver.solCard.currCfgLst[sol_index] = cmd
-
-        msg = []
-        msg.append(coil.hw_driver.solCard.addr)
-        msg.append(OppRs232Intf.CFG_IND_SOL_CMD)
-        msg.append(chr(int(solenoid)))
-        msg.append(cmd)
-        msg.append(coil.hw_driver.solCard.currCfgLst[sol_index + 1])
-        msg.append(coil.hw_driver.solCard.currCfgLst[sol_index + 2])
-        msg.append(OppRs232Intf.calc_crc8_whole_msg(msg))
-        msg.append(OppRs232Intf.EOM_CMD)
-        cmd = ''.join(msg)
-
-        self.log.debug("Clearing hardware rule: %s", "".join(" 0x%02x" % ord(b) for b in cmd))
-        self.opp_connection.send(cmd)
+        coil.hw_driver.use_switch = False
+        self.reconfigure_driver(coil.hw_driver, not coil.hw_driver.can_be_pulsed)
 
 
 class OPPIncandCard(object):
@@ -743,6 +697,7 @@ class OPPSolenoid(object):
         self.log = sol_card.log
         self.config = {}
         self.can_be_pulsed = False
+        self.use_switch = False
 
     def _kick_coil(self, sol_int, on):
         mask = 1 << sol_int
@@ -811,8 +766,6 @@ class OPPSolenoidCard(object):
         self.mask = mask
         self.platform = platform
         self.state = 0
-        self.currCfgLst = ['\x00' for _ in range(OppRs232Intf.NUM_G2_SOL_PER_BRD *
-                                                 OppRs232Intf.CFG_BYTES_PER_SOL)]
 
         self.log.debug("Creating OPP Solenoid at hardware address: 0x%02x", ord(addr))
         
