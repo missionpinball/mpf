@@ -3,14 +3,6 @@ platform hardware, including the solenoid, input, incandescent, and neopixel
 boards.
 
 """
-
-# opp.py
-# Mission Pinball Framework
-# Written by Hugh Spahr
-# Released under the MIT License. (See license info at the end of this file.)
-
-# Documentation and more info at http://missionpinball.com/mpf
-
 import logging
 import time
 import sys
@@ -160,9 +152,8 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self.platformVersion = "0.1.0.0"
 
         if not serial_imported:
-            self.log.error('Could not import "pySerial". This is required for '
-                           'the OPP platform interface')
-            sys.exit()
+            raise AssertionError('Could not import "pySerial". This is required for '
+                                 'the OPP platform interface')
 
         self.opp_connection = None
         self.opp_nodes = list()
@@ -196,13 +187,11 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
         if self.machine_type == 'gen1':
             self.log.info("Configuring the original OPP boards")
-            self.log.error("Original OPP boards not currently supported.")
-            sys.exit()
+            raise AssertionError("Original OPP boards not currently supported.")
         elif self.machine_type == 'gen2':
             self.log.info("Configuring the OPP Gen2 boards")
         else:
-            self.log.error('Invalid driverboards type: %s', self.machine_type)
-            sys.exit()
+            raise AssertionError('Invalid driverboards type: {}'.format(self.machine_type))
 
         # Only including responses that should be received
         self.opp_commands = {
@@ -482,14 +471,12 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
     def configure_driver(self, config):
         if not self.opp_connection:
-            self.log.critical("A request was made to configure an OPP solenoid, "
-                              "but no OPP connection is available")
-            sys.exit()
+            raise AssertionError("A request was made to configure an OPP solenoid, "
+                                 "but no OPP connection is available")
 
         if not config['number'] in self.solDict:
-            self.log.critical("A request was made to configure an OPP solenoid "
-                              "with number %s which doesn't exist", config['number'])
-            sys.exit()
+            raise AssertionError("A request was made to configure an OPP solenoid "
+                                 "with number %s which doesn't exist", config['number'])
 
         # Use new update individual solenoid command
         _, solenoid = config['number'].split('-')
@@ -530,28 +517,24 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
     def configure_switch(self, config):
         # A switch is termed as an input to OPP
         if not self.opp_connection:
-            self.log.critical("A request was made to configure an OPP switch, "
-                              "but no OPP connection is available")
-            sys.exit()
+            raise AssertionError("A request was made to configure an OPP switch, "
+                                 "but no OPP connection is available")
 
         if not config['number'] in self.inpDict:
-            self.log.critical("A request was made to configure an OPP switch "
-                              "with number %s which doesn't exist", config['number'])
-            sys.exit()
+            raise AssertionError("A request was made to configure an OPP switch "
+                                 "with number %s which doesn't exist", config['number'])
 
         return self.inpDict[config['number']]
 
     def configure_led(self, config):
         if not self.opp_connection:
-            self.log.critical("A request was made to configure an OPP LED, "
-                              "but no OPP connection is available")
-            sys.exit()
+            raise AssertionError("A request was made to configure an OPP LED, "
+                                 "but no OPP connection is available")
 
         card, pixel_num = config['number'].split('-')
         if card not in self.neoCardDict:
-            self.log.critical("A request was made to configure an OPP neopixel "
-                              "with card number %s which doesn't exist", card)
-            sys.exit()
+            raise AssertionError("A request was made to configure an OPP neopixel "
+                                 "with card number %s which doesn't exist", card)
 
         neo = self.neoCardDict[card]
         pixel = neo.add_neopixel(int(pixel_num), self.neoDict)
@@ -561,15 +544,14 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
     def configure_matrixlight(self, config):
 
         if not self.opp_connection:
-            self.log.critical("A request was made to configure an OPP matrix "
-                              "light (incand board), but no OPP connection "
-                              "is available")
-            sys.exit()
+            raise AssertionError("A request was made to configure an OPP matrix "
+                                 "light (incand board), but no OPP connection "
+                                 "is available")
+
         if not config['number'] in self.incandDict:
-            self.log.critical("A request was made to configure a OPP matrix "
-                              "light (incand board), with number %s "
-                              "which doesn't exist", config['number'])
-            sys.exit()
+            raise AssertionError("A request was made to configure a OPP matrix "
+                                 "light (incand board), with number %s "
+                                 "which doesn't exist", config['number'])
             
         self.incand_reg = True            
         return self.incandDict[config['number']]
@@ -982,8 +964,7 @@ class SerialCommunicator(object):
             self.serial_connection = serial.Serial(port=port, baudrate=baud,
                                                    timeout=.01, writeTimeout=0)
         except serial.SerialException:
-            self.log.error('Could not open port: %s' % port)
-            sys.exit()
+            raise AssertionError('Could not open port: {}'.format(port))
 
         self.identify_connection()
         self.platform.register_processor_connection(self.remote_processor, self)
@@ -1005,8 +986,7 @@ class SerialCommunicator(object):
             if resp.startswith(OppRs232Intf.EOM_CMD):
                 break
             if count == 100:
-                self.log.error('No response from OPP hardware: %s' % self.serial_connection.name)
-                sys.exit()
+                raise AssertionError('No response from OPP hardware: {}'.format(self.serial_connection.name))
 
         # Send inventory command to figure out number of cards
         msg = []
@@ -1041,11 +1021,10 @@ class SerialCommunicator(object):
         
         # see if version of firmware is new enough
         if self.platform.minVersion < MIN_FW:
-            self.log.critical("Firmware version mismatch. MPF requires"
-                              " the %s processor to be firmware %s, but yours is %s",
-                              self.remote_processor, self.create_vers_str(MIN_FW),
-                              self.create_vers_str(self.platform.minVersion))
-            sys.exit()
+            raise AssertionError("Firmware version mismatch. MPF requires"
+                                 " the {} processor to be firmware {}, but yours is {}".
+                                 format(self.remote_processor, self.create_vers_str(MIN_FW),
+                                        self.create_vers_str(self.platform.minVersion)))
         
         # get initial value for inputs
         self.serial_connection.write(self.platform.read_input_msg)
