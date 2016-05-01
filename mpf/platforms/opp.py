@@ -734,75 +734,54 @@ class OPPSolenoid(object):
         self.log = sol_card.log
         self.config = {}
 
+    def _kick_coil(self, sol_int, on):
+        mask = 1 << sol_int
+        msg = []
+        msg.append(self.solCard.addr)
+        msg.append(OppRs232Intf.KICK_SOL_CMD)
+        if on:
+            msg.append(chr((mask >> 8) & 0xff))
+            msg.append(chr(mask & 0xff))
+        else:
+            msg.append(chr(0))
+            msg.append(chr(0))
+        msg.append(chr((mask >> 8) & 0xff))
+        msg.append(chr(mask & 0xff))
+        msg.append(OppRs232Intf.calc_crc8_whole_msg(msg))
+        cmd = ''.join(msg)
+        self.log.debug("Triggering solenoid driver: %s", "".join(" 0x%02x" % ord(b) for b in cmd))
+        self.solCard.platform.opp_connection.send(cmd)
+
     def disable(self, coil):
         """Disables (turns off) this driver. """
         del coil
+
         _, solenoid = self.number.split("-")
         sol_int = int(solenoid)
-        mask = 1 << sol_int
-
-        msg = []
-        msg.append(self.solCard.addr)
-        msg.append(OppRs232Intf.KICK_SOL_CMD)
-        msg.append(chr(0))
-        msg.append(chr(0))
-        msg.append(chr((mask >> 8) & 0xff))
-        msg.append(chr(mask & 0xff))
-        msg.append(OppRs232Intf.calc_crc8_whole_msg(msg))
-        cmd = ''.join(msg)
-        self.log.debug("Disabling solenoid driver: %s", "".join(" 0x%02x" % ord(b) for b in cmd))
-        self.solCard.platform.opp_connection.send(cmd)
+        self.log.debug("Disabling solenoid %s", sol_int)
+        self._kick_coil(sol_int, False)
 
     def enable(self, coil):
         """Enables (turns on) this driver. """
-        del coil
-        # TODO: refactor to _kick_coil()
         _, solenoid = self.number.split("-")
         sol_int = int(solenoid)
-        mask = 1 << sol_int
-
-        msg = []
-        msg.append(self.solCard.addr)
-        msg.append(OppRs232Intf.KICK_SOL_CMD)
-        msg.append(chr((mask >> 8) & 0xff))
-        msg.append(chr(mask & 0xff))
-        msg.append(chr((mask >> 8) & 0xff))
-        msg.append(chr(mask & 0xff))
-        msg.append(OppRs232Intf.calc_crc8_whole_msg(msg))
-        cmd = ''.join(msg)
-        self.log.debug("Enabling solenoid driver: %s", "".join(" 0x%02x" % ord(b) for b in cmd))
-        self.solCard.platform.opp_connection.send(cmd)
+        self.log.debug("Enabling solenoid %s", sol_int)
+        self._kick_coil(sol_int, True)
 
     def pulse(self, coil, milliseconds):
         """Pulses this driver. """
         del coil
-        error = False
         if milliseconds and milliseconds != self.config['pulse_ms']:
-            self.log.warning("OPP platform doesn't allow changing pulse width using pulse call. "
-                             "Tried %d, used %s", milliseconds, self.config['pulse_ms'])
+            raise AssertionError("OPP platform doesn't allow changing pulse width using pulse call. "
+                                 "Tried {}, used {}".format(milliseconds, self.config['pulse_ms']))
         if self.config['hold_power'] is not None:
-            self.log.warning("OPP platform, trying to pulse a solenoid with a hold_power. "
-                             "That would lock the driver on.  Use enable/disable calls.")
-            error = True
+            raise AssertionError("OPP platform, trying to pulse a solenoid with a hold_power. "
+                                 "That would lock the driver on.  Use enable/disable calls.")
 
-        # TODO: either trigger off at the end or reconfigure driver
-
-        if not error:
-            # TODO: refactor to _kick_coil()
-            _, solenoid = self.number.split("-")
-            mask = 1 << int(solenoid)
-            
-            msg = []
-            msg.append(self.solCard.addr)
-            msg.append(OppRs232Intf.KICK_SOL_CMD)
-            msg.append(chr((mask >> 8) & 0xff))
-            msg.append(chr(mask & 0xff))
-            msg.append(chr((mask >> 8) & 0xff))
-            msg.append(chr(mask & 0xff))
-            msg.append(OppRs232Intf.calc_crc8_whole_msg(msg))
-            cmd = ''.join(msg)
-            self.log.debug("Pulse driver: %s", "".join(" 0x%02x" % ord(b) for b in cmd))
-            self.solCard.platform.opp_connection.send(cmd)
+        _, solenoid = self.number.split("-")
+        sol_int = int(solenoid)
+        self.log.debug("Pulsing solenoid %s", sol_int)
+        self._kick_coil(sol_int, True)
         
         hex_ms_string = self.config['pulse_ms']
         return Util.hex_string_to_int(hex_ms_string)
