@@ -309,6 +309,27 @@ class Show(Asset):
         # todo bugfix, currently there is only one set of autoplay seetings,
         # so if multiple show instances are played but the show is not loaded,
         # only the last one will play
+
+        if not show_tokens:
+            show_tokens = dict()
+
+        # todo if we want to enfore that show_tokens match the tokens in the
+        # show exactly, uncomment below and remove the following if.
+        # however we don't do this today because of the default 'off' show
+        # that's used since it has lights and leds, so we'll have to think
+        # about this.
+
+        # if set(show_tokens.keys()) != self.tokens:
+        #     raise ValueError('Token mismatch while playing show "{}". Tokens '
+        #                      'expected: {}. Tokens submitted: {}'.format(
+        #                      self.name, self.tokens, set(show_tokens.keys())))
+
+        if not set(show_tokens.keys()).issubset(self.tokens):
+            raise ValueError('Token mismatch while playing show "{}". Tokens '
+                             'expected: {}. Tokens submitted: {}'.format(
+                             self.name, self.tokens, set(show_tokens.keys())))
+
+
         if not self.loaded:
             self._autoplay_settings = dict(priority=priority,
                                            hold=hold,

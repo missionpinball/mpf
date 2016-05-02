@@ -661,6 +661,15 @@ class TestShows(MpfTestCase):
         self.assertEqual(2, len(self.machine.shows[
                                     'show_from_mode'].show_steps))
 
+    def test_too_many_tokens(self):
+        with self.assertRaises(ValueError):
+            self.machine.shows['lights_basic'].play(show_tokens=dict(
+                lights='light_01', fake='foo'))
+
+    def test_too_few_tokens(self):
+        self.machine.shows['multiple_tokens'].play(show_tokens=dict(
+            lights='light_01'))
+
     # todo need to implement this
     # def test_updating_shows(self):
     #     self.machine.events.post('play_with_keys')
