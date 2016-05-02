@@ -414,10 +414,10 @@ class HardwarePlatform(Platform):
                 if hasNeo:
                     self.opp_neopixels.append(OPPNeopixelCard(msg[currIndex], self.neoCardDict, self))
             if (not end):
-                if (msg[currIndex + 7] == OppRs232Intf.GET_GEN2_CFG):
-                    currIndex += 7
-                elif (msg[currIndex + 7] == OppRs232Intf.EOM_CMD):
+                if (msg[currIndex + 7] == OppRs232Intf.EOM_CMD):
                     end = True
+                elif (msg[currIndex + 8] == OppRs232Intf.GET_GEN2_CFG):
+                    currIndex += 7
                 else:
                     self.log.warning("Malformed GET_GEN2_CFG response:%s.",
                                      "".join(" 0x%02x" % ord(b) for b in msg))
