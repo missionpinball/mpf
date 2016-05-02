@@ -42,6 +42,7 @@ class ModeController(object):
         self.active_modes = list()
         self.mode_stop_count = 0
 
+
         self._machine_mode_folders = dict()
         self._mpf_mode_folders = dict()
 
@@ -50,6 +51,7 @@ class ModeController(object):
         # started.
         self.loader_methods = list()
         self.start_methods = list()
+        self.stop_methods = list()
 
         if 'modes' in self.machine.config:
             self.machine.events.add_handler('init_phase_2',
@@ -323,6 +325,11 @@ class ModeController(object):
         initialized during the MPF boot process.
 
         """
+
+        if not callable(load_method):
+            raise ValueError("Cannot add load method '{}' as it is not"
+                             "callable".format(load_method))
+
         self.loader_methods.append(RemoteMethod(method=load_method,
                                                 config_section=config_section_name, kwargs=kwargs,
                                                 priority=priority))
@@ -349,6 +356,10 @@ class ModeController(object):
 
         """
 
+        if not callable(start_method):
+            raise ValueError("Cannot add start method '{}' as it is not"
+                             "callable".format(start_method))
+
         if self.debug:
             self.log.debug('Registering %s as a mode start method. Config '
                            'section: %s, priority: %s, kwargs: %s',
@@ -359,6 +370,19 @@ class ModeController(object):
                                                kwargs=kwargs))
 
         self.start_methods.sort(key=lambda x: x.priority, reverse=True)
+
+    def register_stop_method(self, callback, priority=0):
+        # these are universal, in that they're called every time a mode stops
+        # priority is the priority they're called. Has nothing to do with mode
+        # priority
+
+        if not callable(callback):
+            raise ValueError("Cannot add stop method '{}' as it is not"
+                             "callable".format(callback))
+
+        self.stop_methods.append((callback, priority))
+
+        self.stop_methods.sort(key=lambda x: x[1], reverse=True)
 
     def set_mode_state(self, mode, active):
         # called when a mode goes active or inactive

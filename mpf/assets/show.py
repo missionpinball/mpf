@@ -476,6 +476,9 @@ class RunningShow(object):
         if hold is None:
             hold = self.hold
 
+        # todo this could be smarter, to only clear players that were
+        # actually used in this show instead of all of them
+
         if not hold:
             for player in ConfigPlayer.show_players.values():
                 player.clear(caller=self, priority=self.priority)
