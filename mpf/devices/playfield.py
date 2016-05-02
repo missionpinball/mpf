@@ -16,7 +16,7 @@ class Playfield(SystemWideDevice):
 
     # noinspection PyMissingConstructor
     def __init__(self, machine, name):
-        self.log = logging.getLogger('playfield')
+        self.log = logging.getLogger('playfield.{}'.format(name))
 
         self.machine = machine
         self.name = name.lower()
