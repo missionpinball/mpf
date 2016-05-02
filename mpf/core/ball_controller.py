@@ -118,12 +118,26 @@ class BallController(object):
         for playfield in self.machine.playfields:
             balls_on_pfs += playfield.balls
 
-        # fix too much balls
+        # fix too much balls and prefer playfields where balls and available_balls have the same value
         if balls_on_pfs > loose_balls:
             for dummy_i in range(balls_on_pfs - loose_balls):
                 for playfield in self.machine.playfields:
-                    self.log.warning("Corecting balls on pf from %s to %s",
-                                     playfield.balls, playfield.balls - 1)
+                    self.log.warning("Corecting balls on pf from %s to %s on playfield %s (preferred)",
+                                     playfield.balls, playfield.balls - 1, playfield.name)
+                    if playfield.available_balls == playfield.balls and playfield.balls > 0:
+                        if playfield.unexpected_balls > 0:
+                            playfield.unexpected_balls -= 1
+                        playfield.balls -= 1
+                        playfield.available_balls -= 1
+                        balls_on_pfs -= 1
+                        break
+
+        # fix too much balls and take the remaining playfields
+        if balls_on_pfs > loose_balls:
+            for dummy_i in range(balls_on_pfs - loose_balls):
+                for playfield in self.machine.playfields:
+                    self.log.warning("Corecting balls on pf from %s to %s on playfield %s",
+                                     playfield.balls, playfield.balls - 1, playfield.name)
                     if playfield.balls > 0:
                         if playfield.unexpected_balls > 0:
                             playfield.unexpected_balls -= 1
@@ -132,10 +146,13 @@ class BallController(object):
                         balls_on_pfs -= 1
                         break
 
+        if balls_on_pfs > loose_balls:
+            self.log.warning("Failed to remove enough balls from playfields. This is a bug!")
+
         for playfield in self.machine.playfields:
             if playfield.balls != playfield.available_balls:
-                self.log.warning("Corecting available_balls %s to %s",
-                                 playfield.available_balls, playfield.balls)
+                self.log.warning("Corecting available_balls %s to %s on playfield %s",
+                                 playfield.available_balls, playfield.balls, playfield.name)
                 playfield.available_balls = playfield.balls
 
     def trigger_ball_count(self):
