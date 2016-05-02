@@ -509,6 +509,11 @@ multiballs:
     reset_events:  dict|str:ms|machine_reset_phase_3, ball_starting
     start_events:  dict|str:ms|None
     stop_events:  dict|str:ms|None
+opp:
+    ports: list|str|
+    baud: single|int|115200
+    config_number_format: single|str|hex
+    debug: single|bool|False
 osc:
     __valid_in__: machine
     client_port: single|int|8000
