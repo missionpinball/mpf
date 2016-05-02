@@ -510,6 +510,7 @@ multiballs:
     start_events:  dict|str:ms|None
     stop_events:  dict|str:ms|None
 opp:
+    __valid_in__: machine
     ports: list|str|
     baud: single|int|115200
     config_number_format: single|str|hex
