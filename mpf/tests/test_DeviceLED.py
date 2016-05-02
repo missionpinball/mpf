@@ -83,7 +83,7 @@ class TestLed(MpfTestCase):
         self.assertIsNone(color_setting['key'])
 
         # remove the orange key from the stack
-        led1.remove_from_stack('test')
+        led1.remove_from_stack_by_key('test')
         self.assertEqual(len(led1.stack), 1)
 
         # clear the stack
@@ -237,7 +237,7 @@ class TestLed(MpfTestCase):
                          self.machine.leds.led1.hw_driver.current_color)
         self.assertFalse(led1.fade_in_progress)
 
-        led1.remove_from_stack('test')
+        led1.remove_from_stack_by_key('test')
         # should go back to the fade in progress, which is now 75% complete
         self.advance_time_and_run(1)
         self.assertEqual(RGBColor((191, 0, 0)),

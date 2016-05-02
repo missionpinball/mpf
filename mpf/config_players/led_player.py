@@ -59,7 +59,7 @@ class LedPlayer(ConfigPlayer):
 
         try:
             for led in self.caller_target_map[caller]:
-                led.remove_from_stack(caller)
+                led.remove_from_stack_by_key(caller)
         except KeyError:
             pass
 
