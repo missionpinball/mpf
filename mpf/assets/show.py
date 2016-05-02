@@ -151,7 +151,8 @@ class Show(Asset):
                     actions[key] = validated_config
 
                 elif key != 'time':
-                    actions[key] = step[key]
+                    raise ValueError('Invalid section "{}:" found in show: '
+                                     '{}'.format(key, self.file))
 
             self.show_steps.append(actions)
 

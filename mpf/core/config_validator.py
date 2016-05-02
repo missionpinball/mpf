@@ -26,6 +26,8 @@ accelerometers:
     tags: list|str|None
     label: single|str|%
     number: single|str|
+animations:
+    __valid_in__: machine, mode                 # todo add to validator
 assets:
     __valid_in__: machine, mode
     common:
@@ -820,6 +822,8 @@ system11:
     __valid_in__: machine
     ac_relay_delay_ms: single|ms|75ms
     ac_relay_driver: single|machine(coils)|
+text_strings:
+    __valid_in__: machine, mode                 # todo add to validator
 # text_styles:
 #     __valid_in__: machine, mode
 #     font_name: single|str|None
