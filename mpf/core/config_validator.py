@@ -406,6 +406,8 @@ images:
     load: single|str|None
 keyboard:
     __valid_in__: machine                           # todo add to validator
+kivy_config:
+    __valid_in__: machine                           # todo add to validator
 led_player:
     __valid_in__: machine, mode, show
     color: single|str|white
@@ -494,6 +496,8 @@ mode:
 modes:
     __valid_in__: machine                           # todo add to validator
 mpf:
+    __valid_in__: machine                           # todo add to validator
+mpf-mc:
     __valid_in__: machine                           # todo add to validator
 multiballs:
     __valid_in__: machine, mode

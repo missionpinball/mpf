@@ -98,6 +98,9 @@ class ConfigProcessor(object):
         # file being loaded is a machine config or a mode config file
         config = FileManager.load(filename, verify_version, halt_on_error)
 
+        if not ConfigValidator.config_spec:
+                    ConfigValidator.load_config_spec()
+
         for k in config.keys():
             try:
                 if config_type not in ConfigValidator.config_spec[k][
