@@ -2,6 +2,7 @@
 # generic ConfigPlayer functionality
 from collections import namedtuple
 
+import mpf.core.config_validator
 from mpf.tests.MpfTestCase import MpfTestCase
 from mpf.core.config_player import ConfigPlayer
 
@@ -50,6 +51,9 @@ class TestConfigPlayers(MpfTestCase):
         self.machine_config_patches['mpf']['config_players'] = dict()
         self.machine_config_patches['mpf']['config_players']['banana'] = \
             'mpf.tests.test_ConfigPlayers'
+
+        self.add_to_config_validator('banana_player',
+                                     dict(__valid_in__='machine, mode'))
 
         super().setUp()
 

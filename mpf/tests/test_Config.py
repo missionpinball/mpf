@@ -1,5 +1,5 @@
 from mpf.tests.MpfTestCase import MpfTestCase
-
+from mpf.core.config_validator import ConfigValidator
 
 class TestConfig(MpfTestCase):
 
@@ -8,6 +8,15 @@ class TestConfig(MpfTestCase):
 
     def getMachinePath(self):
         return 'tests/machine_files/config_interface/'
+
+    def setUp(self):
+
+        self.add_to_config_validator('test_section',
+                                     dict(__valid_in__='machine'))
+        self.add_to_config_validator('test_section_1',
+                                     dict(__valid_in__='machine'))
+
+        super().setUp()
 
     def test_config_file(self):
         # true, True, yes, Yes values should be True

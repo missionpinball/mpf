@@ -8,8 +8,10 @@ import unittest
 
 from mock import *
 
+import ruamel.yaml as yaml
+
 import mpf.core
-from mpf.core.config_validator import ConfigValidator
+import mpf.core.config_validator
 from mpf.core.machine import MachineController
 from mpf.core.utility_functions import Util
 from mpf.file_interfaces.yaml_interface import YamlInterface
@@ -178,7 +180,8 @@ class MpfTestCase(unittest.TestCase):
 
     def setUp(self):
         # we want to reuse config_specs to speed tests up
-        ConfigValidator.unload_config_spec = MagicMock()
+        mpf.core.config_validator.ConfigValidator.unload_config_spec = (
+            MagicMock())
 
         self._events = {}
 
@@ -279,3 +282,11 @@ class MpfTestCase(unittest.TestCase):
 
     def _bcp_send(self, bcp_command, callback=None, **kwargs):
         self.sent_bcp_commands.append((bcp_command, callback, kwargs))
+
+    def add_to_config_validator(self, key, new_dict):
+        if mpf.core.config_validator.ConfigValidator.config_spec:
+            mpf.core.config_validator.ConfigValidator.config_spec[key] = (
+                new_dict)
+        else:
+            mpf.core.config_validator.mpf_config_spec += '\n' + yaml.dump(
+                dict(key=new_dict), default_flow_style=False)

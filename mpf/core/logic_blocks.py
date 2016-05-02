@@ -137,8 +137,8 @@ class LogicBlock(object):
         config = copy.deepcopy(config)
 
         self.config = self.machine.config_validator.validate_config(
-            'logic_block:{}'.format(self.config_section_name), config,
-            base_spec='logic_block:common')
+            'logic_blocks:{}'.format(self.config_section_name), config,
+            base_spec='logic_blocks:common')
 
         if not self.config['events_when_complete']:
             self.config['events_when_complete'] = ['logicblock_' + self.name + '_complete']
