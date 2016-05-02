@@ -31,26 +31,26 @@ class LedPlayer(ConfigPlayer):
                 s['key'] = mode
 
             try:
-                led.color(**s)
+                led.color(mode=mode, **s)
                 if caller:
                     self.caller_target_map[caller].add(led)
 
             except AttributeError:
                 try:
-                    self._led_color(led, caller, **s)
+                    self._led_color(led, mode=mode, **s)
                 except KeyError:
                     led_list = Util.string_to_list(led)
                     if len(led_list) > 1:
                         for led1 in led_list:
-                            self._led_color(led1, caller, **s)
+                            self._led_color(led1, mode=mode, **s)
                     else:
                         for led1 in self.machine.leds.sitems_tagged(led):
-                            self._led_color(led1, caller, **s)
+                            self._led_color(led1, mode=mode, **s)
 
-    def _led_color(self, led_name, caller=None, **s):
-        self.machine.leds[led_name].color(**s)
-        if caller:
-            self.caller_target_map[caller].add(
+    def _led_color(self, led_name, key=None, mode=None, **s):
+        self.machine.leds[led_name].color(key=key, mode=mode, **s)
+        if key:
+            self.caller_target_map[key].add(
                 self.machine.leds[led_name])
 
     def clear(self, caller, priority):
