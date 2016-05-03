@@ -71,8 +71,8 @@ coil_overwrites:
     __valid_in__: machine
     recycle: single|bool|None
     pulse_ms: single|ms|None
-    pulse_power: single|int|None
-    hold_power: single|int|None
+    pulse_power: single|int(0,8)|None
+    hold_power: single|int(0,8)|None
 fast_coil_overwrites:
     __valid_in__: machine
     pulse_power32: single|int|None
@@ -162,9 +162,9 @@ bcp_player:                                          # todo
 coils:
     __valid_in__: machine
     number: single|str|
-    pulse_ms: single|int|None
-    pulse_power: single|int|None
-    hold_power: single|int|None
+    pulse_ms: single|ms|None
+    pulse_power: single|int(0,8)|None
+    hold_power: single|int(0,8)|None
     recycle: single|bool|False
     allow_enable: single|bool|False
     tags: list|str|None
