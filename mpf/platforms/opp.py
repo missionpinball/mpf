@@ -297,6 +297,10 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
             self.opp_connection.send(send_cmd)
             self.log.debug("Update incand cmd:%s", "".join(" 0x%02x" % ord(b) for b in send_cmd))
 
+    @classmethod
+    def get_coil_config_section(cls):
+        return "opp_coils"
+
     def get_hw_switch_states(self):
         hw_states = dict()
         for opp_inp in self.opp_inputs:
@@ -604,8 +608,15 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self._write_hw_rule(enable_switch, coil, True)
 
     def get_hold_value(self, coil):
-        if coil.config['hold_power']:
-            return coil.config['hold_power']
+        if coil.config['hold_power16']:
+            return coil.config['hold_power16']
+        elif coil.config['hold_power']:
+            if coil.config['hold_power'] >= 8:
+                # OPP supports a maximum 15/16ms hold power
+                return 15
+            else:
+                # hold_power is 0-8 and OPP supports 0-15
+                return coil.config['hold_power'] * 2
         elif coil.config['allow_enable']:
             return 15
         else:
