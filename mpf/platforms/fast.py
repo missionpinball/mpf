@@ -662,17 +662,6 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         driver = coil.hw_driver
 
-        # cmd = (driver.get_config_cmd() +
-        #        coil.hw_driver.number + ',' +
-        #        driver.get_control_for_cmd(enable_switch) + ',' +
-        #        enable_switch.hw_switch.number[0] + ',' +
-        #        "18" + ',' +                                 # Mode 18 settings
-        #        driver.get_pulse_ms_for_cmd(coil) + ',' +    # initial pulse ms
-        #        driver.get_pwm1_for_cmd(coil) + ',' +        # intial pwm
-        #        "00" + ',' +        # pulse 2 time
-        #        driver.get_recycle_ms_for_cmd(coil) + ',' +  # recycle ms
-        #        "00")                                        # not used with Mode 18
-
         cmd = '{}{},{},{},18,{},{},00,{},00'.format(
             driver.get_config_cmd(),
             coil.hw_driver.number,
@@ -716,17 +705,6 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         driver = coil.hw_driver
 
-        # cmd = (driver.get_config_cmd() +
-        #        coil.hw_driver.number + ',' +
-        #        driver.get_control_for_cmd(enable_switch) + ',' +
-        #        enable_switch.hw_switch.number[0] + ',' +
-        #        "10" + ',' +                                 # Mode 10 settings
-        #        driver.get_pulse_ms_for_cmd(coil) + ',' +    # initial pulse ms
-        #        driver.get_pwm1_for_cmd(coil) + ',' +        # intial pwm
-        #        '00' + ',' +                                 # pulse 2 time
-        #        '00' + ',' +                                 # pulse 2 pwm
-        #        driver.get_recycle_ms_for_cmd(coil))         # recycle ms
-
         cmd = '{}{},{},{},10,{},{},00,00,{}'.format(
             driver.get_config_cmd(),
             coil.hw_driver.number,
@@ -755,17 +733,6 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             # todo figure how to show the friendly name of this driver
             raise AssertionError("Coil {} may not be enabled at 100% without"
                 "allow_enabled or pwm settings".format(coil.hw_driver.number))
-
-        # cmd = (driver.get_config_cmd() +
-        #        coil.hw_driver.number + ',' +
-        #        driver.get_control_for_cmd(enable_switch) + ',' +
-        #        enable_switch.hw_switch.number[0] + ',' +
-        #        "18" + ',' +                                 # Mode 18 settings
-        #        driver.get_pulse_ms_for_cmd(coil) + ',' +    # initial pulse ms
-        #        driver.get_pwm1_for_cmd(coil) + ',' +        # intial pwm
-        #        driver.get_pwm2_for_cmd(coil) + ',' +        # pulse 2 time
-        #        driver.get_recycle_ms_for_cmd(coil) + ',' +  # recycle ms
-        #        "00")                                        # not used with Mode 18
 
         cmd = '{}{},{},{},18,{},{},{},{},00'.format(
             driver.get_config_cmd(),
@@ -804,10 +771,6 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         driver = coil.hw_driver
 
-        # cmd = (driver.get_config_cmd() +
-        #        coil.hw_driver.number + ',' +
-        #        '81')
-
         cmd = '{}{},81'.format(driver.get_config_cmd(), coil.hw_driver.number)
 
         coil.autofire = None
@@ -827,9 +790,6 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         # convert from [0,1] to [0, 255]
         position_numeric = int(position * 255)
-
-        # build command and send it
-        # cmd = 'XO:' + Util.int_to_hex_string(number) + ',' + Util.int_to_hex_string(position_numeric)
 
         cmd = 'XO:{},{}'.format(
             Util.int_to_hex_string(number),
@@ -868,11 +828,6 @@ class FASTSwitch(object):
             return
 
         self._configured_debounce = new_setting
-
-        # cmd += str(self.number[0])
-        # cmd += ',01,'
-        # cmd += Util.int_to_hex_string(debounce_open) + ','
-        # cmd += Util.int_to_hex_string(debounce_close)
 
         cmd = '{}{},01,{},{}'.format(
             cmd,
@@ -1045,14 +1000,6 @@ class FASTDriver(DriverPlatformInterface):
 
                 pulse_ms = self.get_pulse_ms_for_cmd(coil)
 
-                # cmd = (self.get_config_cmd() +
-                #        self.number +
-                #        ',C1,00,18,' +
-                #        str(pulse_ms) + ',' +
-                #        self.get_pwm1_for_cmd(coil) + ',' +
-                #        self.get_pwm2_for_cmd(coil) + ',' +
-                #        self.get_recycle_ms_for_cmd(coil))
-
                 cmd = '{}{},C1,00,18,{},{},{},{}'.format(
                     self.get_config_cmd(),
                     self.number,
@@ -1076,10 +1023,6 @@ class FASTDriver(DriverPlatformInterface):
             hex_ms_string = milliseconds
 
         if self.autofire:
-            # cmd = (self.get_trigger_cmd() +
-            #        self.number + ',' +
-            #        '01')
-
             cmd = '{}{},01'.format(self.get_trigger_cmd(), self.number)
 
             if milliseconds:
@@ -1087,13 +1030,6 @@ class FASTDriver(DriverPlatformInterface):
                                "this driver is configured with an autofire rule"
                                ", so that pulse value will be used instead.")
         else:
-            # cmd = (self.get_config_cmd() +
-            #        self.number +
-            #        ',89,00,10,' +
-            #        hex_ms_string + ',' +
-            #        self.get_pwm1_for_cmd(coil) + ',00,00,' +
-            #        self.get_recycle_ms_for_cmd(coil))
-
             cmd = '{}{},89,00,10,{},{},00,00,{}'.format(
                 self.get_config_cmd(),
                 self.number,
@@ -1110,10 +1046,6 @@ class FASTDriver(DriverPlatformInterface):
     def check_auto(self):
 
         if self.autofire:
-            # cmd = (self.get_trigger_cmd() +
-            #        self.number +
-            #        ',00')
-
             cmd = '{}{},00'.format(self.get_trigger_cmd(), self.number)
 
             self.log.debug("Re-enabling auto fire mode: %s", cmd)
@@ -1260,15 +1192,14 @@ class FASTDMD(object):
         self.dmd_frame = bytearray()
 
     def update(self, data):
-        self.dmd_frame = data
-        self.send('BM:'.encode())
         self.send(data)
 
 
 class SerialCommunicator(object):
 
     # pylint: disable-msg=too-many-arguments
-    def __init__(self, machine, platform, port, baud, send_queue, receive_queue):
+    def __init__(self, machine, platform, port, baud, send_queue,
+                 receive_queue):
         self.machine = machine
         self.platform = platform
         self.send_queue = send_queue
@@ -1441,12 +1372,22 @@ class SerialCommunicator(object):
         debug = self.platform.config['debug']
 
         try:
-            while self.serial_connection:
-                msg = self.send_queue.get()
-                self.serial_connection.write(msg.encode())
 
-                if debug:
-                    self.platform.log.info("Sending: %s", msg)
+            if self.dmd:
+                while self.serial_connection:
+
+                    data = self.send_queue.get()
+                    msg = b'BM:' + data
+                    self.serial_connection.write(msg)
+
+            else:
+
+                while self.serial_connection:
+                    msg = self.send_queue.get()
+                    self.serial_connection.write(msg.encode())
+
+                    if debug:
+                        self.platform.log.info("Sending: %s", msg)
 
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()

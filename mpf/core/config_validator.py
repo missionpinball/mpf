@@ -499,6 +499,15 @@ modes:
     __valid_in__: machine                           # todo add to validator
 mpf:
     __valid_in__: machine                           # todo add to validator
+    default_pulse_ms: single|int|10
+    default_flash_ms: single|int|50
+    auto_create_switch_events: single|bool|True
+    switch_event_active: single|str|%_active
+    switch_event_inactive: single|str|%_inactive
+    switch_tag_event: single|str|sw_%
+    allow_invalid_config_sections: single|bool|false
+    save_machine_vars_to_disk: single|bool|true
+    hz: single|float|30.0
 mpf-mc:
     __valid_in__: machine                           # todo add to validator
 multiballs:
@@ -546,14 +555,14 @@ p3_roc:
 physical_dmd:
     __valid_in__: machine
     shades: single|pow2|16
-    fps: single|int|0
+    fps: single|int|30
     source_display: single|str|dmd
     luminosity: list|float|.299, .587, .114
     brightness: single|float|1.0
     only_send_changes: single|bool|False
 physical_rgb_dmd:
     __valid_in__: machine
-    fps: single|int|0
+    fps: single|int|30
     source_display: single|str|dmd
     color_adjust: list|float|1, 1, 1
     only_send_changes: single|bool|False

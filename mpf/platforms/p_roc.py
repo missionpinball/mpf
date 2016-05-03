@@ -181,7 +181,8 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
     def configure_dmd(self):
         """Configures a hardware DMD connected to a classic P-ROC."""
 
-        self.machine.bcp.register_dmd(PROCDMD(self.proc, self.machine).update)
+        self.machine.bcp.register_dmd(PROCDMD(self.pinproc, self.proc,
+                                              self.machine).update)
 
     def tick(self, dt):
         """Checks the P-ROC for any events (switch state changes or notification
@@ -229,7 +230,7 @@ class PROCDMD(object):
 
     """
 
-    def __init__(self, proc, machine):
+    def __init__(self, pinproc, proc, machine):
         self.proc = proc
         self.machine = machine
 
