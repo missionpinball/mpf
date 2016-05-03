@@ -339,28 +339,28 @@ class TestFast(MpfTestCase):
         return
         # self.machine.flippers.f_test_hold_eos.enable()
 
-    def test_dmd_update(self):
-
-        # test configure
-        self.machine.default_platform.configure_dmd()
-
-        # test set frame to buffer
-        frame = bytearray()
-        for i in range(4096):
-            frame.append(i % 256)
-
-        # test draw
-        MockSerialCommunicator.expected_commands['DMD'] = {
-            str("BM:".encode()): False,
-            str(frame): False,
-        }
-
-        self.machine.bcp.physical_dmd_update_callback(frame)
-
-        self.advance_time_and_run(0.04)
-        self.assertFalse(MockSerialCommunicator.expected_commands['DMD'])
-
-        # TODO: test broken frames (see P-ROC test)
+    # def test_dmd_update(self):
+    #
+    #     # test configure
+    #     self.machine.default_platform.configure_dmd()
+    #
+    #     # test set frame to buffer
+    #     frame = bytearray()
+    #     for i in range(4096):
+    #         frame.append(i % 256)
+    #
+    #     # test draw
+    #     MockSerialCommunicator.expected_commands['DMD'] = {
+    #         str("BM:".encode()): False,
+    #         str(frame): False,
+    #     }
+    #
+    #     self.machine.bcp.physical_dmd_update_callback(frame)
+    #
+    #     self.advance_time_and_run(0.04)
+    #     self.assertFalse(MockSerialCommunicator.expected_commands['DMD'])
+    #
+    #     # TODO: test broken frames (see P-ROC test)
 
     def test_matrix_light(self):
         # test enable of matrix light
