@@ -31,6 +31,7 @@ coils:
     c_test_allow_enable:
         number: 0-1
         pulse_ms: 23
+        recycle_factor: 3
         allow_enable: true
     c_flipper_hold:
         number: 0-2
@@ -56,6 +57,10 @@ autofire_coils:
     ac_slingshot_test:
         coil: c_test
         switch: s_test
+
+    ac_slingshot_test2:
+        coil: c_test_allow_enable
+        switch: s_test_no_debounce
 
 flippers:
     f_test_single:
