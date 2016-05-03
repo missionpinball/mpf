@@ -75,8 +75,8 @@ class TestOPP(MpfTestCase):
             self._crc_message('\x20\x14\x00\x02\x17\x00'): False,   # configure coil 0
             self._crc_message('\x20\x14\x01\x00\x17\x0f'): False,   # configure coil 1
             self._crc_message('\x20\x14\x02\x00\x0a\x01'): False,   # configure coil 2
-            self._crc_message('\x20\x14\x03\x00\x0a\x03'): False,    # configure coil 3
-                                             }
+            self._crc_message('\x20\x14\x03\x00\x0a\x06'): False,    # configure coil 3
+        }
         self.serialMock.permanent_commands = {
             '\xff': '\xff',
             self._crc_message('\x20\x08\x00\x00\x00\x00', False) + self._crc_message('\x21\x08\x00\x00\x00\x00'):
@@ -103,9 +103,9 @@ class TestOPP(MpfTestCase):
             self.serialMock.queue.put(self._crc_message(msg))
         else:
             self.serialMock.queue.put(msg)
-        time.sleep(.001)
-        self.advance_time_and_run(1)
-        self.assertTrue(self.serialMock.queue.empty())
+        while not self.serialMock.queue.empty():
+            time.sleep(.001)
+            self.advance_time_and_run(1)
 
     def test_opp(self):
         self._test_coils()
@@ -216,23 +216,34 @@ class TestOPP(MpfTestCase):
         self.assertFalse(self.serialMock.expected_commands)
 
     def _test_autofires(self):
-        self.serialMock.expected_commands[self._crc_message('\x20\x14\x00\x03\x17\x00')] = False
+        self.serialMock.expected_commands[self._crc_message('\x20\x14\x00\x03\x17\x20')] = False
         self.machine.autofires.ac_slingshot_test.enable()
         self._write_message("\xff", False)
         self.assertFalse(self.serialMock.expected_commands)
 
-        self.serialMock.expected_commands[self._crc_message('\x20\x14\x00\x02\x17\x00')] = False
+        self.serialMock.expected_commands[self._crc_message('\x20\x14\x00\x02\x17\x20')] = False
         self.machine.autofires.ac_slingshot_test.disable()
         self._write_message("\xff", False)
         self.assertFalse(self.serialMock.expected_commands)
 
+        self.serialMock.expected_commands[self._crc_message('\x20\x14\x01\x03\x17\x30')] = False
+        self.machine.autofires.ac_slingshot_test2.enable()
+        self._write_message("\xff", False)
+        self.assertFalse(self.serialMock.expected_commands)
+
+        self.serialMock.expected_commands[self._crc_message('\x20\x14\x01\x02\x17\x30')] = False
+        self.machine.autofires.ac_slingshot_test2.disable()
+        self._write_message("\xff", False)
+        self.assertFalse(self.serialMock.expected_commands)
+
+
     def _test_flippers(self):
-        self.serialMock.expected_commands[self._crc_message('\x20\x14\x03\x01\x0a\x03')] = False
+        self.serialMock.expected_commands[self._crc_message('\x20\x14\x03\x01\x0a\x06')] = False
         self.machine.flippers.f_test_single.enable()
         self._write_message("\xff", False)
         self.assertFalse(self.serialMock.expected_commands)
 
-        self.serialMock.expected_commands[self._crc_message('\x20\x14\x03\x00\x0a\x03')] = False
+        self.serialMock.expected_commands[self._crc_message('\x20\x14\x03\x00\x0a\x06')] = False
         self.machine.flippers.f_test_single.disable()
         self._write_message("\xff", False)
         self.assertFalse(self.serialMock.expected_commands)

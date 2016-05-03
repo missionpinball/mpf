@@ -10,6 +10,8 @@ import threading
 import queue
 import traceback
 
+from mpf.devices.driver import ConfiguredHwDriver
+
 from mpf.core.platform import MatrixLightsPlatform, LedPlatform, SwitchPlatform, DriverPlatform
 from mpf.core.utility_functions import Util
 
@@ -297,6 +299,10 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
             self.opp_connection.send(send_cmd)
             self.log.debug("Update incand cmd:%s", "".join(" 0x%02x" % ord(b) for b in send_cmd))
 
+    @classmethod
+    def get_coil_config_section(cls):
+        return "opp_coils"
+
     def get_hw_switch_states(self):
         hw_states = dict()
         for opp_inp in self.opp_inputs:
@@ -473,30 +479,31 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         # If hold is 0, set the auto clear bit
         if not use_hold:
             cmd = ord(OppRs232Intf.CFG_SOL_AUTO_CLR)
-            driver.can_be_pulsed = True
+            driver.hw_driver.can_be_pulsed = True
             hold = 0
         else:
             cmd = 0
-            driver.can_be_pulsed = False
+            driver.hw_driver.can_be_pulsed = False
             hold = self.get_hold_value(driver)
             if not hold:
                 raise AssertionError("Hold may not be 0")
 
         # TODO: implement separate hold power (0-f) and minimum off time (0-7)
+        minimum_off = self.get_minimum_off_time(driver)
 
-        if driver.use_switch:
+        if driver.hw_driver.use_switch:
             cmd += ord(OppRs232Intf.CFG_SOL_USE_SWITCH)
 
         _, solenoid = driver.config['number'].split('-')
         pulse_len = self._get_pulse_ms_value(driver)
 
         msg = []
-        msg.append(driver.solCard.addr)
+        msg.append(driver.hw_driver.solCard.addr)
         msg.append(OppRs232Intf.CFG_IND_SOL_CMD)
         msg.append(chr(int(solenoid)))
         msg.append(chr(cmd))
         msg.append(chr(pulse_len))
-        msg.append(chr(hold))
+        msg.append(chr(hold + (minimum_off << 4)))
         msg.append(OppRs232Intf.calc_crc8_whole_msg(msg))
         msg.append(OppRs232Intf.EOM_CMD)
         final_cmd = ''.join(msg)
@@ -520,7 +527,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                        opp_sol.config['pulse_ms'], opp_sol.config['hold_power'])
 
         hold = self.get_hold_value(opp_sol)
-        self.reconfigure_driver(opp_sol, hold != 0)
+        self.reconfigure_driver(ConfiguredHwDriver(opp_sol, {}), hold != 0)
 
         return opp_sol
 
@@ -604,19 +611,35 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self._write_hw_rule(enable_switch, coil, True)
 
     def get_hold_value(self, coil):
-        if coil.config['hold_power']:
-            return coil.config['hold_power']
+        if coil.config['hold_power16']:
+            return coil.config['hold_power16']
+        elif coil.config['hold_power']:
+            if coil.config['hold_power'] >= 8:
+                # OPP supports a maximum 15/16ms hold power
+                return 15
+            else:
+                # hold_power is 0-8 and OPP supports 0-15
+                return coil.config['hold_power'] * 2
         elif coil.config['allow_enable']:
             return 15
         else:
             return 0
 
+    def get_minimum_off_time(self, coil):
+        if not coil.config['recycle']:
+            return 0
+        elif coil.config['recycle_factor']:
+            return coil.config['recycle_factor']
+        else:
+            # default to two times pulse_ms
+            return 2
+
     def _get_pulse_ms_value(self, coil):
         if coil.config['pulse_ms']:
             return coil.config['pulse_ms']
         else:
-            # TODO: load default
-            return 10
+            # use mpf default_pulse_ms
+            return self.machine.config['mpf']['default_pulse_ms']
 
     def _write_hw_rule(self, switch_obj, driver_obj, use_hold):
         if switch_obj.invert:
@@ -628,7 +651,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                        driver_obj.hw_driver.number, driver_obj.config)
 
         driver_obj.hw_driver.use_switch = True
-        self.reconfigure_driver(driver_obj.hw_driver, use_hold)
+        self.reconfigure_driver(driver_obj, use_hold)
 
     def clear_hw_rule(self, switch, coil):
         """Clears a hardware rule.
@@ -644,7 +667,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                        coil.hw_driver.number)
 
         coil.hw_driver.use_switch = False
-        self.reconfigure_driver(coil.hw_driver, not coil.hw_driver.can_be_pulsed)
+        self.reconfigure_driver(coil, not coil.hw_driver.can_be_pulsed)
 
 
 class OPPIncandCard(object):
@@ -733,7 +756,7 @@ class OPPSolenoid(object):
                                  format(self.number))
 
         if self.can_be_pulsed:
-            self.solCard.platform.reconfigure_driver(coil.hw_driver, True)
+            self.solCard.platform.reconfigure_driver(coil, True)
 
         _, solenoid = self.number.split("-")
         sol_int = int(solenoid)
@@ -746,7 +769,7 @@ class OPPSolenoid(object):
             if self.use_switch:
                 raise AssertionError("Cannot currently pulse driver {} because hw_rule needs hold_power".
                                      format(self.number))
-            self.solCard.platform.reconfigure_driver(coil.hw_driver, False)
+            self.solCard.platform.reconfigure_driver(coil, False)
 
         if milliseconds and milliseconds != self.config['pulse_ms']:
             raise AssertionError("OPP platform doesn't allow changing pulse width using pulse call. "
@@ -853,8 +876,6 @@ class OPPNeopixel(object):
             0-255 each.
         """
 
-        # todo this is crazy inefficient right now. todo change it so it can use
-        # hex strings as the color throughout
         new_color = color.hex
         error = False
 
@@ -1045,8 +1066,6 @@ class SerialCommunicator(object):
         self.log.error("Stop called on serial connection")
         self.serial_connection.close()
         self.serial_connection = None  # child threads stop when this is None
-
-        # todo clear the hw?
 
     def send(self, msg):
         """Sends a message to the remote processor over the serial connection.
