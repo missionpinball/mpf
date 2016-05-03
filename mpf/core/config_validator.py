@@ -1436,9 +1436,9 @@ class ConfigValidator(object):
 
         if param:
             param = param.split(",")
-            if param[0] is not None and value < int(param[0]):
+            if param[0] != "NONE" and value < int(param[0]):
                 self.validation_error(item, validation_failure_info, "{} is smaller then {}".format(item, param[0]))
-            elif param[1] is not None and value > int(param[1]):
+            elif param[1] != "NONE" and value > int(param[1]):
                 self.validation_error(item, validation_failure_info, "{} is larger then {}".format(item, param[0]))
 
         return value
