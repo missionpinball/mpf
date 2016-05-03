@@ -568,7 +568,6 @@ physical_rgb_dmd:
     __valid_in__: machine
     fps: single|int|30
     source_display: single|str|dmd
-    color_adjust: list|float|1, 1, 1
     only_send_changes: single|bool|False
     brightness: single|float|1.0
 playfields:
