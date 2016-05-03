@@ -175,7 +175,7 @@ class OpenPixelClient(object):
             g = min(255, max(0, int(g)))
             b = min(255, max(0, int(b)))
             pieces.append(chr(r) + chr(g) + chr(b))
-        self.send(''.join(pieces))
+        self.send(bytes(''.join(pieces), 'UTF-8'))
 
     def send(self, message):
         """Puts a message on the queue to be sent to the OPC server.
