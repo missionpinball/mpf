@@ -7,5 +7,3 @@ multiballs:
     mb5:
         ball_count: 2
         start_events: mb5_start
-        enable_events:
-        disable_events:
