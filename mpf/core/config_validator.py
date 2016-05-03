@@ -177,6 +177,7 @@ coils:
 opp_coils:
     __valid_in__: machine
     hold_power16: single|int|None
+    recycle_factor: single|int|None
 fast_coils:
     __valid_in__: machine
     pulse_power32: single|int|None
