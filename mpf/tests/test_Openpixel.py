@@ -37,7 +37,7 @@ class TestOpenpixel(MpfTestCase):
             else:
                 out += chr(0) + chr(0) + chr(0)
 
-        return out
+        return bytes(out, 'UTF-8')
 
     def _send_mock(self, message):
         self._messages.append(message)
