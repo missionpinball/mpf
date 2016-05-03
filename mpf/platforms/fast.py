@@ -545,7 +545,9 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         return switch
 
-    def configure_led(self, config):
+    def configure_led(self, config, channels):
+        if channels > 3:
+            raise AssertionError("FAST only supports RGB LEDs")
         if not self.rgb_connection:
             raise AssertionError('A request was made to configure a FAST LED, '
                                  'but no connection to an LED processor is '

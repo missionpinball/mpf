@@ -34,7 +34,9 @@ class HardwarePlatform(LedPlatform):
     def __repr__(self):
         return '<Platform.OpenPixel>'
 
-    def configure_led(self, config):
+    def configure_led(self, config, channels):
+        if channels > 3:
+            raise AssertionError("More channels not yet implemented")
 
         if not self.opc_client:
             self._setup_opc_client()

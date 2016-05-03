@@ -210,8 +210,11 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
 
         return bool(coil_number)
 
-    def configure_led(self, config):
+    def configure_led(self, config, channels):
         """ Configures a P/P3-ROC RGB LED controlled via a PD-LED."""
+
+        if channels > 3:
+            raise AssertionError("More than 3 channels not yet implemented")
 
         # split the number (which comes in as a string like w-x-y-z) into parts
         number_parts = str(config['number']).split('-')

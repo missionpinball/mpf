@@ -1,4 +1,5 @@
 """ Contains the Led parent classes. """
+import copy
 from operator import itemgetter
 
 from mpf.core.rgb_color import RGBColor
@@ -125,7 +126,7 @@ class Led(SystemWideDevice):
 
         self.config['default_color'] = RGBColor(self.config['default_color'])
 
-        self.hw_driver = self.platform.configure_led(self.config)
+        self.hw_driver = self.platform.configure_led(self.config, len(self.config['type']))
 
         if self.config['color_correction_profile'] is not None:
             if self.config['color_correction_profile'] in (
@@ -336,11 +337,13 @@ class Led(SystemWideDevice):
         # If there's no current fade and no new fade, or a current fade and new
         # fade
         else:
+            corrected_color = self.color_correct(self.stack[0]['color'])
             if self.debug:
-                self.log.debug("Writing color to hw driver: %s",
-                               self.color_correct(self.stack[0]['color']))
+                self.log.debug("Writing color to hw driver: %s", corrected_color)
 
-            self.hw_driver.color(self.color_correct(self.stack[0]['color']))
+            reordered_color = self._get_color_channels_for_hw(corrected_color)
+
+            self.hw_driver.color(RGBColor(tuple(reordered_color)))
 
             if self.registered_handlers:
                 # Handlers are not sent color corrected colors
@@ -348,6 +351,33 @@ class Led(SystemWideDevice):
                 for handler in self.registered_handlers:
                     handler(led_name=self.name,
                             color=self.stack[0]['color'])
+
+    def _get_color_channels_for_hw(self, color):
+        color_channels = []
+        for color_name in self.config['type']:
+            # red channel
+            if color_name == 'r':
+                color_channels.append(color.red)
+            # green channel
+            elif color_name == 'g':
+                color_channels.append(color.green)
+            # blue channel
+            elif color_name == 'b':
+                color_channels.append(color.blue)
+            # simple white channel
+            elif color_name == 'w':
+                color_channels.append(min(color.red, color.green, color.blue))
+            # always off
+            elif color_name == '-':
+                color_channels.append(0)
+            # always on
+            elif color_name == '+':
+                color_channels.append(255)
+            else:
+                raise AssertionError("Invalid element {} in type {} of led {}".format(
+                    color_name, self.config['type'], self.name))
+
+        return color_channels
 
     def color_correct(self, color):
         """Applies the current color correction profile to the color passed.

@@ -433,6 +433,7 @@ leds:
     color_correction_profile: single|str|None
     fade_ms: single|int|None
     tags: list|str|None
+    type: single|lstr|rgb
     label: single|str|%
     debug: single|bool|False
     on_events:  dict|str:ms|None
