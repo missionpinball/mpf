@@ -219,8 +219,6 @@ class DriverPlatform(BasePlatform):
         # these to notify the framework of the specific features it supports.
         self.features['has_drivers'] = True
         self.features['max_pulse'] = 255
-        self.features['hw_rule_coil_delay'] = False
-        self.features['variable_recycle_time'] = False
 
     def configure_driver(self, config):
         """Subclass this method in a platform module to configure a driver.

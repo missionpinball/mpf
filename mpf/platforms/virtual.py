@@ -27,18 +27,6 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
         self.hw_switches = dict()
         self.initial_states_sent = False
 
-        # ----------------------------------------------------------------------
-        # Platform-specific hardware features. WARNING: Do not edit these. They
-        # are based on what the virtual hardware can and cannot do.
-        self.features['max_pulse'] = 255
-        self.features['hw_rule_coil_delay'] = False
-        self.features['variable_recycle_time'] = False
-        self.features['variable_debounce_time'] = False
-
-        # Make the platform features available to everyone
-        self.machine.config['platform'] = self.features
-        # ----------------------------------------------------------------------
-
     def __repr__(self):
         return '<Platform.Virtual>'
 

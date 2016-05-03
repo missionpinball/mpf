@@ -32,18 +32,6 @@ class HardwarePlatform(MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatfor
         self.log.debug("Configuring template hardware interface.")
         self.initial_states_sent = False
 
-        # The following "features" are supposed to be constants that you can
-        # use to define was is or is not in your own platform. However they
-        # have not been implemented at this time. So for now just keep them
-        # as-is below and we'll deal with them in some future version of MPF.
-        self.features['max_pulse'] = 255
-        self.features['hw_rule_coil_delay'] = False
-        self.features['variable_recycle_time'] = False
-        self.features['variable_debounce_time'] = False
-
-        # Make the platform features available to everyone
-        self.machine.config['platform'] = self.features
-
     def __repr__(self):
         """String name you'd like to show up in logs and stuff when a
         reference to this platform is printed."""

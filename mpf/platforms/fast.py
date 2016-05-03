@@ -60,17 +60,6 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             raise AssertionError('Could not import "pySerial". This is '
                                  'required for the FAST platform interface')
 
-        # ----------------------------------------------------------------------
-        # Platform-specific hardware features. WARNING: Do not edit these. They
-        # are based on what the FAST hardware can and cannot do.
-        self.features['max_pulse'] = 255  # todo
-        self.features['hw_rule_coil_delay'] = True  # todo
-        self.features['variable_recycle_time'] = True  # todo
-        self.features['variable_debounce_time'] = True  # todo
-        # Make the platform features available to everyone
-        self.machine.config['platform'] = self.features
-        # ----------------------------------------------------------------------
-
         self.dmd_connection = None
         self.net_connection = None
         self.rgb_connection = None
