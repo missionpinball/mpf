@@ -30,14 +30,15 @@ class TestOpenpixel(MpfTestCase):
         openpixel.OpenPixelClient.send = self._send
 
     def _build_message(self, channel, leds):
-        out = chr(channel) + chr(0) + chr(1) + chr(44)
+        out = bytearray()
+        out.extend([channel, 0, 1, 44])
         for i in range(0, 100):
             if i in leds:
-                out += chr(leds[i][0]) + chr(leds[i][1]) + chr(leds[i][2])
+                out.extend([leds[i][0], leds[i][1], leds[i][2]])
             else:
-                out += chr(0) + chr(0) + chr(0)
+                out.extend([0, 0, 0])
 
-        return bytes(out, 'UTF-8')
+        return bytes(out)
 
     def _send_mock(self, message):
         self._messages.append(message)

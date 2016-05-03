@@ -166,16 +166,19 @@ class OpenPixelClient(object):
         """
 
         # Build the OPC message
+        msg = bytearray()
         len_hi_byte = int(len(pixels)*3 / 256)
         len_lo_byte = (len(pixels)*3) % 256
-        header = chr(channel) + chr(0) + chr(len_hi_byte) + chr(len_lo_byte)
-        pieces = [header]
+        header = bytes([channel, 0, len_hi_byte, len_lo_byte])
+        msg.extend(header)
         for r, g, b in pixels:
             r = min(255, max(0, int(r)))
             g = min(255, max(0, int(g)))
             b = min(255, max(0, int(b)))
-            pieces.append(chr(r) + chr(g) + chr(b))
-        self.send(bytes(''.join(pieces), 'UTF-8'))
+            msg.append(r)
+            msg.append(g)
+            msg.append(b)
+        self.send(bytes(msg))
 
     def send(self, message):
         """Puts a message on the queue to be sent to the OPC server.
