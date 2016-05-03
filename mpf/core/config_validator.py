@@ -1134,14 +1134,14 @@ class ConfigValidator(object):
             "boolean": self._validate_type_bool,
             "ms": self._validate_type_ms,
             "secs": self._validate_type_secs,
-            "list": Util.string_to_list,
-            "int_from_hex": Util.hex_string_to_int,
+            "list": self._validate_type_list,
+            "int_from_hex": self._validate_type_int_from_hex,
             "dict": self._validate_type_dict,
             "kivycolor": self._validate_type_kivycolor,
             "color": self._validate_type_color,
             "bool_int": self._validate_type_bool_int,
             "pow2": self._validate_type_pow2,
-            "gain": Util.string_to_gain,
+            "gain": self._validate_type_gain,
             "subconfig": self._validate_type_subconfig,
             "enum": self._validate_type_enum,
             "machine": self._validate_type_machine,
@@ -1228,15 +1228,15 @@ class ConfigValidator(object):
                     if k in source:
                         for i in source[k]:  # individual step
                             final_list.append(self.validate_config(
-                                    config_spec + ':' + k, source=i,
-                                    section_name=k))
+                                config_spec + ':' + k, source=i,
+                                section_name=k))
 
                     processed_config[k] = final_list
 
                 else:
                     processed_config[k] = self.validate_config_item(
-                            this_spec[k], item=source[k],
-                            validation_failure_info=(validation_failure_info, k))
+                        this_spec[k], item=source[k],
+                        validation_failure_info=(validation_failure_info, k))
 
             elif add_missing_keys:  # create the default entry
 
@@ -1245,9 +1245,9 @@ class ConfigValidator(object):
 
                 else:
                     processed_config[k] = self.validate_config_item(
-                            this_spec[k],
-                            validation_failure_info=(
-                                validation_failure_info, k))
+                        this_spec[k],
+                        validation_failure_info=(
+                            validation_failure_info, k))
 
         return processed_config
 
@@ -1285,9 +1285,7 @@ class ConfigValidator(object):
             new_list = list()
 
             for i in item_list:
-                new_list.append(
-                        self.validate_item(i, validation,
-                                           validation_failure_info))
+                new_list.append(self.validate_item(i, validation, validation_failure_info))
 
             return new_list
 
@@ -1297,9 +1295,7 @@ class ConfigValidator(object):
             new_set = set()
 
             for i in item_set:
-                new_set.add(
-                        self.validate_item(i, validation,
-                                           validation_failure_info))
+                new_set.add(self.validate_item(i, validation, validation_failure_info))
 
             return new_set
 
@@ -1326,8 +1322,7 @@ class ConfigValidator(object):
 
                     path_list = validation_failure_info[0].split(':')
 
-                    if len(path_list) > 1 and (
-                                path_list[-1] == validation_failure_info[1]):
+                    if len(path_list) > 1 and path_list[-1] == validation_failure_info[1]:
                         path_list.append('[list_item]')
                     elif path_list[0] == validation_failure_info[1]:
                         path_list = list()
@@ -1337,13 +1332,11 @@ class ConfigValidator(object):
 
                     path_string = ':'.join(path_list)
 
-                    if self.machine.machine_config['mpf'][
-                        'allow_invalid_config_sections']:
+                    if self.machine.machine_config['mpf']['allow_invalid_config_sections']:
 
-                        self.log.warning(
-                                'Unrecognized config setting. "%s" is '
-                                'not a valid setting name.',
-                                path_string)
+                        self.log.warning('Unrecognized config setting. "%s" is '
+                                         'not a valid setting name.',
+                                         path_string)
 
                     else:
                         self.log.error('Your config contains a value for the '
@@ -1398,47 +1391,76 @@ class ConfigValidator(object):
         else:
             self.validation_error(item, validation_failure_info)
 
-    def _validate_type_str(self, item):
+    def _validate_type_list(self, item, validation_failure_info):
+        del validation_failure_info
+        return Util.string_to_list(item)
+
+    def _validate_type_int_from_hex(self, item, validation_failure_info):
+        del validation_failure_info
+        return Util.hex_string_to_int(item)
+
+    def _validate_type_gain(self, item, validation_failure_info):
+        del validation_failure_info
+        return Util.string_to_gain(item)
+
+    def _validate_type_str(self, item, validation_failure_info):
+        del validation_failure_info
         if item is not None:
             return str(item)
         else:
             return None
 
-    def _validate_type_lstr(self, item):
+    def _validate_type_lstr(self, item, validation_failure_info):
+        del validation_failure_info
         if item is not None:
             return str(item).lower()
         else:
             return None
 
-    def _validate_type_float(self, item):
+    def _validate_type_float(self, item, validation_failure_info):
+        if item is None:
+            return None
         try:
             return float(item)
         except (TypeError, ValueError):
-            # TODO error
-            return item
+            self.validation_error(item, validation_failure_info, "Could not convert to float")
 
-    def _validate_type_int(self, item):
+    def _validate_type_int(self, item, validation_failure_info, param=None):
+        if item is None:
+            return None
+
         try:
-            return int(item)
+            value = int(item)
         except (TypeError, ValueError):
-            # TODO error
-            return item
+            return self.validation_error(item, validation_failure_info, "Could not convert {} to int".format(item))
 
-    def _validate_type_num(self, item):
+        if param:
+            param = param.split(",")
+            if param[0] is not None and value < int(param[0]):
+                self.validation_error(item, validation_failure_info, "{} is smaller then {}".format(item, param[0]))
+            elif param[1] is not None and value > int(param[1]):
+                self.validation_error(item, validation_failure_info, "{} is larger then {}".format(item, param[0]))
+
+        return value
+
+    def _validate_type_num(self, item, validation_failure_info):
+        if item is None:
+            return None
+
         # used for int or float, but does not convert one to the other
-        if not isinstance(item, (int, float)):
+        if isinstance(item, (int, float)):
+            return item
+        else:
             try:
                 if '.' in item:
                     return float(item)
                 else:
                     return int(item)
             except (TypeError, ValueError):
-                # TODO: error
-                return item
-        else:
-            return item
+                self.validation_error(item, validation_failure_info, "Could not convert {} to num".format(item))
 
-    def _validate_type_bool(self, item):
+    def _validate_type_bool(self, item, validation_failure_info):
+        del validation_failure_info
         if item is None:
             return None
         elif isinstance(item, str):
@@ -1448,22 +1470,26 @@ class ConfigValidator(object):
         else:
             return True
 
-    def _validate_type_ms(self, item):
+    def _validate_type_ms(self, item, validation_failure_info):
+        del validation_failure_info
         if item is not None:
             return Util.string_to_ms(item)
         else:
             return None
 
-    def _validate_type_secs(self, item):
+    def _validate_type_secs(self, item, validation_failure_info):
+        del validation_failure_info
         if item is not None:
             return Util.string_to_secs(item)
         else:
             return None
 
-    def _validate_type_dict(self, item):
+    def _validate_type_dict(self, item, validation_failure_info):
+        del validation_failure_info
         return item
 
-    def _validate_type_kivycolor(self, item):
+    def _validate_type_kivycolor(self, item, validation_failure_info):
+        del validation_failure_info
         # Validate colors that will be used by Kivy. The result is a 4-item
         # list, RGBA, with individual values from 0.0 - 1.0
         if not item:
@@ -1489,7 +1515,8 @@ class ConfigValidator(object):
 
         return color
 
-    def _validate_type_color(self, item):
+    def _validate_type_color(self, item, validation_failure_info):
+        del validation_failure_info
         # Validates colors by name, hex, or list, into a 3-item list, RGB,
         # with individual values from 0-255
         color_string = str(item).lower()
@@ -1503,16 +1530,17 @@ class ConfigValidator(object):
             color = Util.string_to_list(color_string)
             return int(color[0]), int(color[1]), int(color[2])
 
-    def _validate_type_bool_int(self, item):
-        if self._validate_type_bool(item):
+    def _validate_type_bool_int(self, item, validation_failure_info):
+        if self._validate_type_bool(item, validation_failure_info):
             return 1
         else:
             return 0
 
-    def _validate_type_pow2(self, item):
+    def _validate_type_pow2(self, item, validation_failure_info):
+        if item is None:
+            return None
         if not Util.is_power2(item):
-            raise ValueError
-            # todo make a better error
+            self.validation_error(item, validation_failure_info, "Could not convert {} to pow2".format(item))
         else:
             return item
 
@@ -1544,9 +1572,9 @@ class ConfigValidator(object):
             validator_parts = validator.split('(')
             validator = validator_parts[0]
             param = validator_parts[1][:-1]
-            return self.validator_list[validator](item, param, validation_failure_info=validation_failure_info)
+            return self.validator_list[validator](item, validation_failure_info=validation_failure_info, param=param)
         elif validator in self.validator_list:
-            return self.validator_list[validator](item)
+            return self.validator_list[validator](item, validation_failure_info=validation_failure_info)
 
         else:
             raise AssertionError("Invalid Validator '{}' in config spec {}:{}".format(
@@ -1554,10 +1582,9 @@ class ConfigValidator(object):
                                  validation_failure_info[0][0],
                                  validation_failure_info[1]))
 
-    def validation_error(self, item, validation_failure_info):
-        raise AssertionError(
-                "Config validation error: Entry {}:{}:{}:{} is not valid".format(
-                        validation_failure_info[0][0],
-                        validation_failure_info[0][1],
-                        validation_failure_info[1],
-                        item))
+    def validation_error(self, item, validation_failure_info, msg=""):
+        raise AssertionError("Config validation error: Entry {}:{}:{}:{} is not valid. {}".format(
+            validation_failure_info[0][0],
+            validation_failure_info[0][1],
+            validation_failure_info[1],
+            item, msg))
