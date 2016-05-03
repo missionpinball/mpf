@@ -15,4 +15,4 @@ timers:
               action: start
             - event: pause_timer_down
               action: pause
-              value: 2s
+              value: 2
