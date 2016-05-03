@@ -615,8 +615,8 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         if coil.config['pulse_ms']:
             return coil.config['pulse_ms']
         else:
-            # TODO: load default
-            return 10
+            # use mpf default_pulse_ms
+            return self.machine.config['mpf']['default_pulse_ms']
 
     def _write_hw_rule(self, switch_obj, driver_obj, use_hold):
         if switch_obj.invert:
@@ -853,8 +853,6 @@ class OPPNeopixel(object):
             0-255 each.
         """
 
-        # todo this is crazy inefficient right now. todo change it so it can use
-        # hex strings as the color throughout
         new_color = color.hex
         error = False
 
@@ -1045,8 +1043,6 @@ class SerialCommunicator(object):
         self.log.error("Stop called on serial connection")
         self.serial_connection.close()
         self.serial_connection = None  # child threads stop when this is None
-
-        # todo clear the hw?
 
     def send(self, msg):
         """Sends a message to the remote processor over the serial connection.
