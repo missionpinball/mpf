@@ -2,4 +2,10 @@
 
 leds:
   led1:
-    number:
+    number: 1
+  led2:
+    number: 2, 3, 4
+    type: bgr
+  led3:
+    number: 7, 8, 9, 10
+    type: rgbw

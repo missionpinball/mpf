@@ -284,3 +284,20 @@ class TestLed(MpfTestCase):
     # TODO
     # color correction profiles
     # default fades
+
+    def test_non_rgb_leds(self):
+        # test bgr
+        led = self.machine.leds.led2
+
+        led.color(RGBColor((11, 23, 42)))
+        self.advance_time_and_run(1)
+
+        self.assertEqual(RGBColor((42, 23, 11)), led.hw_driver.current_color)
+
+        # test rgbw
+        led = self.machine.leds.led3
+
+        led.color(RGBColor((11, 23, 42)))
+        self.advance_time_and_run(1)
+
+        self.assertEqual(RGBColor((11, 23, 42, 11)), led.hw_driver.current_color)
