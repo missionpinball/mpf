@@ -43,6 +43,10 @@ class HighScore(Mode):
                     self.high_scores[entries] = list()
 
     def mode_start(self, **kwargs):
+
+        self.add_mode_event_handler('text_input_high_score_complete',
+                                    self._receive_player_name)
+
         if self._check_for_high_scores():
             self._start_sending_switches()
             self._get_player_names()
@@ -64,12 +68,18 @@ class HighScore(Mode):
                 new_list = list()
 
                 # add the existing high scores to the list
-                for category_high_scores in self.high_scores[category_name]:
-                    new_list.append(category_high_scores)
+
+                # make sure we have this category in the existing high scores
+                if category_name in self.high_scores:
+                    for category_high_scores in self.high_scores[category_name]:
+                        new_list.append(category_high_scores)
 
                 # add the players scores from this game to the list
                 for player in self.machine.game.player_list:
-                    new_list.append((player, player[category_name]))
+                    # if the player var is 0, don't add it. This prevents
+                    # values of 0 being added to blank high score lists
+                    if player[category_name]:
+                        new_list.append((player, player[category_name]))
 
                 # sort if from highest to lowest
                 new_list.sort(key=lambda x: x[1], reverse=True)
@@ -88,10 +98,6 @@ class HighScore(Mode):
         return high_score_change
 
     def _get_player_names(self):
-        if not self.player_name_handler:
-            self.machine.events.add_handler('text_input_high_score_complete',
-                                            self._receive_player_name)
-
         for category_name, top_scores in self.new_high_score_list.items():
             for index, (player, value) in enumerate(top_scores):
                 if player in self.machine.game.player_list:
@@ -104,18 +110,22 @@ class HighScore(Mode):
                                     category_dict[config_cat_name][index])
 
                                 if not self.pending_award:
-                                    self._get_player_name(player, award_label, value)
+                                    self._get_player_name(player,
+                                                          config_cat_name,
+                                                          index, award_label,
+                                                          value)
                                 return
 
         self.high_scores_done()
 
-    def _get_player_name(self, player, award_label, value):
+    def _get_player_name(self, player, config_cat_name, index, award_label,
+                         value):
         if not self.pending_award:
 
             self.log.info("New high score. Player: %s, award_label: %s"
                        ", Value: %s", player, award_label, value)
 
-            self.pending_award = award_label
+            self.pending_award = (config_cat_name, index, value, award_label)
 
             self.machine.create_machine_var(name='new_high_score_award',
                                             value=award_label)
@@ -130,34 +140,27 @@ class HighScore(Mode):
                                   player_num=player.number,
                                   value=value)
 
-    def _receive_player_name(self, text):
+    def _receive_player_name(self, text, mode):
+        del mode
 
         if not text:
             text = ''
 
-        for category_scores in self.high_score_config['categories']:
+        if not self.pending_award:
+            self._get_player_names()
+            return
 
-            for category_name in list(category_scores.keys()):
-                for index, local_award in (
-                        enumerate(category_scores[category_name])):
-                    if local_award == self.pending_award:
+        config_cat_name, index, value, award_label = self.pending_award
 
-                        if (self.new_high_score_list[category_name][index][0]
-                                in self.machine.game.player_list):
-                            value = (self.new_high_score_list[category_name]
-                                                            [index][1])
-                            self.new_high_score_list[category_name][index] = (
-                                (text, value))
-
-                            if self.high_score_config[
-                                    'award_slide_display_time']:
-
-                                self._send_award_slide(text,
-                                                       self.pending_award,
-                                                       value)
+        self.new_high_score_list[config_cat_name][index] = (text, value)
 
         self.pending_award = None
-        self._get_player_names()
+
+        if self.high_score_config['award_slide_display_time']:
+            self._send_award_slide(text, award_label, value)
+
+        else:
+            self._get_player_names()
 
     def _send_award_slide(self, player_name, award, value):
         self.send_award_slide_event(
@@ -170,7 +173,6 @@ class HighScore(Mode):
             player_name=player_name,
             award=award,
             value=value)
-
         self.delay.add(name='award_timer',
             ms=self.high_score_config['award_slide_display_time'],
             callback=self._get_player_names)
@@ -179,7 +181,6 @@ class HighScore(Mode):
         self._stop_sending_switches()
         self.high_scores = self.new_high_score_list
         self._write_scores_to_disk()
-        self.machine.events.remove_handler(self._receive_player_name)
         self.player_name_handler = None
         self.stop()
 
