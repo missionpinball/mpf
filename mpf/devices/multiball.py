@@ -29,9 +29,13 @@ class Multiball(SystemWideDevice, ModeDevice):
         self.ball_locks = self.config['ball_locks']
         self.source_playfield = self.config['source_playfield']
 
-        # start mb if no enable_events are specified
-        if not self.config['enable_events']:
-            self.enable()
+    def prepare_config(self, config, is_mode_config):
+        if not is_mode_config:
+            if 'enable_events' not in config:
+                config['enable_events'] = 'ball_started'
+            if 'disable_events' not in config:
+                config['disable_events'] = 'ball_ending'
+        return super().prepare_config(config, is_mode_config)
 
     def start(self, **kwargs):
         del kwargs

@@ -10,7 +10,9 @@ class ModeDevice(Device):
 
     def control_events_in_mode(self, mode):
         # Called on mode start if this device has any control events in that mode
-        pass
+        # start mb if no enable_events are specified
+        if "enable_events" in self.config and not self.config['enable_events']:
+            self.enable()
 
     def remove(self):
         raise NotImplementedError(

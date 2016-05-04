@@ -523,8 +523,8 @@ multiballs:
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False
-    enable_events:  dict|str:ms|ball_started
-    disable_events:  dict|str:ms|ball_ending
+    enable_events:  dict|str:ms|None
+    disable_events:  dict|str:ms|None
     reset_events:  dict|str:ms|machine_reset_phase_3, ball_starting
     start_events:  dict|str:ms|None
     stop_events:  dict|str:ms|None
