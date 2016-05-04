@@ -431,7 +431,7 @@ leds:
     polarity: single|bool|False
     default_color: single|color|ffffff
     color_correction_profile: single|str|None
-    fade_ms: single|int|None
+    fade_ms: single|ms|None
     tags: list|str|None
     type: single|lstr|rgb
     label: single|str|%

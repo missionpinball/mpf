@@ -171,6 +171,14 @@ class TestLed(MpfTestCase):
         self.assertEqual(list(RGBColor('red').rgb),
                          self.machine.leds.led1.hw_driver.current_color)
 
+        led = self.machine.leds.led4
+        self.assertEqual(1000, led.default_fade_ms)
+        led.color('white')
+        self.advance_time_and_run(.5)
+        self.assertEqual([127, 127, 127], led.hw_driver.current_color)
+        self.advance_time_and_run(.5)
+        self.assertEqual([255, 255, 255], led.hw_driver.current_color)
+
     def test_interrupted_fade(self):
         led1 = self.machine.leds.led1
 
@@ -301,3 +309,11 @@ class TestLed(MpfTestCase):
         self.advance_time_and_run(1)
 
         self.assertEqual([11, 23, 42, 11], led.hw_driver.current_color)
+
+        # test w+-
+        led = self.machine.leds.led5
+
+        led.color(RGBColor((100, 100, 100)))
+        self.advance_time_and_run(1)
+
+        self.assertEqual([100, 255, 0], led.hw_driver.current_color)

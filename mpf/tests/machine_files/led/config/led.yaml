@@ -3,9 +3,19 @@
 leds:
   led1:
     number: 1
+    debug: True
   led2:
     number: 2, 3, 4
     type: bgr
+    debug: True
   led3:
     number: 7, 8, 9, 10
     type: rgbw
+    debug: True
+  led4:
+    number: 11
+    fade_ms: 1s
+  led5:
+    number: 12, 13, 14
+    type: w+-
+    debug: True
