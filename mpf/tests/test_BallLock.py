@@ -8,7 +8,7 @@ class TestBallLock(MpfTestCase):
         return 'test_ball_lock.yaml'
 
     def getMachinePath(self):
-        return 'tests/machine_files/ball_device/'
+        return 'tests/machine_files/ball_lock/'
 
     def _missing_ball(self):
         self._missing += 1
