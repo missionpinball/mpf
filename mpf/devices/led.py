@@ -343,7 +343,7 @@ class Led(SystemWideDevice):
 
             reordered_color = self._get_color_channels_for_hw(corrected_color)
 
-            self.hw_driver.color(RGBColor(tuple(reordered_color)))
+            self.hw_driver.color(reordered_color)
 
             if self.registered_handlers:
                 # Handlers are not sent color corrected colors

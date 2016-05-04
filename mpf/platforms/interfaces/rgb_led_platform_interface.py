@@ -11,9 +11,9 @@ class RGBLEDPlatformInterface(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def color(self, color):
         """
-        Sets the RGB LED to the specified color.
+        Sets the LED to the specified color.
         Args:
-            color: an RGBColor object
+            color: a list of int colors. one for each channel.
 
         Returns:
             None

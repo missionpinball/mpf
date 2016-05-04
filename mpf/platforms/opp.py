@@ -878,7 +878,9 @@ class OPPNeopixel(object):
             0-255 each.
         """
 
-        new_color = color.hex
+        new_color = "{0}{1}{2}".format(hex(int(color[0]))[2:].zfill(2),
+                                       hex(int(color[1]))[2:].zfill(2),
+                                       hex(int(color[2]))[2:].zfill(2))
         error = False
 
         # Check if this color exists in the color table

@@ -70,7 +70,7 @@ class OpenPixelLED(RGBLEDPlatformInterface):
 
     def color(self, color):
         self.log.debug("Setting color: %s", color)
-        self.opc_client.set_pixel_color(self.channel, self.led, color.rgb)
+        self.opc_client.set_pixel_color(self.channel, self.led, color)
 
 
 class OpenPixelClient(object):
