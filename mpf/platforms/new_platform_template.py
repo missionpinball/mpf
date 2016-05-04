@@ -144,7 +144,7 @@ class HardwarePlatform(MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatfor
     def configure_matrixlight(self, config):
         return VirtualMatrixLight(config['number'])
 
-    def configure_led(self, config):
+    def configure_led(self, config, channels):
         return VirtualLED(config['number'])
 
     def configure_gi(self, config):
