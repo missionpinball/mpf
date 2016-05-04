@@ -55,6 +55,7 @@ class TestOPP(MpfTestCase):
         return crc_msg
 
     def setUp(self):
+        self.expected_duration = 1.5
         opp.serial_imported = True
         opp.serial = MagicMock()
         self.serialMock = SerialMock()
