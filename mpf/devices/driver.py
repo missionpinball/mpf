@@ -88,8 +88,6 @@ class Driver(SystemWideDevice):
         """
         del kwargs
 
-        # todo power is broken with fast since they come in as strings
-
         if not milliseconds:
             if self.config['pulse_ms']:
                 milliseconds = self.config['pulse_ms']
