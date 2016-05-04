@@ -459,7 +459,7 @@ class AssetManager(object):
                    if x['pool_config_section']]:
 
             if (ac['pool_config_section']) not in config:
-                return
+                continue
 
             for name, settings in config[ac['pool_config_section']].items():
                 getattr(self.machine, ac['attribute'])[name] = (
