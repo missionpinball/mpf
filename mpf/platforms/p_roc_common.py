@@ -210,8 +210,11 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
 
         return bool(coil_number)
 
-    def configure_led(self, config):
+    def configure_led(self, config, channels):
         """ Configures a P/P3-ROC RGB LED controlled via a PD-LED."""
+
+        if channels > 3:
+            raise AssertionError("More than 3 channels not yet implemented")
 
         # split the number (which comes in as a string like w-x-y-z) into parts
         number_parts = str(config['number']).split('-')
@@ -743,7 +746,6 @@ class PDBLED(RGBLEDPlatformInterface):
         else:
             return value
 
-
     def color(self, color):
         """Instantly sets this LED to the color passed.
 
@@ -754,9 +756,9 @@ class PDBLED(RGBLEDPlatformInterface):
         # self.log.debug("Setting Color. Board: %s, Address: %s, Color: %s",
         #               self.board, self.address, color)
 
-        self.proc.led_color(self.board, self.address[0], self.normalise_color(color.red))
-        self.proc.led_color(self.board, self.address[1], self.normalise_color(color.green))
-        self.proc.led_color(self.board, self.address[2], self.normalise_color(color.blue))
+        self.proc.led_color(self.board, self.address[0], self.normalise_color(color[0]))
+        self.proc.led_color(self.board, self.address[1], self.normalise_color(color[1]))
+        self.proc.led_color(self.board, self.address[2], self.normalise_color(color[2]))
 
 
 def is_pdb_address(addr):

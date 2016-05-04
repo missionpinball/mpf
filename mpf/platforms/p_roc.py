@@ -40,20 +40,6 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
         # validate config for p_roc
         self.machine.config_validator.validate_config("p_roc", self.machine.config['p_roc'])
 
-        # ----------------------------------------------------------------------
-        # Platform-specific hardware features. WARNING: Do not edit these. They
-        # are based on what the P-ROC hardware can and cannot do.
-        self.features['max_pulse'] = 255
-        self.features['hw_rule_coil_delay'] = False
-        self.features['variable_recycle_time'] = False
-        self.features['variable_debounce_time'] = False
-        self.features['hw_led_fade'] = True
-        # todo need to add differences between patter and pulsed_patter
-
-        # Make the platform features available to everyone
-        self.machine.config['platform'] = self.features
-        # ----------------------------------------------------------------------
-
         self.dmd = None
 
         self.connect()

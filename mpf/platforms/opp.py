@@ -543,7 +543,9 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
         return self.inpDict[config['number']]
 
-    def configure_led(self, config):
+    def configure_led(self, config, channels):
+        if channels > 3:
+            raise AssertionError("OPP only supports RGB LEDs")
         if not self.opp_connection:
             raise AssertionError("A request was made to configure an OPP LED, "
                                  "but no OPP connection is available")
@@ -876,7 +878,9 @@ class OPPNeopixel(object):
             0-255 each.
         """
 
-        new_color = color.hex
+        new_color = "{0}{1}{2}".format(hex(int(color[0]))[2:].zfill(2),
+                                       hex(int(color[1]))[2:].zfill(2),
+                                       hex(int(color[2]))[2:].zfill(2))
         error = False
 
         # Check if this color exists in the color table

@@ -19,6 +19,7 @@ class BasePlatform(object):
         self.features['has_servos'] = False
         self.features['has_matrix_lights'] = False
         self.features['has_gis'] = False
+        self.features['has_leds'] = False
         self.features['has_switches'] = False
         self.features['has_drivers'] = False
 
@@ -151,9 +152,9 @@ class GiPlatform(BasePlatform):
 class LedPlatform(BasePlatform):
     def __init__(self, machine):
         super().__init__(machine)
-        self.features['has_gis'] = True
+        self.features['has_leds'] = True
 
-    def configure_led(self, config):
+    def configure_led(self, config, channels):
         """Subclass this method in a platform module to configure an LED.
 
         This method should return a reference to the LED's platform interface
@@ -219,8 +220,6 @@ class DriverPlatform(BasePlatform):
         # these to notify the framework of the specific features it supports.
         self.features['has_drivers'] = True
         self.features['max_pulse'] = 255
-        self.features['hw_rule_coil_delay'] = False
-        self.features['variable_recycle_time'] = False
 
     def configure_driver(self, config):
         """Subclass this method in a platform module to configure a driver.

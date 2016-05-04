@@ -278,82 +278,82 @@ class TestShotGroups(MpfTestCase):
 
         # advance the shots a bit
 
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_10.hw_driver.current_color)
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_11.hw_driver.current_color)
 
         self.hit_and_release_switch('switch_10')
         self.advance_time_and_run()
-        self.assertEqual(RGBColor('red'),
+        self.assertEqual(list(RGBColor('red').rgb),
             self.machine.leds.led_10.hw_driver.current_color)
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_11.hw_driver.current_color)
 
         self.hit_and_release_switch('switch_10')
         self.advance_time_and_run()
-        self.assertEqual(RGBColor('orange'),
+        self.assertEqual(list(RGBColor('orange').rgb),
             self.machine.leds.led_10.hw_driver.current_color)
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_11.hw_driver.current_color)
 
         self.hit_and_release_switch('switch_11')
         self.advance_time_and_run()
-        self.assertEqual(RGBColor('orange'),
+        self.assertEqual(list(RGBColor('orange').rgb),
             self.machine.leds.led_10.hw_driver.current_color)
-        self.assertEqual(RGBColor('red'),
+        self.assertEqual(list(RGBColor('red').rgb),
             self.machine.leds.led_11.hw_driver.current_color)
 
         # rotate
         self.machine.events.post('rotate_11_left')
         self.advance_time_and_run()
-        self.assertEqual(RGBColor('red'),
+        self.assertEqual(list(RGBColor('red').rgb),
             self.machine.leds.led_10.hw_driver.current_color)
-        self.assertEqual(RGBColor('orange'),
+        self.assertEqual(list(RGBColor('orange').rgb),
             self.machine.leds.led_11.hw_driver.current_color)
 
         # make sure they don't auto advance since the shows should be set to
         # manual advance
         self.advance_time_and_run()
-        self.assertEqual(RGBColor('red'),
+        self.assertEqual(list(RGBColor('red').rgb),
             self.machine.leds.led_10.hw_driver.current_color)
-        self.assertEqual(RGBColor('orange'),
+        self.assertEqual(list(RGBColor('orange').rgb),
             self.machine.leds.led_11.hw_driver.current_color)
 
         self.advance_time_and_run()
-        self.assertEqual(RGBColor('red'),
+        self.assertEqual(list(RGBColor('red').rgb),
             self.machine.leds.led_10.hw_driver.current_color)
-        self.assertEqual(RGBColor('orange'),
+        self.assertEqual(list(RGBColor('orange').rgb),
             self.machine.leds.led_11.hw_driver.current_color)
 
     def test_no_profile_in_shot_group_uses_profile_from_shot(self):
         self.start_game()
         self.advance_time_and_run()
 
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_30.hw_driver.current_color)
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_31.hw_driver.current_color)
 
         self.hit_and_release_switch('switch_30')
         self.advance_time_and_run()
-        self.assertEqual(RGBColor('red'),
+        self.assertEqual(list(RGBColor('red').rgb),
             self.machine.leds.led_30.hw_driver.current_color)
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_31.hw_driver.current_color)
 
         self.hit_and_release_switch('switch_30')
         self.advance_time_and_run()
-        self.assertEqual(RGBColor('orange'),
+        self.assertEqual(list(RGBColor('orange').rgb),
             self.machine.leds.led_30.hw_driver.current_color)
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_31.hw_driver.current_color)
 
         self.hit_and_release_switch('switch_31')
         self.advance_time_and_run()
-        self.assertEqual(RGBColor('orange'),
+        self.assertEqual(list(RGBColor('orange').rgb),
             self.machine.leds.led_30.hw_driver.current_color)
-        self.assertEqual(RGBColor('red'),
+        self.assertEqual(list(RGBColor('red').rgb),
             self.machine.leds.led_31.hw_driver.current_color)
 
     def test_control_events(self):
@@ -385,19 +385,19 @@ class TestShotGroups(MpfTestCase):
 
         # test advance event
         self.assertEqual(shot32.profiles[0]['current_state_name'], 'unlit')
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_32.hw_driver.current_color)
         self.assertEqual(shot33.profiles[0]['current_state_name'], 'unlit')
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_33.hw_driver.current_color)
 
         self.machine.events.post('group32_advance')
         self.advance_time_and_run()
         self.assertEqual(shot32.profiles[0]['current_state_name'], 'red')
         self.assertEqual(shot33.profiles[0]['current_state_name'], 'red')
-        self.assertEqual(RGBColor('red'),
+        self.assertEqual(list(RGBColor('red').rgb),
             self.machine.leds.led_32.hw_driver.current_color)
-        self.assertEqual(RGBColor('red'),
+        self.assertEqual(list(RGBColor('red').rgb),
             self.machine.leds.led_33.hw_driver.current_color)
 
         # test reset event
@@ -405,9 +405,9 @@ class TestShotGroups(MpfTestCase):
         self.advance_time_and_run()
         self.assertEqual(shot32.profiles[0]['current_state_name'], 'unlit')
         self.assertEqual(shot33.profiles[0]['current_state_name'], 'unlit')
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_32.hw_driver.current_color)
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_33.hw_driver.current_color)
 
         # test rotate without rotation enabled
@@ -415,9 +415,9 @@ class TestShotGroups(MpfTestCase):
         self.advance_time_and_run()
         self.assertEqual(shot32.profiles[0]['current_state_name'], 'red')
         self.assertEqual(shot33.profiles[0]['current_state_name'], 'unlit')
-        self.assertEqual(RGBColor('red'),
+        self.assertEqual(list(RGBColor('red').rgb),
             self.machine.leds.led_32.hw_driver.current_color)
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_33.hw_driver.current_color)
         self.assertFalse(group32.rotation_enabled)
 
@@ -425,9 +425,9 @@ class TestShotGroups(MpfTestCase):
         self.advance_time_and_run()
         self.assertEqual(shot32.profiles[0]['current_state_name'], 'red')
         self.assertEqual(shot33.profiles[0]['current_state_name'], 'unlit')
-        self.assertEqual(RGBColor('red'),
+        self.assertEqual(list(RGBColor('red').rgb),
             self.machine.leds.led_32.hw_driver.current_color)
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_33.hw_driver.current_color)
 
         # test rotation enable
@@ -440,9 +440,9 @@ class TestShotGroups(MpfTestCase):
         self.advance_time_and_run()
         self.assertEqual(shot32.profiles[0]['current_state_name'], 'unlit')
         self.assertEqual(shot33.profiles[0]['current_state_name'], 'red')
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_32.hw_driver.current_color)
-        self.assertEqual(RGBColor('red'),
+        self.assertEqual(list(RGBColor('red').rgb),
             self.machine.leds.led_33.hw_driver.current_color)
 
         # test disable rotation
@@ -457,9 +457,9 @@ class TestShotGroups(MpfTestCase):
         # test that rotate did not happen
         self.assertEqual(shot32.profiles[0]['current_state_name'], 'unlit')
         self.assertEqual(shot33.profiles[0]['current_state_name'], 'red')
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_32.hw_driver.current_color)
-        self.assertEqual(RGBColor('red'),
+        self.assertEqual(list(RGBColor('red').rgb),
             self.machine.leds.led_33.hw_driver.current_color)
 
         # test disable event
@@ -484,11 +484,11 @@ class TestShotGroups(MpfTestCase):
         self.assertEqual(shot34.profiles[0]['current_state_name'], 'red')
         self.assertEqual(shot35.profiles[0]['current_state_name'], 'green')
         self.assertEqual(shot36.profiles[0]['current_state_name'], 'unlit')
-        self.assertEqual(RGBColor('red'),
+        self.assertEqual(list(RGBColor('red').rgb),
             self.machine.leds.led_34.hw_driver.current_color)
-        self.assertEqual(RGBColor('green'),
+        self.assertEqual(list(RGBColor('green').rgb),
             self.machine.leds.led_35.hw_driver.current_color)
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_36.hw_driver.current_color)
 
         # rotate, only the red and green states should be rotated
@@ -497,11 +497,11 @@ class TestShotGroups(MpfTestCase):
         self.assertEqual(shot34.profiles[0]['current_state_name'], 'green')
         self.assertEqual(shot35.profiles[0]['current_state_name'], 'red')
         self.assertEqual(shot36.profiles[0]['current_state_name'], 'unlit')
-        self.assertEqual(RGBColor('green'),
+        self.assertEqual(list(RGBColor('green').rgb),
             self.machine.leds.led_34.hw_driver.current_color)
-        self.assertEqual(RGBColor('red'),
+        self.assertEqual(list(RGBColor('red').rgb),
             self.machine.leds.led_35.hw_driver.current_color)
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_36.hw_driver.current_color)
 
     def test_state_names_to_not_rotate(self):
@@ -519,11 +519,11 @@ class TestShotGroups(MpfTestCase):
         self.assertEqual(shot37.profiles[0]['current_state_name'], 'red')
         self.assertEqual(shot38.profiles[0]['current_state_name'], 'orange')
         self.assertEqual(shot39.profiles[0]['current_state_name'], 'unlit')
-        self.assertEqual(RGBColor('red'),
+        self.assertEqual(list(RGBColor('red').rgb),
             self.machine.leds.led_37.hw_driver.current_color)
-        self.assertEqual(RGBColor('orange'),
+        self.assertEqual(list(RGBColor('orange').rgb),
             self.machine.leds.led_38.hw_driver.current_color)
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_39.hw_driver.current_color)
 
         # rotate, only the red and green states should be rotated
@@ -532,11 +532,11 @@ class TestShotGroups(MpfTestCase):
         self.assertEqual(shot37.profiles[0]['current_state_name'], 'orange')
         self.assertEqual(shot38.profiles[0]['current_state_name'], 'red')
         self.assertEqual(shot39.profiles[0]['current_state_name'], 'unlit')
-        self.assertEqual(RGBColor('orange'),
+        self.assertEqual(list(RGBColor('orange').rgb),
             self.machine.leds.led_37.hw_driver.current_color)
-        self.assertEqual(RGBColor('red'),
+        self.assertEqual(list(RGBColor('red').rgb),
             self.machine.leds.led_38.hw_driver.current_color)
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_39.hw_driver.current_color)
 
     def test_rotation_pattern(self):
@@ -552,11 +552,11 @@ class TestShotGroups(MpfTestCase):
         self.assertEqual(shot40.profiles[0]['current_state_name'], 'red')
         self.assertEqual(shot41.profiles[0]['current_state_name'], 'unlit')
         self.assertEqual(shot42.profiles[0]['current_state_name'], 'unlit')
-        self.assertEqual(RGBColor('red'),
+        self.assertEqual(list(RGBColor('red').rgb),
             self.machine.leds.led_40.hw_driver.current_color)
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_41.hw_driver.current_color)
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_42.hw_driver.current_color)
 
         group40.rotate()
@@ -564,11 +564,11 @@ class TestShotGroups(MpfTestCase):
         self.assertEqual(shot40.profiles[0]['current_state_name'], 'unlit')
         self.assertEqual(shot41.profiles[0]['current_state_name'], 'red')
         self.assertEqual(shot42.profiles[0]['current_state_name'], 'unlit')
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_40.hw_driver.current_color)
-        self.assertEqual(RGBColor('red'),
+        self.assertEqual(list(RGBColor('red').rgb),
             self.machine.leds.led_41.hw_driver.current_color)
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_42.hw_driver.current_color)
 
         group40.rotate()
@@ -576,11 +576,11 @@ class TestShotGroups(MpfTestCase):
         self.assertEqual(shot40.profiles[0]['current_state_name'], 'unlit')
         self.assertEqual(shot41.profiles[0]['current_state_name'], 'unlit')
         self.assertEqual(shot42.profiles[0]['current_state_name'], 'red')
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_40.hw_driver.current_color)
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_41.hw_driver.current_color)
-        self.assertEqual(RGBColor('red'),
+        self.assertEqual(list(RGBColor('red').rgb),
             self.machine.leds.led_42.hw_driver.current_color)
 
         group40.rotate()
@@ -588,11 +588,11 @@ class TestShotGroups(MpfTestCase):
         self.assertEqual(shot40.profiles[0]['current_state_name'], 'unlit')
         self.assertEqual(shot41.profiles[0]['current_state_name'], 'red')
         self.assertEqual(shot42.profiles[0]['current_state_name'], 'unlit')
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_40.hw_driver.current_color)
-        self.assertEqual(RGBColor('red'),
+        self.assertEqual(list(RGBColor('red').rgb),
             self.machine.leds.led_41.hw_driver.current_color)
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_42.hw_driver.current_color)
 
         group40.rotate()
@@ -600,11 +600,11 @@ class TestShotGroups(MpfTestCase):
         self.assertEqual(shot40.profiles[0]['current_state_name'], 'red')
         self.assertEqual(shot41.profiles[0]['current_state_name'], 'unlit')
         self.assertEqual(shot42.profiles[0]['current_state_name'], 'unlit')
-        self.assertEqual(RGBColor('red'),
+        self.assertEqual(list(RGBColor('red').rgb),
             self.machine.leds.led_40.hw_driver.current_color)
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_41.hw_driver.current_color)
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_42.hw_driver.current_color)
 
         group40.rotate()
@@ -612,11 +612,11 @@ class TestShotGroups(MpfTestCase):
         self.assertEqual(shot40.profiles[0]['current_state_name'], 'unlit')
         self.assertEqual(shot41.profiles[0]['current_state_name'], 'red')
         self.assertEqual(shot42.profiles[0]['current_state_name'], 'unlit')
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_40.hw_driver.current_color)
-        self.assertEqual(RGBColor('red'),
+        self.assertEqual(list(RGBColor('red').rgb),
             self.machine.leds.led_41.hw_driver.current_color)
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.led_42.hw_driver.current_color)
 
     def test_block_in_shot_group_profile(self):
@@ -665,29 +665,29 @@ class TestShotGroups(MpfTestCase):
         self.machine.modes.mode_shot_groups.start()
         self.advance_time_and_run()
 
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.l_gas_g.hw_driver.current_color)
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.l_gas_a.hw_driver.current_color)
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.l_gas_s.hw_driver.current_color)
 
         self.hit_and_release_switch('s_gas_g')
         self.advance_time_and_run()
 
-        self.assertEqual(RGBColor('white'),
+        self.assertEqual(list(RGBColor('white').rgb),
             self.machine.leds.l_gas_g.hw_driver.current_color)
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.l_gas_a.hw_driver.current_color)
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.l_gas_s.hw_driver.current_color)
 
         self.machine.events.post('s_upper_left_flipper_active')
         self.advance_time_and_run()
 
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.l_gas_g.hw_driver.current_color)
-        self.assertEqual(RGBColor('off'),
+        self.assertEqual(list(RGBColor('off').rgb),
             self.machine.leds.l_gas_a.hw_driver.current_color)
-        self.assertEqual(RGBColor('white'),
+        self.assertEqual(list(RGBColor('white').rgb),
             self.machine.leds.l_gas_s.hw_driver.current_color)

@@ -20,7 +20,6 @@ from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformIn
 from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
 from mpf.platforms.interfaces.gi_platform_interface import GIPlatformInterface
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
-from mpf.core.rgb_color import RGBColor
 
 try:
     import serial
@@ -59,17 +58,6 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         if not serial_imported:
             raise AssertionError('Could not import "pySerial". This is '
                                  'required for the FAST platform interface')
-
-        # ----------------------------------------------------------------------
-        # Platform-specific hardware features. WARNING: Do not edit these. They
-        # are based on what the FAST hardware can and cannot do.
-        self.features['max_pulse'] = 255  # todo
-        self.features['hw_rule_coil_delay'] = True  # todo
-        self.features['variable_recycle_time'] = True  # todo
-        self.features['variable_debounce_time'] = True  # todo
-        # Make the platform features available to everyone
-        self.machine.config['platform'] = self.features
-        # ----------------------------------------------------------------------
 
         self.dmd_connection = None
         self.net_connection = None
@@ -556,7 +544,9 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         return switch
 
-    def configure_led(self, config):
+    def configure_led(self, config, channels):
+        if channels > 3:
+            raise AssertionError("FAST only supports RGB LEDs")
         if not self.rgb_connection:
             raise AssertionError('A request was made to configure a FAST LED, '
                                  'but no connection to an LED processor is '
@@ -1109,7 +1099,6 @@ class FASTDirectLED(RGBLEDPlatformInterface):
     def __init__(self, number):
         self.log = logging.getLogger('FASTLED')
         self.number = number
-        self._color_order_function = FASTDirectLED._color_rgb
         self._current_color = '000000'
 
         # All FAST LEDs are 3 element RGB and are set using hex strings
@@ -1117,63 +1106,15 @@ class FASTDirectLED(RGBLEDPlatformInterface):
         self.log.debug("Creating FAST RGB LED at hardware address: %s",
                        self.number)
 
-    @property
-    def color_order(self):
-        return {
-            FASTDirectLED._color_rgb: 'rgb',
-            FASTDirectLED._color_rbg: 'rbg',
-            FASTDirectLED._color_grb: 'grb',
-            FASTDirectLED._color_gbr: 'gbr',
-            FASTDirectLED._color_bgr: 'bgr',
-            FASTDirectLED._color_brg: 'brg'
-        }.get(self._color_order_function, 'error')
-
-    @color_order.setter
-    def color_order(self, order):
-        self._color_order_function = FASTDirectLED._determine_color_order_function(order)
-
-    @staticmethod
-    def _determine_color_order_function(order):
-        return {
-            'rgb': FASTDirectLED._color_rgb,
-            'rbg': FASTDirectLED._color_rbg,
-            'grb': FASTDirectLED._color_grb,
-            'gbr': FASTDirectLED._color_gbr,
-            'bgr': FASTDirectLED._color_bgr,
-            'brg': FASTDirectLED._color_brg
-        }.get(order, FASTDirectLED._color_rgb)
-
-    @staticmethod
-    def _color_rgb(color):
-        return color.hex
-
-    @staticmethod
-    def _color_rbg(color):
-        return RGBColor.rgb_to_hex((color.red, color.blue, color.green))
-
-    @staticmethod
-    def _color_grb(color):
-        return RGBColor.rgb_to_hex((color.green, color.red, color.blue))
-
-    @staticmethod
-    def _color_gbr(color):
-        return RGBColor.rgb_to_hex((color.green, color.blue, color.red))
-
-    @staticmethod
-    def _color_bgr(color):
-        return RGBColor.rgb_to_hex((color.blue, color.green, color.red))
-
-    @staticmethod
-    def _color_brg(color):
-        return RGBColor.rgb_to_hex((color.blue, color.red, color.green))
-
     def color(self, color):
         """Instantly sets this LED to the color passed.
 
         Args:
             color: an RGBColor object
         """
-        self._current_color = self._color_order_function(color)
+        self._current_color = "{0}{1}{2}".format(hex(int(color[0]))[2:].zfill(2),
+                                                 hex(int(color[1]))[2:].zfill(2),
+                                                 hex(int(color[2]))[2:].zfill(2))
 
     @property
     def current_color(self):

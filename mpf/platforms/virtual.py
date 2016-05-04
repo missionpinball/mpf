@@ -2,7 +2,7 @@
 
 import logging
 from mpf.core.platform import ServoPlatform, MatrixLightsPlatform, GiPlatform, LedPlatform, \
-                              SwitchPlatform, DriverPlatform, AccelerometerPlatform, I2cPlatform
+    SwitchPlatform, DriverPlatform, AccelerometerPlatform, I2cPlatform
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
@@ -26,18 +26,6 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
         # switches
         self.hw_switches = dict()
         self.initial_states_sent = False
-
-        # ----------------------------------------------------------------------
-        # Platform-specific hardware features. WARNING: Do not edit these. They
-        # are based on what the virtual hardware can and cannot do.
-        self.features['max_pulse'] = 255
-        self.features['hw_rule_coil_delay'] = False
-        self.features['variable_recycle_time'] = False
-        self.features['variable_debounce_time'] = False
-
-        # Make the platform features available to everyone
-        self.machine.config['platform'] = self.features
-        # ----------------------------------------------------------------------
 
     def __repr__(self):
         return '<Platform.Virtual>'
@@ -71,7 +59,7 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
 
                 initial_active_switches = [self.machine.switches[x].hw_switch.number for x in
                                            Util.string_to_list(
-                        self.machine.config['virtual_platform_start_active_switches'])]
+                                               self.machine.config['virtual_platform_start_active_switches'])]
 
                 for k in self.hw_switches:
                     if k in initial_active_switches:
@@ -141,7 +129,7 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
     def configure_matrixlight(self, config):
         return VirtualMatrixLight(config['number'])
 
-    def configure_led(self, config):
+    def configure_led(self, config, channels):
         return VirtualLED(config['number'])
 
     def configure_gi(self, config):
