@@ -1,7 +1,5 @@
 """ Contains the Led parent classes. """
-import copy
 from operator import itemgetter
-
 from mpf.core.rgb_color import RGBColor
 from mpf.core.rgb_color import RGBColorCorrectionProfile
 from mpf.core.system_wide_device import SystemWideDevice
