@@ -1,9 +1,6 @@
-import unittest
-
-from mpf.core.machine import MachineController
 from mpf.tests.MpfTestCase import MpfTestCase
 from mock import MagicMock
-import time
+
 
 class TestBallLock(MpfTestCase):
 
@@ -17,15 +14,16 @@ class TestBallLock(MpfTestCase):
         self._missing += 1
 
     def _ball_enter(self, new_balls, unclaimed_balls, **kwargs):
+        del unclaimed_balls
+        del kwargs
         self._enter += new_balls
 
     def _captured_from_pf(self, balls, **kwargs):
-        self._captured += balls
-
-    def _captured_from_pf(self, balls, **kwargs):
+        del kwargs
         self._captured += balls
 
     def _collecting_balls_complete_handler(self, **kwargs):
+        del kwargs
         self._collecting_balls_complete = 1
 
     def test_lock_and_release_at_game_end(self):
@@ -41,7 +39,6 @@ class TestBallLock(MpfTestCase):
         self.machine.events.add_handler('balldevice_captured_from_playfield', self._captured_from_pf)
         self.machine.events.add_handler('balldevice_1_ball_missing', self._missing_ball)
         self.machine.events.add_handler('collecting_balls_complete', self._collecting_balls_complete_handler)
-
 
         self._enter = 0
         self._captured = 0
@@ -80,7 +77,6 @@ class TestBallLock(MpfTestCase):
         self.machine.switch_controller.process_switch("s_ball_switch1", 0)
         self.advance_time_and_run(1)
         self.assertEqual(1, trough.balls)
-
 
         # launcher receives and ejects
         self.machine.switch_controller.process_switch("s_ball_switch_launcher", 1)
@@ -128,7 +124,6 @@ class TestBallLock(MpfTestCase):
         self.machine.switch_controller.process_switch("s_ball_switch2", 0)
         self.advance_time_and_run(1)
         self.assertEqual(0, trough.balls)
-
 
         # launcher receives and ejects
         self.machine.switch_controller.process_switch("s_ball_switch_launcher", 1)
@@ -195,13 +190,11 @@ class TestBallLock(MpfTestCase):
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
         self.assertEqual(1, self._collecting_balls_complete)
 
-
     def test_lock_full_and_release(self):
         coil1 = self.machine.coils['eject_coil1']
         coil2 = self.machine.coils['eject_coil2']
         coil3 = self.machine.coils['eject_coil3']
         trough = self.machine.ball_devices['test_trough']
-        launcher = self.machine.ball_devices['test_launcher']
         lock = self.machine.ball_devices['test_lock']
         lock_logic = self.machine.ball_locks['lock_test']
         playfield = self.machine.ball_devices['playfield']
@@ -305,7 +298,6 @@ class TestBallLock(MpfTestCase):
         self.machine.events.add_handler('balldevice_1_ball_missing', self._missing_ball)
         self.machine.events.add_handler('collecting_balls_complete', self._collecting_balls_complete_handler)
 
-
         self._enter = 0
         self._captured = 0
         self._missing = 0
@@ -344,7 +336,6 @@ class TestBallLock(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEqual(1, trough.balls)
 
-
         # launcher receives and ejects
         self.machine.switch_controller.process_switch("s_ball_switch_launcher", 1)
         self.advance_time_and_run(1)
@@ -382,7 +373,6 @@ class TestBallLock(MpfTestCase):
         self.machine.switch_controller.process_switch("s_ball_switch2", 0)
         self.advance_time_and_run(1)
         self.assertEqual(0, trough.balls)
-
 
         # launcher receives and ejects
         self.machine.switch_controller.process_switch("s_ball_switch_launcher", 1)
@@ -447,7 +437,6 @@ class TestBallLock(MpfTestCase):
         self.assertEqual(0, self._collecting_balls_complete)
         self.assertEqual(1, self.machine.game.balls_in_play)
 
-
         coil1.pulse = MagicMock()
         coil2.pulse = MagicMock()
         coil3.pulse = MagicMock()
@@ -505,4 +494,3 @@ class TestBallLock(MpfTestCase):
         self.assertEqual(0, self._missing)
 
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
-
