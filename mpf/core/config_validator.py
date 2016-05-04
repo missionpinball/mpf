@@ -193,7 +193,7 @@ p_roc_coils:
 coil_player:
     __valid_in__: machine, mode, show
     action: single|lstr|pulse
-    ms: single|ms|None
+    # ms: single|ms|None
     power: single|float|1.0
     # pwm_on_ms: single|int|None
     # pwm_off_ms: single|int|None

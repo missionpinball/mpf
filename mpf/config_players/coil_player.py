@@ -14,10 +14,11 @@ class CoilPlayer(ConfigPlayer):
             settings = settings['coils']
 
         for coil, s in settings.items():
+            action = s.pop('action')
             try:
-                getattr(coil, s['action'])(**s)
+                getattr(coil, action)(**s)
             except AttributeError:
-                getattr(self.machine.coils[coil], s['action'])(**s)
+                getattr(self.machine.coils[coil], action)(**s)
 
     def get_express_config(self, value):
 
