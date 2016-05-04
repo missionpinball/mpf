@@ -96,19 +96,16 @@ class Driver(SystemWideDevice):
             else:
                 milliseconds = self.machine.config['mpf']['default_pulse_ms']
 
-        if power and isinstance(milliseconds, int):
-            milliseconds *= power
+        if power:
+            milliseconds = int(power * milliseconds)
         else:
             power = 1.0
 
-        if isinstance(milliseconds, str) or (
-                isinstance(milliseconds, int) and 0 < milliseconds <= self.platform.features['max_pulse']):
-            self.log.debug("Pulsing Driver. %sms (%s power)", milliseconds,
-                           power)
+        if 0 < milliseconds <= self.platform.features['max_pulse']:
+            self.log.debug("Pulsing Driver. %sms (%s power)", milliseconds, power)
             ms_actual = self.hw_driver.pulse(self.get_configured_driver(), milliseconds)
         else:
-            self.log.debug("Enabling Driver for %sms (%s power)", milliseconds,
-                           power)
+            self.log.debug("Enabling Driver for %sms (%s power)", milliseconds, power)
             self.machine.delay.reset(name='{}_timed_enable'.format(self.name),
                                      ms=milliseconds,
                                      callback=self.disable)
