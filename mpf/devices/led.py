@@ -146,6 +146,8 @@ class Led(SystemWideDevice):
         elif self.machine.config['led_settings']:
             self.default_fade_ms = (self.machine.config['led_settings']
                                     ['default_led_fade_ms'])
+        else:
+            self.default_fade_ms = 0
 
         if self.debug:
             self.log.debug("Initializing LED. Platform: %s, CC Profile: %s, "
@@ -195,10 +197,7 @@ class Led(SystemWideDevice):
             color = RGBColor(color)
 
         if fade_ms is None:
-            if self.default_fade_ms is not None:
-                fade_ms = self.default_fade_ms
-            else:
-                fade_ms = 0
+            fade_ms = self.default_fade_ms
 
         if priority < self._get_priority_from_key(key):
             if self.debug:
