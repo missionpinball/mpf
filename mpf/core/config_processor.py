@@ -99,7 +99,7 @@ class ConfigProcessor(object):
         config = FileManager.load(filename, verify_version, halt_on_error)
 
         if not ConfigValidator.config_spec:
-                    ConfigValidator.load_config_spec()
+            ConfigValidator.load_config_spec()
 
         for k in config.keys():
             try:
