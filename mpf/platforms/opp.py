@@ -10,8 +10,6 @@ import threading
 import queue
 import traceback
 
-import struct
-
 from mpf.devices.driver import ConfiguredHwDriver
 
 from mpf.core.platform import MatrixLightsPlatform, LedPlatform, SwitchPlatform, DriverPlatform
