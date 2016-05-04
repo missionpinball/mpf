@@ -88,8 +88,8 @@ class FadeCandyOPClient(OpenPixelClient):
                             'linearCutoff': self.linear_cutoff
                             })
 
-        self.send(str(struct.pack(
-            "!BBHHH", 0x00, 0xFF, len(msg) + 4, 0x0001, 0x0001)) + msg)
+        self.send(struct.pack(
+            "!BBHHH", 0x00, 0xFF, len(msg) + 4, 0x0001, 0x0001) + bytes(msg, 'UTF-8'))
 
     def write_firmware_options(self):
         """Writes the current firmware settings (keyframe interpolation and

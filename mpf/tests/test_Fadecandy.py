@@ -24,10 +24,10 @@ class TestOpenpixel(MpfTestCase):
         openpixel.OpenPixelClient.send = self._send_mock
         super().setUp()
         color_correct = self._messages.pop(0)
-        color_correct_binary = 'b\'\\x00\\xff\\x00Z\\x00\\x01\\x00\\x01\''
+        color_correct_binary = b'\x00\xff\x00Z\x00\x01\x00\x01'
         self.assertEqual(color_correct[0:len(color_correct_binary)], color_correct_binary)
         correction = {"linearSlope": 1.0, "linearCutoff": 0.0, "gamma": 2.5, "whitepoint": [1.0, 1.0, 1.0]}
-        self.assertEqual(json.loads(color_correct[len(color_correct_binary):]), correction)
+        self.assertEqual(json.loads(color_correct[len(color_correct_binary):].decode()), correction)
 
         firmware = self._messages.pop(0)
         self.assertEqual(firmware, b'\x00\xff\x00\x05\x00\x01\x00\x02\x00')
@@ -40,14 +40,15 @@ class TestOpenpixel(MpfTestCase):
         openpixel.OpenPixelClient.send = self._send
 
     def _build_message(self, channel, leds):
-        out = chr(channel) + chr(0) + chr(1) + chr(44)
+        out = bytearray()
+        out.extend([channel, 0, 1, 44])
         for i in range(0, 100):
             if i in leds:
-                out += chr(leds[i][0]) + chr(leds[i][1]) + chr(leds[i][2])
+                out.extend([leds[i][0], leds[i][1], leds[i][2]])
             else:
-                out += chr(0) + chr(0) + chr(0)
+                out.extend([0, 0, 0])
 
-        return out
+        return bytes(out)
 
     def _send_mock(self, message):
         self._messages.append(message)
@@ -59,9 +60,9 @@ class TestOpenpixel(MpfTestCase):
         found2 = False
         for message in self._messages:
             if not (message == bank1 or message == bank2):
-                print(":".join("{:02x}".format(ord(c)) for c in message))
-                print(":".join("{:02x}".format(ord(c)) for c in bank1))
-                print(":".join("{:02x}".format(ord(c)) for c in bank2))
+                print(":".join("{:02x}".format(c) for c in message))
+                print(":".join("{:02x}".format(c) for c in bank1))
+                print(":".join("{:02x}".format(c) for c in bank2))
                 raise AssertionError("Invalid Message")
             if message == bank1:
                 found1 = True
