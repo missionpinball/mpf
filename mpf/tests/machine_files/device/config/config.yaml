@@ -37,6 +37,8 @@ coils:
     coil_02:
         number: 2
         pulse_ms: 60
+    coil_03:
+        number: 3
 
 flashers:
     flasher_01:
