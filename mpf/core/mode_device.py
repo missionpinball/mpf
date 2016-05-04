@@ -9,6 +9,7 @@ class ModeDevice(Device):
         self._initialize()
 
     def control_events_in_mode(self, mode):
+        del mode
         # Called on mode start if this device has any control events in that mode
         # start mb if no enable_events are specified
         if "enable_events" in self.config and not self.config['enable_events']:
