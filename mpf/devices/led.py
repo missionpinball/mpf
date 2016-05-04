@@ -277,8 +277,6 @@ class Led(SystemWideDevice):
         """Removes a group of color settings from the stack.
 
         Args:
-            key: The key of the settings to remove (based on the 'key'
-                parameter that was originally passed to the color() method.)
 
         This method triggers a LED update, so if the highest priority settings
         were removed, the LED will be updated with whatever's below it. If no
