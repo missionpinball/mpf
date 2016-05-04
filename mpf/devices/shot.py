@@ -12,7 +12,6 @@ from copy import copy
 import mpf.core.delays
 from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
-from mpf.core.config_validator import ConfigValidator
 
 
 class Shot(ModeDevice, SystemWideDevice):
