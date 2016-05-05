@@ -1,6 +1,7 @@
 """Contains the MachineController base class"""
 
 import errno
+import hashlib
 import importlib
 import logging
 import os
@@ -259,9 +260,11 @@ class MachineController(object):
         sys.path.insert(0, self.machine_path)
 
     def _get_mpfcache_file_name(self):
-        return os.path.join(
-            self.machine_path, '__mpfcache__', '{}_config.p'.
-                format('-'.join(self.options['configfile'])))
+        dir = tempfile.gettempdir()
+        path_hash = hashlib.md5(bytes(self.machine_path, 'UTF-8')).hexdigest()
+        path_hash += '-'.join(self.options['configfile'])
+        result = os.path.join(dir, path_hash)
+        return result
 
     def _load_config(self):
         if self.options['no_load_cache']:
@@ -348,12 +351,6 @@ class MachineController(object):
         return latest_time
 
     def _cache_config(self):
-        try:
-            os.makedirs(os.path.join(self.machine_path, '__mpfcache__'))
-        except OSError as exception:
-            if exception.errno != errno.EEXIST:
-                raise
-
         with open(self._get_mpfcache_file_name(),
                 'wb') as f:
             pickle.dump(self.config, f, protocol=4)
