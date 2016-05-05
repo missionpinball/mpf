@@ -248,18 +248,6 @@ bcp:
             params:
                 player_num: "%number"
 
-        tilt:
-            command: tilt
-
-        slam_tilt:
-            command: slam_tilt
-
-        tilt_warning:
-            command: tilt_warning
-            params:
-                warnings: "%warnings"
-                warnings_remaining: "%warnings_remaining"
-
     player_variables:
       __all__
 
