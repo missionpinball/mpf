@@ -565,7 +565,7 @@ physical_dmd:
     fps: single|int|30
     source_display: single|str|dmd
     luminosity: list|float|.299, .587, .114
-    brightness: single|float|1.0
+    brightness: single|float|0.5
     only_send_changes: single|bool|False
 physical_rgb_dmd:
     __valid_in__: machine
