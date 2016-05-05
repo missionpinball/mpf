@@ -174,6 +174,7 @@ class BCP(object):
             error=self.bcp_receive_error,
             switch=self.bcp_receive_switch,
             trigger=self.bcp_receive_trigger,
+            register_trigger=self.bcp_receive_register_trigger,
             get=self.bcp_receive_get,
             set=self.bcp_receive_set,
             reset_complete=self.bcp_receive_reset_complete,
@@ -212,7 +213,7 @@ class BCP(object):
         try:
             self._setup_track_volumes(self.machine.config['volume'])
         except KeyError:
-            self.log.warning("No 'Volume:' section in config file")
+            pass
 
         self._parse_filters_from_config()
 
@@ -627,6 +628,11 @@ class BCP(object):
         """
         del kwargs
         self.physical_rgb_dmd_update_callback(rawbytes)
+
+    def bcp_receive_register_trigger(self, event, rawbytes, **kwargs):
+        del rawbytes
+        del kwargs
+        self.add_registered_trigger_event(event)
 
     def bcp_player_added(self, player, num):
         """Sends BCP 'player_added' to the connected BCP hosts."""
