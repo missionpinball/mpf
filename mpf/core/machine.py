@@ -5,6 +5,8 @@ import importlib
 import logging
 import os
 import pickle
+import tempfile
+
 from pkg_resources import iter_entry_points
 import queue
 import sys
@@ -256,14 +258,17 @@ class MachineController(object):
         # Add the machine folder to sys.path so we can import modules from it
         sys.path.insert(0, self.machine_path)
 
+    def _get_mpfcache_file_name(self):
+        return os.path.join(
+            self.machine_path, '__mpfcache__', '{}_config.p'.
+                format('-'.join(self.options['configfile'])))
+
     def _load_config(self):
         if self.options['no_load_cache']:
             load_from_cache = False
         else:
             try:
-                if self._get_latest_config_mod_time() > os.path.getmtime(os.path.join(
-                        self.machine_path, '__mpfcache__', '{}_config.p'.
-                        format('-'.join(self.options['configfile'])))):
+                if self._get_latest_config_mod_time() > os.path.getmtime(self._get_mpfcache_file_name()):
                     load_from_cache = False  # config is newer
                 else:
                     load_from_cache = True  # cache is newer
@@ -309,13 +314,9 @@ class MachineController(object):
                                                 config_type='machine')
 
     def _load_config_from_cache(self):
-        self.log.info("Loading cached config: %s",
-                      os.path.join(self.machine_path, '__mpfcache__',
-                                   '{}_config.p'.format('-'.join(self.options['configfile']))))
+        self.log.info("Loading cached config: %s", self._get_mpfcache_file_name())
 
-        with open(os.path.join(
-                self.machine_path, '__mpfcache__', '{}_config.p'.
-                format('-'.join(self.options['configfile']))), 'rb') as f:
+        with open(self._get_mpfcache_file_name(), 'rb') as f:
 
             try:
                 self.config = pickle.load(f)
@@ -353,14 +354,10 @@ class MachineController(object):
             if exception.errno != errno.EEXIST:
                 raise
 
-        with open(os.path.join(
-                self.machine_path, '__mpfcache__', '{}_config.p'.
-                format('-'.join(self.options['configfile']))),
+        with open(self._get_mpfcache_file_name(),
                 'wb') as f:
             pickle.dump(self.config, f, protocol=4)
-            self.log.info('Config file cache created: %s', os.path.join(
-                self.machine_path, '__mpfcache__', '{}_config.p'.
-                format('-'.join(self.options['configfile']))))
+            self.log.info('Config file cache created: %s', self._get_mpfcache_file_name())
 
     def verify_system_info(self):
         """Dumps information about the Python installation to the log.
