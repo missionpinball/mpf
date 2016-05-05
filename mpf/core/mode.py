@@ -326,7 +326,16 @@ class Mode(object):
 
         for collection_name, device_class in (
                 iter(self.machine.device_manager.device_classes.items())):
+
+            # check if there is config for the device type
             if device_class.config_section in self.config:
+
+                # check if it is supposed to be used in mode
+                if collection_name not in self.machine.config['mpf']['mode_config_sections']:
+                    raise AssertionError("Found config for device {} in mode {} which may not be used in modes".format(
+                        collection_name, self.name
+                    ))
+
                 for device, settings in (
                         iter(self.config[device_class.config_section].items())):
 
