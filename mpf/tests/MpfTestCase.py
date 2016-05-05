@@ -92,6 +92,9 @@ class MpfTestCase(unittest.TestCase):
     def get_use_bcp(self):
         return False
 
+    def get_enable_plugins(self):
+        return False
+
     def getOptions(self):
 
         mpfconfig = os.path.abspath(os.path.join(
@@ -205,7 +208,8 @@ class MpfTestCase(unittest.TestCase):
             self.machine = TestMachineController(
                 os.path.abspath(os.path.join(
                     mpf.core.__path__[0], os.pardir)), machine_path,
-                self.getOptions(), self.machine_config_patches)
+                self.getOptions(), self.machine_config_patches,
+                self.get_enable_plugins())
             self.realTime = self.machine.clock.time
             self.testTime = self.realTime()
             self.machine.clock.time = MagicMock(return_value=self.testTime)
