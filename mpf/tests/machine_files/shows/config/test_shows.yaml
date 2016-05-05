@@ -24,10 +24,12 @@ matrix_lights:
         number: 0
         label: Test 0
         tags: tag1
+        debug: True
     light_02:
         number: 1
         label: Test 1
         tags: tag1
+        debug: True
 
 gis:
     gi_01:

@@ -375,11 +375,27 @@ class TestFast(MpfTestCase):
         self.machine_run()
         self.assertFalse(MockSerialCommunicator.expected_commands['NET'])
 
+        # test enable of matrix light with brightness
+        MockSerialCommunicator.expected_commands['NET'] = {
+            "L1:23,80": False,
+        }
+        self.machine.lights.test_pdb_light.on(brightness=128)
+        self.machine_run()
+        self.assertFalse(MockSerialCommunicator.expected_commands['NET'])
+
         # test disable of matrix light
         MockSerialCommunicator.expected_commands['NET'] = {
             "L1:23,00": False,
         }
         self.machine.lights.test_pdb_light.off()
+        self.machine_run()
+        self.assertFalse(MockSerialCommunicator.expected_commands['NET'])
+
+        # test disable of matrix light with brightness
+        MockSerialCommunicator.expected_commands['NET'] = {
+            "L1:23,00": False,
+        }
+        self.machine.lights.test_pdb_light.on(brightness=0)
         self.machine_run()
         self.assertFalse(MockSerialCommunicator.expected_commands['NET'])
 
@@ -412,6 +428,13 @@ class TestFast(MpfTestCase):
             "GI:2A,00": False,
         }
         device.disable()
+        self.machine_run()
+        self.assertFalse(MockSerialCommunicator.expected_commands['NET'])
+
+        MockSerialCommunicator.expected_commands['NET'] = {
+            "GI:2A,00": False,
+        }
+        device.enable(brightness=0)
         self.machine_run()
         self.assertFalse(MockSerialCommunicator.expected_commands['NET'])
 
