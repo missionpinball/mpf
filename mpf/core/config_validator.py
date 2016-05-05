@@ -424,7 +424,6 @@ led_settings:
     color_correction_profiles: single|dict|None
     default_color_correction_profile: single|str|None
     default_led_fade_ms: single|int|0
-    brightness_compensation: ignore                              # todo
 leds:
     __valid_in__: machine
     number: single|str|
@@ -446,8 +445,7 @@ leds:
 light_player:
     __valid_in__: machine, mode, show
     brightness: single|int_from_hex|ff
-    fade_ms: single|ms|0
-    force: single|bool|False
+    fade: single|ms|0
     __allow_others__:
 logic_blocks:                                       # todo add validation
     __valid_in__: machine, mode
@@ -477,11 +475,15 @@ machine:
     __valid_in__: machine
     balls_installed: single|int|1
     min_balls: single|int|1
+matrix_light_settings:
+    __valid_in__: machine
+    default_light_fade_ms: single|int|0
 matrix_lights:
     __valid_in__: machine
     number: single|str|
     tags: list|str|None
     label: single|str|%
+    fade_ms: single|ms|None
     debug: single|bool|False
     on_events:  dict|str:ms|None
     off_events:  dict|str:ms|None

@@ -1,5 +1,7 @@
 """ Contains the MatrixLight parent classes. """
 
+from operator import itemgetter
+
 from mpf.core.system_wide_device import SystemWideDevice
 
 
@@ -15,16 +17,21 @@ class MatrixLight(SystemWideDevice):
     config_section = 'matrix_lights'
     collection = 'lights'
     class_label = 'light'
+    machine = None
 
     lights_to_update = set()
 
-    # todo need to get the handler stuff out of each of these I think and into
-    # a parent class? Maybe this is a device thing?
-
     @classmethod
     def device_class_init(cls, machine):
+
+        cls.machine = machine
+
+        machine.validate_machine_config_section('matrix_light_settings')
+
         # todo make time configurable
         machine.clock.schedule_interval(cls.update_matrix_lights, 0, -100)
+
+        machine.mode_controller.register_stop_method(cls.mode_stop)
 
     @classmethod
     def update_matrix_lights(cls, dt):
@@ -33,43 +40,73 @@ class MatrixLight(SystemWideDevice):
         # write the new light states to the hardware
         if MatrixLight.lights_to_update:
             for light in MatrixLight.lights_to_update:
-                light.do_on()
+                light.update_hw_light()
 
             MatrixLight.lights_to_update = set()
+
+    @classmethod
+    def mode_stop(cls, mode):
+        for light in cls.machine.lights:
+            light.remove_from_stack_by_mode(mode)
 
     def __init__(self, machine, name):
         super().__init__(machine, name)
 
-        self.registered_handlers = list()
-
-        self.state = dict(brightness=0,
-                          priority=0,
-                          destination_brightness=0,
-                          destination_time=0.0,
-                          start_brightness=0,
-                          start_time=0.0,
-                          fade_ms=0)
-        """Current state of this light."""
-
-        self.cache = dict(brightness=0,
-                          priority=0,
-                          destination_brightness=0,
-                          destination_time=0.0,
-                          start_brightness=0,
-                          start_time=0.0,
-                          fade_ms=0)
-        """Cached state of the last manual command."""
-
-        self.fade_in_progress = False
-
-        # set up the X, Y coordinates
         self.x = None
         self.y = None
+
+        self.fade_in_progress = False
+        self.default_fade_ms = None
+
+        self.registered_handlers = list()
+
+        self.stack = list()
+        """A list of dicts which represents different commands that have come
+        in to set this light to a certain brightness (and/or fade). Each entry
+        in the list contains the following key/value pairs:
+
+        priority: The relative priority of this brightness command. Higher
+            numbers take precedent, and the highest priority entry will be the
+            command that's currently active. In the event of a tie,
+            whichever entry was added last wins (based on 'start_time' below).
+        start_time: The clock time when this command was added. Primarily used
+            to calculate fades, but also used as a tie-breaker for multiple
+            entries with the same priority.
+        start_brightness: Brightness this light when this command came in.
+        dest_time: Clock time that represents when a fade (from
+            start_brightness to dest_brightness ) will be done. If this is 0,
+            that means there is no fade. When a fade is complete, this value is
+             reset to 0.
+        dest_brightness: Brightness of the destination this light is fading
+            to. If a command comes in with no fade, then this will be the same
+            as the 'brightness' below.
+        brightness: The current brightness of the light based on this command.
+            (0-255) This value is updated automatically as fades progress, and
+            it's the value that's actually written to the hardware.
+        key: An arbitrary unique identifier to keep multiple entries in the
+            stack separate. If a new brightness command comes in with a key
+            that already exists for an entry in the stack, that entry will be
+            replaced by the new entry. The key is also used to remove entries
+            from the stack (e.g. when shows or modes end and they want to
+            remove their commands from the light).
+        mode: Optional mode where the brightness was set. Used to remove
+            entries when a mode ends.
+
+        """
 
     def _initialize(self):
         self.load_platform_section('matrix_lights')
 
         self.hw_driver = self.platform.configure_matrixlight(self.config)
+
+        if self.config['fade_ms'] is not None:
+            self.default_fade_ms = self.config['fade_ms']
+        elif self.machine.config['matrix_light_settings']:
+            self.default_fade_ms = (
+                self.machine.config['matrix_light_settings']
+                                    ['default_light_fade_ms'])
+        else:
+            self.default_fade_ms = 0
 
         if 'x' in self.config:
             self.x = self.config['x']
@@ -77,124 +114,216 @@ class MatrixLight(SystemWideDevice):
         if 'y' in self.config:
             self.y = self.config['y']
 
-    # pylint: disable-msg=too-many-arguments
-    def on(self, brightness=255, fade_ms=0, priority=0, cache=True,
-           force=False, **kwargs):
-        """Turns on this matrix light.
+    def on(self, brightness=255, fade_ms=0, priority=0, key=None, mode=None,
+           **kwargs):
+        """Adds or updates a brightness entry in this lights's stack, which is
+        how you tell this light how bright you want it to be.
 
         Args:
             brightness: How bright this light should be, as an int between 0
-                and 255. 0 is off. 255 is full on. Note that intermediary
-                values are not yet implemented, so 0 is off, anything from
-                1-255 is full on.
-            fade_ms: The number of milliseconds to fade from the current
-                brightness level to the desired brightness level.
-            priority: The priority of the incoming request. If this priority is
-                lower than the current cached priority, this on command will
-                have no effect. (Unless force=True)
-            cache: Boolean as to whether this light should cache these new
-                settings. This cache can be used for the light to "go back" to
-                it's previous state. Default is True.
-            force: Whether the light should be forced to go to the new state,
-                regardless of the incoming and current priority. Default is
-                False.
-
-        Note: This method immediately updates the internal state of the matrix
-        light, but it doesn't actually send the command to set or change the
-        light to the hardware platform interface until the end of the
-        current frame. This is done so that multiple things changing the same
-        light in the same frame actually only send a single command to the
-        light instead of sending a stream of conflicting  values.
-
+                and 255. 0 is off. 255 is full on. Note that matrix lights in
+                older (even WPC) machines had slow matrix update speeds, and
+                effective brightness levels will be far less than 255.
+            fade_ms: Int of the number of ms you want this light to fade to the
+                brightness in. A value of 0 means it's instant. A value of
+                None (the default) means that it will use this lights's and/or
+                the machine's default fade_ms setting.
+            priority: Int value of the priority of these incoming settings. If
+                this light has current settings in the stack at a higher
+                priority, the settings you're adding here won't take effect.
+                However they're still added to the stack, so if the higher
+                priority settings are removed, then the next-highest apply.
+            key: An arbitrary identifier (can be any immutable object) that's
+                used to identify these settings for later removal. If any
+                settings in the stack already have this key, those settings
+                will be replaced with these new settings.
+            mode: Optional mode instance of the mode that is setting this
+                brightness. When a mode ends, entries from the stack with that
+                mode will automatically be removed.
+            **kwargs: Not used. Only included so this method can be used as
+                an event callback since events could pass random kwargs.
         """
-        del kwargs
-        # First, if this incoming command is at a lower priority than what the
-        # light is doing now, we don't proceed (unless force is True).
 
-        if priority < self.state['priority'] and not force:
+        del kwargs
+
+        if self.debug:
+            self.log.debug("Received on() command. brightness: %s, fade_ms: %s"
+                           "priority: %s, key: %s", brightness, fade_ms,
+                           priority, key)
+
+        if fade_ms is None:
+            fade_ms = self.default_fade_ms
+
+        if priority < self._get_priority_from_key(key):
+            if self.debug:
+                self.log.debug("Incoming priority is lower than an existing "
+                               "stack item with the same key. Not adding to "
+                               "stack.")
+
             return
 
-        # todo add brightness 0 as the same as on(0)
-        if isinstance(brightness, list):
-            brightness = brightness[0]
+        self._add_to_stack(brightness, fade_ms, priority, key, mode)
 
-        current_time = self.machine.clock.get_time()
+    def _add_to_stack(self, brightness, fade_ms, priority, key, mode):
+        curr_brightness = self.get_brightness()
 
-        # update state
-        self.state['priority'] = priority
-        self.state['fade_ms'] = fade_ms
+        self.remove_from_stack_by_key(key)
 
-        if not self.fade_in_progress:
-            if fade_ms:
-                self.state['destination_brightness'] = brightness
-                self.state['start_brightness'] = self.state['brightness']
-                self.state['destination_time'] = current_time + (fade_ms / 1000.0)
-                self.state['start_time'] = current_time
-                if self.debug:
-                    print("setting fade", self.state)
-
-            else:
-                self.state['brightness'] = brightness
-                self.state['destination_brightness'] = brightness
-                self.state['destination_time'] = 0.0
-                self.state['start_brightness'] = 0
-                self.state['start_time'] = current_time
-                if self.debug:
-                    print("setting brightness", self.state)
-
+        if fade_ms:
+            new_brightness = curr_brightness
+            dest_time = self.machine.clock.get_time() + (fade_ms / 1000)
         else:
-            self.state['brightness'] = brightness
+            new_brightness = brightness
+            dest_time = 0
 
-        if cache:
-            self.cache['brightness'] = brightness
-            self.cache['start_brightness'] = self.state['brightness']
-            self.cache['destination_brightness'] = self.state['destination_brightness']
-            self.cache['start_time'] = current_time
-            self.cache['destination_time'] = self.state['destination_time']
-            self.cache['priority'] = priority
-            self.cache['fade_ms'] = fade_ms
+        self.stack.append(dict(priority=priority,
+                               start_time=self.machine.clock.get_time(),
+                               start_brightness=curr_brightness,
+                               dest_time=dest_time,
+                               dest_brightness=brightness,
+                               brightness=new_brightness,
+                               key=key,
+                               mode=mode))
+
+        self.stack.sort(key=itemgetter('priority', 'start_time'), reverse=True)
+
+        if self.debug:
+            self.log.debug("+-------------- Adding to stack ----------------+")
+            self.log.debug("priority: %s", priority)
+            self.log.debug("start_time: %s", self.machine.clock.get_time())
+            self.log.debug("start_brightness: %s", curr_brightness)
+            self.log.debug("dest_time: %s", dest_time)
+            self.log.debug("dest_brightness: %s", brightness)
+            self.log.debug("brightness: %s", new_brightness)
+            self.log.debug("key: %s", key)
 
         MatrixLight.lights_to_update.add(self)
 
-    def do_on(self):
-        if self.state['fade_ms'] and not self.fade_in_progress:
+    def clear_stack(self):
+        """Removes all entries from the stack and resets this light to 'off'."""
+        self.stack[:] = []
+
+        if self.debug:
+            self.log.debug("Clearing Stack")
+
+        MatrixLight.lights_to_update.add(self)
+
+    def remove_from_stack_by_key(self, key):
+        """Removes a group of brightness settings from the stack.
+
+        Args:
+            key: The key of the settings to remove (based on the 'key'
+                parameter that was originally passed to the brightness() method.)
+
+        This method triggers a light update, so if the highest priority settings
+        were removed, the light will be updated with whatever's below it. If no
+        settings remain after these are removed, the light will turn off.
+
+        """
+
+        if self.debug:
+            self.log.debug("Removing key '%s' from stack", key)
+
+        self.stack[:] = [x for x in self.stack if x['key'] != key]
+        MatrixLight.lights_to_update.add(self)
+
+    def remove_from_stack_by_mode(self, mode):
+        """Removes a group of brightness settings from the stack.
+
+        Args:
+            key: The key of the settings to remove (based on the 'key'
+                parameter that was originally passed to the brightness() method.)
+
+        This method triggers a light update, so if the highest priority settings
+        were removed, the light will be updated with whatever's below it. If no
+        settings remain after these are removed, the light will turn off.
+
+        """
+
+        if self.debug:
+            self.log.debug("Removing mode '%s' from stack", mode)
+
+        self.stack[:] = [x for x in self.stack if x['mode'] != mode]
+        MatrixLight.lights_to_update.add(self)
+
+
+    def get_brightness(self):
+        """Returns an RGBColor() instance of the 'color' setting of the highest
+        color setting in the stack. This is usually the same color as the
+        physical LED, but not always (since physical LEDs are updated once per
+        frame, this value could vary.
+
+        Also note the color returned is the "raw" color that does has not had
+        the color correction profile applied.
+
+        """
+        try:
+            return self.stack[0]['brightness']
+        except IndexError:
+            return 0
+
+    def _get_priority_from_key(self, key):
+        try:
+            return [x for x in self.stack if x['key'] == key][0]['priority']
+        except IndexError:
+            return 0
+
+    def update_hw_light(self):
+        """Physically updates the light hardware object based on the
+        'brightness' setting of the highest priority setting from the stack.
+
+        This method is automatically called whenever a brightness change has been
+        made (including when fades are active).
+
+        """
+        if not self.stack:
+            self.off()
+
+        # if there's a current fade, but the new command doesn't have one
+        if not self.stack[0]['dest_time'] and self.fade_in_progress:
+            self._stop_fade_task()
+
+        # If the new command has a fade, but the fade task isn't running
+        if self.stack[0]['dest_time'] and not self.fade_in_progress:
             self._setup_fade()
 
+        # If there's no current fade and no new fade, or a current fade and new
+        # fade
         else:
-
-            if self.debug:
-                print(self.state['brightness'], self.machine.clock.get_time())
-
-            self.hw_driver.on(self.state['brightness'])
+            self.hw_driver.on(self.stack[0]['brightness'])
 
             if self.registered_handlers:
+                # Handlers are not sent brightness corrected brightnesss
+                # todo make this a config option?
                 for handler in self.registered_handlers:
                     handler(light_name=self.name,
-                            brightness=self.state['brightness'])
+                            brightness=self.stack[0]['brightness'])
 
-    def off(self, fade_ms=0, priority=0, cache=True, force=False, **kwargs):
+    def off(self, fade_ms=0, priority=0, key=None, mode=None, **kwargs):
         """Turns this light off.
 
         Args:
-            fade_ms: The number of milliseconds to fade from the current
-                brightness level to a brightness level of 0 (off).
-            priority: The priority of the incoming request. If this priority is
-                lower than the current cached priority, this on command will
-                have no effect. (Unless force=True)
-            cache: Boolean as to whether this light should cache these new
-                settings. This cache can be used for the light to "go back" to
-                it's previous state. Default is True.
-            force: Whether the light should be forced to go to the new state,
-                regardless of the incoming and current priority. Default is
-                False.
+            fade_ms: Int of the number of ms you want this light to fade to the
+                brightness in. A value of 0 means it's instant. A value of
+                None (the default) means that it will use this lights's and/or
+                the machine's default fade_ms setting.
+            priority: Int value of the priority of these incoming settings. If
+                this light has current settings in the stack at a higher
+                priority, the settings you're adding here won't take effect.
+                However they're still added to the stack, so if the higher
+                priority settings are removed, then the next-highest apply.
+            key: An arbitrary identifier (can be any immutable object) that's
+                used to identify these settings for later removal. If any
+                settings in the stack already have this key, those settings
+                will be replaced with these new settings.
+            mode: Optional mode instance of the mode that is setting this
+                brightness. When a mode ends, entries from the stack with that
+                mode will automatically be removed.
+            **kwargs: Not used. Only included so this method can be used as
+                an event callback since events could pass random kwargs.
         """
-        del kwargs
-        self.on(brightness=0, fade_ms=fade_ms, priority=priority, cache=cache,
-                force=force)
-
-    def get_state(self):
-        """Returns the current state of this light"""
-        return self.state
+        self.on(brightness=0, fade_ms=fade_ms, priority=priority, key=key,
+                mode=mode)
 
     def add_handler(self, callback):
         """Registers a handler to be called when this light changes state."""
@@ -209,38 +338,19 @@ class MatrixLight(SystemWideDevice):
         if callback in self.registered_handlers:
             self.registered_handlers.remove(callback)
 
-    def restore(self):
-        """Restores the light state from cache."""
-
-        if self.debug:
-            self.log.debug("Received a restore command.")
-            self.log.debug("Cached brightness: %s, Cached priority: %s",
-                           self.cache['brightness'], self.cache['priority'])
-
-        self.on(brightness=self.cache['brightness'],
-                priority=self.cache['priority'],
-                force=True,
-                cache=True)
-
     def _setup_fade(self):
-        """
-        Sets up the fade task for this LED.
-        Returns: None
-        """
+
+        if self.fade_in_progress:
+            return
+
         self.fade_in_progress = True
-        self.machine.clock.unschedule(self._fade_task)
 
         if self.debug:
-            print("setting up fade task")
+            self.log.debug("Setting up the fade task")
 
         self.machine.clock.schedule_interval(self._fade_task, 0)
 
     def _fade_task(self, dt):
-        """
-        Task that performs a fade from the current brightness to the target brightness
-        over the specified fade time.
-        Returns: None
-        """
         del dt
 
         # not sure why this is needed, but sometimes the fade task tries to
@@ -249,46 +359,49 @@ class MatrixLight(SystemWideDevice):
         if not self.fade_in_progress:
             return
 
-        if self.debug:
-            print("fade_in_progress fade_task", self.machine.clock.get_time())
-            print("state", self.state)
+        try:
+            brightness_settings = self.stack[0]
+        except IndexError:
+            self._stop_fade_task()
+            return
 
-        state = self.state
+        # todo
+        if not brightness_settings['dest_time']:
+            return
 
         # figure out the ratio of how far along we are
         try:
-            ratio = ((self.machine.clock.get_time() - state['start_time']) /
-                     (state['destination_time'] - state['start_time']))
+            ratio = ((self.machine.clock.get_time() -
+                      brightness_settings['start_time']) /
+                     (brightness_settings['dest_time'] -
+                      brightness_settings['start_time']))
         except ZeroDivisionError:
             ratio = 1.0
 
         if self.debug:
-            print("ratio", ratio)
+            self.log.debug("Fade task, ratio: %s", ratio)
 
         if ratio >= 1.0:  # fade is done
-            self._stop_fade_task()
-            set_cache = True
-            new_brightness = state['destination_brightness']
+            self._end_fade()
+            brightness_settings['brightness'] = (
+                brightness_settings['dest_brightness'])
         else:
-            set_cache = False
-            new_brightness = state['start_brightness'] + int((state['destination_brightness'] -
-                                                              state['start_brightness']) * ratio)
+            brightness_settings['brightness'] = (
+                brightness_settings['start_brightness'] +
+                int((brightness_settings['dest_brightness'] -
+                brightness_settings['start_brightness']) * ratio))
 
-        if self.debug:
-            print("new brightness", new_brightness)
-
-        self.on(brightness=new_brightness, priority=state['priority'], cache=set_cache)
-
-        if self.debug:
-            print("fade_in_progress just ended")
-            print("killing fade task")
+        MatrixLight.lights_to_update.add(self)
 
     def _end_fade(self):
-        # stops the fade and instantly sets the light to its destination color
+        # stops the fade and instantly sets the light to its destination brightness
         self._stop_fade_task()
-        self.on(brightness=self.state['destination_brightness'], priority=self.state['priority'], cache=True)
+        self.stack[0]['dest_time'] = 0
 
     def _stop_fade_task(self):
         # stops the fade task. Light is left in whatever state it was in
         self.fade_in_progress = False
         self.machine.clock.unschedule(self._fade_task)
+
+        if self.debug:
+            self.log.debug("Stopping fade task")

@@ -98,10 +98,10 @@ class TestShows(MpfTestCase):
         self.assertEqual(200, self.machine.leds.led_02.stack[0]['priority'])
         self.assertEqual(204,
                     self.machine.lights.light_01.hw_driver.current_brightness)
-        self.assertEqual(200, self.machine.lights.light_01.state['priority'])
+        self.assertEqual(200, self.machine.lights.light_01.stack[0]['priority'])
         self.assertEqual(120,
                     self.machine.lights.light_02.hw_driver.current_brightness)
-        self.assertEqual(200, self.machine.lights.light_02.state['priority'])
+        self.assertEqual(200, self.machine.lights.light_02.stack[0]['priority'])
         self.assertEqual(255,
                          self.machine.gis.gi_01.hw_driver.current_brightness)
 
@@ -116,10 +116,10 @@ class TestShows(MpfTestCase):
         self.assertEqual(200, self.machine.leds.led_02.stack[0]['priority'])
         self.assertEqual(204,
                     self.machine.lights.light_01.hw_driver.current_brightness)
-        self.assertEqual(200, self.machine.lights.light_01.state['priority'])
+        self.assertEqual(200, self.machine.lights.light_01.stack[0]['priority'])
         self.assertEqual(120,
                     self.machine.lights.light_02.hw_driver.current_brightness)
-        self.assertEqual(200, self.machine.lights.light_02.state['priority'])
+        self.assertEqual(200, self.machine.lights.light_02.stack[0]['priority'])
         self.assertEqual(255,
                          self.machine.gis.gi_01.hw_driver.current_brightness)
 
@@ -134,11 +134,11 @@ class TestShows(MpfTestCase):
         self.assertEqual(255,
                          self.machine.lights.light_01.hw_driver
                          .current_brightness)
-        self.assertEqual(200, self.machine.lights.light_01.state['priority'])
+        self.assertEqual(200, self.machine.lights.light_01.stack[0]['priority'])
         self.assertEqual(51,
                          self.machine.lights.light_02.hw_driver
                          .current_brightness)
-        self.assertEqual(200, self.machine.lights.light_02.state['priority'])
+        self.assertEqual(200, self.machine.lights.light_02.stack[0]['priority'])
         self.assertEqual(153,
                          self.machine.gis.gi_01.hw_driver.current_brightness)
 
@@ -154,11 +154,11 @@ class TestShows(MpfTestCase):
         self.assertEqual(255,
                          self.machine.lights.light_01.hw_driver
                          .current_brightness)
-        self.assertEqual(200, self.machine.lights.light_01.state['priority'])
+        self.assertEqual(200, self.machine.lights.light_01.stack[0]['priority'])
         self.assertEqual(51,
                          self.machine.lights.light_02.hw_driver
                          .current_brightness)
-        self.assertEqual(200, self.machine.lights.light_02.state['priority'])
+        self.assertEqual(200, self.machine.lights.light_02.stack[0]['priority'])
         self.assertEqual(51,
                          self.machine.gis.gi_01.hw_driver.current_brightness)
 
@@ -241,11 +241,11 @@ class TestShows(MpfTestCase):
         self.assertEqual(0,
                          self.machine.lights.light_01.hw_driver
                          .current_brightness)
-        self.assertEqual(0, self.machine.lights.light_01.state['priority'])
+        self.assertEqual(0, self.machine.lights.light_01.stack[0]['priority'])
         self.assertEqual(0,
                          self.machine.lights.light_02.hw_driver
                          .current_brightness)
-        self.assertEqual(0, self.machine.lights.light_02.state['priority'])
+        self.assertEqual(0, self.machine.lights.light_02.stack[0]['priority'])
         self.assertEqual(255,
                          self.machine.gis.gi_01.hw_driver.current_brightness)
 

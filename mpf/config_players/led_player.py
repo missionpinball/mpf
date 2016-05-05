@@ -54,7 +54,6 @@ class LedPlayer(ConfigPlayer):
                 self.machine.leds[led_name])
 
     def clear(self, caller, priority):
-
         del priority
 
         try:

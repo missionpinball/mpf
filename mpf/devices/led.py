@@ -21,6 +21,7 @@ class Led(SystemWideDevice):
         cls.machine = machine
 
         machine.validate_machine_config_section('led_settings')
+
         if machine.config['led_settings']['color_correction_profiles'] is None:
             machine.config['led_settings']['color_correction_profiles'] = (
                 dict())
@@ -79,8 +80,6 @@ class Led(SystemWideDevice):
         super().__init__(machine, name)
 
         self.fade_in_progress = False
-        self.fade_destination_color = RGBColor()
-        self.fade_end_time = None
         self.default_fade_ms = None
 
         self.registered_handlers = list()
@@ -116,7 +115,8 @@ class Led(SystemWideDevice):
             replaced by the new entry. The key is also used to remove entries
             from the stack (e.g. when shows or modes end and they want to
             remove their commands from the LED).
-
+        mode: Optional mode where the brightness was set. Used to remove
+            entries when a mode ends.
         """
 
     def _initialize(self):
@@ -180,7 +180,7 @@ class Led(SystemWideDevice):
                 priority, the settings you're adding here won't take effect.
                 However they're still added to the stack, so if the higher
                 priority settings are removed, then the next-highest apply.
-            key: An arbitrary identifier (can be any unmutable object) that's
+            key: An arbitrary identifier (can be any immutable object) that's
                 used to identify these settings for later removal. If any
                 settings in the stack already have this key, those settings
                 will be replaced with these new settings.
