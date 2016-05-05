@@ -120,6 +120,7 @@ mpf:
       - autofire_coils
       - ball_devices
       - ball_saves
+      - ball_locks
       - coils
       - diverters
       - drop_targets
