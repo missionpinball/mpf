@@ -103,8 +103,7 @@ class MatrixLight(SystemWideDevice):
             self.default_fade_ms = self.config['fade_ms']
         elif self.machine.config['matrix_light_settings']:
             self.default_fade_ms = (
-                self.machine.config['matrix_light_settings']
-                                    ['default_light_fade_ms'])
+                self.machine.config['matrix_light_settings']['default_light_fade_ms'])
         else:
             self.default_fade_ms = 0
 
@@ -231,8 +230,6 @@ class MatrixLight(SystemWideDevice):
         """Removes a group of brightness settings from the stack.
 
         Args:
-            key: The key of the settings to remove (based on the 'key'
-                parameter that was originally passed to the brightness() method.)
 
         This method triggers a light update, so if the highest priority settings
         were removed, the light will be updated with whatever's below it. If no
@@ -245,7 +242,6 @@ class MatrixLight(SystemWideDevice):
 
         self.stack[:] = [x for x in self.stack if x['mode'] != mode]
         MatrixLight.lights_to_update.add(self)
-
 
     def get_brightness(self):
         """Returns an RGBColor() instance of the 'color' setting of the highest
@@ -322,6 +318,7 @@ class MatrixLight(SystemWideDevice):
             **kwargs: Not used. Only included so this method can be used as
                 an event callback since events could pass random kwargs.
         """
+        del kwargs
         self.on(brightness=0, fade_ms=fade_ms, priority=priority, key=key,
                 mode=mode)
 
@@ -389,7 +386,7 @@ class MatrixLight(SystemWideDevice):
             brightness_settings['brightness'] = (
                 brightness_settings['start_brightness'] +
                 int((brightness_settings['dest_brightness'] -
-                brightness_settings['start_brightness']) * ratio))
+                    brightness_settings['start_brightness']) * ratio))
 
         MatrixLight.lights_to_update.add(self)
 
