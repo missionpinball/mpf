@@ -1082,14 +1082,14 @@ class FASTMatrixLight(MatrixLightPlatformInterface):
 
     def on(self, brightness=255):
         """Enables (turns on) this driver."""
-        if brightness >= 255:
-            # self.send('L1:' + self.number + ',FF')
-            self.send('L1:{},FF'.format(self.number))
-        elif brightness == 0:
+        if brightness == 0:
             self.off()
-        else:
-            pass
-            # patter rates of 10/1 through 2/9
+            return
+
+        if brightness >= 255:
+            brightness = 255
+
+        self.send('L1:{},{}'.format(self.number, Util.int_to_hex_string(brightness)))
 
 
 class FASTDirectLED(RGBLEDPlatformInterface):
