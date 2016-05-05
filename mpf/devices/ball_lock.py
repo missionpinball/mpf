@@ -1,11 +1,11 @@
 """ Contains the BallLock device class."""
 
 from collections import deque
-
+from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
 
 
-class BallLock(SystemWideDevice):
+class BallLock(SystemWideDevice, ModeDevice):
     config_section = 'ball_locks'
     collection = 'ball_locks'
     class_label = 'ball_lock'
@@ -17,6 +17,17 @@ class BallLock(SystemWideDevice):
         self.balls_locked = 0
         self.enabled = False
         self.lock_queue = deque()
+
+    def remove(self):
+        self.disable()
+
+    def prepare_config(self, config, is_mode_config):
+        if not is_mode_config:
+            if 'enable_events' not in config:
+                config['enable_events'] = 'ball_started'
+            if 'disable_events' not in config:
+                config['disable_events'] = 'ball_ending'
+        return super().prepare_config(config, is_mode_config)
 
     def _initialize(self):
         # load lock_devices
@@ -100,7 +111,7 @@ class BallLock(SystemWideDevice):
 
             if balls > remaining_balls_to_release:
                 self.lock_queue.append(
-                        (device, balls_locked - remaining_balls_to_release))
+                    (device, balls_locked - remaining_balls_to_release))
                 balls = remaining_balls_to_release
 
             device.eject(balls=balls)
