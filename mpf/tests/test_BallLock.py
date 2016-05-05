@@ -26,6 +26,19 @@ class TestBallLock(MpfTestCase):
         del kwargs
         self._collecting_balls_complete = 1
 
+    def test_ball_lock_in_mode(self):
+        # start mode
+        self.post_event("start_mode1")
+
+        # mode loaded. ball_lock2 should be enabled
+        self.assertTrue(self.machine.ball_locks.lock_test2.enabled)
+
+        # stop mode
+        self.post_event("stop_mode1")
+
+        # mode stopped. should ball_lock be disabled
+        self.assertFalse(self.machine.ball_locks.lock_test2.enabled)
+
     def test_lock_and_release_at_game_end(self):
         coil1 = self.machine.coils['eject_coil1']
         coil2 = self.machine.coils['eject_coil2']

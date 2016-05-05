@@ -3,6 +3,9 @@
 game:
     balls_per_game: 1
 
+modes:
+    - mode1
+
 coils:
     eject_coil1:
         number:
