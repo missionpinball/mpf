@@ -200,10 +200,12 @@ shot_profiles:
 shots:
     left_lane:
         switch: s_left_rollover
-        light: l_left_rollover
+        show_tokens:
+            light: l_left_rollover
     middle_lane:
         switch: s_center_rollover
-        light: l_middle_rollover
+        show_tokens:
+            light: l_middle_rollover
 
 shot_groups:
     rollover_lanes:
@@ -390,7 +392,8 @@ show_player:
 
     mode_claw_lit_for_major_mode_started:
         flash:
-            lights: l_claw_ready, l_right_ramp_arrow
+            show_tokens:
+                lights: l_claw_ready, l_right_ramp_arrow
             key: claw_lit
             speed: 5
             loops: -1
@@ -399,12 +402,14 @@ show_player:
             action: stop
     mode_mode1_acmag_started:
         flash:
-            lights: l_left_ramp_arrow
+            show_tokens:
+                lights: l_left_ramp_arrow
             speed: 4
             loops: -1
     led_show1:
         flash:
-            leds: led1
+            show_tokens:
+                leds: led1
             speed: 4
             loops: -1
 

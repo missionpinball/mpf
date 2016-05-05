@@ -6,7 +6,8 @@ mode:
 shots:
   mode1_shot_1:
     switch: switch_3
-    light: light_3
+    show_tokens:
+      light: light_3
   mode1_shot_17:
     switch: switch_17
     enable_events: custom_enable_17

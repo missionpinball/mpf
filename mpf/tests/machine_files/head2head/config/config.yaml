@@ -39,6 +39,16 @@ switches:
     number:
   s_launcher_diverter_back:
     number:
+  s_transfer_front_back:
+    number:
+  s_transfer_back_front:
+    number:
+  s_playfield_front:
+    number:
+    tags: playfield_front_active
+  s_playfield_back:
+    number:
+    tags: playfield_back_active
 
 coils:
   c_trough_eject_front:
@@ -125,3 +135,13 @@ ball_devices:
     eject_timeouts: 2s
     tags: ball_add_live
     debug: true
+
+playfield_transfers:
+    transfer_front_back:
+        ball_switch: s_transfer_front_back
+        captures_from: playfield_front
+        eject_target: playfield_back
+    transfer_back_front:
+        ball_switch: s_transfer_back_front
+        captures_from: playfield_back
+        eject_target: playfield_front

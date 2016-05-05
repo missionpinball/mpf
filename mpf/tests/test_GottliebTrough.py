@@ -41,7 +41,6 @@ class TestGottliebTrough(MpfTestCase):
         self.assertEqual('idle', self.machine.ball_devices.plunger._state)
 
     def test_boot_with_balls_in_drain_and_trough(self):
-        self.machine.ball_controller.num_balls_known = 0
         self.machine.coils.outhole.pulse = MagicMock()
         self.machine.coils.trough.pulse = MagicMock()
 
@@ -185,7 +184,6 @@ class TestGottliebTrough(MpfTestCase):
         self.assertEqual('ejecting', self.machine.ball_devices.plunger._state)
 
     def test_boot_with_two_balls_in_trough(self):
-        self.machine.ball_controller.num_balls_known = 3
         # two balls are in trough
         self.machine.coils.outhole.pulse = MagicMock()
         self.machine.coils.trough.pulse = MagicMock()
@@ -233,6 +231,7 @@ class TestGottliebTrough(MpfTestCase):
         self.assertEqual('idle', self.machine.ball_devices.outhole._state)
         self.assertEqual('idle', self.machine.ball_devices.trough._state)
         self.assertEqual('idle', self.machine.ball_devices.plunger._state)
+        self.assertEqual(3, self.machine.ball_controller.num_balls_known)
 
         # game should now start
         self.hit_and_release_switch("start")

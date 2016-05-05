@@ -89,14 +89,17 @@ class MachineController(object):
         self.events = None
         self.machine_config = None
         self._set_machine_path()
+
+        self.config_validator = ConfigValidator(self)
+
         self._load_config()
 
         self.clock = ClockBase(self.config['mpf']['hz'])
-        self.log.info("Starting clock at %sHz", self.clock._max_fps)
+        self.log.info("Starting clock at %sHz", self.clock.max_fps)
         self.clock.schedule_interval(self._check_crash_queue, 1)
         self.configure_debugger()
 
-        self.config_validator = ConfigValidator(self)
+
 
         self.hardware_platforms = dict()
         self.default_platform = None
@@ -293,14 +296,17 @@ class MachineController(object):
             self.log.info("Machine config file #%s: %s", num+1, config_file)
 
             self.config = Util.dict_merge(self.config,
-                                          ConfigProcessor.load_config_file(config_file))
+                                          ConfigProcessor.load_config_file(
+                                              config_file,
+                                              config_type='machine'))
             self.machine_config = self.config
 
         if self.options['create_config_cache']:
             self._cache_config()
 
     def _get_mpf_config(self):
-        return ConfigProcessor.load_config_file(self.options['mpfconfigfile'])
+        return ConfigProcessor.load_config_file(self.options['mpfconfigfile'],
+                                                config_type='machine')
 
     def _load_config_from_cache(self):
         self.log.info("Loading cached config: %s",

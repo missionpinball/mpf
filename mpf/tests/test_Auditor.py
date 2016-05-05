@@ -37,6 +37,8 @@ class TestAuditor(MpfTestCase):
 
     def test_auditor_switches(self):
         self.machine.ball_controller.num_balls_known = 1
+        self.machine.playfield.available_balls = 1
+        self.machine.playfield.balls = 1
 
         auditor = self.machine.plugins[0]
         self.assertIsInstance(auditor, Auditor)

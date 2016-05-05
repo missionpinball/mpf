@@ -40,8 +40,6 @@ class Shot(ModeDevice, SystemWideDevice):
         self.profiles = list()
         self.groups = set()  # shot_groups this shot belongs to
 
-        self.tokens = dict()
-
         # todo is this a hack??
         self.machine.events.add_handler('game_ended', self.disable)
 
@@ -95,14 +93,6 @@ class Shot(ModeDevice, SystemWideDevice):
         for switch in self.config['switch']:
             if switch not in self.config['switches']:
                 self.config['switches'].append(switch)
-
-        self._create_tokens()
-
-    def _create_tokens(self):
-        # anything in this shot's config that is not a standard shot config
-        # item is a token that's later passed to shows
-        self.tokens = {x: self.config[x] for x in self.config
-                       if x not in ConfigValidator.config_spec['shots']}
 
     def _register_switch_handlers(self):
         if self.switch_handlers_active:
@@ -246,9 +236,12 @@ class Shot(ModeDevice, SystemWideDevice):
 
             # If we're here then we need to start the show from this state
             s = copy(state_settings)
-            s.update(self.tokens)
+            s['show_tokens'] = self.config['show_tokens']
             s['priority'] += profile['priority']
             s.pop('show')
+
+            s.pop('action')  # temp todo
+            s.pop('name')
 
             # todo kind of a hack, but hold is the only setting from the
             # profile root that we can pass to any show, so we grab it here.
@@ -272,7 +265,7 @@ class Shot(ModeDevice, SystemWideDevice):
 
                     # start the new show at this step
                     s = copy(state_settings)
-                    s.update(self.tokens)
+                    s['show_tokens'] = self.config['show_tokens']
                     s['manual_advance'] = True
                     s['priority'] += profile['priority']
                     s['start_step'] = self.player[profile[
@@ -284,6 +277,9 @@ class Shot(ModeDevice, SystemWideDevice):
                         s['hold'] = profile['settings']['hold']
 
                     s.pop('show')
+                    s.pop('name')
+                    s.pop('action')  # temp todo
+
                     profile['running_show'] = (self.machine.shows[
                         profile['settings']['show']].play(
                         mode=mode, **s))
@@ -293,10 +289,13 @@ class Shot(ModeDevice, SystemWideDevice):
 
             else:  # no running show, so start the profile root show
                 s = copy(state_settings)
-                s.update(self.tokens)
+                s['show_tokens'] = self.config['show_tokens']
                 s['priority'] += profile['priority']
                 s.pop('show')
+                s.pop('name')
+                s.pop('action')  # temp todo
                 s['manual_advance'] = True
+
                 if profile['settings']['hold'] is not None:
                     s['hold'] = profile['settings']['hold']
 

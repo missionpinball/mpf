@@ -29,11 +29,18 @@ class TestBallDevice(MpfTestCase):
                                         self._missing_ball)
 
         self._missing = 0
+        self.assertEqual(0, self.machine.playfield.balls)
+        self.assertEqual(0, self.machine.playfield.available_balls)
+        self.assertEqual(0, self.machine.playfield.unexpected_balls)
 
         self.machine.switch_controller.process_switch("s_ball_switch_launcher",
                                                       1)
         self.advance_time_and_run(1)
         self.assertEqual(1, device2.balls)
+        self.assertEqual(1, self.machine.ball_controller.num_balls_known)
+        self.assertEqual(0, self.machine.playfield.balls)
+        self.assertEqual(0, self.machine.playfield.unexpected_balls)
+        self.assertEqual(1, self.machine.playfield.available_balls)
 
         coil2.pulse.assert_called_once_with()
 
@@ -44,6 +51,9 @@ class TestBallDevice(MpfTestCase):
         self.assertEqual(0, self._missing)
         self.advance_time_and_run(300)
         self.assertEqual(1, self._missing)
+        self.assertEqual(1, self.machine.playfield.balls)
+        self.assertEqual(0, self.machine.playfield.unexpected_balls)
+        self.assertEqual(1, self.machine.playfield.available_balls)
 
     def _requesting_ball(self, balls, **kwargs):
         del kwargs
@@ -765,6 +775,7 @@ class TestBallDevice(MpfTestCase):
         self.assertEqual(1, self._missing)
         self.assertEqual(0, self._captured)
         self.assertEqual(1, playfield.balls)
+        self.assertEqual(1, playfield.available_balls)
 
         # count should be on less and one ball missing
         self.assertEqual(1, device1.balls)
@@ -814,8 +825,12 @@ class TestBallDevice(MpfTestCase):
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
         self.machine.switch_controller.process_switch("s_ball_switch2", 1)
         self.advance_time_and_run(1)
+        self.assertEqual(0, playfield.unexpected_balls)
         self.assertEqual(2, self._captured)
         self._captured = 0
+
+        # assume there are more balls in the machine
+        self.machine.ball_controller.num_balls_known = 4
 
         self.assertEqual(0, playfield.balls)
 
@@ -830,6 +845,7 @@ class TestBallDevice(MpfTestCase):
 
         # assume there are already two balls on the playfield
         playfield.balls = 2
+        playfield.available_balls = 2
 
         # request an ball to pf
         playfield.add_ball()
@@ -1573,7 +1589,6 @@ class TestBallDevice(MpfTestCase):
         self._captured = 0
         self._missing = 0
         self._collecting_balls_complete = 0
-        self.machine.ball_controller.num_balls_known = 2
 
         # add an initial ball to trough
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
@@ -1605,6 +1620,7 @@ class TestBallDevice(MpfTestCase):
 
         # playfield should expect to have a ball
         self.assertEqual(1, playfield.available_balls)
+        self.assertEqual(0, playfield.balls)
 
         # trough ejects
         coil1.pulse.assert_called_once_with()
@@ -1630,6 +1646,9 @@ class TestBallDevice(MpfTestCase):
                                                       0)
         self.advance_time_and_run(1)
         self.assertEqual(0, launcher.balls)
+        self.assertEqual(2, self.machine.ball_controller.num_balls_known)
+        self.assertEqual(1, playfield.available_balls)
+        self.assertEqual(0, playfield.balls)
 
         # the ball should go to target1. however, it jumps to the pf and drains
         # without hitting a switch on the pf
@@ -1642,12 +1661,14 @@ class TestBallDevice(MpfTestCase):
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
 
         # no more balls on pf
-        self.assertEqual(0, playfield.available_balls)
         self.assertEqual(0, playfield.balls)
+        # eject is not failed yet
+        #self.assertEqual(0, playfield.available_balls)
 
         self.advance_time_and_run(30)
 
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
+        self.assertEqual(0, playfield.balls)
         self.assertEqual(0, playfield.available_balls)
 
     def test_ball_missing_to_pf_and_drain_with_pf_switch(self):
@@ -1672,7 +1693,6 @@ class TestBallDevice(MpfTestCase):
         self._captured = 0
         self._missing = 0
         self._collecting_balls_complete = 0
-        self.machine.ball_controller.num_balls_known = 2
 
         # add an initial ball to trough
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
@@ -1763,6 +1783,7 @@ class TestBallDevice(MpfTestCase):
         self.machine.events.add_handler('balldevice_captured_from_playfield',
                                         self._captured_from_pf)
         self._captured = 0
+        self.assertEqual(0, self.machine.ball_controller.num_balls_known)
 
         # device captures two balls
         self.machine.switch_controller.process_switch("s_ball_switch_target3",
@@ -1772,6 +1793,10 @@ class TestBallDevice(MpfTestCase):
             "s_ball_switch_target3_2", 1)
         self.advance_time_and_run(1)
         self.assertEqual(2, self._captured)
+        self.assertEqual(0, playfield.balls)
+        self.assertEqual(2, playfield.available_balls)
+        self.assertEqual(0, playfield.unexpected_balls)
+        self.assertEqual(2, self.machine.ball_controller.num_balls_known)
         self._captured = 0
 
         # it should eject one
@@ -1797,6 +1822,7 @@ class TestBallDevice(MpfTestCase):
         self.assertEqual(2, playfield.balls)
         self.assertEqual(0, self._captured)
         self.assertEqual(2, playfield.available_balls)
+        self.assertEqual(0, playfield.unexpected_balls)
 
     def test_ball_request_when_device_is_full(self):
         coil1 = self.machine.coils['eject_coil1']
@@ -1820,7 +1846,6 @@ class TestBallDevice(MpfTestCase):
         self._captured = 0
         self._missing = 0
         self._collecting_balls_complete = 0
-        self.machine.ball_controller.num_balls_known = 2
 
         # add initial balls to trough
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)

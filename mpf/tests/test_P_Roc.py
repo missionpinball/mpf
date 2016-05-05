@@ -130,38 +130,39 @@ class TestPRoc(MpfTestCase):
         # test configure
         self.machine.default_platform.configure_dmd()
 
-        return
-        # todo update these tests when MPF 0.30 is updated for DMD support
-
-        # dmd.proc.dmd_update_config.assert_called_with(high_cycles=[1, 2, 3, 4])
+        self.pinproc.dmd_update_config.assert_called_with(high_cycles=[1, 2, 3,
+                                                                    4])
 
         # test set frame to buffer
         frame = bytearray()
         for i in range(4096):
             frame.append(i % 256)
-        dmd.update(frame)
-        dmd.dmd.set_data.assert_called_with(frame)
 
-        # test draw
-        assert not dmd.proc.dmd_draw.called
-        self.advance_time_and_run(0.04)
+        dmd = self.machine.default_platform.dmd
+
+        dmd.proc = MagicMock()
+
+        dmd.update(frame)
+
+        dmd.dmd.set_data.assert_called_with(frame)
         dmd.proc.dmd_draw.assert_called_with(dmd.dmd)
 
         # frame displayed
         self.machine.default_platform.proc.get_events = MagicMock(return_value=[
             {'type': 5, 'value': 123}])
 
-        dmd.proc.dmd_draw = MagicMock()
         self.advance_time_and_run(0.04)
         dmd.proc.dmd_draw.assert_called_with(dmd.dmd)
 
         # draw broken frame
         dmd.dmd.set_data = MagicMock()
+
         # test set frame to buffer
         frame = bytearray()
         for i in range(1234):
             frame.append(i % 256)
-        dmd.update(frame)
+        self.pinproc.update(frame)
+
         # should not be rendered
         assert not dmd.dmd.set_data.called
 

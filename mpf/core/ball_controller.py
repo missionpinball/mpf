@@ -45,10 +45,141 @@ class BallController(object):
             if 'ball_switches' not in device.config:
                 continue
             for switch in device.config['ball_switches']:
-                self.machine.switch_controller.add_switch_handler(switch.name, self._count_balls, ms=100)
+                self.machine.switch_controller.add_switch_handler(switch.name,
+                                                                  self._update_num_balls_known,
+                                                                  ms=device.config['entrance_count_delay'],
+                                                                  state=1)
+                self.machine.switch_controller.add_switch_handler(switch.name,
+                                                                  self._update_num_balls_known,
+                                                                  ms=device.config['exit_count_delay'],
+                                                                  state=0)
+                self.machine.switch_controller.add_switch_handler(switch.name,
+                                                                  self._correct_playfield_count,
+                                                                  ms=device.config['entrance_count_delay'],
+                                                                  state=1)
+                self.machine.switch_controller.add_switch_handler(switch.name,
+                                                                  self._correct_playfield_count,
+                                                                  ms=device.config['exit_count_delay'],
+                                                                  state=0)
+
+        for playfield in self.machine.playfields:
+            self.machine.events.add_handler('{}_ball_count_change'.format(playfield.name),
+                                            self._correct_playfield_count)
 
         # run initial count
-        self._count_balls()
+        self._update_num_balls_known()
+
+    def _get_loose_balls(self):
+        return self.num_balls_known - self._count_stable_balls()
+
+    def _count_stable_balls(self):
+        self.log.debug("Counting Balls")
+        balls = 0
+
+        for device in self.machine.ball_devices:
+            if device.is_playfield():
+                continue
+
+            if not device.is_ball_count_stable():
+                raise ValueError("devices not stable")
+
+            # generally we do not count ball devices without switches
+            if 'ball_switches' not in device.config:
+                continue
+            # special handling for troughs (needed for gottlieb)
+            elif not device.config['ball_switches'] and 'trough' in device.tags:
+                balls += device.balls
+            else:
+                for switch in device.config['ball_switches']:
+                    if self.machine.switch_controller.is_active(
+                            switch.name, ms=device.config['entrance_count_delay']):
+                        balls += 1
+                    elif self.machine.switch_controller.is_inactive(
+                            switch.name, ms=device.config['exit_count_delay']):
+                        continue
+                    else:
+                        raise ValueError("switches not stable")
+
+        return balls
+
+    def _correct_playfield_count(self, **kwargs):
+        del kwargs
+        self.delay.reset(ms=1, callback=self._correct_playfield_count2, name="correct_playfield")
+
+    def _correct_playfield_count2(self):
+        try:
+            loose_balls = self._get_loose_balls()
+        except ValueError:
+            self.delay.reset(ms=10000, callback=self._correct_playfield_count2, name="correct_playfield")
+            return
+
+        balls_on_pfs = 0
+
+        for playfield in self.machine.playfields:
+            balls_on_pfs += playfield.balls
+
+        # fix too much balls and prefer playfields where balls and available_balls have the same value
+        if balls_on_pfs > loose_balls:
+            for dummy_i in range(balls_on_pfs - loose_balls):
+                for playfield in self.machine.playfields:
+                    self.log.warning("Corecting balls on pf from %s to %s on playfield %s (preferred)",
+                                     playfield.balls, playfield.balls - 1, playfield.name)
+                    if playfield.available_balls == playfield.balls and playfield.balls > 0:
+                        if playfield.unexpected_balls > 0:
+                            playfield.unexpected_balls -= 1
+                        playfield.balls -= 1
+                        playfield.available_balls -= 1
+                        balls_on_pfs -= 1
+                        break
+
+        # fix too much balls and take the remaining playfields
+        if balls_on_pfs > loose_balls:
+            for dummy_i in range(balls_on_pfs - loose_balls):
+                for playfield in self.machine.playfields:
+                    self.log.warning("Corecting balls on pf from %s to %s on playfield %s",
+                                     playfield.balls, playfield.balls - 1, playfield.name)
+                    if playfield.balls > 0:
+                        if playfield.unexpected_balls > 0:
+                            playfield.unexpected_balls -= 1
+                        playfield.balls -= 1
+                        playfield.available_balls -= 1
+                        balls_on_pfs -= 1
+                        break
+
+        if balls_on_pfs > loose_balls:
+            self.log.warning("Failed to remove enough balls from playfields. This is a bug!")
+
+        for playfield in self.machine.playfields:
+            if playfield.balls != playfield.available_balls:
+                self.log.warning("Corecting available_balls %s to %s on playfield %s",
+                                 playfield.available_balls, playfield.balls, playfield.name)
+                playfield.available_balls = playfield.balls
+
+    def trigger_ball_count(self):
+        self._update_num_balls_known()
+        self._correct_playfield_count()
+
+    def _update_num_balls_known(self):
+        try:
+            balls = self._count_balls()
+        except ValueError:
+            self.delay.reset(ms=100, callback=self._update_num_balls_known, name="update_num_balls_known")
+            return
+
+        if self.num_balls_known < 0:
+            self.num_balls_known = 0
+        if balls > self.num_balls_known:
+            self.log.debug("Found new balls. Setting known balls to %s", balls)
+            self.delay.add(1, self._handle_new_balls, new_balls=balls - self.num_balls_known)
+            self.num_balls_known = balls
+
+    def _handle_new_balls(self, new_balls):
+        for dummy_i in range(new_balls):
+            for playfield in self.machine.playfields:
+                if playfield.unexpected_balls > 0:
+                    playfield.unexpected_balls -= 1
+                    playfield.available_balls += 1
+                    break
 
     def _count_balls(self):
         self.log.debug("Counting Balls")
@@ -63,13 +194,14 @@ class BallController(object):
                 balls += device.balls
             else:
                 for switch in device.config['ball_switches']:
-                    if self.machine.switch_controller.is_active(switch.name, ms=100):
+                    if self.machine.switch_controller.is_active(
+                            switch.name, ms=device.config['entrance_count_delay']):
                         balls += 1
-
-        self.log.debug("Setting known balls to %s", balls)
-        if balls > self.num_balls_known:
-            self.log.debug("Setting known balls to %s", balls)
-            self.num_balls_known = balls
+                    elif self.machine.switch_controller.is_inactive(
+                            switch.name, ms=device.config['exit_count_delay']):
+                        continue
+                    else:
+                        raise ValueError("switches not stable")
 
         return balls
 

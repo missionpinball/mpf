@@ -8,8 +8,10 @@ import unittest
 
 from mock import *
 
+import ruamel.yaml as yaml
+
 import mpf.core
-from mpf.core.config_validator import ConfigValidator
+import mpf.core.config_validator
 from mpf.core.machine import MachineController
 from mpf.core.utility_functions import Util
 from mpf.file_interfaces.yaml_interface import YamlInterface
@@ -49,7 +51,8 @@ class MpfTestCase(unittest.TestCase):
         self.machine_config_patches['mpf']['save_machine_vars_to_disk'] = False
         self.machine_config_patches['mpf']['plugins'] = list()
         self.machine_config_patches['bcp'] = []
-        self.expected_duration = 1.0
+        self.expected_duration = 0.5
+        self.min_frame_time = 1/30  # test with default Hz
 
     def getConfigFile(self):
         """Override this method in your own test class to point to the config
@@ -78,6 +81,10 @@ class MpfTestCase(unittest.TestCase):
     def post_event(self, event_name):
         self.machine.events.post(event_name)
         self.machine_run()
+
+    def set_num_balls_known(self, balls):
+        # in case the test does not have any ball devices
+        self.machine.ball_controller.num_balls_known = balls
 
     def get_platform(self):
         return 'virtual'
@@ -130,6 +137,9 @@ class MpfTestCase(unittest.TestCase):
             if not wait_until or (next_show_step and wait_until > next_show_step):
                 wait_until = next_show_step
 
+            if wait_until and wait_until - self.machine.clock.get_time() < self.min_frame_time:
+                wait_until = self.machine.clock.get_time() + self.min_frame_time
+
             if wait_until and self.machine.clock.get_time() < wait_until < end_time:
                 self.set_time(wait_until)
                 self.machine_run()
@@ -170,7 +180,8 @@ class MpfTestCase(unittest.TestCase):
 
     def setUp(self):
         # we want to reuse config_specs to speed tests up
-        ConfigValidator.unload_config_spec = MagicMock()
+        mpf.core.config_validator.ConfigValidator.unload_config_spec = (
+            MagicMock())
 
         self._events = {}
 
@@ -205,8 +216,7 @@ class MpfTestCase(unittest.TestCase):
             while not self.machine.test_init_complete:
                 self.advance_time_and_run(0.01)
 
-            self.machine.ball_controller.num_balls_known = 99
-            self.advance_time_and_run(300)
+            self.advance_time_and_run(1)
 
         except Exception as e:
             # todo temp until I can figure out how to stop the asset loader
@@ -255,8 +265,10 @@ class MpfTestCase(unittest.TestCase):
         if sys.exc_info != (None, None, None):
             # disable teardown logging after error
             logging.basicConfig(level=99)
-        # fire all delays
-        self.advance_time_and_run(300)
+        else:
+            # fire all delays
+            self.min_frame_time = 20.0
+            self.advance_time_and_run(300)
         self.machine.clock.time = self.realTime
         self.machine.stop()
         self.machine = None
@@ -270,3 +282,11 @@ class MpfTestCase(unittest.TestCase):
 
     def _bcp_send(self, bcp_command, callback=None, **kwargs):
         self.sent_bcp_commands.append((bcp_command, callback, kwargs))
+
+    def add_to_config_validator(self, key, new_dict):
+        if mpf.core.config_validator.ConfigValidator.config_spec:
+            mpf.core.config_validator.ConfigValidator.config_spec[key] = (
+                new_dict)
+        else:
+            mpf.core.config_validator.mpf_config_spec += '\n' + yaml.dump(
+                dict(key=new_dict), default_flow_style=False)

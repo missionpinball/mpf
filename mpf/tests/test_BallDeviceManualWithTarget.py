@@ -21,12 +21,16 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         self._missing += 1
 
     def _requesting_ball(self, balls, **kwargs):
+        del kwargs
         self._requesting += balls
 
     def _ball_enter(self, new_balls, unclaimed_balls, **kwargs):
+        del kwargs
+        del unclaimed_balls
         self._enter += new_balls
 
     def _captured_from_pf(self, balls, **kwargs):
+        del kwargs
         self._captured += balls
 
     def test_manual_successful_eject_to_pf(self):
@@ -194,7 +198,6 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         self._enter = 0
         self._captured = 0
         self._missing = 0
-        self.machine.ball_controller.num_balls_known = 1
 
         # add an initial ball to trough
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
@@ -626,7 +629,6 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         self._enter = 0
         self._captured = 0
         self._missing = 0
-        self.machine.ball_controller.num_balls_known = 2
 
         # add two initial ball to trough
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
@@ -782,6 +784,7 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         self.advance_time_and_run(100)
 
         self.assertEqual(1, playfield.balls)
+        self.assertEqual(1, playfield.available_balls)
         self.assertEqual(0, self._captured)
         self.assertEqual(0, self._missing)
 
@@ -796,12 +799,14 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         self.machine.switch_controller.process_switch("s_ball_switch2", 1)
         self.advance_time_and_run(1)
         self.assertEqual(0, playfield.balls)
+        self.assertEqual(0, playfield.available_balls)
         self.assertEqual(2, self._captured)
         self.assertEqual(0, self._missing)
 
         self.advance_time_and_run(100)
         self.assertEqual(0, self._missing)
         self.assertEqual(0, playfield.balls)
+        self.assertEqual(0, playfield.available_balls)
         self.assertEqual(2, self._captured)
         # launcher should be idle
         self.assertEqual("idle", device2._state)
@@ -932,12 +937,16 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         self.machine.switch_controller.process_switch("s_playfield", 0)
         self.advance_time_and_run(1)
 
+        self.assertEqual(1, playfield.balls)
+        self.assertEqual(1, playfield.available_balls)
+
         # no launcher eject
         coil1.pulse.assert_called_once_with()
         assert not coil2.pulse.called
         self.advance_time_and_run(100)
 
         self.assertEqual(1, playfield.balls)
+        self.assertEqual(1, playfield.available_balls)
         self.assertEqual(0, self._captured)
         self.assertEqual(0, self._missing)
         self.assertEqual("idle", device2._state)
@@ -964,6 +973,7 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         self.assertEqual(2, self._captured)
         self._captured = 0
         self.assertEqual(0, playfield.balls)
+        self.assertEqual(0, playfield.available_balls)
 
         # it should keep the ball
         coil1.pulse = MagicMock()
@@ -1020,6 +1030,7 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
 
         self.advance_time_and_run(100)
         self.assertEqual(1, playfield.balls)
+        self.assertEqual(1, playfield.available_balls)
         self.assertEqual(0, self._captured)
         self.assertEqual(0, self._missing)
 
@@ -1032,7 +1043,9 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         playfield = self.machine.ball_devices['playfield']
 
         # add ball to pf
+        self.machine.ball_controller.num_balls_known = 1
         playfield.balls = 1
+        playfield.available_balls = 1
         self.assertEqual(1, playfield.balls)
         coil4.pulse = MagicMock()
         self.assertEqual(0, launcher_manual.balls)
@@ -1074,7 +1087,9 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         playfield = self.machine.ball_devices['playfield']
 
         # add ball to pf
+        self.machine.ball_controller.num_balls_known = 1
         playfield.balls = 1
+        playfield.available_balls = 1
         coil5.pulse = MagicMock()
         coil2.pulse = MagicMock()
         self.assertEqual(1, playfield.balls)
@@ -1119,7 +1134,6 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         self.assertEqual(0, playfield.balls)
         self.assertEqual(1, launcher.balls)
         self.assertEqual(0, vuk.balls)
-
 
         # it should stay there and wait for manual eject
         self.assertEqual(0, playfield.balls)

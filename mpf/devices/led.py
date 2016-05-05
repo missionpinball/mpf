@@ -12,11 +12,15 @@ class Led(SystemWideDevice):
     config_section = 'leds'
     collection = 'leds'
     class_label = 'led'
+    machine = None
 
     leds_to_update = set()
 
     @classmethod
     def device_class_init(cls, machine):
+
+        cls.machine = machine
+
         machine.validate_machine_config_section('led_settings')
         if machine.config['led_settings']['color_correction_profiles'] is None:
             machine.config['led_settings']['color_correction_profiles'] = (
@@ -41,8 +45,12 @@ class Led(SystemWideDevice):
                 linear_cutoff=profile_parameters['linear_cutoff'])
             machine.led_color_correction_profiles[profile_name] = profile
 
+        # schedule the single machine-wide update to write the current led of
+        # each LED to the hardware
         # todo make time configurable
         machine.clock.schedule_interval(cls.update_leds, 0, -100)
+
+        machine.mode_controller.register_stop_method(cls.mode_stop)
 
     @classmethod
     def update_leds(cls, dt):
@@ -62,6 +70,11 @@ class Led(SystemWideDevice):
                 led.write_color_to_hw_driver()
 
             Led.leds_to_update = set()
+
+    @classmethod
+    def mode_stop(cls, mode):
+        for led in cls.machine.leds:
+            led.remove_from_stack_by_mode(mode)
 
     def __init__(self, machine, name):
         super().__init__(machine, name)
@@ -150,7 +163,7 @@ class Led(SystemWideDevice):
         """
         self._color_correction_profile = profile
 
-    def color(self, color, fade_ms=None, priority=0, key=None):
+    def color(self, color, fade_ms=None, priority=0, key=None, mode=None):
         """Adds or updates a color entry in this LED's stack, which is how you
         tell this LED what color you want it to be.
 
@@ -170,7 +183,9 @@ class Led(SystemWideDevice):
                 used to identify these settings for later removal. If any
                 settings in the stack already have this key, those settings
                 will be replaced with these new settings.
-
+            mode: Optional mode instance of the mode that is setting this
+                color. When a mode ends, entries from the stack with that mode
+                will automatically be removed.
         """
         if self.debug:
             self.log.debug("Received color() command. color: %s, fade_ms: %s"
@@ -194,12 +209,12 @@ class Led(SystemWideDevice):
 
             return
 
-        self._add_to_stack(color, fade_ms, priority, key)
+        self._add_to_stack(color, fade_ms, priority, key, mode)
 
-    def _add_to_stack(self, color, fade_ms, priority, key):
+    def _add_to_stack(self, color, fade_ms, priority, key, mode):
         curr_color = self.get_color()
 
-        self.remove_from_stack(key)
+        self.remove_from_stack_by_key(key)
 
         if fade_ms:
             new_color = curr_color
@@ -214,7 +229,8 @@ class Led(SystemWideDevice):
                                dest_time=dest_time,
                                dest_color=color,
                                color=new_color,
-                               key=key))
+                               key=key,
+                               mode=mode))
 
         self.stack.sort(key=itemgetter('priority', 'start_time'), reverse=True)
 
@@ -239,7 +255,7 @@ class Led(SystemWideDevice):
 
         Led.leds_to_update.add(self)
 
-    def remove_from_stack(self, key):
+    def remove_from_stack_by_key(self, key):
         """Removes a group of color settings from the stack.
 
         Args:
@@ -256,6 +272,25 @@ class Led(SystemWideDevice):
             self.log.debug("Removing key '%s' from stack", key)
 
         self.stack[:] = [x for x in self.stack if x['key'] != key]
+        Led.leds_to_update.add(self)
+
+    def remove_from_stack_by_mode(self, mode):
+        """Removes a group of color settings from the stack.
+
+        Args:
+            key: The key of the settings to remove (based on the 'key'
+                parameter that was originally passed to the color() method.)
+
+        This method triggers a LED update, so if the highest priority settings
+        were removed, the LED will be updated with whatever's below it. If no
+        settings remain after these are removed, the LED will turn off.
+
+        """
+
+        if self.debug:
+            self.log.debug("Removing mode '%s' from stack", mode)
+
+        self.stack[:] = [x for x in self.stack if x['mode'] != mode]
         Led.leds_to_update.add(self)
 
     def get_color(self):

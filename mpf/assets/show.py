@@ -151,7 +151,8 @@ class Show(Asset):
                     actions[key] = validated_config
 
                 elif key != 'time':
-                    actions[key] = step[key]
+                    raise ValueError('Invalid section "{}:" found in show: '
+                                     '{}'.format(key, self.file))
 
             self.show_steps.append(actions)
 
@@ -235,7 +236,7 @@ class Show(Asset):
     def play(self, priority=0, hold=None,
              speed=1.0, start_step=1, callback=None,
              loops=-1, sync_ms=0, reset=True, mode=None,
-             manual_advance=False, key=None, **kwargs):
+             manual_advance=False, key=None, show_tokens=None):
         """Plays a Show. There are many parameters you can use here which
         affect how the show is played. This includes things like the playback
         speed, priority, etc. These are
@@ -308,6 +309,27 @@ class Show(Asset):
         # todo bugfix, currently there is only one set of autoplay seetings,
         # so if multiple show instances are played but the show is not loaded,
         # only the last one will play
+
+        if not show_tokens:
+            show_tokens = dict()
+
+        # todo if we want to enfore that show_tokens match the tokens in the
+        # show exactly, uncomment below and remove the following if.
+        # however we don't do this today because of the default 'off' show
+        # that's used since it has lights and leds, so we'll have to think
+        # about this.
+
+        # if set(show_tokens.keys()) != self.tokens:
+        #     raise ValueError('Token mismatch while playing show "{}". Tokens '
+        #                      'expected: {}. Tokens submitted: {}'.format(
+        #                      self.name, self.tokens, set(show_tokens.keys())))
+
+        if not set(show_tokens.keys()).issubset(self.tokens):
+            raise ValueError('Token mismatch while playing show "{}". Tokens '
+                             'expected: {}. Tokens submitted: {}'.format(
+                             self.name, self.tokens, set(show_tokens.keys())))
+
+
         if not self.loaded:
             self._autoplay_settings = dict(priority=priority,
                                            hold=hold,
@@ -320,7 +342,7 @@ class Show(Asset):
                                            mode=mode,
                                            manual_advance=manual_advance,
                                            key=key,
-                                           play_kwargs=kwargs
+                                           show_tokens=show_tokens
                                            )
 
             self.load(callback=self._autoplay, priority=priority)
@@ -350,7 +372,7 @@ class Show(Asset):
                            mode=mode,
                            manual_advance=manual_advance,
                            key=key,
-                           play_kwargs=kwargs)
+                           show_tokens=show_tokens)
 
     def _autoplay(self, *args, **kwargs):
         del args
@@ -375,7 +397,7 @@ class RunningShow(object):
     def __init__(self, machine, show, show_steps, priority,
                  hold, speed, start_step, callback, loops,
                  sync_ms, reset, mode, manual_advance, key,
-                 play_kwargs):
+                 show_tokens):
 
         self.machine = machine
         self.show = show
@@ -389,7 +411,12 @@ class RunningShow(object):
         self.mode = mode
         self.manual_advance = manual_advance
         self.key = key
-        self.play_kwargs = play_kwargs
+
+        if show_tokens:
+            self.show_tokens = show_tokens
+        else:
+            self.show_tokens = dict()
+
         self.debug = False
         self._stopped = False
 
@@ -406,8 +433,8 @@ class RunningShow(object):
         if self.hold is None:
             self.hold = self._total_steps == 1
 
-        if play_kwargs and show.tokens:
-            self._replace_tokens(**play_kwargs)
+        if show_tokens and show.tokens:
+            self._replace_tokens(**show_tokens)
 
         show.running.add(self)
         self.machine.show_controller.notify_show_starting(self)
@@ -470,6 +497,9 @@ class RunningShow(object):
         if hold is None:
             hold = self.hold
 
+        # todo this could be smarter, to only clear players that were
+        # actually used in this show instead of all of them
+
         if not hold:
             for player in ConfigPlayer.show_players.values():
                 player.clear(caller=self, priority=self.priority)
@@ -492,7 +522,7 @@ class RunningShow(object):
     def advance(self, steps=1, show_step=None):
         """Manually advances this show to the next step."""
 
-        if type(show_step) is int and show_step < 0:
+        if isinstance(show_step, int) and show_step < 0:
             raise ValueError('Cannot advance {} to step "{}" as that is'
                              'not a valid step number.'.format(self, show_step))
 
@@ -534,7 +564,7 @@ class RunningShow(object):
                     caller=self,
                     priority=self.priority,
                     hold=self.hold,
-                    play_kwargs=self.play_kwargs)
+                    show_tokens=self.show_tokens)
 
         # if we're at the end of the show
         if self.next_step_index == self._total_steps - 1:

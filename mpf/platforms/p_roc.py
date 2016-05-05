@@ -54,6 +54,8 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
         self.machine.config['platform'] = self.features
         # ----------------------------------------------------------------------
 
+        self.dmd = None
+
         self.connect()
 
         # Clear out the default program for the aux port since we might need it
@@ -181,7 +183,8 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
     def configure_dmd(self):
         """Configures a hardware DMD connected to a classic P-ROC."""
 
-        self.machine.bcp.register_dmd(PROCDMD(self.proc, self.machine).update)
+        self.dmd = PROCDMD(self.pinproc, self.proc, self.machine)
+        self.machine.bcp.register_dmd(self.dmd.update)
 
     def tick(self, dt):
         """Checks the P-ROC for any events (switch state changes or notification
@@ -229,7 +232,7 @@ class PROCDMD(object):
 
     """
 
-    def __init__(self, proc, machine):
+    def __init__(self, pinproc, proc, machine):
         self.proc = proc
         self.machine = machine
 

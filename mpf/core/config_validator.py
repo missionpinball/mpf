@@ -15,6 +15,7 @@ log = logging.getLogger('ConfigProcessor')
 mpf_config_spec = '''
 
 accelerometers:
+    __valid_in__: machine
     platform: single|str|None
     hit_limits: single|float:str|None
     level_limits: single|float:str|None
@@ -25,7 +26,10 @@ accelerometers:
     tags: list|str|None
     label: single|str|%
     number: single|str|
+animations:
+    __valid_in__: machine, mode                 # todo add to validator
 assets:
+    __valid_in__: machine, mode
     common:
         load: single|str|preload
         file: single|str|None
@@ -40,12 +44,14 @@ assets:
         width: single|num|None
         height: single|num|None
 auditor:
+    __valid_in__: machine
     save_events: list|str|ball_ended
     audit: list|str|None
     events: list|str|None
     player: list|str|None
     num_player_top_records: single|int|1
 autofire_coils:
+    __valid_in__: machine
     coil: single|machine(coils)|
     switch: single|machine(switches)|
     reverse_switch: single|bool|False
@@ -58,24 +64,29 @@ autofire_coils:
     switch_overwrite: dict|str:str|None
 
 switch_overwrites:
+    __valid_in__: machine
     debounce: single|enum(quick,normal,None)|None
 
 coil_overwrites:
+    __valid_in__: machine
     recycle: single|bool|None
     pulse_ms: single|ms|None
-    pulse_power: single|int|None
-    hold_power: single|int|None
+    pulse_power: single|int(0,8)|None
+    hold_power: single|int(0,8)|None
 fast_coil_overwrites:
+    __valid_in__: machine
     pulse_power32: single|int|None
     hold_power32: single|int|None
     pulse_pwm_mask: single|int|None
     hold_pwm_mask: single|int|None
     recycle_ms: single|ms|None
 p_roc_coil_overwrites:
+    __valid_in__: machine
     pwm_on_ms: single|int|None
     pwm_off_ms: single|int|None
 
 ball_devices:
+    __valid_in__: machine
     exit_count_delay: single|ms|500ms
     entrance_count_delay: single|ms|500ms
     eject_coil: single|machine(coils)|None
@@ -112,6 +123,7 @@ ball_devices:
     auto_fire_on_unexpected_ball: single|bool|True
     target_on_unexpected_ball: single|machine(ball_devices)|None
 ball_locks:
+    __valid_in__: machine, mode
     balls_to_lock: single|int|
     lock_devices: list|machine(ball_devices)|
     source_playfield: single|machine(ball_devices)|playfield
@@ -124,6 +136,7 @@ ball_locks:
     reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_ending
     release_one_events: dict|str:ms|None
 ball_saves:
+    __valid_in__: machine, mode
     source_playfield: single|machine(ball_devices)|playfield
     active_time: single|ms|0
     hurry_up_time: single|ms|0
@@ -137,18 +150,21 @@ ball_saves:
     disable_events: dict|str:ms|ball_ending
     timer_start_events: dict|str:ms|None
 bcp:
+    __valid_in__: machine
     connections:
         host: single|str|None
         port: single|int|5050
         connection_attempts: single|int|-1
         require_connection: single|bool|False
 bcp_player:                                          # todo
+    __valid_in__: machine
     __allow_others__:
 coils:
+    __valid_in__: machine
     number: single|str|
-    pulse_ms: single|int|None
-    pulse_power: single|int|None
-    hold_power: single|int|None
+    pulse_ms: single|ms|None
+    pulse_power: single|int(0,8)|None
+    hold_power: single|int(0,8)|None
     recycle: single|bool|False
     allow_enable: single|bool|False
     tags: list|str|None
@@ -158,7 +174,12 @@ coils:
     disable_events: dict|str:ms|None
     pulse_events: dict|str:ms|None
     platform: single|str|None
+opp_coils:
+    __valid_in__: machine
+    hold_power16: single|int|None
+    recycle_factor: single|int|None
 fast_coils:
+    __valid_in__: machine
     pulse_power32: single|int|None
     hold_power32: single|int|None
     pulse_pwm_mask: single|int|None
@@ -166,9 +187,11 @@ fast_coils:
     connection: single|enum(network,local,auto)|auto
     recycle_ms: single|ms|None
 p_roc_coils:
+    __valid_in__: machine
     pwm_on_ms: single|int|None
     pwm_off_ms: single|int|None
 coil_player:
+    __valid_in__: machine, mode, show
     action: single|lstr|pulse
     ms: single|ms|None
     power: single|float|1.0
@@ -182,17 +205,23 @@ coil_player:
     # hold_pwm_mask: single|int|None
     __allow_others__:
 color_correction_profile:
+    __valid_in__: machine
     gamma: single|float|2.5
     whitepoint: list|float|1.0, 1.0, 1.0
     linear_slope: single|float|1.0
     linear_cutoff: single|float|0.0
+config:
+    __valid_in__: machine                           # todo add to validator
 config_player_common:
+    __valid_in__: None
     priority: single|int|0
 control_events:
+    __valid_in__: None
     action: single|enum(add,substract,jump,start,stop,reset,restart,pause,set_tick_interval,change_tick_interval)|
     event: single|str|
     value: single|int|None
 credits:
+    __valid_in__: machine, mode
     max_credits: single|int|0
     free_play: single|bool|yes
     service_credits_switch: list|machine(switches)|None
@@ -209,11 +238,13 @@ credits:
         price: single|float|.50
         credits: single|int|1
 displays:
+    __valid_in__: machine
     width: single|int|800
     height: single|int|600
     default: single|bool|False
     fps: single|int|0
 diverters:
+    __valid_in__: machine
     type: single|enum(hold,pulse)|hold
     activation_time: single|ms|0
     activation_switches: list|machine(switches)|None
@@ -232,6 +263,7 @@ diverters:
     activate_events: dict|str:ms|None
     deactivate_events: dict|str:ms|None
 driver_enabled:
+    __valid_in__: machine
     number: single|str|
     allow_enable: single|bool|True
     tags: list|str|None
@@ -241,6 +273,7 @@ driver_enabled:
     enable_events: dict|str:ms|ball_started
     disable_events: dict|str:ms|ball_ending
 drop_targets:
+    __valid_in__: machine
     switch: single|machine(switches)|
     reset_coil: single|machine(coils)|None
     knockdown_coil: single|machine(coils)|None
@@ -251,6 +284,7 @@ drop_targets:
     knockdown_events: dict|str:ms|None
     ball_search_order: single|int|100
 drop_target_banks:
+    __valid_in__: machine, mode
     drop_targets: list|machine(drop_targets)|
     reset_coil: single|machine(coils)|None
     reset_coils: list|machine(coils)|None
@@ -259,8 +293,10 @@ drop_target_banks:
     debug: single|bool|False
     reset_events: dict|str:ms|machine_reset_phase_3, ball_starting
 event_player:
+    __valid_in__: machine, mode, show
     __allow_others__:
 fadecandy:
+    __valid_in__: machine
     gamma: single|float|2.5
     whitepoint: list|float|1.0, 1.0, 1.0
     linear_slope: single|float|1.0
@@ -268,6 +304,7 @@ fadecandy:
     keyframe_interpolation: single|bool|True
     dithering: single|bool|True
 fast:
+    __valid_in__: machine
     ports: list|str|
     baud: single|int|921600
     config_number_format: single|str|hex
@@ -278,10 +315,14 @@ fast:
     default_normal_debounce_close: single|ms|
     hardware_led_fade_time: single|ms|0
     debug: single|bool|False
+file_shows:
+    __valid_in__: machine, mode                      # todo add to validator
 flasher_player:
+    __valid_in__: machine, mode, show
     __allow_others__:
     ms: single|int|None
 flashers:   # TODO: this should be a coil + x. actually extend coil config
+    __valid_in__: machine
     number: single|str|
     flash_ms: single|ms|None
     tags: list|str|None
@@ -301,6 +342,7 @@ flashers:   # TODO: this should be a coil + x. actually extend coil config
     hold_pwm_mask: single|int|None
     recycle: single|ms|None
 flippers:
+    __valid_in__: machine
     main_coil: single|machine(coils)|
     hold_coil: single|machine(coils)|None
     activation_switch: single|machine(switches)|
@@ -318,6 +360,7 @@ flippers:
     switch_overwrite: dict|str:str|None
     eos_switch_overwrite: dict|str:str|None
 game:
+    __valid_in__: machine
     balls_per_game: single|int|3
     max_players: single|int|4
     start_game_switch_tag: single|str|start
@@ -325,9 +368,11 @@ game:
     allow_start_with_loose_balls: single|bool|False
     allow_start_with_ball_in_drain: single|bool|False
 gi_player:
+    __valid_in__: machine, mode, show
     brightness: single|int_from_hex|ff
     __allow_others__:
 gis:
+    __valid_in__: machine
     number: single|str|
     dimmable: single|bool|False
     tags: list|str|None
@@ -338,6 +383,7 @@ gis:
     platform: single|str|None
     __allow_others__:
 hardware:
+    __valid_in__: machine
     platform: single|str|virtual
     coils: single|str|default
     switches: single|str|default
@@ -352,24 +398,35 @@ hardware:
     accelerometers: single|str|
     i2c: single|str|
 high_score:
+    __valid_in__: machine, mode
     award_slide_display_time: single|ms|4s
     categories: list|str:list|
     shift_left_tag: single|str|left_flipper
     shift_right_tag: single|str|right_flipper
     select_tag: single|str|start
+image_pools:
+    __valid_in__: machine, mode                      # todo add to validator
 images:
+    __valid_in__: machine, mode
     file: single|str|None
     load: single|str|None
+keyboard:
+    __valid_in__: machine                           # todo add to validator
+kivy_config:
+    __valid_in__: machine                           # todo add to validator
 led_player:
+    __valid_in__: machine, mode, show
     color: single|str|white
     fade: single|ms|0
     __allow_others__:
 led_settings:
+    __valid_in__: machine
     color_correction_profiles: single|dict|None
     default_color_correction_profile: single|str|None
     default_led_fade_ms: single|int|0
     brightness_compensation: ignore                              # todo
 leds:
+    __valid_in__: machine
     number: single|str|
     polarity: single|bool|False
     default_color: single|color|ffffff
@@ -386,11 +443,13 @@ leds:
     z: single|int|None
     # color_channel_map: single|str|rgb     # not implemented
 light_player:
+    __valid_in__: machine, mode, show
     brightness: single|int_from_hex|ff
     fade_ms: single|ms|0
     force: single|bool|False
     __allow_others__:
-logic_block:
+logic_blocks:                                       # todo add validation
+    __valid_in__: machine, mode
     common:
         enable_events: list|str|None
         disable_events: list|str|None
@@ -414,10 +473,11 @@ logic_block:
     sequence:
         events: list|str|
 machine:
+    __valid_in__: machine
     balls_installed: single|int|1
     min_balls: single|int|1
-    glass_off_mode: single|bool|True
 matrix_lights:
+    __valid_in__: machine
     number: single|str|
     tags: list|str|None
     label: single|str|%
@@ -429,6 +489,7 @@ matrix_lights:
     y: single|int|None
     z: single|int|None
 mode:
+    __valid_in__: mode
     priority: single|int|100
     start_events: list|str|None
     stop_events: list|str|None
@@ -438,7 +499,23 @@ mode:
     code: single|str|None
     stop_on_ball_end: single|bool|True
     restart_on_next_ball: single|bool|False
+modes:
+    __valid_in__: machine                           # todo add to validator
+mpf:
+    __valid_in__: machine                           # todo add to validator
+    default_pulse_ms: single|int|10
+    default_flash_ms: single|int|50
+    auto_create_switch_events: single|bool|True
+    switch_event_active: single|str|%_active
+    switch_event_inactive: single|str|%_inactive
+    switch_tag_event: single|str|sw_%
+    allow_invalid_config_sections: single|bool|false
+    save_machine_vars_to_disk: single|bool|true
+    hz: single|float|30.0
+mpf-mc:
+    __valid_in__: machine                           # todo add to validator
 multiballs:
+    __valid_in__: machine, mode
     ball_count: single|int|
     source_playfield: single|machine(ball_devices)|playfield
     shoot_again: single|ms|10s
@@ -446,42 +523,55 @@ multiballs:
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False
-    enable_events:  dict|str:ms|ball_started
-    disable_events:  dict|str:ms|ball_ending
+    enable_events:  dict|str:ms|None
+    disable_events:  dict|str:ms|None
     reset_events:  dict|str:ms|machine_reset_phase_3, ball_starting
     start_events:  dict|str:ms|None
     stop_events:  dict|str:ms|None
+opp:
+    __valid_in__: machine
+    ports: list|str|
+    baud: single|int|115200
+    config_number_format: single|str|hex
+    debug: single|bool|False
 osc:
+    __valid_in__: machine
     client_port: single|int|8000
     debug_messages: single|bool|false
     machine_ip: single|str|auto
     machine_port: single|int|9000
     approved_client_ips: ignore
     client_updates: list|str|None
+open_pixel_control:
+    __valid_in__: machine                           # todo add to validator
 p_roc:
+    __valid_in__: machine
     lamp_matrix_strobe_time: single|ms|100ms
     watchdog_time: single|ms|1s
     use_watchdog: single|bool|True
     dmd_timing_cycles: list|int|None
     dmd_update_interval: single|ms|33ms
 p3_roc:
+    __valid_in__: machine
     lamp_matrix_strobe_time: single|ms|100ms
     watchdog_time: single|ms|1s
     use_watchdog: single|bool|True
 physical_dmd:
+    __valid_in__: machine
     shades: single|pow2|16
-    fps: single|int|0
+    fps: single|int|30
     source_display: single|str|dmd
     luminosity: list|float|.299, .587, .114
     brightness: single|float|1.0
     only_send_changes: single|bool|False
 physical_rgb_dmd:
-    fps: single|int|0
+    __valid_in__: machine
+    fps: single|int|30
     source_display: single|str|dmd
-    color_adjust: list|float|1, 1, 1
     only_send_changes: single|bool|False
     brightness: single|float|1.0
 playfields:
+    __valid_in__: machine
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False
@@ -494,15 +584,21 @@ playfields:
     ball_search_failed_action: single|str|new_ball
     ball_search_wait_after_iteration: single|ms|10s
 playfield_transfers:
+    __valid_in__: machine
     ball_switch: single|machine(switches)|
     eject_target: single|machine(ball_devices)|
     captures_from: single|machine(ball_devices)|
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False
+plugins:
+    __valid_in__: machine                      # todo add to validator
+
 random_event_player:
+    __valid_in__: machine, mode, show
     event_list: list|str|
 score_reels:
+    __valid_in__: machine
     coil_inc: single|machine(coils)|None
     coil_dec: single|machine(coils)|None
     rollover: single|bool|True
@@ -529,6 +625,7 @@ score_reels:
     label: single|str|%
     debug: single|bool|False
 score_reel_groups:
+    __valid_in__: machine
     max_simultaneous_coils: single|int|2
     reels: list|str|
     chimes: list|str|None
@@ -539,7 +636,14 @@ score_reel_groups:
     label: single|str|%
     debug: single|bool|False
     lights_tag: single|str|None
+scoring:
+    __valid_in__: machine, modes                    # todo add to validator
+scriptlets:
+    __valid_in__: machine                           # todo add to validator
+servo_controller:
+    __valid_in__: machine                           # todo add to validator
 servo_controllers:
+    __valid_in__: machine
     platform: single|str|None
     address: single|int|64
     servo_min: single|int|150
@@ -549,6 +653,7 @@ servo_controllers:
     tags: list|str|None
     label: single|str|%
 servos:
+    __valid_in__: machine
     positions: dict|float:str|None
     servo_min: single|float|0.0
     servo_max: single|float|1.0
@@ -560,6 +665,7 @@ servos:
     number: single|int|
     platform: single|str|None
 shots:
+    __valid_in__: machine, mode
     profile: single|str|None
     switch: list|machine(switches)|None
     switches: list|machine(switches)|None
@@ -576,8 +682,9 @@ shots:
     advance_events: dict|str:ms|None
     hit_events: dict|str:ms|None
     remove_active_profile_events: dict|str:ms|None
-    __allow_others__:
+    show_tokens: dict|str:str|None
 shot_groups:
+    __valid_in__: machine, mode
     shots: list|machine(shots)|None
     profile: single|str|None    # TODO: convert from str to machine(profiles)
     tags: list|str|None
@@ -594,6 +701,7 @@ shot_groups:
     advance_events: dict|str:ms|None
     remove_active_profile_events: dict|str:ms|None
 shot_profiles:
+    __valid_in__: machine, mode
     loop: single|bool|False
     show: single|str|None
     hold: single|bool|None
@@ -606,6 +714,7 @@ shot_profiles:
     block: single|bool|true
     states:
         show: single|str|None
+        name: single|str|
         # These settings are same as show_player. Could probably get fancy with
         # the validator to make this automatically pull them in.
         action: single|enum(play,stop,pause,resume,advance,update)|play
@@ -618,8 +727,9 @@ shot_profiles:
         reset: single|bool|True
         manual_advance: single|bool|False
         key: single|str|None
-        __allow_others__:
+        show_tokens: dict|str:str|None
 show_player:
+    __valid_in__: machine, mode, show
     action: single|enum(play,stop,pause,resume,advance,update)|play
     priority: single|int|0
     hold: single|bool|None
@@ -630,11 +740,19 @@ show_player:
     reset: single|bool|True
     manual_advance: single|bool|False
     key: single|str|None
+    show_tokens: dict|str:str|None
     __allow_others__:
+show_pools:
+    __valid_in__: machine, mode                      # todo add to validator
+
 show_step:
+    __valid_in__: None
     time: single|str|
     __allow_others__:
+shows:
+    __valid_in__: machine, mode                      # todo add to validator
 slide_player:
+    __valid_in__: machine, mode, show
     target: single|str|None
     priority: single|int|None                      # todo should this be 0?
     show: single|bool|True
@@ -645,31 +763,39 @@ slide_player:
     expire: single|secs|None
     action: single|enum(play,remove)|play
 slides:
+    __valid_in__: machine, mode
     debug: single|bool|False
     tags: list|str|None
     expire: single|secs|None
     __allow_others__:
 snux:
+    __valid_in__: machine
     flipper_enable_driver: single|machine(coils)|
     diag_led_driver: single|machine(coils)|
     platform: single|str|None
 smartmatrix:
+    __valid_in__: machine
     port: single|str|
     use_separate_thread: single|bool|true
 sound_player:
+    __valid_in__: machine, mode, show
     action: single|enum(play,stop)|play
     volume: single|gain|None
     loops: single|int|None
     priority: single|int|None
     max_queue_time: single|secs|None
     __allow_others__:
+sound_pools:
+    __valid_in__: machine, mode                      # todo add to validator
 sound_system:
+    __valid_in__: machine
     enabled: single|bool|True
     buffer: single|int|2048
     frequency: single|int|44100
     channels: single|int|1
     master_volume: single|gain|0.5
 sounds:
+    __valid_in__: machine, mode
     file: single|str|None
     track: single|str|None
     volume: single|gain|0.5
@@ -684,9 +810,11 @@ sounds:
         release_point: single|str|0
         release: single|str|10ms
 switch_player:
+    __valid_in__: machine
     start_event: single|str|machine_reset_phase_3
     steps: ignore
 switches:
+    __valid_in__: machine
     number: single|str|
     type: single|enum(NC,NO)|NO
     debounce: single|enum(auto,quick,normal)|auto
@@ -698,35 +826,41 @@ switches:
     debug: single|bool|False
     platform: single|str|None
 fast_switches:
+    __valid_in__: machine
     debounce_open: single|ms|None
     debounce_close: single|ms|None
 system11:
+    __valid_in__: machine
     ac_relay_delay_ms: single|ms|75ms
     ac_relay_driver: single|machine(coils)|
-text_styles:
-    font_name: single|str|None
-    font_size: single|num|None
-    bold: single|bool|None
-    italtic: single|bool|None
-    halign: single|str|None
-    valign: single|str|None
-    padding_x: single|num|None
-    padding_y: single|num|None
-    # text_size: single||None
-    shorten: single|bool|None
-    mipmap: single|bool|None
-    markup: single|bool|None
-    line_height: single|float|None
-    max_lines: single|int|None
-    strip: single|bool|None
-    shorten_from: single|str|None
-    split_str: single|str|None
-    unicode_errors: single|str|None
-    color: single|kivycolor|ffffffff
-    crop_top: single|int|0            # todo
-    crop_bottom: single|int|0         # todo
-    antialias: single|bool|False      # todo
+text_strings:
+    __valid_in__: machine, mode                 # todo add to validator
+# text_styles:
+#     __valid_in__: machine, mode
+#     font_name: single|str|None
+#     font_size: single|num|None
+#     bold: single|bool|None
+#     italtic: single|bool|None
+#     halign: single|str|None
+#     valign: single|str|None
+#     padding_x: single|num|None
+#     padding_y: single|num|None
+#     # text_size: single||None
+#     shorten: single|bool|None
+#     mipmap: single|bool|None
+#     markup: single|bool|None
+#     line_height: single|float|None
+#     max_lines: single|int|None
+#     strip: single|bool|None
+#     shorten_from: single|str|None
+#     split_str: single|str|None
+#     unicode_errors: single|str|None
+#     color: single|kivycolor|ffffffff
+#     crop_top: single|int|0            # todo
+#     crop_bottom: single|int|0         # todo
+#     antialias: single|bool|False      # todo
 tilt:
+    __valid_in__: machine, mode
     tilt_slam_tilt_events: list|str|None
     tilt_warning_events: list|str|None
     tilt_events: list|str|None
@@ -739,6 +873,7 @@ tilt:
     settle_time: single|ms|5s
     tilt_warnings_player_var: single|str|tilt_warnings
 timers:
+    __valid_in__: mode
     debug: single|bool|False
     start_value: single|int|0
     end_value: single|int|None
@@ -750,6 +885,7 @@ timers:
     restart_on_complete: single|bool|False
     bcp: single|bool|False
 transitions:
+    __valid_in__: None
     push:
         type: single|str|
         direction: single|str|left
@@ -786,13 +922,20 @@ transitions:
     # fs
     # vs
 trigger_player:                                    # todo
+    __valid_in__: machine, mode, show
     __allow_others__:
+video_pools:
+    __valid_in__: machine, mode                      # todo add to validator
 videos:
+    __valid_in__: machine, mode
     file: single|str|None
     load: single|str|None
     fps: single|num|None
     auto_play: single|bool|True
+virtual_platform_start_active_switches:
+    __valid_in__: machine                           # todo add to validator
 widget_player:
+    __valid_in__: machine, mode, show
     # widget: list|str|
     target: single|str|None
     slide: single|str|None
@@ -801,9 +944,11 @@ widget_player:
     z: single|int|0
     key: single|str|None
 widget_styles:
+    __valid_in__: machine, mode, show
     color: single|kivycolor|ffffffff
     __allow_others__:
 widgets:
+    __valid_in__: machine, mode
     common:
         type: single|str|slide_frame
         x: single|str|None
@@ -951,6 +1096,7 @@ widgets:
         width: single|int|0
 
 window:
+    __valid_in__: machine
     icon: single|str|None
     title: single|str|Mission Pinball Framework v{}
     source_display: single|str|default
@@ -976,7 +1122,6 @@ class ConfigValidator(object):
     def __init__(self, machine):
         self.machine = machine
         self.log = logging.getLogger('ConfigProcessor')
-        self.system_config = self.machine.get_system_config()
 
         self.validator_list = {
             "str": self._validate_type_str,
@@ -988,18 +1133,21 @@ class ConfigValidator(object):
             "boolean": self._validate_type_bool,
             "ms": self._validate_type_ms,
             "secs": self._validate_type_secs,
-            "list": Util.string_to_list,
-            "int_from_hex": Util.hex_string_to_int,
+            "list": self._validate_type_list,
+            "int_from_hex": self._validate_type_int_from_hex,
             "dict": self._validate_type_dict,
             "kivycolor": self._validate_type_kivycolor,
             "color": self._validate_type_color,
             "bool_int": self._validate_type_bool_int,
             "pow2": self._validate_type_pow2,
-            "gain": Util.string_to_gain,
+            "gain": self._validate_type_gain,
             "subconfig": self._validate_type_subconfig,
             "enum": self._validate_type_enum,
             "machine": self._validate_type_machine,
         }
+
+        if not ConfigValidator.config_spec:
+            ConfigValidator.load_config_spec()
 
     @classmethod
     def load_config_spec(cls, config_spec=None):
@@ -1079,15 +1227,15 @@ class ConfigValidator(object):
                     if k in source:
                         for i in source[k]:  # individual step
                             final_list.append(self.validate_config(
-                                    config_spec + ':' + k, source=i,
-                                    section_name=k))
+                                config_spec + ':' + k, source=i,
+                                section_name=k))
 
                     processed_config[k] = final_list
 
                 else:
                     processed_config[k] = self.validate_config_item(
-                            this_spec[k], item=source[k],
-                            validation_failure_info=(validation_failure_info, k))
+                        this_spec[k], item=source[k],
+                        validation_failure_info=(validation_failure_info, k))
 
             elif add_missing_keys:  # create the default entry
 
@@ -1096,9 +1244,9 @@ class ConfigValidator(object):
 
                 else:
                     processed_config[k] = self.validate_config_item(
-                            this_spec[k],
-                            validation_failure_info=(
-                                validation_failure_info, k))
+                        this_spec[k],
+                        validation_failure_info=(
+                            validation_failure_info, k))
 
         return processed_config
 
@@ -1136,9 +1284,7 @@ class ConfigValidator(object):
             new_list = list()
 
             for i in item_list:
-                new_list.append(
-                        self.validate_item(i, validation,
-                                           validation_failure_info))
+                new_list.append(self.validate_item(i, validation, validation_failure_info))
 
             return new_list
 
@@ -1148,9 +1294,7 @@ class ConfigValidator(object):
             new_set = set()
 
             for i in item_set:
-                new_set.add(
-                        self.validate_item(i, validation,
-                                           validation_failure_info))
+                new_set.add(self.validate_item(i, validation, validation_failure_info))
 
             return new_set
 
@@ -1177,8 +1321,7 @@ class ConfigValidator(object):
 
                     path_list = validation_failure_info[0].split(':')
 
-                    if len(path_list) > 1 and (
-                                path_list[-1] == validation_failure_info[1]):
+                    if len(path_list) > 1 and path_list[-1] == validation_failure_info[1]:
                         path_list.append('[list_item]')
                     elif path_list[0] == validation_failure_info[1]:
                         path_list = list()
@@ -1188,12 +1331,11 @@ class ConfigValidator(object):
 
                     path_string = ':'.join(path_list)
 
-                    if self.system_config['allow_invalid_config_sections']:
+                    if self.machine.machine_config['mpf']['allow_invalid_config_sections']:
 
-                        self.log.warning(
-                                'Unrecognized config setting. "%s" is '
-                                'not a valid setting name.',
-                                path_string)
+                        self.log.warning('Unrecognized config setting. "%s" is '
+                                         'not a valid setting name.',
+                                         path_string)
 
                     else:
                         self.log.error('Your config contains a value for the '
@@ -1248,47 +1390,76 @@ class ConfigValidator(object):
         else:
             self.validation_error(item, validation_failure_info)
 
-    def _validate_type_str(self, item):
+    def _validate_type_list(self, item, validation_failure_info):
+        del validation_failure_info
+        return Util.string_to_list(item)
+
+    def _validate_type_int_from_hex(self, item, validation_failure_info):
+        del validation_failure_info
+        return Util.hex_string_to_int(item)
+
+    def _validate_type_gain(self, item, validation_failure_info):
+        del validation_failure_info
+        return Util.string_to_gain(item)
+
+    def _validate_type_str(self, item, validation_failure_info):
+        del validation_failure_info
         if item is not None:
             return str(item)
         else:
             return None
 
-    def _validate_type_lstr(self, item):
+    def _validate_type_lstr(self, item, validation_failure_info):
+        del validation_failure_info
         if item is not None:
             return str(item).lower()
         else:
             return None
 
-    def _validate_type_float(self, item):
+    def _validate_type_float(self, item, validation_failure_info):
+        if item is None:
+            return None
         try:
             return float(item)
         except (TypeError, ValueError):
-            # TODO error
-            return item
+            self.validation_error(item, validation_failure_info, "Could not convert to float")
 
-    def _validate_type_int(self, item):
+    def _validate_type_int(self, item, validation_failure_info, param=None):
+        if item is None:
+            return None
+
         try:
-            return int(item)
+            value = int(item)
         except (TypeError, ValueError):
-            # TODO error
-            return item
+            return self.validation_error(item, validation_failure_info, "Could not convert {} to int".format(item))
 
-    def _validate_type_num(self, item):
+        if param:
+            param = param.split(",")
+            if param[0] != "NONE" and value < int(param[0]):
+                self.validation_error(item, validation_failure_info, "{} is smaller then {}".format(item, param[0]))
+            elif param[1] != "NONE" and value > int(param[1]):
+                self.validation_error(item, validation_failure_info, "{} is larger then {}".format(item, param[0]))
+
+        return value
+
+    def _validate_type_num(self, item, validation_failure_info):
+        if item is None:
+            return None
+
         # used for int or float, but does not convert one to the other
-        if not isinstance(item, (int, float)):
+        if isinstance(item, (int, float)):
+            return item
+        else:
             try:
                 if '.' in item:
                     return float(item)
                 else:
                     return int(item)
             except (TypeError, ValueError):
-                # TODO: error
-                return item
-        else:
-            return item
+                self.validation_error(item, validation_failure_info, "Could not convert {} to num".format(item))
 
-    def _validate_type_bool(self, item):
+    def _validate_type_bool(self, item, validation_failure_info):
+        del validation_failure_info
         if item is None:
             return None
         elif isinstance(item, str):
@@ -1298,22 +1469,26 @@ class ConfigValidator(object):
         else:
             return True
 
-    def _validate_type_ms(self, item):
+    def _validate_type_ms(self, item, validation_failure_info):
+        del validation_failure_info
         if item is not None:
             return Util.string_to_ms(item)
         else:
             return None
 
-    def _validate_type_secs(self, item):
+    def _validate_type_secs(self, item, validation_failure_info):
+        del validation_failure_info
         if item is not None:
             return Util.string_to_secs(item)
         else:
             return None
 
-    def _validate_type_dict(self, item):
+    def _validate_type_dict(self, item, validation_failure_info):
+        del validation_failure_info
         return item
 
-    def _validate_type_kivycolor(self, item):
+    def _validate_type_kivycolor(self, item, validation_failure_info):
+        del validation_failure_info
         # Validate colors that will be used by Kivy. The result is a 4-item
         # list, RGBA, with individual values from 0.0 - 1.0
         if not item:
@@ -1339,7 +1514,8 @@ class ConfigValidator(object):
 
         return color
 
-    def _validate_type_color(self, item):
+    def _validate_type_color(self, item, validation_failure_info):
+        del validation_failure_info
         # Validates colors by name, hex, or list, into a 3-item list, RGB,
         # with individual values from 0-255
         color_string = str(item).lower()
@@ -1353,16 +1529,17 @@ class ConfigValidator(object):
             color = Util.string_to_list(color_string)
             return int(color[0]), int(color[1]), int(color[2])
 
-    def _validate_type_bool_int(self, item):
-        if self._validate_type_bool(item):
+    def _validate_type_bool_int(self, item, validation_failure_info):
+        if self._validate_type_bool(item, validation_failure_info):
             return 1
         else:
             return 0
 
-    def _validate_type_pow2(self, item):
+    def _validate_type_pow2(self, item, validation_failure_info):
+        if item is None:
+            return None
         if not Util.is_power2(item):
-            raise ValueError
-            # todo make a better error
+            self.validation_error(item, validation_failure_info, "Could not convert {} to pow2".format(item))
         else:
             return item
 
@@ -1394,9 +1571,9 @@ class ConfigValidator(object):
             validator_parts = validator.split('(')
             validator = validator_parts[0]
             param = validator_parts[1][:-1]
-            return self.validator_list[validator](item, param, validation_failure_info=validation_failure_info)
+            return self.validator_list[validator](item, validation_failure_info=validation_failure_info, param=param)
         elif validator in self.validator_list:
-            return self.validator_list[validator](item)
+            return self.validator_list[validator](item, validation_failure_info=validation_failure_info)
 
         else:
             raise AssertionError("Invalid Validator '{}' in config spec {}:{}".format(
@@ -1404,10 +1581,9 @@ class ConfigValidator(object):
                                  validation_failure_info[0][0],
                                  validation_failure_info[1]))
 
-    def validation_error(self, item, validation_failure_info):
-        raise AssertionError(
-                "Config validation error: Entry {}:{}:{}:{} is not valid".format(
-                        validation_failure_info[0][0],
-                        validation_failure_info[0][1],
-                        validation_failure_info[1],
-                        item))
+    def validation_error(self, item, validation_failure_info, msg=""):
+        raise AssertionError("Config validation error: Entry {}:{}:{}:{} is not valid. {}".format(
+            validation_failure_info[0][0],
+            validation_failure_info[0][1],
+            validation_failure_info[1],
+            item, msg))

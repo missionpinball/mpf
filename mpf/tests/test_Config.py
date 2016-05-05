@@ -1,5 +1,5 @@
 from mpf.tests.MpfTestCase import MpfTestCase
-
+from mpf.core.config_validator import ConfigValidator
 
 class TestConfig(MpfTestCase):
 
@@ -8,6 +8,15 @@ class TestConfig(MpfTestCase):
 
     def getMachinePath(self):
         return 'tests/machine_files/config_interface/'
+
+    def setUp(self):
+
+        self.add_to_config_validator('test_section',
+                                     dict(__valid_in__='machine'))
+        self.add_to_config_validator('test_section_1',
+                                     dict(__valid_in__='machine'))
+
+        super().setUp()
 
     def test_config_file(self):
         # true, True, yes, Yes values should be True
@@ -53,6 +62,7 @@ class TestConfig(MpfTestCase):
         self.assertIn('test_section_1', self.machine.config)
 
     def test_config_validator(self):
+        validation_failure_info = (("key", "entry"), "subkey")
         # test config spec syntax error
         self.assertRaises(ValueError,
                           self.machine.config_validator.validate_config_item,
@@ -87,6 +97,45 @@ class TestConfig(MpfTestCase):
         self.assertRaises(ValueError,
                           self.machine.config_validator.validate_config_item,
                           validation_string, 'test_failure_info')  # no item
+
+        # test broken int
+        validation_string = 'single|int|'  # default required
+        with self.assertRaises(AssertionError) as e:
+            results = self.machine.config_validator.validate_config_item(
+                validation_string, validation_failure_info, '1s')
+
+        # test int with range
+        validation_string = 'single|int(0,10)|'
+
+        results = self.machine.config_validator.validate_config_item(
+            validation_string, validation_failure_info, '0')
+        self.assertEqual(results, 0)
+
+        results = self.machine.config_validator.validate_config_item(
+            validation_string, validation_failure_info, '7')
+        self.assertEqual(results, 7)
+
+        results = self.machine.config_validator.validate_config_item(
+            validation_string, validation_failure_info, '10')
+        self.assertEqual(results, 10)
+
+        with self.assertRaises(AssertionError) as e:
+            results = self.machine.config_validator.validate_config_item(
+                validation_string, validation_failure_info, '-1')
+
+        with self.assertRaises(AssertionError) as e:
+            results = self.machine.config_validator.validate_config_item(
+                validation_string, validation_failure_info, 11)
+
+        # int with open end
+        validation_string = 'single|int(0,NONE)|'
+        results = self.machine.config_validator.validate_config_item(
+            validation_string, validation_failure_info, 999)
+        self.assertEqual(results, 999)
+
+        with self.assertRaises(AssertionError) as e:
+            results = self.machine.config_validator.validate_config_item(
+                validation_string, validation_failure_info, -1)
 
         # test str validations
 
@@ -357,12 +406,11 @@ class TestConfig(MpfTestCase):
             validation_string, 'test_failure_info', '128')
         self.assertEqual(results, '128')
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(AssertionError):
             self.machine.config_validator.validate_config_item(
-                validation_string, 'test_failure_info', '127')
+                validation_string, validation_failure_info, '127')
 
         # test enum
-        validation_failure_info = (("key", "entry"), "subkey")
         validation_string = 'single|enum(None,test)|None'
         results = self.machine.config_validator.validate_config_item(
             validation_string, validation_failure_info, None)

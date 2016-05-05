@@ -118,10 +118,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
         self._enabled = True
 
-        if not self.config['enable_rotation_events']:
-            self.rotation_enabled = True
-        else:
-            self.rotation_enabled = False
+        self.rotation_enabled = not self.config['enable_rotation_events']
 
         self.debug_log('Enabling from mode: %s', mode)
 

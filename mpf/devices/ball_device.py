@@ -310,6 +310,7 @@ class BallDevice(SystemWideDevice):
             self.mechanical_eject_in_progress = True
             # this is an unexpected eject. use default target
             self.eject_in_progress_target = self.config['eject_targets'][0]
+            self.eject_in_progress_target.available_balls += 1
             # self.eject_queue.append((target, 0))
             self._do_eject_attempt()
             return self._switch_state("ball_left")
@@ -1080,6 +1081,7 @@ class BallDevice(SystemWideDevice):
                           "balls to %s", new_balls, self.config['ball_capacity'])
             self.balls += new_balls
             self._handle_new_balls(new_balls)
+            self.machine.ball_controller.trigger_ball_count()
 
     def _entrance_switch_handler(self):
         # A ball has triggered this device's entrance switch
@@ -1093,6 +1095,10 @@ class BallDevice(SystemWideDevice):
 
             self.balls += 1
             self._handle_new_balls(1)
+            self.machine.ball_controller.trigger_ball_count()
+
+    def is_ball_count_stable(self):
+        return self._state == "idle" and self._idle_counted and not len(self._incoming_balls)
 
     def is_ready_to_receive(self):
         return ((self._state == "idle" and self._idle_counted) or
@@ -1161,10 +1167,9 @@ class BallDevice(SystemWideDevice):
         return balls
 
     def _setup_or_queue_eject_to_target(self, target, player_controlled=False):
+        path_to_target = self.find_path_to_target(target)
         if self.available_balls > 0 and self != target:
-            path = deque()
-            path.append(self)
-            path.append(target)
+            path = path_to_target
         else:
 
             path = self.find_one_available_ball()
@@ -1178,7 +1183,8 @@ class BallDevice(SystemWideDevice):
                     raise AssertionError(
                             "Do not know how to eject to " + target.name)
 
-                path.append(target)
+                path_to_target.popleft()    # remove self from path
+                path.extend(path_to_target)
 
         path[0].setup_eject_chain(path, player_controlled)
 
@@ -1615,6 +1621,9 @@ class BallDevice(SystemWideDevice):
             # remove eject from queue if we have one
             if len(self.eject_queue):
                 self.eject_queue.popleft()
+            else:
+                # because the path was not set up. just add the ball
+                self.eject_in_progress_target.available_balls += 1
             self._incoming_balls.popleft()
         elif self._state != "ball_left" and self._state != "failed_confirm":
             raise AssertionError(

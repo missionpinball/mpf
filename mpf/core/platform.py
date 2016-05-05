@@ -266,13 +266,22 @@ class DriverPlatform(BasePlatform):
         return config
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
+        """Pulses a driver when a switch is hit. When the switch is released the pulse is canceled. Typically used on
+        the main coil for dual coil flippers without eos switch. """
         raise NotImplementedError
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
+        """Pulses a driver when a switch is hit. Then enables the driver (may be with pwm). When the switch is released
+        the pulse is canceled and the driver gets disabled. Typically used for single coil flippers. """
         raise NotImplementedError
 
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
+        """Pulses a driver when a switch is hit. Then enables the driver (may be with pwm). When the switch is released
+        the pulse is canceled and the driver gets disabled. When the second disable_switch is hit the pulse is canceled
+        and the driver gets disabled. Typically used on the main coil for dual coil flippers with eos switch. """
         raise NotImplementedError
 
     def set_pulse_on_hit_rule(self, enable_switch, coil):
+        """Pulses a driver when a switch is hit. When the switch is released the pulse continues. Typically used for
+         autofire coils such as pop bumpers. """
         raise NotImplementedError

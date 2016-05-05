@@ -312,13 +312,11 @@ class BCP(object):
 
     def register_dmd(self, dmd_update_meth):
         self.physical_dmd_update_callback = dmd_update_meth
-        # pylint: disable-msg=too-many-arguments
-        self.send('dmd_start', fps=self.machine.clock._max_fps)
+        self.send('dmd_start', fps=self.machine.clock.max_fps)
 
     def register_rgb_dmd(self, dmd_update_meth):
         self.physical_rgb_dmd_update_callback = dmd_update_meth
-        # pylint: disable-msg=protected_access
-        self.send('rgb_dmd_start', fps=self.machine.clock._max_fps)
+        self.send('rgb_dmd_start', fps=self.machine.clock.max_fps)
 
     def _parse_filters_from_config(self):
         if ('player_variables' in self.config and

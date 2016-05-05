@@ -1,8 +1,5 @@
 #config_version=4
 
-machine:
-    glass_off_mode: False
-
 switches:
   s_playfield:
     number:

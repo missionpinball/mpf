@@ -110,61 +110,76 @@ shots:
     switch: switch_4
   shot_10:
     switch: switch_10
-    leds: led_10
+    show_tokens:
+      leds: led_10
   shot_11:
     switch: switch_11
-    leds: led_11
+    show_tokens:
+      leds: led_11
   shot_30:
     switch: switch_30
-    leds: led_30
+    show_tokens:
+      leds: led_30
     profile: rainbow
   shot_31:
     switch: switch_31
-    leds: led_31
+    show_tokens:
+      leds: led_31
     profile: rainbow
   shot_32:
     switch: switch_32
-    leds: led_32
+    show_tokens:
+      leds: led_32
     enable_events: None
   shot_33:
     switch: switch_33
-    leds: led_33
+    show_tokens:
+      leds: led_33
     enable_events: None
   shot_34:
     switch: switch_34
-    leds: led_34
+    show_tokens:
+      leds: led_34
     enable_events: None
   shot_35:
     switch: switch_35
-    leds: led_35
+    show_tokens:
+      leds: led_35
     enable_events: None
   shot_36:
     switch: switch_36
-    leds: led_36
+    show_tokens:
+      leds: led_36
     enable_events: None
   shot_37:
     switch: switch_37
-    leds: led_37
+    show_tokens:
+      leds: led_37
     enable_events: None
   shot_38:
     switch: switch_38
-    leds: led_38
+    show_tokens:
+      leds: led_38
     enable_events: None
   shot_39:
     switch: switch_39
-    leds: led_39
+    show_tokens:
+      leds: led_39
     enable_events: None
   shot_40:
     switch: switch_40
-    leds: led_40
+    show_tokens:
+      leds: led_40
     enable_events: None
   shot_41:
     switch: switch_41
-    leds: led_41
+    show_tokens:
+      leds: led_41
     enable_events: None
   shot_42:
     switch: switch_42
-    leds: led_42
+    show_tokens:
+      leds: led_42
     enable_events: None
   shot_43:
     switch: switch_43
@@ -178,13 +193,16 @@ shots:
     profile: rainbow
   shot_GAS_G:
     switch: s_GAS_G
-    led: l_GAS_G
+    show_tokens:
+      led: l_GAS_G
   shot_GAS_A:
     switch: s_GAS_A
-    led: l_GAS_A
+    show_tokens:
+      led: l_GAS_A
   shot_GAS_S:
     switch: s_GAS_S
-    led: l_GAS_S
+    show_tokens:
+      led: l_GAS_S
 
 shot_groups:
   test_group:

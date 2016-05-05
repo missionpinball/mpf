@@ -634,7 +634,7 @@ class ClockBase(_ClockBase):
         try:
             self._max_fps = float(max_fps)
         except ValueError:
-            self._max_fps = 30
+            self._max_fps = 30.0
 
         self._dt = 0.0001
         self._start_tick = self._last_tick = self.time()
@@ -655,6 +655,10 @@ class ClockBase(_ClockBase):
         #:     how iteration will be allowed. That is here to prevent too much
         #:     relayout.
         self.max_iteration = 10
+
+    @property
+    def max_fps(self):
+        return self._max_fps
 
     @property
     def frametime(self):

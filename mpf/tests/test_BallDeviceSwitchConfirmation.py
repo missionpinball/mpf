@@ -154,7 +154,12 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self.assertEqual(1, self._captured)
         self._captured = 0
 
+        # assume we have more than one ball to prevent BallController from "fixing" pf
+        self.machine.ball_controller.num_balls_known = 5
+
         self.assertEqual(0, playfield.balls)
+        self.assertEqual(0, playfield.available_balls)
+        self.assertEqual(0, playfield.unexpected_balls)
 
         # it should keep the ball
         coil1.pulse = MagicMock()
@@ -202,6 +207,9 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
             "s_ball_switch_target2_1", 1)
         self.advance_time_and_run(1)
         self.assertEqual(1, device4.balls)
+        self.assertEqual(1, playfield.unexpected_balls)
+        self.assertEqual(-1, playfield.available_balls)
+        self.assertEqual(0, playfield.balls)
 
         # eject will fail since the eject_confirm switch was not hit
         self.advance_time_and_run(30)
@@ -215,7 +223,10 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self.assertEqual(0, self._enter)
         self.assertEqual(1, self._captured)
 
-        self.assertEqual(1, playfield.balls)
+        # no ball on pf because the pf saw an unexpected ball
+        self.assertEqual(0, playfield.balls)
+        self.assertEqual(0, playfield.available_balls)
+        self.assertEqual(0, playfield.unexpected_balls)
         self.assertEqual(1, self._missing)
 
     def test_eject_successful_but_ball_never_arrives(self):
@@ -332,8 +343,6 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
                                         self._missing_ball)
         self._captured = 0
         self._missing = 0
-
-        self.machine.ball_controller.num_balls_known = 1
 
         # add an initial ball to trough
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
@@ -458,8 +467,6 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
                                         self._missing_ball)
         self._captured = 0
         self._missing = 0
-
-        self.machine.ball_controller.num_balls_known = 1
 
         # add an initial ball to trough
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)

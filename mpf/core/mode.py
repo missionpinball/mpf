@@ -281,14 +281,11 @@ class Mode(object):
         self.priority = 0
         self.active = False
 
+        for callback in self.machine.mode_controller.stop_methods:
+            callback[0](self)
+
         for item in self.stop_methods:
-            try:
-                item[0](item[1])
-            except TypeError:
-                try:
-                    item()
-                except TypeError:
-                    pass
+            item[0](item[1])
 
         self.stop_methods = list()
 
