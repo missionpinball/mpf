@@ -9,21 +9,6 @@ class PluginPlayer(ConfigPlayer):
     def __repr__(self):
         return 'PluginPlayer.{}'.format(self.show_section)
 
-    def _initialize(self):
-        # overrides base method to just look for this config_player's section
-        # in the config files for the purpose of adding event triggers. No
-        # need to do validation since that's handled on the remote side.
-
-        # future feature could be to make this switchable so a plugin could
-        # ask MPF to do validation.
-
-        self.machine.mode_controller.register_start_method(
-            self.mode_start, self.config_file_section)
-
-        if self.config_file_section in self.machine.config:
-            self.register_player_events(
-                self.machine.config[self.config_file_section])
-
     def register_player_events(self, config, mode=None, priority=0):
         """ Overrides this method in the base class and registers the
         config_player events to send the trigger via BCP instead of calling
