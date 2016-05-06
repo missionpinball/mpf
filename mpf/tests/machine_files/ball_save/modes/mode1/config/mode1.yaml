@@ -1,0 +1,14 @@
+#config_version=4
+mode:
+  start_events: start_mode1
+  stop_events: stop_mode1
+
+ball_saves:
+    mode_ball_save:
+        active_time: 10s
+        hurry_up_time: 2s
+        grace_period: 2s
+        timer_start_events: balldevice_bd_launcher_ball_eject_success
+        auto_launch: yes
+        balls_to_save: 1
+        debug: yes

@@ -12,9 +12,22 @@ class TestBallSave(MpfTestCase):
     def get_platform(self):
         return 'smart_virtual'
 
+    def test_ball_save_enable_in_mode(self):
+        # start mode
+        self.post_event("start_mode1")
+
+        # mode loaded. mode_ball_save should be enabled
+        self.assertTrue(self.machine.ball_saves.mode_ball_save.enabled)
+
+        # stop mode
+        self.post_event("stop_mode1")
+
+        # mode stopped. mode_ball_save should be disabled
+        self.assertFalse(self.machine.ball_saves.mode_ball_save.enabled)
+
+
     def testBallSaveShootAgain(self):
         # prepare game
-        self.machine.ball_controller.num_balls_known = 0
         self.machine.switch_controller.process_switch('s_ball_switch1', 1)
         self.machine.switch_controller.process_switch('s_ball_switch2', 1)
         self.advance_time_and_run(10)
@@ -77,7 +90,6 @@ class TestBallSave(MpfTestCase):
         self._grace_period = False
 
         # prepare game
-        self.machine.ball_controller.num_balls_known = 0
         self.machine.switch_controller.process_switch('s_ball_switch1', 1)
         self.machine.switch_controller.process_switch('s_ball_switch2', 1)
         self.advance_time_and_run(10)
@@ -136,7 +148,6 @@ class TestBallSave(MpfTestCase):
         self.mock_event("ball_save_unlimited_timer_start")
 
         # prepare game
-        self.machine.ball_controller.num_balls_known = 0
         self.machine.switch_controller.process_switch('s_ball_switch1', 1)
         self.machine.switch_controller.process_switch('s_ball_switch2', 1)
         self.advance_time_and_run(10)
