@@ -81,7 +81,7 @@ class TestOPP(MpfTestCase):
         opp.serial.Serial = MagicMock(return_value=self.serialMock)
         super(TestOPP, self).setUp()
 
-        self.advance_time_and_run(1)
+        self._wait_for_processing()
 
         self.assertFalse(self.serialMock.expected_commands)
 
@@ -99,7 +99,7 @@ class TestOPP(MpfTestCase):
         else:
             self.serialMock.queue.put(msg)
         while not self.serialMock.queue.empty() and not self.serialMock.crashed:
-            time.sleep(.001)
+            time.sleep(.00001)
             self.advance_time_and_run(1)
 
     def _wait_for_processing(self):
@@ -107,13 +107,13 @@ class TestOPP(MpfTestCase):
             time.sleep(.00001)
             self.machine_run()
 
-    # def test_opp(self):
-    #     self._test_coils()
-    #     self._test_leds()
-    #     self._test_matrix_lights()
-    #     self._test_autofires()
-    #     self._test_switches()
-    #     self._test_flippers()
+    def test_opp(self):
+        self._test_coils()
+        self._test_leds()
+        self._test_matrix_lights()
+        self._test_autofires()
+        self._test_switches()
+        self._test_flippers()
 
     def _test_switches(self):
         # initial switches
