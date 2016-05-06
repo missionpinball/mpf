@@ -458,13 +458,11 @@ class AssetManager(object):
         for ac in [x for x in self._asset_classes
                    if x['pool_config_section']]:
 
-            if (ac['pool_config_section']) not in config:
-                return
-
-            for name, settings in config[ac['pool_config_section']].items():
-                getattr(self.machine, ac['attribute'])[name] = (
-                    ac['cls'].asset_group_class(self.machine, name, settings,
-                                                ac['cls']))
+            if (ac['pool_config_section']) in config:
+                for name, settings in config[ac['pool_config_section']].items():
+                    getattr(self.machine, ac['attribute'])[name] = (
+                        ac['cls'].asset_group_class(self.machine, name, settings,
+                                                    ac['cls']))
 
     def _load_mode_assets(self, config, priority, mode):
         # Called on mode start to load the assets that are set to automatically

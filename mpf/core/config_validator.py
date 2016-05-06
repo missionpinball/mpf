@@ -783,7 +783,6 @@ smartmatrix:
 sound_player:
     __valid_in__: machine, mode, show
     action: single|enum(play,stop)|play
-    track: single|str|None
     volume: single|gain|None
     loops: single|int|None
     priority: single|int|None
@@ -806,6 +805,8 @@ sounds:
     loops: single|int|0
     priority: single|int|0
     max_queue_time: single|secs|None
+    events_when_played: list|str|None
+    events_when_stopped: list|str|None
     ducking:
         target: single|str|
         delay: single|str|0
