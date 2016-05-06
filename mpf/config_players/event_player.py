@@ -1,10 +1,17 @@
+from mpf.core.delays import DelayManager
+
 from mpf.core.config_player import ConfigPlayer
 from mpf.core.utility_functions import Util
+
 
 class EventPlayer(ConfigPlayer):
     config_file_section = 'event_player'
     show_section = 'events'
     device_collection = None
+
+    def __init__(self, machine):
+        super().__init__(machine)
+        self.delay = DelayManager(self.machine.delayRegistry)
 
     # pylint: disable-msg=too-many-arguments
     def play(self, settings, mode=None, caller=None,
@@ -20,7 +27,15 @@ class EventPlayer(ConfigPlayer):
 
         for event, s in settings.items():
             s.update(play_kwargs)
-            self.machine.events.post(event, **s)
+            if ':' in event:
+                event, delay = event.split(":")
+                delay = Util.string_to_ms(delay)
+                self.delay.add(callback=self._post_event, ms=delay, event=event, s=s)
+            else:
+                self.machine.events.post(event, **s)
+
+    def _post_event(self, event, s):
+        self.machine.events.post(event, **s)
 
     def get_express_config(self, value):
         return_dict = dict()
