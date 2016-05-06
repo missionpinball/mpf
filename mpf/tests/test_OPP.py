@@ -107,13 +107,13 @@ class TestOPP(MpfTestCase):
             time.sleep(.00001)
             self.machine_run()
 
-    def test_opp(self):
-        self._test_coils()
-        self._test_leds()
-        self._test_matrix_lights()
-        self._test_autofires()
-        self._test_switches()
-        self._test_flippers()
+    # def test_opp(self):
+    #     self._test_coils()
+    #     self._test_leds()
+    #     self._test_matrix_lights()
+    #     self._test_autofires()
+    #     self._test_switches()
+    #     self._test_flippers()
 
     def _test_switches(self):
         # initial switches
