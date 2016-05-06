@@ -299,58 +299,6 @@ class Game(Mode):
         del kwargs
         self.log.debug("Entering Game.game_ended()")
 
-    def set_balls_in_play(self, balls):
-        """Sets the number of balls in play to the value passed.
-
-        Args:
-            balls: Int of the new value of balls in play.
-
-        This method does not actually eject any new balls onto the playfield,
-        rather, it just changes the game controller's count of the number of
-        balls in play.
-
-        The balls in play value cannot be lower than 0 or higher than
-        the number of balls known. This message will automatically set the balls
-        in play to the nearest valid value if it's outside of this range.
-
-        If balls in play drops to zero, ``ball_ending()`` will be called.
-
-        """
-
-        self.balls_in_play = balls
-
-    def add_balls_in_play(self, balls=1):
-        """Adds one or more balls to the current balls in play value.
-
-        Args:
-            balls: Int of the balls to add.
-
-        This method does not actually eject any new balls onto the playfield,
-        rather, it just changes the game controller's count of the number of
-        balls in play.
-
-        Note that if the number of balls added exceeds the number of balls
-        known, it will be set to the number of balls known.
-
-        """
-
-        self.balls_in_play += balls
-
-    def remove_balls_in_play(self, balls=1):
-        """Removes one or more balls from the current balls in play value.
-
-        Args:
-            balls: Int of the balls to add.
-
-        Note that if the number of balls removed would take the current balls in
-        play count to less than zero, the number of balls in play will be set to
-        zero.
-
-        If balls in play drops to zero, ``ball_ending()`` will be called.
-
-        """
-        self.balls_in_play -= balls
-
     def request_player_add(self, **kwargs):
         """Called by any module that wants to add a player to an active game.
 

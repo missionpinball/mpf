@@ -54,7 +54,7 @@ class Multiball(SystemWideDevice, ModeDevice):
 
         self.balls_ejected = self.config['ball_count'] - 1
 
-        self.machine.game.add_balls_in_play(balls=self.balls_ejected)
+        self.machine.game.balls_in_play += self.balls_ejected
 
         balls_added = 0
 
