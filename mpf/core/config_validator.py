@@ -821,6 +821,7 @@ switches:
     type: single|enum(NC,NO)|NO
     debounce: single|enum(auto,quick,normal)|auto
     ignore_window_ms: single|ms|0
+    events_when_activated: list|str|None
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False
