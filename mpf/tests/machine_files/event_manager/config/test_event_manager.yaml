@@ -7,13 +7,15 @@ bcp:
 
 event_player:
     test_event_player1:
-        test_event_player2
-        test_event_player3
+        - test_event_player2
+        - test_event_player3
+    test_event_player_delayed:
+        - test_event_player2:2s
 
 random_event_player:
     test_random_event_player1:
-        test_random_event_player2
-        test_random_event_player3
+        - test_random_event_player2
+        - test_random_event_player3
 
 modes:
   - test_mode
