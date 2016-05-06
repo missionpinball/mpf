@@ -9,15 +9,12 @@ from mpf.platforms import opp
 class SerialMock:
     def read(self, length):
         del length
-        if not self.send_buffer:
-            msg = self.queue.get()
-        else:
-            msg = self.send_buffer.pop()
+        msg = self.queue.get()
         return msg
 
     def write(self, msg):
         if msg in self.permanent_commands:
-            self.send_buffer.append(self.permanent_commands[msg])
+            self.queue.put(self.permanent_commands[msg])
             return
 
         # print("Serial received: " + "".join("\\x%02x" % ord(b) for b in msg) + " len: " + str(len(msg)))
@@ -27,13 +24,12 @@ class SerialMock:
                                  " len: " + str(len(msg)))
 
         if self.expected_commands[msg] is not False:
-            self.send_buffer.append(self.expected_commands[msg])
+            self.queue.put(self.expected_commands[msg])
 
         del self.expected_commands[msg]
 
     def __init__(self):
         self.name = "SerialMock"
-        self.send_buffer = []
         self.expected_commands = {}
         self.queue = Queue()
         self.permanent_commands = {}
@@ -59,7 +55,6 @@ class TestOPP(MpfTestCase):
         opp.serial_imported = True
         opp.serial = MagicMock()
         self.serialMock = SerialMock()
-        self.serialMock.send_buffer = []
         board1_config = b'\x20\x0d\x01\x02\x03\x03'      # wing1: solenoids, wing2: inputs, wing3: lamps, wing4: lamps
         board2_config = b'\x21\x0d\x06\x02\x02\x01'      # wing1: neo, wing2: inputs, wing3: inputs, wing4: solenoids
         board1_version = b'\x20\x02\x00\x00\x10\x00'     # 0.0.16.0
@@ -68,6 +63,7 @@ class TestOPP(MpfTestCase):
         inputs2_message = b"\x21\x08\x00\x00\x00\x00"
 
         self.serialMock.expected_commands = {
+            b'\xff': b'\xff',
             b'\xf0\xff': b'\xf0\x20\x21\xff',     # boards 20 + 21 installed
             self._crc_message(b'\x20\x0d\x00\x00\x00\x00', False) + self._crc_message(b'\x21\x0d\x00\x00\x00\x00'):
                 self._crc_message(board1_config, False) + self._crc_message(board2_config),     # get config
@@ -79,15 +75,13 @@ class TestOPP(MpfTestCase):
             self._crc_message(b'\x20\x14\x03\x00\x0a\x06'): False,    # configure coil 3
         }
         self.serialMock.permanent_commands = {
-            b'\xff': b'\xff',
             self._crc_message(b'\x20\x08\x00\x00\x00\x00', False) + self._crc_message(b'\x21\x08\x00\x00\x00\x00'):
                 self._crc_message(inputs1_message, False) + self._crc_message(inputs2_message),  # read inputs
         }
         opp.serial.Serial = MagicMock(return_value=self.serialMock)
         super(TestOPP, self).setUp()
 
-        for i in range(10):
-            self._write_message(b"\xff", False)
+        self.advance_time_and_run(1)
 
         self.assertFalse(self.serialMock.expected_commands)
 
@@ -107,6 +101,11 @@ class TestOPP(MpfTestCase):
         while not self.serialMock.queue.empty() and not self.serialMock.crashed:
             time.sleep(.001)
             self.advance_time_and_run(1)
+
+    def _wait_for_processing(self):
+        while self.serialMock.expected_commands and not self.serialMock.crashed:
+            time.sleep(.00001)
+            self.machine_run()
 
     def test_opp(self):
         self._test_coils()
@@ -148,7 +147,7 @@ class TestOPP(MpfTestCase):
         # pulse coil
         self.serialMock.expected_commands[self._crc_message(b'\x20\x07\x00\x01\x00\x01', False)] = False
         self.machine.coils.c_test.pulse()
-        self._write_message(b"\xff", False)
+        self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
         # enable coil (not allowed)
@@ -158,38 +157,37 @@ class TestOPP(MpfTestCase):
         # disable coil
         self.serialMock.expected_commands[self._crc_message(b'\x20\x07\x00\x00\x00\x01', False)] = False
         self.machine.coils.c_test.disable()
-        self._write_message(b"\xff", False)
+        self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
         # pulse coil (with allow_enable set)
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x01\x02\x17\x00')] = False
         self.serialMock.expected_commands[self._crc_message(b'\x20\x07\x00\x02\x00\x02', False)] = False
         self.machine.coils.c_test_allow_enable.pulse()
-        self._write_message(b"\xff", False)
+        self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
         # enable coil (with allow_enable set)
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x01\x00\x17\x0f')] = False
         self.serialMock.expected_commands[self._crc_message(b'\x20\x07\x00\x02\x00\x02', False)] = False
         self.machine.coils.c_test_allow_enable.enable()
-        self._write_message(b"\xff", False)
+        self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
     def _test_matrix_lights(self):
         self.serialMock.expected_commands[self._crc_message(b'\x20\x13\x07\x00\x01\x00\x00')] = False
         self.machine.lights.test_light1.on()
         self.machine.lights.test_light2.off()
-        # it will only update once every 10 ticks so just advance 10 times to be sure
-        for i in range(10):
-            self._write_message(b"\xff", False)
+
+        self._wait_for_processing()
+
         self.assertFalse(self.serialMock.expected_commands)
 
         self.serialMock.expected_commands[self._crc_message(b'\x20\x13\x07\x00\x03\x00\x00')] = False
         self.machine.lights.test_light1.on()
         self.machine.lights.test_light2.on()
         # it will only update once every 10 ticks so just advance 10 times to be sure
-        for i in range(10):
-            self._write_message(b"\xff", False)
+        self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
     def _test_leds(self):
@@ -199,8 +197,7 @@ class TestOPP(MpfTestCase):
         self.serialMock.expected_commands[self._crc_message(b'\x21\x16\x00\x80', False)] = False
 
         self.machine.leds.test_led1.on()
-        for i in range(10):
-            self._write_message(b"\xff", False)
+        self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
         # add 00/00/00 as color 1
@@ -212,39 +209,40 @@ class TestOPP(MpfTestCase):
 
         self.machine.leds.test_led1.off()
         self.machine.leds.test_led2.on()
-        for i in range(10):
-            self._write_message(b"\xff", False)
+
+        self._wait_for_processing()
+
         self.assertFalse(self.serialMock.expected_commands)
 
     def _test_autofires(self):
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x00\x03\x17\x20')] = False
         self.machine.autofires.ac_slingshot_test.enable()
-        self._write_message(b"\xff", False)
+        self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x00\x02\x17\x20')] = False
         self.machine.autofires.ac_slingshot_test.disable()
-        self._write_message(b"\xff", False)
+        self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x01\x03\x17\x30')] = False
         self.machine.autofires.ac_slingshot_test2.enable()
-        self._write_message(b"\xff", False)
+        self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x01\x02\x17\x30')] = False
         self.machine.autofires.ac_slingshot_test2.disable()
-        self._write_message(b"\xff", False)
+        self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
 
     def _test_flippers(self):
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x01\x0a\x06')] = False
         self.machine.flippers.f_test_single.enable()
-        self._write_message(b"\xff", False)
+        self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x00\x0a\x06')] = False
         self.machine.flippers.f_test_single.disable()
-        self._write_message(b"\xff", False)
+        self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
