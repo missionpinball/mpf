@@ -579,7 +579,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         if self.machine_type == 'wpc':  # translate switch num to FAST switch
             number = self.wpc_gi_map.get(str(config['number']).upper())
         else:
-            number = Util.int_to_hex_string(config['number'])
+            number = self._convert_number_from_config(config['number'])
 
         return FASTGIString(number, self.net_connection.send)
 
