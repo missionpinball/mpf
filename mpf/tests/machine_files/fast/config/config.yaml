@@ -90,7 +90,7 @@ matrix_lights:
 
 gis:
   test_gi:
-    number: 42
+    number: 2A
 
 leds:
   test_led:

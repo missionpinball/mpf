@@ -14,7 +14,7 @@ from distutils.version import StrictVersion
 from copy import deepcopy
 
 from mpf.core.platform import ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatform, \
-                              SwitchPlatform, DriverPlatform
+    SwitchPlatform, DriverPlatform
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
@@ -196,8 +196,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             'SF6': '65',  # 101
             'SF7': '66',  # 102
             'SF8': '67',  # 103
-
-            }
+        }
 
         self.wpc_light_map = {
             'L11': '00', 'L12': '01', 'L13': '02', 'L14': '03',
@@ -216,7 +215,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             'L75': '34', 'L76': '35', 'L77': '36', 'L78': '37',
             'L81': '38', 'L82': '39', 'L83': '3A', 'L84': '3B',
             'L85': '3C', 'L86': '3D', 'L87': '3E', 'L88': '3F',
-                               }
+        }
 
         self.wpc_driver_map = {
             'C01': '00', 'C02': '01', 'C03': '02', 'C04': '03',
@@ -232,12 +231,12 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             'FURM': '24', 'FURH': '25', 'FULM': '26', 'FULH': '27',
             'C37': '28', 'C38': '29', 'C39': '2A', 'C40': '2B',
             'C41': '2C', 'C42': '2D', 'C43': '2E', 'C44': '2F',
-                                }
+        }
 
         self.wpc_gi_map = {
             'G01': '00', 'G02': '01', 'G03': '02', 'G04': '03',
             'G05': '04', 'G06': '05', 'G07': '06', 'G08': '07',
-                           }
+        }
 
         # todo verify this list
         self.fast_commands = {'ID': self.receive_id,  # processor ID
@@ -430,6 +429,12 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         self.hw_switch_data = hw_states
 
+    def _convert_number_from_config(self, number):
+        if self.config['config_number_format'] == 'int':
+            return Util.int_to_hex_string(number)
+        else:
+            return Util.normalize_hex_string(number)
+
     def configure_driver(self, config):
         # dont modify the config. make a copy
         config = deepcopy(config)
@@ -456,10 +461,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         # If we have FAST IO boards, we need to make sure we have hex strings
         elif self.machine_type == 'fast':
 
-            if self.config['config_number_format'] == 'int':
-                config['number'] = Util.int_to_hex_string(config['number'])
-            else:
-                config['number'] = Util.normalize_hex_string(config['number'])
+            config['number'] = self._convert_number_from_config(config['number'])
 
             # Now figure out the connection type
             if ('connection' in config and
@@ -522,11 +524,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
                 config['connection'] = 0  # local switch
 
             try:
-                if self.config['config_number_format'] == 'int':
-                    config['number'] = Util.int_to_hex_string(config['number'])
-                else:
-                    config['number'] = Util.normalize_hex_string(
-                        config['number'])
+                config['number'] = self._convert_number_from_config(config['number'])
             except ValueError:
                 raise AssertionError("Could not parse switch number %s. Seems "
                                      "to be not a valid switch number for the"
@@ -563,10 +561,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             num = str(config['number']).split('-')
             number = Util.int_to_hex_string((int(num[0]) * 64) + int(num[1]))
         else:
-            if self.config['config_number_format'] == 'int':
-                number = Util.int_to_hex_string(config['number'])
-            else:
-                number = Util.normalize_hex_string(config['number'])
+            number = self._convert_number_from_config(config['number'])
 
         this_fast_led = FASTDirectLED(number)
         self.fast_leds.add(this_fast_led)
@@ -584,7 +579,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         if self.machine_type == 'wpc':  # translate switch num to FAST switch
             number = self.wpc_gi_map.get(str(config['number']).upper())
         else:
-            number = Util.int_to_hex_string(config['number'])
+            number = self._convert_number_from_config(config['number'])
 
         return FASTGIString(number, self.net_connection.send)
 
@@ -596,10 +591,8 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         if self.machine_type == 'wpc':  # translate number to FAST light num
             number = self.wpc_light_map.get(str(config['number']).upper())
-        elif self.config['config_number_format'] == 'int':
-            number = Util.int_to_hex_string(config['number'])
         else:
-            number = Util.normalize_hex_string(config['number'])
+            number = self._convert_number_from_config(config['number'])
 
         return FASTMatrixLight(number, self.net_connection.send)
 
@@ -667,8 +660,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         self.net_connection.send(cmd)
 
-    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self,
-            enable_switch, disable_switch, coil):
+    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
         # Potential command from Dave:
         # Command
         # [DL/DN]:<DRIVER_ID>,<CONTROL>,<SWITCH_ID_ON>,<75>,<SWITCH_ID_OFF>,<Driver On Time1>,<Driver On Time2 X 100mS>,
@@ -721,8 +713,8 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
                 not coil.config['allow_enable']):
 
             # todo figure how to show the friendly name of this driver
-            raise AssertionError("Coil {} may not be enabled at 100% without"
-                "allow_enabled or pwm settings".format(coil.hw_driver.number))
+            raise AssertionError("Coil {} may not be enabled at 100% without "
+                                 "allow_enabled or pwm settings".format(coil.hw_driver.number))
 
         cmd = '{}{},{},{},18,{},{},{},{},00'.format(
             driver.get_config_cmd(),
@@ -1231,8 +1223,8 @@ class SerialCommunicator(object):
 
         if StrictVersion(min_version) > StrictVersion(self.remote_firmware):
             raise AssertionError('Firmware version mismatch. MPF requires'
-                                 ' the {} processor to be firmware {}, but yours is {}'.format(
-                                       self.remote_processor, min_version, self.remote_firmware))
+                                 ' the {} processor to be firmware {}, but yours is {}'.
+                                 format(self.remote_processor, min_version, self.remote_firmware))
 
         if self.remote_processor == 'NET' and self.platform.machine_type == 'fast':
             self.query_fast_io_boards()
