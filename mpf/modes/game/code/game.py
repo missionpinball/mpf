@@ -149,8 +149,8 @@ class Game(Mode):
         self.log.info("****************** BALL STARTING ******************")
         self.log.info("**                                               **")
         self.log.info("**    Player: {}    Ball: {}   Score: {}".format(
-                self.player.number, self.player.ball,
-                self.player.score).ljust(49) + '**')
+                      self.player.number, self.player.ball,
+                      self.player.score).ljust(49) + '**')
         self.log.info("**                                               **")
         self.log.info("***************************************************")
         self.log.info("***************************************************")
@@ -186,7 +186,7 @@ class Game(Mode):
         else:
             self.machine.events.post('multi_player_ball_started')
             self.machine.events.post(
-                    'player_{}_ball_started'.format(self.player.number))
+                'player_{}_ball_started'.format(self.player.number))
 
         self.machine.playfield.add_ball(player_controlled=True)
 
@@ -422,9 +422,9 @@ class Game(Mode):
             self.num_players = len(self.player_list)
 
             self.machine.create_machine_var(
-                    name='player{}_score'.format(player.number),
-                    value=player.score,
-                    persist=True)
+                name='player{}_score'.format(player.number),
+                value=player.score,
+                persist=True)
 
             return player
 
@@ -456,8 +456,8 @@ class Game(Mode):
                                  number=self.player.number)
 
         self.machine.set_machine_var(
-                name='player{}_score'.format(self.player.number),
-                value=self.player.score)
+            name='player{}_score'.format(self.player.number),
+            value=self.player.score)
 
         if self.player.number < self.num_players:
             self.player = self.player_list[self.player.number]
