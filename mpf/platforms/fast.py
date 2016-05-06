@@ -14,7 +14,7 @@ from distutils.version import StrictVersion
 from copy import deepcopy
 
 from mpf.core.platform import ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatform, \
-                              SwitchPlatform, DriverPlatform
+    SwitchPlatform, DriverPlatform
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
@@ -196,8 +196,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             'SF6': '65',  # 101
             'SF7': '66',  # 102
             'SF8': '67',  # 103
-
-            }
+        }
 
         self.wpc_light_map = {
             'L11': '00', 'L12': '01', 'L13': '02', 'L14': '03',
@@ -216,7 +215,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             'L75': '34', 'L76': '35', 'L77': '36', 'L78': '37',
             'L81': '38', 'L82': '39', 'L83': '3A', 'L84': '3B',
             'L85': '3C', 'L86': '3D', 'L87': '3E', 'L88': '3F',
-                               }
+        }
 
         self.wpc_driver_map = {
             'C01': '00', 'C02': '01', 'C03': '02', 'C04': '03',
@@ -232,12 +231,12 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             'FURM': '24', 'FURH': '25', 'FULM': '26', 'FULH': '27',
             'C37': '28', 'C38': '29', 'C39': '2A', 'C40': '2B',
             'C41': '2C', 'C42': '2D', 'C43': '2E', 'C44': '2F',
-                                }
+        }
 
         self.wpc_gi_map = {
             'G01': '00', 'G02': '01', 'G03': '02', 'G04': '03',
             'G05': '04', 'G06': '05', 'G07': '06', 'G08': '07',
-                           }
+        }
 
         # todo verify this list
         self.fast_commands = {'ID': self.receive_id,  # processor ID
@@ -667,8 +666,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         self.net_connection.send(cmd)
 
-    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self,
-            enable_switch, disable_switch, coil):
+    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
         # Potential command from Dave:
         # Command
         # [DL/DN]:<DRIVER_ID>,<CONTROL>,<SWITCH_ID_ON>,<75>,<SWITCH_ID_OFF>,<Driver On Time1>,<Driver On Time2 X 100mS>,
@@ -721,8 +719,8 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
                 not coil.config['allow_enable']):
 
             # todo figure how to show the friendly name of this driver
-            raise AssertionError("Coil {} may not be enabled at 100% without"
-                "allow_enabled or pwm settings".format(coil.hw_driver.number))
+            raise AssertionError("Coil {} may not be enabled at 100% without "
+                                 "allow_enabled or pwm settings".format(coil.hw_driver.number))
 
         cmd = '{}{},{},{},18,{},{},{},{},00'.format(
             driver.get_config_cmd(),
@@ -1231,8 +1229,8 @@ class SerialCommunicator(object):
 
         if StrictVersion(min_version) > StrictVersion(self.remote_firmware):
             raise AssertionError('Firmware version mismatch. MPF requires'
-                                 ' the {} processor to be firmware {}, but yours is {}'.format(
-                                       self.remote_processor, min_version, self.remote_firmware))
+                                 ' the {} processor to be firmware {}, but yours is {}'.
+                                 format(self.remote_processor, min_version, self.remote_firmware))
 
         if self.remote_processor == 'NET' and self.platform.machine_type == 'fast':
             self.query_fast_io_boards()
