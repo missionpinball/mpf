@@ -259,10 +259,6 @@ class Game(Mode):
             self.game_ending()
             return
 
-        if self.player.extra_balls:
-            self.shoot_again()
-            return
-
         if (self.player.ball ==
                 self.machine.config['game']['balls_per_game'] and
                 self.player.number == self.num_players):
@@ -302,26 +298,6 @@ class Game(Mode):
         """
         del kwargs
         self.log.debug("Entering Game.game_ended()")
-
-    def award_extra_ball(self, num=1):
-        """Awards the player an extra ball.
-
-        Args:
-            num: Integer of the  number of extra balls to award. Default is 1.
-
-        TODO: The limit checking is not yet implemented
-        """
-        self.log.debug("Entering Game.award_extra_ball()")
-        self.player.extra_balls += num
-        self.machine.events.post('extra_ball_awarded')
-        # todo add the limit checking
-
-    def shoot_again(self):
-        """Called when the same player should shoot again."""
-        self.log.debug("Player %s Shoot Again", self.player.index + 1)
-        if self.player.extra_balls > 0:
-            self.player.extra_balls -= 1
-        self.ball_starting()
 
     def set_balls_in_play(self, balls):
         """Sets the number of balls in play to the value passed.
