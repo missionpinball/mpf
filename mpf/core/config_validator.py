@@ -802,6 +802,8 @@ sounds:
     loops: single|int|0
     priority: single|int|0
     max_queue_time: single|secs|None
+    events_when_played: list|str|None
+    events_when_stopped: list|str|None
     ducking:
         target: single|str|
         delay: single|str|0
@@ -819,8 +821,6 @@ switches:
     type: single|enum(NC,NO)|NO
     debounce: single|enum(auto,quick,normal)|auto
     ignore_window_ms: single|ms|0
-    events_when_activated: list|str|None
-    events_when_deactivated: list|str|None
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False
