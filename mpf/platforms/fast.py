@@ -9,7 +9,6 @@ import sys
 import threading
 import queue
 import traceback
-import io
 from distutils.version import StrictVersion
 from copy import deepcopy
 
@@ -1170,12 +1169,6 @@ class SerialCommunicator(object):
         self.serial_connection = serial.Serial(port=port, baudrate=baud,
                                                timeout=1, writeTimeout=0)
 
-        self.serial_io = io.TextIOWrapper(io.BufferedRWPair(
-            self.serial_connection, self.serial_connection, 1), newline='\r',
-            line_buffering=True)
-        # pylint: disable=W0212
-        self.serial_io._CHUNK_SIZE = 1
-
         self.identify_connection()
         self.platform.register_processor_connection(self.remote_processor, self)
         self._start_threads()
@@ -1191,7 +1184,7 @@ class SerialCommunicator(object):
             self.platform.log.debug("Sending 'ID:' command to port '%s'",
                                     self.serial_connection.name)
             self.serial_connection.write('ID:\r'.encode())
-            msg = self.serial_io.readline()  # todo timeout
+            msg = str(self.serial_connection.readline(), 'UTF-8')  # todo timeout
             if msg.startswith('ID:'):
                 break
 
@@ -1242,7 +1235,7 @@ class SerialCommunicator(object):
 
         for board_id in range(8):
             self.serial_connection.write('NN:{0}\r'.format(board_id).encode())
-            msg = self.serial_io.readline()
+            msg = str(self.serial_connection.readline(), 'UTF-8')
             if msg.startswith('NN:'):
 
                 node_id, model, fw, dr, sw, _, _, _, _, _, _ = msg.split(',')
@@ -1336,7 +1329,7 @@ class SerialCommunicator(object):
 
             try:
                 while self.serial_connection:
-                    msg = self.serial_io.readline()[:-1]  # strip the \r
+                    msg = str(self.serial_connection.readline(), 'UTF-8')[:-1]  # strip the \r
 
                     if debug:
                         self.platform.log.info("Received: %s", msg)
