@@ -429,6 +429,12 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         self.hw_switch_data = hw_states
 
+    def _convert_number_from_config(self, number):
+        if self.config['config_number_format'] == 'int':
+            return Util.int_to_hex_string(number)
+        else:
+            return Util.normalize_hex_string(number)
+
     def configure_driver(self, config):
         # dont modify the config. make a copy
         config = deepcopy(config)
@@ -455,10 +461,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         # If we have FAST IO boards, we need to make sure we have hex strings
         elif self.machine_type == 'fast':
 
-            if self.config['config_number_format'] == 'int':
-                config['number'] = Util.int_to_hex_string(config['number'])
-            else:
-                config['number'] = Util.normalize_hex_string(config['number'])
+            config['number'] = self._convert_number_from_config(config['number'])
 
             # Now figure out the connection type
             if ('connection' in config and
@@ -521,11 +524,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
                 config['connection'] = 0  # local switch
 
             try:
-                if self.config['config_number_format'] == 'int':
-                    config['number'] = Util.int_to_hex_string(config['number'])
-                else:
-                    config['number'] = Util.normalize_hex_string(
-                        config['number'])
+                config['number'] = self._convert_number_from_config(config['number'])
             except ValueError:
                 raise AssertionError("Could not parse switch number %s. Seems "
                                      "to be not a valid switch number for the"
@@ -562,10 +561,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             num = str(config['number']).split('-')
             number = Util.int_to_hex_string((int(num[0]) * 64) + int(num[1]))
         else:
-            if self.config['config_number_format'] == 'int':
-                number = Util.int_to_hex_string(config['number'])
-            else:
-                number = Util.normalize_hex_string(config['number'])
+            number = self._convert_number_from_config(config['number'])
 
         this_fast_led = FASTDirectLED(number)
         self.fast_leds.add(this_fast_led)
@@ -595,10 +591,8 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         if self.machine_type == 'wpc':  # translate number to FAST light num
             number = self.wpc_light_map.get(str(config['number']).upper())
-        elif self.config['config_number_format'] == 'int':
-            number = Util.int_to_hex_string(config['number'])
         else:
-            number = Util.normalize_hex_string(config['number'])
+            number = self._convert_number_from_config(config['number'])
 
         return FASTMatrixLight(number, self.net_connection.send)
 
