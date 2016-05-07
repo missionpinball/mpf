@@ -43,6 +43,7 @@ mpf:
         playfield.Playfield
         drop_target.DropTarget
         drop_target.DropTargetBank
+        extra_ball.ExtraBall
         shot.Shot
         shot_group.ShotGroup
         flipper.Flipper
@@ -125,6 +126,7 @@ mpf:
       - diverters
       - drop_targets
       - drop_target_banks
+      - extra_balls
       - flashers
       - flippers
       - gis

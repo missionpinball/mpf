@@ -295,6 +295,13 @@ drop_target_banks:
 event_player:
     __valid_in__: machine, mode, show
     __allow_others__:
+extra_balls:
+    __valid_in__: mode
+    tags: list|str|None
+    label: single|str|%
+    debug: single|bool|False
+    award_events: dict|str:ms|None
+    reset_events: dict|str:ms|None
 fadecandy:
     __valid_in__: machine
     gamma: single|float|2.5
