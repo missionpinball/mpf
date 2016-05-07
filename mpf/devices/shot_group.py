@@ -26,6 +26,9 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         self.rotation_enabled = True
         self._enabled = False
 
+        # todo remove this hack
+        self._created_system_wide = False
+
     @property
     def enabled(self):
         return self._enabled
@@ -45,6 +48,8 @@ class ShotGroup(ModeDevice, SystemWideDevice):
     def device_added_system_wide(self):
         # Called when a device is added system wide
         super().device_added_system_wide()
+
+        self._created_system_wide = True
 
         if 'profile' in self.config:
             for shot in self.config['shots']:
@@ -401,7 +406,9 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
                 shot.update_profile(profile=profile, enable=enable, mode=mode)
 
-    def device_removed_from_mode(self):
+    def device_removed_from_mode(self, mode):
+        del mode
+        if self._created_system_wide:
+            return
         self.debug_log("Removing this shot group")
         self._enabled = False
-        del self.machine.shot_groups[self.name]
