@@ -151,6 +151,26 @@ class TestShots(MpfTestCase):
         self.machine_run()
         self.assertEqual("CREDITS 1", self.machine.get_machine_var('credits_string'))
 
+    def testMaxCredits(self):
+        self.assertTrue(self.machine.mode_controller.is_active('credits'))
+        self.assertEqual("CREDITS 0", self.machine.get_machine_var('credits_string'))
+
+        self.hit_and_release_switch("s_right_coin")
+        self.hit_and_release_switch("s_right_coin")
+        self.hit_and_release_switch("s_right_coin")
+        self.hit_and_release_switch("s_right_coin")
+        self.machine_run()
+
+        self.assertEqual("CREDITS 10", self.machine.get_machine_var('credits_string'))
+
+        self.hit_and_release_switch("s_right_coin")
+        self.machine_run()
+        self.assertEqual("CREDITS 12", self.machine.get_machine_var('credits_string'))
+
+        self.hit_and_release_switch("s_right_coin")
+        self.machine_run()
+        self.assertEqual("CREDITS 12", self.machine.get_machine_var('credits_string'))
+
     def testPricingTiers(self):
         self.hit_and_release_switch("s_right_coin")
         self.machine_run()
