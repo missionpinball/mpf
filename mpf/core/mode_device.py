@@ -18,6 +18,7 @@ class ModeDevice(Device):
     def remove_control_events_in_mode(self):
         pass
 
-    def device_removed_from_mode(self):
+    def device_removed_from_mode(self, mode):
+        del mode
         raise NotImplementedError(
             '{} does not have a device_removed_from_mode() method'.format(self.name))
