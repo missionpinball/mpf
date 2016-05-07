@@ -38,12 +38,12 @@ class TestShots(MpfTestCase):
         self.assertIn('shot_4', self.machine.shots)
         self.assertIn('led_1', self.machine.shots)
 
-        self.assertNotIn('mode1_shot_1', self.machine.shots)
+        self.assertFalse(self.machine.shots.mode1_shot_1.enabled)
 
         # Start the mode and make sure those shots load
         self.machine.modes.mode1.start()
         self.advance_time_and_run()
-        self.assertIn('mode1_shot_1', self.machine.shots)
+        self.assertTrue(self.machine.shots.mode1_shot_1.enabled)
 
         self.assertIn('shot_1', self.machine.shots)
         self.assertIn('shot_2', self.machine.shots)
@@ -54,7 +54,7 @@ class TestShots(MpfTestCase):
         # Stop the mode and make sure those shots go away
         self.machine.modes.mode1.stop()
         self.advance_time_and_run()
-        self.assertNotIn('mode1_shot_1', self.machine.shots)
+        self.assertFalse(self.machine.shots.mode1_shot_1.enabled)
 
         self.assertIn('shot_1', self.machine.shots)
         self.assertIn('shot_2', self.machine.shots)
@@ -575,7 +575,7 @@ class TestShots(MpfTestCase):
         # mode1 is not active, so make sure none of the events from
         # mode1_shot_17
 
-        self.assertNotIn('mode1_shot_17', self.machine.shots)
+        self.assertFalse(self.machine.shots.mode1_shot_17.enabled)
         self.mock_event("mode1_shot_17_hit")
 
         # Also verify hit event does not register a hit
