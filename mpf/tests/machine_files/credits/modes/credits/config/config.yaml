@@ -1,0 +1,8 @@
+#config_version=4
+
+mode:
+  priority: 11000
+  start_events: machine_reset_phase_3
+  stop_on_ball_end: False
+
+
