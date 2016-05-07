@@ -307,10 +307,16 @@ class Credits(Mode):
 
     def _update_credit_strings(self):
         machine_credit_units = self._get_credit_units()
-        whole_num = int(floor(machine_credit_units /
-                              self.credit_units_per_game))
-        numerator = int(machine_credit_units % self.credit_units_per_game)
-        denominator = int(self.credit_units_per_game)
+        if self.credit_units_per_game > 0:
+            whole_num = int(floor(machine_credit_units /
+                            self.credit_units_per_game))
+            numerator = int(machine_credit_units % self.credit_units_per_game)
+            denominator = int(self.credit_units_per_game)
+        else:
+            whole_num = 0
+            numerator = 0
+            denominator = 0
+
 
         if numerator:
             if whole_num:
