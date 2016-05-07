@@ -1,0 +1,9 @@
+#config_version=4
+mode:
+  start_events: start_mode1
+  stop_events: stop_mode1
+
+extra_balls:
+    test_extra_ball:
+        award_events: extra_ball_award
+        reset_events: extra_ball_reset
