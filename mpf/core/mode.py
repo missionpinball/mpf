@@ -44,6 +44,8 @@ class Mode(object):
 
         self._validate_mode_config()
 
+        self._create_mode_devices()
+
         self.configure_mode_settings(config.get('mode', dict()))
 
         self.auto_stop_on_ball_end = self.config['mode']['stop_on_ball_end']
@@ -173,8 +175,6 @@ class Mode(object):
         self.start_event_kwargs = kwargs
 
         self.log.info('Mode Starting. Priority: %s', self.priority)
-
-        self._create_mode_devices()
 
         self._add_mode_devices()
 
