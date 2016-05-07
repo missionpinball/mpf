@@ -259,6 +259,10 @@ class Game(Mode):
             self.game_ending()
             return
 
+        if self.player.extra_balls:
+            self.award_extra_ball()
+            return
+
         if (self.player.ball ==
                 self.machine.config['game']['balls_per_game'] and
                 self.player.number == self.num_players):
@@ -298,6 +302,12 @@ class Game(Mode):
         """
         del kwargs
         self.log.debug("Entering Game.game_ended()")
+
+    def award_extra_ball(self):
+        """Called when the same player should shoot again."""
+        self.log.debug("Awarded extra ball to Player %s. Shoot Again", self.player.index + 1)
+        self.player.extra_balls -= 1
+        self.ball_starting()
 
     def request_player_add(self, **kwargs):
         """Called by any module that wants to add a player to an active game.
