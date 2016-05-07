@@ -114,10 +114,7 @@ class Credits(Mode):
 
         self.credits_config['free_play'] = False
 
-        if self.machine.is_machine_var('credit_units'):
-            credit_units = self.machine.get_machine_var('credit_units')
-        else:
-            credit_units = 0
+        credit_units = self._get_credit_units()
 
         if self.credits_config['persist_credits_while_off_time']:
             self.machine.create_machine_var(name='credit_units',
@@ -181,8 +178,14 @@ class Credits(Mode):
         else:
             self.enable_free_play()
 
+    def _get_credit_units(self):
+        credit_units = self.machine.get_machine_var('credit_units')
+        if not credit_units:
+            credit_units = 0
+        return credit_units
+
     def _player_add_request(self):
-        if (self.machine.get_machine_var('credit_units') >=
+        if (self._get_credit_units() >=
                 self.credit_units_per_game):
             self.log.debug("Received request to add player. Request Approved")
             return True
@@ -193,7 +196,7 @@ class Credits(Mode):
             return False
 
     def _request_to_start_game(self):
-        if (self.machine.get_machine_var('credit_units') >=
+        if (self._get_credit_units() >=
                 self.credit_units_per_game):
             self.log.debug("Received request to start game. Request Approved")
             return True
@@ -205,7 +208,7 @@ class Credits(Mode):
 
     def _player_add_success(self, **kwargs):
         del kwargs
-        new_credit_units = (self.machine.get_machine_var('credit_units') -
+        new_credit_units = (self._get_credit_units() -
                 self.credit_units_per_game)
 
         if new_credit_units < 0:
@@ -253,7 +256,7 @@ class Credits(Mode):
         self.log.debug("Adding %s credit_units. Price tiering: %s",
                        credit_units, price_tiering)
 
-        previous_credit_units = self.machine.get_machine_var('credit_units')
+        previous_credit_units = self._get_credit_units()
         total_credit_units = credit_units + previous_credit_units
 
         # check for pricing tier
@@ -303,7 +306,7 @@ class Credits(Mode):
             self._reset_pricing_tier_credits()
 
     def _update_credit_strings(self):
-        machine_credit_units = self.machine.get_machine_var('credit_units')
+        machine_credit_units = self._get_credit_units()
         whole_num = int(floor(machine_credit_units /
                               self.credit_units_per_game))
         numerator = int(machine_credit_units % self.credit_units_per_game)
@@ -366,7 +369,7 @@ class Credits(Mode):
     def _clear_fractional_credits(self):
         self.log.debug("Clearing fractional credits")
 
-        credit_units = self.machine.get_machine_var('credit_units')
+        credit_units = self._get_credit_units()
         credit_units -= credit_units % self.credit_units_per_game
 
         self.machine.set_machine_var('credit_units', credit_units)
