@@ -18,6 +18,7 @@ class Credits(Mode):
         self.max_credit_units = 0
         self.pricing_tiers = set()
         self.credit_units_for_pricing_tiers = 0
+        self.reset_pricing_tier_count_this_game = False
 
         self.credits_config = self.machine.config_validator.validate_config(
             config_spec='credits',
@@ -121,7 +122,7 @@ class Credits(Mode):
                                             value=credit_units,
                                             persist=True,
                                             expire_secs=self.credits_config[
-                                            'persist_credits_while_off_time'])
+                                                'persist_credits_while_off_time'])
         else:
             self.machine.create_machine_var(name='credit_units',
                                             value=credit_units)
@@ -144,9 +145,9 @@ class Credits(Mode):
         self.machine.events.add_handler('player_add_success',
                                         self._player_add_success)
         self.machine.events.add_handler('mode_game_started',
-                                        self._game_ended)
-        self.machine.events.add_handler('mode_game_ended',
                                         self._game_started)
+        self.machine.events.add_handler('mode_game_stopped',
+                                        self._game_ended)
         self.machine.events.add_handler('ball_starting',
                                         self._ball_starting)
         if post_event:
@@ -209,7 +210,7 @@ class Credits(Mode):
     def _player_add_success(self, **kwargs):
         del kwargs
         new_credit_units = (self._get_credit_units() -
-                self.credit_units_per_game)
+                            self.credit_units_per_game)
 
         if new_credit_units < 0:
             self.log.warning("Somehow credit units went below 0?!? Resetting "
@@ -244,8 +245,9 @@ class Credits(Mode):
                 callback=self._service_credit_callback)
 
     def _credit_switch_callback(self, value, audit_class):
-        self._add_credit_units(credit_units=value/self.credit_unit)
+        self._add_credit_units(credit_units=value / self.credit_unit)
         self._audit(value, audit_class)
+        self._reset_timeouts()
 
     def _service_credit_callback(self):
         self.log.debug("Service Credit Added")
@@ -317,7 +319,6 @@ class Credits(Mode):
             numerator = 0
             denominator = 0
 
-
         if numerator:
             if whole_num:
                 display_fraction = '{} {}/{}'.format(whole_num, numerator,
@@ -355,20 +356,23 @@ class Credits(Mode):
         self.delay.remove('clear_fractional_credits')
         self.delay.remove('clear_all_credits')
 
-    def _game_ended(self):
+    def _reset_timeouts(self):
         if self.credits_config['fractional_credit_expiration_time']:
             self.log.debug("Adding delay to clear fractional credits")
-            self.delay.add(
+            self.delay.reset(
                 ms=self.credits_config['fractional_credit_expiration_time'],
                 callback=self._clear_fractional_credits,
                 name='clear_fractional_credits')
 
         if self.credits_config['credit_expiration_time']:
             self.log.debug("Adding delay to clear credits")
-            self.delay.add(
+            self.delay.reset(
                 ms=self.credits_config['credit_expiration_time'],
                 callback=self.clear_all_credits,
                 name='clear_all_credits')
+
+    def _game_ended(self):
+        self._reset_timeouts()
 
         self.reset_pricing_tier_count_this_game = False
 
