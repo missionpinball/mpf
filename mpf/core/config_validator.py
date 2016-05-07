@@ -221,7 +221,7 @@ control_events:
     event: single|str|
     value: single|int|None
 credits:
-    __valid_in__: machine, mode
+    __valid_in__: machine
     max_credits: single|int|0
     free_play: single|bool|yes
     service_credits_switch: list|machine(switches)|None
