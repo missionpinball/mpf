@@ -170,7 +170,7 @@ class BallSave(SystemWideDevice, ModeDevice):
 
         return {'balls': balls - balls_to_save}
 
-    def remove(self):
+    def device_removed_from_mode(self):
         if self.debug:
             self.log.debug("Removing...")
 

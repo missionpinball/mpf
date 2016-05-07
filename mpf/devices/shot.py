@@ -324,11 +324,11 @@ class Shot(ModeDevice, SystemWideDevice):
         self.player = None
         self.remove_profile_by_mode(None)
 
-    def control_events_in_mode(self, mode):
+    def add_control_events_in_mode(self, mode):
         enable = not mode.config['shots'][self.name]['enable_events']
         self.update_profile(enable=enable, mode=mode)
 
-    def remove(self):
+    def device_removed_from_mode(self):
         """Remove this shot device. Destroys it and removes it from the shots
         collection.
 

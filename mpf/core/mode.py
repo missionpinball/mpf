@@ -374,7 +374,7 @@ class Mode(object):
     def _remove_mode_devices(self):
 
         for device in self.mode_devices:
-            device.remove()
+            device.device_removed_from_mode()
 
         self.mode_devices = set()
 
@@ -405,7 +405,7 @@ class Mode(object):
             device_list.add(device)
 
         for device in device_list:
-            device.control_events_in_mode(self)
+            device.add_control_events_in_mode(self)
 
     def _control_event_handler(self, callback, ms_delay=0, **kwargs):
         del kwargs

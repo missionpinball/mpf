@@ -18,7 +18,7 @@ class Multiball(SystemWideDevice, ModeDevice):
         self.enabled = False
         self.shoot_again = False
 
-    def remove(self):
+    def device_removed_from_mode(self):
         # disable mb when mode ends
         self.disable()
 
