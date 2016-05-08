@@ -7,7 +7,7 @@ from mpf.core.delays import DelayManager
 from mpf.core.system_wide_device import SystemWideDevice
 
 
-class ScoreReelController(SystemWideDevice):
+class ScoreReelController(object):
     """The overall controller that is in charge of and manages the score reels
     in a pinball machine.
 
@@ -241,14 +241,8 @@ class ScoreReelGroup(SystemWideDevice):
         self.jump_in_progress = False
         # Boolean attribute that is True when a jump advance is in progress.
 
-        # convert self.config['reels'] from strings to objects
-        for reel in self.config['reels']:
-            # find the object
-
-            if reel:
-                reel = self.machine.score_reels[reel]
-            self.reels.append(reel)
-
+    def _initialize(self):
+        self.reels = self.config['reels']
         self.reels.reverse()  # We want our smallest digit in the 0th element
 
         # ---- temp chimes code. todo move this --------------------
@@ -275,7 +269,7 @@ class ScoreReelGroup(SystemWideDevice):
 
     # ----- temp method for chime ------------------------------------
     def chime(self, chime):
-        self.machine.coils[chime].pulse()
+        chime.pulse()
 
     # ---- temp chimes code end --------------------------------------
 
@@ -916,7 +910,6 @@ class ScoreReel(SystemWideDevice):
         # it's not trying to re-fire a stuck position.
 
         self.assumed_value = -999
-        self.assumed_value = self.check_hw_switches()
         # The assumed value the machine thinks this reel is showing. A value
         # of -999 indicates that the value is unknown.
 
@@ -945,7 +938,10 @@ class ScoreReel(SystemWideDevice):
 
         # todo add some kind of status for broken?
 
+    def _initialize(self):
         self.log.debug("Configuring score reel with: %s", self.config)
+
+        self.assumed_value = self.check_hw_switches()
 
         # figure out how many values we have
         # Add 1 so range is inclusive of the lower limit
