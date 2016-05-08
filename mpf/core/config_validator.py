@@ -603,7 +603,7 @@ random_event_player:
 score_reels:
     __valid_in__: machine
     coil_inc: single|machine(coils)|None
-    coil_dec: single|machine(coils)|None
+#    coil_dec: single|machine(coils)|None
     rollover: single|bool|True
     limit_lo: single|int|0
     limit_hi: single|int|9
