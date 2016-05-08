@@ -58,7 +58,7 @@ class TestShots(MpfTestCase):
         player1_100.pulse = MagicMock(return_value=10)
         player1_10.pulse = MagicMock(return_value=10)
 
-        self.machine.scoring.add(11097) # result: 11207
+        self.machine.scoring.add(11097)  # result: 11207
         self.advance_time_and_run(.1)
         self.advance_time_and_run(.1)
         self.assertEqual(0, player1_10k.pulse.call_count)
