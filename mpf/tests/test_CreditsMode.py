@@ -2,7 +2,7 @@ from mock import MagicMock
 from mpf.tests.MpfTestCase import MpfTestCase
 
 
-class TestShots(MpfTestCase):
+class TestCreditsMode(MpfTestCase):
 
     def getConfigFile(self):
         return 'config.yaml'
