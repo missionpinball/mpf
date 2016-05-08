@@ -630,8 +630,8 @@ score_reels:
 score_reel_groups:
     __valid_in__: machine
     max_simultaneous_coils: single|int|2
-    reels: list|str|
-    chimes: list|str|None
+    reels: list|machine(score_reels)|
+    chimes: list|machine(coils)|None
     repeat_pulse_time: single|ms|200
     hw_confirm_time: single|ms|300
     config: single|str|lazy
@@ -639,6 +639,7 @@ score_reel_groups:
     label: single|str|%
     debug: single|bool|False
     lights_tag: single|str|None
+    confirm: single|str|lazy
 scoring:
     __valid_in__: machine, modes                    # todo add to validator
 scriptlets:
