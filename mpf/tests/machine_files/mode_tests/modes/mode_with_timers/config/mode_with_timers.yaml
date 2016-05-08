@@ -5,6 +5,7 @@ mode:
 timers:
     timer_down:
         debug: True
+        bcp: True
         start_value: 5
         end_value: 0
         direction: down
@@ -13,6 +14,62 @@ timers:
         control_events:
             - event: start_timer_down
               action: start
+            - event: reset_timer_down
+              action: reset
             - event: pause_timer_down
               action: pause
+              value: 2
+            - event: add_timer_down
+              action: add
+              value: 2
+            - event: subtract_timer_down
+              action: subtract
+              value: 2
+    timer_start_running:
+        debug: True
+        start_value: 0
+        end_value: 10
+        direction: up
+        tick_interval: 1s
+        start_running: yes
+    timer_restart_on_complete:
+        debug: True
+        start_value: 0
+        end_value: 5
+        direction: up
+        tick_interval: 1s
+        start_running: yes
+        restart_on_complete: yes
+    timer_up:
+        bcp: True
+        debug: True
+        start_value: 0
+        end_value: 10
+        max_value: 15
+        direction: up
+        tick_interval: 1s
+        start_running: no
+        control_events:
+            - event: start_timer_up
+              action: start
+            - event: reset_timer_up
+              action: reset
+            - event: stop_timer_up
+              action: stop
+            - event: restart_timer_up
+              action: restart
+            - event: jump_timer_up
+              action: jump
+              value: 5
+            - event: jump_over_max_timer_up
+              action: jump
+              value: 20
+            - event: add_timer_up
+              action: add
+              value: 2
+            - event: change_tick_interval_timer_up
+              action: change_tick_interval
+              value: 4
+            - event: set_tick_interval_timer_up
+              action: set_tick_interval
               value: 2
