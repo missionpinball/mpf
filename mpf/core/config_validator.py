@@ -217,7 +217,7 @@ config_player_common:
     priority: single|int|0
 control_events:
     __valid_in__: None
-    action: single|enum(add,substract,jump,start,stop,reset,restart,pause,set_tick_interval,change_tick_interval)|
+    action: single|enum(add,subtract,jump,start,stop,reset,restart,pause,set_tick_interval,change_tick_interval)|
     event: single|str|
     value: single|int|None
 credits:
