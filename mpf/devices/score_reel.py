@@ -97,8 +97,7 @@ class ScoreReelController(object):
                        self.active_scorereelgroup.assumed_value_int)
         if (self.active_scorereelgroup.assumed_value_int !=
                 self.machine.game.player.score):
-            self.active_scorereelgroup.set_value(
-                    self.machine.game.player.score)
+            self.active_scorereelgroup.set_value(self.machine.game.player.score)
 
         # light up this group
         for group in self.machine.score_reel_groups:
@@ -111,7 +110,7 @@ class ScoreReelController(object):
 
         # do we have a reel group tagged for this player?
         for reel_group in self.machine.score_reel_groups.items_tagged(
-                        "player" + str(self.machine.game.player.number)):
+                "player" + str(self.machine.game.player.number)):
             self.player_to_scorereel_map.append(reel_group)
             self.log.debug("Found a mapping to add: %s", reel_group.name)
             return
@@ -812,9 +811,9 @@ class ScoreReelGroup(SystemWideDevice):
         # while they're resyncing
 
         self.unlight_on_resync_key = self.machine.events.add_handler(
-                'scorereelgroup_' + self.name + '_resync',
-                self.unlight,
-                relight_on_valid=True)
+            'scorereelgroup_' + self.name + '_resync',
+            self.unlight,
+            relight_on_valid=True)
 
         if relight_on_valid:
             self.machine.events.remove_handler_by_key(self.light_on_valid_key)
@@ -833,12 +832,12 @@ class ScoreReelGroup(SystemWideDevice):
 
         if relight_on_valid:
             self.light_on_valid_key = self.machine.events.add_handler(
-                    'scorereelgroup_' + self.name + '_valid',
-                    self.light,
-                    relight_on_valid=True)
+                'scorereelgroup_' + self.name + '_valid',
+                self.light,
+                relight_on_valid=True)
         else:
             self.machine.events.remove_handler_by_key(
-                    self.unlight_on_resync_key)
+                self.unlight_on_resync_key)
 
     def _ball_ending(self, queue=None):
         # We need to hook the ball_ending event in case the ball ends while the
