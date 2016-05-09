@@ -302,5 +302,6 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         not all down or not all up. This event is posted every time a member
         drop target changes but the overall bank is not not complete.'''
 
-    def remove(self):
+    def device_removed_from_mode(self, mode):
+        # TODO implement this
         pass

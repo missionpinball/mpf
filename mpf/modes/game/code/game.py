@@ -149,8 +149,8 @@ class Game(Mode):
         self.log.info("****************** BALL STARTING ******************")
         self.log.info("**                                               **")
         self.log.info("**    Player: {}    Ball: {}   Score: {}".format(
-                self.player.number, self.player.ball,
-                self.player.score).ljust(49) + '**')
+                      self.player.number, self.player.ball,
+                      self.player.score).ljust(49) + '**')
         self.log.info("**                                               **")
         self.log.info("***************************************************")
         self.log.info("***************************************************")
@@ -186,7 +186,7 @@ class Game(Mode):
         else:
             self.machine.events.post('multi_player_ball_started')
             self.machine.events.post(
-                    'player_{}_ball_started'.format(self.player.number))
+                'player_{}_ball_started'.format(self.player.number))
 
         self.machine.playfield.add_ball(player_controlled=True)
 
@@ -260,7 +260,7 @@ class Game(Mode):
             return
 
         if self.player.extra_balls:
-            self.shoot_again()
+            self.award_extra_ball()
             return
 
         if (self.player.ball ==
@@ -303,77 +303,11 @@ class Game(Mode):
         del kwargs
         self.log.debug("Entering Game.game_ended()")
 
-    def award_extra_ball(self, num=1):
-        """Awards the player an extra ball.
-
-        Args:
-            num: Integer of the  number of extra balls to award. Default is 1.
-
-        TODO: The limit checking is not yet implemented
-        """
-        self.log.debug("Entering Game.award_extra_ball()")
-        self.player.extra_balls += num
-        self.machine.events.post('extra_ball_awarded')
-        # todo add the limit checking
-
-    def shoot_again(self):
+    def award_extra_ball(self):
         """Called when the same player should shoot again."""
-        self.log.debug("Player %s Shoot Again", self.player.index + 1)
-        if self.player.extra_balls > 0:
-            self.player.extra_balls -= 1
+        self.log.debug("Awarded extra ball to Player %s. Shoot Again", self.player.index + 1)
+        self.player.extra_balls -= 1
         self.ball_starting()
-
-    def set_balls_in_play(self, balls):
-        """Sets the number of balls in play to the value passed.
-
-        Args:
-            balls: Int of the new value of balls in play.
-
-        This method does not actually eject any new balls onto the playfield,
-        rather, it just changes the game controller's count of the number of
-        balls in play.
-
-        The balls in play value cannot be lower than 0 or higher than
-        the number of balls known. This message will automatically set the balls
-        in play to the nearest valid value if it's outside of this range.
-
-        If balls in play drops to zero, ``ball_ending()`` will be called.
-
-        """
-
-        self.balls_in_play = balls
-
-    def add_balls_in_play(self, balls=1):
-        """Adds one or more balls to the current balls in play value.
-
-        Args:
-            balls: Int of the balls to add.
-
-        This method does not actually eject any new balls onto the playfield,
-        rather, it just changes the game controller's count of the number of
-        balls in play.
-
-        Note that if the number of balls added exceeds the number of balls
-        known, it will be set to the number of balls known.
-
-        """
-
-        self.balls_in_play += balls
-
-    def remove_balls_in_play(self, balls=1):
-        """Removes one or more balls from the current balls in play value.
-
-        Args:
-            balls: Int of the balls to add.
-
-        Note that if the number of balls removed would take the current balls in
-        play count to less than zero, the number of balls in play will be set to
-        zero.
-
-        If balls in play drops to zero, ``ball_ending()`` will be called.
-
-        """
-        self.balls_in_play -= balls
 
     def request_player_add(self, **kwargs):
         """Called by any module that wants to add a player to an active game.
@@ -422,9 +356,9 @@ class Game(Mode):
             self.num_players = len(self.player_list)
 
             self.machine.create_machine_var(
-                    name='player{}_score'.format(player.number),
-                    value=player.score,
-                    persist=True)
+                name='player{}_score'.format(player.number),
+                value=player.score,
+                persist=True)
 
             return player
 
@@ -456,8 +390,8 @@ class Game(Mode):
                                  number=self.player.number)
 
         self.machine.set_machine_var(
-                name='player{}_score'.format(self.player.number),
-                value=self.player.score)
+            name='player{}_score'.format(self.player.number),
+            value=self.player.score)
 
         if self.player.number < self.num_players:
             self.player = self.player_list[self.player.number]

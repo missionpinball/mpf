@@ -44,6 +44,8 @@ class Mode(object):
 
         self._validate_mode_config()
 
+        self._create_mode_devices()
+
         self.configure_mode_settings(config.get('mode', dict()))
 
         self.auto_stop_on_ball_end = self.config['mode']['stop_on_ball_end']
@@ -174,7 +176,7 @@ class Mode(object):
 
         self.log.info('Mode Starting. Priority: %s', self.priority)
 
-        self._create_mode_devices()
+        self._add_mode_devices()
 
         self.log.debug("Registering mode_stop handlers")
 
@@ -318,6 +320,31 @@ class Mode(object):
         if self.stop_callback:
             self.stop_callback()
 
+    def _add_mode_devices(self):
+        # adds and initializes mode devices which get removed at the end of the mode
+
+        for collection_name, device_class in (
+                iter(self.machine.device_manager.device_classes.items())):
+
+            # check if there is config for the device type
+            if device_class.config_section in self.config:
+
+                for device_name, settings in (
+                        iter(self.config[device_class.config_section].items())):
+
+                    collection = getattr(self.machine, collection_name)
+
+                    # get device
+                    device = collection[device_name]
+
+                    # Track that this device was added via this mode so we
+                    # can remove it when the mode ends.
+                    self.mode_devices.add(device)
+
+                    # This lets the device know it was added to a mode
+                    device.device_added_to_mode(mode=self,
+                                                player=self.player)
+
     def _create_mode_devices(self):
         # Creates new devices that are specified in a mode config that haven't
         # been created in the machine-wide config
@@ -358,23 +385,10 @@ class Mode(object):
                         # config is already validated. just load it
                         device.load_config(settings)
 
-                        # Track that this device was added via this mode so we
-                        # can remove it when the mode ends.
-                        self.mode_devices.add(device)
-
-                        # TODO: postpone this similar to ball_controller
-                        # This lets the device know it was created by a mode
-                        # instead of machine-wide, as some devices want to do
-                        # certain things here. We also pass the player object
-                        # in case this device wants to do something with that
-                        # too.
-                        device.device_added_to_mode(mode=self,
-                                                    player=self.player)
-
     def _remove_mode_devices(self):
 
         for device in self.mode_devices:
-            device.remove()
+            device.device_removed_from_mode(self)
 
         self.mode_devices = set()
 
@@ -405,7 +419,7 @@ class Mode(object):
             device_list.add(device)
 
         for device in device_list:
-            device.control_events_in_mode(self)
+            device.add_control_events_in_mode(self)
 
     def _control_event_handler(self, callback, ms_delay=0, **kwargs):
         del kwargs

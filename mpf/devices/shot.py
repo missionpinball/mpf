@@ -42,6 +42,9 @@ class Shot(ModeDevice, SystemWideDevice):
         # todo is this a hack??
         self.machine.events.add_handler('game_ended', self.disable)
 
+        # todo remove this hack
+        self._created_system_wide = False
+
     @property
     def enabled(self):
         return [x for x in self.profiles if x['enable']]
@@ -59,6 +62,7 @@ class Shot(ModeDevice, SystemWideDevice):
     def device_added_system_wide(self):
         # Called when a device is added system wide
         super().device_added_system_wide()
+        self._created_system_wide = True
 
         self.update_profile(profile=self.config['profile'], enable=False,
                             mode=None)
@@ -324,22 +328,23 @@ class Shot(ModeDevice, SystemWideDevice):
         self.player = None
         self.remove_profile_by_mode(None)
 
-    def control_events_in_mode(self, mode):
+    def add_control_events_in_mode(self, mode):
         enable = not mode.config['shots'][self.name]['enable_events']
         self.update_profile(enable=enable, mode=mode)
 
-    def remove(self):
+    def device_removed_from_mode(self, mode):
         """Remove this shot device. Destroys it and removes it from the shots
         collection.
 
         """
+        del mode
+        if self._created_system_wide:
+            return
 
         self.debug_log("Removing...")
         self.disable()
         self._remove_switch_handlers()
         self._stop_shows()
-
-        del self.machine.shots[self.name]
 
     def hit(self, mode='default#$%', _wf=None, **kwargs):
         """Method which is called to indicate this shot was just hit. This

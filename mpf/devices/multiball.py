@@ -18,7 +18,8 @@ class Multiball(SystemWideDevice, ModeDevice):
         self.enabled = False
         self.shoot_again = False
 
-    def remove(self):
+    def device_removed_from_mode(self, mode):
+        del mode
         # disable mb when mode ends
         self.disable()
 
@@ -53,7 +54,7 @@ class Multiball(SystemWideDevice, ModeDevice):
 
         self.balls_ejected = self.config['ball_count'] - 1
 
-        self.machine.game.add_balls_in_play(balls=self.balls_ejected)
+        self.machine.game.balls_in_play += self.balls_ejected
 
         balls_added = 0
 

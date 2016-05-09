@@ -18,7 +18,8 @@ class BallLock(SystemWideDevice, ModeDevice):
         self.enabled = False
         self.lock_queue = deque()
 
-    def remove(self):
+    def device_removed_from_mode(self, mode):
+        del mode
         self.disable()
 
     def prepare_config(self, config, is_mode_config):

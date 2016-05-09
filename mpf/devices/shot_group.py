@@ -26,6 +26,9 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         self.rotation_enabled = True
         self._enabled = False
 
+        # todo remove this hack
+        self._created_system_wide = False
+
     @property
     def enabled(self):
         return self._enabled
@@ -46,10 +49,12 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         # Called when a device is added system wide
         super().device_added_system_wide()
 
+        self._created_system_wide = True
+
         if 'profile' in self.config:
             for shot in self.config['shots']:
                 shot.update_profile(profile=self.config['profile'],
-                                         mode=None)
+                                    mode=None)
 
     def device_added_to_mode(self, mode, player):
         super().device_added_to_mode(mode, player)
@@ -243,8 +248,8 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
         if not (self._enabled and self.rotation_enabled):
             self.debug_log("Received rotation request. "
-                               "Rotation Enabled: %s. Will NOT rotate",
-                               self.rotation_enabled)
+                           "Rotation Enabled: %s. Will NOT rotate",
+                           self.rotation_enabled)
 
             return
 
@@ -281,14 +286,12 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
         for shot in shot_list:
             try:
-                current_show_step = shot.get_profile_by_key('mode', mode)[
-                    'running_show'].next_step_index
+                current_show_step = shot.get_profile_by_key('mode', mode)['running_show'].next_step_index
             except AttributeError:
                 current_show_step = None
 
             shot_state_list.append(
-                (shot.player[shot.get_profile_by_key('mode',
-                mode)['settings']['player_variable']], current_show_step))
+                (shot.player[shot.get_profile_by_key('mode', mode)['settings']['player_variable']], current_show_step))
 
         if self.debug:
             self.log.debug('Rotating. Mode: %s, Direction: %s, Include states:'
@@ -298,8 +301,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
             for shot in shot_list:
                 shot.log.debug("This shot is part of a rotation event. Current"
-                               " state: %s", shot.get_profile_by_key(
-                    'mode', mode)['current_state_name'])
+                               " state: %s", shot.get_profile_by_key('mode', mode)['current_state_name'])
 
         # figure out which direction we're going to rotate
         if not direction:
@@ -384,7 +386,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
             self.machine.events.post(self.name + '_' + profile + '_' + state +
                                      '_complete')
 
-    def control_events_in_mode(self, mode):
+    def add_control_events_in_mode(self, mode):
         # called if any control_events for this shot_group exist in the mode
         # config, regardless of whether or not the shot_group device was
         # initially created in this mode
@@ -404,7 +406,9 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
                 shot.update_profile(profile=profile, enable=enable, mode=mode)
 
-    def remove(self):
+    def device_removed_from_mode(self, mode):
+        del mode
+        if self._created_system_wide:
+            return
         self.debug_log("Removing this shot group")
         self._enabled = False
-        del self.machine.shot_groups[self.name]

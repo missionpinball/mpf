@@ -8,13 +8,17 @@ class ModeDevice(Device):
         del player
         self._initialize()
 
-    def control_events_in_mode(self, mode):
+    def add_control_events_in_mode(self, mode):
         del mode
         # Called on mode start if this device has any control events in that mode
         # start mb if no enable_events are specified
         if "enable_events" in self.config and not self.config['enable_events']:
             self.enable()
 
-    def remove(self):
+    def remove_control_events_in_mode(self):
+        pass
+
+    def device_removed_from_mode(self, mode):
+        del mode
         raise NotImplementedError(
-            '{} does not have a remove() method'.format(self.name))
+            '{} does not have a device_removed_from_mode() method'.format(self.name))
