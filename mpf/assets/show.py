@@ -26,6 +26,13 @@ class Show(Asset):
     pool_config_section = 'show_pools'
     asset_group_class = ShowPool
 
+    next_id = 0
+
+    @classmethod
+    def get_id(cls):
+        Show.next_id += 1
+        return Show.next_id
+
     # pylint: disable-msg=too-many-arguments
     def __init__(self, machine, name, file=None, config=None, data=None):
         super().__init__(machine, name, file, config)
@@ -357,7 +364,6 @@ class Show(Asset):
             loops = loops
         else:
             loops = 0
-
         return RunningShow(machine=self.machine,
                            show=self,
                            show_steps=self.get_show_steps(),
@@ -398,7 +404,6 @@ class RunningShow(object):
                  hold, speed, start_step, callback, loops,
                  sync_ms, reset, mode, manual_advance, key,
                  show_tokens):
-
         self.machine = machine
         self.show = show
         self.show_steps = show_steps
@@ -408,9 +413,15 @@ class RunningShow(object):
         self.callback = callback
         self.loops = loops
         self.reset = reset
-        self.mode = mode
+        # self.mode = mode
         self.manual_advance = manual_advance
-        self.key = key
+
+        self.name = show.name
+
+        if not key:
+            self.key = '{}.{}'.format(self.name, Show.get_id())
+        else:
+            self.key = key
 
         if show_tokens:
             self.show_tokens = show_tokens
@@ -420,7 +431,6 @@ class RunningShow(object):
         self.debug = False
         self._stopped = False
 
-        self.name = show.name
         self._total_steps = len(show_steps)
 
         if start_step > 0:
@@ -502,7 +512,7 @@ class RunningShow(object):
 
         if not hold:
             for player in ConfigPlayer.show_players.values():
-                player.clear(caller=self, priority=self.priority)
+                player.clear(key=self.key)
 
         if self.callback and callable(self.callback):
             self.callback()
@@ -560,8 +570,7 @@ class RunningShow(object):
 
                 ConfigPlayer.show_players[item_type].show_play_callback(
                     settings=item_dict,
-                    mode=self.mode,
-                    caller=self,
+                    key=self.key,
                     priority=self.priority,
                     hold=self.hold,
                     show_tokens=self.show_tokens)

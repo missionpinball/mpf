@@ -8,10 +8,7 @@ class ShowPlayer(ConfigPlayer):
     show_section = 'shows'
     device_collection = None
 
-    # pylint: disable-msg=too-many-arguments
-    def play(self, settings, mode=None, caller=None, priority=0,
-             play_kwargs=None, show_tokens=None, **kwargs):
-
+    def _play(self, settings, key, priority, play_kwargs, **kwargs):
         # if not play_kwargs:
         #     play_kwargs = kwargs
         # else:
@@ -24,16 +21,22 @@ class ShowPlayer(ConfigPlayer):
 
         settings = deepcopy(settings)
 
-        for show, s in settings.items():
+        show_tokens = kwargs.get('show_tokens', None)
 
+        for show, s in settings.items():
             try:
                 s['priority'] += priority
             except KeyError:
                 s['priority'] = priority
 
+            if not s['key']:
+                s['key'] = key
+
+                # todo need to add this key back to the config player
+
             if s['action'].lower() == 'play':
                 try:
-                    self.machine.shows[show].play(mode=mode,
+                    self.machine.shows[show].play(
                                                   show_tokens=show_tokens,
                                                   priority=s['priority'],
                                                   hold=s['hold'],
@@ -76,8 +79,8 @@ class ShowPlayer(ConfigPlayer):
                     running_show.update(show_tokens=show_tokens,
                                         priority=s['priority'])
 
-    def clear(self, caller, priority):
-        self.machine.show_controller.stop_shows_by_mode(caller)
+    def _clear(self, key):
+        self.machine.show_controller.stop_shows_by_key(key)
 
     def get_express_config(self, value):
         return dict()

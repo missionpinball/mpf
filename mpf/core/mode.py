@@ -255,7 +255,6 @@ class Mode(object):
         put whatever code you want to run when this mode stops in the
         mode_stop method which will be called automatically.
         """
-
         if not self._active:
             return
 

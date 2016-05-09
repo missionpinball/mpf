@@ -78,6 +78,7 @@ class ShowController(object):
             A list of RunningShow() objects.
 
         """
+
         return [x for x in self.running_shows if x.name == name or
                 x.key == name]
 
@@ -94,6 +95,10 @@ class ShowController(object):
 
     def stop_shows_by_mode(self, mode):
         for show in [x for x in self.running_shows if x.mode == mode]:
+            show.stop()
+
+    def stop_shows_by_key(self, key):
+        for show in [x for x in self.running_shows if x.key == key]:
             show.stop()
 
     def unload_show_player_shows(self, removal_tuple):

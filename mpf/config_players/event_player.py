@@ -13,10 +13,7 @@ class EventPlayer(ConfigPlayer):
         super().__init__(machine)
         self.delay = DelayManager(self.machine.delayRegistry)
 
-    # pylint: disable-msg=too-many-arguments
-    def play(self, settings, mode=None, caller=None,
-             priority=0, play_kwargs=None, **kwargs):
-
+    def _play(self, settings, key, priority, play_kwargs, **kwargs):
         if not play_kwargs:
             play_kwargs = kwargs
         else:

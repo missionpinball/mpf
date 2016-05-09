@@ -10,7 +10,7 @@ class RandomEventPlayer(ConfigPlayer):
     device_collection = None
 
     # pylint: disable-msg=too-many-arguments
-    def play(self, settings, mode=None, caller=None, priority=0,
+    def _play(self, settings, mode=None, caller=None, priority=0,
              play_kwargs=None, **kwargs):
 
         if not play_kwargs:

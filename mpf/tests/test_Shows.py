@@ -595,6 +595,16 @@ class TestShows(MpfTestCase):
         self.assertEqual(1, len(self.machine.show_controller.get_running_shows(
             'key2')))
 
+        # make sure the leds and lights are working
+        self.assertEqual(list(RGBColor('darkgreen').rgb),
+                         self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(list(RGBColor('off').rgb),
+                         self.machine.leds.led_02.hw_driver.current_color)
+        self.assertEqual(204,
+            self.machine.lights.light_01.hw_driver.current_brightness)
+        self.assertEqual(120,
+            self.machine.lights.light_02.hw_driver.current_brightness)
+
         # stop shows based on key
         self.machine.events.post('stop_key1')
         self.advance_time_and_run()
@@ -605,6 +615,16 @@ class TestShows(MpfTestCase):
         self.machine.events.post('stop_key2')
         self.advance_time_and_run()
         self.assertFalse(self.machine.show_controller.running_shows)
+
+        # make sure the things in the show actually stopped
+        self.assertEqual(list(RGBColor('off').rgb),
+                         self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(list(RGBColor('off').rgb),
+                         self.machine.leds.led_02.hw_driver.current_color)
+        self.assertEqual(0,
+            self.machine.lights.light_01.hw_driver.current_brightness)
+        self.assertEqual(0,
+            self.machine.lights.light_02.hw_driver.current_brightness)
 
         # stop by show name
         self.machine.events.post('play_with_keys')

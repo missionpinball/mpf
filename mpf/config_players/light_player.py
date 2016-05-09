@@ -7,56 +7,51 @@ class LightPlayer(ConfigPlayer):
     show_section = 'lights'
     machine_collection_name = 'lights'
 
-    # pylint: disable-msg=too-many-arguments
-    def play(self, settings, mode=None, caller=None, priority=0,
-             play_kwargs=None, hold=False, **kwargs):
-
+    def _play(self, settings, key, priority, play_kwargs, **kwargs):
         del kwargs
 
         if 'lights' in settings:
             settings = settings['lights']
 
         for light, s in settings.items():
-
             try:
                 s['priority'] += priority
             except KeyError:
                 s['priority'] = priority
 
-            if caller:
-                s['key'] = caller
-            else:
-                s['key'] = mode
-
             try:
-                light.on(mode=mode, **s)
-                if caller:
-                    self.caller_target_map[caller].add(light)
+                light.on(key=key, **s)
+                try:
+                    self.caller_target_map[key].add(light)
+                except KeyError:
+                    self.caller_target_map[key] = set()
+                    self.caller_target_map[key].add(light)
 
             except AttributeError:
                 try:
-                    self._light_on(light, mode=mode, **s)
+                    self._light_on(light, key=key, **s)
                 except KeyError:
                     light_list = Util.string_to_list(light)
                     if len(light_list) > 1:
                         for light1 in light_list:
-                            self._light_on(light1, mode=mode, **s)
+                            self._light_on(light1, key=key, **s)
                     else:
                         for light1 in self.machine.lights.sitems_tagged(light):
-                            self._light_on(light1, mode=mode, **s)
+                            self._light_on(light1, key=key, **s)
 
-    def _light_on(self, light_name, key=None, mode=None, **s):
-        self.machine.lights[light_name].on(key=key, mode=mode, **s)
-        if key:
-            self.caller_target_map[key].add(
-                self.machine.lights[light_name])
-
-    def clear(self, caller, priority):
-        del priority
-
+    def _light_on(self, light_name, key=None, **s):
+        light = self.machine.lights[light_name]
+        light.on(key=key, **s)
         try:
-            for light in self.caller_target_map[caller]:
-                light.remove_from_stack_by_key(caller)
+            self.caller_target_map[key].add(light)
+        except KeyError:
+            self.caller_target_map[key] = set()
+            self.caller_target_map[key].add(light)
+
+    def _clear(self, key):
+        try:
+            for light in self.caller_target_map[key]:
+                light.remove_from_stack_by_key(key)
         except KeyError:
             pass
 
