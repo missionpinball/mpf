@@ -409,6 +409,8 @@ high_score:
     shift_left_tag: single|str|left_flipper
     shift_right_tag: single|str|right_flipper
     select_tag: single|str|start
+info_lights:
+    __valid_in__: machine                            # todo add to validator
 image_pools:
     __valid_in__: machine, mode                      # todo add to validator
 images:
