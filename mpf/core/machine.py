@@ -549,8 +549,6 @@ class MachineController(object):
 
         self.default_platform.timer_initialize()
 
-        self.loop_start_time = self.clock.get_time()
-
         self._run_loop()
 
     def stop(self):
@@ -570,6 +568,9 @@ class MachineController(object):
     def _run_loop(self):
         # Main machine run loop with when the default platform interface
         # specifies the MPF should control the main timer
+
+        self.loop_start_time = self.clock.get_time()
+
         try:
             while not self.done:
                 self.process_frame()
@@ -610,30 +611,6 @@ class MachineController(object):
         self.log.info("Actual MPF loop rate: %s Hz",
                       round(self.clock.get_fps(), 2))
 
-    # def _loading_tick(self, dt):
-    #     if not self.asset_loader_complete:
-    #
-    #         if AssetManager.loader_queue.qsize():
-    #             self.log.debug("Holding Attract start while MPF assets load. "
-    #                            "Remaining: %s",
-    #                            AssetManager.loader_queue.qsize())
-    #             self.bcp.bcp_trigger('assets_to_load',
-    #                  total=AssetManager.total_assets,
-    #                  remaining=AssetManager.loader_queue.qsize())
-    #         else:
-    #             self.bcp.bcp_trigger('assets_to_load',
-    #                  total=AssetManager.total_assets,
-    #                  remaining=0)
-    #             self.asset_loader_complete = True
-    #
-    #     elif self.bcp.active_connections and not self.flag_bcp_reset_complete:
-    #         if self.tick_num % Timing.HZ == 0:
-    #             self.log.info("Waiting for BCP reset_complete...")
-    #
-    #     else:
-    #         self.log.debug("Asset loading complete")
-    #         self._reset_complete()
-
     def bcp_reset_complete(self):
         self.flag_bcp_reset_complete = True
 
@@ -645,7 +622,6 @@ class MachineController(object):
         desc: The machine reset process is complete
 
         '''
-        # self.clock.unschedule(self._loading_tick)
 
     def configure_debugger(self):
         pass
