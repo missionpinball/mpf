@@ -217,7 +217,8 @@ class MpfTestCase(unittest.TestCase):
             self.machine.default_platform.timer_initialize()
             self.machine.loop_start_time = self.machine.clock.get_time()
 
-            while not self.machine.test_init_complete:
+            start = time.time()
+            while not self.machine.test_init_complete and time.time() < start + 20:
                 self.advance_time_and_run(0.01)
 
             self.advance_time_and_run(1)
@@ -230,6 +231,8 @@ class MpfTestCase(unittest.TestCase):
             except AttributeError:
                 pass
             raise e
+
+        self.assertFalse(self.machine.done, "Machine crashed during start")
 
     def _mock_event_handler(self, event_name, **kwargs):
         del kwargs
