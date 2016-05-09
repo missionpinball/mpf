@@ -78,7 +78,10 @@ class ConfigPlayer(object):
             # settings here is the same as a show entry, so we process with
             # that
             if not isinstance(settings, dict):
-                settings = {settings: dict()}
+                if isinstance(settings, str):
+                    settings = {settings: dict()}
+                else:
+                    raise AssertionError("Invalid settings for player {}".format(self.show_section))
 
             # settings here are dicts of devices/settings
             for device, device_settings in settings.items():
