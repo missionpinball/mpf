@@ -206,9 +206,6 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
         self._connect_to_hardware()
 
-        if 'config_number_format' not in self.machine.config['opp']:
-            self.machine.config['opp']['config_number_format'] = 'int'
-
     def __repr__(self):
         return '<Platform.OPP>'
 

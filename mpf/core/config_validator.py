@@ -540,7 +540,6 @@ opp:
     __valid_in__: machine
     ports: list|str|
     baud: single|int|115200
-    config_number_format: single|str|hex
     debug: single|bool|False
 osc:
     __valid_in__: machine

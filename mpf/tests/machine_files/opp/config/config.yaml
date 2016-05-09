@@ -7,7 +7,6 @@ hardware:
 opp:
     ports: com1
     baud: 115200
-    config_number_format: hex
     debug: True
 
 switches:
