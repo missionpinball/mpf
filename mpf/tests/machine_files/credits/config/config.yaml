@@ -1,0 +1,49 @@
+#config_version=4
+
+modes:
+    - credits
+
+machine:
+    min_balls: 0
+
+switches:
+    s_left_coin:
+        number:
+    s_center_coin:
+        number:
+    s_right_coin:
+        number:
+    s_esc:
+        number:
+    s_start:
+        number:
+        tags: start
+
+coils:
+    c_eject:
+        number:
+
+credits:
+  max_credits: 12
+  free_play: no
+  service_credits_switch: s_esc
+  switches:
+    - switch: s_left_coin
+      type: money
+      value: .25
+    - switch: s_center_coin
+      type: money
+      value: .25
+    - switch: s_right_coin
+      type: money
+      value: 1
+  pricing_tiers:
+    - price: .50
+      credits: 1
+    - price: 2
+      credits: 5
+  fractional_credit_expiration_time: 15m
+  credit_expiration_time: 2h
+  persist_credits_while_off_time: 1h
+  free_play_string: FREE PLAY
+  credits_string: CREDITS
