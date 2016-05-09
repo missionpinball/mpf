@@ -154,8 +154,6 @@ bcp:
     connections:
         host: single|str|None
         port: single|int|5050
-        connection_attempts: single|int|-1
-        require_connection: single|bool|False
 bcp_player:                                          # todo
     __valid_in__: machine
     __allow_others__:

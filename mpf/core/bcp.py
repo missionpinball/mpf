@@ -920,7 +920,6 @@ class BCPClientSocket(object):
         self.receive_thread = None
         self.sending_thread = None
         self.socket = None
-        self.connection_attempts = 0
         self.attempt_socket_connection = True
         self._send_goodbye = True
 
@@ -932,41 +931,28 @@ class BCPClientSocket(object):
     def setup_client_socket(self):
         """Sets up the client socket."""
 
-        self.connection_attempts += 1
-        if (self.config['connection_attempts'] == -1 or
-                self.connection_attempts < self.config['connection_attempts']):
+        self.log.info("Waiting for BCP Media Controller at %s:%s...",
+                      self.config['host'], self.config['port'])
 
-            self.log.debug("Attempting socket connection. Attempt: %s, Max: %s",
-                           self.connection_attempts,
-                           self.config['connection_attempts'])
+        self.socket = socket.socket()
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-            self.socket = socket.socket()
-            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        connected = False
 
+        while not connected:
             try:
                 self.socket.connect((self.config['host'], self.config['port']))
                 self.log.info("Connected to remote BCP host %s:%s",
                               self.config['host'], self.config['port'])
 
                 BCP.active_connections += 1
-                self.connection_attempts = 0
+                connected = True
 
-            except socket.error as v:
-                self.socket = None
-                self.log.warning("Failed to connect to remote BCP host %s:%s. "
-                                 "Error: %s", self.config['host'],
-                                 self.config['port'], v)
-                if self.config['require_connection']:
-                    self.log.critical("BCP connection 'require_connection' "
-                                      "setting is True. Unable to continue.")
-                    self.machine.done = True
+            except socket.error:
+                pass
 
-            if self.create_socket_threads():
-                self.send_hello()
-
-        else:
-            self.attempt_socket_connection = False
-            self.log.debug("Max socket connection attempts reached. Giving up")
+        if self.create_socket_threads():
+            self.send_hello()
 
     def create_socket_threads(self):
         """Creates and starts the sending and receiving threads for the BCP
@@ -1090,7 +1076,12 @@ class BCPClientSocket(object):
             The data in raw string format.
 
         """
-        return self.socket.recv(num_bytes)
+        try:
+            return self.socket.recv(num_bytes)
+        except socket.error:
+            self.log.info("Media Controller disconnected. Shutting down...")
+            self.socket.close()
+            self.machine.done = True
 
     def sending_loop(self):
         """Sending loop which transmits data from the sending queue to the
@@ -1126,9 +1117,8 @@ class BCPClientSocket(object):
         self.stop()
         self.machine.bcp.remove_bcp_connection(self)
 
-        if self.config['require_connection']:
-            self.machine.bcp.shutdown()
-            self.machine.done = True
+        self.machine.bcp.shutdown()
+        self.machine.done = True
 
     def send_hello(self):
         """Sends BCP 'hello' command."""
