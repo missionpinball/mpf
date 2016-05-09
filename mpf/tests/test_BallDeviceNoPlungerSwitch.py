@@ -1,6 +1,6 @@
 
 from mpf.tests.MpfTestCase import MpfTestCase
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 
 class TestBallDeviceNoPlungerSwitch(MpfTestCase):
@@ -51,4 +51,3 @@ class TestBallDeviceNoPlungerSwitch(MpfTestCase):
 
         self.assertEqual(self.machine.ball_devices.trough.balls, 1)
         self.assertEqual(self.machine.ball_devices.playfield.balls, 0)
-

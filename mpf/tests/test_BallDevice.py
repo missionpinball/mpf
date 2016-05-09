@@ -1,5 +1,5 @@
 from mpf.tests.MpfTestCase import MpfTestCase
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 
 class TestBallDevice(MpfTestCase):
@@ -1663,7 +1663,7 @@ class TestBallDevice(MpfTestCase):
         # no more balls on pf
         self.assertEqual(0, playfield.balls)
         # eject is not failed yet
-        #self.assertEqual(0, playfield.available_balls)
+        # self.assertEqual(0, playfield.available_balls)
 
         self.advance_time_and_run(30)
 

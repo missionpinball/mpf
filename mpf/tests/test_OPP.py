@@ -2,7 +2,7 @@ import copy
 import time
 from queue import Queue
 from mpf.tests.MpfTestCase import MpfTestCase
-from mock import MagicMock
+from unittest.mock import MagicMock
 from mpf.platforms import opp
 
 

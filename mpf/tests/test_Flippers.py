@@ -1,11 +1,8 @@
-import unittest
-
-from mpf.core.machine import MachineController
 from mpf.tests.MpfTestCase import MpfTestCase
-from mock import MagicMock, call
-import time
+from unittest.mock import MagicMock, call
 
-class TestTilt(MpfTestCase):
+
+class TestFlippers(MpfTestCase):
 
     def getConfigFile(self):
         return 'config.yaml'

@@ -1,5 +1,6 @@
 from mpf.tests.MpfTestCase import MpfTestCase
-from mock import MagicMock
+from unittest.mock import MagicMock
+
 
 class TestBallDeviceAutoManualPlunger(MpfTestCase):
 

@@ -1,5 +1,5 @@
 from mpf.tests.MpfTestCase import MpfTestCase
-from mock import MagicMock, call
+from unittest.mock import MagicMock, call
 from mpf.platforms import p_roc_common, p_roc
 
 
@@ -78,14 +78,14 @@ class TestPRoc(MpfTestCase):
         self.machine.coils.c_test_allow_enable.enable()
         number = self.machine.coils.c_test_allow_enable.hw_driver.number
         self.machine.coils.c_test.hw_driver.proc.driver_schedule.assert_called_with(
-                number=number, cycle_seconds=0, now=True, schedule=0xffffffff)
+            number=number, cycle_seconds=0, now=True, schedule=0xffffffff)
 
     def test_hw_rule_pulse(self):
         self.machine.autofires.ac_slingshot_test.enable()
         self.machine.coils.c_slingshot_test.platform.proc.switch_update_rule.assert_any_call(
-                40, 'closed_nondebounced',
-                {'notifyHost': False, 'reloadActive': True},
-                ["driver_state_pulse"], False)
+            40, 'closed_nondebounced',
+            {'notifyHost': False, 'reloadActive': True},
+            ["driver_state_pulse"], False)
 
     def test_initial_switches(self):
         self.assertFalse(self.machine.switch_controller.is_active("s_test"))
@@ -130,8 +130,7 @@ class TestPRoc(MpfTestCase):
         # test configure
         self.machine.default_platform.configure_dmd()
 
-        self.pinproc.dmd_update_config.assert_called_with(high_cycles=[1, 2, 3,
-                                                                    4])
+        self.pinproc.dmd_update_config.assert_called_with(high_cycles=[1, 2, 3, 4])
 
         # test set frame to buffer
         frame = bytearray()

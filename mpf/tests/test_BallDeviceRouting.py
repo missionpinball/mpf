@@ -1,9 +1,5 @@
-import unittest
-
-from mpf.core.machine import MachineController
 from mpf.tests.MpfTestCase import MpfTestCase
-from mock import MagicMock
-import time
+from unittest.mock import MagicMock
 
 
 class TestBallDeviceRouting(MpfTestCase):
@@ -22,19 +18,16 @@ class TestBallDeviceRouting(MpfTestCase):
         self._missing += 1
 
     def _captured_from_pf(self, balls, **kwargs):
+        del kwargs
         self._captured += balls
 
     def test_routing_to_pf_on_capture(self):
-        c_trough1 = self.machine.coils['c_trough1']
-        c_trough2 = self.machine.coils['c_trough2']
-        c_target1 = self.machine.coils['c_target1']
         c_launcher = self.machine.coils['c_launcher']
         c_launcher.pulse = MagicMock()
         trough1 = self.machine.ball_devices['test_trough1']
         trough2 = self.machine.ball_devices['test_trough2']
         launcher = self.machine.ball_devices['test_launcher']
         target1 = self.machine.ball_devices['test_target1']
-        playfield = self.machine.ball_devices['playfield']
 
         self.machine.events.add_handler('balldevice_1_ball_missing',
                                         self._missing_ball)
