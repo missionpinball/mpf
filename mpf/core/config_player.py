@@ -1,5 +1,7 @@
 """Base class used for things that "play" from the config files, such as
 WidgetPlayer, SlidePlayer, etc."""
+from copy import deepcopy
+
 from mpf.core.device import Device
 
 
@@ -22,8 +24,9 @@ class ConfigPlayer(object):
         ConfigPlayer.config_file_players[self.config_file_section] = self
 
         self.machine.events.add_handler('init_phase_1', self._initialize)
+        self.machine.events.add_handler('clear', self.clear)
 
-        self.mode_keys = dict()
+        self.mode_event_keys = dict()
 
     def __repr__(self):
         return 'ConfigPlayer.{}'.format(self.show_section)
@@ -158,7 +161,7 @@ class ConfigPlayer(object):
         fade: 500
 
         Since every config_player is different, this method raises a
-        NotImplementedError and most be configured in the chiild class.
+        NotImplementedError and most be configured in the child class.
 
         Args:
             value: The single line string value from a config file.
@@ -177,15 +180,13 @@ class ConfigPlayer(object):
     def mode_start(self, config, priority, mode):
         event_keys = self.register_player_events(config, mode, priority)
 
-        self.mode_keys[mode] = event_keys
+        self.mode_event_keys[mode] = event_keys
 
         return self.mode_stop, mode
 
     def mode_stop(self, mode):
-        event_keys = self.mode_keys.pop(mode, list())
-
-        self.unload_player_events(event_keys)
-        self.clear(mode, mode.priority)
+        self.unload_player_events(self.mode_event_keys.pop(mode, list()))
+        self.clear(mode.name)
 
     def register_player_events(self, config, mode=None, priority=0):
         # config is localized
@@ -208,53 +209,33 @@ class ConfigPlayer(object):
     def additional_processing(self, config):
         return config
 
-    def config_play_callback(self, settings, priority=0, mode=None,
-                             hold=None, **kwargs):
+    def config_play_callback(self, settings, priority=0, mode=None, **kwargs):
         # called when a config_player event is posted
-
-        # calculate the base priority, which is a combination of the mode
-        # priority and any priority value
-
         if mode:
-
             if not mode.active:
                 # It's possible that an earlier event could have stopped the
                 # mode before this event was handled, so just double-check to
                 # make sure the mode is still active before proceeding.
                 return
 
-            if mode not in self.caller_target_map:
-                self.caller_target_map[mode] = set()
-                # todo call clear() on mode stop
-
+            # calculate the base priority, which is a combination of the mode
+            # priority and any priority value
             priority += mode.priority
+            key = mode.name
+        else:
+            key = None
 
-        # todo detect whether this has a single parent key
+        self.play(settings=settings, key=key, priority=priority, **kwargs)
 
-        # todo play_kwargs
-
-        self.play(settings=settings, mode=mode, caller=mode,
-                  priority=priority, hold=hold, **kwargs)
-
-    # pylint: disable-msg=too-many-arguments
-    def show_play_callback(self, settings, mode, caller, priority,
-                           hold, show_tokens):
+    def show_play_callback(self, settings, key, priority, show_tokens):
         # called from a show step
+        self.play(settings=settings, key=key, priority=priority,
+                  show_tokens=show_tokens)
 
-        # todo add caller processing? Or stop_key?
-        if caller and caller not in self.caller_target_map:
-            self.caller_target_map[caller] = set()
-
-        self.play(settings=settings, mode=mode, caller=caller,
-                  priority=priority, show_tokens=show_tokens, hold=hold)
-
-    # pylint: disable-msg=too-many-arguments
-    def play(self, settings, mode=None, caller=None, priority=None,
-             hold=None, play_kwargs=None, **kwargs):
-
+    def play(self, settings, key=None, priority=0, **kwargs):
         raise NotImplementedError
 
-    def clear(self, caller, priority):
+    def clear(self, key):
         pass
 
     def expand_device_list(self, device):

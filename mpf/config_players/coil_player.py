@@ -5,9 +5,7 @@ class CoilPlayer(ConfigPlayer):
     config_file_section = 'coil_player'
     show_section = 'coils'
 
-    # pylint: disable-msg=too-many-arguments
-    def play(self, settings, mode=None, caller=None,
-             priority=0, play_kwargs=None, **kwargs):
+    def play(self, settings, key=None, priority=0, **kwargs):
         del kwargs
 
         if 'coils' in settings:

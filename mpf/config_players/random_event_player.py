@@ -9,19 +9,18 @@ class RandomEventPlayer(ConfigPlayer):
     show_section = 'random_events'
     device_collection = None
 
-    # pylint: disable-msg=too-many-arguments
-    def play(self, settings, mode=None, caller=None, priority=0,
-             play_kwargs=None, **kwargs):
+    def play(self, settings, key=None, priority=0, **kwargs):
 
-        if not play_kwargs:
-            play_kwargs = kwargs
-        else:
-            play_kwargs.update(kwargs)
+
+        # if not play_kwargs:
+        #     play_kwargs = kwargs
+        # else:
+        #     play_kwargs.update(kwargs)
 
         these_settings = copy.deepcopy(settings)
-        these_settings.update(play_kwargs)
+        # these_settings.update(play_kwargs)
         event_list = these_settings.pop('event_list')
-        self.machine.events.post(random.choice(event_list), **play_kwargs)
+        self.machine.events.post(random.choice(event_list), **kwargs)
 
     def get_express_config(self, value):
         return dict(event_list=Util.string_to_list(value))

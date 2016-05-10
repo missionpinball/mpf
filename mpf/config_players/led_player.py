@@ -8,57 +8,52 @@ class LedPlayer(ConfigPlayer):
     show_section = 'leds'
     machine_collection_name = "leds"
 
-    # pylint: disable-msg=too-many-arguments
-    def play(self, settings, mode=None, caller=None, priority=0,
-             play_kwargs=None, hold=False, **kwargs):
+    def play(self, settings, key=None, priority=0, **kwargs):
 
         del kwargs
-
         if 'leds' in settings:
             settings = settings['leds']
 
         for led, s in settings.items():
             s['color'] = RGBColor(s['color'])
-
             try:
                 s['priority'] += priority
             except KeyError:
                 s['priority'] = priority
 
-            if caller:
-                s['key'] = caller
-            else:
-                s['key'] = mode
-
             try:
-                led.color(mode=mode, **s)
-                if caller:
-                    self.caller_target_map[caller].add(led)
+                led.color(key=key, **s)
+                try:
+                    self.caller_target_map[key].add(led)
+                except KeyError:
+                    self.caller_target_map[key] = set()
+                    self.caller_target_map[key].add(led)
 
             except AttributeError:
                 try:
-                    self._led_color(led, mode=mode, **s)
+                    self._led_color(led, key=key, **s)
                 except KeyError:
                     led_list = Util.string_to_list(led)
                     if len(led_list) > 1:
                         for led1 in led_list:
-                            self._led_color(led1, mode=mode, **s)
+                            self._led_color(led1, key=key, **s)
                     else:
                         for led1 in self.machine.leds.sitems_tagged(led):
-                            self._led_color(led1, mode=mode, **s)
+                            self._led_color(led1, key=key, **s)
 
-    def _led_color(self, led_name, key=None, mode=None, **s):
-        self.machine.leds[led_name].color(key=key, mode=mode, **s)
-        if key:
-            self.caller_target_map[key].add(
-                self.machine.leds[led_name])
-
-    def clear(self, caller, priority):
-        del priority
-
+    def _led_color(self, led_name, key=None, **s):
+        led = self.machine.leds[led_name]
+        led.color(key=key, **s)
         try:
-            for led in self.caller_target_map[caller]:
-                led.remove_from_stack_by_key(caller)
+            self.caller_target_map[key].add(led)
+        except KeyError:
+            self.caller_target_map[key] = set()
+            self.caller_target_map[key].add(led)
+
+    def clear(self, key):
+        try:
+            for led in self.caller_target_map[key]:
+                led.remove_from_stack_by_key(key)
         except KeyError:
             pass
 

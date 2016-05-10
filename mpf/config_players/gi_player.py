@@ -5,10 +5,7 @@ class GiPlayer(ConfigPlayer):
     config_file_section = 'gi_player'
     show_section = 'gis'
 
-    # pylint: disable-msg=too-many-arguments
-    def play(self, settings, mode=None, caller=None, priority=0,
-             play_kwargs=None, **kwargs):
-
+    def play(self, settings, key=None, priority=0, **kwargs):
         del kwargs
 
         if 'gis' in settings:

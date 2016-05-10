@@ -322,4 +322,4 @@ class MpfTestCase(unittest.TestCase):
                 new_dict)
         else:
             mpf.core.config_validator.mpf_config_spec += '\n' + yaml.dump(
-                dict(key=new_dict), default_flow_style=False)
+                {key: new_dict}, default_flow_style=False)

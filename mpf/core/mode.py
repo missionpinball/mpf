@@ -255,7 +255,6 @@ class Mode(object):
         put whatever code you want to run when this mode stops in the
         mode_stop method which will be called automatically.
         """
-
         if not self._active:
             return
 
@@ -298,7 +297,16 @@ class Mode(object):
         desc: Posted when a mode has stopped. The "mode_name" part is replaced
         with the actual name of the mode, so the actual event posted is
         something like *mode_attract_stopped*, *mode_base_stopped*, etc.
+        '''
 
+        self.machine.events.post('clear', key=self.name)
+        '''event: clear
+
+        args:
+            key: string name of the configs to clear
+
+        desc: Posted to cause config players to clear whatever they're running
+            based on the key passed. Typically posted when a show or mode ends.
         '''
 
         if self._mode_start_wait_queue:

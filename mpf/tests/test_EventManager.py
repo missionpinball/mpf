@@ -585,10 +585,10 @@ class TestEventManager(MpfTestCase):
         self.assertEqual(tuple(), self._handler1_args)
         self.assertEqual(dict(test="123"), self._handler1_kwargs)
         self.assertEqual(tuple(), self._handler2_args)
-        self.assertEqual(dict(hold=None, test="123", priority=0),
+        self.assertEqual(dict(test="123", priority=0),
                          self._handler2_kwargs)
         self.assertEqual(tuple(), self._handler3_args)
-        self.assertEqual(dict(hold=None, test="123", priority=0),
+        self.assertEqual(dict(test="123", priority=0),
                          self._handler3_kwargs)
 
     def test_event_player_delay(self):
@@ -617,7 +617,7 @@ class TestEventManager(MpfTestCase):
         self.assertEqual(tuple(), self._handler1_args)
         self.assertEqual(dict(test="123"), self._handler1_kwargs)
         self.assertEqual(tuple(), self._handler2_args)
-        self.assertEqual(dict(hold=None, test="123"), self._handler2_kwargs)
+        self.assertEqual(dict(test="123"), self._handler2_kwargs)
 
         with patch('random.choice', return_value="test_random_event_player3") as mock_random:
             self.machine.events.post('test_random_event_player1', test="123")
@@ -630,7 +630,7 @@ class TestEventManager(MpfTestCase):
         self.assertEqual(tuple(), self._handler1_args)
         self.assertEqual(dict(test="123"), self._handler1_kwargs)
         self.assertEqual(tuple(), self._handler3_args)
-        self.assertEqual(dict(hold=None, test="123"), self._handler3_kwargs)
+        self.assertEqual(dict(test="123"), self._handler3_kwargs)
 
     def test_event_player_in_mode(self):
         self.machine.events.add_handler('test_event_player_mode1', self.event_handler1)
