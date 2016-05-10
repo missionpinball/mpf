@@ -1,8 +1,7 @@
 from collections import OrderedDict
 
-from mock import MagicMock
+from unittest.mock import MagicMock
 from mpf.tests.MpfTestCase import MpfTestCase
-from mpf.core.data_manager import DataManager
 
 
 class TestHighScoreMode(MpfTestCase):
@@ -11,10 +10,6 @@ class TestHighScoreMode(MpfTestCase):
         super().__init__(methodName)
         # remove config patch which disables bcp
         del self.machine_config_patches['bcp']
-
-        # path DataManager so it doesn't actually write anything to disk
-        DataManager._make_sure_path_exists = MagicMock()
-        DataManager.save_all = MagicMock()
 
     def getConfigFile(self):
         return 'high_score.yaml'

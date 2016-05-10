@@ -1,8 +1,6 @@
-from mock import MagicMock
-from mpf.devices.switch import Switch
-from mpf.core.device_manager import DeviceCollection
-
+from unittest.mock import MagicMock
 from mpf.tests.MpfTestCase import MpfTestCase
+
 
 class TestMpfTestCase(MpfTestCase):
 
@@ -30,8 +28,7 @@ class TestMpfTestCase(MpfTestCase):
         # test the timed switch event
         self.assertIn('switch1', self.machine.switches)
         self.switch_callback = MagicMock()
-        self.machine.switch_controller.add_switch_handler('switch1',
-                                               self.switch_callback, ms=1000)
+        self.machine.switch_controller.add_switch_handler('switch1', self.switch_callback, ms=1000)
 
         self.machine.switch_controller.process_switch('switch1')
         self.advance_time_and_run(.5)
@@ -46,25 +43,23 @@ class TestMpfTestCase(MpfTestCase):
 
         self.machine.default_platform.delay.add(ms=500,
                                                 callback=self._callback,
-                                                id='d1')
+                                                _id='d1')
         self.machine.default_platform.delay.add(ms=1500,
                                                 callback=self._callback,
-                                                id='d2')
+                                                _id='d2')
         self.machine.default_platform.delay.add(ms=2500,
                                                 callback=self._callback,
-                                                id='d3')
+                                                _id='d3')
 
-        self.machine.switch_controller.add_switch_handler('switch1',
-            self._callback, ms=1000, callback_kwargs={'id': 's1'})
-        self.machine.switch_controller.add_switch_handler('switch1',
-            self._callback, ms=2000, callback_kwargs={'id': 's2'})
-        self.machine.switch_controller.add_switch_handler('switch1',
-            self._callback, ms=3000, callback_kwargs={'id': 's3'})
+        self.machine.switch_controller.add_switch_handler(
+            'switch1', self._callback, ms=1000, callback_kwargs={'_id': 's1'})
+        self.machine.switch_controller.add_switch_handler(
+            'switch1', self._callback, ms=2000, callback_kwargs={'_id': 's2'})
+        self.machine.switch_controller.add_switch_handler(
+            'switch1', self._callback, ms=3000, callback_kwargs={'_id': 's3'})
 
         self.machine.switch_controller.process_switch('switch1')
         self.advance_time_and_run(10)
-
-        #print(self.id_list)
 
         # make sure the callback was called in the right order
         self.assertEqual(self.id_list[0][0], 'd1')
@@ -86,6 +81,6 @@ class TestMpfTestCase(MpfTestCase):
         self.assertAlmostEqual(self.id_list[5][1] - self.id_list[4][1], .5,
                                delta=0.01)
 
-    def _callback(self, id):
+    def _callback(self, _id):
         # print(self.id_list)
-        self.id_list.append((id, self.machine.clock.get_time()))
+        self.id_list.append((_id, self.machine.clock.get_time()))

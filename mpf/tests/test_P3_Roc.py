@@ -1,6 +1,6 @@
 from mpf.core.rgb_color import RGBColor
 from mpf.tests.MpfTestCase import MpfTestCase
-from mock import MagicMock, call
+from unittest.mock import MagicMock, call
 from mpf.platforms import p_roc_common
 
 

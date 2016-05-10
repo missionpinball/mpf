@@ -1,4 +1,4 @@
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 from mpf.core.rgb_color import RGBColor
 from mpf.tests.MpfTestCase import MpfTestCase
@@ -91,7 +91,7 @@ class TestShots(MpfTestCase):
         self.shot_1_default_hit.assert_called_once_with(profile='default',
                                                         state='unlit')
         self.shot_1_default_unlit_hit.assert_called_once_with(
-                profile='default', state='unlit')
+            profile='default', state='unlit')
 
         # hit the mode shot and make sure it doesn't fire
         self.hit_and_release_switch('switch_3')
@@ -215,7 +215,7 @@ class TestShots(MpfTestCase):
 
         # unlit and two states in the beginning
         self.assertEqual(2, len(self.machine.shots.shot_1.get_profile_by_key('mode', None)[
-                                    'settings']['states']))
+                                'settings']['states']))
         self.assertEqual("unlit", self.machine.shots.shot_1.get_profile_by_key('mode', None)[
             'current_state_name'])
 
@@ -235,7 +235,7 @@ class TestShots(MpfTestCase):
         self.start_game()
 
         self.assertEqual(3, len(self.machine.shots.shot_2.get_profile_by_key('mode', None)[
-                                    'settings']['states']))
+                                'settings']['states']))
 
         self.assertEqual("one", self.machine.shots.shot_2.get_profile_by_key('mode', None)[
             'current_state_name'])
@@ -266,27 +266,21 @@ class TestShots(MpfTestCase):
 
     def test_default_show_light(self):
         self.start_game()
-        self.assertEqual(0,
-            self.machine.lights.light_1.hw_driver.current_brightness)
+        self.assertEqual(0, self.machine.lights.light_1.hw_driver.current_brightness)
 
         self.hit_and_release_switch("switch_5")
         self.advance_time_and_run()
-        self.assertEqual(255,
-            self.machine.lights.light_1.hw_driver.current_brightness)
+        self.assertEqual(255, self.machine.lights.light_1.hw_driver.current_brightness)
 
     def test_default_show_lights(self):
         self.start_game()
-        self.assertEqual(0,
-            self.machine.lights.light_1.hw_driver.current_brightness)
-        self.assertEqual(0,
-            self.machine.lights.light_2.hw_driver.current_brightness)
+        self.assertEqual(0, self.machine.lights.light_1.hw_driver.current_brightness)
+        self.assertEqual(0, self.machine.lights.light_2.hw_driver.current_brightness)
 
         self.hit_and_release_switch("switch_6")
         self.advance_time_and_run()
-        self.assertEqual(255,
-            self.machine.lights.light_1.hw_driver.current_brightness)
-        self.assertEqual(255,
-            self.machine.lights.light_2.hw_driver.current_brightness)
+        self.assertEqual(255, self.machine.lights.light_1.hw_driver.current_brightness)
+        self.assertEqual(255, self.machine.lights.light_2.hw_driver.current_brightness)
 
     def test_default_show_led(self):
         self.start_game()
@@ -625,12 +619,10 @@ class TestShots(MpfTestCase):
         self.assertEqual(1, self._events["mode1_shot_17_hit"])
         self.assertEqual(shot17.profiles[0]['current_state_name'], 'lit')
 
-
         # test reset event
         self.machine.events.post('custom_reset_17')
         self.advance_time_and_run()
         self.assertEqual(shot17.profiles[0]['current_state_name'], 'unlit')
-
 
         # test disable event
         self.machine.events.post('custom_disable_17')
@@ -868,7 +860,6 @@ class TestShots(MpfTestCase):
 
     def test_show_in_higher_profile(self):
         self.start_game()
-        shot23 = self.machine.shots.shot_23
 
         # make sure show is running from base config
         self.assertEqual(list(RGBColor('orange').rgb),

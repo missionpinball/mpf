@@ -1,5 +1,5 @@
 from mpf.tests.MpfTestCase import MpfTestCase
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 
 class TestBallDeviceJamSwitch(MpfTestCase):
@@ -648,4 +648,3 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.assertEqual(self.machine.ball_devices.playfield.balls, 1)
         self.assertEqual(4, self.machine.ball_controller.num_balls_known)
         self.assertEqual(0, self._captured)
-

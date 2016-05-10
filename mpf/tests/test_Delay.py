@@ -1,5 +1,5 @@
 from mpf.tests.MpfTestCase import MpfTestCase
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 
 class TestDelay(MpfTestCase):
@@ -44,5 +44,3 @@ class TestDelay(MpfTestCase):
         # Advance another 0.5 sec (callback should not be called since it was cancelled)
         self.advance_time_and_run(0.5)
         self.callback.assert_not_called()
-
-

@@ -1,5 +1,5 @@
 from mpf.tests.MpfTestCase import MpfTestCase
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 
 class TestCoilPlayer(MpfTestCase):
@@ -70,7 +70,6 @@ class TestCoilPlayer(MpfTestCase):
         coil = self.machine.coils['coil_1']
         coil.enable = MagicMock()
         coil.pulse = MagicMock()
-
 
         self.machine.events.post('event4')
         self.advance_time_and_run()

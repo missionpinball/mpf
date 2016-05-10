@@ -6,12 +6,13 @@ import sys
 import time
 import unittest
 
-from mock import *
+from unittest.mock import *
 
 import ruamel.yaml as yaml
 
 import mpf.core
 import mpf.core.config_validator
+from mpf.core.data_manager import DataManager
 from mpf.core.machine import MachineController
 from mpf.core.utility_functions import Util
 from mpf.file_interfaces.yaml_interface import YamlInterface
@@ -52,7 +53,7 @@ class MpfTestCase(unittest.TestCase):
         self.machine_config_patches['mpf']['plugins'] = list()
         self.machine_config_patches['bcp'] = []
         self.expected_duration = 0.5
-        self.min_frame_time = 1/30  # test with default Hz
+        self.min_frame_time = 1 / 30  # test with default Hz
 
     def getConfigFile(self):
         """Override this method in your own test class to point to the config
@@ -181,6 +182,28 @@ class MpfTestCase(unittest.TestCase):
         # restore sys path
         sys.path = self._sys_path
 
+    def _get_data(self, section=None):
+        del section
+        return dict()
+
+    def _setup_file(self):
+        pass
+
+    def _save_all(self, data=None, delay_secs=0):
+        pass
+
+    def _mock_data_manager(self):
+        self._data_manager = (DataManager._setup_file, DataManager.save_all, DataManager.get_data)
+
+        DataManager._setup_file = self._setup_file
+        DataManager.save_all = self._save_all
+        DataManager.get_data = self._get_data
+
+    def _unmock_data_manager(self):
+        DataManager._setup_file = self._data_manager[0]
+        DataManager.save_all = self._data_manager[1]
+        DataManager.get_data = self._data_manager[2]
+
     def setUp(self):
         # we want to reuse config_specs to speed tests up
         mpf.core.config_validator.ConfigValidator.unload_config_spec = (
@@ -203,6 +226,8 @@ class MpfTestCase(unittest.TestCase):
 
         # init machine
         machine_path = self.getAbsoluteMachinePath()
+
+        self._mock_data_manager()
 
         try:
             self.machine = TestMachineController(
@@ -281,6 +306,7 @@ class MpfTestCase(unittest.TestCase):
         self.machine = None
         self.realTime = None
 
+        self._unmock_data_manager()
         self.restore_sys_path()
 
     def patch_bcp(self):

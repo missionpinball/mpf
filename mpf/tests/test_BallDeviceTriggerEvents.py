@@ -1,9 +1,5 @@
-import unittest
-
-from mpf.core.machine import MachineController
 from mpf.tests.MpfTestCase import MpfTestCase
-from mock import MagicMock
-import time
+from unittest.mock import MagicMock
 
 
 class TestBallDeviceTriggerEvents(MpfTestCase):
@@ -25,12 +21,16 @@ class TestBallDeviceTriggerEvents(MpfTestCase):
         self._missing += 1
 
     def _requesting_ball(self, balls, **kwargs):
+        del kwargs
         self._requesting += balls
 
     def _ball_enter(self, new_balls, unclaimed_balls, **kwargs):
+        del unclaimed_balls
+        del kwargs
         self._enter += new_balls
 
     def _captured_from_pf(self, balls, **kwargs):
+        del kwargs
         self._captured += balls
 
     def test_manual_successful_eject_to_pf(self):

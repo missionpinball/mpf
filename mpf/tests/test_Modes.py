@@ -1,5 +1,6 @@
-from mock import MagicMock
+from unittest.mock import MagicMock
 from mpf.tests.MpfTestCase import MpfTestCase
+
 
 class TestModes(MpfTestCase):
 
@@ -133,12 +134,9 @@ class TestModes(MpfTestCase):
         # mode1 is set to keep running on ball end
         # mode2 should stop and restart on ball end
         # mode3 should stop and stay stopped
-        self.assertFalse(
-                self.machine.modes.mode1.config['mode']['stop_on_ball_end'])
-        self.assertTrue(
-                self.machine.modes.mode2.config['mode']['stop_on_ball_end'])
-        self.assertTrue(
-                self.machine.modes.mode3.config['mode']['stop_on_ball_end'])
+        self.assertFalse(self.machine.modes.mode1.config['mode']['stop_on_ball_end'])
+        self.assertTrue(self.machine.modes.mode2.config['mode']['stop_on_ball_end'])
+        self.assertTrue(self.machine.modes.mode3.config['mode']['stop_on_ball_end'])
 
         # start a game
         self.machine.playfield.add_ball = MagicMock()

@@ -1,9 +1,6 @@
-import unittest
-
-from mpf.core.machine import MachineController
 from mpf.tests.MpfTestCase import MpfTestCase
-from mock import MagicMock
-import time
+from unittest.mock import MagicMock
+
 
 class TestTilt(MpfTestCase):
 
@@ -100,7 +97,6 @@ class TestTilt(MpfTestCase):
 
         self.assertEqual(False, self.machine.game.tilted)
 
-
     def test_simple_tilt_ball_not_on_pf_yet(self):
         self._is_tilted = False
         self.machine.events.add_handler("tilt", self._tilted)
@@ -179,8 +175,6 @@ class TestTilt(MpfTestCase):
         self.assertTrue(self._is_tilted)
         self.assertNotEqual(None, self.machine.game)
         self.assertEqual(True, self.machine.game.tilted)
-
-
 
         self.machine.switch_controller.process_switch('s_ball_switch1', 1)
         self.advance_time_and_run(1)

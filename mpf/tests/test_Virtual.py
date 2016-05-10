@@ -1,5 +1,4 @@
 from mpf.tests.MpfTestCase import MpfTestCase
-from mock import MagicMock
 
 
 class TestSmartVirtualPlatform(MpfTestCase):

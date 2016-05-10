@@ -1,5 +1,5 @@
 from mpf.tests.MpfTestCase import MpfTestCase
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 
 class TestSystem11Trough(MpfTestCase):
@@ -148,4 +148,3 @@ class TestSystem11Trough(MpfTestCase):
         self.machine.switch_controller.process_switch("outhole", 0)
         self.advance_time_and_run(.1)
         self.machine.switch_controller.process_switch("trough1", 1)
-
