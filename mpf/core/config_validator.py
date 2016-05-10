@@ -243,23 +243,24 @@ displays:
     fps: single|int|0
 diverters:
     __valid_in__: machine
-    type: single|enum(hold,pulse)|hold
+    activate_events: dict|str:ms|None
+    activation_coil: single|machine(coils)|None
     activation_time: single|ms|0
     activation_switches: list|machine(switches)|None
-    disable_switches: list|machine(switches)|None
+    debug: single|bool|False
+    deactivate_events: dict|str:ms|None
     deactivation_switches: list|machine(switches)|None
-    activation_coil: single|machine(coils)|None
     deactivation_coil: single|machine(coils)|None
+    disable_events: dict|str:ms|None
+    disable_switches: list|machine(switches)|None
+    enable_events: dict|str:ms|None
+    feeder_devices: list|machine(ball_devices)|playfield
+    label: single|str|%
+    reset_events: dict|str:ms|machine_reset_phase_3
+    tags: list|str|None
     targets_when_active: list|machine(ball_devices)|playfield
     targets_when_inactive: list|machine(ball_devices)|playfield
-    feeder_devices: list|machine(ball_devices)|playfield
-    tags: list|str|None
-    label: single|str|%
-    debug: single|bool|False
-    enable_events: dict|str:ms|None
-    disable_events: dict|str:ms|None
-    activate_events: dict|str:ms|None
-    deactivate_events: dict|str:ms|None
+    type: single|enum(hold,pulse)|hold
 driver_enabled:
     __valid_in__: machine
     number: single|str|
