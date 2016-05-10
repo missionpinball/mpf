@@ -6,7 +6,7 @@ import mpf.core.config_validator
 from mpf.tests.MpfTestCase import MpfTestCase
 from mpf.core.config_player import ConfigPlayer
 
-PlayCall = namedtuple('PlayCall', 'settings key priority play_kwargs kwargs',
+PlayCall = namedtuple('PlayCall', 'settings key priority kwargs',
                       verbose=False)
 
 class BananaPlayer(ConfigPlayer):
@@ -19,9 +19,9 @@ class BananaPlayer(ConfigPlayer):
         self.machine.bananas = dict()
         self.machine.banana_play_calls = list()
 
-    def _play(self, settings, key, priority, play_kwargs, **kwargs):
+    def play(self, settings, key=None, priority=0, **kwargs):
         self.machine.banana_play_calls.append(PlayCall(
-            settings, key, priority, play_kwargs, kwargs))
+            settings, key, priority, kwargs))
 
     def _clear(self, key):
         pass
@@ -65,7 +65,6 @@ class TestConfigPlayers(MpfTestCase):
 
         self.assertEqual(play_call.settings, {'bananas': {'express': {}}})
         self.assertEqual(play_call.key, None)
-        self.assertEqual(play_call.play_kwargs, None)  # todo
         self.assertEqual(play_call.kwargs, {})
 
         self.machine.events.post('event2')
@@ -76,7 +75,6 @@ class TestConfigPlayers(MpfTestCase):
         self.assertEqual(play_call.settings,
                          {'bananas': {'some': {'banana': 'key'}}})
         self.assertEqual(play_call.key, None)
-        self.assertEqual(play_call.play_kwargs, None)  # todo
         self.assertEqual(play_call.kwargs, {})  # todo
 
         self.machine.events.post('event3')
@@ -88,7 +86,6 @@ class TestConfigPlayers(MpfTestCase):
                          {'bananas': {'this_banana': {'some': 'key'},
                                       'that_banana': {'some': 'key'}}})
         self.assertEqual(play_call.key, None)
-        self.assertEqual(play_call.play_kwargs, None)  # todo
         self.assertEqual(play_call.kwargs, {})  # todo
 
         # event5 is in mode1, so make sure it is not called now
@@ -112,7 +109,6 @@ class TestConfigPlayers(MpfTestCase):
         self.assertEqual(play_call.settings, {'bananas': {'express': {}}})
         # Mode should be passed properly
         self.assertEqual(play_call.key, 'mode1')
-        self.assertEqual(play_call.play_kwargs, None)  # todo
         self.assertEqual(play_call.kwargs, {})  # todo
 
         # stop the mode, make sure the event doesn't fire
@@ -131,7 +127,6 @@ class TestConfigPlayers(MpfTestCase):
         play_call = self.machine.banana_play_calls.pop()
         self.assertEqual(play_call.settings, {'banana1': {'banana': 'express'}})
         self.assertEqual(play_call.key, 'show1.1')
-        self.assertEqual(play_call.play_kwargs, None)  # todo
         self.assertEqual(play_call.kwargs, {'show_tokens': {}})  # todo
 
         self.assertEqual(1, len(self.machine.show_controller.running_shows))

@@ -7,7 +7,7 @@ class LightPlayer(ConfigPlayer):
     show_section = 'lights'
     machine_collection_name = 'lights'
 
-    def _play(self, settings, key, priority, play_kwargs, **kwargs):
+    def play(self, settings, key=None, priority=0, **kwargs):
         del kwargs
 
         if 'lights' in settings:
@@ -48,7 +48,7 @@ class LightPlayer(ConfigPlayer):
             self.caller_target_map[key] = set()
             self.caller_target_map[key].add(light)
 
-    def _clear(self, key):
+    def clear(self, key):
         try:
             for light in self.caller_target_map[key]:
                 light.remove_from_stack_by_key(key)

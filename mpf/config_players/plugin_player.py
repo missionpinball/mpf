@@ -29,20 +29,24 @@ class PluginPlayer(ConfigPlayer):
         for event in event_list:
             self.machine.bcp.remove_registered_trigger_event(event)
 
-    # pylint: disable-msg=too-many-arguments
-    def play(self, settings, key=None, priority=0,
-             hold=None, play_kwargs=None, **kwargs):
+    def play(self, settings, key=None, priority=0, **kwargs):
 
-        settings = deepcopy(settings)
-        super().play(settings, key, priority, hold, play_kwargs, **kwargs)
-
-    def _play(self, settings, key, priority, play_kwargs, **kwargs):
-        try:
-            prior_play_kwargs = play_kwargs.pop('play_kwargs', None)
-            settings['play_kwargs'] = prior_play_kwargs.update(play_kwargs)
-            settings['play_kwargs'].update(kwargs)
-        except AttributeError:
-            settings['play_kwargs'] = play_kwargs
 
         self.machine.bcp.bcp_trigger(name='{}_play'.format(self.show_section),
                                      **settings)
+
+
+    #     settings = deepcopy(settings)
+    #     super().play(settings, key, priority, hold, play_kwargs, **kwargs)
+    #
+    # def play(self, settings, key=None, priority=0, **kwargs):
+    #
+    #     try:
+    #         prior_play_kwargs = play_kwargs.pop('play_kwargs', None)
+    #         settings['play_kwargs'] = prior_play_kwargs.update(play_kwargs)
+    #         settings['play_kwargs'].update(kwargs)
+    #     except AttributeError:
+    #         settings['play_kwargs'] = play_kwargs
+    #
+    #     self.machine.bcp.bcp_trigger(name='{}_play'.format(self.show_section),
+    #                                  **settings)

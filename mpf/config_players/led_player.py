@@ -8,7 +8,7 @@ class LedPlayer(ConfigPlayer):
     show_section = 'leds'
     machine_collection_name = "leds"
 
-    def _play(self, settings, key, priority, play_kwargs, **kwargs):
+    def play(self, settings, key=None, priority=0, **kwargs):
 
         del kwargs
         if 'leds' in settings:
@@ -50,7 +50,7 @@ class LedPlayer(ConfigPlayer):
             self.caller_target_map[key] = set()
             self.caller_target_map[key].add(led)
 
-    def _clear(self, key):
+    def clear(self, key):
         try:
             for led in self.caller_target_map[key]:
                 led.remove_from_stack_by_key(key)

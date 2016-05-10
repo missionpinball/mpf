@@ -511,8 +511,8 @@ class RunningShow(object):
         # actually used in this show instead of all of them
 
         if not hold:
-            for player in ConfigPlayer.show_players.values():
-                player.clear(key=self.key)
+            self.machine.events.post('clear', key=self.key)
+            # description for this event is in the mode module
 
         if self.callback and callable(self.callback):
             self.callback()
@@ -572,7 +572,6 @@ class RunningShow(object):
                     settings=item_dict,
                     key=self.key,
                     priority=self.priority,
-                    hold=self.hold,
                     show_tokens=self.show_tokens)
 
         # if we're at the end of the show

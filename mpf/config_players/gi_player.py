@@ -5,7 +5,7 @@ class GiPlayer(ConfigPlayer):
     config_file_section = 'gi_player'
     show_section = 'gis'
 
-    def _play(self, settings, key, priority, play_kwargs, **kwargs):
+    def play(self, settings, key=None, priority=0, **kwargs):
         del kwargs
 
         if 'gis' in settings:

@@ -27,7 +27,6 @@ class ConfigPlayer(object):
         self.machine.events.add_handler('clear', self.clear)
 
         self.mode_event_keys = dict()
-        self.play_keys = set()
 
     def __repr__(self):
         return 'ConfigPlayer.{}'.format(self.show_section)
@@ -159,7 +158,7 @@ class ConfigPlayer(object):
         fade: 500
 
         Since every config_player is different, this method raises a
-        NotImplementedError and most be configured in the chiild class.
+        NotImplementedError and most be configured in the child class.
 
         Args:
             value: The single line string value from a config file.
@@ -183,12 +182,8 @@ class ConfigPlayer(object):
         return self.mode_stop, mode
 
     def mode_stop(self, mode):
-        event_keys = self.mode_event_keys.pop(mode, list())
-
-        self.unload_player_events(event_keys)
-
-        if mode.name in self.play_keys:
-            self.clear(mode.name)
+        self.unload_player_events(self.mode_event_keys.pop(mode, list()))
+        self.clear(mode.name)
 
     def register_player_events(self, config, mode=None, priority=0):
         # config is localized
@@ -211,8 +206,7 @@ class ConfigPlayer(object):
     def additional_processing(self, config):
         return config
 
-    def config_play_callback(self, settings, priority=0, mode=None,
-                             hold=None, **kwargs):
+    def config_play_callback(self, settings, priority=0, mode=None, **kwargs):
         # called when a config_player event is posted
         if mode:
             if not mode.active:
@@ -228,34 +222,18 @@ class ConfigPlayer(object):
         else:
             key = None
 
-        self.play(settings=settings, key=key, priority=priority,
-                  hold=hold, **kwargs)
+        self.play(settings=settings, key=key, priority=priority, **kwargs)
 
-    # pylint: disable-msg=too-many-arguments
-    def show_play_callback(self, settings, key, priority, hold, show_tokens):
+    def show_play_callback(self, settings, key, priority, show_tokens):
         # called from a show step
-        self.play(settings=settings, key=key,
-                  priority=priority, show_tokens=show_tokens, hold=hold)
+        self.play(settings=settings, key=key, priority=priority,
+                  show_tokens=show_tokens)
 
-    # pylint: disable-msg=too-many-arguments
-    def play(self, settings, key=None, priority=0,
-             hold=None, play_kwargs=None, **kwargs):
-        self.play_keys.add(key)
-
-        self._play(settings, key, priority, play_kwargs, **kwargs)
-
-    def _play(self, settings, key, priority, play_kwargs, **kwargs):
+    def play(self, settings, key=None, priority=0, **kwargs):
         raise NotImplementedError
 
     def clear(self, key):
-        if key in self.play_keys:
-            self.play_keys.remove(key)
-            self._clear(key)
-
-    def _clear(self, key):
         pass
-
-        # todo change to NotImplementedError, force all players to implement?
 
     def expand_device_list(self, device):
         if isinstance(device, Device):

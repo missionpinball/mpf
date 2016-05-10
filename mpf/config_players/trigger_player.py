@@ -5,10 +5,7 @@ class TriggerPlayer(ConfigPlayer):
     config_file_section = 'trigger_player'
     show_section = 'triggers'
 
-    # pylint: disable-msg=too-many-arguments
-    def _play(self, settings, mode=None, caller=None, priority=0,
-             play_kwargs=None, **kwargs):
-
+    def play(self, settings, key=None, priority=0, **kwargs):
         del kwargs
 
         if 'triggers' in settings:

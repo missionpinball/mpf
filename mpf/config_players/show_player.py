@@ -8,7 +8,7 @@ class ShowPlayer(ConfigPlayer):
     show_section = 'shows'
     device_collection = None
 
-    def _play(self, settings, key, priority, play_kwargs, **kwargs):
+    def play(self, settings, key=None, priority=0, **kwargs):
         # if not play_kwargs:
         #     play_kwargs = kwargs
         # else:
@@ -79,7 +79,7 @@ class ShowPlayer(ConfigPlayer):
                     running_show.update(show_tokens=show_tokens,
                                         priority=s['priority'])
 
-    def _clear(self, key):
+    def clear(self, key):
         self.machine.show_controller.stop_shows_by_key(key)
 
     def get_express_config(self, value):
