@@ -905,7 +905,10 @@ class ClockBase(_ClockBase):
             # Call the callback if the event has not been cancelled during the current frame
             if not event.callback_cancelled:
                 callback = event.get_callback()
-                ret = callback(self.frametime)
+                if callback:
+                    ret = callback(self.frametime)
+                else:
+                    ret = False
 
                 # if the user returns False explicitly, remove the event
                 if event.loop and ret is False:
