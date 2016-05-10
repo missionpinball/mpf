@@ -1,0 +1,83 @@
+#config_version=4
+
+machine:
+    min_balls: 0
+
+switches:
+    s_start:
+        number: 1
+        tags: start
+
+matrix_lights:
+    match00:
+        number:
+    match10:
+        number:
+    match20:
+        number:
+    match30:
+        number:
+    match40:
+        number:
+    match50:
+        number:
+    match60:
+        number:
+    match70:
+        number:
+    match80:
+        number:
+    match90:
+        number:
+    bip1:
+        number:
+    bip2:
+        number:
+    bip3:
+        number:
+    player1:
+        number:
+    player2:
+        number:
+
+leds:
+    tilt:
+        number:
+    gameOver:
+        number:
+
+info_lights:
+    match_00:
+        light: match00
+    match_10:
+        light: match10
+    match_20:
+        light: match20
+    match_30:
+        light: match30
+    match_40:
+        light: match40
+    match_50:
+        light: match50
+    match_60:
+        light: match60
+    match_70:
+        light: match70
+    match_80:
+        light: match80
+    match_90:
+        light: match90
+    ball_1:
+        light: bip1
+    ball_2:
+        light: bip2
+    ball_3:
+        light: bip3
+    player_1:
+        light: player1
+    player_2:
+        light: player2
+    tilt:
+        light: tilt
+    game_over:
+        light: gameOver

@@ -3,6 +3,8 @@ EM machine"""
 
 import logging
 
+from mpf.devices.led import Led
+
 
 class InfoLights(object):
 
@@ -18,16 +20,18 @@ class InfoLights(object):
                                    'will not be used.')
             return
 
-        self.flash = [
-            {'color': 'ff', 'tocks': 1},
-            {'color': '0', 'tocks': 1},
-        ]
+        self.machine.events.add_handler('machine_reset_phase_3', self._initialize)
 
+    def _initialize(self):
         # convert any light names we find to objects
         for k, v in self.config.items():
             if 'light' in v:
                 if v['light'] in self.machine.lights:
                     self.config[k]['light'] = self.machine.lights[v['light']]
+                elif v['light'] in self.machine.leds:
+                    self.config[k]['light'] = self.machine.leds[v['light']]
+                else:
+                    raise AssertionError("Invalid light or led {}".format(v['light']))
 
         self.machine.events.add_handler('ball_started', self.ball_started)
         self.machine.events.add_handler('game_ended', self.game_ended)
@@ -73,17 +77,21 @@ class InfoLights(object):
 
         # turn on game over
         if 'game_over' in self.config:
-            self.machine.scripts.run_script(
-                lights=self.config['game_over']['light'].name,
-                script=self.flash,
-                playback_rate=2,
-                key='game_over')
+            if isinstance(self.config['game_over']['light'], Led):
+                self.machine.shows['flash'].play(
+                    show_tokens=dict(leds=self.config['game_over']['light']),
+                    key='infolights_game_over')
+            else:
+                self.machine.shows['flash'].play(
+                    show_tokens=dict(lights=self.config['game_over']['light']),
+                    key='infolights_game_over')
 
     def game_starting(self, **kwargs):
         del kwargs
         self.log.debug("game_starting")
         self.reset_game_lights()
-        self.machine.scripts.stop_script(key='game_over')
+        if self.machine.show_controller.get_running_shows('infolights_game_over'):
+            self.machine.show_controller.get_running_shows('infolights_game_over')[0].stop()
 
     def player_added(self, player, **kwargs):
         del kwargs
