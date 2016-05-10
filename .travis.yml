@@ -4,11 +4,11 @@ python:
 install:
 - pip install coveralls
 - python setup.py install
-- git clone --branch dev https://github.com/missionpinball/mpf-examples.git
+- git clone --branch $TRAVIS_BRANCH https://github.com/missionpinball/mpf-examples.git || git clone --branch dev https://github.com/missionpinball/mpf-examples.git 
 script:
 - coverage run -m unittest discover mpf/tests
 # temp removed until we can update MpfTestCase to ignore invalid sections in
 # shows from plugin players that are from mpf-mc so they don't exist in mpf
-#- cd mpf-examples/demo_man/ && python3 -m unittest discover -s tests/ && cd ../../
+- cd mpf-examples/demo_man/ && python3 -m unittest discover -s tests/ && cd ../../
 after_success: coveralls
 
