@@ -249,6 +249,12 @@ bcp:
             params:
                 player_num: "%number"
 
+        clear:
+            command: trigger
+            params:
+                name: clear
+                key: "%key"
+
     player_variables:
       __all__
 
