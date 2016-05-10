@@ -202,6 +202,15 @@ class TestDiverter(MpfTestCase):
     def test_pulsed_activation_time(self):
         diverter = self.machine.diverters.d_test_pulse
 
+        self.machine.coils.c_diverter.pulse = MagicMock()
+        self.machine.coils.c_diverter_disable.pulse = MagicMock()
+
+        self.post_event("machine_reset_phase_3")
+        self.assertFalse(diverter.enabled)
+        self.assertFalse(diverter.active)
+        self.machine.coils.c_diverter_disable.pulse.assert_called_once_with()
+        assert not self.machine.coils.c_diverter.pulse.called
+
         self.assertEqual("idle", self.machine.ball_devices.test_trough._state)
         self.assertEqual("idle", self.machine.ball_devices.test_target._state)
 
