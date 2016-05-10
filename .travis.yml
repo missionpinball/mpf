@@ -7,9 +7,6 @@ install:
 - git clone --branch $TRAVIS_BRANCH https://github.com/missionpinball/mpf-examples.git || git clone --branch dev https://github.com/missionpinball/mpf-examples.git
 script:
 - coverage run -m unittest discover mpf/tests
-# need to install mpf-mc because demo_man contains sections in shows from
-# mpf-mc plugin config players that need to be present in order to validate
-- pip install mpf-mc
-- cd mpf-examples/demo_man/ && python3 -m unittest discover -s tests/ && cd ../../
+#- cd mpf-examples/demo_man/ && python3 -m unittest discover -s tests/ && cd ../../
 after_success: coveralls
 
