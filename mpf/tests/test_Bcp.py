@@ -1,5 +1,15 @@
+from unittest.mock import MagicMock, patch, call
+
 from mpf.tests.MpfTestCase import MpfTestCase
 from mpf.core.bcp import decode_command_string, encode_command_string
+
+
+class TestBcpClient:
+    def __init__(self, queue):
+        self.queue = queue
+
+    def send(self, msg):
+        self.queue.put(decode_command_string(msg))
 
 
 class TestBcp(MpfTestCase):
@@ -104,3 +114,42 @@ class TestBcp(MpfTestCase):
         self.advance_time_and_run()
 
         self.assertIn('test_event', self.machine.bcp.registered_trigger_events)
+
+    def test_bcp_mpf_and_mpf_mc(self):
+        self.kivy = MagicMock()
+        self.kivy.clock.Clock = self.machine.clock
+        modules = {
+            'kivy': self.kivy,
+            'kivy.clock': self.kivy.clock,
+            'kivy.logger': self.kivy.logger,
+        }
+        self.module_patcher = patch.dict('sys.modules', modules)
+        self.module_patcher.start()
+
+        try:
+            from mpfmc.core import bcp_processor
+        except ImportError:
+            self.skipTest("Cannot import mpfmc.core.bcp_processor")
+            return
+
+        mc = MagicMock()
+        bcp_processor.BcpProcessor._start_socket_thread = MagicMock()
+        bcp_mc = bcp_processor.BcpProcessor(mc)
+        bcp_mc.enabled = True
+        self.advance_time_and_run()
+        mc.events.post = MagicMock()
+
+        bcp_mpf = self.machine.bcp
+        bcp_mpf.bcp_clients = [TestBcpClient(bcp_mc.receive_queue)]
+
+        self.machine.events.post('ball_started', ball=17,
+                                 player=23)
+
+        self.advance_time_and_run()
+
+        mc.events.post.assert_has_calls([
+            call("ball_started", ball=17, player=23),
+            call("ball_started", ball='17', player='23')
+        ])
+
+        self.module_patcher.stop()
