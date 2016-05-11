@@ -82,8 +82,7 @@ class Shot(ModeDevice, SystemWideDevice):
             self.enable(mode)
 
     def _validate_config(self):
-        if len(self.config['switch_sequence']) and (
-                    len(self.config['switch']) or len(self.config['switches'])):
+        if len(self.config['switch_sequence']) and (len(self.config['switch']) or len(self.config['switches'])):
             raise AssertionError("A shot can have either switch_sequence or "
                                  "switch/switches, not both")
 
@@ -228,7 +227,7 @@ class Shot(ModeDevice, SystemWideDevice):
 
         if state_settings['show']:  # there's a show specified this state
             if profile['running_show']:
-                if (profile['running_show'].show.name != state_settings['show']):
+                if profile['running_show'].show.name != state_settings['show']:
                     # if there's a show running and it's not the show for this
                     # state, stop it (and then continue)
                     self._stop_show(mode)
@@ -406,8 +405,7 @@ class Shot(ModeDevice, SystemWideDevice):
                     found = True
                 elif found:
                     _wf.append(_profile['mode'])
-                    if self.get_profile_by_key('mode', _profile['mode'])['settings'][
-                        'block']:
+                    if self.get_profile_by_key('mode', _profile['mode'])['settings']['block']:
                         break
         elif _wf:
             _wf.pop(0)
@@ -428,8 +426,7 @@ class Shot(ModeDevice, SystemWideDevice):
         # Need to try because the event postings above could be used to stop
         # the mode, in which case the mode entry won't be in the profiles list
         try:
-            advance = self.get_profile_by_key('mode', mode)['settings'][
-            'advance_on_hit']
+            advance = self.get_profile_by_key('mode', mode)['settings']['advance_on_hit']
         except KeyError:
             advance = False
 
@@ -516,8 +513,7 @@ class Shot(ModeDevice, SystemWideDevice):
         self.active_sequences.remove((seq_id, current_position_index,
                                       next_switch))
 
-        if current_position_index == (
-                    len(self.config['switch_sequence']) - 2):  # complete
+        if current_position_index == (len(self.config['switch_sequence']) - 2):  # complete
 
             self.debug_log("Sequence complete!")
 
@@ -582,8 +578,7 @@ class Shot(ModeDevice, SystemWideDevice):
             return
 
         try:
-            if state == self.player[self.get_profile_by_key('mode', mode)['settings'][
-                                                            'player_variable']]:
+            if state == self.player[self.get_profile_by_key('mode', mode)['settings']['player_variable']]:
                 # we're already at that state
                 return
         except KeyError:  # no profile for this mode
@@ -602,9 +597,8 @@ class Shot(ModeDevice, SystemWideDevice):
     def enable(self, mode=None, profile=None, **kwargs):
         del kwargs
 
-        self.debug_log(
-                "Received command to enable this shot from mode: %s "
-                "with profile: %s", mode, profile)
+        self.debug_log("Received command to enable this shot from mode: %s "
+                       "with profile: %s", mode, profile)
 
         self.update_profile(profile=profile, enable=True, mode=mode)
 
@@ -641,7 +635,6 @@ class Shot(ModeDevice, SystemWideDevice):
         except TypeError:
             profile['current_state_name'] = None
 
-
     def remove_active_profile(self, mode='default#$%', **kwargs):
         del kwargs
         # this has the effect of changing out this mode's profile in the
@@ -653,7 +646,6 @@ class Shot(ModeDevice, SystemWideDevice):
         self.update_profile(enable=False, mode=mode)
 
         # self.get_profile_by_key('mode', mode)['enable'] = False
-
 
         self.debug_log("Removing active profile for mode %s", mode)
 
@@ -679,9 +671,8 @@ class Shot(ModeDevice, SystemWideDevice):
                 existing_profile['profile'] = profile
 
             except KeyError:
-                raise KeyError('Cannot apply shot profile "{}" to shot "{}" as'
-                               ' there is no profile with that name.'.format(
-                               profile, self.name))
+                raise AssertionError('Cannot apply shot profile "{}" to shot "{}" as'
+                                     ' there is no profile with that name.'.format(profile, self.name))
 
         if isinstance(enable, bool) and enable != existing_profile['enable']:
             update_needed = True
@@ -716,9 +707,8 @@ class Shot(ModeDevice, SystemWideDevice):
             profile_settings = (
                 self.machine.shot_profile_manager.profiles[profile].copy())
         except KeyError:
-            raise KeyError('Cannot apply shot profile "{}" to shot "{}" as '
-                           'there is no profile with that name.'.format(
-                           profile, self.name))
+            raise AssertionError('Cannot apply shot profile "{}" to shot "{}" as '
+                                 'there is no profile with that name.'.format(profile, self.name))
 
         profile_settings['player_variable'] = (
             profile_settings['player_variable'].replace('%', self.name))
@@ -769,15 +759,6 @@ class Shot(ModeDevice, SystemWideDevice):
         self.debug_log("Received request to register this shot to the %s "
                        "group", group)
 
-        if isinstance(group, str):
-
-            try:
-                group = self.machine.shot_groups[group]
-            except KeyError:
-                self.debug_log("'%s' is not a valid shot_group name.",
-                               group)
-                return
-
         self.groups.add(group)
 
     def deregister_group(self, group):
@@ -786,14 +767,5 @@ class Shot(ModeDevice, SystemWideDevice):
         remove a shot from a group, do it from there."""
         self.debug_log("Received request to deregister this shot from the %s "
                        "group", group)
-
-        if isinstance(group, str):
-
-            try:
-                group = self.machine.shot_groups[group]
-            except KeyError:
-                self.debug_log("'%s' is not a valid shot_group name.",
-                               group)
-                return
 
         self.groups.discard(group)
