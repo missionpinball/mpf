@@ -44,7 +44,7 @@ class CommandLineUtility(object):
         for file in os.listdir(os.path.join(self.mpf_path, 'commands')):
             commands.add(os.path.splitext(file)[0])
 
-        command = 'core'
+        command = 'game'
 
         if len(self.argv) > 1:
 
