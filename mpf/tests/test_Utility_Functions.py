@@ -1,7 +1,8 @@
-from mpf.tests.MpfTestCase import MpfTestCase
+import unittest
 from mpf.core.utility_functions import Util
 
-class TestUtil(MpfTestCase):
+
+class TestUtil(unittest.TestCase):
 
     def test_keys_to_lower(self):
         inner_dict = dict(key1=1, Key2=2)
@@ -103,13 +104,13 @@ class TestUtil(MpfTestCase):
         self.assertEqual(result['list1'], [4, 5, 6])
 
     def test_hex_to_string_list(self):
-        result = Util.hex_string_to_list('00ff88', 3)
+        result = Util.hex_string_to_list('00ff88')
         self.assertEqual(result, [0, 255, 136])
 
-        result = Util.hex_string_to_list('00FF88', 3)
+        result = Util.hex_string_to_list('00FF88')
         self.assertEqual(result, [0, 255, 136])
 
-        result = Util.hex_string_to_list('00ff88aa', 3)
+        result = Util.hex_string_to_list('00ff88aa')
         self.assertEqual(result, [0, 255, 136])
 
         result = Util.hex_string_to_list('00ff88', 4)
