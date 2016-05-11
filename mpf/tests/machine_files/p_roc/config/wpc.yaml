@@ -1,0 +1,29 @@
+#config_version=4
+
+hardware:
+    driverboards: wpc
+    platform: p_roc
+
+switches:
+    s_test_fliptronics:
+        number: sf1
+    s_test_direct:
+        number: sd1
+    s_test_matrix:
+        number: s26
+
+coils:
+    c_test_direct:
+        number: c01
+        pulse_ms: 23
+    c_test_fliptronics:
+        number: fllm
+        pulse_ms: 23
+
+matrix_lights:
+  test_light:
+    number: l11
+
+gis:
+  test_gi_direct:
+    number: g01
