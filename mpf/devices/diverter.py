@@ -56,12 +56,17 @@ class Diverter(SystemWideDevice):
         # register for deactivation switches
         for switch in self.config['deactivation_switches']:
             self.machine.switch_controller.add_switch_handler(
-                    switch.name, self.deactivate)
+                switch.name, self.deactivate)
 
         # register for disable switches:
         for switch in self.config['disable_switches']:
             self.machine.switch_controller.add_switch_handler(
-                    switch.name, self.disable)
+                switch.name, self.disable)
+
+    def reset(self, **kwargs):
+        """Resets and deactivates the diverter"""
+        del kwargs
+        self.deactivate()
 
     def enable(self, auto=False, **kwargs):
         """Enables this diverter.
@@ -191,7 +196,7 @@ class Diverter(SystemWideDevice):
 
         for switch in self.config['activation_switches']:
             self.machine.switch_controller.add_switch_handler(
-                    switch_name=switch.name, callback=self.activate)
+                switch_name=switch.name, callback=self.activate)
 
     def disable_switches(self):
         self.log.debug("Disabling Diverter sw switches: %s",
@@ -199,7 +204,7 @@ class Diverter(SystemWideDevice):
 
         for switch in self.config['activation_switches']:
             self.machine.switch_controller.remove_switch_handler(
-                    switch_name=switch.name, callback=self.activate)
+                switch_name=switch.name, callback=self.activate)
 
     def _feeder_eject_count_decrease(self, target, **kwargs):
         del target
