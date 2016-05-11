@@ -9,14 +9,14 @@ from mpf.platforms.interfaces.gi_platform_interface import GIPlatformInterface
 from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
 from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 
-try:
+try:    # pragma: no cover
     import pinproc
     pinproc_imported = True
 except ImportError:
     pinproc_imported = False
     pinproc = None
 
-if not pinproc_imported:
+if not pinproc_imported:    # pragma: no cover
     try:
         if sys.platform == 'darwin':
             from mpf.platforms.pinproc.osx import pinproc
@@ -69,7 +69,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
             try:
                 self.proc = pinproc.PinPROC(self.machine_type)
                 self.proc.reset(1)
-            except IOError:
+            except IOError:     # pragma: no cover
                 print("Retrying...")
                 time.sleep(1)
 
@@ -106,8 +106,8 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
             switch.hw_switch.hw_rules[self._get_event_type(not switch.invert, switch.config['debounce'])].append(
                 (switch.hw_switch.number, coil.hw_driver.number,
                  self.pinproc.driver_state_patter(
-                    coil.hw_driver.state(), coil.hw_driver.get_pwm_on_ms(coil), coil.hw_driver.get_pwm_off_ms(coil),
-                    coil.hw_driver.get_pulse_ms(coil), True))
+                     coil.hw_driver.state(), coil.hw_driver.get_pwm_on_ms(coil), coil.hw_driver.get_pwm_off_ms(coil),
+                     coil.hw_driver.get_pulse_ms(coil), True))
             )
         else:
             if not coil.config['allow_enable']:
@@ -115,7 +115,8 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
                     coil.hw_driver.number
                 ))
             switch.hw_switch.hw_rules[self._get_event_type(not switch.invert, switch.config['debounce'])].append(
-                (switch.hw_switch.number, coil.hw_driver.number, self.pinproc.driver_state_pulse(coil.hw_driver.state(), 0))
+                (switch.hw_switch.number, coil.hw_driver.number,
+                 self.pinproc.driver_state_pulse(coil.hw_driver.state(), 0))
             )
 
     def add_relase_disable_rule_to_switch(self, switch, coil):
@@ -580,7 +581,7 @@ class PDBSwitch(object):
         if upper_str.startswith('SD'):  # only P-ROC
             self.sw_type = 'dedicated'
             self.sw_number = int(upper_str[2:])
-        elif '/' in upper_str:  # only P-ROC
+        elif upper_str.count("/") == 1:  # only P-ROC
             self.sw_type = 'matrix'
             self.sw_number = self.parse_matrix_num(upper_str)
         else:   # only P3-Roc
@@ -920,7 +921,7 @@ class PROCGiString(GIPlatformInterface):
             brightness = 255
 
         # run the GIs at 50Hz
-        duty_on = int(brightness/12.75)
+        duty_on = int(brightness / 12.75)
         duty_off = 20 - duty_on
         self.proc.driver_patter(self.number,
                                 int(duty_on),
