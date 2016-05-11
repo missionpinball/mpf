@@ -6,6 +6,9 @@ coils:
     allow_enable: true
   coil_2:
     number:
+  coil_3:
+    number:
+    allow_enable: true
 
 coil_player:
   event1: coil_1
@@ -25,3 +28,9 @@ coil_player:
     coil_1:
       action: disable
   event6: coil_2
+  event7:
+    coil_3: enable
+  event8:
+    coil_3: disable
+  event9:
+    coil_3: 30
