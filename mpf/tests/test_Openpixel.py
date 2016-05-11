@@ -74,3 +74,13 @@ class TestOpenpixel(MpfTestCase):
         self.machine.leds.test_led3.on()
         self.advance_time_and_run(1)
         self.assertOpenPixelLedsSent({20: (255, 0, 0), 99: (2, 23, 42)}, {99: (255, 255, 255)})
+
+    def test_configure_led(self):
+        # test configure_led with int format
+        led = self.machine.default_platform.configure_led({"number": "10"}, 3)
+        self.assertEqual(10, led.led)
+
+        # test configure_led with hex format
+        self.machine.config['open_pixel_control']['number_format'] = "hex"
+        led = self.machine.default_platform.configure_led({"number": "10"}, 3)
+        self.assertEqual(16, led.led)
