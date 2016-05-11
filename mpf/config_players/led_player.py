@@ -61,6 +61,9 @@ class LedPlayer(ConfigPlayer):
                              hold=None, **kwargs):
         # led_player sections from config should set LEDs to hold
 
+        del hold
+        # TODO: is this right? see: #284
+
         super().config_play_callback(settings=settings, priority=priority,
                                      mode=mode, hold=True, **kwargs)
 
