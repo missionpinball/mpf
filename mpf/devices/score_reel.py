@@ -577,7 +577,7 @@ class ScoreReelGroup(SystemWideDevice):
             coils_this_round = len(reels_needing_advance)
 
         for i in range(coils_this_round):
-            reels_needing_advance[i].advance(direction=1)
+            reels_needing_advance[i].advance()
 
             # Any leftover reels that don't get fired this time will get picked up
             # whenever the next reel changes state and this method is called again.
@@ -660,7 +660,7 @@ class ScoreReelGroup(SystemWideDevice):
 
         # try to advance the reel, We use `if` here so this code block only runs
         # if the reel accepted our advance request
-        if reel.advance(direction=1):
+        if reel.advance():
             self.log.debug("Reel '%s' accepted advance", reel.name)
             self.log.debug("Reels (assumed): %s", self.assumed_value_int)
             try:
@@ -951,66 +951,13 @@ class ScoreReel(SystemWideDevice):
         for value in range(self.num_values):
             self.value_switches.append(self.config.get('switch_' + str(value)))
 
-    @property
-    def pulse_ms(self, direction=1):
-        """Returns an integer representing the number of milliseconds the coil
-        will pulse for.
-
-        This method is used by the jump and step advances so they know when a
-        reel's coil is done firing so they can fire the next reel in the group.
-
-        Args:
-            direction (int, optional): Lets you specify which coil you want to
-            get the time for. Default is 1 (up), but you can also specify -1 (
-            down).
-
-        Returns: Interger of the coil pulse time. If there is no coil for the
-            direction you specify, returns 0.
-        """
-        if direction == 1:
-            return self.config['coil_inc'].config['pulse_ms']
-        elif self.config['coil_dec']:
-            return self.config['coil_dec'].config['pulse_ms']
-        else:
-            return 0
-
-    def logical_to_physical(self, value):
-        """Converts a logical reel displayed value to what the physical switch
-        value should be.
-
-        For example, if a reel has switches for the 0 and 9 values, then an
-        input of 0 will return 0 (since that's what the physical value should
-        be for that logical value). In that case it will return 9 for an input
-        of 9, but it will return -999 for any input value of 1 through 8 since
-        there are no switches for those values.
-
-        Note this method does not perform any physical or logical check against
-        the reel's actual position, rather, it's only used to indicate what
-        hardware switch value should be expected for the display value passed.
-
-        Args:
-            value (int): The value you want to check.
-
-        Returns:
-            The phsyical switch value, which is same as the input value if
-            there's a switch there, or -999 if not.
-        """
-        if value != -999:
-
-            if self.value_switches[value]:
-                return value
-            else:
-                return -999
-
-        return -999
-
     def set_rollover_reel(self, reel):
         # Sets this reels' rollover_reel to the object of the next higher
         # reel
         self.log.debug("Setting rollover reel: %s", reel.name)
         self.rollover_reel = reel
 
-    def advance(self, direction=None):
+    def advance(self):
         """Performs the coil firing to advance this reel one position (up or
         down).
 
@@ -1021,12 +968,6 @@ class ScoreReel(SystemWideDevice):
         `reel_<name>_hw_value`: When the config['hw_confirm_time'] time is up
 
         Args:
-            direction (int, optional): If direction is 1, advances the reel
-                to the next higher position. If direction is -1, advances the
-                reel down one position (if the reel has a decrement coil). If
-                direction is not passed, this method will compare the reel's
-                `_destination_index` to its `assumed_value` and will advance it
-                in the direction it needs to go if those values do not match.
 
         Returns: If this method is unable to advance the reel (either because
             it's not ready, because it's at its maximum value and does not have
@@ -1035,20 +976,9 @@ class ScoreReel(SystemWideDevice):
             return `False`. If it's able to pulse the advance coil, it returns
             `True`.
         """
-        self.log.debug("Received command advance Reel in direction: '%s'",
-                       direction)
+        self.log.debug("Received command advance Reel")
 
-        if not direction:
-            # A direction wasn't specified, but let's see if this reel wants
-            # to be in another position and fire it if so
-            if self._destination_index != self.assumed_value and self.config['rollover']:
-                direction = 1
-            elif self._destination_index < self.assumed_value and self.config['coil_dec']:
-                direction = -1
-            else:  # no direction specified and everything seems ok
-                return
-
-        self.set_destination_value(direction)
+        self.set_destination_value()
         # above line also sets self._destination_index
 
         if self.next_pulse_time > self.machine.clock.get_time():
@@ -1060,53 +990,45 @@ class ScoreReel(SystemWideDevice):
                            "ready")
             return False  # since we didn't advance...in case anyone cares?
 
-        if direction == 1:
-            # Ensure we're not at the limit of a reel that can't roll over
-            if not ((self.physical_value == self.config['limit_hi']) and not self.config['rollover']):
-                self.log.debug("Ok to advance")
+        # Ensure we're not at the limit of a reel that can't roll over
+        if not ((self.physical_value == self.config['limit_hi']) and not self.config['rollover']):
+            self.log.debug("Ok to advance")
 
-                # Since we're firing, assume we're going to make it
-                self.assumed_value = self._destination_index
-                self.log.debug("+++Setting assumed value to: %s",
-                               self.assumed_value)
+            # Since we're firing, assume we're going to make it
+            self.assumed_value = self._destination_index
+            self.log.debug("+++Setting assumed value to: %s",
+                           self.assumed_value)
 
-                # Reset our statuses (stati?) :)
-                self.ready = False
-                self.hw_sync = False
+            # Reset our statuses (stati?) :)
+            self.ready = False
+            self.hw_sync = False
 
-                # fire the coil
-                self.config['coil_inc'].pulse()
+            # fire the coil
+            self.config['coil_inc'].pulse()
 
-                # set delay to notify when this reel can be fired again
-                self.delay.add(name='ready_to_fire',
-                               ms=self.config['repeat_pulse_time'],
-                               callback=self._ready_to_fire)
+            # set delay to notify when this reel can be fired again
+            self.delay.add(name='ready_to_fire',
+                           ms=self.config['repeat_pulse_time'],
+                           callback=self._ready_to_fire)
 
-                self.next_pulse_time = (self.machine.clock.get_time() +
-                                        (self.config['repeat_pulse_time'] /
-                                         1000.0))
-                self.log.debug("@@@ New Next pulse ready time: %s",
-                               self.next_pulse_time)
+            self.next_pulse_time = (self.machine.clock.get_time() +
+                                    (self.config['repeat_pulse_time'] /
+                                     1000.0))
+            self.log.debug("@@@ New Next pulse ready time: %s",
+                           self.next_pulse_time)
 
-                # set delay to check the hw switches
-                self.delay.add(name='hw_switch_check',
-                               ms=self.config['hw_confirm_time'],
-                               callback=self.check_hw_switches)
+            # set delay to check the hw switches
+            self.delay.add(name='hw_switch_check',
+                           ms=self.config['hw_confirm_time'],
+                           callback=self.check_hw_switches)
 
-                return True
+            return True
 
-            else:
-                self.log.warning("Received command to increment reel, but "
-                                 "we're at the max limit and this reel "
-                                 "cannot roll over")
-                return False
-
-        # if direction is not 1 we'll assume down, but only if we have
-        # the ability to decrement this reel
-        elif 'coil_dec' in self.config:
-            return False  # since we haven't written this yet  todo
-
-            # todo log else error?
+        else:
+            self.log.warning("Received command to increment reel, but "
+                             "we're at the max limit and this reel "
+                             "cannot roll over")
+            return False
 
     def _pulse_done(self):
         # automatically called (via a delay) after the reel fires to post an
@@ -1180,13 +1102,10 @@ class ScoreReel(SystemWideDevice):
         else:
             return False
 
-    def set_destination_value(self, direction=1):
+    def set_destination_value(self):
         """Returns the integer value of the destination this reel is moving to.
 
         Args:
-            direction (int, optional): The direction of the reel movement this
-            method should get the value for. Default is 1 which means of 'up'.
-            You can pass -1 the next lower value.
 
         Returns: The value of the destination. If the current
             `self.assumed_value` is -999, this method will always return -999
@@ -1198,22 +1117,14 @@ class ScoreReel(SystemWideDevice):
         self.log.debug("@@@ old destination_index: %s",
                        self._destination_index)
         if self.assumed_value != -999:
-            if direction == 1:
-                self._destination_index = self.assumed_value + 1
-                if self._destination_index > (self.num_values - 1):
-                    self._destination_index = 0
-                if self._destination_index == 1:
-                    self.rollover_reel_advanced = False
-                self.log.debug("@@@ new destination_index: %s",
-                               self._destination_index)
-                return self._destination_index
-            elif direction == -1:
-                self._destination_index = self.assumed_value - 1
-                if self._destination_index < 0:
-                    self._destination_index = (self.num_values - 1)
-                self.log.debug("@@@ new destination_index: %s",
-                               self._destination_index)
-                return self._destination_index
+            self._destination_index = self.assumed_value + 1
+            if self._destination_index > (self.num_values - 1):
+                self._destination_index = 0
+            if self._destination_index == 1:
+                self.rollover_reel_advanced = False
+            self.log.debug("@@@ new destination_index: %s",
+                           self._destination_index)
+            return self._destination_index
         else:
             self.log.debug("@@@ new destination_index: -999")
             self._destination_index = -999

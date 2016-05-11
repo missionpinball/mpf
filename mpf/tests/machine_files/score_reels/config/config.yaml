@@ -107,9 +107,19 @@ score_reel_groups:
         max_simultaneous_coils: 2
         chimes: None, chime1, chime2, chime3, None
         confirm: lazy
+        lights_tag: player1
     player2:
         reels: score_2p_10, None
         tags: player2
         max_simultaneous_coils: 2
         chimes: chime3, None
         confirm: lazy
+        lights_tag: player2
+
+matrix_lights:
+    light_p1:
+        number:
+        tags: player1
+    light_p2:
+        number:
+        tags: player2

@@ -610,13 +610,11 @@ random_event_player:
 score_reels:
     __valid_in__: machine
     coil_inc: single|machine(coils)|None
-#    coil_dec: single|machine(coils)|None
     rollover: single|bool|True
     limit_lo: single|int|0
     limit_hi: single|int|9
     repeat_pulse_time: single|ms|200
     hw_confirm_time: single|ms|300
-#    config: single|str|lazy
     confirm: single|str|strict
     switch_0: single|machine(switches)|None
     switch_1: single|machine(switches)|None
