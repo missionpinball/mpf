@@ -156,6 +156,15 @@ class DropTarget(SystemWideDevice):
         """
         self.banks.add(bank)
 
+    def remove_from_bank(self, bank):
+        """Remove the DropTarget from a bank
+
+        Args:
+            bank: DropTargetBank object to remove
+
+        """
+        self.banks.remove(bank)
+
     def reset(self, **kwargs):
         """Resets this drop target.
 
@@ -267,7 +276,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
 
         if self.down == len(self.drop_targets):
             self._bank_down()
-        if not self.down:
+        elif not self.down:
             self._bank_up()
         else:
             self._bank_mixed()
@@ -303,5 +312,5 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         drop target changes but the overall bank is not not complete.'''
 
     def device_removed_from_mode(self, mode):
-        # TODO implement this
-        pass
+        for target in self.drop_targets:
+            target.remove_from_bank(self)

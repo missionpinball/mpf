@@ -19,27 +19,40 @@ coils:
     number:
   coil2:
     number:
+  coil3:
+    number:
 
 modes:
   - mode1
 
 drop_targets:
    left1:
+     debug: True
      switch: switch1
    left2:
+     debug: True
      switch: switch2
    left3:
+     debug: True
      switch: switch3
    left4:
+     debug: True
      switch: switch4
    left5:
+     debug: True
      switch: switch5
    left6:
+     debug: True
      switch: switch6
+     reset_coil: coil2
+     knockdown_coil: coil3
+     knockdown_events: knock_knock
+     reset_events: reset_target
 
 drop_target_banks:
    left_bank:
+     debug: True
      drop_targets: left1, left2, left3
      reset_coils: coil1
      reset_events:
-       drop_targets_left_complete: 1s
+       left_bank_down: 1s
