@@ -72,6 +72,8 @@ class Tilt(Mode):
                 switch_name=switch.name,
                 callback=self.slam_tilt)
 
+    # ignore false positives about self.player
+    # pylint: disable-msg=unsubscriptable-object
     def tilt_warning(self):
         """Processes a tilt warning. If the number of warnings is the number to
         cause a tilt, a tilt will be processed.
@@ -92,7 +94,8 @@ class Tilt(Mode):
         if warnings >= self.tilt_config['warnings_to_tilt']:
             self.tilt()
         else:
-            self.machine.events.post('tilt_warning',
+            self.machine.events.post(
+                'tilt_warning',
                 warnings=warnings,
                 warnings_remaining=(self.tilt_config['warnings_to_tilt'] -
                                     warnings))
@@ -166,9 +169,8 @@ class Tilt(Mode):
 
     def _tilt_warning_switch_handler(self):
         if (not self._last_warning or
-                (self._last_warning +
-                (self.tilt_config['multiple_hit_window'] * 0.001) <=
-                self.machine.clock.get_time())):
+                (self._last_warning + (self.tilt_config['multiple_hit_window'] * 0.001) <=
+                 self.machine.clock.get_time())):
 
             self.tilt_warning()
 
@@ -204,7 +206,7 @@ class Tilt(Mode):
             return 0
 
         delta = (self.tilt_config['settle_time'] -
-                (self.machine.clock.get_time() - self.last_tilt_warning_switch) * 1000)
+                 (self.machine.clock.get_time() - self.last_tilt_warning_switch) * 1000)
         if delta > 0:
             return delta
         else:

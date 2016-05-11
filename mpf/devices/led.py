@@ -164,6 +164,7 @@ class Led(SystemWideDevice):
         """
         self._color_correction_profile = profile
 
+    # pylint: disable-msg=too-many-arguments
     def color(self, color, fade_ms=None, priority=0, key=None, mode=None):
         """Adds or updates a color entry in this LED's stack, which is how you
         tell this LED what color you want it to be.
@@ -209,6 +210,7 @@ class Led(SystemWideDevice):
 
         self._add_to_stack(color, fade_ms, priority, key, mode)
 
+    # pylint: disable-msg=too-many-arguments
     def _add_to_stack(self, color, fade_ms, priority, key, mode):
         curr_color = self.get_color()
 

@@ -113,6 +113,7 @@ class MatrixLight(SystemWideDevice):
         if 'y' in self.config:
             self.y = self.config['y']
 
+    # pylint: disable-msg=too-many-arguments
     def on(self, brightness=255, fade_ms=0, priority=0, key=None, mode=None,
            **kwargs):
         """Adds or updates a brightness entry in this lights's stack, which is
@@ -163,6 +164,7 @@ class MatrixLight(SystemWideDevice):
 
         self._add_to_stack(brightness, fade_ms, priority, key, mode)
 
+    # pylint: disable-msg=too-many-arguments
     def _add_to_stack(self, brightness, fade_ms, priority, key, mode):
         curr_brightness = self.get_brightness()
 
