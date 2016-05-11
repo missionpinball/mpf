@@ -113,7 +113,7 @@ class MatrixLight(SystemWideDevice):
         if 'y' in self.config:
             self.y = self.config['y']
 
-    def on(self, brightness=255, fade_ms=0, priority=0, key=None, mode=None,
+    def on(self, brightness=255, fade_ms=None, priority=0, key=None, mode=None,
            **kwargs):
         """Adds or updates a brightness entry in this lights's stack, which is
         how you tell this light how bright you want it to be.
