@@ -46,6 +46,8 @@ drop_targets:
      switch: switch6
      reset_coil: coil2
      knockdown_coil: coil3
+     knockdown_events: knock_knock
+     reset_events: reset_target
 
 drop_target_banks:
    left_bank:
