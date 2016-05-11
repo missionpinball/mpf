@@ -170,7 +170,8 @@ class RGBColor(object):
         elif isinstance(color, str):
             self._color = RGBColor.string_to_rgb(color)
         else:
-            self._color = color if color else rgb_min
+            self._color = tuple(color) if color else rgb_min
+            assert len(self._color) == 3
 
         for k, v in list(kwargs.items()):
             setattr(self, k, v)
@@ -238,7 +239,9 @@ class RGBColor(object):
 
     @red.setter
     def red(self, value):
-        self._color[0] = value
+        color = list(self._color)
+        color[0] = value
+        self._color = tuple(color)
 
     @property
     def green(self):
@@ -247,7 +250,9 @@ class RGBColor(object):
 
     @green.setter
     def green(self, value):
-        self._color[1] = value
+        color = list(self._color)
+        color[1] = value
+        self._color = tuple(color)
 
     @property
     def blue(self):
@@ -256,7 +261,9 @@ class RGBColor(object):
 
     @blue.setter
     def blue(self, value):
-        self._color[2] = value
+        color = list(self._color)
+        color[2] = value
+        self._color = tuple(color)
 
     @property
     def rgb(self):
@@ -282,7 +289,7 @@ class RGBColor(object):
         RGB color does not have a standard name
         """
         return dict(
-                [(_v, _k) for _k, _v in list(named_rgb_colors.items())]).get(
+            [(_v, _k) for _k, _v in list(named_rgb_colors.items())]).get(
             self._color)
 
     @name.setter
