@@ -32,14 +32,37 @@ class MockPinProcModule(MagicMock):
     SwitchNeverDebounceLast = 255
 
     def decode(self, machine_type, device_str):
-        assert machine_type == MockPinProcModule.MachineTypePDB
-        # for PDB it will just return str as int
-        return int(device_str)
+        if machine_type == MockPinProcModule.MachineTypePDB:
+            # for PDB it will just return str as int
+            return int(device_str)
+        elif machine_type == MockPinProcModule.MachineTypeWPC:
+            if device_str == "fllm":
+                return 38
+            elif device_str == "c01":
+                return 40
+            elif device_str == "sd1":
+                return 8
+            elif device_str == "sf1":
+                return 0
+            elif device_str == "s26":
+                return 53
+            elif device_str == "l11":
+                return 80
+            elif device_str == "g01":
+                return 72
+            else:
+                raise AssertionError("cannot decode {}".format(device_str))
+
+        else:
+            raise AssertionError("asd")
 
 
 class TestPRoc(MpfTestCase):
     def getConfigFile(self):
-        return 'config.yaml'
+        if "wpc" in self._testMethodName:
+            return "wpc.yaml"
+        else:
+            return 'config.yaml'
 
     def getMachinePath(self):
         return 'tests/machine_files/p_roc/'
@@ -47,13 +70,21 @@ class TestPRoc(MpfTestCase):
     def get_platform(self):
         return 'p_roc'
 
+    def _normalize(self, type_name):
+        if type_name == "pdb":
+            return MockPinProcModule.MachineTypePDB
+        elif type_name == "wpc":
+            return MockPinProcModule.MachineTypeWPC
+        else:
+            raise AssertionError("Invalid type")
+
     def setUp(self):
         p_roc_common.pinproc_imported = True
         p_roc_common.pinproc = MockPinProcModule()
         p_roc.pinproc = p_roc_common.pinproc
         self.pinproc = MagicMock()
         p_roc_common.pinproc.PinPROC = MagicMock(return_value=self.pinproc)
-        p_roc_common.pinproc.normalize_machine_type = MagicMock(return_value=7)
+        p_roc_common.pinproc.normalize_machine_type = self._normalize
         p_roc_common.pinproc.driver_state_pulse = MagicMock(
             return_value="driver_state_pulse")
         self.pinproc.switch_get_states = MagicMock(return_value=[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
@@ -206,3 +237,7 @@ class TestPRoc(MpfTestCase):
         device.disable()
         self.machine_run()
         device.hw_driver.proc.driver_disable.assert_called_with(67)
+
+    def test_load_wpc(self):
+        # make sure p-roc properly initialises with WPC config
+        pass
