@@ -1,8 +1,8 @@
-from mpf.tests.MpfTestCase import MpfTestCase
+import unittest
 from mpf.core.rgb_color import RGBColor, RGBColorCorrectionProfile
 
 
-class TestRGBColor(MpfTestCase):
+class TestRGBColor(unittest.TestCase):
 
     def test_default_color(self):
         # Tests the default color
@@ -81,10 +81,7 @@ class TestRGBColor(MpfTestCase):
         self.assertEqual((169, 169, 169), corrected_color.rgb)
 
         # Test correction with default parameters
-        color_correction_profile.generate_from_parameters(gamma=2.5,
-                                                          whitepoint=(1.0, 1.0, 1.0),
-                                                          linear_slope=1.0,
-                                                          linear_cutoff=0.0)
+        color_correction_profile.generate_from_parameters()
         corrected_color = color_correction_profile.apply(color)
         self.assertEqual((91, 91, 91), corrected_color.rgb)
 
@@ -95,3 +92,36 @@ class TestRGBColor(MpfTestCase):
                                                           linear_cutoff=0.1)
         corrected_color = color_correction_profile.apply(color)
         self.assertEqual((77, 67, 77), corrected_color.rgb)
+
+    def test_init_and_equal(self):
+        black = RGBColor("black")
+        color = RGBColor(red=1, green=2, blue=3)
+        self.assertEqual((1, 2, 3), color.rgb)
+        color2 = RGBColor((1, 2, 3))
+        color3 = RGBColor([1, 2, 3])
+        color4 = RGBColor(color)
+        color5 = RGBColor("010203")
+        color6 = RGBColor(hex="010203")
+        color7 = RGBColor("")
+
+        self.assertEqual(color2, color)
+        self.assertEqual(color3, color)
+        self.assertEqual(color4, color)
+        self.assertEqual(color5, color)
+        self.assertEqual(color6, color)
+        self.assertEqual(color7, black)
+        self.assertNotEqual(black, color)
+        self.assertNotEqual(black, "010203")
+
+        self.assertEqual("(1, 2, 3)", str(color5))
+
+    def test_add_sub(self):
+        color = RGBColor(red=1, green=2, blue=3)
+        color2 = color + (10, 10, 10)
+        color3 = color + RGBColor((10, 10, 10))
+        color4 = color2 - color3
+        color5 = color2 - (11, 12, 13)
+        self.assertEqual((11, 12, 13), color2.rgb)
+        self.assertEqual((11, 12, 13), color3.rgb)
+        self.assertEqual((0, 0, 0), color4.rgb)
+        self.assertEqual((0, 0, 0), color5.rgb)
