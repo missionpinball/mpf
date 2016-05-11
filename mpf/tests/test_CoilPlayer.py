@@ -36,6 +36,35 @@ class TestCoilPlayer(MpfTestCase):
         coil.pulse.assert_called_with(power=1.0, priority=0)
         assert not coil.enable.called
 
+        coil = self.machine.coils['coil_3']
+        coil.pulse = MagicMock()
+        coil.enable = MagicMock()
+        coil.disable = MagicMock()
+
+        self.post_event("event7")
+        self.advance_time_and_run()
+        coil.enable.assert_called_with(power=1.0, priority=0)
+        assert not coil.disable.called
+        assert not coil.pulse.called
+        coil.pulse = MagicMock()
+        coil.enable = MagicMock()
+        coil.disable = MagicMock()
+
+        self.post_event("event8")
+        self.advance_time_and_run()
+        coil.disable.assert_called_with(power=1.0, priority=0)
+        assert not coil.enable.called
+        assert not coil.pulse.called
+        coil.pulse = MagicMock()
+        coil.enable = MagicMock()
+        coil.disable = MagicMock()
+
+        self.post_event("event9")
+        self.advance_time_and_run()
+        coil.pulse.assert_called_with(milliseconds=30, power=1.0, priority=0)
+        assert not coil.disable.called
+        assert not coil.enable.called
+
     def test_pulse(self):
         coil = self.machine.coils['coil_1']
         coil.pulse = MagicMock()
