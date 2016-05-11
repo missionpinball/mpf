@@ -5,6 +5,7 @@ from mpf.core.data_manager import DataManager
 from mpf.core.mode import Mode
 from mpf.core.player import Player
 
+
 class HighScore(Mode):
 
     def mode_init(self):
@@ -103,27 +104,26 @@ class HighScore(Mode):
                 if player in self.machine.game.player_list:
 
                     for category_dict in self.high_score_config['categories']:
-                        for config_cat_name in list(category_dict.keys()):
+                        if category_name not in category_dict:
+                            continue
+                        award_label = (
+                            category_dict[category_name][index])
 
-                            if config_cat_name == category_name:
-                                award_label = (
-                                    category_dict[config_cat_name][index])
-
-                                if not self.pending_award:
-                                    self._get_player_name(player,
-                                                          config_cat_name,
-                                                          index, award_label,
-                                                          value)
-                                return
+                        if not self.pending_award:
+                            self._get_player_name(player,
+                                                  category_name,
+                                                  index, award_label,
+                                                  value)
+                        return
 
         self.high_scores_done()
 
-    def _get_player_name(self, player, config_cat_name, index, award_label,
-                         value):
+    # pylint: disable-msg=too-many-arguments
+    def _get_player_name(self, player, config_cat_name, index, award_label, value):
         if not self.pending_award:
 
             self.log.info("New high score. Player: %s, award_label: %s"
-                       ", Value: %s", player, award_label, value)
+                          ", Value: %s", player, award_label, value)
 
             self.pending_award = (config_cat_name, index, value, award_label)
 
@@ -173,7 +173,8 @@ class HighScore(Mode):
             player_name=player_name,
             award=award,
             value=value)
-        self.delay.add(name='award_timer',
+        self.delay.add(
+            name='award_timer',
             ms=self.high_score_config['award_slide_display_time'],
             callback=self._get_player_names)
 
