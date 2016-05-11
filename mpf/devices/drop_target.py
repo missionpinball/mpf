@@ -267,7 +267,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
 
         if self.down == len(self.drop_targets):
             self._bank_down()
-        if not self.down:
+        elif not self.down:
             self._bank_up()
         else:
             self._bank_mixed()
