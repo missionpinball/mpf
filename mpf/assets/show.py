@@ -305,8 +305,7 @@ class Show(Asset):
                 instance of this show. Useful when you have a show with tokens
                 where you'll have multiple instances running and you need a way
                 to idenify a specific instance.
-            **kwargs: Any additional kwargs are passed to the show to look for
-                replacement tokens.
+            show_tokens: Replacement tokens for the show
 
         Returns: The RunningShow() instance if this show plays now, or False if
             the show is not loaded. (In this case the show will be loaded and
@@ -333,9 +332,8 @@ class Show(Asset):
 
         if not set(show_tokens.keys()).issubset(self.tokens):
             raise ValueError('Token mismatch while playing show "{}". Tokens '
-                             'expected: {}. Tokens submitted: {}'.format(
-                             self.name, self.tokens, set(show_tokens.keys())))
-
+                             'expected: {}. Tokens submitted: {}'.
+                             format(self.name, self.tokens, set(show_tokens.keys())))
 
         if not self.loaded:
             self._autoplay_settings = dict(priority=priority,
@@ -400,6 +398,7 @@ class Show(Asset):
 
 class RunningShow(object):
     # pylint: disable-msg=too-many-arguments
+    # pylint: disable-msg=too-many-locals
     def __init__(self, machine, show, show_steps, priority,
                  hold, speed, start_step, callback, loops,
                  sync_ms, reset, mode, manual_advance, key,
@@ -414,6 +413,8 @@ class RunningShow(object):
         self.loops = loops
         self.reset = reset
         # self.mode = mode
+        del mode
+        # TODO: remove mode from __init__
         self.manual_advance = manual_advance
 
         self.name = show.name
@@ -486,7 +487,6 @@ class RunningShow(object):
                             x = keys_replaced[x]
 
                         target = target[x]
-
 
                     target[replacement] = target.pop(key_name)
                     keys_replaced[key_name] = replacement
