@@ -30,6 +30,11 @@ matrix_lights:
         label: Test 1
         tags: tag1
         debug: True
+    light_03:
+        number: 2
+        label: Test 1
+        fade_ms: 1s
+        debug: True
 
 gis:
     gi_01:
