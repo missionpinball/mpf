@@ -152,6 +152,11 @@ class Credits(Mode):
                                         self._ball_starting)
         if post_event:
             self.machine.events.post('enabling_credit_play')
+        '''event: enabling_credit_play
+        desc: The game is no longer on free play. Credits are required to
+        start a game. This event is also posted on MPF boot if the credits mode
+         is enabled and the game is not set to free play.
+        '''
 
     def enable_free_play(self, post_event=True, **kwargs):
         del kwargs
@@ -170,6 +175,11 @@ class Credits(Mode):
 
         if post_event:
             self.machine.events.post('enabling_free_play')
+        '''event: enabling_free_play
+        desc: Credits are no longer required to start a game. This event is
+        also posted on MPF boot if the credits mode is enabled and the game is
+        set to free play.
+        '''
 
     def toggle_credit_play(self, **kwargs):
         del kwargs
@@ -194,6 +204,11 @@ class Credits(Mode):
         else:
             self.log.debug("Received request to add player. Request Denied")
             self.machine.events.post("not_enough_credits")
+            '''event: not_enough_credits
+            desc: A player has pushed the start button, but the game is not set
+            to free play and there are not enough credits to start a game or
+            add a player.
+            '''
             return False
 
     def _request_to_start_game(self):
@@ -205,6 +220,7 @@ class Credits(Mode):
         else:
             self.log.debug("Received request to start game. Request Denied")
             self.machine.events.post("not_enough_credits")
+            # event docstring covered in _player_add_request() method
             return False
 
     def _player_add_success(self, **kwargs):
@@ -278,6 +294,9 @@ class Credits(Mode):
             self.log.debug("Max credits reached")
             self._update_credit_strings()
             self.machine.events.post('max_credits_reached')
+            '''event: max_credits_reached
+            desc: Credits have just been added to the machine, but the
+            configured maximum number of credits has been reached.'''
             self.machine.set_machine_var('credit_units', max_credit_units)
 
         if max_credit_units > previous_credit_units:
@@ -285,6 +304,9 @@ class Credits(Mode):
             self.machine.set_machine_var('credit_units', total_credit_units)
             self._update_credit_strings()
             self.machine.events.post('credits_added')
+            '''event: credits_added
+            desc: Credits (or partial credits) have just been added to the
+            machine.'''
 
     def add_credit(self, price_tiering=True):
         """Adds a single credit to the machine.

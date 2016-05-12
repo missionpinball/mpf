@@ -339,6 +339,11 @@ class ScoreReelGroup(SystemWideDevice):
                                                  self.reels[i].name +
                                                  '_resync')
                     return False
+
+        '''event: scorereel_(name)_resync
+        desc: The score reel (name) is not valid and will be resyncing.
+        '''
+
         return True
 
     def get_physical_value_list(self):
@@ -404,12 +409,21 @@ class ScoreReelGroup(SystemWideDevice):
             # FYI each reel will hw check during hw_sync, so if there's a
             # misfire that we can know about then it will be caught here
             self.machine.events.post('scorereelgroup_' + self.name + '_resync')
+            '''event: scorereelgroup_(name)_resync
+            desc: The score reel group (name) is not valid and will be
+            resyncing.
+            '''
             self.set_value(value_list=self.desired_value_list)
             return False
 
         self.valid = True
         self.machine.events.post('scorereelgroup_' + self.name + '_valid',
                                  value=self.assumed_value_int)
+        '''event: scorereelgroup_(name)_valid
+        desc: The score reall group (name) is valid.
+        args:
+        value: The integer value this score reel group is assumed to be at.
+        '''
 
         if self.wait_for_valid_queue:
             self.log.debug("Found a wait queue. Clearing now.")
@@ -670,6 +684,9 @@ class ScoreReelGroup(SystemWideDevice):
                 pass
             self.machine.events.post('reel_' + reel.name + "_advance")
             # todo should this advance event be posted here? Or by the reel?
+            '''event: reel_(name)_advance
+            desc: The score reel (name) is advancing.
+            '''
 
             # Add the reel's buddy to the advance queue
             if buddy_pulse:
@@ -684,6 +701,10 @@ class ScoreReelGroup(SystemWideDevice):
                     # whoops, we don't have a rollover reel. Yay for player!
                     self.machine.events.post('scorereelgroup_' + self.name +
                                              '_rollover')
+                    '''event: scorereelgroup_(name)_rollover
+                    desc: The score reel group (name) has just rolled over,
+                    meaning it exceeded its mechanical limit and rolled over
+                    past zero.'''
 
         else:  # the reel did not accept the advance. Put it back in the queue
             self.advance_queue.appendleft(reel)
@@ -1034,12 +1055,16 @@ class ScoreReel(SystemWideDevice):
         # automatically called (via a delay) after the reel fires to post an
         # event that the reel's coil is done pulsing
         self.machine.events.post('reel_' + self.name + "_pulse_done")
+        '''event: reel_(name)_pulse_done
+        desc: The score real (name) is done pulsing.'''
 
     def _ready_to_fire(self):
         # automatically called (via a delay) after the reel fires to post an
         # event that the reel is ready to fire again
         self.ready = True
         self.machine.events.post('reel_' + self.name + "_ready")
+        '''event: reel_(name)_ready
+        desc: The score real (name) is ready to be pulsed again.'''
 
     def check_hw_switches(self, no_event=False):
         """Checks all the value switches for this score reel.
@@ -1097,6 +1122,11 @@ class ScoreReel(SystemWideDevice):
             if not no_event:
                 self.machine.events.post('reel_' + self.name + "_hw_value",
                                          value=value)
+                '''event: reel_(name)_hw_value
+                desc: The score reel (name) has checked its hardware switches.
+                args:
+                value: The physical confirmed value of the real. (Will be -999
+                if the reel is not at a position with a switch.'''
             return value
 
         else:

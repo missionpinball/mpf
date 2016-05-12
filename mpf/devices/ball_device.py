@@ -278,6 +278,23 @@ class BallDevice(SystemWideDevice):
                 unclaimed_balls=balls,
                 device=self,
                 callback=self._balls_added_callback)
+        '''event: balldevice_(name)_ball_enter
+
+        desc: A ball (or balls) have just entered the ball device called
+        "name".
+
+        Note that this is a relay event based on the "unclaimed_balls" arg. Any
+        unclaimed balls in the relay will be processed as new balls entering
+        this device.
+
+        args:
+
+        unclaimed_balls: The number of balls that have not yet been claimed.
+        device: A reference to the ball device object that is posting this
+        event.
+
+
+        '''
 
     def _handle_eject_queue(self):
         if self.eject_queue:
@@ -500,6 +517,20 @@ class BallDevice(SystemWideDevice):
                                            self.mechanical_eject_in_progress),
                                        num_attempts=self.num_eject_attempts,
                                        callback=self._perform_eject)
+        '''event: balldevice_(name)_ball_eject_attempt
+
+        desc: The ball device called "name" is attempting to eject a ball (or
+        balls). This is a queue event. The eject will not actually be attempted
+        until the queue is cleared.
+
+        args:
+
+        balls: The number of balls that are to be ejected.
+        taget: The target ball device that will receive these balls.
+        source: The source device that will be ejecting the balls.
+        mechanical_eject: Boolean as to whether this is a mechanical eject.
+        num_attempts: How many eject attempts have been tried so far.
+        '''
 
     # --------------------------- State: failed_eject -------------------------
 
@@ -1229,6 +1260,9 @@ class BallDevice(SystemWideDevice):
         target.available_balls += 1
 
         self.machine.events.post_boolean('balldevice_balls_available')
+        '''event: balldevice_balls_available
+        desc: A device has balls available to be ejected.
+        '''
 
     def setup_eject_chain_next_hop(self, path, player_controlled):
         next_hop = path.popleft()

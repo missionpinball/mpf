@@ -211,6 +211,13 @@ class Mode(object):
 
         self.machine.events.post_queue(event='mode_' + self.name + '_starting',
                                        callback=self._started)
+        '''event: mode_(mode_name)_starting
+
+        desc: The mode called "mode_name" is starting.
+
+        This is a queue event. The mode will not fully start until the queue is
+        cleared.
+        '''
 
     def _started(self):
         # Called after the mode_<name>_starting queue event has finished.
@@ -229,6 +236,7 @@ class Mode(object):
         with the actual name of the mode, so the actual event posted is
         something like *mode_attract_started*, *mode_base_started*, etc.
 
+        This is posted after the "mode_(mode_name)_starting" event.
         '''
 
     def _mode_started_callback(self, **kwargs):
@@ -275,6 +283,12 @@ class Mode(object):
 
         self.machine.events.post_queue(event='mode_' + self.name + '_stopping',
                                        callback=self._stopped)
+        '''event: mode_(mode_name)_stopping
+
+        The mode called "mode_name" is stopping. This is a queue event. The
+        mode won't actually stop until the queue is cleared.
+
+        '''
 
     def _stopped(self):
         self.log.debug('Mode Stopped.')

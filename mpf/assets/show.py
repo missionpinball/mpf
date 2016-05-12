@@ -487,7 +487,6 @@ class RunningShow(object):
 
                         target = target[x]
 
-
                     target[replacement] = target.pop(key_name)
                     keys_replaced[key_name] = replacement
 

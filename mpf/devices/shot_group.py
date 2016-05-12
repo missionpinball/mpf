@@ -102,13 +102,60 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
         self.machine.events.post(self.name + '_hit',
                                  profile=profile, state=state)
+        '''event: (shot_group)_hit
+        desc: A member shot in the shot group called (shot_group) was just hit.
+
+        Note that there are three events posted when a member shot is hit, each
+        with variants of the shot name, profile, and current state,
+        allowing you to key in on the specific granularity you need.
+
+        Also remember that shots can have more than one active profile at a
+        time (typically each associated with a mode), so a single hit to this
+        shot might result in this event being posted multiple times with
+        different (profile) values.
+
+        args:
+        profile: The name of the profile that was active when hit.
+        state: The name of the state the profile was in when it was hit
+        '''
 
         self.machine.events.post(self.name + '_' + profile + '_hit',
                                  profile=profile, state=state)
+        '''event: (shot_group)_(profile)_hit
+        desc: A member shot in the shot group called (shot_group) was just hit
+        with the profile called (profile) applied.
 
+        Note that there are three events posted when a member shot is hit, each
+        with variants of the shot name, profile, and current state,
+        allowing you to key in on the specific granularity you need.
+
+        Also remember that shots can have more than one active profile at a
+        time (typically each associated with a mode), so a single hit to this
+        shot might result in this event being posted multiple times with
+        different (profile) values.
+
+        args:
+        profile: The name of the profile that was active when hit.
+        state: The name of the state the profile was in when it was hit'''
         self.machine.events.post(self.name + '_' + profile + '_' + state +
                                  '_hit', profile=profile, state=state)
+        '''event: (shot_group)_(profile)_(state)_hit
+        desc: A member shot in the shot group called (shot_group) was just hit
+        with the profile called (profile) applied in the current state called
+        (state).
 
+        Note that there are three events posted when a member shot is hit, each
+        with variants of the shot name, profile, and current state,
+        allowing you to key in on the specific granularity you need.
+
+        Also remember that shots can have more than one active profile at a
+        time (typically each associated with a mode), so a single hit to this
+        shot might result in this event being posted multiple times with
+        different (profile) values.
+
+        args:
+        profile: The name of the profile that was active when hit.
+        state: The name of the state the profile was in when it was hit'''
     def enable(self, mode=None, profile=None, **kwargs):
         """Enables this shot group. Also enables all the shots in this
         group.
@@ -382,9 +429,26 @@ class ShotGroup(ModeDevice, SystemWideDevice):
                 "%s", profile, state)
 
             self.machine.events.post(self.name + '_complete')
+            '''event: (shot_group)_complete
+            desc: All the member shots in the shot group called (shot_group)
+            are in the same state.
+            '''
+
             self.machine.events.post(self.name + '_' + profile + '_complete')
+            '''event: (shot_group)_(profile)_complete
+            desc: All the member shots in the shot group called (shot_group)
+            with the profile called (profile) are in the same state.
+            '''
+
             self.machine.events.post(self.name + '_' + profile + '_' + state +
                                      '_complete')
+            '''event: (shot_group)_(profile)_(state)_complete
+            desc: All the member shots in the shot group called (shot_group)
+            with the profile called (profile) are in the same state with the
+            name (state).
+            '''
+
+
 
     def add_control_events_in_mode(self, mode):
         # called if any control_events for this shot_group exist in the mode

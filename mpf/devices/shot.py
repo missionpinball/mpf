@@ -417,13 +417,55 @@ class Shot(ModeDevice, SystemWideDevice):
             # if this is a waterfall, this event would have already been posted
             self.machine.events.post('{}_hit'.format(self.name),
                                      profile=profile, state=state)
+            '''event: (shot)_hit
+            desc: The shot called (shot) was just hit.
+
+            Note that there are three events posted when a shot is hit, each
+            with variants of the shot name, profile, and current state,
+            allowing you to key in on the specific granularity you need.
+
+            args:
+            profile: The name of the profile that was active when hit.
+            state: The name of the state the profile was in when it was hit'''
 
         self.machine.events.post('{}_{}_hit'.format(self.name, profile),
                                  profile=profile, state=state)
+        '''event: (shot)_(profile)_hit
+        desc: The shot called (shot) was just hit with the profile (profile)
+        active.
 
-        self.machine.events.post('{}_{}_{}_hit'.format(self.name, profile, state),
-                                 profile=profile,
-                                 state=state)
+        Note that there are three events posted when a shot is hit, each
+        with variants of the shot name, profile, and current state,
+        allowing you to key in on the specific granularity you need.
+
+        Also remember that shots can have more than one active profile at a
+        time (typically each associated with a mode), so a single hit to this
+        shot might result in this event being posted multiple times with
+        different (profile) values.
+
+        args:
+        profile: The name of the profile that was active when hit.
+        state: The name of the state the profile was in when it was hit'''
+
+        self.machine.events.post('{}_{}_{}_hit'.format(self.name, profile,
+                                                       state),
+                                 profile=profile, state=state)
+        '''event: (shot)_(profile)_(state)_hit
+        desc: The shot called (shot) was just hit with the profile (profile)
+        active in the state (state).
+
+        Note that there are three events posted when a shot is hit, each
+        with variants of the shot name, profile, and current state,
+        allowing you to key in on the specific granularity you need.
+
+        Also remember that shots can have more than one active profile at a
+        time (typically each associated with a mode), so a single hit to this
+        shot might result in this event being posted multiple times with
+        different (profile) and (state) values.
+
+        args:
+        profile: The name of the profile that was active when hit.
+        state: The name of the state the profile was in when it was hit'''
 
         # Need to try because the event postings above could be used to stop
         # the mode, in which case the mode entry won't be in the profiles list

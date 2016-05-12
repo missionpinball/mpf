@@ -127,10 +127,20 @@ class Playfield(SystemWideDevice):
                                            '_ball_enter', new_balls=ball_change,
                                            unclaimed_balls=ball_change,
                                            device=self)
+        # event docstring covered in base class
 
         if ball_change:
             self.machine.events.post(self.name + '_ball_count_change',
                                      balls=balls, change=ball_change)
+        '''event: (playfield)_ball_count_change
+
+        desc: The playfield with the name "playfield" has changed the number
+        of balls that are live.
+
+        args:
+        balls: The current number of balls on the playfield.
+        change: The change in balls from the last count.
+        '''
 
         if balls <= 0:
             self.ball_search.disable()
@@ -242,6 +252,10 @@ class Playfield(SystemWideDevice):
     def mark_playfield_active(self):
         self.ball_search.reset_timer()
         self.machine.events.post_boolean(self.name + "_active")
+        '''event: (playfield)_active
+        desc: The playfield called "playfield" is now active, meaning there's
+        at least one loose ball on it.
+        '''
 
     def playfield_switch_hit(self, **kwargs):
         """A switch tagged with '<this playfield name>_active' was just hit,
@@ -254,11 +268,24 @@ class Playfield(SystemWideDevice):
             if not self.num_balls_requested:
                 self.log.debug("Playfield was activated with no balls expected.")
                 self.machine.events.post('unexpected_ball_on_' + self.name)
+                '''event: unexpected_ball_on_(playfield)
+                desc: The playfield namaed "playfield" just had a switch hit,
+                meaning a ball is on it, but that ball was not expected.
+                '''
 
     def _ball_removed_handler(self, balls, **kwargs):
         del kwargs
         # somebody got a ball from us so we obviously had one
-        self.machine.events.post('sw_' + self.name + "_active", callback=self._ball_removed_handler2, balls=balls)
+        self.machine.events.post('sw_' + self.name + "_active",
+                                 callback=self._ball_removed_handler2,
+                                 balls=balls)
+        '''event: sw_(playfield)_active
+        desc: The playfield called (playfield) was active, though a ball
+        was just removed from it.
+
+        args:
+        balls: The number of balls that were just removed from this playfield.
+        '''
 
     def _ball_removed_handler2(self, balls):
         self.log.debug("%s ball(s) removed from the playfield", balls)

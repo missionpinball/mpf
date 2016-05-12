@@ -47,6 +47,7 @@ class Attract(Mode):
 
         self.machine.events.post('enable_volume_keys')
         # move volume to its own mode?
+        # todo
 
     def start_button_pressed(self):
         """ Called when the a switch tagged with *start* is activated."""
@@ -71,6 +72,15 @@ class Attract(Mode):
         # todo should this be a decorator?
         self.machine.events.post_boolean('request_to_start_game',
                                          callback=self.result_of_start_request)
+        '''event: request_to_start_game
+        desc: This event is posted when to start a game. This is a boolean
+        event. Any handler can return *False* and the game will not be
+        started. Otherwise when this event is done, a new game is started.
+
+        Posting this event is the only way to start a game in MPF, since many
+        systems have to "approve" the start. (Are the balls in the right
+        places, are there enough credits, etc.)
+        '''
 
     def result_of_start_request(self, ev_result=True):
         """Called after the *request_to_start_game* event is posted.
@@ -92,3 +102,17 @@ class Attract(Mode):
             self.machine.events.post('game_start',
                                      buttons=self.start_buttons_held,
                                      hold_time=self.start_hold_time)
+            '''event: game_start
+            desc: A game is starting. (Do not use this event to start a game.
+            Instead, use the *request_to_start_game* event.
+
+            args:
+            buttons: A list of switches tagged with *player* that were held in
+            when the start button was released. This is used for "alternate"
+            game starts (e.g. hold the right flipper and press start for
+            tournament mode, etc.)
+
+            hold_time: The time, in seconds, that the start button was held in
+            to start the game. This can be used to start alternate games via a
+            "long press" of the start button.
+            '''

@@ -379,6 +379,21 @@ class BallController(object):
                                        callback=self._process_ball_drained,
                                        device=device,
                                        balls=unclaimed_balls)
+        '''event: ball_drain
+
+        desc: A ball (or balls) has just drained. (More specifically, ball(s)
+        have entered a ball device tagged with "drain".)
+
+        This is a relay event.
+
+        args:
+
+        device: The ball device object that received the ball(s)
+
+        balls: The number of balls that have just drained. Any balls remaining
+        after the relay will be processed as newly-drained balls.
+
+        '''
 
         # What happens if the ball enters the trough but the ball_add_live
         # event hasn't confirmed its eject? todo

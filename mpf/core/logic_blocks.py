@@ -249,6 +249,15 @@ class LogicBlock(object):
         if self.config['events_when_complete']:
             for event in self.config['events_when_complete']:
                 self.machine.events.post(event)
+        '''event: logicblock_(name)_complete
+
+        desc: The logic block called "name" has just been completed.
+
+        Note that this is the default completion event for logic blocks, but
+        this can be changed in a logic block's "events_when_complete:" setting,
+        so this might not be the actual event that's posted for all logic
+        blocks in your machine.
+        '''
 
         # call reset to reset completion
         if self.config['reset_on_complete']:
@@ -339,6 +348,21 @@ class Counter(LogicBlock):
                 self.machine.events.post(self.config['event_when_hit'],
                                          count=self.player[
                                              self.config['player_variable']])
+            '''event: counter_(name)_hit
+
+            desc: The counter logic block "name" was just hit.
+
+            Note that this is the default hit event for counter logic blocks,
+            but this can be changed in a logic block's "events_when_hit:"
+            setting, so this might not be the actual event that's posted for
+            all counter logic blocks in your machine.
+
+            args:
+
+            count: The new count value for this logic block. (It may be
+            counting up or down, depending on its config.)
+
+            '''
 
             if self.config['multiple_hit_window']:
                 self.log.debug("Beginning Ignore Hits")

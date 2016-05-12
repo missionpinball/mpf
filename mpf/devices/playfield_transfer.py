@@ -32,6 +32,8 @@ class PlayfieldTransfer(SystemWideDevice):
         # (otherwise it may go to -1 during the next event)
         self.machine.events.post('sw_' + self.source.name + '_active',
                                  callback=self._ball_went_through2)
+        # event docstring in playfield module.
+        # todo should we add ball kwarg to post so it matched the other one?
 
     # used as callback in _ball_went_through
     def _ball_went_through2(self):
@@ -39,6 +41,7 @@ class PlayfieldTransfer(SystemWideDevice):
         self.machine.events.post(
             'balldevice_captured_from_' + self.source.name,
             balls=1)
+        # event docstring covered elsewhere
 
         # inform target playfield about incomming ball
         self.machine.events.post(
@@ -47,6 +50,7 @@ class PlayfieldTransfer(SystemWideDevice):
             target=self.target,
             timeout=0,
             callback=self._ball_went_through3)
+        # event docstring covered elsewhere
 
     # used as callback in _ball_went_through2
     def _ball_went_through3(self, balls, target, timeout):
@@ -60,6 +64,7 @@ class PlayfieldTransfer(SystemWideDevice):
             target=self.target,
             callback=self._ball_went_through4)
         self.target.available_balls += 1
+        # event docstring covered elsewhere
 
     # used as callback in _ball_went_through3
     def _ball_went_through4(self, balls, target):
@@ -67,3 +72,4 @@ class PlayfieldTransfer(SystemWideDevice):
         del target
         # since we confirmed eject target playfield has to be active
         self.machine.events.post('sw_' + self.target.name + '_active')
+        # event docstring covered elsewhere

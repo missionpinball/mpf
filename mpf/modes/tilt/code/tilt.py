@@ -96,7 +96,16 @@ class Tilt(Mode):
                 warnings=warnings,
                 warnings_remaining=(self.tilt_config['warnings_to_tilt'] -
                                     warnings))
+            '''event: tilt_warning
+            desc: A tilt warning just happened.
+            args:
+            warnings: The total number of warnings so far.
+            warnings_remaining: The remaining number of warnings until a tilt.
+            '''
             self.machine.events.post('tilt_warning_{}'.format(warnings))
+            '''event: tilt_warning_(number)
+            desc: A tilt warning just happened. The number of this tilt
+            warning is in the event name in the (number).'''
 
     def reset_warnings(self, **kwargs):
         """Resets the tilt warnings for the current player."""
@@ -122,6 +131,8 @@ class Tilt(Mode):
 
         self.machine.game.tilted = True
         self.machine.events.post('tilt')
+        '''event: tilt
+        desc: The player has tilted.'''
         self._disable_autofires()
         self._disable_flippers()
 
@@ -189,10 +200,16 @@ class Tilt(Mode):
             self.machine.game.tilted = False
 
             self.machine.events.post('tilt_clear')
+            '''event: tilt_clear
+            desc: Posted after a tilt, when the settling time has passed after
+            the last tilt switch hit. This is used to hold the next ball
+            start until the plumb bob has settled to prevent tilt throughs.
+            '''
 
             self.ball_ending_tilted_queue.clear()
 
-            self.machine.events.remove_handlers_by_keys(self.tilt_event_handlers)
+            self.machine.events.remove_handlers_by_keys(
+                self.tilt_event_handlers)
             self.tilt_event_handlers = set()
 
     def tilt_settle_ms_remaining(self):
@@ -204,7 +221,8 @@ class Tilt(Mode):
             return 0
 
         delta = (self.tilt_config['settle_time'] -
-                (self.machine.clock.get_time() - self.last_tilt_warning_switch) * 1000)
+                (self.machine.clock.get_time() -
+                 self.last_tilt_warning_switch) * 1000)
         if delta > 0:
             return delta
         else:
@@ -212,6 +230,8 @@ class Tilt(Mode):
 
     def slam_tilt(self):
         self.machine.events.post('slam_tilt')
+        '''event: slam_tilt
+        desc: A slam tilt has just occurred.'''
         if not self.machine.game:
             return
 

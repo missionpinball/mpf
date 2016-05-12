@@ -552,6 +552,10 @@ class BCP(object):
         del rawbytes
         for name in Util.string_to_list(names):
             self.machine.events.post('bcp_get_{}'.format(name))
+        '''event: bcp_get_(name)
+
+        desc: A BCP get command was received.
+        '''
 
     def bcp_receive_set(self, rawbytes, **kwargs):
         """Processes an incoming BCP 'set' command by posting an event
@@ -565,6 +569,14 @@ class BCP(object):
         del rawbytes
         for k, v in kwargs.items():
             self.machine.events.post('bcp_set_{}'.format(k), value=v)
+        '''event: bcp_set_(name)
+
+        A BCP set command was received.
+
+        args:
+
+        value: The value of the "name" variable to set.
+        '''
 
     def bcp_receive_reset_complete(self, rawbytes, **kwargs):
         del kwargs

@@ -54,6 +54,17 @@ class Game(Mode):
         if self._balls_in_play > 0:
             self.machine.events.post('balls_in_play',
                                      balls=self._balls_in_play)
+            '''event: balls_in_play
+            desc: The number of balls in play has just changed, and there is at
+            least 1 ball in play.
+
+            Note that the number of balls in play is not necessarily the same
+            as the number of balls loose on the playfield. For example, if the
+            player shoots a lock and is watching a cut scene, there is still
+            one ball in play even though there are no balls on the playfield.
+
+            args:
+            balls: The number of ball(s) in play.'''
 
         if prev_balls_in_play and not self._balls_in_play:
             self.ball_ending()
@@ -91,9 +102,17 @@ class Game(Mode):
         self.add_mode_event_handler('game_ended', self.game_ended)
 
         self.machine.events.post('enable_volume_keys')
+        # todo
 
         self.machine.events.post_queue('game_starting',
                                        callback=self.game_started, game=self)
+        '''event: game_starting
+        desc: A game is in the process of starting. This is a queue event, and
+        the game won't actually start until the queue is cleared.
+
+        args:
+        game: A reference to the game mode object.
+        '''
 
     def mode_stop(self, **kwargs):
         self.machine.game = None
@@ -116,6 +135,8 @@ class Game(Mode):
                 self._player_add()
 
             self.machine.events.post('game_started')
+            '''event: game_started
+            desc: A new game has started.'''
 
             self.player_turn_start()
 
@@ -134,6 +155,12 @@ class Game(Mode):
 
         if self.num_players == 2:
             self.machine.events.post('multiplayer_game')
+            '''event: multiplayer_game
+            desc: A second player has just been added to this game, meaning
+            this is now a multiplayer game.
+
+            This event is typically used to switch the score display from the
+            single player layout to the multiplayer layout.'''
 
     def ball_starting(self):
         """Called when a new ball is starting.
@@ -157,6 +184,9 @@ class Game(Mode):
 
         self.machine.events.post_queue('ball_starting',
                                        callback=self.ball_started)
+        '''event: ball_startin
+        desc: A ball is starting. This is a queue event, so the ball won't
+        actually start until the queue is cleared.'''
 
     def ball_started(self, ev_result=True):
         self.log.debug("Game Machine Mode ball_started()")
@@ -180,13 +210,25 @@ class Game(Mode):
 
         self.machine.events.post('ball_started', ball=self.player.ball,
                                  player=self.player.number)
+        '''event: ball_started
+        desc: A new ball has started.
+        args:
+        ball: The ball number.
+        player: The player number.'''
 
         if self.num_players == 1:
             self.machine.events.post('single_player_ball_started')
+            '''event: single_player_ball_started
+            desc: A new ball has started, and this is a single player game.'''
         else:
             self.machine.events.post('multi_player_ball_started')
+            '''event: multi_player_ball_started
+            desc: A new ball has started, and this is a multiplayer game.'''
             self.machine.events.post(
                 'player_{}_ball_started'.format(self.player.number))
+            '''event player_(number)_ball_started
+            desc: A new ball has started, and this is a multiplayer game.
+            The player number is the (number) in the event that's posted.'''
 
         self.machine.playfield.add_ball(player_controlled=True)
 
@@ -229,6 +271,9 @@ class Game(Mode):
 
         self.machine.events.post_queue('ball_ending',
                                        callback=self._ball_ending_done)
+        '''event: ball_ending
+        desc: The ball is ending. This is a queue event and the ball won't
+        actually end until the queue is cleared.'''
 
     def _ball_ending_done(self, **kwargs):
         # Callback for when the ball_ending queue is clear. All this does is
@@ -236,6 +281,8 @@ class Game(Mode):
         # properly after other existing events have been posted.
         del kwargs
         self.machine.events.post('ball_ended')
+        '''event: ball_ended
+        desc: The ball has ended.'''
 
     def ball_ended(self, ev_result=True, **kwargs):
         """Called when the ball has successfully ended.
@@ -283,6 +330,9 @@ class Game(Mode):
         self.log.debug("Entering Game.game_ending()")
         self.machine.events.post_queue('game_ending',
                                        callback=self._game_ending_done)
+        '''event: game_ending
+        desc: The game is in the process of ending. This is a queue event, and
+        the game won't actually end until the queue is cleared.'''
 
     def _game_ending_done(self, **kwargs):
         # Callback for when the game_ending queue is clear. All this does is
@@ -291,6 +341,8 @@ class Game(Mode):
         del kwargs
         self.player_turn_stop()
         self.machine.events.post('game_ended')
+        '''event: game_ended
+        desc: The game has ended.'''
 
     def game_ended(self, **kwargs):
         """Actually ends the game once the *game_ending* event is clear.
@@ -343,6 +395,11 @@ class Game(Mode):
 
         return self.machine.events.post_boolean('player_add_request',
                                                 callback=self._player_add)
+        '''event: player_add_request
+        desc: Posted to request that an additional player be added to this
+        game. Any registered handler can deny the player add request by
+        returning *False* to this event.
+        '''
 
     def _player_add(self, ev_result=True):
         # This is the callback from our request player add event.
@@ -380,6 +437,15 @@ class Game(Mode):
         self.machine.events.post('player_turn_start', player=self.player,
                                  number=self.player.number,
                                  callback=self._player_turn_started)
+        '''event: player_turn_start
+        desc: A new player's turn is starting. This event is only posted at the
+        start of a new player's turn. If that player gets an extra ball and
+        shoots again, this event is not posted a second time.
+
+        args:
+        player: The player object whose turn is starting.
+        number: The player number
+        '''
 
     def player_turn_stop(self):
 
@@ -388,6 +454,16 @@ class Game(Mode):
 
         self.machine.events.post('player_turn_stop', player=self.player,
                                  number=self.player.number)
+        '''event: player_turn_stop
+        desc: The player's turn is ending. This event is only posted when this
+        player's turn is totally over. If the player gets an extra ball and
+        shoots again, this event is not posted until after all their extra
+        balls and it's no longer their turn.
+
+        args:
+        player: The player object whose turn is over.
+        number: The player number
+        '''
 
         self.machine.set_machine_var(
             name='player{}_score'.format(self.player.number),
