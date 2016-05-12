@@ -1187,6 +1187,10 @@ class SerialCommunicator(object):
 
         msg = ''
 
+        # send enough dummy commands to clear out any buffers on the FAST
+        # board that might be waiting for more commands
+        self.serial_connection.write(((' ' * 256) + '\r').encode())
+
         while True:
             self.platform.log.debug("Sending 'ID:' command to port '%s'",
                                     self.serial_connection.name)
