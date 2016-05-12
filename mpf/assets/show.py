@@ -78,6 +78,8 @@ class Show(Asset):
         if not data and self.file:
             data = self.load_show_from_disk()
 
+        # Pylint complains about the change from dict to list. This is intended and fine.
+        # pylint: disable-msg=redefined-variable-type
         if isinstance(data, dict):
             data = list(data)
         elif not isinstance(data, list):
@@ -136,30 +138,7 @@ class Show(Asset):
             total_step_time += actions['time']
 
             # Now process show step actions
-            for key, value in step.items():
-
-                # key: the section of the show, like 'leds'
-                # value: dic of express settings or dic of dics w full settings
-
-                # check to see if we know how to process this kind of entry
-                if key in ConfigPlayer.show_players.keys():
-                    validated_config = dict()
-
-                    # we're now at a dict for this section in the show
-                    # key
-                    if not isinstance(value, dict):
-                        value = {value: dict()}
-
-                    for device, settings in value.items():
-                        validated_config.update(
-                            ConfigPlayer.show_players[key].validate_show_config(
-                                device, settings))
-
-                    actions[key] = validated_config
-
-                elif key != 'time':
-                    raise ValueError('Invalid section "{}:" found in show: '
-                                     '{}'.format(key, self.file))
+            self._process_step_actions(step, actions)
 
             self.show_steps.append(actions)
 
@@ -168,6 +147,32 @@ class Show(Asset):
         self.total_steps = len(self.show_steps)
 
         self._get_tokens()
+
+    def _process_step_actions(self, step, actions):
+        for key, value in step.items():
+
+            # key: the section of the show, like 'leds'
+            # value: dic of express settings or dic of dics w full settings
+
+            # check to see if we know how to process this kind of entry
+            if key in ConfigPlayer.show_players.keys():
+                validated_config = dict()
+
+                # we're now at a dict for this section in the show
+                # key
+                if not isinstance(value, dict):
+                    value = {value: dict()}
+
+                for device, settings in value.items():
+                    validated_config.update(
+                        ConfigPlayer.show_players[key].validate_show_config(
+                            device, settings))
+
+                actions[key] = validated_config
+
+            elif key != 'time':
+                raise ValueError('Invalid section "{}:" found in show: '
+                                 '{}'.format(key, self.file))
 
     def _do_unload(self):
         self.show_steps = None
