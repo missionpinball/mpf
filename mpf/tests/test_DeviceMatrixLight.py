@@ -122,6 +122,18 @@ class TestDeviceMatrixLight(MpfTestCase):
         self.machine_run()
         self.assertFalse(light.fade_in_progress)
 
+        light = self.machine.lights.light_03
+        light.clear_stack()
+        self.assertEqual(1000, light.default_fade_ms)
+
+        self.advance_time_and_run(1)
+        self.assertEqual(0, light.hw_driver.current_brightness)
+        light.on()
+        self.advance_time_and_run(.5)
+        self.assertEqual(127, light.hw_driver.current_brightness)
+        self.advance_time_and_run(.5)
+        self.assertEqual(255, light.hw_driver.current_brightness)
+
     def testInterruptFadeOut(self):
         """Interrupt (kill) a one second fade from white to off"""
 
