@@ -1210,6 +1210,8 @@ class SerialCommunicator(object):
         # keep looping and wait for an ID response
 
         msg = ''
+        # clear out buffers
+        self.serial_connection.write((' ' * 256) + '\r')
 
         while True:
             self.platform.log.debug("Sending 'ID:' command to port '%s'",
