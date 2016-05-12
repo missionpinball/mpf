@@ -63,12 +63,27 @@ class TestExtraBall(MpfTestCase):
 
         # player get extra_ball
         self.post_event("extra_ball_award")
-        self.assertTrue(self.machine.extra_balls.test_extra_ball)
-        self.assertTrue(self.machine.extra_balls.test_extra_ball.player)
         self.assertEqual(1, self.machine.game.player.number)
         self.assertEqual(1, self.machine.game.player.ball)
         self.assertEqual(True, self.machine.game.player.uvars['extra_balls_awarded']['test_extra_ball'])
         self.assertEqual(1, self.machine.game.player.extra_balls)
+
+        # but only once
+        self.post_event("extra_ball_award")
+        self.assertEqual(1, self.machine.game.player.number)
+        self.assertEqual(1, self.machine.game.player.ball)
+        self.assertEqual(True, self.machine.game.player.uvars['extra_balls_awarded']['test_extra_ball'])
+        self.assertEqual(1, self.machine.game.player.extra_balls)
+
+        # reset the extra ball
+        self.post_event("extra_ball_reset")
+
+        # should give another extra ball
+        self.post_event("extra_ball_award")
+        self.assertEqual(1, self.machine.game.player.number)
+        self.assertEqual(1, self.machine.game.player.ball)
+        self.assertEqual(True, self.machine.game.player.uvars['extra_balls_awarded']['test_extra_ball'])
+        self.assertEqual(2, self.machine.game.player.extra_balls)
 
         # takes roughly 4s to get ball confirmed
         self.advance_time_and_run(4)
@@ -83,7 +98,17 @@ class TestExtraBall(MpfTestCase):
         self.assertEqual(1, self.machine.game.player.number)
         self.assertEqual(1, self.machine.game.player.ball)
         self.assertEqual(True, self.machine.game.player.uvars['extra_balls_awarded']['test_extra_ball'])
-        self.assertEqual(0, self.machine.game.player.extra_balls)
+        self.assertEqual(1, self.machine.game.player.extra_balls)
+
+        # takes roughly 4s to get ball confirmed
+        self.advance_time_and_run(4)
+        self.assertNotEqual(None, self.machine.game)
+        self.assertEqual(1, self.machine.playfield.balls)
+
+        # ball drains right away
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+        self.advance_time_and_run(1)
 
         # takes roughly 4s to get ball confirmed
         self.advance_time_and_run(4)
@@ -106,7 +131,6 @@ class TestExtraBall(MpfTestCase):
         # game should not end
         self.assertNotEqual(None, self.machine.game)
         self.assertEqual(0, self.machine.playfield.balls)
-
 
         # game should eject another ball
         self.advance_time_and_run(4)
