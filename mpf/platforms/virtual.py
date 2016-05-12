@@ -1,6 +1,8 @@
 """Contains code for a virtual hardware platform."""
 
 import logging
+import random
+
 from mpf.core.platform import ServoPlatform, MatrixLightsPlatform, GiPlatform, LedPlatform, \
     SwitchPlatform, DriverPlatform, AccelerometerPlatform, I2cPlatform
 from mpf.core.utility_functions import Util
@@ -46,6 +48,10 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
 
         if config['type'].upper() == 'NC':
             state = 1
+
+        # switch needs a number to be distingishable from other switches
+        if not config['number']:
+            config['number'] = random.randint(100, 10000)
 
         self.hw_switches[config['number']] = state
 
