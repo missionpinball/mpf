@@ -3,7 +3,6 @@
 hardware:
     driverboards: pdb
     platform: p_roc
-    servo_controllers: i2c_servo_controller
 
 P_ROC:
   dmd_timing_cycles: 1, 2, 3, 4
@@ -20,6 +19,11 @@ switches:
         debounce: quick
     s_slingshot_test:
         number: 40
+    s_direct:
+        number: SD01
+    s_matrix:
+        number: 2/3
+
 
 coils:
     c_test:
@@ -34,22 +38,19 @@ coils:
         number: A0-B1-0
     c_test2:  # unused. just to configure bank 0
         number: A0-B0-0
+    c_direct:
+        number: C01
 
 autofire_coils:
     ac_slingshot_test:
         coil: c_slingshot_test
         switch: s_slingshot_test
 
-servo_controller:
-    address: 0x40
-
-servos:
-    servo1:
-        number: 3
-
 matrix_lights:
   test_pdb_light:
     number: C-A2-B0-0:R-A2-B1-0
+  test_direct_light:
+    number: L01
 
 gis:
   test_gi:

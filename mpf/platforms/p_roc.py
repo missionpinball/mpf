@@ -145,7 +145,14 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
                 `7/5`. This `proc_num` is an int between 0 and 255.
 
         """
-        proc_num = self.pinproc.decode(self.machine_type, str(config['number']))
+        if self.machine_type == self.pinproc.MachineTypePDB:
+            proc_num = self.pdbconfig.get_proc_number("switch", str(config['number']))
+            if proc_num == -1:
+                raise AssertionError("Switch {} cannot be controlled by the P-ROC. ".format(
+                    str(config['number'])))
+
+        else:
+            proc_num = self.pinproc.decode(self.machine_type, str(config['number']))
         return self._configure_switch(config, proc_num)
 
     def get_hw_switch_states(self):
