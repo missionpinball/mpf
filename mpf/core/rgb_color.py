@@ -170,7 +170,8 @@ class RGBColor(object):
         elif isinstance(color, str):
             self._color = RGBColor.string_to_rgb(color)
         else:
-            self._color = color if color else rgb_min
+            self._color = tuple(color) if color else rgb_min
+            assert len(self._color) == 3
 
         for k, v in list(kwargs.items()):
             setattr(self, k, v)
@@ -238,7 +239,9 @@ class RGBColor(object):
 
     @red.setter
     def red(self, value):
-        self._color[0] = value
+        color = list(self._color)
+        color[0] = value
+        self._color = tuple(color)
 
     @property
     def green(self):
@@ -247,7 +250,9 @@ class RGBColor(object):
 
     @green.setter
     def green(self, value):
-        self._color[1] = value
+        color = list(self._color)
+        color[1] = value
+        self._color = tuple(color)
 
     @property
     def blue(self):
@@ -256,7 +261,9 @@ class RGBColor(object):
 
     @blue.setter
     def blue(self, value):
-        self._color[2] = value
+        color = list(self._color)
+        color[2] = value
+        self._color = tuple(color)
 
     @property
     def rgb(self):
@@ -282,7 +289,7 @@ class RGBColor(object):
         RGB color does not have a standard name
         """
         return dict(
-                [(_v, _k) for _k, _v in list(named_rgb_colors.items())]).get(
+            [(_v, _k) for _k, _v in list(named_rgb_colors.items())]).get(
             self._color)
 
     @name.setter
@@ -324,87 +331,10 @@ class RGBColor(object):
         _hex = str(_hex).strip('#')
 
         n = len(_hex) // 3
-        if len(_hex) == 3:
-            r = int(_hex[:n] * 2, 16)
-            g = int(_hex[n:2 * n] * 2, 16)
-            b = int(_hex[2 * n:3 * n] * 2, 16)
-        else:
-            r = int(_hex[:n], 16)
-            g = int(_hex[n:2 * n], 16)
-            b = int(_hex[2 * n:3 * n], 16)
+        r = int(_hex[:n], 16)
+        g = int(_hex[n:2 * n], 16)
+        b = int(_hex[2 * n:3 * n], 16)
         return r, g, b
-
-    @staticmethod
-    def rgb_to_hsv(rgb):
-        """
-        Convert an RGB color representation to an HSV color representation.
-        (r, g, b) :: r -> [0, 255]
-                     g -> [0, 255]
-                     b -> [0, 255]
-        :param rgb: A tuple of three numeric values corresponding to the red, green, and blue value.
-        :return: HSV representation of the input RGB value.
-        :rtype: tuple
-        """
-        r, g, b = rgb[0] / 255, rgb[1] / 255, rgb[2] / 255
-        _min = min(r, g, b)
-        _max = max(r, g, b)
-        v = _max
-        delta = _max - _min
-
-        if _max == 0:
-            return 0, 0, v
-
-        s = delta / _max
-
-        if delta == 0:
-            delta = 1
-
-        if r == _max:
-            h = 60 * (((g - b) / delta) % 6)
-
-        elif g == _max:
-            h = 60 * (((b - r) / delta) + 2)
-
-        else:
-            h = 60 * (((r - g) / delta) + 4)
-
-        return round(h, 3), round(s, 3), round(v, 3)
-
-    @staticmethod
-    def hsv_to_rgb(hsv):
-        """
-        Convert an HSV color representation to an RGB color representation.
-        (h, s, v) :: h -> [0, 360)
-                     s -> [0, 1]
-                     v -> [0, 1]
-        :param hsv: A tuple of three numeric values corresponding to the hue, saturation, and value.
-        :return: RGB representation of the input HSV value.
-        :rtype: tuple
-        """
-        h, s, v = hsv
-        c = v * s
-        h /= 60
-        x = c * (1 - abs((h % 2) - 1))
-        m = v - c
-
-        if h < 1:
-            res = (c, x, 0)
-        elif h < 2:
-            res = (x, c, 0)
-        elif h < 3:
-            res = (0, c, x)
-        elif h < 4:
-            res = (0, x, c)
-        elif h < 5:
-            res = (x, 0, c)
-        elif h < 6:
-            res = (c, 0, x)
-        else:
-            raise ColorException("Unable to convert from HSV to RGB")
-
-        r, g, b = res
-        return round((r + m) * 255, 3), round((g + m) * 255, 3), round(
-            (b + m) * 255, 3)
 
     @staticmethod
     def blend(start_color, end_color, fraction):
