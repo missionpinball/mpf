@@ -260,10 +260,10 @@ class MachineController(object):
         sys.path.insert(0, self.machine_path)
 
     def _get_mpfcache_file_name(self):
-        dir = tempfile.gettempdir()
+        cache_dir = tempfile.gettempdir()
         path_hash = hashlib.md5(bytes(self.machine_path, 'UTF-8')).hexdigest()
         path_hash += '-'.join(self.options['configfile'])
-        result = os.path.join(dir, path_hash)
+        result = os.path.join(cache_dir, path_hash)
         return result
 
     def _load_config(self):

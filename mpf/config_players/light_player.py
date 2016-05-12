@@ -57,6 +57,8 @@ class LightPlayer(ConfigPlayer):
 
     def config_play_callback(self, settings, priority=0, mode=None,
                              hold=None, **kwargs):
+        # TODO: is this right or a bug? see: #284
+        del hold
         # led_player sections from config should set LEDs to hold
 
         super().config_play_callback(settings=settings, priority=priority,

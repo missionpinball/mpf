@@ -1,10 +1,10 @@
+import unittest
 import ruamel.yaml as yaml
 from ruamel.yaml.loader import RoundTripLoader
-
-from mpf.tests.MpfTestCase import MpfTestCase
 from mpf.file_interfaces.yaml_interface import YamlInterface
 
-class TestYamlInterface(MpfTestCase):
+
+class TestYamlInterface(unittest.TestCase):
 
     def test_round_trip(self):
 
@@ -74,7 +74,7 @@ sound_system:
         parsed_config = YamlInterface.process(orig_config, True)
         saved_config = YamlInterface.save_to_str(parsed_config)
 
-        #print(saved_config)
+        # print(saved_config)
 
         self.assertEqual(orig_config, saved_config)
 

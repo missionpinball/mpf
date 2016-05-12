@@ -351,8 +351,7 @@ class Mode(object):
             # check if there is config for the device type
             if device_class.config_section in self.config:
 
-                for device_name, settings in (
-                        iter(self.config[device_class.config_section].items())):
+                for device_name in self.config[device_class.config_section]:
 
                     collection = getattr(self.machine, collection_name)
 
