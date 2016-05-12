@@ -86,7 +86,8 @@ class TestFastSerial(unittest.TestCase):
 
     def test_SerialCommunicator_DMD(self):
         self.serialMock.expected_commands = {
-            'ID:\r'.encode(): 'ID:DMD FP-CPU-002-1 00.88\r'.encode()
+            'ID:\r'.encode(): 'ID:DMD FP-CPU-002-1 00.88\r'.encode(),
+            ((' ' * 256) + '\r').encode(): False
         }
 
         self.communicator = fast.SerialCommunicator(
@@ -111,7 +112,8 @@ class TestFastSerial(unittest.TestCase):
 
     def test_SerialCommunicator_RGB(self):
         self.serialMock.expected_commands = {
-            'ID:\r'.encode(): 'ID:RGB FP-CPU-002-1 00.88\r'.encode()
+            'ID:\r'.encode(): 'ID:RGB FP-CPU-002-1 00.88\r'.encode(),
+            ((' ' * 256) + '\r').encode(): False
         }
 
         self.communicator = fast.SerialCommunicator(
@@ -133,6 +135,7 @@ class TestFastSerial(unittest.TestCase):
             'NN:5\r'.encode(): 'NN:5,asd,0.87,8,10,,,,,,\r'.encode(),
             'NN:6\r'.encode(): 'NN:6,asd,0.87,8,10,,,,,,\r'.encode(),
             'NN:7\r'.encode(): 'NN:7,asd,0.87,8,10,,,,,,\r'.encode(),
+            ((' ' * 256) + '\r').encode(): False,
         }
 
         self.communicator = fast.SerialCommunicator(
