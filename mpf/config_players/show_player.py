@@ -32,52 +32,54 @@ class ShowPlayer(ConfigPlayer):
             if not s['key']:
                 s['key'] = key
 
-                # todo need to add this key back to the config player
+            # todo need to add this key back to the config player
 
-            if s['action'].lower() == 'play':
-                try:
-                    self.machine.shows[show].play(
-                                                  show_tokens=show_tokens,
-                                                  priority=s['priority'],
-                                                  hold=s['hold'],
-                                                  speed=s['speed'],
-                                                  start_step=s['start_step'],
-                                                  loops=s['loops'],
-                                                  sync_ms=s['sync_ms'],
-                                                  reset=s['reset'],
-                                                  manual_advance=s[
-                                                      'manual_advance'],
-                                                  key=s['key']
-                                                  )
-                except KeyError:
-                    raise KeyError("Cannot play show '{}'. No show with that "
-                                   "name.".format(show))
+            self._update_show(show, s, show_tokens)
 
-            elif s['action'].lower() == 'stop':
-                for running_show in (
-                        self.machine.show_controller.get_running_shows(show)):
-                    running_show.stop(s['hold'])
+    def _update_show(self, show, s, show_tokens):
+        if s['action'].lower() == 'play':
+            try:
+                self.machine.shows[show].play(
+                    show_tokens=show_tokens,
+                    priority=s['priority'],
+                    hold=s['hold'],
+                    speed=s['speed'],
+                    start_step=s['start_step'],
+                    loops=s['loops'],
+                    sync_ms=s['sync_ms'],
+                    reset=s['reset'],
+                    manual_advance=s['manual_advance'],
+                    key=s['key']
+                )
+            except KeyError:
+                raise KeyError("Cannot play show '{}'. No show with that "
+                               "name.".format(show))
 
-            elif s['action'].lower() == 'pause':
-                for running_show in (
-                        self.machine.show_controller.get_running_shows(show)):
-                    running_show.pause()
+        elif s['action'].lower() == 'stop':
+            for running_show in (
+                    self.machine.show_controller.get_running_shows(show)):
+                running_show.stop(s['hold'])
 
-            elif s['action'].lower() == 'resume':
-                for running_show in (
-                        self.machine.show_controller.get_running_shows(show)):
-                    running_show.resume()
+        elif s['action'].lower() == 'pause':
+            for running_show in (
+                    self.machine.show_controller.get_running_shows(show)):
+                running_show.pause()
 
-            elif s['action'].lower() == 'advance':
-                for running_show in (
-                        self.machine.show_controller.get_running_shows(show)):
-                    running_show.advance()
+        elif s['action'].lower() == 'resume':
+            for running_show in (
+                    self.machine.show_controller.get_running_shows(show)):
+                running_show.resume()
 
-            elif s['action'].lower() == 'update':
-                for running_show in (
-                        self.machine.show_controller.get_running_shows(show)):
-                    running_show.update(show_tokens=show_tokens,
-                                        priority=s['priority'])
+        elif s['action'].lower() == 'advance':
+            for running_show in (
+                    self.machine.show_controller.get_running_shows(show)):
+                running_show.advance()
+
+        elif s['action'].lower() == 'update':
+            for running_show in (
+                    self.machine.show_controller.get_running_shows(show)):
+                running_show.update(show_tokens=show_tokens,
+                                    priority=s['priority'])
 
     def clear(self, key):
         self.machine.show_controller.stop_shows_by_key(key)

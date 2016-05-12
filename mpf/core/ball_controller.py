@@ -120,31 +120,11 @@ class BallController(object):
 
         # fix too much balls and prefer playfields where balls and available_balls have the same value
         if balls_on_pfs > loose_balls:
-            for dummy_i in range(balls_on_pfs - loose_balls):
-                for playfield in self.machine.playfields:
-                    self.log.warning("Corecting balls on pf from %s to %s on playfield %s (preferred)",
-                                     playfield.balls, playfield.balls - 1, playfield.name)
-                    if playfield.available_balls == playfield.balls and playfield.balls > 0:
-                        if playfield.unexpected_balls > 0:
-                            playfield.unexpected_balls -= 1
-                        playfield.balls -= 1
-                        playfield.available_balls -= 1
-                        balls_on_pfs -= 1
-                        break
+            balls_on_pfs -= self._fix_jumped_balls(balls_on_pfs - loose_balls)
 
         # fix too much balls and take the remaining playfields
         if balls_on_pfs > loose_balls:
-            for dummy_i in range(balls_on_pfs - loose_balls):
-                for playfield in self.machine.playfields:
-                    self.log.warning("Corecting balls on pf from %s to %s on playfield %s",
-                                     playfield.balls, playfield.balls - 1, playfield.name)
-                    if playfield.balls > 0:
-                        if playfield.unexpected_balls > 0:
-                            playfield.unexpected_balls -= 1
-                        playfield.balls -= 1
-                        playfield.available_balls -= 1
-                        balls_on_pfs -= 1
-                        break
+            balls_on_pfs -= self._remove_balls_from_playfield_randomly(balls_on_pfs - loose_balls)
 
         if balls_on_pfs > loose_balls:
             self.log.warning("Failed to remove enough balls from playfields. This is a bug!")
@@ -154,6 +134,37 @@ class BallController(object):
                 self.log.warning("Corecting available_balls %s to %s on playfield %s",
                                  playfield.available_balls, playfield.balls, playfield.name)
                 playfield.available_balls = playfield.balls
+
+    def _fix_jumped_balls(self, balls_to_remove):
+        # this can be improved. find source and target. see #212
+        balls_removed = 0
+        for dummy_i in range(balls_to_remove):
+            for playfield in self.machine.playfields:
+                self.log.warning("Corecting balls on pf from %s to %s on playfield %s (preferred)",
+                                 playfield.balls, playfield.balls - 1, playfield.name)
+                if playfield.available_balls == playfield.balls and playfield.balls > 0:
+                    if playfield.unexpected_balls > 0:
+                        playfield.unexpected_balls -= 1
+                    playfield.balls -= 1
+                    playfield.available_balls -= 1
+                    balls_removed += 1
+                    break
+        return balls_removed
+
+    def _remove_balls_from_playfield_randomly(self, balls_to_remove):
+        balls_removed = 0
+        for dummy_i in range(balls_to_remove):
+            for playfield in self.machine.playfields:
+                self.log.warning("Corecting balls on pf from %s to %s on playfield %s",
+                                 playfield.balls, playfield.balls - 1, playfield.name)
+                if playfield.balls > 0:
+                    if playfield.unexpected_balls > 0:
+                        playfield.unexpected_balls -= 1
+                    playfield.balls -= 1
+                    playfield.available_balls -= 1
+                    balls_removed += 1
+                    break
+        return balls_removed
 
     def trigger_ball_count(self):
         self._update_num_balls_known()

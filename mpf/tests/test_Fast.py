@@ -66,7 +66,7 @@ class TestFast(MpfTestCase):
             "RF:00": False,
         }
         MockSerialCommunicator.expected_commands['NET'] = {
-            "SA:": "SA:1,00,8,00000000",
+            "SA:": "SA:1,00,8,05000000",
             "SN:01,01,0A,0A": "SN:",
             "SN:02,01,0A,0A": "SN:",
             "SN:16,01,0A,0A": "SN:",
@@ -211,6 +211,9 @@ class TestFast(MpfTestCase):
         self.switch_hit = True
 
     def test_switch_changes(self):
+        self.assertFalse(self.machine.switch_controller.is_active("s_flipper"))
+        self.assertTrue(self.machine.switch_controller.is_active("s_flipper_eos"))
+
         self.switch_hit = False
         self.advance_time_and_run(1)
         self.assertFalse(self.machine.switch_controller.is_active("s_test"))

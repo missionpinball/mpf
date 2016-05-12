@@ -345,6 +345,19 @@ class Shot(ModeDevice, SystemWideDevice):
         self._remove_switch_handlers()
         self._stop_shows()
 
+    def _build_waterfall_list(self, mode):
+        _wf = list()
+        found = False
+
+        for _profile in self.profiles:
+            if _profile['mode'] == mode:
+                found = True
+            elif found:
+                _wf.append(_profile['mode'])
+                if self.get_profile_by_key('mode', _profile['mode'])['settings']['block']:
+                    break
+        return _wf
+
     def hit(self, mode='default#$%', _wf=None, **kwargs):
         """Method which is called to indicate this shot was just hit. This
         method will advance the currently-active shot profile.
@@ -397,16 +410,7 @@ class Shot(ModeDevice, SystemWideDevice):
         # profile
         if not _wf and not self.get_profile_by_key(
                 'mode', mode)['settings']['block']:
-            _wf = list()
-            found = False
-
-            for _profile in self.profiles:
-                if _profile['mode'] == mode:
-                    found = True
-                elif found:
-                    _wf.append(_profile['mode'])
-                    if self.get_profile_by_key('mode', _profile['mode'])['settings']['block']:
-                        break
+            _wf = self._build_waterfall_list(mode)
         elif _wf:
             _wf.pop(0)
 
@@ -485,15 +489,19 @@ class Shot(ModeDevice, SystemWideDevice):
             self.log.debug("Notifying shot_group %s of new hit", group)
             group.hit(mode, profile, state)
 
-        if Shot.monitor_enabled and "shots" in self.machine.monitors:
-            for callback in self.machine.monitors['shots']:
-                callback(name=self.name, profile=profile, state=state)
+        self._notify_monitors(profile, state)
 
+        # if not the last in the waterfall propagate
         if _wf:
             self.hit(_wf[0], _wf)
 
         else:
             self.debug_log('%s settings has block enabled', mode)
+
+    def _notify_monitors(self, profile, state):
+        if Shot.monitor_enabled and "shots" in self.machine.monitors:
+            for callback in self.machine.monitors['shots']:
+                callback(name=self.name, profile=profile, state=state)
 
     def _sequence_switch_hit(self, switch_name, state, ms):
         # Since we can track multiple simulatenous sequences (e.g. two balls

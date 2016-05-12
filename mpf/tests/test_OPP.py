@@ -239,7 +239,6 @@ class TestOPP(MpfTestCase):
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
-
     def _test_flippers(self):
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x01\x0a\x06')] = False
         self.machine.flippers.f_test_single.enable()

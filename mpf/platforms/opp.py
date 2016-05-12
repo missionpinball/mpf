@@ -464,11 +464,13 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                             if (curr_bit & new_state) == 0:
                                 self.machine.switch_controller.process_switch_by_num(
                                     state=1,
-                                    num=opp_inp.cardNum + '-' + str(index))
+                                    num=opp_inp.cardNum + '-' + str(index),
+                                    platform=self)
                             else:
                                 self.machine.switch_controller.process_switch_by_num(
                                     state=0,
-                                    num=opp_inp.cardNum + '-' + str(index))
+                                    num=opp_inp.cardNum + '-' + str(index),
+                                    platform=self)
                         curr_bit <<= 1
             opp_inp.oldState = new_state
 
