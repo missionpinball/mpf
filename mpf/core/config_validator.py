@@ -603,7 +603,9 @@ playfield_transfers:
     debug: single|bool|False
 plugins:
     __valid_in__: machine                      # todo add to validator
-
+pololu_maestro:
+    __valid_in__: machine
+    port: single|str|
 random_event_player:
     __valid_in__: machine, mode, show
     event_list: list|str|
@@ -657,7 +659,6 @@ servo_controllers:
     address: single|int|64
     servo_min: single|int|150
     servo_max: single|int|600
-    platform: single|str|None
     debug: single|bool|False
     tags: list|str|None
     label: single|str|%

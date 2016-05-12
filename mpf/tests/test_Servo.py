@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 from mpf.tests.MpfTestCase import MpfTestCase
 
 
-class TestShots(MpfTestCase):
+class TestServo(MpfTestCase):
 
     def getConfigFile(self):
         return 'config.yaml'

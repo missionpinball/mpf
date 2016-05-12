@@ -68,13 +68,14 @@ mpf:
     platforms:
         fadecandy: mpf.platforms.fadecandy.HardwarePlatform
         fast: mpf.platforms.fast.HardwarePlatform
+        i2c_servo_controller: mpf.platforms.i2c_servo_controller.HardwarePlatform
         p_roc:  mpf.platforms.p_roc.HardwarePlatform
         p3_roc:  mpf.platforms.p3_roc.HardwarePlatform
+        pololu_maestro: mpf.platforms.pololu_maestro.HardwarePlatform
+        smart_virtual: mpf.platforms.smart_virtual.HardwarePlatform
         smartmatrix: mpf.platforms.smartmatrix.HardwarePlatform
         snux: mpf.platforms.snux.HardwarePlatform
         virtual: mpf.platforms.virtual.HardwarePlatform
-        smart_virtual: mpf.platforms.smart_virtual.HardwarePlatform
-        i2c_servo_controller: mpf.platforms.i2c_servo_controller.HardwarePlatform
 
     paths:
         scriptlets: scriptlets

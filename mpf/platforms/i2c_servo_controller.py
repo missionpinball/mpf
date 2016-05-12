@@ -17,21 +17,22 @@ class HardwarePlatform(ServoPlatform):
         self.platform = None
 
     def __repr__(self):
-        """String name you'd like to show up in logs and stuff when a
-        reference to this platform is printed."""
         return '<Platform.I2C_Servo_Controller_Platform>'
 
     def initialize(self):
         """
-        Method is called after all hardware platforms where instantiated
+        Method is called after all hardware platforms were instantiated.
         """
         super().initialize()
 
-        # validate our config (has to be in intialize since config_processor its not read in __init__)
-        self.machine.config_validator.validate_config("servo_controllers", self.config)
+        # validate our config (has to be in intialize since config_processor
+        # is not read in __init__)
+        self.machine.config_validator.validate_config("servo_controllers",
+                                                      self.config)
 
         # load i2c platform
-        self.platform = self.machine.get_platform_sections("i2c", self.config['platform'])
+        self.platform = self.machine.get_platform_sections(
+            "i2c", self.config['platform'])
 
         # initialise PCA9685/PCA9635
         self.platform.i2c_write8(self.config['address'], 0x00,
@@ -61,7 +62,8 @@ class HardwarePlatform(ServoPlatform):
         if position < 0 or position > 1:
             raise AssertionError("Position has to be between 0 and 1")
 
-        # actual values depend on the controller. usually 150 to 600. interpolate
+        # actual values depend on the controller. usually 150 to 600.
+        # interpolate
         servo_min = self.config['servo_min']
         servo_max = self.config['servo_max']
         value = int(servo_min + position * (servo_max - servo_min))
