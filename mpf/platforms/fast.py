@@ -385,19 +385,23 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
     def receive_nw_open(self, msg):
         self.machine.switch_controller.process_switch_by_num(state=0,
-                                                             num=(msg, 1))
+                                                             num=(msg, 1),
+                                                             platform=self)
 
     def receive_nw_closed(self, msg):
         self.machine.switch_controller.process_switch_by_num(state=1,
-                                                             num=(msg, 1))
+                                                             num=(msg, 1),
+                                                             platform=self)
 
     def receive_local_open(self, msg):
         self.machine.switch_controller.process_switch_by_num(state=0,
-                                                             num=(msg, 0))
+                                                             num=(msg, 0),
+                                                             platform=self)
 
     def receive_local_closed(self, msg):
         self.machine.switch_controller.process_switch_by_num(state=1,
-                                                             num=(msg, 0))
+                                                             num=(msg, 0),
+                                                             platform=self)
 
     def receive_sa(self, msg):
 
