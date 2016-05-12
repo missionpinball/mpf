@@ -171,7 +171,10 @@ class RGBColor(object):
             self._color = RGBColor.string_to_rgb(color)
         else:
             self._color = tuple(color) if color else rgb_min
-            assert len(self._color) == 3
+            # This method is also used for Kivy which has 4-element tuples
+            # (4th is opacity), so I commented this out. In future version,
+            # I want to add opacity support to MPF colors too.
+            # assert len(self._color) == 3
 
         for k, v in list(kwargs.items()):
             setattr(self, k, v)
