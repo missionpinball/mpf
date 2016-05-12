@@ -132,8 +132,12 @@ class SwitchController(object):
             switch_states = platform.get_hw_switch_states()
 
             for switch, number in switches:
+                # if two platforms have the same number choose the right switch
+                if switch.platform != platform:
+                    continue
                 try:
                     switch.state = switch_states[number] ^ switch.invert
+                    switch.time = self.machine.clock.get_time()
                 except (IndexError, KeyError):
                     self.log.warning("Received a status update from hardware "
                                      "switch %s, but that switch is not in "
@@ -239,9 +243,9 @@ class SwitchController(object):
         # rid of it, or move the switch device settings from process_switch()
         # to here.
 
-    def process_switch_by_num(self, num, state=1, logical=False):
+    def process_switch_by_num(self, num, state, platform, logical=False):
         for switch in self.machine.switches:
-            if switch.hw_switch.number == num:
+            if switch.hw_switch.number == num and switch.platform == platform:
                 self.process_switch(name=switch.name, state=state, logical=logical)
                 return
 
@@ -455,7 +459,7 @@ class SwitchController(object):
         if ms:  # only do this for handlers that have delays
             if state == 1:
                 if self.is_active(switch_name, 0) and (
-                            self.ms_since_change(switch_name) < ms):
+                        self.ms_since_change(switch_name) < ms):
                     # figure out when this handler should fire based on the
                     # switch's original activation time.
                     key = self.machine.clock.get_time() + ((ms - self.ms_since_change(switch_name)) / 1000.0)
@@ -470,7 +474,7 @@ class SwitchController(object):
                     self.active_timed_switches[key].append(value)
             elif state == 0:
                 if self.is_inactive(switch_name, 0) and (
-                            self.ms_since_change(switch_name) < ms):
+                        self.ms_since_change(switch_name) < ms):
                     key = self.machine.clock.get_time() + ((ms - self.ms_since_change(switch_name)) / 1000.0)
                     value = {'switch_action': entry_key,
                              'callback': callback,
