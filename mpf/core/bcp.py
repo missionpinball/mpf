@@ -865,8 +865,7 @@ class BCP(object):
                 volume = 0
 
             self.track_volumes[track] = volume
-            volume_float = round(volume/float(self.machine.config['volume']
-                                              ['steps']), 2)
+            volume_float = round(volume / float(self.machine.config['volume']['steps']), 2)
             send_kwargs = {'volume_' + track: volume_float}
             self.send('config', **send_kwargs)
         except KeyError:
@@ -1015,6 +1014,8 @@ class BCPClientSocket(object):
 
         self.sending_queue.put(message)
 
+    # Disable warning. This needs refactoring anyway when we get rid of the thread
+    # pylint: disable-msg=too-many-nested-blocks
     def receive_loop(self):
         socket_bytes = b''
 
