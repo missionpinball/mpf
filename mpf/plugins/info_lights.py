@@ -24,14 +24,14 @@ class InfoLights(object):
 
     def _initialize(self):
         # convert any light names we find to objects
-        for k, v in self.config.items():
-            if 'light' in v:
-                if v['light'] in self.machine.lights:
-                    self.config[k]['light'] = self.machine.lights[v['light']]
-                elif v['light'] in self.machine.leds:
-                    self.config[k]['light'] = self.machine.leds[v['light']]
+        for key, value in self.config.items():
+            if 'light' in value:
+                if value['light'] in self.machine.lights:
+                    self.config[key]['light'] = self.machine.lights[value['light']]
+                elif value['light'] in self.machine.leds:
+                    self.config[key]['light'] = self.machine.leds[value['light']]
                 else:
-                    raise AssertionError("Invalid light or led {}".format(v['light']))
+                    raise AssertionError("Invalid light or led {}".format(value['light']))
 
         self.machine.events.add_handler('ball_started', self.ball_started)
         self.machine.events.add_handler('game_ended', self.game_ended)
@@ -45,21 +45,21 @@ class InfoLights(object):
     def reset_game_lights(self):
         self.log.debug("reset_game_lights")
         # turn off the game-specific lights (player, ball & match)
-        for k, v in self.config.items():
-            if k.startswith('ball_'):
-                v['light'].off()
-            if k.startswith('player_'):
-                v['light'].off()
-            if k.startswith('match_'):
-                v['light'].off()
+        for key, value in self.config.items():
+            if key.startswith('ball_'):
+                value['light'].off()
+            if key.startswith('player_'):
+                value['light'].off()
+            if key.startswith('match_'):
+                value['light'].off()
 
     def ball_started(self, **kwargs):
         del kwargs
         self.log.debug("ball_started")
         # turn off all the ball lights
-        for k, v in self.config.items():
-            if k.startswith('ball_'):
-                v['light'].off()
+        for key, value in self.config.items():
+            if key.startswith('ball_'):
+                value['light'].off()
 
         # turn on this current ball's light
         ball_light = 'ball_' + str(self.machine.game.player.ball)
