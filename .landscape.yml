@@ -1,6 +1,17 @@
+strictness: high
+max-line-length: 120
+
+mccabe:
+  options:
+    max-complexity: 15
+
 pylint:
   disable:
     - pointless-string-statement  # pointless statement, which is how our event docstrings are seen
+    - invalid-name  # we got ms and dt as defaults for a lot of functions
+  options:
+    max-attributes: 12
+    max-parents: 15
 
 ignore-paths:
   - docs
