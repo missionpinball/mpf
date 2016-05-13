@@ -14,5 +14,9 @@ class TriggerPlayer(ConfigPlayer):
         for trigger, s in settings.items():
             self.machine.bcp.bcp_trigger(trigger, **s)
 
+    def get_express_config(self, value):
+        del value
+        raise NotImplementedError("Trigger Player does not support express config")
+
 
 player_cls = TriggerPlayer
