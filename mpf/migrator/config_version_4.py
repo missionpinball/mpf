@@ -321,8 +321,7 @@ class V4Migrator(VersionMigrator):
             self.fc['sound_system']['tracks'][stream_track_name] = (
                 CommentedMap())
             self.fc['sound_system']['tracks'][stream_track_name]['volume'] = 0.5
-            self.fc['sound_system']['tracks'][stream_track_name][
-                 'simultaneous_sounds'] = 1
+            self.fc['sound_system']['tracks'][stream_track_name]['simultaneous_sounds'] = 1
             self.log.debug('Converting stream: audio track to normal track')
         except KeyError:
             pass
@@ -570,7 +569,8 @@ class V4Migrator(VersionMigrator):
 
         return elements
 
-    def _get_width_and_height_for_display(self, element, display):
+    @classmethod
+    def _get_width_and_height_for_display(cls, element, display):
         # Figure out which display we're working with so we can get the
         # size to update the positions later. This could be target or
         # display, since this meth is called from a few different places
@@ -608,7 +608,8 @@ class V4Migrator(VersionMigrator):
         YamlInterface.del_key_with_comments(element, 'slide', self.log)
         return element
 
-    def _format_anchor_and_value(self, anchor, value):
+    @classmethod
+    def _format_anchor_and_value(cls, anchor, value):
         if value < 0:
             return '{}{}'.format(anchor, value)
         else:
@@ -864,7 +865,8 @@ class V4Migrator(VersionMigrator):
                                      'events_when_deactivated',
                                      switch_settings, self.log)
 
-    def _get_old_default_widget_styles(self):
+    @classmethod
+    def _get_old_default_widget_styles(cls):
         # these are from MPF 0.21, but they are in the new v4 format
         widget_styles = '''
           default:
@@ -927,7 +929,7 @@ class V4Migrator(VersionMigrator):
 
             if 'display' in step:
                 self.log.debug("Show step %s: Converting 'display' section",
-                               i+1)
+                               i + 1)
 
                 found_transition = False
                 for widget in step['display']:
@@ -1007,7 +1009,8 @@ class V4Migrator(VersionMigrator):
         if found:
             self._remove_tags(dic)
 
-    def _convert_tokens(self, dic):
+    @classmethod
+    def _convert_tokens(cls, dic):
         # converts % tokens to ()
         token_finder = re.compile("(?<=%)[a-zA-Z_0-9|]+(?=%)")
 

@@ -78,7 +78,8 @@ class Migrator(object):
                         ignore=self._ignore_files)
         self.log.debug("Backup done")
 
-    def _ignore_files(self, root_folder, contents):
+    @classmethod
+    def _ignore_files(cls, root_folder, contents):
         # ignore previous backup folders
         if BACKUP_FOLDER_NAME in root_folder:
             return contents
@@ -229,6 +230,7 @@ class VersionMigrator(object):
 
         self.log.debug("Ignoring data file: %s. (Error is ok)", self.file_name)
 
+    # pylint: disable-msg=no-self-use
     def is_show_file(self):
         return False
 
@@ -362,7 +364,8 @@ class VersionMigrator(object):
 
         return False
 
-    def _increment_key_with_list(self, key):
+    @classmethod
+    def _increment_key_with_list(cls, key):
         for i, val in enumerate(key):
             if val == '__list__':
                 key[i] = 0
