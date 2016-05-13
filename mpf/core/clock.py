@@ -1,4 +1,4 @@
-'''
+"""
 Clock object
 ============
 
@@ -194,16 +194,17 @@ from two threads simultaneously without any locking mechanism::
 
 Note, in the code above, thread 1 or thread 2 could be the main thread, not
 just an external thread.
-'''
+"""
 
 from sys import platform
 from functools import partial
 
-from mpf.core.weakmethod import WeakMethod
 from queue import PriorityQueue, Empty
 import itertools
 import time
 import logging
+from mpf.core.weakmethod import WeakMethod
+
 """
 Clock object
 ============
@@ -391,6 +392,7 @@ _default_time = time.perf_counter
 
 try:
     # pylint: disable-msg=wrong-import-position
+    # pylint: disable-msg=wrong-import-order
     import ctypes
     if platform in ('win32', 'cygwin'):
         # Win32 Sleep function is only 10-millisecond resolution, so
@@ -415,26 +417,27 @@ try:
             _libc = ctypes.CDLL('libc.dylib')
         else:
             # pylint: disable-msg=wrong-import-position
+            # pylint: disable-msg=wrong-import-order
             from ctypes.util import find_library
             _libc = ctypes.CDLL(find_library('c'), use_errno=True)
 
             def _libc_clock_gettime_wrapper():
                 from os import strerror
 
-                class struct_tv(ctypes.Structure):
+                class StructTv(ctypes.Structure):
                     _fields_ = [('tv_sec', ctypes.c_long),
                                 ('tv_usec', ctypes.c_long)]
 
                 _clock_gettime = _libc.clock_gettime
                 _clock_gettime.argtypes = [ctypes.c_long,
-                                           ctypes.POINTER(struct_tv)]
+                                           ctypes.POINTER(StructTv)]
 
                 if 'linux' in platform:
                     _clockid = 4  # CLOCK_MONOTONIC_RAW (Linux specific)
                 else:
                     _clockid = 1  # CLOCK_MONOTONIC
 
-                tv = struct_tv()
+                tv = StructTv()
 
                 def _time():
                     if _clock_gettime(ctypes.c_long(_clockid),
@@ -451,7 +454,8 @@ try:
         _libc_usleep = _libc.usleep
 
         class _ClockBase(object):
-            def usleep(self, microseconds):
+            @classmethod
+            def usleep(cls, microseconds):
                 _libc_usleep(int(microseconds))
 
 except (OSError, ImportError, AttributeError):
@@ -464,7 +468,8 @@ except (OSError, ImportError, AttributeError):
     _default_sleep = time.sleep
 
     class _ClockBase(object):
-        def usleep(self, microseconds):
+        @classmethod
+        def usleep(cls, microseconds):
             _default_sleep(microseconds / 1000000.)
 
 

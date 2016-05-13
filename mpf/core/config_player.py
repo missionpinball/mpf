@@ -12,6 +12,8 @@ class ConfigPlayer(object):
     config_file_players = dict()
 
     def __init__(self, machine):
+        self.device_collection = None
+
         self.machine = machine
         self.caller_target_map = dict()
         '''Dict of callers which called this config player. Will be used with
@@ -135,13 +137,15 @@ class ConfigPlayer(object):
         config = self.validate_config(config)
         root_config_dict[self.config_file_section] = config
 
-    def process_config(self, config, **kwargs):
+    @classmethod
+    def process_config(cls, config, **kwargs):
         # called every time mpf starts, regardless of whether config was built
         # from cache or config files
         del kwargs
         return config
 
-    def process_show_config(self, config):
+    @classmethod
+    def process_show_config(cls, config):
         # override if you need a different show processor from config file
         # processor
         return config
@@ -194,19 +198,16 @@ class ConfigPlayer(object):
             for event, settings in config.items():
                 key_list.append(
                     self.machine.events.add_handler(
-                    event=event,
-                    handler=self.config_play_callback,
-                    priority=priority,
-                    mode=mode,
-                    settings=settings))
+                        event=event,
+                        handler=self.config_play_callback,
+                        priority=priority,
+                        mode=mode,
+                        settings=settings))
 
         return key_list
 
     def unload_player_events(self, key_list):
         self.machine.events.remove_handlers_by_keys(key_list)
-
-    def additional_processing(self, config):
-        return config
 
     def config_play_callback(self, settings, priority=0, mode=None, **kwargs):
         # called when a config_player event is posted

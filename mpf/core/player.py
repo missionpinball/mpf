@@ -98,7 +98,7 @@ class Player(object):
         use a callback so this event is posted after the player add event
         """
         del kwargs
-        self.score = 0
+        self.__setattr__("score", 0)
 
     def __repr__(self):
         try:
@@ -124,7 +124,7 @@ class Player(object):
         self.vars[name] = value
 
         try:
-            change = value-prev_value
+            change = value - prev_value
         except TypeError:
             change = prev_value != value
 

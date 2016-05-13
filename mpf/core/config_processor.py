@@ -24,8 +24,8 @@ class ConfigProcessor(object):
     def register_load_methods(self):
         for section in self.mode_sections:
             self.machine.mode_controller.register_load_method(
-                    load_method=self.process_mode_config,
-                    config_section_name=section, section=section)
+                load_method=self.process_mode_config,
+                config_section_name=section, section=section)
 
     def process_config_file(self, section_dict, config):
         """Called to process a config file (can be a mode or machine config).
@@ -110,8 +110,8 @@ class ConfigProcessor(object):
                                      'files.'.format(k, filename, config_type))
             except KeyError:
                 raise ValueError('Found a "{}:" section in config file {}, '
-                                     'but that section is not valid in {} config '
-                                     'files.'.format(k, filename, config_type))
+                                 'but that section is not valid in {} config '
+                                 'files.'.format(k, filename, config_type))
 
         try:
             if 'config' in config:

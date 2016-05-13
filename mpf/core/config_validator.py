@@ -606,6 +606,8 @@ plugins:
 pololu_maestro:
     __valid_in__: machine
     port: single|str|
+    servo_min: single|int|3000
+    servo_max: single|int|9000
 random_event_player:
     __valid_in__: machine, mode, show
     event_list: list|str|
@@ -1382,14 +1384,11 @@ class ConfigValidator(object):
             return 'yes'
 
         else:
-            raise ValueError(
-                "Config validation error: Entry {}:{}:{} \"{}\" is not valid. Valid values are: {}".format(
-                    validation_failure_info[0][0],
-                    validation_failure_info[0][1],
-                    validation_failure_info[1],
-                    item,
-                    str(param)
-                ))
+            self.validation_error(item, validation_failure_info,
+                                  "Entry \"{}\" is not valid for enum. Valid values are: {}".format(
+                                      item,
+                                      str(param)
+                                  ))
 
     def _validate_type_machine(self, item, param, validation_failure_info):
         if item is None:
@@ -1402,26 +1401,31 @@ class ConfigValidator(object):
         else:
             self.validation_error(item, validation_failure_info)
 
-    def _validate_type_list(self, item, validation_failure_info):
+    @classmethod
+    def _validate_type_list(cls, item, validation_failure_info):
         del validation_failure_info
         return Util.string_to_list(item)
 
-    def _validate_type_int_from_hex(self, item, validation_failure_info):
+    @classmethod
+    def _validate_type_int_from_hex(cls, item, validation_failure_info):
         del validation_failure_info
         return Util.hex_string_to_int(item)
 
-    def _validate_type_gain(self, item, validation_failure_info):
+    @classmethod
+    def _validate_type_gain(cls, item, validation_failure_info):
         del validation_failure_info
         return Util.string_to_gain(item)
 
-    def _validate_type_str(self, item, validation_failure_info):
+    @classmethod
+    def _validate_type_str(cls, item, validation_failure_info):
         del validation_failure_info
         if item is not None:
             return str(item)
         else:
             return None
 
-    def _validate_type_lstr(self, item, validation_failure_info):
+    @classmethod
+    def _validate_type_lstr(cls, item, validation_failure_info):
         del validation_failure_info
         if item is not None:
             return str(item).lower()
@@ -1470,7 +1474,8 @@ class ConfigValidator(object):
             except (TypeError, ValueError):
                 self.validation_error(item, validation_failure_info, "Could not convert {} to num".format(item))
 
-    def _validate_type_bool(self, item, validation_failure_info):
+    @classmethod
+    def _validate_type_bool(cls, item, validation_failure_info):
         del validation_failure_info
         if item is None:
             return None
@@ -1481,25 +1486,29 @@ class ConfigValidator(object):
         else:
             return True
 
-    def _validate_type_ms(self, item, validation_failure_info):
+    @classmethod
+    def _validate_type_ms(cls, item, validation_failure_info):
         del validation_failure_info
         if item is not None:
             return Util.string_to_ms(item)
         else:
             return None
 
-    def _validate_type_secs(self, item, validation_failure_info):
+    @classmethod
+    def _validate_type_secs(cls, item, validation_failure_info):
         del validation_failure_info
         if item is not None:
             return Util.string_to_secs(item)
         else:
             return None
 
-    def _validate_type_dict(self, item, validation_failure_info):
+    @classmethod
+    def _validate_type_dict(cls, item, validation_failure_info):
         del validation_failure_info
         return item
 
-    def _validate_type_kivycolor(self, item, validation_failure_info):
+    @classmethod
+    def _validate_type_kivycolor(cls, item, validation_failure_info):
         del validation_failure_info
         # Validate colors that will be used by Kivy. The result is a 4-item
         # list, RGBA, with individual values from 0.0 - 1.0
@@ -1526,7 +1535,8 @@ class ConfigValidator(object):
 
         return color
 
-    def _validate_type_color(self, item, validation_failure_info):
+    @classmethod
+    def _validate_type_color(cls, item, validation_failure_info):
         del validation_failure_info
         # Validates colors by name, hex, or list, into a 3-item list, RGB,
         # with individual values from 0-255
@@ -1593,7 +1603,8 @@ class ConfigValidator(object):
                                  validation_failure_info[0][0],
                                  validation_failure_info[1]))
 
-    def validation_error(self, item, validation_failure_info, msg=""):
+    @classmethod
+    def validation_error(cls, item, validation_failure_info, msg=""):
         raise AssertionError("Config validation error: Entry {}:{}:{}:{} is not valid. {}".format(
             validation_failure_info[0][0],
             validation_failure_info[0][1],

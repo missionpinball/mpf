@@ -205,13 +205,13 @@ class ShowController(object):
         """
         if not self.external_show_connected:
             self.register_tick_handler(
-                    self._update_external_shows)
+                self._update_external_shows)
             self.external_show_connected = True
 
         self.external_show_command_queue.put(
-                (self._process_external_show_start_command,
-                 (name, priority, leds,
-                  lights, flashers, gis, coils)))
+            (self._process_external_show_start_command,
+             (name, priority, leds,
+              lights, flashers, gis, coils)))
 
     def add_external_show_stop_command_to_queue(self, name):
         """Called by BCP worker thread when an external show stop command is
@@ -224,7 +224,7 @@ class ShowController(object):
             name: The name of the external show.
         """
         self.external_show_command_queue.put(
-                (self._process_external_show_stop_command, (name,)))
+            (self._process_external_show_stop_command, (name,)))
 
     # pylint: disable-msg=too-many-arguments
     def add_external_show_frame_command_to_queue(self, name, led_data=None,
@@ -252,9 +252,9 @@ class ShowController(object):
             events: A comma-separated list of events to fire
         """
         self.external_show_command_queue.put(
-                (self._process_external_show_frame_command,
-                 (name, led_data, light_data,
-                  flasher_data, gi_data, coil_data, events)))
+            (self._process_external_show_frame_command,
+             (name, led_data, light_data,
+              flasher_data, gi_data, coil_data, events)))
 
     def _update_external_shows(self):
         """Processes any pending BCP external show commands.  This function
@@ -356,6 +356,7 @@ class ShowController(object):
             #     if events:
             #         for event in events.split(","):
             #             self.machine.show_controller._add_to_event_queue(event)
+
 
 class ExternalShow(object):
     # pylint: disable-msg=too-many-arguments

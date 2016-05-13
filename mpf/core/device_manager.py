@@ -157,7 +157,7 @@ class DeviceManager(object):
         """
         for collection in self.collections:
             if self.collections[collection].config_section in config:
-                for device, settings in (iter(config[self.collections[collection].config_section].items())):
+                for device, settings in iter(config[self.collections[collection].config_section].items()):
 
                     control_events = [x for x in settings if
                                       x.endswith('_events')]
@@ -183,15 +183,15 @@ class DeviceManager(object):
             except ValueError:
                 priority = 0
             self.machine.events.add_handler(
-                    event=event,
-                    handler=self._control_event_handler,
-                    priority=int(priority),
-                    callback=method,
-                    ms_delay=delay,
-                    delay_mgr=self.machine.delay)
+                event=event,
+                handler=self._control_event_handler,
+                priority=int(priority),
+                callback=method,
+                ms_delay=delay,
+                delay_mgr=self.machine.delay)
 
     def create_collection_control_events(self):
-        for collection, events in (iter(self.machine.config['mpf']['device_collection_control_events'].items())):
+        for collection, events in iter(self.machine.config['mpf']['device_collection_control_events'].items()):
 
             for event in events:
                 event_name = collection + '_' + event
