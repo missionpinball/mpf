@@ -7,23 +7,19 @@ hardware:
 
 pololu_maestro:
   port: COM5
+  servo_min: 3000
+  servo_max: 9000
 
 servos:
   servo1:
-    servo_min: 3000
-    servo_max: 9000
-    positions:
-      0.1: servo1_down
-      0.9: servo1_up
+    servo_min: 0.0
+    servo_max: 1.0
     reset_position: 0.5
     reset_events: reset_servo1
     number: 1
   servo2:
-    servo_min: 0
-    servo_max: 10000
-    positions:
-      0.2: servo2_left
-      1.0: servo2_home
+    servo_min: 0.2
+    servo_max: 0.8
     reset_position: 1.0
     reset_events: reset_servo2
     number: 2
