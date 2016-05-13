@@ -11,6 +11,8 @@ class BallSave(SystemWideDevice, ModeDevice):
     class_label = 'ball_save'
 
     def __init__(self, machine, name):
+        self.unlimited_saves = None
+        self.source_playfield = None
         super().__init__(machine, name)
 
         self.delay = DelayManager(machine.delayRegistry)
@@ -153,8 +155,7 @@ class BallSave(SystemWideDevice, ModeDevice):
         '''
 
         self.source_playfield.add_ball(balls=balls_to_save,
-                                       player_controlled=self.config[
-                                                             'auto_launch'] ^ 1)
+                                       player_controlled=self.config['auto_launch'] ^ 1)
 
         if not self.unlimited_saves:
             self.saves_remaining -= balls_to_save

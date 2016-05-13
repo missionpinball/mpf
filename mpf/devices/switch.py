@@ -12,6 +12,7 @@ class Switch(SystemWideDevice):
     class_label = 'switch'
 
     def __init__(self, machine, name):
+        self.hw_switch = None
         super().__init__(machine, name)
 
         self.machine = machine
@@ -50,7 +51,7 @@ class Switch(SystemWideDevice):
         if self.config['type'].upper() == 'NC':
             self.invert = 1
 
-        self.recycle_secs = self.config['ignore_window_ms']/1000.0
+        self.recycle_secs = self.config['ignore_window_ms'] / 1000.0
 
         self.hw_switch = self.platform.configure_switch(self.config)
 

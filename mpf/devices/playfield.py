@@ -26,6 +26,7 @@ class Playfield(SystemWideDevice):
         self.config = dict()
         self.unexpected_balls = 0
         self.ball_search = BallSearch(self.machine, self)
+        self.ball_controller = None
 
         self.delay = DelayManager(self.machine.delayRegistry)
 
@@ -147,7 +148,8 @@ class Playfield(SystemWideDevice):
         else:
             self.ball_search.enable()
 
-    def get_additional_ball_capacity(self):
+    @classmethod
+    def get_additional_ball_capacity(cls):
         """Used to find out how many more balls this device can hold. Since this
         is the playfield device, this method always returns 999.
 
@@ -329,7 +331,8 @@ class Playfield(SystemWideDevice):
             if self.num_balls_requested < 0:
                 raise AssertionError("num_balls_requested is smaller 0, which doesn't make sense. Quitting...")
 
-    def is_playfield(self):
+    @classmethod
+    def is_playfield(cls):
         return True
 
     def add_incoming_ball(self, source):

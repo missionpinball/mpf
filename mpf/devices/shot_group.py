@@ -33,7 +33,8 @@ class ShotGroup(ModeDevice, SystemWideDevice):
     def enabled(self):
         return self._enabled
 
-    def prepare_config(self, config, is_mode_config):
+    @classmethod
+    def prepare_config(cls, config, is_mode_config):
         if not is_mode_config:
             # If this device is setup in a machine-wide config, make sure it has
             # a default enable event.
@@ -447,8 +448,6 @@ class ShotGroup(ModeDevice, SystemWideDevice):
             with the profile called (profile) are in the same state with the
             name (state).
             '''
-
-
 
     def add_control_events_in_mode(self, mode):
         # called if any control_events for this shot_group exist in the mode

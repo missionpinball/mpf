@@ -169,9 +169,9 @@ class Flipper(SystemWideDevice):
 
         # Send the activation switch press to the switch controller
         self.machine.switch_controller.process_switch(
-                name=self.config['activation_switch'].name,
-                state=1,
-                logical=True)
+            name=self.config['activation_switch'].name,
+            state=1,
+            logical=True)
 
         self.config['main_coil'].enable()
 
@@ -182,9 +182,9 @@ class Flipper(SystemWideDevice):
 
         # Send the activation switch release to the switch controller
         self.machine.switch_controller.process_switch(
-                name=self.config['activation_switch'].name,
-                state=0,
-                logical=True)
+            name=self.config['activation_switch'].name,
+            state=0,
+            logical=True)
 
         # disable the flipper coil(s)
         self.config['main_coil'].disable()

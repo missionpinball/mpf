@@ -21,6 +21,11 @@ class AutofireCoil(SystemWideDevice):
     collection = 'autofires'
     class_label = 'autofire'
 
+    def __init__(self, machine, name):
+        self.coil = None
+        self.switch = None
+        super().__init__(machine, name)
+
     def _initialize(self):
         if "debounce" not in self.config['switch_overwrite']:
             self.config['switch_overwrite']['debounce'] = "quick"

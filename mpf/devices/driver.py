@@ -24,6 +24,7 @@ class Driver(SystemWideDevice):
     class_label = 'coil'
 
     def __init__(self, machine, name):
+        self.hw_driver = None
         super().__init__(machine, name)
 
         self.time_last_changed = 0

@@ -29,7 +29,8 @@ class Accelerometer(SystemWideDevice):
                                               number=self.config['number'],
                                               use_high_pass=False)
 
-    def _calculate_vector_length(self, x, y, z):
+    @classmethod
+    def _calculate_vector_length(cls, x, y, z):
         return math.sqrt(x * x + y * y + z * z)
 
     # pylint: disable-msg=too-many-arguments
@@ -91,10 +92,10 @@ class Accelerometer(SystemWideDevice):
                                deviation_yz / math.pi * 180,
                                deviation_xyz / math.pi * 180)
                 self.machine.events.post(
-                        self.config['level_limits'][max_deviation],
-                        deviation_xyz=deviation_xyz,
-                        deviation_xz=deviation_xz,
-                        deviation_yz=deviation_yz)
+                    self.config['level_limits'][max_deviation],
+                    deviation_xyz=deviation_xyz,
+                    deviation_xz=deviation_xz,
+                    deviation_yz=deviation_yz)
 
     def _handle_hits(self, dx, dy, dz):
         acceleration = self._calculate_vector_length(dx, dy, dz)
@@ -106,4 +107,4 @@ class Accelerometer(SystemWideDevice):
                                self.config['hit_limits'][min_acceleration]
                                )
                 self.machine.events.post(
-                        self.config['hit_limits'][min_acceleration])
+                    self.config['hit_limits'][min_acceleration])

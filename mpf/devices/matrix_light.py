@@ -50,6 +50,7 @@ class MatrixLight(SystemWideDevice):
             light.remove_from_stack_by_mode(mode)
 
     def __init__(self, machine, name):
+        self.hw_driver = None
         super().__init__(machine, name)
 
         self.x = None

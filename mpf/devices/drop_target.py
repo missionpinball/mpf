@@ -15,6 +15,9 @@ class DropTarget(SystemWideDevice):
     class_label = 'drop_target'
 
     def __init__(self, machine, name):
+        self.reset_coil = None
+        self.knockdown_coil = None
+        self.banks = None
         super().__init__(machine, name)
 
         self._in_ball_search = False

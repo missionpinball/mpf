@@ -13,8 +13,9 @@ class Flasher(SystemWideDevice):
     class_label = 'flasher'
 
     def __init__(self, machine, name):
-        super().__init__(machine, name)
         self._configured_driver = None
+        self.hw_driver = None
+        super().__init__(machine, name)
 
     def _initialize(self):
         self.load_platform_section('flashers')

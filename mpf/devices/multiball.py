@@ -11,6 +11,8 @@ class Multiball(SystemWideDevice, ModeDevice):
     class_label = 'multiball'
 
     def __init__(self, machine, name):
+        self.ball_locks = None
+        self.source_playfield = None
         super().__init__(machine, name)
 
         self.delay = DelayManager(machine.delayRegistry)
@@ -30,7 +32,8 @@ class Multiball(SystemWideDevice, ModeDevice):
         self.ball_locks = self.config['ball_locks']
         self.source_playfield = self.config['source_playfield']
 
-    def prepare_config(self, config, is_mode_config):
+    @classmethod
+    def prepare_config(cls, config, is_mode_config):
         if not is_mode_config:
             if 'enable_events' not in config:
                 config['enable_events'] = 'ball_started'
