@@ -23,9 +23,10 @@ class Command(object):
         parser.add_argument("-l",
                             action="store", dest="logfile",
                             metavar='file_name',
-                            default=os.path.join("logs",
+                            default=os.path.join(
+                                "logs",
                                 datetime.now().strftime(
-                                "migration-%Y-%m-%d-%H-%M-%S.log")),
+                                    "migration-%Y-%m-%d-%H-%M-%S.log")),
                             help="The name (and path) of the log file")
 
         args = parser.parse_args(args)

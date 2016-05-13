@@ -129,6 +129,7 @@ class Command(object):
         try:
             MachineController(mpf_path, machine_path, vars(args)).run()
             logging.info("MPF run loop ended.")
+        # pylint: disable-msg=broad-except
         except Exception as e:
             logging.exception(e)
 
