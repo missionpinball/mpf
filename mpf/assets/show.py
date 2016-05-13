@@ -45,7 +45,7 @@ class Show(Asset):
         self.token_values = dict()
         self.token_keys = dict()
 
-        self.token_finder = re.compile('(?<=\()(.*?)(?=\))')
+        self.token_finder = re.compile('(?<=\\()(.*?)(?=\\))')
 
         self.running = set()
         '''Set of RunningShow() instances which represents running instances
