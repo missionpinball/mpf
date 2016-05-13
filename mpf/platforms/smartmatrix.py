@@ -1,11 +1,11 @@
 """Contains code for an SmartMatrix Shield connected to a Teensy"""
 
 import logging
-import serial
 import sys
 import threading
 import traceback
 from queue import Queue
+import serial
 from mpf.core.platform import RgbDmdPlatform
 
 
@@ -62,7 +62,7 @@ class HardwarePlatform(RgbDmdPlatform):
                 self.serial_port.write(bytearray([0x01]))
                 self.serial_port.write(bytearray(data))
 
-            except Exception:
+            except IOError:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 lines = traceback.format_exception(exc_type, exc_value,
                                                    exc_traceback)

@@ -68,7 +68,8 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
     def stop(self):
         self.proc.reset(1)
 
-    def scale_accelerometer_to_g(self, raw_value):
+    @classmethod
+    def scale_accelerometer_to_g(cls, raw_value):
         # raw value is 0 to 16384 -> 14 bit
         # scale is -2g to 2g (2 complement)
         if raw_value & (1 << 13):
@@ -233,14 +234,6 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
                 states[switch] = 0
 
         return states
-
-    def configure_dmd(self):
-        """The P3-ROC does not support a physical DMD, so this method does
-        nothing. It's included here in case it's called by mistake.
-
-        """
-        raise AssertionError("An attempt was made to configure a physical DMD, "
-                             "but the P3-ROC does not support physical DMDs.")
 
     def tick(self, dt):
         """Checks the P3-ROC for any events (switch state changes).

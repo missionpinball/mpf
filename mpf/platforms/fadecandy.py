@@ -82,11 +82,11 @@ class FadeCandyOPClient(OpenPixelClient):
         """
 
         msg = json.dumps({
-                            'gamma': self.gamma,
-                            'whitepoint': self.whitepoint,
-                            'linearSlope': self.linear_slope,
-                            'linearCutoff': self.linear_cutoff
-                            })
+            'gamma': self.gamma,
+            'whitepoint': self.whitepoint,
+            'linearSlope': self.linear_slope,
+            'linearCutoff': self.linear_cutoff
+        })
 
         self.send(struct.pack(
             "!BBHHH", 0x00, 0xFF, len(msg) + 4, 0x0001, 0x0001) + bytes(msg, 'UTF-8'))

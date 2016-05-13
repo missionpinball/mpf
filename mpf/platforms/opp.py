@@ -10,11 +10,6 @@ import threading
 import queue
 import traceback
 
-from mpf.devices.driver import ConfiguredHwDriver
-
-from mpf.core.platform import MatrixLightsPlatform, LedPlatform, SwitchPlatform, DriverPlatform
-from mpf.core.utility_functions import Util
-
 try:
     import serial
     serial_imported = True
@@ -22,104 +17,108 @@ except ImportError:
     serial = None
     serial_imported = False
 
+from mpf.devices.driver import ConfiguredHwDriver
+from mpf.core.platform import MatrixLightsPlatform, LedPlatform, SwitchPlatform, DriverPlatform
+from mpf.core.utility_functions import Util
+
 # Minimum firmware versions needed for this module
 MIN_FW = 0x00000100
 BAD_FW_VERSION = 0x01020304
 
 
 class OppRs232Intf:
-    GET_SER_NUM_CMD     = b'\x00'
-    GET_PROD_ID_CMD     = b'\x01'
-    GET_GET_VERS_CMD    = b'\x02'
+    GET_SER_NUM_CMD = b'\x00'
+    GET_PROD_ID_CMD = b'\x01'
+    GET_GET_VERS_CMD = b'\x02'
     GET_SET_SER_NUM_CMD = b'\x03'
-    RESET_CMD           = b'\x04'
-    GO_BOOT_CMD         = b'\x05'
-    CFG_SOL_CMD         = b'\x06'
-    KICK_SOL_CMD        = b'\x07'
-    READ_GEN2_INP_CMD   = b'\x08'
-    CFG_INP_CMD         = b'\x09'
-    SAVE_CFG_CMD        = b'\x0b'
-    ERASE_CFG_CMD       = b'\x0c'
-    GET_GEN2_CFG        = b'\x0d'
-    SET_GEN2_CFG        = b'\x0e'
-    CHNG_NEO_CMD        = b'\x0f'
-    CHNG_NEO_COLOR      = b'\x10'
-    CHNG_NEO_COLOR_TBL  = b'\x11'
-    SET_NEO_COLOR_TBL   = b'\x12'
-    INCAND_CMD          = b'\x13'
-    CFG_IND_SOL_CMD     = b'\x14'
-    CFG_IND_INP_CMD     = b'\x15'
-    SET_IND_NEO_CMD     = b'\x16'
+    RESET_CMD = b'\x04'
+    GO_BOOT_CMD = b'\x05'
+    CFG_SOL_CMD = b'\x06'
+    KICK_SOL_CMD = b'\x07'
+    READ_GEN2_INP_CMD = b'\x08'
+    CFG_INP_CMD = b'\x09'
+    SAVE_CFG_CMD = b'\x0b'
+    ERASE_CFG_CMD = b'\x0c'
+    GET_GEN2_CFG = b'\x0d'
+    SET_GEN2_CFG = b'\x0e'
+    CHNG_NEO_CMD = b'\x0f'
+    CHNG_NEO_COLOR = b'\x10'
+    CHNG_NEO_COLOR_TBL = b'\x11'
+    SET_NEO_COLOR_TBL = b'\x12'
+    INCAND_CMD = b'\x13'
+    CFG_IND_SOL_CMD = b'\x14'
+    CFG_IND_INP_CMD = b'\x15'
+    SET_IND_NEO_CMD = b'\x16'
 
-    INV_CMD             = b'\xf0'
-    ILLEGAL_CMD         = b'\xfe'
-    EOM_CMD             = b'\xff'
+    INV_CMD = b'\xf0'
+    ILLEGAL_CMD = b'\xfe'
+    EOM_CMD = b'\xff'
 
-    CARD_ID_TYPE_MASK   = b'\xf0'
-    CARD_ID_SOL_CARD    = b'\x00'
-    CARD_ID_INP_CARD    = b'\x10'
-    CARD_ID_GEN2_CARD   = b'\x20'
+    CARD_ID_TYPE_MASK = b'\xf0'
+    CARD_ID_SOL_CARD = b'\x00'
+    CARD_ID_INP_CARD = b'\x10'
+    CARD_ID_GEN2_CARD = b'\x20'
 
     NUM_G2_WING_PER_BRD = 4
-    WING_SOL            = b'\x01'
-    WING_INP            = b'\x02'
-    WING_INCAND         = b'\x03'
-    WING_SW_MATRIX_OUT  = b'\x04'
-    WING_SW_MATRIX_IN   = b'\x05'
-    WING_NEO            = b'\x06'
+    WING_SOL = b'\x01'
+    WING_INP = b'\x02'
+    WING_INCAND = b'\x03'
+    WING_SW_MATRIX_OUT = b'\x04'
+    WING_SW_MATRIX_IN = b'\x05'
+    WING_NEO = b'\x06'
 
-    NUM_G2_INP_PER_BRD  = 32
-    CFG_INP_STATE       = b'\x00'
-    CFG_INP_FALL_EDGE   = b'\x01'
-    CFG_INP_RISE_EDGE   = b'\x02'
+    NUM_G2_INP_PER_BRD = 32
+    CFG_INP_STATE = b'\x00'
+    CFG_INP_FALL_EDGE = b'\x01'
+    CFG_INP_RISE_EDGE = b'\x02'
 
-    NUM_G2_SOL_PER_BRD  = 16
-    CFG_SOL_USE_SWITCH  = b'\x01'
-    CFG_SOL_AUTO_CLR    = b'\x02'
+    NUM_G2_SOL_PER_BRD = 16
+    CFG_SOL_USE_SWITCH = b'\x01'
+    CFG_SOL_AUTO_CLR = b'\x02'
 
-    NUM_COLOR_TBL       = 32
-    NEO_CMD_ON          = 0x80
+    NUM_COLOR_TBL = 32
+    NEO_CMD_ON = 0x80
 
-    INCAND_ROT_LEFT     = b'\x00'
-    INCAND_ROT_RIGHT    = b'\x01'
-    INCAND_LED_ON       = b'\x02'
-    INCAND_LED_OFF      = b'\x03'
-    INCAND_BLINK_SLOW   = b'\x04'
-    INCAND_BLINK_FAST   = b'\x05'
-    INCAND_BLINK_OFF    = b'\x06'
-    INCAND_SET_ON_OFF   = b'\x07'
+    INCAND_ROT_LEFT = b'\x00'
+    INCAND_ROT_RIGHT = b'\x01'
+    INCAND_LED_ON = b'\x02'
+    INCAND_LED_OFF = b'\x03'
+    INCAND_BLINK_SLOW = b'\x04'
+    INCAND_BLINK_FAST = b'\x05'
+    INCAND_BLINK_OFF = b'\x06'
+    INCAND_SET_ON_OFF = b'\x07'
 
-    INCAND_SET_CMD          = b'\x80'
-    INCAND_SET_ON           = b'\x01'
-    INCAND_SET_BLINK_SLOW   = b'\x02'
-    INCAND_SET_BLINK_FAST   = b'\x04'
+    INCAND_SET_CMD = b'\x80'
+    INCAND_SET_ON = b'\x01'
+    INCAND_SET_BLINK_SLOW = b'\x02'
+    INCAND_SET_BLINK_FAST = b'\x04'
 
     # Solenoid configuration constants
-    CFG_BYTES_PER_SOL   = 3
-    INIT_KICK_OFFSET    = 1
-    DUTY_CYCLE_OFFSET   = 2
-    #CFG_SOL_USE_SWITCH  = '\x01'
-    #CFG_SOL_AUTO_CLR    = '\x02'
-    CFG_SOL_DISABLE     = b'\x00'
+    CFG_BYTES_PER_SOL = 3
+    INIT_KICK_OFFSET = 1
+    DUTY_CYCLE_OFFSET = 2
+    # CFG_SOL_USE_SWITCH  = '\x01'
+    # CFG_SOL_AUTO_CLR    = '\x02'
+    CFG_SOL_DISABLE = b'\x00'
 
     CRC8_LOOKUP = [
-          0x00, 0x07, 0x0e, 0x09, 0x1c, 0x1b, 0x12, 0x15, 0x38, 0x3f, 0x36, 0x31, 0x24, 0x23, 0x2a, 0x2d,
-          0x70, 0x77, 0x7e, 0x79, 0x6c, 0x6b, 0x62, 0x65, 0x48, 0x4f, 0x46, 0x41, 0x54, 0x53, 0x5a, 0x5d,
-          0xe0, 0xe7, 0xee, 0xe9, 0xfc, 0xfb, 0xf2, 0xf5, 0xd8, 0xdf, 0xd6, 0xd1, 0xc4, 0xc3, 0xca, 0xcd,
-          0x90, 0x97, 0x9e, 0x99, 0x8c, 0x8b, 0x82, 0x85, 0xa8, 0xaf, 0xa6, 0xa1, 0xb4, 0xb3, 0xba, 0xbd,
-          0xc7, 0xc0, 0xc9, 0xce, 0xdb, 0xdc, 0xd5, 0xd2, 0xff, 0xf8, 0xf1, 0xf6, 0xe3, 0xe4, 0xed, 0xea,
-          0xb7, 0xb0, 0xb9, 0xbe, 0xab, 0xac, 0xa5, 0xa2, 0x8f, 0x88, 0x81, 0x86, 0x93, 0x94, 0x9d, 0x9a,
-          0x27, 0x20, 0x29, 0x2e, 0x3b, 0x3c, 0x35, 0x32, 0x1f, 0x18, 0x11, 0x16, 0x03, 0x04, 0x0d, 0x0a,
-          0x57, 0x50, 0x59, 0x5e, 0x4b, 0x4c, 0x45, 0x42, 0x6f, 0x68, 0x61, 0x66, 0x73, 0x74, 0x7d, 0x7a,
-          0x89, 0x8e, 0x87, 0x80, 0x95, 0x92, 0x9b, 0x9c, 0xb1, 0xb6, 0xbf, 0xb8, 0xad, 0xaa, 0xa3, 0xa4,
-          0xf9, 0xfe, 0xf7, 0xf0, 0xe5, 0xe2, 0xeb, 0xec, 0xc1, 0xc6, 0xcf, 0xc8, 0xdd, 0xda, 0xd3, 0xd4,
-          0x69, 0x6e, 0x67, 0x60, 0x75, 0x72, 0x7b, 0x7c, 0x51, 0x56, 0x5f, 0x58, 0x4d, 0x4a, 0x43, 0x44,
-          0x19, 0x1e, 0x17, 0x10, 0x05, 0x02, 0x0b, 0x0c, 0x21, 0x26, 0x2f, 0x28, 0x3d, 0x3a, 0x33, 0x34,
-          0x4e, 0x49, 0x40, 0x47, 0x52, 0x55, 0x5c, 0x5b, 0x76, 0x71, 0x78, 0x7f, 0x6a, 0x6d, 0x64, 0x63,
-          0x3e, 0x39, 0x30, 0x37, 0x22, 0x25, 0x2c, 0x2b, 0x06, 0x01, 0x08, 0x0f, 0x1a, 0x1d, 0x14, 0x13,
-          0xae, 0xa9, 0xa0, 0xa7, 0xb2, 0xb5, 0xbc, 0xbb, 0x96, 0x91, 0x98, 0x9f, 0x8a, 0x8d, 0x84, 0x83,
-          0xde, 0xd9, 0xd0, 0xd7, 0xc2, 0xc5, 0xcc, 0xcb, 0xe6, 0xe1, 0xe8, 0xef, 0xfa, 0xfd, 0xf4, 0xf3]
-    
+        0x00, 0x07, 0x0e, 0x09, 0x1c, 0x1b, 0x12, 0x15, 0x38, 0x3f, 0x36, 0x31, 0x24, 0x23, 0x2a, 0x2d,
+        0x70, 0x77, 0x7e, 0x79, 0x6c, 0x6b, 0x62, 0x65, 0x48, 0x4f, 0x46, 0x41, 0x54, 0x53, 0x5a, 0x5d,
+        0xe0, 0xe7, 0xee, 0xe9, 0xfc, 0xfb, 0xf2, 0xf5, 0xd8, 0xdf, 0xd6, 0xd1, 0xc4, 0xc3, 0xca, 0xcd,
+        0x90, 0x97, 0x9e, 0x99, 0x8c, 0x8b, 0x82, 0x85, 0xa8, 0xaf, 0xa6, 0xa1, 0xb4, 0xb3, 0xba, 0xbd,
+        0xc7, 0xc0, 0xc9, 0xce, 0xdb, 0xdc, 0xd5, 0xd2, 0xff, 0xf8, 0xf1, 0xf6, 0xe3, 0xe4, 0xed, 0xea,
+        0xb7, 0xb0, 0xb9, 0xbe, 0xab, 0xac, 0xa5, 0xa2, 0x8f, 0x88, 0x81, 0x86, 0x93, 0x94, 0x9d, 0x9a,
+        0x27, 0x20, 0x29, 0x2e, 0x3b, 0x3c, 0x35, 0x32, 0x1f, 0x18, 0x11, 0x16, 0x03, 0x04, 0x0d, 0x0a,
+        0x57, 0x50, 0x59, 0x5e, 0x4b, 0x4c, 0x45, 0x42, 0x6f, 0x68, 0x61, 0x66, 0x73, 0x74, 0x7d, 0x7a,
+        0x89, 0x8e, 0x87, 0x80, 0x95, 0x92, 0x9b, 0x9c, 0xb1, 0xb6, 0xbf, 0xb8, 0xad, 0xaa, 0xa3, 0xa4,
+        0xf9, 0xfe, 0xf7, 0xf0, 0xe5, 0xe2, 0xeb, 0xec, 0xc1, 0xc6, 0xcf, 0xc8, 0xdd, 0xda, 0xd3, 0xd4,
+        0x69, 0x6e, 0x67, 0x60, 0x75, 0x72, 0x7b, 0x7c, 0x51, 0x56, 0x5f, 0x58, 0x4d, 0x4a, 0x43, 0x44,
+        0x19, 0x1e, 0x17, 0x10, 0x05, 0x02, 0x0b, 0x0c, 0x21, 0x26, 0x2f, 0x28, 0x3d, 0x3a, 0x33, 0x34,
+        0x4e, 0x49, 0x40, 0x47, 0x52, 0x55, 0x5c, 0x5b, 0x76, 0x71, 0x78, 0x7f, 0x6a, 0x6d, 0x64, 0x63,
+        0x3e, 0x39, 0x30, 0x37, 0x22, 0x25, 0x2c, 0x2b, 0x06, 0x01, 0x08, 0x0f, 0x1a, 0x1d, 0x14, 0x13,
+        0xae, 0xa9, 0xa0, 0xa7, 0xb2, 0xb5, 0xbc, 0xbb, 0x96, 0x91, 0x98, 0x9f, 0x8a, 0x8d, 0x84, 0x83,
+        0xde, 0xd9, 0xd0, 0xd7, 0xc2, 0xc5, 0xcc, 0xcb, 0xe6, 0xe1, 0xe8, 0xef, 0xfa, 0xfd, 0xf4, 0xf3]
+
     @staticmethod
     def calc_crc8_whole_msg(msg_chars):
         crc8_byte = 0xff
@@ -202,7 +201,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
             ord(OppRs232Intf.GET_GEN2_CFG): self.get_gen2_cfg_resp,
             ord(OppRs232Intf.READ_GEN2_INP_CMD): self.read_gen2_inp_resp,
             ord(OppRs232Intf.GET_GET_VERS_CMD): self.vers_resp,
-            }
+        }
 
         self._connect_to_hardware()
 
@@ -237,7 +236,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         else:            
             self.log.warning("Received unknown serial command?%s. (This is "
                              "very worrisome.)", "".join(" 0x%02x" % b for b in msg))
-            
+
             # TODO: This means synchronization is lost.  Send EOM characters
             #  until they come back
 
@@ -266,7 +265,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         It is currently assumed that the oversampling will guarantee proper communication
         with the boards.  If this does not end up being the case, this will be changed
         to update all the incandescents each loop.
-        
+
         Note:  This could be made much more efficient by supporting a command
         that simply sets the state of all 32 of the LEDs as either on or off.
 
@@ -312,7 +311,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                         hw_states[opp_inp.cardNum + '-' + str(index)] = 0
                 curr_bit <<= 1
         return hw_states
-        
+
     def inv_resp(self, msg):
         self.log.debug("Received Inventory Response:%s", "".join(" 0x%02x" % b for b in msg))
 
@@ -378,7 +377,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                     inp_msg.append(0)
                     inp_msg.extend(OppRs232Intf.calc_crc8_whole_msg(inp_msg))
                     whole_msg.extend(inp_msg)
-            
+
                 if has_neo:
                     self.opp_neopixels.append(OPPNeopixelCard(msg[curr_index], self.neoCardDict, self))
 
@@ -393,7 +392,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
                 # TODO: This means synchronization is lost.  Send EOM characters
                 #  until they come back
-                    
+
         whole_msg.extend(OppRs232Intf.EOM_CMD)
         self.read_input_msg = bytes(whole_msg)
 
@@ -556,7 +555,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
         neo = self.neoCardDict[card]
         pixel = neo.add_neopixel(int(pixel_num), self.neoDict)
-            
+
         return pixel
 
     def configure_matrixlight(self, config):
@@ -570,7 +569,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
             raise AssertionError("A request was made to configure a OPP matrix "
                                  "light (incand board), with number %s "
                                  "which doesn't exist", config['number'])
-            
+
         self.incand_reg = True            
         return self.incandDict[config['number']]
 
@@ -588,7 +587,8 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         if curr_tick == 0:
             self.opp_connection.send(self.read_input_msg)
 
-    def _verify_coil_and_switch_fit(self, switch, coil):
+    @classmethod
+    def _verify_coil_and_switch_fit(cls, switch, coil):
         card, solenoid = coil.hw_driver.number.split('-')
         sw_card, sw_num = switch.hw_switch.number.split('-')
         matching_sw = ((int(solenoid) & 0x0c) << 1) | (int(solenoid) & 0x03)
@@ -611,7 +611,11 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
         self._write_hw_rule(enable_switch, coil, True)
 
-    def get_hold_value(self, coil):
+    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
+        raise AssertionError("Not implemented in OPP currently")
+
+    @classmethod
+    def get_hold_value(cls, coil):
         if coil.config['hold_power16']:
             return coil.config['hold_power16']
         elif coil.config['hold_power']:
@@ -626,7 +630,8 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         else:
             return 0
 
-    def get_minimum_off_time(self, coil):
+    @classmethod
+    def get_minimum_off_time(cls, coil):
         if not coil.config['recycle']:
             return 0
         elif coil.config['recycle_factor']:
@@ -780,7 +785,7 @@ class OPPSolenoid(object):
         sol_int = int(solenoid)
         self.log.debug("Pulsing solenoid %s", self.number)
         self._kick_coil(sol_int, True)
-        
+
         hex_ms_string = self.config['pulse_ms']
         return Util.hex_string_to_int(hex_ms_string)
 
@@ -795,7 +800,7 @@ class OPPSolenoidCard(object):
         self.state = 0
 
         self.log.debug("Creating OPP Solenoid at hardware address: 0x%02x", addr)
-        
+
         card = str(addr - ord(OppRs232Intf.CARD_ID_GEN2_CARD))
         for index in range(0, 16):
             if ((1 << index) & mask) != 0:
@@ -804,7 +809,8 @@ class OPPSolenoidCard(object):
                 opp_sol.config = self.create_driver_settings(platform.machine)
                 sol_dict[card + '-' + str(index)] = opp_sol
 
-    def create_driver_settings(self, machine):
+    @classmethod
+    def create_driver_settings(cls, machine):
         return_dict = dict()
         pulse_ms = machine.config['mpf']['default_pulse_ms']
         return_dict['pulse_ms'] = str(pulse_ms)
@@ -966,13 +972,13 @@ class SerialCommunicator(object):
         msg.extend(OppRs232Intf.INV_CMD)
         msg.extend(OppRs232Intf.EOM_CMD)
         cmd = bytes(msg)
-        
+
         self.log.debug("Sending inventory command: %s", "".join(" 0x%02x" % b for b in cmd))
         self.serial_connection.write(cmd)
-        
+
         time.sleep(.1)
         resp = self.serial_connection.read(30)
-        
+
         # resp will contain the inventory response.
         self.platform.process_received_message(resp)
 
@@ -991,21 +997,21 @@ class SerialCommunicator(object):
         time.sleep(.1)
         resp = self.serial_connection.read(30)
         self.platform.process_received_message(resp)
-        
+
         # see if version of firmware is new enough
         if self.platform.minVersion < MIN_FW:
             raise AssertionError("Firmware version mismatch. MPF requires"
                                  " the {} processor to be firmware {}, but yours is {}".
                                  format(self.remote_processor, self.create_vers_str(MIN_FW),
                                         self.create_vers_str(self.platform.minVersion)))
-        
+
         # get initial value for inputs
         self.serial_connection.write(self.platform.read_input_msg)
         time.sleep(.1)
         resp = self.serial_connection.read(100)
         self.log.debug("Init get input response: %s", "".join(" 0x%02x" % b for b in resp))
         self.platform.process_received_message(resp)
-        
+
     def send_get_gen2_cfg_cmd(self):
         # Now send get gen2 configuration message to find populated wing boards
         whole_msg = bytearray()
@@ -1020,12 +1026,12 @@ class SerialCommunicator(object):
             msg.append(0)
             msg.extend(OppRs232Intf.calc_crc8_whole_msg(msg))
             whole_msg.extend(msg)
-            
+
         whole_msg.extend(OppRs232Intf.EOM_CMD)
         cmd = bytes(whole_msg)
         self.log.debug("Sending get Gen2 Cfg command: %s", "".join(" 0x%02x" % b for b in cmd))
         self.serial_connection.write(cmd)
-        
+
     def send_vers_cmd(self):
         # Now send get firmware version message
         whole_msg = bytearray()
@@ -1040,13 +1046,14 @@ class SerialCommunicator(object):
             msg.append(0)
             msg.extend(OppRs232Intf.calc_crc8_whole_msg(msg))
             whole_msg.extend(msg)
-            
+
         whole_msg.extend(OppRs232Intf.EOM_CMD)
         cmd = bytes(whole_msg)
         self.log.debug("Sending get version command: %s", "".join(" 0x%02x" % b for b in cmd))
         self.serial_connection.write(cmd)
-        
-    def create_vers_str(self, version_int):
+
+    @classmethod
+    def create_vers_str(cls, version_int):
         return ("%02d.%02d.%02d.%02d" % (((version_int >> 24) & 0xff),
                                          ((version_int >> 16) & 0xff), ((version_int >> 8) & 0xff),
                                          (version_int & 0xff)))
@@ -1091,6 +1098,7 @@ class SerialCommunicator(object):
                 if debug:
                     self.log.info("Sending: %s", "".join(" 0x%02x" % b for b in msg))
 
+        # pylint: disable-msg=broad-except
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
@@ -1125,7 +1133,7 @@ class SerialCommunicator(object):
                             self.partMsg = self.partMsg[2:]
                             strlen -= 2
                             lost_synch = True
-                            
+
                     elif self.partMsg[0] == ord(OppRs232Intf.EOM_CMD):
                         self.partMsg = self.partMsg[1:]
                         strlen -= 1
@@ -1143,6 +1151,7 @@ class SerialCommunicator(object):
                             strlen -= 1
             self.log.critical("Exit rcv loop")
 
+        # pylint: disable-msg=broad-except
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             lines = traceback.format_exception(exc_type, exc_value,

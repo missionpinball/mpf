@@ -13,6 +13,13 @@ import io
 from distutils.version import StrictVersion
 from copy import deepcopy
 
+try:
+    import serial
+    serial_imported = True
+except ImportError:
+    serial_imported = False
+    serial = None
+
 from mpf.core.platform import ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatform, \
     SwitchPlatform, DriverPlatform
 from mpf.core.utility_functions import Util
@@ -20,13 +27,6 @@ from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformIn
 from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
 from mpf.platforms.interfaces.gi_platform_interface import GIPlatformInterface
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
-
-try:
-    import serial
-    serial_imported = True
-except ImportError:
-    serial_imported = False
-    serial = None
 
 # Minimum firmware versions needed for this module
 DMD_MIN_FW = '0.88'
@@ -868,7 +868,8 @@ class FASTDriver(DriverPlatformInterface):
         else:
             return Util.int_to_hex_string(pulse_ms)
 
-    def get_pwm1_for_cmd(self, coil):
+    @classmethod
+    def get_pwm1_for_cmd(cls, coil):
         if coil.config['pulse_pwm_mask']:
             pulse_pwm_mask = str(coil.config['pulse_pwm_mask'])
             if len(pulse_pwm_mask) == 32:
@@ -884,7 +885,8 @@ class FASTDriver(DriverPlatformInterface):
         else:
             return "ff"
 
-    def get_pwm2_for_cmd(self, coil):
+    @classmethod
+    def get_pwm2_for_cmd(cls, coil):
         if coil.config['hold_pwm_mask']:
             hold_pwm_mask = str(coil.config['hold_pwm_mask'])
             if len(hold_pwm_mask) == 32:
@@ -919,7 +921,8 @@ class FASTDriver(DriverPlatformInterface):
     def get_trigger_cmd(self):
         return self.driver_settings['trigger_cmd']
 
-    def get_control_for_cmd(self, switch):
+    @classmethod
+    def get_control_for_cmd(cls, switch):
         control = 0x01  # Driver enabled
         if switch.invert:
             control += 0x10
@@ -1330,6 +1333,7 @@ class SerialCommunicator(object):
                     if debug:
                         self.platform.log.info("Sending: %s", msg)
 
+        # pylint: disable-msg=broad-except
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
@@ -1352,6 +1356,7 @@ class SerialCommunicator(object):
                     if msg not in self.ignored_messages:
                         self.receive_queue.put(msg)
 
+            # pylint: disable-msg=broad-except
             except Exception:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 lines = traceback.format_exception(exc_type, exc_value,

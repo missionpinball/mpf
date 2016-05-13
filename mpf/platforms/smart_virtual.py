@@ -23,7 +23,8 @@ class HardwarePlatform(VirtualPlatform):
         self.machine.events.add_handler('machine_reset_phase_1',
                                         self._initialize2)
 
-    def set_target(self, source, target, **kwargs):
+    @classmethod
+    def set_target(cls, source, target, **kwargs):
         del kwargs
         driver = None
         if source.config['eject_coil']:
@@ -44,26 +45,26 @@ class HardwarePlatform(VirtualPlatform):
 
             if device.config['eject_coil']:
                 device.config['eject_coil'].hw_driver.register_ball_switches(
-                        device.config['ball_switches'])
+                    device.config['ball_switches'])
 
                 device.config['eject_coil'].hw_driver.type = 'eject'
 
                 if not device.config['eject_targets'][0].is_playfield():
                     device.config['eject_coil'].hw_driver.set_target_device(
-                            device.config['eject_targets'][0])
+                        device.config['eject_targets'][0])
 
                 if device.config['confirm_eject_switch']:
                     device.config['eject_coil'].hw_driver.confirm_eject_switch = device.config['confirm_eject_switch']
 
             elif device.config['hold_coil']:
                 device.config['hold_coil'].hw_driver.register_ball_switches(
-                        device.config['ball_switches'])
+                    device.config['ball_switches'])
 
                 device.config['hold_coil'].hw_driver.type = 'hold'
 
                 if not device.config['eject_targets'][0].is_playfield():
                     device.config['hold_coil'].hw_driver.set_target_device(
-                            device.config['eject_targets'][0])
+                        device.config['eject_targets'][0])
 
                 if device.config['confirm_eject_switch']:
                     device.config['hold_coil'].hw_driver.confirm_eject_switch = device.config['confirm_eject_switch']
@@ -101,9 +102,8 @@ class HardwarePlatform(VirtualPlatform):
 
 class SmartVirtualDriver(VirtualDriver):
     def __init__(self, config, machine, platform):
+        super().__init__(config)
         self.log = logging.getLogger('SmartVirtualDriver')
-        self.number = config['number']
-        self.config = config
         self.machine = machine
         self.platform = platform
         self.ball_switches = list()

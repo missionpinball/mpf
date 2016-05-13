@@ -1,3 +1,4 @@
+import abc
 import logging
 import platform
 import sys
@@ -33,7 +34,10 @@ if not pinproc_imported:    # pragma: no cover
         pinproc = None
 
 
-class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlatform, DriverPlatform):
+# pylint does not understand that this class is abstract
+# pylint: disable-msg=abstract-method
+class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlatform, DriverPlatform,
+                       metaclass=abc.ABCMeta):
     """Platform class for the P-Roc and P3-ROC hardware controller.
 
     Args:
@@ -75,7 +79,8 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
 
         self.log.info("Successfully connected to P-ROC/P3-ROC")
 
-    def _get_event_type(self, sw_activity, debounced):
+    @classmethod
+    def _get_event_type(cls, sw_activity, debounced):
         if sw_activity == 0 and debounced in ("normal", "auto"):
             return "open_debounced"
         elif sw_activity == 0 and debounced == "quick":
@@ -479,7 +484,8 @@ class PDBConfig(object):
 
         return coil_bank_list
 
-    def initialize_drivers(self, proc):
+    @classmethod
+    def initialize_drivers(cls, proc):
         # Loop through all of the drivers, initializing them with the polarity.
         for i in range(0, 255):
             state = {'driverNum': i,
@@ -599,7 +605,8 @@ class PDBSwitch(object):
     def proc_num(self):
         return self.sw_number
 
-    def parse_matrix_num(self, num_str):
+    @classmethod
+    def parse_matrix_num(cls, num_str):
         cr_list = num_str.split('/')
         return 32 + int(cr_list[0]) * 16 + int(cr_list[1])
 
@@ -634,7 +641,8 @@ class PDBCoil(object):
     def output(self):
         return self.outputnum
 
-    def is_direct_coil(self, string):
+    @classmethod
+    def is_direct_coil(cls, string):
         if len(string) < 2 or len(string) > 3:
             return False
         if not string[0] == 'C':
@@ -643,7 +651,8 @@ class PDBCoil(object):
             return False
         return True
 
-    def is_pdb_coil(self, string):
+    @classmethod
+    def is_pdb_coil(cls, string):
         return is_pdb_address(string)
 
 
@@ -686,7 +695,8 @@ class PDBLight(object):
     def dedicated_output(self):
         return self.output
 
-    def is_direct_lamp(self, string):
+    @classmethod
+    def is_direct_lamp(cls, string):
         if len(string) < 2 or len(string) > 3:
             return False
         if not string[0] == 'L':
@@ -695,7 +705,8 @@ class PDBLight(object):
             return False
         return True
 
-    def split_matrix_addr_parts(self, string):
+    @classmethod
+    def split_matrix_addr_parts(cls, string):
         """ Input is of form C-Ax-By-z:R-Ax-By-z  or  C-x/y/z:R-x/y/z  or
         aliasX:aliasY.  We want to return only the address part: Ax-By-z,
         x/y/z, or aliasX.  That is, remove the two character prefix if present.
@@ -829,7 +840,8 @@ class PROCDriver(DriverPlatformInterface):
 
         self.log.debug("Driver Settings for %s", self.number)
 
-    def get_pwm_on_ms(self, coil):
+    @classmethod
+    def get_pwm_on_ms(cls, coil):
         # figure out what kind of enable we need:
         if coil.config['hold_power']:
             pwm_on_ms, pwm_off_ms = (Util.pwm8_to_on_off(coil.config['hold_power']))
@@ -841,7 +853,8 @@ class PROCDriver(DriverPlatformInterface):
         else:
             return 0
 
-    def get_pwm_off_ms(self, coil):
+    @classmethod
+    def get_pwm_off_ms(cls, coil):
         # figure out what kind of enable we need:
         if coil.config['hold_power']:
             pwm_on_ms, pwm_off_ms = (Util.pwm8_to_on_off(coil.config['hold_power']))
