@@ -5,6 +5,16 @@ from mpf.core.mode import Mode
 
 class Tilt(Mode):
 
+    def __init__(self, machine, config, name, path):
+        self._balls_to_collect = None
+        self._last_warning = None
+        self.ball_ending_tilted_queue = None
+        self.tilt_event_handlers = None
+        self.last_tilt_warning_switch = None
+        self.tilt_config = None
+        self.reset_warnings_handlers = None
+        super().__init__(machine, config, name, path)
+
     def mode_init(self):
         self._balls_to_collect = 0
         self._last_warning = None
@@ -223,8 +233,8 @@ class Tilt(Mode):
             return 0
 
         delta = (self.tilt_config['settle_time'] -
-                (self.machine.clock.get_time() -
-                 self.last_tilt_warning_switch) * 1000)
+                 (self.machine.clock.get_time() -
+                  self.last_tilt_warning_switch) * 1000)
         if delta > 0:
             return delta
         else:

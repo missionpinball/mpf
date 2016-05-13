@@ -8,6 +8,15 @@ from mpf.core.player import Player
 
 class HighScore(Mode):
 
+    def __init__(self, machine, config, name, path):
+        self.data_manager = None
+        self.high_scores = None
+        self.high_score_config = None
+        self.player_name_handler = None
+        self.pending_award = None
+        self.new_high_score_list = None
+        super().__init__(machine, config, name, path)
+
     def mode_init(self):
         self.data_manager = DataManager(self.machine, 'high_scores')
         self.high_scores = self.data_manager.get_data()

@@ -8,6 +8,20 @@ from mpf.core.mode import Mode
 
 class Credits(Mode):
 
+    def __init__(self, machine, config, name, path):
+        self.data_manager = None
+        self.earnings = None
+
+        self.credit_units_per_game = None
+        self.credit_units_inserted = None
+        self.credit_unit = None
+        self.max_credit_units = None
+        self.pricing_tiers = None
+        self.credit_units_for_pricing_tiers = None
+        self.reset_pricing_tier_count_this_game = None
+        self.credits_config = None
+        super().__init__(machine, config, name, path)
+
     def mode_init(self):
         self.data_manager = DataManager(self.machine, 'earnings')
         self.earnings = self.data_manager.get_data()
