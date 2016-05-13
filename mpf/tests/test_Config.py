@@ -40,7 +40,7 @@ class TestConfig(MpfTestCase):
         self.assertEqual(6, self.machine.config['test_section']['int_6'])
         self.assertEqual(7, self.machine.config['test_section']['int_7'])
 
-        # 00ff00, 003200 should be strings
+        # 00ff00, 003200 should be stringsc
         self.assertEqual('00ff00', self.machine.config['test_section']['str_00ff00'])
         self.assertEqual('003200', self.machine.config['test_section']['str_003200'])
 
@@ -424,11 +424,11 @@ class TestConfig(MpfTestCase):
             validation_string, validation_failure_info, "test")
         self.assertEqual("test", results)
 
-        with self.assertRaises(ValueError) as e:
+        with self.assertRaises(AssertionError) as e:
             self.machine.config_validator.validate_config_item(
                 validation_string, validation_failure_info, 'something else')
-        self.assertEqual('Config validation error: Entry key:entry:subkey "something else" '
-                         'is not valid. Valid values are: None,test', str(e.exception))
+        self.assertEqual('Config validation error: Entry key:entry:subkey:something else is not valid. Entry'
+                         ' "something else" is not valid for enum. Valid values are: None,test', str(e.exception))
 
         # test enum with 'NO' setting
         validation_string = 'single|enum(nc,no)|no'
