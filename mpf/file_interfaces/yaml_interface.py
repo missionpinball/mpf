@@ -33,7 +33,7 @@ MpfResolver.add_implicit_resolver(
     # Process any item beginning with a plus sign (+) as a string
     u'tag:yaml.org,2002:str',
     re.compile(
-        u'''^(\+([0-9a-zA-Z .]+))$''',
+        u'''^(\\+([0-9a-zA-Z .]+))$''',
         re.X),
     list(u'+'))
 
@@ -121,11 +121,11 @@ class MpfRoundTripConstructor(RoundTripConstructor):
         if value == '0':
             return 0
         elif value.startswith('0b'):
-            return sign*int(value[2:], 2)
+            return sign * int(value[2:], 2)
         elif value.startswith('0x'):
-            return sign*int(value[2:], 16)
+            return sign * int(value[2:], 16)
         elif value.startswith('0o'):
-            return sign*int(value[2:], 8)
+            return sign * int(value[2:], 8)
         # elif value[0] == '0':
         #    return sign*int(value, 8)
         elif ':' in value:
@@ -134,11 +134,11 @@ class MpfRoundTripConstructor(RoundTripConstructor):
             base = 1
             int_value = 0
             for digit in digits:
-                int_value += digit*base
+                int_value += digit * base
                 base *= 60
-            return sign*int_value
+            return sign * int_value
         else:
-            return sign*int(value)
+            return sign * int(value)
 
 
 class MpfConstructor(Constructor):
@@ -156,11 +156,11 @@ class MpfConstructor(Constructor):
         if value == '0':
             return 0
         elif value.startswith('0b'):
-            return sign*int(value[2:], 2)
+            return sign * int(value[2:], 2)
         elif value.startswith('0x'):
-            return sign*int(value[2:], 16)
+            return sign * int(value[2:], 16)
         elif value.startswith('0o'):
-            return sign*int(value[2:], 8)
+            return sign * int(value[2:], 8)
         # elif value[0] == '0':
         #    return sign*int(value, 8)
         elif ':' in value:
@@ -169,11 +169,11 @@ class MpfConstructor(Constructor):
             base = 1
             int_value = 0
             for digit in digits:
-                int_value += digit*base
+                int_value += digit * base
                 base *= 60
-            return sign*int_value
+            return sign * int_value
         else:
-            return sign*int(value)
+            return sign * int(value)
 
 MpfRoundTripConstructor.add_constructor(
     u'tag:yaml.org,2002:int',
@@ -305,16 +305,16 @@ class YamlInterface(FileInterface):
             if hasattr(exc, 'problem_mark'):
                 mark = exc.problem_mark
                 self.log.debug("YAML error found in file %s. Line %s, "
-                               "Position %s", filename, mark.line+1,
-                               mark.column+1)
+                               "Position %s", filename, mark.line + 1,
+                               mark.column + 1)
                 if halt_on_error:
                     raise ValueError("YAML error found in file {}. Line {}, "
-                                     "Position {}".format(filename, mark.line+1, mark.column+1))
+                                     "Position {}".format(filename, mark.line + 1, mark.column + 1))
 
             elif halt_on_error:
                 raise ValueError("Error found in file %s" % filename)
 
-        except Exception:
+        except Exception:   # pylint: disable-msg=broad-except
             self.log.debug("Couldn't load from file: %s", filename)
 
             if halt_on_error:
