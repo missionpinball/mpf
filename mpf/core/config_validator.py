@@ -847,30 +847,6 @@ system11:
     ac_relay_driver: single|machine(coils)|
 text_strings:
     __valid_in__: machine, mode                 # todo add to validator
-# text_styles:
-#     __valid_in__: machine, mode
-#     font_name: single|str|None
-#     font_size: single|num|None
-#     bold: single|bool|None
-#     italtic: single|bool|None
-#     halign: single|str|None
-#     valign: single|str|None
-#     padding_x: single|num|None
-#     padding_y: single|num|None
-#     # text_size: single||None
-#     shorten: single|bool|None
-#     mipmap: single|bool|None
-#     markup: single|bool|None
-#     line_height: single|float|None
-#     max_lines: single|int|None
-#     strip: single|bool|None
-#     shorten_from: single|str|None
-#     split_str: single|str|None
-#     unicode_errors: single|str|None
-#     color: single|kivycolor|ffffffff
-#     crop_top: single|int|0            # todo
-#     crop_bottom: single|int|0         # todo
-#     antialias: single|bool|False      # todo
 tilt:
     __valid_in__: machine, mode
     tilt_slam_tilt_events: list|str|None
@@ -948,13 +924,11 @@ virtual_platform_start_active_switches:
     __valid_in__: machine                           # todo add to validator
 widget_player:
     __valid_in__: machine, mode, show
-    # widget: list|str|
     target: single|str|None
     slide: single|str|None
-    expire: single|secs|None
     action: single|enum(add,remove)|add
-    z: single|int|0
     key: single|str|None
+    widget_settings: ignore
 widget_styles:
     __valid_in__: machine, mode, show
     color: single|kivycolor|ffffffff

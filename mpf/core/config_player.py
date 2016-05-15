@@ -232,6 +232,7 @@ class ConfigPlayer(object):
                   show_tokens=show_tokens)
 
     def play(self, settings, key=None, priority=0, **kwargs):
+        # **kwargs since this is an event callback
         raise NotImplementedError
 
     def clear(self, key):
