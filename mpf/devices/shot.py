@@ -132,6 +132,9 @@ class Shot(Device):
 
         """
 
+        if not self.player:
+            return
+
         profile_name = self.enable_table[mode]['profile']
         profile = self.enable_table[mode]['settings']
         player_var = profile['player_variable']
@@ -552,7 +555,7 @@ class Shot(Device):
                 pick up right where it left off. Default is 0.
 
         """
-        if not self.machine.game:
+        if not self.player:
             return
 
         if self.debug:
@@ -736,6 +739,9 @@ class Shot(Device):
             pass
 
     def update_current_state_name(self, mode):
+
+        if not self.player:
+            return
 
         if self.debug:
             self.log.debug("Old current state name for mode %s: %s",

@@ -11,6 +11,7 @@ data
 *.p
 htmlcov/
 tests/machine_files/ball_device/data/
+mpf.egg-info
 # docs have been moved to a branch called gh-pages
 
 # Note, if you want to exclude your own machine files from git, you can move the

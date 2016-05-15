@@ -193,6 +193,10 @@ class ShotGroup(Device):
         shot group, must both be enabled for the rotation events to work.
 
         """
+
+        if not self.machine.game:
+            return
+
         if not self.rotation_enabled:
 
             if self.debug:
