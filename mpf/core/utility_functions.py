@@ -438,7 +438,7 @@ class Util(object):
         return Util.hex_matcher.fullmatch(str(string)) is not None
 
     @staticmethod
-    # pylint disable-msg=too-many-return-statements
+    # pylint: disable-msg=too-many-return-statements
     def string_to_ms(time_string):
         """Decodes a string of real-world time into an int of milliseconds.
         Example inputs:
