@@ -30,6 +30,7 @@ MIN_FW = 0x00000100
 BAD_FW_VERSION = 0x01020304
 
 
+# pylint: disable-msg=too-many-instance-attributes
 class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, DriverPlatform):
     """Platform class for the OPP hardware.
 
