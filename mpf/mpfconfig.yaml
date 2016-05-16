@@ -49,7 +49,7 @@ mpf:
         flipper.Flipper
         diverter.Diverter
         score_reel.ScoreReel
-        score_reel.ScoreReelGroup
+        score_reel_group.ScoreReelGroup
         flasher.Flasher
         playfield_transfer.PlayfieldTransfer
         ball_lock.BallLock
