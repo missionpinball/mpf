@@ -17,11 +17,11 @@ except ImportError:
     serial = None
     serial_imported = False
 
-from mpf.platforms.opp_common.opp_coil import OPPSolenoidCard
-from mpf.platforms.opp_common.opp_incand import OPPIncandCard
-from mpf.platforms.opp_common.opp_neopixel import OPPNeopixelCard
-from mpf.platforms.opp_common.opp_switch import OPPInputCard
-from mpf.platforms.opp_common.opp_rs232_intf import OppRs232Intf
+from mpf.platforms.opp.opp_coil import OPPSolenoidCard
+from mpf.platforms.opp.opp_incand import OPPIncandCard
+from mpf.platforms.opp.opp_neopixel import OPPNeopixelCard
+from mpf.platforms.opp.opp_switch import OPPInputCard
+from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 from mpf.devices.driver import ConfiguredHwDriver
 from mpf.core.platform import MatrixLightsPlatform, LedPlatform, SwitchPlatform, DriverPlatform
 

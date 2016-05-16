@@ -1,11 +1,11 @@
 import copy
 import time
 from queue import Queue
-
-from mpf.tests.MpfTestCase import MpfTestCase
 from unittest.mock import MagicMock
-from mpf.platforms import opp
-from mpf.platforms.opp_common.opp_rs232_intf import OppRs232Intf
+
+from mpf.platforms.opp import opp
+from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
+from mpf.tests.MpfTestCase import MpfTestCase
 
 
 class SerialMock:

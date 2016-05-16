@@ -1,7 +1,7 @@
 import logging
 
 from mpf.core.utility_functions import Util
-from mpf.platforms.opp_common.opp_rs232_intf import OppRs232Intf
+from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 
 
 class OPPSolenoid(object):
