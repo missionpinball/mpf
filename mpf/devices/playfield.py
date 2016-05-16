@@ -14,16 +14,8 @@ class Playfield(SystemWideDevice):
     collection = 'playfields'
     class_label = 'playfield'
 
-    # noinspection PyMissingConstructor
     def __init__(self, machine, name):
-        self.log = logging.getLogger('playfield.{}'.format(name))
-
-        self.machine = machine
-        self.name = name.lower()
-        self.tags = list()
-        self.label = None
-        self.debug = False
-        self.config = dict()
+        super().__init__(machine, name)
         self.unexpected_balls = 0
         self.ball_search = BallSearch(self.machine, self)
         self.ball_controller = None
@@ -36,8 +28,6 @@ class Playfield(SystemWideDevice):
         self._balls = 0
         self.available_balls = 0
         self.num_balls_requested = 0
-        self.queued_balls = list()
-        self._playfield = True
 
     def _initialize(self):
         if 'default' in self.config['tags']:
