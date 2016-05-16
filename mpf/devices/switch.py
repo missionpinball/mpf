@@ -15,8 +15,6 @@ class Switch(SystemWideDevice):
         self.hw_switch = None
         super().__init__(machine, name)
 
-        self.machine = machine
-        self.name = name
         self.deactivation_events = set()
         self.activation_events = set()
         self.state = 0
@@ -33,8 +31,6 @@ class Switch(SystemWideDevice):
         self.recycle_clear_time = 0
         self.recycle_jitter_count = 0
 
-        self.last_changed = None
-        self.hw_timestamp = None
         self._configured_switch = None
 
         # register switch so other devices can add handlers to it
