@@ -15,6 +15,7 @@ from copy import deepcopy
 
 from mpf.platforms.fast.fast_driver import FASTDriver
 from mpf.platforms.fast.fast_gi import FASTGIString
+from mpf.platforms.fast.fast_light import FASTMatrixLight
 from mpf.platforms.fast.fast_switch import FASTSwitch
 
 try:
@@ -28,7 +29,6 @@ from mpf.core.platform import ServoPlatform, MatrixLightsPlatform, GiPlatform, D
     SwitchPlatform, DriverPlatform
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
-from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
 
 # Minimum firmware versions needed for this module
 DMD_MIN_FW = '0.88'
@@ -781,29 +781,6 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         self.net_connection.send(cmd)
 
-
-class FASTMatrixLight(MatrixLightPlatformInterface):
-
-    def __init__(self, number, sender):
-        self.log = logging.getLogger('FASTMatrixLight')
-        self.number = number
-        self.send = sender
-
-    def off(self):
-        """Disables (turns off) this matrix light."""
-        # self.send('L1:' + self.number + ',00')
-        self.send('L1:{},00'.format(self.number))
-
-    def on(self, brightness=255):
-        """Enables (turns on) this driver."""
-        if brightness == 0:
-            self.off()
-            return
-
-        if brightness >= 255:
-            brightness = 255
-
-        self.send('L1:{},{}'.format(self.number, Util.int_to_hex_string(brightness)))
 
 
 class FASTDirectLED(RGBLEDPlatformInterface):
