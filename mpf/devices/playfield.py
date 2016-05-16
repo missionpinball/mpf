@@ -1,8 +1,5 @@
 """Contains the Playfield device class which represents the actual playfield in
 a pinball machine."""
-
-import logging
-
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.ball_search import BallSearch
 from mpf.core.delays import DelayManager
@@ -16,9 +13,7 @@ class Playfield(SystemWideDevice):
 
     def __init__(self, machine, name):
         super().__init__(machine, name)
-        self.unexpected_balls = 0
         self.ball_search = BallSearch(self.machine, self)
-        self.ball_controller = None
 
         self.delay = DelayManager(self.machine.delayRegistry)
 
@@ -27,13 +22,12 @@ class Playfield(SystemWideDevice):
         # Attributes
         self._balls = 0
         self.available_balls = 0
+        self.unexpected_balls = 0
         self.num_balls_requested = 0
 
     def _initialize(self):
         if 'default' in self.config['tags']:
             self.machine.playfield = self
-
-        self.ball_controller = self.machine.ball_controller
 
         # Set up event handlers
 
