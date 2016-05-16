@@ -170,6 +170,8 @@ class ConfiguredHwDriver:
 
 
 class ReconfiguredDriver(Driver):
+
+    # pylint: disable-msg=super-init-not-called
     def __init__(self, driver, config_overwrite):
         # no call to super init
         self._driver = driver
