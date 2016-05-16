@@ -10,11 +10,6 @@ import threading
 import queue
 import traceback
 
-from mpf.platforms.opp_common.opp_coil import OPPSolenoidCard
-from mpf.platforms.opp_common.opp_incand import OPPIncandCard
-from mpf.platforms.opp_common.opp_neopixel import OPPNeopixelCard
-from mpf.platforms.opp_common.opp_switch import OPPInputCard
-
 try:
     import serial
     serial_imported = True
@@ -22,6 +17,10 @@ except ImportError:
     serial = None
     serial_imported = False
 
+from mpf.platforms.opp_common.opp_coil import OPPSolenoidCard
+from mpf.platforms.opp_common.opp_incand import OPPIncandCard
+from mpf.platforms.opp_common.opp_neopixel import OPPNeopixelCard
+from mpf.platforms.opp_common.opp_switch import OPPInputCard
 from mpf.platforms.opp_common.opp_rs232_intf import OppRs232Intf
 from mpf.devices.driver import ConfiguredHwDriver
 from mpf.core.platform import MatrixLightsPlatform, LedPlatform, SwitchPlatform, DriverPlatform
