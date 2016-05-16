@@ -15,6 +15,7 @@ from copy import deepcopy
 
 from mpf.platforms.fast.fast_driver import FASTDriver
 from mpf.platforms.fast.fast_gi import FASTGIString
+from mpf.platforms.fast.fast_led import FASTDirectLED
 from mpf.platforms.fast.fast_light import FASTMatrixLight
 from mpf.platforms.fast.fast_switch import FASTSwitch
 
@@ -28,7 +29,6 @@ except ImportError:
 from mpf.core.platform import ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatform, \
     SwitchPlatform, DriverPlatform
 from mpf.core.utility_functions import Util
-from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 
 # Minimum firmware versions needed for this module
 DMD_MIN_FW = '0.88'
@@ -780,36 +780,6 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             Util.int_to_hex_string(position_numeric))
 
         self.net_connection.send(cmd)
-
-
-
-class FASTDirectLED(RGBLEDPlatformInterface):
-    """
-    Represents a single RGB LED connected to the Fast hardware platform
-    """
-    def __init__(self, number):
-        self.log = logging.getLogger('FASTLED')
-        self.number = number
-        self._current_color = '000000'
-
-        # All FAST LEDs are 3 element RGB and are set using hex strings
-
-        self.log.debug("Creating FAST RGB LED at hardware address: %s",
-                       self.number)
-
-    def color(self, color):
-        """Instantly sets this LED to the color passed.
-
-        Args:
-            color: an RGBColor object
-        """
-        self._current_color = "{0}{1}{2}".format(hex(int(color[0]))[2:].zfill(2),
-                                                 hex(int(color[1]))[2:].zfill(2),
-                                                 hex(int(color[2]))[2:].zfill(2))
-
-    @property
-    def current_color(self):
-        return self._current_color
 
 
 class FASTDMD(object):
