@@ -1,9 +1,11 @@
 import copy
 import time
 from queue import Queue
+
 from mpf.tests.MpfTestCase import MpfTestCase
 from unittest.mock import MagicMock
 from mpf.platforms import opp
+from mpf.platforms.opp_common.opp_rs232_intf import OppRs232Intf
 
 
 class SerialMock:
@@ -45,7 +47,7 @@ class TestOPP(MpfTestCase):
         return 'tests/machine_files/opp/'
 
     def _crc_message(self, msg, term=True):
-        crc_msg = msg + opp.OppRs232Intf.calc_crc8_part_msg(msg, 0, len(msg))
+        crc_msg = msg + OppRs232Intf.calc_crc8_part_msg(msg, 0, len(msg))
         if term:
             crc_msg += b'\xff'
         return crc_msg
