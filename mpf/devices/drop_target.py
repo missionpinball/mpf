@@ -47,6 +47,42 @@ class DropTarget(SystemWideDevice):
             self.knockdown_coil.pulse()
             return True
 
+    def _ball_search_phase2(self):
+        if self.reset_coil and self.knockdown_coil:
+            if self.complete:
+                self._in_ball_search = True
+                self.reset_coil.pulse()
+                self.delay.add(100, self._ball_search_knockdown)
+                return True
+            else:
+                self._in_ball_search = True
+                self.knockdown_coil.pulse()
+                self.delay.add(100, self._ball_search_reset)
+                return True
+        else:
+            # fall back to phase1
+            return self._ball_search_phase1()
+
+    def _ball_search_phase3(self):
+        if self.complete:
+            if self.reset_coil:
+                self.reset_coil.pulse()
+                if self.knockdown_coil:
+                    self._in_ball_search = True
+                    self.delay.add(100, self._ball_search_knockdown)
+                return True
+            else:
+                return self._ball_search_phase1()
+        else:
+            if self.knockdown_coil:
+                self.knockdown_coil.pulse()
+                if self.reset_coil:
+                    self._in_ball_search = True
+                    self.delay.add(100, self._ball_search_reset)
+                return True
+            else:
+                return self._ball_search_phase1()
+
     def _ball_search_iteration_finish(self):
         self._in_ball_search = False
 
@@ -66,40 +102,10 @@ class DropTarget(SystemWideDevice):
             return self._ball_search_phase1()
         elif phase == 2:
             # phase 2: if we can reset and knockdown the target we will do that
-            if self.reset_coil and self.knockdown_coil:
-                if self.complete:
-                    self._in_ball_search = True
-                    self.reset_coil.pulse()
-                    self.delay.add(100, self._ball_search_knockdown)
-                    return True
-                else:
-                    self._in_ball_search = True
-                    self.knockdown_coil.pulse()
-                    self.delay.add(100, self._ball_search_reset)
-                    return True
-            else:
-                # fall back to phase1
-                return self._ball_search_phase1()
+            return self._ball_search_phase2()
         else:
             # phase3: reset no matter what
-            if self.complete:
-                if self.reset_coil:
-                    self.reset_coil.pulse()
-                    if self.knockdown_coil:
-                        self._in_ball_search = True
-                        self.delay.add(100, self._ball_search_knockdown)
-                    return True
-                else:
-                    return self._ball_search_phase1()
-            else:
-                if self.knockdown_coil:
-                    self.knockdown_coil.pulse()
-                    if self.reset_coil:
-                        self._in_ball_search = True
-                        self.delay.add(100, self._ball_search_reset)
-                    return True
-                else:
-                    return self._ball_search_phase1()
+            return self._ball_search_phase3()
 
     def _register_switch_handlers(self):
         # register for notification of switch state
