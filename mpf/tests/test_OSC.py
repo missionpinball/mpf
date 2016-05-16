@@ -76,11 +76,9 @@ class TestOSC(MpfTestCase):
         self.machine_run()
 
     def test_refresh(self):
-        self.assertFalse(self.osc.client_needs_sync)
-        # should not crash
+        # should not crash. is a noop
         self.osc.process_message("/refresh", [], [], "123")
         self.machine_run()
-        self.assertTrue(self.osc.client_needs_sync)
 
     def test_audits(self):
         self.osc.process_message("/audits", [], [], "123")

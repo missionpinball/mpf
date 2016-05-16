@@ -50,9 +50,6 @@ class OSC(object):
 
         self.osc_clients = dict()
         self.osc_message = False
-        self.client_needs_sync = False
-        self.client_last_update_time = None
-        self.last_loop_time = 1
         self.client_mode = 'name'
         self.clients_to_delete = list()
         self.clients_to_add = list()
@@ -133,10 +130,9 @@ class OSC(object):
         elif self.config['debug_messages']:
             self.log.info("Last incoming OSC message was invalid")
 
+    # legacy method which does nothing
     def process_refresh(self, name, data):
-        del name
-        del data
-        self.client_needs_sync = True  # is this used anymore?
+        pass
 
     def process_sync(self, name, data):
         del name
@@ -292,7 +288,6 @@ class OSC(object):
         Good for when it switches to a new tab or connects a new client
         """
         self.client_update_all_switches()
-        self.client_needs_sync = False
 
     def client_update_switch(self, switch_name, ms, state):
         del ms
