@@ -15,7 +15,7 @@ from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInt
 from mpf.core.delays import DelayManager
 
 
-# pylint disable-msg=too-many-instance-attributes
+# pylint: disable-msg=too-many-instance-attributes
 class HardwarePlatform(DriverPlatform):
 
     def __init__(self, machine):
