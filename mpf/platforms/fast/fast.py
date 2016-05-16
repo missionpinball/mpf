@@ -14,6 +14,7 @@ from distutils.version import StrictVersion
 from copy import deepcopy
 
 from mpf.platforms.fast.fast_driver import FASTDriver
+from mpf.platforms.fast.fast_switch import FASTSwitch
 
 try:
     import serial
@@ -779,46 +780,6 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             Util.int_to_hex_string(position_numeric))
 
         self.net_connection.send(cmd)
-
-
-class FASTSwitch(object):
-
-    def __init__(self, config, sender, platform):
-        self.config = config
-        self.log = logging.getLogger('FASTSwitch')
-        self.number = config['number']
-        self.connection = config['number'][1]
-        self.send = sender
-        self.platform = platform
-        self._configured_debounce = False
-        self.configure_debounce(config)
-
-    def configure_debounce(self, config):
-        if config['debounce'] in ("normal", "auto"):
-            debounce_open = self.platform.config['default_normal_debounce_open']
-            debounce_close = self.platform.config['default_normal_debounce_close']
-        else:
-            debounce_open = self.platform.config['default_quick_debounce_open']
-            debounce_close = self.platform.config['default_quick_debounce_close']
-
-        if self.connection:
-            cmd = 'SN:'
-        else:
-            cmd = 'SL:'
-
-        new_setting = (debounce_open, debounce_close)
-        if new_setting == self._configured_debounce:
-            return
-
-        self._configured_debounce = new_setting
-
-        cmd = '{}{},01,{},{}'.format(
-            cmd,
-            self.number[0],
-            Util.int_to_hex_string(debounce_open),
-            Util.int_to_hex_string(debounce_close))
-
-        self.send(cmd)
 
 
 class FASTGIString(GIPlatformInterface):
