@@ -14,6 +14,7 @@ from distutils.version import StrictVersion
 from copy import deepcopy
 
 from mpf.platforms.fast.fast_driver import FASTDriver
+from mpf.platforms.fast.fast_gi import FASTGIString
 from mpf.platforms.fast.fast_switch import FASTSwitch
 
 try:
@@ -28,7 +29,6 @@ from mpf.core.platform import ServoPlatform, MatrixLightsPlatform, GiPlatform, D
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
-from mpf.platforms.interfaces.gi_platform_interface import GIPlatformInterface
 
 # Minimum firmware versions needed for this module
 DMD_MIN_FW = '0.88'
@@ -780,32 +780,6 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             Util.int_to_hex_string(position_numeric))
 
         self.net_connection.send(cmd)
-
-
-class FASTGIString(GIPlatformInterface):
-    def __init__(self, number, sender):
-        """A FAST GI string in a WPC machine.
-
-        TODO: Need to implement the enable_relay and control which strings are
-        dimmable.
-        """
-        self.log = logging.getLogger('FASTGIString.0x' + str(number))
-        self.number = number
-        self.send = sender
-
-    def off(self):
-        self.log.debug("Turning Off GI String")
-        self.send('GI:' + self.number + ',00')
-
-    def on(self, brightness=255):
-        if brightness >= 255:
-            brightness = 255
-
-        self.log.debug("Turning On GI String to brightness %s", brightness)
-        # self.send('GI:' + self.number + ',' + Util.int_to_hex_string(brightness))
-
-        self.send('GI:{},{}'.format(self.number,
-                                    Util.int_to_hex_string(brightness)))
 
 
 class FASTMatrixLight(MatrixLightPlatformInterface):
