@@ -19,6 +19,25 @@ class BallDevice(SystemWideDevice):
     collection = 'ball_devices'
     class_label = 'ball_device'
 
+    _state_transitions = dict(
+        invalid=['idle'],
+        idle=['waiting_for_ball', 'wait_for_eject', 'missing_balls',
+              'waiting_for_ball_mechanical'],
+        lost_balls=['idle'],
+        missing_balls=['ball_left', 'idle'],
+        waiting_for_ball=['idle', 'waiting_for_ball_mechanical'],
+        waiting_for_ball_mechanical=['idle', 'waiting_for_ball',
+                                     'eject_confirmed'],
+        ball_left=['eject_confirmed', 'failed_confirm'],
+        wait_for_eject=['ejecting'],
+        ejecting=['ball_left', 'failed_eject'],
+        failed_eject=['eject_broken', 'ejecting'],
+        eject_broken=[],
+        failed_confirm=['failed_eject', 'eject_confirmed',
+                        'lost_balls'],
+        eject_confirmed=['idle', 'lost_balls'],
+    )
+
     def __init__(self, machine, name):
         super().__init__(machine, name)
 
@@ -90,37 +109,6 @@ class BallDevice(SystemWideDevice):
         self._idle_counted = None
 
         self.eject_start_time = None
-
-        self._state_transitions = dict(
-            invalid=['idle'],
-
-            idle=['waiting_for_ball', 'wait_for_eject', 'missing_balls',
-                  'waiting_for_ball_mechanical'],
-
-            lost_balls=['idle'],
-
-            missing_balls=['ball_left', 'idle'],
-
-            waiting_for_ball=['idle', 'waiting_for_ball_mechanical'],
-
-            waiting_for_ball_mechanical=['idle', 'waiting_for_ball',
-                                         'eject_confirmed'],
-
-            ball_left=['eject_confirmed', 'failed_confirm'],
-
-            wait_for_eject=['ejecting'],
-
-            ejecting=['ball_left', 'failed_eject'],
-
-            failed_eject=['eject_broken', 'ejecting'],
-
-            eject_broken=[],
-
-            failed_confirm=['failed_eject', 'eject_confirmed',
-                            'lost_balls'],
-
-            eject_confirmed=['idle', 'lost_balls'],
-        )
 
     def _initialize(self):
         # initialize right away
