@@ -401,6 +401,8 @@ class Show(Asset):
         return FileManager.load(self.file)
 
 
+# This class is more or less a container
+# pylint: disable-msg=too-many-instance-attributes
 class RunningShow(object):
     # pylint: disable-msg=too-many-arguments
     # pylint: disable-msg=too-many-locals
