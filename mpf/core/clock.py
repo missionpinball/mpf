@@ -479,6 +479,7 @@ def _hash(cb):
     return (id(cb) & 0xFF00) >> 8
 
 
+# pylint: disable-msg=too-many-instance-attributes
 class ClockEvent(object):
     """ A class that describes a callback scheduled with kivy's :attr:`Clock`.
     This class is never created by the user; instead, kivy creates and returns
@@ -620,6 +621,7 @@ class ClockEvent(object):
         return '<ClockEvent callback=%r>' % self.get_callback()
 
 
+# pylint: disable-msg=too-many-instance-attributes
 class ClockBase(_ClockBase):
     """A clock object with event support.
     """
