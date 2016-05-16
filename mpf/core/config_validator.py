@@ -606,6 +606,8 @@ plugins:
 pololu_maestro:
     __valid_in__: machine
     port: single|str|
+    servo_min: single|int|3000
+    servo_max: single|int|9000
 random_event_player:
     __valid_in__: machine, mode, show
     event_list: list|str|
