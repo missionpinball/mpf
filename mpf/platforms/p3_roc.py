@@ -170,7 +170,7 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
         # Find the P3-ROC number for each driver. For P3-ROC driver boards, the
         # P3-ROC number is specified via the Ax-By-C format.
 
-        proc_num = self.pdbconfig.get_proc_number("coil", str(config['number']))
+        proc_num = self.pdbconfig.get_proc_coil_number(str(config['number']))
         if proc_num == -1:
             raise AssertionError("Driver {} cannot be controlled by the P3-ROC. ".format(str(config['number'])))
 
@@ -180,7 +180,7 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
 
     def configure_gi(self, config):
         # GIs are coils in P3-Roc
-        proc_num = self.pdbconfig.get_proc_number("coil", str(config['number']))
+        proc_num = self.pdbconfig.get_proc_coil_number(str(config['number']))
         if proc_num == -1:
             raise AssertionError("Gi Driver {} cannot be controlled by the P3-ROC. ".format(str(config['number'])))
 
@@ -189,7 +189,7 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
         return proc_driver_object
 
     def configure_matrixlight(self, config):
-        proc_num = self.pdbconfig.get_proc_number("light", str(config['number']))
+        proc_num = self.pdbconfig.get_proc_light_number(str(config['number']))
 
         if proc_num == -1:
             raise AssertionError("Matrixlight {} cannot be controlled by the P3-ROC. ".format(str(config['number'])))
@@ -212,7 +212,7 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
                 configuration files would specify a switch number like `SD12` or
                 `7/5`. This `proc_num` is an int between 0 and 255.
         """
-        proc_num = self.pdbconfig.get_proc_number('switch', str(config['number']))
+        proc_num = self.pdbconfig.get_proc_switch_number(str(config['number']))
         return self._configure_switch(config, proc_num)
 
     def get_hw_switch_states(self):

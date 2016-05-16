@@ -537,44 +537,35 @@ class PDBConfig(object):
                                          self.use_watchdog,  # Enable watchdog
                                          self.watchdog_time)
 
-    def get_proc_number(self, device_type, number_str):
-        """Returns the P-ROC/P3-ROC number for the requested driver string.
+    def get_proc_coil_number(self, number_str):
+        coil = PDBCoil(self, number_str)
+        bank = coil.bank()
+        if bank == -1:
+            return -1
+        index = self.indexes.index(coil.bank())
+        num = index * 8 + coil.output()
+        return num
 
-        This method uses the driver string to look in the indexes list that
-        was set up when the PDBs were configured.  The resulting P-ROC/P3-ROC index
-        * 3 is the first driver number in the group, and the driver offset is
-        to that.
+    def get_proc_light_number(self, number_str):
+        lamp = PDBLight(self, number_str)
+        if lamp.lamp_type == 'unknown':
+            return -1
+        elif lamp.lamp_type == 'dedicated':
+            return lamp.dedicated_output()
 
-        """
-        if device_type == 'coil':
-            coil = PDBCoil(self, number_str)
-            bank = coil.bank()
-            if bank == -1:
-                return -1
-            index = self.indexes.index(coil.bank())
-            num = index * 8 + coil.output()
-            return num
+        lamp_dict_for_index = {'source_board': lamp.source_board(),
+                               'sink_bank': lamp.sink_bank(),
+                               'source_output': lamp.source_output()}
+        if lamp_dict_for_index not in self.indexes:
+            return -1
+        index = self.indexes.index(lamp_dict_for_index)
+        num = index * 8 + lamp.sink_output()
+        return num
 
-        if device_type == 'light':
-            lamp = PDBLight(self, number_str)
-            if lamp.lamp_type == 'unknown':
-                return -1
-            elif lamp.lamp_type == 'dedicated':
-                return lamp.dedicated_output()
-
-            lamp_dict_for_index = {'source_board': lamp.source_board(),
-                                   'sink_bank': lamp.sink_bank(),
-                                   'source_output': lamp.source_output()}
-            if lamp_dict_for_index not in self.indexes:
-                return -1
-            index = self.indexes.index(lamp_dict_for_index)
-            num = index * 8 + lamp.sink_output()
-            return num
-
-        if device_type == 'switch':
-            switch = PDBSwitch(self, number_str)
-            num = switch.proc_num()
-            return num
+    def get_proc_switch_number(self, number_str):
+        switch = PDBSwitch(self, number_str)
+        num = switch.proc_num()
+        return num
 
 
 class PDBSwitch(object):
