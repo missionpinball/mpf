@@ -490,14 +490,13 @@ class MachineController(object):
         if name not in self.hardware_platforms:
 
             try:
-                hardware_platform = __import__('mpf.platforms.%s' % name,
-                                               fromlist=["HardwarePlatform"])
+                hardware_platform = Util.string_to_class(self.config['mpf']['platforms'][name])
             except ImportError:
                 raise ImportError("Cannot add hardware platform {}. This is "
                                   "not a valid platform name".format(name))
 
             self.hardware_platforms[name] = (
-                hardware_platform.HardwarePlatform(self))
+                hardware_platform(self))
 
     def set_default_platform(self, name):
         """Sets the default platform which is used if a device class-specific or
