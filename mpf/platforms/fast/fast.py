@@ -13,19 +13,19 @@ import io
 from distutils.version import StrictVersion
 from copy import deepcopy
 
-from mpf.platforms.fast import fast_defines
-from mpf.platforms.fast.fast_driver import FASTDriver
-from mpf.platforms.fast.fast_gi import FASTGIString
-from mpf.platforms.fast.fast_led import FASTDirectLED
-from mpf.platforms.fast.fast_light import FASTMatrixLight
-from mpf.platforms.fast.fast_switch import FASTSwitch
-
 try:
     import serial
     serial_imported = True
 except ImportError:
     serial_imported = False
     serial = None
+
+from mpf.platforms.fast import fast_defines
+from mpf.platforms.fast.fast_driver import FASTDriver
+from mpf.platforms.fast.fast_gi import FASTGIString
+from mpf.platforms.fast.fast_led import FASTDirectLED
+from mpf.platforms.fast.fast_light import FASTMatrixLight
+from mpf.platforms.fast.fast_switch import FASTSwitch
 
 from mpf.core.platform import ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatform, \
     SwitchPlatform, DriverPlatform
