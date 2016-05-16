@@ -43,6 +43,7 @@ RGB_LATEST_FW = '0.88'
 IO_LATEST_FW = '0.89'
 
 
+# pylint: disable-msg=too-many-instance-attributes
 class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
                        DmdPlatform, LedPlatform, SwitchPlatform,
                        DriverPlatform):
