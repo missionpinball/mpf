@@ -1329,7 +1329,7 @@ class SerialCommunicator(object):
 
             try:
                 while self.serial_connection:
-                    msg = str(self.serial_connection.readline(), 'UTF-8')[:-1]  # strip the \r
+                    msg = str(self.serial_connection.readline(), 'UTF-8')  # strip the \r
 
                     if debug:
                         self.platform.log.info("Received: %s", msg)
