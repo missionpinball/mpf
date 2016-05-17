@@ -1,3 +1,4 @@
+# pylint: disable-msg=too-many-lines
 import os
 import re
 from copy import deepcopy
