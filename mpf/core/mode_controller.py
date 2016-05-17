@@ -400,14 +400,14 @@ class ModeController(object):
     def dump(self):
         """Dumps the current status of the running modes to the log file."""
 
-        self.log.info('+=========== ACTIVE MODES ============+')
+        self.log.debug('+=========== ACTIVE MODES ============+')
 
         for mode in self.active_modes:
             if mode.active:
-                self.log.info('| {} : {}'.format(
+                self.log.debug('| {} : {}'.format(
                         mode.name, mode.priority).ljust(38) + '|')
 
-        self.log.info('+-------------------------------------+')
+        self.log.debug('+-------------------------------------+')
 
     def is_active(self, mode_name):
         """

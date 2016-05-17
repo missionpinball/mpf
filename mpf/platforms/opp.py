@@ -188,10 +188,10 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
             self.machine.config['hardware']['driverboards'].lower())
 
         if self.machine_type == 'gen1':
-            self.log.info("Configuring the original OPP boards")
+            self.log.debug("Configuring the original OPP boards")
             raise AssertionError("Original OPP boards not currently supported.")
         elif self.machine_type == 'gen2':
-            self.log.info("Configuring the OPP Gen2 boards")
+            self.log.debug("Configuring the OPP Gen2 boards")
         else:
             raise AssertionError('Invalid driverboards type: {}'.format(self.machine_type))
 
@@ -323,7 +323,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                 self.gen2AddrArr.append(msg[index])
                 self.currInpData.append(0)
             index += 1
-        self.log.info("Found %d Gen2 OPP boards.", self.numGen2Brd)
+        self.log.debug("Found %d Gen2 OPP boards.", self.numGen2Brd)
 
     def eom_resp(self, msg):
         # An EOM command can be used to resynchronize communications if message synch is lost
@@ -415,7 +415,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                     (msg[curr_index + 3] << 16) | \
                     (msg[curr_index + 4] << 8) | \
                     msg[curr_index + 5]
-                self.log.info("Firmware version: %d.%d.%d.%d", msg[curr_index + 2],
+                self.log.debug("Firmware version: %d.%d.%d.%d", msg[curr_index + 2],
                               msg[curr_index + 3], msg[curr_index + 4],
                               msg[curr_index + 5])
                 if version < self.minVersion:
@@ -932,7 +932,7 @@ class SerialCommunicator(object):
         self.remote_processor = "OPP Gen2"
         self.remote_model = None
 
-        self.log.info("Connecting to %s at %sbps", port, baud)
+        self.log.debug("Connecting to %s at %sbps", port, baud)
         try:
             self.serial_connection = serial.Serial(port=port, baudrate=baud,
                                                    timeout=.01, writeTimeout=0)
@@ -1089,7 +1089,7 @@ class SerialCommunicator(object):
                 self.serial_connection.write(msg)
 
                 if debug:
-                    self.log.info("Sending: %s", "".join(" 0x%02x" % b for b in msg))
+                    self.log.debug("Sending: %s", "".join(" 0x%02x" % b for b in msg))
 
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -1102,11 +1102,11 @@ class SerialCommunicator(object):
         debug = self.platform.config['debug']
 
         try:
-            self.log.info("Start rcv loop")
+            self.log.debug("Starting receive loop")
             while self.serial_connection:
                 resp = self.serial_connection.read(30)
                 if debug:
-                    self.log.info("Received: %s", "".join(" 0x%02x" % b for b in resp))
+                    self.log.debug("Received: %s", "".join(" 0x%02x" % b for b in resp))
                 self.partMsg += resp
                 end_string = False
                 strlen = len(self.partMsg)

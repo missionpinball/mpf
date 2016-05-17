@@ -529,9 +529,6 @@ class SwitchController(object):
         This method dumps these events with logging level "INFO."
 
         """
-
-        self.log.info("Dumping current active switches")
-
         for k, v in self.switches.items():
             if v['state']:
                 self.log.info("Active Switch|%s", k)

@@ -172,15 +172,15 @@ class Game(Mode):
         opportunity to do things before the ball actually starts. Once that
         event is clear, this method calls :meth:`ball_started`.
         """
-        self.log.info("***************************************************")
-        self.log.info("****************** BALL STARTING ******************")
-        self.log.info("**                                               **")
-        self.log.info("**    Player: {}    Ball: {}   Score: {}".format(
+        self.log.debug("***************************************************")
+        self.log.debug("****************** BALL STARTING ******************")
+        self.log.debug("**                                               **")
+        self.log.debug("**    Player: {}    Ball: {}   Score: {}".format(
                       self.player.number, self.player.ball,
                       self.player.score).ljust(49) + '**')
-        self.log.info("**                                               **")
-        self.log.info("***************************************************")
-        self.log.info("***************************************************")
+        self.log.debug("**                                               **")
+        self.log.debug("***************************************************")
+        self.log.debug("***************************************************")
 
         self.machine.events.post_queue('ball_starting',
                                        callback=self.ball_started)

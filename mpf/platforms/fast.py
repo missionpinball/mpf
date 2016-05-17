@@ -53,7 +53,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
     def __init__(self, machine):
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger('FAST')
-        self.log.info("Configuring FAST hardware.")
+        self.log.debug("Configuring FAST hardware.")
 
         if not serial_imported:
             raise AssertionError('Could not import "pySerial". This is '
@@ -265,10 +265,10 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             self.machine.config['hardware']['driverboards'].lower())
 
         if self.machine_type == 'wpc':
-            self.log.info("Configuring the FAST Controller for WPC driver "
+            self.log.debug("Configuring the FAST Controller for WPC driver "
                           "board")
         else:
-            self.log.info("Configuring FAST Controller for FAST IO boards.")
+            self.log.debug("Configuring FAST Controller for FAST IO boards.")
 
         self._connect_to_hardware()
 
@@ -1170,7 +1170,7 @@ class SerialCommunicator(object):
                                  'XX:N',
                                  ]
 
-        self.platform.log.info("Connecting to %s at %sbps", port, baud)
+        self.platform.log.debug("Connecting to %s at %sbps", port, baud)
         self.serial_connection = serial.Serial(port=port, baudrate=baud,
                                                timeout=1, writeTimeout=0)
 
@@ -1214,9 +1214,10 @@ class SerialCommunicator(object):
         except ValueError:
             self.remote_processor, self.remote_model, = msg[3:].split()
 
-        self.platform.log.info("Received ID acknowledgement. Processor: %s, "
-                               "Board: %s, Firmware: %s", self.remote_processor,
-                               self.remote_model, self.remote_firmware)
+        self.platform.log.debug("Received ID acknowledgement. Processor: %s, "
+                                "Board: %s, Firmware: %s",
+                                self.remote_processor, self.remote_model,
+                                self.remote_firmware)
 
         if self.remote_processor == 'DMD':
             min_version = DMD_MIN_FW
@@ -1263,9 +1264,12 @@ class SerialCommunicator(object):
                     model = False
 
                 if model:
-                    self.platform.log.info('Fast IO Board {0}: Model: {1}, '
-                                           'Firmware: {2}, Switches: {3}, '
-                                           'Drivers: {4}'.format(node_id, model, fw, int(sw, 16), int(dr, 16)))
+                    self.platform.log.debug('Fast IO Board {0}: Model: {1}, '
+                                            'Firmware: {2}, Switches: {3}, '
+                                            'Drivers: {4}'.format(node_id,
+                                                                  model, fw,
+                                                                  int(sw, 16),
+                                                                  int(dr, 16)))
 
                     if StrictVersion(IO_MIN_FW) > str(fw):
                         self.platform.log.critical("Firmware version mismatch. MPF "

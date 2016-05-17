@@ -942,7 +942,7 @@ class BCPClientSocket(object):
     def setup_client_socket(self):
         """Sets up the client socket."""
 
-        self.log.info("Waiting for BCP Media Controller at %s:%s...",
+        self.log.info("Connecting to BCP Media Controller at %s:%s...",
                       self.config['host'], self.config['port'])
 
         self.socket = socket.socket()
@@ -953,7 +953,7 @@ class BCPClientSocket(object):
         while not connected:
             try:
                 self.socket.connect((self.config['host'], self.config['port']))
-                self.log.info("Connected to remote BCP host %s:%s",
+                self.log.debug("Connected to remote BCP host %s:%s",
                               self.config['host'], self.config['port'])
 
                 BCP.active_connections += 1
@@ -991,7 +991,7 @@ class BCPClientSocket(object):
 
     def stop(self):
         """Stops and shuts down the socket client."""
-        self.log.info("Stopping socket client")
+        self.log.debug("Stopping socket client")
 
         if self.socket:
             if self._send_goodbye:

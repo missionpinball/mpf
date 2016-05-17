@@ -105,7 +105,7 @@ class OSC(object):
         self.server.close()
         self.log.info("Waiting for the OSC host thread to finish")
         self.server_thread.join()
-        self.log.info("OSC host thread is done.")
+        self.log.debug("OSC host thread is done.")
 
     def process_message(self, addr, tags, data, client_address):
         """Receives OSC messages and acts on them."""
@@ -131,7 +131,7 @@ class OSC(object):
         if cat.upper() in self.message_parsers:
             self.message_parsers[cat.upper()](name, data)
         elif self.config['debug_messages']:
-            self.log.info("Last incoming OSC message was invalid")
+            self.log.warning("Last incoming OSC message was invalid")
 
     def process_refresh(self, name, data):
         del name
@@ -342,11 +342,12 @@ class OSC(object):
             for k in list(self.OSC_clients.items()):
                 try:
                     if self.config['debug_messages']:
-                        self.log.info("Sending OSC Message to client:%s: %s", k, self.OSC_message)
+                        self.log.debug("Sending OSC Message to client:%s: %s",
+                                       k, self.OSC_message)
                     k[1].send(self.OSC_message)
 
                 except OSCmodule.OSCClientError:
-                    self.log.info("OSC client at address %s disconnected", k[0])
+                    self.log.debug("OSC client at address %s disconnected", k[0])
                     # todo mark for deletion
                     self.clients_to_delete.append(k)
                     break
@@ -362,7 +363,7 @@ class OSC(object):
 
     def setup_osc_client(self, address):
         """Setup a new OSC client"""
-        self.log.info("OSC client at address %s connected", address[0])
+        self.log.debug("OSC client at address %s connected", address[0])
         self.OSC_clients[address] = OSCmodule.OSCClient()
         self.OSC_clients[address].connect((address[0],
                                            self.config['client_port']))

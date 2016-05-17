@@ -379,7 +379,7 @@ class MachineController(object):
         self.log.debug("32-bit Python? %s", sys.maxsize < 2**32)
 
     def _load_core_modules(self):
-        self.log.info("Loading core modules...")
+        self.log.debug("Loading core modules...")
         for name, module in self.config['mpf']['core_modules'].items():
             self.log.debug("Loading '%s' core module", module)
             m = Util.string_to_class(module)(self)
@@ -397,7 +397,7 @@ class MachineController(object):
             self.set_default_platform(self.options['force_platform'])
 
     def _load_plugins(self):
-        self.log.info("Loading plugins...")
+        self.log.debug("Loading plugins...")
 
         # TODO: This should be cleaned up. Create a Plugins base class and
         # classmethods to determine if the plugins should be used.
@@ -414,7 +414,7 @@ class MachineController(object):
         if 'scriptlets' in self.config:
             self.config['scriptlets'] = self.config['scriptlets'].split(' ')
 
-            self.log.info("Loading scriptlets...")
+            self.log.debug("Loading scriptlets...")
 
             for scriptlet in self.config['scriptlets']:
 

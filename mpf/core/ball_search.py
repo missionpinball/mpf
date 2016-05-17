@@ -89,7 +89,7 @@ class BallSearch(object):
         self.iteration = 1
         self.phase = 1
         self.iterator = iter(self.callbacks)
-        self.log.info("Starting ball search")
+        self.log.debug("Starting ball search")
         self.machine.events.post('ball_search_started')
         '''event: ball_search_started
 
@@ -114,7 +114,7 @@ class BallSearch(object):
                         self.give_up()
                         return
 
-                self.log.info("Ball Search Phase %s Iteratio %s", self.phase, self.iteration)
+                self.log.debug("Ball Search Phase %s Iteratio %s", self.phase, self.iteration)
                 self.iterator = iter(self.callbacks)
                 element = next(self.iterator)
                 timeout = self.playfield.config['ball_search_wait_after_iteration']
@@ -144,18 +144,18 @@ class BallSearch(object):
         if self.playfield.config['ball_search_failed_action'] == "new_ball":
             if self.machine.ball_controller.num_balls_known > 0:
                 # we have at least one ball remaining
-                self.log.info("Adding %s replacement ball", lost_balls)
+                self.log.debug("Adding %s replacement ball", lost_balls)
                 for dummy_iterator in range(lost_balls):
                     self.playfield.add_ball()
             else:
-                self.log.info("No more balls left. Ending game!")
+                self.log.debug("No more balls left. Ending game!")
                 self.machine.game.game_ending()
 
         elif self.playfield.config['ball_search_failed_action'] == "end_game":
             if self.machine.game:
-                self.log.info("Ending the game")
+                self.log.debug("Ending the game")
                 self.machine.game.game_ending()
             else:
-                self.log.info("There is no game. Doing nothing!")
+                self.log.warning("There is no game. Doing nothing!")
         else:
             raise AssertionError("Unknown action " + self.playfield.config['ball_search_failed_action'])

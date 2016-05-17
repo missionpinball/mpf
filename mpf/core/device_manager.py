@@ -26,7 +26,7 @@ class DeviceManager(object):
                                         self.create_collection_control_events)
 
     def _load_device_modules(self):
-        self.log.info("Loading devices...")
+        self.log.debug("Loading devices...")
         self.machine.config['mpf']['device_modules'] = (
             self.machine.config['mpf']['device_modules'].split(' '))
         for device_type in self.machine.config['mpf']['device_modules']:

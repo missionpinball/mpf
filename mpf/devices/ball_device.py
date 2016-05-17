@@ -225,7 +225,7 @@ class BallDevice(SystemWideDevice):
             self._handle_lost_incoming_ball()
             missing_balls += 1
         if missing_balls > 0:
-            self.log.info("Incoming ball expired!")
+            self.log.debug("Incoming ball expired!")
             return self._switch_state("missing_balls", balls=missing_balls)
 
         if self.get_additional_ball_capacity():
@@ -1051,7 +1051,7 @@ class BallDevice(SystemWideDevice):
                     raise AssertionError("Could not find path to playfield {}".format(target.name))
 
                 if self.debug:
-                    self.log.info("Ejecting %s unexpected balls using path %s", unclaimed_balls, path)
+                    self.log.debug("Ejecting %s unexpected balls using path %s", unclaimed_balls, path)
 
                 for dummy_iterator in range(unclaimed_balls):
                     self.setup_eject_chain(path, not self.config['auto_fire_on_unexpected_ball'])
@@ -1108,8 +1108,9 @@ class BallDevice(SystemWideDevice):
         # a ball is sitting on the entrance_switch. assume the device is full
         new_balls = self.config['ball_capacity'] - self.balls
         if new_balls > 0:
-            self.log.info("Ball is sitting on entrance_switch. Assuming device is full. Adding %s balls and setting"
-                          "balls to %s", new_balls, self.config['ball_capacity'])
+            self.log.debug("Ball is sitting on entrance_switch. Assuming "
+                           "device is full. Adding %s balls and setting balls"
+                           "to %s", new_balls, self.config['ball_capacity'])
             self.balls += new_balls
             self._handle_new_balls(new_balls)
             self.machine.ball_controller.trigger_ball_count()

@@ -20,7 +20,7 @@ class ExtraBall(ModeDevice):
         # mark as awarded
         self.player.uvars['extra_balls_awarded'][self.name] = True
 
-        self.log.info("Awarding additional ball to player %s", self.player.number)
+        self.log.debug("Awarding additional ball to player %s", self.player.number)
 
         self.player.extra_balls += 1
 

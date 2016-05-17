@@ -73,7 +73,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
                 print("Retrying...")
                 time.sleep(1)
 
-        self.log.info("Successfully connected to P-ROC/P3-ROC")
+        self.log.debug("Successfully connected to P-ROC/P3-ROC")
 
     def _get_event_type(self, sw_activity, debounced):
         if sw_activity == 0 and debounced in ("normal", "auto"):
