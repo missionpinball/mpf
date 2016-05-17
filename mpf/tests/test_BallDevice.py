@@ -1791,7 +1791,7 @@ class TestBallDevice(MpfTestCase):
         self.advance_time_and_run(.1)
         self.machine.switch_controller.process_switch(
             "s_ball_switch_target3_2", 1)
-        self.advance_time_and_run(1)
+        self.advance_time_and_run(1.5)
         self.assertEqual(2, self._captured)
         self.assertEqual(0, playfield.balls)
         self.assertEqual(2, playfield.available_balls)
