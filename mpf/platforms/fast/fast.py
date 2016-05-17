@@ -102,7 +102,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         if self.machine_type == 'wpc':
             self.log.debug("Configuring the FAST Controller for WPC driver "
-                          "board")
+                           "board")
         else:
             self.log.debug("Configuring FAST Controller for FAST IO boards.")
 

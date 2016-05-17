@@ -405,7 +405,7 @@ class ModeController(object):
         for mode in self.active_modes:
             if mode.active:
                 self.log.info('| {} : {}'.format(
-                        mode.name, mode.priority).ljust(38) + '|')
+                    mode.name, mode.priority).ljust(38) + '|')
 
         self.log.debug('+-------------------------------------+')
 

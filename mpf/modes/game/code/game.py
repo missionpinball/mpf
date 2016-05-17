@@ -176,8 +176,8 @@ class Game(Mode):
         self.log.debug("****************** BALL STARTING ******************")
         self.log.debug("**                                               **")
         self.log.debug("**    Player: {}    Ball: {}   Score: {}".format(
-                      self.player.number, self.player.ball,
-                      self.player.score).ljust(49) + '**')
+                       self.player.number, self.player.ball,
+                       self.player.score).ljust(49) + '**')
         self.log.debug("**                                               **")
         self.log.debug("***************************************************")
         self.log.debug("***************************************************")

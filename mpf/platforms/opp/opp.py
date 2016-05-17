@@ -308,8 +308,8 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                     (msg[curr_index + 4] << 8) | \
                     msg[curr_index + 5]
                 self.log.debug("Firmware version: %d.%d.%d.%d", msg[curr_index + 2],
-                              msg[curr_index + 3], msg[curr_index + 4],
-                              msg[curr_index + 5])
+                               msg[curr_index + 3], msg[curr_index + 4],
+                               msg[curr_index + 5])
                 if version < self.minVersion:
                     self.minVersion = version
                 if version == BAD_FW_VERSION:

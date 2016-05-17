@@ -956,7 +956,7 @@ class BCPClientSocket(object):
             try:
                 self.socket.connect((self.config['host'], self.config['port']))
                 self.log.debug("Connected to remote BCP host %s:%s",
-                              self.config['host'], self.config['port'])
+                               self.config['host'], self.config['port'])
 
                 BCP.active_connections += 1
                 connected = True

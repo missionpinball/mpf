@@ -132,7 +132,7 @@ class HighScore(Mode):
         if not self.pending_award:
 
             self.log.debug("New high score. Player: %s, award_label: %s"
-                          ", Value: %s", player, award_label, value)
+                           ", Value: %s", player, award_label, value)
 
             self.pending_award = (config_cat_name, index, value, award_label)
 
