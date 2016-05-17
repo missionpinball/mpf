@@ -14,8 +14,8 @@ install:
       brew update;
       brew install python3;
   fi;
-- pip install coveralls
-- python setup.py install
+- pip3 install coveralls
+- python3 setup.py install
 - git clone --branch $TRAVIS_BRANCH https://github.com/missionpinball/mpf-examples.git || git clone --branch dev https://github.com/missionpinball/mpf-examples.git
 - git clone --branch $TRAVIS_BRANCH https://github.com/missionpinball/mpf-mc.git || git clone --branch dev https://github.com/missionpinball/mpf-mc.git
 before_script:
