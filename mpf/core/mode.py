@@ -13,6 +13,7 @@ from mpf.core.mode_timer import ModeTimer
 from mpf.core.utility_functions import Util
 
 
+# pylint: disable-msg=too-many-instance-attributes
 class Mode(object):
     """Parent class for in-game mode code."""
 
