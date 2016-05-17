@@ -1096,7 +1096,7 @@ class BCPClientSocket(object):
             if ready[0]:
                 return self.socket.recv(num_bytes)
             else:
-                return ''
+                return b''
         except socket.error:
             self.log.info("Media Controller disconnected. Shutting down...")
             self.socket.close()
