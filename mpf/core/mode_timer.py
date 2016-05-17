@@ -3,6 +3,7 @@ import logging
 from mpf.core.delays import DelayManager
 
 
+# pylint: disable-msg=too-many-instance-attributes
 class ModeTimer(object):
     """Parent class for a mode timer.
 
