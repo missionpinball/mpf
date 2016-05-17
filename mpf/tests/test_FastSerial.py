@@ -148,7 +148,10 @@ class TestFastSerial(unittest.TestCase):
         self.platform.register_processor_connection.assert_called_with('NET', self.communicator)
         self.platform.log.info.assert_has_calls([
             call('Connecting to %s at %sbps', 'port_name', 1234),
-            call('Received ID acknowledgement. Processor: %s, Board: %s, Firmware: %s', 'NET', 'FP-CPU-002-1', '00.88'),
+        ])
+
+        self.platform.log.debug.assert_has_calls([
+            call('Querying FAST IO boards...'),
             call('Fast IO Board 0: Model: asd, Firmware: 0.87, Switches: 16, Drivers: 8'),
             call('Fast IO Board 1: Model: asd, Firmware: 0.87, Switches: 16, Drivers: 8'),
             call('Fast IO Board 2: Model: asd, Firmware: 0.87, Switches: 16, Drivers: 8'),

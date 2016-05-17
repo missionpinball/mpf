@@ -674,7 +674,7 @@ class SerialCommunicator(object):
                                  'XX:N',
                                  ]
 
-        self.platform.log.debug("Connecting to %s at %sbps", port, baud)
+        self.platform.log.info("Connecting to %s at %sbps", port, baud)
         self.serial_connection = serial.Serial(port=port, baudrate=baud,
                                                timeout=1, writeTimeout=0)
 
