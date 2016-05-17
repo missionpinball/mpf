@@ -25,6 +25,7 @@ from mpf.core.device_manager import DeviceCollection
 from mpf.core.utility_functions import Util
 
 
+# pylint: disable-msg=too-many-instance-attributes
 class MachineController(object):
     """Base class for the Machine Controller object.
 
