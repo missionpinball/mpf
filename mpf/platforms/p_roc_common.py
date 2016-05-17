@@ -3,21 +3,11 @@ import logging
 import platform
 import sys
 import time
-from mpf.core.platform import MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlatform, DriverPlatform
-from mpf.core.utility_functions import Util
-from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
-from mpf.platforms.interfaces.gi_platform_interface import GIPlatformInterface
-from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
-from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 
 try:    # pragma: no cover
     import pinproc
     pinproc_imported = True
 except ImportError:
-    pinproc_imported = False
-    pinproc = None
-
-if not pinproc_imported:    # pragma: no cover
     try:
         if sys.platform == 'darwin':
             from mpf.platforms.pinproc.osx import pinproc
@@ -32,6 +22,13 @@ if not pinproc_imported:    # pragma: no cover
     except ImportError:
         pinproc_imported = False
         pinproc = None
+
+from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
+from mpf.platforms.interfaces.gi_platform_interface import GIPlatformInterface
+from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
+from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
+from mpf.core.platform import MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlatform, DriverPlatform
+from mpf.core.utility_functions import Util
 
 
 # pylint does not understand that this class is abstract
