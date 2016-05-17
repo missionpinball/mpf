@@ -168,4 +168,4 @@ class TestFastSerial(unittest.TestCase):
 
         self.assertFalse(self.serialMock.expected_commands)
         self.assertFalse(self.communicator.receive_queue.empty())
-        self.assertEqual("SA:1,00,8,00000000", self.communicator.receive_queue.get())
+        self.assertEqual("SA:1,00,8,00000000\r", self.communicator.receive_queue.get())
