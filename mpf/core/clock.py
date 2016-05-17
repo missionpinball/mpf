@@ -1,3 +1,4 @@
+# pylint: disable-msg=anomalous-backslash-in-string
 """
 Clock object
 ============
@@ -205,6 +206,7 @@ import time
 import logging
 from mpf.core.weakmethod import WeakMethod
 
+# pylint: disable-msg=anomalous-backslash-in-string
 """
 Clock object
 ============
@@ -363,7 +365,7 @@ from two threads simultaneously without any locking mechanism::
     # may schedule it twice
 Note, in the code above, thread 1 or thread 2 could be the kivy thread, not
 just an external thread.
-"""     # pylint: disable=W0105
+"""
 
 """
 ---------------------
@@ -382,7 +384,7 @@ been made for use in MPF:
        program if desired.
     5) max_fps is now a parameter in the Clock constructor (defaults to 60) that
        controls the maximum speed at which the MPF main loop/clock runs.
-"""     # pylint: disable=W0105
+"""
 
 __all__ = ('ClockBase', 'ClockEvent')
 
