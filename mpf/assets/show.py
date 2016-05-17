@@ -16,6 +16,7 @@ class ShowPool(AssetPool):
         return self.asset
 
 
+# pylint: disable-msg=too-many-instance-attributes
 class Show(Asset):
     attribute = 'shows'
     path_string = 'shows'
