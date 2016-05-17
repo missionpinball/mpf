@@ -48,4 +48,3 @@ class DriverEnabled(SystemWideDevice):
         del kwargs
         self.log.warning("Received request to pulse a driver-enabled device. "
                          "Ignoring...")
-

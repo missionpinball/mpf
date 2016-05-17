@@ -126,7 +126,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         # Can't use try since it swallows too many errors for now
         if cmd in self.opp_commands:
             self.opp_commands[cmd](msg)
-        else:            
+        else:
             self.log.warning("Received unknown serial command?%s. (This is "
                              "very worrisome.)", "".join(" 0x%02x" % b for b in msg))
 
@@ -463,7 +463,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                                  "light (incand board), with number %s "
                                  "which doesn't exist", config['number'])
 
-        self.incand_reg = True            
+        self.incand_reg = True
         return self.incandDict[config['number']]
 
     def tick(self, dt):
@@ -784,7 +784,7 @@ class SerialCommunicator(object):
                         self.partMsg = self.partMsg[1:]
                         strlen -= 1
                     else:
-                        # Lost synch 
+                        # Lost synch
                         self.partMsg = self.partMsg[1:]
                         strlen -= 1
                         lost_synch = True

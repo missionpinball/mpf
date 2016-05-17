@@ -28,4 +28,3 @@ class MatrixLightPlatformInterface(metaclass=abc.ABCMeta):
             None
         """
         raise NotImplementedError('off method must be defined to use this base class')
-
