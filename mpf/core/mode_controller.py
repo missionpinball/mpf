@@ -42,7 +42,6 @@ class ModeController(object):
         self.active_modes = list()
         self.mode_stop_count = 0
 
-
         self._machine_mode_folders = dict()
         self._mpf_mode_folders = dict()
 
@@ -111,11 +110,11 @@ class ModeController(object):
         # Is there an MPF default config for this mode? If so, load it first
         try:
             mpf_mode_config = os.path.join(
-                    self.machine.mpf_path,
-                    self.machine.config['mpf']['paths']['modes'],
-                    self._mpf_mode_folders[mode_string],
-                    'config',
-                    self._mpf_mode_folders[mode_string] + '.yaml')
+                self.machine.mpf_path,
+                self.machine.config['mpf']['paths']['modes'],
+                self._mpf_mode_folders[mode_string],
+                'config',
+                self._mpf_mode_folders[mode_string] + '.yaml')
 
             if os.path.isfile(mpf_mode_config):
                 config = ConfigProcessor.load_config_file(mpf_mode_config,
@@ -202,7 +201,7 @@ class ModeController(object):
                     config['mode']['code'].split('.')[0])
 
                 mode_object = getattr(i, config['mode']['code'].split('.')[1])(
-                        self.machine, config, mode_string, mode_path)
+                    self.machine, config, mode_string, mode_path)
 
                 if self.debug:
                     self.log.debug("Loaded code from %s",
@@ -239,16 +238,17 @@ class ModeController(object):
         for folder in mode_folders:
 
             this_mode_folder = os.path.join(
-                    base_folder,
-                    self.machine.config['mpf']['paths']['modes'],
-                    folder)
+                base_folder,
+                self.machine.config['mpf']['paths']['modes'],
+                folder)
 
             if os.path.isdir(this_mode_folder) and not folder.startswith('_'):
                 final_mode_folders[folder.lower()] = folder
 
         return final_mode_folders
 
-    def _player_added(self, player, num):
+    @classmethod
+    def _player_added(cls, player, num):
         del num
         player.uvars['_restart_modes_on_next_ball'] = list()
 
@@ -404,7 +404,7 @@ class ModeController(object):
 
         for mode in self.active_modes:
             if mode.active:
-                self.log.debug('| {} : {}'.format(
+                self.log.info('| {} : {}'.format(
                         mode.name, mode.priority).ljust(38) + '|')
 
         self.log.debug('+-------------------------------------+')

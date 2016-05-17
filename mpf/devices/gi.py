@@ -17,6 +17,7 @@ class Gi(SystemWideDevice):
     class_label = 'gi'
 
     def __init__(self, machine, name):
+        self.hw_driver = None
         super().__init__(machine, name)
 
         self.registered_handlers = []

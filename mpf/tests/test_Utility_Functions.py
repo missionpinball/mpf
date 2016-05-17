@@ -4,6 +4,15 @@ from mpf.core.utility_functions import Util
 
 class TestUtil(unittest.TestCase):
 
+    def test_string_to_ms(self):
+        self.assertEqual(86400000, Util.string_to_ms('1d'))
+        self.assertEqual(3600000, Util.string_to_ms('1h'))
+        self.assertEqual(60000, Util.string_to_ms('1m'))
+        self.assertEqual(1000, Util.string_to_ms('1s'))
+        self.assertEqual(1, Util.string_to_ms('1ms'))
+        self.assertEqual(0, Util.string_to_ms(None))
+        self.assertEqual(0, Util.string_to_ms(False))
+
     def test_keys_to_lower(self):
         inner_dict = dict(key1=1, Key2=2)
         outer_dict = dict(key3=1, Key4=2, Key5=inner_dict)

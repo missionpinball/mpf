@@ -58,7 +58,7 @@ class TestOSC(MpfTestCase):
         self.assertIsInstance(self.osc, osc.OSC)
         self.auditor = self.machine.auditor
         self.assertIsInstance(self.auditor, auditor.Auditor)
-        #self.auditor.enable()
+        # self.auditor.enable()
         # TODO: test audits
 
     def tearDown(self):
@@ -76,11 +76,9 @@ class TestOSC(MpfTestCase):
         self.machine_run()
 
     def test_refresh(self):
-        self.assertFalse(self.osc.client_needs_sync)
-        # should not crash
+        # should not crash. is a noop
         self.osc.process_message("/refresh", [], [], "123")
         self.machine_run()
-        self.assertTrue(self.osc.client_needs_sync)
 
     def test_audits(self):
         self.osc.process_message("/audits", [], [], "123")
@@ -331,9 +329,9 @@ class TestOSC(MpfTestCase):
         osc.OSCmodule.OSCClient.assert_called_once_with()
         self.client.connect.assert_called_once_with(('1', 8000))
 
-        self.assertEqual(1, self.osc.OSC_message.data)
-        self.assertEqual("/sw/switch1", self.osc.OSC_message.cat)
-        self.client.send.assert_called_once_with(self.osc.OSC_message)
+        self.assertEqual(1, self.osc.osc_message.data)
+        self.assertEqual("/sw/switch1", self.osc.osc_message.cat)
+        self.client.send.assert_called_once_with(self.osc.osc_message)
         self.client.send = MagicMock()
 
         # switch inactive
@@ -342,15 +340,15 @@ class TestOSC(MpfTestCase):
         self.assertEqual(1, self._events["switch1_active"])
         self.assertEqual(1, self._events["switch1_inactive"])
 
-        self.assertEqual(0, self.osc.OSC_message.data)
-        self.assertEqual("/sw/switch1", self.osc.OSC_message.cat)
-        self.client.send.assert_called_once_with(self.osc.OSC_message)
+        self.assertEqual(0, self.osc.osc_message.data)
+        self.assertEqual("/sw/switch1", self.osc.osc_message.cat)
+        self.client.send.assert_called_once_with(self.osc.osc_message)
         self.client.send = MagicMock()
 
         self.hit_switch_and_run("switch2", 1)
-        self.assertEqual(1, self.osc.OSC_message.data)
-        self.assertEqual("/sw/switch2", self.osc.OSC_message.cat)
-        self.client.send.assert_called_once_with(self.osc.OSC_message)
+        self.assertEqual(1, self.osc.osc_message.data)
+        self.assertEqual("/sw/switch2", self.osc.osc_message.cat)
+        self.client.send.assert_called_once_with(self.osc.osc_message)
 
     def test_switch_wpc(self):
         self.hit_switch_and_run("s_flipper", 1)
@@ -384,9 +382,9 @@ class TestOSC(MpfTestCase):
         osc.OSCmodule.OSCClient.assert_called_once_with()
         self.client.connect.assert_called_once_with(('1', 8000))
 
-        self.assertEqual(1, self.osc.OSC_message.data)
-        self.assertEqual("/sw/s1", self.osc.OSC_message.cat)
-        self.client.send.assert_called_once_with(self.osc.OSC_message)
+        self.assertEqual(1, self.osc.osc_message.data)
+        self.assertEqual("/sw/s1", self.osc.osc_message.cat)
+        self.client.send.assert_called_once_with(self.osc.osc_message)
         self.client.send = MagicMock()
 
         # switch inactive (also works with name)
@@ -395,15 +393,15 @@ class TestOSC(MpfTestCase):
         self.assertEqual(1, self._events["switch1_active"])
         self.assertEqual(1, self._events["switch1_inactive"])
 
-        self.assertEqual(0, self.osc.OSC_message.data)
-        self.assertEqual("/sw/s1", self.osc.OSC_message.cat)
-        self.client.send.assert_called_once_with(self.osc.OSC_message)
+        self.assertEqual(0, self.osc.osc_message.data)
+        self.assertEqual("/sw/s1", self.osc.osc_message.cat)
+        self.client.send.assert_called_once_with(self.osc.osc_message)
         self.client.send = MagicMock()
 
         self.hit_switch_and_run("switch2", 1)
-        self.assertEqual(1, self.osc.OSC_message.data)
-        self.assertEqual("/sw/s2", self.osc.OSC_message.cat)
-        self.client.send.assert_called_once_with(self.osc.OSC_message)
+        self.assertEqual(1, self.osc.osc_message.data)
+        self.assertEqual("/sw/s2", self.osc.osc_message.cat)
+        self.client.send.assert_called_once_with(self.osc.osc_message)
 
     def test_event(self):
         self.mock_event("test_event")
@@ -436,9 +434,9 @@ class TestOSC(MpfTestCase):
 
         self.advance_time_and_run(1)
 
-        self.assertAlmostEqual(0.1, self.osc.OSC_message.data, delta=0.05)
-        self.assertEqual("/light/light1", self.osc.OSC_message.cat)
-        self.client.send.assert_called_once_with(self.osc.OSC_message)
+        self.assertAlmostEqual(0.1, self.osc.osc_message.data, delta=0.05)
+        self.assertEqual("/light/light1", self.osc.osc_message.cat)
+        self.client.send.assert_called_once_with(self.osc.osc_message)
         self.client.send = MagicMock()
 
         # put light on 100%
@@ -447,9 +445,9 @@ class TestOSC(MpfTestCase):
         self.machine_run()
         self.machine.lights.light1.hw_driver.on.assert_called_once_with(255)
 
-        self.assertAlmostEqual(1.0, self.osc.OSC_message.data, delta=0.05)
-        self.assertEqual("/light/light1", self.osc.OSC_message.cat)
-        self.client.send.assert_called_once_with(self.osc.OSC_message)
+        self.assertAlmostEqual(1.0, self.osc.osc_message.data, delta=0.05)
+        self.assertEqual("/light/light1", self.osc.osc_message.cat)
+        self.client.send.assert_called_once_with(self.osc.osc_message)
 
     def test_light_wpc(self):
         # set client to wpc mode. currently machine + client have to be WPC (unlike for switches)
@@ -466,9 +464,9 @@ class TestOSC(MpfTestCase):
 
         self.advance_time_and_run(1)
 
-        self.assertAlmostEqual(0.1, self.osc.OSC_message.data, delta=0.05)
-        self.assertEqual("/light/l77", self.osc.OSC_message.cat)
-        self.client.send.assert_called_once_with(self.osc.OSC_message)
+        self.assertAlmostEqual(0.1, self.osc.osc_message.data, delta=0.05)
+        self.assertEqual("/light/l77", self.osc.osc_message.cat)
+        self.client.send.assert_called_once_with(self.osc.osc_message)
         self.client.send = MagicMock()
 
         # put light on 100% (should still work with name)
@@ -477,9 +475,9 @@ class TestOSC(MpfTestCase):
         self.machine_run()
         self.machine.lights.light1.hw_driver.on.assert_called_once_with(255)
 
-        self.assertAlmostEqual(1.0, self.osc.OSC_message.data, delta=0.05)
-        self.assertEqual("/light/l77", self.osc.OSC_message.cat)
-        self.client.send.assert_called_once_with(self.osc.OSC_message)
+        self.assertAlmostEqual(1.0, self.osc.osc_message.data, delta=0.05)
+        self.assertEqual("/light/l77", self.osc.osc_message.cat)
+        self.client.send.assert_called_once_with(self.osc.osc_message)
 
         self.client.send = MagicMock()
         # put light2 on 100%. we skip the starting 0
@@ -488,9 +486,9 @@ class TestOSC(MpfTestCase):
         self.machine_run()
         self.machine.lights.light2.hw_driver.on.assert_called_once_with(255)
 
-        self.assertAlmostEqual(1.0, self.osc.OSC_message.data, delta=0.05)
-        self.assertEqual("/light/02", self.osc.OSC_message.cat)
-        self.client.send.assert_called_once_with(self.osc.OSC_message)
+        self.assertAlmostEqual(1.0, self.osc.osc_message.data, delta=0.05)
+        self.assertEqual("/light/02", self.osc.osc_message.cat)
+        self.client.send.assert_called_once_with(self.osc.osc_message)
 
     def test_flipper(self):
         self.machine.coils.c_flipper.enable = MagicMock()

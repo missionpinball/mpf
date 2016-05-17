@@ -8,10 +8,10 @@ import os
 import pickle
 import tempfile
 
-from pkg_resources import iter_entry_points
 import queue
 import sys
 import threading
+from pkg_resources import iter_entry_points
 
 from mpf._version import __version__
 from mpf.core.bcp import BCP
@@ -25,6 +25,7 @@ from mpf.core.device_manager import DeviceCollection
 from mpf.core.utility_functions import Util
 
 
+# pylint: disable-msg=too-many-instance-attributes
 class MachineController(object):
     """Base class for the Machine Controller object.
 
@@ -101,8 +102,6 @@ class MachineController(object):
         self.log.info("Starting clock at %sHz", self.clock.max_fps)
         self.clock.schedule_interval(self._check_crash_queue, 1)
         self.configure_debugger()
-
-
 
         self.hardware_platforms = dict()
         self.default_platform = None
@@ -301,7 +300,7 @@ class MachineController(object):
 
                 config_file = os.path.join(self.machine_path, self.config['mpf']['paths']['config'], config_file)
 
-            self.log.info("Machine config file #%s: %s", num+1, config_file)
+            self.log.info("Machine config file #%s: %s", num + 1, config_file)
 
             self.config = Util.dict_merge(self.config,
                                           ConfigProcessor.load_config_file(
@@ -326,6 +325,7 @@ class MachineController(object):
                 self.machine_config = self.config
 
             # unfortunately pickle can raise all kinds of exceptions and we dont want to crash on corrupted cache
+            # pylint: disable-msg=broad-except
             except Exception:
                 self.log.warning("Could not load config from cache")
                 return False
@@ -351,8 +351,7 @@ class MachineController(object):
         return latest_time
 
     def _cache_config(self):
-        with open(self._get_mpfcache_file_name(),
-                'wb') as f:
+        with open(self._get_mpfcache_file_name(), 'wb') as f:
             pickle.dump(self.config, f, protocol=4)
             self.log.info('Config file cache created: %s', self._get_mpfcache_file_name())
 
@@ -492,14 +491,13 @@ class MachineController(object):
         if name not in self.hardware_platforms:
 
             try:
-                hardware_platform = __import__('mpf.platforms.%s' % name,
-                                               fromlist=["HardwarePlatform"])
+                hardware_platform = Util.string_to_class(self.config['mpf']['platforms'][name])
             except ImportError:
                 raise ImportError("Cannot add hardware platform {}. This is "
                                   "not a valid platform name".format(name))
 
             self.hardware_platforms[name] = (
-                hardware_platform.HardwarePlatform(self))
+                hardware_platform(self))
 
     def set_default_platform(self, name):
         """Sets the default platform which is used if a device class-specific or
@@ -659,7 +657,7 @@ class MachineController(object):
         self.machine_vars[name]['value'] = value
 
         try:
-            change = value-prev_value
+            change = value - prev_value
         except TypeError:
             change = prev_value != value
 

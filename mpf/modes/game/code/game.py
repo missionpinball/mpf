@@ -394,7 +394,7 @@ class Game(Mode):
             return False
 
         result = self.machine.events.post_boolean('player_add_request',
-                                                callback=self._player_add)
+                                                  callback=self._player_add)
         '''event: player_add_request
         desc: Posted to request that an additional player be added to this
         game. Any registered handler can deny the player add request by

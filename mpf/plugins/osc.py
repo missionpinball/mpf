@@ -48,11 +48,8 @@ class OSC(object):
             except socket.gaierror:
                 self.config['machine_ip'] = '127.0.0.1'
 
-        self.OSC_clients = dict()
-        self.OSC_message = False
-        self.client_needs_sync = False
-        self.client_last_update_time = None
-        self.last_loop_time = 1
+        self.osc_clients = dict()
+        self.osc_message = False
         self.client_mode = 'name'
         self.clients_to_delete = list()
         self.clients_to_add = list()
@@ -125,7 +122,7 @@ class OSC(object):
             name = None  # catches incoming messages that are just one part
 
         # if this client is not connected, set up a connection
-        if client_address not in self.OSC_clients:
+        if client_address not in self.osc_clients:
             self.found_new_osc_client(client_address)
 
         if cat.upper() in self.message_parsers:
@@ -133,10 +130,9 @@ class OSC(object):
         elif self.config['debug_messages']:
             self.log.warning("Last incoming OSC message was invalid")
 
+    # legacy method which does nothing
     def process_refresh(self, name, data):
-        del name
-        del data
-        self.client_needs_sync = True  # is this used anymore?
+        pass
 
     def process_sync(self, name, data):
         del name
@@ -181,7 +177,7 @@ class OSC(object):
                     light = self.machine.lights.number(light).name
 
         if light in self.machine.lights:
-            self.machine.lights[light].on(int(255*data[0]))
+            self.machine.lights[light].on(int(255 * data[0]))
         else:
             self.log.debug("Received OSC command for invalid light '%s'. "
                            "Ignorring...", light)
@@ -274,9 +270,9 @@ class OSC(object):
                                              name='player/' + entry + '/total',
                                              data=self.machine.auditor.current_audits['player'][entry]['total'])
                 i = 0
-                for dummy_iterator in (self.machine.auditor.current_audits['player'][entry]['top']):
+                for dummy_iterator in self.machine.auditor.current_audits['player'][entry]['top']:
                     self.client_send_osc_message(category="audits",
-                                                 name='player/' + entry + '/top/' + str(i+1),
+                                                 name='player/' + entry + '/top/' + str(i + 1),
                                                  data=self.machine.auditor.current_audits['player'][entry]['top'][i])
                     i += 1
 
@@ -292,7 +288,6 @@ class OSC(object):
         Good for when it switches to a new tab or connects a new client
         """
         self.client_update_all_switches()
-        self.client_needs_sync = False
 
     def client_update_switch(self, switch_name, ms, state):
         del ms
@@ -303,7 +298,7 @@ class OSC(object):
     def client_update_light(self, light_name, brightness):
         if self.client_mode == 'wpc':
             light_name = str(self.machine.lights[light_name].config['number']).lower()
-        self.client_send_osc_message("light", light_name, float(brightness/255))
+        self.client_send_osc_message("light", light_name, float(brightness / 255))
 
     def client_update_all_switches(self):
         """ Updates all the switch states on the OSC client."""
@@ -334,12 +329,12 @@ class OSC(object):
         for client in self.clients_to_add:
             self.setup_osc_client(client)
 
-        if self.OSC_clients:
-            self.OSC_message = OSCmodule.OSCMessage("/" + str(category) + "/" +
+        if self.osc_clients:
+            self.osc_message = OSCmodule.OSCMessage("/" + str(category) + "/" +
                                                     name)
-            self.OSC_message.append(data)
+            self.osc_message.append(data)
 
-            for k in list(self.OSC_clients.items()):
+            for k in list(self.osc_clients.items()):
                 try:
                     if self.config['debug_messages']:
                         self.log.debug("Sending OSC Message to client:%s: %s",
@@ -353,19 +348,19 @@ class OSC(object):
                     break
 
         for client in self.clients_to_delete:
-            if client in self.OSC_clients:
-                del self.OSC_clients[client]
+            if client in self.osc_clients:
+                del self.osc_clients[client]
         self.clients_to_delete = []
 
     def found_new_osc_client(self, address):
-        if address not in self.OSC_clients:
+        if address not in self.osc_clients:
             self.clients_to_add.append(address)
 
     def setup_osc_client(self, address):
         """Setup a new OSC client"""
-        self.log.debug("OSC client at address %s connected", address[0])
-        self.OSC_clients[address] = OSCmodule.OSCClient()
-        self.OSC_clients[address].connect((address[0],
+        self.log.info("OSC client at address %s connected", address[0])
+        self.osc_clients[address] = OSCmodule.OSCClient()
+        self.osc_clients[address].connect((address[0],
                                            self.config['client_port']))
         if address in self.clients_to_add:
             self.clients_to_add.remove(address)

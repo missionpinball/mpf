@@ -58,6 +58,7 @@ class WeakMethod:
             s = self()
             return s is not None and s == other()
         # no way to specify this
+        # pylint: disable-msg=broad-except
         except Exception:
             return False
 

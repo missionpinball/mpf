@@ -15,6 +15,7 @@ from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInt
 from mpf.core.delays import DelayManager
 
 
+# pylint: disable-msg=too-many-instance-attributes
 class HardwarePlatform(DriverPlatform):
 
     def __init__(self, machine):
@@ -27,13 +28,6 @@ class HardwarePlatform(DriverPlatform):
 
         self.system11_config = None
         self.snux_config = None
-        self.ac_relay_delay_ms = 100
-
-        self.diag_led = None
-        '''Diagnostics LED (LED 3) on the Snux board turns on solid when MPF
-        first connects, then starts flashing once the MPF init is done.'''
-        self.ac_relay = None
-        self.flipper_relay = None
         self.ac_relay_enabled = False  # disabled = A, enabled = C
 
         self.a_side_queue = set()
@@ -46,8 +40,6 @@ class HardwarePlatform(DriverPlatform):
         self.c_side_done_time = 0
         self.drivers_holding_a_side = set()
         self.drivers_holding_c_side = set()
-        # self.a_side_busy = False  # This is a property
-        # self.c_side_active = False  # This is a property
         self.a_side_enabled = True
         self.c_side_enabled = False
 
@@ -79,37 +71,29 @@ class HardwarePlatform(DriverPlatform):
     def _initialize(self):
         self._validate_config()
 
-        self.diag_led = self.snux_config['diag_led_driver']
-
         self.log.debug("Configuring Snux Diag LED for driver %s",
-                       self.diag_led.name)
+                       self.snux_config['diag_led_driver'].name)
 
         # Hack to silence logging of P_ROC
         # TODO: clean this up
-        self.diag_led.hw_driver.log.info = self.null_log_handler
-        self.diag_led.hw_driver.log.debug = self.null_log_handler
+        self.snux_config['diag_led_driver'].hw_driver.log.info = self.null_log_handler
+        self.snux_config['diag_led_driver'].hw_driver.log.debug = self.null_log_handler
 
-        self.diag_led.enable()
-
-        self.ac_relay = self.system11_config['ac_relay_driver']
+        self.snux_config['diag_led_driver'].enable()
 
         self.log.debug("Configuring A/C Select Relay for driver %s",
-                       self.ac_relay.name)
+                       self.system11_config['ac_relay_driver'].name)
 
-        if not self.ac_relay.config['allow_enable']:
+        if not self.system11_config['ac_relay_driver'].config['allow_enable']:
             raise AssertionError("AC Relay has to have allow_enable set to true")
 
         self.log.debug("Configuring A/C Select Relay transition delay for "
                        "%sms", self.system11_config['ac_relay_delay_ms'])
 
-        self.ac_relay_delay_ms = self.system11_config['ac_relay_delay_ms']
-
-        self.flipper_relay = self.snux_config['flipper_enable_driver']
-
         self.log.debug("Configuring Flipper Enable for driver %s",
-                       self.flipper_relay.name)
+                       self.snux_config['flipper_enable_driver'].name)
 
-        if not self.flipper_relay.config['allow_enable']:
+        if not self.snux_config['flipper_enable_driver'].config['allow_enable']:
             raise AssertionError("Flipper Relay has to have allow_enable set to true")
 
         self.machine.events.add_handler('init_phase_5',
@@ -141,7 +125,7 @@ class HardwarePlatform(DriverPlatform):
 
     def flash_diag_led(self, dt):
         del dt
-        self.diag_led.pulse(250)
+        self.snux_config['diag_led_driver'].pulse(250)
 
     def configure_driver(self, config):
         orig_number = config['number']
@@ -218,20 +202,20 @@ class HardwarePlatform(DriverPlatform):
                 self._service_c_side()
 
     def _enable_ac_relay(self):
-        self.ac_relay.enable()
+        self.system11_config['ac_relay_driver'].enable()
         self.ac_relay_in_transition = True
         self.a_side_enabled = False
         self.c_side_enabled = False
-        self.delay.add(ms=self.ac_relay_delay_ms,
+        self.delay.add(ms=self.system11_config['ac_relay_delay_ms'],
                        callback=self._c_side_enabled,
                        name='enable_ac_relay')
 
     def _disable_ac_relay(self):
-        self.ac_relay.disable()
+        self.system11_config['ac_relay_driver'].disable()
         self.ac_relay_in_transition = True
         self.a_side_enabled = False
         self.c_side_enabled = False
-        self.delay.add(ms=self.ac_relay_delay_ms,
+        self.delay.add(ms=self.system11_config['ac_relay_delay_ms'],
                        callback=self._a_side_enabled,
                        name='disable_ac_relay')
 
@@ -243,7 +227,7 @@ class HardwarePlatform(DriverPlatform):
             if self.c_side_active:
                 self._disable_all_c_side_drivers()
                 self._disable_ac_relay()
-                self.delay.add(ms=self.ac_relay_delay_ms,
+                self.delay.add(ms=self.system11_config['ac_relay_delay_ms'],
                                callback=self._enable_a_side,
                                name='enable_a_side')
                 return

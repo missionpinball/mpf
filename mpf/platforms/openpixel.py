@@ -93,7 +93,7 @@ class OpenPixelClient(object):
 
         # Update the FadeCandy at a regular interval
         # TODO: Add update interval to config
-        self.machine.clock.schedule_interval(self.tick, 1/30.0)
+        self.machine.clock.schedule_interval(self.tick, 1 / 30.0)
 
         self.sending_thread = OPCThread(self.machine, self.sending_queue,
                                         config)
@@ -169,8 +169,8 @@ class OpenPixelClient(object):
 
         # Build the OPC message
         msg = bytearray()
-        len_hi_byte = int(len(pixels)*3 / 256)
-        len_lo_byte = (len(pixels)*3) % 256
+        len_hi_byte = int(len(pixels) * 3 / 256)
+        len_lo_byte = (len(pixels) * 3) % 256
         header = bytes([channel, 0, len_hi_byte, len_lo_byte])
         msg.extend(header)
         for r, g, b in pixels:
@@ -287,6 +287,7 @@ class OPCThread(threading.Thread):  # pragma: no cover
                     self.sending_queue.queue.clear()
                     self.log.warning('Discarding stale pixel data from the queue.')
 
+        # pylint: disable-msg=broad-except
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             lines = traceback.format_exception(exc_type, exc_value, exc_traceback)

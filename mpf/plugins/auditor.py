@@ -26,6 +26,8 @@ class Auditor(object):
 
         self.machine.auditor = self
         self.switchnames_to_audit = set()
+        self.config = None
+        self.current_audits = None
 
         self.enabled = False
         """Attribute that's viewed by other core components to let them know
@@ -160,7 +162,8 @@ class Auditor(object):
 
                 self.current_audits['player'][item]['total'] += 1
 
-    def _merge_into_top_list(self, new_item, current_list, num_items):
+    @classmethod
+    def _merge_into_top_list(cls, new_item, current_list, num_items):
         # takes a list of top integers and a new item and merges the new item
         # into the list, then trims it based on the num_items specified
         current_list.append(new_item)

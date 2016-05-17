@@ -27,6 +27,8 @@ class HardwarePlatform(MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatfor
     time, this class *must* be called HardwarePlatform."""
 
     def __init__(self, machine):
+        self.hw_switches = {}
+        self.hw_switch_rules = {}
         super().__init__(machine)
         self.log = logging.getLogger("Template Platform")
         self.log.debug("Configuring template hardware interface.")
@@ -72,6 +74,18 @@ class HardwarePlatform(MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatfor
         driver.driver_settings['pulse_ms'] = 30
 
         return driver
+
+    def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
+        pass
+
+    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
+        pass
+
+    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
+        pass
+
+    def set_pulse_on_hit_rule(self, enable_switch, coil):
+        pass
 
     def configure_switch(self, config):
         """Called once per switch when MPF boots. It's used to setup the
@@ -121,8 +135,8 @@ class HardwarePlatform(MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatfor
                 initial_active_switches = [self.machine.switches[x].number for
                                            x in
                                            Util.string_to_list(
-                                                   self.machine.config[
-                                                       'virtual_platform_start_active_switches'])]
+                                               self.machine.config[
+                                                   'virtual_platform_start_active_switches'])]
 
                 for k in self.hw_switches:
                     if k in initial_active_switches:
@@ -164,11 +178,13 @@ class HardwarePlatform(MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatfor
     def i2c_write8(self, address, register, value):
         pass
 
+    # pylint: disable-msg=no-self-use
     def i2c_read8(self, address, register):
         del address
         del register
         return None
 
+    # pylint: disable-msg=no-self-use
     def i2c_read16(self, address, register):
         del address
         del register
@@ -181,6 +197,7 @@ class VirtualSwitch(object):
     def __init__(self, number):
         self.log = logging.getLogger('VirtualSwitch')
         self.number = number
+        self.driver_settings = {}
 
 
 class VirtualMatrixLight(MatrixLightPlatformInterface):
@@ -242,6 +259,7 @@ class TemplateDriver(DriverPlatformInterface):
     def __init__(self, number):
         self.log = logging.getLogger('VirtualDriver')
         self.number = number
+        self.driver_settings = {}
 
     def __repr__(self):
         return "VirtualDriver.{}".format(self.number)
@@ -311,7 +329,7 @@ class TemplateDriver(DriverPlatformInterface):
 
 class VirtualDMD(object):
     def __init__(self, machine):
-        pass
+        self.machine = machine
 
     def update(self, data):
         pass

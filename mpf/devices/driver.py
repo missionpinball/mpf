@@ -24,6 +24,7 @@ class Driver(SystemWideDevice):
     class_label = 'coil'
 
     def __init__(self, machine, name):
+        self.hw_driver = None
         super().__init__(machine, name)
 
         self.time_last_changed = 0
@@ -169,6 +170,8 @@ class ConfiguredHwDriver:
 
 
 class ReconfiguredDriver(Driver):
+
+    # pylint: disable-msg=super-init-not-called
     def __init__(self, driver, config_overwrite):
         # no call to super init
         self._driver = driver

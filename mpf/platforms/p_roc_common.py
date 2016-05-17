@@ -1,22 +1,13 @@
+import abc
 import logging
 import platform
 import sys
 import time
-from mpf.core.platform import MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlatform, DriverPlatform
-from mpf.core.utility_functions import Util
-from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
-from mpf.platforms.interfaces.gi_platform_interface import GIPlatformInterface
-from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
-from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 
 try:    # pragma: no cover
     import pinproc
     pinproc_imported = True
 except ImportError:
-    pinproc_imported = False
-    pinproc = None
-
-if not pinproc_imported:    # pragma: no cover
     try:
         if sys.platform == 'darwin':
             from mpf.platforms.pinproc.osx import pinproc
@@ -32,8 +23,18 @@ if not pinproc_imported:    # pragma: no cover
         pinproc_imported = False
         pinproc = None
 
+from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
+from mpf.platforms.interfaces.gi_platform_interface import GIPlatformInterface
+from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
+from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
+from mpf.core.platform import MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlatform, DriverPlatform
+from mpf.core.utility_functions import Util
 
-class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlatform, DriverPlatform):
+
+# pylint does not understand that this class is abstract
+# pylint: disable-msg=abstract-method
+class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlatform, DriverPlatform,
+                       metaclass=abc.ABCMeta):
     """Platform class for the P-Roc and P3-ROC hardware controller.
 
     Args:
@@ -75,7 +76,8 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
 
         self.log.debug("Successfully connected to P-ROC/P3-ROC")
 
-    def _get_event_type(self, sw_activity, debounced):
+    @classmethod
+    def _get_event_type(cls, sw_activity, debounced):
         if sw_activity == 0 and debounced in ("normal", "auto"):
             return "open_debounced"
         elif sw_activity == 0 and debounced == "quick":
@@ -479,7 +481,8 @@ class PDBConfig(object):
 
         return coil_bank_list
 
-    def initialize_drivers(self, proc):
+    @classmethod
+    def initialize_drivers(cls, proc):
         # Loop through all of the drivers, initializing them with the polarity.
         for i in range(0, 255):
             state = {'driverNum': i,
@@ -531,44 +534,35 @@ class PDBConfig(object):
                                          self.use_watchdog,  # Enable watchdog
                                          self.watchdog_time)
 
-    def get_proc_number(self, device_type, number_str):
-        """Returns the P-ROC/P3-ROC number for the requested driver string.
+    def get_proc_coil_number(self, number_str):
+        coil = PDBCoil(self, number_str)
+        bank = coil.bank()
+        if bank == -1:
+            return -1
+        index = self.indexes.index(coil.bank())
+        num = index * 8 + coil.output()
+        return num
 
-        This method uses the driver string to look in the indexes list that
-        was set up when the PDBs were configured.  The resulting P-ROC/P3-ROC index
-        * 3 is the first driver number in the group, and the driver offset is
-        to that.
+    def get_proc_light_number(self, number_str):
+        lamp = PDBLight(self, number_str)
+        if lamp.lamp_type == 'unknown':
+            return -1
+        elif lamp.lamp_type == 'dedicated':
+            return lamp.dedicated_output()
 
-        """
-        if device_type == 'coil':
-            coil = PDBCoil(self, number_str)
-            bank = coil.bank()
-            if bank == -1:
-                return -1
-            index = self.indexes.index(coil.bank())
-            num = index * 8 + coil.output()
-            return num
+        lamp_dict_for_index = {'source_board': lamp.source_board(),
+                               'sink_bank': lamp.sink_bank(),
+                               'source_output': lamp.source_output()}
+        if lamp_dict_for_index not in self.indexes:
+            return -1
+        index = self.indexes.index(lamp_dict_for_index)
+        num = index * 8 + lamp.sink_output()
+        return num
 
-        if device_type == 'light':
-            lamp = PDBLight(self, number_str)
-            if lamp.lamp_type == 'unknown':
-                return -1
-            elif lamp.lamp_type == 'dedicated':
-                return lamp.dedicated_output()
-
-            lamp_dict_for_index = {'source_board': lamp.source_board(),
-                                   'sink_bank': lamp.sink_bank(),
-                                   'source_output': lamp.source_output()}
-            if lamp_dict_for_index not in self.indexes:
-                return -1
-            index = self.indexes.index(lamp_dict_for_index)
-            num = index * 8 + lamp.sink_output()
-            return num
-
-        if device_type == 'switch':
-            switch = PDBSwitch(self, number_str)
-            num = switch.proc_num()
-            return num
+    def get_proc_switch_number(self, number_str):
+        switch = PDBSwitch(self, number_str)
+        num = switch.proc_num()
+        return num
 
 
 class PDBSwitch(object):
@@ -599,7 +593,8 @@ class PDBSwitch(object):
     def proc_num(self):
         return self.sw_number
 
-    def parse_matrix_num(self, num_str):
+    @classmethod
+    def parse_matrix_num(cls, num_str):
         cr_list = num_str.split('/')
         return 32 + int(cr_list[0]) * 16 + int(cr_list[1])
 
@@ -634,7 +629,8 @@ class PDBCoil(object):
     def output(self):
         return self.outputnum
 
-    def is_direct_coil(self, string):
+    @classmethod
+    def is_direct_coil(cls, string):
         if len(string) < 2 or len(string) > 3:
             return False
         if not string[0] == 'C':
@@ -643,7 +639,8 @@ class PDBCoil(object):
             return False
         return True
 
-    def is_pdb_coil(self, string):
+    @classmethod
+    def is_pdb_coil(cls, string):
         return is_pdb_address(string)
 
 
@@ -686,7 +683,8 @@ class PDBLight(object):
     def dedicated_output(self):
         return self.output
 
-    def is_direct_lamp(self, string):
+    @classmethod
+    def is_direct_lamp(cls, string):
         if len(string) < 2 or len(string) > 3:
             return False
         if not string[0] == 'L':
@@ -695,7 +693,8 @@ class PDBLight(object):
             return False
         return True
 
-    def split_matrix_addr_parts(self, string):
+    @classmethod
+    def split_matrix_addr_parts(cls, string):
         """ Input is of form C-Ax-By-z:R-Ax-By-z  or  C-x/y/z:R-x/y/z  or
         aliasX:aliasY.  We want to return only the address part: Ax-By-z,
         x/y/z, or aliasX.  That is, remove the two character prefix if present.
@@ -829,7 +828,8 @@ class PROCDriver(DriverPlatformInterface):
 
         self.log.debug("Driver Settings for %s", self.number)
 
-    def get_pwm_on_ms(self, coil):
+    @classmethod
+    def get_pwm_on_ms(cls, coil):
         # figure out what kind of enable we need:
         if coil.config['hold_power']:
             pwm_on_ms, pwm_off_ms = (Util.pwm8_to_on_off(coil.config['hold_power']))
@@ -841,7 +841,8 @@ class PROCDriver(DriverPlatformInterface):
         else:
             return 0
 
-    def get_pwm_off_ms(self, coil):
+    @classmethod
+    def get_pwm_off_ms(cls, coil):
         # figure out what kind of enable we need:
         if coil.config['hold_power']:
             pwm_on_ms, pwm_off_ms = (Util.pwm8_to_on_off(coil.config['hold_power']))

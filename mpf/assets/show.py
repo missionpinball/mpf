@@ -16,6 +16,7 @@ class ShowPool(AssetPool):
         return self.asset
 
 
+# pylint: disable-msg=too-many-instance-attributes
 class Show(Asset):
     attribute = 'shows'
     path_string = 'shows'
@@ -45,7 +46,7 @@ class Show(Asset):
         self.token_values = dict()
         self.token_keys = dict()
 
-        self.token_finder = re.compile('(?<=\()(.*?)(?=\))')
+        self.token_finder = re.compile('(?<=\\()(.*?)(?=\\))')
 
         self.running = set()
         '''Set of RunningShow() instances which represents running instances
@@ -401,6 +402,8 @@ class Show(Asset):
         return FileManager.load(self.file)
 
 
+# This class is more or less a container
+# pylint: disable-msg=too-many-instance-attributes
 class RunningShow(object):
     # pylint: disable-msg=too-many-arguments
     # pylint: disable-msg=too-many-locals

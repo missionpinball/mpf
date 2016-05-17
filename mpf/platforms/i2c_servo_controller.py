@@ -2,8 +2,8 @@
 """
 
 import logging
-from mpf.core.platform import ServoPlatform
 import time
+from mpf.core.platform import ServoPlatform
 
 
 class HardwarePlatform(ServoPlatform):

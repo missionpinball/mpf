@@ -87,19 +87,19 @@ class LogicBlocks(object):
         if 'counters' in config:
             for item in config['counters']:
                 counter_block = Counter(self.machine, item, player,
-                                config['counters'][item])
+                                        config['counters'][item])
                 blocks_added.add(counter_block)
 
         if 'accruals' in config:
             for item in config['accruals']:
                 accrual_block = Accrual(self.machine, item, player,
-                                config['accruals'][item])
+                                        config['accruals'][item])
                 blocks_added.add(accrual_block)
 
         if 'sequences' in config:
             for item in config['sequences']:
                 sequence_block = Sequence(self.machine, item, player,
-                                 config['sequences'][item])
+                                          config['sequences'][item])
                 blocks_added.add(sequence_block)
 
         # Enable any logic blocks that do not have specific enable events
@@ -159,19 +159,19 @@ class LogicBlock(object):
         # Register for the events to enable, disable, and reset this LogicBlock
         for event in self.config['enable_events']:
             self.handler_keys.add(
-                    self.machine.events.add_handler(event, self.enable))
+                self.machine.events.add_handler(event, self.enable))
 
         for event in self.config['disable_events']:
             self.handler_keys.add(
-                    self.machine.events.add_handler(event, self.disable))
+                self.machine.events.add_handler(event, self.disable))
 
         for event in self.config['reset_events']:
             self.handler_keys.add(
-                    self.machine.events.add_handler(event, self.reset))
+                self.machine.events.add_handler(event, self.reset))
 
         for event in self.config['restart_events']:
             self.handler_keys.add(
-                    self.machine.events.add_handler(event, self.restart))
+                self.machine.events.add_handler(event, self.restart))
 
     def _remove_all_event_handlers(self):
         for key in self.handler_keys:
@@ -317,7 +317,7 @@ class Counter(LogicBlock):
 
         for event in self.config['count_events']:
             self.handler_keys.add(
-                    self.machine.events.add_handler(event, self.hit))
+                self.machine.events.add_handler(event, self.hit))
 
     def reset(self, **kwargs):
         """Resets the hit progress towards completion"""
@@ -412,8 +412,8 @@ class Accrual(LogicBlock):
         for entry_num in range(len(self.config['events'])):
             for event in self.config['events'][entry_num]:
                 self.handler_keys.add(
-                        self.machine.events.add_handler(event, self.hit,
-                                                        step=entry_num))
+                    self.machine.events.add_handler(event, self.hit,
+                                                    step=entry_num))
 
     def reset(self, **kwargs):
         """Resets the hit progress towards completion"""
@@ -473,7 +473,7 @@ class Sequence(LogicBlock):
         for event in (self.config['events']
                       [self.player[self.config['player_variable']]]):
             self.handler_keys.add(
-                    self.machine.events.add_handler(event, self.hit))
+                self.machine.events.add_handler(event, self.hit))
 
     def hit(self, **kwargs):
         """Increases the hit progress towards completion. Automatically called
@@ -495,7 +495,7 @@ class Sequence(LogicBlock):
             for event in (self.config['events']
                           [self.player[self.config['player_variable']]]):
                 self.handler_keys.add(
-                        self.machine.events.add_handler(event, self.hit))
+                    self.machine.events.add_handler(event, self.hit))
 
     def reset(self, **kwargs):
         """Resets the sequence back to the first step."""

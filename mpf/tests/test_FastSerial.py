@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, call
 
 import time
 
-from mpf.platforms import fast
+from mpf.platforms.fast import fast
 
 
 class SerialMock:

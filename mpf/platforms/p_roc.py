@@ -82,7 +82,6 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
 
         Args:
             config: Dictionary of settings for the driver.
-            device_type: String with value of either 'coil' or 'switch'.
 
         Returns:
             A reference to the PROCDriver object which is the actual object you
@@ -98,7 +97,7 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
         # can provide the number.
 
         if self.machine_type == self.pinproc.MachineTypePDB:
-            proc_num = self.pdbconfig.get_proc_number("coil", str(config['number']))
+            proc_num = self.pdbconfig.get_proc_coil_number(str(config['number']))
             if proc_num == -1:
                 raise AssertionError("Driver {} cannot be controlled by the P-ROC. ".format(str(config['number'])))
         else:
@@ -109,7 +108,7 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
     def configure_gi(self, config):
         # GIs are coils in P-Roc
         if self.machine_type == self.pinproc.MachineTypePDB:
-            proc_num = self.pdbconfig.get_proc_number("coil", str(config['number']))
+            proc_num = self.pdbconfig.get_proc_coil_number(str(config['number']))
             if proc_num == -1:
                 raise AssertionError("Gi Driver {} cannot be controlled by the P-ROC. ".format(str(config['number'])))
         else:
@@ -120,7 +119,7 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
 
     def configure_matrixlight(self, config):
         if self.machine_type == self.pinproc.MachineTypePDB:
-            proc_num = self.pdbconfig.get_proc_number("light", str(config['number']))
+            proc_num = self.pdbconfig.get_proc_light_number(str(config['number']))
             if proc_num == -1:
                 raise AssertionError("Matrixlight {} cannot be controlled by the P-ROC. ".format(
                     str(config['number'])))
@@ -146,7 +145,7 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
 
         """
         if self.machine_type == self.pinproc.MachineTypePDB:
-            proc_num = self.pdbconfig.get_proc_number("switch", str(config['number']))
+            proc_num = self.pdbconfig.get_proc_switch_number(str(config['number']))
             if proc_num == -1:
                 raise AssertionError("Switch {} cannot be controlled by the P-ROC. ".format(
                     str(config['number'])))

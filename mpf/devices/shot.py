@@ -49,7 +49,8 @@ class Shot(ModeDevice, SystemWideDevice):
     def enabled(self):
         return [x for x in self.profiles if x['enable']]
 
-    def prepare_config(self, config, is_mode_config):
+    @classmethod
+    def prepare_config(cls, config, is_mode_config):
         if not is_mode_config:
             if 'enable_events' not in config:
                 config['enable_events'] = 'ball_starting'

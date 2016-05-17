@@ -1,8 +1,5 @@
 """Contains the Playfield device class which represents the actual playfield in
 a pinball machine."""
-
-import logging
-
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.ball_search import BallSearch
 from mpf.core.delays import DelayManager
@@ -14,17 +11,8 @@ class Playfield(SystemWideDevice):
     collection = 'playfields'
     class_label = 'playfield'
 
-    # noinspection PyMissingConstructor
     def __init__(self, machine, name):
-        self.log = logging.getLogger('playfield.{}'.format(name))
-
-        self.machine = machine
-        self.name = name.lower()
-        self.tags = list()
-        self.label = None
-        self.debug = False
-        self.config = dict()
-        self.unexpected_balls = 0
+        super().__init__(machine, name)
         self.ball_search = BallSearch(self.machine, self)
 
         self.delay = DelayManager(self.machine.delayRegistry)
@@ -34,15 +22,12 @@ class Playfield(SystemWideDevice):
         # Attributes
         self._balls = 0
         self.available_balls = 0
+        self.unexpected_balls = 0
         self.num_balls_requested = 0
-        self.queued_balls = list()
-        self._playfield = True
 
     def _initialize(self):
         if 'default' in self.config['tags']:
             self.machine.playfield = self
-
-        self.ball_controller = self.machine.ball_controller
 
         # Set up event handlers
 
@@ -147,7 +132,8 @@ class Playfield(SystemWideDevice):
         else:
             self.ball_search.enable()
 
-    def get_additional_ball_capacity(self):
+    @classmethod
+    def get_additional_ball_capacity(cls):
         """Used to find out how many more balls this device can hold. Since this
         is the playfield device, this method always returns 999.
 
@@ -329,7 +315,8 @@ class Playfield(SystemWideDevice):
             if self.num_balls_requested < 0:
                 raise AssertionError("num_balls_requested is smaller 0, which doesn't make sense. Quitting...")
 
-    def is_playfield(self):
+    @classmethod
+    def is_playfield(cls):
         return True
 
     def add_incoming_ball(self, source):

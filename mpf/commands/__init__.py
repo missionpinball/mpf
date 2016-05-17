@@ -27,7 +27,8 @@ class CommandLineUtility(object):
             command, function = entry_point.load()()
             self.external_commands[command] = function
 
-    def check_python_version(self):
+    @classmethod
+    def check_python_version(cls):
         if sys.version_info[0] != 3:
             print("MPF requires Python 3. You have Python {}.{}.{}".format(
                 sys.version_info[0], sys.version_info[1], sys.version_info[2]

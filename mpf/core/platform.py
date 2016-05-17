@@ -1,7 +1,8 @@
 """ Contains the parent classes Platform"""
+import abc
 
 
-class BasePlatform(object):
+class BasePlatform(metaclass=abc.ABCMeta):
     def __init__(self, machine):
         self.machine = machine
         self.HZ = None
@@ -55,11 +56,12 @@ class BasePlatform(object):
         pass
 
 
-class DmdPlatform(BasePlatform):
+class DmdPlatform(BasePlatform, metaclass=abc.ABCMeta):
     def __init__(self, machine):
         super().__init__(machine)
         self.features['has_dmd'] = True
 
+    @abc.abstractmethod
     def configure_dmd(self):
         """Subclass this method in a platform module to configure the DMD.
 
@@ -70,11 +72,12 @@ class DmdPlatform(BasePlatform):
         raise NotImplementedError
 
 
-class RgbDmdPlatform(BasePlatform):
+class RgbDmdPlatform(BasePlatform, metaclass=abc.ABCMeta):
     def __init__(self, machine):
         super().__init__(machine)
         self.features['has_rgb_dmd'] = True
 
+    @abc.abstractmethod
     def configure_rgb_dmd(self):
         """Subclass this method in a platform module to configure the DMD.
 
@@ -85,44 +88,50 @@ class RgbDmdPlatform(BasePlatform):
         raise NotImplementedError
 
 
-class AccelerometerPlatform(BasePlatform):
+class AccelerometerPlatform(BasePlatform, metaclass=abc.ABCMeta):
     def __init__(self, machine):
         super().__init__(machine)
         self.features['has_accelerometers'] = True
 
+    @abc.abstractmethod
     def configure_accelerometer(self, device, number, use_high_pass):
         raise NotImplementedError
 
 
-class I2cPlatform(BasePlatform):
+class I2cPlatform(BasePlatform, metaclass=abc.ABCMeta):
     def __init__(self, machine):
         super().__init__(machine)
         self.features['has_i2c'] = True
 
+    @abc.abstractmethod
     def i2c_write8(self, address, register, value):
         raise NotImplementedError
 
+    @abc.abstractmethod
     def i2c_read8(self, address, register):
         raise NotImplementedError
 
+    @abc.abstractmethod
     def i2c_read16(self, address, register):
         raise NotImplementedError
 
 
-class ServoPlatform(BasePlatform):
+class ServoPlatform(BasePlatform, metaclass=abc.ABCMeta):
     def __init__(self, machine):
         super().__init__(machine)
         self.features['has_servos'] = True
 
+    @abc.abstractmethod
     def servo_go_to_position(self, number, position):
         raise NotImplementedError
 
 
-class MatrixLightsPlatform(BasePlatform):
+class MatrixLightsPlatform(BasePlatform, metaclass=abc.ABCMeta):
     def __init__(self, machine):
         super().__init__(machine)
         self.features['has_matrix_lights'] = True
 
+    @abc.abstractmethod
     def configure_matrixlight(self, config):
         """Subclass this method in a platform module to configure a matrix
         light.
@@ -134,11 +143,12 @@ class MatrixLightsPlatform(BasePlatform):
         raise NotImplementedError
 
 
-class GiPlatform(BasePlatform):
+class GiPlatform(BasePlatform, metaclass=abc.ABCMeta):
     def __init__(self, machine):
         super().__init__(machine)
         self.features['has_gis'] = True
 
+    @abc.abstractmethod
     def configure_gi(self, config):
         """Subclass this method in a platform module to configure a GI string.
 
@@ -149,11 +159,12 @@ class GiPlatform(BasePlatform):
         raise NotImplementedError
 
 
-class LedPlatform(BasePlatform):
+class LedPlatform(BasePlatform, metaclass=abc.ABCMeta):
     def __init__(self, machine):
         super().__init__(machine)
         self.features['has_leds'] = True
 
+    @abc.abstractmethod
     def configure_led(self, config, channels):
         """Subclass this method in a platform module to configure an LED.
 
@@ -164,11 +175,12 @@ class LedPlatform(BasePlatform):
         raise NotImplementedError
 
 
-class SwitchPlatform(BasePlatform):
+class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
     def __init__(self, machine):
         super().__init__(machine)
         self.features['has_switches'] = True
 
+    @abc.abstractmethod
     def configure_switch(self, config):
         """Subclass this method in a platform module to configure a switch.
 
@@ -198,6 +210,7 @@ class SwitchPlatform(BasePlatform):
             base_spec=self.__class__.get_switch_config_section())
         return config
 
+    @abc.abstractmethod
     def get_hw_switch_states(self):
         """Subclass this method in a platform module to return the hardware
         states of all the switches on that platform.
@@ -212,7 +225,7 @@ class SwitchPlatform(BasePlatform):
         raise NotImplementedError
 
 
-class DriverPlatform(BasePlatform):
+class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
     def __init__(self, machine):
         super().__init__(machine)
 
@@ -221,6 +234,7 @@ class DriverPlatform(BasePlatform):
         self.features['has_drivers'] = True
         self.features['max_pulse'] = 255
 
+    @abc.abstractmethod
     def configure_driver(self, config):
         """Subclass this method in a platform module to configure a driver.
 
@@ -230,6 +244,7 @@ class DriverPlatform(BasePlatform):
         """
         raise NotImplementedError
 
+    @abc.abstractmethod
     def clear_hw_rule(self, switch, coil):
         """Subclass this method in a platform module to clear a hardware switch
         rule for this switch.
@@ -264,22 +279,26 @@ class DriverPlatform(BasePlatform):
             base_spec=self.__class__.get_coil_config_section())
         return config
 
+    @abc.abstractmethod
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
         """Pulses a driver when a switch is hit. When the switch is released the pulse is canceled. Typically used on
         the main coil for dual coil flippers without eos switch. """
         raise NotImplementedError
 
+    @abc.abstractmethod
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
         """Pulses a driver when a switch is hit. Then enables the driver (may be with pwm). When the switch is released
         the pulse is canceled and the driver gets disabled. Typically used for single coil flippers. """
         raise NotImplementedError
 
+    @abc.abstractmethod
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
         """Pulses a driver when a switch is hit. Then enables the driver (may be with pwm). When the switch is released
         the pulse is canceled and the driver gets disabled. When the second disable_switch is hit the pulse is canceled
         and the driver gets disabled. Typically used on the main coil for dual coil flippers with eos switch. """
         raise NotImplementedError
 
+    @abc.abstractmethod
     def set_pulse_on_hit_rule(self, enable_switch, coil):
         """Pulses a driver when a switch is hit. When the switch is released the pulse continues. Typically used for
          autofire coils such as pop bumpers. """

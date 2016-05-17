@@ -25,7 +25,8 @@ class ScoreController(object):
         self.mode_configs = OrderedDict()
         self.mode_scores = dict()
 
-    def validate_entry(self, entry, mode):
+    @classmethod
+    def validate_entry(cls, entry, mode):
         # TODO: better validation at mode loading time
         for value in entry.values():
             if isinstance(value, int):
@@ -106,7 +107,7 @@ class ScoreController(object):
             self.machine.events.post('_'.join(('mode', mode.name, var_name,
                                                'score')), value=value,
                                      prev_value=prev_value,
-                                     change=value-prev_value)
+                                     change=value - prev_value)
             '''event: mode_(mode_name)_(var_name)_score
 
             desc: A scoring event was just processed to add (or remove) value

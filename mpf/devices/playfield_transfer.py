@@ -9,6 +9,11 @@ class PlayfieldTransfer(SystemWideDevice):
     collection = 'playfield_transfers'
     class_label = 'playfield_transfer'
 
+    def __init__(self, machine, name):
+        self.target = None
+        self.source = None
+        super().__init__(machine, name)
+
     def _initialize(self):
         self.machine.events.add_handler('init_phase_3',
                                         self.configure_switch)
@@ -19,9 +24,9 @@ class PlayfieldTransfer(SystemWideDevice):
 
     def configure_switch(self):
         self.machine.switch_controller.add_switch_handler(
-                switch_name=self.config['ball_switch'].name,
-                callback=self._ball_went_through,
-                state=1, ms=0)
+            switch_name=self.config['ball_switch'].name,
+            callback=self._ball_went_through,
+            state=1, ms=0)
 
     def _ball_went_through(self):
         self.log.debug("Ball went from %s to %s", self.source.name,

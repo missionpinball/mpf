@@ -1061,6 +1061,7 @@ class BCPClientSocket(object):
                         socket_bytes = leftovers
                         self._process_command(message)
 
+        # pylint: disable-msg=broad-except
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             lines = traceback.format_exception(exc_type, exc_value,
@@ -1114,6 +1115,7 @@ class BCPClientSocket(object):
                     # MPF is probably in the process of shutting down
                     pass
 
+        # pylint: disable-msg=broad-except
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             lines = traceback.format_exception(exc_type, exc_value, exc_traceback)

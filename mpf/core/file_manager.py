@@ -2,8 +2,8 @@
 
 import logging
 import os
-import mpf.file_interfaces
 import importlib
+import mpf.file_interfaces
 
 
 class FileInterface(object):

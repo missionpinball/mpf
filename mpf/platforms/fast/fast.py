@@ -13,20 +13,23 @@ import io
 from distutils.version import StrictVersion
 from copy import deepcopy
 
-from mpf.core.platform import ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatform, \
-    SwitchPlatform, DriverPlatform
-from mpf.core.utility_functions import Util
-from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
-from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
-from mpf.platforms.interfaces.gi_platform_interface import GIPlatformInterface
-from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
-
 try:
     import serial
     serial_imported = True
 except ImportError:
     serial_imported = False
     serial = None
+
+from mpf.platforms.fast import fast_defines
+from mpf.platforms.fast.fast_driver import FASTDriver
+from mpf.platforms.fast.fast_gi import FASTGIString
+from mpf.platforms.fast.fast_led import FASTDirectLED
+from mpf.platforms.fast.fast_light import FASTMatrixLight
+from mpf.platforms.fast.fast_switch import FASTSwitch
+
+from mpf.core.platform import ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatform, \
+    SwitchPlatform, DriverPlatform
+from mpf.core.utility_functions import Util
 
 # Minimum firmware versions needed for this module
 DMD_MIN_FW = '0.88'
@@ -40,6 +43,7 @@ RGB_LATEST_FW = '0.88'
 IO_LATEST_FW = '0.89'
 
 
+# pylint: disable-msg=too-many-instance-attributes
 class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
                        DmdPlatform, LedPlatform, SwitchPlatform,
                        DriverPlatform):
@@ -68,175 +72,9 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         self.fast_leds = set()
         self.flag_led_tick_registered = False
         self.fast_io_boards = list()
-        self.waiting_for_switch_data = False
         self.config = None
-        self.watchdog_command = None
         self.machine_type = None
         self.hw_switch_data = None
-
-        self.wpc_switch_map = {
-
-            # WPC   HEX    DEC
-            'S11': '00',  # 00
-            'S12': '01',  # 01
-            'S13': '02',  # 02
-            'S14': '03',  # 03
-            'S15': '04',  # 04
-            'S16': '05',  # 05
-            'S17': '06',  # 06
-            'S18': '07',  # 07
-
-            'S21': '08',  # 08
-            'S22': '09',  # 09
-            'S23': '0A',  # 10
-            'S24': '0B',  # 11
-            'S25': '0C',  # 12
-            'S26': '0D',  # 13
-            'S27': '0E',  # 14
-            'S28': '0F',  # 15
-
-            'S31': '10',  # 16
-            'S32': '11',  # 17
-            'S33': '12',  # 18
-            'S34': '13',  # 19
-            'S35': '14',  # 20
-            'S36': '15',  # 21
-            'S37': '16',  # 22
-            'S38': '17',  # 23
-
-            'S41': '18',  # 24
-            'S42': '19',  # 25
-            'S43': '1A',  # 26
-            'S44': '1B',  # 27
-            'S45': '1C',  # 28
-            'S46': '1D',  # 29
-            'S47': '1E',  # 30
-            'S48': '1F',  # 31
-
-            'S51': '20',  # 32
-            'S52': '21',  # 33
-            'S53': '22',  # 34
-            'S54': '23',  # 35
-            'S55': '24',  # 36
-            'S56': '25',  # 37
-            'S57': '26',  # 38
-            'S58': '27',  # 39
-
-            'S61': '28',  # 40
-            'S62': '29',  # 41
-            'S63': '2A',  # 42
-            'S64': '2B',  # 43
-            'S65': '2C',  # 44
-            'S66': '2D',  # 45
-            'S67': '2E',  # 46
-            'S68': '2F',  # 47
-
-            'S71': '30',  # 48
-            'S72': '31',  # 49
-            'S73': '32',  # 50
-            'S74': '33',  # 51
-            'S75': '34',  # 52
-            'S76': '35',  # 53
-            'S77': '36',  # 54
-            'S78': '37',  # 55
-
-            'S81': '38',  # 56
-            'S82': '39',  # 57
-            'S83': '3A',  # 58
-            'S84': '3B',  # 59
-            'S85': '3C',  # 60
-            'S86': '3D',  # 61
-            'S87': '3E',  # 62
-            'S88': '3F',  # 63
-
-            'S91': '40',  # 64
-            'S92': '41',  # 65
-            'S93': '42',  # 66
-            'S94': '43',  # 67
-            'S95': '44',  # 68
-            'S96': '45',  # 69
-            'S97': '46',  # 70
-            'S98': '47',  # 71
-
-            'S101': '48',  # 72
-            'S102': '49',  # 73
-            'S103': '4A',  # 74
-            'S104': '4B',  # 75
-            'S105': '4C',  # 76
-            'S106': '4D',  # 77
-            'S107': '4E',  # 78
-            'S108': '4F',  # 79
-
-            # Directs
-            'SD1': '50',  # 80
-            'SD2': '51',  # 81
-            'SD3': '52',  # 82
-            'SD4': '53',  # 83
-            'SD5': '54',  # 84
-            'SD6': '55',  # 85
-            'SD7': '56',  # 86
-            'SD8': '57',  # 87
-
-            # DIP switches
-            'DIP1': '58',  # 88
-            'DIP2': '59',  # 89
-            'DIP3': '5A',  # 90
-            'DIP4': '5B',  # 91
-            'DIP5': '5C',  # 92
-            'DIP6': '5D',  # 93
-            'DIP7': '5E',  # 94
-            'DIP8': '5F',  # 95
-
-            # Fliptronics
-            'SF1': '60',  # 96
-            'SF2': '61',  # 97
-            'SF3': '62',  # 98
-            'SF4': '63',  # 99
-            'SF5': '64',  # 100
-            'SF6': '65',  # 101
-            'SF7': '66',  # 102
-            'SF8': '67',  # 103
-        }
-
-        self.wpc_light_map = {
-            'L11': '00', 'L12': '01', 'L13': '02', 'L14': '03',
-            'L15': '04', 'L16': '05', 'L17': '06', 'L18': '07',
-            'L21': '08', 'L22': '09', 'L23': '0A', 'L24': '0B',
-            'L25': '0C', 'L26': '0D', 'L27': '0E', 'L28': '0F',
-            'L31': '10', 'L32': '11', 'L33': '12', 'L34': '13',
-            'L35': '14', 'L36': '15', 'L37': '16', 'L38': '17',
-            'L41': '18', 'L42': '19', 'L43': '1A', 'L44': '1B',
-            'L45': '1C', 'L46': '1D', 'L47': '1E', 'L48': '1F',
-            'L51': '20', 'L52': '21', 'L53': '22', 'L54': '23',
-            'L55': '24', 'L56': '25', 'L57': '26', 'L58': '27',
-            'L61': '28', 'L62': '29', 'L63': '2A', 'L64': '2B',
-            'L65': '2C', 'L66': '2D', 'L67': '2E', 'L68': '2F',
-            'L71': '30', 'L72': '31', 'L73': '32', 'L74': '33',
-            'L75': '34', 'L76': '35', 'L77': '36', 'L78': '37',
-            'L81': '38', 'L82': '39', 'L83': '3A', 'L84': '3B',
-            'L85': '3C', 'L86': '3D', 'L87': '3E', 'L88': '3F',
-        }
-
-        self.wpc_driver_map = {
-            'C01': '00', 'C02': '01', 'C03': '02', 'C04': '03',
-            'C05': '04', 'C06': '05', 'C07': '06', 'C08': '07',
-            'C09': '08', 'C10': '09', 'C11': '0A', 'C12': '0B',
-            'C13': '0C', 'C14': '0D', 'C15': '0E', 'C16': '0F',
-            'C17': '10', 'C18': '11', 'C19': '12', 'C20': '13',
-            'C21': '14', 'C22': '15', 'C23': '16', 'C24': '17',
-            'C25': '18', 'C26': '19', 'C27': '1A', 'C28': '1B',
-            'C29': '1C', 'C30': '1D', 'C31': '1E', 'C32': '1F',
-            'C33': '24', 'C34': '25', 'C35': '26', 'C36': '27',
-            'FLRM': '20', 'FLRH': '21', 'FLLM': '22', 'FLLH': '23',
-            'FURM': '24', 'FURH': '25', 'FULM': '26', 'FULH': '27',
-            'C37': '28', 'C38': '29', 'C39': '2A', 'C40': '2B',
-            'C41': '2C', 'C42': '2D', 'C43': '2E', 'C44': '2F',
-        }
-
-        self.wpc_gi_map = {
-            'G01': '00', 'G02': '01', 'G03': '02', 'G04': '03',
-            'G05': '04', 'G06': '05', 'G07': '06', 'G08': '07',
-        }
 
         # todo verify this list
         self.fast_commands = {'ID': self.receive_id,  # processor ID
@@ -258,8 +96,6 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
     def initialize(self):
         self.config = self.machine.config['fast']
         self.machine.config_validator.validate_config("fast", self.config)
-
-        self.watchdog_command = 'WD:' + str(hex(self.config['watchdog']))[2:]
 
         self.machine_type = (
             self.machine.config['hardware']['driverboards'].lower())
@@ -453,7 +289,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         # If we have WPC driver boards, look up the driver number
         if self.machine_type == 'wpc':
-            config['number'] = self.wpc_driver_map.get(
+            config['number'] = fast_defines.wpc_driver_map.get(
                 config['number'].upper())
 
             if ('connection' in config and
@@ -514,7 +350,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
                                  "is available")
 
         if self.machine_type == 'wpc':  # translate switch num to FAST switch
-            config['number'] = self.wpc_switch_map.get(
+            config['number'] = fast_defines.wpc_switch_map.get(
                 str(config['number']).upper())
             if 'connection' not in config:
                 config['connection'] = 0  # local switch (default for WPC)
@@ -581,7 +417,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
                                  'available')
 
         if self.machine_type == 'wpc':  # translate switch num to FAST switch
-            number = self.wpc_gi_map.get(str(config['number']).upper())
+            number = fast_defines.wpc_gi_map.get(str(config['number']).upper())
         else:
             number = self._convert_number_from_config(config['number'])
 
@@ -594,7 +430,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
                                  'processor is available')
 
         if self.machine_type == 'wpc':  # translate number to FAST light num
-            number = self.wpc_light_map.get(str(config['number']).upper())
+            number = fast_defines.wpc_light_map.get(str(config['number']).upper())
         else:
             number = self._convert_number_from_config(config['number'])
 
@@ -617,7 +453,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         while not self.receive_queue.empty():
             self.process_received_message(self.receive_queue.get(False))
 
-        self.net_connection.send(self.watchdog_command)
+        self.net_connection.send('WD:' + str(hex(self.config['watchdog']))[2:])
 
     @classmethod
     def get_coil_config_section(cls):
@@ -784,339 +620,6 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         self.net_connection.send(cmd)
 
 
-class FASTSwitch(object):
-
-    def __init__(self, config, sender, platform):
-        self.config = config
-        self.log = logging.getLogger('FASTSwitch')
-        self.number = config['number']
-        self.connection = config['number'][1]
-        self.send = sender
-        self.platform = platform
-        self._configured_debounce = False
-        self.configure_debounce(config)
-
-    def configure_debounce(self, config):
-        if config['debounce'] in ("normal", "auto"):
-            debounce_open = self.platform.config['default_normal_debounce_open']
-            debounce_close = self.platform.config['default_normal_debounce_close']
-        else:
-            debounce_open = self.platform.config['default_quick_debounce_open']
-            debounce_close = self.platform.config['default_quick_debounce_close']
-
-        if self.connection:
-            cmd = 'SN:'
-        else:
-            cmd = 'SL:'
-
-        new_setting = (debounce_open, debounce_close)
-        if new_setting == self._configured_debounce:
-            return
-
-        self._configured_debounce = new_setting
-
-        cmd = '{}{},01,{},{}'.format(
-            cmd,
-            self.number[0],
-            Util.int_to_hex_string(debounce_open),
-            Util.int_to_hex_string(debounce_close))
-
-        self.send(cmd)
-
-
-class FASTDriver(DriverPlatformInterface):
-    """Base class for drivers connected to a FAST Controller.
-
-    """
-
-    def __init__(self, config, sender, machine):
-        """
-
-        """
-
-        self.autofire = None
-        self.machine = machine
-        self.driver_settings = dict()
-        self.config = config
-
-        self.log = logging.getLogger('FASTDriver')
-
-        # Number is already normalized FAST hex string at this point
-        self.number = config['number']
-        self.send = sender
-
-        if config['connection'] == 1:
-            self.driver_settings['config_cmd'] = 'DN:'
-            self.driver_settings['trigger_cmd'] = 'TN:'
-        else:
-            self.driver_settings['config_cmd'] = 'DL:'
-            self.driver_settings['trigger_cmd'] = 'TL:'
-
-        self.log.debug("Driver Settings: %s", self.driver_settings)
-        self.reset()
-
-    def _get_pulse_ms(self, coil):
-        if coil.config['pulse_ms'] is None:
-            return self.machine.config['mpf']['default_pulse_ms']
-        else:
-            return coil.config['pulse_ms']
-
-    def get_pulse_ms_for_cmd(self, coil):
-        pulse_ms = self._get_pulse_ms(coil)
-        if pulse_ms > 255:
-            return "00"
-        else:
-            return Util.int_to_hex_string(pulse_ms)
-
-    def get_pwm1_for_cmd(self, coil):
-        if coil.config['pulse_pwm_mask']:
-            pulse_pwm_mask = str(coil.config['pulse_pwm_mask'])
-            if len(pulse_pwm_mask) == 32:
-                return Util.bin_str_to_hex_str(pulse_pwm_mask, 8)
-            elif len(pulse_pwm_mask) == 8:
-                return Util.bin_str_to_hex_str(pulse_pwm_mask, 2)
-            else:
-                raise ValueError("pulse_pwm_mask must either be 8 or 32 bits")
-        elif coil.config['pulse_power32'] is not None:
-            return "ff"
-        elif coil.config['pulse_power'] is not None:
-            return Util.pwm8_to_hex_string(coil.config['pulse_power'])
-        else:
-            return "ff"
-
-    def get_pwm2_for_cmd(self, coil):
-        if coil.config['hold_pwm_mask']:
-            hold_pwm_mask = str(coil.config['hold_pwm_mask'])
-            if len(hold_pwm_mask) == 32:
-                return Util.bin_str_to_hex_str(hold_pwm_mask, 8)
-            elif len(hold_pwm_mask) == 8:
-                return Util.bin_str_to_hex_str(hold_pwm_mask, 2)
-            else:
-                raise ValueError("hold_pwm_mask must either be 8 or 32 bits")
-        elif coil.config['hold_power32'] is not None:
-            return "ff"
-        elif coil.config['hold_power'] is not None:
-            return Util.pwm8_to_hex_string(coil.config['hold_power'])
-        else:
-            return "ff"
-
-    def get_recycle_ms_for_cmd(self, coil):
-        if not coil.config['recycle']:
-            return "00"
-        elif coil.config['recycle_ms'] is not None:
-            return Util.int_to_hex_string(coil.config['recycle_ms'])
-        else:
-            # default recycle_ms to pulse_ms * 2
-            pulse_ms = self._get_pulse_ms(coil)
-            if pulse_ms * 2 > 255:
-                return "FF"
-            else:
-                return Util.int_to_hex_string(pulse_ms * 2)
-
-    def get_config_cmd(self):
-        return self.driver_settings['config_cmd']
-
-    def get_trigger_cmd(self):
-        return self.driver_settings['trigger_cmd']
-
-    def get_control_for_cmd(self, switch):
-        control = 0x01  # Driver enabled
-        if switch.invert:
-            control += 0x10
-        return Util.int_to_hex_string(int(control))
-
-    def reset(self):
-        """
-
-        Resets a driver
-
-        """
-        self.log.debug("Resetting driver %s", self.driver_settings)
-        # cmd = (self.get_config_cmd() +
-        #        self.number +
-        #        ',00,00,00')
-
-        cmd = '{}{},00,00,00'.format(self.get_config_cmd(), self.number)
-
-        self.send(cmd)
-
-    def disable(self, coil):
-        """Disables (turns off) this driver. """
-        del coil
-
-        # cmd = (self.get_trigger_cmd() +
-        #        self.number + ',' + '02')
-
-        cmd = '{}{},02'.format(self.get_trigger_cmd(), self.number)
-
-        self.log.debug("Sending Disable Command: %s", cmd)
-        self.send(cmd)
-        self.check_auto()
-
-    def enable(self, coil):
-        """Enables (turns on) this driver. """
-
-        if self.autofire:
-            # If this driver is also configured for an autofire rule, we just
-            # manually trigger it with the trigger_cmd and manual on ('03')
-            # cmd = (self.get_trigger_cmd() +
-            #        self.number + ',' +
-            #        '03')
-
-            cmd = '{}{},03'.format(self.get_trigger_cmd(), self.number)
-
-            self.log.warning("Recived a command to enable this driver, but "
-                             "this driver is configured with an autofire rule,"
-                             " so this enable will reset that rule. We need to"
-                             " change this behavior...")
-
-        else:
-            # Otherwise we send a full config command, trigger C1 (logic triggered
-            # and drive now) switch ID 00, mode 18 (latched)
-
-            if (self.get_pwm1_for_cmd(coil) == 'ff' and
-                    self.get_pwm2_for_cmd(coil) == 'ff' and
-                    not coil.config['allow_enable']):
-
-                raise AssertionError("Received a command to enable this coil "
-                                     "without pwm, but 'allow_enable' has not been"
-                                     "set to True in this coil's configuration.")
-
-            else:
-
-                pulse_ms = self.get_pulse_ms_for_cmd(coil)
-
-                cmd = '{}{},C1,00,18,{},{},{},{}'.format(
-                    self.get_config_cmd(),
-                    self.number,
-                    pulse_ms,
-                    self.get_pwm1_for_cmd(coil),
-                    self.get_pwm2_for_cmd(coil),
-                    self.get_recycle_ms_for_cmd(coil))
-
-        # todo pwm32
-
-        self.log.debug("Sending Enable Command: %s", cmd)
-        self.send(cmd)
-        # todo change hold to pulse with re-ups
-
-    def pulse(self, coil, milliseconds):
-        """Pulses this driver. """
-
-        if isinstance(milliseconds, int):
-            hex_ms_string = Util.int_to_hex_string(milliseconds)
-        else:
-            hex_ms_string = milliseconds
-
-        if self.autofire:
-            cmd = '{}{},01'.format(self.get_trigger_cmd(), self.number)
-
-            if milliseconds:
-                self.log.debug("Received command to pulse driver for %sms, but"
-                               "this driver is configured with an autofire rule"
-                               ", so that pulse value will be used instead.")
-        else:
-            cmd = '{}{},89,00,10,{},{},00,00,{}'.format(
-                self.get_config_cmd(),
-                self.number,
-                hex_ms_string,
-                self.get_pwm1_for_cmd(coil),
-                self.get_recycle_ms_for_cmd(coil))
-
-        self.log.debug("Sending Pulse Command: %s", cmd)
-        self.send(cmd)
-        self.check_auto()
-
-        return Util.hex_string_to_int(hex_ms_string)
-
-    def check_auto(self):
-
-        if self.autofire:
-            cmd = '{}{},00'.format(self.get_trigger_cmd(), self.number)
-
-            self.log.debug("Re-enabling auto fire mode: %s", cmd)
-            self.send(cmd)
-
-
-class FASTGIString(GIPlatformInterface):
-    def __init__(self, number, sender):
-        """A FAST GI string in a WPC machine.
-
-        TODO: Need to implement the enable_relay and control which strings are
-        dimmable.
-        """
-        self.log = logging.getLogger('FASTGIString.0x' + str(number))
-        self.number = number
-        self.send = sender
-
-    def off(self):
-        self.log.debug("Turning Off GI String")
-        self.send('GI:' + self.number + ',00')
-
-    def on(self, brightness=255):
-        if brightness >= 255:
-            brightness = 255
-
-        self.log.debug("Turning On GI String to brightness %s", brightness)
-        # self.send('GI:' + self.number + ',' + Util.int_to_hex_string(brightness))
-
-        self.send('GI:{},{}'.format(self.number,
-                                    Util.int_to_hex_string(brightness)))
-
-
-class FASTMatrixLight(MatrixLightPlatformInterface):
-
-    def __init__(self, number, sender):
-        self.log = logging.getLogger('FASTMatrixLight')
-        self.number = number
-        self.send = sender
-
-    def off(self):
-        """Disables (turns off) this matrix light."""
-        # self.send('L1:' + self.number + ',00')
-        self.send('L1:{},00'.format(self.number))
-
-    def on(self, brightness=255):
-        """Enables (turns on) this driver."""
-        if brightness == 0:
-            self.off()
-            return
-
-        if brightness >= 255:
-            brightness = 255
-
-        self.send('L1:{},{}'.format(self.number, Util.int_to_hex_string(brightness)))
-
-
-class FASTDirectLED(RGBLEDPlatformInterface):
-    """
-    Represents a single RGB LED connected to the Fast hardware platform
-    """
-    def __init__(self, number):
-        self.log = logging.getLogger('FASTLED')
-        self.number = number
-        self._current_color = '000000'
-
-        # All FAST LEDs are 3 element RGB and are set using hex strings
-
-        self.log.debug("Creating FAST RGB LED at hardware address: %s",
-                       self.number)
-
-    def color(self, color):
-        """Instantly sets this LED to the color passed.
-
-        Args:
-            color: an RGBColor object
-        """
-        self._current_color = "{0}{1}{2}".format(hex(int(color[0]))[2:].zfill(2),
-                                                 hex(int(color[1]))[2:].zfill(2),
-                                                 hex(int(color[2]))[2:].zfill(2))
-
-    @property
-    def current_color(self):
-        return self._current_color
-
-
 class FASTDMD(object):
 
     def __init__(self, machine, sender):
@@ -1132,6 +635,7 @@ class FASTDMD(object):
         self.send(data)
 
 
+# pylint: disable-msg=too-many-instance-attributes
 class SerialCommunicator(object):
 
     # pylint: disable-msg=too-many-arguments
@@ -1334,6 +838,7 @@ class SerialCommunicator(object):
                     if debug:
                         self.platform.log.info("Sending: %s", msg)
 
+        # pylint: disable-msg=broad-except
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
@@ -1356,6 +861,7 @@ class SerialCommunicator(object):
                     if msg not in self.ignored_messages:
                         self.receive_queue.put(msg)
 
+            # pylint: disable-msg=broad-except
             except Exception:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 lines = traceback.format_exception(exc_type, exc_value,

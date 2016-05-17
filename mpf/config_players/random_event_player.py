@@ -11,7 +11,6 @@ class RandomEventPlayer(ConfigPlayer):
 
     def play(self, settings, key=None, priority=0, **kwargs):
 
-
         # if not play_kwargs:
         #     play_kwargs = kwargs
         # else:

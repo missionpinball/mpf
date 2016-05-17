@@ -1,6 +1,6 @@
 from mpf.core.rgb_color import RGBColor
 from mpf.tests.MpfTestCase import MpfTestCase
-from mpf.platforms import fast
+from mpf.platforms.fast import fast
 import time
 
 

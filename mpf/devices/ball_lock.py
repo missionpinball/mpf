@@ -11,6 +11,8 @@ class BallLock(SystemWideDevice, ModeDevice):
     class_label = 'ball_lock'
 
     def __init__(self, machine, name):
+        self.lock_devices = None
+        self.source_playfield = None
         super().__init__(machine, name)
 
         # initialise variables
@@ -22,7 +24,8 @@ class BallLock(SystemWideDevice, ModeDevice):
         del mode
         self.disable()
 
-    def prepare_config(self, config, is_mode_config):
+    @classmethod
+    def prepare_config(cls, config, is_mode_config):
         if not is_mode_config:
             if 'enable_events' not in config:
                 config['enable_events'] = 'ball_started'

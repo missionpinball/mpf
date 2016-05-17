@@ -56,7 +56,7 @@ class AssetManager(object):
         self._start_loader_thread()
 
         self.machine.mode_controller.register_start_method(
-                start_method=self._load_mode_assets)
+            start_method=self._load_mode_assets)
 
         # Modes load in init_phase_1, so by 2 we have everything to create
         # the assets.
@@ -160,7 +160,8 @@ class AssetManager(object):
         self._asset_classes.sort(key=lambda x: x['priority'], reverse=True)
         self._set_asset_class_defaults(ac, self.machine.machine_config)
 
-    def _set_asset_class_defaults(self, asset_class, config):
+    @classmethod
+    def _set_asset_class_defaults(cls, asset_class, config):
         # Creates the folder-based default configs for the asset class
         # starting with the default section and then created folder-specific
         # entries based on that. Just runs once on startup for each asset
@@ -390,7 +391,7 @@ class AssetManager(object):
                 # for everything in case one of the custom folder configs
                 # doesn't include all settings
                 built_up_config = copy.deepcopy(
-                        asset_class['defaults'][default_string])
+                    asset_class['defaults'][default_string])
 
                 # scan through the existing config to see if this file is used
                 # as the file setting for any entry.
@@ -458,7 +459,7 @@ class AssetManager(object):
         for ac in [x for x in self._asset_classes
                    if x['pool_config_section']]:
 
-            if (ac['pool_config_section']) in config:
+            if ac['pool_config_section'] in config:
                 for name, settings in config[ac['pool_config_section']].items():
                     getattr(self.machine, ac['attribute'])[name] = (
                         ac['cls'].asset_group_class(self.machine, name, settings,
@@ -470,8 +471,8 @@ class AssetManager(object):
         del config
         return (self.unload_assets,
                 self.load_assets_by_load_key(
-                        key_name='{}_start'.format(mode.name),
-                        priority=priority))
+                    key_name='{}_start'.format(mode.name),
+                    priority=priority))
 
     def load_assets_by_load_key(self, key_name, priority=0):
         """Loads all the assets with a given load key.
@@ -493,7 +494,8 @@ class AssetManager(object):
 
         return assets
 
-    def unload_assets(self, assets):
+    @classmethod
+    def unload_assets(cls, assets):
         """Unloads multiple assets.
 
             Args:
@@ -554,7 +556,8 @@ class AssetManager(object):
         total = self.num_assets_to_load + self.num_bcp_assets_to_load
         remaining = total - self.num_assets_loaded - self.num_bcp_assets_loaded
 
-        self.machine.events.post('loading_assets', total=total,
+        self.machine.events.post(
+            'loading_assets', total=total,
             loaded=self.num_assets_loaded + self.num_bcp_assets_loaded,
             remaining=remaining,
             percent=self.loading_percent)
@@ -657,6 +660,7 @@ class AssetLoader(threading.Thread):
 
             return
 
+        # pylint: disable-msg=broad-except
         except Exception:  # pragma no cover
             exc_type, exc_value, exc_traceback = sys.exc_info()
             lines = traceback.format_exception(exc_type, exc_value,
@@ -668,6 +672,7 @@ class AssetLoader(threading.Thread):
 class AssetPool(object):
     def __init__(self, mc, name, config, member_cls):
         self.machine = mc
+        self.priority = None
         self.name = name
         self.config = config
         self.member_cls = member_cls
@@ -685,8 +690,7 @@ class AssetPool(object):
         if 'type' not in config:
             config['type'] = 'sequence'
 
-        for asset in Util.string_to_list(self.config[
-                                             self.member_cls.config_section]):
+        for asset in Util.string_to_list(self.config[self.member_cls.config_section]):
             try:
                 name, number = asset.split('|')
                 if not number:
@@ -824,14 +828,14 @@ class Asset(object):
             cls.disk_asset_section = cls.config_section
 
         mc.asset_manager.register_asset_class(
-                asset_class=cls,
-                attribute=cls.attribute,
-                path_string=cls.path_string,
-                config_section=cls.config_section,
-                disk_asset_section=cls.disk_asset_section,
-                extensions=cls.extensions,
-                priority=cls.class_priority,
-                pool_config_section=cls.pool_config_section)
+            asset_class=cls,
+            attribute=cls.attribute,
+            path_string=cls.path_string,
+            config_section=cls.config_section,
+            disk_asset_section=cls.disk_asset_section,
+            extensions=cls.extensions,
+            priority=cls.class_priority,
+            pool_config_section=cls.pool_config_section)
 
     def __init__(self, mc, name, file, config):
         self.machine = mc

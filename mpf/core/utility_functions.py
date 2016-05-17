@@ -438,6 +438,7 @@ class Util(object):
         return Util.hex_matcher.fullmatch(str(string)) is not None
 
     @staticmethod
+    # pylint: disable-msg=too-many-return-statements
     def string_to_ms(time_string):
         """Decodes a string of real-world time into an int of milliseconds.
         Example inputs:
@@ -454,6 +455,11 @@ class Util(object):
             Integer. The examples listed above return 200, 2000 and 0,
             respectively
         """
+        if time_string is None:
+            return 0
+
+        if isinstance(time_string, (int, float)):
+            return int(time_string)
 
         time_string = str(time_string).upper()
 
@@ -476,14 +482,8 @@ class Util(object):
         elif time_string.endswith('S') or time_string.endswith('SEC'):
             time_string = ''.join(i for i in time_string if not i.isalpha())
             return int(float(time_string) * 1000)
-
-        elif not time_string or time_string == 'NONE':
-            return 0
-
-        elif '.' in time_string:
-            return int(float(''.join(i for i in time_string if not i.isalpha())))
         else:
-            return int(''.join(i for i in time_string if not i.isalpha()))
+            return int(time_string)
 
     @staticmethod
     def string_to_secs(time_string):

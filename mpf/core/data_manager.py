@@ -40,7 +40,8 @@ class DataManager(object):
 
         self._load()
 
-    def _make_sure_path_exists(self, path):
+    @classmethod
+    def _make_sure_path_exists(cls, path):
         try:
             os.makedirs(path)
         except OSError as exception:
@@ -101,7 +102,7 @@ class DataManager(object):
         if delay_secs:
             self.machine.delay.add(callback=self._delayed_save_callback,
                                    data=copy.deepcopy(self.data),
-                                   ms=delay_secs*1000)
+                                   ms=delay_secs * 1000)
         else:
             _thread.start_new_thread(self._writing_thread, (copy.deepcopy(self.data), ))
 
