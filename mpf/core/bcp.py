@@ -12,6 +12,8 @@ from queue import Queue
 import copy
 import json
 
+import select
+
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.player import Player
 from mpf.core.utility_functions import Util
@@ -1090,7 +1092,11 @@ class BCPClientSocket(object):
 
         """
         try:
-            return self.socket.recv(num_bytes)
+            ready = select.select([self.socket], [], [], 1)
+            if ready[0]:
+                return self.socket.recv(num_bytes)
+            else:
+                return ''
         except socket.error:
             self.log.info("Media Controller disconnected. Shutting down...")
             self.socket.close()
