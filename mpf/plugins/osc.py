@@ -338,8 +338,8 @@ class OSC(object):
                 try:
                     if self.config['debug_messages']:
                         self.log.debug("Sending OSC Message to client:%s: %s",
-                                       k, self.OSC_message)
-                    k[1].send(self.OSC_message)
+                                       k, self.osc_message)
+                    k[1].send(self.osc_message)
 
                 except OSCmodule.OSCClientError:
                     self.log.debug("OSC client at address %s disconnected", k[0])
