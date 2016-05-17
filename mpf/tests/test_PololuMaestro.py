@@ -1,5 +1,4 @@
-from unittest.mock import MagicMock, call
-
+from unittest.mock import MagicMock
 from mpf.tests.MpfTestCase import MpfTestCase
 import mpf.platforms.pololu_maestro
 
@@ -16,57 +15,38 @@ class TestPololuMaestro(MpfTestCase):
         return 'pololu_maestro'
 
     def setUp(self):
+        self.serial = MagicMock()
         mpf.platforms.pololu_maestro.serial = MagicMock()
+        mpf.platforms.pololu_maestro.serial.Serial.return_value = self.serial
         super().setUp()
 
+    def _build_message(self, number, value):
+        lsb = value & 0x7f  # 7 bits for least significant byte
+        msb = (value >> 7) & 0x7f  # shift 7 and take next 7 bits for msb
+        # Send Pololu intro, device number, command, channel, and target
+        # lsb/msb
+        return chr(0xaa) + chr(0xc) + chr(0x04) + chr(number) + chr(lsb) + chr(msb)
+
     def test_servo_go_to_position(self):
-        # full range servo
-        self.machine.default_platform.servo_go_to_position = MagicMock()
-        gtp = self.machine.default_platform.servo_go_to_position
         # go to position 1.0 (on of the ends)
         self.machine.servos.servo1.go_to_position(1.0)
         # assert that platform got called
-        gtp.assert_called_with(1, 9000.0)
+        self.serial.write.assert_called_with(self._build_message(1, 9000))
         # go to position 0.0 (other end)
         self.machine.servos.servo1.go_to_position(0.0)
         # assert that platform got called
-        gtp.assert_called_with(1, 3000.0)
+        self.serial.write.assert_called_with(self._build_message(1, 3000))
 
-        gtp.reset_mock()
+        self.serial.reset_mock()
         # go to position 1.0 (on of the ends)
         self.machine.servos.servo2.go_to_position(1.0)
         # assert that platform got called
-        gtp.assert_called_with(2, 10000.0)
+        self.serial.write.assert_called_with(self._build_message(2, 7800))
         # go to position 0.0 (other end)
         self.machine.servos.servo2.go_to_position(0.0)
         # assert that platform got called
-        gtp.assert_called_with(2, 0.0)
+        self.serial.write.assert_called_with(self._build_message(2, 4200))
         # go to position 0.0 (middle)
         self.machine.servos.servo2.go_to_position(0.5)
         # assert that platform got called
-        gtp.assert_called_with(2, 5000.0)
-
-    def test_events(self):
-
-        self.machine.hardware_platforms['pololu_maestro']. \
-            servo_go_to_position = MagicMock()
-        gtp = (self.machine.hardware_platforms['pololu_maestro'].
-               servo_go_to_position)
-
-        self.post_event("reset_servo1")
-        gtp.assert_called_with(1, 6000.0)
-
-        self.post_event("servo1_down")
-        gtp.assert_called_with(1, 3600.0)
-
-        self.post_event("servo1_up")
-        gtp.assert_called_with(1, 8400.0)
-
-        self.post_event("reset_servo2")
-        gtp.assert_called_with(2, 10000.0)
-
-        self.post_event("servo2_left")
-        gtp.assert_called_with(2, 2000.0)
-
-        self.post_event("servo2_home")
-        gtp.assert_called_with(2, 10000.0)
+        self.serial.write.assert_called_with(self._build_message(2, 6000))

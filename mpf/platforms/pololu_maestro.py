@@ -1,8 +1,8 @@
 """Pololu Maestro servo controller platform"""
 
 import logging
-from mpf.core.platform import ServoPlatform
 import serial
+from mpf.core.platform import ServoPlatform
 
 
 class HardwarePlatform(ServoPlatform):
@@ -52,20 +52,23 @@ class HardwarePlatform(ServoPlatform):
         # Servo center is at 1500 microseconds, or 6000 quarter-microseconds
         # Typcially valid servo range is 3000 to 9000 quarter-microseconds
         # If channel is configured for digital output, values < 6000 =
-        # Low ouput
+        # Low ouputco
+
+        servo_min = self.config['servo_min']
+        servo_max = self.config['servo_max']
+        value = int(servo_min + position * (servo_max - servo_min))
 
         # if Min is defined and Target is below, force to Min
         if (self.config['servo_min'] > 0 and
-                position < self.config['servo_min']):
-            position = self.config['servo_min']
+                value < self.config['servo_min']):
+            value = self.config['servo_min']
 
         # if Max is defined and Target is above, force to Max
-        if (self.config['servo_max'] > 0 and
-                position > self.config['servo_max']):
-            position = self.config['servo_max']
-        #
-        lsb = position & 0x7f  # 7 bits for least significant byte
-        msb = (position >> 7) & 0x7f  # shift 7 and take next 7 bits for msb
+        if 0 < self.config['servo_max'] < value:
+            value = self.config['servo_max']
+
+        lsb = value & 0x7f  # 7 bits for least significant byte
+        msb = (value >> 7) & 0x7f  # shift 7 and take next 7 bits for msb
         # Send Pololu intro, device number, command, channel, and target
         # lsb/msb
         cmd = self.cmd_header + chr(0x04) + chr(number) + chr(lsb) + chr(msb)
@@ -107,5 +110,5 @@ class HardwarePlatform(ServoPlatform):
         """
         lsb = accel & 0x7f  # 7 bits for least significant byte
         msb = (accel >> 7) & 0x7f  # shift 7 and take next 7 bits for msb
-        cmd = self.cmd_header + chr(0x09) + chr(chan) + chr(lsb) + chr(msb)
+        cmd = self.cmd_header + chr(0x09) + chr(number) + chr(lsb) + chr(msb)
         self.serial.write(cmd)
