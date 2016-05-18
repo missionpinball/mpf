@@ -1,0 +1,140 @@
+- tocks: 2
+  display:
+    - type: Text
+      text: MISSION PINBALL
+      color: ff0000
+    - type: shape
+      shape: box
+      width: 128
+      height: 32
+      transition:
+        type: move_in
+        duration: 1s
+        direction: top
+
+- tocks: 2
+  display:
+    - type: Text
+      text: STARTER GAME
+      color: ff0000
+    - type: shape
+      shape: box
+      width: 128
+      height: 32
+
+- tocks: 2
+  display:
+    type: text
+    text: "%machine|credits_string%"
+    color: 00ff00
+
+- tocks: 2
+  display:
+    - type: text
+      text: "%machine|score1_label%"
+      v_pos: top
+      y: 4
+      color: ffff00
+    - type: text
+      text: "%machine|score1_name% %machine|score1_value%"
+      v_pos: bottom
+      number_grouping: true
+      y: -3
+      color: ff0000
+    - type: shape
+      shape: box
+      width: 128
+      height: 32
+    - type: shape
+      shape: box
+      width: 126
+      height: 30
+      shade: 8
+      color: 555555
+- tocks: 2
+  display:
+    - type: text
+      text: "1. %machine|score2_name% %machine|score2_value%"
+      v_pos: top
+      h_pos: left
+      number_grouping: true
+      y: 3
+      x: 12
+    - type: text
+      text: "2. %machine|score3_name% %machine|score3_value%"
+      v_pos: bottom
+      h_pos: left
+      number_grouping: true
+      y: -3
+      x: 10
+      transition:
+        type: move_out
+        duration: 1s
+        direction: top
+- tocks: 2
+  display:
+    - type: text
+      text: "3. %machine|score4_name% %machine|score4_value%"
+      v_pos: top
+      y: 3
+      x: 10
+      number_grouping: true
+    - type: text
+      text: "4. %machine|score5_name% %machine|score5_value%"
+      v_pos: bottom
+      number_grouping: true
+      y: -3
+      x: 10
+      transition:
+        type: move_in
+        duration: 1s
+        direction: bottom
+
+- tocks: 2
+  display:
+    - type: text
+      text: "%machine|player1_score%"
+      number_grouping: true
+      min_digits: 2
+      font: small
+      v_pos: top
+      h_pos: right
+      x: -80
+      y: 1
+    - type: text
+      text: "%machine|player2_score%"
+      number_grouping: true
+      min_digits: 2
+      font: small
+      v_pos: top
+      h_pos: right
+      x: -1
+      y: 1
+    - type: text
+      text: "%machine|player3_score%"
+      number_grouping: true
+      min_digits: 2
+      font: small
+      v_pos: bottom
+      h_pos: right
+      x: -80
+      y: -10
+    - type: text
+      text: "%machine|player4_score%"
+      number_grouping: true
+      min_digits: 2
+      font: small
+      v_pos: bottom
+      h_pos: right
+      x: -1
+      y: -10
+    - type: text
+      text: "%machine|credits_string%"
+      font: small
+      h_pos: center
+      v_pos: bottom
+
+
+
+
+
