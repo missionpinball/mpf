@@ -22,9 +22,16 @@ week. It's MIT licensed, actively developed by fun people, and supported by a vi
 
 The MPF project homepage is here : https://missionpinball.com/mpf/
 
+Master (current release):
 [![Coverage Status](https://coveralls.io/repos/missionpinball/mpf/badge.svg?branch=master&service=github)](https://coveralls.io/github/missionpinball/mpf?branch=master)
 [![Build Status](https://travis-ci.org/missionpinball/mpf.svg?branch=master)](https://travis-ci.org/missionpinball/mpf)
 [![Code Health](https://landscape.io/github/missionpinball/mpf/master/landscape.svg?style=flat)](https://landscape.io/github/missionpinball/mpf/master)
+
+Dev (next release):
+[![Coverage Status](https://coveralls.io/repos/missionpinball/mpf/badge.svg?branch=dev&service=github)](https://coveralls.io/github/missionpinball/mpf?branch=dev)
+[![Build Status](https://travis-ci.org/missionpinball/mpf.svg?branch=dev)](https://travis-ci.org/missionpinball/mpf)
+[![Code Health](https://landscape.io/github/missionpinball/mpf/dev/landscape.svg?style=flat)](https://landscape.io/github/missionpinball/mpf/dev)
+
 
 Installation, Documentation, and Examples
 -----------------------------------------
