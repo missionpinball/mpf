@@ -1,0 +1,65 @@
+# config_version=3
+
+mode:
+  start_events: ball_starting
+  stop_events: mode_selected
+  priority: 100
+  code: carousel.Carousel
+
+# Each entry in the slide player with a name xxx_highlighted
+# is treated as an entry in the carousel, where xxx is the
+# name of the mode.  
+slide_player:
+  mode_1_highlighted:
+    - type: text
+      text: CHOOSE YOUR MODE
+      v_pos: top
+      font: small
+    - type: text
+      text: "MODE ONE"
+    - type: text
+      text: << SELECT
+      v_pos: bottom
+      h_pos: left
+      font: small
+    - type: text
+      text: NEXT >>
+      v_pos: bottom
+      h_pos: right
+      font: small
+
+  mode_2_highlighted:
+    - type: text
+      text: CHOOSE YOUR MODE
+      v_pos: top
+      font: small
+    - type: text
+      text: "MODE TWO"
+    - type: text
+      text: << SELECT
+      v_pos: bottom
+      h_pos: left
+      font: small
+    - type: text
+      text: NEXT >>
+      v_pos: bottom
+      h_pos: right
+      font: small
+
+  wizard_mode_highlighted:
+    - type: text
+      text: CHOOSE YOUR MODE
+      v_pos: top
+      font: small
+    - type: text
+      text: "WIZARD MODE"
+    - type: text
+      text: << SELECT
+      v_pos: bottom
+      h_pos: left
+      font: small
+    - type: text
+      text: NEXT >>
+      v_pos: bottom
+      h_pos: right
+      font: small
