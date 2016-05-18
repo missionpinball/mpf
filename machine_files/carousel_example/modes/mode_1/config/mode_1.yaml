@@ -1,0 +1,5 @@
+# config_version=3
+
+mode:
+  start_events: mode_1_selected
+  priority: 100

@@ -1,0 +1,5 @@
+# config_version=3
+
+mode:
+  start_events: wizard_mode_selected
+  priority: 100
