@@ -52,7 +52,9 @@ class Carousel(Mode):
     def _update_highlighted_item(self):
         self.log.info("Highlighted item: " + self._get_highlighted_item())
 
-        self.machine.events.post(self._get_highlighted_item() + "_highlighted")
+        self.machine.events.post("{}_{}_highlighted".format(self.name, self._get_highlighted_item()))
+        '''event (carousel_name)_(item)_highlighted
+            desc: Player highlighted an item in a carousel. Mostly used to play shows or trigger slides. '''
 
     def _get_available_items(self):
         player = self.machine.game.player
@@ -78,5 +80,9 @@ class Carousel(Mode):
         del kwargs
         self.log.info("Selected mode: " + str(self._get_highlighted_item()))
 
-        self.machine.events.post(self._get_highlighted_item() + "_selected")
+        self.machine.events.post("{}_{}_selected".format(self.name, self._get_highlighted_item()))
+        '''event (carousel_name)_(item)_selected
+            desc: Player selected an item in a carousel. Can be used to trigger modes. '''
         self.machine.events.post("{}_item_selected".format(self.name))
+        '''event (carousel_name)_item_selected
+            desc: Player selected any item in a carousel. Used to stop mode. '''
