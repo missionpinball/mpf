@@ -1,4 +1,5 @@
-from mpf.system.mode import Mode
+from mpf.core.mode import Mode
+
 
 class CarouselItem:
     def __init__(self, name):
@@ -6,6 +7,7 @@ class CarouselItem:
 
     def __repr__(self):
         return "<CarouselItem: " + self.name + ">"
+
  
 class Carousel(Mode):
 
