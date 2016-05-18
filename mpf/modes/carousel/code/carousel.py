@@ -1,73 +1,82 @@
+import copy
+
+from mpf.core.utility_functions import Util
+
 from mpf.core.mode import Mode
 
 
-class CarouselItem:
-    def __init__(self, name):
-        self.name = name
-
-    def __repr__(self):
-        return "<CarouselItem: " + self.name + ">"
-
- 
 class Carousel(Mode):
+    def __init__(self, machine, config, name, path):
+        self._items = None
+        self._select_item_events = None
+        self._next_item_events = None
+        self._previous_item_events = None
+        self._highlighted_item_index = None
+        super().__init__(machine, config, name, path)
 
     def mode_init(self):
-        self.items = []
+        mode_settings = self.config.get("mode_settings", [])
+        self._items = Util.string_to_list(mode_settings.get("selectable_items", ""))
+        self._select_item_events = Util.string_to_list(mode_settings.get("select_item_events", ""))
+        self._next_item_events = Util.string_to_list(mode_settings.get("next_item_events", ""))
+        self._previous_item_events = Util.string_to_list(mode_settings.get("previous_item_events", ""))
+        self._highlighted_item_index = 0
 
-        for key, value in self.config['slide_player'].iteritems():
-            if key.endswith("_highlighted"):
-                self.items.append(CarouselItem(key[0:-len('_highlighted')]))
-
-        self.next_item_events = ['sw_carousel_next_item']
-        self.select_item_events = ['sw_carousel_select_item', 'balldevice_plunger_lane_ball_left']
+        if not self._items:
+            raise AssertionError("Specify at least one item to select from")
 
     def mode_start(self, **kwargs):
         self.log.info("Carousel Mode Starting")
 
-        self.register_handlers(self.next_item_events, self.next_item)
-        self.register_handlers(self.select_item_events, self.select_item)
+        self._register_handlers(self._next_item_events, self.next_item)
+        self._register_handlers(self._previous_item_events, self.previous_item)
+        self._register_handlers(self._select_item_events, self.select_item)
 
         player = self.machine.game.player
-        if not player.is_player_var('available_modes'):
-            player.available_modes = self.items
-        self.highlighted_mode_index = 0
+        if not player.is_player_var('available_items_{}'.format(self.name)):
+            player['available_items_{}'.format(self.name)] = copy.deepcopy(self._items)
+        self._highlighted_item_index = 0
 
-        self.update_highlighted_mode()
+        self._update_highlighted_item()
 
     def mode_stop(self, **kwargs):
         self.log.info("Carousel Mode Stopping")
 
-        self.deregister_handlers(self.next_item_events, self.next_item)
-        self.deregister_handlers(self.select_item_events, self.select_item)
-
-    def register_handlers(self, events, handler):
+    def _register_handlers(self, events, handler):
         for event in events:
-            self.machine.events.add_handler(event, handler)
+            self.add_mode_event_handler(event, handler)
 
-    def deregister_handlers(self, events, handler):
-        for event in events:
-            self.machine.events.remove_handler_by_event(event, handler)
+    def _get_highlighted_item(self):
+        return self._get_available_items()[self._highlighted_item_index]
 
-    def highlighted_mode(self):
+    def _update_highlighted_item(self):
+        self.log.info("Highlighted item: " + self._get_highlighted_item())
+
+        self.machine.events.post(self._get_highlighted_item() + "_highlighted")
+
+    def _get_available_items(self):
         player = self.machine.game.player
-        return player.available_modes[self.highlighted_mode_index]
-
-    def update_highlighted_mode(self):
-        self.log.info("Highlighted mode: " + str(self.highlighted_mode()))
-
-        self.machine.events.post(self.highlighted_mode().name + "_highlighted")
+        return player['available_items_{}'.format(self.name)]
 
     def next_item(self, **kwargs):
-        player = self.machine.game.player
+        del kwargs
+        self._highlighted_item_index += 1
+        if self._highlighted_item_index >= len(self._get_available_items()):
+            self._highlighted_item_index = 0
 
-        self.highlighted_mode_index += 1
-        if self.highlighted_mode_index >= len(player.available_modes):
-            self.highlighted_mode_index = 0
+        self._update_highlighted_item()
 
-        self.update_highlighted_mode()
+    def previous_item(self, **kwargs):
+        del kwargs
+        self._highlighted_item_index -= 1
+        if self._highlighted_item_index < 0:
+            self._highlighted_item_index = len(self._get_available_items()) - 1
+
+        self._update_highlighted_item()
 
     def select_item(self, **kwargs):
-        self.log.info("Selected mode: " + str(self.highlighted_mode()))
+        del kwargs
+        self.log.info("Selected mode: " + str(self._get_highlighted_item()))
 
-        self.machine.events.post(self.highlighted_mode().name + "_selected")
-        self.machine.events.post("mode_selected")
+        self.machine.events.post(self._get_highlighted_item() + "_selected")
+        self.machine.events.post("{}_item_selected".format(self.name))
