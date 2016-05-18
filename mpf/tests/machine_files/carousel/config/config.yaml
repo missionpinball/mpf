@@ -1,0 +1,12 @@
+#config_version=4
+
+modes:
+    - carousel
+
+machine:
+    min_balls: 0
+
+switches:
+    s_start:
+        number:
+        tags: start
