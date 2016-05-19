@@ -65,9 +65,6 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
     def i2c_read16(self, address, register):
         return self.proc.read_data(7, address << 9 | 1 << 8 | register)
 
-    def stop(self):
-        self.proc.reset(1)
-
     @classmethod
     def scale_accelerometer_to_g(cls, raw_value):
         # raw value is 0 to 16384 -> 14 bit

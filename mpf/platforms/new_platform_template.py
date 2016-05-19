@@ -42,6 +42,9 @@ class HardwarePlatform(MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatfor
     def initialize(self):
         pass
 
+    def stop(self):
+        pass
+
     def configure_driver(self, config):
         """This method is called once per driver when MPF is starting up. It
         passes the config for the driver and returns a hardware driver object

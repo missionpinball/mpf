@@ -46,6 +46,9 @@ class HardwarePlatform(ServoPlatform):
                                  0x01)  # no more sleep
         time.sleep(.01)  # needed to end sleep according to datasheet
 
+    def stop(self):
+        pass
+
     def servo_go_to_position(self, number, position):
         """
         Args:

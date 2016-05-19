@@ -116,6 +116,10 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         if 'config_number_format' not in self.machine.config['fast']:
             self.machine.config['fast']['config_number_format'] = 'int'
 
+    def stop(self):
+        for connection in self.connection_threads:
+            connection.stop()
+
     def __repr__(self):
         return '<Platform.FAST>'
 

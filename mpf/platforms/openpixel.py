@@ -37,6 +37,10 @@ class HardwarePlatform(LedPlatform):
     def initialize(self):
         pass
 
+    def stop(self):
+        # disconnect thread
+        self.opc_client.sending_thread.disconnect()
+
     def configure_led(self, config, channels):
         if channels > 3:
             raise AssertionError("More channels not yet implemented")

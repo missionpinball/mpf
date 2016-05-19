@@ -65,6 +65,9 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
     def initialize(self):
         pass
 
+    def stop(self):
+        self.proc.reset(1)
+
     def connect(self):
         # Connect to the P-ROC. Keep trying if it doesn't work the first time.
         self.log.info("Connecting to P-ROC")

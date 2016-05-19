@@ -101,6 +101,10 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
     def initialize(self):
         pass
 
+    def stop(self):
+        for connections in self.connection_threads:
+            connections.stop()
+
     def __repr__(self):
         return '<Platform.OPP>'
 

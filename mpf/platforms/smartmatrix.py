@@ -30,6 +30,9 @@ class HardwarePlatform(RgbDmdPlatform):
     def initialize(self):
         pass
 
+    def stop(self):
+        self.serial_port.close()
+
     def __repr__(self):
         return '<Platform.SmartMatrix>'
 

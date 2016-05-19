@@ -35,6 +35,9 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
     def initialize(self):
         pass
 
+    def stop(self):
+        pass
+
     def configure_driver(self, config):
         # generate random number if None
         if config['number'] is None:

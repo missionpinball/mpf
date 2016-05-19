@@ -71,9 +71,6 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
     def __repr__(self):
         return '<Platform.P-ROC>'
 
-    def stop(self):
-        self.proc.reset(1)
-
     def configure_driver(self, config):
         """Creates a P-ROC driver.
 
