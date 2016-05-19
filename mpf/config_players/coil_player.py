@@ -1,3 +1,5 @@
+import copy
+
 from mpf.core.config_player import ConfigPlayer
 
 
@@ -12,6 +14,7 @@ class CoilPlayer(ConfigPlayer):
             settings = settings['coils']
 
         for coil, s in settings.items():
+            s = copy.deepcopy(s)
             action = s.pop('action')
             try:
                 getattr(coil, action)(**s)
