@@ -2,6 +2,8 @@
 
 import logging
 import serial
+from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
+
 from mpf.core.platform import ServoPlatform
 
 
@@ -16,8 +18,6 @@ class HardwarePlatform(ServoPlatform):
         self.log.debug("Configuring template hardware interface.")
         self.config = self.machine.config['pololu_maestro']
         self.platform = None
-
-        self.cmd_header = chr(0xaa) + chr(0xc)
         self.serial = None
 
     def __repr__(self):
@@ -43,7 +43,20 @@ class HardwarePlatform(ServoPlatform):
     def stop(self):
         self.serial.close()
 
-    def servo_go_to_position(self, number, position):
+    def configure_servo(self, config):
+        return PololuServo(config['number'], self.config, self.serial)
+
+
+class PololuServo(ServoPlatformInterface):
+
+    def __init__(self, number, config, serial_port):
+        self.log = logging.getLogger('PololuServo')
+        self.number = number
+        self.config = config
+        self.serial = serial_port
+        self.cmd_header = chr(0xaa) + chr(0xc)
+
+    def go_to_position(self, position):
         # Set channel to a specified target value.  Servo will begin moving
         # based on Speed and Acceleration parameters previously set.
         # Target values will be constrained within Min and Max range, if set.
@@ -71,10 +84,10 @@ class HardwarePlatform(ServoPlatform):
         msb = (value >> 7) & 0x7f  # shift 7 and take next 7 bits for msb
         # Send Pololu intro, device number, command, channel, and target
         # lsb/msb
-        cmd = self.cmd_header + chr(0x04) + chr(number) + chr(lsb) + chr(msb)
+        cmd = self.cmd_header + chr(0x04) + chr(self.number) + chr(lsb) + chr(msb)
         self.serial.write(cmd)
 
-    def set_speed(self, number, speed):
+    def set_speed(self, speed):
         """Set the speed of the channel.
 
         Speed is measured as 0.25microseconds/10milliseconds
@@ -86,7 +99,6 @@ class HardwarePlatform(ServoPlatform):
         Speed of 0 is unrestricted.
 
         Args:
-            number:
             speed:
 
         Returns:
@@ -94,10 +106,10 @@ class HardwarePlatform(ServoPlatform):
         """
         lsb = speed & 0x7f  # 7 bits for least significant byte
         msb = (speed >> 7) & 0x7f  # shift 7 and take next 7 bits for msb
-        cmd = self.cmd_header + chr(0x07) + chr(number) + chr(lsb) + chr(msb)
+        cmd = self.cmd_header + chr(0x07) + chr(self.number) + chr(lsb) + chr(msb)
         self.serial.write(cmd)
 
-    def set_acceleration(self, number, accel):
+    def set_acceleration(self, accel):
         """Set acceleration of channel.
 
         This provide soft starts and finishes when servo moves to target
@@ -110,5 +122,5 @@ class HardwarePlatform(ServoPlatform):
         """
         lsb = accel & 0x7f  # 7 bits for least significant byte
         msb = (accel >> 7) & 0x7f  # shift 7 and take next 7 bits for msb
-        cmd = self.cmd_header + chr(0x09) + chr(number) + chr(lsb) + chr(msb)
+        cmd = self.cmd_header + chr(0x09) + chr(self.number) + chr(lsb) + chr(msb)
         self.serial.write(cmd)
