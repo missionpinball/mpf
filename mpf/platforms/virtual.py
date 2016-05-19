@@ -40,6 +40,9 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
     def stop(self):
         pass
 
+    def configure_servo(self, config):
+        return VirtualServo(config['number'])
+
     def configure_driver(self, config):
         # generate random number if None
         if config['number'] is None:
@@ -166,9 +169,6 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
         del register
         return None
 
-    def servo_go_to_position(self, number, position):
-        pass
-
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
         pass
 
@@ -223,6 +223,16 @@ class VirtualGI(GIPlatformInterface):
 
     def off(self):
         self.current_brightness = 0
+
+
+class VirtualServo(object):
+    def __init__(self, number):
+        self.log = logging.getLogger('VirtualServo')
+        self.number = number
+        self.current_position = None
+
+    def go_to_position(self, position):
+        self.current_position = position
 
 
 class VirtualDriver(DriverPlatformInterface):
