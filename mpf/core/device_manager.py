@@ -5,7 +5,6 @@ from collections import OrderedDict
 
 from mpf.core.utility_functions import Util
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
-from mpf.core.file_manager import FileManager
 
 
 class DeviceManager(object):

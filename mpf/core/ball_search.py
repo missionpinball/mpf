@@ -145,7 +145,7 @@ class BallSearch(object):
             if self.machine.ball_controller.num_balls_known > 0:
                 # we have at least one ball remaining
                 self.log.debug("Adding %s replacement ball", lost_balls)
-                for _dummy_iterator in range(lost_balls):
+                for dummy_iterator in range(lost_balls):
                     self.playfield.add_ball()
             else:
                 self.log.debug("No more balls left. Ending game!")

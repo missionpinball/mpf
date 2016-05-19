@@ -68,6 +68,8 @@ class Game(Mode):
 
     def mode_start(self, buttons=None, hold_time=None, **kwargs):
         """Automatically called when the *Game* machine mode becomes active."""
+        del hold_time
+        del buttons
 
         # Intialize variables
         self.num_players = 0
