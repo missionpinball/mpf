@@ -13,6 +13,10 @@ class Servo(SystemWideDevice):
     collection = 'servos'
     class_label = 'servo'
 
+    def __init__(self, machine, name):
+        self.hw_servo = None
+        super().__init__(machine, name)
+
     def _initialize(self):
         self.load_platform_section('servo_controllers')
 
@@ -20,6 +24,8 @@ class Servo(SystemWideDevice):
             self.machine.events.add_handler(self.config['positions'][position],
                                             self._position_event,
                                             position=position)
+
+        self.hw_servo = self.platform.configure_servo(self.config)
 
     def reset(self, **kwargs):
         del kwargs
@@ -35,4 +41,4 @@ class Servo(SystemWideDevice):
             self.config['servo_max'] - self.config['servo_min'])
 
         # call platform with calculated position
-        self.platform.servo_go_to_position(self.config['number'], position)
+        self.hw_servo.go_to_position(position)
