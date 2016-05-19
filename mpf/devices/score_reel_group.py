@@ -24,7 +24,6 @@ class ScoreReelGroup(SystemWideDevice):
 
         self.wait_for_valid_queue = None
         self.valid = True  # Confirmed reels are showing the right values
-        self.lit = False  # This group has its lights on
         self.unlight_on_resync_key = None
         self.light_on_valid_key = None
 
@@ -41,19 +40,6 @@ class ScoreReelGroup(SystemWideDevice):
         self.desired_value_list = []
         # A list of what values the machine desires to have the score reel
         # group set to.
-
-        self.reset_pulses_per_round = 5
-        # Interger value of how many "pulses" should be done per reset round.
-        # This is used to simulate the actual mechnical resets the way a classic
-        # EM machine would do it. If you watch an EM game reset, you'll notice
-        # they pulse the reels in groups, like click-click-click-click-click..
-        # pause.. click-click-click-click-click.. pause.. etc. Once each reel
-        # gets to zero, it stops advancing.
-
-        # If you don't want to emulate this behavior, set this to 0. The default
-        # is 5.
-
-        # TODO / NOTE: This feature is not yet implemented.
 
         self.advance_queue = deque()
         # Holds a list of the next reels that for step advances.
@@ -649,8 +635,6 @@ class ScoreReelGroup(SystemWideDevice):
                 self.config['lights_tag']):
             light.on()
 
-        self.lit = True
-
         # Watch for these reels going out of sync so we can turn off the lights
         # while they're resyncing
 
@@ -671,8 +655,6 @@ class ScoreReelGroup(SystemWideDevice):
         for light in self.machine.lights.items_tagged(
                 self.config['lights_tag']):
             light.off()
-
-        self.lit = False
 
         if relight_on_valid:
             self.light_on_valid_key = self.machine.events.add_handler(

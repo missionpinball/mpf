@@ -73,14 +73,6 @@ class ScoreReel(SystemWideDevice):
         # group. This is used so the reel can notify its neighbor that it needs
         # to advance too when this reel rolls over.
 
-        self.misfires = dict()
-        # Counts the number of "misfires" this reel has, which is when we
-        # advanced a reel to a value where we expected a switch to activate but
-        # didn't receive that activation as expected. This is a dictionary with
-        # the key equal to the switch position and the value is a tuple with
-        # the first entry being the number of misfires this attempt, and the
-        # second value being the number of misfires overall.
-
         self._destination_index = 0
         # Holds the index of the destination the reel is trying to advance to.
 
