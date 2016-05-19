@@ -675,7 +675,7 @@ servos:
     debug: single|bool|False
     tags: list|str|None
     label: single|str|%
-    number: single|int|
+    number: single|str|
     platform: single|str|None
 shots:
     __valid_in__: machine, mode

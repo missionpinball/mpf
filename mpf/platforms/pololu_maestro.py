@@ -44,7 +44,7 @@ class HardwarePlatform(ServoPlatform):
         self.serial.close()
 
     def configure_servo(self, config):
-        return PololuServo(config['number'], self.config, self.serial)
+        return PololuServo(int(config['number']), self.config, self.serial)
 
 
 class PololuServo(ServoPlatformInterface):

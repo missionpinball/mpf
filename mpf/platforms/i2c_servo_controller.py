@@ -50,7 +50,7 @@ class HardwarePlatform(ServoPlatform):
         time.sleep(.01)  # needed to end sleep according to datasheet
 
     def configure_servo(self, config):
-        number = config['number']
+        number = int(config['number'])
 
         # check bounds
         if number < 0 or number > 15:
