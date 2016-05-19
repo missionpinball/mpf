@@ -3,6 +3,7 @@
 import logging
 import random
 
+from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 
 from mpf.core.platform import ServoPlatform, MatrixLightsPlatform, GiPlatform, LedPlatform, \
@@ -225,7 +226,7 @@ class VirtualGI(GIPlatformInterface):
         self.current_brightness = 0
 
 
-class VirtualServo(object):
+class VirtualServo(ServoPlatformInterface):
     def __init__(self, number):
         self.log = logging.getLogger('VirtualServo')
         self.number = number
