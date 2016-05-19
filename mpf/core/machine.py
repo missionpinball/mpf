@@ -560,6 +560,7 @@ class MachineController(object):
         '''
         self.events.process_event_queue()
         self.thread_stopper.set()
+        self._platform_stop()
         # todo change this to look for the shutdown event
         self.done = True
 
