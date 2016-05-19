@@ -1,5 +1,7 @@
 import logging
 
+from mpf.platforms.interfaces.gi_platform_interface import GIPlatformInterface
+
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 
 
@@ -21,7 +23,7 @@ class OPPIncandCard(object):
                 incand_dict[number] = OPPIncand(self, number)
 
 
-class OPPIncand(object):
+class OPPIncand(GIPlatformInterface):
 
     def __init__(self, incand_card, number):
         self.incandCard = incand_card
@@ -33,10 +35,8 @@ class OPPIncand(object):
         curr_bit = (1 << int(incand))
         self.incandCard.newState &= ~curr_bit
 
-    def on(self, brightness=255, fade_ms=0, start=0):
+    def on(self, brightness=255):
         """Enables (turns on) this driver."""
-        del fade_ms
-        del start
         _, incand = self.number.split("-")
         curr_bit = (1 << int(incand))
         if brightness == 0:

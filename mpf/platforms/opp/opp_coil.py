@@ -1,10 +1,12 @@
 import logging
 
+from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
+
 from mpf.core.utility_functions import Util
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 
 
-class OPPSolenoid(object):
+class OPPSolenoid(DriverPlatformInterface):
 
     def __init__(self, sol_card, number):
         self.solCard = sol_card
