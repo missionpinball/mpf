@@ -18,7 +18,6 @@ class HardwarePlatform(RgbDmdPlatform):
         self.log = logging.getLogger('SmartMatrix')
         self.log.info("Configuring SmartMatrix hardware interface.")
 
-        self.dmd_frame = bytearray()
         self.queue = None
         self.serial_port = None
         self.dmd_thread = None
