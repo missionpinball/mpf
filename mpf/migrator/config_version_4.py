@@ -76,10 +76,6 @@ class V4Migrator(VersionMigrator):
     HEIGHT = 600
     MAIN_CONFIG_FILE = 'config.yaml'
 
-    def __init__(self, file_name, file_contents):
-        super().__init__(file_name, file_contents)
-        self.created_slide_player = False
-
     @classmethod
     def _get_slide_name(cls, display):
         if display not in cls.slides:

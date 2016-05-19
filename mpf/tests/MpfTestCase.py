@@ -240,7 +240,6 @@ class MpfTestCase(unittest.TestCase):
             self.machine.clock.time = MagicMock(return_value=self.testTime)
 
             self.machine.default_platform.timer_initialize()
-            self.machine.loop_start_time = self.machine.clock.get_time()
 
             start = time.time()
             while not self.machine.test_init_complete and time.time() < start + 20:
