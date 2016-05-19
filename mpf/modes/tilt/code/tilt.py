@@ -12,7 +12,6 @@ class Tilt(Mode):
         self.tilt_event_handlers = None
         self.last_tilt_warning_switch = None
         self.tilt_config = None
-        self.reset_warnings_handlers = None
         super().__init__(machine, config, name, path)
 
     def mode_init(self):
@@ -44,7 +43,6 @@ class Tilt(Mode):
 
     def mode_stop(self, **kwargs):
         self._remove_switch_handlers()
-        self.reset_warnings_handlers = set()
 
     def _register_switch_handlers(self):
         for switch in self.machine.switches.items_tagged(

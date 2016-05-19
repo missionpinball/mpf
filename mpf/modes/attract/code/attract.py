@@ -19,8 +19,6 @@ class Attract(Mode):
         self.start_hold_time = 0.0
         self.start_buttons_held = list()
 
-        self.assets_waiting = 0
-
     def mode_start(self, **kwargs):
         """ Automatically called when the Attract game mode becomes active.
 
