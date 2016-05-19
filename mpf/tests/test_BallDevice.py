@@ -1783,7 +1783,9 @@ class TestBallDevice(MpfTestCase):
         self.machine.events.add_handler('balldevice_captured_from_playfield',
                                         self._captured_from_pf)
         self._captured = 0
-        self.assertEqual(0, self.machine.ball_controller.num_balls_known)
+        self.machine.ball_controller.num_balls_known = 2
+        playfield.available_balls = 2
+        playfield.balls = 2
 
         # device captures two balls
         self.machine.switch_controller.process_switch("s_ball_switch_target3",
@@ -1791,7 +1793,7 @@ class TestBallDevice(MpfTestCase):
         self.advance_time_and_run(.1)
         self.machine.switch_controller.process_switch(
             "s_ball_switch_target3_2", 1)
-        self.advance_time_and_run(1.5)
+        self.advance_time_and_run(.5)
         self.assertEqual(2, self._captured)
         self.assertEqual(0, playfield.balls)
         self.assertEqual(2, playfield.available_balls)
