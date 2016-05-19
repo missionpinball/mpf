@@ -3,6 +3,8 @@
 import logging
 import random
 
+from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
+
 from mpf.core.platform import ServoPlatform, MatrixLightsPlatform, GiPlatform, LedPlatform, \
     SwitchPlatform, DriverPlatform, AccelerometerPlatform, I2cPlatform
 from mpf.core.utility_functions import Util
@@ -180,7 +182,7 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
         pass
 
 
-class VirtualSwitch(object):
+class VirtualSwitch(SwitchPlatformInterface):
     """Represents a switch in a pinball machine used with virtual hardware."""
     def __init__(self, config):
         self.log = logging.getLogger('VirtualSwitch')

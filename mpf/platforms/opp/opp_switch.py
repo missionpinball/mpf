@@ -1,5 +1,7 @@
 import logging
 
+from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
+
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 
 
@@ -19,7 +21,7 @@ class OPPInputCard(object):
                 inp_dict[self.cardNum + '-' + str(index)] = OPPSwitch(self, self.cardNum + '-' + str(index))
 
 
-class OPPSwitch(object):
+class OPPSwitch(SwitchPlatformInterface):
     def __init__(self, card, number):
         self.number = number
         self.card = card

@@ -23,6 +23,7 @@ except ImportError:
         pinproc_imported = False
         pinproc = None
 
+from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
 from mpf.platforms.interfaces.gi_platform_interface import GIPlatformInterface
 from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
@@ -806,7 +807,7 @@ def decode_pdb_address(addr):
         raise ValueError('PDB address delimiter (- or /) not found.')
 
 
-class PROCSwitch(object):
+class PROCSwitch(SwitchPlatformInterface):
     def __init__(self, config, number, notify_on_nondebounce):
         self.log = logging.getLogger('PROCSwitch')
         self.config = config
