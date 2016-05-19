@@ -23,6 +23,5 @@ class OPPInputCard(object):
 
 class OPPSwitch(SwitchPlatformInterface):
     def __init__(self, card, number):
-        self.number = number
+        super().__init__({}, number)
         self.card = card
-        self.config = {}

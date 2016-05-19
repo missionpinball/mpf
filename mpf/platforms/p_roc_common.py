@@ -809,9 +809,8 @@ def decode_pdb_address(addr):
 
 class PROCSwitch(SwitchPlatformInterface):
     def __init__(self, config, number, notify_on_nondebounce):
+        super().__init__(config, number)
         self.log = logging.getLogger('PROCSwitch')
-        self.config = config
-        self.number = number
         self.notify_on_nondebounce = notify_on_nondebounce
         self.hw_rules = {"closed_debounced": [],
                          "closed_nondebounced": [],

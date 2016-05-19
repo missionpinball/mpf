@@ -185,9 +185,8 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
 class VirtualSwitch(SwitchPlatformInterface):
     """Represents a switch in a pinball machine used with virtual hardware."""
     def __init__(self, config):
+        super().__init__(config, config['number'])
         self.log = logging.getLogger('VirtualSwitch')
-        self.number = config['number']
-        self.config = config
 
 
 class VirtualMatrixLight(MatrixLightPlatformInterface):

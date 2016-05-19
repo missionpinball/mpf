@@ -8,6 +8,6 @@ class SwitchPlatformInterface(metaclass=abc.ABCMeta):
     methods are implemented to support switch operations in MPF.
     """
 
-    def __init__(self):
-        self.config = None
-        self.number = None
+    def __init__(self, config, number):
+        self.config = config
+        self.number = number
