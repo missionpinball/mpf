@@ -24,6 +24,9 @@ class HardwarePlatform(OPHardwarePlatform):
         self.log = logging.getLogger("FadeCandy")
         self.log.debug("Configuring FadeCandy hardware interface.")
 
+    def initialize(self):
+        pass
+
     def __repr__(self):
         return '<Platform.FadeCandy>'
 

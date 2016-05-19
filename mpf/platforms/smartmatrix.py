@@ -27,6 +27,9 @@ class HardwarePlatform(RgbDmdPlatform):
             config_spec='smartmatrix',
             source=self.machine.config['smartmatrix'])
 
+    def initialize(self):
+        pass
+
     def __repr__(self):
         return '<Platform.SmartMatrix>'
 

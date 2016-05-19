@@ -62,6 +62,9 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
         self.machine_type = pinproc.normalize_machine_type(
             self.machine.config['hardware']['driverboards'])
 
+    def initialize(self):
+        pass
+
     def connect(self):
         # Connect to the P-ROC. Keep trying if it doesn't work the first time.
         self.log.info("Connecting to P-ROC")

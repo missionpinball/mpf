@@ -98,6 +98,9 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
         self._connect_to_hardware()
 
+    def initialize(self):
+        pass
+
     def __repr__(self):
         return '<Platform.OPP>'
 

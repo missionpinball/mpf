@@ -24,6 +24,7 @@ class BasePlatform(metaclass=abc.ABCMeta):
         self.features['has_switches'] = False
         self.features['has_drivers'] = False
 
+    @abc.abstractmethod
     def initialize(self):
         pass
 
