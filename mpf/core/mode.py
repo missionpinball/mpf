@@ -36,7 +36,6 @@ class Mode(object):
         self.stop_callback = None
         self.event_handlers = set()
         self.switch_handlers = list()
-        self.mode_start_kwargs = dict()
         self.mode_stop_kwargs = dict()
         self.mode_devices = set()
         self.start_event_kwargs = None

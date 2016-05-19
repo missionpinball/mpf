@@ -68,8 +68,6 @@ class MachineController(object):
         self._boot_holds = set()
         self.register_boot_hold('init')
 
-        self.loop_start_time = 0
-        self.tick_num = 0
         self.done = False
         self.monitors = dict()
         self.plugins = list()
@@ -81,7 +79,6 @@ class MachineController(object):
         self.machine_var_monitor = False
         self.machine_var_data_manager = None
         self.thread_stopper = threading.Event()
-        self.flag_bcp_reset_complete = False
 
         self.delayRegistry = DelayManagerRegistry(self)
         self.delay = DelayManager(self.delayRegistry)
@@ -132,10 +129,6 @@ class MachineController(object):
     @property
     def bcp_client_connected(self):
         return BCP.active_connections > 0
-
-    def get_system_config(self):
-        # used by the config validator
-        return self.machine_config['mpf']
 
     def _run_init_phases(self):
         self.events.post("init_phase_1")
@@ -425,11 +418,6 @@ class MachineController(object):
                                        (machine=self,
                                         name=scriptlet.split('.')[1]))
 
-    def _prepare_to_reset(self):
-        pass
-
-        # wipe all event handlers
-
     def reset(self):
         """Resets the machine.
 
@@ -567,8 +555,6 @@ class MachineController(object):
         # Main machine run loop with when the default platform interface
         # specifies the MPF should control the main timer
 
-        self.loop_start_time = self.clock.get_time()
-
         try:
             while not self.done:
                 self.process_frame()
@@ -610,7 +596,7 @@ class MachineController(object):
                       round(self.clock.get_fps(), 2))
 
     def bcp_reset_complete(self):
-        self.flag_bcp_reset_complete = True
+        pass
 
     def _reset_complete(self):
         self.log.debug('Reset Complete')
@@ -623,18 +609,6 @@ class MachineController(object):
 
     def configure_debugger(self):
         pass
-
-    def get_debug_status(self, debug_path):
-
-        if self.options['loglevel'] > 10 or self.options['consoleloglevel'] > 10:
-            return True
-
-        class_, module = debug_path.split('|')
-
-        try:
-            return module in self.active_debugger[class_]
-        except KeyError:
-            return False
 
     def set_machine_var(self, name, value, force_events=False):
         """Sets the value of a machine variable.

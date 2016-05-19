@@ -28,9 +28,6 @@ class BallController(object):
 
         self.num_balls_known = -999
 
-        self.num_balls_missing = 0
-        # Balls lost and/or not installed.
-
         # register for events
         self.machine.events.add_handler('request_to_start_game',
                                         self.request_to_start_game)

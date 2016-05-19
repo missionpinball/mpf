@@ -29,8 +29,6 @@ class ModeController(object):
 
     """
 
-    debug_path = 'core_modules|mode_controller'
-
     def __init__(self, machine):
         self.machine = machine
         self.log = logging.getLogger('Mode Controller')

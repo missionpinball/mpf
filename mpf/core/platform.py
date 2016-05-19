@@ -5,9 +5,6 @@ import abc
 class BasePlatform(metaclass=abc.ABCMeta):
     def __init__(self, machine):
         self.machine = machine
-        self.HZ = None
-        self.secs_per_tick = None
-        self.next_tick_time = None
         self.features = {}
         self.log = None
 
@@ -33,7 +30,7 @@ class BasePlatform(metaclass=abc.ABCMeta):
         this premature optimization?)
 
         """
-        self.next_tick_time = self.machine.clock.get_time()
+        pass
 
     def tick(self, dt):
         """Subclass this method in a platform module to perform periodic updates

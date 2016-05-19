@@ -231,11 +231,6 @@ class DeviceManager(object):
                                                 handler=getattr(device,
                                                                 method))
 
-    def save_tree_to_file(self, filename):
-        print("Exporting file...")
-        FileManager.save(filename, self.collections)
-        print("Export complete!")
-
 
 class DeviceCollection(CaseInsensitiveDict):
     """A collection of Devices.

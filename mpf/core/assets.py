@@ -46,7 +46,6 @@ class AssetManager(object):
 
         self.num_bcp_assets_to_load = 0
         self.num_bcp_assets_loaded = 0
-        self.num_bcb_assets_remaining = 0
 
         self.loader_queue = PriorityQueue()  # assets for to the loader thread
         self.loaded_queue = Queue()  # assets loaded from the loader thread
@@ -65,10 +64,6 @@ class AssetManager(object):
         # Picks up asset load information from connected BCP client(s)
         self.machine.events.add_handler('assets_to_load',
                                         self._bcp_client_asset_load)
-
-    @property
-    def num_assets_remaining(self):
-        return self.num_assets_to_load - self.num_assets_loaded
 
     @property
     def loading_percent(self):
@@ -422,36 +417,6 @@ class AssetManager(object):
                                default_string, built_up_config)
         return config
 
-    def locate_asset_file(self, file_name, path_string, path=None):
-        """Takes a file name and a root path and returns a link to the absolute
-        path of the file
-
-        Args:
-            file_name: String of the file name
-            path: root of the path to check (without the specific asset path
-                string)
-
-        Returns: String of the full path (path + file name) of the asset.
-
-        Note this method will add the path string between the path you pass and
-        the file. Also if it can't find the file in the path you pass, it will
-        look for the file in the machine root plus the path string location.
-
-        """
-        if path:
-            path_list = [path]
-        else:
-            path_list = list()
-
-        path_list.append(self.machine.machine_path)
-
-        for path in path_list:
-            full_path = os.path.join(path, path_string, file_name)
-            if os.path.isfile(full_path):
-                return full_path
-
-        raise ValueError("Could not locate image '{}'".format(file_name))
-
     def _create_asset_groups(self, config, mode=None):
         # creates named groups of assets and adds them to to the mc's asset
         # dicts
@@ -548,7 +513,6 @@ class AssetManager(object):
         # loading from a connected BCP client.
         self.num_bcp_assets_loaded = int(total) - int(remaining)
         self.num_bcp_assets_to_load = int(total)
-        self.num_bcb_assets_remaining = int(remaining)
         self._post_loading_event()
 
     def _post_loading_event(self):
@@ -914,6 +878,3 @@ class Asset(object):
     def _do_unload(self):
         # This is the actual method that unloads the asset
         raise NotImplementedError
-
-    def _unloaded(self):
-        pass
