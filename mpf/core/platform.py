@@ -44,6 +44,7 @@ class BasePlatform(metaclass=abc.ABCMeta):
         """
         pass
 
+    @abc.abstractmethod
     def stop(self):
         """Subclass this method in the platform module if you need to perform
         any actions to gracefully stop the platform interface.
