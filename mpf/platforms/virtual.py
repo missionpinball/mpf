@@ -36,8 +36,9 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
         pass
 
     def configure_driver(self, config):
-        # todo should probably throw out the number that we get since it could
-        # be a weird string and just return an incremental int?
+        # generate random number if None
+        if config['number'] is None:
+            config['number'] = random.randint(100, 10000)
 
         driver = VirtualDriver(config)
 
@@ -53,7 +54,7 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
             state = 1
 
         # switch needs a number to be distingishable from other switches
-        if not config['number']:
+        if config['number'] is None:
             config['number'] = random.randint(100, 10000)
 
         self.hw_switches[config['number']] = state
