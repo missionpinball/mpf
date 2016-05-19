@@ -26,6 +26,7 @@ from mpf.platforms.fast.fast_gi import FASTGIString
 from mpf.platforms.fast.fast_led import FASTDirectLED
 from mpf.platforms.fast.fast_light import FASTMatrixLight
 from mpf.platforms.fast.fast_switch import FASTSwitch
+from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 
 from mpf.core.platform import ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatform, \
     SwitchPlatform, DriverPlatform
@@ -320,6 +321,11 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         return FASTDriver(config, self.net_connection.send, self.machine)
 
+    def configure_servo(self, config):
+        number = self._convert_number_from_config(config['number'])
+
+        return FastServo(number, self.net_connection)
+
     def configure_switch(self, config):
         """Configures the switch object for a FAST Pinball controller.
 
@@ -605,11 +611,15 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         self.net_connection.send(cmd)
 
-    def servo_go_to_position(self, number, position):
-        """Sets a servo position. """
 
-        if number < 0:
-            raise AssertionError("invalid number")
+class FastServo(ServoPlatformInterface):
+
+    def __init__(self, number, net_connection):
+        self.number = number
+        self.net_connection = net_connection
+
+    def go_to_position(self, position):
+        """Sets a servo position. """
 
         if position < 0 or position > 1:
             raise AssertionError("Position has to be between 0 and 1")
@@ -618,7 +628,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         position_numeric = int(position * 255)
 
         cmd = 'XO:{},{}'.format(
-            Util.int_to_hex_string(number),
+            Util.int_to_hex_string(self.number),
             Util.int_to_hex_string(position_numeric))
 
         self.net_connection.send(cmd)
