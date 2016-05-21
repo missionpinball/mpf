@@ -203,33 +203,6 @@ assets:
             load: on_demand
         mode_start:
             load: mode_start
-    videos:
-        default:
-            load: preload
-        preload:
-            load: preload
-        on_demand:
-            load: on_demand
-        mode_start:
-            load: mode_start
-    images:
-        default:
-            load: preload
-        preload:
-            load: preload
-        on_demand:
-            load: on_demand
-        mode_start:
-            load: mode_start
-    sounds:
-        default:
-            load: preload
-        preload:
-            load: preload
-        on_demand:
-            load: on_demand
-        mode_start:
-            load: mode_start
 
 bcp:
     connections:
