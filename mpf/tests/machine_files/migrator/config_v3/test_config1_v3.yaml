@@ -363,6 +363,7 @@ light_player:
       script: flash
       tocks_per_sec: 4
       repeat: yes
+      action: start
   led_show1:
       leds: led1
       script: flash

@@ -458,6 +458,8 @@ class V4Migrator(VersionMigrator):
                 if 'show' in action:
                     show_name = action.pop('show')
                     this_events_shows[show_name] = action
+                if 'action' in action and action['action'] == 'start':
+                    del action['action']
 
             temp_show_player[event] = this_events_shows
 
@@ -492,6 +494,9 @@ class V4Migrator(VersionMigrator):
 
                 else:
                     continue
+
+                if 'action' in action and action['action'] == 'start':
+                    del action['action']
 
                 this_events_shows[show_name] = action
 
