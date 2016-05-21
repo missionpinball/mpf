@@ -1,4 +1,4 @@
-"""Mission Pinball Framework (mpf) setup.py"""
+"""Mission Pinball Framework (mpf) setup.py."""
 
 import re
 
