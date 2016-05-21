@@ -13,9 +13,7 @@ class Credits(Mode):
         self.earnings = None
 
         self.credit_units_per_game = None
-        self.credit_units_inserted = None
         self.credit_unit = None
-        self.max_credit_units = None
         self.pricing_tiers = None
         self.credit_units_for_pricing_tiers = None
         self.reset_pricing_tier_count_this_game = None
@@ -27,9 +25,7 @@ class Credits(Mode):
         self.earnings = self.data_manager.get_data()
 
         self.credit_units_per_game = 0
-        self.credit_units_inserted = 0
         self.credit_unit = 0
-        self.max_credit_units = 0
         self.pricing_tiers = set()
         self.credit_units_for_pricing_tiers = 0
         self.reset_pricing_tier_count_this_game = False
@@ -101,10 +97,6 @@ class Credits(Mode):
                 self.credit_unit))
 
         self.log.debug("Credit units per game: %s", self.credit_units_per_game)
-
-        if self.credits_config['max_credits']:
-            self.max_credit_units = (self.credit_units_per_game *
-                                     self.credits_config['max_credits'])
 
     def _calculate_pricing_tiers(self):
         # pricing tiers are calculated with a set of tuples which indicate the

@@ -12,7 +12,6 @@ class HighScore(Mode):
         self.data_manager = None
         self.high_scores = None
         self.high_score_config = None
-        self.player_name_handler = None
         self.pending_award = None
         self.new_high_score_list = None
         super().__init__(machine, config, name, path)
@@ -25,8 +24,6 @@ class HighScore(Mode):
             config_spec='high_score',
             source=self._get_merged_settings('high_score'),
             section_name='high_score')
-
-        self.player_name_handler = None
 
         self._create_machine_vars()
         self.pending_award = None
@@ -191,7 +188,6 @@ class HighScore(Mode):
         self._stop_sending_switches()
         self.high_scores = self.new_high_score_list
         self._write_scores_to_disk()
-        self.player_name_handler = None
         self.stop()
 
     def _write_scores_to_disk(self):

@@ -573,13 +573,10 @@ class PDBSwitch(object):
 
         upper_str = number_str.upper()
         if upper_str.startswith('SD'):  # only P-ROC
-            self.sw_type = 'dedicated'
             self.sw_number = int(upper_str[2:])
         elif upper_str.count("/") == 1:  # only P-ROC
-            self.sw_type = 'matrix'
             self.sw_number = self.parse_matrix_num(upper_str)
         else:   # only P3-Roc
-            self.sw_type = 'proc'
             try:
                 (boardnum, banknum, inputnum) = decode_pdb_address(number_str)
                 self.sw_number = boardnum * 16 + banknum * 8 + inputnum
@@ -606,7 +603,7 @@ class PDBCoil(object):
     """
 
     def __init__(self, pdb, number_str):
-        self.pdb = pdb
+        del pdb
         upper_str = number_str.upper()
         if self.is_direct_coil(upper_str):
             self.coil_type = 'dedicated'
@@ -648,7 +645,7 @@ class PDBLight(object):
     """Base class for lights connected to a PD-8x8 driver board."""
 
     def __init__(self, pdb, number_str):
-        self.pdb = pdb
+        del pdb
         upper_str = number_str.upper()
         if self.is_direct_lamp(upper_str):
             self.lamp_type = 'dedicated'

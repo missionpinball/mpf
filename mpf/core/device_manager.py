@@ -5,7 +5,6 @@ from collections import OrderedDict
 
 from mpf.core.utility_functions import Util
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
-from mpf.core.file_manager import FileManager
 
 
 class DeviceManager(object):
@@ -230,11 +229,6 @@ class DeviceManager(object):
                 self.machine.events.add_handler(event=event_prefix2 + method,
                                                 handler=getattr(device,
                                                                 method))
-
-    def save_tree_to_file(self, filename):
-        print("Exporting file...")
-        FileManager.save(filename, self.collections)
-        print("Export complete!")
 
 
 class DeviceCollection(CaseInsensitiveDict):

@@ -1,6 +1,5 @@
 """Base class used for things that "play" from the config files, such as
 WidgetPlayer, SlidePlayer, etc."""
-from mpf.core.device import Device
 
 
 class ConfigPlayer(object):
@@ -144,12 +143,6 @@ class ConfigPlayer(object):
         del kwargs
         return config
 
-    @classmethod
-    def process_show_config(cls, config):
-        # override if you need a different show processor from config file
-        # processor
-        return config
-
     def get_express_config(self, value):
         """Implements "express" settings for this config_player which is what
         happens when a config is passed as a string instead of a full config
@@ -238,12 +231,3 @@ class ConfigPlayer(object):
 
     def clear(self, key):
         pass
-
-    def expand_device_list(self, device):
-        if isinstance(device, Device):
-            return list(device)
-
-        try:
-            return self.device_collection[device]
-        except KeyError:
-            return self.device_collection.items_tagged(device)

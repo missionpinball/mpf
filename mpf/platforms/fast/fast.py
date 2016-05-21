@@ -37,10 +37,10 @@ NET_MIN_FW = '0.88'
 RGB_MIN_FW = '0.87'
 IO_MIN_FW = '0.87'
 
-DMD_LATEST_FW = '0.88'
-NET_LATEST_FW = '0.90'
-RGB_LATEST_FW = '0.88'
-IO_LATEST_FW = '0.89'
+# DMD_LATEST_FW = '0.88'
+# NET_LATEST_FW = '0.90'
+# RGB_LATEST_FW = '0.88'
+# IO_LATEST_FW = '0.89'
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -66,12 +66,10 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         self.dmd_connection = None
         self.net_connection = None
         self.rgb_connection = None
-        self.fast_nodes = list()
         self.connection_threads = set()
         self.receive_queue = queue.Queue()
         self.fast_leds = set()
         self.flag_led_tick_registered = False
-        self.fast_io_boards = list()
         self.config = None
         self.machine_type = None
         self.hw_switch_data = None
@@ -628,8 +626,6 @@ class FASTDMD(object):
 
         # Clear the DMD
         # todo
-
-        self.dmd_frame = bytearray()
 
     def update(self, data):
         self.send(data)

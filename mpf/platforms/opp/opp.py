@@ -43,14 +43,12 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger('OPP')
         self.log.info("Configuring OPP hardware.")
-        self.platformVersion = "0.1.0.0"
 
         if not serial_imported:
             raise AssertionError('Could not import "pySerial". This is required for '
                                  'the OPP platform interface')
 
         self.opp_connection = None
-        self.opp_nodes = list()
         self.connection_threads = set()
         self.receive_queue = queue.Queue()
         self.opp_incands = []

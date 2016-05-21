@@ -190,7 +190,6 @@ class BCP(object):
         self.physical_rgb_dmd_update_callback = None
         self.filter_player_events = True
         self.filter_machine_vars = True
-        self.filter_shots = True
         self.send_player_vars = False
         self.send_machine_vars = False
         self.track_volumes = dict()
@@ -690,64 +689,6 @@ class BCP(object):
 
         else:
             self.machine.events.post(event=name, **kwargs)
-
-    def enable_bcp_switch(self, name):
-        """Enables sending BCP switch commands when this switch changes state.
-
-        Args:
-            name: string name of the switch
-
-        """
-        self.machine.switch_controller.add_switch_handler(switch_name=name,
-                                                          callback=self._switch_sender_callback,
-                                                          state=1,
-                                                          return_info=True)
-
-        self.machine.switch_controller.add_switch_handler(switch_name=name,
-                                                          callback=self._switch_sender_callback,
-                                                          state=0,
-                                                          return_info=True)
-
-    def enable_bcp_switches(self, tag):
-        """Enables sending BCP switch commands when a switch with a certain tag
-        changes state.
-
-        Args:
-            tag: string name of the tag for the switches you want to start
-                sending
-
-        """
-        for switch in self.machine.switches.items_tagged(tag):
-            self.enable_bcp_switch(switch.name)
-
-    def disable_bcp_switch(self, name):
-        """Disables sending BCP switch commands when this switch changes state.
-
-        Args:
-            name: string name of the switch
-
-        """
-        self.machine.switch_controller.remove_switch_handler(switch_name=name,
-                                                             callback=self._switch_sender_callback,
-                                                             state=1)
-        self.machine.switch_controller.remove_switch_handler(switch_name=name,
-                                                             callback=self._switch_sender_callback,
-                                                             state=0)
-
-    def disable_bcp_switches(self, tag):
-        """Disables sending BCP switch commands when a switch with a certain tag
-        changes state.
-
-        Args:
-            tag: string name of the tag for the switches you want to stop
-                sending
-        """
-        for switch in self.machine.switches.items_tagged(tag):
-            self.disable_bcp_switch(switch)
-
-    def _switch_sender_callback(self, switch_name, state, ms):
-        del ms
-        self.send('switch', name=switch_name, state=state)
 
     def _setup_track_volumes(self, config):
         # config is localized to 'Volume'

@@ -64,8 +64,6 @@ class Show(Asset):
 
     def _initialize_asset(self):
         self.loaded = False
-        self.notify_when_loaded = set()
-        self.loaded_callbacks = list()
         self.show_steps = list()
         self.mode = None
 

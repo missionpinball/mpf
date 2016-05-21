@@ -28,7 +28,6 @@ class HardwarePlatform(DriverPlatform):
 
         self.system11_config = None
         self.snux_config = None
-        self.ac_relay_enabled = False  # disabled = A, enabled = C
 
         self.a_side_queue = set()
         self.c_side_queue = set()

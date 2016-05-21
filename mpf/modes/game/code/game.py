@@ -24,11 +24,8 @@ class Game(Mode):
         self._balls_in_play = 0
         self.player_list = list()
         self.machine.game = None
-        self.tilted = False
         self.slam_tilted = False
         self.player = None
-        self.buttons_held_on_start = None
-        self.start_button_hold_time = None
         self.num_players = None
 
     @property
@@ -71,18 +68,14 @@ class Game(Mode):
 
     def mode_start(self, buttons=None, hold_time=None, **kwargs):
         """Automatically called when the *Game* machine mode becomes active."""
-
-        if buttons:
-            self.buttons_held_on_start = buttons
-        if hold_time:
-            self.start_button_hold_time = hold_time
+        del hold_time
+        del buttons
 
         # Intialize variables
         self.num_players = 0
         self.player = None
         self.player_list = list()
         self.machine.game = self
-        self.tilted = False
         self.slam_tilted = False
         self._balls_in_play = 0
 
