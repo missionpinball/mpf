@@ -123,15 +123,15 @@ class Show(Asset):
                 actions['time'] = step_time
             else:
                 # Step time relative to start of show
-
                 # Make sure this step time comes after the previous step time
-                # todo automatically fix this programmatically
-                if step_time < total_step_time:
-                    self.machine.show_controller.log.warning(
-                        "%s is not a valid show file. Step times are not valid"
-                        " as they are not all in chronological order. "
-                        "Skipping show.", self.file)
-                    return False
+                if step_time and step_time < total_step_time:
+                    if self.file:
+                        raise ValueError(
+                            "'{}' is not a valid show file. Step times are not"
+                            "valid".format(self.file))
+                    else:
+                        raise ValueError("Invalid show data:\n{}".format(
+                            YamlInterface.pretty_format(data)))
 
                 # Calculate the time since previous step
                 actions['time'] = step_time - total_step_time
