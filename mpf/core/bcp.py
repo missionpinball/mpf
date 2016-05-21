@@ -619,6 +619,11 @@ class BCP(object):
         del rawbytes
         state = int(state)
 
+        if name not in self.machine.switches:
+            self.log.warning("Received BCP switch message with invalid switch"
+                             "name: '%s'", name)
+            return
+
         if state == -1:
             if self.machine.switch_controller.is_active(name):
                 state = 0
