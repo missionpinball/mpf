@@ -9,8 +9,16 @@ switches:
         number: 0
         events_when_activated: event1
         events_when_deactivated: event2
+        debounce: normal
     s_center_rollover:
         number: L12
+        debounce: normal
+    s_2:
+        number:
+        debounce: quick
+    s_3:
+        number:
+        debounce: quick
 
 matrix_lights:
     l_fortress_multiball:
@@ -81,34 +89,34 @@ widget_styles:
     default:
         font_name: Quadrit
         font_size: 10
-        crop_top: 2
-        crop_bottom: 3
+        adjust_top: 2
+        adjust_bottom: 3
     space title huge:
         font_name: DEADJIM
         font_size: 29
         antialias: true
-        crop_top: 3
-        crop_bottom: 3
-    space title:
-        font_name: DEADJIM
-        font_size: 21
-        antialias: true
-        crop_top: 2
-        crop_bottom: 3
+        adjust_top: 3
+        adjust_bottom: 3
     medium:
         font_name: pixelmix
         font_size: 8
-        crop_top: 1
-        crop_bottom: 1
+        adjust_top: 1
+        adjust_bottom: 1
     small:
         font_name: smallest_pixel-7
         font_size: 9
-        crop_top: 2
-        crop_bottom: 3
+        adjust_top: 2
+        adjust_bottom: 3
     tall title:
         font_name: big_noodle_titling
         font_size: 20
 
+    space title:
+        font_name: DEADJIM
+        font_size: 21
+        antialias: true
+        adjust_top: 2
+        adjust_bottom: 3
 sounds:
     intro_loop:
         file: waiting to plunge loop.ogg
@@ -156,27 +164,42 @@ assets:
             load: preload
 
 sound_player:
-    pluger_lane_ball_start:
-        sound: intro_loop
-        start_events: ball_starting
-        stop_events: ball_live_added
-        duration:
-        loops: -1
-        priority:
-        fade_in: 0
-        fade_out: 0
-    ball_launch_motorcycle:
-        sound: ball_launch_motorcycle
-        start_events: sw_launch
-    slingshot:
-        sound: slingshot
-        start_events: shot_Slingshot
-    main_loop:
-        sound: main_loop
-        start_events: player_eject_request
-        loops: -1
-        stop_events: ball_ending
-
+    ball_starting:
+        intro_loop:
+            duration:
+            loops: -1
+            priority:
+            fade_in: 0
+            fade_out: 0
+    ball_live_added:
+        intro_loop:
+            action: stop
+    sw_launch:
+        ball_launch_motorcycle:
+            action: play
+        test_sound:
+            action: play
+    shot_slingshot: slingshot
+    player_eject_request:
+        main_loop:
+            loops: -1
+    ball_ending:
+        main_loop:
+            action: stop
+        test_sound:
+            action: stop
+    mode_super_spinner_stopped:
+        base_mode_music:
+            loops: -1
+    mode_millions_stopped:
+        base_mode_music:
+            loops: -1
+    mode_skillshot_stopped:
+        base_mode_music:
+            loops: -1
+    mode_base_stopping:
+        base_mode_music:
+            action: stop
 shot_profiles:
     hit_me:
         states:

@@ -23,15 +23,16 @@ class TestMigratorCls(Migrator):
 class TestMigrator(MpfTestCase):
 
     def test_migrator(self):
-
         self.expected_duration = 3.0
 
         old_config_path = os.path.abspath(os.path.join(
             self.machine.machine_path, os.pardir, 'migrator/config_v3'))
 
-        V4Migrator.MAIN_CONFIG_FILE = 'test_config2_v3.yaml'
+        V4Migrator.MAIN_CONFIG_FILE = 'test_config1_v3.yaml'
 
         TestMigratorCls(self.machine.mpf_path, old_config_path)
+
+        self.assertEqual(2, len(TestMigratorCls.migrated_files.values()))
 
         for old_file_name, contents in TestMigratorCls.migrated_files.items():
             target_file_name = old_file_name.replace('config_v3', 'config')

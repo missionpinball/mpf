@@ -12,8 +12,16 @@ switches:
       number: 0
       activation_events: event1
       deactivation_events: event2
+      debounce: true
     s_center_rollover:
       number: L12
+      debounce: Yes
+    s_2:
+      number:
+      debounce: no
+    s_3:
+      number:
+      debounce: False
 
 matrix_lights:
     l_fortress_multiball:
@@ -217,12 +225,6 @@ fonts:
         antialias: yes
         crop_top: 3
         crop_bottom: 3
-    space title:
-        file: DEADJIM.TTF
-        size: 21
-        antialias: yes
-        crop_top: 2
-        crop_bottom: 3
     medium:
         file: pixelmix.ttf
         size: 8
@@ -303,7 +305,7 @@ asset_defaults:
             load: preload
 
 Sound_Player:
-    pluger_lane_ball_start:
+    plunger_lane_ball_start:
         sound: intro_loop
         start_events: ball_starting
         stop_events: ball_live_added
@@ -323,6 +325,21 @@ Sound_Player:
         start_events: player_eject_request
         loops: -1
         stop_events: ball_ending
+    test_sound:
+        sound: test_sound
+        start_events: sw_launch
+        stop_events: ball_ending
+    base music:
+      sound: base_mode_music
+      start_events:
+      - mode_super_spinner_stopped
+      - mode_millions_stopped
+      - mode_skillshot_stopped
+
+      stop_events:
+      - mode_base_stopping
+
+      loops: -1
 
 light_player:
   mode_attract_started:  # test comment 1

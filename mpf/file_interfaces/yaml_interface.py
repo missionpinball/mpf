@@ -435,13 +435,5 @@ class YamlInterface(FileInterface):
         del dic[key]
         dic.ca.items.pop(key, None)
 
-    @staticmethod
-    def alphabetize_keys(dic):
-        key_list = list(dic.keys())
-        key_list.sort()
-
-        for key in key_list:
-            YamlInterface.copy_with_comments(dic, key, dic, key)
-
 
 file_interface_class = YamlInterface

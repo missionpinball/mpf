@@ -5,6 +5,8 @@ from copy import deepcopy
 
 from ruamel import yaml
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
+
+from mpf.core.utility_functions import Util
 from mpf.migrator.migrator import VersionMigrator
 from mpf.core.rgb_color import named_rgb_colors, RGBColor
 
@@ -119,6 +121,7 @@ class V4Migrator(VersionMigrator):
         self._migrate_assets('videos')
         self._migrate_assets('sounds')
         self._migrate_switches()
+        self._migrate_sound_player()
 
     def _migrate_mode_timers(self):
         if 'timers' in self.fc:
@@ -356,8 +359,14 @@ class V4Migrator(VersionMigrator):
             self.log.debug("Converting widget_styles: from the old fonts: "
                            "settings")
             for settings in self.fc['widget_styles'].values():
-                YamlInterface.rename_key('size', 'font_size', settings, self.log)
-                YamlInterface.rename_key('file', 'font_name', settings, self.log)
+                YamlInterface.rename_key('size', 'font_size', settings,
+                                         self.log)
+                YamlInterface.rename_key('file', 'font_name', settings,
+                                         self.log)
+                YamlInterface.rename_key('crop_top', 'adjust_top', settings,
+                                         self.log)
+                YamlInterface.rename_key('crop_bottom', 'adjust_bottom',
+                                         settings, self.log)
 
                 if 'font_name' in settings:
                     self.log.debug("Converting font_name: from file to name")
@@ -371,11 +380,12 @@ class V4Migrator(VersionMigrator):
                 self.fc['widget_styles'] = self._get_old_default_widget_styles()
 
             else:
-                self.log.debug("Merging old default font settings into "
-                               "widget_styles: section")
-                self.fc['widget_styles'] = (
-                    self._get_old_default_widget_styles().update(
-                        self.fc['widget_styles']))
+                for k, v in self._get_old_default_widget_styles().items():
+                    if k not in self.fc['widget_styles']:
+                        self.fc['widget_styles'][k] = v
+
+                    self.log.debug("Merging old built-in font settings '%s' "
+                                   "into widget_styles: section", k)
 
     def _migrate_asset_defaults(self):
         # convert asset_defaults to assets:
@@ -888,6 +898,12 @@ class V4Migrator(VersionMigrator):
                                      'events_when_deactivated',
                                      switch_settings, self.log)
 
+            if 'debounce' in switch_settings:
+                if switch_settings['debounce']:
+                    switch_settings['debounce'] = 'normal'
+                else:
+                    switch_settings['debounce'] = 'quick'
+
     @classmethod
     def _get_old_default_widget_styles(cls):
         # these are from MPF 0.21, but they are in the new v4 format
@@ -895,36 +911,83 @@ class V4Migrator(VersionMigrator):
           default:
             font_name: Quadrit
             font_size: 10
-            crop_top: 2
-            crop_bottom: 3
+            adjust_top: 2
+            adjust_bottom: 3
           space title huge:
             font_name: DEADJIM
             font_size: 29
             antialias: true
-            crop_top: 3
-            crop_bottom: 3
+            adjust_top: 3
+            adjust_bottom: 3
           space title:
             font_name: DEADJIM
             font_size: 21
             antialias: true
-            crop_top: 2
-            crop_bottom: 3
+            adjust_top: 2
+            adjust_bottom: 3
           medium:
             font_name: pixelmix
             font_size: 8
-            crop_top: 1
-            crop_bottom: 1
+            adjust_top: 1
+            adjust_bottom: 1
           small:
             font_name: smallest_pixel-7
             font_size: 9
-            crop_top: 2
-            crop_bottom: 3
+            adjust_top: 2
+            adjust_bottom: 3
           tall title:
             font_name: big_noodle_titling
             font_size: 20
         '''
 
         return yaml.load(widget_styles, Loader=MpfRoundTripLoader)
+
+    def _migrate_sound_player(self):
+        if 'sound_player' not in self.fc:
+            return
+
+        self.log.debug("Migrating sound_player: section")
+
+        temp_sound_player = CommentedMap()
+
+        for settings in self.fc['sound_player'].values():
+            this_sound = settings.pop('sound')
+            play_events = settings.pop('start_events', None)
+            stop_events = settings.pop('stop_events', None)
+
+            play_events = Util.string_to_lowercase_list(play_events)
+            stop_events = Util.string_to_lowercase_list(stop_events)
+
+            for event in play_events:
+                self._add_to_sound_player(temp_sound_player, event, this_sound,
+                                          deepcopy(settings))
+
+            for event in stop_events:
+                self._add_to_sound_player(temp_sound_player, event, this_sound,
+                                          dict(action='stop'))
+
+        self.fc['sound_player'] = temp_sound_player
+
+    def _add_to_sound_player(self, sound_player, event, sound, settings):
+        if event not in sound_player:
+            if settings:
+                sound_player[event] = CommentedMap()
+            elif not settings:
+                sound_player[event] = sound
+                return
+        elif isinstance(sound_player[event], str):
+            old_sound = sound_player[event]
+            sound_player[event] = CommentedMap()
+            sound_player[event][old_sound] = CommentedMap()
+            sound_player[event][old_sound]['action'] = 'play'
+
+        # if we're here, we now have a commented map
+
+        if settings:
+            sound_player[event][sound] = settings
+        else:
+            sound_player[event][sound] = CommentedMap()
+            sound_player[event][sound]['action'] = 'play'
 
     def is_show_file(self):
         # Verify we have a show file and that it's an old version
