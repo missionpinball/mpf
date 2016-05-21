@@ -472,7 +472,7 @@ logic_blocks:                                       # todo add validation
         events: list|str|
     counter:
         count_events: list|str|
-        count_complete_value: single|int|
+        count_complete_value: single|int|None
         multiple_hit_window: single|ms|0
         count_interval: single|int|1
         direction: single|str|up

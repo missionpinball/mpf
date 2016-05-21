@@ -336,14 +336,6 @@ class Counter(LogicBlock):
             self.log.debug("Processing Count change. Total: %s",
                            self.player[self.config['player_variable']])
 
-            if (self.config['direction'] == 'up' and
-                    self.player[self.config['player_variable']] >= self.config['count_complete_value']):
-                self.complete()
-
-            elif (self.config['direction'] == 'down' and
-                    self.player[self.config['player_variable']] <= self.config['count_complete_value']):
-                self.complete()
-
             if self.config['event_when_hit']:
                 self.machine.events.post(self.config['event_when_hit'],
                                          count=self.player[
@@ -363,6 +355,16 @@ class Counter(LogicBlock):
             counting up or down, depending on its config.)
 
             '''
+
+            if self.config['count_complete_value'] is not None:
+
+                if (self.config['direction'] == 'up' and
+                        self.player[self.config['player_variable']] >= self.config['count_complete_value']):
+                    self.complete()
+
+                elif (self.config['direction'] == 'down' and
+                        self.player[self.config['player_variable']] <= self.config['count_complete_value']):
+                    self.complete()
 
             if self.config['multiple_hit_window']:
                 self.log.debug("Beginning Ignore Hits")
