@@ -435,5 +435,8 @@ class YamlInterface(FileInterface):
         del dic[key]
         dic.ca.items.pop(key, None)
 
+    @staticmethod
+    def pretty_format(dic):
+        return '\r' + yaml.dump(dic, Dumper=RoundTripDumper, indent=4)
 
 file_interface_class = YamlInterface
