@@ -14,7 +14,8 @@ from ruamel.yaml.resolver import BaseResolver, Resolver
 from ruamel.yaml.scanner import Scanner, RoundTripScanner
 from ruamel.yaml.parser_ import Parser
 from ruamel.yaml.composer import Composer
-from ruamel.yaml.constructor import Constructor, RoundTripConstructor
+from ruamel.yaml.constructor import Constructor, RoundTripConstructor, \
+    CommentedMap
 from ruamel.yaml.compat import to_str
 from ruamel.yaml.dumper import RoundTripDumper
 
@@ -433,5 +434,14 @@ class YamlInterface(FileInterface):
 
         del dic[key]
         dic.ca.items.pop(key, None)
+
+    @staticmethod
+    def alphabetize_keys(dic):
+        key_list = list(dic.keys())
+        key_list.sort()
+
+        for key in key_list:
+            YamlInterface.copy_with_comments(dic, key, dic, key)
+
 
 file_interface_class = YamlInterface

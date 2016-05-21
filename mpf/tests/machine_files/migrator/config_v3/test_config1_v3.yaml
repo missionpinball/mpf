@@ -1,4 +1,5 @@
 #config_version=3
+# test_config1
 
 timing:
   hz: 30
@@ -8,11 +9,11 @@ game:
 
 switches:
     s_left_rollover:
-      number:
+      number: 0
       activation_events: event1
       deactivation_events: event2
     s_center_rollover:
-      number:
+      number: L12
 
 matrix_lights:
     l_fortress_multiball:

@@ -1,15 +1,17 @@
 #config_version=4
+# test_config1
 
 game:
     allow_start_with_loose_balls: true
 
 switches:
     s_left_rollover:
-        number:
+        number: 0
         events_when_activated: event1
         events_when_deactivated: event2
     s_center_rollover:
-        number:
+        number: L12
+
 matrix_lights:
     l_fortress_multiball:
         number:
@@ -392,24 +394,24 @@ show_player:
 
     mode_claw_lit_for_major_mode_started:
         flash:
-            show_tokens:
-                lights: l_claw_ready, l_right_ramp_arrow
             key: claw_lit
             speed: 5
             loops: -1
+            show_tokens:
+                lights: l_claw_ready, l_right_ramp_arrow
     balldevice_elevator_ball_enter:
         claw_lit:
             action: stop
     mode_mode1_acmag_started:
         flash:
-            show_tokens:
-                lights: l_left_ramp_arrow
             speed: 4
             loops: -1
+            show_tokens:
+                lights: l_left_ramp_arrow
     led_show1:
         flash:
-            show_tokens:
-                leds: led1
             speed: 4
             loops: -1
 
+            show_tokens:
+                leds: led1

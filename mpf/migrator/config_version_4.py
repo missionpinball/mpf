@@ -110,6 +110,7 @@ class V4Migrator(VersionMigrator):
         self._migrate_asset_defaults()
         self._migrate_animation_assets()
         self._migrate_show_player()
+        self._migrate_shots()
         self._migrate_light_player()
         self._migrate_shot_profiles()
         self._migrate_light_scripts()
@@ -278,6 +279,13 @@ class V4Migrator(VersionMigrator):
                 self.fc['slides'][slide] = elements
 
             self.fc['slide_player'] = new_slide_player
+
+    def _migrate_shots(self):
+        if 'shots' not in self.fc:
+            return
+
+        for v in self.fc['shots'].values():
+            self._convert_show_call_to_tokens(v)
 
     def _create_window_slide(self):
         if 'window' in self.fc and 'elements' in self.fc['window']:
@@ -501,6 +509,8 @@ class V4Migrator(VersionMigrator):
                 else:
                     settings['loops'] = 0
 
+            self._convert_show_call_to_tokens(settings)
+
         if 'show_player' not in self.fc:
             self.log.debug("Creating show_player: section")
             self.fc['show_player'] = CommentedMap()
@@ -516,6 +526,18 @@ class V4Migrator(VersionMigrator):
                 self.fc['light_player'].ca.items[event])
         except KeyError:
             pass
+
+    def _convert_show_call_to_tokens(self, settings):
+        token_list = ['light', 'lights', 'leds', 'led']
+
+        for token in token_list:
+            if token in settings:
+                if 'show_tokens' not in settings:
+                    settings['show_tokens'] = CommentedMap()
+
+                YamlInterface.copy_with_comments(settings, token,
+                                                 settings['show_tokens'],
+                                                 token, True)
 
     def _migrate_assets(self, section_name):
         if section_name in self.fc:
@@ -939,7 +961,7 @@ class V4Migrator(VersionMigrator):
                         break
 
                 if found_transition:
-                    step['display'] = dict(
+                    step['display'] = CommentedMap(
                         widgets=self._migrate_elements(step['display']))
 
                     for widget in step['display']['widgets']:
@@ -959,7 +981,7 @@ class V4Migrator(VersionMigrator):
 
                 slide_num += 1
                 old_slides = step['slides']
-                step['slides'] = dict()
+                step['slides'] = CommentedMap()
                 step['slides']['{}_slide_{}'.format(show_name_stub,
                                                     slide_num)] = old_slides
 

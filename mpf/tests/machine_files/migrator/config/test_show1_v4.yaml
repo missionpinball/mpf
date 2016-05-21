@@ -11,13 +11,13 @@
 -   time: '+2'
     slides:
         test_show1_v3_slide_2:
+            widgets:
+            -   type: image
+                image: demo_man_logo
             transition:
                 type: move_out
                 duration: 1s
                 direction: top
-            widgets:
-            -   type: image
-                image: demo_man_logo
 -   time: '+2'
     slides:
         test_show1_v3_slide_3:
@@ -45,10 +45,6 @@
 -   time: '+2'
     slides:
         test_show1_v3_slide_5:
-            transition:
-                type: move_out
-                duration: 1s
-                direction: top
             widgets:
             -   type: text
                 text: 1. (machine|score2_name) (machine|score2_value)
@@ -64,13 +60,13 @@
                 number_grouping: true
                 y: bottom+3
                 x: left+10
+            transition:
+                type: move_out
+                duration: 1s
+                direction: top
 -   time: '+2'
     slides:
         test_show1_v3_slide_6:
-            transition:
-                type: move_in
-                duration: 1s
-                direction: bottom
             widgets:
             -   type: text
                 text: 3. (machine|score4_name) (machine|score4_value)
@@ -86,13 +82,13 @@
                 y: bottom+3
                 x: left+10
                 anchor_x: left
--   time: '+2'
-    slides:
-        test_show1_v3_slide_7:
             transition:
                 type: move_in
                 duration: 1s
                 direction: bottom
+-   time: '+2'
+    slides:
+        test_show1_v3_slide_7:
             widgets:
             -   type: text
                 text: MASTER LOOPER
@@ -108,6 +104,10 @@
                 style: medium
                 number_grouping: true
                 y: bottom
+            transition:
+                type: move_in
+                duration: 1s
+                direction: bottom
 -   time: '+2'
     slides:
         test_show1_v3_slide_8:

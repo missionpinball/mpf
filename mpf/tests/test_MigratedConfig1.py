@@ -17,3 +17,5 @@ class TestMigratedV4(MpfTestCase):
 
         # Really we just need to make sure it loads. If any sections are
         # broken, their own validators should pick them up.
+
+        # print(self.machine.shows)
