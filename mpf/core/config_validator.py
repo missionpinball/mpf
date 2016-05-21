@@ -511,6 +511,9 @@ mode:
     code: single|str|None
     stop_on_ball_end: single|bool|True
     restart_on_next_ball: single|bool|False
+mode_settings:
+    __valid_in__: mode
+    __allow_others__:
 modes:
     __valid_in__: machine                           # todo add to validator
 mpf:
