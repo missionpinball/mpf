@@ -1,14 +1,14 @@
 import logging
 
 from mpf.core.utility_functions import Util
+from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 
 
-class FASTSwitch(object):
+class FASTSwitch(SwitchPlatformInterface):
 
     def __init__(self, config, sender, platform):
-        self.config = config
+        super().__init__(config, config['number'])
         self.log = logging.getLogger('FASTSwitch')
-        self.number = config['number']
         self.connection = config['number'][1]
         self.send = sender
         self.platform = platform

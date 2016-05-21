@@ -44,6 +44,9 @@ class HardwarePlatform(DriverPlatform):
 
         self.ac_relay_in_transition = False
 
+    def stop(self):
+        pass
+
     @property
     def a_side_busy(self):
         return self.drivers_holding_a_side or self.a_side_done_time > self.machine.clock.get_time() or self.a_side_queue

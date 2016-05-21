@@ -37,6 +37,9 @@ class SerialMock:
         self.permanent_commands = {}
         self.crashed = False
 
+    def close(self):
+        pass
+
 
 class TestOPP(MpfTestCase):
 

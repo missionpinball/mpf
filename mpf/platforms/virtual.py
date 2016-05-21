@@ -3,6 +3,9 @@
 import logging
 import random
 
+from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
+from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
+
 from mpf.core.platform import ServoPlatform, MatrixLightsPlatform, GiPlatform, LedPlatform, \
     SwitchPlatform, DriverPlatform, AccelerometerPlatform, I2cPlatform
 from mpf.core.utility_functions import Util
@@ -32,9 +35,19 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
     def __repr__(self):
         return '<Platform.Virtual>'
 
+    def initialize(self):
+        pass
+
+    def stop(self):
+        pass
+
+    def configure_servo(self, config):
+        return VirtualServo(config['number'])
+
     def configure_driver(self, config):
-        # todo should probably throw out the number that we get since it could
-        # be a weird string and just return an incremental int?
+        # generate random number if None
+        if config['number'] is None:
+            config['number'] = random.randint(100, 10000)
 
         driver = VirtualDriver(config)
 
@@ -50,7 +63,7 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
             state = 1
 
         # switch needs a number to be distingishable from other switches
-        if not config['number']:
+        if config['number'] is None:
             config['number'] = random.randint(100, 10000)
 
         self.hw_switches[config['number']] = state
@@ -157,9 +170,6 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
         del register
         return None
 
-    def servo_go_to_position(self, number, position):
-        pass
-
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
         pass
 
@@ -173,12 +183,11 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
         pass
 
 
-class VirtualSwitch(object):
+class VirtualSwitch(SwitchPlatformInterface):
     """Represents a switch in a pinball machine used with virtual hardware."""
     def __init__(self, config):
+        super().__init__(config, config['number'])
         self.log = logging.getLogger('VirtualSwitch')
-        self.number = config['number']
-        self.config = config
 
 
 class VirtualMatrixLight(MatrixLightPlatformInterface):
@@ -215,6 +224,16 @@ class VirtualGI(GIPlatformInterface):
 
     def off(self):
         self.current_brightness = 0
+
+
+class VirtualServo(ServoPlatformInterface):
+    def __init__(self, number):
+        self.log = logging.getLogger('VirtualServo')
+        self.number = number
+        self.current_position = None
+
+    def go_to_position(self, position):
+        self.current_position = position
 
 
 class VirtualDriver(DriverPlatformInterface):

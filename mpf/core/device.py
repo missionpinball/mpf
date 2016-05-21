@@ -17,14 +17,11 @@ class Device(object):
         self.machine = machine
         self.name = name.lower()
         self.log = logging.getLogger(self.class_label + '.' + self.name)
-        self.tags = list()
+        self.tags = []
         self.label = None
         self.debug = False
         self.platform = None
         self.config = dict()
-
-        self.tags = []
-        self.label = []
 
     def load_platform_section(self, platform_section):
         # can be called in _initialize to load the platform section

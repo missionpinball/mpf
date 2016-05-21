@@ -21,6 +21,7 @@ class BasePlatform(metaclass=abc.ABCMeta):
         self.features['has_switches'] = False
         self.features['has_drivers'] = False
 
+    @abc.abstractmethod
     def initialize(self):
         pass
 
@@ -40,6 +41,7 @@ class BasePlatform(metaclass=abc.ABCMeta):
         """
         pass
 
+    @abc.abstractmethod
     def stop(self):
         """Subclass this method in the platform module if you need to perform
         any actions to gracefully stop the platform interface.
@@ -119,7 +121,7 @@ class ServoPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['has_servos'] = True
 
     @abc.abstractmethod
-    def servo_go_to_position(self, number, position):
+    def configure_servo(self, config):
         raise NotImplementedError
 
 

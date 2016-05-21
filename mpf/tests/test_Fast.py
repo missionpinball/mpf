@@ -44,6 +44,9 @@ class MockSerialCommunicator:
         else:
             raise Exception(cmd)
 
+    def stop(self):
+        pass
+
 
 class TestFast(MpfTestCase):
     def getConfigFile(self):

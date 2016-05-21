@@ -3,6 +3,9 @@
 
 import logging
 import time
+
+from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
+
 from mpf.core.platform import ServoPlatform
 
 
@@ -46,17 +49,32 @@ class HardwarePlatform(ServoPlatform):
                                  0x01)  # no more sleep
         time.sleep(.01)  # needed to end sleep according to datasheet
 
-    def servo_go_to_position(self, number, position):
-        """
-        Args:
-            number: Number of servo 0 to 15
-            position: Position to set the servo. 0 to 1
-
-        """
+    def configure_servo(self, config):
+        number = int(config['number'])
 
         # check bounds
         if number < 0 or number > 15:
             raise AssertionError("invalid number")
+
+        return I2cServo(number, self.config, self.platform)
+
+    def stop(self):
+        pass
+
+
+class I2cServo(ServoPlatformInterface):
+    def __init__(self, number, config, platform):
+        self.log = logging.getLogger('I2cServo')
+        self.number = number
+        self.config = config
+        self.platform = platform
+
+    def go_to_position(self, position):
+        """
+        Args:
+            position: Position to set the servo. 0 to 1
+
+        """
 
         # check bounds
         if position < 0 or position > 1:
@@ -69,9 +87,9 @@ class HardwarePlatform(ServoPlatform):
         value = int(servo_min + position * (servo_max - servo_min))
 
         # set servo via i2c
-        self.platform.i2c_write8(self.config['address'], 0x06 + number * 4, 0)
-        self.platform.i2c_write8(self.config['address'], 0x07 + number * 4, 0)
-        self.platform.i2c_write8(self.config['address'], 0x08 + number * 4,
+        self.platform.i2c_write8(self.config['address'], 0x06 + self.number * 4, 0)
+        self.platform.i2c_write8(self.config['address'], 0x07 + self.number * 4, 0)
+        self.platform.i2c_write8(self.config['address'], 0x08 + self.number * 4,
                                  value & 0xFF)
-        self.platform.i2c_write8(self.config['address'], 0x09 + number * 4,
+        self.platform.i2c_write8(self.config['address'], 0x09 + self.number * 4,
                                  value >> 8)

@@ -23,6 +23,7 @@ except ImportError:
         pinproc_imported = False
         pinproc = None
 
+from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
 from mpf.platforms.interfaces.gi_platform_interface import GIPlatformInterface
 from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
@@ -61,6 +62,12 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
 
         self.machine_type = pinproc.normalize_machine_type(
             self.machine.config['hardware']['driverboards'])
+
+    def initialize(self):
+        pass
+
+    def stop(self):
+        self.proc.reset(1)
 
     def connect(self):
         # Connect to the P-ROC. Keep trying if it doesn't work the first time.
@@ -797,11 +804,10 @@ def decode_pdb_address(addr):
         raise ValueError('PDB address delimiter (- or /) not found.')
 
 
-class PROCSwitch(object):
+class PROCSwitch(SwitchPlatformInterface):
     def __init__(self, config, number, notify_on_nondebounce):
+        super().__init__(config, number)
         self.log = logging.getLogger('PROCSwitch')
-        self.config = config
-        self.number = number
         self.notify_on_nondebounce = notify_on_nondebounce
         self.hw_rules = {"closed_debounced": [],
                          "closed_nondebounced": [],

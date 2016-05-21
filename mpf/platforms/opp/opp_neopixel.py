@@ -1,5 +1,7 @@
 import logging
 
+from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
+
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 
 
@@ -25,7 +27,7 @@ class OPPNeopixelCard(object):
         return pixel
 
 
-class OPPNeopixel(object):
+class OPPNeopixel(RGBLEDPlatformInterface):
 
     def __init__(self, number, neo_card):
         self.log = logging.getLogger('OPPNeopixel')
