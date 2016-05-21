@@ -281,7 +281,22 @@ shows:
     -   time: '+1'
         leds:
             (leds): blue
+
     -   time: '+1'
+logic_blocks:
+    counters:
+        spinner_level:
+            count_events: s_TelboySpinner_active
+            starting_count: 0
+            count_complete_value: 50
+            direction: up
+            events_when_complete: super_spinner_round
+            player_variable: spins
+            enable_events: mode_base_started, mode_super_spinner_stopped, start_round_counters
+            disable_events: stop_round_counters
+            disable_on_complete: true
+            reset_events: mode_super_spinner_stopping
+            persist_state: true
 displays:
     window:
         height: 200

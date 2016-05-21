@@ -1045,8 +1045,8 @@ class V4Migrator(VersionMigrator):
         if 'logic_blocks' not in self.fc:
             return
 
-        for lb_type in self.fc.keys():
-            for lb, settings in self.fc[lb_type].items():
+        for lb_type in self.fc['logic_blocks'].keys():
+            for lb, settings in self.fc['logic_blocks'][lb_type].items():
                 try:
                     if 'reset_each_ball' in settings:
                         if settings['reset_each_ball']:
