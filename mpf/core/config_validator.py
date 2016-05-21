@@ -1028,8 +1028,6 @@ widgets:
     quad:
         points: list|num|
     rectangle:
-        x: single|float|None
-        y: single|float|None
         width: single|float|
         height: single|float|
         corner_radius: single|int|0
