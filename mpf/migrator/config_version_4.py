@@ -122,6 +122,7 @@ class V4Migrator(VersionMigrator):
         self._migrate_assets('sounds')
         self._migrate_switches()
         self._migrate_sound_player()
+        self._migrate_logic_blocks()
 
     def _migrate_mode_timers(self):
         if 'timers' in self.fc:
@@ -234,6 +235,8 @@ class V4Migrator(VersionMigrator):
                 transition = None
                 expire = None
                 priority = None
+                persist = None
+                slide = None
 
                 if isinstance(elements, dict):
                     elements = [elements]
@@ -243,20 +246,39 @@ class V4Migrator(VersionMigrator):
                         self.log.debug("Converting display: to target:")
                         display = element['display']
                         del element['display']
+
                     if 'transition' in element:
                         transition = (element['transition'],
                                       element.ca.items.get('transition', None))
                         del element['transition']
+
                     if 'expire' in element:
                         expire = element['expire']
                         del element['expire']
+
                     if 'slide_priority' in element:
                         priority = element['slide_priority']
                         del element['slide_priority']
 
+                    if 'priority' in element:
+                        priority = element['priority']
+                        del element['priority']
+
+                    if 'persist_slide' in element:
+                        persist = element['persist_slide']
+                        del element['persist_slide']
+
+                    if 'slide_name' in element:
+                        slide = element['slide_name']
+                        del element['slide_name']
+
+                    if 'clear_slide' in element:
+                        del element['clear_slide']
+
                 elements = self._migrate_elements(elements, display)
 
-                slide = V4Migrator._get_slide_name(display)
+                if not slide:
+                    slide = V4Migrator._get_slide_name(display)
 
                 new_slide_player[event] = CommentedMap()
                 new_slide_player[event][slide] = CommentedMap()
@@ -284,6 +306,11 @@ class V4Migrator(VersionMigrator):
                     self.log.debug("Setting slide_player:priority: to '%s'",
                                    priority)
                     new_slide_player[event][slide]['priority'] = priority
+
+                if persist:
+                    self.log.debug("Setting slide_player:persist: to '%s'",
+                                   persist)
+                    new_slide_player[event][slide]['persist'] = persist
 
                 if not new_slide_player[event][slide]:
                     new_slide_player[event] = slide
@@ -802,6 +829,12 @@ class V4Migrator(VersionMigrator):
         if 'movie' in element:
             YamlInterface.rename_key('movie', 'video', element, self.log)
 
+            if 'repeat' in element:  # indented on purpose
+                YamlInterface.rename_key('repeat', 'loop', element, self.log)
+            if 'loops' in element:  # indented on purpose
+                YamlInterface.rename_key('loops', 'loop', element, self.log)
+
+
         self._convert_tokens(element)
 
         return element
@@ -1007,6 +1040,35 @@ class V4Migrator(VersionMigrator):
         else:
             sound_player[event][sound] = CommentedMap()
             sound_player[event][sound]['action'] = 'play'
+
+    def _migrate_logic_blocks(self):
+        if 'logic_blocks' not in self.fc:
+            return
+
+        for lb_type in self.fc.keys():
+            for lb, settings in self.fc[lb_type].items():
+                try:
+                    if 'reset_each_ball' in settings:
+                        if settings['reset_each_ball']:
+                            reset_each_ball = True
+                        else:
+                            reset_each_ball = False
+
+                        del settings['reset_each_ball']
+
+                        if reset_each_ball:
+                            if 'reset_events' in settings:
+                                if isinstance(settings['reset_events'], dict):
+                                    settings['reset_events']['ball_starting'] = 0
+                                elif isinstance(settings['reset_events'], list):
+                                    settings['reset_events'].append('ball_starting')
+                                elif isinstance(settings['reset_events'], str):
+                                    settings['reset_events'] += ', ball_starting'
+
+                            else:
+                                settings['reset_events'] = 'ball_starting'
+                except TypeError:
+                    pass
 
     def is_show_file(self):
         # Verify we have a show file and that it's an old version

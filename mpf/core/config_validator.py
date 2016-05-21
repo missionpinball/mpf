@@ -775,6 +775,7 @@ slide_player:
     widgets: ignore
     expire: single|secs|None
     action: single|enum(play,remove)|play
+    persist: single|bool|False                      # todo
 slides:
     __valid_in__: machine, mode
     debug: single|bool|False
@@ -1084,6 +1085,10 @@ widgets:
         video: single|str|
         height: single|int|0
         width: single|int|0
+        loop: single|bool|False                                   # todo
+        volume: single|float|1.0                                  # todo
+        start_frame: ignore                                       # todo
+        play_now: ignore                                          # todo
 
 window:
     __valid_in__: machine
