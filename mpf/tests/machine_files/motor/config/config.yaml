@@ -1,0 +1,24 @@
+#config_version=4
+
+switches:
+    s_position_up:
+        number:
+    s_position_down:
+        number:
+
+coils:
+    c_motor_run:
+        number:
+        allow_enable: True
+
+motors:
+    motorized_drop_target_bank:
+        motor_coil: c_motor_run
+        position_switches:
+            up: s_position_up
+            down: s_position_down
+        reset_position: down
+        go_to_position:
+            go_up: up
+            go_down: down
+            go_down2: down
