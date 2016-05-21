@@ -1,7 +1,7 @@
 from mpf.plugins import osc
 from mpf.plugins import auditor
 from mpf.tests.MpfTestCase import MpfTestCase
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 
 from mpf.tests.test_Auditor import TestDataManager
 
@@ -81,6 +81,9 @@ class TestOSC(MpfTestCase):
         self.machine_run()
 
     def test_audits(self):
+
+        self.expected_duration = 1.0
+
         self.osc.process_message("/audits", [], [], "123")
         self.machine_run()
 
