@@ -1040,13 +1040,13 @@ class V4Migrator(VersionMigrator):
         if isinstance(dic, list):
             for step in dic:
                 if 'text' in step:
-                    for token in token_finder.findall(step['text']):
+                    for token in token_finder.findall(str(step['text'])):
                         step['text'] = step['text'].replace(
                             '%{}%'.format(token), '({})'.format(token))
 
         else:
             if 'text' in dic:
-                for token in token_finder.findall(dic['text']):
+                for token in token_finder.findall(str(dic['text'])):
                     dic['text'] = dic['text'].replace(
                         '%{}%'.format(token), '({})'.format(token))
 
