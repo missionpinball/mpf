@@ -82,6 +82,10 @@ slide_player:
                 duration: 1s
                 direction: top
     player_1_multiplayer_slide: slide_2
+    test_with_movie:
+        slide_3:
+            expire: 5.1s
+            priority: 20
     machine_reset_phase_3:
         window_slide_1:
             target: window
@@ -343,7 +347,10 @@ slides:
         anchor_y: bottom # bottom
         style: small
         y: bottom+1 # -1
-
+    slide_3:
+    -   type: video
+        video: my_movie
+        z: 1
     window_slide_1:
     -   type: dmd
         width: 512

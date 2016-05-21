@@ -233,6 +233,7 @@ class V4Migrator(VersionMigrator):
                 display = None
                 transition = None
                 expire = None
+                priority = None
 
                 if isinstance(elements, dict):
                     elements = [elements]
@@ -247,7 +248,11 @@ class V4Migrator(VersionMigrator):
                                       element.ca.items.get('transition', None))
                         del element['transition']
                     if 'expire' in element:
+                        expire = element['expire']
                         del element['expire']
+                    if 'slide_priority' in element:
+                        priority = element['slide_priority']
+                        del element['slide_priority']
 
                 elements = self._migrate_elements(elements, display)
 
@@ -272,7 +277,13 @@ class V4Migrator(VersionMigrator):
 
                 if expire:
                     self.log.debug("Setting slide_player:expire: to '%s'",
-                                   display)
+                                   expire)
+                    new_slide_player[event][slide]['expire'] = expire
+
+                if priority:
+                    self.log.debug("Setting slide_player:priority: to '%s'",
+                                   priority)
+                    new_slide_player[event][slide]['priority'] = priority
 
                 if not new_slide_player[event][slide]:
                     new_slide_player[event] = slide
@@ -787,6 +798,9 @@ class V4Migrator(VersionMigrator):
 
         if 'color' in element:
             element['color'] = self._get_color(element['color'])
+
+        if 'movie' in element:
+            YamlInterface.rename_key('movie', 'video', element, self.log)
 
         self._convert_tokens(element)
 

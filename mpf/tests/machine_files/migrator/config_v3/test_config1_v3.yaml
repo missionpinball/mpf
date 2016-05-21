@@ -212,6 +212,12 @@ slide_player:
       v_pos: bottom  # bottom
       font: small
       y: -1  # -1
+  test_with_movie:
+      - type: movie
+        movie: my_movie
+        slide_priority: 20
+        layer: 1
+        expire: 5.1s
 
 fonts:
     default:
