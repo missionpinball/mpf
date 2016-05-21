@@ -1,11 +1,11 @@
 import os
 import platform
 import subprocess
+from importlib import import_module
 
 
 class Command(object):
     def __init__(self, mpf_path, machine_path, args):
-        del mpf_path
         if platform.system() == 'Windows':
             subprocess.Popen('mpf game {} {}'.format(machine_path,
                                                      ' '.join(args)))
@@ -13,8 +13,8 @@ class Command(object):
 
         else:
             if os.fork():
-                os.system('mpf game {} {}'.format(
-                    machine_path, ' '.join(args)))
+                module = import_module('mpf.commands.game')
+                module.Command(mpf_path, machine_path, args)
             else:
-                os.system('mpf mc {} {}'.format(
-                    machine_path, ' '.join(args)))
+                module = import_module('mpfmc.commands.mc')
+                module.Command(mpf_path, machine_path, args)
