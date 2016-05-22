@@ -1,8 +1,11 @@
+"""Interface for GIs."""
 import abc
 
 
 class GIPlatformInterface(metaclass=abc.ABCMeta):
-    """
+
+    """Interface for GIs in hardware platform.
+
     GIPlatformInterface is an abstract base class that should be overridden for all
     GI interface classes on supported platforms.  This class ensures the proper required
     methods are implemented to support GI operations in MPF.
@@ -10,8 +13,8 @@ class GIPlatformInterface(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def on(self, brightness=255):
-        """
-        Sets the GI to the specified brightness level.
+        """Set the GI to the specified brightness level.
+
         Args:
             brightness: Integer (0 to 255) that sets the brightness level of the GI
 
@@ -22,8 +25,8 @@ class GIPlatformInterface(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def off(self):
-        """
-        Turns off the GI instantly.
+        """Turn off the GI instantly.
+
         Returns:
             None
         """

@@ -1,8 +1,11 @@
+"""Interface for RGB hardware devices/LEDs."""
 import abc
 
 
 class RGBLEDPlatformInterface(metaclass=abc.ABCMeta):
-    """
+
+    """Interface for LEDs in hardware platforms.
+
     LEDPlatformInterface is an abstract base class that should be overridden for all LED
     interface classes on supported platforms.  This class ensures the proper required
     methods are implemented to support LED operations in MPF.
@@ -10,8 +13,8 @@ class RGBLEDPlatformInterface(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def color(self, color):
-        """
-        Sets the LED to the specified color.
+        """Set the LED to the specified color.
+
         Args:
             color: a list of int colors. one for each channel.
 
