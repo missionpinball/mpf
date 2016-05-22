@@ -938,7 +938,6 @@ videos:
     __valid_in__: machine, mode
     file: single|str|None
     load: single|str|None
-    fps: single|num|None
     auto_play: single|bool|True
 virtual_platform_start_active_switches:
     __valid_in__: machine                           # todo add to validator
@@ -1098,10 +1097,19 @@ widgets:
         video: single|str|
         height: single|int|0
         width: single|int|0
-        loop: single|bool|False                                   # todo
-        volume: single|float|1.0                                  # todo
-        start_frame: ignore                                       # todo
-        play_now: ignore                                          # todo
+        # loop: single|bool|False
+        volume: single|float|1.0
+        # start_frame: ignore
+        # play_now: ignore
+        start_pos: single|float|0.0
+        auto_play: single|bool|True
+        end_behavior: single|enum(loop,pause,stop)|stop
+        play_events: list|str|None
+        pause_events: list|str|None
+        stop_events: list|str|None
+        seek_events: dict|float:str|None
+        volume_events: dict|float:str|None
+        position_events: dict|float:str|None
 
 window:
     __valid_in__: machine
