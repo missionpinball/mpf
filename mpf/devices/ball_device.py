@@ -104,6 +104,8 @@ class BallDevice(SystemWideDevice):
         # that this device could fulfil
         # each tuple is (target device, boolean player_controlled flag)
 
+        self.trigger_event = None
+
         self._idle_counted = None
 
         self.eject_start_time = None
@@ -452,16 +454,16 @@ class BallDevice(SystemWideDevice):
     # --------------------------- State: ejecting -----------------------------
 
     def _state_ejecting_start(self):
-        (self.eject_in_progress_target, self.mechanical_eject_in_progress) = (self.eject_queue.popleft())
-
-        trigger_event = self.config['player_controlled_eject_event']
+        (self.eject_in_progress_target,
+         self.mechanical_eject_in_progress,
+         self.trigger_event) = (self.eject_queue.popleft())
 
         if self.debug:
             self.log.debug("Setting eject_in_progress_target: %s, " +
                            "mechanical: %s, trigger_events %s",
                            self.eject_in_progress_target.name,
                            self.mechanical_eject_in_progress,
-                           trigger_event)
+                           self.trigger_event)
 
         self.num_eject_attempts += 1
 
@@ -470,15 +472,15 @@ class BallDevice(SystemWideDevice):
                                                   self.config['jam_switch'].name,
                                                   ms=self.config['entrance_count_delay']))
 
-        if not trigger_event or self.mechanical_eject_in_progress:
+        if not self.trigger_event or self.mechanical_eject_in_progress:
             # no trigger_event -> just eject
             # mechanical eject -> will not eject. but be prepared
             self._do_eject_attempt()
 
-        if trigger_event:
+        if self.trigger_event:
             # wait for trigger event
             self.machine.events.add_handler(
-                trigger_event,
+                self.trigger_event,
                 self._trigger_eject_by_event)
 
     def _trigger_eject_by_event(self):
@@ -1261,9 +1263,11 @@ class BallDevice(SystemWideDevice):
 
         # append to queue
         if player_controlled and (self.config['mechanical_eject'] or self.config['player_controlled_eject_event']):
-            self.eject_queue.append((next_hop, self.config['mechanical_eject']))
+            self.eject_queue.append((next_hop, self.config['mechanical_eject'],
+                                     self.config[
+                                         'player_controlled_eject_event']))
         else:
-            self.eject_queue.append((next_hop, False))
+            self.eject_queue.append((next_hop, False, None))
 
         # check if we traversed the whole path
         if len(path) > 0:
@@ -1726,7 +1730,8 @@ class BallDevice(SystemWideDevice):
 
         if retry:
             self.eject_queue.appendleft((self.eject_in_progress_target,
-                                         self.mechanical_eject_in_progress))
+                                         self.mechanical_eject_in_progress,
+                                         self.trigger_event))
 
         # Remember variables for event
         target = self.eject_in_progress_target
