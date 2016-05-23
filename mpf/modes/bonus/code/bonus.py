@@ -1,9 +1,14 @@
+"""Bonus mode for MPF."""
 from mpf.core.mode import Mode
 
 
 class Bonus(Mode):
+    """Bonus mode for MPF.
+
+    Give a player bonus for his achievements. But only if the machine is not tilted."""
 
     def __init__(self, machine, config, name, path):
+        """Initialise bonus mode."""
         super().__init__(machine, config, name, path)
         self.bonus_score = None
         self.settings = config.get("mode_settings")
@@ -12,6 +17,7 @@ class Bonus(Mode):
         self.bonus_iterator = None
 
     def mode_start(self, **kwargs):
+        """Start the bonus mode."""
         # TODO: reenable this when that attribute is back and working
         # no bonus when machine is tilted
         # if self.machine.game.tilted:
