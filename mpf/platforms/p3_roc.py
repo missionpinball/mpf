@@ -14,7 +14,8 @@ https://github.com/preble/pyprocgame
 import logging
 
 from mpf.core.platform import I2cPlatform, AccelerometerPlatform
-from mpf.platforms.p_roc_common import PDBConfig, PROCDriver, PROCMatrixLight, PROCBasePlatform, PROCGiString
+from mpf.platforms.p_roc_common import PDBConfig, PROCBasePlatform
+from mpf.platforms.p_roc_devices import PROCDriver, PROCGiString, PROCMatrixLight
 
 
 class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
