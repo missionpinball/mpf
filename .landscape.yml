@@ -5,6 +5,8 @@ mccabe:
   options:
     max-complexity: 15
 
+doc-warnings: true
+
 pylint:
   disable:
     - pointless-string-statement  # pointless statement, which is how our event docstrings are seen

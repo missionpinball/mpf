@@ -1,8 +1,11 @@
+"""Interface for drivers."""
 import abc
 
 
 class DriverPlatformInterface(metaclass=abc.ABCMeta):
-    """
+
+    """Interface for drivers in hardware platforms.
+
     DriverPlatformInterface is an abstract base class that should be overridden for all
     driver interface classes on supported platforms.  This class ensures the proper required
     methods are implemented to support driver operations in MPF.
@@ -10,19 +13,19 @@ class DriverPlatformInterface(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def disable(self, coil):
-        """Disabled the driver"""
+        """Disable the driver."""
         raise NotImplementedError('disable method must be defined to use this base class')
 
     @abc.abstractmethod
     def enable(self, coil):
-        """Enables this driver, which means it's held "on" indefinitely until
-        it's explicitly disabled.
-        """
+        """Enable this driver, which means it's held "on" indefinitely until it's explicitly disabled."""
         raise NotImplementedError('enable method must be defined to use this base class')
 
     @abc.abstractmethod
     def pulse(self, coil, milliseconds):
-        """Pulses this driver for a pre-determined amount of time, after which
+        """Pulse a driver.
+
+        Pulse this driver for a pre-determined amount of time, after which
         this driver is turned off automatically. Note that on most platforms,
         pulse times are a max of 255ms. (Beyond that MPF will send separate
         enable() and disable() commands.

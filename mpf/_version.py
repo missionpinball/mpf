@@ -1,6 +1,4 @@
-'''
-Version string
-==============
+"""Version string of MPF.
 
 This modules holds the MPF version strings, including the version of BCP it
 needs and the config file version it needs.
@@ -10,7 +8,7 @@ It's used internally for all sorts of things, from printing the output of the
 the proper versions, to automatically triggering new builds and deployments to
 PyPI.
 
-'''
+"""
 
 __version__ = '0.30.0.dev1633'
 __short_version__ = '0.30'
