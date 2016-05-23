@@ -855,5 +855,3 @@ def decode_pdb_address(addr):
 
     else:
         raise ValueError('PDB address delimiter (- or /) not found.')
-
-

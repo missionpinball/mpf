@@ -13,6 +13,7 @@ class PROCSwitch(SwitchPlatformInterface):
     """P-ROC switch object which is use to store the configure rules and config."""
 
     def __init__(self, config, number, notify_on_nondebounce):
+        """Initialise P-ROC switch."""
         super().__init__(config, number)
         self.log = logging.getLogger('PROCSwitch')
         self.notify_on_nondebounce = notify_on_nondebounce
@@ -162,6 +163,7 @@ class PROCMatrixLight(MatrixLightPlatformInterface):
     """A P-ROC matrix light device."""
 
     def __init__(self, number, proc_driver):
+        """Initialise matrix light device."""
         self.log = logging.getLogger('PROCMatrixLight')
         self.number = number
         self.proc = proc_driver
