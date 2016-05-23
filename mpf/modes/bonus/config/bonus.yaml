@@ -1,0 +1,11 @@
+#config_version=4
+
+mode:
+  start_events: ball_ending
+  code: bonus.Bonus
+  priority: 500
+  use_wait_queue: true
+
+mode_settings:
+  keep_multiplier: False
+  bonus_entries:

@@ -1,0 +1,1 @@
+"""Contains a bonus mode."""
