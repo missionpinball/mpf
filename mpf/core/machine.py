@@ -533,8 +533,6 @@ class MachineController(object):
         """Starts the main machine run loop."""
         self.log.debug("Starting the main run loop.")
 
-        self.default_platform.timer_initialize()
-
         self._run_loop()
 
     def stop(self):

@@ -3,7 +3,11 @@ import abc
 
 
 class BasePlatform(metaclass=abc.ABCMeta):
+
+    """Base class for all hardware platforms in MPF."""
+
     def __init__(self, machine):
+        """Create features and set default variables."""
         self.machine = machine
         self.features = {}
         self.log = None
@@ -23,19 +27,15 @@ class BasePlatform(metaclass=abc.ABCMeta):
         self.features['has_drivers'] = False
 
     def debug_log(self, msg, *args, **kwargs):
+        """Log when debug is set to True for platform."""
         if self.debug:
             self.log.debug(msg, *args, **kwargs)
 
     @abc.abstractmethod
     def initialize(self):
-        pass
+        """Initialise the platform.
 
-    def timer_initialize(self):
-        """ Run this before the machine loop starts. I want to do it here so we
-        don't need to check for initialization on each machine loop. (Or is
-        this premature optimization?)
-
-        """
+        This is called after all platforms have been created and core modules have been loaded."""
         pass
 
     def tick(self, dt):
