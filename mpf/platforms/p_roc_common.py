@@ -10,7 +10,7 @@ from mpf.platforms.p_roc_devices import PROCSwitch
 try:    # pragma: no cover
     import pinproc
     pinproc_imported = True
-except ImportError:
+except ImportError:     # pragma: no cover
     try:
         if sys.platform == 'darwin':
             from mpf.platforms.pinproc.osx import pinproc
@@ -623,8 +623,8 @@ class PDBSwitch(object):
                 try:
                     self.sw_number = int(number_str)
                 except:
-                    raise ValueError('Switch %s is invalid. Use either PDB '
-                                     'format or an int', str(number_str))
+                    raise AssertionError('Switch {} is invalid. Use either PDB '
+                                         'format or an int'.format(str(number_str)))
 
     def proc_num(self):
         """Return the number of the switch."""
