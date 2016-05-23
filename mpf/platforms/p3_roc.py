@@ -56,16 +56,20 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
         return '<Platform.P3-ROC>'
 
     def i2c_write8(self, address, register, value):
+        """Write an 8-bit value to the I2C bus of the P3-Roc."""
         self.proc.write_data(7, address << 9 | register, value)
 
     def i2c_read8(self, address, register):
+        """Read an 8-bit value from the I2C bus of the P3-Roc."""
         return self.proc.read_data(7, address << 9 | register) & 0xFF
 
     def i2c_read16(self, address, register):
+        """Read an 16-bit value from the I2C bus of the P3-Roc."""
         return self.proc.read_data(7, address << 9 | 1 << 8 | register)
 
     @classmethod
     def scale_accelerometer_to_g(cls, raw_value):
+        """Convert internal representation to g."""
         # raw value is 0 to 16384 -> 14 bit
         # scale is -2g to 2g (2 complement)
         if raw_value & (1 << 13):
@@ -138,7 +142,11 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
         return proc_driver_object
 
     def configure_gi(self, config):
-        # GIs are coils in P3-Roc
+        """Configure a GI driver on the P3-Roc.
+
+        GIs are coils in P3-Roc
+        """
+
         proc_num = self.pdbconfig.get_proc_coil_number(str(config['number']))
         if proc_num == -1:
             raise AssertionError("Gi Driver {} cannot be controlled by the P3-ROC. ".format(str(config['number'])))
@@ -148,6 +156,7 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
         return proc_driver_object
 
     def configure_matrixlight(self, config):
+        """Configure a matrix light in P3-Roc."""
         proc_num = self.pdbconfig.get_proc_light_number(str(config['number']))
 
         if proc_num == -1:
@@ -175,12 +184,14 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
         return self._configure_switch(config, proc_num)
 
     def get_hw_switch_states(self):
-        # Read in and set the initial switch state
-        # The P-ROC uses the following values for hw switch states:
-        # 1 - closed (debounced)
-        # 2 - open (debounced)
-        # 3 - closed (not debounced)
-        # 4 - open (not debounced)
+        """Read in and set the initial switch state.
+
+        The P-ROC uses the following values for hw switch states:
+        1 - closed (debounced)
+        2 - open (debounced)
+        3 - closed (not debounced)
+        4 - open (not debounced)
+        """
 
         states = self.proc.switch_get_states()
 
@@ -249,6 +260,7 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
 
 
 class PROCAccelerometer(object):
+
     """The accelerometer on the P3-Roc."""
 
     def __init__(self, callback):
