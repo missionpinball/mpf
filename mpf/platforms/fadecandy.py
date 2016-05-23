@@ -22,7 +22,7 @@ class HardwarePlatform(OPHardwarePlatform):
         super(HardwarePlatform, self).__init__(machine)
 
         self.log = logging.getLogger("FadeCandy")
-        self.log.debug("Configuring FadeCandy hardware interface.")
+        self.debug_log("Configuring FadeCandy hardware interface.")
 
     def initialize(self):
         pass

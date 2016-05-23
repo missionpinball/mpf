@@ -28,14 +28,16 @@ class HardwarePlatform(LedPlatform):
         super(HardwarePlatform, self).__init__(machine)
 
         self.log = logging.getLogger("OpenPixel")
-        self.log.debug("Configuring Open Pixel hardware interface.")
+        self.debug_log("Configuring Open Pixel hardware interface.")
         self.opc_client = None
 
     def __repr__(self):
         return '<Platform.OpenPixel>'
 
     def initialize(self):
-        pass
+        self.machine.config_validator.validate_config("open_pixel_control", self.machine.config['open_pixel_control'])
+        if self.machine.config['open_pixel_control']['debug']:
+            self.debug = True
 
     def stop(self):
         # disconnect thread
@@ -57,9 +59,7 @@ class HardwarePlatform(LedPlatform):
         if self.machine.config['open_pixel_control']['number_format'] == 'hex':
             led = int(str(led), 16)
 
-        # self.opc_client.add_pixel(channel, led)
-
-        return OpenPixelLED(self.opc_client, channel, led)
+        return OpenPixelLED(self.opc_client, channel, led, self.debug)
 
     def _setup_opc_client(self):
         self.opc_client = OpenPixelClient(self.machine, self.machine.config['open_pixel_control'])
@@ -67,16 +67,18 @@ class HardwarePlatform(LedPlatform):
 
 class OpenPixelLED(RGBLEDPlatformInterface):
 
-    def __init__(self, opc_client, channel, led):
+    def __init__(self, opc_client, channel, led, debug):
         self.log = logging.getLogger('OpenPixelLED')
 
         self.opc_client = opc_client
+        self.debug = debug
         self.channel = int(channel)
         self.led = int(led)
         self.opc_client.add_pixel(self.channel, self.led)
 
     def color(self, color):
-        self.log.debug("Setting color: %s", color)
+        if self.debug:
+            self.log.debug("Setting color: %s", color)
         self.opc_client.set_pixel_color(self.channel, self.led, color)
 
 
