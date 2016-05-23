@@ -1,17 +1,18 @@
-"""Contains the Playfield device class which represents the actual playfield in
-a pinball machine."""
+"""Contains the Playfield device class which represents the actual playfield in a pinball machine."""
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.ball_search import BallSearch
 from mpf.core.delays import DelayManager
 
 
 class Playfield(SystemWideDevice):
+    """One playfield in a pinball machine."""
 
     config_section = 'playfields'
     collection = 'playfields'
     class_label = 'playfield'
 
     def __init__(self, machine, name):
+        """Create the playfield."""
         super().__init__(machine, name)
         self.ball_search = BallSearch(self.machine, self)
 
@@ -60,7 +61,7 @@ class Playfield(SystemWideDevice):
 
         # Watch for any switch hit which indicates a ball on the playfield
         self.machine.events.add_handler('sw_' + self.name + '_active',
-                                        self.playfield_switch_hit)
+                                        self._playfield_switch_hit)
 
         for device in self.machine.playfield_transfers:
             if device.config['eject_target'] == self:
@@ -74,6 +75,7 @@ class Playfield(SystemWideDevice):
                     handler=self._source_device_eject_attempt)
 
     def add_missing_balls(self, balls):
+        """Notifie the playfield that it probably received a ball which went missing elsewhere."""
         self.available_balls += balls
         # if we catched an unexpected balls before do not add a ball
         if self.unexpected_balls:
@@ -84,6 +86,7 @@ class Playfield(SystemWideDevice):
 
     @property
     def balls(self):
+        """The number of balls on the playfield."""
         return self._balls
 
     @balls.setter
@@ -134,7 +137,9 @@ class Playfield(SystemWideDevice):
 
     @classmethod
     def get_additional_ball_capacity(cls):
-        """Used to find out how many more balls this device can hold. Since this
+        """The number of ball which can be added.
+
+        Used to find out how many more balls this device can hold. Since this
         is the playfield device, this method always returns 999.
 
         Returns: 999
@@ -144,7 +149,7 @@ class Playfield(SystemWideDevice):
 
     def add_ball(self, balls=1, source_device=None,
                  player_controlled=False):
-        """Adds live ball(s) to the playfield.
+        """Add live ball(s) to the playfield.
 
         Args:
             balls: Integer of the number of balls you'd like to add.
@@ -235,7 +240,7 @@ class Playfield(SystemWideDevice):
 
         return True
 
-    def mark_playfield_active(self):
+    def _mark_playfield_active(self):
         self.ball_search.reset_timer()
         self.machine.events.post_boolean(self.name + "_active")
         '''event: (playfield)_active
@@ -243,13 +248,15 @@ class Playfield(SystemWideDevice):
         at least one loose ball on it.
         '''
 
-    def playfield_switch_hit(self, **kwargs):
-        """A switch tagged with '<this playfield name>_active' was just hit,
+    def _playfield_switch_hit(self, **kwargs):
+        """Playfield switch was hit.
+
+        A switch tagged with '<this playfield name>_active' was just hit,
         indicating that there is at least one ball on the playfield.
 
         """
         if not self.balls or (kwargs.get('balls') and self.balls - kwargs['balls'] < 0):
-            self.mark_playfield_active()
+            self._mark_playfield_active()
 
             if not self.num_balls_requested:
                 self.log.debug("Playfield was activated with no balls expected.")
@@ -317,10 +324,13 @@ class Playfield(SystemWideDevice):
 
     @classmethod
     def is_playfield(cls):
+        """True since it is a playfield."""
         return True
 
     def add_incoming_ball(self, source):
+        """Track an incoming ball."""
         pass
 
     def remove_incoming_ball(self, source):
+        """Stop tracking an incoming ball."""
         pass
