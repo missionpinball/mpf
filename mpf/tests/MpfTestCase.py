@@ -52,6 +52,8 @@ class MpfTestCase(unittest.TestCase):
         self.machine_config_patches['mpf']['save_machine_vars_to_disk'] = False
         self.machine_config_patches['mpf']['plugins'] = list()
         self.machine_config_patches['bcp'] = []
+        self._last_event_kwargs = {}
+        self._events = {}
         self.expected_duration = 0.5
         self.min_frame_time = 1 / 30  # test with default Hz
 
@@ -210,6 +212,7 @@ class MpfTestCase(unittest.TestCase):
             MagicMock())
 
         self._events = {}
+        self._last_event_kwargs = {}
 
         # print(threading.active_count())
 
@@ -259,7 +262,7 @@ class MpfTestCase(unittest.TestCase):
         self.assertFalse(self.machine.done, "Machine crashed during start")
 
     def _mock_event_handler(self, event_name, **kwargs):
-        del kwargs
+        self._last_event_kwargs[event_name] = kwargs
         self._events[event_name] += 1
 
     def mock_event(self, event_name):
