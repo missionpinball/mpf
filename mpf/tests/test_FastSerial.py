@@ -150,7 +150,7 @@ class TestFastSerial(unittest.TestCase):
             call('Connecting to %s at %sbps', 'port_name', 1234),
         ])
 
-        self.platform.log.debug.assert_has_calls([
+        self.platform.debug_log.assert_has_calls([
             call('Querying FAST IO boards...'),
             call('Fast IO Board 0: Model: asd, Firmware: 0.87, Switches: 16, Drivers: 8'),
             call('Fast IO Board 1: Model: asd, Firmware: 0.87, Switches: 16, Drivers: 8'),
