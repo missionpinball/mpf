@@ -35,7 +35,8 @@ class BasePlatform(metaclass=abc.ABCMeta):
     def initialize(self):
         """Initialise the platform.
 
-        This is called after all platforms have been created and core modules have been loaded."""
+        This is called after all platforms have been created and core modules have been loaded.
+        """
         pass
 
     def tick(self, dt):
