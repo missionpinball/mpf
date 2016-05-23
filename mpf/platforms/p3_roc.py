@@ -12,7 +12,6 @@ https://github.com/preble/pyprocgame
 """
 
 import logging
-import math
 
 from mpf.core.platform import I2cPlatform, AccelerometerPlatform
 from mpf.platforms.p_roc_common import PDBConfig, PROCDriver, PROCMatrixLight, PROCBasePlatform, PROCGiString
@@ -76,24 +75,18 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
 
         return g_value
 
-    def configure_accelerometer(self, device, number, use_high_pass):
-        if number != "1":
+    def configure_accelerometer(self, config, callback):
+        """Configure the accelerometer on the P3-ROC."""
+        if config['number'] != "1":
             raise AssertionError("P3-ROC only has one accelerometer. Use number 1")
 
-        self.accelerometer_device = device
-        self._configure_accelerometer(periodic_read=True, read_with_high_pass=use_high_pass, tilt_interrupt=False)
+        self.accelerometer_device = PROCAccelerometer(callback)
+        self._configure_accelerometer()
 
-    def _configure_accelerometer(self, periodic_read=False, tilt_interrupt=True, tilt_threshold=0.2,
-                                 read_with_high_pass=False):
+    def _configure_accelerometer(self):
 
-        enable = 0
-        if periodic_read:
-            # enable polling every 128ms
-            enable |= 0x0F
-
-        if tilt_interrupt:
-            # configure interrupt at P3-ROC
-            enable |= 0x1E00
+        # enable polling every 128ms
+        enable = 0x0F
 
         # configure some P3-Roc registers
         self.proc.write_data(6, 0x000, enable)
@@ -101,39 +94,8 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
         # CTRL_REG1 - set to standby
         self.proc.write_data(6, 0x12A, 0)
 
-        if periodic_read:
-            # XYZ_DATA_CFG - enable/disable high pass filter, scale 0 to 2g
-            self.proc.write_data(6, 0x10E, 0x00 | (bool(read_with_high_pass) * 0x10))
-
-        if tilt_interrupt:
-            # HP_FILTER_CUTOFF - cutoff at 2Hz
-            self.proc.write_data(6, 0x10F, 0x03)
-
-            # FF_TRANSIENT_COUNT - set debounce counter
-            # number of timesteps where the threshold has to be reached
-            # time step is 1.25ms
-            self.proc.write_data(6, 0x120, 1)
-
-            # transient_threshold * 0.063g
-            # Theoretically up to 8g
-            # Since we use low noise mode limited to 4g (value of 63)
-            transient_threshold_raw = int(math.ceil(float(tilt_threshold) / 0.063))
-            if transient_threshold_raw > 63:
-                self.log.warning("Tilt Threshold is too high. Limiting to 4g")
-                transient_threshold_raw = 63
-
-            # TRANSIENT_THS - Set threshold (0-127)
-            self.proc.write_data(6, 0x11F, transient_threshold_raw & 0x7F)
-
-            # Set FF_TRANSIENT_CONFIG (0x1D)
-            # enable latching, all axis, no high pass filter bypass
-            self.proc.write_data(6, 0x11D, 0x1E)
-
-            # CTRL_REG4 - Enable transient interrupt
-            self.proc.write_data(6, 0x12D, 0x20)
-
-            # CTRL_REG5 - Enable transient interrupt (goes to INT1 by default)
-            self.proc.write_data(6, 0x12E, 0x20)
+        # XYZ_DATA_CFG - disable high pass filter, scale 0 to 2g
+        self.proc.write_data(6, 0x10E, 0x00)
 
         # CTRL_REG1 - set device to active and in low noise mode
         # 800HZ output data rate
@@ -278,16 +240,21 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
                         self.scale_accelerometer_to_g(self.acceleration[2]))
                     self.debug_log("Got Accelerometer value Z. Value: %s", event_value)
 
-            # The P3-ROC sends interrupts when
-            elif event_type == self.pinproc.EventTypeAccelerometerIRQ:
-                self.debug_log("Got Accelerometer value IRQ. Value: %s", event_value)
-                # trigger here
-                if self.accelerometer_device:
-                    self.accelerometer_device.received_hit()
-
-            else:
+            else:   # pragma: no cover
                 self.log.warning("Received unrecognized event from the P3-ROC. "
                                  "Type: %s, Value: %s", event_type, event_value)
 
         self.proc.watchdog_tickle()
         self.proc.flush()
+
+
+class PROCAccelerometer(object):
+    """The accelerometer on the P3-Roc."""
+
+    def __init__(self, callback):
+        """Remember the callback."""
+        self.callback = callback
+
+    def update_acceleration(self, x, y, z):
+        """Call the callback."""
+        self.callback.update_acceleration(x, y, z)

@@ -98,7 +98,7 @@ class AccelerometerPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['has_accelerometers'] = True
 
     @abc.abstractmethod
-    def configure_accelerometer(self, device, number, use_high_pass):
+    def configure_accelerometer(self, config, callback):
         raise NotImplementedError
 
 

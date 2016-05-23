@@ -142,7 +142,7 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
             base_spec=sections)
         return config
 
-    def configure_accelerometer(self, device, number, use_high_pass):
+    def configure_accelerometer(self, config, callback):
         pass
 
     def configure_matrixlight(self, config):

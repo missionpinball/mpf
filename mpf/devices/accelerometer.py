@@ -21,13 +21,11 @@ class Accelerometer(SystemWideDevice):
 
         self.history = None
         self.value = None
+        self.hw_device = None
 
     def _initialize(self):
         self.load_platform_section('accelerometers')
-
-        self.platform.configure_accelerometer(self,
-                                              number=self.config['number'],
-                                              use_high_pass=False)
+        self.hw_device = self.platform.configure_accelerometer(self.config, self)
 
     @classmethod
     def _calculate_vector_length(cls, x, y, z):
