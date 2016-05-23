@@ -31,7 +31,7 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
     def __init__(self, machine):
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger('P3-ROC')
-        self.log.debug("Configuring P3-ROC hardware.")
+        self.debug_log("Configuring P3-ROC hardware.")
 
         # validate config for p3_roc
         self.machine.config_validator.validate_config("p3_roc", self.machine.config['p_roc'])
@@ -47,7 +47,7 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
         # Only then can we relate the YAML coil/light #'s to P3-ROC numbers for
         # the collections.
 
-        self.log.debug("Configuring P3-ROC for PDB driver boards.")
+        self.debug_log("Configuring P3-ROC for PDB driver boards.")
         self.pdbconfig = PDBConfig(self.proc, self.machine.config, self.pinproc.DriverCount)
 
         self.acceleration = [0] * 3
@@ -263,10 +263,10 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
             # Therefore, we will trigger after the Z value
             elif event_type == self.pinproc.EventTypeAccelerometerX:
                 self.acceleration[0] = event_value
-            #                self.log.debug("Got Accelerometer value X. Value: %s", event_value)
+                self.debug_log("Got Accelerometer value X. Value: %s", event_value)
             elif event_type == self.pinproc.EventTypeAccelerometerY:
                 self.acceleration[1] = event_value
-            #                self.log.debug("Got Accelerometer value Y. Value: %s", event_value)
+                self.debug_log("Got Accelerometer value Y. Value: %s", event_value)
             elif event_type == self.pinproc.EventTypeAccelerometerZ:
                 self.acceleration[2] = event_value
 
@@ -276,11 +276,11 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
                         self.scale_accelerometer_to_g(self.acceleration[0]),
                         self.scale_accelerometer_to_g(self.acceleration[1]),
                         self.scale_accelerometer_to_g(self.acceleration[2]))
-                #                self.log.debug("Got Accelerometer value Z. Value: %s", event_value)
+                    self.debug_log("Got Accelerometer value Z. Value: %s", event_value)
 
             # The P3-ROC sends interrupts when
             elif event_type == self.pinproc.EventTypeAccelerometerIRQ:
-                self.log.debug("Got Accelerometer value IRQ. Value: %s", event_value)
+                self.debug_log("Got Accelerometer value IRQ. Value: %s", event_value)
                 # trigger here
                 if self.accelerometer_device:
                     self.accelerometer_device.received_hit()

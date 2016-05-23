@@ -81,7 +81,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
                 print("Retrying...")
                 time.sleep(1)
 
-        self.log.debug("Successfully connected to P-ROC/P3-ROC")
+        self.log.info("Successfully connected to P-ROC/P3-ROC")
 
     @classmethod
     def _get_event_type(cls, sw_activity, debounced):
@@ -152,7 +152,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
                 self.proc.switch_update_rule(switch.hw_switch.number, event_type, rule, driver, drive_now)
 
     def set_pulse_on_hit_rule(self, enable_switch, coil):
-        self.log.debug("Setting HW Rule on pulse on hit. Switch: %s, Driver: %s",
+        self.debug_log("Setting HW Rule on pulse on hit. Switch: %s, Driver: %s",
                        enable_switch.hw_switch.number, coil.hw_driver.number)
 
         self.add_pulse_rule_to_switch(enable_switch, coil)
@@ -160,7 +160,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
         self.write_rules_to_switch(enable_switch, coil, False)
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
-        self.log.debug("Setting HW Rule on pulse on hit and relesae. Switch: %s, Driver: %s",
+        self.debug_log("Setting HW Rule on pulse on hit and relesae. Switch: %s, Driver: %s",
                        enable_switch.hw_switch.number, coil.hw_driver.number)
 
         self.add_pulse_rule_to_switch(enable_switch, coil)
@@ -169,7 +169,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
         self.write_rules_to_switch(enable_switch, coil, False)
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
-        self.log.debug("Setting Pulse on hit and enable and release HW Rule. Switch: %s, Driver: %s",
+        self.debug_log("Setting Pulse on hit and enable and release HW Rule. Switch: %s, Driver: %s",
                        enable_switch.hw_switch.number, coil.hw_driver.number)
 
         self.add_pulse_and_hold_rule_to_switch(enable_switch, coil)
@@ -178,7 +178,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
         self.write_rules_to_switch(enable_switch, coil, False)
 
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
-        self.log.debug("Setting Pulse on hit and enable and release and disable HW Rule. Enable Switch: %s,"
+        self.debug_log("Setting Pulse on hit and enable and release and disable HW Rule. Enable Switch: %s,"
                        "Disable Switch: %s, Driver: %s", enable_switch.hw_switch.number,
                        disable_switch.hw_switch.number, coil.hw_driver.number)
 
@@ -203,7 +203,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
             coil: Coil object
         """
 
-        self.log.debug("Clearing HW rule for switch: %s coil: %s", switch.hw_switch.number, coil.hw_driver.number)
+        self.debug_log("Clearing HW rule for switch: %s coil: %s", switch.hw_switch.number, coil.hw_driver.number)
 
         coil_number = False
         for entry, element in switch.hw_switch.hw_rules.items():
@@ -261,7 +261,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
         # The P3-ROC needs to be configured to notify the host computers of
         # switch events. (That notification can be for open or closed,
         # debounced or nondebounced.)
-        self.log.debug("Configuring switch's host notification settings. P3-ROC"
+        self.debug_log("Configuring switch's host notification settings. P3-ROC"
                        "number: %s, debounce: %s", proc_num,
                        config['debounce'])
         if config['debounce'] == "quick":

@@ -35,7 +35,7 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
     def __init__(self, machine):
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger('P-ROC')
-        self.log.debug("Configuring P-ROC hardware")
+        self.debug_log("Configuring P-ROC hardware")
 
         # validate config for p_roc
         self.machine.config_validator.validate_config("p_roc", self.machine.config['p_roc'])
@@ -62,11 +62,11 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
         # Only then can we relate the YAML coil/light #'s to P-ROC numbers for
         # the collections.
         if self.machine_type == self.pinproc.MachineTypePDB:
-            self.log.debug("Configuring P-ROC for PDBs (P-ROC driver boards)")
+            self.debug_log("Configuring P-ROC for PDBs (P-ROC driver boards)")
             self.pdbconfig = PDBConfig(self.proc, self.machine.config, self.pinproc.DriverCount)
 
         else:
-            self.log.debug("Configuring P-ROC for OEM driver boards")
+            self.debug_log("Configuring P-ROC for OEM driver boards")
 
     def __repr__(self):
         return '<Platform.P-ROC>'
