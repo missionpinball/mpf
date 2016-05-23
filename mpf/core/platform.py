@@ -7,6 +7,7 @@ class BasePlatform(metaclass=abc.ABCMeta):
         self.machine = machine
         self.features = {}
         self.log = None
+        self.debug = False
 
         # Set default platform features. Each platform interface can change
         # these to notify the framework of the specific features it supports.
@@ -20,6 +21,10 @@ class BasePlatform(metaclass=abc.ABCMeta):
         self.features['has_leds'] = False
         self.features['has_switches'] = False
         self.features['has_drivers'] = False
+
+    def debug_log(self, msg, *args, **kwargs):
+        if self.debug:
+            self.log.debug(msg, *args, **kwargs)
 
     @abc.abstractmethod
     def initialize(self):
