@@ -77,7 +77,8 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
     def connect(self):
         """Connect to the P-ROC.
 
-        Keep trying if it doesn't work the first time."""
+        Keep trying if it doesn't work the first time.
+        """
         self.log.info("Connecting to P-ROC")
 
         while not self.proc:
@@ -309,7 +310,6 @@ class PDBConfig(object):
 
         Will configure driver groups for matrixes, lamps and normal drivers.
         """
-
         self.log = logging.getLogger('PDBConfig')
         self.log.debug("Processing PDB Driver Board configuration")
 
@@ -560,7 +560,7 @@ class PDBConfig(object):
                                          self.watchdog_time)
 
     def get_proc_coil_number(self, number_str):
-        """Gets the actual number of a coil from the bank index config.
+        """Get the actual number of a coil from the bank index config.
 
         Args:
             number_str (str): PDB string
@@ -574,7 +574,7 @@ class PDBConfig(object):
         return num
 
     def get_proc_light_number(self, number_str):
-        """Gets the actual number of a light from the lamp config.
+        """Get the actual number of a light from the lamp config.
 
         Args:
             number_str (str): PDB string
@@ -595,7 +595,7 @@ class PDBConfig(object):
         return num
 
     def get_proc_switch_number(self, number_str):
-        """Gets the actual number of a switch based on the string only.
+        """Get the actual number of a switch based on the string only.
 
         Args:
             number_str (str): PDB string
@@ -991,7 +991,8 @@ class PROCGiString(GIPlatformInterface):
     def on(self, brightness=255):
         """Turn on GI to `brightness`.
 
-        A brightness of 0 will turn it off. For values between 0 and 255 hardware pulse patter is used."""
+        A brightness of 0 will turn it off. For values between 0 and 255 hardware pulse patter is used.
+        """
         if brightness > 255:
             brightness = 255
 
