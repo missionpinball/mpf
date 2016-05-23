@@ -146,7 +146,6 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
 
         GIs are coils in P3-Roc
         """
-
         proc_num = self.pdbconfig.get_proc_coil_number(str(config['number']))
         if proc_num == -1:
             raise AssertionError("Gi Driver {} cannot be controlled by the P3-ROC. ".format(str(config['number'])))
@@ -192,7 +191,6 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
         3 - closed (not debounced)
         4 - open (not debounced)
         """
-
         states = self.proc.switch_get_states()
 
         for switch, state in enumerate(states):
