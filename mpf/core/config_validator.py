@@ -567,7 +567,13 @@ osc:
     approved_client_ips: ignore
     client_updates: list|str|None
 open_pixel_control:
-    __valid_in__: machine                           # todo add to validator
+    __valid_in__: machine
+    connection_required: single|bool|False
+    host: single|str|localhost
+    port: single|str|7890
+    connection_attempts: single|int|-1
+    number_format: single|enum(int,hex)|int
+    debug: single|bool|False
 p_roc:
     __valid_in__: machine
     lamp_matrix_strobe_time: single|ms|100ms
@@ -575,11 +581,13 @@ p_roc:
     use_watchdog: single|bool|True
     dmd_timing_cycles: list|int|None
     dmd_update_interval: single|ms|33ms
+    debug: single|bool|False
 p3_roc:
     __valid_in__: machine
     lamp_matrix_strobe_time: single|ms|100ms
     watchdog_time: single|ms|1s
     use_watchdog: single|bool|True
+    debug: single|bool|False
 physical_dmd:
     __valid_in__: machine
     shades: single|pow2|16

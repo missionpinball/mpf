@@ -1,5 +1,4 @@
-"""Contains the drivers and interface code for pinball machines which
-use the Multimorphic R-ROC hardware controllers.
+"""Contains the drivers and interface code for pinball machines which use the Multimorphic R-ROC hardware controllers.
 
 This code can be used with P-ROC driver boards, or with Stern SAM, Stern
 Whitestar, Williams WPC, or Williams WPC95 driver boards.
@@ -12,17 +11,18 @@ More info on the P-ROC hardware platform: http://pinballcontrollers.com/
 
 Original code source on which this module was based:
 https://github.com/preble/pyprocgame
-
 """
 
 import logging
 
 from mpf.core.platform import DmdPlatform
-from mpf.platforms.p_roc_common import PDBConfig, PROCDriver, PROCMatrixLight, PROCBasePlatform, PROCGiString
+from mpf.platforms.p_roc_common import PDBConfig, PROCBasePlatform
 from mpf.core.utility_functions import Util
+from mpf.platforms.p_roc_devices import PROCDriver, PROCGiString, PROCMatrixLight
 
 
 class HardwarePlatform(PROCBasePlatform, DmdPlatform):
+
     """Platform class for the P-ROC hardware controller.
 
     Args:
@@ -33,9 +33,10 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
     """
 
     def __init__(self, machine):
+        """Initialise P-ROC."""
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger('P-ROC')
-        self.log.debug("Configuring P-ROC hardware")
+        self.debug_log("Configuring P-ROC hardware")
 
         # validate config for p_roc
         self.machine.config_validator.validate_config("p_roc", self.machine.config['p_roc'])
@@ -62,17 +63,17 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
         # Only then can we relate the YAML coil/light #'s to P-ROC numbers for
         # the collections.
         if self.machine_type == self.pinproc.MachineTypePDB:
-            self.log.debug("Configuring P-ROC for PDBs (P-ROC driver boards)")
+            self.debug_log("Configuring P-ROC for PDBs (P-ROC driver boards)")
             self.pdbconfig = PDBConfig(self.proc, self.machine.config, self.pinproc.DriverCount)
 
         else:
-            self.log.debug("Configuring P-ROC for OEM driver boards")
+            self.debug_log("Configuring P-ROC for OEM driver boards")
 
     def __repr__(self):
         return '<Platform.P-ROC>'
 
     def configure_driver(self, config):
-        """Creates a P-ROC driver.
+        """Create a P-ROC driver.
 
         Typically drivers are coils or flashers, but for the P-ROC this is
         also used for matrix-based lights.
@@ -103,6 +104,7 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
         return PROCDriver(proc_num, self.proc, config, self.machine)
 
     def configure_gi(self, config):
+        """Configure a GI."""
         # GIs are coils in P-Roc
         if self.machine_type == self.pinproc.MachineTypePDB:
             proc_num = self.pdbconfig.get_proc_coil_number(str(config['number']))
@@ -115,6 +117,7 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
         return proc_driver_object
 
     def configure_matrixlight(self, config):
+        """Configure a matrix light."""
         if self.machine_type == self.pinproc.MachineTypePDB:
             proc_num = self.pdbconfig.get_proc_light_number(str(config['number']))
             if proc_num == -1:
@@ -127,7 +130,7 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
         return PROCMatrixLight(proc_num, self.proc)
 
     def configure_switch(self, config):
-        """Configures a P-ROC switch.
+        """Configure a P-ROC switch.
 
         Args:
             config: Dictionary of settings for the switch. In the case
@@ -152,13 +155,14 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
         return self._configure_switch(config, proc_num)
 
     def get_hw_switch_states(self):
-        # Read in and set the initial switch state
-        # The P-ROC uses the following values for hw switch states:
-        # 1 - closed (debounced)
-        # 2 - open (debounced)
-        # 3 - closed (not debounced)
-        # 4 - open (not debounced)
+        """Read in and set the initial switch state.
 
+        The P-ROC uses the following values for hw switch states:
+        1 - closed (debounced)
+        2 - open (debounced)
+        3 - closed (not debounced)
+        4 - open (not debounced)
+        """
         states = self.proc.switch_get_states()
 
         for switch, state in enumerate(states):
@@ -170,17 +174,14 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
         return states
 
     def configure_dmd(self):
-        """Configures a hardware DMD connected to a classic P-ROC."""
-
+        """Configure a hardware DMD connected to a classic P-ROC."""
         self.dmd = PROCDMD(self.pinproc, self.proc, self.machine)
         self.machine.bcp.register_dmd(self.dmd.update)
 
     def tick(self, dt):
-        """Checks the P-ROC for any events (switch state changes or notification
-        that a DMD frame was updated).
+        """Check the P-ROC for any events (switch state changes or notification that a DMD frame was updated).
 
         Also tickles the watchdog and flushes any queued commands to the P-ROC.
-
         """
         del dt
         # Get P-ROC events (switches & DMD frames displayed)
@@ -210,6 +211,7 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
 
 
 class PROCDMD(object):
+
     """Parent class for a physical DMD attached to a P-ROC.
 
     Args:
@@ -222,6 +224,7 @@ class PROCDMD(object):
     """
 
     def __init__(self, pinproc, proc, machine):
+        """Set up DMD."""
         self.proc = proc
         self.machine = machine
 
@@ -236,7 +239,7 @@ class PROCDMD(object):
             self.proc.dmd_update_config(high_cycles=dmd_timing)
 
     def update(self, data):
-        """Updates the DMD with a new frame.
+        """Update the DMD with a new frame.
 
         Args:
             data: A 4096-byte raw string.

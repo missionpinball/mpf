@@ -40,6 +40,10 @@ coils:
         number: A0-B0-0
     c_direct:
         number: C01
+    c_pwm_on_off:
+        number: A1-B1-4
+        pwm_on_ms: 2
+        pwm_off_ms: 5
 
 autofire_coils:
     ac_slingshot_test:

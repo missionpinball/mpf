@@ -58,7 +58,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
     def __init__(self, machine):
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger('FAST')
-        self.log.debug("Configuring FAST hardware.")
+        self.debug_log("Configuring FAST hardware.")
 
         if not serial_imported:
             raise AssertionError('Could not import "pySerial". This is '
@@ -96,14 +96,17 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         self.config = self.machine.config['fast']
         self.machine.config_validator.validate_config("fast", self.config)
 
+        if self.config['debug']:
+            self.debug = True
+
         self.machine_type = (
             self.machine.config['hardware']['driverboards'].lower())
 
         if self.machine_type == 'wpc':
-            self.log.debug("Configuring the FAST Controller for WPC driver "
+            self.debug_log("Configuring the FAST Controller for WPC driver "
                            "board")
         else:
-            self.log.debug("Configuring FAST Controller for FAST IO boards.")
+            self.debug_log("Configuring FAST Controller for FAST IO boards.")
 
         self._connect_to_hardware()
 
@@ -244,7 +247,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
     def receive_sa(self, msg):
 
-        self.log.debug("Received SA: %s", msg)
+        self.debug_log("Received SA: %s", msg)
 
         hw_states = dict()
 
@@ -382,7 +385,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         # (switch number, connection)
         config['number'] = (config['number'], config['connection'])
 
-        self.log.debug("FAST Switch hardware tuple: %s", config['number'])
+        self.debug_log("FAST Switch hardware tuple: %s", config['number'])
 
         switch = FASTSwitch(config=config,
                             sender=self.net_connection.send,
@@ -487,7 +490,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         return config_overwrite
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
-        self.log.debug("Setting Pulse on hit and release HW Rule. Switch: %s,"
+        self.debug_log("Setting Pulse on hit and release HW Rule. Switch: %s,"
                        "Driver: %s", enable_switch.hw_switch.number,
                        coil.hw_driver.number)
 
@@ -504,7 +507,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         driver.autofire = True
         enable_switch.hw_switch.configure_debounce(enable_switch.config)
-        self.log.debug("Writing hardware rule: %s", cmd)
+        self.debug_log("Writing hardware rule: %s", cmd)
 
         self.net_connection.send(cmd)
 
@@ -519,7 +522,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         # Driver On Time2 X 100mS would not be used for a flipper, so set it to 0.
         # And PWM2 should be left on full 0xff unless you need less power for some reason.
         # No release so far :-(
-        self.log.debug("Setting Pulse on hit and release with HW Rule. Switch:"
+        self.debug_log("Setting Pulse on hit and release with HW Rule. Switch:"
                        "%s, Driver: %s", enable_switch.hw_switch.number,
                        coil.hw_driver.number)
 
@@ -529,7 +532,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         self.set_pulse_on_hit_and_release_rule(enable_switch, coil)
 
     def set_pulse_on_hit_rule(self, enable_switch, coil):
-        self.log.debug("Setting Pulse on hit and release HW Rule. Switch: %s,"
+        self.debug_log("Setting Pulse on hit and release HW Rule. Switch: %s,"
                        "Driver: %s", enable_switch.hw_switch.number,
                        coil.hw_driver.number)
 
@@ -546,12 +549,12 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         driver.autofire = True
         enable_switch.hw_switch.configure_debounce(enable_switch.config)
-        self.log.debug("Writing hardware rule: %s", cmd)
+        self.debug_log("Writing hardware rule: %s", cmd)
 
         self.net_connection.send(cmd)
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
-        self.log.debug("Setting Pulse on hit and enable and release HW Rule. "
+        self.debug_log("Setting Pulse on hit and enable and release HW Rule. "
                        "Switch: %s, Driver: %s",
                        enable_switch.hw_switch.number, coil.hw_driver.number)
 
@@ -576,7 +579,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         driver.autofire = True
         enable_switch.hw_switch.configure_debounce(enable_switch.config)
-        self.log.debug("Writing hardware rule: %s", cmd)
+        self.debug_log("Writing hardware rule: %s", cmd)
 
         self.net_connection.send(cmd)
 
@@ -594,7 +597,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             coil: The coil whose rule you want to clear.
 
         """
-        self.log.debug("Clearing HW Rule for switch: %s, coils: %s",
+        self.debug_log("Clearing HW Rule for switch: %s, coils: %s",
                        switch.hw_switch.number, coil.hw_driver.number)
 
         # TODO: check that the rule is switch + coil and not another switch + this coil
@@ -605,7 +608,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         coil.autofire = None
 
-        self.log.debug("Clearing hardware rule: %s", cmd)
+        self.debug_log("Clearing hardware rule: %s", cmd)
 
         self.net_connection.send(cmd)
 
@@ -710,7 +713,7 @@ class SerialCommunicator(object):
         self.serial_connection.write(((' ' * 256) + '\r').encode())
 
         while True:
-            self.platform.log.debug("Sending 'ID:' command to port '%s'",
+            self.platform.debug_log("Sending 'ID:' command to port '%s'",
                                     self.serial_connection.name)
             self.serial_connection.write('ID:\r'.encode())
             msg = self.serial_io.readline()  # todo timeout
@@ -728,7 +731,7 @@ class SerialCommunicator(object):
         except ValueError:
             self.remote_processor, self.remote_model, = msg[3:].split()
 
-        self.platform.log.debug("Received ID acknowledgement. Processor: %s, "
+        self.platform.debug_log("Received ID acknowledgement. Processor: %s, "
                                 "Board: %s, Firmware: %s",
                                 self.remote_processor, self.remote_model,
                                 self.remote_firmware)
@@ -759,7 +762,7 @@ class SerialCommunicator(object):
 
         """
 
-        self.platform.log.debug('Querying FAST IO boards...')
+        self.platform.debug_log('Querying FAST IO boards...')
 
         firmware_ok = True
 
@@ -778,7 +781,7 @@ class SerialCommunicator(object):
                     model = False
 
                 if model:
-                    self.platform.log.debug('Fast IO Board {0}: Model: {1}, '
+                    self.platform.debug_log('Fast IO Board {0}: Model: {1}, '
                                             'Firmware: {2}, Switches: {3}, '
                                             'Drivers: {4}'.format(node_id,
                                                                   model, fw,

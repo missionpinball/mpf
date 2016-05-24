@@ -90,7 +90,7 @@ class TestPRoc(MpfTestCase):
         self.pinproc.switch_get_states = MagicMock(return_value=[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
         super().setUp()
 
-    def test_pulse(self):
+    def test_pulse_and_hold(self):
         # pulse coil A1-B1-2
         self.machine.coils.c_test.pulse()
         # A1-B1-2 -> address 16 + 8 + 2 = 26 in P3-Roc
@@ -99,6 +99,15 @@ class TestPRoc(MpfTestCase):
         self.machine.coils.c_test.hw_driver.proc.driver_pulse.assert_called_with(
             number, 23)
         assert not self.machine.coils.c_test.hw_driver.proc.driver_schedule.called
+
+        # enable coil A1-B1-4
+        self.machine.coils.c_pwm_on_off.enable()
+        # A1-B1-4 -> address 16 + 8 + 4 = 28 in P-Roc
+        # 2ms on, 5ms off. 10ms initial pulse (default)
+        number = self.machine.coils.c_pwm_on_off.hw_driver.number
+        self.machine.coils.c_pwm_on_off.hw_driver.proc.driver_patter.assert_called_with(
+            number, 2, 5, 10, True)
+
 
     def test_enable_exception(self):
         # enable coil which does not have allow_enable

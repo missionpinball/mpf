@@ -1,13 +1,16 @@
+"""Common code for P-Roc and P3-Roc."""
 import abc
 import logging
 import platform
 import sys
 import time
 
+from mpf.platforms.p_roc_devices import PROCSwitch
+
 try:    # pragma: no cover
     import pinproc
     pinproc_imported = True
-except ImportError:
+except ImportError:     # pragma: no cover
     try:
         if sys.platform == 'darwin':
             from mpf.platforms.pinproc.osx import pinproc
@@ -23,19 +26,15 @@ except ImportError:
         pinproc_imported = False
         pinproc = None
 
-from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
-from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
-from mpf.platforms.interfaces.gi_platform_interface import GIPlatformInterface
-from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
 from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 from mpf.core.platform import MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlatform, DriverPlatform
-from mpf.core.utility_functions import Util
 
 
 # pylint does not understand that this class is abstract
 # pylint: disable-msg=abstract-method
 class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlatform, DriverPlatform,
                        metaclass=abc.ABCMeta):
+
     """Platform class for the P-Roc and P3-ROC hardware controller.
 
     Args:
@@ -47,6 +46,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
     """
 
     def __init__(self, machine):
+        """Make sure pinproc was loaded."""
         super().__init__(machine)
 
         if not pinproc_imported:
@@ -64,13 +64,18 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
             self.machine.config['hardware']['driverboards'])
 
     def initialize(self):
+        """Nothing to late initialise."""
         pass
 
     def stop(self):
+        """Stop proc."""
         self.proc.reset(1)
 
     def connect(self):
-        # Connect to the P-ROC. Keep trying if it doesn't work the first time.
+        """Connect to the P-ROC.
+
+        Keep trying if it doesn't work the first time.
+        """
         self.log.info("Connecting to P-ROC")
 
         while not self.proc:
@@ -81,7 +86,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
                 print("Retrying...")
                 time.sleep(1)
 
-        self.log.debug("Successfully connected to P-ROC/P3-ROC")
+        self.log.info("Successfully connected to P-ROC/P3-ROC")
 
     @classmethod
     def _get_event_type(cls, sw_activity, debounced):
@@ -96,13 +101,15 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
 
     @classmethod
     def get_coil_config_section(cls):
+        """Additional config validation for coils."""
         return "p_roc_coils"
 
     @classmethod
     def get_coil_overwrite_section(cls):
+        """Additional config validation for coils overwrites."""
         return "p_roc_coil_overwrites"
 
-    def add_pulse_rule_to_switch(self, switch, coil):
+    def _add_pulse_rule_to_switch(self, switch, coil):
         # TODO: properly implement pulse_power. previously implemented pwm_on_ms/pwm_off_ms were incorrect here
 
         switch.hw_switch.hw_rules[self._get_event_type(not switch.invert, switch.config['debounce'])].append(
@@ -110,7 +117,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
              self.pinproc.driver_state_pulse(coil.hw_driver.state(), coil.hw_driver.get_pulse_ms(coil)))
         )
 
-    def add_pulse_and_hold_rule_to_switch(self, switch, coil):
+    def _add_pulse_and_hold_rule_to_switch(self, switch, coil):
         if coil.hw_driver.get_pwm_on_ms(coil) and coil.hw_driver.get_pwm_off_ms(coil):
             switch.hw_switch.hw_rules[self._get_event_type(not switch.invert, switch.config['debounce'])].append(
                 (switch.hw_switch.number, coil.hw_driver.number,
@@ -128,18 +135,18 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
                  self.pinproc.driver_state_pulse(coil.hw_driver.state(), 0))
             )
 
-    def add_relase_disable_rule_to_switch(self, switch, coil):
+    def _add_relase_disable_rule_to_switch(self, switch, coil):
         switch.hw_switch.hw_rules[self._get_event_type(switch.invert, switch.config['debounce'])].append(
             (switch.hw_switch.number, coil.hw_driver.number, self.pinproc.driver_state_disable(coil.hw_driver.state()))
         )
 
-    def add_disable_rule_to_switch(self, switch, coil):
+    def _add_disable_rule_to_switch(self, switch, coil):
         switch.hw_switch.hw_rules[self._get_event_type(not switch.invert, switch.config['debounce'])].append(
             (switch.hw_switch.number, coil.hw_driver.number,
              self.pinproc.driver_state_disable(coil.hw_driver.state()))
         )
 
-    def write_rules_to_switch(self, switch, coil, drive_now):
+    def _write_rules_to_switch(self, switch, coil, drive_now):
         for event_type, driver_rules in switch.hw_switch.hw_rules.items():
             driver = []
             for x in driver_rules:
@@ -152,45 +159,49 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
                 self.proc.switch_update_rule(switch.hw_switch.number, event_type, rule, driver, drive_now)
 
     def set_pulse_on_hit_rule(self, enable_switch, coil):
-        self.log.debug("Setting HW Rule on pulse on hit. Switch: %s, Driver: %s",
+        """Set pulse on hit rule on driver."""
+        self.debug_log("Setting HW Rule on pulse on hit. Switch: %s, Driver: %s",
                        enable_switch.hw_switch.number, coil.hw_driver.number)
 
-        self.add_pulse_rule_to_switch(enable_switch, coil)
+        self._add_pulse_rule_to_switch(enable_switch, coil)
 
-        self.write_rules_to_switch(enable_switch, coil, False)
+        self._write_rules_to_switch(enable_switch, coil, False)
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
-        self.log.debug("Setting HW Rule on pulse on hit and relesae. Switch: %s, Driver: %s",
+        """Set pulse on hit and release rule to driver."""
+        self.debug_log("Setting HW Rule on pulse on hit and relesae. Switch: %s, Driver: %s",
                        enable_switch.hw_switch.number, coil.hw_driver.number)
 
-        self.add_pulse_rule_to_switch(enable_switch, coil)
-        self.add_relase_disable_rule_to_switch(enable_switch, coil)
+        self._add_pulse_rule_to_switch(enable_switch, coil)
+        self._add_relase_disable_rule_to_switch(enable_switch, coil)
 
-        self.write_rules_to_switch(enable_switch, coil, False)
+        self._write_rules_to_switch(enable_switch, coil, False)
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
-        self.log.debug("Setting Pulse on hit and enable and release HW Rule. Switch: %s, Driver: %s",
+        """Set pulse on hit and enable and relase rule on driver."""
+        self.debug_log("Setting Pulse on hit and enable and release HW Rule. Switch: %s, Driver: %s",
                        enable_switch.hw_switch.number, coil.hw_driver.number)
 
-        self.add_pulse_and_hold_rule_to_switch(enable_switch, coil)
-        self.add_relase_disable_rule_to_switch(enable_switch, coil)
+        self._add_pulse_and_hold_rule_to_switch(enable_switch, coil)
+        self._add_relase_disable_rule_to_switch(enable_switch, coil)
 
-        self.write_rules_to_switch(enable_switch, coil, False)
+        self._write_rules_to_switch(enable_switch, coil, False)
 
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
-        self.log.debug("Setting Pulse on hit and enable and release and disable HW Rule. Enable Switch: %s,"
+        """Set pulse on hit and enable and release and disable rule on driver."""
+        self.debug_log("Setting Pulse on hit and enable and release and disable HW Rule. Enable Switch: %s,"
                        "Disable Switch: %s, Driver: %s", enable_switch.hw_switch.number,
                        disable_switch.hw_switch.number, coil.hw_driver.number)
 
-        self.add_pulse_and_hold_rule_to_switch(enable_switch, coil)
-        self.add_relase_disable_rule_to_switch(enable_switch, coil)
-        self.add_disable_rule_to_switch(disable_switch, coil)
+        self._add_pulse_and_hold_rule_to_switch(enable_switch, coil)
+        self._add_relase_disable_rule_to_switch(enable_switch, coil)
+        self._add_disable_rule_to_switch(disable_switch, coil)
 
-        self.write_rules_to_switch(enable_switch, coil, False)
-        self.write_rules_to_switch(disable_switch, coil, False)
+        self._write_rules_to_switch(enable_switch, coil, False)
+        self._write_rules_to_switch(disable_switch, coil, False)
 
     def clear_hw_rule(self, switch, coil):
-        """Clears a hardware rule.
+        """Clear a hardware rule.
 
         This is used if you want to remove the linkage between a switch and
         some driver activity. For example, if you wanted to disable your
@@ -202,8 +213,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
             switch: Switch object
             coil: Coil object
         """
-
-        self.log.debug("Clearing HW rule for switch: %s coil: %s", switch.hw_switch.number, coil.hw_driver.number)
+        self.debug_log("Clearing HW rule for switch: %s coil: %s", switch.hw_switch.number, coil.hw_driver.number)
 
         coil_number = False
         for entry, element in switch.hw_switch.hw_rules.items():
@@ -216,13 +226,12 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
 
         if coil_number:
             self.proc.driver_disable(coil_number)
-            self.write_rules_to_switch(switch, coil, None)
+            self._write_rules_to_switch(switch, coil, None)
 
         return bool(coil_number)
 
     def configure_led(self, config, channels):
-        """ Configures a P/P3-ROC RGB LED controlled via a PD-LED."""
-
+        """Configure a P/P3-ROC RGB LED controlled via a PD-LED."""
         if channels > 3:
             raise AssertionError("More than 3 channels not yet implemented")
 
@@ -240,7 +249,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
                       proc_driver=self.proc)
 
     def _configure_switch(self, config, proc_num):
-        """Configures a P3-ROC switch.
+        """Configure a P3-ROC switch.
 
         Args:
             config: Dictionary of settings for the switch.
@@ -261,7 +270,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
         # The P3-ROC needs to be configured to notify the host computers of
         # switch events. (That notification can be for open or closed,
         # debounced or nondebounced.)
-        self.log.debug("Configuring switch's host notification settings. P3-ROC"
+        self.debug_log("Configuring switch's host notification settings. P3-ROC"
                        "number: %s, debounce: %s", proc_num,
                        config['debounce'])
         if config['debounce'] == "quick":
@@ -282,16 +291,22 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
 
 
 class PDBConfig(object):
-    """ This class is only used when using the P3-ROC or when the P-ROC is configured to use PDB
+
+    """Handles PDB Config of the P/P3-Roc.
+
+    This class is only used when using the P3-ROC or when the P-ROC is configured to use PDB
     driver boards such as the PD-16 or PD-8x8. i.e. not when it's operating in
     WPC or Stern mode.
-
     """
+
     indexes = []
     proc = None
 
     def __init__(self, proc, config, driver_count):
+        """Set up PDB config.
 
+        Will configure driver groups for matrixes, lamps and normal drivers.
+        """
         self.log = logging.getLogger('PDBConfig')
         self.log.debug("Processing PDB Driver Board configuration")
 
@@ -312,7 +327,7 @@ class PDBConfig(object):
         num_proc_banks = driver_count // 8
         self.indexes = [99] * num_proc_banks
 
-        self.initialize_drivers(proc)
+        self._initialize_drivers(proc)
 
         # Set up dedicated driver groups (groups 0-3).
         for group_ctr in range(0, 4):
@@ -420,8 +435,8 @@ class PDBConfig(object):
 
         # Now set up globals.  First disable them to allow the P-ROC/P3-ROC to set up
         # the polarities on the Drivers.  Then enable them.
-        self.configure_globals(proc, lamp_source_bank_list, False)
-        self.configure_globals(proc, lamp_source_bank_list, True)
+        self._configure_globals(proc, lamp_source_bank_list, False)
+        self._configure_globals(proc, lamp_source_bank_list, True)
 
     def _load_lamp_lists_from_config(self, config):
         lamp_source_bank_list = []
@@ -489,8 +504,8 @@ class PDBConfig(object):
         return coil_bank_list
 
     @classmethod
-    def initialize_drivers(cls, proc):
-        # Loop through all of the drivers, initializing them with the polarity.
+    def _initialize_drivers(cls, proc):
+        """Loop through all of the drivers, initializing them with the polarity."""
         for i in range(0, 255):
             state = {'driverNum': i,
                      'outputDriveTime': 0,
@@ -505,7 +520,7 @@ class PDBConfig(object):
 
             proc.driver_update_state(state)
 
-    def configure_globals(self, proc, lamp_source_bank_list, enable=True):
+    def _configure_globals(self, proc, lamp_source_bank_list, enable=True):
 
         if enable:
             self.log.debug("Configuring PDB Driver Globals:  polarity = %s  "
@@ -542,6 +557,11 @@ class PDBConfig(object):
                                          self.watchdog_time)
 
     def get_proc_coil_number(self, number_str):
+        """Get the actual number of a coil from the bank index config.
+
+        Args:
+            number_str (str): PDB string
+        """
         coil = PDBCoil(self, number_str)
         bank = coil.bank()
         if bank == -1:
@@ -551,6 +571,11 @@ class PDBConfig(object):
         return num
 
     def get_proc_light_number(self, number_str):
+        """Get the actual number of a light from the lamp config.
+
+        Args:
+            number_str (str): PDB string
+        """
         lamp = PDBLight(self, number_str)
         if lamp.lamp_type == 'unknown':
             return -1
@@ -567,15 +592,22 @@ class PDBConfig(object):
         return num
 
     def get_proc_switch_number(self, number_str):
+        """Get the actual number of a switch based on the string only.
+
+        Args:
+            number_str (str): PDB string
+        """
         switch = PDBSwitch(self, number_str)
         num = switch.proc_num()
         return num
 
 
 class PDBSwitch(object):
+
     """Base class for switches connected to a P-ROC/P3-ROC."""
 
     def __init__(self, pdb, number_str):
+        """Find out the number of the switch."""
         del pdb  # unused. why?
 
         upper_str = number_str.upper()
@@ -591,25 +623,29 @@ class PDBSwitch(object):
                 try:
                     self.sw_number = int(number_str)
                 except:
-                    raise ValueError('Switch %s is invalid. Use either PDB '
-                                     'format or an int', str(number_str))
+                    raise AssertionError('Switch {} is invalid. Use either PDB '
+                                         'format or an int'.format(str(number_str)))
 
     def proc_num(self):
+        """Return the number of the switch."""
         return self.sw_number
 
     @classmethod
     def parse_matrix_num(cls, num_str):
+        """Parse a source/sink matrix tuple."""
         cr_list = num_str.split('/')
         return 32 + int(cr_list[0]) * 16 + int(cr_list[1])
 
 
 class PDBCoil(object):
-    """Base class for coils connected to a P-ROC/P3-ROC that are controlled via PDB
-    driver boards (i.e. the PD-16 board).
 
+    """Base class for coils connected to a P-ROC/P3-ROC that are controlled via PDB driver boards.
+
+    (i.e. the PD-16 board).
     """
 
     def __init__(self, pdb, number_str):
+        """Find out number fo coil."""
         del pdb
         upper_str = number_str.upper()
         if self.is_direct_coil(upper_str):
@@ -623,6 +659,7 @@ class PDBCoil(object):
             self.coil_type = 'unknown'
 
     def bank(self):
+        """Return the bank number."""
         if self.coil_type == 'dedicated':
             return self.banknum
         elif self.coil_type == 'pdb':
@@ -631,10 +668,12 @@ class PDBCoil(object):
             return -1
 
     def output(self):
+        """Return the output number."""
         return self.outputnum
 
     @classmethod
     def is_direct_coil(cls, string):
+        """Return true if it is a direct coil."""
         if len(string) < 2 or len(string) > 3:
             return False
         if not string[0] == 'C':
@@ -645,13 +684,16 @@ class PDBCoil(object):
 
     @classmethod
     def is_pdb_coil(cls, string):
+        """Return true if string looks like PDB address."""
         return is_pdb_address(string)
 
 
 class PDBLight(object):
+
     """Base class for lights connected to a PD-8x8 driver board."""
 
     def __init__(self, pdb, number_str):
+        """Find out light number."""
         del pdb
         upper_str = number_str.upper()
         if self.is_direct_lamp(upper_str):
@@ -667,28 +709,36 @@ class PDBLight(object):
             self.lamp_type = 'unknown'
 
     def source_board(self):
+        """Return source board."""
         return self.source_boardnum
 
     def sink_board(self):
+        """Return sink board."""
         return self.sink_boardnum
 
     def source_bank(self):
+        """Return source bank."""
         return self.source_boardnum * 2 + self.source_banknum
 
     def sink_bank(self):
+        """Return sink bank."""
         return self.sink_boardnum * 2 + self.sink_banknum
 
     def source_output(self):
+        """Return source output."""
         return self.source_outputnum
 
     def sink_output(self):
+        """Return sink output."""
         return self.sink_outputnum
 
     def dedicated_output(self):
+        """Return dedicated output number."""
         return self.output
 
     @classmethod
     def is_direct_lamp(cls, string):
+        """Return true if it looks like a direct lamp."""
         if len(string) < 2 or len(string) > 3:
             return False
         if not string[0] == 'L':
@@ -699,7 +749,9 @@ class PDBLight(object):
 
     @classmethod
     def split_matrix_addr_parts(cls, string):
-        """ Input is of form C-Ax-By-z:R-Ax-By-z  or  C-x/y/z:R-x/y/z  or
+        """Split the string of a matrix lamp address.
+
+        Input is of form C-Ax-By-z:R-Ax-By-z  or  C-x/y/z:R-x/y/z  or
         aliasX:aliasY.  We want to return only the address part: Ax-By-z,
         x/y/z, or aliasX.  That is, remove the two character prefix if present.
         """
@@ -717,6 +769,7 @@ class PDBLight(object):
         return addrs_out
 
     def is_pdb_lamp(self, string):
+        """Return true if it looks like a pdb lamp string."""
         params = self.split_matrix_addr_parts(string)
         if len(params) != 2:
             return False
@@ -727,9 +780,11 @@ class PDBLight(object):
 
 
 class PDBLED(RGBLEDPlatformInterface):
+
     """Represents an RGB LED connected to a PD-LED board."""
 
     def __init__(self, board, address, polarity, proc_driver):
+        """Initialise PDB LED."""
         self.log = logging.getLogger('PDBLED')
         self.board = board
         self.address = address
@@ -744,29 +799,28 @@ class PDBLED(RGBLEDPlatformInterface):
                        "RGB outputs: %s", self.board,
                        self.address)
 
-    def normalise_color(self, value):
+    def _normalise_color(self, value):
         if self.polarity:
             return 255 - value
         else:
             return value
 
     def color(self, color):
-        """Instantly sets this LED to the color passed.
+        """Instantly set this LED to the color passed.
 
         Args:
             color: an RGBColor object
         """
-
         # self.log.debug("Setting Color. Board: %s, Address: %s, Color: %s",
         #               self.board, self.address, color)
 
-        self.proc.led_color(self.board, self.address[0], self.normalise_color(color[0]))
-        self.proc.led_color(self.board, self.address[1], self.normalise_color(color[1]))
-        self.proc.led_color(self.board, self.address[2], self.normalise_color(color[2]))
+        self.proc.led_color(self.board, self.address[0], self._normalise_color(color[0]))
+        self.proc.led_color(self.board, self.address[1], self._normalise_color(color[1]))
+        self.proc.led_color(self.board, self.address[2], self._normalise_color(color[2]))
 
 
 def is_pdb_address(addr):
-    """Returns True if the given address is a valid PDB address."""
+    """Return True if the given address is a valid PDB address."""
     try:
         decode_pdb_address(addr=addr)
         return True
@@ -775,8 +829,7 @@ def is_pdb_address(addr):
 
 
 def decode_pdb_address(addr):
-    """Decodes Ax-By-z or x/y/z into PDB address, bank number, and output
-    number.
+    """Decode Ax-By-z or x/y/z into PDB address, bank number, and output number.
 
     Raises a ValueError exception if it is not a PDB address, otherwise returns
     a tuple of (addr, bank, number).
@@ -802,170 +855,3 @@ def decode_pdb_address(addr):
 
     else:
         raise ValueError('PDB address delimiter (- or /) not found.')
-
-
-class PROCSwitch(SwitchPlatformInterface):
-    def __init__(self, config, number, notify_on_nondebounce):
-        super().__init__(config, number)
-        self.log = logging.getLogger('PROCSwitch')
-        self.notify_on_nondebounce = notify_on_nondebounce
-        self.hw_rules = {"closed_debounced": [],
-                         "closed_nondebounced": [],
-                         "open_debounced": [],
-                         "open_nondebounced": []}
-
-
-class PROCDriver(DriverPlatformInterface):
-    """ Base class for drivers connected to a P3-ROC. This class is used for all
-    drivers, regardless of whether they're connected to a P-ROC driver board
-    (such as the PD-16 or PD-8x8) or an OEM driver board.
-
-    """
-
-    def __init__(self, number, proc_driver, config, machine):
-        self.log = logging.getLogger('PROCDriver')
-        self.number = number
-        self.proc = proc_driver
-        self.machine = machine
-        self.config = config
-
-        self.log.debug("Driver Settings for %s", self.number)
-
-    @classmethod
-    def get_pwm_on_ms(cls, coil):
-        # figure out what kind of enable we need:
-        if coil.config['hold_power']:
-            pwm_on_ms, pwm_off_ms = (Util.pwm8_to_on_off(coil.config['hold_power']))
-            del pwm_off_ms
-            return pwm_on_ms
-
-        elif coil.config['pwm_on_ms'] and coil.config['pwm_off_ms']:
-            return int(coil.config['pwm_on_ms'])
-        else:
-            return 0
-
-    @classmethod
-    def get_pwm_off_ms(cls, coil):
-        # figure out what kind of enable we need:
-        if coil.config['hold_power']:
-            pwm_on_ms, pwm_off_ms = (Util.pwm8_to_on_off(coil.config['hold_power']))
-            del pwm_on_ms
-            return pwm_off_ms
-
-        elif coil.config['pwm_on_ms'] and coil.config['pwm_off_ms']:
-            return int(coil.config['pwm_off_ms'])
-        else:
-            return 0
-
-    def get_pulse_ms(self, coil):
-        if coil.config['pulse_ms']:
-            return int(coil.config['pulse_ms'])
-        else:
-            return self.machine.config['mpf']['default_pulse_ms']
-
-    def disable(self, coil):
-        """Disables (turns off) this driver."""
-        del coil
-        self.log.debug('Disabling Driver')
-        self.proc.driver_disable(self.number)
-
-    def enable(self, coil):
-        """Enables (turns on) this driver."""
-        if self.get_pwm_on_ms(coil) and self.get_pwm_off_ms(coil):
-            self.log.debug('Enabling. Initial pulse_ms:%s, pwm_on_ms: %s'
-                           'pwm_off_ms: %s',
-                           self.get_pwm_on_ms(coil),
-                           self.get_pwm_off_ms(coil),
-                           self.get_pulse_ms(coil))
-
-            self.proc.driver_patter(self.number,
-                                    self.get_pwm_on_ms(coil),
-                                    self.get_pwm_off_ms(coil),
-                                    self.get_pulse_ms(coil), True)
-        else:
-            self.log.debug('Enabling at 100%')
-
-            if not coil.config['allow_enable']:
-                raise AssertionError("Received a command to enable this coil "
-                                     "without pwm, but 'allow_enable' has not been"
-                                     "set to True in this coil's configuration.")
-
-            self.proc.driver_schedule(number=self.number, schedule=0xffffffff,
-                                      cycle_seconds=0, now=True)
-
-    def pulse(self, coil, milliseconds):
-        """Enables this driver for `milliseconds`.
-
-        ``ValueError`` will be raised if `milliseconds` is outside of the range
-        0-255.
-        """
-        del coil
-
-        self.log.debug('Pulsing for %sms', milliseconds)
-        self.proc.driver_pulse(self.number, milliseconds)
-
-        return milliseconds
-
-    def state(self):
-        """Returns a dictionary representing this driver's current
-        configuration state.
-        """
-        return self.proc.driver_get_state(self.number)
-
-
-class PROCGiString(GIPlatformInterface):
-    def __init__(self, number, proc_driver, config):
-        self.log = logging.getLogger('PROCGiString')
-        self.number = number
-        self.proc = proc_driver
-        self.config = config
-
-    def on(self, brightness=255):
-        if brightness > 255:
-            brightness = 255
-
-        # run the GIs at 50Hz
-        duty_on = int(brightness / 12.75)
-        duty_off = 20 - duty_on
-        self.proc.driver_patter(self.number,
-                                int(duty_on),
-                                int(duty_off),
-                                0, True)
-
-    def off(self):
-        self.proc.driver_disable(self.number)
-
-
-class PROCMatrixLight(MatrixLightPlatformInterface):
-    def __init__(self, number, proc_driver):
-        self.log = logging.getLogger('PROCMatrixLight')
-        self.number = number
-        self.proc = proc_driver
-
-    def off(self):
-        """Disables (turns off) this driver."""
-        self.proc.driver_disable(self.number)
-
-    def on(self, brightness=255):
-        """Enables (turns on) this driver."""
-        if brightness >= 255:
-            self.proc.driver_schedule(number=self.number, schedule=0xffffffff,
-                                      cycle_seconds=0, now=True)
-        elif brightness == 0:
-            self.off()
-        else:
-            pass
-            # patter rates of 10/1 through 2/9
-
-        """
-        Koen's fade code he posted to pinballcontrollers:
-        def mode_tick(self):
-            if self.fade_counter % 10 == 0:
-                for lamp in self.game.lamps:
-                    if lamp.name.find("gi0") == -1:
-                        var = 4.0*math.sin(0.02*float(self.fade_counter)) + 5.0
-                        on_time = 11-round(var)
-                        off_time = round(var)
-                        lamp.patter(on_time, off_time)
-                self.fade_counter += 1
-        """     # pylint: disable=W0105
