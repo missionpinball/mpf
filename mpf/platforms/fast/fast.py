@@ -813,10 +813,16 @@ class SerialCommunicator(object):
                 be added automatically.
 
         """
+        debug = self.platform.config['debug']
         if self.dmd:
             self.serial_connection.write(b'BM:' + msg)
+            if debug:
+                self.platform.log.debug("Send: %s", msg.decode())
+
         else:
             self.serial_connection.write(msg.encode() + b'\r')
+            if debug:
+                self.platform.log.debug("Send: %s", msg)
 
     def _receiver(self):
         debug = self.platform.config['debug']
@@ -830,13 +836,13 @@ class SerialCommunicator(object):
                 break
 
             msg = self.received_msg[:pos]
-            self.received_msg = self.received_msg[pos+1:]
+            self.received_msg = self.received_msg[pos + 1:]
 
             if not msg:
                 continue
 
-            if debug and msg != b'WD:P':
-                self.platform.log.info("Received: %s", msg.decode())
+            if debug:
+                self.platform.log.debug("Received: %s", msg.decode())
 
             if msg.decode() not in self.ignored_messages:
                 self.platform.process_received_message(msg.decode())
