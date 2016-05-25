@@ -1,4 +1,6 @@
-"""Contains the hardware interface and drivers for the FAST Pinball platform
+"""FAST hardware platform.
+
+Contains the hardware interface and drivers for the FAST Pinball platform
 hardware, including the FAST Core and WPC controllers as well as FAST I/O
 boards.
 """
@@ -23,6 +25,7 @@ from mpf.platforms.fast.fast_light import FASTMatrixLight
 from mpf.platforms.fast.fast_switch import FASTSwitch
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 
+from mpf.devices.switch import Switch
 from mpf.core.platform import ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatform, \
     SwitchPlatform, DriverPlatform
 from mpf.core.utility_functions import Util
@@ -43,14 +46,15 @@ IO_MIN_FW = '0.87'
 class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
                        DmdPlatform, LedPlatform, SwitchPlatform,
                        DriverPlatform):
+
     """Platform class for the FAST hardware controller.
 
     Args:
         machine: The main ``MachineController`` instance.
-
     """
 
     def __init__(self, machine):
+        """Initialise fast hardware platform."""
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger('FAST')
         self.log.debug("Configuring FAST hardware.")
@@ -87,6 +91,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
                               }
 
     def initialize(self):
+        """Initialise platform."""
         self.config = self.machine.config['fast']
         self.machine.config_validator.validate_config("fast", self.config)
 
@@ -115,6 +120,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         self.machine.clock.schedule_interval(self._update_watchdog, self.config['watchdog'] / 2000)
 
     def stop(self):
+        """Stop platform and close connections."""
         for connection in self.connection_threads:
             connection.stop()
 
@@ -125,9 +131,11 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         del dt
         self.net_connection.send('WD:' + str(hex(self.config['watchdog']))[2:])
 
-    def process_received_message(self, msg):
-        """Sends an incoming message from the FAST controller to the proper
-        method for servicing.
+    def process_received_message(self, msg: str):
+        """Send an incoming message from the FAST controller to the proper method for servicing.
+
+        Args:
+            msg: messaged which was received
         """
         if msg[2:3] == ':':
             cmd = msg[0:2]
@@ -145,21 +153,29 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
                              "development)", msg)
 
     def _connect_to_hardware(self):
-        # Connect to each port from the config. This process will cause the
-        # connection threads to figure out which processor they've connected to
-        # and to register themselves.
+        """Connect to each port from the config.
+
+        This process will cause the connection threads to figure out which processor they've connected to
+        and to register themselves.
+        """
         for port in self.config['ports']:
             self.connection_threads.add(SerialCommunicator(
                 machine=self.machine, platform=self, port=port,
                 baud=self.config['baud']))
 
-    def register_processor_connection(self, name, communicator):
-        """Once a communication link has been established with one of the
+    def register_processor_connection(self, name: str, communicator):
+        """Register processor.
+
+        Once a communication link has been established with one of the
         processors on the FAST board, this method lets the communicator let MPF
         know which processor it's talking to.
 
         This is a separate method since we don't know which processor is on
         which serial port ahead of time.
+
+        Args:
+            communicator: communicator object
+            name: name of processor
         """
         if name == 'DMD':
             self.dmd_connection = communicator
@@ -173,13 +189,17 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
                 Util.int_to_hex_string(self.config['hardware_led_fade_time'])))
 
     def update_leds(self, dt):
-        """Updates all the LEDs connected to a FAST controller. This is done
-        once per game loop for efficiency (i.e. all LEDs are sent as a single
+        """Update all the LEDs connected to a FAST controller.
+
+        This is done once per game loop for efficiency (i.e. all LEDs are sent as a single
         update rather than lots of individual ones).
 
         Also, every LED is updated every loop, even if it doesn't change. This
         is in case some interference causes a LED to change color. Since we
         update every loop, it will only be the wrong color for one tick.
+
+        Args:
+            dt: time since last call
         """
         del dt
         msg = 'RS:' + ','.join(["%s%s" % (led.number, led.current_color)
@@ -187,6 +207,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         self.rgb_connection.send(msg)
 
     def get_hw_switch_states(self):
+        """Return initial hardware states."""
         self.hw_switch_data = None
         self.net_connection.send('SA:')
 
@@ -199,53 +220,86 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         return self.hw_switch_data
 
     def receive_id(self, msg):
+        """Ignore command."""
         pass
 
     def receive_wx(self, msg):
+        """Ignore command."""
         pass
 
     def receive_ni(self, msg):
+        """Ignore command."""
         pass
 
     def receive_rx(self, msg):
+        """Ignore command."""
         pass
 
     def receive_dx(self, msg):
+        """Ignore command."""
         pass
 
     def receive_sx(self, msg):
+        """Ignore command."""
         pass
 
     def receive_lx(self, msg):
+        """Ignore command."""
         pass
 
     def receive_px(self, msg):
         pass
 
     def receive_wd(self, msg):
+        """Ignore command."""
         pass
 
     def receive_nw_open(self, msg):
+        """Process network switch open.
+
+        Args:
+            msg: switch number
+        """
         self.machine.switch_controller.process_switch_by_num(state=0,
                                                              num=(msg, 1),
                                                              platform=self)
 
     def receive_nw_closed(self, msg):
+        """Process network switch closed.
+
+        Args:
+            msg: switch number
+        """
         self.machine.switch_controller.process_switch_by_num(state=1,
                                                              num=(msg, 1),
                                                              platform=self)
 
     def receive_local_open(self, msg):
+        """Process local switch open.
+
+        Args:
+            msg: switch number
+        """
         self.machine.switch_controller.process_switch_by_num(state=0,
                                                              num=(msg, 0),
                                                              platform=self)
 
     def receive_local_closed(self, msg):
+        """Process local switch closed.
+
+        Args:
+            msg: switch number
+        """
         self.machine.switch_controller.process_switch_by_num(state=1,
                                                              num=(msg, 0),
                                                              platform=self)
 
     def receive_sa(self, msg):
+        """Receive all switch states.
+
+        Args:
+            msg: switch states as bytearray
+        """
 
         self.debug_log("Received SA: %s", msg)
 
@@ -281,7 +335,14 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         else:
             return Util.normalize_hex_string(number)
 
-    def configure_driver(self, config):
+    def configure_driver(self, config: dict) -> FASTDriver:
+        """Configure a driver.
+
+        Args:
+            config: Driver config.
+
+        Returns: Driver object
+        """
         # dont modify the config. make a copy
         config = deepcopy(config)
 
@@ -322,13 +383,20 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         return FASTDriver(config, self.net_connection.send, self.machine)
 
-    def configure_servo(self, config):
+    def configure_servo(self, config: dict):
+        """Configure a servo.
+
+        Args:
+            config: Servo config.
+
+        Returns: Servo object.
+        """
         number = self._convert_number_from_config(config['number'])
 
         return FastServo(number, self.net_connection)
 
-    def configure_switch(self, config):
-        """Configures the switch object for a FAST Pinball controller.
+    def configure_switch(self, config: dict) -> FASTSwitch:
+        """Configure the switch object for a FAST Pinball controller.
 
         FAST Controllers support two types of switches: `local` and `network`.
         Local switches are switches that are connected to the FAST controller
@@ -347,6 +415,10 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         etc.) then it assumes the connection type is ``local``. Connection types
         can be mixed and matched in the same machine.
 
+        Args:
+            config: Switch config.
+
+        Returns: Switch object.
         """
 
         # dont modify the config. make a copy
@@ -393,7 +465,16 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         return switch
 
-    def configure_led(self, config, channels):
+    def configure_led(self, config: dict, channels: int):
+        """Configure a WS2812 LED.
+
+        Args:
+            config: LED config.
+            channels: Number of channels (3 for RGB)
+
+        Returns: LED object.
+
+        """
         if channels > 3:
             raise AssertionError("FAST only supports RGB LEDs")
         if not self.rgb_connection:
@@ -419,7 +500,14 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         return this_fast_led
 
-    def configure_gi(self, config):
+    def configure_gi(self, config: dict) -> FASTGIString:
+        """Configure a GI.
+
+        Args:
+            config: GI config.
+
+        Returns: GI object.
+        """
         # TODO: Add support for driver-based GI strings
 
         if not self.net_connection:
@@ -434,7 +522,14 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         return FASTGIString(number, self.net_connection.send)
 
-    def configure_matrixlight(self, config):
+    def configure_matrixlight(self, config: dict) -> FASTMatrixLight:
+        """Configure a matrix light.
+
+        Args:
+            config: Matrix light config.
+
+        Returns: Matrix light object.
+        """
         if not self.net_connection:
             raise AssertionError('A request was made to configure a FAST '
                                  'matrix light, but no connection to a NET '
@@ -448,8 +543,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         return FASTMatrixLight(number, self.net_connection.send)
 
     def configure_dmd(self):
-        """Configures a hardware DMD connected to a FAST controller."""
-
+        """Configure a hardware DMD connected to a FAST controller."""
         if not self.dmd_connection:
             raise AssertionError("A request was made to configure a FAST DMD, "
                                  "but no connection to a DMD processor is "
@@ -461,21 +555,37 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         return
 
     def tick(self, dt):
+        """Tick time.
+
+        Args:
+            dt: time since last tick
+        """
         pass
 
     @classmethod
     def get_coil_config_section(cls):
+        """Return coil config section."""
         return "fast_coils"
 
     @classmethod
     def get_switch_config_section(cls):
+        """Return switch config section."""
         return "fast_switches"
 
     @classmethod
     def get_coil_overwrite_section(cls):
+        """Return coil overwrite section."""
         return "fast_coil_overwrites"
 
-    def validate_switch_overwrite_section(self, switch, config_overwrite):
+    def validate_switch_overwrite_section(self, switch: Switch, config_overwrite: dict) -> dict:
+        """Validate switch overwrite section for platform.
+
+        Args:
+            switch: switch to validate
+            config_overwrite: overwrite config to validate
+
+        Returns: Validated config.
+        """
         if ("debounce" in config_overwrite and
                 switch.config['debounce'] != "auto" and
                 switch.config['debounce'] != config_overwrite['debounce']):
@@ -581,7 +691,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         self.net_connection.send(cmd)
 
     def clear_hw_rule(self, switch, coil):
-        """Clears a hardware rule.
+        """Clear a hardware rule.
 
         This is used if you want to remove the linkage between a switch and
         some driver activity. For example, if you wanted to disable your
@@ -612,12 +722,15 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
 class FastServo(ServoPlatformInterface):
 
+    """A servo in the FAST platform."""
+
     def __init__(self, number, net_connection):
+        """Initialise servo."""
         self.number = number
         self.net_connection = net_connection
 
     def go_to_position(self, position):
-        """Sets a servo position. """
+        """Set a servo position."""
 
         if position < 0 or position > 1:
             raise AssertionError("Position has to be between 0 and 1")
@@ -634,6 +747,8 @@ class FastServo(ServoPlatformInterface):
 
 class FASTDMD(object):
 
+    """Object for a FAST DMD."""
+
     def __init__(self, machine, sender):
         self.machine = machine
         self.send = sender
@@ -641,24 +756,32 @@ class FASTDMD(object):
         # Clear the DMD
         # todo
 
-    def update(self, data):
+    def update(self, data: bytes):
+        """Update data on the DMD.
+
+        Args:
+            data: bytes to send to DMD
+        """
         self.send(data)
 
 
 # pylint: disable-msg=too-many-instance-attributes
 class SerialCommunicator(object):
 
+    """Handles the serial communication to the FAST platform."""
+
     # pylint: disable-msg=too-many-arguments
     def __init__(self, machine, platform, port, baud):
+        """Initialise communicator."""
         self.machine = machine
         self.platform = platform
-        self.debug = False
-        self.log = None
         self.dmd = False
 
         self.remote_processor = None
         self.remote_model = None
         self.remote_firmware = 0.0
+
+        self.received_msg = b''
 
         self.ignored_messages = ['RX:P',  # RGB Pass
                                  'SN:P',  # Network Switch pass
@@ -691,8 +814,7 @@ class SerialCommunicator(object):
         self._start_threads()
 
     def identify_connection(self):
-        """Identifies which processor this serial connection is talking to."""
-
+        """Identifie which processor this serial connection is talking to."""
         # keep looping and wait for an ID response
 
         msg = ''
@@ -745,12 +867,11 @@ class SerialCommunicator(object):
             self.query_fast_io_boards()
 
     def query_fast_io_boards(self):
-        """Queries the NET processor to see if any FAST IO boards are connected,
-        and if so, queries the IO boards to log them and make sure they're the
-        proper firmware version.
+        """Querie the NET processor to see if any FAST IO boards are connected.
 
+
+        If so, queries the IO boards to log them and make sure they're the  proper firmware version.
         """
-
         self.platform.debug_log('Querying FAST IO boards...')
 
         firmware_ok = True
@@ -789,17 +910,16 @@ class SerialCommunicator(object):
     def _start_threads(self):
         self.serial_connection.timeout = None
         self.machine.clock.schedule_socket_read_callback(self.serial_connection, self._receiver)
-        self.received_msg = b''
 
     def stop(self):
-        """Stops and shuts down this serial connection."""
+        """Stop and shut down this serial connection."""
         self.serial_connection.close()
         self.serial_connection = None  # child threads stop when this is None
 
         # todo clear the hw?
 
     def send(self, msg):
-        """Sends a message to the remote processor over the serial connection.
+        """Send a message to the remote processor over the serial connection.
 
         Args:
             msg: String of the message you want to send. THe <CR> character will
