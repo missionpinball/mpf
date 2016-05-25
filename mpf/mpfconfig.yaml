@@ -34,6 +34,7 @@ mpf:
 
     device_modules:
         driver.Driver
+        dual_wound_coil.DualWoundCoil
         switch.Switch
         matrix_light.MatrixLight
         led.Led

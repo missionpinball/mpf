@@ -173,6 +173,14 @@ coils:
     disable_events: dict|str:ms|None
     pulse_events: dict|str:ms|None
     platform: single|str|None
+dual_wound_coils:
+    __valid_in__: machine
+    main_coil: single|machine(coils)|
+    hold_coil: single|machine(coils)|
+    eos_switch: single|machine(switches)|None
+    tags: list|str|None
+    label: single|str|%
+    debug: single|bool|False
 opp_coils:
     __valid_in__: machine
     hold_power16: single|int|None
