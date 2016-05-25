@@ -6,7 +6,6 @@ boards.
 import logging
 import time
 import sys
-import threading
 import queue
 import traceback
 import io
@@ -58,7 +57,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
     def __init__(self, machine):
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger('FAST')
-        self.debug_log("Configuring FAST hardware.")
+        self.log.debug("Configuring FAST hardware.")
 
         if not serial_imported:
             raise AssertionError('Could not import "pySerial". This is '
@@ -118,12 +117,18 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         if 'config_number_format' not in self.machine.config['fast']:
             self.machine.config['fast']['config_number_format'] = 'int'
 
+        self.machine.clock.schedule_interval(self._update_watchdog, self.config['watchdog'] / 2000)
+
     def stop(self):
         for connection in self.connection_threads:
             connection.stop()
 
     def __repr__(self):
         return '<Platform.FAST>'
+
+    def _update_watchdog(self, dt):
+        del dt
+        self.net_connection.send('WD:' + str(hex(self.config['watchdog']))[2:])
 
     def process_received_message(self, msg):
         """Sends an incoming message from the FAST controller to the proper
@@ -194,7 +199,8 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         self.tick(0.01)
         while not self.hw_switch_data:
             time.sleep(.01)
-            self.tick(0.01)
+            self.machine.clock.tick()
+            self.tick(.01)
 
         return self.hw_switch_data
 
@@ -463,8 +469,6 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
     def tick(self, dt):
         while not self.receive_queue.empty():
             self.process_received_message(self.receive_queue.get(False))
-
-        self.net_connection.send('WD:' + str(hex(self.config['watchdog']))[2:])
 
     @classmethod
     def get_coil_config_section(cls):
@@ -799,16 +803,9 @@ class SerialCommunicator(object):
             raise AssertionError("Exiting due to IO board firmware mismatch")
 
     def _start_threads(self):
-
         self.serial_connection.timeout = None
-
-        self.receive_thread = threading.Thread(target=self._receive_loop)
-        self.receive_thread.daemon = True
-        self.receive_thread.start()
-
-        self.sending_thread = threading.Thread(target=self._sending_loop)
-        self.sending_thread.daemon = True
-        self.sending_thread.start()
+        self.machine.clock.schedule_socket_read_callback(self.serial_connection, self._receiver)
+        self.received_msg = b''
 
     def stop(self):
         """Stops and shuts down this serial connection."""
@@ -826,59 +823,30 @@ class SerialCommunicator(object):
 
         """
         if self.dmd:
-            self.send_queue.put(msg)
+            self.serial_connection.write(b'BM:' + msg)
         else:
-            self.send_queue.put(msg + '\r')
+            self.serial_connection.write(msg.encode() + b'\r')
 
-    def _sending_loop(self):
-
+    def _receiver(self):
         debug = self.platform.config['debug']
+        self.received_msg += self.serial_connection.read_all()
 
-        try:
+        while True:
+            pos = self.received_msg.find(b'\r')
 
-            if self.dmd:
-                while self.serial_connection:
+            # no more complete messages
+            if pos == -1:
+                break
 
-                    data = self.send_queue.get()
-                    msg = b'BM:' + data
-                    self.serial_connection.write(msg)
+            msg = self.received_msg[:pos]
+            self.received_msg = self.received_msg[pos+1:]
 
-            else:
+            if not msg:
+                continue
 
-                while self.serial_connection:
-                    msg = self.send_queue.get()
-                    self.serial_connection.write(msg.encode())
+            if debug and msg != b'WD:P':
+                self.platform.log.info("Received: %s", msg.decode())
 
-                    if debug and msg[0:2] != "WD":
-                        self.platform.log.info("Sending: %s", msg)
+            if msg.decode() not in self.ignored_messages:
+                self.platform.process_received_message(msg.decode())
 
-        # pylint: disable-msg=broad-except
-        except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
-            msg = ''.join(line for line in lines)
-            self.machine.crash_queue.put(msg)
-
-    def _receive_loop(self):
-
-        debug = self.platform.config['debug']
-
-        if not self.dmd:
-
-            try:
-                while self.serial_connection:
-                    msg = self.serial_io.readline()[:-1]  # strip the \r
-
-                    if debug and msg[0:2] != "WD":
-                        self.platform.log.info("Received: %s", msg)
-
-                    if msg not in self.ignored_messages:
-                        self.receive_queue.put(msg)
-
-            # pylint: disable-msg=broad-except
-            except Exception:
-                exc_type, exc_value, exc_traceback = sys.exc_info()
-                lines = traceback.format_exception(exc_type, exc_value,
-                                                   exc_traceback)
-                msg = ''.join(line for line in lines)
-                self.machine.crash_queue.put(msg)

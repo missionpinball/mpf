@@ -2,8 +2,6 @@ import unittest
 from queue import Queue
 from unittest.mock import MagicMock, call
 
-import time
-
 from mpf.platforms.fast import fast
 
 
@@ -34,6 +32,9 @@ class SerialMock:
 
     def flush(self):
         return True
+
+    def read_all(self):
+        return self.read(100)
 
     def readline(self):
         return self.read(100)
@@ -98,15 +99,10 @@ class TestFastSerial(unittest.TestCase):
         self.platform.register_processor_connection.assert_called_with('DMD', self.communicator)
         self.assertFalse(self.serialMock.expected_commands)
 
-        self.communicator.send("test".encode())
         self.serialMock.expected_commands = {
             'BM:test'.encode(): False
         }
-        time.sleep(.001)
-        for dummy_i in range(10):
-            if not self.serialMock.expected_commands:
-                break
-            time.sleep(.1)
+        self.communicator.send("test".encode())
 
         self.assertFalse(self.serialMock.expected_commands)
 
@@ -162,16 +158,11 @@ class TestFastSerial(unittest.TestCase):
             call('Fast IO Board 7: Model: asd, Firmware: 0.87, Switches: 16, Drivers: 8')
         ])
 
-        self.communicator.send("SA:")
         self.serialMock.expected_commands = {
             "SA:\r".encode(): "SA:1,00,8,00000000\r".encode()
         }
-        time.sleep(.001)
-        for dummy_i in range(10):
-            if not self.serialMock.expected_commands and not self.communicator.receive_queue.empty():
-                break
-            time.sleep(.1)
+        self.communicator.send("SA:")
+        self.communicator._receiver()
 
         self.assertFalse(self.serialMock.expected_commands)
-        self.assertFalse(self.communicator.receive_queue.empty())
-        self.assertEqual("SA:1,00,8,00000000", self.communicator.receive_queue.get())
+        self.communicator.platform.process_received_message.assert_called_with("SA:1,00,8,00000000")
