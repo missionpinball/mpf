@@ -96,8 +96,7 @@ class TestFastSerial(unittest.TestCase):
 
         self.communicator = fast.SerialCommunicator(
             machine=self.machine, platform=self.platform, port="port_name",
-            baud=1234, send_queue=Queue(),
-            receive_queue=self.receive_queue)
+            baud=1234)
 
         self.platform.register_processor_connection.assert_called_with('DMD', self.communicator)
         self.assertFalse(self.serialMock.expected_commands)
@@ -117,8 +116,7 @@ class TestFastSerial(unittest.TestCase):
 
         self.communicator = fast.SerialCommunicator(
             machine=self.machine, platform=self.platform, port="port_name",
-            baud=1234, send_queue=Queue(),
-            receive_queue=self.receive_queue)
+            baud=1234)
 
         self.platform.register_processor_connection.assert_called_with('RGB', self.communicator)
         self.assertFalse(self.serialMock.expected_commands)
@@ -139,8 +137,7 @@ class TestFastSerial(unittest.TestCase):
 
         self.communicator = fast.SerialCommunicator(
             machine=self.machine, platform=self.platform, port="port_name",
-            baud=1234, send_queue=Queue(),
-            receive_queue=self.receive_queue)
+            baud=1234)
 
         self.assertFalse(self.serialMock.expected_commands)
 

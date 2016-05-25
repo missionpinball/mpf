@@ -8,12 +8,11 @@ class MockSerialCommunicator:
     expected_commands = {}
     leds = {}
 
-    def __init__(self, machine, send_queue, receive_queue, platform, baud,
+    def __init__(self, machine, platform, baud,
                  port):
         # ignored variable
-        del machine, send_queue, baud
+        del machine, baud
         self.platform = platform
-        self.receive_queue = receive_queue
         if port == "com4":
             self.type = 'NET'
             self.platform.register_processor_connection("NET", self)
@@ -38,8 +37,7 @@ class MockSerialCommunicator:
 
         if cmd in MockSerialCommunicator.expected_commands[self.type]:
             if MockSerialCommunicator.expected_commands[self.type][cmd]:
-                self.receive_queue.put(
-                    MockSerialCommunicator.expected_commands[self.type][cmd])
+                self.platform.process_received_message(MockSerialCommunicator.expected_commands[self.type][cmd])
             del MockSerialCommunicator.expected_commands[self.type][cmd]
         else:
             raise Exception(cmd)
@@ -234,7 +232,7 @@ class TestFast(MpfTestCase):
         self.assertFalse(self.switch_hit)
 
         self.machine.events.add_handler("s_test_active", self._switch_hit_cb)
-        self.machine.default_platform.net_connection.receive_queue.put("-N:07")
+        self.machine.default_platform.process_received_message("-N:07")
         self.advance_time_and_run(1)
 
         self.assertTrue(self.switch_hit)
@@ -245,7 +243,7 @@ class TestFast(MpfTestCase):
         self.assertFalse(self.switch_hit)
         self.assertTrue(self.machine.switch_controller.is_active("s_test"))
 
-        self.machine.default_platform.net_connection.receive_queue.put("/N:07")
+        self.machine.default_platform.process_received_message("/N:07")
         self.advance_time_and_run(1)
         self.assertFalse(self.switch_hit)
         self.assertFalse(self.machine.switch_controller.is_active("s_test"))
@@ -260,13 +258,13 @@ class TestFast(MpfTestCase):
         self.assertFalse(self.switch_hit)
         self.assertTrue(self.machine.switch_controller.is_active("s_test_nc"))
 
-        self.machine.default_platform.net_connection.receive_queue.put("-N:1A")
+        self.machine.default_platform.process_received_message("-N:1A")
         self.advance_time_and_run(1)
         self.assertFalse(self.switch_hit)
         self.assertFalse(self.machine.switch_controller.is_active("s_test_nc"))
 
         self.machine.events.add_handler("s_test_nc_active", self._switch_hit_cb)
-        self.machine.default_platform.net_connection.receive_queue.put("/N:1A")
+        self.machine.default_platform.process_received_message("/N:1A")
         self.advance_time_and_run(1)
 
         self.assertTrue(self.machine.switch_controller.is_active("s_test_nc"))

@@ -5,7 +5,6 @@ boards.
 
 import logging
 import time
-import queue
 from distutils.version import StrictVersion
 from copy import deepcopy
 
@@ -64,7 +63,6 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         self.net_connection = None
         self.rgb_connection = None
         self.connection_threads = set()
-        self.receive_queue = queue.Queue()
         self.fast_leds = set()
         self.flag_led_tick_registered = False
         self.config = None
@@ -153,8 +151,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         for port in self.config['ports']:
             self.connection_threads.add(SerialCommunicator(
                 machine=self.machine, platform=self, port=port,
-                baud=self.config['baud'], send_queue=queue.Queue(),
-                receive_queue=self.receive_queue))
+                baud=self.config['baud']))
 
     def register_processor_connection(self, name, communicator):
         """Once a communication link has been established with one of the
@@ -464,8 +461,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         return
 
     def tick(self, dt):
-        while not self.receive_queue.empty():
-            self.process_received_message(self.receive_queue.get(False))
+        pass
 
     @classmethod
     def get_coil_config_section(cls):
@@ -653,12 +649,9 @@ class FASTDMD(object):
 class SerialCommunicator(object):
 
     # pylint: disable-msg=too-many-arguments
-    def __init__(self, machine, platform, port, baud, send_queue,
-                 receive_queue):
+    def __init__(self, machine, platform, port, baud):
         self.machine = machine
         self.platform = platform
-        self.send_queue = send_queue
-        self.receive_queue = receive_queue
         self.debug = False
         self.log = None
         self.dmd = False
