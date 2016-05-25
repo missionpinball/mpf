@@ -1,6 +1,8 @@
 """ Contains the parent classes Platform"""
 import abc
 
+from mpf.devices.switch import Switch
+
 
 class BasePlatform(metaclass=abc.ABCMeta):
 
@@ -286,15 +288,29 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """Return config section for additional switch config overwrite items."""
         return None
 
-    def validate_switch_overwrite_section(self, switch, config_overwrite):
-        """Validate a switch overwrite config for platform."""
+    def validate_switch_overwrite_section(self, switch: Switch, config_overwrite: dict) -> dict:
+        """Validate switch overwrite section for platform.
+
+        Args:
+            switch: Switch to validate.
+            config_overwrite: Overwrite config to validate.
+
+        Returns: Validated config.
+        """
         switch.machine.config_validator.validate_config(
             "switch_overwrites", config_overwrite, switch.name,
             base_spec=self.__class__.get_switch_overwrite_section())
         return config_overwrite
 
-    def validate_switch_section(self, switch, config):
-        """Validate a switch config for platform."""
+    def validate_switch_section(self, switch: Switch, config: dict) -> dict:
+        """Validate a switch config for platform.
+
+        Args:
+            switch: Switch to validate.
+            config: Config to validate.
+
+        Returns: Validated config.
+        """
         switch.machine.config_validator.validate_config(
             "switches", config, switch.name,
             base_spec=self.__class__.get_switch_config_section())
