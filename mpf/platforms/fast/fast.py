@@ -248,6 +248,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         pass
 
     def receive_px(self, msg):
+        """Ignore command."""
         pass
 
     def receive_wd(self, msg):
@@ -300,7 +301,6 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         Args:
             msg: switch states as bytearray
         """
-
         self.debug_log("Received SA: %s", msg)
 
         hw_states = dict()
@@ -420,7 +420,6 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         Returns: Switch object.
         """
-
         # dont modify the config. make a copy
         config = deepcopy(config)
 
@@ -597,6 +596,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         return config_overwrite
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
+        """Set pulse on hit and release rule to driver."""
         self.debug_log("Setting Pulse on hit and release HW Rule. Switch: %s,"
                        "Driver: %s", enable_switch.hw_switch.number,
                        coil.hw_driver.number)
@@ -619,6 +619,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         self.net_connection.send(cmd)
 
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
+        """Set pulse on hit and enable and release and disable rule on driver."""
         # Potential command from Dave:
         # Command
         # [DL/DN]:<DRIVER_ID>,<CONTROL>,<SWITCH_ID_ON>,<75>,<SWITCH_ID_OFF>,<Driver On Time1>,<Driver On Time2 X 100mS>,
@@ -639,6 +640,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         self.set_pulse_on_hit_and_release_rule(enable_switch, coil)
 
     def set_pulse_on_hit_rule(self, enable_switch, coil):
+        """Set pulse on hit rule on driver."""
         self.debug_log("Setting Pulse on hit and release HW Rule. Switch: %s,"
                        "Driver: %s", enable_switch.hw_switch.number,
                        coil.hw_driver.number)
@@ -661,6 +663,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         self.net_connection.send(cmd)
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
+        """Set pulse on hit and enable and relase rule on driver."""
         self.debug_log("Setting Pulse on hit and enable and release HW Rule. "
                        "Switch: %s, Driver: %s",
                        enable_switch.hw_switch.number, coil.hw_driver.number)
@@ -731,7 +734,6 @@ class FastServo(ServoPlatformInterface):
 
     def go_to_position(self, position):
         """Set a servo position."""
-
         if position < 0 or position > 1:
             raise AssertionError("Position has to be between 0 and 1")
 
@@ -750,6 +752,7 @@ class FASTDMD(object):
     """Object for a FAST DMD."""
 
     def __init__(self, machine, sender):
+        """Initialise DMD."""
         self.machine = machine
         self.send = sender
 
@@ -868,7 +871,6 @@ class SerialCommunicator(object):
 
     def query_fast_io_boards(self):
         """Querie the NET processor to see if any FAST IO boards are connected.
-
 
         If so, queries the IO boards to log them and make sure they're the  proper firmware version.
         """
