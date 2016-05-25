@@ -36,6 +36,9 @@ class SerialMock:
     def read_all(self):
         return self.read(100)
 
+    def read_until(self, terminator):
+        return self.read(100)
+
     def readline(self):
         return self.read(100)
 
