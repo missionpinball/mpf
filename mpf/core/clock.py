@@ -196,7 +196,6 @@ from two threads simultaneously without any locking mechanism::
 Note, in the code above, thread 1 or thread 2 could be the main thread, not
 just an external thread.
 """
-
 from sys import platform
 from functools import partial
 
@@ -204,6 +203,9 @@ from queue import PriorityQueue, Empty
 import itertools
 import time
 import logging
+
+import select
+
 from mpf.core.weakmethod import WeakMethod
 
 # pylint: disable-msg=anomalous-backslash-in-string
@@ -655,6 +657,7 @@ class ClockBase(_ClockBase):
         self._frames = 0
         self._frames_displayed = 0
         self.events = [[] for dummy_iterator in range(256)]
+        self.read_sockets = {}
         self._frame_callbacks = PriorityQueue()
         self._log = logging.getLogger("Clock")
         self._log.debug("Starting clock (maximum frames per second=%s)", self._max_fps)
@@ -706,9 +709,15 @@ class ClockBase(_ClockBase):
             usleep = self.usleep
 
             sleeptime = 1 / fps - (self.time() - self._last_tick)
-            while sleeptime - sleep_undershoot > min_sleep:
-                usleep(1000000 * (sleeptime - sleep_undershoot))
-                sleeptime = 1 / fps - (self.time() - self._last_tick)
+
+            sleeptime -= sleep_undershoot
+            if sleeptime < min_sleep:
+                sleeptime = min_sleep
+            read_sockets = self.read_sockets.keys()
+            read_ready, _, _ = select.select(read_sockets, [], [], sleeptime)
+            if read_ready:
+                for socket in read_sockets:
+                    self.read_sockets[socket]()
 
         # tick the current time
         current = self.time()
@@ -776,6 +785,9 @@ class ClockBase(_ClockBase):
         ev = ClockEvent(self, False, callback, timeout, 0, _hash(callback), priority)
         ev.release()
         return ev
+
+    def schedule_socket_read_callback(self, socket, callback):
+        self.read_sockets[socket] = callback
 
     def schedule_once(self, callback, timeout=0, priority=1):
         """Schedule an event in <timeout> seconds. If <timeout> is unspecified
