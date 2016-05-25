@@ -1,0 +1,22 @@
+#config_version=4
+
+coils:
+    c_hold:
+        number:
+        allow_enable: True
+    c_power:
+        number:
+        pulse_ms: 20
+
+switches:
+    s_eos:
+        number:
+
+dual_wound_coils:
+    c_test:
+        hold_coil: c_hold
+        main_coil: c_power
+    c_test_eos:
+        hold_coil: c_hold
+        main_coil: c_power
+        eos_switch: s_eos
