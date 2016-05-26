@@ -109,8 +109,7 @@ class TestBcp(MpfTestCase):
                          dict(key3='value5', key4='value6'))
 
     def test_receive_register_trigger(self):
-        self.machine.bcp.receive_queue.put(('register_trigger',
-                                            {'event': 'test_event'}, None))
+        self.machine.bcp.process_bcp_message('register_trigger', {'event': 'test_event'}, None)
         self.advance_time_and_run()
 
         self.assertIn('test_event', self.machine.bcp.registered_trigger_events)
