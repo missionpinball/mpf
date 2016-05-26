@@ -583,6 +583,9 @@ class MachineController(object):
         # tick before draw
         self.clock.tick_draw()
 
+        # process events after tick
+        self.events.process_event_queue()
+
     def _platform_stop(self):
         for platform in list(self.hardware_platforms.values()):
             platform.stop()
