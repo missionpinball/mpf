@@ -5,7 +5,10 @@ from mpf.tests.MpfTestCase import MpfTestCase
 class TestCreditsMode(MpfTestCase):
 
     def getConfigFile(self):
-        return 'config.yaml'
+         if self._testMethodName == "test_free_play_at_start":
+            return 'config_freeplay.yaml'
+         else:
+            return 'config.yaml'
 
     def getMachinePath(self):
         return 'tests/machine_files/credits/'
@@ -22,6 +25,20 @@ class TestCreditsMode(MpfTestCase):
             self.advance_time_and_run()
         else:
             self.assertIsNone(self.machine.game)
+
+    def start_two_player_game(self):
+        # game start should work
+        self.machine.playfield.add_ball = MagicMock()
+        self.machine.ball_controller.num_balls_known = 3
+        self.hit_and_release_switch("s_start")
+        self.advance_time_and_run()
+        self.assertIsNotNone(self.machine.game)
+        self.assertEqual(1, self.machine.game.num_players)
+
+        # add another player
+        self.hit_and_release_switch("s_start")
+        self.advance_time_and_run(1)
+        self.assertEqual(2, self.machine.game.num_players)
 
     def stop_game(self):
         # stop game
@@ -42,8 +59,12 @@ class TestCreditsMode(MpfTestCase):
 
         self.assertEqual("FREEEE", self.machine.get_machine_var('credits_string'))
 
-        # game start should work
-        self.start_game(True)
+        self.start_two_player_game()
+
+    def test_free_play_at_start(self):
+        self.assertEqual("FREE PLAY", self.machine.get_machine_var('credits_string'))
+
+        self.start_two_player_game()
 
     def testToggleEvents(self):
         self.assertTrue(self.machine.mode_controller.is_active('credits'))
@@ -60,7 +81,7 @@ class TestCreditsMode(MpfTestCase):
         self.post_event("toggle_credit_play")
         self.assertEqual("FREE PLAY", self.machine.get_machine_var('credits_string'))
 
-        self.start_game(True)
+        self.start_two_player_game()
         self.stop_game()
 
         self.post_event("enable_credit_play")
