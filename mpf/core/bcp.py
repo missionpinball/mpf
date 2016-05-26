@@ -2,18 +2,12 @@
 
 import logging
 import socket
-import time
-import threading
-import sys
-import traceback
 import urllib.request
 import urllib.parse
 import urllib.error
 from queue import Queue
 import copy
 import json
-
-import select
 
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.player import Player
@@ -850,8 +844,10 @@ class BCP(object):
 
 
 class BCPClientSocket(object):
-    """Parent class for a BCP client socket. (There can be multiple of these to
-    connect to multiple BCP media controllers simultaneously.)
+
+    """Parent class for a BCP client socket.
+
+    (There can be multiple of these to connect to multiple BCP media controllers simultaneously.)
 
     Args:
         machine: The main MachineController object.
@@ -863,7 +859,7 @@ class BCPClientSocket(object):
     """
 
     def __init__(self, machine, name, config, receive_queue):
-
+        """Initialise BCP client socket."""
         self.log = logging.getLogger('BCPClientSocket.' + name)
         self.log.debug('Setting up BCP Client...')
 
@@ -874,12 +870,9 @@ class BCPClientSocket(object):
         self.config = self.machine.config_validator.validate_config(
             'bcp:connections', config, 'bcp:connections')
 
-        self.sending_queue = Queue()
-        self.receive_thread = None
-        self.sending_thread = None
         self.socket = None
-        self.attempt_socket_connection = True
         self._send_goodbye = True
+        self.receive_buffer = b''
 
         self.bcp_client_socket_commands = {'hello': self.receive_hello,
                                            'goodbye': self.receive_goodbye}
@@ -887,8 +880,7 @@ class BCPClientSocket(object):
         self.setup_client_socket()
 
     def setup_client_socket(self):
-        """Sets up the client socket."""
-
+        """Set up the client socket."""
         self.log.info("Connecting to BCP Media Controller at %s:%s...",
                       self.config['host'], self.config['port'])
 
@@ -913,116 +905,67 @@ class BCPClientSocket(object):
 
         self.socket.settimeout(None)
 
-        if self.create_socket_threads():
-            self.send_hello()
-
-    def create_socket_threads(self):
-        """Creates and starts the sending and receiving threads for the BCP
-        socket.
-
-        Returns:
-            True if the socket exists and the threads were started. False if
-            not.
-        """
-
-        if self.socket:
-
-            self.receive_thread = threading.Thread(target=self.receive_loop)
-            self.receive_thread.daemon = True
-            self.receive_thread.start()
-
-            self.sending_thread = threading.Thread(target=self.sending_loop)
-            self.sending_thread.daemon = True
-            self.sending_thread.start()
-
-            return True
-
-        else:
-            return False
+        self.machine.clock.schedule_socket_read_callback(self.socket, self._receive)
+        self.send_hello()
 
     def stop(self):
-        """Stops and shuts down the socket client."""
+        """Stop and shut down the socket client."""
         self.log.debug("Stopping socket client")
 
-        if self.socket:
-            if self._send_goodbye:
-                self.send_goodbye()
+        if self._send_goodbye:
+            self.send_goodbye()
 
-            self.socket.close()
-            BCP.active_connections -= 1
-            self.socket = None  # Socket threads will exit on this
+        self.socket.close()
+        BCP.active_connections -= 1
+        self.socket = None  # Socket threads will exit on this
 
     def send(self, message):
-        """Sends a message to the BCP host.
+        """Send a message to the BCP host.
 
         Args:
             message: String of the message to send.
-
         """
+        self.log.debug('Sending "%s"', message)
+        self.socket.sendall((message + '\n').encode('utf-8'))
 
-        if not self.socket and self.attempt_socket_connection:
-            self.setup_client_socket()
-
-        self.sending_queue.put(message)
-
-    # Disable warning. This needs refactoring anyway when we get rid of the thread
-    # pylint: disable-msg=too-many-nested-blocks
-    def receive_loop(self):
-        socket_bytes = b''
-
+    def _receive(self):
+        """Receive loop."""
         try:
-            while self.socket and not self.machine.thread_stopper.is_set():
-                try:
-                    socket_bytes += self.get_from_socket()
-                except TypeError:
-                    pass
+            self.receive_buffer += self.socket.recv(8192)
+        except ConnectionResetError:
+            # connection has been closed
+            self.socket.close()
+            self.machine.clock.unschedule_socket_read_callback(self.socket)
+            BCP.active_connections -= 1
+            self.machine.done = True
 
-                # All this code exists to build complete messages since what we
-                # get from the socket could be partial messages and/or could
-                # include multiple messages.
+        while True:
+            # All this code exists to build complete messages since what we
+            # get from the socket could be partial messages and/or could
+            # include multiple messages.
+            message, nl, leftovers = self.receive_buffer.partition(b'\n')
 
-                if socket_bytes:
-                    message, nl, leftovers = socket_bytes.partition(b'\n')
+            if not nl:  # \n not found. msg not complete. wait for later
+                break
 
-                    if not nl:  # \n not found, so we go back for more
-                        continue
+            if b'&bytes=' in message:
+                message, bytes_needed = message.split(b'&bytes=')
+                bytes_needed = int(bytes_needed)
 
-                    if b'&bytes=' in message:
-                        message, bytes_needed = message.split(b'&bytes=')
-                        bytes_needed = int(bytes_needed)
+                rawbytes = leftovers
+                if len(rawbytes) < bytes_needed:
+                    break
 
-                        rawbytes = leftovers
-                        next_message = b''
+                rawbytes, next_message = (
+                    rawbytes[0:bytes_needed],
+                    rawbytes[bytes_needed:])
 
-                        if len(rawbytes) >= bytes_needed:
-                            rawbytes, next_message = (
-                                rawbytes[0:bytes_needed],
-                                rawbytes[bytes_needed:])
+                self._process_command(message, rawbytes)
+                self.receive_buffer = next_message
 
-                        else:
-                            while len(rawbytes) < bytes_needed:
-                                rawbytes += self.get_from_socket()
-
-                                if len(rawbytes) >= bytes_needed:
-                                    rawbytes, next_message = (
-                                        rawbytes[0:bytes_needed],
-                                        rawbytes[bytes_needed:])
-
-                        self._process_command(message, rawbytes)
-                        socket_bytes = next_message
-
-                    else:  # no bytes in the message
-                        socket_bytes = leftovers
-                        self._process_command(message)
-
-        # pylint: disable-msg=broad-except
-        except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            lines = traceback.format_exception(exc_type, exc_value,
-                                               exc_traceback)
-            msg = ''.join(line for line in lines)
-            self.machine.crash_queue.put(msg)
-            self.receive_goodbye()
+            else:  # no bytes in the message
+                self.receive_buffer = leftovers
+                self._process_command(message)
 
     def _process_command(self, message, rawbytes=None):
         self.log.debug('Received "%s"', message)
@@ -1034,63 +977,12 @@ class BCPClientSocket(object):
         else:
             self.receive_queue.put((cmd, kwargs, rawbytes))
 
-    def get_from_socket(self, num_bytes=8192):
-        """Reads whatever data is sitting in the receiving socket, converts it
-        to a string via UTF-8 decoding, and returns it.
-
-        Args:
-            num_bytes: Int of the max number of bytes to read.
-
-        Returns:
-            The data in raw string format.
-
-        """
-        try:
-            ready = select.select([self.socket], [], [], 1)
-            if ready[0]:
-                b = self.socket.recv(num_bytes)
-                if b:
-                    return b
-                else:
-                    self.receive_goodbye()
-            else:
-                return b''
-        except socket.error:
-            self.log.info("Media Controller disconnected. Shutting down...")
-            self.receive_goodbye()
-            return b''
-
-    def sending_loop(self):
-        """Sending loop which transmits data from the sending queue to the
-        remote socket.
-
-        This method is run as a thread.
-        """
-        try:
-            while self.socket and not self.machine.thread_stopper.is_set():
-                message = self.sending_queue.get()
-
-                try:
-                    self.log.debug('Sending "%s"', message)
-                    self.socket.sendall((message + '\n').encode('utf-8'))
-
-                except (IOError, AttributeError):
-                    self.receive_goodbye()
-
-        # pylint: disable-msg=broad-except
-        except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
-            msg = ''.join(line for line in lines)
-            self.machine.crash_queue.put(msg)
-            self.receive_goodbye()
-
     def receive_hello(self, **kwargs):
-        """Processes incoming BCP 'hello' command."""
+        """Process incoming BCP 'hello' command."""
         self.log.debug('Received BCP Hello from host with kwargs: %s', kwargs)
 
     def receive_goodbye(self):
-        """Processes incoming BCP 'goodbye' command."""
+        """Process incoming BCP 'goodbye' command."""
         self._send_goodbye = False
         self.stop()
         self.machine.bcp.remove_bcp_connection(self)
@@ -1099,12 +991,12 @@ class BCPClientSocket(object):
         self.machine.stop()
 
     def send_hello(self):
-        """Sends BCP 'hello' command."""
+        """Send BCP 'hello' command."""
         self.send(encode_command_string('hello',
                                         version=__bcp_version__,
                                         controller_name='Mission Pinball Framework',
                                         controller_version=__version__))
 
     def send_goodbye(self):
-        """Sends BCP 'goodbye' command."""
+        """Send BCP 'goodbye' command."""
         self.send('goodbye')
