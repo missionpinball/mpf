@@ -1,3 +1,4 @@
+"""Test high score mode."""
 from collections import OrderedDict
 
 from unittest.mock import MagicMock
@@ -71,8 +72,7 @@ class TestHighScoreMode(MpfTestCase):
 
         self.assertIn(bcp_command, self.sent_bcp_commands)
 
-        self.machine.bcp.receive_queue.put(('trigger',
-            dict(name='text_input_high_score_complete', text='NEW'), None))
+        self.machine.bcp.process_bcp_message('trigger', dict(name='text_input_high_score_complete', text='NEW'), None)
 
         # award slide display time is 4 secs
         self.advance_time_and_run(2)
@@ -121,8 +121,7 @@ class TestHighScoreMode(MpfTestCase):
         self.assertIn(bcp_command, self.sent_bcp_commands)
         self.sent_bcp_commands = list()
 
-        self.machine.bcp.receive_queue.put(('trigger',
-            dict(name='text_input_high_score_complete', text='NEW'), None))
+        self.machine.bcp.process_bcp_message('trigger', dict(name='text_input_high_score_complete', text='NEW'), None)
         self.advance_time_and_run(1)
 
         # High score 1
@@ -140,8 +139,7 @@ class TestHighScoreMode(MpfTestCase):
         self.advance_time_and_run(4)
         self.assertIn(bcp_command, self.sent_bcp_commands)
 
-        self.machine.bcp.receive_queue.put(('trigger',
-            dict(name='text_input_high_score_complete', text='P2'), None))
+        self.machine.bcp.process_bcp_message('trigger', dict(name='text_input_high_score_complete', text='P2'), None)
         self.advance_time_and_run(5)
 
         # High score done
@@ -151,10 +149,10 @@ class TestHighScoreMode(MpfTestCase):
         # verify the data is accurate
         new_score_data = OrderedDict()
         new_score_data['score'] = [('NEW', 10000000),
-                                            ('P2', 8000000),
-                                            ('BRI', 7050550),
-                                            ('GHK', 93060),
-                                            ('JK', 87890)]
+                                   ('P2', 8000000),
+                                   ('BRI', 7050550),
+                                   ('GHK', 93060),
+                                   ('JK', 87890)]
         new_score_data['loops'] = []
 
         self.assertEqual(new_score_data,
@@ -178,8 +176,7 @@ class TestHighScoreMode(MpfTestCase):
 
         self.assertIn(bcp_command, self.sent_bcp_commands)
 
-        self.machine.bcp.receive_queue.put(('trigger',
-            dict(name='text_input_high_score_complete', text='NEW'), None))
+        self.machine.bcp.process_bcp_message('trigger', dict(name='text_input_high_score_complete', text='NEW'), None)
 
         self.advance_time_and_run(5)
         self.assertFalse(self.machine.modes.high_score.active)
@@ -217,8 +214,8 @@ class TestHighScoreMode(MpfTestCase):
 
         self.assertIn(bcp_command, self.sent_bcp_commands)
 
-        self.machine.bcp.receive_queue.put(('trigger',
-            dict(name='text_input_high_score_complete', text='NEWNEW'), None))
+        self.machine.bcp.process_bcp_message(
+            'trigger', dict(name='text_input_high_score_complete', text='NEWNEW'), None)
 
         self.advance_time_and_run(5)
         self.assertFalse(self.machine.modes.high_score.active)
@@ -268,8 +265,7 @@ class TestHighScoreMode(MpfTestCase):
 
         self.assertIn(bcp_command, self.sent_bcp_commands)
         self.sent_bcp_commands = list()
-        self.machine.bcp.receive_queue.put(('trigger',
-            dict(name='text_input_high_score_complete', text='NEW'), None))
+        self.machine.bcp.process_bcp_message('trigger', dict(name='text_input_high_score_complete', text='NEW'), None)
         self.advance_time_and_run(5)
 
         # High score 1
@@ -280,8 +276,7 @@ class TestHighScoreMode(MpfTestCase):
 
         self.assertIn(bcp_command, self.sent_bcp_commands)
         self.sent_bcp_commands = list()
-        self.machine.bcp.receive_queue.put(('trigger',
-            dict(name='text_input_high_score_complete', text='P1'), None))
+        self.machine.bcp.process_bcp_message('trigger', dict(name='text_input_high_score_complete', text='P1'), None)
         self.advance_time_and_run(5)
 
         # Loops champ
@@ -292,8 +287,7 @@ class TestHighScoreMode(MpfTestCase):
 
         self.assertIn(bcp_command, self.sent_bcp_commands)
         self.sent_bcp_commands = list()
-        self.machine.bcp.receive_queue.put(('trigger',
-            dict(name='text_input_high_score_complete', text='YAY'), None))
+        self.machine.bcp.process_bcp_message('trigger', dict(name='text_input_high_score_complete', text='YAY'), None)
         self.advance_time_and_run(5)
 
         # High score done
