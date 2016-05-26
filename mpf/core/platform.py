@@ -27,6 +27,7 @@ class BasePlatform(metaclass=abc.ABCMeta):
         self.features['has_leds'] = False
         self.features['has_switches'] = False
         self.features['has_drivers'] = False
+        self.features['tickless'] = False
 
     def debug_log(self, msg, *args, **kwargs):
         """Log when debug is set to True for platform."""

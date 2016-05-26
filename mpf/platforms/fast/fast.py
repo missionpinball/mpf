@@ -63,6 +63,8 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             raise AssertionError('Could not import "pySerial". This is '
                                  'required for the FAST platform interface')
 
+        self.features['tickless'] = True
+
         self.dmd_connection = None
         self.net_connection = None
         self.rgb_connection = None
@@ -552,14 +554,6 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             FASTDMD(self.machine, self.dmd_connection.send).update)
 
         return
-
-    def tick(self, dt):
-        """Tick time.
-
-        Args:
-            dt: time since last tick
-        """
-        pass
 
     @classmethod
     def get_coil_config_section(cls):

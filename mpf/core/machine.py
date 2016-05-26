@@ -172,6 +172,8 @@ class MachineController(object):
     def _initialize_platforms(self):
         for platform in list(self.hardware_platforms.values()):
             platform.initialize()
+            if not platform.features['tickless']:
+                self.clock.schedule_interval(platform.tick, 0.01)
 
     def _initialize_credit_string(self):
         # Do this here so there's a credit_string var even if they're not using
@@ -568,12 +570,7 @@ class MachineController(object):
         self.log_loop_rate()
 
     def process_frame(self):
-        """Processes the current frame and ticks the clock to wait for the
-        next one"""
-        # TODO: Replace the function call below
-        # todo should the platforms register for their own ticks?
-        self.default_platform.tick(self.clock.frametime)
-
+        """Process one machine loop iteration."""
         # Process events before processing the clock
         self.events.process_event_queue()
 
