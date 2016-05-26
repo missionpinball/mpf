@@ -43,8 +43,9 @@ class ShowController(object):
         external show object.
         """
 
+        # TODO: this queue is not needed since its processed in the same thread. Part of #154
         # Setup the callback schedule (every frame)
-        self.machine.clock.schedule_interval(self._tick, 0)
+        # self.machine.clock.schedule_interval(self._tick, 0)
 
         # Registers Show with the asset manager
         Show.initialize(self.machine)
