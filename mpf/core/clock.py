@@ -710,14 +710,20 @@ class ClockBase(_ClockBase):
 
             sleeptime = 1 / fps - (self.time() - self._last_tick)
 
-            sleeptime -= sleep_undershoot
-            if sleeptime < min_sleep:
-                sleeptime = min_sleep
-            read_sockets = self.read_sockets.keys()
-            read_ready, _, _ = select.select(read_sockets, [], [], sleeptime)
-            if read_ready:
-                for socket in read_sockets:
-                    self.read_sockets[socket]()
+            # Since windows will fail when calling select without sockets we have to fall back to usleep in that case.
+            if self.read_sockets:
+                sleeptime -= sleep_undershoot
+                if sleeptime < min_sleep:
+                    sleeptime = min_sleep
+                read_sockets = self.read_sockets.keys()
+                read_ready, _, _ = select.select(read_sockets, [], [], sleeptime)
+                if read_ready:
+                    for socket in read_sockets:
+                        self.read_sockets[socket]()
+            else:
+                while sleeptime - sleep_undershoot > min_sleep:
+                    usleep(1000000 * (sleeptime - sleep_undershoot))
+                    sleeptime = 1 / fps - (self.time() - self._last_tick)
 
         # tick the current time
         current = self.time()
