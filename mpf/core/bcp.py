@@ -773,18 +773,24 @@ class BCPClientSocket(object):
             message: String of the message to send.
         """
         self.log.debug('Sending "%s"', message)
-        self.socket.sendall((message + '\n').encode('utf-8'))
+        try:
+            self.socket.sendall((message + '\n').encode('utf-8'))
+        except BrokenPipeError:
+            self._handle_connection_close()
+
+    def _handle_connection_close(self):
+        # connection has been closed
+        self.socket.close()
+        self.machine.clock.unschedule_socket_read_callback(self.socket)
+        BCP.active_connections -= 1
+        self.machine.done = True
 
     def _receive(self):
         """Receive loop."""
         try:
             self.receive_buffer += self.socket.recv(8192)
         except ConnectionResetError:
-            # connection has been closed
-            self.socket.close()
-            self.machine.clock.unschedule_socket_read_callback(self.socket)
-            BCP.active_connections -= 1
-            self.machine.done = True
+            self._handle_connection_close()
 
         while True:
             # All this code exists to build complete messages since what we
