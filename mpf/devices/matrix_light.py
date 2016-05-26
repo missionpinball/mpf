@@ -348,7 +348,7 @@ class MatrixLight(SystemWideDevice):
         if self.debug:
             self.log.debug("Setting up the fade task")
 
-        self.machine.clock.schedule_interval(self._fade_task, 0)
+        self.machine.clock.schedule_interval(self._fade_task, 1 / self.machine.config['mpf']['default_fade_hz'])
 
     def _fade_task(self, dt):
         del dt
