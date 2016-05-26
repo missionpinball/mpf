@@ -718,7 +718,7 @@ class ClockBase(_ClockBase):
                 read_sockets = self.read_sockets.keys()
                 read_ready, _, _ = select.select(read_sockets, [], [], sleeptime)
                 if read_ready:
-                    for socket in read_sockets:
+                    for socket in list(read_sockets):
                         self.read_sockets[socket]()
             else:
                 while sleeptime - sleep_undershoot > min_sleep:
@@ -793,7 +793,21 @@ class ClockBase(_ClockBase):
         return ev
 
     def schedule_socket_read_callback(self, socket, callback):
+        """Schedule a callback when the socket is ready.
+
+        Args:
+            socket: Any type of socket which can be passed to select.
+            callback: Callback to call
+        """
         self.read_sockets[socket] = callback
+
+    def unschedule_socket_read_callback(self, socket):
+        """Remove a socket callback which has to be registered.
+
+        Args:
+            socket: Socket so remove.
+        """
+        del self.read_sockets[socket]
 
     def schedule_once(self, callback, timeout=0, priority=1):
         """Schedule an event in <timeout> seconds. If <timeout> is unspecified
