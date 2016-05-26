@@ -16,7 +16,7 @@ from mpf._version import __version__, __bcp_version__
 
 
 def decode_command_string(bcp_string):
-    """Decodes a BCP command string into separate command and paramter parts.
+    """Decode a BCP command string into separate command and paramter parts.
 
     Args:
         bcp_string: The incoming UTF-8, URL encoded BCP command string.
@@ -66,7 +66,7 @@ def decode_command_string(bcp_string):
 
 
 def encode_command_string(bcp_command, **kwargs):
-    """Encodes a BCP command and kwargs into a valid BCP command string.
+    """Encode a BCP command and kwargs into a valid BCP command string.
 
     Args:
         bcp_command: String of the BCP command name.
@@ -85,7 +85,6 @@ def encode_command_string(bcp_command, **kwargs):
     will be preserved.
 
     """
-
     kwarg_string = ''
     json_needed = False
 
@@ -118,6 +117,7 @@ def encode_command_string(bcp_command, **kwargs):
 
 
 class BCP(object):
+
     """The parent class for the BCP client.
 
     This class can support connections with multiple remote hosts at the same
@@ -149,6 +149,7 @@ class BCP(object):
     active_connections = 0
 
     def __init__(self, machine):
+        """Initialise BCP."""
         self.log = logging.getLogger('BCP')
         self.machine = machine
 
@@ -204,11 +205,6 @@ class BCP(object):
         except KeyError:
             pass
 
-        try:
-            self._setup_track_volumes(self.machine.config['volume'])
-        except KeyError:
-            pass
-
         self._parse_filters_from_config()
 
         self._setup_machine_var_monitor()
@@ -223,12 +219,6 @@ class BCP(object):
                                         self.bcp_player_added)
         self.machine.events.add_handler('machine_reset_phase_1',
                                         self.bcp_reset)
-        self.machine.events.add_handler('increase_volume', self.increase_volume)
-        self.machine.events.add_handler('decrease_volume', self.decrease_volume)
-        self.machine.events.add_handler('enable_volume_keys',
-                                        self.enable_volume_keys)
-        self.machine.events.add_handler('disable_volume_keys',
-                                        self.disable_volume_keys)
         self.machine.events.add_handler('bcp_get_led_coordinates',
                                         self.get_led_coordinates)
 
@@ -238,7 +228,7 @@ class BCP(object):
     def __repr__(self):
         return '<BCP Module>'
 
-    def register_connection_callback(self, callback):
+    def _register_connection_callback(self, callback):
         # This is a callback that is called after BCP is connected. If
         # bcp is connected when this is called, the callback will be called
         # at the end of the current frame.
@@ -289,7 +279,7 @@ class BCP(object):
                 return
 
         if platform.features['has_dmd']:
-            self.register_connection_callback(platform.configure_dmd)
+            self._register_connection_callback(platform.configure_dmd)
 
     def _setup_rgb_dmd(self):
         if self.machine.config['hardware']['rgb_dmd'] == 'default':
@@ -303,7 +293,7 @@ class BCP(object):
 
         if platform.features['has_rgb_dmd']:
             # print("RGB DMD PLATFORM ", platform)
-            self.register_connection_callback(platform.configure_rgb_dmd)
+            self._register_connection_callback(platform.configure_rgb_dmd)
 
     def register_dmd(self, dmd_update_meth):
         self.physical_dmd_update_callback = dmd_update_meth
@@ -363,12 +353,11 @@ class BCP(object):
                       value=settings['value'])
 
     def remove_bcp_connection(self, bcp_client):
-        """Removes a BCP connection to a remote BCP host.
+        """Remove a BCP connection to a remote BCP host.
 
         Args:
             bcp_client: A reference to the BCPClientSocket instance you want to
                 remove.
-
         """
         try:
             self.bcp_clients.remove(bcp_client)
@@ -427,7 +416,7 @@ class BCP(object):
                       change=change)
 
     def process_bcp_events(self):
-        """Processes the BCP Events from the config."""
+        """Process the BCP Events from the config."""
         # config is localized to BCPEvents
         for event, settings in self.bcp_events.items():
             if 'params' in settings:
@@ -471,7 +460,7 @@ class BCP(object):
             self.send(command)
 
     def send(self, bcp_command, callback=None, **kwargs):
-        """Sends a BCP message.
+        """Send a BCP message.
 
         Args:
             bcp_command: String name of the BCP command that will be sent.
@@ -486,7 +475,6 @@ class BCP(object):
 
             The BCP command that will be sent will be this:
                 trigger?ball=1&string=hello
-
         """
         if not self.configured:
             return
@@ -499,9 +487,7 @@ class BCP(object):
             callback()
 
     def get_bcp_messages(self, dt):
-        """Retrieves and processes new BCP messages from the receiving queue.
-
-        """
+        """Retrieve and process new BCP messages from the receiving queue."""
         del dt
 
         while not self.receive_queue.empty():
@@ -520,7 +506,7 @@ class BCP(object):
                 pass
 
     def shutdown(self):
-        """Prepares the BCP clients for MPF shutdown."""
+        """Prepare the BCP clients for MPF shutdown."""
         for client in self.bcp_clients:
             client.stop()
 
@@ -530,17 +516,15 @@ class BCP(object):
 
         This method only posts a warning to the log. It doesn't do anything else
         at this point.
-
         """
         del rawbytes
         self.log.warning('Received Error command from host with parameters: %s',
                          kwargs)
 
     def bcp_receive_get(self, names, rawbytes, **kwargs):
-        """Processes an incoming BCP 'get' command by posting an event
-        'bcp_get_<name>'. It's up to an event handler to register for that
-        event and to send the response BCP 'set' command.
+        """Process an incoming BCP 'get' command by posting an event 'bcp_get_<name>'.
 
+        It's up to an event handler to register for that event and to send the response BCP 'set' command.
         """
         del kwargs
         del rawbytes
@@ -552,7 +536,7 @@ class BCP(object):
         '''
 
     def bcp_receive_set(self, rawbytes, **kwargs):
-        """Processes an incoming BCP 'set' command by posting an event
+        """Process an incoming BCP 'set' command by posting an event
         'bcp_set_<name>' with a parameter value=<value>. It's up to an event
         handler to register for that event and to do something with it.
 
@@ -578,8 +562,9 @@ class BCP(object):
         self.machine.bcp_reset_complete()
 
     def bcp_mode_start(self, config, priority, mode, **kwargs):
-        """Sends BCP 'mode_start' to the connected BCP hosts and schedules
-        automatic sending of 'mode_stop' when the mode stops.
+        """Send BCP 'mode_start' to the connected BCP hosts.
+
+        Schedule automatic sending of 'mode_stop' when the mode stops.
         """
         del config
         del kwargs
@@ -588,7 +573,7 @@ class BCP(object):
         return self.bcp_mode_stop, mode.name
 
     def bcp_mode_stop(self, name, **kwargs):
-        """Sends BCP 'mode_stop' to the connected BCP hosts."""
+        """Send BCP 'mode_stop' to the connected BCP hosts."""
         del kwargs
         self.send('mode_stop', name=name)
 
@@ -597,15 +582,13 @@ class BCP(object):
         self.send('reset')
 
     def bcp_receive_switch(self, name, state, rawbytes, **kwargs):
-        """Processes an incoming switch state change request from a remote BCP
-        host.
+        """Process an incoming switch state change request from a remote BCP host.
 
         Args:
             name: String name of the switch to set.
             state: Integer representing the state this switch will be set to.
                 1 = active, 0 = inactive, -1 means this switch will be flipped
                 from whatever its current state is to the opposite state.
-
         """
         del kwargs
         del rawbytes
@@ -627,15 +610,17 @@ class BCP(object):
                                                       logical=True)
 
     def bcp_receive_dmd_frame(self, rawbytes, **kwargs):
-        """Called when the BCP client receives a new DMD frame from the remote
-        BCP host. This method forwards the frame to the physical DMD.
+        """Called when the BCP client receives a new DMD frame from the remote BCP host.
+
+        This method forwards the frame to the physical DMD.
         """
         del kwargs
         self.physical_dmd_update_callback(rawbytes)
 
     def bcp_receive_rgb_dmd_frame(self, rawbytes, **kwargs):
-        """Called when the BCP client receives a new RGB DMD frame from the
-        remote BCP host. This method forwards the frame to the physical DMD.
+        """Called when the BCP client receives a new RGB DMD frame from the remote BCP host.
+
+        This method forwards the frame to the physical DMD.
         """
         del kwargs
         self.physical_rgb_dmd_update_callback(rawbytes)
@@ -646,12 +631,12 @@ class BCP(object):
         self.add_registered_trigger_event(event)
 
     def bcp_player_added(self, player, num):
-        """Sends BCP 'player_added' to the connected BCP hosts."""
+        """Send BCP 'player_added' to the connected BCP hosts."""
         del player
         self.send('player_added', player_num=num)
 
     def bcp_trigger(self, name, **kwargs):
-        """Sends BCP 'trigger' to the connected BCP hosts."""
+        """Send BCP 'trigger' to the connected BCP hosts."""
         # Since player variables are sent automatically, if we get a trigger
         # for an event that starts with "player_", we need to only send it here
         # if there's *not* a player variable with that name, since if there is
@@ -667,8 +652,7 @@ class BCP(object):
         self.send(bcp_command='trigger', name=name, **kwargs)
 
     def bcp_receive_trigger(self, name=None, rawbytes=None, **kwargs):
-        """Processes an incoming trigger command from a remote BCP host.
-        """
+        """Process an incoming trigger command from a remote BCP host."""
         if not name:
             return
 
@@ -683,138 +667,10 @@ class BCP(object):
         else:
             self.machine.events.post(event=name, **kwargs)
 
-    def _setup_track_volumes(self, config):
-        # config is localized to 'Volume'
-        for k, v in config['tracks'].items():
-            self.track_volumes[k] = v
-
-    def increase_volume(self, track='master', **kwargs):
-        """Sends a command to the remote BCP host to increase the volume of a
-        track by 1 unit.
-
-        Args:
-            track: The string name of the track you want to increase the volume
-                on. Default is 'master'.
-            **kwargs: Ignored. Included in case this method is used as a
-                callback for an event which has other kwargs.
-
-        The max value of the volume for a track is set in the Volume: Steps:
-        entry in the config file. If this increase causes the volume to go above
-        the max value, the increase is ignored.
-
-        """
-        del kwargs
-
-        try:
-            self.track_volumes[track] += 1
-            self.set_volume(self.track_volumes[track], track)
-        except KeyError:
-            self.log.warning('Received volume increase request for unknown '
-                             'track "%s"', track)
-
-    def decrease_volume(self, track='master', **kwargs):
-        """Sends a command to the remote BCP host to decrease the volume of a
-        track by 1 unit.
-
-        Args:
-            track: The string name of the track you want to decrease the volume
-                on. Default is 'master'.
-            **kwargs: Ignored. Included in case this method is used as a
-                callback for an event which has other kwargs.
-
-        If this decrease causes the volume to go below zero, the decrease is
-        ignored.
-
-        """
-        del kwargs
-
-        try:
-            self.track_volumes[track] -= 1
-            self.set_volume(self.track_volumes[track], track)
-        except KeyError:
-            self.log.warning('Received volume decrease request for unknown '
-                             'track "%s"', track)
-
-    def enable_volume_keys(self, up_tag='volume_up', down_tag='volume_down'):
-        """Enables switch handlers to change the master core volume based on
-        switch tags.
-
-        Args:
-            up_tag: String of a switch tag name that will be used to set which
-                switch(es), when activated, increase the volume.
-            down_tag: String of a switch tag name that will be used to set which
-                switch(es), when activated, decrease the volume.
-
-        """
-
-        if self.volume_control_enabled:
-            return
-
-        for switch in self.machine.switches.items_tagged(up_tag):
-            self.machine.switch_controller.add_switch_handler(switch.name, self.increase_volume)
-
-        for switch in self.machine.switches.items_tagged(down_tag):
-            self.machine.switch_controller.add_switch_handler(switch.name, self.decrease_volume)
-
-        self.volume_control_enabled = True
-
-    def disable_volume_keys(self, up_tag='volume_up', down_tag='volume_down'):
-        """Disables switch handlers so that the switches no longer affect the
-        master core volume.
-
-        Args:
-            up_tag: String of a switch tag name of the switches that will no
-                longer be used to increase the volume.
-            down_tag: String of a switch tag name of the switches that will no
-                longer be used to decrease the volume.
-
-        """
-        for switch in self.machine.switches.items_tagged(up_tag):
-            self.machine.switch_controller.remove_switch_handler(switch.name, self.increase_volume)
-
-        for switch in self.machine.switches.items_tagged(down_tag):
-            self.machine.switch_controller.remove_switch_handler(switch.name, self.decrease_volume)
-
-        self.volume_control_enabled = False
-
-    def set_volume(self, volume, track='master', **kwargs):
-        """Sends a command to the remote BCP host to set the volume of a track
-        to the value specified.
-
-        Args:
-            volume: Int of the volume level. Valid range is 0 to the "steps"
-                configuration in your config file. Values outside this range are
-                ignored.
-            track: The string name of the track you want to set the volume on.
-                Default is 'master'.
-            **kwargs: Ignored. Included in case this method is used as a
-                callback for an event which has other kwargs.
-
-        """
-        del kwargs
-
-        try:
-            volume = int(volume)
-        except ValueError:
-            self.log.warning("Received invalid volume setting: '%s'", volume)
-            return
-
-        try:
-            if volume > self.machine.config['volume']['steps']:
-                volume = self.machine.config['volume']['steps']
-            elif volume < 0:
-                volume = 0
-
-            self.track_volumes[track] = volume
-            volume_float = round(volume / float(self.machine.config['volume']['steps']), 2)
-            send_kwargs = {'volume_' + track: volume_float}
-            self.send('config', **send_kwargs)
-        except KeyError:
-            self.log.warning('Received volume for unknown track "%s"', track)
-
     def get_led_coordinates(self):
-        """Creates a list of all LEDs with their corresponding x and y coordinates.  Only
-        LEDs that have been configured with both x and y coordinates are included in the
+        """Create a list of all LEDs with their corresponding x and y coordinates.
+
+        Only LEDs that have been configured with both x and y coordinates are included in the
         list.  The list is sent via BCP set command in the following delimited format:
             led_coordinates=led_01:x,y;led_02:x,y;led_03:x,y;...
         """
@@ -855,7 +711,6 @@ class BCPClientSocket(object):
         config: A dictionary containing the configuration for this client.
         receive_queue: The shared Queue() object that holds incoming BCP
             messages.
-
     """
 
     def __init__(self, machine, name, config, receive_queue):
