@@ -488,7 +488,7 @@ class AssetManager(object):
         self.loader_queue.put(asset)
 
         if not self._loaded_watcher:
-            self.machine.clock.schedule_interval(self._check_loader_status, 0)
+            self.machine.clock.schedule_interval(self._check_loader_status, 0.001)
             self._loaded_watcher = True
 
     def _check_loader_status(self, *args):
