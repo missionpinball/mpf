@@ -199,7 +199,6 @@ just an external thread.
 from sys import platform
 from functools import partial
 
-from queue import PriorityQueue, Empty
 import itertools
 import time
 import logging
@@ -632,7 +631,7 @@ class ClockBase(_ClockBase):
     __slots__ = ('_dt', '_last_fps_tick', '_last_tick', '_fps', '_rfps',
                  '_start_tick', '_fps_counter', '_rfps_counter', 'events',
                  '_frame_callbacks', '_frames', '_frames_displayed',
-                 '_max_fps', 'max_iteration', '_log')
+                 '_max_fps', 'max_iteration', '_log', 'read_sockets')
 
     MIN_SLEEP = 0.005
     SLEEP_UNDERSHOOT = MIN_SLEEP - 0.001
@@ -658,7 +657,7 @@ class ClockBase(_ClockBase):
         self._frames_displayed = 0
         self.events = [[] for dummy_iterator in range(256)]
         self.read_sockets = {}
-        self._frame_callbacks = PriorityQueue()
+        self._frame_callbacks = []
         self._log = logging.getLogger("Clock")
         self._log.debug("Starting clock (maximum frames per second=%s)", self._max_fps)
 
@@ -931,18 +930,14 @@ class ClockBase(_ClockBase):
             event: The event whose callback will be called (in priority order)
                 during the current frame.
         """
-        self._frame_callbacks.put((event.last_event_time, -event.priority, event.id, event))
+        self._frame_callbacks.append((event.last_event_time, -event.priority, event.id, event))
 
     def _process_event_callbacks(self):
         """
         Processes event callbacks that were triggered to be called in the current frame.
         """
-        while True:
-            try:
-                event = self._frame_callbacks.get(block=False)[3]
-            except Empty:
-                return
-
+        for event_obj in sorted(self._frame_callbacks):
+            event = event_obj[3]
             # Call the callback if the event has not been cancelled during the current frame
             if not event.callback_cancelled:
                 callback = event.get_callback()
@@ -954,6 +949,8 @@ class ClockBase(_ClockBase):
                 # if the user returns False explicitly, remove the event
                 if event.loop and ret is False:
                     event.cancel()
+
+        self._frame_callbacks = []
 
     time = staticmethod(partial(_default_time))
 
