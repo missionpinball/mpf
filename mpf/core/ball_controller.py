@@ -233,7 +233,10 @@ class BallController(object):
         returns. If too many balls are missing (based on the config files 'Min
         Balls' setting), it will return False to reject the game start request.
         """
-        balls = self._count_balls()
+        try:
+            balls = self._count_balls()
+        except ValueError:
+            balls = -1
         self.log.debug("Received request to start game.")
         self.log.debug("Balls contained: %s, Min balls needed: %s",
                        balls,
