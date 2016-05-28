@@ -177,7 +177,7 @@ class Game(Mode):
 
         self.machine.events.post_queue('ball_starting',
                                        callback=self.ball_started)
-        '''event: ball_startin
+        '''event: ball_starting
         desc: A ball is starting. This is a queue event, so the ball won't
         actually start until the queue is cleared.'''
 
