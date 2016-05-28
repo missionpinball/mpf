@@ -31,6 +31,7 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
         # switches
         self.hw_switches = dict()
         self.initial_states_sent = False
+        self.features['tickless'] = True
 
     def __repr__(self):
         return '<Platform.Virtual>'
