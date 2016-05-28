@@ -111,11 +111,6 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         self._connect_to_hardware()
 
-        # todo this is a hack since the above call blocks it screws up the
-        # clock. Need to fix this for real
-
-        self.machine.clock.tick()
-
         if 'config_number_format' not in self.machine.config['fast']:
             self.machine.config['fast']['config_number_format'] = 'int'
 
