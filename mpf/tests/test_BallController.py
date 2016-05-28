@@ -54,7 +54,13 @@ class TestBallController(MpfTestCase):
         self.assertEqual(None, self.machine.game)
 
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
+        self.advance_time_and_run(.01)
+        # ball did not settle yet
+        self.machine.switch_controller.process_switch("s_start", 1)
+        self.machine.switch_controller.process_switch("s_start", 0)
         self.advance_time_and_run(1)
+        self.assertEqual(None, self.machine.game)
+
         self.assertEqual(4, self.machine.ball_controller.num_balls_known)
 
         self.assertEqual(None, self.machine.game)
