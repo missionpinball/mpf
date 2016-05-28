@@ -1,3 +1,4 @@
+"""Test coils."""
 from mpf.tests.MpfTestCase import MpfTestCase
 from unittest.mock import MagicMock
 
@@ -29,7 +30,6 @@ class TestDeviceDriver(MpfTestCase):
         self.machine.coils.coil_01.hw_driver.pulse.assert_called_with(self.machine.coils.coil_01, 100)
         self.machine.coils.coil_01.disable()
         self.machine.coils.coil_01.hw_driver.disable.assert_called_with(self.machine.coils.coil_01)
-
 
         self.machine.coils.coil_03.hw_driver.disable = MagicMock()
         self.machine.coils.coil_03.hw_driver.enable = MagicMock()
