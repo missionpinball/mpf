@@ -109,7 +109,7 @@ class HardwarePlatform(DriverPlatform):
 
         # Schedule processing callback
         # TODO: Make callback interval a config item
-        self.machine.clock.schedule_interval(self._tick, 0)
+        self.machine.clock.schedule_interval(self._tick, 0.001)
 
     def _validate_config(self):
         self.system11_config = self.machine.config_validator.validate_config(

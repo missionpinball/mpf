@@ -65,7 +65,7 @@ class TestSnux(MpfTestCase):
         # a side should be triggered first. c side should wait
         self.machine.coils.c_side_a1.pulse(50)
         self.machine.coils.c_side_c1.pulse(50)
-        self.machine_run()
+        self.advance_time_and_run(0.001)
         c_side_a1.pulse.assert_called_with(self.machine.coils.c_side_a1, 50)
         c_side_a1.pulse = MagicMock()
         assert not c_side_c1.pulse.called
