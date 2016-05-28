@@ -196,6 +196,7 @@ from two threads simultaneously without any locking mechanism::
 Note, in the code above, thread 1 or thread 2 could be the main thread, not
 just an external thread.
 """
+from operator import attrgetter
 from sys import platform
 from functools import partial
 
@@ -511,7 +512,7 @@ class ClockEvent(object):
         self._priority = priority
         self._callback_cancelled = False
         if trigger:
-            clock.events[cid].append(self)
+            clock.ordered_events.append(self)
 
     def __call__(self, *largs):
         """ Schedules the callback associated with this instance.
@@ -523,7 +524,7 @@ class ClockEvent(object):
             self._is_triggered = True
             # update starttime
             self._last_dt = self.clock.get_time()
-            self.clock.events[self.cid].append(self)
+            self.clock.ordered_events.append(self)
             return True
 
     def get_callback(self):
@@ -561,7 +562,7 @@ class ClockEvent(object):
         if self._is_triggered:
             self._is_triggered = False
             try:
-                self.clock.events[self.cid].remove(self)
+                self.clock.ordered_events.remove(self)
             except ValueError:
                 pass
 
@@ -629,7 +630,7 @@ class ClockBase(_ClockBase):
     """A clock object with event support.
     """
     __slots__ = ('_dt', '_last_fps_tick', '_last_tick', '_fps', '_rfps',
-                 '_start_tick', '_fps_counter', '_rfps_counter', 'events',
+                 '_start_tick', '_fps_counter', '_rfps_counter', 'events', 'periodic_events', 'ordered_events',
                  '_frame_callbacks', '_frames', '_frames_displayed',
                  '_max_fps', 'max_iteration', '_log', 'read_sockets')
 
@@ -656,6 +657,7 @@ class ClockBase(_ClockBase):
         self._frames = 0
         self._frames_displayed = 0
         self.events = [[] for dummy_iterator in range(256)]
+        self.ordered_events = []
         self.read_sockets = {}
         self._frame_callbacks = []
         self._log = logging.getLogger("Clock")
@@ -693,24 +695,36 @@ class ClockBase(_ClockBase):
         """
         return self._frames_displayed
 
+    def get_next_event_time(self):
+        """Return the time when the next event is scheduled."""
+        if not self.ordered_events:
+            return False
+
+        self.ordered_events.sort(key=attrgetter("next_event_time"), reverse=False)
+        return self.ordered_events[0].next_event_time
+
     def tick(self):
         """Advance the clock to the next step. Must be called every frame.
+
         The default clock has a tick() function called by the core Kivy
         framework."""
 
-        self._release_references()
-
         # do we need to sleep ?
         if self._max_fps > 0:
-            min_sleep = self.MIN_SLEEP
-            sleep_undershoot = self.SLEEP_UNDERSHOOT
+            min_sleep = 0
+            sleep_undershoot = 0 #self.SLEEP_UNDERSHOOT
             fps = self._max_fps
             usleep = self.usleep
 
-            sleeptime = 1 / fps - (self.time() - self._last_tick)
+            # TODO: properly handle get_next_event_time == False
+            sleeptime = self.get_next_event_time() - self.time()
+            if sleeptime <= 0:
+                sleeptime = 0.00001
 
             # Since windows will fail when calling select without sockets we have to fall back to usleep in that case.
             if self.read_sockets:
+                # TODO: handle sleep time == 0
+
                 sleeptime -= sleep_undershoot
                 if sleeptime < min_sleep:
                     sleeptime = min_sleep
@@ -753,8 +767,6 @@ class ClockBase(_ClockBase):
     def tick_draw(self):
         """Tick the drawing counter.
         """
-        self._process_events_before_frame()
-        self._process_event_callbacks()
         self._rfps_counter += 1
         self._frames_displayed += 1
 
@@ -868,59 +880,26 @@ class ClockBase(_ClockBase):
             callback.cancel()
         else:
             if all_events:
-                for ev in self.events[_hash(callback)][:]:
+                for ev in self.ordered_events[:]:
                     if ev.get_callback() == callback:
                         ev.cancel()
             else:
-                for ev in self.events[_hash(callback)][:]:
+                for ev in self.ordered_events[:]:
                     if ev.get_callback() == callback:
                         ev.cancel()
                         break
 
-    def _release_references(self):
-        # call that function to release all the direct reference to any
-        # callback and replace it with a weakref
-        events = self.events
-        for events in self.events:
-            for event in events[:]:
-                if event.callback is not None:
-                    event.release()
-        del events
-
     def _process_events(self):
-        for events in self.events:
-            remove = events.remove
-            for event in events[:]:
-                # event may be already removed from original list
-                if event in events:
-                    event.tick(self._last_tick, remove)
-
-    def _process_events_before_frame(self):
-        found = True
-        count = self.max_iteration
-        events = self.events
-        while found:
-            count -= 1
-            if count == -1:
-                self._log.warning(
-                    'Clock: Warning, too much iteration done before'
-                    ' the next frame. Check your code, or increase'
-                    ' the Clock.max_iteration attribute')
+        if not self.ordered_events:
+            return
+        self.ordered_events.sort(key=attrgetter("next_event_time"), reverse=False)
+        for event in list(self.ordered_events):
+            if event.next_event_time > self._last_tick:
                 break
-
-            # search event that have timeout = -1
-            found = False
-            for events in self.events:
-                remove = events.remove
-                for event in events[:]:
-                    if event.timeout != -1:
-                        continue
-                    found = True
-                    # event may be already removed from original list
-                    if event in events:
-                        event.tick(self._last_tick, remove)
-
-        del events
+            remove = self.ordered_events.remove
+            # event may be already removed from original list
+            if not event.callback_cancelled:
+                event.tick(self._last_tick, remove)
 
     def add_event_to_frame_callbacks(self, event):
         """
