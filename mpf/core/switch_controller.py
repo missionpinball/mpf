@@ -614,4 +614,4 @@ class SwitchController(object):
         self.machine.events.process_event_queue()
         if next_event_time:
             self.machine.clock.schedule_once(self._process_active_timed_switches,
-                                             self.machine.clock.get_time() - next_event_time)
+                                             next_event_time - self.machine.clock.get_time())
