@@ -32,6 +32,11 @@ class ClockTestCase(unittest.TestCase):
         self.clock.tick()
         self.assertEqual(counter, 1)
 
+    def test_schedule_once_with_timeout(self):
+        self.clock.schedule_once(callback, .001)
+        self.clock.tick()
+        self.assertEqual(counter, 1)
+
     def test_schedule_once_twice(self):
         self.clock.schedule_once(callback)
         self.clock.schedule_once(callback)
@@ -45,13 +50,6 @@ class ClockTestCase(unittest.TestCase):
         self.clock.tick()
         self.assertEqual(counter, 1)
 
-    def test_schedule_once_draw_before(self):
-        self.clock.schedule_once(callback, -1)
-        self.clock.tick_draw()
-        self.assertEqual(counter, 1)
-        self.clock.tick()
-        self.assertEqual(counter, 1)
-
     def test_unschedule(self):
         self.clock.schedule_once(callback)
         self.clock.unschedule(callback)
@@ -59,7 +57,8 @@ class ClockTestCase(unittest.TestCase):
         self.assertEqual(counter, 0)
 
     def test_unschedule_after_tick(self):
-        self.clock.schedule_once(callback, 5.)
+        self.clock.schedule_once(callback, .02)
+        self.clock.schedule_once(partial(self.callback1, 1), timeout=.01)
         self.clock.tick()
         self.clock.unschedule(callback)
         self.clock.tick()
@@ -79,7 +78,7 @@ class ClockTestCase(unittest.TestCase):
         self.clock.schedule_once(partial(self.callback1, 2), timeout=0.00002)
         self.clock.schedule_once(partial(self.callback1, 1), timeout=0.00001)
         self.clock.tick()
-        self.assertTrue(self.clock.frametime >= 0.0002)
+        self.assertTrue(self.clock.frametime >= 0.00001)
         self.assertTrue(self.callback_order[0] == 1 and self.callback_order[1] == 2)
         self.callback_order.clear()
 
