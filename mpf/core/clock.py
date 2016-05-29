@@ -731,7 +731,7 @@ class ClockBase(_ClockBase):
                 read_sockets = self.read_sockets.keys()
                 read_ready, _, _ = select.select(read_sockets, [], [], sleeptime)
                 if read_ready:
-                    for socket in list(read_sockets):
+                    for socket in list(read_ready):
                         self.read_sockets[socket]()
             else:
                 while sleeptime - sleep_undershoot > min_sleep:
