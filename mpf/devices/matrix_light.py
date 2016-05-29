@@ -29,7 +29,9 @@ class MatrixLight(SystemWideDevice):
         machine.validate_machine_config_section('matrix_light_settings')
 
         # todo make time configurable
-        machine.clock.schedule_interval(cls.update_matrix_lights, 0, -100)
+        machine.clock.schedule_interval(cls.update_matrix_lights,
+                                        1 / machine.config['mpf']['default_matrix_light_hw_update_hz'],
+                                        -100)
 
         machine.mode_controller.register_stop_method(cls.mode_stop)
 
