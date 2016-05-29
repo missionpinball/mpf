@@ -1557,7 +1557,7 @@ class BallDevice(SystemWideDevice):
             self.log.debug("Setting up eject confirmation")
             self.eject_start_time = self.machine.clock.get_time()
             self.log.debug("Eject start time: %s", self.eject_start_time)
-            self.machine.clock.schedule_interval(self._eject_status, 0.25)
+            self.machine.clock.schedule_interval(self._eject_status, 1)
 
         timeout = self.config['eject_timeouts'][target]
         if timeout:
