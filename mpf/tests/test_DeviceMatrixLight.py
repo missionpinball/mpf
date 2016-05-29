@@ -1,3 +1,5 @@
+from mpf.devices.matrix_light import MatrixLight
+
 from mpf.tests.MpfTestCase import MpfTestCase
 
 
@@ -11,6 +13,16 @@ class TestDeviceMatrixLight(MpfTestCase):
 
     def get_platform(self):
         return 'smart_virtual'
+
+    def _synchronise_light_update(self):
+        ts = False
+        for event in self.machine.clock.ordered_events:
+            if event.get_callback() == MatrixLight.update_matrix_lights:
+                ts = event.next_event_time
+
+        self.assertTrue(ts)
+        self.advance_time_and_run(ts - self.machine.clock.get_time())
+        self.advance_time_and_run(0.01)
 
     def testBasicOnAndOff(self):
         """Tests setting some light brightness levels (using default arguments)"""
@@ -73,6 +85,7 @@ class TestDeviceMatrixLight(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEqual(0, light.hw_driver.current_brightness)
 
+        self._synchronise_light_update()
         light.on(255, fade_ms=1000)
         fade_start_time = self.machine.clock.get_time()
 
@@ -92,7 +105,7 @@ class TestDeviceMatrixLight(MpfTestCase):
         self.assertEqual(0, light.stack[0]['priority'])
 
         # Advance time 25% of the fade and check brightness
-        self.advance_time_and_run(0.25)
+        self.advance_time_and_run(0.26)
         self.assertTrue(light.fade_in_progress)
         self.assertEqual(63, light.stack[0]['brightness'])
         self.assertEqual(0, light.stack[0]['start_brightness'])
@@ -100,21 +113,21 @@ class TestDeviceMatrixLight(MpfTestCase):
         self.assertEqual(63, light.hw_driver.current_brightness)
 
         # Advance time another 25% of the fade and check brightness
-        self.advance_time_and_run(0.25)
-        self.assertEqual(127, light.stack[0]['brightness'])
+        self.advance_time_and_run(0.24)
+        self.assertEqual(124, light.stack[0]['brightness'])
         self.assertEqual(0, light.stack[0]['start_brightness'])
         self.assertEqual(255, light.stack[0]['dest_brightness'])
-        self.assertEqual(127, light.hw_driver.current_brightness)
+        self.assertEqual(124, light.hw_driver.current_brightness)
 
         # Advance time another 25% of the fade and check brightness
-        self.advance_time_and_run(0.25)
+        self.advance_time_and_run(0.26)
         self.assertEqual(191, light.stack[0]['brightness'])
         self.assertEqual(0, light.stack[0]['start_brightness'])
         self.assertEqual(255, light.stack[0]['dest_brightness'])
         self.assertEqual(191, light.hw_driver.current_brightness)
 
         # Advance time the last 25% of the fade and check brightness (should be done)
-        self.advance_time_and_run(0.25)
+        self.advance_time_and_run(0.26)
         self.assertEqual(255, light.stack[0]['brightness'])
         self.assertEqual(0, light.stack[0]['start_brightness'])
         self.assertEqual(255, light.stack[0]['dest_brightness'])
@@ -128,9 +141,10 @@ class TestDeviceMatrixLight(MpfTestCase):
 
         self.advance_time_and_run(1)
         self.assertEqual(0, light.hw_driver.current_brightness)
+        self._synchronise_light_update()
         light.on()
-        self.advance_time_and_run(.5)
-        self.assertEqual(127, light.hw_driver.current_brightness)
+        self.advance_time_and_run(.52)
+        self.assertEqual(130, light.hw_driver.current_brightness)
         self.advance_time_and_run(.5)
         self.assertEqual(255, light.hw_driver.current_brightness)
 
@@ -145,6 +159,7 @@ class TestDeviceMatrixLight(MpfTestCase):
 
         self.assertEqual(255, light.hw_driver.current_brightness)
 
+        self._synchronise_light_update()
         light.on(0, fade_ms=1000)
         fade_start_time = self.machine.clock.get_time()
         self.assertEqual(255, light.stack[0]['brightness'])
@@ -153,10 +168,11 @@ class TestDeviceMatrixLight(MpfTestCase):
 
         # Advance time 50% of the fade and check brightness
         self.advance_time_and_run(0.5)
-        self.assertEqual(128, light.stack[0]['brightness'])
+        self.assertEqual(fade_start_time, light.stack[0]['start_time'])
+        self.assertEqual(131, light.stack[0]['brightness'])
         self.assertEqual(255, light.stack[0]['start_brightness'])
         self.assertEqual(0, light.stack[0]['dest_brightness'])
-        self.assertEqual(128, light.hw_driver.current_brightness)
+        self.assertEqual(131, light.hw_driver.current_brightness)
 
         # Now interrupt the fade
         light._end_fade()
@@ -165,5 +181,5 @@ class TestDeviceMatrixLight(MpfTestCase):
         self.advance_time_and_run(2)
 
         # Fade should have been completed when ended
-        self.assertEqual(128, light.hw_driver.current_brightness)
+        self.assertEqual(131, light.hw_driver.current_brightness)
         self.assertFalse(light.fade_in_progress)
