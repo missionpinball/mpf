@@ -141,7 +141,9 @@ class MatrixLight(SystemWideDevice):
     # pylint: disable-msg=too-many-arguments
     def on(self, brightness=255, fade_ms=None, priority=0, key=None, mode=None,
            **kwargs):
-        """Add or updates a brightness entry in this lights's stack, which is
+        """Turn light on.
+
+        Add or updates a brightness entry in this lights's stack, which is
         how you tell this light how bright you want it to be.
 
         Args:
