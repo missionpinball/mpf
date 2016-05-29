@@ -363,10 +363,11 @@ class SwitchController(object):
                     if self.active_timed_switches[k]:
                         del self.active_timed_switches[k]
 
-    def _add_timed_swich_handler(self, key, value):
+    def _add_timed_switch_handler(self, key, value):
         self.active_timed_switches[key].append(value)
+        self.machine.clock.unschedule(self._process_active_timed_switches)
         self.machine.clock.schedule_once(self._process_active_timed_switches,
-                                         self.machine.clock.get_time() - self.get_next_timed_switch_event())
+                                         self.get_next_timed_switch_event() - self.machine.clock.get_time())
 
     def _call_handlers(self, name, state):
         # Combine name & state so we can look it up
@@ -389,7 +390,7 @@ class SwitchController(object):
                              'removed': False,
                              'return_info': entry['return_info'],
                              'callback_kwargs': entry['callback_kwargs']}
-                    self._add_timed_swich_handler(key, value)
+                    self._add_timed_switch_handler(key, value)
                     self.log.debug(
                         "Found timed switch handler for k/v %s / %s",
                         key, value)
@@ -475,7 +476,7 @@ class SwitchController(object):
                              'removed': False,
                              'return_info': return_info,
                              'callback_kwargs': callback_kwargs}
-                    self._add_timed_swich_handler(key, value)
+                    self._add_timed_switch_handler(key, value)
             elif state == 0:
                 if self.is_inactive(switch_name, 0) and (
                         self.ms_since_change(switch_name) < ms):
@@ -488,7 +489,7 @@ class SwitchController(object):
                              'removed': False,
                              'return_info': return_info,
                              'callback_kwargs': callback_kwargs}
-                    self._add_timed_swich_handler(key, value)
+                    self._add_timed_switch_handler(key, value)
 
         # Return the args we used to setup this handler for easy removal later
         return {'switch_name': switch_name,
@@ -613,5 +614,6 @@ class SwitchController(object):
 
         self.machine.events.process_event_queue()
         if next_event_time:
+            self.machine.clock.unschedule(self._process_active_timed_switches)
             self.machine.clock.schedule_once(self._process_active_timed_switches,
                                              next_event_time - self.machine.clock.get_time())
