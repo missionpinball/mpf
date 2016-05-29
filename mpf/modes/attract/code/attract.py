@@ -24,8 +24,6 @@ class Attract(Mode):
 
         """
 
-        # self.machine.events.post('attract_start')
-
         # register switch handlers for the start button press so we can
         # capture long presses
 

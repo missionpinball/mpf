@@ -222,7 +222,7 @@ config:
 config_player_common:
     __valid_in__: None
     priority: single|int|0
-control_events:
+control_events:  # subconfig for mode timers
     __valid_in__: None
     action: single|enum(add,subtract,jump,start,stop,reset,restart,pause,set_tick_interval,change_tick_interval)|
     event: single|str|
@@ -1113,19 +1113,16 @@ widgets:
         video: single|str|
         height: single|int|0
         width: single|int|0
-        # loop: single|bool|False
         volume: single|float|1.0
-        # start_frame: ignore
-        # play_now: ignore
-        start_pos: single|float|0.0
         auto_play: single|bool|True
         end_behavior: single|enum(loop,pause,stop)|stop
-        play_events: list|str|None
-        pause_events: list|str|None
-        stop_events: list|str|None
-        seek_events: dict|float:str|None
-        volume_events: dict|float:str|None
-        position_events: dict|float:str|None
+        control_events: list|subconfig(video_control_events)|None
+
+video_control_events:
+    __valid_in__: None
+    action: single|enum(play,pause,stop,seek,volume,position)|
+    event: single|str|
+    value: single|float|None
 
 window:
     __valid_in__: machine
