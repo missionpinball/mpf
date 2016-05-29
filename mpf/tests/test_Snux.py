@@ -84,7 +84,7 @@ class TestSnux(MpfTestCase):
         c_side_c1.pulse.assert_called_with(self.machine.coils.c_side_c1, 50)
 
         # it should switch back to a side when idle
-        self.advance_time_and_run(0.050)
+        self.advance_time_and_run(0.052)
         c_ac_relay.disable.assert_called_with()
         c_ac_relay.disable = MagicMock()
 
