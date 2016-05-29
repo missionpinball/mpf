@@ -7,6 +7,7 @@ import time
 class MockSerialCommunicator:
     expected_commands = {}
     leds = {}
+    ignore_matrix = True
 
     def __init__(self, machine, platform, baud,
                  port):
@@ -29,6 +30,9 @@ class MockSerialCommunicator:
         cmd = str(cmd)
 
         if cmd[:3] == "WD:":
+            return
+
+        if self.ignore_matrix and cmd == "L1:23,FF":
             return
 
         if self.type == "RGB" and cmd[:3] == "RS:":
@@ -84,6 +88,7 @@ class TestFast(MpfTestCase):
             "DN:21,00,00,00": False,
             "GI:2A,FF": False,
         }
+        MockSerialCommunicator.ignore_matrix = True
         # FAST should never call sleep. Make it fail
         self.sleep = time.sleep
         time.sleep = None
@@ -382,12 +387,13 @@ class TestFast(MpfTestCase):
         # TODO: test broken frames (see P-ROC test)
 
     def test_matrix_light(self):
+        MockSerialCommunicator.ignore_matrix = False
         # test enable of matrix light
         MockSerialCommunicator.expected_commands['NET'] = {
             "L1:23,FF": False,
         }
         self.machine.lights.test_pdb_light.on()
-        self.machine_run()
+        self.advance_time_and_run(.1)
         self.assertFalse(MockSerialCommunicator.expected_commands['NET'])
 
         # test enable of matrix light with brightness
@@ -395,7 +401,7 @@ class TestFast(MpfTestCase):
             "L1:23,80": False,
         }
         self.machine.lights.test_pdb_light.on(brightness=128)
-        self.machine_run()
+        self.advance_time_and_run(.1)
         self.assertFalse(MockSerialCommunicator.expected_commands['NET'])
 
         # test disable of matrix light
@@ -403,7 +409,7 @@ class TestFast(MpfTestCase):
             "L1:23,00": False,
         }
         self.machine.lights.test_pdb_light.off()
-        self.machine_run()
+        self.advance_time_and_run(.1)
         self.assertFalse(MockSerialCommunicator.expected_commands['NET'])
 
         # test disable of matrix light with brightness
@@ -411,7 +417,7 @@ class TestFast(MpfTestCase):
             "L1:23,00": False,
         }
         self.machine.lights.test_pdb_light.on(brightness=0)
-        self.machine_run()
+        self.advance_time_and_run(.1)
         self.assertFalse(MockSerialCommunicator.expected_commands['NET'])
 
     def test_pdb_gi_light(self):
