@@ -33,6 +33,7 @@ class TestInfoLights(MpfTestCase):
 
     def test_info_lights(self):
         # machine starts at gameover
+        self.advance_time_and_run(.1)
         self.assertEqual([0, 0, 0], self.machine.leds['gameOver'].hw_driver.current_color)
         self.advance_time_and_run(1)
         self.assertEqual([255, 255, 255], self.machine.leds['gameOver'].hw_driver.current_color)
