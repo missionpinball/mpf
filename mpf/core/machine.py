@@ -1,5 +1,4 @@
-"""Contains the MachineController base class"""
-
+"""Contains the MachineController base class."""
 import errno
 import hashlib
 import importlib
@@ -22,11 +21,14 @@ from mpf.core.config_validator import ConfigValidator
 from mpf.core.data_manager import DataManager
 from mpf.core.delays import DelayManager, DelayManagerRegistry
 from mpf.core.device_manager import DeviceCollection
+from mpf.core.events import EventManager
 from mpf.core.utility_functions import Util
+from mpf.modes.game.code.game import Game
 
 
 # pylint: disable-msg=too-many-instance-attributes
 class MachineController(object):
+
     """Base class for the Machine Controller object.
 
     The machine controller is the main entity of the entire framework. It's the
@@ -37,19 +39,21 @@ class MachineController(object):
             itself.
 
     Attributes:
-        options: A dictionary of options built from the command line options
+        options(dict): A dictionary of options built from the command line options
             used to launch mpf.py.
-        config: A dictionary of machine's configuration settings, merged from
+        config(dict): A dictionary of machine's configuration settings, merged from
             various sources.
-        done: Boolean. Set to True and MPF exits.
+        done(bool): Boolean. Set to True and MPF exits.
+        game(Game): the current game
         machine_path: The root path of this machine_files folder
         plugins:
         scriptlets:
         hardware_platforms:
-        events:
+        events(EventManager):
 
     """
-    def __init__(self, mpf_path, machine_path, options):
+
+    def __init__(self, mpf_path: str, machine_path: str, options: dict):
         self.log = logging.getLogger("Machine")
         self.log.info("Mission Pinball Framework Core Engine v%s", __version__)
 
