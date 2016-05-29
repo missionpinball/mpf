@@ -214,7 +214,7 @@ class TestPRoc(MpfTestCase):
         # test enable of matrix light
         assert not self.machine.lights.test_pdb_light.hw_driver.proc.driver_schedule.called
         self.machine.lights.test_pdb_light.on()
-        self.advance_time_and_run(.01)
+        self.advance_time_and_run(.02)
         self.machine.lights.test_pdb_light.hw_driver.proc.driver_schedule.assert_called_with(
             cycle_seconds=0, schedule=4294967295, now=True, number=32
         )

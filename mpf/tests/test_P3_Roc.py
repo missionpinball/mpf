@@ -473,7 +473,7 @@ class TestP3Roc(MpfTestCase):
         self.advance_time_and_run(.01)
 
         # check correct decoding of 2 complement
-        self.machine.accelerometers.p3_roc_accelerometer.update_acceleration.assert_called_once_with(1.0, 0.0, -2.0)
+        self.machine.accelerometers.p3_roc_accelerometer.update_acceleration.assert_called_with(1.0, 0.0, -2.0)
 
     def test_flipper_single_coil(self):
         # enable
@@ -679,7 +679,7 @@ class TestP3Roc(MpfTestCase):
         # test enable of matrix light
         assert not self.machine.lights.test_pdb_light.hw_driver.proc.driver_schedule.called
         self.machine.lights.test_pdb_light.on()
-        self.advance_time_and_run(.01)
+        self.advance_time_and_run(.02)
         self.machine.lights.test_pdb_light.hw_driver.proc.driver_schedule.assert_called_with(
             cycle_seconds=0, schedule=4294967295, now=True, number=32
         )
