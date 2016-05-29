@@ -25,6 +25,7 @@ class Game(Mode):
         self.player_list = list()
         self.machine.game = None
         self.slam_tilted = False
+        self.tilted = False
         self.player = None
         self.num_players = None
 
@@ -77,6 +78,7 @@ class Game(Mode):
         self.player_list = list()
         self.machine.game = self
         self.slam_tilted = False
+        self.tilted = False
         self._balls_in_play = 0
 
         # todo register for request_to_start_game so you can deny it, or allow
