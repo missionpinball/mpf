@@ -1,11 +1,15 @@
-""" Contains the Led parent classes. """
+"""Contains the Led class."""
 from operator import itemgetter
+
+from mpf.core.machine import MachineController
+from mpf.core.mode import Mode
 from mpf.core.rgb_color import RGBColor
 from mpf.core.rgb_color import RGBColorCorrectionProfile
 from mpf.core.system_wide_device import SystemWideDevice
 
 
 class Led(SystemWideDevice):
+
     """An RGB LED in a pinball machine."""
 
     config_section = 'leds'
@@ -14,11 +18,18 @@ class Led(SystemWideDevice):
     machine = None
 
     leds_to_update = set()
+    leds_to_fade = set()
 
     @classmethod
-    def device_class_init(cls, machine):
+    def device_class_init(cls, machine: MachineController):
+        """Initialise all LEDs.
 
+        Args:
+            machine: MachineController which is used
+        """
         cls.machine = machine
+        cls.leds_to_fade = set()
+        cls.leds_to_update = set()
 
         machine.validate_machine_config_section('led_settings')
 
@@ -60,8 +71,12 @@ class Led(SystemWideDevice):
         new led colors to the hardware for the LEDs that changed during that
         frame.
 
+        Args:
+            dt: time since last call
         """
-        del dt
+        for led in list(Led.leds_to_fade):
+            if led.fade_in_progress:
+                led.fade_task(dt)
 
         # todo we could make a change here (or an option) so that it writes
         # every led, every frame. That way they'd fix themselves if something
@@ -74,7 +89,12 @@ class Led(SystemWideDevice):
             Led.leds_to_update = set()
 
     @classmethod
-    def mode_stop(cls, mode):
+    def mode_stop(cls, mode: Mode):
+        """Remove all entries from mode.
+
+        Args:
+            mode: Mode which was removed
+        """
         for led in cls.machine.leds:
             led.remove_from_stack_by_mode(mode)
 
@@ -159,7 +179,7 @@ class Led(SystemWideDevice):
                            self.default_fade_ms)
 
     def set_color_correction_profile(self, profile):
-        """Applies a color correction profile to this LED.
+        """Apply a color correction profile to this LED.
 
         Args:
             profile: An RGBColorCorrectionProfile() instance
@@ -169,8 +189,7 @@ class Led(SystemWideDevice):
 
     # pylint: disable-msg=too-many-arguments
     def color(self, color, fade_ms=None, priority=0, key=None, mode=None):
-        """Adds or updates a color entry in this LED's stack, which is how you
-        tell this LED what color you want it to be.
+        """Add or update a color entry in this LED's stack, which is how you tell this LED what color you want it to be.
 
         Args:
             color: RGBColor() instance, or a string color name, hex value, or
@@ -250,7 +269,7 @@ class Led(SystemWideDevice):
         Led.leds_to_update.add(self)
 
     def clear_stack(self):
-        """Removes all entries from the stack and resets this LED to 'off'."""
+        """Remove all entries from the stack and resets this LED to 'off'."""
         self.stack[:] = []
 
         if self.debug:
@@ -259,7 +278,7 @@ class Led(SystemWideDevice):
         Led.leds_to_update.add(self)
 
     def remove_from_stack_by_key(self, key):
-        """Removes a group of color settings from the stack.
+        """Remove a group of color settings from the stack.
 
         Args:
             key: The key of the settings to remove (based on the 'key'
@@ -268,26 +287,23 @@ class Led(SystemWideDevice):
         This method triggers a LED update, so if the highest priority settings
         were removed, the LED will be updated with whatever's below it. If no
         settings remain after these are removed, the LED will turn off.
-
         """
-
         if self.debug:
             self.log.debug("Removing key '%s' from stack", key)
 
         self.stack[:] = [x for x in self.stack if x['key'] != key]
         Led.leds_to_update.add(self)
 
-    def remove_from_stack_by_mode(self, mode):
-        """Removes a group of color settings from the stack.
+    def remove_from_stack_by_mode(self, mode: Mode):
+        """Remove a group of color settings from the stack.
 
         Args:
+            mode: Mode which was removed
 
         This method triggers a LED update, so if the highest priority settings
         were removed, the LED will be updated with whatever's below it. If no
         settings remain after these are removed, the LED will turn off.
-
         """
-
         if self.debug:
             self.log.debug("Removing mode '%s' from stack", mode)
 
@@ -316,12 +332,13 @@ class Led(SystemWideDevice):
             return 0
 
     def write_color_to_hw_driver(self):
-        """Physically updates the LED hardware object based on the 'color'
+        """Set color to hardware platform.
+
+        Physically update the LED hardware object based on the 'color'
         setting of the highest priority setting from the stack.
 
         This method is automatically called whenever a color change has been
         made (including when fades are active).
-
         """
         if not self.stack:
             self.color('off')
@@ -391,7 +408,6 @@ class Led(SystemWideDevice):
 
         Note that if there is no current color correction profile applied, the
         returned color will be the same as the color that was passed.
-
         """
         if self._color_correction_profile is None:
             return color
@@ -437,9 +453,9 @@ class Led(SystemWideDevice):
         if self.debug:
             self.log.debug("Setting up the fade task")
 
-        self.machine.clock.schedule_interval(self._fade_task, 1 / self.machine.config['mpf']['default_fade_hz'])
+        Led.leds_to_fade.add(self)
 
-    def _fade_task(self, dt):
+    def fade_task(self, dt):
         del dt
 
         # not sure why this is needed, but sometimes the fade task tries to
@@ -489,7 +505,7 @@ class Led(SystemWideDevice):
     def _stop_fade_task(self):
         # stops the fade task. Light is left in whatever state it was in
         self.fade_in_progress = False
-        self.machine.clock.unschedule(self._fade_task)
+        Led.leds_to_fade.remove(self)
 
         if self.debug:
             self.log.debug("Stopping fade task")
