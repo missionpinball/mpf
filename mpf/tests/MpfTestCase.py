@@ -1,3 +1,4 @@
+"""Baseclass for all tests."""
 import copy
 import inspect
 import logging
@@ -127,31 +128,18 @@ class MpfTestCase(unittest.TestCase):
         self.machine_run()
         end_time = self.machine.clock.get_time() + delta
 
-        # todo do we want to add clock scheduled events here?
-
         while True:
-            next_delay_event = self.machine.delayRegistry.get_next_event()
-            next_switch = \
-                self.machine.switch_controller.get_next_timed_switch_event()
-            next_show_step = self.machine.show_controller.get_next_show_step()
+            wait_until = self.machine.clock.get_next_event_time()
 
-            wait_until = next_delay_event
-
-            if not wait_until or (next_switch and wait_until > next_switch):
-                wait_until = next_switch
-
-            if not wait_until or (next_show_step and wait_until > next_show_step):
-                wait_until = next_show_step
-
-            if wait_until and wait_until - self.machine.clock.get_time() < self.min_frame_time:
-                wait_until = self.machine.clock.get_time() + self.min_frame_time
+            if wait_until is not False and wait_until <= self.machine.clock.get_time():
+                self.machine_run()
+                continue
 
             if wait_until and self.machine.clock.get_time() < wait_until < end_time:
                 self.set_time(wait_until)
                 self.machine_run()
             else:
                 break
-
         self.set_time(end_time)
         self.machine_run()
 
