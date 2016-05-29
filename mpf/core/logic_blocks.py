@@ -208,6 +208,21 @@ class LogicBlock(object):
     def hit(self, **kwargs):
         raise NotImplementedError("Not implemented")
 
+    def _post_hit_events(self, **kwargs):
+        for event in self.config['events_when_hit']:
+            self.machine.events.post(event, **kwargs)
+            '''event: logicblock_(name)_hit
+
+            desc: The logic block "name" was just hit.
+
+            Note that this is the default hit event for logic blocks,
+            but this can be changed in a logic block's "events_when_hit:"
+            setting, so this might not be the actual event that's posted for
+            all logic blocks in your machine.
+
+            args: depend on the type
+            '''
+
     def disable(self, **kwargs):
         """Disables this logic block. Automatically called when one of the
         disable_event events is posted. Can also manually be called.
@@ -341,22 +356,7 @@ class Counter(LogicBlock):
             self.log.debug("Processing Count change. Total: %s",
                            self.player[self.config['player_variable']])
 
-            for event in self.config['events_when_hit']:
-                self.machine.events.post(event, count=self.player[self.config['player_variable']])
-                '''event: logicblock_(name)_hit
-
-                desc: The logic block "name" was just hit.
-
-                Note that this is the default hit event for logic blocks,
-                but this can be changed in a logic block's "events_when_hit:"
-                setting, so this might not be the actual event that's posted for
-                all logic blocks in your machine.
-
-                args:
-
-                count: The new value for this logic block.
-
-                '''
+            self._post_hit_events(count=self.player[self.config['player_variable']])
 
             if self.config['count_complete_value'] is not None:
 
@@ -439,9 +439,11 @@ class Accrual(LogicBlock):
         """
         del kwargs
         self.log.debug("Processing hit for step: %s", step)
-        self.player[self.config['player_variable']][step] = True
-        self.log.debug("Status: %s",
-                       self.player[self.config['player_variable']])
+        if not self.player[self.config['player_variable']][step]:
+            self.player[self.config['player_variable']][step] = True
+            self.log.debug("Status: %s",
+                           self.player[self.config['player_variable']])
+            self._post_hit_events(step=step)
 
         if (self.player[self.config['player_variable']].count(True) ==
                 len(self.player[self.config['player_variable']])):
@@ -490,6 +492,7 @@ class Sequence(LogicBlock):
         self.machine.events.remove_handler(self.hit)
 
         self.player[self.config['player_variable']] += 1
+        self._post_hit_events(step=self.player[self.config['player_variable']])
 
         if self.player[self.config['player_variable']] >= (
                 len(self.config['events'])):
