@@ -135,7 +135,7 @@ class TestBcp(MpfTestCase):
         bcp_processor.BcpProcessor._start_socket_thread = MagicMock()
         bcp_mc = bcp_processor.BcpProcessor(mc)
         bcp_mc.enabled = True
-        self.advance_time_and_run()
+        self.machine_run()
         mc.events.post = MagicMock()
 
         bcp_mpf = self.machine.bcp
@@ -144,7 +144,7 @@ class TestBcp(MpfTestCase):
         self.machine.events.post('ball_started', ball=17,
                                  player=23)
 
-        self.advance_time_and_run()
+        self.machine_run()
 
         mc.events.post.assert_has_calls([
             call("ball_started", ball=17, player=23),
