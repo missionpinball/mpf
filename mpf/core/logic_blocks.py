@@ -143,6 +143,9 @@ class LogicBlock(object):
         if not self.config['events_when_complete']:
             self.config['events_when_complete'] = ['logicblock_' + self.name + '_complete']
 
+        if not self.config['events_when_hit']:
+            self.config['events_when_hit'] = ['logicblock_' + self.name + '_hit']
+
     @property
     def config_section_name(self):
         raise NotImplementedError("Please implement")
@@ -151,7 +154,7 @@ class LogicBlock(object):
         return '<LogicBlock.{}>'.format(self.name)
 
     def create_control_events(self):
-
+        """Create control events."""
         if self.enabled:
             # register all event handler if already enabled
             self.add_event_handlers()
@@ -286,6 +289,11 @@ class Counter(LogicBlock):
     # todo settle time
 
     def __init__(self, machine, name, player, config):
+        """Initialise counter."""
+        # for compatibility post the same default as previously for counters
+        if 'events_when_hit' not in config:
+            config['events_when_hit'] = ['counter_' + name + '_hit']
+
         super().__init__(machine, name, player, config)
 
         self.log = logging.getLogger('Counter.' + name)
@@ -295,9 +303,6 @@ class Counter(LogicBlock):
 
         self.ignore_hits = False
         self.hit_value = -1
-
-        if not self.config['event_when_hit']:
-            self.config['event_when_hit'] = 'counter_' + self.name + '_hit'
 
         if not self.config['player_variable']:
             self.config['player_variable'] = self.name + '_count'
@@ -336,25 +341,22 @@ class Counter(LogicBlock):
             self.log.debug("Processing Count change. Total: %s",
                            self.player[self.config['player_variable']])
 
-            if self.config['event_when_hit']:
-                self.machine.events.post(self.config['event_when_hit'],
-                                         count=self.player[
-                                             self.config['player_variable']])
-            '''event: counter_(name)_hit
+            for event in self.config['events_when_hit']:
+                self.machine.events.post(event, count=self.player[self.config['player_variable']])
+                '''event: logicblock_(name)_hit
 
-            desc: The counter logic block "name" was just hit.
+                desc: The logic block "name" was just hit.
 
-            Note that this is the default hit event for counter logic blocks,
-            but this can be changed in a logic block's "events_when_hit:"
-            setting, so this might not be the actual event that's posted for
-            all counter logic blocks in your machine.
+                Note that this is the default hit event for logic blocks,
+                but this can be changed in a logic block's "events_when_hit:"
+                setting, so this might not be the actual event that's posted for
+                all logic blocks in your machine.
 
-            args:
+                args:
 
-            count: The new count value for this logic block. (It may be
-            counting up or down, depending on its config.)
+                count: The new value for this logic block.
 
-            '''
+                '''
 
             if self.config['count_complete_value'] is not None:
 

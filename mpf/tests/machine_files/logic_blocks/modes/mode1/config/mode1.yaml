@@ -7,7 +7,7 @@ logic_blocks:
      counters:
         counter2:
             count_events: counter2_count
-            event_when_hit: counter2_hit
+            events_when_hit: counter2_hit
             events_when_complete: counter2_complete
             starting_count: 0
             count_complete_value: 3
