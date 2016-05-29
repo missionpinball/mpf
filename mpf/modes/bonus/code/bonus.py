@@ -18,11 +18,13 @@ class Bonus(Mode):
 
     def mode_start(self, **kwargs):
         """Start the bonus mode."""
-        # TODO: reenable this when that attribute is back and working
         # no bonus when machine is tilted
-        # if self.machine.game.tilted:
-        #    TODO: reset all scores because they should be voided
-        #    self.stop()
+        if self.machine.game.tilted:
+            # reset all scores because they should be voided
+            self._reset_all_scores()
+            # and stop mode
+            self.stop()
+            return
 
         self.bonus_score = 0
         self.bonus_iterator = iter(self.bonus_entries)
@@ -30,6 +32,15 @@ class Bonus(Mode):
         # post start event
         self.machine.events.post('bonus_start')
         self._bonus_next_item()
+
+    def _reset_all_scores(self):
+        """Reset score entries without scoring them.
+
+        We keep the permanent entries.
+        """
+        for entry in self.bonus_entries:
+            if entry['reset_player_score_entry']:
+                self.player.vars[entry['player_score_entry']] = 0
 
     def _bonus_next_item(self):
         try:
