@@ -1,11 +1,14 @@
-"""Contains the Tilt mode code"""
-
+"""Contains the Tilt mode code."""
+from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
 
 
 class Tilt(Mode):
 
-    def __init__(self, machine, config, name, path):
+    """A mode which handles a tilt in a pinball machine."""
+
+    def __init__(self, machine: MachineController, config: dict, name: str, path):
+        """Create mode."""
         self._balls_to_collect = None
         self._last_warning = None
         self.ball_ending_tilted_queue = None
@@ -15,6 +18,7 @@ class Tilt(Mode):
         super().__init__(machine, config, name, path)
 
     def mode_init(self):
+        """Initialise mode."""
         self._balls_to_collect = 0
         self._last_warning = None
         self.ball_ending_tilted_queue = None
@@ -27,6 +31,7 @@ class Tilt(Mode):
             section_name='tilt')
 
     def mode_start(self, **kwargs):
+        """Start mode."""
         self._register_switch_handlers()
 
         for event in self.tilt_config['reset_warnings_events']:
@@ -42,6 +47,7 @@ class Tilt(Mode):
             self.add_mode_event_handler(event, self.slam_tilt)
 
     def mode_stop(self, **kwargs):
+        """Stop mode."""
         self._remove_switch_handlers()
 
     def _register_switch_handlers(self):
@@ -83,9 +89,10 @@ class Tilt(Mode):
     # ignore false positives about self.player
     # pylint: disable-msg=unsubscriptable-object
     def tilt_warning(self):
-        """Processes a tilt warning. If the number of warnings is the number to
-        cause a tilt, a tilt will be processed.
+        """Process a tilt warning
 
+         If the number of warnings is the number to
+        cause a tilt, a tilt will be processed.
         """
         self.last_tilt_warning_switch = self.machine.clock.get_time()
 
@@ -119,7 +126,7 @@ class Tilt(Mode):
             warning is in the event name in the (number).'''
 
     def reset_warnings(self, **kwargs):
-        """Resets the tilt warnings for the current player."""
+        """Reset the tilt warnings for the current player."""
         del kwargs
         try:
             self.player[self.tilt_config['tilt_warnings_player_var']] = 0
@@ -127,10 +134,12 @@ class Tilt(Mode):
             pass
 
     def tilt(self, **kwargs):
-        """Causes the ball to tilt."""
+        """Cause the ball to tilt."""
         del kwargs
         if not self.machine.game:
             return
+
+        self.machine.game.tilted = True
 
         self._balls_to_collect = 0
         for device in self.machine.ball_devices:
@@ -223,10 +232,7 @@ class Tilt(Mode):
             self.tilt_event_handlers = set()
 
     def tilt_settle_ms_remaining(self):
-        """Returns the amount of milliseconds remaining until the tilt settle
-        time has cleared.
-
-        """
+        """Return the amount of milliseconds remaining until the tilt settle time has cleared."""
         if not self.last_tilt_warning_switch:
             return 0
 
@@ -239,6 +245,7 @@ class Tilt(Mode):
             return 0
 
     def slam_tilt(self):
+        """Process a slam tilt."""
         self.machine.events.post('slam_tilt')
         '''event: slam_tilt
         desc: A slam tilt has just occurred.'''
@@ -246,4 +253,5 @@ class Tilt(Mode):
             return
 
         self.machine.game.slam_tilted = True
+        self.machine.game.tilted = True
         self.tilt()
