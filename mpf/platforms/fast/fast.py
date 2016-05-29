@@ -480,7 +480,8 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         if not self.flag_led_tick_registered:
             # Update leds every frame
-            self.machine.clock.schedule_interval(self.update_leds, 0)
+            self.machine.clock.schedule_interval(self.update_leds,
+                                                 1 / self.machine.config['mpf']['default_led_hw_update_hz'])
             self.flag_led_tick_registered = True
 
         # if the LED number is in <channel> - <led> format, convert it to a
