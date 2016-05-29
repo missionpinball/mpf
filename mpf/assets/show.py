@@ -487,7 +487,7 @@ class RunningShow(object):
 
     def __repr__(self):
         """Return str representation."""
-        return 'Running Show Instance: "{}"'.format(self.name)
+        return 'Running Show Instance: "{}" {} {}'.format(self.name, self.show_tokens, self.next_step_index)
 
     def _replace_tokens(self, **kwargs):
         keys_replaced = dict()
