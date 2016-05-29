@@ -788,9 +788,18 @@ class BCPClientSocket(object):
     def _receive(self):
         """Receive loop."""
         try:
-            self.receive_buffer += self.socket.recv(8192)
+            buffer = self.socket.recv(4096)
         except ConnectionResetError:
+            # handle connection reset
             self._handle_connection_close()
+            return
+
+        # handle EOF
+        if not buffer:
+            self._handle_connection_close()
+            return
+
+        self.receive_buffer += buffer
 
         while True:
             # All this code exists to build complete messages since what we
