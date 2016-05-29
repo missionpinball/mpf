@@ -1,16 +1,20 @@
-"""MPF plugin which implements Logic Blocks"""
+"""MPF plugin which implements Logic Blocks."""
 import copy
 import logging
 
 from mpf.core.delays import DelayManager
+from mpf.core.machine import MachineController
+from mpf.core.mode import Mode
+from mpf.core.player import Player
 from mpf.core.utility_functions import Util
 
 
 class LogicBlocks(object):
+
     """LogicBlock Manager."""
 
-    def __init__(self, machine):
-
+    def __init__(self, machine: MachineController):
+        """Initialise LogicBlock manager."""
         self.log = logging.getLogger('Logic Blocks Manager')
 
         self.machine = machine
@@ -29,8 +33,8 @@ class LogicBlocks(object):
         self.machine.events.add_handler('player_turn_stop',
                                         self.player_turn_stop)
 
-    def _create_player_logic_blocks(self, player, **kwargs):
-        """Creates the game-wide logic blocks for this player.
+    def _create_player_logic_blocks(self, player: Player, **kwargs):
+        """Create the game-wide logic blocks for this player.
 
         Args:
             player: The player object.
@@ -49,6 +53,11 @@ class LogicBlocks(object):
                 player=player)
 
     def player_turn_start(self, player, **kwargs):
+        """Create blocks for current player.
+
+        Args:
+            player: Player object
+        """
         del kwargs
 
         self.log.debug("Processing player_turn_start")
@@ -56,7 +65,12 @@ class LogicBlocks(object):
         for block in player.uvars['logic_blocks']:
             block.create_control_events()
 
-    def player_turn_stop(self, player, **kwargs):
+    def player_turn_stop(self, player: Player, **kwargs):
+        """Remove blocks from current player.
+
+        Args:
+            player: Player pnkect
+        """
         del kwargs
 
         self.log.debug("Player logic blocks: %s", player.uvars['logic_blocks'])
@@ -66,7 +80,7 @@ class LogicBlocks(object):
             # we're iterating over
             block.player_turn_stop()
 
-    def _process_config(self, config, priority=0, mode=None):
+    def _process_config(self, config: dict, priority: int=0, mode: Mode=None):
         del priority
         self.log.debug("Processing LogicBlock configuration.")
 
@@ -79,7 +93,7 @@ class LogicBlocks(object):
 
         return self._unload_logic_blocks, blocks_added
 
-    def _create_logic_blocks(self, config, player):
+    def _create_logic_blocks(self, config: dict, player: Player):
         # config is localized for LogicBlock
 
         blocks_added = set()
@@ -119,10 +133,11 @@ class LogicBlocks(object):
 
 
 class LogicBlock(object):
+
     """Parent class for each of the logic block classes."""
 
-    def __init__(self, machine, name, player, config):
-
+    def __init__(self, machine: MachineController, name: str, player: Player, config: dict):
+        """Initialise logic block."""
         self.machine = machine
         self.name = name
         self.player = player
@@ -148,9 +163,11 @@ class LogicBlock(object):
 
     @property
     def config_section_name(self):
+        """Return config section name."""
         raise NotImplementedError("Please implement")
 
     def __repr__(self):
+        """Return str representation of class."""
         return '<LogicBlock.{}>'.format(self.name)
 
     def create_control_events(self):
@@ -183,9 +200,11 @@ class LogicBlock(object):
         self.handler_keys = set()
 
     def player_turn_stop(self):
+        """Remove block on player stop."""
         self._remove_all_event_handlers()
 
     def unload(self):
+        """Unload block."""
         self.disable()
         self._remove_all_event_handlers()
         try:
@@ -194,7 +213,9 @@ class LogicBlock(object):
             pass
 
     def enable(self, **kwargs):
-        """Enables this logic block. Automatically called when one of the
+        """Enable this logic block.
+
+        Automatically called when one of the
         enable_event events is posted. Can also manually be called.
         """
         del kwargs
@@ -203,9 +224,11 @@ class LogicBlock(object):
         self.add_event_handlers()
 
     def add_event_handlers(self):
+        """Add handler to advance block."""
         raise NotImplementedError("Not implemented")
 
     def hit(self, **kwargs):
+        """Hit block."""
         raise NotImplementedError("Not implemented")
 
     def _post_hit_events(self, **kwargs):
@@ -224,7 +247,9 @@ class LogicBlock(object):
             '''
 
     def disable(self, **kwargs):
-        """Disables this logic block. Automatically called when one of the
+        """Disable this logic block.
+
+        Automatically called when one of the
         disable_event events is posted. Can also manually be called.
         """
         del kwargs
@@ -233,7 +258,8 @@ class LogicBlock(object):
         self.machine.events.remove_handler(self.hit)
 
     def reset(self, **kwargs):
-        """Resets the progress towards completion of this logic block.
+        """Reset the progress towards completion of this logic block.
+
         Automatically called when one of the reset_event events is called.
         Can also be manually called.
         """
@@ -242,7 +268,8 @@ class LogicBlock(object):
         self.log.debug("Resetting")
 
     def restart(self, **kwargs):
-        """Restarts this logic block by calling reset() and enable()
+        """Restart this logic block by calling reset() and enable().
+
         Automatically called when one of the restart_event events is called.
         Can also be manually called.
         """
@@ -252,7 +279,9 @@ class LogicBlock(object):
         self.enable()
 
     def complete(self):
-        """Marks this logic block as complete. Posts the 'events_when_complete'
+        """Mark this logic block as complete.
+
+        Posts the 'events_when_complete'
         events and optionally restarts this logic block or disables it,
         depending on this block's configuration settings.
         """
@@ -287,6 +316,7 @@ class LogicBlock(object):
 
 
 class Counter(LogicBlock):
+
     """A type of LogicBlock that tracks multiple hits of a single event.
 
     This counter can be configured to track hits towards a specific end-goal
@@ -299,11 +329,10 @@ class Counter(LogicBlock):
 
     @property
     def config_section_name(self):
+        """Return config section."""
         return 'counter'
 
-    # todo settle time
-
-    def __init__(self, machine, name, player, config):
+    def __init__(self, machine: MachineController, name: str, player: Player, config: dict):
         """Initialise counter."""
         # for compatibility post the same default as previously for counters
         if 'events_when_hit' not in config:
@@ -333,6 +362,7 @@ class Counter(LogicBlock):
             self.player[self.config['player_variable']] = self.config['starting_count']
 
     def add_event_handlers(self):
+        """Add handlers."""
         self.machine.events.remove_handler(self.hit)  # prevents multiples
 
         for event in self.config['count_events']:
@@ -340,13 +370,15 @@ class Counter(LogicBlock):
                 self.machine.events.add_handler(event, self.hit))
 
     def reset(self, **kwargs):
-        """Resets the hit progress towards completion"""
+        """Reset the hit progress towards completion."""
         super().reset(**kwargs)
         self.player[self.config['player_variable']] = (
             self.config['starting_count'])
 
     def hit(self, **kwargs):
-        """Increases the hit progress towards completion. Automatically called
+        """Increase the hit progress towards completion.
+
+        Automatically called
         when one of the `count_events`s is posted. Can also manually be
         called.
         """
@@ -376,9 +408,9 @@ class Counter(LogicBlock):
                                callback=self.stop_ignoring_hits)
 
     def stop_ignoring_hits(self, **kwargs):
-        """Causes the Counter to stop ignoring subsequent hits that occur
-        within the 'multiple_hit_window'. Automatically called when the window
-        time expires. Can safely be manually called.
+        """Cause the Counter to stop ignoring subsequent hits that occur within the 'multiple_hit_window'.
+
+        Automatically called when the window time expires. Can safely be manually called.
         """
         del kwargs
         self.log.debug("Ending Ignore hits")
@@ -386,15 +418,19 @@ class Counter(LogicBlock):
 
 
 class Accrual(LogicBlock):
-    """A type of LogicBlock which tracks many different events (steps) towards
-    a goal, with the steps being able to happen in any order.
+
+    """A type of LogicBlock which tracks many different events (steps) towards a goal.
+
+    The steps are able to happen in any order.
     """
 
     @property
     def config_section_name(self):
+        """Return config section."""
         return "accrual"
 
     def __init__(self, machine, name, player, config):
+        """Initialise Accrual."""
         super().__init__(machine, name, player, config)
 
         self.log = logging.getLogger('Accrual.' + name)
@@ -411,6 +447,7 @@ class Accrual(LogicBlock):
                 [False] * len(self.config['events']))
 
     def add_event_handlers(self):
+        """Add event handlers."""
         self.machine.events.remove_handler(self.hit)  # prevents multiples
 
         for entry_num in range(len(self.config['events'])):
@@ -420,7 +457,7 @@ class Accrual(LogicBlock):
                                                     step=entry_num))
 
     def reset(self, **kwargs):
-        """Resets the hit progress towards completion"""
+        """Reset the hit progress towards completion."""
         super().reset(**kwargs)
 
         self.player[self.config['player_variable']] = (
@@ -428,14 +465,15 @@ class Accrual(LogicBlock):
         self.log.debug("Status: %s",
                        self.player[self.config['player_variable']])
 
-    def hit(self, step, **kwargs):
-        """Increases the hit progress towards completion. Automatically called
+    def hit(self, step: int, **kwargs):
+        """Increase the hit progress towards completion.
+
+        Automatically called
         when one of the `count_events` is posted. Can also manually be
         called.
 
         Args:
             step: Integer of the step number (0 indexed) that was just hit.
-
         """
         del kwargs
         self.log.debug("Processing hit for step: %s", step)
@@ -451,15 +489,19 @@ class Accrual(LogicBlock):
 
 
 class Sequence(LogicBlock):
-    """A type of LogicBlock which tracks many different events (steps) towards
-    a goal, with the steps having to happen in order.
+
+    """A type of LogicBlock which tracks many different events (steps) towards a goal.
+
+    The steps have to happen in order.
     """
 
     @property
     def config_section_name(self):
+        """Return config section."""
         return "sequence"
 
-    def __init__(self, machine, name, player, config):
+    def __init__(self, machine: MachineController, name: str, player: Player, config: dict):
+        """Initialise sequence."""
         super().__init__(machine, name, player, config)
 
         self.log = logging.getLogger('Sequence.' + name)
@@ -475,14 +517,16 @@ class Sequence(LogicBlock):
             self.player[self.config['player_variable']] = 0
 
     def add_event_handlers(self):
-        # add the handlers for the current step
+        """Add the handlers for the current step."""
         for event in (self.config['events']
                       [self.player[self.config['player_variable']]]):
             self.handler_keys.add(
                 self.machine.events.add_handler(event, self.hit))
 
     def hit(self, **kwargs):
-        """Increases the hit progress towards completion. Automatically called
+        """Increase the hit progress towards completion.
+
+        Automatically called
         when one of the `count_events` is posted. Can also manually be
         called.
         """
@@ -505,8 +549,7 @@ class Sequence(LogicBlock):
                     self.machine.events.add_handler(event, self.hit))
 
     def reset(self, **kwargs):
-        """Resets the sequence back to the first step."""
-
+        """Reset the sequence back to the first step."""
         super().reset(**kwargs)
         self.player[self.config['player_variable']] = 0
 
