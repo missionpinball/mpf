@@ -1,5 +1,15 @@
 """MPF clock and main loop."""
 
+from operator import attrgetter
+from sys import platform
+from functools import partial
+
+import itertools
+import time
+import logging
+
+import select
+
 # pylint: disable-msg=anomalous-backslash-in-string
 """
 Clock object
@@ -198,17 +208,6 @@ from two threads simultaneously without any locking mechanism::
 Note, in the code above, thread 1 or thread 2 could be the main thread, not
 just an external thread.
 """
-from operator import attrgetter
-from sys import platform
-from functools import partial
-
-import itertools
-import time
-import logging
-
-import select
-
-from mpf.core.weakmethod import WeakMethod
 
 # pylint: disable-msg=anomalous-backslash-in-string
 """
@@ -505,7 +504,6 @@ class ClockEvent(object):
         self.cid = cid
         self.id = next(clock.counter)
         self.loop = loop
-        self.weak_callback = None
         self.callback = callback
         self.timeout = timeout
         self._is_triggered = trigger
@@ -537,10 +535,7 @@ class ClockEvent(object):
         callback = self.callback
         if callback is not None:
             return callback
-        callback = self.weak_callback
-        if callback.is_dead():
-            return None
-        return callback()
+        return None
 
     @property
     def is_triggered(self):
@@ -576,10 +571,6 @@ class ClockEvent(object):
                 pass
 
         self._callback_cancelled = True
-
-    def release(self):
-        self.weak_callback = WeakMethod(self.callback)
-        self.callback = None
 
     def tick(self, curtime, remove):
         """Call the callback if time is due."""
