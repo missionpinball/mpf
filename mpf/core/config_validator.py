@@ -979,6 +979,7 @@ widgets:
         opacity: single|float|1.0
         z: single|int|0
         animations: ignore
+        reset_animations_events: list|str|None
         color: single|kivycolor|ffffffff
         style: single|str|None
         adjust_top: single|int|None
