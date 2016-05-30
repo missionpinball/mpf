@@ -100,7 +100,6 @@ mpf:
     allow_invalid_config_sections: false
     save_machine_vars_to_disk: true
     hz: auto
-    default_fade_hz: 50
     default_led_hw_update_hz: 50
     default_matrix_light_hw_update_hz: 50
 
