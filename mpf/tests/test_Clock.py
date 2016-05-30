@@ -23,7 +23,7 @@ class ClockTestCase(unittest.TestCase):
     def setUp(self):
         global counter
         counter = 0
-        self.clock = ClockBase(60)
+        self.clock = ClockBase()
         self.callback_order = []
 
     def callback1(self, number, dt):
@@ -46,7 +46,16 @@ class ClockTestCase(unittest.TestCase):
         self.clock.tick()
         self.assertEqual(counter, 2)
 
+    def test_schedule_once_twice_and_unschedule_once(self):
+        self.clock.schedule_once(callback)
+        self.clock.schedule_once(callback)
+        # only unschedule one
+        self.clock.unschedule(callback, False)
+        self.clock.tick()
+        self.assertEqual(counter, 1)
+
     def test_unschedule(self):
+        self.clock.schedule_once(callback)
         self.clock.schedule_once(callback)
         self.clock.unschedule(callback)
         self.clock.tick()
