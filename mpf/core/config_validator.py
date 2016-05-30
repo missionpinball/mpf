@@ -475,6 +475,7 @@ logic_blocks:                                       # todo add validation
         disable_on_complete: single|bool|True
         persist_state: single|bool|False
         events_when_complete: list|str|None
+        events_when_hit: list|str|None
         player_variable: single|str|None
     accrual:
         events: list|str|
@@ -485,7 +486,6 @@ logic_blocks:                                       # todo add validation
         count_interval: single|int|1
         direction: single|str|up
         starting_count: single|int|0
-        event_when_hit: single|str|None
     sequence:
         events: list|str|
 machine:

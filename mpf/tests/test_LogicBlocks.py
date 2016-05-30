@@ -32,6 +32,7 @@ class TestLogicBlocks(MpfTestCase):
     def test_accruals_simple(self):
         self._start_game()
         self.mock_event("accrual1_complete1")
+        self.mock_event("accrual1_hit")
         self.mock_event("accrual1_complete2")
 
         # accrual should not yet work
@@ -48,11 +49,13 @@ class TestLogicBlocks(MpfTestCase):
         # step2
         self.post_event("accrual1_step2a")
         self.assertEqual(0, self._events["accrual1_complete1"])
+        self.assertEqual(1, self._events["accrual1_hit"])
 
         # step1
         self.post_event("accrual1_step1c")
         self.post_event("accrual1_step1b")
         self.assertEqual(0, self._events["accrual1_complete1"])
+        self.assertEqual(2, self._events["accrual1_hit"])
 
         # step 3
         self.post_event("accrual1_step3c")
@@ -152,6 +155,7 @@ class TestLogicBlocks(MpfTestCase):
     def test_sequence_simple(self):
         self._start_game()
         self.mock_event("sequence1_complete")
+        self.mock_event("logicblock_sequence1_hit")
 
         self.post_event("sequence1_enable")
 
@@ -160,19 +164,23 @@ class TestLogicBlocks(MpfTestCase):
         self.post_event("sequence1_step2a")
         self.post_event("sequence1_step1b")
         self.assertEqual(0, self._events["sequence1_complete"])
+        self.assertEqual(1, self._events["logicblock_sequence1_hit"])
 
         # still not
         self.post_event("sequence1_step3b")
         self.post_event("sequence1_step1a")
         self.assertEqual(0, self._events["sequence1_complete"])
+        self.assertEqual(1, self._events["logicblock_sequence1_hit"])
 
         # only 1 so far. now step2
         self.post_event("sequence1_step2a")
         self.assertEqual(0, self._events["sequence1_complete"])
+        self.assertEqual(2, self._events["logicblock_sequence1_hit"])
 
         # and step 3
         self.post_event("sequence1_step3b")
         self.assertEqual(1, self._events["sequence1_complete"])
+        self.assertEqual(3, self._events["logicblock_sequence1_hit"])
 
         # should be disabled
         self.post_event("sequence1_step1a")

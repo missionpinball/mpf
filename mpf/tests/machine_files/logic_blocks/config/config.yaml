@@ -35,6 +35,7 @@ logic_blocks:
             enable_events: accrual1_enable
             disable_events: accrual1_disable
             reset_events: accrual1_reset
+            events_when_hit: accrual1_hit
         accrual2:
             events:
                 - accrual2_step1
