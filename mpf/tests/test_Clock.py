@@ -1,7 +1,4 @@
-'''
-Clock tests
-===========
-'''
+"""Clock tests."""
 
 import unittest
 from mpf.core.clock import ClockBase
@@ -11,6 +8,12 @@ counter = 0
 
 
 def callback(dt):
+    """Global test cb.
+
+    Args:
+        dt:
+    """
+    del dt
     global counter
     counter += 1
 
@@ -21,10 +24,10 @@ class ClockTestCase(unittest.TestCase):
         global counter
         counter = 0
         self.clock = ClockBase(60)
-        self.clock._events = [[] for i in range(256)]
         self.callback_order = []
 
     def callback1(self, number, dt):
+        del dt
         self.callback_order.append(number)
 
     def test_schedule_once(self):
@@ -43,31 +46,8 @@ class ClockTestCase(unittest.TestCase):
         self.clock.tick()
         self.assertEqual(counter, 2)
 
-    def test_schedule_once_draw_after(self):
-        self.clock.schedule_once(callback, 0)
-        self.clock.tick_draw()
-        self.assertEqual(counter, 0)
-        self.clock.tick()
-        self.assertEqual(counter, 1)
-
     def test_unschedule(self):
         self.clock.schedule_once(callback)
-        self.clock.unschedule(callback)
-        self.clock.tick()
-        self.assertEqual(counter, 0)
-
-    def test_unschedule_after_tick(self):
-        self.clock.schedule_once(callback, .02)
-        self.clock.schedule_once(partial(self.callback1, 1), timeout=.01)
-        self.clock.tick()
-        self.clock.unschedule(callback)
-        self.clock.tick()
-        self.assertEqual(counter, 0)
-
-    def test_unschedule_draw(self):
-        self.clock.schedule_once(callback, 0)
-        self.clock.tick_draw()
-        self.assertEqual(counter, 0)
         self.clock.unschedule(callback)
         self.clock.tick()
         self.assertEqual(counter, 0)
