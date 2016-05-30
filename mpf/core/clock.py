@@ -1,3 +1,5 @@
+"""MPF clock and main loop."""
+
 # pylint: disable-msg=anomalous-backslash-in-string
 """
 Clock object
@@ -485,7 +487,9 @@ def _hash(cb):
 
 # pylint: disable-msg=too-many-instance-attributes
 class ClockEvent(object):
-    """ A class that describes a callback scheduled with kivy's :attr:`Clock`.
+
+    """A class that describes a callback scheduled with kivy's :attr:`Clock`.
+
     This class is never created by the user; instead, kivy creates and returns
     an instance of this class when scheduling a callback.
     .. warning::
@@ -495,8 +499,8 @@ class ClockEvent(object):
     """
 
     # pylint: disable-msg=too-many-arguments
-    def __init__(self, clock, loop, callback, timeout, starttime, cid,
-                 priority=1, trigger=False):
+    def __init__(self, clock, loop, callback, timeout, starttime, cid, priority=1, trigger=False):
+        """Create clock event."""
         self.clock = clock
         self.cid = cid
         self.id = next(clock.counter)
@@ -515,7 +519,8 @@ class ClockEvent(object):
             clock.ordered_events.append(self)
 
     def __call__(self, *largs):
-        """ Schedules the callback associated with this instance.
+        """Schedule the callback associated with this instance.
+
         If the callback is already scheduled, it will not be scheduled again.
         """
         # if the event is not yet triggered, do it !
@@ -528,6 +533,7 @@ class ClockEvent(object):
             return True
 
     def get_callback(self):
+        """Return the callback."""
         callback = self.callback
         if callback is not None:
             return callback
@@ -542,23 +548,26 @@ class ClockEvent(object):
 
     @property
     def next_event_time(self):
+        """Return the next time this event will fire."""
         return self._next_event_time
 
     @property
     def last_event_time(self):
+        """Return the last time the event fired."""
         return self._last_event_time
 
     @property
     def priority(self):
+        """Return priority."""
         return self._priority
 
     @property
     def callback_cancelled(self):
+        """Return if callback is canceled."""
         return self._callback_cancelled
 
     def cancel(self):
-        """ Cancels the callback if it was scheduled to be called.
-        """
+        """Cancel the callback if it was scheduled to be called."""
         if self._is_triggered:
             self._is_triggered = False
             try:
@@ -573,6 +582,7 @@ class ClockEvent(object):
         self.callback = None
 
     def tick(self, curtime, remove):
+        """Call the callback if time is due."""
         # Is it time to execute the callback (did timeout occur)?  The
         # decision is easy if this event's timeout is 0 or -1 as it
         # should be called every time.
@@ -622,15 +632,17 @@ class ClockEvent(object):
                 pass
 
     def __repr__(self):
+        """Return str representation."""
         return '<ClockEvent callback=%r>' % self.get_callback()
 
 
 # pylint: disable-msg=too-many-instance-attributes
 class ClockBase(_ClockBase):
-    """A clock object with event support.
-    """
+
+    """A clock object with event support."""
+
     __slots__ = ('_dt', '_last_fps_tick', '_last_tick', '_fps', '_rfps',
-                 '_start_tick', '_fps_counter', '_rfps_counter', 'events', 'periodic_events', 'ordered_events',
+                 '_start_tick', '_fps_counter', '_rfps_counter', 'ordered_events',
                  '_frame_callbacks', '_frames', '_frames_displayed',
                  '_max_fps', 'max_iteration', '_log', 'read_sockets')
 
@@ -656,7 +668,6 @@ class ClockBase(_ClockBase):
         self._last_fps_tick = None
         self._frames = 0
         self._frames_displayed = 0
-        self.events = [[] for dummy_iterator in range(256)]
         self.ordered_events = []
         self.read_sockets = {}
         self._frame_callbacks = []
@@ -675,24 +686,23 @@ class ClockBase(_ClockBase):
 
     @property
     def frametime(self):
-        """Time spent between the last frame and the current frame
-        (in seconds).
+        """Time spent between the last frame and the current frame (in seconds).
+
         .. versionadded:: 1.8.0
         """
         return self._dt
 
     @property
     def frames(self):
-        """Number of internal frames (not necessarily drawn) from the start of
-        the clock.
+        """Number of internal frames from the start of the clock (not necessarily drawn).
+
         .. versionadded:: 1.8.0
         """
         return self._frames
 
     @property
     def frames_displayed(self):
-        """Number of displayed frames from the start of the clock.
-        """
+        """Number of displayed frames from the start of the clock."""
         return self._frames_displayed
 
     def get_next_event_time(self):
@@ -703,40 +713,40 @@ class ClockBase(_ClockBase):
         self.ordered_events.sort(key=attrgetter("next_event_time"), reverse=False)
         return self.ordered_events[0].next_event_time
 
+    def _get_sleep_time(self):
+        next_event_time = self.get_next_event_time()
+        if next_event_time:
+            return next_event_time - self.time()
+        else:
+            return 0
+
+    def _sleep_until_next_event(self):
+        sleeptime = self._get_sleep_time()
+
+        # Since windows will fail when calling select without sockets we have to fall back to usleep in that case.
+        if self.read_sockets:
+            # handle sleep time == 0, because select would block
+            if sleeptime <= 0:
+                sleeptime = 0.00001
+
+            read_sockets = self.read_sockets.keys()
+            read_ready, _, _ = select.select(read_sockets, [], [], sleeptime)
+            if read_ready:
+                for socket in list(read_ready):
+                    self.read_sockets[socket]()
+        elif sleeptime > 0:
+                # no sockets. just sleep
+                usleep = self.usleep
+                usleep(1000000 * sleeptime)
+
     def tick(self):
         """Advance the clock to the next step. Must be called every frame.
 
         The default clock has a tick() function called by the core Kivy
-        framework."""
-
-        # do we need to sleep ?
-        if self._max_fps > 0:
-            min_sleep = 0
-            sleep_undershoot = 0 #self.SLEEP_UNDERSHOOT
-            fps = self._max_fps
-            usleep = self.usleep
-
-            # TODO: properly handle get_next_event_time == False
-            sleeptime = self.get_next_event_time() - self.time()
-            if sleeptime <= 0:
-                sleeptime = 0.00001
-
-            # Since windows will fail when calling select without sockets we have to fall back to usleep in that case.
-            if self.read_sockets:
-                # TODO: handle sleep time == 0
-
-                sleeptime -= sleep_undershoot
-                if sleeptime < min_sleep:
-                    sleeptime = min_sleep
-                read_sockets = self.read_sockets.keys()
-                read_ready, _, _ = select.select(read_sockets, [], [], sleeptime)
-                if read_ready:
-                    for socket in list(read_ready):
-                        self.read_sockets[socket]()
-            else:
-                while sleeptime - sleep_undershoot > min_sleep:
-                    usleep(1000000 * (sleeptime - sleep_undershoot))
-                    sleeptime = 1 / fps - (self.time() - self._last_tick)
+        framework.
+        """
+        # sleep if needed
+        self._sleep_until_next_event()
 
         # tick the current time
         current = self.time()
@@ -765,18 +775,17 @@ class ClockBase(_ClockBase):
         return self._dt
 
     def tick_draw(self):
-        """Tick the drawing counter.
-        """
+        """Tick the drawing counter."""
         self._rfps_counter += 1
         self._frames_displayed += 1
 
     def get_fps(self):
-        """Get the current average FPS calculated by the clock.
-        """
+        """Get the current average FPS calculated by the clock."""
         return self._fps
 
     def get_rfps(self):
         """Get the current "real" FPS calculated by the clock.
+
         This counter reflects the real framerate displayed on the screen.
         In contrast to get_fps(), this function returns a counter of the
         number of frames, not the average of frames per second.
@@ -790,18 +799,6 @@ class ClockBase(_ClockBase):
     def get_boottime(self):
         """Get the time in seconds from the application start."""
         return self._last_tick - self._start_tick
-
-    def create_trigger(self, callback, timeout=0, priority=1):
-        """Create a Trigger event. Check module documentation for more
-        information.
-        :returns:
-            A :class:`ClockEvent` instance. To schedule the callback of this
-            instance, you can call it.
-        .. versionadded:: 1.0.5
-        """
-        ev = ClockEvent(self, False, callback, timeout, 0, _hash(callback), priority)
-        ev.release()
-        return ev
 
     def schedule_socket_read_callback(self, socket, callback):
         """Schedule a callback when the socket is ready.
@@ -821,9 +818,11 @@ class ClockBase(_ClockBase):
         del self.read_sockets[socket]
 
     def schedule_once(self, callback, timeout=0, priority=1):
-        """Schedule an event in <timeout> seconds. If <timeout> is unspecified
+        """Schedule an event in <timeout> seconds.
+
+        If <timeout> is unspecified
         or 0, the callback will be called after the next frame is rendered.
-        :returns:
+        Returns:
             A :class:`ClockEvent` instance. As opposed to
             :meth:`create_trigger` which only creates the trigger event, this
             method also schedules it.
@@ -844,7 +843,8 @@ class ClockBase(_ClockBase):
 
     def schedule_interval(self, callback, timeout, priority=1):
         """Schedule an event to be called every <timeout> seconds.
-        :returns:
+
+        Returns:
             A :class:`ClockEvent` instance. As opposed to
             :meth:`create_trigger` which only creates the trigger event, this
             method also schedules it.
@@ -860,15 +860,16 @@ class ClockBase(_ClockBase):
 
         return event
 
-    def unschedule(self, callback, all_events=True):
+    def unschedule(self, callback, all_events: bool=True):
         """Remove a previously scheduled event.
-        :parameters:
-            `callback`: :class:`ClockEvent` or a callable.
+
+        Args:
+            callback: :class:`ClockEvent` or a callable.
                 If it's a :class:`ClockEvent` instance, then the callback
                 associated with this event will be canceled if it is
                 scheduled. If it's a callable, then the callable will be
                 unscheduled if it is scheduled.
-            `all`: bool
+            all_events: bool
                 If True and if `callback` is a callable, all instances of this
                 callable will be unscheduled (i.e. if this callable was
                 scheduled multiple times). Defaults to `True`.
@@ -902,9 +903,8 @@ class ClockBase(_ClockBase):
                 event.tick(self._last_tick, remove)
 
     def add_event_to_frame_callbacks(self, event):
-        """
-        Adds an event to the priority queue whose callback will be called in the
-        current frame.
+        """Add an event to the priority queue whose callback will be called in the current frame.
+
         Args:
             event: The event whose callback will be called (in priority order)
                 during the current frame.
@@ -912,9 +912,7 @@ class ClockBase(_ClockBase):
         self._frame_callbacks.append((event.last_event_time, -event.priority, event.id, event))
 
     def _process_event_callbacks(self):
-        """
-        Processes event callbacks that were triggered to be called in the current frame.
-        """
+        """Process event callbacks that were triggered to be called in the current frame."""
         for event_obj in sorted(self._frame_callbacks):
             event = event_obj[3]
             # Call the callback if the event has not been cancelled during the current frame

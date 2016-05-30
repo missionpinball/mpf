@@ -22,6 +22,9 @@ YamlInterface.cache = True
 
 
 class TestMachineController(MachineController):
+
+    """MachineController used in tests."""
+
     local_mpf_config_cache = {}
 
     def __init__(self, mpf_path, machine_path, options, config_patches,
@@ -30,7 +33,7 @@ class TestMachineController(MachineController):
         self.test_init_complete = False
         self._enable_plugins = enable_plugins
         super().__init__(mpf_path, machine_path, options)
-        self.clock._max_fps = 0
+        self.clock._sleep_until_next_event = MagicMock()
 
     def _reset_complete(self):
         self.test_init_complete = True
