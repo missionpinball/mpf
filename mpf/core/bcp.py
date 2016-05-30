@@ -294,11 +294,11 @@ class BCP(object):
 
     def register_dmd(self, dmd_update_meth):
         self.physical_dmd_update_callback = dmd_update_meth
-        self.send('dmd_start', fps=self.machine.clock.max_fps)
+        self.send('dmd_start')
 
     def register_rgb_dmd(self, dmd_update_meth):
         self.physical_rgb_dmd_update_callback = dmd_update_meth
-        self.send('rgb_dmd_start', fps=self.machine.clock.max_fps)
+        self.send('rgb_dmd_start')
 
     def _parse_filters_from_config(self):
         if ('player_variables' in self.config and

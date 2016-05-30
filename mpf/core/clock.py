@@ -152,6 +152,10 @@ been made for use in MPF:
        program if desired.
     5) max_fps is now a parameter in the Clock constructor (defaults to 60) that
        controls the maximum speed at which the MPF main loop/clock runs.
+
+MPF v0.31
+    1) Clock is now tickless. No more fps
+    2) Clock can wait on sockets
 """
 
 __all__ = ('ClockBase', 'ClockEvent')
@@ -177,6 +181,11 @@ try:
                 self._timer = _kernel32.CreateWaitableTimerA(None, True, None)
 
             def usleep(self, microseconds):
+                """Usleep on Windows.
+
+                Args:
+                    microseconds: time to sleep in us
+                """
                 delay = ctypes.c_longlong(int(-microseconds * 10))
                 _kernel32.SetWaitableTimer(
                     self._timer, ctypes.byref(delay), 0,
@@ -195,6 +204,9 @@ try:
                 from os import strerror
 
                 class StructTv(ctypes.Structure):
+
+                    """Struct for linux time."""
+
                     _fields_ = [('tv_sec', ctypes.c_long),
                                 ('tv_usec', ctypes.c_long)]
 
@@ -226,6 +238,11 @@ try:
         class _ClockBase(object):
             @classmethod
             def usleep(cls, microseconds):
+                """Linux usleep function.
+
+                Args:
+                    microseconds: time to sleep in us
+                """
                 _libc_usleep(int(microseconds))
 
 except (OSError, ImportError, AttributeError):
@@ -240,6 +257,11 @@ except (OSError, ImportError, AttributeError):
     class _ClockBase(object):
         @classmethod
         def usleep(cls, microseconds):
+            """Default fallback usleep function.
+
+            Args:
+                microseconds: time to sleep in us
+            """
             _default_sleep(microseconds / 1000000.)
 
 
@@ -309,7 +331,12 @@ class ClockEvent(object):
         self._callback_cancelled = True
 
     def tick(self, curtime, remove):
-        """Call the callback if time is due."""
+        """Call the callback if time is due.
+
+        Args:
+            curtime: current time
+            remove: callback to remove event
+        """
         # Is it time to execute the callback (did timeout occur)?  The
         # decision is easy if this event's timeout is 0 or -1 as it
         # should be called every time.
@@ -357,7 +384,6 @@ class ClockEvent(object):
         return '<ClockEvent callback=%r>' % self.get_callback()
 
 
-# pylint: disable-msg=too-many-instance-attributes
 class ClockBase(_ClockBase):
 
     """A clock object with event support."""
@@ -365,20 +391,13 @@ class ClockBase(_ClockBase):
     __slots__ = ('_dt', '_last_fps_tick', '_last_tick', '_fps', '_rfps',
                  '_start_tick', '_fps_counter', '_rfps_counter', 'ordered_events',
                  '_frame_callbacks', '_frames', '_frames_displayed',
-                 '_max_fps', 'max_iteration', '_log', 'read_sockets')
-
-    MIN_SLEEP = 0.005
-    SLEEP_UNDERSHOOT = MIN_SLEEP - 0.001
+                 '_log', 'read_sockets')
 
     counter = itertools.count()
 
-    def __init__(self, max_fps):
+    def __init__(self):
+        """Initialise clock."""
         super(ClockBase, self).__init__()
-
-        try:
-            self._max_fps = float(max_fps)
-        except ValueError:
-            self._max_fps = 30.0
 
         self._dt = 0.0001
         self._start_tick = self._last_tick = self.time()
@@ -393,17 +412,7 @@ class ClockBase(_ClockBase):
         self.read_sockets = {}
         self._frame_callbacks = []
         self._log = logging.getLogger("Clock")
-        self._log.debug("Starting clock (maximum frames per second=%s)", self._max_fps)
-
-        #: .. versionadded:: 1.0.5
-        #:     When a schedule_once is used with -1, you can add a limit on
-        #:     how iteration will be allowed. That is here to prevent too much
-        #:     relayout.
-        self.max_iteration = 10
-
-    @property
-    def max_fps(self):
-        return self._max_fps
+        self._log.debug("Starting tickless clock")
 
     @property
     def frametime(self):
@@ -434,12 +443,12 @@ class ClockBase(_ClockBase):
         self.ordered_events.sort(key=attrgetter("next_event_time"), reverse=False)
         return self.ordered_events[0].next_event_time
 
-    def _get_sleep_time(self):
+    def _get_sleep_time(self) -> float:
         next_event_time = self.get_next_event_time()
         if next_event_time:
             return next_event_time - self.time()
         else:
-            return 0
+            return 0.0
 
     def _sleep_until_next_event(self):
         sleeptime = self._get_sleep_time()
@@ -447,7 +456,7 @@ class ClockBase(_ClockBase):
         # Since windows will fail when calling select without sockets we have to fall back to usleep in that case.
         if self.read_sockets:
             # handle sleep time == 0, because select would block
-            if sleeptime <= 0:
+            if sleeptime <= 0.0:
                 sleeptime = 0.00001
 
             read_sockets = self.read_sockets.keys()
@@ -456,9 +465,9 @@ class ClockBase(_ClockBase):
                 for socket in list(read_ready):
                     self.read_sockets[socket]()
         elif sleeptime > 0:
-                # no sockets. just sleep
-                usleep = self.usleep
-                usleep(1000000 * sleeptime)
+            # no sockets. just sleep
+            usleep = self.usleep
+            usleep(1000000 * sleeptime)
 
     def tick(self):
         """Advance the clock to the next step. Must be called every frame.
@@ -543,11 +552,16 @@ class ClockBase(_ClockBase):
 
         If <timeout> is unspecified
         or 0, the callback will be called after the next frame is rendered.
+        Args:
+            callback: callback to call on timeout
+            timeout: seconds to wait
+            priority: priority when getting called
+
         Returns:
             A :class:`ClockEvent` instance.
         """
         if not callable(callback):
-            raise ValueError('callback must be a callable, got %s' % callback)
+            raise AssertionError('callback must be a callable, got %s' % callback)
         event = ClockEvent(self, False, callback, timeout, self._last_tick, priority)
 
         self._log.debug("Scheduled a one-time clock callback (callback=%s, timeout=%s, priority=%s)",
@@ -558,11 +572,16 @@ class ClockBase(_ClockBase):
     def schedule_interval(self, callback, timeout, priority=1):
         """Schedule an event to be called every <timeout> seconds.
 
+        Args:
+            callback: callback to call on timeout
+            timeout: period to wait
+            priority: priority when getting called
+
         Returns:
             A :class:`ClockEvent` instance.
         """
         if not callable(callback):
-            raise ValueError('callback must be a callable, got %s' % callback)
+            raise AssertionError('callback must be a callable, got %s' % callback)
         event = ClockEvent(self, True, callback, timeout, self._last_tick, priority)
 
         self._log.debug("Scheduled a recurring clock callback (callback=%s, timeout=%s, priority=%s)",
