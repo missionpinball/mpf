@@ -68,7 +68,7 @@ class ScoreReelGroup(SystemWideDevice):
         self.machine.events.add_handler('init_phase_4',
                                         self.initialize)
 
-        self.machine.clock.schedule_interval(self.tick, 0.1)
+        self.machine.clock.schedule_interval(self.tick, 0.01)
 
         # Need to hook this in case reels aren't done when ball ends
         self.machine.events.add_handler('ball_ending', self._ball_ending, 900)
