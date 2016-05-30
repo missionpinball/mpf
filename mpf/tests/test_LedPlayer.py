@@ -23,6 +23,7 @@ class TestLedPlayer(MpfTestCase):
 
         self.assertTrue(ts)
         self.advance_time_and_run(ts - self.machine.clock.get_time())
+        self.advance_time_and_run(.01)
 
     def test_config_player_config_processing(self):
         self.assertIn('led_player', ConfigPlayer.config_file_players)
@@ -90,14 +91,14 @@ class TestLedPlayer(MpfTestCase):
         # led2 should fade to blue since it was red before at priority 0
         self._synchronise_led_update()
         self.machine.events.post('event2')
-        self.advance_time_and_run(.12)
+        self.advance_time_and_run(.1)
 
         self.assertEqual(list(RGBColor('red').rgb),
                          self.machine.leds.led1.hw_driver.current_color)
         self.assertEqual(200, self.machine.leds.led1.stack[0]['priority'])
 
         # fade is half way from red to blue
-        self.assertEqual([128, 0, 127], self.machine.leds.led2.hw_driver.current_color)
+        self.assertEqual([141, 0, 114], self.machine.leds.led2.hw_driver.current_color)
         self.assertEqual(100, self.machine.leds.led2.stack[0]['priority'])
 
         self.advance_time_and_run()
@@ -130,11 +131,11 @@ class TestLedPlayer(MpfTestCase):
 
         # fades are 500ms, so advance 250 and check
         self.advance_time_and_run(.27)
-        self.assertEqual([0, 132, 0],
+        self.assertEqual([0, 127, 0],
                          self.machine.leds.led1.hw_driver.current_color)
-        self.assertEqual([0, 132, 0],
+        self.assertEqual([0, 127, 0],
                          self.machine.leds.led2.hw_driver.current_color)
-        self.assertEqual([0, 132, 0],
+        self.assertEqual([0, 127, 0],
                          self.machine.leds.led3.hw_driver.current_color)
 
         # finish the fade
