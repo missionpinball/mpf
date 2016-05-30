@@ -243,12 +243,6 @@ except (OSError, ImportError, AttributeError):
             _default_sleep(microseconds / 1000000.)
 
 
-def _hash(cb):
-    if hasattr(cb, '__self__') and cb.__self__ is not None:
-        return (id(cb.__self__) & 0xFF00) >> 8
-    return (id(cb) & 0xFF00) >> 8
-
-
 # pylint: disable-msg=too-many-instance-attributes
 class ClockEvent(object):
 
@@ -263,10 +257,9 @@ class ClockEvent(object):
     """
 
     # pylint: disable-msg=too-many-arguments
-    def __init__(self, clock, loop, callback, timeout, starttime, cid, priority=1):
+    def __init__(self, clock, loop, callback, timeout, starttime, priority=1):
         """Create clock event."""
         self.clock = clock
-        self.cid = cid
         self.id = next(clock.counter)
         self.loop = loop
         self.callback = callback
@@ -555,8 +548,7 @@ class ClockBase(_ClockBase):
         """
         if not callable(callback):
             raise ValueError('callback must be a callable, got %s' % callback)
-        event = ClockEvent(
-            self, False, callback, timeout, self._last_tick, _hash(callback), priority)
+        event = ClockEvent(self, False, callback, timeout, self._last_tick, priority)
 
         self._log.debug("Scheduled a one-time clock callback (callback=%s, timeout=%s, priority=%s)",
                         str(callback), timeout, priority)
@@ -571,8 +563,7 @@ class ClockBase(_ClockBase):
         """
         if not callable(callback):
             raise ValueError('callback must be a callable, got %s' % callback)
-        event = ClockEvent(
-            self, True, callback, timeout, self._last_tick, _hash(callback), priority)
+        event = ClockEvent(self, True, callback, timeout, self._last_tick, priority)
 
         self._log.debug("Scheduled a recurring clock callback (callback=%s, timeout=%s, priority=%s)",
                         str(callback), timeout, priority)
