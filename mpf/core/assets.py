@@ -625,7 +625,7 @@ class AssetLoader(threading.Thread):
             return
 
         # pylint: disable-msg=broad-except
-        except Exception:  # pragma no cover
+        except Exception:  # pragma: no cover
             exc_type, exc_value, exc_traceback = sys.exc_info()
             lines = traceback.format_exception(exc_type, exc_value,
                                                exc_traceback)
