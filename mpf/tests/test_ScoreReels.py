@@ -84,17 +84,16 @@ class TestShots(MpfTestCase):
         self.advance_time_and_run(.3)
         self.assertEqual(7, player1_10.pulse.call_count)
 
-        self.advance_time_and_run(.2)
+        self.advance_time_and_run(.3)
         self.assertEqual(0, player1_10k.pulse.call_count)
         self.assertEqual(0, player1_1k.pulse.call_count)
         self.assertEqual(0, player1_100.pulse.call_count)
         self.assertEqual(8, player1_10.pulse.call_count)
         self.hit_switch_and_run("score_1p_10_9", 0)
 
-        # confirm is a bit faster here because of the switch.
         self.advance_time_and_run(.3)
-        self.assertEqual(9, player1_10.pulse.call_count)
         self.assertEqual(1, player1_100.pulse.call_count)
+        self.assertEqual(9, player1_10.pulse.call_count)
 
         self.release_switch_and_run("score_1p_10_9", 0)
         self.hit_switch_and_run("score_1p_10_0", 0)
