@@ -1,3 +1,4 @@
+"""Test score reels."""
 from mock import MagicMock
 from mpf.tests.MpfTestCase import MpfTestCase
 
@@ -59,7 +60,7 @@ class TestShots(MpfTestCase):
         player1_10.pulse = MagicMock(return_value=10)
 
         self.machine.scoring.add(11097)  # result: 11207
-        self.advance_time_and_run(.01)
+        self.advance_time_and_run(.05)
         self.assertEqual(0, player1_10k.pulse.call_count)
         self.assertEqual(0, player1_1k.pulse.call_count)
         self.assertEqual(0, player1_100.pulse.call_count)
@@ -90,11 +91,10 @@ class TestShots(MpfTestCase):
         self.assertEqual(8, player1_10.pulse.call_count)
         self.hit_switch_and_run("score_1p_10_9", 0)
 
+        # confirm is a bit faster here because of the switch.
         self.advance_time_and_run(.3)
-        self.assertEqual(0, player1_10k.pulse.call_count)
-        self.assertEqual(0, player1_1k.pulse.call_count)
-        self.assertEqual(1, player1_100.pulse.call_count)
         self.assertEqual(9, player1_10.pulse.call_count)
+        self.assertEqual(1, player1_100.pulse.call_count)
 
         self.release_switch_and_run("score_1p_10_9", 0)
         self.hit_switch_and_run("score_1p_10_0", 0)
@@ -229,7 +229,7 @@ class TestShots(MpfTestCase):
 
         # drain ball
         self.machine.game.balls_in_play = 0
-        self.advance_time_and_run(.01)
+        self.advance_time_and_run(.05)
         self.assertEqual(3, self.machine.game.player.number)
 
         # player3 reuses the reels from player 1. machine resets them
