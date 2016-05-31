@@ -66,7 +66,7 @@ class TestShots(MpfTestCase):
         self.assertEqual(0, player1_100.pulse.call_count)
         self.assertEqual(1, player1_10.pulse.call_count)
 
-        self.advance_time_and_run(.3)
+        self.advance_time_and_run(.4)
         self.assertEqual(2, player1_10.pulse.call_count)
 
         self.advance_time_and_run(.3)
@@ -84,7 +84,7 @@ class TestShots(MpfTestCase):
         self.advance_time_and_run(.3)
         self.assertEqual(7, player1_10.pulse.call_count)
 
-        self.advance_time_and_run(.3)
+        self.advance_time_and_run(.2)
         self.assertEqual(0, player1_10k.pulse.call_count)
         self.assertEqual(0, player1_1k.pulse.call_count)
         self.assertEqual(0, player1_100.pulse.call_count)
