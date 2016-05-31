@@ -692,7 +692,7 @@ class BCP(object):
             name, **kwargs)
 
 
-class BCPClientSocket(object):
+class BCPClientSocket(object):  # pragma: no cover
 
     """Parent class for a BCP client socket.
 
