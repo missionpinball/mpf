@@ -229,7 +229,7 @@ class TestShots(MpfTestCase):
 
         # drain ball
         self.machine.game.balls_in_play = 0
-        self.advance_time_and_run(.05)
+        self.advance_time_and_run(.15)
         self.assertEqual(3, self.machine.game.player.number)
 
         # player3 reuses the reels from player 1. machine resets them
@@ -241,7 +241,6 @@ class TestShots(MpfTestCase):
 
         for i in range(7):
             self.advance_time_and_run(.3)
-            self.machine_run()
 
         self.assertEqual(0, player1_10k.pulse.call_count)
         self.assertEqual(0, player1_1k.pulse.call_count)
@@ -253,7 +252,6 @@ class TestShots(MpfTestCase):
         self.hit_switch_and_run("score_1p_100_9", 0)
 
         self.advance_time_and_run(.3)
-        self.machine_run()
 
         self.assertEqual(0, player1_10k.pulse.call_count)
         self.assertEqual(0, player1_1k.pulse.call_count)
@@ -267,7 +265,6 @@ class TestShots(MpfTestCase):
         self.release_switch_and_run("score_1p_100_9", 0)
 
         self.advance_time_and_run(10)
-        self.machine_run()
 
         self.assertEqual(0, player1_10k.pulse.call_count)
         self.assertEqual(0, player1_1k.pulse.call_count)
