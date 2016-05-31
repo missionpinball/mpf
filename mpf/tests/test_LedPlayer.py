@@ -130,7 +130,7 @@ class TestLedPlayer(MpfTestCase):
         self.machine.events.post('event3')
 
         # fades are 500ms, so advance 250 and check
-        self.advance_time_and_run(.27)
+        self.advance_time_and_run(.26)
         self.assertEqual([0, 127, 0],
                          self.machine.leds.led1.hw_driver.current_color)
         self.assertEqual([0, 127, 0],
