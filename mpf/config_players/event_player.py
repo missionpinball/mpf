@@ -14,11 +14,6 @@ class EventPlayer(ConfigPlayer):
         self.delay = DelayManager(self.machine.delayRegistry)
 
     def play(self, settings, key=None, priority=0, **kwargs):
-        # if not play_kwargs:
-        #     play_kwargs = kwargs
-        # else:
-        #     play_kwargs.update(kwargs)
-
         if 'events' in settings:
             settings = settings['events']
 

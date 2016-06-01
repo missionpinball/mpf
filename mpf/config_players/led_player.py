@@ -9,7 +9,6 @@ class LedPlayer(ConfigPlayer):
     machine_collection_name = "leds"
 
     def play(self, settings, key=None, priority=0, **kwargs):
-
         del kwargs
         if 'leds' in settings:
             settings = settings['leds']

@@ -222,6 +222,7 @@ class ConfigPlayer(object):
 
     def show_play_callback(self, settings, key, priority, show_tokens):
         # called from a show step
+
         self.play(settings=settings, key=key, priority=priority,
                   show_tokens=show_tokens)
 
