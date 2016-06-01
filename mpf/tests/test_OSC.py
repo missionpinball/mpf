@@ -1,3 +1,4 @@
+"""Test OSC."""
 from mpf.plugins import osc
 from mpf.plugins import auditor
 from mpf.tests.MpfTestCase import MpfTestCase

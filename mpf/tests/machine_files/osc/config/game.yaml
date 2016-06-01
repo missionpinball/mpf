@@ -2,6 +2,10 @@
 
 config: config.yaml
 
+mpf:
+  default_matrix_light_hw_update_hz: 1
+  default_led_hw_update_hz: 1
+
 game:
     balls_per_game: 1
 
