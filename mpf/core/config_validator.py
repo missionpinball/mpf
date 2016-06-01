@@ -961,7 +961,7 @@ widget_player:
     __valid_in__: machine, mode, show
     target: single|str|None
     slide: single|str|None
-    action: single|enum(add,remove)|add
+    action: single|enum(add,remove,update)|add
     key: single|str|None
     widget_settings: ignore
 widget_styles:
@@ -1010,6 +1010,7 @@ widgets:
         source_display: single|str|dmd
         gain: single|float|1.0
         pixel_color: single|kivycolor|None
+        dark_color: single|kivycolor|221100
         shades: single|int|0
         bg_color: single|kivycolor|191919ff
         blur: single|float|0.1
