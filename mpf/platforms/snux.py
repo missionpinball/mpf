@@ -107,10 +107,6 @@ class HardwarePlatform(DriverPlatform):
     def _initialize_phase_2(self):
         self.machine.clock.schedule_interval(self._flash_diag_led, 0.5)
 
-        # Schedule processing callback
-        # TODO: Make callback interval a config item
-        self.machine.clock.schedule_interval(self._tick, 0.001)
-
     def _validate_config(self):
         self.system11_config = self.machine.config_validator.validate_config(
             'system11', self.machine.config['system11'])
@@ -118,8 +114,14 @@ class HardwarePlatform(DriverPlatform):
         self.snux_config = self.machine.config_validator.validate_config(
             'snux', self.machine.config['snux'])
 
-    def _tick(self, dt):
-        # Called based on the timer_tick event
+    def tick(self, dt):
+        """Snux main loop.
+
+        Called based on the timer_tick event
+
+        Args:
+            dt: time since last call
+        """
         del dt
         if self.a_side_queue:
             self._service_a_side()
@@ -133,7 +135,11 @@ class HardwarePlatform(DriverPlatform):
         self.snux_config['diag_led_driver'].pulse(250)
 
     def configure_driver(self, config):
-        """Configure a driver on the snux board."""
+        """Configure a driver on the snux board.
+
+        Args:
+            config: Driver config dict
+        """
         orig_number = config['number']
 
         if (config['number'].lower().endswith('a') or
@@ -352,7 +358,7 @@ class HardwarePlatform(DriverPlatform):
 
     def _disable_all_c_side_drivers(self):
         if self.c_side_active:
-            for driver in self.c_drivers:
+            for driver in self.drivers_holding_c_side:
                 driver.disable(ConfiguredHwDriver(driver, {}))
             self.drivers_holding_c_side = set()
             self.c_side_done_time = 0
