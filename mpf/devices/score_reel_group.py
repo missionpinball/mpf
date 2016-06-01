@@ -143,12 +143,12 @@ class ScoreReelGroup(SystemWideDevice):
             if self.reels[i]:
                 if self.assumed_value_list[i] != self.desired_value_list[i]:
                     if notify_event:
-                        self.machine.events.post('scorereel_' +
+                        self.machine.events.post('reel_' +
                                                  self.reels[i].name +
                                                  '_resync')
                     return False
 
-        '''event: scorereel_(name)_resync
+        '''event: reel_(name)_resync
         desc: The score reel (name) is not valid and will be resyncing.
         '''
 
