@@ -86,14 +86,14 @@ class AssetManager(object):
         except ZeroDivisionError:
             return 100
 
-    def shutdown(self):
-        """Prepares the Asset Manager for shutdown by stopping the loader
-        thread. Will block until the loader thread is stopped.
-
-        """
-        self.loader_queue = None
-        self.loaded_queue = None
-        self.loader_thread.stop()
+    # def shutdown(self):
+    #     """Prepares the Asset Manager for shutdown by stopping the loader
+    #     thread. Will block until the loader thread is stopped.
+    #
+    #     """
+    #     self.loader_queue = None
+    #     self.loaded_queue = None
+    #     self.loader_thread.stop()
 
     def _start_loader_thread(self):
         self.loader_thread = AssetLoader(loader_queue=self.loader_queue,
