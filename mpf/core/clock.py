@@ -278,6 +278,10 @@ class ClockEvent(object):
         :meth:`__call__` methods.
     """
 
+    __slots__ = ('clock', 'id', 'loop', 'callback', 'timeout',
+                 '_last_dt', '_next_event_time', '_last_event_time', '_dt',
+                 '_priority', '_callback_cancelled')
+
     # pylint: disable-msg=too-many-arguments
     def __init__(self, clock, loop, callback, timeout, starttime, priority=1):
         """Create clock event."""
@@ -443,15 +447,12 @@ class ClockBase(_ClockBase):
         self.ordered_events.sort(key=attrgetter("next_event_time"), reverse=False)
         return self.ordered_events[0].next_event_time
 
-    def _get_sleep_time(self) -> float:
+    def _sleep_until_next_event(self):
         next_event_time = self.get_next_event_time()
         if next_event_time:
-            return next_event_time - self.time()
+            sleeptime = next_event_time - self.time()
         else:
-            return 0.0
-
-    def _sleep_until_next_event(self):
-        sleeptime = self._get_sleep_time()
+            sleeptime = 0.0
 
         # Since windows will fail when calling select without sockets we have to fall back to usleep in that case.
         if self.read_sockets:
@@ -464,10 +465,18 @@ class ClockBase(_ClockBase):
             if read_ready:
                 for socket in list(read_ready):
                     self.read_sockets[socket]()
-        elif sleeptime > 0:
-            # no sockets. just sleep
-            usleep = self.usleep
-            usleep(1000000 * sleeptime)
+
+                # prematurely exit function if we have been woken up by a socket
+                return
+
+        # make sure we sleep long enough
+        if next_event_time:
+            current = self.time()
+            while next_event_time > current:
+                sleeptime = next_event_time - current
+                usleep = self.usleep
+                usleep(1000000 * sleeptime)
+                current = self.time()
 
     def tick(self):
         """Advance the clock to the next step. Must be called every frame.
