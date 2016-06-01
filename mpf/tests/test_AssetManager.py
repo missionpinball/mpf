@@ -1,3 +1,4 @@
+"""Test assets."""
 import time
 from mpf.tests.MpfTestCase import MpfTestCase
 
@@ -65,9 +66,7 @@ class TestAssets(MpfTestCase):
 
         # same as above, but test that it also works when the asset name is
         # different from the file name
-        self.assertEqual(
-                self.machine.shows['show_12_new_name'].config['test_key'],
-                'test_value_override12')
+        self.assertEqual(self.machine.shows['show_12_new_name'].config['test_key'], 'test_value_override12')
 
         # Test that mode assets were loaded properly
         self.assertIn('show6', self.machine.shows)
@@ -79,7 +78,8 @@ class TestAssets(MpfTestCase):
         # Make sure all the assets are loaded. Wait if not
         while (self.machine.asset_manager.num_assets_to_load <
                self.machine.asset_manager.num_assets_loaded):
-            self.advance_time_and_run()
+            time.sleep(.0001)
+            self.advance_time_and_run(.1)
 
         # Need to wait a bit since the loading was a separate thread
         self.advance_time_and_run(.1)
@@ -149,6 +149,7 @@ class TestAssets(MpfTestCase):
         while (not self.machine.shows['show9'].loaded and
                 time.time() < start_time + 5):
             self.assertTrue(self.machine.shows['show9'].loading)
+            time.sleep(.0001)
             self.advance_time_and_run(.1)
 
         self.assertTrue(self.machine.shows['show9'].loaded)
@@ -163,6 +164,7 @@ class TestAssets(MpfTestCase):
         while (self.machine.shows['show9'].loaded and
                 time.time() < start_time + 5):
             self.assertTrue(self.machine.shows['show9'].unloading)
+            time.sleep(.0001)
             self.advance_time_and_run(.1)
 
         self.assertFalse(self.machine.shows['show9'].loaded)
