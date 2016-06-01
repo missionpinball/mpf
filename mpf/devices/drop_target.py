@@ -35,8 +35,9 @@ class DropTarget(SystemWideDevice):
         self.machine.events.add_handler('init_phase_4',
                                         self._register_switch_handlers)
 
-        # TODO: make playfield name configureable
-        self.machine.ball_devices['playfield'].ball_search.register(self.config['ball_search_order'], self._ball_search)
+        # TODO: make playfield name configurable
+        self.machine.ball_devices['playfield'].ball_search.register(
+            self.config['ball_search_order'], self._ball_search)
 
     def _ball_search_phase1(self):
         if not self.complete and self.reset_coil:
@@ -139,17 +140,16 @@ class DropTarget(SystemWideDevice):
 
     def _down(self):
         self.complete = True
-        self.machine.events.post(self.name + '_down')
-        '''event: (drop_target_name)_down
-        desc: The drop target with the name (drop_target_name) has just
-        changed to the "down" state.'''
+        self.machine.events.post('drop_target_' + self.name + '_down')
+        '''event: drop_target_(name)_down
+        desc: The drop target with the (name) has just changed to the "down"
+        state.'''
 
     def _up(self):
         self.complete = False
-        self.machine.events.post(self.name + '_up')
-        '''event: (drop_target_name)_up
-        desc: The drop target with the name (drop_target_name) has just
-        changed to the "up" state.'''
+        self.machine.events.post('drop_target_' + self.name + '_up')
+        '''event: drop_target_(name)_up
+        desc: The drop target (name) has just changed to the "up" state.'''
 
     def _update_banks(self):
         for bank in self.banks:
@@ -295,28 +295,29 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         if self.debug:
             self.log.debug('All targets are down')
 
-        self.machine.events.post(self.name + '_down')
-        '''event: (drop_target_bank_name)_down
+        self.machine.events.post('drop_target_bank_' + self.name + '_down')
+        '''event: drop_target_bank_(name)_down
         desc: Every drop target in the drop target bank called
-        (drop_target_bank_name) is now in the "down" state. This event is
+        (name) is now in the "down" state. This event is
         only posted once, when all the drop targets are down.'''
 
     def _bank_up(self):
         self.complete = False
         if self.debug:
             self.log.debug('All targets are up')
-        self.machine.events.post(self.name + '_up')
-        '''event: (drop_target_bank_name)_up
+        self.machine.events.post('drop_target_bank_' + self.name + '_up')
+        '''event: drop_target_bank_(name)_up
         desc: Every drop target in the drop target bank called
-        (drop_target_bank_name) is now in the "up" state. This event is
+        (name) is now in the "up" state. This event is
         only posted once, when all the drop targets are up.'''
 
     def _bank_mixed(self):
         self.complete = False
-        self.machine.events.post(self.name + '_mixed', down=self.down)
-        '''event: (drop_target_bank_name)_mixed
+        self.machine.events.post('drop_target_bank_' + self.name + '_mixed',
+                                 down=self.down)
+        '''event: drop_target_bank_(name)_mixed
         desc: The drop targets in the drop target bank
-        (drop_target_bank_name) are in a "mixed" state, meaning that they're
+        (name) are in a "mixed" state, meaning that they're
         not all down or not all up. This event is posted every time a member
         drop target changes but the overall bank is not not complete.'''
 
