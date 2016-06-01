@@ -231,7 +231,7 @@ class Mode(object):
 
         self.machine.events.post('mode_' + self.name + '_started',
                                  callback=self._mode_started_callback)
-        '''event: event_(mode_name)_started
+        '''event: mode_(mode_name)_started
 
         desc: Posted when a mode has started. The "mode_name" part is replaced
         with the actual name of the mode, so the actual event posted is
@@ -307,7 +307,7 @@ class Mode(object):
 
         self.machine.events.post('mode_' + self.name + '_stopped',
                                  callback=self._mode_stopped_callback)
-        '''event: event_(mode_name)_stopped
+        '''event: mode_(mode_name)_stopped
 
         desc: Posted when a mode has stopped. The "mode_name" part is replaced
         with the actual name of the mode, so the actual event posted is
