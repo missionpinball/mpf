@@ -297,16 +297,6 @@ diverters:
     targets_when_active: list|machine(ball_devices)|playfield
     targets_when_inactive: list|machine(ball_devices)|playfield
     type: single|enum(hold,pulse)|hold
-driver_enabled:
-    __valid_in__: machine
-    number: single|str|
-    allow_enable: single|bool|True
-    tags: list|str|None
-    label: single|str|%
-    debug: single|bool|False
-    platform: single|str|None
-    enable_events: dict|str:ms|ball_started
-    disable_events: dict|str:ms|ball_ending
 drop_targets:
     __valid_in__: machine
     switch: single|machine(switches)|

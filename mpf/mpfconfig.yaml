@@ -57,7 +57,6 @@ mpf:
         multiball.Multiball
         motor.Motor
         ball_save.BallSave
-        driver_enabled.DriverEnabled
         accelerometer.Accelerometer
         servo.Servo
         achievement.Achievement
