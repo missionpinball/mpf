@@ -334,9 +334,14 @@ class Counter(LogicBlock):
 
     def __init__(self, machine: MachineController, name: str, player: Player, config: dict):
         """Initialise counter."""
-        # for compatibility post the same default as previously for counters
+
         if 'events_when_hit' not in config:
+            # for compatibility post the same default as previously for
+            # counters. This one is deprecated.
             config['events_when_hit'] = ['counter_' + name + '_hit']
+
+            # this is the one moving forward
+            config['events_when_hit'] = ['logicblock_' + name + '_hit']
 
         super().__init__(machine, name, player, config)
 
