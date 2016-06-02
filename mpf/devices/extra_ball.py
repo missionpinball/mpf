@@ -14,11 +14,11 @@ class ExtraBall(ModeDevice):
     def award(self, **kwargs):
         del kwargs
         # if there is no player active or the ball was already awareded to the player
-        if not self.player or self.player.uvars['extra_balls_awarded'][self.name]:
+        if not self.player or self.player.extra_balls_awarded[self.name]:
             return
 
         # mark as awarded
-        self.player.uvars['extra_balls_awarded'][self.name] = True
+        self.player.extra_balls_awarded[self.name] = True
 
         self.log.debug("Awarding additional ball to player %s", self.player.number)
 
@@ -31,16 +31,16 @@ class ExtraBall(ModeDevice):
             return
 
         # reset flag
-        self.player.uvars['extra_balls_awarded'][self.name] = False
+        self.player.extra_balls_awarded[self.name] = False
 
     def device_added_to_mode(self, mode, player):
         super().device_added_to_mode(mode, player)
         self.player = player
-        if 'extra_balls' not in self.player.uvars:
-            self.player.uvars['extra_balls_awarded'] = dict()
+        if not self.player.extra_balls:
+            self.player.extra_balls_awarded = dict()
 
-        if self.name not in self.player.uvars['extra_balls_awarded']:
-            self.player.uvars['extra_balls_awarded'][self.name] = False
+        if self.name not in self.player.extra_balls_awarded:
+            self.player.extra_balls_awarded[self.name] = False
 
     def device_removed_from_mode(self, mode):
         del mode

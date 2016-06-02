@@ -63,7 +63,6 @@ class Player(object):
         self.__dict__['log'] = logging.getLogger("Player")
         self.__dict__['machine'] = machine
         self.__dict__['vars'] = dict()
-        self.__dict__['uvars'] = dict()  # for "untracked" player vars
 
         player_list.append(self)
 
@@ -128,7 +127,7 @@ class Player(object):
         except TypeError:
             change = prev_value != value
 
-        if change or new_entry:
+        if (change or new_entry) and type(value) in (int, str, float):
 
             self.log.debug("Setting '%s' to: %s, (prior: %s, change: %s)",
                            name, self.vars[name], prev_value, change)
@@ -139,7 +138,8 @@ class Player(object):
                                      player_num=self.vars['number'])
             '''event: player_(var_name)
 
-            desc: Posted when a player variable is added or changes value.
+            desc: Posted when simpler types of player variables are added or
+            change value.
 
             The actual event has (var_name) replaced with the name of the
             player variable that changed. Some examples:
@@ -152,6 +152,11 @@ class Player(object):
             in the documentation, if you see something that says it's stored in
             a player variable, that means you'll get this event when that
             player variable is created or is changed.
+
+            Note that this event is only posted for simpler types of player
+            variables, including player variables that are integers, floating
+            point numbers, or strings. More complex player variables (lists,
+            dicts, etc.) do not get this event posted.
 
             This event is posted for a single player variable changing, meaning
             if multiple player variables change at the same time, multiple
@@ -166,8 +171,8 @@ class Player(object):
 
             change: If the player variable just changed, this will be the
             amount of the change. If it's not possible to determine a numeric
-            change (for example, if this player variable is a list), then this
-            *change* value will be set to the boolean *True*.
+            change (for example, if this player variable is a string), then
+            this *change* value will be set to the boolean *True*.
 
             player_num: The player number this variable just changed for,
             starting with 1. (e.g. Player 1 will have *player_num=1*, Player 4
@@ -175,11 +180,12 @@ class Player(object):
 
             '''
 
-        if Player.monitor_enabled and "player" in self.machine.monitors:
-            for callback in self.machine.monitors['player']:
-                callback(name=name, value=self.vars[name],
-                         prev_value=prev_value, change=change,
-                         player_num=self.vars['number'])
+            # note the monitor is only called for simpler var changes
+            if Player.monitor_enabled and "player" in self.machine.monitors:
+                for callback in self.machine.monitors['player']:
+                    callback(name=name, value=self.vars[name],
+                             prev_value=prev_value, change=change,
+                             player_num=self.vars['number'])
 
     def __getitem__(self, name):
         return self.__getattr__(name)
