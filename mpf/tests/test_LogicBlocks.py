@@ -106,7 +106,7 @@ class TestLogicBlocks(MpfTestCase):
     def test_counter_simple_down(self):
         self._start_game()
         self.mock_event("logicblock_counter1_complete")
-        self.mock_event("counter_counter1_hit")
+        self.mock_event("logicblock_counter1_hit")
 
         self.post_event("counter1_enable")
         for i in range(4):
@@ -122,12 +122,12 @@ class TestLogicBlocks(MpfTestCase):
 
         self.post_event("counter1_count")
         self.assertEqual(1, self._events["logicblock_counter1_complete"])
-        self.assertEqual(5, self._events["counter_counter1_hit"])
+        self.assertEqual(5, self._events["logicblock_counter1_hit"])
 
         # it should disable
         self.post_event("counter1_count")
         self.assertEqual(1, self._events["logicblock_counter1_complete"])
-        self.assertEqual(5, self._events["counter_counter1_hit"])
+        self.assertEqual(5, self._events["logicblock_counter1_hit"])
 
         self.post_event("counter1_restart")
 
@@ -136,7 +136,7 @@ class TestLogicBlocks(MpfTestCase):
 
         # 4 more hits but not completed
         self.assertEqual(1, self._events["logicblock_counter1_complete"])
-        self.assertEqual(9, self._events["counter_counter1_hit"])
+        self.assertEqual(9, self._events["logicblock_counter1_hit"])
 
         # reset
         self.post_event("counter1_reset")
@@ -145,12 +145,12 @@ class TestLogicBlocks(MpfTestCase):
 
         # another 4 hits still not complete
         self.assertEqual(1, self._events["logicblock_counter1_complete"])
-        self.assertEqual(13, self._events["counter_counter1_hit"])
+        self.assertEqual(13, self._events["logicblock_counter1_hit"])
 
         # and complete again
         self.post_event("counter1_count")
         self.assertEqual(2, self._events["logicblock_counter1_complete"])
-        self.assertEqual(14, self._events["counter_counter1_hit"])
+        self.assertEqual(14, self._events["logicblock_counter1_hit"])
 
     def test_sequence_simple(self):
         self._start_game()
