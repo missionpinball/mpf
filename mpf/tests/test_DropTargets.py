@@ -45,7 +45,7 @@ class TestDropTargets(MpfTestCase):
         self.advance_time_and_run(.5)
         self.machine.coils.coil1.pulse.assert_called_once_with()
 
-        # after another 100ms the switches relesae
+        # after another 100ms the switches releases
         self.release_switch_and_run("switch1", 0)
         self.release_switch_and_run("switch2", 0)
         self.release_switch_and_run("switch3", 1)
