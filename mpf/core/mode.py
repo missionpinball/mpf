@@ -212,9 +212,9 @@ class Mode(object):
 
         self.machine.events.post_queue(event='mode_' + self.name + '_starting',
                                        callback=self._started)
-        '''event: mode_(mode_name)_starting
+        '''event: mode_(name)_starting
 
-        desc: The mode called "mode_name" is starting.
+        desc: The mode called "name" is starting.
 
         This is a queue event. The mode will not fully start until the queue is
         cleared.
@@ -231,13 +231,13 @@ class Mode(object):
 
         self.machine.events.post('mode_' + self.name + '_started',
                                  callback=self._mode_started_callback)
-        '''event: mode_(mode_name)_started
+        '''event: mode_(name)_started
 
-        desc: Posted when a mode has started. The "mode_name" part is replaced
+        desc: Posted when a mode has started. The "name" part is replaced
         with the actual name of the mode, so the actual event posted is
         something like *mode_attract_started*, *mode_base_started*, etc.
 
-        This is posted after the "mode_(mode_name)_starting" event.
+        This is posted after the "mode_(name)_starting" event.
         '''
 
     def _mode_started_callback(self, **kwargs):
@@ -284,9 +284,9 @@ class Mode(object):
 
         self.machine.events.post_queue(event='mode_' + self.name + '_stopping',
                                        callback=self._stopped)
-        '''event: mode_(mode_name)_stopping
+        '''event: mode_(name)_stopping
 
-        The mode called "mode_name" is stopping. This is a queue event. The
+        The mode called "name" is stopping. This is a queue event. The
         mode won't actually stop until the queue is cleared.
 
         '''
@@ -307,9 +307,9 @@ class Mode(object):
 
         self.machine.events.post('mode_' + self.name + '_stopped',
                                  callback=self._mode_stopped_callback)
-        '''event: mode_(mode_name)_stopped
+        '''event: mode_(name)_stopped
 
-        desc: Posted when a mode has stopped. The "mode_name" part is replaced
+        desc: Posted when a mode has stopped. The "name" part is replaced
         with the actual name of the mode, so the actual event posted is
         something like *mode_attract_stopped*, *mode_base_stopped*, etc.
         '''

@@ -49,9 +49,9 @@ class Motor(SystemWideDevice):
         self.log.info("Motor is in position %s", position)
 
         self.machine.events.post("motor_{}_reached_{}".format(self.name, position))
-        '''event: motor_(motor)_reached_(position)
+        '''event: motor_(name)_reached_(position)
 
-        desc: A motor device (motor) reached position (position)
+        desc: A motor device called (name) reached position (position)
         (device)
         '''
 
