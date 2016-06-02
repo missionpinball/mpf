@@ -2,14 +2,18 @@ import os
 import platform
 import subprocess
 from importlib import import_module
+import sys
 
 
 class Command(object):
     def __init__(self, mpf_path, machine_path, args):
         if platform.system() == 'Windows':
-            subprocess.Popen('mpf game {} {}'.format(machine_path,
-                                                     ' '.join(args)))
-            os.system('mpf mc {} {}'.format(machine_path, ' '.join(args)))
+            subprocess.Popen(
+                '{} -m mpf game {} {}'.format(
+                    sys.executable, machine_path, ' '.join(args)))
+
+            os.system('{} -m mpf mc {} {}'.format(
+                sys.executable, machine_path, ' '.join(args)))
 
         else:
             if os.fork():
