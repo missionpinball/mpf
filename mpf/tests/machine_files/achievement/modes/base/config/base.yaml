@@ -1,0 +1,34 @@
+#config_version=4
+mode:
+    start_events: ball_starting
+    priority: 100
+
+achievements:
+  achievement1:
+    start_events: achievement1_start
+    stop_events: achievement1_stop
+    enable_events: achievement1_enable
+    disable_events: achievement1_disable
+    complete_events: achievement1_complete
+    reset_events: achievement1_reset
+    show_when_disabled: achievement1_disabled
+    show_when_enabled: achievement1_enabled
+    show_when_started: achievement1_started
+    show_when_stopped: achievement1_stopped
+    show_when_completed: achievement1_completed
+
+  achievement2:
+    start_events: achievement2_start
+    stop_events: achievement2_stop
+    enable_events: achievement2_enable
+    disable_events: achievement2_disable
+    complete_events: achievement2_complete
+    reset_events: achievement2_reset
+    events_when_started: test_event, test_event2
+    show_when_enabled: achievement2_enabled
+    show_when_started: achievement2_started
+    show_when_completed: achievement2_completed
+    restart_after_stop_possible: False
+    start_enabled: True
+    restart_on_next_ball_when_started: False
+    enable_on_next_ball_when_enabled: False

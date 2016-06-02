@@ -1,0 +1,26 @@
+#config_version=4
+
+switches:
+    test:
+        number:
+
+modes:
+  - base
+
+shows:
+  achievement1_disabled:
+    - time: 1
+  achievement1_enabled:
+    - time: 1
+  achievement1_started:
+    - time: 1
+  achievement1_stopped:
+    - time: 1
+  achievement1_completed:
+    - time: 1
+  achievement2_enabled:
+    - time: 1
+  achievement2_started:
+    - time: 1
+  achievement2_completed:
+    - time: 1

@@ -60,6 +60,7 @@ mpf:
         driver_enabled.DriverEnabled
         accelerometer.Accelerometer
         servo.Servo
+        achievement.Achievement
 
     plugins:
         mpf.plugins.auditor.Auditor
@@ -147,6 +148,7 @@ mpf:
       - shot_profiles
       - switches
       - timers
+      - achievements
 
 # Default settings for machines. All can be overridden
 
