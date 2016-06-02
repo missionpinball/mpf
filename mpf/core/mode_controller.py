@@ -248,7 +248,7 @@ class ModeController(object):
     @classmethod
     def _player_added(cls, player, num):
         del num
-        player.uvars['_restart_modes_on_next_ball'] = list()
+        player._restart_modes_on_next_ball = list()
 
     def _player_turn_start(self, player, **kwargs):
         del kwargs
@@ -263,13 +263,13 @@ class ModeController(object):
 
     def _ball_starting(self, queue):
         del queue
-        for mode in self.machine.game.player.uvars['_restart_modes_on_next_ball']:
+        for mode in self.machine.game.player._restart_modes_on_next_ball:
             self.log.debug("Restarting mode %s based on 'restart_on_next_ball"
                            "' setting", mode)
 
             mode.start()
 
-        self.machine.game.player.uvars['_restart_modes_on_next_ball'] = list()
+        self.machine.game.player._restart_modes_on_next_ball = list()
 
     def _ball_ending(self, queue):
         # unloads all the active modes
@@ -289,8 +289,7 @@ class ModeController(object):
 
             if mode.restart_on_next_ball:
                 self.log.debug("Will Restart mode %s on next ball, mode")
-                self.machine.game.player.uvars[
-                    '_restart_modes_on_next_ball'].append(mode)
+                self.machine.game.player._restart_modes_on_next_ball.append(mode)
 
         if not self.mode_stop_count:
             self.queue.clear()

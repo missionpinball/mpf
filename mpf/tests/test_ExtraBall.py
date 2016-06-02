@@ -39,7 +39,7 @@ class TestExtraBall(MpfTestCase):
         self.assertTrue(self.machine.extra_balls.test_extra_ball)
         self.assertTrue(self.machine.extra_balls.test_extra_ball.player)
         self.assertEqual(1, self.machine.game.player.number)
-        self.assertEqual(False, self.machine.game.player.uvars['extra_balls_awarded']['test_extra_ball'])
+        self.assertEqual(False, self.machine.game.player.extra_balls_awarded['test_extra_ball'])
         self.assertEqual(0, self.machine.game.player.extra_balls)
 
         # stop mode
@@ -48,7 +48,7 @@ class TestExtraBall(MpfTestCase):
         # nothing should happen
         self.post_event("extra_ball_award")
         self.assertEqual(1, self.machine.game.player.number)
-        self.assertEqual(False, self.machine.game.player.uvars['extra_balls_awarded']['test_extra_ball'])
+        self.assertEqual(False, self.machine.game.player.extra_balls_awarded['test_extra_ball'])
         self.assertEqual(0, self.machine.game.player.extra_balls)
         self.assertFalse(self.machine.extra_balls.test_extra_ball.player)
 
@@ -58,21 +58,21 @@ class TestExtraBall(MpfTestCase):
         self.assertTrue(self.machine.extra_balls.test_extra_ball)
         self.assertTrue(self.machine.extra_balls.test_extra_ball.player)
         self.assertEqual(1, self.machine.game.player.number)
-        self.assertEqual(False, self.machine.game.player.uvars['extra_balls_awarded']['test_extra_ball'])
+        self.assertEqual(False, self.machine.game.player.extra_balls_awarded['test_extra_ball'])
         self.assertEqual(0, self.machine.game.player.extra_balls)
 
         # player get extra_ball
         self.post_event("extra_ball_award")
         self.assertEqual(1, self.machine.game.player.number)
         self.assertEqual(1, self.machine.game.player.ball)
-        self.assertEqual(True, self.machine.game.player.uvars['extra_balls_awarded']['test_extra_ball'])
+        self.assertEqual(True, self.machine.game.player.extra_balls_awarded['test_extra_ball'])
         self.assertEqual(1, self.machine.game.player.extra_balls)
 
         # but only once
         self.post_event("extra_ball_award")
         self.assertEqual(1, self.machine.game.player.number)
         self.assertEqual(1, self.machine.game.player.ball)
-        self.assertEqual(True, self.machine.game.player.uvars['extra_balls_awarded']['test_extra_ball'])
+        self.assertEqual(True, self.machine.game.player.extra_balls_awarded['test_extra_ball'])
         self.assertEqual(1, self.machine.game.player.extra_balls)
 
         # reset the extra ball
@@ -82,7 +82,7 @@ class TestExtraBall(MpfTestCase):
         self.post_event("extra_ball_award")
         self.assertEqual(1, self.machine.game.player.number)
         self.assertEqual(1, self.machine.game.player.ball)
-        self.assertEqual(True, self.machine.game.player.uvars['extra_balls_awarded']['test_extra_ball'])
+        self.assertEqual(True, self.machine.game.player.extra_balls_awarded['test_extra_ball'])
         self.assertEqual(2, self.machine.game.player.extra_balls)
 
         # takes roughly 4s to get ball confirmed
@@ -97,7 +97,7 @@ class TestExtraBall(MpfTestCase):
 
         self.assertEqual(1, self.machine.game.player.number)
         self.assertEqual(1, self.machine.game.player.ball)
-        self.assertEqual(True, self.machine.game.player.uvars['extra_balls_awarded']['test_extra_ball'])
+        self.assertEqual(True, self.machine.game.player.extra_balls_awarded['test_extra_ball'])
         self.assertEqual(1, self.machine.game.player.extra_balls)
 
         # takes roughly 4s to get ball confirmed
@@ -125,7 +125,7 @@ class TestExtraBall(MpfTestCase):
 
         self.assertEqual(2, self.machine.game.player.number)
         self.assertEqual(1, self.machine.game.player.ball)
-        self.assertEqual(False, self.machine.game.player.uvars['extra_balls_awarded']['test_extra_ball'])
+        self.assertEqual(False, self.machine.game.player.extra_balls_awarded['test_extra_ball'])
         self.assertEqual(0, self.machine.game.player.extra_balls)
 
         # game should not end
