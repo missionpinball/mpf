@@ -24,11 +24,11 @@ class Achievement(ModeDevice):
 
     @property
     def _state(self):
-        return self._player.uvars['achievements'][self.name]
+        return self._player.achievements[self.name]
 
     @_state.setter
     def _state(self, value):
-        self._player.uvars['achievements'][self.name] = value
+        self._player.achievements[self.name] = value
 
     def enable(self, **kwargs):
         """Enable the achievement.
@@ -123,10 +123,10 @@ class Achievement(ModeDevice):
         super().device_added_to_mode(mode, player)
         self._player = player
         self._mode = mode
-        if 'achievements' not in self._player.uvars:
-            self._player.uvars['achievements'] = dict()
+        if not self._player.achievements:
+            self._player.achievements = dict()
 
-        if self.name not in self._player.uvars['achievements']:
+        if self.name not in self._player.achievements:
             self.reset()
         else:
             self._restore_state()
