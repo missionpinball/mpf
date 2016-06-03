@@ -143,12 +143,13 @@ class Diverter(Device):
             self.config['activation_coil'].enable()
             self.schedule_deactivation()
 
-    def deactivate(self):
+    def deactivate(self, **kwargs):
         """Deactivates this diverter.
 
         This method will disable the activation_coil, and (optionally) if it's
         configured with a deactivation coil, it will pulse it.
         """
+        del kwargs
         self.log.debug("Deactivating Diverter")
         self.active = False
 
