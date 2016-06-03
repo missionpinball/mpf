@@ -842,7 +842,7 @@ smartmatrix:
     use_separate_thread: single|bool|true
 sound_player:
     __valid_in__: machine, mode, show
-    action: single|enum(play,stop)|play
+    action: single|enum(play,stop,stop_looping)|play
     volume: single|gain|None
     loops: single|int|None
     priority: single|int|None
