@@ -237,29 +237,38 @@ class VirtualServo(ServoPlatformInterface):
 
 
 class VirtualDriver(DriverPlatformInterface):
+
+    """A virtual driver object."""
+
     def __init__(self, config):
+        """Initialise virtual driver to disabled."""
         self.log = logging.getLogger('VirtualDriver')
         self.number = config['number']
         self.config = config
+        self.state = "disabled"
 
     def __repr__(self):
+        """Str representation."""
         return "VirtualDriver.{}".format(self.number)
 
     def disable(self, coil):
-        pass
+        """Disable virtual coil."""
+        del coil
+        self.state = "disabled"
 
     def enable(self, coil):
-        pass
+        """Enable virtual coil."""
+        del coil
+        if (not self.config.get("allow_enable", False) and not self.config.get("hold_power", 0) and     # defaults
+                not self.config.get("pwm_on_ms", 0) and not self.config.get("pwm_off_ms", 0) and        # p-roc
+                not self.config.get("hold_power32", 0) and not self.config.get("hold_pwm_mask", 0) and  # fast
+                not self.config.get("hold_power16", 0)):                                                # opp
+            raise AssertionError("Cannot enable coil {}. Please specify allow_enable or hold_power".format(self.number))
+
+        self.state = "enabled"
 
     def pulse(self, coil, milliseconds):
+        """Pulse virtual coil."""
         del coil
+        self.state = "pulsed_" + str(milliseconds)
         return milliseconds
-
-    def state(self):
-        pass
-
-    def tick(self):
-        pass
-
-    def reconfigure(self, polarity):
-        pass

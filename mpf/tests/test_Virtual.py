@@ -9,6 +9,13 @@ class TestSmartVirtualPlatform(MpfTestCase):
     def getMachinePath(self):
         return 'tests/machine_files/platform/'
 
-    def test_load_config(self):
+    def test_load_config_and_allow_enable(self):
         # test that we can load the config with coil and switch parameters from platforms
-        pass
+
+        self.machine.coils.c_test_allow_enable.enable()
+        self.machine.coils.c_test_hold_fast.enable()
+        self.machine.coils.c_test_hold_p_roc.enable()
+        self.machine.coils.c_test_hold_power.enable()
+
+        with self.assertRaises(AssertionError):
+            self.machine.coils.c_test_no_allow_enable.enable()

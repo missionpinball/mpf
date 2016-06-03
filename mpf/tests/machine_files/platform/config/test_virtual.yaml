@@ -11,6 +11,21 @@ coils:
         pwm_on_ms: 5
         pwm_off_ms: 1
         number: 1
+    c_test_no_allow_enable:
+        number: 2
+    c_test_allow_enable:
+        number: 3
+        allow_enable: True
+    c_test_hold_fast:
+        number: 4
+        hold_power32: 123
+    c_test_hold_p_roc:
+        number: 5
+        pwm_on_ms: 1
+        pwm_off_ms: 2
+    c_test_hold_power:
+        number: 6
+        hold_power: 3
 
 autofire_coils:
     ac_test:

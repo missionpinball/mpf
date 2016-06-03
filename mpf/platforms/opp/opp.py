@@ -504,7 +504,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
         # OPP always does the full pulse. Therefore, this is mostly right.
-        if coil.config['hold_power'] is None and not coil.config['allow_enable']:
+        if not self.get_hold_value(coil):
             raise AssertionError("Set allow_enable if you want to enable a coil without hold_power")
 
         self._write_hw_rule(enable_switch, coil, True)
