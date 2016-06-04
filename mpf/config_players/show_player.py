@@ -9,11 +9,6 @@ class ShowPlayer(ConfigPlayer):
     device_collection = None
 
     def play(self, settings, key=None, priority=0, **kwargs):
-        # if not play_kwargs:
-        #     play_kwargs = kwargs
-        # else:
-        #     play_kwargs.update(kwargs)
-
         # todo should show_tokens be part of settings?
 
         if 'shows' in settings:
@@ -21,7 +16,7 @@ class ShowPlayer(ConfigPlayer):
 
         settings = deepcopy(settings)
 
-        show_tokens = kwargs.get('show_tokens', None)
+        # show_tokens = kwargs.get('show_tokens', None)
 
         for show, s in settings.items():
             try:
@@ -34,13 +29,13 @@ class ShowPlayer(ConfigPlayer):
 
             # todo need to add this key back to the config player
 
-            self._update_show(show, s, show_tokens)
+            self._update_show(show, s)
 
-    def _update_show(self, show, s, show_tokens):
+    def _update_show(self, show, s):
         if s['action'].lower() == 'play':
             try:
                 self.machine.shows[show].play(
-                    show_tokens=show_tokens,
+                    show_tokens=s['show_tokens'],
                     priority=s['priority'],
                     hold=s['hold'],
                     speed=s['speed'],
@@ -78,7 +73,7 @@ class ShowPlayer(ConfigPlayer):
         elif s['action'].lower() == 'update':
             for running_show in (
                     self.machine.show_controller.get_running_shows(show)):
-                running_show.update(show_tokens=show_tokens,
+                running_show.update(show_tokens=s['show_tokens'],
                                     priority=s['priority'])
 
     def clear(self, key):

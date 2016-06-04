@@ -319,7 +319,6 @@ class Show(Asset):
         # todo bugfix, currently there is only one set of autoplay seetings,
         # so if multiple show instances are played but the show is not loaded,
         # only the last one will play
-
         if not show_tokens:
             show_tokens = dict()
 
@@ -419,6 +418,8 @@ class RunningShow(object):
         self.loops = loops
         self.reset = reset
         # self.mode = mode
+        self.show_tokens = show_tokens
+
         del mode
         # TODO: remove mode from __init__
         self.manual_advance = manual_advance
@@ -430,10 +431,10 @@ class RunningShow(object):
         else:
             self.key = key
 
-        if show_tokens:
-            self.show_tokens = show_tokens
-        else:
-            self.show_tokens = dict()
+        # if show_tokens:
+        #     self.show_tokens = show_tokens
+        # else:
+        #     self.show_tokens = dict()
 
         self.debug = False
         self._stopped = False

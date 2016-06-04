@@ -160,7 +160,6 @@ class Mode(object):
         if self._active:
             self.log.debug("Mode is already active. Aborting start")
             return
-
         if self.config['mode']['use_wait_queue'] and 'queue' in kwargs:
 
             self.log.debug("Registering a mode start wait queue")
