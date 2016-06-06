@@ -694,7 +694,7 @@ score_reel_groups:
     lights_tag: single|str|None
     confirm: single|str|lazy
 scoring:
-    __valid_in__: machine, modes                    # todo add to validator
+    __valid_in__: modes                             # todo add to validator
 scriptlets:
     __valid_in__: machine                           # todo add to validator
 servo_controller:

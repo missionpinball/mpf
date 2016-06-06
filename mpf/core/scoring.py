@@ -1,21 +1,22 @@
-""" MPF plugin for a score controller which handles all scoring and bonus
-tracking.
-"""
+"""MPF device for a score controller which handles all scoring and bonus tracking."""
 
 import logging
 from collections import OrderedDict
 
+from mpf.core.machine import MachineController
+from mpf.core.mode import Mode
+
 
 class ScoreController(object):
 
-    def __init__(self, machine):
-        """Base class for the score controller which is responsible for
-        tracking scoring events (or any events configured to score) and adding
-        them to the current player's score.)
+    """Base class for the score controller.
 
-        TODO: There's a lot to do here, including bonus scoring & multipliers.
+    It is responsible for tracking scoring events (or any events configured to score) and adding
+    them to the current player's score.
+    """
 
-        """
+    def __init__(self, machine: MachineController):
+        """Initialise Score Controller."""
         self.machine = machine
         self.log = logging.getLogger("Score")
         self.log.debug("Loading the Score Controller")
@@ -26,8 +27,7 @@ class ScoreController(object):
         self.mode_scores = dict()
 
     @classmethod
-    def validate_entry(cls, entry, mode):
-        # TODO: better validation at mode loading time
+    def _validate_entry(cls, entry, mode):
         for value in entry.values():
             if isinstance(value, int):
                 continue
@@ -42,7 +42,14 @@ class ScoreController(object):
                     raise AssertionError("Invalid scoring entry: {} in mode {}".format(
                         entry, mode.name))
 
-    def mode_start(self, config, mode, priority, **kwargs):
+    def mode_start(self, config: dict, mode: Mode, priority: int, **kwargs):
+        """Called when mode is started.
+
+        Args:
+            config: Config dict inside mode.
+            mode: Mode which was started.
+            priority: Priority of mode.
+        """
         del kwargs
         self.mode_configs[mode] = config
         self.mode_scores[mode] = dict()
@@ -51,7 +58,7 @@ class ScoreController(object):
                                                reverse=True))
 
         for event in list(config.keys()):
-            self.validate_entry(config[event], mode)
+            self._validate_entry(config[event], mode)
 
             mode.add_mode_event_handler(event, self._score_event_callback,
                                         priority, event_name=event)
@@ -59,6 +66,11 @@ class ScoreController(object):
         return self.mode_stop, mode
 
     def mode_stop(self, mode, **kwargs):
+        """Called when mode is stopped.
+
+        Args:
+            mode: Mode which was stopped.
+        """
         del kwargs
         try:
             del self.mode_configs[mode]
@@ -93,7 +105,14 @@ class ScoreController(object):
                         if block.lower() == 'block':
                             blocked_variables.add(var_name)
 
-    def add(self, value, var_name='score', mode=None):
+    def add(self, value: int, var_name: str='score', mode: Mode=None):
+        """Add score to current player.
+
+        Args:
+            value: The score to add.
+            var_name: Player variable to use for the score.
+            mode: Mode in which this was scored. Used track mode scores and post events.
+        """
         if not value:
             return
 
