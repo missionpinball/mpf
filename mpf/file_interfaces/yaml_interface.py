@@ -14,8 +14,7 @@ from ruamel.yaml.resolver import BaseResolver, Resolver
 from ruamel.yaml.scanner import Scanner, RoundTripScanner
 from ruamel.yaml.parser_ import Parser
 from ruamel.yaml.composer import Composer
-from ruamel.yaml.constructor import Constructor, RoundTripConstructor, \
-    CommentedMap
+from ruamel.yaml.constructor import Constructor, RoundTripConstructor
 from ruamel.yaml.compat import to_str
 from ruamel.yaml.dumper import RoundTripDumper
 
