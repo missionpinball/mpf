@@ -1042,7 +1042,7 @@ class V4Migrator(VersionMigrator):
             return
 
         for lb_type in self.fc['logic_blocks'].keys():
-            for lb, settings in self.fc['logic_blocks'][lb_type].items():
+            for settings in self.fc['logic_blocks'][lb_type].values():
                 try:
                     if 'reset_each_ball' in settings:
                         if settings['reset_each_ball']:
