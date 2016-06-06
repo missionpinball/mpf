@@ -21,9 +21,7 @@ from mpf.core.config_validator import ConfigValidator
 from mpf.core.data_manager import DataManager
 from mpf.core.delays import DelayManager, DelayManagerRegistry
 from mpf.core.device_manager import DeviceCollection
-from mpf.core.events import EventManager
 from mpf.core.utility_functions import Util
-from mpf.modes.game.code.game import Game
 
 
 # pylint: disable-msg=too-many-instance-attributes
