@@ -1070,10 +1070,9 @@ class V4Migrator(VersionMigrator):
                 except TypeError:
                     pass
 
-    @classmethod
-    def is_show_file(cls):
-        # Verify we have a show file and that it's an old version
-        if 'tocks' in cls.fc[0]:
+    def is_show_file(self):
+        """Verify we have a show file and that it's an old version."""
+        if 'tocks' in self.fc[0]:
             return True
 
     def _migrate_show_file(self):
