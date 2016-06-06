@@ -1,4 +1,5 @@
 # pylint: disable-msg=too-many-lines
+"""Config Migrator for v4."""
 import os
 import re
 from copy import deepcopy
@@ -15,6 +16,8 @@ from mpf.file_interfaces.yaml_interface import YamlInterface, \
 
 
 class V4Migrator(VersionMigrator):
+
+    """Migrate config to v4."""
 
     config_version = 4
 
@@ -576,7 +579,8 @@ class V4Migrator(VersionMigrator):
         except KeyError:
             pass
 
-    def _convert_show_call_to_tokens(self, settings):
+    @classmethod
+    def _convert_show_call_to_tokens(cls, settings):
         token_list = ['light', 'lights', 'leds', 'led']
 
         for token in token_list:
@@ -830,7 +834,6 @@ class V4Migrator(VersionMigrator):
             if 'loops' in element:  # indented on purpose
                 YamlInterface.rename_key('loops', 'loop', element, self.log)
 
-
         self._convert_tokens(element)
 
         return element
@@ -1016,7 +1019,8 @@ class V4Migrator(VersionMigrator):
 
         self.fc['sound_player'] = temp_sound_player
 
-    def _add_to_sound_player(self, sound_player, event, sound, settings):
+    @classmethod
+    def _add_to_sound_player(cls, sound_player, event, sound, settings):
         if event not in sound_player:
             if settings:
                 sound_player[event] = CommentedMap()
@@ -1066,9 +1070,10 @@ class V4Migrator(VersionMigrator):
                 except TypeError:
                     pass
 
-    def is_show_file(self):
+    @classmethod
+    def is_show_file(cls):
         # Verify we have a show file and that it's an old version
-        if 'tocks' in self.fc[0]:
+        if 'tocks' in cls.fc[0]:
             return True
 
     def _migrate_show_file(self):
