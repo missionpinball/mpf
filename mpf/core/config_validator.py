@@ -1,5 +1,5 @@
-"""Config specs and validator."""
 # pylint: disable-msg=too-many-lines
+"""Config specs and validator."""
 import logging
 import re
 from copy import deepcopy
