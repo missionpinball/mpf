@@ -327,7 +327,6 @@ shot_profiles:
         - name: base_two
           show: rainbow_stay_on
     profile_25:
-        hold: false
         states:
         - name: base_one
           show: rainbow

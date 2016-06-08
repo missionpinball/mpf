@@ -279,7 +279,6 @@ shot_profiles:
         - name: green
     rainbow_no_hold:
       show: rainbow
-      hold: no
       states:
         - name: unlit
         - name: red
