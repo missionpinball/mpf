@@ -263,8 +263,7 @@ class Show(Asset):
             self.token_values[token].append(path)
 
     # pylint: disable-msg=too-many-arguments
-    def play(self, priority=0, hold=None,
-             speed=1.0, start_step=1, callback=None,
+    def play(self, priority=0, speed=1.0, start_step=1, callback=None,
              loops=-1, sync_ms=0, reset=True, mode=None,
              manual_advance=False, key=None, show_tokens=None):
         """Plays a Show. There are many parameters you can use here which
@@ -281,10 +280,6 @@ class Show(Asset):
                 the same item, the one with the higher priority will win.
                 ("Higher" means a bigger number, so a show with priority 2 will
                 override a priority 1.)
-            hold: Boolean which controls whether the lights or LEDs remain in
-                their final show state when the show ends. Default is None
-                which means hold will be False if the show has more than one
-                step, and True if there is only one step.
             speed: Float of how fast your show runs. Your Show files
                 specify step times in actual time values.  When you play a
                 show,
