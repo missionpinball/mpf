@@ -113,8 +113,8 @@ class Show(Asset):
             # Make sure there is a time entry for each step in the show file.
             if 'duration' not in step:
                 if step_num == total_steps_num - 1:
-                    # special case with an empty last step
-                    if 'time' in step and len(step) == 1:
+                    # special case with an empty last step (but longer than 1 step)
+                    if 'time' in step and len(step) == 1 and step_num != 0:
                         break
                     else:
                         #self._show_validation_error("Last step has 0 duration")
@@ -154,6 +154,8 @@ class Show(Asset):
         # Count how many total steps are in the show. We need this later
         # so we can know when we're at the end of a show
         self.total_steps = len(self.show_steps)
+        if self.total_steps == 0:
+            self._show_validation_error("Show is empty")
 
         self._get_tokens()
 
@@ -357,7 +359,6 @@ class Show(Asset):
 
         if not self.loaded:
             self._autoplay_settings = dict(priority=priority,
-                                           hold=hold,
                                            speed=speed,
                                            start_step=start_step,
                                            callback=callback,
@@ -373,20 +374,10 @@ class Show(Asset):
             self.load(callback=self._autoplay, priority=priority)
             return False
 
-        if hold is not None:
-            hold = hold
-        elif self.total_steps == 1:
-            hold = True
-
-        if self.total_steps > 0:
-            loops = loops
-        else:
-            loops = 0
         return RunningShow(machine=self.machine,
                            show=self,
                            show_steps=self.get_show_steps(),
                            priority=int(priority),
-                           hold=bool(hold),
                            speed=float(speed),
                            start_step=int(start_step),
                            callback=callback,
@@ -422,14 +413,13 @@ class RunningShow(object):
     # pylint: disable-msg=too-many-arguments
     # pylint: disable-msg=too-many-locals
     def __init__(self, machine, show, show_steps, priority,
-                 hold, speed, start_step, callback, loops,
+                 speed, start_step, callback, loops,
                  sync_ms, reset, mode, manual_advance, key,
                  show_tokens):
         self.machine = machine
         self.show = show
         self.show_steps = show_steps
         self.priority = priority
-        self.hold = hold
         self.speed = speed
         self.callback = callback
         self.loops = loops
@@ -464,9 +454,6 @@ class RunningShow(object):
             self.next_step_index = self._total_steps + start_step
         else:
             self.next_step_index = 0
-
-        if self.hold is None:
-            self.hold = self._total_steps == 1
 
         if show_tokens and show.tokens:
             self._replace_tokens(**show_tokens)
@@ -515,7 +502,7 @@ class RunningShow(object):
                     target[replacement] = target.pop(key_name)
                     keys_replaced[key_name] = replacement
 
-    def stop(self, hold=None):
+    def stop(self):
         if self._stopped:
             return
 
@@ -528,15 +515,11 @@ class RunningShow(object):
         self.show.running.remove(self)
         self.machine.clock.unschedule(self._run_next_step, True)
 
-        if hold is None:
-            hold = self.hold
-
         # todo this could be smarter, to only clear players that were
         # actually used in this show instead of all of them
 
-        if not hold:
-            self.machine.events.post('clear', key=self.key)
-            # description for this event is in the mode module
+        self.machine.events.post('clear', key=self.key)
+        # description for this event is in the mode module
 
         if self.callback and callable(self.callback):
             self.callback()
