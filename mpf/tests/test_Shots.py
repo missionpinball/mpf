@@ -415,10 +415,9 @@ class TestShots(MpfTestCase):
         self.assertEqual(list(RGBColor('aquamarine').rgb),
                          self.machine.leds.led_12.hw_driver.current_color)
 
-        #It should show azure but it does not. see ticket #337
-        #self.advance_time_and_run(1)
-        #self.assertEqual(list(RGBColor('azure').rgb),
-        #                 self.machine.leds.led_12.hw_driver.current_color)
+        self.advance_time_and_run(1)
+        self.assertEqual(list(RGBColor('azure').rgb),
+                         self.machine.leds.led_12.hw_driver.current_color)
 
         # it should loop
         self.advance_time_and_run(1)
@@ -892,8 +891,10 @@ class TestShots(MpfTestCase):
                          self.machine.leds.led_23.hw_driver.current_color)
 
         self.advance_time_and_run(1)
-        #self.assertEqual(list(RGBColor('purple').rgb),
-        # This should purple. It is not because of #337
+        self.assertEqual(list(RGBColor('purple').rgb),
+                         self.machine.leds.led_23.hw_driver.current_color)
+
+        self.advance_time_and_run(1)
         self.assertEqual(list(RGBColor('red').rgb),
                          self.machine.leds.led_23.hw_driver.current_color)
 
