@@ -16,7 +16,7 @@ class TestPlatform(MpfTestCase):
         return False
 
     def setUp(self):
-        openpixel.OPCThread = MagicMock()
+        openpixel.OPCSerialSender = MagicMock()
         super().setUp()
 
     def test_platform_from_device(self):

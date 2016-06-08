@@ -10,6 +10,7 @@ from mpf.platforms.openpixel import HardwarePlatform as OPHardwarePlatform
 
 
 class HardwarePlatform(OPHardwarePlatform):
+
     """Base class for the open pixel hardware platform.
 
     Args:
@@ -18,16 +19,14 @@ class HardwarePlatform(OPHardwarePlatform):
     """
 
     def __init__(self, machine):
-
+        """Initialise Fadecandy."""
         super(HardwarePlatform, self).__init__(machine)
 
         self.log = logging.getLogger("FadeCandy")
         self.debug_log("Configuring FadeCandy hardware interface.")
 
-    def initialize(self):
-        pass
-
     def __repr__(self):
+        """Return string representation."""
         return '<Platform.FadeCandy>'
 
     def _setup_opc_client(self):
@@ -35,6 +34,7 @@ class HardwarePlatform(OPHardwarePlatform):
 
 
 class FadeCandyOPClient(OpenPixelClient):
+
     """Base class of an OPC client which connects to a FadeCandy server.
 
     Args:
@@ -46,8 +46,9 @@ class FadeCandyOPClient(OpenPixelClient):
     available with generic OPC implementations.
 
     """
-    def __init__(self, machine, config):
 
+    def __init__(self, machine, config):
+        """Initialise Fadecandy client."""
         super(FadeCandyOPClient, self).__init__(machine, config)
 
         self.log = logging.getLogger('FadeCandyClient')
@@ -76,14 +77,14 @@ class FadeCandyOPClient(OpenPixelClient):
         self.write_firmware_options()
 
     def __repr__(self):
+        """Return str representation."""
         return '<Platform.FadeCandyOPClient>'
 
     def set_global_color_correction(self):
-        """Writes the current global color correction settings (gamma, white
-        point, linear slope, and linear cutoff) to the FadeCandy server.
+        """Write the current global color correction settings to the FadeCandy server.
 
+        This includes gamma, white point, linear slope, and linear cutoff.
         """
-
         msg = json.dumps({
             'gamma': self.gamma,
             'whitepoint': self.whitepoint,
@@ -95,10 +96,7 @@ class FadeCandyOPClient(OpenPixelClient):
             "!BBHHH", 0x00, 0xFF, len(msg) + 4, 0x0001, 0x0001) + bytes(msg, 'UTF-8'))
 
     def write_firmware_options(self):
-        """Writes the current firmware settings (keyframe interpolation and
-        dithering) to the FadeCandy hardware.
-
-        """
+        """Write the current firmware settings (keyframe interpolation and dithering) to the FadeCandy hardware."""
         config_byte = 0x00
 
         if not self.dithering:

@@ -592,7 +592,7 @@ open_pixel_control:
     __valid_in__: machine
     connection_required: single|bool|False
     host: single|str|localhost
-    port: single|str|7890
+    port: single|int|7890
     connection_attempts: single|int|-1
     number_format: single|enum(int,hex)|int
     debug: single|bool|False

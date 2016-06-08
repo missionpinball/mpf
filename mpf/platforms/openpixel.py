@@ -6,10 +6,6 @@ https://github.com/zestyping/openpixelcontrol/blob/master/python_clients/opc.py
 
 import logging
 import socket
-from queue import Queue
-import threading
-import sys
-import traceback
 
 from mpf.core.platform import LedPlatform
 from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
@@ -44,8 +40,8 @@ class HardwarePlatform(LedPlatform):
 
     def stop(self):
         """Stop platform."""
-        # disconnect thread
-        self.opc_client.sending_thread.disconnect()
+        # disconnect sender
+        self.opc_client.serial_sender.disconnect()
 
     def configure_led(self, config, channels):
         """Configure an LED.
@@ -116,17 +112,13 @@ class OpenPixelClient(object):
         self.machine = machine
         self.dirty = True
         self.update_every_tick = False
-        self.sending_queue = Queue()
-        self.sending_thread = None
+        self.serial_sender = None
         self.channels = list()
 
         # Update the FadeCandy at a regular interval
         self.machine.clock.schedule_interval(self.tick, 1 / self.machine.config['mpf']['default_led_hw_update_hz'])
 
-        self.sending_thread = OPCThread(self.machine, self.sending_queue,
-                                        config)
-        self.sending_thread.daemon = True
-        self.sending_thread.start()
+        self.serial_sender = OPCSerialSender(self.machine, config)
 
     def add_pixel(self, channel, led):
         """Add a pixel to the list that will be sent to the OPC server.
@@ -213,39 +205,31 @@ class OpenPixelClient(object):
         self.send(bytes(msg))
 
     def send(self, message):
-        """Put a message on the queue to be sent to the OPC server.
-
-        Args:
-            message: The raw message you want to send. No processing is done on
-                this. It's sent however it comes in.
-        """
-        self.sending_queue.put(message)
+        """Send a message to the socket."""
+        self.serial_sender.send(message)
 
 
-class OPCThread(threading.Thread):  # pragma: no cover
+class OPCSerialSender:  # pragma: no cover
 
     """Base class for the thread that connects to the OPC server.
 
     Args:
         machine: The main ``MachineController`` instance.
-        sending_queue: The Queue() object that receives OPC messages for the OPC server.
         config: Dictionary of configuration settings.
 
     The OPC connection is handled in a separate thread so it doesn't bog down
     the main MPF machine loop if there are connection problems.
     """
 
-    def __init__(self, machine, sending_queue, config):
+    def __init__(self, machine, config):
         """Initialise sender thread."""
-        threading.Thread.__init__(self)
-        self.sending_queue = sending_queue
         self.machine = machine
         self.host = config['host']
         self.port = config['port']
         self.connection_required = config['connection_required']
         self.max_connection_attempts = config['connection_attempts']
 
-        self.log = logging.getLogger("OpenPixelThread")
+        self.log = logging.getLogger("OpenPixelSerialSender")
 
         self.socket = None
         self.connection_attempts = 0
@@ -276,7 +260,8 @@ class OPCThread(threading.Thread):  # pragma: no cover
             if self.connection_required:
                 self.log.debug("Configuration is set that OPC connection is "
                                "required. MPF exiting.")
-                self.done()
+                self.machine.done = True
+                return
 
         try:
             self.log.debug('Trying to connect to OPC server: %s:%s. Attempt '
@@ -299,34 +284,11 @@ class OPCThread(threading.Thread):  # pragma: no cover
             self.socket.close()
         self.socket = None
 
-    def run(self):
-        """Thread run loop."""
+    def send(self, message):
+        """Send a message."""
         try:
-            while True:
-                while self.socket:
-                    message = self.sending_queue.get()
-
-                    try:
-                        self.socket.send(message)
-                    except (IOError, AttributeError):
-                        self.log.warning('Connection to OPC server lost.')
-                        self.socket = None
-
-                while not self.socket and self.try_connecting:
-                    self.connect()
-                    # don't want to build up stale pixel data while we're not
-                    # connected
-                    self.sending_queue.queue.clear()
-                    self.log.warning('Discarding stale pixel data from the queue.')
-
-        # pylint: disable-msg=broad-except
-        except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
-            msg = ''.join(line for line in lines)
-            self.machine.crash_queue.put(msg)
-
-    def done(self):
-        """Exit the thread and causes MPF to shut down."""
-        self.disconnect()
-        self.machine.done = True
+            self.socket.send(message)
+        except (IOError, AttributeError):
+            self.log.warning('Connection to OPC server lost.')
+            self.socket = None
+            self.connect()
