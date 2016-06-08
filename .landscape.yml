@@ -7,6 +7,10 @@ mccabe:
 
 doc-warnings: true
 
+pep257:
+   disable:
+    - D211
+
 pylint:
   disable:
     - pointless-string-statement  # pointless statement, which is how our event docstrings are seen
