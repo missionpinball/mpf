@@ -320,13 +320,12 @@ shot_profiles:
         - name: base_three
           show: rainbow
     profile_24:
-        hold: true
         states:
         - name: base_one
-          show: rainbow
+          show: rainbow_stay_on
           loops: 0
         - name: base_two
-          show: rainboww
+          show: rainbow_stay_on
     profile_25:
         hold: false
         states:
@@ -358,6 +357,20 @@ shows:
           (leds): blue
       - leds:
           (leds): purple
+    rainbow_stay_on:
+      - leds:
+          (leds): red
+      - leds:
+          (leds): orange
+      - leds:
+          (leds): yellow
+      - leds:
+          (leds): green
+      - leds:
+          (leds): blue
+      - leds:
+          (leds): purple
+        duration: -1
     rainbow2:
       - leds:
           (leds): aliceblue

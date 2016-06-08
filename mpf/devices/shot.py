@@ -190,17 +190,17 @@ class Shot(ModeDevice, SystemWideDevice):
 
         self._update_show(mode=mode, show_step=self.player[player_var] + 1)
 
-    def _stop_shows(self, hold=False):
+    def _stop_shows(self):
         for profile in self.profiles:
-            self._stop_show(profile['mode'], hold=hold)
+            self._stop_show(profile['mode'])
 
-    def _stop_show(self, mode, hold=False):
+    def _stop_show(self, mode):
         profile = self.get_profile_by_key('mode', mode)
 
         if not profile or not profile['running_show']:
             return
 
-        profile['running_show'].stop(hold=hold)
+        profile['running_show'].stop()
         profile['running_show'] = None
 
     def _update_shows(self, show_step=None, advance=None):
@@ -246,13 +246,6 @@ class Shot(ModeDevice, SystemWideDevice):
             s.pop('action')  # temp todo
             s.pop('name')
 
-            # todo kind of a hack, but hold is the only setting from the
-            # profile root that we can pass to any show, so we grab it here.
-            # might want to make a list of settings that can be passed and do
-            # all of them.
-            if profile['settings']['hold'] is not None:
-                s['hold'] = profile['settings']['hold']
-
             profile['running_show'] = (
                 self.machine.shows[state_settings['show']].play(
                     mode=profile['mode'], **s))
@@ -276,9 +269,6 @@ class Shot(ModeDevice, SystemWideDevice):
                     # +1 above because show steps are 1-based while player var
                     # profile index is 0-based
 
-                    if profile['settings']['hold'] is not None:
-                        s['hold'] = profile['settings']['hold']
-
                     s.pop('show')
                     s.pop('name')
                     s.pop('action')  # temp todo
@@ -298,9 +288,6 @@ class Shot(ModeDevice, SystemWideDevice):
                 s.pop('name')
                 s.pop('action')  # temp todo
                 s['manual_advance'] = True
-
-                if profile['settings']['hold'] is not None:
-                    s['hold'] = profile['settings']['hold']
 
                 profile['running_show'] = (self.machine.shows[
                     profile['settings']['show']].play(
@@ -778,7 +765,7 @@ class Shot(ModeDevice, SystemWideDevice):
         self.update_current_state_name(mode)  # todo
 
     def remove_profile_by_mode(self, mode):
-        self._stop_show(mode, hold=False)  # todo
+        self._stop_show(mode)  # todo
         self.profiles[:] = [x for x in self.profiles if x['mode'] != mode]
         self._process_changed_profiles()
 
