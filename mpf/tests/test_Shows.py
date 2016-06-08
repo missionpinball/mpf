@@ -531,12 +531,6 @@ class TestShows(MpfTestCase):
             self.machine.show_controller.running_shows[0].priority)
         self._stop_shows()
 
-        # Test hold
-        self.machine.events.post('play_with_hold')
-        self.advance_time_and_run()
-        self.assertTrue(self.machine.show_controller.running_shows[0].hold)
-        self._stop_shows()
-
         # Test speed
         self.machine.events.post('play_with_speed')
         self.advance_time_and_run()

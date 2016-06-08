@@ -183,7 +183,6 @@ class TestLedPlayer(MpfTestCase):
     def test_show_no_hold_leds(self):
         show = self.machine.shows['show2'].play(loops=0, hold=False)
         self.advance_time_and_run(.1)
-        self.assertFalse(show.hold)
 
         # led should be red while show is running
         self.assertEqual(list(RGBColor('red').rgb),
