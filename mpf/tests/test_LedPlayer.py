@@ -170,7 +170,7 @@ class TestLedPlayer(MpfTestCase):
         self.assertEqual(0, self.machine.leds.led1.stack[0]['priority'])
 
     def test_show_hold_leds(self):
-        self.machine.shows['show2'].play(loops=0, hold=True)
+        self.machine.shows['show2'].play(loops=0)
         self.advance_time_and_run()
 
         self.assertEqual(list(RGBColor('red').rgb),
@@ -181,7 +181,7 @@ class TestLedPlayer(MpfTestCase):
         self.assertEqual(0, self.machine.leds.led1.stack[0]['priority'])
 
     def test_show_no_hold_leds(self):
-        show = self.machine.shows['show2'].play(loops=0, hold=False)
+        show = self.machine.shows['show2'].play(loops=0)
         self.advance_time_and_run(.1)
 
         # led should be red while show is running
@@ -222,7 +222,7 @@ class TestLedPlayer(MpfTestCase):
                          self.machine.leds.led1.hw_driver.current_color)
 
         # start show3 at same priority, leds should be blue
-        show3 = self.machine.shows['show3'].play(priority=100, hold=False)
+        show3 = self.machine.shows['show3'].play(priority=100)
         # timing is 600ms after show2 start, since show2 will set them to red
         # again
         self.advance_time_and_run(.1)
