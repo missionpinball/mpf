@@ -37,7 +37,6 @@ class ShowPlayer(ConfigPlayer):
                 self.machine.shows[show].play(
                     show_tokens=s['show_tokens'],
                     priority=s['priority'],
-                    hold=s['hold'],
                     speed=s['speed'],
                     start_step=s['start_step'],
                     loops=s['loops'],
@@ -53,7 +52,7 @@ class ShowPlayer(ConfigPlayer):
         elif s['action'].lower() == 'stop':
             for running_show in (
                     self.machine.show_controller.get_running_shows(show)):
-                running_show.stop(s['hold'])
+                running_show.stop()
 
         elif s['action'].lower() == 'pause':
             for running_show in (
