@@ -70,6 +70,30 @@ class Show(Asset):
     def do_load(self):
         self._do_load_show(None)
 
+    def _get_duration(self, data, step_num, total_step_time):
+        total_steps_num = len(data)
+        step = data[step_num]
+        if 'duration' not in step:
+            if step_num == total_steps_num - 1:
+                # special case with an empty last step (but longer than 1 step)
+                if 'time' in step and len(step) == 1 and step_num != 0:
+                    return False
+                else:
+                    return 1
+            elif 'time' in data[step_num + 1]:
+                next_step_time = data[step_num + 1]['time']
+                if str(next_step_time)[0] == "+":
+                    return Util.string_to_secs(next_step_time)
+                else:
+                    if total_step_time < 0:
+                        self._show_validation_error("Absolute timing in step {} not possible because "
+                                                    "there was a duration of -1 before".format(step_num))
+                    return Util.string_to_secs(next_step_time) - total_step_time
+            else:
+                return 1
+        else:
+            return step['duration']
+
     def _do_load_show(self, data):
         self.show_steps = list()
 
@@ -96,7 +120,6 @@ class Show(Asset):
             total_step_time = data[0]['time']
 
         # Loop over all steps in the show file
-        total_steps_num = len(data)
         for step_num, step in enumerate(data):
             actions = dict()
 
@@ -111,27 +134,12 @@ class Show(Asset):
             # since the previous step).
 
             # Make sure there is a time entry for each step in the show file.
-            if 'duration' not in step:
-                if step_num == total_steps_num - 1:
-                    # special case with an empty last step (but longer than 1 step)
-                    if 'time' in step and len(step) == 1 and step_num != 0:
-                        break
-                    else:
-                        #self._show_validation_error("Last step has 0 duration")
-                        step['duration'] = 1
-                elif 'time' in data[step_num + 1]:
-                    next_step_time = data[step_num + 1]['time']
-                    if str(next_step_time)[0] == "+":
-                        step['duration'] = Util.string_to_secs(next_step_time)
-                    else:
-                        if total_step_time < 0:
-                            self._show_validation_error("Absolute timing in step {} not possible because "
-                                                        "there was a duration of -1 before".format(step_num))
-                        step['duration'] = Util.string_to_secs(next_step_time) - total_step_time
-                else:
-                    step['duration'] = 1
+            step['duration'] = self._get_duration(data, step_num, total_step_time)
 
-            if step['duration'] == 0:
+            # special case: empty last step
+            if step['duration'] is False:
+                break
+            elif step['duration'] == 0:
                 self._show_validation_error("Step {} has 0 duration".format(step_num))
 
             # internally we only use duration
