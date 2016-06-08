@@ -56,7 +56,7 @@ class Show(Asset):
         self.show_steps = None
 
         if data:
-            self.do_load_show(data=data)
+            self._do_load_show(data=data)
             self.loaded = True
 
     def __lt__(self, other):
@@ -68,9 +68,9 @@ class Show(Asset):
         self.mode = None
 
     def do_load(self):
-        self.do_load_show(None)
+        self._do_load_show(None)
 
-    def do_load_show(self, data):
+    def _do_load_show(self, data):
         self.show_steps = list()
 
         self.machine.show_controller.log.debug("Loading Show %s", self.file)
@@ -85,8 +85,18 @@ class Show(Asset):
             raise ValueError("Show {} does not appear to be a valid show "
                              "config".format(self.file))
 
-        # Loop over all steps in the show file
+        if not data:
+            self._show_validation_error("Cannot load empty show")
+
         total_step_time = 0
+
+        # add empty first step if show does not start right away
+        if 'time' in data[0] and data[0]['time'] != 0:
+            self.show_steps.append({'duration': data[0]['time']})
+            total_step_time = data[0]['time']
+
+        # Loop over all steps in the show file
+        total_steps_num = len(data)
         for step_num, step in enumerate(data):
             actions = dict()
 
@@ -101,40 +111,40 @@ class Show(Asset):
             # since the previous step).
 
             # Make sure there is a time entry for each step in the show file.
-            if 'time' not in step:
-                if step_num:
-                    step['time'] = '+1'
-                else:
-                    step['time'] = 0
-
-            step_time = Util.string_to_secs(step['time'])
-
-            # If the first step in the show is not at the very beginning of the
-            # show (time = 0), automatically add a new empty step at time 0
-            if step_num == 0 and step_time > 0:
-                self.show_steps.append({'time': 0})
-
-            # Calculate step time based on whether the step uses absolute or
-            # relative time
-            if str(step['time'])[0] == '+':
-                # Step time relative to previous step time
-                actions['time'] = step_time
-            else:
-                # Step time relative to start of show
-                # Make sure this step time comes after the previous step time
-                if step_time and step_time < total_step_time:
-                    if self.file:
-                        raise ValueError(
-                            "'{}' is not a valid show file. Step times are not"
-                            "valid".format(self.file))
+            if 'duration' not in step:
+                if step_num == total_steps_num - 1:
+                    # special case with an empty last step
+                    if 'time' in step and len(step) == 1:
+                        break
                     else:
-                        raise ValueError("Invalid show data:\n{}".format(
-                            YamlInterface.pretty_format(data)))
+                        #self._show_validation_error("Last step has 0 duration")
+                        step['duration'] = 1
+                elif 'time' in data[step_num + 1]:
+                    next_step_time = data[step_num + 1]['time']
+                    if str(next_step_time)[0] == "+":
+                        step['duration'] = Util.string_to_secs(next_step_time)
+                    else:
+                        if total_step_time < 0:
+                            self._show_validation_error("Absolute timing in step {} not possible because "
+                                                        "there was a duration of -1 before".format(step_num))
+                        step['duration'] = Util.string_to_secs(next_step_time) - total_step_time
+                else:
+                    step['duration'] = 1
 
-                # Calculate the time since previous step
-                actions['time'] = step_time - total_step_time
+            if step['duration'] == 0:
+                self._show_validation_error("Step {} has 0 duration".format(step_num))
 
-            total_step_time += actions['time']
+            # internally we only use duration
+            if 'time' in step:
+                del step['time']
+
+            # Calculate the time since previous step
+            actions['duration'] = step['duration']
+
+            if step['duration'] > 0 and total_step_time >= 0:
+                total_step_time += step['duration']
+            else:
+                total_step_time = -1
 
             # Now process show step actions
             self._process_step_actions(step, actions)
@@ -146,6 +156,14 @@ class Show(Asset):
         self.total_steps = len(self.show_steps)
 
         self._get_tokens()
+
+    def _show_validation_error(self, msg):
+        if self.file:
+            identifier = self.file
+        else:
+            identifier = self.name
+
+        raise AssertionError("Show {}: {}".format(identifier, msg))
 
     def _process_step_actions(self, step, actions):
         for key, value in step.items():
@@ -169,9 +187,8 @@ class Show(Asset):
 
                 actions[key] = validated_config
 
-            elif key != 'time':
-                raise ValueError('Invalid section "{}:" found in show: '
-                                 '{}'.format(key, self.file))
+            elif key != 'duration':
+                self._show_validation_error('Invalid section "{}:" found in show'.format(key))
 
     def _do_unload(self):
         self.show_steps = None
@@ -361,7 +378,7 @@ class Show(Asset):
         elif self.total_steps == 1:
             hold = True
 
-        if self.total_steps > 1:
+        if self.total_steps > 0:
             loops = loops
         else:
             loops = 0
@@ -565,10 +582,24 @@ class RunningShow(object):
         if self.machine.clock.get_time() < self.next_step_time:
             return
 
-        for item_type, item_dict in (
-                iter(self.show_steps[self.next_step_index].items())):
+        # if we're at the end of the show
+        if self.next_step_index == self._total_steps:
 
-            if item_type == 'time':
+            if self.loops > 0:
+                self.loops -= 1
+                self.next_step_index = 0
+            elif self.loops < 0:
+                self.next_step_index = 0
+            else:
+                self.stop()
+                return False
+
+        current_step_index = self.next_step_index
+
+        for item_type, item_dict in (
+                iter(self.show_steps[current_step_index].items())):
+
+            if item_type == 'duration':
                 continue
 
             elif item_type in ConfigPlayer.show_players:
@@ -581,26 +612,11 @@ class RunningShow(object):
                     priority=self.priority,
                     show_tokens=self.show_tokens)
 
-        # if we're at the end of the show
-        if self.next_step_index == self._total_steps - 1:
+        self.next_step_index += 1
 
-            if self.loops > 0:
-                self.loops -= 1
-            elif self.loops < 0:
-                self.next_step_index = 0
-            else:
-                self.stop()
-                return False
-
-        else:  # we're in the middle of a show
-            self.next_step_index += 1
-
-        if not self.manual_advance:
-            time_to_next_step = (
-                self.show_steps[self.next_step_index]['time'] / self.speed)
-            self.next_step_time = (
-                self.machine.clock.get_time() + time_to_next_step)
-
+        time_to_next_step = self.show_steps[current_step_index]['duration'] / self.speed
+        if not self.manual_advance and time_to_next_step > 0:
+            self.next_step_time = self.machine.clock.get_time() + time_to_next_step
             self.machine.clock.schedule_once(self._run_next_step,
                                              time_to_next_step)
 
