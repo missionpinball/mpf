@@ -1,3 +1,4 @@
+"""Contains show related classes."""
 import re
 from mpf.core.assets import Asset, AssetPool
 from mpf.core.config_player import ConfigPlayer
@@ -8,16 +9,25 @@ from mpf._version import __show_version__, __version__
 
 
 class ShowPool(AssetPool):
+
+    """A pool of shows."""
+
     def __repr__(self):
+        """Return str representation."""
         return '<ShowPool: {}>'.format(self.name)
 
     @property
     def show(self):
+        """Return the next show."""
+        # TODO: getters should not modify state #348
         return self.asset
 
 
 # pylint: disable-msg=too-many-instance-attributes
 class Show(Asset):
+
+    """A show which can be instantiated."""
+
     attribute = 'shows'
     path_string = 'shows'
     config_section = 'shows'
@@ -31,11 +41,14 @@ class Show(Asset):
 
     @classmethod
     def get_id(cls):
+        """Return the next show id."""
+        # TODO: remove global here #349
         Show.next_id += 1
         return Show.next_id
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, machine, name, file=None, config=None, data=None):
+        """Initialise show."""
         super().__init__(machine, name, file, config)
 
         self._autoplay_settings = dict()
@@ -60,6 +73,7 @@ class Show(Asset):
             self.loaded = True
 
     def __lt__(self, other):
+        """Compare two instances."""
         return id(self) < id(other)
 
     def _initialize_asset(self):
@@ -68,6 +82,7 @@ class Show(Asset):
         self.mode = None
 
     def do_load(self):
+        """Load a show from disk."""
         self._do_load_show(None)
 
     def _get_duration(self, data, step_num, total_step_time):
@@ -229,7 +244,7 @@ class Show(Asset):
             self._check_token(path, data, 'value')
 
     def get_show_steps(self, data='dummy_default!#$'):
-
+        """Return a copy of the show steps."""
         if data == 'dummy_default!#$':
             data = self.show_steps
 
@@ -274,7 +289,9 @@ class Show(Asset):
     def play(self, priority=0, speed=1.0, start_step=1, callback=None,
              loops=-1, sync_ms=0, reset=True, mode=None,
              manual_advance=False, key=None, show_tokens=None):
-        """Plays a Show. There are many parameters you can use here which
+        """Play a Show.
+
+        There are many parameters you can use here which
         affect how the show is played. This includes things like the playback
         speed, priority, etc. These are
         all set when the show plays. (For example, you could have a Show
@@ -336,7 +353,6 @@ class Show(Asset):
         Returns: The RunningShow() instance if this show plays now, or False if
             the show is not loaded. (In this case the show will be loaded and
             will automatically play once its loaded.)
-
         """
         # todo bugfix, currently there is only one set of autoplay seetings,
         # so if multiple show instances are played but the show is not loaded,
@@ -398,7 +414,7 @@ class Show(Asset):
         self.play(**self._autoplay_settings)
 
     def load_show_from_disk(self):
-
+        """Load show from disk."""
         show_version = YamlInterface.get_show_file_version(self.file)
 
         if show_version != int(__show_version__):
@@ -413,12 +429,16 @@ class Show(Asset):
 # This class is more or less a container
 # pylint: disable-msg=too-many-instance-attributes
 class RunningShow(object):
+
+    """A running instance of a show."""
+
     # pylint: disable-msg=too-many-arguments
     # pylint: disable-msg=too-many-locals
     def __init__(self, machine, show, show_steps, priority,
                  speed, start_step, callback, loops,
                  sync_ms, reset, mode, manual_advance, key,
                  show_tokens):
+        """Initialise an instance of a show."""
         self.machine = machine
         self.show = show
         self.show_steps = show_steps
@@ -477,6 +497,7 @@ class RunningShow(object):
             self._run_next_step()
 
     def __repr__(self):
+        """Return str representation."""
         return 'Running Show Instance: "{}"'.format(self.name)
 
     def _replace_tokens(self, **kwargs):
@@ -506,6 +527,7 @@ class RunningShow(object):
                     keys_replaced[key_name] = replacement
 
     def stop(self):
+        """Stop show."""
         if self._stopped:
             return
 
@@ -528,20 +550,25 @@ class RunningShow(object):
             self.callback()
 
     def pause(self):
+        """Pause show."""
         self.machine.clock.unschedule(self._run_next_step, True)
 
     def resume(self):
-        # todo this needs work
+        """Resume paused show."""
+        self.next_step_time = self.machine.clock.get_time()
         self._run_next_step()
 
     def update(self, **kwargs):
+        """Update show.
+
+        Not implemented yet.
+        """
         # todo
         raise NotImplementedError("Show update is not implemented yet. It's "
                                   "coming though...")
 
     def advance(self, steps=1, show_step=None):
-        """Manually advances this show to the next step."""
-
+        """Manually advance this show to the next step."""
         if isinstance(show_step, int) and show_step < 0:
             raise ValueError('Cannot advance {} to step "{}" as that is'
                              'not a valid step number.'.format(self, show_step))
@@ -563,10 +590,6 @@ class RunningShow(object):
 
     def _run_next_step(self, dt=None):
         del dt
-
-        # todo dunno why we have to do this. It's needed with unit tests
-        if self.machine.clock.get_time() < self.next_step_time:
-            return
 
         # if we're at the end of the show
         if self.next_step_index == self._total_steps:
@@ -602,8 +625,8 @@ class RunningShow(object):
 
         time_to_next_step = self.show_steps[current_step_index]['duration'] / self.speed
         if not self.manual_advance and time_to_next_step > 0:
-            self.next_step_time = self.machine.clock.get_time() + time_to_next_step
+            self.next_step_time += time_to_next_step
             self.machine.clock.schedule_once(self._run_next_step,
-                                             time_to_next_step)
+                                             self.next_step_time - self.machine.clock.get_time())
 
             return time_to_next_step
