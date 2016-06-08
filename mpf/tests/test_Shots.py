@@ -420,10 +420,7 @@ class TestShots(MpfTestCase):
                          self.machine.leds.led_12.hw_driver.current_color)
 
         # it should loop
-        self.advance_time_and_run(.5)
-        # .5 because the time drifts due to how LEDs are updated and how the
-        # advance_time_and_run() test method works
-
+        self.advance_time_and_run(1)
         self.assertEqual(list(RGBColor('aliceblue').rgb),
                          self.machine.leds.led_12.hw_driver.current_color)
         self.advance_time_and_run(1)
