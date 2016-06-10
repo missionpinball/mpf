@@ -629,7 +629,7 @@ class FastServo(ServoPlatformInterface):
         position_numeric = int(position * 255)
 
         cmd = 'XO:{},{}'.format(
-            Util.int_to_hex_string(self.number),
+            self.number,
             Util.int_to_hex_string(position_numeric))
 
         self.net_connection.send(cmd)
@@ -682,7 +682,8 @@ class SerialCommunicator(object):
                                  'L1:P',
                                  'GI:P',
                                  'TL:P',
-                                 'TN:P'
+                                 'TN:P',
+                                 'XO:P',  # Servo/Daughterboard Pass
                                  'XX:U',
                                  'XX:N',
                                  ]
