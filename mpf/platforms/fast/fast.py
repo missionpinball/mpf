@@ -848,7 +848,7 @@ class SerialCommunicator(object):
                     msg = self.send_queue.get()
                     self.serial_connection.write(msg.encode())
 
-                    if debug:
+                    if debug and msg[0:2] != "WD":
                         self.platform.log.info("Sending: %s", msg)
 
         # pylint: disable-msg=broad-except
@@ -868,7 +868,7 @@ class SerialCommunicator(object):
                 while self.serial_connection:
                     msg = self.serial_io.readline()[:-1]  # strip the \r
 
-                    if debug:
+                    if debug and msg[0:2] != "WD":
                         self.platform.log.info("Received: %s", msg)
 
                     if msg not in self.ignored_messages:
