@@ -19,6 +19,8 @@ class ShowPlayer(ConfigPlayer):
         # show_tokens = kwargs.get('show_tokens', None)
 
         for show, s in settings.items():
+            if 'hold' in s:
+                raise AssertionError("Setting 'hold' is no longer supported for shows. Use duration -1 in your show.")
             try:
                 s['priority'] += priority
             except KeyError:
