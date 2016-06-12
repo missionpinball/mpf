@@ -10,9 +10,11 @@ class BcpPlayer(ConfigPlayer):
     show_section = 'bcp'
 
     def play(self, settings, context, priority=0, **kwargs):
+        """Play BCP events."""
         pass
 
     def get_express_config(self, value):
+        """Parse express config."""
         pass
 
 player_cls = BcpPlayer
