@@ -145,6 +145,9 @@ class ConfigPlayer(object):
     def _get_instance_dict(self, context):
         return self.instances[context][self.config_file_section]
 
+    def _reset_instance_dict(self, context):
+        self.instances[context][self.config_file_section] = dict()
+
     @classmethod
     def process_config(cls, config, **kwargs):
         # called every time mpf starts, regardless of whether config was built

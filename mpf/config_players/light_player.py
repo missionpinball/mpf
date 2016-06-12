@@ -47,6 +47,8 @@ class LightPlayer(ConfigPlayer):
         for light in self._get_instance_dict(context).values():
             light.remove_from_stack_by_key(full_context)
 
+        self._reset_instance_dict(context)
+
     def get_express_config(self, value):
         value = str(value).replace(' ', '').lower()
         fade = 0

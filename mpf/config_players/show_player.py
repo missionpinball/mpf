@@ -75,6 +75,7 @@ class ShowPlayer(ConfigPlayer):
     def clear_context(self, context):
         for show in self._get_instance_dict(context).values():
             show.stop()
+        self._reset_instance_dict(context)
 
     def get_express_config(self, value):
         return dict()
