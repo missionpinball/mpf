@@ -14,18 +14,15 @@ class ConfigPlayer(object):
         self.device_collection = None
 
         self.machine = machine
-        self.caller_target_map = dict()
-        '''Dict of callers which called this config player. Will be used with
-        a clear method. Different config players can use this for different
-        things. See the LedPlayer for an example.'''
 
         ConfigPlayer.show_players[self.show_section] = self
         ConfigPlayer.config_file_players[self.config_file_section] = self
 
         self.machine.events.add_handler('init_phase_1', self._initialize)
-        self.machine.events.add_handler('clear', self.clear)
 
         self.mode_event_keys = dict()
+        self.instances = dict()
+        self.instances['_global'] = dict()
 
     def __repr__(self):
         return 'ConfigPlayer.{}'.format(self.show_section)
@@ -36,6 +33,8 @@ class ConfigPlayer(object):
                                              self.machine_collection_name)
         else:
             self.device_collection = None
+
+        self.instances['_global'][self.config_file_section] = dict()
 
         self.machine.mode_controller.register_load_method(
             self.process_mode_config, self.config_file_section)
@@ -130,11 +129,21 @@ class ConfigPlayer(object):
 
         return return_dict
 
-    def process_mode_config(self, config, root_config_dict, **kwargs):
+    def process_mode_config(self, config, root_config_dict, mode, **kwargs):
         del kwargs
         # handles validation and processing of mode config
         config = self.validate_config(config)
         root_config_dict[self.config_file_section] = config
+        if mode.name not in self.instances:
+            self.instances[mode.name] = dict()
+        if self.config_file_section not in self.instances[mode.name]:
+            self.instances[mode.name][self.config_file_section] = dict()
+
+    def _get_full_context(self, context):
+        return context + "." + self.config_file_section
+
+    def _get_instance_dict(self, context):
+        return self.instances[context][self.config_file_section]
 
     @classmethod
     def process_config(cls, config, **kwargs):
@@ -181,7 +190,10 @@ class ConfigPlayer(object):
 
     def mode_stop(self, mode):
         self.unload_player_events(self.mode_event_keys.pop(mode, list()))
-        self.clear(mode.name)
+        self.clear_context(mode.name)
+
+    def clear_context(self, context):
+        pass
 
     def register_player_events(self, config, mode=None, priority=0):
         # config is localized
@@ -214,21 +226,26 @@ class ConfigPlayer(object):
             # calculate the base priority, which is a combination of the mode
             # priority and any priority value
             priority += mode.priority
-            key = mode.name
+            context = mode.name
         else:
-            key = None
+            context = "_global"
 
-        self.play(settings=settings, key=key, priority=priority, **kwargs)
+        self.play(settings=settings, context=context, priority=priority, **kwargs)
 
-    def show_play_callback(self, settings, key, priority, show_tokens):
+    def show_play_callback(self, settings, priority, show_tokens, context):
         # called from a show step
+        if context not in self.instances:
+            self.instances[context] = dict()
 
-        self.play(settings=settings, key=key, priority=priority,
-                  show_tokens=show_tokens)
+        if self.config_file_section not in self.instances[context]:
+            self.instances[context][self.config_file_section] = dict()
 
-    def play(self, settings, key=None, priority=0, **kwargs):
+        self.play(settings=settings, priority=priority,
+                  show_tokens=show_tokens, context=context)
+
+    def show_stop_callback(self, context):
+        self.clear_context(context)
+
+    def play(self, settings, context, priority=0, **kwargs):
         # **kwargs since this is an event callback
         raise NotImplementedError
-
-    def clear(self, key):
-        pass
