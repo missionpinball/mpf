@@ -7,7 +7,7 @@ class CoilPlayer(ConfigPlayer):
     config_file_section = 'coil_player'
     show_section = 'coils'
 
-    def play(self, settings, key=None, priority=0, **kwargs):
+    def play(self, settings, context, priority=0, **kwargs):
         del kwargs
 
         if 'coils' in settings:
@@ -22,7 +22,6 @@ class CoilPlayer(ConfigPlayer):
                 getattr(self.machine.coils[coil], action)(**s)
 
     def get_express_config(self, value):
-
         try:
             value = int(value)
             return dict(action='pulse', milliseconds=value)
