@@ -288,7 +288,7 @@ class Show(Asset):
     # pylint: disable-msg=too-many-arguments
     def play(self, priority=0, speed=1.0, start_step=1, callback=None,
              loops=-1, sync_ms=0, reset=True, mode=None,
-             manual_advance=False, key=None, show_tokens=None):
+             manual_advance=False, show_tokens=None):
         """Play a Show.
 
         There are many parameters you can use here which
@@ -386,7 +386,6 @@ class Show(Asset):
                                            reset=reset,
                                            mode=mode,
                                            manual_advance=manual_advance,
-                                           key=key,
                                            show_tokens=show_tokens
                                            )
 
@@ -405,7 +404,6 @@ class Show(Asset):
                            reset=bool(reset),
                            mode=mode,
                            manual_advance=manual_advance,
-                           key=key,
                            show_tokens=show_tokens)
 
     def _autoplay(self, *args, **kwargs):
@@ -436,8 +434,7 @@ class RunningShow(object):
     # pylint: disable-msg=too-many-locals
     def __init__(self, machine, show, show_steps, priority,
                  speed, start_step, callback, loops,
-                 sync_ms, reset, mode, manual_advance, key,
-                 show_tokens):
+                 sync_ms, reset, mode, manual_advance, show_tokens):
         """Initialise an instance of a show."""
         self.machine = machine
         self.show = show
@@ -456,10 +453,8 @@ class RunningShow(object):
 
         self.name = show.name
 
-        if not key:
-            self.key = '{}.{}'.format(self.name, Show.get_id())
-        else:
-            self.key = key
+        self.id = Show.get_id()
+        self._players = list()
 
         # if show_tokens:
         #     self.show_tokens = show_tokens
@@ -540,11 +535,9 @@ class RunningShow(object):
         self.show.running.remove(self)
         self.machine.clock.unschedule(self._run_next_step, True)
 
-        # todo this could be smarter, to only clear players that were
-        # actually used in this show instead of all of them
-
-        self.machine.events.post('clear', key=self.key)
-        # description for this event is in the mode module
+        # clear context in used players
+        for player in self._players:
+            ConfigPlayer.show_players[player].show_stop_callback("show_" + str(self.id))
 
         if self.callback and callable(self.callback):
             self.callback()
@@ -617,9 +610,12 @@ class RunningShow(object):
 
                 ConfigPlayer.show_players[item_type].show_play_callback(
                     settings=item_dict,
-                    key=self.key,
+                    context="show_" + str(self.id),
                     priority=self.priority,
                     show_tokens=self.show_tokens)
+
+                if item_type not in self._players:
+                    self._players.append(item_type)
 
         self.next_step_index += 1
 
