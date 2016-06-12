@@ -11,6 +11,7 @@ class InfoLights(object):
     def __init__(self, machine):
         self.log = logging.getLogger('infolights')
         self.machine = machine
+        self.game_over_show = None
 
         try:
             self.config = self.machine.config['info_lights']
@@ -77,21 +78,21 @@ class InfoLights(object):
 
         # turn on game over
         if 'game_over' in self.config:
+            if self.game_over_show:
+                self.game_over_show.stop()
             if isinstance(self.config['game_over']['light'], Led):
-                self.machine.shows['flash'].play(
-                    show_tokens=dict(leds=self.config['game_over']['light']),
-                    key='infolights_game_over')
+                self.game_over_show = self.machine.shows['flash'].play(
+                    show_tokens=dict(leds=self.config['game_over']['light']))
             else:
-                self.machine.shows['flash'].play(
-                    show_tokens=dict(lights=self.config['game_over']['light']),
-                    key='infolights_game_over')
+                self.game_over_show = self.machine.shows['flash'].play(
+                    show_tokens=dict(lights=self.config['game_over']['light']))
 
     def game_starting(self, **kwargs):
         del kwargs
         self.log.debug("game_starting")
         self.reset_game_lights()
-        if self.machine.show_controller.get_running_shows('infolights_game_over'):
-            self.machine.show_controller.get_running_shows('infolights_game_over')[0].stop()
+        if self.game_over_show:
+            self.game_over_show.stop()
 
     def player_added(self, player, **kwargs):
         del kwargs
