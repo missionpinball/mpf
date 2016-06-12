@@ -31,7 +31,7 @@ class PluginPlayer(ConfigPlayer):
         for event in event_list:
             self.machine.bcp.remove_registered_trigger_event(event)
 
-    def play(self, settings, key=None, priority=0, **kwargs):
+    def play(self, settings, context, priority=0, **kwargs):
         self.machine.bcp.bcp_trigger(name='{}_play'.format(self.show_section),
                                      **settings)
 
