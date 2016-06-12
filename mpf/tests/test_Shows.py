@@ -591,6 +591,7 @@ class TestShows(MpfTestCase):
             self.machine.show_controller.running_shows[0].next_step_index)
 
     def test_show_player_keys(self):
+        self.skipTest("no longer supported. remove")
         # Make sure keys are right
         self.machine.events.post('play_with_keys')
         self.advance_time_and_run()
