@@ -1,3 +1,4 @@
+"""Event Config Player."""
 from mpf.core.delays import DelayManager
 
 from mpf.core.config_player import ConfigPlayer
@@ -5,15 +6,20 @@ from mpf.core.utility_functions import Util
 
 
 class EventPlayer(ConfigPlayer):
+
+    """Posts events based on config."""
+
     config_file_section = 'event_player'
     show_section = 'events'
     device_collection = None
 
     def __init__(self, machine):
+        """Initialise EventPlayer."""
         super().__init__(machine)
         self.delay = DelayManager(self.machine.delayRegistry)
 
     def play(self, settings, context, priority=0, **kwargs):
+        """Post (delayed) events."""
         if 'events' in settings:
             settings = settings['events']
 
@@ -30,14 +36,16 @@ class EventPlayer(ConfigPlayer):
         self.machine.events.post(event, **s)
 
     def get_express_config(self, value):
+        """Parse short config."""
         return_dict = dict()
         return_dict[value] = dict()
         return return_dict
 
     def validate_config(self, config):
-        # override because we want to let events just be a list of
-        # events
+        """Validate the config.
 
+        Override because we want to let events just be a list of events.
+        """
         new_config = dict()
 
         for event, settings in config.items():

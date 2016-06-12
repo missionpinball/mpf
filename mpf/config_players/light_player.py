@@ -1,13 +1,18 @@
+"""Light config player."""
 from mpf.core.config_player import ConfigPlayer
 from mpf.core.utility_functions import Util
 
 
 class LightPlayer(ConfigPlayer):
+
+    """Sets lights based on config."""
+
     config_file_section = 'light_player'
     show_section = 'lights'
     machine_collection_name = 'lights'
 
     def play(self, settings, context, priority=0, **kwargs):
+        """Set brightness based on config."""
         del kwargs
         instance_dict = self._get_instance_dict(context)
         full_context = self._get_full_context(context)
@@ -43,6 +48,7 @@ class LightPlayer(ConfigPlayer):
         instance_dict[light.name] = light
 
     def clear_context(self, context):
+        """Remove all brightness which was set in context."""
         full_context = self._get_full_context(context)
         for light in self._get_instance_dict(context).values():
             light.remove_from_stack_by_key(full_context)
@@ -50,6 +56,7 @@ class LightPlayer(ConfigPlayer):
         self._reset_instance_dict(context)
 
     def get_express_config(self, value):
+        """Parse express config."""
         value = str(value).replace(' ', '').lower()
         fade = 0
         if '-f' in value:
@@ -60,6 +67,7 @@ class LightPlayer(ConfigPlayer):
         return dict(brightness=value, fade=fade)
 
     def get_full_config(self, value):
+        """Return full config."""
         super().get_full_config(value)
         value['fade_ms'] = value.pop('fade')
         return value

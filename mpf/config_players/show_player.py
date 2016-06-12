@@ -1,14 +1,19 @@
+"""Show config player."""
 from copy import deepcopy
 
 from mpf.core.config_player import ConfigPlayer
 
 
 class ShowPlayer(ConfigPlayer):
+
+    """Plays, starts, stops, pauses, resumes or advances shows based on config."""
+
     config_file_section = 'show_player'
     show_section = 'shows'
     device_collection = None
 
     def play(self, settings, context, priority=0, **kwargs):
+        """Play, start, stop, pause, resume or advance show based on config."""
         if 'shows' in settings:
             settings = settings['shows']
 
@@ -73,11 +78,13 @@ class ShowPlayer(ConfigPlayer):
                     priority=s['priority'])
 
     def clear_context(self, context):
+        """Stop running shows from context."""
         for show in self._get_instance_dict(context).values():
             show.stop()
         self._reset_instance_dict(context)
 
     def get_express_config(self, value):
+        """Parse express config."""
         return dict()
 
 player_cls = ShowPlayer

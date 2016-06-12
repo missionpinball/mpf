@@ -1,13 +1,18 @@
+"""Coil config player."""
 import copy
 
 from mpf.core.config_player import ConfigPlayer
 
 
 class CoilPlayer(ConfigPlayer):
+
+    """Triggers coils based on config."""
+
     config_file_section = 'coil_player'
     show_section = 'coils'
 
     def play(self, settings, context, priority=0, **kwargs):
+        """Enable, Pulse or disable coils."""
         del kwargs
 
         if 'coils' in settings:
@@ -22,6 +27,7 @@ class CoilPlayer(ConfigPlayer):
                 getattr(self.machine.coils[coil], action)(**s)
 
     def get_express_config(self, value):
+        """Parse short config version."""
         try:
             value = int(value)
             return dict(action='pulse', milliseconds=value)

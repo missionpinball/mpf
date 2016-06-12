@@ -1,8 +1,10 @@
-"""Base class used for things that "play" from the config files, such as
-WidgetPlayer, SlidePlayer, etc."""
+"""Base class used for things that "play" from the config files, such as WidgetPlayer, SlidePlayer, etc."""
 
 
 class ConfigPlayer(object):
+
+    """Base class for players which play things based on config."""
+
     config_file_section = None
     show_section = None
     machine_collection_name = None
@@ -11,6 +13,7 @@ class ConfigPlayer(object):
     config_file_players = dict()
 
     def __init__(self, machine):
+        """Initialise config player."""
         self.device_collection = None
 
         self.machine = machine
@@ -25,6 +28,7 @@ class ConfigPlayer(object):
         self.instances['_global'] = dict()
 
     def __repr__(self):
+        """Return string representation."""
         return 'ConfigPlayer.{}'.format(self.show_section)
 
     def _initialize(self):
@@ -54,8 +58,7 @@ class ConfigPlayer(object):
                 self.machine.config[self.config_file_section])
 
     def validate_config(self, config):
-        """Validates this player's section of a config file (either a machine-
-        wide config or a mode config).
+        """Validate this player's section of a config file (either a machine-wide config or a mode config).
 
         Args:
             config: A dict of the contents of this config_player's section
@@ -65,11 +68,9 @@ class ConfigPlayer(object):
 
         Returns: A dict in the same format, but passed through the config
             validator.
-
         """
         # called first, before config file is cached. Not called if config file
         # is read from cache
-
         validated_config = dict()
 
         for event, settings in config.items():
@@ -92,6 +93,7 @@ class ConfigPlayer(object):
         return validated_config
 
     def validate_show_config(self, device, device_settings):
+        """Validate show config."""
         # override if you need a different show processor from config file
         # processor
 
@@ -130,6 +132,7 @@ class ConfigPlayer(object):
         return return_dict
 
     def process_mode_config(self, config, root_config_dict, mode, **kwargs):
+        """Parse mode config."""
         del kwargs
         # handles validation and processing of mode config
         config = self.validate_config(config)
@@ -150,13 +153,18 @@ class ConfigPlayer(object):
 
     @classmethod
     def process_config(cls, config, **kwargs):
-        # called every time mpf starts, regardless of whether config was built
-        # from cache or config files
+        """Process system-wide config.
+
+        Called every time mpf starts, regardless of whether config was built
+        from cache or config files.
+        """
         del kwargs
         return config
 
     def get_express_config(self, value):
-        """Implements "express" settings for this config_player which is what
+        """Parse short config version.
+
+        Implements "express" settings for this config_player which is what
         happens when a config is passed as a string instead of a full config
         dict. (This is detected automatically and this method is only called
         when the config is not a dict.)
@@ -181,10 +189,12 @@ class ConfigPlayer(object):
         raise NotImplementedError(self.config_file_section)
 
     def get_full_config(self, value):
+        """Return full config."""
         return self.machine.config_validator.validate_config(
             self.config_file_section, value, base_spec='config_player_common')
 
     def mode_start(self, config, priority, mode):
+        """Add events for mode."""
         event_keys = self.register_player_events(config, mode, priority)
 
         self.mode_event_keys[mode] = event_keys
@@ -192,13 +202,16 @@ class ConfigPlayer(object):
         return self.mode_stop, mode
 
     def mode_stop(self, mode):
+        """Remove events for mode."""
         self.unload_player_events(self.mode_event_keys.pop(mode, list()))
         self.clear_context(mode.name)
 
     def clear_context(self, context):
+        """Clear the context."""
         pass
 
     def register_player_events(self, config, mode=None, priority=0):
+        """Register events for standalone player."""
         # config is localized
         key_list = list()
 
@@ -215,9 +228,11 @@ class ConfigPlayer(object):
         return key_list
 
     def unload_player_events(self, key_list):
+        """Remove event for standalone player."""
         self.machine.events.remove_handlers_by_keys(key_list)
 
     def config_play_callback(self, settings, priority=0, mode=None, **kwargs):
+        """Callback for standalone player."""
         # called when a config_player event is posted
         if mode:
             if not mode.active:
@@ -236,6 +251,7 @@ class ConfigPlayer(object):
         self.play(settings=settings, context=context, priority=priority, **kwargs)
 
     def show_play_callback(self, settings, priority, show_tokens, context):
+        """Callback if used in a show."""
         # called from a show step
         if context not in self.instances:
             self.instances[context] = dict()
@@ -247,8 +263,10 @@ class ConfigPlayer(object):
                   show_tokens=show_tokens, context=context)
 
     def show_stop_callback(self, context):
+        """Callback if show stops."""
         self.clear_context(context)
 
     def play(self, settings, context, priority=0, **kwargs):
+        """Directly play player."""
         # **kwargs since this is an event callback
         raise NotImplementedError
