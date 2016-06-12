@@ -7,8 +7,10 @@ class LightPlayer(ConfigPlayer):
     show_section = 'lights'
     machine_collection_name = 'lights'
 
-    def play(self, settings, key=None, priority=0, **kwargs):
+    def play(self, settings, context, priority=0, **kwargs):
         del kwargs
+        instance_dict = self._get_instance_dict(context)
+        full_context = self._get_full_context(context)
 
         if 'lights' in settings:
             settings = settings['lights']
@@ -20,51 +22,30 @@ class LightPlayer(ConfigPlayer):
                 s['priority'] = priority
 
             try:
-                light.on(key=key, **s)
-                try:
-                    self.caller_target_map[key].add(light)
-                except KeyError:
-                    self.caller_target_map[key] = set()
-                    self.caller_target_map[key].add(light)
+                light.on(key=full_context, **s)
+                instance_dict[light.name] = light
 
             except AttributeError:
                 try:
-                    self._light_on(light, key=key, **s)
+                    self._light_on(light, instance_dict, full_context, **s)
                 except KeyError:
                     light_list = Util.string_to_list(light)
                     if len(light_list) > 1:
                         for light1 in light_list:
-                            self._light_on(light1, key=key, **s)
+                            self._light_on(light1, instance_dict, full_context, **s)
                     else:
                         for light1 in self.machine.lights.sitems_tagged(light):
-                            self._light_on(light1, key=key, **s)
+                            self._light_on(light1, instance_dict, full_context, **s)
 
-    def _light_on(self, light_name, key=None, **s):
+    def _light_on(self, light_name, instance_dict, full_context, **s):
         light = self.machine.lights[light_name]
-        light.on(key=key, **s)
-        try:
-            self.caller_target_map[key].add(light)
-        except KeyError:
-            self.caller_target_map[key] = set()
-            self.caller_target_map[key].add(light)
+        light.on(key=full_context, **s)
+        instance_dict[light.name] = light
 
-    def clear(self, key):
-        try:
-            for light in self.caller_target_map[key]:
-                light.remove_from_stack_by_key(key)
-        except KeyError:
-            pass
-
-    def config_play_callback(self, settings, priority=0, mode=None,
-                             hold=None, **kwargs):
-        # TODO: is this right or a bug? see: #284
-        del hold
-        # led_player sections from config should set LEDs to hold
-
-        super().config_play_callback(settings=settings, priority=priority,
-                                     mode=mode, hold=True, **kwargs)
-
-        # todo change this in the base method?
+    def clear_context(self, context):
+        full_context = self._get_full_context(context)
+        for light in self._get_instance_dict(context).values():
+            light.remove_from_stack_by_key(full_context)
 
     def get_express_config(self, value):
         value = str(value).replace(' ', '').lower()
