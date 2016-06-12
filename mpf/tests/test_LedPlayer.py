@@ -170,7 +170,7 @@ class TestLedPlayer(MpfTestCase):
         self.assertEqual(0, self.machine.leds.led1.stack[0]['priority'])
 
     def test_show_hold_leds(self):
-        self.machine.shows['show2'].play(loops=0)
+        self.machine.shows['show2_stay_on'].play(loops=0)
         self.advance_time_and_run()
 
         self.assertEqual(list(RGBColor('red').rgb),

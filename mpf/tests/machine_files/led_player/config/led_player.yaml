@@ -63,3 +63,11 @@ shows:
       led2: blue
       led3: blue
   - time: 1
+  show2_stay_on:
+  - time: 0
+    duration: -1
+    leds:
+      led1: red
+      led2: red
+      led3: red
+  - time: 1
