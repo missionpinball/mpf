@@ -268,7 +268,7 @@ shot_profiles:
     profile_14:
       states:
         - name: one
-          show: rainbow
+          show: rainbow_stay_on
           loops: 0
         - name: two
     profile_17:
