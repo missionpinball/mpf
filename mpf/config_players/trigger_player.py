@@ -5,7 +5,7 @@ class TriggerPlayer(ConfigPlayer):
     config_file_section = 'trigger_player'
     show_section = 'triggers'
 
-    def play(self, settings, key=None, priority=0, **kwargs):
+    def play(self, settings, context, priority=0, **kwargs):
         del kwargs
 
         if 'triggers' in settings:
