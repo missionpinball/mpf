@@ -9,7 +9,7 @@ class RandomEventPlayer(ConfigPlayer):
     show_section = 'random_events'
     device_collection = None
 
-    def play(self, settings, key=None, priority=0, **kwargs):
+    def play(self, settings, context, priority=0, **kwargs):
 
         # if not play_kwargs:
         #     play_kwargs = kwargs
