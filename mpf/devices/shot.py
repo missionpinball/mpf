@@ -245,6 +245,8 @@ class Shot(ModeDevice, SystemWideDevice):
 
             s.pop('action')  # temp todo
             s.pop('name')
+            # TODO: remove from config here
+            s.pop('key')
 
             profile['running_show'] = (
                 self.machine.shows[state_settings['show']].play(
@@ -273,6 +275,9 @@ class Shot(ModeDevice, SystemWideDevice):
                     s.pop('name')
                     s.pop('action')  # temp todo
 
+                    # TODO: remove from config here
+                    s.pop('key')
+
                     profile['running_show'] = (self.machine.shows[
                         profile['settings']['show']].play(
                         mode=mode, **s))
@@ -288,6 +293,9 @@ class Shot(ModeDevice, SystemWideDevice):
                 s.pop('name')
                 s.pop('action')  # temp todo
                 s['manual_advance'] = True
+
+                # TODO: remove from config here
+                s.pop('key')
 
                 profile['running_show'] = (self.machine.shows[
                     profile['settings']['show']].play(
