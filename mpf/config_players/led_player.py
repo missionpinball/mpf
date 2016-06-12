@@ -8,7 +8,9 @@ class LedPlayer(ConfigPlayer):
     show_section = 'leds'
     machine_collection_name = "leds"
 
-    def play(self, settings, key=None, priority=0, **kwargs):
+    def play(self, settings, context, priority=0, **kwargs):
+        instance_dict = self._get_instance_dict(context)
+        full_context = self._get_full_context(context)
         del kwargs
         if 'leds' in settings:
             settings = settings['leds']
@@ -21,52 +23,30 @@ class LedPlayer(ConfigPlayer):
                 s['priority'] = priority
 
             try:
-                led.color(key=key, **s)
-                try:
-                    self.caller_target_map[key].add(led)
-                except KeyError:
-                    self.caller_target_map[key] = set()
-                    self.caller_target_map[key].add(led)
+                led.color(key=full_context, **s)
+                instance_dict[led.name] = led
 
             except AttributeError:
                 try:
-                    self._led_color(led, key=key, **s)
+                    self._led_color(led, instance_dict, full_context, **s)
                 except KeyError:
                     led_list = Util.string_to_list(led)
                     if len(led_list) > 1:
                         for led1 in led_list:
-                            self._led_color(led1, key=key, **s)
+                            self._led_color(led1, instance_dict, full_context, **s)
                     else:
                         for led1 in self.machine.leds.sitems_tagged(led):
-                            self._led_color(led1, key=key, **s)
+                            self._led_color(led1, instance_dict, full_context, **s)
 
-    def _led_color(self, led_name, key=None, **s):
+    def _led_color(self, led_name, instance_dict, full_context, **s):
         led = self.machine.leds[led_name]
-        led.color(key=key, **s)
-        try:
-            self.caller_target_map[key].add(led)
-        except KeyError:
-            self.caller_target_map[key] = set()
-            self.caller_target_map[key].add(led)
+        led.color(key=full_context, **s)
+        instance_dict[led.name] = led
 
-    def clear(self, key):
-        try:
-            for led in self.caller_target_map[key]:
-                led.remove_from_stack_by_key(key)
-        except KeyError:
-            pass
-
-    def config_play_callback(self, settings, priority=0, mode=None,
-                             hold=None, **kwargs):
-        # led_player sections from config should set LEDs to hold
-
-        del hold
-        # TODO: is this right? see: #284
-
-        super().config_play_callback(settings=settings, priority=priority,
-                                     mode=mode, hold=True, **kwargs)
-
-        # todo change this in the base method?
+    def clear_context(self, context):
+        full_context = self._get_full_context(context)
+        for led in self._get_instance_dict(context).values():
+            led.remove_from_stack_by_key(full_context)
 
     def get_express_config(self, value):
         value = str(value).replace(' ', '').lower()
