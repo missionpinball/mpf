@@ -75,6 +75,7 @@ class Mode(object):
                     self.config[item.config_section]):
                 item.method(config=self.config[item.config_section],
                             mode_path=self.path,
+                            mode=self,
                             root_config_dict=self.config,
                             **item.kwargs)
             elif not item.config_section:
