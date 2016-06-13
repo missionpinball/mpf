@@ -1,4 +1,5 @@
-"""Base class used for things that "play" from the config files, such as WidgetPlayer, SlidePlayer, etc."""
+"""Base class used for things that "play" from the config files, such as
+WidgetPlayer, SlidePlayer, etc."""
 
 
 class ConfigPlayer(object):
@@ -48,7 +49,12 @@ class ConfigPlayer(object):
 
         # Look through the machine config for config_player sections and
         # for shows to validate and process
-        if self.config_file_section in self.machine.config:
+
+        # if self.config_file_section in self.machine.config:
+
+        if (self.config_file_section in self.machine.config and
+                self.machine.config[self.config_file_section]):
+
             # Validate
             self.machine.config[self.config_file_section] = (
                 self.validate_config(
