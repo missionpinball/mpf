@@ -1,5 +1,4 @@
 """Contains show related classes."""
-import re
 from mpf.core.assets import Asset, AssetPool
 from mpf.core.config_player import ConfigPlayer
 from mpf.core.file_manager import FileManager
@@ -58,8 +57,6 @@ class Show(Asset):
         self.tokens = set()
         self.token_values = dict()
         self.token_keys = dict()
-
-        self.token_finder = re.compile('(?<=\\()(.*?)(?=\\))')
 
         self.running = set()
         '''Set of RunningShow() instances which represents running instances
@@ -262,13 +259,11 @@ class Show(Asset):
             return data
 
     def _check_token(self, path, data, token_type):
-        try:
-            token = self.token_finder.findall(data)
-        except TypeError:
+        if not isinstance(data, str):
             return
 
-        if token:
-            self._add_token(token[0], path, token_type)
+        if data[0:1] == "(" and data[-1:] == ")":
+            self._add_token(data[1:-1].lower(), path, token_type)
 
     def _add_token(self, token, path, token_type):
 
@@ -518,7 +513,18 @@ class RunningShow(object):
 
                         target = target[x]
 
-                    target[replacement] = target.pop(key_name)
+                    if key_name in target:
+                        target[replacement] = target.pop(key_name)
+                    else:
+                        # Fallback in case the token is no lowercase. Unfortunately, this can happen since every config
+                        # player has its own config validator. Additionally, keys in dicts are not properly lowercased.
+                        for key in target:
+                            if key.lower() == key_name:
+                                target[replacement] = target.pop(key)
+                                break
+                        else:
+                            raise KeyError("Could not find token {}".format(key_name))
+
                     keys_replaced[key_name] = replacement
 
     def stop(self):
