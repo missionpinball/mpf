@@ -218,8 +218,6 @@ class TestShows(MpfTestCase):
         self.assertEqual(255,
                          self.machine.gis.gi_01.hw_driver.current_brightness)
 
-        # TODO: Add tests for reset and hold
-
         # Stop the mode (and therefore the show)
         self.machine.events.post('stop_mode1')
         self.machine_run()
@@ -246,8 +244,7 @@ class TestShows(MpfTestCase):
                          self.machine.lights.light_02.hw_driver
                          .current_brightness)
         self.assertEqual(0, self.machine.lights.light_02.stack[0]['priority'])
-        self.assertEqual(255,
-                         self.machine.gis.gi_01.hw_driver.current_brightness)
+        self.assertEqual(0, self.machine.gis.gi_01.hw_driver.current_brightness)
 
         # --------------------------------------------------------
         # test_show2 - Show with events and triggers
