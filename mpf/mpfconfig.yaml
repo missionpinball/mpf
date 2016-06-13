@@ -21,7 +21,6 @@ mpf:
         - scoring: mpf.core.scoring.ScoreController
 
     config_players:
-        bcp: mpf.config_players.bcp_player
         coil: mpf.config_players.coil_player
         event: mpf.config_players.event_player
         flasher: mpf.config_players.flasher_player

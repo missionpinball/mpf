@@ -182,9 +182,6 @@ bcp:
     connections:
         host: single|str|None
         port: single|int|5050
-bcp_player:                                          # todo
-    __valid_in__: machine
-    __allow_others__:
 coils:
     __valid_in__: machine
     number: single|str|
