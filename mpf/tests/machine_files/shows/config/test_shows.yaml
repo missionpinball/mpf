@@ -89,6 +89,10 @@ shows:
         (leds): blue
       lights:
         (lights): ff
+  show_assoc_tokens:
+    - time: 0
+      leds:
+        (line1Num): (line1Color)
 
 show_player:
   play_test_show1: test_show1
@@ -158,5 +162,14 @@ show_player:
       action: stop
   stop_by_show_name:
     leds_extended:
+      action: stop
+  play_show_assoc_tokens:
+    show_assoc_tokens:
+      speed: 1
+      show_tokens:
+         line1Num: tag1
+         line1Color: red
+  stop_show_assoc_tokens:
+    show_assoc_tokens:
       action: stop
 

@@ -488,6 +488,22 @@ class TestShows(MpfTestCase):
         self.assertEqual(255,
             self.machine.lights.light_01.hw_driver.current_brightness)
         show.stop()
+        self.advance_time_and_run(.5)
+
+        self.assertEqual(self.machine.leds.led_01.hw_driver.current_color, list(RGBColor('black').rgb))
+        self.assertEqual(self.machine.leds.led_02.hw_driver.current_color, list(RGBColor('black').rgb))
+
+        self.post_event("play_show_assoc_tokens")
+        self.advance_time_and_run(.5)
+
+        self.assertEqual(self.machine.leds.led_01.hw_driver.current_color, list(RGBColor('red').rgb))
+        self.assertEqual(self.machine.leds.led_02.hw_driver.current_color, list(RGBColor('red').rgb))
+
+        self.post_event("stop_show_assoc_tokens")
+        self.advance_time_and_run(.5)
+
+        self.assertEqual(self.machine.leds.led_01.hw_driver.current_color, list(RGBColor('black').rgb))
+        self.assertEqual(self.machine.leds.led_02.hw_driver.current_color, list(RGBColor('black').rgb))
 
     def test_get_show_copy(self):
         copied_show = self.machine.shows['test_show1'].get_show_steps()
