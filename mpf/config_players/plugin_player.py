@@ -43,4 +43,8 @@ class PluginPlayer(ConfigPlayer):
         self.machine.bcp.bcp_trigger(name='{}_play'.format(self.show_section),
                                      settings=settings, context=context,
                                      priority=priority)
-        # todo do we need kwargs here? I think no?
+
+    def clear_context(self, context):
+        """Clear the context at remote player via BCP."""
+        self.machine.bcp.bcp_trigger(name='{}_clear'.format(self.show_section),
+                                     context=context)
