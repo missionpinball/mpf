@@ -41,19 +41,6 @@ class PluginPlayer(ConfigPlayer):
     def play(self, settings, context, priority=0, **kwargs):
         """Trigger remote player via BCP."""
         self.machine.bcp.bcp_trigger(name='{}_play'.format(self.show_section),
-                                     **settings)
-
-    #     settings = deepcopy(settings)
-    #     super().play(settings, key, priority, hold, play_kwargs, **kwargs)
-    #
-    # def play(self, settings, key=None, priority=0, **kwargs):
-    #
-    #     try:
-    #         prior_play_kwargs = play_kwargs.pop('play_kwargs', None)
-    #         settings['play_kwargs'] = prior_play_kwargs.update(play_kwargs)
-    #         settings['play_kwargs'].update(kwargs)
-    #     except AttributeError:
-    #         settings['play_kwargs'] = play_kwargs
-    #
-    #     self.machine.bcp.bcp_trigger(name='{}_play'.format(self.show_section),
-    #                                  **settings)
+                                     settings=settings, context=context,
+                                     priority=priority)
+        # todo do we need kwargs here? I think no?
