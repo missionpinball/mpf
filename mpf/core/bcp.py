@@ -132,8 +132,6 @@ class BCP(object):
         machine: A reference to the main MPF machine object.
 
     The following BCP commands are currently implemented:
-        ball_start?player_num=x&ball=x
-        ball_end
         config?volume=0.5
         error
         get
