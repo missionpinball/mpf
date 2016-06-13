@@ -56,8 +56,8 @@ class ShowPlayer(ConfigPlayer):
 
         elif s['action'].lower() == 'stop':
             if show in instance_dict:
-                instance_dict[self.config_file_section][show].stop()
-                del instance_dict[self.config_file_section][show]
+                instance_dict[show].stop()
+                del instance_dict[show]
 
         elif s['action'].lower() == 'pause':
             if show in instance_dict:
