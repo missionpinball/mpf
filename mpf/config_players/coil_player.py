@@ -14,6 +14,7 @@ class CoilPlayer(ConfigPlayer):
     def play(self, settings, context, priority=0, **kwargs):
         """Enable, Pulse or disable coils."""
         del kwargs
+        instance_dict = self._get_instance_dict(context)
 
         if 'coils' in settings:
             settings = settings['coils']
@@ -22,9 +23,24 @@ class CoilPlayer(ConfigPlayer):
             s = copy.deepcopy(s)
             action = s.pop('action')
             try:
-                getattr(coil, action)(**s)
+                coil = getattr(coil, action)
             except AttributeError:
-                getattr(self.machine.coils[coil], action)(**s)
+                coil = getattr(self.machine.coils[coil], action)
+
+            if action in ("disable", "off") and coil.name in instance_dict:
+                del instance_dict[coil.name]
+            elif action in ("on", "enable"):
+                instance_dict[coil.name] = coil
+
+            coil(**s)
+
+    def clear_context(self, context):
+        """Disable enabled coils."""
+        instance_dict = self._get_instance_dict(context)
+        for coil in instance_dict.values():
+            coil.disable()
+
+        self._reset_instance_dict(context)
 
     def get_express_config(self, value):
         """Parse short config version."""
