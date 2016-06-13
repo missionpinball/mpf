@@ -862,6 +862,7 @@ sounds:
     max_queue_time: single|secs|None
     events_when_played: list|str|None
     events_when_stopped: list|str|None
+    events_when_looping: list|str|None
     ducking:
         target: single|str|
         delay: single|str|0
