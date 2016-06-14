@@ -94,7 +94,7 @@ shows:
       leds:
         (line1Num): (line1Color)
   show_with_time_and_duration:
-    - time: 1
+    - time: +1s
     - time: 5s
     - time: +1s
       duration: 1s
