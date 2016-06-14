@@ -131,8 +131,8 @@ class Show(Asset):
 
         # add empty first step if show does not start right away
         if 'time' in data[0] and data[0]['time'] != 0:
-            self.show_steps.append({'duration': data[0]['time']})
-            total_step_time = data[0]['time']
+            self.show_steps.append({'duration': Util.string_to_secs(data[0]['time'])})
+            total_step_time = Util.string_to_secs(data[0]['time'])
 
         # Loop over all steps in the show file
         for step_num, step in enumerate(data):
