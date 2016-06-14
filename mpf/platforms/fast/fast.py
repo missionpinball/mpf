@@ -74,6 +74,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         self.config = None
         self.machine_type = None
         self.hw_switch_data = None
+        self.io_boards = {}
 
         # todo verify this list
         self.fast_commands = {'ID': self.receive_id,  # processor ID
@@ -123,6 +124,12 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
     def __repr__(self):
         return '<Platform.FAST>'
+
+    def register_io_board(self, board):
+        """Register an IO board."""
+        if board.node_id in self.io_boards:
+            raise AssertionError("Duplicate node_id")
+        self.io_boards[board.node_id] = board
 
     def _update_watchdog(self, dt):
         del dt
@@ -758,12 +765,23 @@ class FASTDMD(object):
         self.send(data)
 
 
+class FastIOBoard:
+
+    """A fast IO board on the NET processor."""
+
+    def __init__(self, node_id, model_string, firmware_version, switch_count, driver_count):
+        self.node_id = node_id
+        self.model_string = model_string
+        self.firmware_version = firmware_version
+        self.switch_count = switch_count
+        self.driver_count = driver_count
+
+
 # pylint: disable-msg=too-many-instance-attributes
 class SerialCommunicator(object):
 
     """Handles the serial communication to the FAST platform."""
 
-    # pylint: disable-msg=too-many-arguments
     def __init__(self, machine, platform, port, baud):
         """Initialise communicator."""
         self.machine = machine
@@ -870,31 +888,36 @@ class SerialCommunicator(object):
 
         for board_id in range(8):
             self.serial_connection.write('NN:{0}\r'.format(board_id).encode())
-            msg = self.serial_connection.read_until(b'\r').decode()
-            if msg.startswith('NN:'):
+            msg = ''
+            while not msg.startswith('NN:'):
+                msg = self.serial_connection.read_until(b'\r').decode()
+                print(msg)
+                if not msg.startswith('NN:'):
+                    self.platform.debug_log("Got unexpected message from FAST: {}".format(msg))
 
-                node_id, model, fw, dr, sw, _, _, _, _, _, _ = msg.split(',')
-                node_id = node_id[3:]
-                model = model.strip()
+            node_id, model, fw, dr, sw, _, _, _, _, _, _ = msg.split(',')
+            node_id = node_id[3:]
 
-                # I don't know what character it returns for a non-existent
-                # board, I just know they're all the same
-                if model == len(model) * model[0]:
-                    model = False
+            model = model.strip('\x00')
 
-                if model:
-                    self.platform.debug_log('Fast IO Board {0}: Model: {1}, '
-                                            'Firmware: {2}, Switches: {3}, '
-                                            'Drivers: {4}'.format(node_id,
-                                                                  model, fw,
-                                                                  int(sw, 16),
-                                                                  int(dr, 16)))
+            # skip non-existing boards
+            if not len(model):
+                continue
 
-                    if StrictVersion(IO_MIN_FW) > str(fw):
-                        self.platform.log.critical("Firmware version mismatch. MPF "
-                                                   "requires the IO boards to be firmware {0}, but "
-                                                   "your Board {1} ({2}) is v{3}".format(IO_MIN_FW, node_id, model, fw))
-                        firmware_ok = False
+            self.platform.register_io_board(FastIOBoard(node_id, model, fw, int(sw, 16), int(dr, 16)))
+
+            self.platform.debug_log('Fast IO Board {0}: Model: {1}, '
+                                    'Firmware: {2}, Switches: {3}, '
+                                    'Drivers: {4}'.format(node_id,
+                                                          model, fw,
+                                                          int(sw, 16),
+                                                          int(dr, 16)))
+
+            if StrictVersion(IO_MIN_FW) > str(fw):
+                self.platform.log.critical("Firmware version mismatch. MPF "
+                                           "requires the IO boards to be firmware {0}, but "
+                                           "your Board {1} ({2}) is v{3}".format(IO_MIN_FW, node_id, model, fw))
+                firmware_ok = False
 
         if not firmware_ok:
             raise AssertionError("Exiting due to IO board firmware mismatch")
@@ -926,7 +949,7 @@ class SerialCommunicator(object):
 
         else:
             self.serial_connection.write(msg.encode() + b'\r')
-            if debug:
+            if debug and msg[0:2] != "WD":
                 self.platform.log.debug("Send: %s", msg)
 
     def _receiver(self):
@@ -946,7 +969,7 @@ class SerialCommunicator(object):
             if not msg:
                 continue
 
-            if debug:
+            if debug and msg[0:2] != b"WD":
                 self.platform.log.debug("Received: %s", msg.decode())
 
             if msg.decode() not in self.ignored_messages:
