@@ -104,7 +104,7 @@ class Show(Asset):
             else:
                 return 1
         else:
-            return step['duration']
+            return Util.string_to_secs(step['duration'])
 
     def _do_load_show(self, data):
         self.show_steps = list()
@@ -146,23 +146,19 @@ class Show(Asset):
             # since the previous step).
 
             # Make sure there is a time entry for each step in the show file.
-            step['duration'] = self._get_duration(data, step_num, total_step_time)
+            duration = self._get_duration(data, step_num, total_step_time)
 
             # special case: empty last step
-            if step['duration'] is False:
+            if duration is False:
                 break
-            elif step['duration'] == 0:
+            elif duration == 0:
                 self._show_validation_error("Step {} has 0 duration".format(step_num))
 
-            # internally we only use duration
-            if 'time' in step:
-                del step['time']
-
             # Calculate the time since previous step
-            actions['duration'] = step['duration']
+            actions['duration'] = duration
 
-            if step['duration'] > 0 and total_step_time >= 0:
-                total_step_time += step['duration']
+            if duration > 0 and total_step_time >= 0:
+                total_step_time += duration
             else:
                 total_step_time = -1
 
@@ -209,7 +205,7 @@ class Show(Asset):
 
                 actions[key] = validated_config
 
-            elif key != 'duration':
+            elif key != 'duration' and key != 'time':
                 self._show_validation_error('Invalid section "{}:" found in show'.format(key))
 
     def _do_unload(self):
