@@ -225,6 +225,12 @@ class BCP(object):
     def __repr__(self):
         return '<BCP Module>'
 
+    def register_command_callback(self, cmd, callback):
+        pass
+
+    def unregister_command_callback(self, cmd, callback):
+        pass
+
     def _register_connection_callback(self, callback):
         # This is a callback that is called after BCP is connected. If
         # bcp is connected when this is called, the callback will be called
