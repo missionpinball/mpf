@@ -260,6 +260,7 @@ class VirtualDriver(DriverPlatformInterface):
     def enable(self, coil):
         """Enable virtual coil."""
         del coil
+        # pylint: disable-msg=too-many-boolean-expressions
         if (not self.config.get("allow_enable", False) and not self.config.get("hold_power", 0) and     # defaults
                 not self.config.get("pwm_on_ms", 0) and not self.config.get("pwm_off_ms", 0) and        # p-roc
                 not self.config.get("hold_power32", 0) and not self.config.get("hold_pwm_mask", 0) and  # fast
