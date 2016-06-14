@@ -97,14 +97,17 @@ class Show(Asset):
                 if str(next_step_time)[0] == "+":
                     return Util.string_to_secs(next_step_time)
                 else:
-                    if total_step_time < 0:
+                    if total_step_time < 0:     # pragma: no cover
                         self._show_validation_error("Absolute timing in step {} not possible because "
                                                     "there was a duration of -1 before".format(step_num))
                     return Util.string_to_secs(next_step_time) - total_step_time
             else:
                 return 1
         else:
-            return step['duration']
+            if step_num < total_steps_num - 1 and 'time' in data[step_num + 1]:     # pragma: no cover
+                self._show_validation_error("Found invalid 'time' entry in step after {} which contains a duration. "
+                                            "Remove either of them!".format(step_num))
+            return Util.string_to_secs(step['duration'])
 
     def _do_load_show(self, data):
         self.show_steps = list()
@@ -117,19 +120,19 @@ class Show(Asset):
         # pylint: disable-msg=redefined-variable-type
         if isinstance(data, dict):
             data = list(data)
-        elif not isinstance(data, list):
+        elif not isinstance(data, list):    # pragma: no cover
             raise ValueError("Show {} does not appear to be a valid show "
                              "config".format(self.file))
 
-        if not data:
+        if not data:    # pragma: no cover
             self._show_validation_error("Cannot load empty show")
 
         total_step_time = 0
 
         # add empty first step if show does not start right away
         if 'time' in data[0] and data[0]['time'] != 0:
-            self.show_steps.append({'duration': data[0]['time']})
-            total_step_time = data[0]['time']
+            self.show_steps.append({'duration': Util.string_to_secs(data[0]['time'])})
+            total_step_time = Util.string_to_secs(data[0]['time'])
 
         # Loop over all steps in the show file
         for step_num, step in enumerate(data):
@@ -146,23 +149,19 @@ class Show(Asset):
             # since the previous step).
 
             # Make sure there is a time entry for each step in the show file.
-            step['duration'] = self._get_duration(data, step_num, total_step_time)
+            duration = self._get_duration(data, step_num, total_step_time)
 
             # special case: empty last step
-            if step['duration'] is False:
+            if duration is False:
                 break
-            elif step['duration'] == 0:
+            elif duration == 0:     # pragma: no cover
                 self._show_validation_error("Step {} has 0 duration".format(step_num))
 
-            # internally we only use duration
-            if 'time' in step:
-                del step['time']
-
             # Calculate the time since previous step
-            actions['duration'] = step['duration']
+            actions['duration'] = duration
 
-            if step['duration'] > 0 and total_step_time >= 0:
-                total_step_time += step['duration']
+            if duration > 0 and total_step_time >= 0:
+                total_step_time += duration
             else:
                 total_step_time = -1
 
@@ -174,12 +173,12 @@ class Show(Asset):
         # Count how many total steps are in the show. We need this later
         # so we can know when we're at the end of a show
         self.total_steps = len(self.show_steps)
-        if self.total_steps == 0:
+        if self.total_steps == 0:   # pragma: no cover
             self._show_validation_error("Show is empty")
 
         self._get_tokens()
 
-    def _show_validation_error(self, msg):
+    def _show_validation_error(self, msg):  # pragma: no cover
         if self.file:
             identifier = self.file
         else:
@@ -209,7 +208,7 @@ class Show(Asset):
 
                 actions[key] = validated_config
 
-            elif key != 'duration':
+            elif key != 'duration' and key != 'time':   # pragma: no cover
                 self._show_validation_error('Invalid section "{}:" found in show'.format(key))
 
     def _do_unload(self):
@@ -366,7 +365,7 @@ class Show(Asset):
         #                      'expected: {}. Tokens submitted: {}'.format(
         #                      self.name, self.tokens, set(show_tokens.keys())))
 
-        if not set(show_tokens.keys()).issubset(self.tokens):
+        if not set(show_tokens.keys()).issubset(self.tokens):   # pragma: no cover
             raise ValueError('Token mismatch while playing show "{}". Tokens '
                              'expected: {}. Tokens submitted: {}'.
                              format(self.name, self.tokens, set(show_tokens.keys())))
@@ -410,7 +409,7 @@ class Show(Asset):
         """Load show from disk."""
         show_version = YamlInterface.get_show_file_version(self.file)
 
-        if show_version != int(__show_version__):
+        if show_version != int(__show_version__):   # pragma: no cover
             raise ValueError("Show file {} cannot be loaded. MPF v{} requires "
                              "#show_version={}".format(self.file,
                                                        __version__,
@@ -522,7 +521,7 @@ class RunningShow(object):
                             if key.lower() == key_name:
                                 target[replacement] = target.pop(key)
                                 break
-                        else:
+                        else:   # pragma: no cover
                             raise KeyError("Could not find token {}".format(key_name))
 
                     keys_replaced[key_name] = replacement
@@ -568,7 +567,7 @@ class RunningShow(object):
 
     def advance(self, steps=1, show_step=None):
         """Manually advance this show to the next step."""
-        if isinstance(show_step, int) and show_step < 0:
+        if isinstance(show_step, int) and show_step < 0:    # pragma: no cover
             raise ValueError('Cannot advance {} to step "{}" as that is'
                              'not a valid step number.'.format(self, show_step))
 

@@ -435,13 +435,6 @@ light_scripts:
         - tocks: 1
           color: ff
 
-    on:
-        - tocks: 1
-          color: ff
-    off:
-        - tocks: 1
-          color: 0
-
     rainbow:
         - tocks: 1
           color: ff0000

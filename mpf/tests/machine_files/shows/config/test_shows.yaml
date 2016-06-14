@@ -93,6 +93,15 @@ shows:
     - time: 0
       leds:
         (line1Num): (line1Color)
+  show_with_time_and_duration:
+    - time: +1s
+    - time: 5s
+    - time: +1s
+      duration: 1s
+    - leds:
+        led_02: red
+    - time: 10s
+      duration: 3s
 
 show_player:
   play_test_show1: test_show1

@@ -344,6 +344,16 @@ class TestShows(MpfTestCase):
         # priorities
         # TODO: Test show playback rate
 
+    def test_duration_in_shows(self):
+        show = self.machine.shows['show_with_time_and_duration']
+        self.assertEqual(6, len(show.show_steps))
+        self.assertEqual(1, show.show_steps[0]['duration'])
+        self.assertEqual(4, show.show_steps[1]['duration'])
+        self.assertEqual(1, show.show_steps[2]['duration'])
+        self.assertEqual(1, show.show_steps[3]['duration'])
+        self.assertEqual(3, show.show_steps[4]['duration'])
+        self.assertEqual(3, show.show_steps[5]['duration'])
+
     def test_tokens_in_shows(self):
         self.assertIn('leds_name_token', self.machine.shows)
         self.assertIn('leds_color_token', self.machine.shows)
