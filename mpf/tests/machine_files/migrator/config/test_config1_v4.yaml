@@ -262,15 +262,6 @@ shows:
             (lights): ff
 
     -   time: '+1'
-    on:
-    -   time: 0
-        lights:
-            (lights): ff
-    off:
-    -   time: 0
-        lights:
-            (lights): 0
-
     rainbow:
     -   time: 0
         leds:
