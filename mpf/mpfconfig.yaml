@@ -213,15 +213,6 @@ bcp:
             port: 5050
 
     event_map:
-        ball_started:
-            command: ball_start
-            params:
-                player_num: "%player"
-                ball: "%ball"
-
-        ball_ending:
-            command: ball_end
-
         player_turn_start:
             command: player_turn_start
             params:
