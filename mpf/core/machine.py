@@ -13,7 +13,6 @@ import threading
 from pkg_resources import iter_entry_points
 
 from mpf._version import __version__
-from mpf.core.bcp import BCP
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.clock import ClockBase
 from mpf.core.config_processor import ConfigProcessor
@@ -129,7 +128,7 @@ class MachineController(object):
 
     @property
     def bcp_client_connected(self):
-        return BCP.active_connections > 0
+        return self.bcp.active_connections > 0
 
     def _run_init_phases(self):
         self.events.post("init_phase_1")

@@ -16,7 +16,7 @@ mpf:
         - ball_controller: mpf.core.ball_controller.BallController
         - asset_manager: mpf.core.assets.AssetManager
         - show_controller: mpf.core.show_controller.ShowController
-        - bcp: mpf.core.bcp.BCP
+        - bcp: mpf.core.bcp.bcp.Bcp
         - logic_blocks: mpf.core.logic_blocks.LogicBlocks
         - scoring: mpf.core.scoring.ScoreController
 
