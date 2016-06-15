@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock, patch, call
 
 from mpf.tests.MpfTestCase import MpfTestCase
-from mpf.core.bcp import decode_command_string, encode_command_string
+from mpf.core.bcp.bcp_socket_client import decode_command_string, encode_command_string
 
 
 class TestBcpClient:
@@ -18,6 +18,8 @@ class TestBcp(MpfTestCase):
         super().__init__(methodName)
         # remove config patch which disables bcp
         del self.machine_config_patches['bcp']
+        self.machine_config_patches['bcp'] = dict()
+        self.machine_config_patches['bcp']['connections'] = []
 
     def test_decode_command_string(self):
         # test strings
@@ -109,10 +111,10 @@ class TestBcp(MpfTestCase):
                          dict(key3='value5', key4='value6'))
 
     def test_receive_register_trigger(self):
-        self.machine.bcp.process_bcp_message('register_trigger', {'event': 'test_event'}, None)
+        self.machine.bcp.interface.process_bcp_message('register_trigger', {'event': 'test_event'}, None)
         self.advance_time_and_run()
 
-        self.assertIn('test_event', self.machine.bcp.registered_trigger_events)
+        self.assertIn('test_event', self.machine.bcp.interface.registered_trigger_events)
 
     def test_bcp_mpf_and_mpf_mc(self):
         self.kivy = MagicMock()
@@ -138,7 +140,7 @@ class TestBcp(MpfTestCase):
         self.machine_run()
         mc.events.post = MagicMock()
 
-        bcp_mpf = self.machine.bcp
+        bcp_mpf = self.machine.bcp.interface
         bcp_mpf.bcp_clients = [TestBcpClient(bcp_mc.receive_queue)]
 
         self.machine.events.post('ball_started', ball=17,
