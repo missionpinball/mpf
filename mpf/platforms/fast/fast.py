@@ -891,7 +891,6 @@ class SerialCommunicator(object):
             msg = ''
             while not msg.startswith('NN:'):
                 msg = self.serial_connection.read_until(b'\r').decode()
-                print(msg)
                 if not msg.startswith('NN:'):
                     self.platform.debug_log("Got unexpected message from FAST: {}".format(msg))
 
