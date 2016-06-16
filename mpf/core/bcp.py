@@ -2,6 +2,7 @@
 
 import logging
 import socket
+import time
 import threading
 import sys
 import traceback
@@ -891,14 +892,14 @@ class BCPClientSocket(object):
         self.log.info("Connecting to BCP Media Controller at %s:%s...",
                       self.config['host'], self.config['port'])
 
-        self.socket = socket.socket()
-        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.socket.settimeout(0.5)
-
         connected = False
 
-        while not connected:
+        while not connected and not self.machine.thread_stopper.is_set():
             try:
+                self.socket = socket.socket()
+                self.socket.setsockopt(
+                    socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                self.socket.settimeout(0.5)
                 self.socket.connect((self.config['host'], self.config['port']))
                 self.log.debug("Connected to remote BCP host %s:%s",
                                self.config['host'], self.config['port'])
@@ -906,10 +907,9 @@ class BCPClientSocket(object):
                 BCP.active_connections += 1
                 connected = True
 
-            except socket.error:
-                pass
-            except socket.timeout:
-                pass
+            except (socket.error, socket.timeout):
+                self.socket = None
+                time.sleep(.1)
 
         self.socket.settimeout(None)
 
