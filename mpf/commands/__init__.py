@@ -74,15 +74,28 @@ class CommandLineUtility(object):
                             help="Displays the MPF, config file, and BCP "
                                  "version info and exits")
 
+        # the problem with parser.add_argument is it will take the first
+        # positional argument it finds for machine_path and set it to the
+        # machine path, regardless of what's in front of it. So for example,
+        # args of "-c step4" will lead to machine_path='step4', but that's not
+        # right, machine_path should be None. But this is because it doesn't
+        # know that -c wants to consume the next positional arg.
+
+        # So our workaround is we check if there are any argv, and if so, we
+        # check to see if the first one starts with a dash, meaning it's an
+        # optional arg and guaranteeing that whatever's after it is NOT our
+        # machine path, so in that case, we just insert a None as the machine
+        # path in front of it and everything is cool.
+
+        if len(self.argv) > 1 and self.argv[1].startswith('-'):
+            self.argv.insert(1, None)
+
         args, remaining_args = parser.parse_known_args(self.argv[1:])
         machine_path = self.get_machine_path(args.machine_path)
 
         return machine_path, remaining_args
 
     def get_machine_path(self, machine_path_hint):
-
-        # print('get machine path', machine_path_hint)
-
         machine_path = None
 
         if machine_path_hint:
