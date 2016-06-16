@@ -893,6 +893,7 @@ class BCPClientSocket(object):
 
         self.socket = socket.socket()
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.socket.settimeout(0.5)
 
         connected = False
 
@@ -907,6 +908,10 @@ class BCPClientSocket(object):
 
             except socket.error:
                 pass
+            except socket.timeout:
+                pass
+
+        self.socket.settimeout(None)
 
         if self.create_socket_threads():
             self.send_hello()
