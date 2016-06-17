@@ -1051,6 +1051,7 @@ class BCPClientSocket(object):
             self.log.info("Media Controller disconnected. Shutting down...")
             self.socket.close()
             self.machine.done = True
+            return b''
 
     def sending_loop(self):
         """Sending loop which transmits data from the sending queue to the
