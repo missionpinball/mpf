@@ -785,5 +785,14 @@ class MachineController(object):
 
     def init_done(self):
         self.is_init_done = True
+
+        self.events.post("init_done")
+        '''event: init_done
+
+        desc: Posted when the initial (one-time / boot) init phase is done. In
+        other words, once this is posted, MPF is booted and ready to go.
+        '''
+        self.events.process_event_queue()
+        
         ConfigValidator.unload_config_spec()
         self.reset()
