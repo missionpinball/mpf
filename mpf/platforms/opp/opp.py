@@ -482,8 +482,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         while not self.receive_queue.empty():
             self.process_received_message(self.receive_queue.get(False))
 
-        if curr_tick == 0:
-            self.opp_connection.send(self.read_input_msg)
+        self.opp_connection.send(self.read_input_msg)
 
     @classmethod
     def _verify_coil_and_switch_fit(cls, switch, coil):
