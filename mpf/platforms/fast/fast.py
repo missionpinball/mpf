@@ -553,7 +553,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
                                  "but no connection to a DMD processor is "
                                  "available.")
 
-        self.machine.bcp.register_dmd(
+        self.machine.bcp.interface.register_dmd(
             FASTDMD(self.machine, self.dmd_connection.send).update)
 
         return

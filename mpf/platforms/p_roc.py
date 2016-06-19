@@ -176,7 +176,7 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
     def configure_dmd(self):
         """Configure a hardware DMD connected to a classic P-ROC."""
         self.dmd = PROCDMD(self.pinproc, self.proc, self.machine)
-        self.machine.bcp.register_dmd(self.dmd.update)
+        self.machine.bcp.interface.register_dmd(self.dmd.update)
 
     def tick(self, dt):
         """Check the P-ROC for any events (switch state changes or notification that a DMD frame was updated).
