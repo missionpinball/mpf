@@ -90,14 +90,13 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
             ord(OppRs232Intf.INV_CMD): self.inv_resp,
             ord(OppRs232Intf.EOM_CMD): self.eom_resp,
             ord(OppRs232Intf.GET_GEN2_CFG): self.get_gen2_cfg_resp,
-            ord(OppRs232Intf.READ_GEN2_INP_CMD): self.read_gen2_inp_resp,
+            ord(OppRs232Intf.READ_GEN2_INP_CMD): self.read_gen2_inp_resp_initial,
             ord(OppRs232Intf.GET_GET_VERS_CMD): self.vers_resp,
         }
 
-        self._connect_to_hardware()
-
     def initialize(self):
-        pass
+        self._connect_to_hardware()
+        self.opp_commands[ord(OppRs232Intf.READ_GEN2_INP_CMD)] = self.read_gen2_inp_resp
 
     def stop(self):
         for connections in self.connection_threads:
@@ -109,9 +108,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
     def process_received_message(self, msg):
         """Sends an incoming message from the OPP hardware to the proper
         method for servicing.
-
         """
-
         if len(msg) >= 1:
             if ((msg[0] >= ord(OppRs232Intf.CARD_ID_GEN2_CARD)) and
                     (msg[0] < (ord(OppRs232Intf.CARD_ID_GEN2_CARD) + 0x20))):
@@ -145,7 +142,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         for port in self.config['ports']:
             self.connection_threads.add(SerialCommunicator(
                 platform=self, port=port, baud=self.config['baud'],
-                send_queue=queue.Queue(), receive_queue=self.receive_queue))
+                send_queue=queue.Queue()))
 
     def register_processor_connection(self, name, communicator):
         """Once a communication link has been established with one of the
@@ -334,6 +331,24 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
                     # TODO: This means synchronization is lost.  Send EOM characters
                     #  until they come back
+
+    def read_gen2_inp_resp_initial(self, msg):
+        """Read initial switch states."""
+
+        # Verify the CRC8 is correct
+        crc8 = OppRs232Intf.calc_crc8_part_msg(msg, 0, 6)
+        if msg[6] != ord(crc8):
+            self.badCRC += 1
+            hex_string = "".join(" 0x%02x" % b for b in msg)
+            self.log.warning("Msg contains bad CRC:%s.", hex_string)
+        else:
+            opp_inp = self.inpAddrDict[msg[0]]
+            new_state = (msg[2] << 24) | \
+                (msg[3] << 16) | \
+                (msg[4] << 8) | \
+                msg[5]
+
+            opp_inp.oldState = new_state
 
     def read_gen2_inp_resp(self, msg):
         # Single read gen2 input response.  Receive function breaks them down
@@ -576,14 +591,14 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 class SerialCommunicator(object):
 
     # pylint: disable=too-many-arguments
-    def __init__(self, platform, port, baud, send_queue, receive_queue):
+    def __init__(self, platform: HardwarePlatform, port, baud, send_queue):
         self.machine = platform.machine
         self.platform = platform
         self.send_queue = send_queue
-        self.receive_queue = receive_queue
         self.debug = False
         self.log = self.platform.log
         self.partMsg = b""
+        self.debug = self.platform.config['debug']
 
         self.remote_processor = "OPP Gen2"
         self.remote_model = None
@@ -711,10 +726,7 @@ class SerialCommunicator(object):
     def _start_threads(self):
 
         self.serial_connection.timeout = None
-
-        self.receive_thread = threading.Thread(target=self._receive_loop)
-        self.receive_thread.daemon = True
-        self.receive_thread.start()
+        self.machine.clock.schedule_socket_read_callback(self.serial_connection, self._read_socket)
 
         self.sending_thread = threading.Thread(target=self._sending_loop)
         self.sending_thread.daemon = True
@@ -755,58 +767,51 @@ class SerialCommunicator(object):
             msg = ''.join(line for line in lines)
             self.machine.crash_queue.put(msg)
 
-    def _receive_loop(self):
-
-        debug = self.platform.config['debug']
-
+    def _read_socket(self):
         try:
-            self.log.debug("Starting receive loop")
-            while self.serial_connection:
-                resp = self.serial_connection.read(30)
-                if debug:
-                    self.log.debug("Received: %s", "".join(" 0x%02x" % b for b in resp))
-                self.partMsg += resp
-                end_string = False
-                strlen = len(self.partMsg)
-                lost_synch = False
-                # Split into individual responses
-                while strlen >= 7 and not end_string:
-                    # Check if this is a gen2 card address
+            resp = self.serial_connection.read_all()
+        except OSError:
+            resp = False
+
+        # we either got empty response (-> socket closed) or and error
+        if not resp:
+            self.log.warning("Serial of OPP closed.")
+            self.serial_connection.close()
+            self.machine.done = True
+            return
+
+        if self.debug:
+            self.log.debug("Received: %s", "".join(" 0x%02x" % b for b in resp))
+        self.partMsg += resp
+        strlen = len(self.partMsg)
+        lost_synch = False
+        # Split into individual responses
+        while strlen >= 7:
+            # Check if this is a gen2 card address
+            if (self.partMsg[0] & 0xe0) == 0x20:
+                # Only command expect to receive back is
+                if self.partMsg[1] == ord(OppRs232Intf.READ_GEN2_INP_CMD):
+                    self.platform.process_received_message(self.partMsg[:7])
+                    self.partMsg = self.partMsg[7:]
+                    strlen -= 7
+                else:
+                    # Lost synch
+                    self.partMsg = self.partMsg[2:]
+                    strlen -= 2
+                    lost_synch = True
+
+            elif self.partMsg[0] == ord(OppRs232Intf.EOM_CMD):
+                self.partMsg = self.partMsg[1:]
+                strlen -= 1
+            else:
+                # Lost synch
+                self.partMsg = self.partMsg[1:]
+                strlen -= 1
+                lost_synch = True
+            if lost_synch:
+                while strlen > 0:
                     if (self.partMsg[0] & 0xe0) == 0x20:
-                        # Only command expect to receive back is
-                        if self.partMsg[1] == ord(OppRs232Intf.READ_GEN2_INP_CMD):
-                            self.receive_queue.put(self.partMsg[:7])
-                            self.partMsg = self.partMsg[7:]
-                            strlen -= 7
-                        else:
-                            # Lost synch
-                            self.partMsg = self.partMsg[2:]
-                            strlen -= 2
-                            lost_synch = True
-
-                    elif self.partMsg[0] == ord(OppRs232Intf.EOM_CMD):
-                        self.partMsg = self.partMsg[1:]
-                        strlen -= 1
-                    else:
-                        # Lost synch
-                        self.partMsg = self.partMsg[1:]
-                        strlen -= 1
-                        lost_synch = True
-                    if lost_synch:
-                        while strlen > 0:
-                            if (self.partMsg[0] & 0xe0) == 0x20:
-                                lost_synch = False
-                                break
-                            self.partMsg = self.partMsg[1:]
-                            strlen -= 1
-            self.log.critical("Exit rcv loop")
-
-        # pylint: disable-msg=broad-except
-        except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            lines = traceback.format_exception(exc_type, exc_value,
-                                               exc_traceback)
-            msg = ''.join(line for line in lines)
-            self.log.critical("!!! Receive loop error exception")
-            self.machine.crash_queue.put(msg)
-        self.log.critical("!!! Receive loop exited")
+                        lost_synch = False
+                        break
+                    self.partMsg = self.partMsg[1:]
+                    strlen -= 1
