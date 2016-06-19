@@ -22,25 +22,22 @@ class ConfigPlayer(object):
         ConfigPlayer.show_players[self.show_section] = self
         ConfigPlayer.config_file_players[self.config_file_section] = self
 
-        self.machine.events.add_handler('init_phase_1', self._initialize)
+        self._add_handlers()
 
         self.mode_event_keys = dict()
         self.instances = dict()
         self.instances['_global'] = dict()
+        self.instances['_global'][self.config_file_section] = dict()
+
+    def _add_handlers(self):
+        self.machine.events.add_handler('init_phase_1', self._initialize_in_mode)
+        self.machine.events.add_handler('init_phase_1', self._initialise_system_wide)
 
     def __repr__(self):
         """Return string representation."""
         return 'ConfigPlayer.{}'.format(self.show_section)
 
-    def _initialize(self):
-        if self.machine_collection_name:
-            self.device_collection = getattr(self.machine,
-                                             self.machine_collection_name)
-        else:
-            self.device_collection = None
-
-        self.instances['_global'][self.config_file_section] = dict()
-
+    def _initialize_in_mode(self):
         self.machine.mode_controller.register_load_method(
             self.process_mode_config, self.config_file_section)
 
@@ -51,6 +48,13 @@ class ConfigPlayer(object):
         # for shows to validate and process
 
         # if self.config_file_section in self.machine.config:
+
+    def _initialise_system_wide(self):
+        if self.machine_collection_name:
+            self.device_collection = getattr(self.machine,
+                                             self.machine_collection_name)
+        else:
+            self.device_collection = None
 
         if (self.config_file_section in self.machine.config and
                 self.machine.config[self.config_file_section]):
