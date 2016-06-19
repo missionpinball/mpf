@@ -22,6 +22,7 @@ class SerialMock:
         # print("Serial received: " + "".join("\\x%02x" % ord(b) for b in msg) + " len: " + str(len(msg)))
         if msg not in self.expected_commands:
             self.crashed = True
+            print("Unexpected command: " + "".join("\\x%02x" % b for b in msg) + " len: " + str(len(msg)))
             raise AssertionError("Unexpected command: " + "".join("\\x%02x" % b for b in msg) +
                                  " len: " + str(len(msg)))
 
