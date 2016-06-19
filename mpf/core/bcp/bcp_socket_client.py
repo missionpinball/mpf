@@ -170,15 +170,19 @@ class BCPClientSocket(object):
         self.socket.close()
         self.socket = None  # Socket threads will exit on this
 
-    def send(self, message):
+    def send(self, bcp_command, **kwargs):
         """Send a message to the BCP host.
 
         Args:
-            message: String of the message to send.
+            bcp_command: command to send
+            **kwargs: parameters to command
+
         """
-        self.log.debug('Sending "%s"', message)
+        bcp_string = encode_command_string(bcp_command, **kwargs)
+
+        self.log.debug('Sending "%s"', bcp_string)
         try:
-            self.socket.sendall((message + '\n').encode('utf-8'))
+            self.socket.sendall((bcp_string + '\n').encode())
         except BrokenPipeError:
             self._handle_connection_close()
 
@@ -240,7 +244,7 @@ class BCPClientSocket(object):
         if cmd in self.bcp_client_socket_commands:
             self.bcp_client_socket_commands[cmd](**kwargs)
         else:
-            self.bcp.process_bcp_message(cmd, kwargs, rawbytes)
+            self.bcp.interface.process_bcp_message(cmd, kwargs, rawbytes)
 
     def receive_hello(self, **kwargs):
         """Process incoming BCP 'hello' command."""

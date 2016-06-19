@@ -2,7 +2,6 @@
 import copy
 import logging
 
-from mpf.core.bcp.bcp_socket_client import encode_command_string, BCPClientSocket
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.player import Player
 from mpf.core.utility_functions import Util
@@ -10,10 +9,7 @@ from mpf.core.utility_functions import Util
 
 class BcpInterface(object):
 
-    """The parent class for the BCP client.
-
-    This class can support connections with multiple remote hosts at the same
-    time using multiple instances of the BCPClientSocket class.
+    """Implements the BCP interface which can be used by all clients.
 
     Args:
         machine: A reference to the main MPF machine object.
@@ -58,6 +54,7 @@ class BcpInterface(object):
             switch=self.bcp_receive_switch,
             trigger=self.bcp_receive_trigger,
             register_trigger=self.bcp_receive_register_trigger,
+            get_machine_vars=self._get_machine_vars,
             get=self.bcp_receive_get,
             set=self.bcp_receive_set,
             reset_complete=self.bcp_receive_reset_complete,
@@ -104,48 +101,7 @@ class BcpInterface(object):
         self.machine.mode_controller.register_start_method(
             self.bcp_mode_start, 'mode')
 
-    def __repr__(self):
-        return '<BCP Module>'
-
-    def register_command_callback(self, cmd, callback):
-        pass
-
-    def unregister_command_callback(self, cmd, callback):
-        pass
-
-    def _register_connection_callback(self, callback):
-        # This is a callback that is called after BCP is connected. If
-        # bcp is connected when this is called, the callback will be called
-        # at the end of the current frame.
-        if callable(callback):
-            self.connection_callbacks.append(callback)
-
-            if False:
-                self.machine.clock.schedule_once(callback, -1)
-
-    def add_registered_trigger_event(self, event):
-        if not self.configured:
-            return
-        try:
-            self.registered_trigger_events[event] += 1
-        except KeyError:
-            self.registered_trigger_events[event] = 1
-            self.machine.events.add_handler(event=event,
-                                            handler=self.bcp_trigger,
-                                            name=event)
-
-    def remove_registered_trigger_event(self, event):
-        if not self.configured:
-            return
-        try:
-            self.registered_trigger_events[event] -= 1
-            if not self.registered_trigger_events[event]:
-                del self.registered_trigger_events[event]
-                self.machine.events.remove_handler_by_event(
-                    event=event, handler=self.bcp_trigger)
-        except KeyError:
-            pass
-
+    # TODO: move DMD code to device
     def _setup_dmds(self):
         if 'physical_dmd' in self.machine.config:
             self._setup_dmd()
@@ -188,6 +144,62 @@ class BcpInterface(object):
         self.physical_rgb_dmd_update_callback = dmd_update_meth
         self.send('rgb_dmd_start')
 
+    # TODO: end
+
+    def __repr__(self):
+        return '<BCP Interface>'
+
+    def register_command_callback(self, cmd, callback):
+        pass
+
+    def unregister_command_callback(self, cmd, callback):
+        pass
+
+    def _register_connection_callback(self, callback):
+        # This is a callback that is called after BCP is connected. If
+        # bcp is connected when this is called, the callback will be called
+        # at the end of the current frame.
+        if callable(callback):
+            self.connection_callbacks.append(callback)
+
+            if False:
+                self.machine.clock.schedule_once(callback, -1)
+
+    def add_registered_trigger_event_for_client(self, client, event):
+        # TODO: implement
+        self.add_registered_trigger_event(event)
+
+    def remove_registered_trigger_event_for_client(self, client, event):
+        # TODO: implement
+        self.remove_registered_trigger_event(event)
+
+    def bcp_trigger_client(self, client, name, **kwargs):
+        # TODO: implement
+        self.bcp_trigger(name, **kwargs)
+
+    def add_registered_trigger_event(self, event):
+        if not self.configured:
+            return
+        try:
+            self.registered_trigger_events[event] += 1
+        except KeyError:
+            self.registered_trigger_events[event] = 1
+            self.machine.events.add_handler(event=event,
+                                            handler=self.bcp_trigger,
+                                            name=event)
+
+    def remove_registered_trigger_event(self, event):
+        if not self.configured:
+            return
+        try:
+            self.registered_trigger_events[event] -= 1
+            if not self.registered_trigger_events[event]:
+                del self.registered_trigger_events[event]
+                self.machine.events.remove_handler_by_event(
+                    event=event, handler=self.bcp_trigger)
+        except KeyError:
+            pass
+
     def _parse_filters_from_config(self):
         if ('player_variables' in self.config and
                 self.config['player_variables']):
@@ -212,6 +224,9 @@ class BcpInterface(object):
 
             if '__all__' in self.config['machine_variables']:
                 self.filter_machine_vars = False
+
+    def _get_machine_vars(self, rawbytes):
+        self._send_machine_vars()
 
     def _send_machine_vars(self):
         for var_name, settings in self.machine.machine_vars.items():
@@ -346,10 +361,9 @@ class BcpInterface(object):
         """
         if not self.configured:
             return
-        bcp_string = encode_command_string(bcp_command, **kwargs)
 
         for client in self.bcp_clients:
-            client.send(bcp_string)
+            client.send(bcp_command, **kwargs)
 
         if callback:
             callback()
@@ -417,12 +431,7 @@ class BcpInterface(object):
 
     def bcp_client_connected(self, client):
         # TODO: use client
-        self._send_machine_vars()
-
         self.bcp_clients.append(client)
-
-        for callback in self.machine.bcp.connection_callbacks:
-            callback()
 
     def bcp_receive_reset_complete(self, rawbytes, **kwargs):
         del kwargs
@@ -448,6 +457,7 @@ class BcpInterface(object):
     def bcp_reset(self):
         """Sends the 'reset' command to the remote BCP host."""
         self.send('reset')
+        pass
 
     def bcp_receive_switch(self, name, state, rawbytes, **kwargs):
         """Process an incoming switch state change request from a remote BCP host.

@@ -15,7 +15,6 @@ class BcpTransportManager:
         self._transports.remove(transport)
 
     def get_named_client(self, client_name):
-        print(self._transports)
         for client in self._transports:
             if client.name == client_name:
                 return client
