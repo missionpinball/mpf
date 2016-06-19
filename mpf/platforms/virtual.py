@@ -208,7 +208,7 @@ class VirtualLED(RGBLEDPlatformInterface):
     def __init__(self, number):
         self.log = logging.getLogger('VirtualLED')
         self.number = number
-        self.current_color = RGBColor()
+        self.current_color = list(RGBColor().rgb)
 
     def color(self, color):
         self.current_color = color
