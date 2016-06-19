@@ -79,8 +79,7 @@ class ShowController(object):
 
         """
 
-        return [x for x in self.running_shows if x.name == name or
-                x.key == name]
+        return [x for x in self.running_shows if x.name == name]
 
     def register_show(self, name, settings):
         if name in self.machine.shows:
@@ -93,14 +92,6 @@ class ShowController(object):
                                             data=settings,
                                             file=None)
 
-    def stop_shows_by_mode(self, mode):
-        for show in [x for x in self.running_shows if x.mode == mode]:
-            show.stop()
-
-    def stop_shows_by_key(self, key):
-        for show in [x for x in self.running_shows if x.key == key]:
-            show.stop()
-
     def unload_show_player_shows(self, removal_tuple):
         event_keys, shows = removal_tuple
 
@@ -112,36 +103,6 @@ class ShowController(object):
                 show.stop()
             except AttributeError:
                 pass
-
-    def add_show_player_show(self, event, settings):
-        if 'priority' in settings:
-            settings['show_priority'] = settings['priority']
-
-        if 'action' in settings and settings['action'] == 'stop':
-
-            if 'script' in settings:
-
-                if 'key' in settings:
-                    event_key = self.machine.events.add_handler(event,
-                                                                self.machine.scripts.stop_script,
-                                                                **settings)
-
-                else:
-                    self.log.error('Cannot add light show stop action since a '
-                                   '"script" value was specified but a "key" '
-                                   'value was not. Event name: %s', event)
-                    return
-
-            else:  # we have a show name specified
-                event_key = self.machine.events.add_handler(event,
-                                                            self.stop_show,
-                                                            **settings)
-
-        else:  # action = 'play'
-            event_key = self.machine.events.add_handler(event, self.play_show,
-                                                        **settings)
-
-        return event_key
 
     def notify_show_starting(self, show):
         self.running_shows.append(show)
