@@ -126,10 +126,6 @@ class MachineController(object):
 
         self.clear_boot_hold('init')
 
-    @property
-    def bcp_client_connected(self):
-        return self.bcp.active_connections > 0
-
     def _run_init_phases(self):
         self.events.post("init_phase_1")
         '''event: init_phase_1
