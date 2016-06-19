@@ -599,58 +599,6 @@ class TestShows(MpfTestCase):
         self.advance_time_and_run(10)
         self.assertEqual(1, self.machine.show_controller.running_shows[0].next_step_index)
 
-    def test_show_player_keys(self):
-        self.skipTest("no longer supported. remove")
-        # Make sure keys are right
-        self.machine.events.post('play_with_keys')
-        self.advance_time_and_run(2)
-        self.assertEqual(2, len(self.machine.show_controller.get_running_shows(
-            'key1')))
-        self.assertEqual(1, len(self.machine.show_controller.get_running_shows(
-            'key2')))
-
-        # make sure the leds and lights are working
-        self.assertEqual(list(RGBColor('darkgreen').rgb),
-                         self.machine.leds.led_01.hw_driver.current_color)
-        self.assertEqual(list(RGBColor('off').rgb),
-                         self.machine.leds.led_02.hw_driver.current_color)
-        self.assertEqual(204, self.machine.lights.light_01.hw_driver.current_brightness)
-        self.assertEqual(120, self.machine.lights.light_02.hw_driver.current_brightness)
-
-        # stop shows based on key
-        self.machine.events.post('stop_key1')
-        self.advance_time_and_run()
-        self.assertFalse(self.machine.show_controller.get_running_shows('key1'))
-        self.assertEqual(1, len(self.machine.show_controller.get_running_shows(
-            'key2')))
-
-        self.machine.events.post('stop_key2')
-        self.advance_time_and_run()
-        self.assertFalse(self.machine.show_controller.running_shows)
-
-        # make sure the things in the show actually stopped
-        self.assertEqual(list(RGBColor('off').rgb),
-                         self.machine.leds.led_01.hw_driver.current_color)
-        self.assertEqual(list(RGBColor('off').rgb),
-                         self.machine.leds.led_02.hw_driver.current_color)
-        self.assertEqual(0, self.machine.lights.light_01.hw_driver.current_brightness)
-        self.assertEqual(0, self.machine.lights.light_02.hw_driver.current_brightness)
-
-        # stop by show name
-        self.machine.events.post('play_with_keys')
-        self.advance_time_and_run()
-        self.assertTrue(
-            self.machine.show_controller.get_running_shows('test_show1'))
-
-        self.machine.events.post('stop_test_show1')
-        self.advance_time_and_run()
-        self.assertFalse(
-            self.machine.show_controller.get_running_shows('test_show1'))
-        self._stop_shows()
-
-        # test invalid show stop name
-        self.machine.events.post('invalid_show_stop_name')
-
     def test_pause_resume_shows(self):
         self.machine.events.post('play_test_show1')
         # make sure show is advancing
