@@ -9,6 +9,10 @@ class PluginPlayer(ConfigPlayer):
     This class is created on the MPF side of things.
     """
 
+    def __init__(self, machine):
+        super().__init__(machine)
+        self.bcp_client = None
+
     def __repr__(self):
         """Return str representation."""
         return 'PluginPlayer.{}'.format(self.show_section)
@@ -18,6 +22,14 @@ class PluginPlayer(ConfigPlayer):
         del value
         raise AssertionError("Plugin Player does not support express config")
 
+    def _get_bcp_client(self, config):
+        client_name = config.get('bcp_connection', "local_display")
+        client = self.machine.bcp.transport.get_named_client(client_name)
+        if not client:
+            raise AssertionError("bcp connection {} not found".format(client_name))
+
+        return client
+
     def register_player_events(self, config, mode=None, priority=0):
         """Register player events via BCP.
 
@@ -26,9 +38,10 @@ class PluginPlayer(ConfigPlayer):
         the local play() method.
         """
         event_list = list()
+        self.bcp_client = self._get_bcp_client(config)
 
         for event in config:
-            self.machine.bcp.add_registered_trigger_event(event)
+            self.machine.bcp.add_registered_trigger_event(self.bcp_client, event)
             event_list.append(event)
 
         return event_list
@@ -36,7 +49,7 @@ class PluginPlayer(ConfigPlayer):
     def unload_player_events(self, event_list):
         """Unload player events via BCP."""
         for event in event_list:
-            self.machine.bcp.remove_registered_trigger_event(event)
+            self.machine.bcp.remove_registered_trigger_event(self.bcp_client, event)
 
     def play(self, settings, context, priority=0, **kwargs):
         """Trigger remote player via BCP."""
