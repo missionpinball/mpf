@@ -14,6 +14,12 @@ class SerialMock:
         msg = self.queue.get()
         return msg
 
+    def read_all(self):
+        return self.read(123)
+
+    def ready(self):
+        return not self.queue.empty()
+
     def write(self, msg):
         if msg in self.permanent_commands:
             self.queue.put(self.permanent_commands[msg])
