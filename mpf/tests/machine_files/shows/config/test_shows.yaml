@@ -9,11 +9,11 @@ leds:
     led_01:
         number: 0
         color_correction_profile: default
-        tags: tag1
+        tags: tag1, row0
     led_02:
         number: 1
         color_correction_profile: default
-        tags: tag1
+        tags: tag1, row0
     led_03:
         number: 2
     led_04:
@@ -181,4 +181,28 @@ show_player:
   stop_show_assoc_tokens:
     show_assoc_tokens:
       action: stop
+  mode_attract_started:
+    8linesweep:
+      loops: 0
+      speed: 1
+      show_tokens:
+         line1num: row0
+         line1color: red
+         line2num: row1
+         line2color: orange
+         line3num: row2
+         line3color: yellow
+         line4num: row3
+         line4color: green
+         line5num: row4
+         line5color: blue
+         line6num: row5
+         line6color: indigo
+         line7num: row6
+         line7color: violet
+         line8num: row7
+         line8color: midnightblue
 
+  mode_attract_stopped:
+    8linesweep:
+      action: stop

@@ -56,9 +56,9 @@ class TestShows(MpfTestCase):
         # --------------------------------------------------------
 
         # LEDs should start out off (current color is default RGBColor object)
-        self.assertEqual(RGBColor(),
+        self.assertEqual(list(RGBColor().rgb),
                          self.machine.leds.led_01.hw_driver.current_color)
-        self.assertEqual(RGBColor(),
+        self.assertEqual(list(RGBColor().rgb),
                          self.machine.leds.led_02.hw_driver.current_color)
 
         # Lights should start out off (brightness is 0)
@@ -504,6 +504,13 @@ class TestShows(MpfTestCase):
 
         self.assertEqual(self.machine.leds.led_01.hw_driver.current_color, list(RGBColor('black').rgb))
         self.assertEqual(self.machine.leds.led_02.hw_driver.current_color, list(RGBColor('black').rgb))
+
+        self.post_event("mode_attract_started")
+        self.advance_time_and_run(.5)
+
+        print(self.machine.show_controller.running_shows)
+
+        self.assertEqual(self.machine.leds.led_01.hw_driver.current_color, list(RGBColor('red').rgb))
 
     def test_get_show_copy(self):
         copied_show = self.machine.shows['test_show1'].get_show_steps()
