@@ -72,6 +72,7 @@ class TestFast(MpfTestCase):
             "SA:": "SA:1,00,8,05000000",
             "SN:01,01,0A,0A": "SN:",
             "SN:02,01,0A,0A": "SN:",
+            "SN:03,01,0A,0A": "SN:",
             "SN:16,01,0A,0A": "SN:",
             "SN:07,01,0A,0A": "SN:",
             "SN:1A,01,0A,0A": "SN:",
@@ -139,6 +140,16 @@ class TestFast(MpfTestCase):
             self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule(
                 self.machine.switches.s_test,
                 self.machine.coils.c_test)
+
+    def test_two_rules_one_switch(self):
+        MockSerialCommunicator.expected_commands['NET'] = {
+            "SN:03,01,02,02": False,
+            "DN:04,01,03,10,17,ff,00,00,2E": False,
+            "DN:06,01,03,10,17,ff,00,00,2E": False
+        }
+        self.post_event("ac_same_switch")
+        self.hit_and_release_switch("s_flipper")
+        self.assertFalse(MockSerialCommunicator.expected_commands['NET'])
 
     def test_allow_enable(self):
         MockSerialCommunicator.expected_commands['NET'] = {
