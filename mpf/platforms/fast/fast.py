@@ -953,7 +953,19 @@ class SerialCommunicator(object):
 
     def _receiver(self):
         debug = self.platform.config['debug']
-        self.received_msg += self.serial_connection.read_all()
+        try:
+            read_msg = self.serial_connection.read_all()
+        except OSError:
+            read_msg = False
+
+        # we either got empty response (-> socket closed) or and error
+        if not read_msg:
+            self.platform.log.warning("Serial of FAST closed.")
+            self.machine.done = True
+            self.serial_connection.close()
+            return
+
+        self.received_msg += read_msg
 
         while True:
             pos = self.received_msg.find(b'\r')
