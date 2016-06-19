@@ -33,7 +33,12 @@ class TestMachineController(MachineController):
         self.test_init_complete = False
         self._enable_plugins = enable_plugins
         super().__init__(mpf_path, machine_path, options)
-        self.clock._sleep_until_next_event = MagicMock()
+        self.clock._sleep_until_next_event = self.sleep_until_next_event_mock
+
+    def sleep_until_next_event_mock(self):
+        for socket, callback in self.clock.read_sockets.items():
+            if socket.ready():
+                callback()
 
     def _reset_complete(self):
         self.test_init_complete = True
