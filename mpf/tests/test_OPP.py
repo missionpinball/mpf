@@ -131,15 +131,12 @@ class TestOPP(MpfTestCase):
 
         # switch change
         permanent_commands = copy.deepcopy(self.serialMock.permanent_commands)
-        self.serialMock.permanent_commands = {}
 
         inputs_message = b"\x20\x08\x00\x00\x01\x08"  # inputs 0+1+2 off, 3 on, 8 off
-        self.serialMock.expected_commands = {
+        self.serialMock.permanent_commands = {
             self._crc_message(b'\x20\x08\x00\x00\x00\x00', False) + self._crc_message(b'\x21\x08\x00\x00\x00\x00'):
                 self._crc_message(inputs_message)
         }
-        self._wait_for_processing()
-        self.assertFalse(self.serialMock.expected_commands)
 
         while self.machine.switch_controller.is_active("s_test_nc"):
             time.sleep(.0001)
