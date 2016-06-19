@@ -181,7 +181,7 @@ show_player:
   stop_show_assoc_tokens:
     show_assoc_tokens:
       action: stop
-  mode_attract_started:
+  test_mode_started:
     8linesweep:
       loops: 0
       speed: 1
@@ -203,6 +203,6 @@ show_player:
          line8num: row7
          line8color: midnightblue
 
-  mode_attract_stopped:
+  test_mode_stopped:
     8linesweep:
       action: stop
