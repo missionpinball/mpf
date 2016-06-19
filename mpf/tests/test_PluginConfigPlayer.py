@@ -1,6 +1,8 @@
+from unittest import mock
+from unittest.mock import MagicMock, call
+
 from mpf.config_players.plugin_player import PluginPlayer
 from mpf.core.config_player import ConfigPlayer
-import mpf.core.config_validator
 from mpf.tests.MpfTestCase import MpfTestCase
 from mpf.tests.MpfTestCase import TestMachineController
 
@@ -50,6 +52,7 @@ class TestConfigPlayer(PluginPlayer):
 
     def register_with_mpf(machine):
         return 'test', TestConfigPlayer(machine)
+
 
 class TestConfigPlayer2(PluginPlayer):
     config_file_section = 'test2_player'
@@ -102,7 +105,11 @@ class TestPluginConfigPlayer(MpfTestCase):
         self.add_to_config_validator('test2_player',
                                      dict(__valid_in__='machine, mode'))
 
-        super().setUp()
+        self.client = MagicMock()
+        self.client.name = "local_display"
+        # prevent sockets
+        with mock.patch("mpf.core.bcp.bcp.BCPClientSocket", return_value=self.client):
+            super().setUp()
 
     def __init__(self, methodName):
         super().__init__(methodName)
@@ -118,61 +125,65 @@ class TestPluginConfigPlayer(MpfTestCase):
 
         # event1 is in the test_player only. Check that it's sent as a
         # trigger
+        self.client.send.reset_mock()
         self.machine.events.post('event1')
         self.advance_time_and_run()
-        self.assertIn(('trigger', None, dict(name='event1')),
-                      self.sent_bcp_commands)
+        self.client.send.assert_called_once_with('trigger', name='event1')
+        self.client.send.reset_mock()
 
         # event2 is in the test_player and test2_player. Check that it's only
         # sent once
         self.sent_bcp_commands = list()
         self.machine.events.post('event2')
         self.advance_time_and_run()
-        self.assertIn(('trigger', None, dict(name='event2')),
-              self.sent_bcp_commands)
-        self.assertEqual(1, len(self.sent_bcp_commands))
+        self.client.send.assert_called_once_with('trigger', name='event2')
+        self.client.send.reset_mock()
 
         # event3 is test2_player only. Check that it's only sent once
         self.sent_bcp_commands = list()
         self.machine.events.post('event3')
         self.advance_time_and_run()
-        self.assertIn(('trigger', None, dict(name='event3')),
-              self.sent_bcp_commands)
-        self.assertEqual(1, len(self.sent_bcp_commands))
+        self.client.send.assert_called_once_with('trigger', name='event3')
+        self.client.send.reset_mock()
 
         # event4 isn't used in any player. Check that it's not sent
         self.sent_bcp_commands = list()
         self.machine.events.post('event4')
         self.advance_time_and_run()
-        self.assertNotIn(('trigger', None, dict(name='event4')),
-              self.sent_bcp_commands)
-        self.assertEqual(0, len(self.sent_bcp_commands))
+        assert not self.client.send.called
 
         # Start mode1
         self.machine.modes['mode1'].start()
         self.advance_time_and_run()
         self.assertTrue(self.machine.modes['mode1'].active)
+        self.client.send.assert_called_with('mode_start', name='mode1', priority=400)
+        self.client.send.reset_mock()
 
         # event4 is in test_player for mode1, so make sure it sends now
         self.sent_bcp_commands = list()
         self.machine.events.post('event4')
         self.advance_time_and_run()
 
-        self.assertIn(('trigger', None, dict(name='event4')),
-                      self.sent_bcp_commands)
+        self.client.send.assert_called_with('trigger', name='event4')
+        self.client.send.reset_mock()
 
         # Stop mode 1
         self.machine.modes['mode1'].stop()
         self.advance_time_and_run()
+        self.client.send.assert_has_calls([
+            call('mode_stop', name='mode1'),
+            call('trigger', context='mode1', name='tests_clear'),
+            call('trigger', context='mode1', name='test2s_clear'),
+            call('trigger', key='mode1', name='clear')]
+        )
+        self.client.send.reset_mock()
 
         # post event4 again, and it should not be sent since that mode was
         # stopped
         self.sent_bcp_commands = list()
         self.machine.events.post('event4')
         self.advance_time_and_run()
-        self.assertNotIn(('trigger', None, dict(name='event4')),
-              self.sent_bcp_commands)
-        self.assertEqual(0, len(self.sent_bcp_commands))
+        assert not self.client.send.called
 
         # event1, event2, and event3 should still work. Even though they were
         # in mode1, they were also in the base config
@@ -181,16 +192,15 @@ class TestPluginConfigPlayer(MpfTestCase):
         self.sent_bcp_commands = list()
         self.machine.events.post('event1')
         self.advance_time_and_run()
-        self.assertIn(('trigger', None, dict(name='event1')),
-                      self.sent_bcp_commands)
+        self.client.send.assert_called_once_with('trigger', name='event1')
+        self.client.send.reset_mock()
 
         # event2
         self.sent_bcp_commands = list()
         self.machine.events.post('event2')
         self.advance_time_and_run()
-        self.assertIn(('trigger', None, dict(name='event2')),
-              self.sent_bcp_commands)
-        self.assertEqual(1, len(self.sent_bcp_commands))
+        self.client.send.assert_called_once_with('trigger', name='event2')
+        self.client.send.reset_mock()
 
         self.sent_bcp_commands = list()
 
@@ -198,9 +208,8 @@ class TestPluginConfigPlayer(MpfTestCase):
         self.sent_bcp_commands = list()
         self.machine.events.post('event3')
         self.advance_time_and_run()
-        self.assertIn(('trigger', None, dict(name='event3')),
-              self.sent_bcp_commands)
-        self.assertEqual(1, len(self.sent_bcp_commands))
+        self.client.send.assert_called_once_with('trigger', name='event3')
+        self.client.send.reset_mock()
 
     def test_plugin_from_show(self):
         self.patch_bcp()

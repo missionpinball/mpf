@@ -8,8 +8,8 @@ class TestBcpClient:
     def __init__(self, queue):
         self.queue = queue
 
-    def send(self, msg):
-        self.queue.put(decode_command_string(msg))
+    def send(self, bcp_command, **kwargs):
+        self.queue.put((bcp_command, kwargs))
 
 
 class TestBcp(MpfTestCase):
