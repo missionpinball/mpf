@@ -146,21 +146,15 @@ class BCPClientSocket(object):
         self.log.info("Connecting to BCP Media Controller at %s:%s...",
                       self.config['host'], self.config['port'])
 
-        self.socket = socket.socket()
-        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-
-        connected = False
-
-        while not connected:
+        while True:
             try:
-                self.socket.connect((self.config['host'], self.config['port']))
+                self.socket = socket.create_connection((self.config['host'], self.config['port']), timeout=1)
                 self.log.debug("Connected to remote BCP host %s:%s",
                                self.config['host'], self.config['port'])
-
-                self.machine.bcp.active_connections += 1
-                connected = True
-
+                break
             except socket.error:
+                pass
+            except socket.timeout:
                 pass
 
         self.machine.clock.schedule_socket_read_callback(self.socket, self._receive)
@@ -174,7 +168,6 @@ class BCPClientSocket(object):
             self.send_goodbye()
 
         self.socket.close()
-        self.machine.bcp.active_connections -= 1
         self.socket = None  # Socket threads will exit on this
 
     def send(self, message):
@@ -193,7 +186,6 @@ class BCPClientSocket(object):
         # connection has been closed
         self.socket.close()
         self.machine.clock.unschedule_socket_read_callback(self.socket)
-        self.machine.bcp.active_connections -= 1
         self.machine.done = True
 
     def _receive(self):
@@ -260,7 +252,7 @@ class BCPClientSocket(object):
         self.stop()
         self.machine.bcp.remove_bcp_connection(self)
 
-        self.machine.bcp.shutdown()
+        self.machine.bcp.interface.shutdown()
         self.machine.done = True
 
     def send_hello(self):

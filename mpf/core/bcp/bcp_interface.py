@@ -52,7 +52,6 @@ class BcpInterface(object):
         self.config = machine.config['bcp']
         self.bcp_events = dict()
         self.bcp_clients = list()
-        self.active_connections = 0
 
         self.bcp_receive_commands = dict(
             error=self.bcp_receive_error,
@@ -121,7 +120,7 @@ class BcpInterface(object):
         if callable(callback):
             self.connection_callbacks.append(callback)
 
-            if self.active_connections:
+            if False:
                 self.machine.clock.schedule_once(callback, -1)
 
     def add_registered_trigger_event(self, event):
@@ -369,11 +368,6 @@ class BcpInterface(object):
             self.bcp_receive_commands[cmd](rawbytes=rawbytes, **kwargs)
         else:
             self.log.warning("Received invalid BCP command: %s", cmd)
-
-    def shutdown(self):
-        """Prepare the BCP clients for MPF shutdown."""
-        for client in self.bcp_clients:
-            client.stop()
 
     def bcp_receive_error(self, rawbytes, **kwargs):
         """A remote BCP host has sent a BCP error message, indicating that a

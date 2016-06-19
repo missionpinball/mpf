@@ -6,11 +6,6 @@ from mpf.core.bcp.bcp_transport import BcpTransportManager
 
 class Bcp:
     def __init__(self, machine):
-        self.active_connections = 0
-
-        if 'bcp' not in machine.config or not machine.config['bcp']:
-            return
-
         self.interface = BcpInterface(machine)
         self.transport = BcpTransportManager(machine)
         self.machine = machine
@@ -32,4 +27,5 @@ class Bcp:
                 break
 
             client = BCPClientSocket(self.machine, name, settings, self.machine.bcp)
+            self.transport.register_transport(client)
             self.interface.bcp_client_connected(client)

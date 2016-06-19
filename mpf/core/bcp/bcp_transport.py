@@ -14,6 +14,14 @@ class BcpTransportManager:
     def unregister_transport(self, transport):
         self._transports.remove(transport)
 
+    def get_named_client(self, client_name):
+        print(self._transports)
+        for client in self._transports:
+            if client.name == client_name:
+                return client
+        else:
+            return False
+
     def send_to_client(self, client, bcp_command, **kwargs):
         try:
             client.send(bcp_command, **kwargs)
@@ -25,6 +33,11 @@ class BcpTransportManager:
         for client in self._transports:
             self.send_to_client(client, bcp_command, **kwargs)
 
+    def shutdown(self):
+        """Prepare the BCP clients for MPF shutdown."""
+        for client in self._transports:
+            client.close()
+
 
 class BcpTransport:
 
@@ -34,6 +47,7 @@ class BcpTransport:
         self._transport_manager = transport_manager
         self._bcp_handler = bcp_handler
         self._disconnect_callbacks = []
+        self.name = None
 
     def send(self, bcp_command, **kwargs):
         raise NotImplementedError()
