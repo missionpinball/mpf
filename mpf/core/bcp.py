@@ -222,7 +222,7 @@ class BCP(object):
         self.machine.events.add_handler('init_phase_1',
                                         self._setup_dmds)
 
-        self.machine.events.add_handler('init_phase_2',
+        self.machine.events.add_handler('init_done',
                                         self._setup_bcp_connections)
         self.machine.clock.schedule_interval(self.get_bcp_messages, 0)
         self.machine.events.add_handler('player_add_success',
