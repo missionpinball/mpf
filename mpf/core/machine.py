@@ -564,8 +564,8 @@ class MachineController(object):
         except KeyboardInterrupt:
             pass
 
+        self.stop()
         self.log_loop_rate()
-        self._platform_stop()
 
     def process_frame(self):
         """Processes the current frame and ticks the clock to wait for the
@@ -793,6 +793,6 @@ class MachineController(object):
         other words, once this is posted, MPF is booted and ready to go.
         '''
         self.events.process_event_queue()
-        
+
         ConfigValidator.unload_config_spec()
         self.reset()

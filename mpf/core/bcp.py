@@ -971,7 +971,7 @@ class BCPClientSocket(object):
         socket_bytes = b''
 
         try:
-            while self.socket:
+            while self.socket and not self.machine.thread_stopper.is_set():
                 socket_bytes += self.get_from_socket()
 
                 # All this code exists to build complete messages since what we
@@ -1019,6 +1019,7 @@ class BCPClientSocket(object):
                                                exc_traceback)
             msg = ''.join(line for line in lines)
             self.machine.crash_queue.put(msg)
+            self.receive_goodbye()
 
     def _process_command(self, message, rawbytes=None):
         self.log.debug('Received "%s"', message)
@@ -1049,8 +1050,7 @@ class BCPClientSocket(object):
                 return b''
         except socket.error:
             self.log.info("Media Controller disconnected. Shutting down...")
-            self.socket.close()
-            self.machine.done = True
+            self.receive_goodbye()
             return b''
 
     def sending_loop(self):
@@ -1060,7 +1060,7 @@ class BCPClientSocket(object):
         This method is run as a thread.
         """
         try:
-            while self.socket:
+            while self.socket and not self.machine.thread_stopper.is_set():
                 message = self.sending_queue.get()
 
                 try:
@@ -1068,8 +1068,7 @@ class BCPClientSocket(object):
                     self.socket.sendall((message + '\n').encode('utf-8'))
 
                 except (IOError, AttributeError):
-                    # MPF is probably in the process of shutting down
-                    pass
+                    self.receive_goodbye()
 
         # pylint: disable-msg=broad-except
         except Exception:
@@ -1077,6 +1076,7 @@ class BCPClientSocket(object):
             lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
             msg = ''.join(line for line in lines)
             self.machine.crash_queue.put(msg)
+            self.receive_goodbye()
 
     def receive_hello(self, **kwargs):
         """Processes incoming BCP 'hello' command."""
@@ -1089,7 +1089,7 @@ class BCPClientSocket(object):
         self.machine.bcp.remove_bcp_connection(self)
 
         self.machine.bcp.shutdown()
-        self.machine.done = True
+        self.machine.stop()
 
     def send_hello(self):
         """Sends BCP 'hello' command."""
