@@ -1045,7 +1045,11 @@ class BCPClientSocket(object):
         try:
             ready = select.select([self.socket], [], [], 1)
             if ready[0]:
-                return self.socket.recv(num_bytes)
+                b = self.socket.recv(num_bytes)
+                if b:
+                    return b
+                else:
+                    self.receive_goodbye()
             else:
                 return b''
         except socket.error:
