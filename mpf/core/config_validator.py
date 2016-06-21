@@ -786,7 +786,6 @@ show_player:
     __valid_in__: machine, mode, show
     action: single|enum(play,stop,pause,resume,advance,update)|play
     priority: single|int|0
-    hold: single|bool|None
     speed: single|float|1
     start_step: single|int|1
     loops: single|int|-1
@@ -852,6 +851,7 @@ sound_system:
     frequency: single|int|44100
     channels: single|int|1
     master_volume: single|gain|0.5
+    tracks: ignore                                  # todo add subconfig
 sounds:
     __valid_in__: machine, mode
     file: single|str|None
