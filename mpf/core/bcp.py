@@ -899,7 +899,7 @@ class BCPClientSocket(object):
                 self.socket = socket.socket()
                 self.socket.setsockopt(
                     socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                self.socket.settimeout(0.5)
+                # self.socket.settimeout(0.5)
                 self.socket.connect((self.config['host'], self.config['port']))
                 self.log.debug("Connected to remote BCP host %s:%s",
                                self.config['host'], self.config['port'])
@@ -972,7 +972,10 @@ class BCPClientSocket(object):
 
         try:
             while self.socket and not self.machine.thread_stopper.is_set():
-                socket_bytes += self.get_from_socket()
+                try:
+                    socket_bytes += self.get_from_socket()
+                except TypeError:
+                    pass
 
                 # All this code exists to build complete messages since what we
                 # get from the socket could be partial messages and/or could
