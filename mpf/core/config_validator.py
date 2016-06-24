@@ -823,7 +823,7 @@ slides:
     expire: single|secs|None
     background_color: single|kivycolor|000000ff
     opacity: single|float|1.0
-    transistion_out: ignore
+    transition_out: ignore
     __allow_others__:
 snux:
     __valid_in__: machine
