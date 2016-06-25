@@ -580,6 +580,7 @@ opp:
     ports: list|str|
     baud: single|int|115200
     debug: single|bool|False
+    chains: dict|str:str|None
 osc:
     __valid_in__: machine
     client_port: single|int|8000

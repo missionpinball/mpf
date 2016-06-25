@@ -17,6 +17,10 @@ class SerialMock:
     def read_all(self):
         return self.read(123)
 
+    def read_until(self, char):
+        del char
+        return self.read(123)
+
     def ready(self):
         return not self.queue.empty()
 

@@ -1,3 +1,4 @@
+"""OPP solenoid wings."""
 import logging
 
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
@@ -8,7 +9,10 @@ from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 
 class OPPSolenoid(DriverPlatformInterface):
 
+    """Driver of an OPP solenoid card."""
+
     def __init__(self, sol_card, number):
+        """Initialise OPP solenoid driver."""
         self.solCard = sol_card
         self.number = number
         self.log = sol_card.log
@@ -32,10 +36,10 @@ class OPPSolenoid(DriverPlatformInterface):
         msg.extend(OppRs232Intf.calc_crc8_whole_msg(msg))
         cmd = bytes(msg)
         self.log.debug("Triggering solenoid driver: %s", "".join(" 0x%02x" % b for b in cmd))
-        self.solCard.platform.opp_connection.send(cmd)
+        self.solCard.platform.send_to_processor(self.solCard.chain_serial, cmd)
 
     def disable(self, coil):
-        """Disables (turns off) this driver. """
+        """Disable (turns off) this driver. """
         del coil
 
         _, solenoid = self.number.split("-")
@@ -44,7 +48,7 @@ class OPPSolenoid(DriverPlatformInterface):
         self._kick_coil(sol_int, False)
 
     def enable(self, coil):
-        """Enables (turns on) this driver. """
+        """Enable (turns on) this driver. """
         if self.solCard.platform.get_hold_value(coil.hw_driver) == 0:
             raise AssertionError("Coil {} cannot be enabled. You need to specify either allow_enable or hold_power".
                                  format(self.number))
@@ -58,7 +62,7 @@ class OPPSolenoid(DriverPlatformInterface):
         self._kick_coil(sol_int, True)
 
     def pulse(self, coil, milliseconds):
-        """Pulses this driver. """
+        """Pulse this driver. """
         if not self.can_be_pulsed:
             if self.use_switch:
                 raise AssertionError("Cannot currently pulse driver {} because hw_rule needs hold_power".
@@ -80,8 +84,12 @@ class OPPSolenoid(DriverPlatformInterface):
 
 class OPPSolenoidCard(object):
 
-    def __init__(self, addr, mask, sol_dict, platform):
+    """OPP solenoid card."""
+
+    def __init__(self, chain_serial, addr, mask, sol_dict, platform):
+        """Initialise OPP solennoid card."""
         self.log = logging.getLogger('OPPSolenoid')
+        self.chain_serial = chain_serial
         self.addr = addr
         self.mask = mask
         self.platform = platform
@@ -94,11 +102,11 @@ class OPPSolenoidCard(object):
             if ((1 << index) & mask) != 0:
                 number = card + '-' + str(index)
                 opp_sol = OPPSolenoid(self, number)
-                opp_sol.config = self.create_driver_settings(platform.machine)
-                sol_dict[card + '-' + str(index)] = opp_sol
+                opp_sol.config = self._create_driver_settings(platform.machine)
+                sol_dict[chain_serial + "-" + card + '-' + str(index)] = opp_sol
 
     @classmethod
-    def create_driver_settings(cls, machine):
+    def _create_driver_settings(cls, machine):
         return_dict = dict()
         pulse_ms = machine.config['mpf']['default_pulse_ms']
         return_dict['pulse_ms'] = str(pulse_ms)

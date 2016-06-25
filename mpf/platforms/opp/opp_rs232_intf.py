@@ -103,6 +103,10 @@ class OppRs232Intf:
     def calc_crc8_part_msg(msg_chars, start_index, num_chars):
         crc8_byte = 0xff
         index = 0
+        if len(msg_chars) < start_index + num_chars:
+            raise AssertionError("String too short for {} chars of CRC: {}". format(
+                num_chars,
+                "".join(" 0x%02x" % b for b in msg_chars[start_index:])))
         while index < num_chars:
             ind_int = msg_chars[start_index + index]
             crc8_byte = OppRs232Intf.CRC8_LOOKUP[crc8_byte ^ ind_int]
