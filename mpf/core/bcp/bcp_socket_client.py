@@ -148,13 +148,11 @@ class BCPClientSocket(object):
 
         while True:
             try:
-                self.socket = socket.create_connection((self.config['host'], self.config['port']), timeout=1)
+                self.socket = socket.create_connection((self.config['host'], self.config['port']))
                 self.log.debug("Connected to remote BCP host %s:%s",
                                self.config['host'], self.config['port'])
                 break
             except socket.error:
-                pass
-            except socket.timeout:
                 pass
 
         self.machine.clock.schedule_socket_read_callback(self.socket, self._receive)
