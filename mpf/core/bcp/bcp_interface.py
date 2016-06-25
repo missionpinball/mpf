@@ -363,7 +363,7 @@ class BcpInterface(object):
             return
 
         for client in self.bcp_clients:
-            client.send(bcp_command, **kwargs)
+            client.send(bcp_command, kwargs)
 
         if callback:
             callback()

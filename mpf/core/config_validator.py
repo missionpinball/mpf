@@ -182,6 +182,7 @@ bcp:
     connections:
         host: single|str|None
         port: single|int|5050
+        type: single|str|
 coils:
     __valid_in__: machine
     number: single|str|

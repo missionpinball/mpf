@@ -170,7 +170,7 @@ class BCPClientSocket(object):
         self.socket.close()
         self.socket = None  # Socket threads will exit on this
 
-    def send(self, bcp_command, **kwargs):
+    def send(self, bcp_command, bcp_command_args):
         """Send a message to the BCP host.
 
         Args:
@@ -178,7 +178,7 @@ class BCPClientSocket(object):
             **kwargs: parameters to command
 
         """
-        bcp_string = encode_command_string(bcp_command, **kwargs)
+        bcp_string = encode_command_string(bcp_command, **bcp_command_args)
 
         self.log.debug('Sending "%s"', bcp_string)
         try:

@@ -1,6 +1,7 @@
 """BCP module."""
+from mpf.core.utility_functions import Util
+
 from mpf.core.bcp.bcp_interface import BcpInterface
-from mpf.core.bcp.bcp_socket_client import BCPClientSocket
 from mpf.core.bcp.bcp_transport import BcpTransportManager
 
 
@@ -23,9 +24,6 @@ class Bcp:
             return
 
         for name, settings in self.machine.config['bcp']['connections'].items():
-            if 'host' not in settings:
-                break
-
-            client = BCPClientSocket(self.machine, name, settings, self.machine.bcp)
+            client = Util.string_to_class(settings['type'])(self.machine, name, settings, self.machine.bcp)
             self.transport.register_transport(client)
             self.interface.bcp_client_connected(client)

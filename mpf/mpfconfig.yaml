@@ -213,6 +213,7 @@ bcp:
         local_display:
             host: localhost
             port: 5050
+            type: mpf.core.bcp.bcp_socket_client.BCPClientSocket
 
     event_map:
         player_turn_start:

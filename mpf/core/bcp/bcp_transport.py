@@ -23,7 +23,7 @@ class BcpTransportManager:
 
     def send_to_client(self, client, bcp_command, **kwargs):
         try:
-            client.send(bcp_command, **kwargs)
+            client.send(bcp_command, kwargs)
         except IOError:
             client.close()
             self.unregister_transport(client)
