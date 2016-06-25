@@ -441,7 +441,6 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                 chain_serial = list(self.connection_threads)[0].chain_serial
         else:
             chain_serial = self.config['chains'][chain_str]
-        print(chain_serial + "-" + card_str + "-" + number_str)
 
         return chain_serial + "-" + card_str + "-" + number_str
 
