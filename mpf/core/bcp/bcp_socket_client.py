@@ -252,7 +252,7 @@ class BCPClientSocket(object):
         """Process incoming BCP 'goodbye' command."""
         self._send_goodbye = False
         self.stop()
-        self.machine.bcp.remove_bcp_connection(self)
+        self.machine.bcp.interface.remove_bcp_connection(self)
 
         self.machine.bcp.interface.shutdown()
         self.machine.done = True
