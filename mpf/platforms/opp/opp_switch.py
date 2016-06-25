@@ -26,7 +26,7 @@ class OPPInputCard(object):
         for index in range(0, 32):
             if ((1 << index) & mask) != 0:
                 inp_dict[self.chain_serial + "-" + self.cardNum + '-' + str(index)] =\
-                    OPPSwitch(self, self.cardNum + '-' + str(index))
+                    OPPSwitch(self, self.chain_serial + "-" + self.cardNum + '-' + str(index))
 
 
 class OPPSwitch(SwitchPlatformInterface):

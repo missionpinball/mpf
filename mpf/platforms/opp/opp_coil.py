@@ -42,7 +42,7 @@ class OPPSolenoid(DriverPlatformInterface):
         """Disable (turns off) this driver."""
         del coil
 
-        _, solenoid = self.number.split("-")
+        _, _, solenoid = self.number.split("-")
         sol_int = int(solenoid)
         self.log.debug("Disabling solenoid %s", self.number)
         self._kick_coil(sol_int, False)
@@ -56,7 +56,7 @@ class OPPSolenoid(DriverPlatformInterface):
         if self.can_be_pulsed:
             self.solCard.platform.reconfigure_driver(coil, True)
 
-        _, solenoid = self.number.split("-")
+        _, _, solenoid = self.number.split("-")
         sol_int = int(solenoid)
         self.log.debug("Enabling solenoid %s", self.number)
         self._kick_coil(sol_int, True)
@@ -73,7 +73,7 @@ class OPPSolenoid(DriverPlatformInterface):
             raise AssertionError("OPP platform doesn't allow changing pulse width using pulse call. "
                                  "Tried {}, used {}".format(milliseconds, self.config['pulse_ms']))
 
-        _, solenoid = self.number.split("-")
+        _, _, solenoid = self.number.split("-")
         sol_int = int(solenoid)
         self.log.debug("Pulsing solenoid %s", self.number)
         self._kick_coil(sol_int, True)
@@ -101,10 +101,10 @@ class OPPSolenoidCard(object):
         card = str(addr - ord(OppRs232Intf.CARD_ID_GEN2_CARD))
         for index in range(0, 16):
             if ((1 << index) & mask) != 0:
-                number = card + '-' + str(index)
+                number = chain_serial + '-' + card + '-' + str(index)
                 opp_sol = OPPSolenoid(self, number)
                 opp_sol.config = self._create_driver_settings(platform.machine)
-                sol_dict[chain_serial + "-" + card + '-' + str(index)] = opp_sol
+                sol_dict[number] = opp_sol
 
     @classmethod
     def _create_driver_settings(cls, machine):

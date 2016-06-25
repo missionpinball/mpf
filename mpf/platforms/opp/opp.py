@@ -67,7 +67,6 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self.incand_reg = False
         self.numGen2Brd = 0
         self.gen2AddrArr = []
-        self.currInpData = []
         self.badCRC = 0
         self.oppFirmwareVers = []
         self.minVersion = 0xffffffff
@@ -111,7 +110,12 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         return '<Platform.OPP>'
 
     def process_received_message(self, chain_serial, msg):
-        """Send an incoming message from the OPP hardware to the proper method for servicing."""
+        """Send an incoming message from the OPP hardware to the proper method for servicing.
+
+        Args:
+            chain_serial: Serial of the chain which received the message.
+            msg: Message to parse.
+        """
         if len(msg) >= 1:
             if ((msg[0] >= ord(OppRs232Intf.CARD_ID_GEN2_CARD)) and
                     (msg[0] < (ord(OppRs232Intf.CARD_ID_GEN2_CARD) + 0x20))):
@@ -150,12 +154,22 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                 send_queue=queue.Queue()))
 
     def register_processor_connection(self, serial_number, communicator):
-        """Register the processors to the platform."""
+        """Register the processors to the platform.
+
+        Args:
+            serial_number: Serial number of chain.
+            communicator: Instance of OPPSerialCommunicator
+        """
         self.opp_connection[serial_number] = communicator
 
-    def send_to_processor(self, serial_number, msg):
-        """Send message to processor with specific serial number."""
-        self.opp_connection[serial_number].send(msg)
+    def send_to_processor(self, chain_serial, msg):
+        """Send message to processor with specific serial number.
+
+        Args:
+            chain_serial: Serial of the processor.
+            msg: Message to send.
+        """
+        self.opp_connection[chain_serial].send(msg)
 
     def update_incand(self):
         """Update all the incandescents connected to OPP hardware.
@@ -206,13 +220,19 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
             for index in range(0, 32):
                 if (curr_bit & opp_inp.mask) != 0:
                     if (curr_bit & opp_inp.oldState) == 0:
-                        hw_states[opp_inp.cardNum + '-' + str(index)] = 1
+                        hw_states[opp_inp.chain_serial + '-' + opp_inp.cardNum + '-' + str(index)] = 1
                     else:
-                        hw_states[opp_inp.cardNum + '-' + str(index)] = 0
+                        hw_states[opp_inp.chain_serial + '-' + opp_inp.cardNum + '-' + str(index)] = 0
                 curr_bit <<= 1
         return hw_states
 
     def inv_resp(self, chain_serial, msg):
+        """Parse inventory response.
+
+        Args:
+            chain_serial: Serial of the chain which received the message.
+            msg: Message to parse.
+        """
         # TODO: use chain_serial/move to serial communicator
         self.log.debug("Received Inventory Response:%s", "".join(" 0x%02x" % b for b in msg))
 
@@ -220,18 +240,27 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         while msg[index] != ord(OppRs232Intf.EOM_CMD):
             if (msg[index] & ord(OppRs232Intf.CARD_ID_TYPE_MASK)) == ord(OppRs232Intf.CARD_ID_GEN2_CARD):
                 self.numGen2Brd += 1
-                self.gen2AddrArr.append(msg[index])
-                self.currInpData.append(0)
+                self.gen2AddrArr.append((chain_serial, msg[index]))
             index += 1
         self.log.debug("Found %d Gen2 OPP boards.", self.numGen2Brd)
 
     def eom_resp(self, chain_serial, msg):
-        """Process an EOM."""
+        """Process an EOM.
+
+        Args:
+            chain_serial: Serial of the chain which received the message.
+            msg: Message to parse.
+        """
         # An EOM command can be used to resynchronize communications if message synch is lost
         pass
 
     def get_gen2_cfg_resp(self, chain_serial, msg):
-        """Process cfg response."""
+        """Process cfg response.
+
+        Args:
+            chain_serial: Serial of the chain which received the message.
+            msg: Message to parse.
+        """
         # Multiple get gen2 cfg responses can be received at once
         self.log.debug("Received Gen2 Cfg Response:%s", "".join(" 0x%02x" % b for b in msg))
         curr_index = 0
@@ -301,7 +330,12 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self.read_input_msg[chain_serial] = bytes(whole_msg)
 
     def vers_resp(self, chain_serial, msg):
-        """Process version response."""
+        """Process version response.
+
+        Args:
+            chain_serial: Serial of the chain which received the message.
+            msg: Message to parse.
+        """
         # TODO: implement chain_serial
         # Multiple get version responses can be received at once
         self.log.debug("Received Version Response:%s", "".join(" 0x%02x" % b for b in msg))
@@ -344,7 +378,12 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                     #  until they come back
 
     def read_gen2_inp_resp_initial(self, chain_serial, msg):
-        """Read initial switch states."""
+        """Read initial switch states.
+
+        Args:
+            chain_serial: Serial of the chain which received the message.
+            msg: Message to parse.
+        """
         # Verify the CRC8 is correct
         crc8 = OppRs232Intf.calc_crc8_part_msg(msg, 0, 6)
         if msg[6] != ord(crc8):
@@ -361,7 +400,12 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
             opp_inp.oldState = new_state
 
     def read_gen2_inp_resp(self, chain_serial, msg):
-        """Read switch changes."""
+        """Read switch changes.
+
+        Args:
+            chain_serial: Serial of the chain which received the message.
+            msg: Message to parse.
+        """
         # Single read gen2 input response.  Receive function breaks them down
 
         # Verify the CRC8 is correct
@@ -386,18 +430,23 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                         if (curr_bit & new_state) == 0:
                             self.machine.switch_controller.process_switch_by_num(
                                 state=1,
-                                num=opp_inp.cardNum + '-' + str(index),
+                                num=opp_inp.chain_serial + '-' + opp_inp.cardNum + '-' + str(index),
                                 platform=self)
                         else:
                             self.machine.switch_controller.process_switch_by_num(
                                 state=0,
-                                num=opp_inp.cardNum + '-' + str(index),
+                                num=opp_inp.chain_serial + '-' + opp_inp.cardNum + '-' + str(index),
                                 platform=self)
                     curr_bit <<= 1
             opp_inp.oldState = new_state
 
-    def reconfigure_driver(self, driver, use_hold):
-        """Reconfigure a driver."""
+    def reconfigure_driver(self, driver, use_hold: bool):
+        """Reconfigure a driver.
+
+        Args:
+            driver: Driver object.
+            use_hold: Whether this driver stays enabled after a trigger or not.
+        """
         # If hold is 0, set the auto clear bit
         if not use_hold:
             cmd = ord(OppRs232Intf.CFG_SOL_AUTO_CLR)
@@ -455,8 +504,12 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
         return chain_serial + "-" + card_str + "-" + number_str
 
-    def configure_driver(self, config):
-        """Configure a driver."""
+    def configure_driver(self, config: dict):
+        """Configure a driver.
+
+        Args:
+            config: Config dict.
+        """
         if not self.opp_connection:
             raise AssertionError("A request was made to configure an OPP solenoid, "
                                  "but no OPP connection is available")
@@ -478,8 +531,12 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
         return opp_sol
 
-    def configure_switch(self, config):
-        """Configure a switch."""
+    def configure_switch(self, config: dict):
+        """Configure a switch.
+
+        Args:
+            config: Config dict.
+        """
         # A switch is termed as an input to OPP
         if not self.opp_connection:
             raise AssertionError("A request was made to configure an OPP switch, "
@@ -493,8 +550,13 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
         return self.inpDict[number]
 
-    def configure_led(self, config, channels):
-        """Configure LED."""
+    def configure_led(self, config: dict, channels: int):
+        """Configure LED.
+
+        Args:
+            config: Config dict.
+            channels: Number of channels. OPP supports up to three.
+        """
         if channels > 3:
             raise AssertionError("OPP only supports RGB LEDs")
         if not self.opp_connection:
@@ -515,7 +577,11 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         return pixel
 
     def configure_matrixlight(self, config):
-        """Configure a direct incandescent bulb."""
+        """Configure a direct incandescent bulb.
+
+        Args:
+            config: Config dict.
+        """
         if not self.opp_connection:
             raise AssertionError("A request was made to configure an OPP matrix "
                                  "light (incand board), but no OPP connection "
@@ -532,7 +598,11 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         return self.incandDict[number]
 
     def tick(self, dt):
-        """Tick function."""
+        """Tick function.
+
+        Args:
+            dt: delta since last call
+        """
         # TODO: remove and replace by schedule_interval
         del dt
         self.tickCnt += 1
@@ -546,10 +616,10 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
     @classmethod
     def _verify_coil_and_switch_fit(cls, switch, coil):
-        card, solenoid = coil.hw_driver.number.split('-')
-        sw_card, sw_num = switch.hw_switch.number.split('-')
+        chain_serial, card, solenoid = coil.hw_driver.number.split('-')
+        sw_chain_serial, sw_card, sw_num = switch.hw_switch.number.split('-')
         matching_sw = ((int(solenoid) & 0x0c) << 1) | (int(solenoid) & 0x03)
-        if (card != sw_card) or (matching_sw != int(sw_num)):
+        if chain_serial != sw_chain_serial or card != sw_card or matching_sw != int(sw_num):
             raise AssertionError('Invalid switch being configured for driver. Driver = %s '
                                  'Switch = %s' % (coil.hw_driver.number, switch.hw_switch.number))
 
@@ -755,8 +825,9 @@ class OPPSerialCommunicator(object):
     def send_get_gen2_cfg_cmd(self):
         """Send get gen2 configuration message to find populated wing boards."""
         whole_msg = bytearray()
-        for cardAddr in self.platform.gen2AddrArr:
-            # Turn on the bulbs that are non-zero
+        for chain_serial, cardAddr in self.platform.gen2AddrArr:
+            if chain_serial != self.chain_serial:
+                continue
             msg = bytearray()
             msg.append(cardAddr)
             msg.extend(OppRs232Intf.GET_GEN2_CFG)
@@ -775,8 +846,9 @@ class OPPSerialCommunicator(object):
     def send_vers_cmd(self):
         """Send get firmware version message."""
         whole_msg = bytearray()
-        for card_addr in self.platform.gen2AddrArr:
-            # Turn on the bulbs that are non-zero
+        for chain_serial, card_addr in self.platform.gen2AddrArr:
+            if chain_serial != self.chain_serial:
+                continue
             msg = bytearray()
             msg.append(card_addr)
             msg.extend(OppRs232Intf.GET_GET_VERS_CMD)
