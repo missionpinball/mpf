@@ -261,10 +261,9 @@ class BCPClientSocket(object):
 
     def send_hello(self):
         """Send BCP 'hello' command."""
-        self.send(encode_command_string('hello',
-                                        version=__bcp_version__,
-                                        controller_name='Mission Pinball Framework',
-                                        controller_version=__version__))
+        self.send('hello', {"version": __bcp_version__,
+                            "controller_name": 'Mission Pinball Framework',
+                            "controller_version": __version__})
 
     def send_goodbye(self):
         """Send BCP 'goodbye' command."""
