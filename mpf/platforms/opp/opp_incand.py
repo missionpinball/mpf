@@ -11,6 +11,7 @@ class OPPIncandCard(object):
     """An incandescent wing card."""
 
     def __init__(self, chain_serial, addr, mask, incand_dict):
+        """Initialise OPP incandescent card."""
         self.log = logging.getLogger('OPPIncand')
         self.addr = addr
         self.chain_serial = chain_serial
