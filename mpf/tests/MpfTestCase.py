@@ -21,6 +21,14 @@ from mpf.file_interfaces.yaml_interface import YamlInterface
 YamlInterface.cache = True
 
 
+class MockBcpClient():
+    def __init__(self, machine, name, settings, bcp):
+        self.name = name
+
+    def send(self, bcp_command, bcp_command_args):
+        pass
+
+
 class TestMachineController(MachineController):
 
     """MachineController used in tests."""
@@ -304,13 +312,6 @@ class MpfTestCase(unittest.TestCase):
 
         self._unmock_data_manager()
         self.restore_sys_path()
-
-    def patch_bcp(self):
-        self.sent_bcp_commands = list()
-        self.machine.bcp.send = self._bcp_send
-
-    def _bcp_send(self, bcp_command, callback=None, **kwargs):
-        self.sent_bcp_commands.append((bcp_command, callback, kwargs))
 
     def add_to_config_validator(self, key, new_dict):
         if mpf.core.config_validator.ConfigValidator.config_spec:
