@@ -1,7 +1,8 @@
-"""Contains the hardware interface and drivers for the Open Pinball Project
+"""OPP Hardware interface.
+
+Contains the hardware interface and drivers for the Open Pinball Project
 platform hardware, including the solenoid, input, incandescent, and neopixel
 boards.
-
 """
 import logging
 import time
@@ -150,7 +151,6 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
     def register_processor_connection(self, serial_number, communicator):
         """Register the processors to the platform."""
-
         self.opp_connection[serial_number] = communicator
 
     def send_to_processor(self, serial_number, msg):
@@ -301,6 +301,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self.read_input_msg[chain_serial] = bytes(whole_msg)
 
     def vers_resp(self, chain_serial, msg):
+        """Process version response."""
         # TODO: implement chain_serial
         # Multiple get version responses can be received at once
         self.log.debug("Received Version Response:%s", "".join(" 0x%02x" % b for b in msg))
@@ -690,7 +691,6 @@ class OPPSerialCommunicator(object):
 
     def identify_connection(self):
         """Identify which processor this serial connection is talking to."""
-
         # keep looping and wait for an ID response
         count = 0
         resp = b''
@@ -807,13 +807,13 @@ class OPPSerialCommunicator(object):
         self.sending_thread.start()
 
     def stop(self):
-        """Stops and shuts down this serial connection."""
+        """Stop and shut down this serial connection."""
         self.log.error("Stop called on serial connection")
         self.serial_connection.close()
         self.serial_connection = None  # child threads stop when this is None
 
     def send(self, msg):
-        """Sends a message to the remote processor over the serial connection.
+        """Send a message to the remote processor over the serial connection.
 
         Args:
             msg: String of the message you want to send. We don't need no
@@ -880,7 +880,7 @@ class OPPSerialCommunicator(object):
         try:
             resp = self.serial_connection.read_all()
         except OSError:
-            resp = False
+            resp = None
 
         # we either got empty response (-> socket closed) or and error
         if not resp:
