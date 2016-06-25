@@ -247,15 +247,14 @@ class SwitchController(object):
         """Process a switch state change by switch number."""
         for switch in self.machine.switches:
             if switch.hw_switch.number == num and switch.platform == platform:
-                self.process_switch(name=switch.name, state=state, logical=logical)
+                self.process_switch_obj(obj=switch, state=state, logical=logical)
                 return
 
     def process_switch(self, name, state=1, logical=False):
-        """Process a new switch state change.
+        """Process a new switch state change for a switch by name.
 
         Args:
-            name: The string name of the switch. This is optional if you specify
-                the switch via the 'num' or 'obj' parameters.
+            name: The string name of the switch.
             state: Boolean or int of state of the switch you're processing,
                 True/1 is active, False/0 is inactive.
             logical: Boolean which specifies whether the 'state' argument
@@ -267,9 +266,6 @@ class SwitchController(object):
                 hardware will send switch states in their raw (logical=False)
                 states, but other interfaces like the keyboard and OSC will use
                 logical=True.
-
-        Note that there are three different paramter options to specify the
-        switch: 'name', 'num', and 'obj'. You only need to pass one of them.
 
         This is the method that is called by the platform driver whenever a
         switch changes state. It's also used by the "other" modules that
@@ -288,6 +284,34 @@ class SwitchController(object):
             raise AssertionError("Cannot process switch \"" + name + "\" as "
                                  "this is not a valid switch name.")
 
+        self.process_switch_obj(obj, state, logical)
+
+    def process_switch_obj(self, obj, state, logical):
+        """Process a new switch state change for a switch by name.
+
+        Args:
+            obj: The switch object.
+            state: Boolean or int of state of the switch you're processing,
+                True/1 is active, False/0 is inactive.
+            logical: Boolean which specifies whether the 'state' argument
+                represents the "physical" or "logical" state of the switch. If
+                True, a 1 means this switch is active and a 0 means it's
+                inactive, regardless of the NC/NO configuration of the switch.
+                If False, then the state paramenter passed will be inverted if
+                the switch is configured to be an 'NC' type. Typically the
+                hardware will send switch states in their raw (logical=False)
+                states, but other interfaces like the keyboard and OSC will use
+                logical=True.
+
+        This is the method that is called by the platform driver whenever a
+        switch changes state. It's also used by the "other" modules that
+        activate switches, including the keyboard and OSC interfaces.
+
+        State 0 means the switch changed from active to inactive, and 1 means
+        it changed from inactive to active. (The hardware & platform code
+        handles NC versus NO switches and translates them to 'active' versus
+        'inactive'.)
+        """
         # We need int, but this lets it come in as boolean also
         if state:
             state = 1
@@ -322,29 +346,29 @@ class SwitchController(object):
                                       obj.recycle_secs)
 
         # if the switch is already in this state, then abort
-        if self.switches[name]['state'] == state:
+        if self.switches[obj.name]['state'] == state:
 
             if not obj.recycle_secs:
                 self.log.info("Received duplicate switch state, which means "
                               "this switch had some non-debounced state changes. This "
                               "could be nothing, but if it happens a lot it could "
                               "indicate noise or interference on the line. Switch: %s",
-                              name)
+                              obj.name)
             return
 
-        self.log.info("<<<<< switch: %s, State:%s >>>>>", name, state)
+        self.log.info("<<<<< switch: %s, State:%s >>>>>", obj.name, state)
 
         # Update the switch controller's logical state for this switch
-        self.set_state(name, state)
+        self.set_state(obj.name, state)
 
-        self._call_handlers(name, state)
+        self._call_handlers(obj.name, state)
 
-        self._cancel_timed_handlers(name, state)
+        self._cancel_timed_handlers(obj.name, state)
 
         for monitor in self.monitors:
-            monitor(name, state)
+            monitor(obj.name, state)
 
-        self._post_switch_events(name, state)
+        self._post_switch_events(obj.name, state)
 
     def _recycle_passed(self, obj, state, logical, hw_state):
         if obj.hw_state == hw_state:
