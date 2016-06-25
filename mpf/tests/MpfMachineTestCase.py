@@ -8,9 +8,11 @@ class MpfMachineTestCase(MpfTestCase):
     def __init__(self, methodName='runTest'):
         super().__init__(methodName)
 
-        # only disable bcp. everything else should run
+        # remove config patches
         self.machine_config_patches = dict()
-        self.machine_config_patches['bcp'] = []
+        # use bcp mock
+        self.machine_config_patches['bcp'] = \
+            {"connections": {"local_display": {"type": "mpf.tests.MpfTestCase.MockBcpClient"}}}
 
         # increase test expected duration
         self.expected_duration = 5.0
