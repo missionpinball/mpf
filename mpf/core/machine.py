@@ -67,6 +67,7 @@ class MachineController(object):
         self.verify_system_info()
 
         self._boot_holds = set()
+        self.is_init_done = False
         self.register_boot_hold('init')
 
         self.done = False
@@ -86,7 +87,6 @@ class MachineController(object):
 
         self.crash_queue = queue.Queue()
 
-        self.is_init_done = False
         self.config = None
         self.events = None
         self.machine_config = None
@@ -764,9 +764,13 @@ class MachineController(object):
             return self.default_platform
 
     def register_boot_hold(self, hold):
+        if self.is_init_done:
+            raise AssertionError("Register hold after init_done")
         self._boot_holds.add(hold)
 
     def clear_boot_hold(self, hold):
+        if self.is_init_done:
+            raise AssertionError("Clearing hold after init_done")
         self._boot_holds.remove(hold)
         self.log.debug('Clearing boot hold %s. Holds remaining: %s', hold, self._boot_holds)
         if not self._boot_holds:
