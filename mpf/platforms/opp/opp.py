@@ -32,6 +32,7 @@ BAD_FW_VERSION = 0x01020304
 
 # pylint: disable-msg=too-many-instance-attributes
 class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, DriverPlatform):
+
     """Platform class for the OPP hardware.
 
     Args:
@@ -40,6 +41,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
     """
 
     def __init__(self, machine):
+        """Initialise OPP platform."""
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger('OPP')
         self.log.info("Configuring OPP hardware.")
@@ -99,10 +101,12 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self.opp_commands[ord(OppRs232Intf.READ_GEN2_INP_CMD)] = self.read_gen2_inp_resp
 
     def stop(self):
+        """Stop hardware and close connections."""
         for connections in self.connection_threads:
             connections.stop()
 
     def __repr__(self):
+        """String representation."""
         return '<Platform.OPP>'
 
     def process_received_message(self, chain_serial, msg):
@@ -191,9 +195,11 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
     @classmethod
     def get_coil_config_section(cls):
+        """Return coil config section."""
         return "opp_coils"
 
     def get_hw_switch_states(self):
+        """Get initial hardware switch states."""
         hw_states = dict()
         for opp_inp in self.opp_inputs:
             curr_bit = 1
@@ -225,6 +231,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         pass
 
     def get_gen2_cfg_resp(self, chain_serial, msg):
+        """Process cfg response."""
         # Multiple get gen2 cfg responses can be received at once
         self.log.debug("Received Gen2 Cfg Response:%s", "".join(" 0x%02x" % b for b in msg))
         curr_index = 0
@@ -257,7 +264,8 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                 if incand_mask != 0:
                     self.opp_incands.append(OPPIncandCard(chain_serial, msg[curr_index], incand_mask, self.incandDict))
                 if sol_mask != 0:
-                    self.opp_solenoid.append(OPPSolenoidCard(chain_serial, msg[curr_index], sol_mask, self.solDict, self))
+                    self.opp_solenoid.append(
+                        OPPSolenoidCard(chain_serial, msg[curr_index], sol_mask, self.solDict, self))
                 if inp_mask != 0:
                     # Create the input object, and add to the command to read all inputs
                     self.opp_inputs.append(OPPInputCard(chain_serial, msg[curr_index], inp_mask, self.inpDict,
@@ -293,6 +301,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self.read_input_msg[chain_serial] = bytes(whole_msg)
 
     def vers_resp(self, chain_serial, msg):
+        # TODO: implement chain_serial
         # Multiple get version responses can be received at once
         self.log.debug("Received Version Response:%s", "".join(" 0x%02x" % b for b in msg))
         end = False
@@ -387,6 +396,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
             opp_inp.oldState = new_state
 
     def reconfigure_driver(self, driver, use_hold):
+        """Reconfigure a driver."""
         # If hold is 0, set the auto clear bit
         if not use_hold:
             cmd = ord(OppRs232Intf.CFG_SOL_AUTO_CLR)
@@ -445,6 +455,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         return chain_serial + "-" + card_str + "-" + number_str
 
     def configure_driver(self, config):
+        """Configure a driver."""
         if not self.opp_connection:
             raise AssertionError("A request was made to configure an OPP solenoid, "
                                  "but no OPP connection is available")
@@ -467,6 +478,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         return opp_sol
 
     def configure_switch(self, config):
+        """Configure a switch."""
         # A switch is termed as an input to OPP
         if not self.opp_connection:
             raise AssertionError("A request was made to configure an OPP switch, "
@@ -481,6 +493,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         return self.inpDict[number]
 
     def configure_led(self, config, channels):
+        """Configure LED."""
         if channels > 3:
             raise AssertionError("OPP only supports RGB LEDs")
         if not self.opp_connection:
@@ -501,6 +514,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         return pixel
 
     def configure_matrixlight(self, config):
+        """Configure a direct incandescent bulb."""
         if not self.opp_connection:
             raise AssertionError("A request was made to configure an OPP matrix "
                                  "light (incand board), but no OPP connection "
@@ -517,6 +531,8 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         return self.incandDict[number]
 
     def tick(self, dt):
+        """Tick function."""
+        # TODO: remove and replace by schedule_interval
         del dt
         self.tickCnt += 1
         curr_tick = self.tickCnt % 10
@@ -537,14 +553,29 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                                  'Switch = %s' % (coil.hw_driver.number, switch.hw_switch.number))
 
     def set_pulse_on_hit_rule(self, enable_switch, coil):
+        """Set pulse on hit rule on driver.
+
+        Pulses a driver when a switch is hit. When the switch is released the pulse continues. Typically used for
+        autofire coils such as pop bumpers.
+        """
         # OPP always does the full pulse
         self._write_hw_rule(enable_switch, coil, False)
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
+        """Set pulse on hit and release rule to driver.
+
+        Pulses a driver when a switch is hit. When the switch is released the pulse is canceled. Typically used on
+        the main coil for dual coil flippers without eos switch.
+        """
         # OPP always does the full pulse. So this is not 100% correct
         self.set_pulse_on_hit_rule(enable_switch, coil)
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
+        """Set pulse on hit and enable and relase rule on driver.
+
+        Pulses a driver when a switch is hit. Then enables the driver (may be with pwm). When the switch is released
+        the pulse is canceled and the driver gets disabled. Typically used for single coil flippers.
+        """
         # OPP always does the full pulse. Therefore, this is mostly right.
         if not self.get_hold_value(coil):
             raise AssertionError("Set allow_enable if you want to enable a coil without hold_power")
@@ -552,6 +583,12 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self._write_hw_rule(enable_switch, coil, True)
 
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
+        """Set pulse on hit and enable and release and disable rule on driver.
+
+        Pulses a driver when a switch is hit. Then enables the driver (may be with pwm). When the switch is released
+        the pulse is canceled and the driver gets disabled. When the second disable_switch is hit the pulse is canceled
+        and the driver gets disabled. Typically used on the main coil for dual coil flippers with eos switch.
+        """
         raise AssertionError("Not implemented in OPP currently")
 
     @classmethod

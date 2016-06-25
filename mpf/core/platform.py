@@ -400,7 +400,8 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """Set pulse on hit and release rule to driver.
 
         Pulses a driver when a switch is hit. When the switch is released the pulse is canceled. Typically used on
-        the main coil for dual coil flippers without eos switch. """
+        the main coil for dual coil flippers without eos switch.
+        """
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -408,7 +409,8 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """Set pulse on hit and enable and relase rule on driver.
 
         Pulses a driver when a switch is hit. Then enables the driver (may be with pwm). When the switch is released
-        the pulse is canceled and the driver gets disabled. Typically used for single coil flippers. """
+        the pulse is canceled and the driver gets disabled. Typically used for single coil flippers.
+        """
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -417,7 +419,8 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
         Pulses a driver when a switch is hit. Then enables the driver (may be with pwm). When the switch is released
         the pulse is canceled and the driver gets disabled. When the second disable_switch is hit the pulse is canceled
-        and the driver gets disabled. Typically used on the main coil for dual coil flippers with eos switch. """
+        and the driver gets disabled. Typically used on the main coil for dual coil flippers with eos switch.
+        """
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -425,5 +428,6 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """Set pulse on hit rule on driver.
 
         Pulses a driver when a switch is hit. When the switch is released the pulse continues. Typically used for
-         autofire coils such as pop bumpers. """
+        autofire coils such as pop bumpers.
+        """
         raise NotImplementedError
