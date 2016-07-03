@@ -242,7 +242,7 @@ class BCPClientSocket(object):
         if cmd in self.bcp_client_socket_commands:
             self.bcp_client_socket_commands[cmd](**kwargs)
         else:
-            self.bcp.interface.process_bcp_message(cmd, kwargs, rawbytes)
+            self.bcp.interface.process_bcp_message(cmd, kwargs, rawbytes, self)
 
     def receive_hello(self, **kwargs):
         """Process incoming BCP 'hello' command."""
