@@ -27,6 +27,7 @@ class HardwarePlatform(LedPlatform):
         self.log = logging.getLogger("OpenPixel")
         self.debug_log("Configuring Open Pixel hardware interface.")
         self.opc_client = None
+        self.features['tickless'] = True
 
     def __repr__(self):
         """Return str representation."""
