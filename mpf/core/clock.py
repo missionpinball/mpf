@@ -11,93 +11,7 @@ import logging
 import select
 
 # pylint: disable-msg=anomalous-backslash-in-string
-"""
-Clock object
-============
-
-The :class:`Clock` object allows you to schedule a function call in the
-future; once or repeatedly at specified intervals. It's heavily based on
-Kivy's Clock object. (Almost 100% identical.) An instance of the clock is
-available in MPF set `self.machine.clock`.
-
-You can get the time elapsed between the scheduling and the calling of the
-callback via the `dt` argument::
-
-    # dt means delta-time
-    def my_callback(self, dt):
-        pass
-
-    # call my_callback every 0.5 seconds
-    self.machine.clock.schedule_interval(my_callback, 0.5)
-
-    # call my_callback in 5 seconds
-    self.machine.clock..schedule_once(my_callback, 5)
-
-    # call my_callback as soon as possible (usually next frame.)
-    self.machine.clock..schedule_once(my_callback)
-
-.. note::
-
-    If the callback returns False, the schedule will be removed.
-
-If you want to schedule a function to call with default arguments, you can use
-the `functools.partial
-<http://docs.python.org/library/functools.html#functools.partial>`_ python
-module::
-
-    from functools import partial
-
-    def my_callback(value, key, *largs):
-        pass
-
-    self.machine.clock.schedule_interval(partial(my_callback, 'my value', 'my key'), 0.5)
-
-Conversely, if you want to schedule a function that doesn't accept the dt
-argument, you can use a `lambda
-<http://docs.python.org/2/reference/expressions.html#lambda>`_ expression
-to write a short function that does accept dt. For Example::
-
-    def no_args_func():
-        print("I accept no arguments, so don't schedule me in the clock")
-
-    self.machine.clock..schedule_once(lambda dt: no_args_func(), 0.5)
-
-----------
-
-Often, other threads are used to schedule callbacks with MPF's main thread
-using :class:`ClockBase`. Therefore, it's important to know what is thread safe
-and what isn't.
-
-All the :class:`ClockBase` and :class:`ClockEvent` methods are safe with
-respect to MPF's thread. That is, it's always safe to call these methods
-from a single thread that is not the main thread. However, there are no
-guarantees as to the order in which these callbacks will be executed.
-
-"""
-
-
-"""
----------------------
-MPF v0.30
-This file was adapted from Kivy for use in MPF.  The following changes have
-been made for use in MPF:
-    1) Support proper event callback order in a frame based on scheduled callback
-       time (earliest first), priority (highest first), and finally the order
-       in which the callback was added to the clock. This involved adding
-       triggered events to a priority queue and then executing all the callbacks
-       in the queue during each frame.
-    2) The 5ms look-ahead for activating events has been removed.
-    3) next_event_time and last_event_time properties have been added.
-    4) Clock is not used as a global singleton in MPF, but rather as an
-       instantiated object.  Multiple clock objects could be used in a single
-       program if desired.
-    5) max_fps is now a parameter in the Clock constructor (defaults to 60) that
-       controls the maximum speed at which the MPF main loop/clock runs.
-
-MPF v0.31
-    1) Clock is now tickless. No more fps
-    2) Clock can wait on sockets
-"""
+import asyncio
 
 __all__ = ('ClockBase', 'ClockEvent')
 
@@ -329,6 +243,31 @@ class ClockEvent(object):
         return '<ClockEvent callback=%r>' % self.get_callback()
 
 
+class PeriodicTask:
+    def __init__(self, interval, loop, callback):
+        self._canceled = False
+        self._interval = interval
+        self._callback = callback
+        self._loop = loop
+        self._last_call = self._loop.time()
+        self._schedule()
+
+    def _schedule(self):
+        if self._canceled:
+            return
+        self._loop.call_at(self._last_call + self._interval, self._run)
+
+    def _run(self):
+        self._last_call = self._last_call + self._interval
+        if self._canceled:
+            return
+        self._callback(None)
+        self._schedule()
+
+    def cancel(self):
+        self._canceled = True
+
+
 class ClockBase(_ClockBase):
 
     """A clock object with event support."""
@@ -336,11 +275,11 @@ class ClockBase(_ClockBase):
     __slots__ = ('_dt', '_last_fps_tick', '_last_tick', '_fps', '_rfps',
                  '_start_tick', '_fps_counter', '_rfps_counter', 'ordered_events',
                  '_frame_callbacks', '_frames', '_frames_displayed',
-                 '_log', 'read_sockets')
+                 '_log', 'read_sockets', 'loop')
 
     counter = itertools.count()
 
-    def __init__(self):
+    def __init__(self, machine):
         """Initialise clock."""
         super(ClockBase, self).__init__()
 
@@ -358,6 +297,7 @@ class ClockBase(_ClockBase):
         self._frame_callbacks = []
         self._log = logging.getLogger("Clock")
         self._log.debug("Starting tickless clock")
+        self.loop = machine.get_event_loop()
 
     @property
     def frametime(self):
@@ -420,6 +360,8 @@ class ClockBase(_ClockBase):
                 current = self.time()
 
     def tick(self):
+        self.loop.run_forever()
+
         """Advance the clock to the next step. Must be called every frame.
 
         The default clock has a tick() function called by the core Kivy
@@ -474,7 +416,7 @@ class ClockBase(_ClockBase):
 
     def get_time(self):
         """Get the last tick made by the clock."""
-        return self._last_tick
+        return self.loop.time()
 
     def get_boottime(self):
         """Get the time in seconds from the application start."""
@@ -487,7 +429,8 @@ class ClockBase(_ClockBase):
             socket: Any type of socket which can be passed to select.
             callback: Callback to call
         """
-        self.read_sockets[socket] = callback
+        self.loop.add_reader(fd=socket, callback=callback)
+        #self.read_sockets[socket] = callback
 
     def unschedule_socket_read_callback(self, socket):
         """Remove a socket callback which has to be registered.
@@ -495,9 +438,10 @@ class ClockBase(_ClockBase):
         Args:
             socket: Socket so remove.
         """
-        del self.read_sockets[socket]
+        self.loop.remove_reader(fd=socket)
+        #del self.read_sockets[socket]
 
-    def schedule_once(self, callback, timeout=0, priority=1):
+    def schedule_once(self, callback, timeout=0):
         """Schedule an event in <timeout> seconds.
 
         If <timeout> is unspecified
@@ -512,14 +456,16 @@ class ClockBase(_ClockBase):
         """
         if not callable(callback):
             raise AssertionError('callback must be a callable, got %s' % callback)
-        event = ClockEvent(self, False, callback, timeout, self._last_tick, priority)
+        #event = ClockEvent(self, False, callback, timeout, self._last_tick, priority)
+        new_callback = lambda: callback(None)
+        event = self.loop.call_later(delay=timeout, callback=new_callback)
 
-        self._log.debug("Scheduled a one-time clock callback (callback=%s, timeout=%s, priority=%s)",
-                        str(callback), timeout, priority)
+        self._log.debug("Scheduled a one-time clock callback (callback=%s, timeout=%s)",
+                        str(callback), timeout)
 
         return event
 
-    def schedule_interval(self, callback, timeout, priority=1):
+    def schedule_interval(self, callback, timeout):
         """Schedule an event to be called every <timeout> seconds.
 
         Args:
@@ -532,12 +478,13 @@ class ClockBase(_ClockBase):
         """
         if not callable(callback):
             raise AssertionError('callback must be a callable, got %s' % callback)
-        event = ClockEvent(self, True, callback, timeout, self._last_tick, priority)
+        #event = ClockEvent(self, True, callback, timeout, self._last_tick, priority)
+        periodic_task = PeriodicTask(timeout, self.loop, callback)
 
         self._log.debug("Scheduled a recurring clock callback (callback=%s, timeout=%s, priority=%s)",
-                        str(callback), timeout, priority)
+                        str(callback), timeout)
 
-        return event
+        return periodic_task
 
     def unschedule(self, callback, all_events: bool=True):
         """Remove a previously scheduled event.
@@ -556,18 +503,10 @@ class ClockBase(_ClockBase):
             The all parameter was added. Before, it behaved as if `all` was
             `True`.
         """
-        if isinstance(callback, ClockEvent):
+        if isinstance(callback, (asyncio.Handle, PeriodicTask)):
             callback.cancel()
         else:
-            if all_events:
-                for ev in self.ordered_events[:]:
-                    if ev.get_callback() == callback:
-                        ev.cancel()
-            else:
-                for ev in self.ordered_events[:]:
-                    if ev.get_callback() == callback:
-                        ev.cancel()
-                        break
+            raise AssertionError("Broken unschedule")
 
     def _process_events(self):
         if not self.ordered_events:

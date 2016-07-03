@@ -10,6 +10,8 @@ import tempfile
 import queue
 import sys
 import threading
+
+import asyncio
 from pkg_resources import iter_entry_points
 
 from mpf._version import __version__
@@ -96,8 +98,8 @@ class MachineController(object):
 
         self._load_config()
 
-        self.clock = ClockBase()
-        self.clock.schedule_interval(self._check_crash_queue, 1)
+        self.clock = ClockBase(self)
+        self._crash_queue_checker = self.clock.schedule_interval(self._check_crash_queue, 1)
         self.configure_debugger()
 
         self.hardware_platforms = dict()
@@ -547,6 +549,7 @@ class MachineController(object):
         self._platform_stop()
         # todo change this to look for the shutdown event
         self.done = True
+        self.clock.loop.stop()
 
     def _run_loop(self):
         # Main machine run loop with when the default platform interface
@@ -559,7 +562,6 @@ class MachineController(object):
             pass
 
         self.stop()
-        self.log_loop_rate()
 
     def process_frame(self):
         """Process one machine loop iteration."""
@@ -582,10 +584,6 @@ class MachineController(object):
         This method is not yet implemented.
         """
         pass
-
-    def log_loop_rate(self):
-        self.log.info("Actual MPF loop rate: %s Hz",
-                      round(self.clock.get_fps(), 2))
 
     def bcp_reset_complete(self):
         pass
@@ -789,3 +787,6 @@ class MachineController(object):
 
         ConfigValidator.unload_config_spec()
         self.reset()
+
+    def get_event_loop(self):
+        return asyncio.get_event_loop()
