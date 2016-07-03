@@ -238,11 +238,13 @@ class BCPClientSocket(object):
         self.log.debug('Received "%s"', message)
 
         cmd, kwargs = decode_command_string(message.decode())
+        if rawbytes:
+            kwargs['rawbytes'] = rawbytes
 
         if cmd in self.bcp_client_socket_commands:
             self.bcp_client_socket_commands[cmd](**kwargs)
         else:
-            self.bcp.interface.process_bcp_message(cmd, kwargs, rawbytes, self)
+            self.bcp.interface.process_bcp_message(cmd, kwargs, self)
 
     def receive_hello(self, **kwargs):
         """Process incoming BCP 'hello' command."""
