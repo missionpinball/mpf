@@ -111,7 +111,7 @@ class TestBcp(MpfTestCase):
                          dict(key3='value5', key4='value6'))
 
     def test_receive_register_trigger(self):
-        self.machine.bcp.interface.process_bcp_message('register_trigger', {'event': 'test_event'}, None, None)
+        self.machine.bcp.interface.process_bcp_message('register_trigger', {'event': 'test_event'}, None)
         self.advance_time_and_run()
 
         self.assertIn('test_event', self.machine.bcp.interface.registered_trigger_events)
@@ -140,8 +140,12 @@ class TestBcp(MpfTestCase):
         self.machine_run()
         mc.events.post = MagicMock()
 
-        bcp_mpf = self.machine.bcp.interface
-        bcp_mpf.bcp_clients = [TestBcpClient(bcp_mc.receive_queue)]
+        client = TestBcpClient(bcp_mc.receive_queue)
+        self.machine.bcp.transport.register_transport(client)
+
+        self.machine.bcp.interface.process_bcp_message("register_trigger", {"event": "ball_started"}, client)
+        self.machine.bcp.interface.process_bcp_message("register_trigger", {"event": "ball_ended"}, client)
+        self.machine_run()
 
         self.machine.events.post('ball_started', ball=17,
                                  player=23)
