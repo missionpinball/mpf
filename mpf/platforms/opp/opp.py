@@ -52,7 +52,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                                  'the OPP platform interface')
 
         self.opp_connection = {}
-        self.connection_threads = set()
+        self.serial_connections = set()
         self.opp_incands = []
         self.incandDict = dict()
         self.opp_solenoid = []
@@ -101,7 +101,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
     def stop(self):
         """Stop hardware and close connections."""
-        for connections in self.connection_threads:
+        for connections in self.serial_connections:
             connections.stop()
 
     def __repr__(self):
@@ -144,11 +144,11 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
     def _connect_to_hardware(self):
         """Connect to each port from the config.
 
-        This process will cause the connection threads to figure out which processor they've connected to
+        This process will cause the OPPSerialCommunicator to figure out which chains they've connected to
         and to register themselves.
         """
         for port in self.config['ports']:
-            self.connection_threads.add(OPPSerialCommunicator(
+            self.serial_connections.add(OPPSerialCommunicator(
                 platform=self, port=port, baud=self.config['baud'],
                 send_queue=queue.Queue()))
 
@@ -497,7 +497,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                 raise AssertionError("Chain {} is unconfigured".format(chain_str))
             else:
                 # when there is only one port, use only available chain
-                chain_serial = list(self.connection_threads)[0].chain_serial
+                chain_serial = list(self.serial_connections)[0].chain_serial
         else:
             chain_serial = self.config['chains'][chain_str]
 
@@ -756,7 +756,7 @@ class OPPSerialCommunicator(object):
 
         self.identify_connection()
         self.platform.register_processor_connection(self.chain_serial, self)
-        self._start_threads()
+        self._connect_to_serials()
 
     def identify_connection(self):
         """Identify which processor this serial connection is talking to."""
@@ -869,7 +869,7 @@ class OPPSerialCommunicator(object):
                                          ((version_int >> 16) & 0xff), ((version_int >> 8) & 0xff),
                                          (version_int & 0xff)))
 
-    def _start_threads(self):
+    def _connect_to_serials(self):
         self.serial_connection.timeout = None
         self.machine.clock.schedule_socket_read_callback(self.serial_connection, self._read_socket)
 
@@ -881,7 +881,7 @@ class OPPSerialCommunicator(object):
         """Stop and shut down this serial connection."""
         self.log.error("Stop called on serial connection")
         self.serial_connection.close()
-        self.serial_connection = None  # child threads stop when this is None
+        self.serial_connection = None
 
     def send(self, msg):
         """Send a message to the remote processor over the serial connection.
