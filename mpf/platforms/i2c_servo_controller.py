@@ -18,6 +18,7 @@ class HardwarePlatform(ServoPlatform):
         self.log.debug("Configuring template hardware interface.")
         self.config = self.machine.config['servo_controller']
         self.platform = None
+        self.features['tickless'] = True
 
     def __repr__(self):
         return '<Platform.I2C_Servo_Controller_Platform>'
