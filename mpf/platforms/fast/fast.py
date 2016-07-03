@@ -769,6 +769,7 @@ class FastIOBoard:
 
     """A fast IO board on the NET processor."""
 
+    # pylint: disable-msg=too-many-arguments
     def __init__(self, node_id, model_string, firmware_version, switch_count, driver_count):
         self.node_id = node_id
         self.model_string = model_string
@@ -956,7 +957,7 @@ class SerialCommunicator(object):
         try:
             read_msg = self.serial_connection.read_all()
         except OSError:
-            read_msg = False
+            read_msg = None
 
         # we either got empty response (-> socket closed) or and error
         if not read_msg:
@@ -985,4 +986,3 @@ class SerialCommunicator(object):
 
             if msg.decode() not in self.ignored_messages:
                 self.platform.process_received_message(msg.decode())
-
