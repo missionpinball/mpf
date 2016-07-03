@@ -74,12 +74,6 @@ class BcpInterface(object):
 
         self.registered_trigger_events = CaseInsensitiveDict()
 
-        # Add the following to the set of events that already have mpf mc
-        # triggers since these are all posted on the mc side already
-        self.add_registered_trigger_event('ball_started')
-        self.add_registered_trigger_event('ball_ended')
-        self.add_registered_trigger_event('player_add_success')
-
         try:
             self.bcp_events = self.config['event_map']
             self.process_bcp_events()
