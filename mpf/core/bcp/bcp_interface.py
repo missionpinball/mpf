@@ -47,7 +47,6 @@ class BcpInterface(object):
 
         self.config = machine.config['bcp']
         self.bcp_events = dict()
-        self.bcp_clients = list()
 
         self.bcp_receive_commands = dict(
             error=self.bcp_receive_error,
@@ -200,18 +199,6 @@ class BcpInterface(object):
                                                       name=var_name,
                                                       value=settings['value'])
 
-    def remove_bcp_connection(self, bcp_client):
-        """Remove a BCP connection to a remote BCP host.
-
-        Args:
-            bcp_client: A reference to the BCPClientSocket instance you want to
-                remove.
-        """
-        try:
-            self.bcp_clients.remove(bcp_client)
-        except ValueError:
-            pass
-
     def _setup_player_monitor(self):
         Player.monitor_enabled = True
         self.machine.register_monitor('player', self._player_var_change)
@@ -340,10 +327,6 @@ class BcpInterface(object):
         """
         self.log.warning('Received Error command from host with parameters: %s',
                          kwargs)
-
-    def bcp_client_connected(self, client):
-        # TODO: use client
-        self.bcp_clients.append(client)
 
     def bcp_receive_reset_complete(self, client, **kwargs):
         del kwargs

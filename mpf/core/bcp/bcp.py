@@ -6,6 +6,9 @@ from mpf.core.bcp.bcp_transport import BcpTransportManager
 
 
 class Bcp:
+
+    """BCP Module."""
+
     def __init__(self, machine):
         self.interface = BcpInterface(machine)
         self.transport = BcpTransportManager(machine)
@@ -26,4 +29,3 @@ class Bcp:
         for name, settings in self.machine.config['bcp']['connections'].items():
             client = Util.string_to_class(settings['type'])(self.machine, name, settings, self.machine.bcp)
             self.transport.register_transport(client)
-            self.interface.bcp_client_connected(client)
