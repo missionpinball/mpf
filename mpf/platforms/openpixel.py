@@ -212,18 +212,15 @@ class OpenPixelClient(object):
 
 class OPCSerialSender:  # pragma: no cover
 
-    """Base class for the thread that connects to the OPC server.
+    """Base class for the serial sender.
 
     Args:
         machine: The main ``MachineController`` instance.
         config: Dictionary of configuration settings.
-
-    The OPC connection is handled in a separate thread so it doesn't bog down
-    the main MPF machine loop if there are connection problems.
     """
 
     def __init__(self, machine, config):
-        """Initialise sender thread."""
+        """Initialise serial sender."""
         self.machine = machine
         self.host = config['host']
         self.port = config['port']
