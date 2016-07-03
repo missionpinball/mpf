@@ -68,7 +68,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         self.dmd_connection = None
         self.net_connection = None
         self.rgb_connection = None
-        self.connection_threads = set()
+        self.serial_connections = set()
         self.fast_leds = set()
         self.flag_led_tick_registered = False
         self.config = None
@@ -119,7 +119,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
     def stop(self):
         """Stop platform and close connections."""
-        for connection in self.connection_threads:
+        for connection in self.serial_connections:
             connection.stop()
 
     def __repr__(self):
@@ -163,7 +163,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         and to register themselves.
         """
         for port in self.config['ports']:
-            self.connection_threads.add(SerialCommunicator(
+            self.serial_connections.add(SerialCommunicator(
                 machine=self.machine, platform=self, port=port,
                 baud=self.config['baud']))
 
@@ -822,7 +822,7 @@ class SerialCommunicator(object):
 
         self.identify_connection()
         self.platform.register_processor_connection(self.remote_processor, self)
-        self._start_threads()
+        self._connect_to_hardware()
 
     def identify_connection(self):
         """Identifie which processor this serial connection is talking to."""
@@ -921,14 +921,14 @@ class SerialCommunicator(object):
         if not firmware_ok:
             raise AssertionError("Exiting due to IO board firmware mismatch")
 
-    def _start_threads(self):
+    def _connect_to_hardware(self):
         self.serial_connection.timeout = None
         self.machine.clock.schedule_socket_read_callback(self.serial_connection, self._receiver)
 
     def stop(self):
         """Stop and shut down this serial connection."""
         self.serial_connection.close()
-        self.serial_connection = None  # child threads stop when this is None
+        self.serial_connection = None
 
         # todo clear the hw?
 
