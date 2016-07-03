@@ -55,8 +55,6 @@ class BcpInterface(object):
             trigger=self.bcp_receive_trigger,
             register_trigger=self.bcp_receive_register_trigger,
             get_machine_vars=self._get_machine_vars,
-            get=self.bcp_receive_get,
-            set=self.bcp_receive_set,
             reset_complete=self.bcp_receive_reset_complete,
             dmd_frame=self.bcp_receive_dmd_frame,
             rgb_dmd_frame=self.bcp_receive_rgb_dmd_frame)
@@ -387,41 +385,6 @@ class BcpInterface(object):
         del rawbytes
         self.log.warning('Received Error command from host with parameters: %s',
                          kwargs)
-
-    def bcp_receive_get(self, client, names, rawbytes, **kwargs):
-        """Process an incoming BCP 'get' command by posting an event 'bcp_get_<name>'.
-
-        It's up to an event handler to register for that event and to send the response BCP 'set' command.
-        """
-        del kwargs
-        del rawbytes
-        for name in Util.string_to_list(names):
-            self.machine.events.post('bcp_get_{}'.format(name))
-        '''event: bcp_get_(name)
-
-        desc: A BCP get command was received.
-        '''
-
-    def bcp_receive_set(self, client, rawbytes, **kwargs):
-        """Process an incoming BCP 'set' command by posting an event
-        'bcp_set_<name>' with a parameter value=<value>. It's up to an event
-        handler to register for that event and to do something with it.
-
-        Note that BCP set commands can contain multiple key/value pairs, and
-        this method will post one event for each pair.
-
-        """
-        del rawbytes
-        for k, v in kwargs.items():
-            self.machine.events.post('bcp_set_{}'.format(k), value=v)
-        '''event: bcp_set_(name)
-
-        A BCP set command was received.
-
-        args:
-
-        value: The value of the "name" variable to set.
-        '''
 
     def bcp_client_connected(self, client):
         # TODO: use client
