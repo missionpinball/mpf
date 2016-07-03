@@ -72,7 +72,7 @@ class TestHighScoreMode(MpfTestCase):
                                                         'name': 'new_high_score'})
 
         self.machine.bcp.interface.process_bcp_message(
-            'trigger', dict(name='text_input_high_score_complete', text='NEW'), None)
+            'trigger', dict(name='text_input_high_score_complete', text='NEW'), None, self.client)
 
         # award slide display time is 4 secs
         self.advance_time_and_run(2)
@@ -123,7 +123,7 @@ class TestHighScoreMode(MpfTestCase):
         self.client.send.reset_mock()
 
         self.machine.bcp.interface.process_bcp_message(
-            'trigger', dict(name='text_input_high_score_complete', text='NEW'), None)
+            'trigger', dict(name='text_input_high_score_complete', text='NEW'), None, self.client)
         self.advance_time_and_run(1)
 
         # High score 1
@@ -146,7 +146,7 @@ class TestHighScoreMode(MpfTestCase):
         ])
 
         self.machine.bcp.interface.process_bcp_message(
-            'trigger', dict(name='text_input_high_score_complete', text='P2'), None)
+            'trigger', dict(name='text_input_high_score_complete', text='P2'), None, self.client)
         self.advance_time_and_run(5)
 
         # High score done
@@ -182,7 +182,7 @@ class TestHighScoreMode(MpfTestCase):
                                                          'name': 'new_high_score'})
 
         self.machine.bcp.interface.process_bcp_message(
-            'trigger', dict(name='text_input_high_score_complete', text='NEW'), None)
+            'trigger', dict(name='text_input_high_score_complete', text='NEW'), None, self.client)
 
         self.advance_time_and_run(5)
         self.assertFalse(self.machine.modes.high_score.active)
@@ -219,7 +219,7 @@ class TestHighScoreMode(MpfTestCase):
                                                         'name': 'new_high_score'})
 
         self.machine.bcp.interface.process_bcp_message(
-            'trigger', dict(name='text_input_high_score_complete', text='NEWNEW'), None)
+            'trigger', dict(name='text_input_high_score_complete', text='NEWNEW'), None, self.client)
 
         self.advance_time_and_run(5)
         self.assertFalse(self.machine.modes.high_score.active)
@@ -269,7 +269,7 @@ class TestHighScoreMode(MpfTestCase):
         self.client.send.reset_mock()
 
         self.machine.bcp.interface.process_bcp_message(
-            'trigger', dict(name='text_input_high_score_complete', text='NEW'), None)
+            'trigger', dict(name='text_input_high_score_complete', text='NEW'), None, self.client)
         self.advance_time_and_run(5)
 
         # High score 1
@@ -279,7 +279,7 @@ class TestHighScoreMode(MpfTestCase):
                                                         'name': 'new_high_score'})
 
         self.machine.bcp.interface.process_bcp_message(
-            'trigger', dict(name='text_input_high_score_complete', text='P1'), None)
+            'trigger', dict(name='text_input_high_score_complete', text='P1'), None, self.client)
         self.advance_time_and_run(5)
 
         # Loops champ
@@ -289,7 +289,7 @@ class TestHighScoreMode(MpfTestCase):
                                                         'name': 'new_high_score'})
 
         self.machine.bcp.interface.process_bcp_message(
-            'trigger', dict(name='text_input_high_score_complete', text='YAY'), None)
+            'trigger', dict(name='text_input_high_score_complete', text='YAY'), None, self.client)
         self.advance_time_and_run(5)
 
         # High score done
