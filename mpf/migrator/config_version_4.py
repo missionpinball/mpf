@@ -1039,7 +1039,8 @@ class V4Migrator(VersionMigrator):
             sound_player[event][sound] = CommentedMap()
             sound_player[event][sound]['action'] = 'play'
 
-    def _migrate_logic_block(self, settings):
+    @staticmethod
+    def _migrate_logic_block(settings):
         try:
             if 'reset_each_ball' in settings:
                 reset_each_ball = bool(settings['reset_each_ball'])
