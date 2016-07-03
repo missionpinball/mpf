@@ -225,7 +225,7 @@ class BcpInterface(object):
             if '__all__' in self.config['machine_variables']:
                 self.filter_machine_vars = False
 
-    def _get_machine_vars(self, rawbytes):
+    def _get_machine_vars(self, client, rawbytes):
         self._send_machine_vars()
 
     def _send_machine_vars(self):
@@ -368,7 +368,7 @@ class BcpInterface(object):
         if callback:
             callback()
 
-    def process_bcp_message(self, cmd, kwargs, rawbytes):
+    def process_bcp_message(self, cmd, kwargs, rawbytes, client):
         """Process BCP message.
 
         Args:
@@ -379,11 +379,11 @@ class BcpInterface(object):
         self.log.debug("Processing command: %s %s", cmd, kwargs)
 
         if cmd in self.bcp_receive_commands:
-            self.bcp_receive_commands[cmd](rawbytes=rawbytes, **kwargs)
+            self.bcp_receive_commands[cmd](client=client, rawbytes=rawbytes, **kwargs)
         else:
-            self.log.warning("Received invalid BCP command: %s", cmd)
+            self.log.warning("Received invalid BCP command: %s from client: %s", cmd, client.name)
 
-    def bcp_receive_error(self, rawbytes, **kwargs):
+    def bcp_receive_error(self, client, rawbytes, **kwargs):
         """A remote BCP host has sent a BCP error message, indicating that a
         command from MPF was not recognized.
 
@@ -394,7 +394,7 @@ class BcpInterface(object):
         self.log.warning('Received Error command from host with parameters: %s',
                          kwargs)
 
-    def bcp_receive_get(self, names, rawbytes, **kwargs):
+    def bcp_receive_get(self, client, names, rawbytes, **kwargs):
         """Process an incoming BCP 'get' command by posting an event 'bcp_get_<name>'.
 
         It's up to an event handler to register for that event and to send the response BCP 'set' command.
@@ -408,7 +408,7 @@ class BcpInterface(object):
         desc: A BCP get command was received.
         '''
 
-    def bcp_receive_set(self, rawbytes, **kwargs):
+    def bcp_receive_set(self, client, rawbytes, **kwargs):
         """Process an incoming BCP 'set' command by posting an event
         'bcp_set_<name>' with a parameter value=<value>. It's up to an event
         handler to register for that event and to do something with it.
@@ -433,7 +433,7 @@ class BcpInterface(object):
         # TODO: use client
         self.bcp_clients.append(client)
 
-    def bcp_receive_reset_complete(self, rawbytes, **kwargs):
+    def bcp_receive_reset_complete(self, client, rawbytes, **kwargs):
         del kwargs
         del rawbytes
         self.machine.bcp_reset_complete()
@@ -459,7 +459,7 @@ class BcpInterface(object):
         self.send('reset')
         pass
 
-    def bcp_receive_switch(self, name, state, rawbytes, **kwargs):
+    def bcp_receive_switch(self, client, name, state, rawbytes, **kwargs):
         """Process an incoming switch state change request from a remote BCP host.
 
         Args:
@@ -487,7 +487,7 @@ class BcpInterface(object):
                                                       state=state,
                                                       logical=True)
 
-    def bcp_receive_dmd_frame(self, rawbytes, **kwargs):
+    def bcp_receive_dmd_frame(self, client, rawbytes, **kwargs):
         """Called when the BCP client receives a new DMD frame from the remote BCP host.
 
         This method forwards the frame to the physical DMD.
@@ -495,7 +495,7 @@ class BcpInterface(object):
         del kwargs
         self.physical_dmd_update_callback(rawbytes)
 
-    def bcp_receive_rgb_dmd_frame(self, rawbytes, **kwargs):
+    def bcp_receive_rgb_dmd_frame(self, client, rawbytes, **kwargs):
         """Called when the BCP client receives a new RGB DMD frame from the remote BCP host.
 
         This method forwards the frame to the physical DMD.
@@ -503,10 +503,10 @@ class BcpInterface(object):
         del kwargs
         self.physical_rgb_dmd_update_callback(rawbytes)
 
-    def bcp_receive_register_trigger(self, event, rawbytes, **kwargs):
+    def bcp_receive_register_trigger(self, client, event, rawbytes, **kwargs):
         del rawbytes
         del kwargs
-        self.add_registered_trigger_event(event)
+        self.add_registered_trigger_event_for_client(client, event)
 
     def bcp_player_added(self, player, num):
         """Send BCP 'player_added' to the connected BCP hosts."""
@@ -529,7 +529,7 @@ class BcpInterface(object):
 
         self.send(bcp_command='trigger', name=name, **kwargs)
 
-    def bcp_receive_trigger(self, name=None, rawbytes=None, **kwargs):
+    def bcp_receive_trigger(self, client, name=None, rawbytes=None, **kwargs):
         """Process an incoming trigger command from a remote BCP host."""
         if not name:
             return
