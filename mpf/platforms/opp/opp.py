@@ -68,7 +68,6 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self.numGen2Brd = 0
         self.gen2AddrArr = []
         self.badCRC = 0
-        self.oppFirmwareVers = []
         self.minVersion = 0xffffffff
         self.tickCnt = 0
 
@@ -244,7 +243,8 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
             index += 1
         self.log.debug("Found %d Gen2 OPP boards.", self.numGen2Brd)
 
-    def eom_resp(self, chain_serial, msg):
+    @staticmethod
+    def eom_resp(chain_serial, msg):
         """Process an EOM.
 
         Args:
@@ -336,7 +336,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
             chain_serial: Serial of the chain which received the message.
             msg: Message to parse.
         """
-        # TODO: implement chain_serial
+        del chain_serial
         # Multiple get version responses can be received at once
         self.log.debug("Received Version Response:%s", "".join(" 0x%02x" % b for b in msg))
         end = False
@@ -361,9 +361,8 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                     self.minVersion = version
                 if version == BAD_FW_VERSION:
                     raise AssertionError("Original firmware sent only to Brian before adding "
-                                         "real version numbers.  The firmware must be updated before "
+                                         "real version numbers. The firmware must be updated before "
                                          "MPF will work.")
-                self.oppFirmwareVers.append(version)
             if not end:
                 if msg[curr_index + 7] == ord(OppRs232Intf.EOM_CMD):
                     end = True
