@@ -3,7 +3,6 @@
 leds:
     led_01:
         number: 0
-        color_correction_profile: default
     led_02:
         number: 1
         color_correction_profile: correction_profile_1
