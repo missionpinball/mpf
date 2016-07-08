@@ -17,6 +17,7 @@ class Led(SystemWideDevice):
 
     @classmethod
     def device_class_init(cls, machine):
+        """Class initializer method"""
 
         cls.machine = machine
 
@@ -28,6 +29,12 @@ class Led(SystemWideDevice):
 
         # Generate and add color correction profiles to the machine
         machine.led_color_correction_profiles = dict()
+
+        # Create the default color correction profile and add it to the machine
+        default_profile = RGBColorCorrectionProfile.default()
+        machine.led_color_correction_profiles['default'] = default_profile
+
+        # Add any user-defined profiles specified in the machine config file
         for profile_name, profile_parameters in (
                 machine.config['led_settings']
                 ['color_correction_profiles'].items()):
