@@ -8,11 +8,9 @@ modes:
 leds:
     led_01:
         number: 0
-        color_correction_profile: default
         tags: tag1
     led_02:
         number: 1
-        color_correction_profile: default
         tags: tag1
     led_03:
         number: 2
