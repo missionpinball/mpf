@@ -1,4 +1,5 @@
-from mock import MagicMock
+from unittest.mock import MagicMock
+
 from mpf.tests.MpfTestCase import MpfTestCase
 
 
