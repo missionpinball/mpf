@@ -188,7 +188,7 @@ class BCPClientSocket(object):
         # connection has been closed
         self.socket.close()
         self.machine.clock.unschedule_socket_read_callback(self.socket)
-        self.machine.done = True
+        self.machine.stop()
 
     def _receive(self):
         """Receive loop."""
@@ -257,7 +257,7 @@ class BCPClientSocket(object):
         self.machine.bcp.interface.remove_bcp_connection(self)
 
         self.machine.bcp.interface.shutdown()
-        self.machine.done = True
+        self.machine.stop()
 
     def send_hello(self):
         """Send BCP 'hello' command."""
@@ -267,4 +267,4 @@ class BCPClientSocket(object):
 
     def send_goodbye(self):
         """Send BCP 'goodbye' command."""
-        self.send('goodbye')
+        self.send('goodbye', {})

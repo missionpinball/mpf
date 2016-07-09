@@ -48,7 +48,7 @@ class BcpTransportManager:
         try:
             client.send(bcp_command, kwargs)
         except IOError:
-            client.close()
+            client.stop()
             self.unregister_transport(client)
 
     def send_to_all_clients(self, bcp_command, **kwargs):
@@ -58,7 +58,7 @@ class BcpTransportManager:
     def shutdown(self):
         """Prepare the BCP clients for MPF shutdown."""
         for client in self._transports:
-            client.close()
+            client.stop()
 
 
 class BcpTransport:
