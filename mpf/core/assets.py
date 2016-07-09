@@ -488,8 +488,7 @@ class AssetManager(object):
         self.loader_queue.put(asset)
 
         if not self._loaded_watcher:
-            self.machine.clock.schedule_interval(self._check_loader_status, 0.001)
-            self._loaded_watcher = True
+            self._loaded_watcher = self.machine.clock.schedule_interval(self._check_loader_status, 0.001)
 
     def _check_loader_status(self, *args):
         del args
@@ -505,8 +504,8 @@ class AssetManager(object):
         if self.num_assets_to_load == self.num_assets_loaded:
             self.num_assets_loaded = 0
             self.num_assets_to_load = 0
-            self.machine.clock.unschedule(self._check_loader_status)
-            self._loaded_watcher = False
+            self.machine.clock.unschedule(self._loaded_watcher)
+            self._loaded_watcher = None
 
     def _bcp_client_asset_load(self, total, remaining):
         # Callback for the BCP assets_to_load command which tracks asset
