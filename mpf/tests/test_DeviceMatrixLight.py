@@ -15,11 +15,7 @@ class TestDeviceMatrixLight(MpfTestCase):
         return 'smart_virtual'
 
     def _synchronise_light_update(self):
-        ts = False
-        for event in self.machine.clock.ordered_events:
-            if event.get_callback() == MatrixLight.update_matrix_lights:
-                ts = event.next_event_time
-
+        ts = MatrixLight._updater_task.get_next_call_time()
         self.assertTrue(ts)
         self.advance_time_and_run(ts - self.machine.clock.get_time())
         self.advance_time_and_run(0.01)

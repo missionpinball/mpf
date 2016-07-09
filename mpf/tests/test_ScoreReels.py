@@ -13,11 +13,7 @@ class TestScoreReels(MpfTestCase):
         return 'tests/machine_files/score_reels/'
 
     def _synchronise_to_reel(self):
-        ts = False
-        for event in self.machine.clock.ordered_events:
-            if event.get_callback() == self.machine.score_reel_groups.player1.tick:
-                ts = event.next_event_time
-
+        ts =  self.machine.score_reel_groups.player1._tick_task.get_next_call_time()
         self.assertTrue(ts)
         self.advance_time_and_run(ts - self.machine.clock.get_time())
         self.advance_time_and_run(.01)

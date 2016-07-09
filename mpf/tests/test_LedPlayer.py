@@ -16,11 +16,7 @@ class TestLedPlayer(MpfTestCase):
         return 'tests/machine_files/led_player/'
 
     def _synchronise_led_update(self):
-        ts = False
-        for event in self.machine.clock.ordered_events:
-            if event.get_callback() == Led.update_leds:
-                ts = event.next_event_time
-
+        ts = Led._updater_task.get_next_call_time()
         self.assertTrue(ts)
         self.advance_time_and_run(ts - self.machine.clock.get_time())
         self.advance_time_and_run(.01)
