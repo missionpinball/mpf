@@ -68,9 +68,9 @@ community.''',
 
     zip_safe=False,
 
-    install_requires=['ruamel.yaml>=0.10, <0.11', 'pyserial', 'mock'],
+    install_requires=['ruamel.yaml>=0.10, <0.11', 'pyserial'],
 
-    tests_require=['mock'],
+    tests_require=['asyncio-time-travel'],
     test_suite="mpf.tests",
 
     entry_points={
