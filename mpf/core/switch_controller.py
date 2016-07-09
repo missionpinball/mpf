@@ -31,6 +31,8 @@ class SwitchController(object):
         # Dictionary of switches and states that have been registered for
         # callbacks.
 
+        self._timed_switch_handler_delay = None
+
         self.active_timed_switches = defaultdict(list)
         # Dictionary of switches that are currently in a state counting ms
         # waiting to notify their handlers. In other words, this is the dict that
@@ -230,7 +232,7 @@ class SwitchController(object):
     def set_state(self, switch_name, state=1, reset_time=False):
         """Set the state of a switch."""
         if reset_time:
-            timestamp = -1
+            timestamp = -100000     # clock can be 0 at start
         else:
             timestamp = self.machine.clock.get_time()
 
@@ -389,9 +391,12 @@ class SwitchController(object):
 
     def _add_timed_switch_handler(self, key, value):
         self.active_timed_switches[key].append(value)
-        self.machine.clock.unschedule(self._process_active_timed_switches)
-        self.machine.clock.schedule_once(self._process_active_timed_switches,
-                                         self.get_next_timed_switch_event() - self.machine.clock.get_time())
+
+        if self._timed_switch_handler_delay:
+            self.machine.clock.unschedule(self._timed_switch_handler_delay)
+        self._timed_switch_handler_delay = self.machine.clock.schedule_once(
+            self._process_active_timed_switches,
+            self.get_next_timed_switch_event() - self.machine.clock.get_time())
 
     def _call_handlers(self, name, state):
         # Combine name & state so we can look it up
@@ -638,6 +643,8 @@ class SwitchController(object):
 
         self.machine.events.process_event_queue()
         if next_event_time:
-            self.machine.clock.unschedule(self._process_active_timed_switches)
-            self.machine.clock.schedule_once(self._process_active_timed_switches,
-                                             next_event_time - self.machine.clock.get_time())
+            if self._timed_switch_handler_delay:
+                self.machine.clock.unschedule(self._timed_switch_handler_delay)
+            self._timed_switch_handler_delay = self.machine.clock.schedule_once(
+                self._process_active_timed_switches,
+                next_event_time - self.machine.clock.get_time())
