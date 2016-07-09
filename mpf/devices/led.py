@@ -19,6 +19,7 @@ class Led(SystemWideDevice):
 
     leds_to_update = set()
     leds_to_fade = set()
+    _updater_task = None
 
     @classmethod
     def device_class_init(cls, machine: MachineController):
@@ -58,8 +59,8 @@ class Led(SystemWideDevice):
 
         # schedule the single machine-wide update to write the current led of
         # each LED to the hardware
-        machine.clock.schedule_interval(cls.update_leds,
-                                        1 / machine.config['mpf']['default_led_hw_update_hz'])
+        cls._updater_task = machine.clock.schedule_interval(
+            cls.update_leds, 1 / machine.config['mpf']['default_led_hw_update_hz'])
 
         machine.mode_controller.register_stop_method(cls.mode_stop)
 
