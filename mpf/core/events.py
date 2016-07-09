@@ -358,6 +358,9 @@ class EventManager(object):
             self.log.debug("^^^^ Posted event '%s'. Type: %s, Callback: %s, "
                            "Args: %s", event, ev_type, callback, kwargs)
 
+        if not self.event_queue and hasattr(self.machine.clock, "loop"):
+            self.machine.clock.loop.call_soon(self.process_event_queue)
+
         self.event_queue.append((event, ev_type, callback, kwargs))
         if self.debug:
             self.log.debug("============== EVENTS QUEUE =============")
