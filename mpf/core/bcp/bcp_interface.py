@@ -59,18 +59,19 @@ class BcpInterface(object):
             dmd_frame=self.bcp_receive_dmd_frame,
             rgb_dmd_frame=self.bcp_receive_rgb_dmd_frame)
 
+        # TODO: remove/move dmd handlers
         self.physical_dmd_update_callback = None
         self.physical_rgb_dmd_update_callback = None
-
         self.connection_callbacks = list()
+        # TODO end
 
-        self.registered_trigger_events = CaseInsensitiveDict()
-
+        # TODO: remove event_map
         try:
             self.bcp_events = self.config['event_map']
             self.process_bcp_events()
         except KeyError:
             pass
+        # TODO end
 
         self._setup_player_monitor()
 
@@ -124,22 +125,11 @@ class BcpInterface(object):
 
     def register_dmd(self, dmd_update_meth):
         self.physical_dmd_update_callback = dmd_update_meth
-        self.send('dmd_start')
+        self.machine.bcp.transport.send_to_all_clients('dmd_start')
 
     def register_rgb_dmd(self, dmd_update_meth):
         self.physical_rgb_dmd_update_callback = dmd_update_meth
-        self.send('rgb_dmd_start')
-
-    # TODO: end
-
-    def __repr__(self):
-        return '<BCP Interface>'
-
-    def register_command_callback(self, cmd, callback):
-        pass
-
-    def unregister_command_callback(self, cmd, callback):
-        pass
+        self.machine.bcp.transport.send_to_all_clients('rgb_dmd_start')
 
     def _register_connection_callback(self, callback):
         # This is a callback that is called after BCP is connected. If
@@ -151,43 +141,54 @@ class BcpInterface(object):
             if False:
                 self.machine.clock.schedule_once(callback, -1)
 
+    def bcp_receive_dmd_frame(self, client, rawbytes, **kwargs):
+        """Called when the BCP client receives a new DMD frame from the remote BCP host.
+
+        This method forwards the frame to the physical DMD.
+        """
+        del kwargs
+        self.physical_dmd_update_callback(rawbytes)
+
+    def bcp_receive_rgb_dmd_frame(self, client, rawbytes, **kwargs):
+        """Called when the BCP client receives a new RGB DMD frame from the remote BCP host.
+
+        This method forwards the frame to the physical DMD.
+        """
+        del kwargs
+        self.physical_rgb_dmd_update_callback(rawbytes)
+    # TODO: end
+
+    def __repr__(self):
+        return '<BCP Interface>'
+
+    def register_command_callback(self, cmd, callback):
+        # TODO: implement
+        pass
+
+    def unregister_command_callback(self, cmd, callback):
+        # TODO: implement
+        pass
+
     def add_registered_trigger_event_for_client(self, client, event):
-        # TODO: implement
-        self.add_registered_trigger_event(event)
-
-    def remove_registered_trigger_event_for_client(self, client, event):
-        # TODO: implement
-        self.remove_registered_trigger_event(event)
-
-    def bcp_trigger_client(self, client, name, **kwargs):
-        # TODO: implement
-        self.bcp_trigger(name, **kwargs)
-
-    def add_registered_trigger_event(self, event):
-        if not self.configured:
-            return
-        try:
-            self.registered_trigger_events[event] += 1
-        except KeyError:
-            self.registered_trigger_events[event] = 1
+        # register handler if first transport
+        if not self.machine.bcp.transport.get_transports_for_handler(event):
             self.machine.events.add_handler(event=event,
                                             handler=self.bcp_trigger,
                                             name=event)
+        # register transport
+        self.machine.bcp.transport.add_handler_to_transport(event, client)
 
-    def remove_registered_trigger_event(self, event):
-        if not self.configured:
-            return
-        try:
-            self.registered_trigger_events[event] -= 1
-            if not self.registered_trigger_events[event]:
-                del self.registered_trigger_events[event]
-                self.machine.events.remove_handler_by_event(
-                    event=event, handler=self.bcp_trigger)
-        except KeyError:
-            pass
+    def remove_registered_trigger_event_for_client(self, client, event):
+        # unregister transport
+        self.machine.bcp.transport.remove_transport_from_handle(event, client)
+
+        # if not transports remain. remove handler
+        if not self.machine.bcp.transport.get_transports_for_handler(event):
+            self.machine.events.remove_handler_by_event(event=event, handler=self.bcp_trigger)
 
     def _monitor_player_vars(self, client):
         self.machine.bcp.transport.add_handler_to_transport("_player_vars", client)
+        self.add_registered_trigger_event_for_client(client, 'player_score')
 
     def _monitor_machine_vars(self, client):
         self._send_machine_vars(client)
@@ -202,12 +203,6 @@ class BcpInterface(object):
     def _setup_player_monitor(self):
         Player.monitor_enabled = True
         self.machine.register_monitor('player', self._player_var_change)
-
-        # Since we have a player monitor setup, we need to add whatever events
-        # it will send to our ignored list. Otherwise
-        # register_mpfmc_trigger_events() will register for them too and they'll
-        # be sent twice
-        self.add_registered_trigger_event('player_score')
 
     def _setup_machine_var_monitor(self):
         self.machine.machine_var_monitor = True
@@ -239,6 +234,7 @@ class BcpInterface(object):
             prev_value=prev_value,
             change=change)
 
+    # TODO: remove event_map
     def process_bcp_events(self):
         """Process the BCP Events from the config."""
         # config is localized to BCPEvents
@@ -278,31 +274,11 @@ class BcpInterface(object):
             for param, value in params.items():
                 params[param] = self._replace_variables(value, kwargs)
 
-            self.send(command, **params)
+            self.machine.bcp.transport.send_to_all_clients(command, **params)
 
         else:
-            self.send(command)
-
-    def send(self, bcp_command, **kwargs):
-        """Send a BCP message.
-
-        Args:
-            bcp_command: String name of the BCP command that will be sent.
-            **kwargs: Optional kwarg pairs that will be sent as parameters along
-                with the BCP command.
-
-        Example:
-            If you call this method like this:
-                send('trigger', ball=1, string'hello')
-
-            The BCP command that will be sent will be this:
-                trigger?ball=1&string=hello
-        """
-        # TODO: remove this legacy method
-        if not self.configured:
-            return
-
-        self.machine.bcp.transport.send_to_all_clients(bcp_command, **kwargs)
+            self.machine.bcp.transport.send_to_all_clients(command)
+    # TODO end
 
     def process_bcp_message(self, cmd, kwargs, client):
         """Process BCP message.
@@ -339,19 +315,18 @@ class BcpInterface(object):
         """
         del config
         del kwargs
-        self.send('mode_start', name=mode.name, priority=priority)
+        self.machine.bcp.transport.send_to_all_clients('mode_start', name=mode.name, priority=priority)
 
         return self.bcp_mode_stop, mode.name
 
     def bcp_mode_stop(self, name, **kwargs):
         """Send BCP 'mode_stop' to the connected BCP hosts."""
         del kwargs
-        self.send('mode_stop', name=name)
+        self.machine.bcp.transport.send_to_all_clients('mode_stop', name=name)
 
     def bcp_reset(self):
-        """Sends the 'reset' command to the remote BCP host."""
-        self.send('reset')
-        pass
+        """Send the 'reset' command to the remote BCP host."""
+        self.machine.bcp.transport.send_to_all_clients("reset")
 
     def bcp_receive_switch(self, client, name, state, **kwargs):
         """Process an incoming switch state change request from a remote BCP host.
@@ -363,6 +338,7 @@ class BcpInterface(object):
                 from whatever its current state is to the opposite state.
         """
         del kwargs
+        del client
         state = int(state)
 
         if name not in self.machine.switches:
@@ -380,22 +356,6 @@ class BcpInterface(object):
                                                       state=state,
                                                       logical=True)
 
-    def bcp_receive_dmd_frame(self, client, rawbytes, **kwargs):
-        """Called when the BCP client receives a new DMD frame from the remote BCP host.
-
-        This method forwards the frame to the physical DMD.
-        """
-        del kwargs
-        self.physical_dmd_update_callback(rawbytes)
-
-    def bcp_receive_rgb_dmd_frame(self, client, rawbytes, **kwargs):
-        """Called when the BCP client receives a new RGB DMD frame from the remote BCP host.
-
-        This method forwards the frame to the physical DMD.
-        """
-        del kwargs
-        self.physical_rgb_dmd_update_callback(rawbytes)
-
     def bcp_receive_register_trigger(self, client, event, **kwargs):
         del kwargs
         self.add_registered_trigger_event_for_client(client, event)
@@ -403,7 +363,7 @@ class BcpInterface(object):
     def bcp_player_added(self, num, **kwargs):
         """Send BCP 'player_added' to the connected BCP hosts."""
         del kwargs
-        self.send('player_added', player_num=num)
+        self.machine.bcp.transport.send_to_clients_with_handler('_player_vars', 'player_added', player_num=num)
 
     def bcp_trigger(self, name, **kwargs):
         """Send BCP 'trigger' to the connected BCP hosts."""
@@ -419,10 +379,12 @@ class BcpInterface(object):
             except AttributeError:
                 pass
 
-        self.send(bcp_command='trigger', name=name, **kwargs)
+        self.machine.bcp.transport.send_to_clients_with_handler(
+            handler=name, bcp_command='trigger', name=name, **kwargs)
 
     def bcp_receive_trigger(self, client, name=None, **kwargs):
         """Process an incoming trigger command from a remote BCP host."""
+        del client
         if not name:
             return
 
@@ -434,4 +396,3 @@ class BcpInterface(object):
 
         else:
             self.machine.events.post(event=name, **kwargs)
-
