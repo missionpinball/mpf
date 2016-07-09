@@ -19,15 +19,6 @@ class DelayManagerRegistry(object):
     def add_delay_manager(self, delay_manager):
         self.delay_managers.add(delay_manager)
 
-    def get_next_event(self):
-        next_event_time = False
-        for delay_manager in self.delay_managers:
-            next_event_time_single = delay_manager.get_next_event()
-            if not next_event_time or (next_event_time > next_event_time_single and next_event_time_single):
-                next_event_time = next_event_time_single
-
-        return next_event_time
-
 
 class DelayManager(object):
     """Handles delays for one object"""
@@ -123,14 +114,6 @@ class DelayManager(object):
             self.remove(name)
 
         self.delays = {}
-
-    def get_next_event(self):
-        next_event_time = False
-        for name in list(self.delays.keys()):
-            if not next_event_time or next_event_time > self.delays[name].next_event_time:
-                next_event_time = self.delays[name].next_event_time
-
-        return next_event_time
 
     def _process_delay_callback(self, name, callback, dt, **kwargs):
         del dt
