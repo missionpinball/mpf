@@ -98,6 +98,8 @@ class BallDevice(SystemWideDevice):
 
         self.jam_switch_state_during_eject = False
 
+        self._eject_status_logger = None
+
         self._incoming_balls = deque()
         # deque of tuples that tracks incoming balls this device should expect
         # each tuple is (self.machine.clock.get_time() formatted timeout, source device)
@@ -1572,7 +1574,7 @@ class BallDevice(SystemWideDevice):
             self.log.debug("Setting up eject confirmation")
             self.eject_start_time = self.machine.clock.get_time()
             self.log.debug("Eject start time: %s", self.eject_start_time)
-            self.machine.clock.schedule_interval(self._eject_status, 1)
+            self._eject_status_logger = self.machine.clock.schedule_interval(self._eject_status, 1)
 
         timeout = self.config['eject_timeouts'][target]
         if timeout:
@@ -1603,7 +1605,8 @@ class BallDevice(SystemWideDevice):
     def _cancel_eject_confirmation(self):
         if self.debug:
             self.log.debug("Canceling eject confirmations")
-            self.machine.clock.unschedule(self._eject_status)
+            if self._eject_status_logger:
+                self.machine.clock.unschedule(self._eject_status_logger)
         self.eject_in_progress_target = None
 
         # Remove any event watching for success
