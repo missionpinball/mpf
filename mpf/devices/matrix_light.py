@@ -22,6 +22,7 @@ class MatrixLight(SystemWideDevice):
 
     lights_to_update = set()
     lights_to_fade = set()
+    _updater_task = None
 
     @classmethod
     def device_class_init(cls, machine: MachineController):
@@ -36,8 +37,8 @@ class MatrixLight(SystemWideDevice):
 
         machine.validate_machine_config_section('matrix_light_settings')
 
-        machine.clock.schedule_interval(cls.update_matrix_lights,
-                                        1 / machine.config['mpf']['default_matrix_light_hw_update_hz'])
+        cls._updater_task = machine.clock.schedule_interval(
+            cls.update_matrix_lights, 1 / machine.config['mpf']['default_matrix_light_hw_update_hz'])
 
         machine.mode_controller.register_stop_method(cls.mode_stop)
 
