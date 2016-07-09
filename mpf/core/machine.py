@@ -550,7 +550,6 @@ class MachineController(object):
         # todo change this to look for the shutdown event
         self.done = True
         self.clock.loop.stop()
-        self.clock.loop.close()
 
     def _run_loop(self):
         # Main machine run loop with when the default platform interface
@@ -559,6 +558,7 @@ class MachineController(object):
         self.clock.run()
 
         self.stop()
+        self.clock.loop.close()
 
     def _platform_stop(self):
         for platform in list(self.hardware_platforms.values()):

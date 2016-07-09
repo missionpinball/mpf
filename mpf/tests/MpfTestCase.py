@@ -288,6 +288,7 @@ class MpfTestCase(unittest.TestCase):
             self.min_frame_time = 20.0
             self.advance_time_and_run(300)
         self.machine.stop()
+        self.machine.clock.loop.close()
         self.machine = None
 
         self._unmock_data_manager()
