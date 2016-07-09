@@ -1607,6 +1607,7 @@ class BallDevice(SystemWideDevice):
             self.log.debug("Canceling eject confirmations")
             if self._eject_status_logger:
                 self.machine.clock.unschedule(self._eject_status_logger)
+                self._eject_status_logger = None
         self.eject_in_progress_target = None
 
         # Remove any event watching for success
