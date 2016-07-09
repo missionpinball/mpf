@@ -9,7 +9,9 @@ import unittest
 
 from unittest.mock import *
 
+import asyncio
 import ruamel.yaml as yaml
+from asyncio_time_travel import TimeTravelLoop
 
 import mpf.core
 import mpf.core.config_validator
@@ -41,7 +43,9 @@ class TestMachineController(MachineController):
         self.test_init_complete = False
         self._enable_plugins = enable_plugins
         super().__init__(mpf_path, machine_path, options)
-        self.clock._sleep_until_next_event = self.sleep_until_next_event_mock
+
+    def get_event_loop(self):
+        return TimeTravelLoop()
 
     def sleep_until_next_event_mock(self):
         for socket, callback in self.clock.read_sockets.items():
@@ -130,37 +134,16 @@ class MpfTestCase(unittest.TestCase):
             'create_config_cache': True,
         }
 
-    def set_time(self, new_time):
-        self.machine.log.debug("Moving time forward %ss",
-                               new_time - self.testTime)
-        self.testTime = new_time
-        self.machine.clock.time.return_value = self.testTime
-
-    def advance_time(self, delta=1):
-        self.testTime += delta
-        self.machine.clock.time.return_value = self.testTime
-
     def advance_time_and_run(self, delta=1.0):
-        self.machine_run()
-        end_time = self.machine.clock.get_time() + delta
-
-        while True:
-            wait_until = self.machine.clock.get_next_event_time()
-
-            if wait_until is not False and wait_until <= self.machine.clock.get_time():
-                self.machine_run()
-                continue
-
-            if wait_until and self.machine.clock.get_time() < wait_until < end_time:
-                self.set_time(wait_until)
-                self.machine_run()
-            else:
-                break
-        self.set_time(end_time)
-        self.machine_run()
+        self.machine.log.info("Advancing time by %s", delta)
+        task_with_timeout = asyncio.wait_for(asyncio.sleep(delay=delta, loop=self.loop),
+                                             timeout=delta+1,
+                                             loop=self.loop)
+        self.machine.clock.loop.run_until_complete(task_with_timeout)
 
     def machine_run(self):
-        self.machine.process_frame()
+        #self.machine.events.process_event_queue()
+        self.advance_time_and_run(0)
 
     def unittest_verbosity(self):
         """Return the verbosity setting of the currently running unittest
@@ -242,14 +225,13 @@ class MpfTestCase(unittest.TestCase):
                     mpf.core.__path__[0], os.pardir)), machine_path,
                 self.getOptions(), self.machine_config_patches,
                 self.get_enable_plugins())
-            self.realTime = self.machine.clock.time
-            self.testTime = self.realTime()
-            self.machine.clock.time = MagicMock(return_value=self.testTime)
+            self.loop = self.machine.clock.loop
 
             start = time.time()
             while not self.machine.test_init_complete and time.time() < start + 20:
                 self.advance_time_and_run(0.01)
 
+            self.machine.events.process_event_queue()
             self.advance_time_and_run(1)
 
         except Exception as e:
@@ -305,10 +287,8 @@ class MpfTestCase(unittest.TestCase):
             # fire all delays
             self.min_frame_time = 20.0
             self.advance_time_and_run(300)
-        self.machine.clock.time = self.realTime
         self.machine.stop()
         self.machine = None
-        self.realTime = None
 
         self._unmock_data_manager()
         self.restore_sys_path()
