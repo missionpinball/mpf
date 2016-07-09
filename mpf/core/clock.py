@@ -1,249 +1,12 @@
 """MPF clock and main loop."""
-
-from operator import attrgetter
-from sys import platform
-from functools import partial
-
-import itertools
-import time
 import logging
-
-import select
-
-# pylint: disable-msg=anomalous-backslash-in-string
 import asyncio
-
-__all__ = ('ClockBase', 'ClockEvent')
-
-
-_default_time = time.perf_counter
-'''A clock with the highest available resolution. '''
-
-try:
-    # pylint: disable-msg=wrong-import-position
-    # pylint: disable-msg=wrong-import-order
-    import ctypes
-    if platform in ('win32', 'cygwin'):
-        # Win32 Sleep function is only 10-millisecond resolution, so
-        # instead use a waitable timer object, which has up to
-        # 100-nanosecond resolution (hardware and implementation
-        # dependent, of course).
-
-        _kernel32 = ctypes.windll.kernel32
-
-        class _ClockBase(object):
-            def __init__(self):
-                self._timer = _kernel32.CreateWaitableTimerA(None, True, None)
-
-            def usleep(self, microseconds):
-                """Usleep on Windows.
-
-                Args:
-                    microseconds: time to sleep in us
-                """
-                delay = ctypes.c_longlong(int(-microseconds * 10))
-                _kernel32.SetWaitableTimer(
-                    self._timer, ctypes.byref(delay), 0,
-                    ctypes.c_void_p(), ctypes.c_void_p(), False)
-                _kernel32.WaitForSingleObject(self._timer, 0xffffffff)
-    else:
-        if platform == 'darwin':
-            _libc = ctypes.CDLL('libc.dylib')
-        else:
-            # pylint: disable-msg=wrong-import-position
-            # pylint: disable-msg=wrong-import-order
-            from ctypes.util import find_library
-            _libc = ctypes.CDLL(find_library('c'), use_errno=True)
-
-            def _libc_clock_gettime_wrapper():
-                from os import strerror
-
-                class StructTv(ctypes.Structure):
-
-                    """Struct for linux time."""
-
-                    _fields_ = [('tv_sec', ctypes.c_long),
-                                ('tv_usec', ctypes.c_long)]
-
-                _clock_gettime = _libc.clock_gettime
-                _clock_gettime.argtypes = [ctypes.c_long,
-                                           ctypes.POINTER(StructTv)]
-
-                if 'linux' in platform:
-                    _clockid = 4  # CLOCK_MONOTONIC_RAW (Linux specific)
-                else:
-                    _clockid = 1  # CLOCK_MONOTONIC
-
-                tv = StructTv()
-
-                def _time():
-                    if _clock_gettime(ctypes.c_long(_clockid),
-                                      ctypes.pointer(tv)) != 0:
-                        _ernno = ctypes.get_errno()
-                        raise OSError(_ernno, strerror(_ernno))
-                    return tv.tv_sec + (tv.tv_usec * 0.000000001)
-
-                return _time
-
-            _default_time = _libc_clock_gettime_wrapper()
-
-        _libc.usleep.argtypes = [ctypes.c_ulong]
-        _libc_usleep = _libc.usleep
-
-        class _ClockBase(object):
-            @classmethod
-            def usleep(cls, microseconds):
-                """Linux usleep function.
-
-                Args:
-                    microseconds: time to sleep in us
-                """
-                _libc_usleep(int(microseconds))
-
-except (OSError, ImportError, AttributeError):
-    # ImportError: ctypes is not available on python-for-android.
-    # AttributeError: ctypes is now available on python-for-android, but
-    #   "undefined symbol: clock_gettime". CF #3797
-    # OSError: if the libc cannot be readed (like with buildbot: invalid ELF
-    # header)
-
-    _default_sleep = time.sleep
-
-    class _ClockBase(object):
-        @classmethod
-        def usleep(cls, microseconds):
-            """Default fallback usleep function.
-
-            Args:
-                microseconds: time to sleep in us
-            """
-            _default_sleep(microseconds / 1000000.)
-
-
-# pylint: disable-msg=too-many-instance-attributes
-class ClockEvent(object):
-
-    """A class that describes a callback scheduled with kivy's :attr:`Clock`.
-
-    This class is never created by the user; instead, kivy creates and returns
-    an instance of this class when scheduling a callback.
-    .. warning::
-        Most of the methods of this class are internal and can change without
-        notice. The only exception are the :meth:`cancel` and
-        :meth:`__call__` methods.
-    """
-
-    __slots__ = ('clock', 'id', 'loop', 'callback', 'timeout',
-                 '_last_dt', '_next_event_time', '_last_event_time', '_dt',
-                 '_priority', '_callback_cancelled')
-
-    # pylint: disable-msg=too-many-arguments
-    def __init__(self, clock, loop, callback, timeout, starttime, priority=1):
-        """Create clock event."""
-        self.clock = clock
-        self.id = next(clock.counter)
-        self.loop = loop
-        self.callback = callback
-        self.timeout = timeout
-        self._last_dt = starttime
-        self._next_event_time = starttime + timeout
-        self._last_event_time = 0
-        self._dt = 0.
-        self._priority = priority
-        self._callback_cancelled = False
-        clock.ordered_events.append(self)
-
-    def get_callback(self):
-        """Return the callback."""
-        callback = self.callback
-        if callback is not None:
-            return callback
-        return None
-
-    @property
-    def next_event_time(self):
-        """Return the next time this event will fire."""
-        return self._next_event_time
-
-    @property
-    def last_event_time(self):
-        """Return the last time the event fired."""
-        return self._last_event_time
-
-    @property
-    def priority(self):
-        """Return priority."""
-        return self._priority
-
-    @property
-    def callback_cancelled(self):
-        """Return if callback is canceled."""
-        return self._callback_cancelled
-
-    def cancel(self):
-        """Cancel the callback if it was scheduled to be called."""
-        try:
-            self.clock.ordered_events.remove(self)
-        except ValueError:
-            pass
-
-        self._callback_cancelled = True
-
-    def tick(self, curtime, remove):
-        """Call the callback if time is due.
-
-        Args:
-            curtime: current time
-            remove: callback to remove event
-        """
-        # Is it time to execute the callback (did timeout occur)?  The
-        # decision is easy if this event's timeout is 0 or -1 as it
-        # should be called every time.
-        if self.timeout > 0 and curtime < self._next_event_time:
-            return True
-
-        # calculate current time-diff for this event
-        self._dt = curtime - self._last_dt
-        self._last_dt = curtime
-        loop = self.loop
-
-        if self.timeout > 0:
-            self._last_event_time = self._next_event_time
-            self._next_event_time += self.timeout
-        else:
-            self._last_event_time = curtime
-            self._next_event_time = curtime
-
-        # get the callback
-        callback = self.get_callback()
-        if callback is None:
-            try:
-                remove(self)
-            except ValueError:
-                pass
-            return False
-
-        # Make sure the callback will be called by resetting its cancelled flag
-        self._callback_cancelled = False
-
-        # Do not actually call the callback here, instead add it to the clock
-        # frame callback queue where it will be processed after all events are processed
-        # for the frame.  The callback queue is prioritized by callback time and then
-        # event priority.
-        self.clock.add_event_to_frame_callbacks(self)
-
-        if not loop:
-            try:
-                remove(self)
-            except ValueError:
-                pass
-
-    def __repr__(self):
-        """Return str representation."""
-        return '<ClockEvent callback=%r>' % self.get_callback()
 
 
 class PeriodicTask:
+
+    """A periodic asyncio task."""
+
     def __init__(self, interval, loop, callback):
         self._canceled = False
         self._interval = interval
@@ -265,162 +28,26 @@ class PeriodicTask:
         self._schedule()
 
     def cancel(self):
+        """Cancel periodic task."""
         self._canceled = True
 
 
-class ClockBase(_ClockBase):
-
+class ClockBase:
     """A clock object with event support."""
-
-    __slots__ = ('_dt', '_last_fps_tick', '_last_tick', '_fps', '_rfps',
-                 '_start_tick', '_fps_counter', '_rfps_counter', 'ordered_events',
-                 '_frame_callbacks', '_frames', '_frames_displayed',
-                 '_log', 'read_sockets', 'loop')
-
-    counter = itertools.count()
 
     def __init__(self, machine):
         """Initialise clock."""
-        super(ClockBase, self).__init__()
-
-        self._dt = 0.0001
-        self._start_tick = self._last_tick = self.time()
-        self._fps = 0
-        self._rfps = 0
-        self._fps_counter = 0
-        self._rfps_counter = 0
-        self._last_fps_tick = None
-        self._frames = 0
-        self._frames_displayed = 0
-        self.ordered_events = []
-        self.read_sockets = {}
-        self._frame_callbacks = []
         self._log = logging.getLogger("Clock")
         self._log.debug("Starting tickless clock")
         self.loop = machine.get_event_loop()
 
-    @property
-    def frametime(self):
-        """Time spent between the last frame and the current frame (in seconds).
-
-        .. versionadded:: 1.8.0
-        """
-        return self._dt
-
-    @property
-    def frames(self):
-        """Number of internal frames from the start of the clock (not necessarily drawn).
-
-        .. versionadded:: 1.8.0
-        """
-        return self._frames
-
-    @property
-    def frames_displayed(self):
-        """Number of displayed frames from the start of the clock."""
-        return self._frames_displayed
-
-    def get_next_event_time(self):
-        """Return the time when the next event is scheduled."""
-        if not self.ordered_events:
-            return False
-
-        self.ordered_events.sort(key=attrgetter("next_event_time"), reverse=False)
-        return self.ordered_events[0].next_event_time
-
-    def _sleep_until_next_event(self):
-        next_event_time = self.get_next_event_time()
-        if next_event_time:
-            sleeptime = next_event_time - self.time()
-        else:
-            sleeptime = 0.0
-
-        # Since windows will fail when calling select without sockets we have to fall back to usleep in that case.
-        if self.read_sockets:
-            # handle sleep time == 0, because select would block
-            if sleeptime <= 0.0:
-                sleeptime = 0.00001
-
-            read_sockets = self.read_sockets.keys()
-            read_ready, _, _ = select.select(read_sockets, [], [], sleeptime)
-            if read_ready:
-                for socket in list(read_ready):
-                    self.read_sockets[socket]()
-
-                # prematurely exit function if we have been woken up by a socket
-                return
-
-        # make sure we sleep long enough
-        if next_event_time:
-            current = self.time()
-            while next_event_time > current:
-                sleeptime = next_event_time - current
-                usleep = self.usleep
-                usleep(1000000 * sleeptime)
-                current = self.time()
-
-    def tick(self):
+    def run(self):
+        """Run the clock."""
         self.loop.run_forever()
-
-        """Advance the clock to the next step. Must be called every frame.
-
-        The default clock has a tick() function called by the core Kivy
-        framework.
-        """
-        # sleep if needed
-        self._sleep_until_next_event()
-
-        # tick the current time
-        current = self.time()
-        self._dt = current - self._last_tick
-        self._frames += 1
-        self._fps_counter += 1
-        self._last_tick = current
-
-        # calculate fps things
-        if self._last_fps_tick is None:
-            self._last_fps_tick = current
-        elif current - self._last_fps_tick > 1:
-            d = float(current - self._last_fps_tick)
-            self._fps = self._fps_counter / d
-            self._rfps = self._rfps_counter
-            self._last_fps_tick = current
-            self._fps_counter = 0
-            self._rfps_counter = 0
-
-        # process event
-        self._process_events()
-
-        # now process event callbacks
-        self._process_event_callbacks()
-
-        return self._dt
-
-    def tick_draw(self):
-        """Tick the drawing counter."""
-        self._rfps_counter += 1
-        self._frames_displayed += 1
-
-    def get_fps(self):
-        """Get the current average FPS calculated by the clock."""
-        return self._fps
-
-    def get_rfps(self):
-        """Get the current "real" FPS calculated by the clock.
-
-        This counter reflects the real framerate displayed on the screen.
-        In contrast to get_fps(), this function returns a counter of the
-        number of frames, not the average of frames per second.
-        """
-        return self._rfps
 
     def get_time(self):
         """Get the last tick made by the clock."""
         return self.loop.time()
-
-    def get_boottime(self):
-        """Get the time in seconds from the application start."""
-        return self._last_tick - self._start_tick
 
     def schedule_socket_read_callback(self, socket, callback):
         """Schedule a callback when the socket is ready.
@@ -430,7 +57,6 @@ class ClockBase(_ClockBase):
             callback: Callback to call
         """
         self.loop.add_reader(fd=socket, callback=callback)
-        #self.read_sockets[socket] = callback
 
     def unschedule_socket_read_callback(self, socket):
         """Remove a socket callback which has to be registered.
@@ -439,7 +65,6 @@ class ClockBase(_ClockBase):
             socket: Socket so remove.
         """
         self.loop.remove_reader(fd=socket)
-        #del self.read_sockets[socket]
 
     def schedule_once(self, callback, timeout=0):
         """Schedule an event in <timeout> seconds.
@@ -449,14 +74,13 @@ class ClockBase(_ClockBase):
         Args:
             callback: callback to call on timeout
             timeout: seconds to wait
-            priority: priority when getting called
 
         Returns:
             A :class:`ClockEvent` instance.
         """
         if not callable(callback):
             raise AssertionError('callback must be a callable, got %s' % callback)
-        #event = ClockEvent(self, False, callback, timeout, self._last_tick, priority)
+
         new_callback = lambda: callback(None)
         event = self.loop.call_later(delay=timeout, callback=new_callback)
 
@@ -471,14 +95,13 @@ class ClockBase(_ClockBase):
         Args:
             callback: callback to call on timeout
             timeout: period to wait
-            priority: priority when getting called
 
         Returns:
-            A :class:`ClockEvent` instance.
+            A PeriodicTask object.
         """
         if not callable(callback):
             raise AssertionError('callback must be a callable, got %s' % callback)
-        #event = ClockEvent(self, True, callback, timeout, self._last_tick, priority)
+
         periodic_task = PeriodicTask(timeout, self.loop, callback)
 
         self._log.debug("Scheduled a recurring clock callback (callback=%s, timeout=%s, priority=%s)",
@@ -486,67 +109,14 @@ class ClockBase(_ClockBase):
 
         return periodic_task
 
-    def unschedule(self, callback, all_events: bool=True):
-        """Remove a previously scheduled event.
+    @staticmethod
+    def unschedule(event):
+        """Remove a previously scheduled event. Wrapper for cancel for compatibility to kivy clock.
 
         Args:
-            callback: :class:`ClockEvent` or a callable.
-                If it's a :class:`ClockEvent` instance, then the callback
-                associated with this event will be canceled if it is
-                scheduled. If it's a callable, then the callable will be
-                unscheduled if it is scheduled.
-            all_events: bool
-                If True and if `callback` is a callable, all instances of this
-                callable will be unscheduled (i.e. if this callable was
-                scheduled multiple times). Defaults to `True`.
-        .. versionchanged:: 1.9.0
-            The all parameter was added. Before, it behaved as if `all` was
-            `True`.
+            event: Event to cancel
         """
-        if isinstance(callback, (asyncio.Handle, PeriodicTask)):
-            callback.cancel()
+        if isinstance(event, (asyncio.Handle, PeriodicTask)):
+            event.cancel()
         else:
             raise AssertionError("Broken unschedule")
-
-    def _process_events(self):
-        if not self.ordered_events:
-            return
-        self.ordered_events.sort(key=attrgetter("next_event_time"), reverse=False)
-        for event in list(self.ordered_events):
-            if event.next_event_time > self._last_tick:
-                break
-            remove = self.ordered_events.remove
-            # event may be already removed from original list
-            if not event.callback_cancelled:
-                event.tick(self._last_tick, remove)
-
-    def add_event_to_frame_callbacks(self, event):
-        """Add an event to the priority queue whose callback will be called in the current frame.
-
-        Args:
-            event: The event whose callback will be called (in priority order)
-                during the current frame.
-        """
-        self._frame_callbacks.append((event.last_event_time, -event.priority, event.id, event))
-
-    def _process_event_callbacks(self):
-        """Process event callbacks that were triggered to be called in the current frame."""
-        for event_obj in sorted(self._frame_callbacks):
-            event = event_obj[3]
-            # Call the callback if the event has not been cancelled during the current frame
-            if not event.callback_cancelled:
-                callback = event.get_callback()
-                if callback:
-                    ret = callback(self.frametime)
-                else:
-                    ret = False
-
-                # if the user returns False explicitly, remove the event
-                if event.loop and ret is False:
-                    event.cancel()
-
-        self._frame_callbacks = []
-
-    time = staticmethod(partial(_default_time))
-
-ClockBase.time.__doc__ = '''Proxy method for :func:`~kivy.compat.clock`. '''
