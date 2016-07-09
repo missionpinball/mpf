@@ -114,7 +114,7 @@ class TestBcp(MpfTestCase):
         self.machine.bcp.interface.process_bcp_message('register_trigger', {'event': 'test_event'}, None)
         self.advance_time_and_run()
 
-        self.assertIn('test_event', self.machine.bcp.interface.registered_trigger_events)
+        self.assertIn('test_event', self.machine.bcp.transport._handlers)
 
     def test_bcp_mpf_and_mpf_mc(self):
         self.kivy = MagicMock()
