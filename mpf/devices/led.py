@@ -58,10 +58,8 @@ class Led(SystemWideDevice):
 
         # schedule the single machine-wide update to write the current led of
         # each LED to the hardware
-        # todo make time configurable
         machine.clock.schedule_interval(cls.update_leds,
-                                        1 / machine.config['mpf']['default_led_hw_update_hz'],
-                                        -100)
+                                        1 / machine.config['mpf']['default_led_hw_update_hz'])
 
         machine.mode_controller.register_stop_method(cls.mode_stop)
 
