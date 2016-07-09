@@ -49,6 +49,9 @@ class PluginPlayer(ConfigPlayer):
             self.machine.bcp.interface.add_registered_trigger_event_for_client(self.bcp_client, event)
             event_list.append(event)
 
+        self.machine.bcp.interface.add_registered_trigger_event_for_client(self.bcp_client, '{}_play'.format(self.show_section))
+        self.machine.bcp.interface.add_registered_trigger_event_for_client(self.bcp_client, '{}_clear'.format(self.show_section))
+
         return event_list
 
     def unload_player_events(self, event_list):
@@ -58,13 +61,11 @@ class PluginPlayer(ConfigPlayer):
 
     def play(self, settings, context, priority=0, **kwargs):
         """Trigger remote player via BCP."""
-        self.machine.bcp.interface.bcp_trigger_client(client=self.bcp_client,
-                                                      name='{}_play'.format(self.show_section),
-                                                      settings=settings, context=context,
-                                                      priority=priority)
+        self.machine.bcp.interface.bcp_trigger(name='{}_play'.format(self.show_section),
+                                               settings=settings, context=context,
+                                               priority=priority)
 
     def clear_context(self, context):
         """Clear the context at remote player via BCP."""
-        self.machine.bcp.interface.bcp_trigger_client(client=self.bcp_client,
-                                                      name='{}_clear'.format(self.show_section),
-                                                      context=context)
+        self.machine.bcp.interface.bcp_trigger(name='{}_clear'.format(self.show_section),
+                                               context=context)
