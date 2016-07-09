@@ -31,7 +31,7 @@ class TestShotGroups(MpfTestCase):
         # game in progress. Really we're just making sure this doesn't crash.
 
         self.machine.events.post('s_rotate_l_active')
-        self.advance_time()
+        self.advance_time_and_run()
 
         self.hit_and_release_switch("switch_1")
         self.hit_and_release_switch("switch_2")
