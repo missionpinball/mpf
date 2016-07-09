@@ -13,8 +13,7 @@ class BcpTransportManager:
         if handler not in self._handlers:
             self._handlers[handler] = []
 
-        if transport not in self._handlers[handler]:
-            self._handlers[handler].append(transport)
+        self._handlers[handler].append(transport)
 
     def remove_transport_from_handle(self, handler, transport):
         self._handlers[handler].remove(transport)
@@ -40,7 +39,7 @@ class BcpTransportManager:
             return False
 
     def send_to_clients(self, clients, bcp_command, **kwargs):
-        for client in clients:
+        for client in set(clients):
             self.send_to_client(client, bcp_command, **kwargs)
 
     def send_to_clients_with_handler(self, handler, bcp_command, **kwargs):
