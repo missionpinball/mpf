@@ -21,6 +21,7 @@ class PeriodicTask:
         self._loop.call_at(self._last_call + self._interval, self._run)
 
     def get_next_call_time(self):
+        """Return time of next call."""
         return self._last_call + self._interval
 
     def _run(self):
