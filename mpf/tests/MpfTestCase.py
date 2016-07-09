@@ -42,10 +42,16 @@ class TestMachineController(MachineController):
         self.test_config_patches = config_patches
         self.test_init_complete = False
         self._enable_plugins = enable_plugins
+        self._loop = None
         super().__init__(mpf_path, machine_path, options)
 
     def get_event_loop(self):
-        return TimeTravelLoop()
+        self._loop = TimeTravelLoop()
+        return self._loop
+
+    def __del__(self):
+        if self._loop:
+            self._loop.close()
 
     def sleep_until_next_event_mock(self):
         for socket, callback in self.clock.read_sockets.items():
