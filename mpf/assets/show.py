@@ -541,6 +541,7 @@ class RunningShow(object):
         self.show.running.remove(self)
         if self._delay_handler:
             self.machine.clock.unschedule(self._delay_handler)
+            self._delay_handler = None
 
         # clear context in used players
         for player in self._players:
@@ -553,6 +554,7 @@ class RunningShow(object):
         """Pause show."""
         if self._delay_handler:
             self.machine.clock.unschedule(self._delay_handler)
+            self._delay_handler = None
 
     def resume(self):
         """Resume paused show."""
@@ -576,6 +578,7 @@ class RunningShow(object):
 
         if self._delay_handler:
             self.machine.clock.unschedule(self._delay_handler)
+            self._delay_handler = None
         steps_to_advance = steps - 1  # since current_step is really next step
 
         # todo should this end the show if there are more steps than in the
