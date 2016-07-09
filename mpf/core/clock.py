@@ -1,6 +1,7 @@
 """MPF clock and main loop."""
 import logging
 import asyncio
+from functools import partial
 
 
 class PeriodicTask:
@@ -28,6 +29,7 @@ class PeriodicTask:
         self._last_call = self._last_call + self._interval
         if self._canceled:
             return
+        # TODO: remove dt parameter from all callbacks
         self._callback(None)
         self._schedule()
 
@@ -85,7 +87,8 @@ class ClockBase:
         if not callable(callback):
             raise AssertionError('callback must be a callable, got %s' % callback)
 
-        new_callback = lambda: callback(None)
+        # TODO: remove dt parameter from all callbacks
+        new_callback = partial(callback, None)
         event = self.loop.call_later(delay=timeout, callback=new_callback)
 
         self._log.debug("Scheduled a one-time clock callback (callback=%s, timeout=%s)",
