@@ -550,29 +550,15 @@ class MachineController(object):
         # todo change this to look for the shutdown event
         self.done = True
         self.clock.loop.stop()
+        self.clock.loop.close()
 
     def _run_loop(self):
         # Main machine run loop with when the default platform interface
         # specifies the MPF should control the main timer
 
-        try:
-            while not self.done:
-                self.process_frame()
-        except KeyboardInterrupt:
-            pass
+        self.clock.run()
 
         self.stop()
-
-    def process_frame(self):
-        """Process one machine loop iteration."""
-        # Process events before processing the clock
-        self.events.process_event_queue()
-
-        # update dt
-        self.clock.tick()
-
-        # tick before draw
-        self.clock.tick_draw()
 
     def _platform_stop(self):
         for platform in list(self.hardware_platforms.values()):
