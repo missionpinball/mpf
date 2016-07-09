@@ -16,6 +16,9 @@ class BcpTransportManager:
         if transport not in self._handlers[handler]:
             self._handlers[handler].append(transport)
 
+    def remove_transport_from_handle(self, handler, transport):
+        self._handlers[handler].remove(transport)
+
     def get_transports_for_handler(self, handler):
         return self._handlers.get(handler, [])
 
