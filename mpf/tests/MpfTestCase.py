@@ -142,14 +142,7 @@ class MpfTestCase(unittest.TestCase):
 
     def advance_time_and_run(self, delta=1.0):
         self.machine.log.info("Advancing time by %s", delta)
-        start = self.loop.time()
-        task_with_timeout = asyncio.wait_for(asyncio.sleep(delay=delta, loop=self.loop),
-                                             timeout=delta+0.00000001,
-                                             loop=self.loop)
-        self.machine.clock.loop.run_until_complete(task_with_timeout)
-
-        # hack to python3.5
-        self.loop.set_time(start + delta)
+        self.loop.run_until_complete(asyncio.sleep(delay=delta, loop=self.loop))
 
     def machine_run(self):
         #self.machine.events.process_event_queue()

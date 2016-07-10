@@ -244,12 +244,12 @@ class TimeTravelLoop(base_events.BaseEventLoop):
 #        return
 
     def _run_once(self):
-        super()._run_once()
-
         # Advance time only when we finished everything at the present:
         if len(self._ready) == 0:
             if not self._timers.is_empty():
                 self._time = self._timers.pop_closest()
+
+        super()._run_once()
 
     def call_at(self, when, callback, *args):
         self._timers.add(when)
