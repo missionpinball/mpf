@@ -1,5 +1,5 @@
 import selectors
-from asyncio import base_events, futures, coroutine, events
+from asyncio import base_events, futures, coroutine, events, test_utils
 import collections
 import heapq
 
@@ -128,6 +128,10 @@ class TimeTravelLoop(base_events.BaseEventLoop):
     def time(self):
         return self._time
 
+    def set_time(self, time):
+        """Set time in loop."""
+        self._time = time
+
     def advance_time(self, advance):
         """Move test time forward."""
         if advance:
@@ -240,23 +244,12 @@ class TimeTravelLoop(base_events.BaseEventLoop):
 #        return
 
     def _run_once(self):
-        # check if a mocked reader is ready
-        for fd, reader in self.readers.items():
-            if hasattr(fd, "ready") and fd.ready() and not isinstance(fd, MagicMock):
-                self.call_soon(reader[0], *reader[1])
-
-        # check if a mocked writer is ready
-        for fd, writer in self.writers.items():
-            if hasattr(fd, "ready") and fd.ready() and not isinstance(fd, MagicMock):
-                self.call_soon(writer[0], *writer[1])
-
         super()._run_once()
 
         # Advance time only when we finished everything at the present:
         if len(self._ready) == 0:
             if not self._timers.is_empty():
                 self._time = self._timers.pop_closest()
-                # print('time:',self._time,'timers:',self._timers._timers_set)
 
     def call_at(self, when, callback, *args):
         self._timers.add(when)
