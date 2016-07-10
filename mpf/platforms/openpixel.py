@@ -7,6 +7,8 @@ https://github.com/zestyping/openpixelcontrol/blob/master/python_clients/opc.py
 import logging
 import socket
 
+import asyncio
+
 from mpf.core.platform import LedPlatform
 from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 
@@ -42,7 +44,7 @@ class HardwarePlatform(LedPlatform):
     def stop(self):
         """Stop platform."""
         # disconnect sender
-        self.opc_client.serial_sender.disconnect()
+        self.opc_client.serial_sender.close()
 
     def configure_led(self, config, channels):
         """Configure an LED.
@@ -116,10 +118,12 @@ class OpenPixelClient(object):
         self.serial_sender = None
         self.channels = list()
 
+        #self.serial_sender = OPCSerialSender(self.machine, config)
+        connector = self.machine.clock.loop.create_connection(asyncio.Protocol, config['host'], config['port'])
+        self.serial_sender, _ = self.machine.clock.loop.run_until_complete(connector)
+
         # Update the FadeCandy at a regular interval
         self.machine.clock.schedule_interval(self.tick, 1 / self.machine.config['mpf']['default_led_hw_update_hz'])
-
-        self.serial_sender = OPCSerialSender(self.machine, config)
 
     def add_pixel(self, channel, led):
         """Add a pixel to the list that will be sent to the OPC server.
@@ -207,7 +211,7 @@ class OpenPixelClient(object):
 
     def send(self, message):
         """Send a message to the socket."""
-        self.serial_sender.send(message)
+        self.serial_sender.write(message)
 
 
 class OPCSerialSender:  # pragma: no cover

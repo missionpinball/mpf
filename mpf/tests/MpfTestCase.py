@@ -11,7 +11,7 @@ from unittest.mock import *
 
 import asyncio
 import ruamel.yaml as yaml
-from mpf.tmp.time_travel_util import TimeTravelLoop
+from mpf.tests.loop import TimeTravelLoop
 
 import mpf.core
 import mpf.core.config_validator

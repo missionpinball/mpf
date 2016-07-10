@@ -6,9 +6,10 @@ from unittest.mock import MagicMock
 from mpf.platforms.opp import opp
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.loop import MockSocket
 
 
-class SerialMock:
+class SerialMock(MockSocket):
     def read(self, length):
         del length
         msg = self.queue.get()
@@ -21,7 +22,7 @@ class SerialMock:
         del char
         return self.read(123)
 
-    def ready(self):
+    def read_ready(self):
         return not self.queue.empty()
 
     def write(self, msg):
@@ -47,9 +48,6 @@ class SerialMock:
         self.queue = Queue()
         self.permanent_commands = {}
         self.crashed = False
-
-    def close(self):
-        pass
 
 
 class TestOPP(MpfTestCase):

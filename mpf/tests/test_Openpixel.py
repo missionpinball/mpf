@@ -17,8 +17,6 @@ class TestOpenpixel(MpfTestCase):
 
     def setUp(self):
         self._messages = []
-        self._opcthread = openpixel.OPCSerialSender
-        openpixel.OPCSerialSender = MagicMock()
         self._send = openpixel.OpenPixelClient.send
         openpixel.OpenPixelClient.send = self._send_mock
         super().setUp()
@@ -26,7 +24,6 @@ class TestOpenpixel(MpfTestCase):
 
     def tearDown(self):
         super().tearDown()
-        openpixel.OPCSerialSender = self._opcthread
         openpixel.OpenPixelClient.send = self._send
 
     def _build_message(self, channel, leds):
