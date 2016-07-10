@@ -1,11 +1,10 @@
 import selectors
-from asyncio import base_events, futures, coroutine, events, test_utils
+from asyncio import base_events, coroutine, events
 import collections
 import heapq
 
 # A class to manage set of next events:
 from asyncio.selector_events import _SelectorSocketTransport
-from unittest.mock import MagicMock
 
 
 class NextTimers:
