@@ -1,8 +1,7 @@
-from unittest.mock import MagicMock
-
+"""Test openpixel hardware interface."""
 from mpf.core.rgb_color import RGBColor
-from mpf.platforms import openpixel
 from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.loop import MockSocket
 
 
 class TestOpenpixel(MpfTestCase):
@@ -17,14 +16,15 @@ class TestOpenpixel(MpfTestCase):
 
     def setUp(self):
         self._messages = []
-        self._send = openpixel.OpenPixelClient.send
-        openpixel.OpenPixelClient.send = self._send_mock
         super().setUp()
         self.assertOpenPixelLedsSent({}, {})
+        self.assertTrue(self._mock_socket.is_open)
 
-    def tearDown(self):
-        super().tearDown()
-        openpixel.OpenPixelClient.send = self._send
+    def _mock_loop(self):
+        self._mock_socket = MockSocket()
+        self.loop.mock_socket("localhost", 7890, self._mock_socket)
+        # connect socket to test
+        self._mock_socket.send = self._send_mock
 
     def _build_message(self, channel, leds):
         out = bytearray()
@@ -39,6 +39,7 @@ class TestOpenpixel(MpfTestCase):
 
     def _send_mock(self, message):
         self._messages.append(message)
+        return len(message)
 
     def assertOpenPixelLedsSent(self, leds1, leds2):
         self.assertEqual([self._build_message(0, leds1),

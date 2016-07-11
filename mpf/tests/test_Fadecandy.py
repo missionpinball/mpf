@@ -2,8 +2,8 @@ from unittest.mock import MagicMock
 import json
 
 from mpf.core.rgb_color import RGBColor
-from mpf.platforms import openpixel
 from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.loop import MockSocket
 
 
 class TestFadecandy(MpfTestCase):
@@ -18,10 +18,6 @@ class TestFadecandy(MpfTestCase):
 
     def setUp(self):
         self._messages = []
-        self._opcthread = openpixel.OPCSerialSender
-        openpixel.OPCSerialSender = MagicMock()
-        self._send = openpixel.OpenPixelClient.send
-        openpixel.OpenPixelClient.send = self._send_mock
         super().setUp()
         color_correct = self._messages.pop(0)
         color_correct_binary = b'\x00\xff\x00Z\x00\x01\x00\x01'
@@ -34,10 +30,11 @@ class TestFadecandy(MpfTestCase):
 
         self.assertOpenPixelLedsSent({}, {})
 
-    def tearDown(self):
-        super().tearDown()
-        openpixel.OPCSerialSender = self._opcthread
-        openpixel.OpenPixelClient.send = self._send
+    def _mock_loop(self):
+        self._mock_socket = MockSocket()
+        self.loop.mock_socket("localhost", 7890, self._mock_socket)
+        # connect socket to test
+        self._mock_socket.send = self._send_mock
 
     def _build_message(self, channel, leds):
         out = bytearray()
@@ -52,6 +49,7 @@ class TestFadecandy(MpfTestCase):
 
     def _send_mock(self, message):
         self._messages.append(message)
+        return len(message)
 
     def assertOpenPixelLedsSent(self, leds1, leds2):
         bank1 = self._build_message(0, leds1)
