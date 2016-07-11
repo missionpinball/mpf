@@ -357,6 +357,7 @@ class TestShows(MpfTestCase):
     def test_tokens_in_shows(self):
         self.assertIn('leds_name_token', self.machine.shows)
         self.assertIn('leds_color_token', self.machine.shows)
+        self.assertIn('leds_color_token_and_fade', self.machine.shows)
         self.assertIn('leds_extended', self.machine.shows)
         self.assertIn('lights_basic', self.machine.shows)
         self.assertIn('multiple_tokens', self.machine.shows)
@@ -403,6 +404,17 @@ class TestShows(MpfTestCase):
         self.advance_time_and_run()
 
         show = self.machine.shows['leds_color_token'].play(
+            show_tokens=dict(color1='blue', color2='green'))
+        self.advance_time_and_run(2)
+        self.assertEqual(self.machine.leds.led_01.hw_driver.current_color,
+                         list(RGBColor('blue').rgb))
+        self.assertEqual(self.machine.leds.led_02.hw_driver.current_color,
+                         list(RGBColor('green').rgb))
+
+        show.stop()
+
+        # Test passing color as a token and include a fade string in express config
+        show = self.machine.shows['leds_color_token_and_fade'].play(
             show_tokens=dict(color1='blue', color2='green'))
         self.advance_time_and_run(2)
         self.assertEqual(self.machine.leds.led_01.hw_driver.current_color,

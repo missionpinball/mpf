@@ -61,12 +61,9 @@ class LedPlayer(ConfigPlayer):
         value = str(value).replace(' ', '').lower()
         fade = 0
         if '-f' in value:
+            # Value contains both a color value and a fade value, parse it into
+            # its individual components
             composite_value = value.split('-f')
-
-            # test that the color is valid, but we don't save it now so we can
-            # dynamically set it later
-            RGBColor(RGBColor.string_to_rgb(composite_value[0]))
-
             value = composite_value[0]
             fade = Util.string_to_ms(composite_value[1])
 
