@@ -17,6 +17,7 @@ class Led(SystemWideDevice):
 
     @classmethod
     def device_class_init(cls, machine):
+        """Class initializer method"""
 
         cls.machine = machine
 
@@ -28,6 +29,12 @@ class Led(SystemWideDevice):
 
         # Generate and add color correction profiles to the machine
         machine.led_color_correction_profiles = dict()
+
+        # Create the default color correction profile and add it to the machine
+        default_profile = RGBColorCorrectionProfile.default()
+        machine.led_color_correction_profiles['default'] = default_profile
+
+        # Add any user-defined profiles specified in the machine config file
         for profile_name, profile_parameters in (
                 machine.config['led_settings']
                 ['color_correction_profiles'].items()):
@@ -136,11 +143,11 @@ class Led(SystemWideDevice):
                 if profile is not None:
                     self.set_color_correction_profile(profile)
             else:
-                self.log.warning(
-                    "Color correction profile '%s' was specified for the LED"
-                    " but the color correction profile does not exist."
-                    " Color correction will not be applied to this LED.",
-                    self.config['color_correction_profile'])
+                error = "Color correction profile '{}' was specified for LED '{}'"\
+                        " but the color correction profile does not exist."\
+                    .format(self.config['color_correction_profile'], self.name)
+                self.log.error(error)
+                raise ValueError(error)
 
         if self.config['fade_ms'] is not None:
             self.default_fade_ms = self.config['fade_ms']
