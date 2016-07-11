@@ -5,8 +5,6 @@ https://github.com/zestyping/openpixelcontrol/blob/master/python_clients/opc.py
 """
 
 import logging
-import socket
-
 import asyncio
 
 from mpf.core.platform import LedPlatform
@@ -118,7 +116,6 @@ class OpenPixelClient(object):
         self.serial_sender = None
         self.channels = list()
 
-        #self.serial_sender = OPCSerialSender(self.machine, config)
         connector = self.machine.clock.loop.create_connection(asyncio.Protocol, config['host'], config['port'])
         self.serial_sender, _ = self.machine.clock.loop.run_until_complete(connector)
 
@@ -210,87 +207,9 @@ class OpenPixelClient(object):
         self.send(bytes(msg))
 
     def send(self, message):
-        """Send a message to the socket."""
-        self.serial_sender.write(message)
+        """Send a message to the socket.
 
-
-class OPCSerialSender:  # pragma: no cover
-
-    """Base class for the serial sender.
-
-    Args:
-        machine: The main ``MachineController`` instance.
-        config: Dictionary of configuration settings.
-    """
-
-    def __init__(self, machine, config):
-        """Initialise serial sender."""
-        self.machine = machine
-        self.host = config['host']
-        self.port = config['port']
-        self.connection_required = config['connection_required']
-        self.max_connection_attempts = config['connection_attempts']
-
-        self.log = logging.getLogger("OpenPixelSerialSender")
-
-        self.socket = None
-        self.connection_attempts = 0
-        self.try_connecting = True
-
-        self.connect()
-
-    def connect(self):
-        """Connect to the OPC server.
-
-        Returns:
-            True on success. False if it was unable to connect.
-
-        This method also tracks and respects ``connection_attempts`` and
-        ``max_connection_attempts``.
-
+        Args:
+            message: Message to send
         """
-        if self.socket:
-            return True
-
-        self.connection_attempts += 1
-
-        if 0 < self.max_connection_attempts < self.connection_attempts:
-
-            self.log.debug("Max connection attempts reached")
-            self.try_connecting = False
-
-            if self.connection_required:
-                self.log.debug("Configuration is set that OPC connection is "
-                               "required. MPF exiting.")
-                self.machine.done = True
-                return
-
-        try:
-            self.log.debug('Trying to connect to OPC server: %s:%s. Attempt '
-                           'number %s', self.host, self.port,
-                           self.connection_attempts)
-            self.socket = socket.socket()
-            self.socket.connect((self.host, self.port))
-            self.log.debug('Connected to the OPC server.')
-            self.connection_attempts = 0
-
-        except socket.error:
-            self.log.warning('Failed to connect to the OPC server: %s:%s',
-                             self.host, self.port)
-            self.socket = None
-            return False
-
-    def disconnect(self):
-        """Disconnect from the OPC server."""
-        if self.socket:
-            self.socket.close()
-        self.socket = None
-
-    def send(self, message):
-        """Send a message."""
-        try:
-            self.socket.send(message)
-        except (IOError, AttributeError):
-            self.log.warning('Connection to OPC server lost.')
-            self.socket = None
-            self.connect()
+        self.serial_sender.write(message)
