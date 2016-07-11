@@ -61,7 +61,7 @@ community.''',
 
     include_package_data=True,
 
-    package_data={'': ['*.yaml', '*.png']},
+    package_data={'': ['*.yaml', '*.png', '*.so', '*.pyd']},
 
     # MANIFEST.in picks up the rest
     packages=['mpf'],
