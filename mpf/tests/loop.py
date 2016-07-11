@@ -60,6 +60,9 @@ class _TestTransport:
 
 
 class MockSocket:
+    def __init__(self):
+        self.is_open = False
+
     def getsockname(self):
         return ""
 
@@ -77,6 +80,12 @@ class MockSocket:
 
     def write_ready(self):
         return False
+
+    def recv(self, size):
+        raise AssertionError("Not implemented")
+
+    def send(self, data):
+        return len(data)
 
 
 class TestSelector(selectors.BaseSelector):
@@ -107,6 +116,7 @@ class TestSelector(selectors.BaseSelector):
 
 # Based on TestLoop from asyncio.test_utils:
 class TimeTravelLoop(base_events.BaseEventLoop):
+
     """
     Loop for unittests. Passes time without waiting, but makes sure events
     happen in the correct order.
@@ -123,6 +133,7 @@ class TimeTravelLoop(base_events.BaseEventLoop):
         self._timers = NextTimers()
         self._selector = TestSelector()
         self.reset_counters()
+        self._mock_sockets = {}
 
     def time(self):
         return self._time
@@ -225,22 +236,30 @@ class TimeTravelLoop(base_events.BaseEventLoop):
         self.remove_reader_count = collections.defaultdict(int)
         self.remove_writer_count = collections.defaultdict(int)
 
-#    def sock_connect(self, sock, address):
-#        fut = futures.Future(loop=self)
-#        fut.set_result(sock)
-#        return fut
+    def mock_socket(self, host, port, socket):
+        """Mock a socket and use it for connections."""
+        self._mock_sockets[host + ":" + str(port)] = socket
+
+    def _open_mock_socket(self, host, port):
+        key = host + ":" + str(port)
+        if key not in self._mock_sockets:
+            raise AssertionError("socket not mocked for key {}".format(key))
+        socket = self._mock_sockets[key]
+        if socket.is_open:
+            raise AssertionError("socket already open for key {}".format(key))
+
+        socket.is_open = True
+        return socket
 
     @coroutine
     def create_connection(self, protocol_factory, host=None, port=None, *,
                           ssl=None, family=0, proto=0, flags=0, sock=None,
                           local_addr=None, server_hostname=None):
-        sock = MockSocket()
+        sock = self._open_mock_socket(host, port)
         protocol = protocol_factory()
-        return _SelectorSocketTransport(self, sock, protocol), protocol
+        transport = _SelectorSocketTransport(self, sock, protocol)
 
-#    def _make_socket_transport(self, sock, protocol, waiter=None, *, extra=None, server=None):
-#        waiter.set_result(True)
-#        return
+        return transport, protocol
 
     def _run_once(self):
         # Advance time only when we finished everything at the present:

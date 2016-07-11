@@ -37,16 +37,15 @@ class TestMachineController(MachineController):
 
     local_mpf_config_cache = {}
 
-    def __init__(self, mpf_path, machine_path, options, config_patches,
+    def __init__(self, mpf_path, machine_path, options, config_patches, loop,
                  enable_plugins=False):
         self.test_config_patches = config_patches
         self.test_init_complete = False
         self._enable_plugins = enable_plugins
-        self._loop = None
+        self._loop = loop
         super().__init__(mpf_path, machine_path, options)
 
     def get_event_loop(self):
-        self._loop = TimeTravelLoop()
         return self._loop
 
     def __del__(self):
@@ -196,6 +195,9 @@ class MpfTestCase(unittest.TestCase):
         DataManager.save_all = self._data_manager[1]
         DataManager.get_data = self._data_manager[2]
 
+    def _mock_loop(self):
+        pass
+
     def setUp(self):
         # we want to reuse config_specs to speed tests up
         mpf.core.config_validator.ConfigValidator.unload_config_spec = (
@@ -222,13 +224,15 @@ class MpfTestCase(unittest.TestCase):
 
         self._mock_data_manager()
 
+        self.loop = TimeTravelLoop()
+        self._mock_loop()
+
         try:
             self.machine = TestMachineController(
                 os.path.abspath(os.path.join(
                     mpf.core.__path__[0], os.pardir)), machine_path,
-                self.getOptions(), self.machine_config_patches,
+                self.getOptions(), self.machine_config_patches, self.loop,
                 self.get_enable_plugins())
-            self.loop = self.machine.clock.loop
 
             start = time.time()
             while not self.machine.test_init_complete and time.time() < start + 20:
