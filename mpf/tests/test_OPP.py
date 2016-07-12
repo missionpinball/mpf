@@ -41,6 +41,7 @@ class SerialMock(MockSocket):
             self.queue.put(self.expected_commands[msg])
 
         del self.expected_commands[msg]
+        return len(msg)
 
     def __init__(self):
         self.name = "SerialMock"
