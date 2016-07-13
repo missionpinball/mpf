@@ -35,6 +35,7 @@ class TestBonusMode(MpfTestCase):
 
         self.post_event("start_mode1")
         self.advance_time_and_run()
+        self.assertTrue(self.machine.mode_controller.is_active('mode1'))
 
         # player gets some score
         self.post_event("hit_target")
@@ -58,7 +59,10 @@ class TestBonusMode(MpfTestCase):
 
         # drain a ball
         self.machine.game.balls_in_play = 0
-        self.advance_time_and_run(30)
+        self.advance_time_and_run(1)
+        # check that bonus mode is loaded
+        self.assertTrue(self.machine.mode_controller.is_active('bonus'))
+        self.advance_time_and_run(29)
         self.assertEqual(3000, self._last_event_kwargs["bonus_ramps"]["score"])
         self.assertEqual(3, self._last_event_kwargs["bonus_ramps"]["hits"])
         self.assertEqual(10000, self._last_event_kwargs["bonus_modes"]["score"])
