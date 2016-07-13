@@ -258,7 +258,7 @@ class MpfTestCase(unittest.TestCase):
                 pass
             raise e
 
-        self.assertFalse(self.machine.done, "Machine crashed during start")
+        self.assertFalse(self.machine._done, "Machine crashed during start")
 
     def _mock_event_handler(self, event_name, **kwargs):
         self._last_event_kwargs[event_name] = kwargs

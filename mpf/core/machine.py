@@ -72,7 +72,7 @@ class MachineController(object):
         self.is_init_done = False
         self.register_boot_hold('init')
 
-        self.done = False
+        self._done = False
         self.monitors = dict()
         self.plugins = list()
         self.scriptlets = list()
@@ -537,6 +537,9 @@ class MachineController(object):
 
     def stop(self):
         """Performs a graceful exit of MPF."""
+        if self._done:
+            return
+
         self.log.info("Shutting down...")
         self.events.post('shutdown')
         '''event: shutdown
@@ -548,7 +551,7 @@ class MachineController(object):
         self.thread_stopper.set()
         self._platform_stop()
         # todo change this to look for the shutdown event
-        self.done = True
+        self._done = True
         self.clock.loop.stop()
 
     def _run_loop(self):
