@@ -169,6 +169,14 @@ class MpfTestCase(unittest.TestCase):
         if mpf_path in sys.path:
             sys.path.remove(mpf_path)
 
+        # make tests path independent. remove current dir absolue
+        if os.curdir in sys.path:
+            sys.path.remove(os.curdir)
+
+        # make tests path independent. remove current dir relative
+        if "" in sys.path:
+            sys.path.remove("")
+
     def restore_sys_path(self):
         # restore sys path
         sys.path = self._sys_path
