@@ -750,7 +750,7 @@ class OPPSerialCommunicator(object):
 
         self.machine.clock.loop.run_until_complete(self._initialise(port, baud))
 
-        self.identify_connection()
+        #self.identify_connection()
         self.platform.register_processor_connection(self.chain_serial, self)
 
         self.read_task = self.machine.clock.loop.create_task(self._socket_reader())
@@ -761,6 +761,8 @@ class OPPSerialCommunicator(object):
             loop=self.machine.clock.loop,
             url=port, baudrate=baud)
         self.reader, self.writer = yield from connector
+
+        yield from self.identify_connection()
 
     @asyncio.coroutine
     def readuntil(self, separator=b'\xff'):
@@ -773,6 +775,7 @@ class OPPSerialCommunicator(object):
             if char == separator:
                 return buffer
 
+    @asyncio.coroutine
     def identify_connection(self):
         """Identify which processor this serial connection is talking to."""
         # keep looping and wait for an ID response
@@ -785,7 +788,7 @@ class OPPSerialCommunicator(object):
             count += 1
             self.writer.write(OppRs232Intf.EOM_CMD)
             time.sleep(.01)
-            resp = self.machine.clock.loop.run_until_complete(self.reader.read(30))
+            resp = yield from self.reader.read(30)
             if resp.startswith(OppRs232Intf.EOM_CMD):
                 break
             if count == 100:
@@ -804,14 +807,14 @@ class OPPSerialCommunicator(object):
         self.log.debug("Sending inventory command: %s", "".join(" 0x%02x" % b for b in cmd))
         self.writer.write(cmd)
 
-        resp = self.machine.clock.loop.run_until_complete(self.readuntil(b'\xff'))
+        resp = yield from self.readuntil(b'\xff')
 
         # resp will contain the inventory response.
         self.platform.process_received_message(self.chain_serial, resp)
 
         # Now send get gen2 configuration message to find populated wing boards
         self.send_get_gen2_cfg_cmd()
-        resp = self.machine.clock.loop.run_until_complete(self.readuntil(b'\xff'))
+        resp = yield from self.readuntil(b'\xff')
 
         # resp will contain the gen2 cfg reponses.  That will end up creating all the
         # correct objects.
@@ -819,7 +822,7 @@ class OPPSerialCommunicator(object):
 
         # get the version of the firmware
         self.send_vers_cmd()
-        resp = self.machine.clock.loop.run_until_complete(self.readuntil(b'\xff'))
+        resp = yield from self.readuntil(b'\xff')
         self.platform.process_received_message(self.chain_serial, resp)
 
         # see if version of firmware is new enough
@@ -832,7 +835,7 @@ class OPPSerialCommunicator(object):
         # get initial value for inputs
         self.writer.write(self.platform.read_input_msg[self.chain_serial])
         time.sleep(.1)
-        resp = self.machine.clock.loop.run_until_complete(self.reader.read(100))
+        resp = yield from self.reader.read(100)
         self.log.debug("Init get input response: %s", "".join(" 0x%02x" % b for b in resp))
         self._parse_msg(resp)
 
