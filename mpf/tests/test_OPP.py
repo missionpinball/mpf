@@ -111,12 +111,10 @@ class TestOPP(MpfTestCase):
         else:
             self.serialMock.queue.put(msg)
         while not self.serialMock.queue.empty() and not self.serialMock.crashed:
-            time.sleep(.00001)
             self.advance_time_and_run(1)
 
     def _wait_for_processing(self):
         while self.serialMock.expected_commands and not self.serialMock.crashed:
-            time.sleep(.00001)
             self.advance_time_and_run(.01)
 
     def test_opp(self):
@@ -145,7 +143,6 @@ class TestOPP(MpfTestCase):
         }
 
         while self.machine.switch_controller.is_active("s_test_nc"):
-            time.sleep(.0001)
             self.advance_time_and_run(0.1)
 
         self.assertTrue(self.machine.switch_controller.is_active("s_test"))
