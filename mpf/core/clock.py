@@ -3,6 +3,8 @@ import logging
 import asyncio
 from functools import partial
 
+from serial import aio
+
 
 class PeriodicTask:
 
@@ -54,6 +56,39 @@ class ClockBase:
     def get_time(self):
         """Get the last tick made by the clock."""
         return self.loop.time()
+
+    @asyncio.coroutine
+    def open_serial_connection(self, loop=None, limit=None, **kwargs):
+        """A wrapper for create_serial_connection() returning a (reader,
+        writer) pair.
+
+        The reader returned is a StreamReader instance; the writer is a
+        StreamWriter instance.
+
+        The arguments are all the usual arguments to Serial(). Additional
+        optional keyword arguments are loop (to set the event loop instance
+        to use) and limit (to set the buffer limit passed to the
+        StreamReader.
+
+        This function is a coroutine.
+        """
+        if not loop:
+            loop = asyncio.get_event_loop()
+        if not limit:
+            limit = asyncio.streams._DEFAULT_LIMIT
+
+        # this is supposed to be in the loop
+        if hasattr(loop, "open_serial_connection"):
+            return loop.open_serial_connection(loop=loop, limit=limit, **kwargs)
+
+        reader = asyncio.StreamReader(limit=limit, loop=loop)
+        protocol = asyncio.StreamReaderProtocol(reader, loop=loop)
+        transport, _ = yield from aio.create_serial_connection(
+                loop=loop,
+                protocol_factory=lambda: protocol,
+                **kwargs)
+        writer = asyncio.StreamWriter(transport, protocol, reader, loop)
+        return reader, writer
 
     def schedule_socket_read_callback(self, socket, callback):
         """Schedule a callback when the socket is ready.
@@ -107,11 +142,11 @@ class ClockBase:
             A PeriodicTask object.
         """
         if not callable(callback):
-            raise AssertionError('callback must be a callable, got %s' % callback)
+            raise AssertionError('callback must be a callable, got {}'.format(callback))
 
         periodic_task = PeriodicTask(timeout, self.loop, callback)
 
-        self._log.debug("Scheduled a recurring clock callback (callback=%s, timeout=%s, priority=%s)",
+        self._log.debug("Scheduled a recurring clock callback (callback=%s, timeout=%s)",
                         str(callback), timeout)
 
         return periodic_task
