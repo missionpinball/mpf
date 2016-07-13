@@ -63,11 +63,23 @@ class _TestTransport:
         pass
 
 
-class MockSocket:
+class MockFd:
     def __init__(self):
         self.is_open = False
-        self.fd = self
 
+    def read_ready(self):
+        return False
+
+    def send(self, data):
+        return len(data)
+
+    def write_ready(self):
+        return False
+
+    def close(self):
+        return
+
+class MockSocket(MockFd):
     def getsockname(self):
         return ""
 
@@ -77,21 +89,19 @@ class MockSocket:
     def fileno(self):
         return self
 
-    def close(self):
-        return
-
-    def read_ready(self):
-        return False
-
-    def write_ready(self):
-        return False
-
     def recv(self, size):
         raise AssertionError("Not implemented")
 
-    def send(self, data):
-        return len(data)
+class MockSerial(MockFd):
+    def __init__(self):
+        super().__init__()
+        self.fd = self
 
+    def nonblocking(self):
+        pass
+
+    def read(self, length):
+        raise AssertionError("Not implemented")
 
 class TestSelector(selectors.BaseSelector):
     def __init__(self):
