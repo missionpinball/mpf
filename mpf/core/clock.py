@@ -3,7 +3,7 @@ import logging
 import asyncio
 from functools import partial
 
-from serial import aio
+from serial_asyncio import create_serial_connection
 
 
 class PeriodicTask:
@@ -83,7 +83,7 @@ class ClockBase:
 
         reader = asyncio.StreamReader(limit=limit, loop=loop)
         protocol = asyncio.StreamReaderProtocol(reader, loop=loop)
-        transport, _ = yield from aio.create_serial_connection(
+        transport, _ = yield from create_serial_connection(
                 loop=loop,
                 protocol_factory=lambda: protocol,
                 **kwargs)

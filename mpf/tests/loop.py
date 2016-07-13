@@ -8,7 +8,7 @@ from asyncio.selector_events import _SelectorSocketTransport
 
 import asyncio
 
-from serial.aio import SerialTransport
+from serial_asyncio import SerialTransport
 
 
 class NextTimers:
@@ -79,6 +79,7 @@ class MockFd:
     def close(self):
         return
 
+
 class MockSocket(MockFd):
     def getsockname(self):
         return ""
@@ -92,6 +93,7 @@ class MockSocket(MockFd):
     def recv(self, size):
         raise AssertionError("Not implemented")
 
+
 class MockSerial(MockFd):
     def __init__(self):
         super().__init__()
@@ -100,6 +102,20 @@ class MockSerial(MockFd):
 
     def nonblocking(self):
         pass
+
+    @property
+    def in_waiting(self):
+        if self.read_ready():
+            return 1
+        else:
+            return 0
+
+    @property
+    def out_waiting(self):
+        if self.write_ready():
+            return 1
+        else:
+            return 0
 
     def read(self, length):
         raise AssertionError("Not implemented")
