@@ -5,7 +5,6 @@ platform hardware, including the solenoid, input, incandescent, and neopixel
 boards.
 """
 import logging
-import time
 import asyncio
 
 try:
@@ -787,7 +786,7 @@ class OPPSerialCommunicator(object):
                                self.port)
             count += 1
             self.writer.write(OppRs232Intf.EOM_CMD)
-            time.sleep(.01)
+            yield from asyncio.sleep(.01, loop=self.machine.clock.loop)
             resp = yield from self.reader.read(30)
             if resp.startswith(OppRs232Intf.EOM_CMD):
                 break
@@ -834,7 +833,7 @@ class OPPSerialCommunicator(object):
 
         # get initial value for inputs
         self.writer.write(self.platform.read_input_msg[self.chain_serial])
-        time.sleep(.1)
+        yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
         resp = yield from self.reader.read(100)
         self.log.debug("Init get input response: %s", "".join(" 0x%02x" % b for b in resp))
         self._parse_msg(resp)
