@@ -6,6 +6,10 @@ import heapq
 # A class to manage set of next events:
 from asyncio.selector_events import _SelectorSocketTransport
 
+import asyncio
+
+from serial.aio import SerialTransport
+
 
 class NextTimers:
     def __init__(self):
@@ -62,6 +66,7 @@ class _TestTransport:
 class MockSocket:
     def __init__(self):
         self.is_open = False
+        self.fd = self
 
     def getsockname(self):
         return ""
@@ -134,6 +139,7 @@ class TimeTravelLoop(base_events.BaseEventLoop):
         self._selector = TestSelector()
         self.reset_counters()
         self._mock_sockets = {}
+        self._mock_serials = {}
 
     def time(self):
         return self._time
@@ -235,6 +241,47 @@ class TimeTravelLoop(base_events.BaseEventLoop):
     def reset_counters(self):
         self.remove_reader_count = collections.defaultdict(int)
         self.remove_writer_count = collections.defaultdict(int)
+
+    def mock_serial(self, url, serial):
+        """Mock a socket and use it for connections."""
+        self._mock_serials[url] = serial
+
+    def _open_mock_serial(self, url):
+        key = url
+        if key not in self._mock_serials:
+            raise AssertionError("serial not mocked for key {}".format(key))
+        serial = self._mock_serials[key]
+        if serial.is_open:
+            raise AssertionError("serial already open for key {}".format(key))
+
+        serial.is_open = True
+        return serial
+
+    def open_serial_connection(self, url, baudrate, loop=None, limit=None):
+        """A wrapper for create_serial_connection() returning a (reader,
+        writer) pair.
+
+        The reader returned is a StreamReader instance; the writer is a
+        StreamWriter instance.
+
+        The arguments are all the usual arguments to Serial(). Additional
+        optional keyword arguments are loop (to set the event loop instance
+        to use) and limit (to set the buffer limit passed to the
+        StreamReader.
+
+        This function is a coroutine.
+        """
+        del baudrate
+        if not loop:
+            loop = asyncio.get_event_loop()
+        if not limit:
+            limit = asyncio.streams._DEFAULT_LIMIT
+
+        reader = asyncio.StreamReader(limit=limit, loop=loop)
+        protocol = asyncio.StreamReaderProtocol(reader, loop=loop)
+        transport = SerialTransport(loop, protocol, self._open_mock_serial(url))
+        writer = asyncio.StreamWriter(transport, protocol, reader, loop)
+        return reader, writer
 
     def mock_socket(self, host, port, socket):
         """Mock a socket and use it for connections."""
