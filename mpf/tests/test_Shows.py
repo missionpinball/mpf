@@ -640,10 +640,3 @@ class TestShows(MpfTestCase):
         self.machine.shows['multiple_tokens'].play(show_tokens=dict(
             lights='light_01'))
 
-    # todo need to implement this
-    # def test_updating_shows(self):
-    #     self.machine.events.post('play_with_keys')
-    #     self.advance_time_and_run()
-    #
-    #     self.machine.events.post('adjust_running_show_by_key')
-    #     self.advance_time_and_run()
