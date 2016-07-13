@@ -412,11 +412,11 @@ class MachineController(object):
 
                 self.log.debug("Loading '%s' scriptlet", scriptlet)
 
-                i = __import__(self.config['mpf']['paths']['scriptlets'] + '.' + scriptlet.split('.')[0], fromlist=[''])
+                scriptlet_obj = Util.string_to_class(self.config['mpf']['paths']['scriptlets'] + "." + scriptlet)(
+                    machine=self,
+                    name=scriptlet.split('.')[1])
 
-                self.scriptlets.append(getattr(i, scriptlet.split('.')[1])
-                                       (machine=self,
-                                        name=scriptlet.split('.')[1]))
+                self.scriptlets.append(scriptlet_obj)
 
     def reset(self):
         """Resets the machine.
