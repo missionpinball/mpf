@@ -6,10 +6,7 @@ boards.
 """
 import logging
 import time
-import sys
-import threading
-import queue
-import traceback
+import asyncio
 
 try:
     import serial
@@ -149,8 +146,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         """
         for port in self.config['ports']:
             self.serial_connections.add(OPPSerialCommunicator(
-                platform=self, port=port, baud=self.config['baud'],
-                send_queue=queue.Queue()))
+                platform=self, port=port, baud=self.config['baud']))
 
     def register_processor_connection(self, serial_number, communicator):
         """Register the processors to the platform.
@@ -517,7 +513,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
         if number not in self.solDict:
             raise AssertionError("A request was made to configure an OPP solenoid "
-                                 "with number %s which doesn't exist", number)
+                                 "with number {} which doesn't exist".format(config['number']))
 
         # Use new update individual solenoid command
         opp_sol = self.solDict[number]
@@ -733,30 +729,49 @@ class OPPSerialCommunicator(object):
     """Manages a Serial connection to the first processor in a OPP serial chain."""
 
     # pylint: disable=too-many-arguments
-    def __init__(self, platform: HardwarePlatform, port, baud, send_queue):
+    def __init__(self, platform: HardwarePlatform, port, baud):
         """Initialise Serial Connection to OPP Hardware."""
         self.machine = platform.machine
         self.platform = platform
-        self.send_queue = send_queue
         self.debug = False
         self.log = self.platform.log
         self.partMsg = b""
         self.debug = self.platform.config['debug']
         self.chain_serial = None
+        self.port = port
 
         self.remote_processor = "OPP Gen2"
         self.remote_model = None
 
         self.log.debug("Connecting to %s at %sbps", port, baud)
-        try:
-            self.serial_connection = serial.Serial(port=port, baudrate=baud,
-                                                   timeout=.01, writeTimeout=0)
-        except serial.SerialException:
-            raise AssertionError('Could not open port: {}'.format(port))
+
+        self.reader = None
+        self.writer = None
+
+        self.machine.clock.loop.run_until_complete(self._initialise(port, baud))
 
         self.identify_connection()
         self.platform.register_processor_connection(self.chain_serial, self)
-        self._connect_to_serials()
+
+        self.read_task = self.machine.clock.loop.create_task(self._socket_reader())
+
+    @asyncio.coroutine
+    def _initialise(self, port, baud):
+        connector = self.machine.clock.open_serial_connection(
+            loop=self.machine.clock.loop,
+            url=port, baudrate=baud)
+        self.reader, self.writer = yield from connector
+
+    @asyncio.coroutine
+    def readuntil(self, separator=b'\xff'):
+        """Read until separator."""
+        # asyncio StreamReader only supports this from python 3.5.2 on
+        buffer = b''
+        while True:
+            char = yield from self.reader.readexactly(1)
+            buffer += char
+            if char == separator:
+                return buffer
 
     def identify_connection(self):
         """Identify which processor this serial connection is talking to."""
@@ -766,19 +781,19 @@ class OPPSerialCommunicator(object):
         while True:
             if (count % 10) == 0:
                 self.log.debug("Sending EOM command to port '%s'",
-                               self.serial_connection.name)
+                               self.port)
             count += 1
-            self.serial_connection.write(OppRs232Intf.EOM_CMD)
+            self.writer.write(OppRs232Intf.EOM_CMD)
             time.sleep(.01)
-            resp = self.serial_connection.read(30)
+            resp = self.machine.clock.loop.run_until_complete(self.reader.read(30))
             if resp.startswith(OppRs232Intf.EOM_CMD):
                 break
             if count == 100:
-                raise AssertionError('No response from OPP hardware: {}'.format(self.serial_connection.name))
+                raise AssertionError('No response from OPP hardware: {}'.format(self.port))
 
         self.log.debug("Got ID response: %s", "".join(" 0x%02x" % b for b in resp))
         # TODO: implement real ID here
-        self.chain_serial = self.serial_connection.name
+        self.chain_serial = self.port
 
         # Send inventory command to figure out number of cards
         msg = bytearray()
@@ -787,16 +802,16 @@ class OPPSerialCommunicator(object):
         cmd = bytes(msg)
 
         self.log.debug("Sending inventory command: %s", "".join(" 0x%02x" % b for b in cmd))
-        self.serial_connection.write(cmd)
+        self.writer.write(cmd)
 
-        resp = self.serial_connection.read_until(b'\xff')
+        resp = self.machine.clock.loop.run_until_complete(self.readuntil(b'\xff'))
 
         # resp will contain the inventory response.
         self.platform.process_received_message(self.chain_serial, resp)
 
         # Now send get gen2 configuration message to find populated wing boards
         self.send_get_gen2_cfg_cmd()
-        resp = self.serial_connection.read_until(b'\xff')
+        resp = self.machine.clock.loop.run_until_complete(self.readuntil(b'\xff'))
 
         # resp will contain the gen2 cfg reponses.  That will end up creating all the
         # correct objects.
@@ -804,7 +819,7 @@ class OPPSerialCommunicator(object):
 
         # get the version of the firmware
         self.send_vers_cmd()
-        resp = self.serial_connection.read_until(b'\xff')
+        resp = self.machine.clock.loop.run_until_complete(self.readuntil(b'\xff'))
         self.platform.process_received_message(self.chain_serial, resp)
 
         # see if version of firmware is new enough
@@ -815,9 +830,9 @@ class OPPSerialCommunicator(object):
                                         self._create_vers_str(self.platform.minVersion)))
 
         # get initial value for inputs
-        self.serial_connection.write(self.platform.read_input_msg[self.chain_serial])
+        self.writer.write(self.platform.read_input_msg[self.chain_serial])
         time.sleep(.1)
-        resp = self.serial_connection.read(100)
+        resp = self.machine.clock.loop.run_until_complete(self.reader.read(100))
         self.log.debug("Init get input response: %s", "".join(" 0x%02x" % b for b in resp))
         self._parse_msg(resp)
 
@@ -840,7 +855,7 @@ class OPPSerialCommunicator(object):
         whole_msg.extend(OppRs232Intf.EOM_CMD)
         cmd = bytes(whole_msg)
         self.log.debug("Sending get Gen2 Cfg command: %s", "".join(" 0x%02x" % b for b in cmd))
-        self.serial_connection.write(cmd)
+        self.writer.write(cmd)
 
     def send_vers_cmd(self):
         """Send get firmware version message."""
@@ -861,7 +876,7 @@ class OPPSerialCommunicator(object):
         whole_msg.extend(OppRs232Intf.EOM_CMD)
         cmd = bytes(whole_msg)
         self.log.debug("Sending get version command: %s", "".join(" 0x%02x" % b for b in cmd))
-        self.serial_connection.write(cmd)
+        self.writer.write(cmd)
 
     @classmethod
     def _create_vers_str(cls, version_int):
@@ -869,19 +884,11 @@ class OPPSerialCommunicator(object):
                                          ((version_int >> 16) & 0xff), ((version_int >> 8) & 0xff),
                                          (version_int & 0xff)))
 
-    def _connect_to_serials(self):
-        self.serial_connection.timeout = None
-        self.machine.clock.schedule_socket_read_callback(self.serial_connection, self._read_socket)
-
-        self.sending_thread = threading.Thread(target=self._sending_loop)
-        self.sending_thread.daemon = True
-        self.sending_thread.start()
-
     def stop(self):
         """Stop and shut down this serial connection."""
         self.log.error("Stop called on serial connection")
-        self.serial_connection.close()
-        self.serial_connection = None
+        self.read_task.cancel()
+        self.writer.close()
 
     def send(self, msg):
         """Send a message to the remote processor over the serial connection.
@@ -891,26 +898,9 @@ class OPPSerialCommunicator(object):
             steenking line feed character
 
         """
-        self.send_queue.put(msg)
-
-    def _sending_loop(self):
-
-        debug = self.platform.config['debug']
-
-        try:
-            while self.serial_connection:
-                msg = self.send_queue.get()
-                self.serial_connection.write(msg)
-
-                if debug:
-                    self.log.debug("Sending: %s", "".join(" 0x%02x" % b for b in msg))
-
-        # pylint: disable-msg=broad-except
-        except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
-            msg = ''.join(line for line in lines)
-            self.machine.crash_queue.put(msg)
+        if self.debug:
+            self.log.debug("Sending: %s", "".join(" 0x%02x" % b for b in msg))
+        self.writer.write(msg)
 
     def _parse_msg(self, msg):
         self.partMsg += msg
@@ -947,19 +937,20 @@ class OPPSerialCommunicator(object):
                     self.partMsg = self.partMsg[1:]
                     strlen -= 1
 
-    def _read_socket(self):
-        try:
-            resp = self.serial_connection.read_all()
-        except OSError:
-            resp = None
+    @asyncio.coroutine
+    def _socket_reader(self):
+        while True:
+            try:
+                resp = yield from self.reader.read(100)
+            except:
+                resp = None
 
-        # we either got empty response (-> socket closed) or and error
-        if not resp:
-            self.log.warning("Serial of OPP closed.")
-            self.serial_connection.close()
-            self.machine.done = True
-            return
+            # we either got empty response (-> socket closed) or and error
+            if not resp:
+                self.log.warning("Serial of OPP closed.")
+                self.machine.stop()
+                return
 
-        if self.debug:
-            self.log.debug("Received: %s", "".join(" 0x%02x" % b for b in resp))
-        self._parse_msg(resp)
+            if self.debug:
+                self.log.debug("Received: %s", "".join(" 0x%02x" % b for b in resp))
+            self._parse_msg(resp)
