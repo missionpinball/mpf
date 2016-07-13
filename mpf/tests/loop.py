@@ -96,6 +96,7 @@ class MockSerial(MockFd):
     def __init__(self):
         super().__init__()
         self.fd = self
+        self.timeout = None
 
     def nonblocking(self):
         pass

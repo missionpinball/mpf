@@ -6,21 +6,14 @@ from unittest.mock import MagicMock
 from mpf.platforms.opp import opp
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 from mpf.tests.MpfTestCase import MpfTestCase
-from mpf.tests.loop import MockSocket
+from mpf.tests.loop import MockSerial
 
 
-class SerialMock(MockSocket):
+class MockOppSocket(MockSerial):
     def read(self, length):
         del length
         msg = self.queue.get()
         return msg
-
-    def read_all(self):
-        return self.read(123)
-
-    def read_until(self, char):
-        del char
-        return self.read(123)
 
     def read_ready(self):
         return not self.queue.empty()
@@ -28,9 +21,9 @@ class SerialMock(MockSocket):
     def write(self, msg):
         if msg in self.permanent_commands:
             self.queue.put(self.permanent_commands[msg])
-            return
+            return len(msg)
 
-        # print("Serial received: " + "".join("\\x%02x" % ord(b) for b in msg) + " len: " + str(len(msg)))
+        # print("Serial received: " + "".join("\\x%02x" % b for b in msg) + " len: " + str(len(msg)))
         if msg not in self.expected_commands:
             self.crashed = True
             print("Unexpected command: " + "".join("\\x%02x" % b for b in msg) + " len: " + str(len(msg)))
@@ -44,6 +37,7 @@ class SerialMock(MockSocket):
         return len(msg)
 
     def __init__(self):
+        super().__init__()
         self.name = "SerialMock"
         self.expected_commands = {}
         self.queue = Queue()
@@ -65,11 +59,14 @@ class TestOPP(MpfTestCase):
             crc_msg += b'\xff'
         return crc_msg
 
+    def _mock_loop(self):
+        self.loop.mock_serial("com1", self.serialMock)
+
     def setUp(self):
         self.expected_duration = 1.5
         opp.serial_imported = True
         opp.serial = MagicMock()
-        self.serialMock = SerialMock()
+        self.serialMock = MockOppSocket()
         board1_config = b'\x20\x0d\x01\x02\x03\x03'      # wing1: solenoids, wing2: inputs, wing3: lamps, wing4: lamps
         board2_config = b'\x21\x0d\x06\x02\x02\x01'      # wing1: neo, wing2: inputs, wing3: inputs, wing4: solenoids
         board1_version = b'\x20\x02\x00\x00\x10\x00'     # 0.0.16.0
