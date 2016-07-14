@@ -1,6 +1,4 @@
 import copy
-import time
-from queue import Queue
 from unittest.mock import MagicMock
 
 from mpf.platforms.opp import opp
@@ -10,17 +8,21 @@ from mpf.tests.loop import MockSerial
 
 
 class MockOppSocket(MockSerial):
+
     def read(self, length):
         del length
-        msg = self.queue.get()
+        msg = self.queue.pop()
         return msg
 
     def read_ready(self):
-        return not self.queue.empty()
+        return self.queue
+
+    def write_ready(self):
+        return True
 
     def write(self, msg):
         if msg in self.permanent_commands:
-            self.queue.put(self.permanent_commands[msg])
+            self.queue.append(self.permanent_commands[msg])
             return len(msg)
 
         # print("Serial received: " + "".join("\\x%02x" % b for b in msg) + " len: " + str(len(msg)))
@@ -31,7 +33,7 @@ class MockOppSocket(MockSerial):
                                  " len: " + str(len(msg)))
 
         if self.expected_commands[msg] is not False:
-            self.queue.put(self.expected_commands[msg])
+            self.queue.append(self.expected_commands[msg])
 
         del self.expected_commands[msg]
         return len(msg)
@@ -40,7 +42,7 @@ class MockOppSocket(MockSerial):
         super().__init__()
         self.name = "SerialMock"
         self.expected_commands = {}
-        self.queue = Queue()
+        self.queue = []
         self.permanent_commands = {}
         self.crashed = False
 
