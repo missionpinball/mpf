@@ -6,16 +6,12 @@ boards.
 """
 
 import logging
-import time
 from distutils.version import StrictVersion
 from copy import deepcopy
 
-try:
-    import serial
-    serial_imported = True
-except ImportError:
-    serial_imported = False
-    serial = None
+import asyncio
+
+from mpf.platforms.base_serial_communicator import BaseSerialCommunicator
 
 from mpf.platforms.fast import fast_defines
 from mpf.platforms.fast.fast_driver import FASTDriver
@@ -58,10 +54,6 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger('FAST')
         self.log.debug("Configuring FAST hardware.")
-
-        if not serial_imported:
-            raise AssertionError('Could not import "pySerial". This is '
-                                 'required for the FAST platform interface')
 
         self.features['tickless'] = True
 
@@ -163,8 +155,8 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         and to register themselves.
         """
         for port in self.config['ports']:
-            self.serial_connections.add(SerialCommunicator(
-                machine=self.machine, platform=self, port=port,
+            self.serial_connections.add(FastSerialCommunicator(
+                platform=self, port=port,
                 baud=self.config['baud']))
 
     def register_processor_connection(self, name: str, communicator):
@@ -210,18 +202,19 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
                                 for led in self.fast_leds])
         self.rgb_connection.send(msg)
 
-    def get_hw_switch_states(self):
-        """Return initial hardware states."""
+    @asyncio.coroutine
+    def _get_hw_switch_states(self):
         self.hw_switch_data = None
         self.net_connection.send('SA:')
 
-        self.tick(0.01)
         while not self.hw_switch_data:
-            time.sleep(.01)
-            self.machine.clock.tick()
-            self.tick(.01)
+            yield from asyncio.sleep(.001, loop=self.machine.clock.loop)
 
         return self.hw_switch_data
+
+    def get_hw_switch_states(self):
+        """Return initial hardware states."""
+        return self.machine.clock.loop.run_until_complete(self._get_hw_switch_states())
 
     def receive_id(self, msg):
         """Ignore command."""
@@ -779,14 +772,35 @@ class FastIOBoard:
 
 
 # pylint: disable-msg=too-many-instance-attributes
-class SerialCommunicator(object):
+class FastSerialCommunicator(BaseSerialCommunicator):
 
     """Handles the serial communication to the FAST platform."""
 
-    def __init__(self, machine, platform, port, baud):
+    ignored_messages = ['RX:P',  # RGB Pass
+                        'SN:P',  # Network Switch pass
+                        'SN:F',  #
+                        'SL:P',  # Local Switch pass
+                        'SL:F',
+                        'LX:P',  # Lamp pass
+                        'PX:P',  # Segment pass
+                        'DN:P',  # Network driver pass
+                        'DN:F',
+                        'DL:P',  # Local driver pass
+                        'DL:F',  # Local driver fail
+                        'XX:F',  # Unrecognized command?
+                        'R1:F',
+                        'L1:P',
+                        'GI:P',
+                        'TL:P',
+                        'TN:P',
+                        'XO:P',  # Servo/Daughterboard Pass
+                        'XX:U',
+                        'XX:N',
+                        ]
+
+    def __init__(self, platform, port, baud):
         """Initialise communicator."""
-        self.machine = machine
-        self.platform = platform
+
         self.dmd = False
 
         self.remote_processor = None
@@ -795,37 +809,10 @@ class SerialCommunicator(object):
 
         self.received_msg = b''
 
-        self.ignored_messages = ['RX:P',  # RGB Pass
-                                 'SN:P',  # Network Switch pass
-                                 'SN:F',  #
-                                 'SL:P',  # Local Switch pass
-                                 'SL:F',
-                                 'LX:P',  # Lamp pass
-                                 'PX:P',  # Segment pass
-                                 'DN:P',  # Network driver pass
-                                 'DN:F',
-                                 'DL:P',  # Local driver pass
-                                 'DL:F',  # Local driver fail
-                                 'XX:F',  # Unrecognized command?
-                                 'R1:F',
-                                 'L1:P',
-                                 'GI:P',
-                                 'TL:P',
-                                 'TN:P',
-                                 'XO:P',  # Servo/Daughterboard Pass
-                                 'XX:U',
-                                 'XX:N',
-                                 ]
+        super().__init__(platform, port, baud)
 
-        self.platform.log.info("Connecting to %s at %sbps", port, baud)
-        self.serial_connection = serial.Serial(port=port, baudrate=baud,
-                                               timeout=1, writeTimeout=0)
-
-        self.identify_connection()
-        self.platform.register_processor_connection(self.remote_processor, self)
-        self._connect_to_hardware()
-
-    def identify_connection(self):
+    @asyncio.coroutine
+    def _identify_connection(self):
         """Identifie which processor this serial connection is talking to."""
         # keep looping and wait for an ID response
 
@@ -833,13 +820,13 @@ class SerialCommunicator(object):
 
         # send enough dummy commands to clear out any buffers on the FAST
         # board that might be waiting for more commands
-        self.serial_connection.write(((' ' * 256) + '\r').encode())
+        self.writer.write(((' ' * 256) + '\r').encode())
 
         while True:
             self.platform.debug_log("Sending 'ID:' command to port '%s'",
-                                    self.serial_connection.name)
-            self.serial_connection.write('ID:\r'.encode())
-            msg = self.serial_connection.read_until(b'\r').decode()
+                                    self.port)
+            self.writer.write('ID:\r'.encode())
+            msg = (yield from self.readuntil(b'\r')).decode()
             if msg.startswith('ID:'):
                 break
 
@@ -876,8 +863,11 @@ class SerialCommunicator(object):
                                  format(self.remote_processor, min_version, self.remote_firmware))
 
         if self.remote_processor == 'NET' and self.platform.machine_type == 'fast':
-            self.query_fast_io_boards()
+            yield from self.query_fast_io_boards()
 
+        self.platform.register_processor_connection(self.remote_processor, self)
+
+    @asyncio.coroutine
     def query_fast_io_boards(self):
         """Querie the NET processor to see if any FAST IO boards are connected.
 
@@ -888,10 +878,10 @@ class SerialCommunicator(object):
         firmware_ok = True
 
         for board_id in range(8):
-            self.serial_connection.write('NN:{0}\r'.format(board_id).encode())
+            self.writer.write('NN:{0}\r'.format(board_id).encode())
             msg = ''
             while not msg.startswith('NN:'):
-                msg = self.serial_connection.read_until(b'\r').decode()
+                msg = (yield from self.readuntil(b'\r')).decode()
                 if not msg.startswith('NN:'):
                     self.platform.debug_log("Got unexpected message from FAST: {}".format(msg))
 
@@ -922,17 +912,6 @@ class SerialCommunicator(object):
         if not firmware_ok:
             raise AssertionError("Exiting due to IO board firmware mismatch")
 
-    def _connect_to_hardware(self):
-        self.serial_connection.timeout = None
-        self.machine.clock.schedule_socket_read_callback(self.serial_connection, self._receiver)
-
-    def stop(self):
-        """Stop and shut down this serial connection."""
-        self.serial_connection.close()
-        self.serial_connection = None
-
-        # todo clear the hw?
-
     def send(self, msg):
         """Send a message to the remote processor over the serial connection.
 
@@ -943,30 +922,17 @@ class SerialCommunicator(object):
         """
         debug = self.platform.config['debug']
         if self.dmd:
-            self.serial_connection.write(b'BM:' + msg)
+            self.writer.write(b'BM:' + msg)
             if debug:
                 self.platform.log.debug("Send: %s", msg.decode())
 
         else:
-            self.serial_connection.write(msg.encode() + b'\r')
+            self.writer.write(msg.encode() + b'\r')
             if debug and msg[0:2] != "WD":
                 self.platform.log.debug("Send: %s", msg)
 
-    def _receiver(self):
-        debug = self.platform.config['debug']
-        try:
-            read_msg = self.serial_connection.read_all()
-        except OSError:
-            read_msg = None
-
-        # we either got empty response (-> socket closed) or and error
-        if not read_msg:
-            self.platform.log.warning("Serial of FAST closed.")
-            self.machine.done = True
-            self.serial_connection.close()
-            return
-
-        self.received_msg += read_msg
+    def _parse_msg(self, msg):
+        self.received_msg += msg
 
         while True:
             pos = self.received_msg.find(b'\r')
@@ -981,7 +947,7 @@ class SerialCommunicator(object):
             if not msg:
                 continue
 
-            if debug and msg[0:2] != b"WD":
+            if self.debug and msg[0:2] != b"WD":
                 self.platform.log.debug("Received: %s", msg.decode())
 
             if msg.decode() not in self.ignored_messages:
