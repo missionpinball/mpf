@@ -7,6 +7,8 @@ boards.
 import logging
 import asyncio
 
+from mpf.platforms.base_serial_communicator import BaseSerialCommunicator
+
 try:
     import serial
     serial_imported = True
@@ -723,59 +725,20 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self.reconfigure_driver(coil, not coil.hw_driver.can_be_pulsed)
 
 
-class OPPSerialCommunicator(object):
+class OPPSerialCommunicator(BaseSerialCommunicator):
 
     """Manages a Serial connection to the first processor in a OPP serial chain."""
 
     # pylint: disable=too-many-arguments
     def __init__(self, platform: HardwarePlatform, port, baud):
         """Initialise Serial Connection to OPP Hardware."""
-        self.machine = platform.machine
-        self.platform = platform
-        self.debug = False
-        self.log = self.platform.log
         self.partMsg = b""
-        self.debug = self.platform.config['debug']
         self.chain_serial = None
-        self.port = port
 
-        self.remote_processor = "OPP Gen2"
-        self.remote_model = None
-
-        self.log.debug("Connecting to %s at %sbps", port, baud)
-
-        self.reader = None
-        self.writer = None
-
-        self.machine.clock.loop.run_until_complete(self._initialise(port, baud))
-
-        #self.identify_connection()
-        self.platform.register_processor_connection(self.chain_serial, self)
-
-        self.read_task = self.machine.clock.loop.create_task(self._socket_reader())
+        super().__init__(platform, port, baud)
 
     @asyncio.coroutine
-    def _initialise(self, port, baud):
-        connector = self.machine.clock.open_serial_connection(
-            loop=self.machine.clock.loop,
-            url=port, baudrate=baud)
-        self.reader, self.writer = yield from connector
-
-        yield from self.identify_connection()
-
-    @asyncio.coroutine
-    def readuntil(self, separator=b'\xff'):
-        """Read until separator."""
-        # asyncio StreamReader only supports this from python 3.5.2 on
-        buffer = b''
-        while True:
-            char = yield from self.reader.readexactly(1)
-            buffer += char
-            if char == separator:
-                return buffer
-
-    @asyncio.coroutine
-    def identify_connection(self):
+    def _identify_connection(self):
         """Identify which processor this serial connection is talking to."""
         # keep looping and wait for an ID response
         count = 0
@@ -827,8 +790,8 @@ class OPPSerialCommunicator(object):
         # see if version of firmware is new enough
         if self.platform.minVersion < MIN_FW:
             raise AssertionError("Firmware version mismatch. MPF requires"
-                                 " the {} processor to be firmware {}, but yours is {}".
-                                 format(self.remote_processor, self._create_vers_str(MIN_FW),
+                                 " the OPP Gen2 processor to be firmware {}, but yours is {}".
+                                 format(self._create_vers_str(MIN_FW),
                                         self._create_vers_str(self.platform.minVersion)))
 
         # get initial value for inputs
@@ -837,6 +800,8 @@ class OPPSerialCommunicator(object):
         resp = yield from self.reader.read(100)
         self.log.debug("Init get input response: %s", "".join(" 0x%02x" % b for b in resp))
         self._parse_msg(resp)
+
+        self.platform.register_processor_connection(self.chain_serial, self)
 
     def send_get_gen2_cfg_cmd(self):
         """Send get gen2 configuration message to find populated wing boards."""
@@ -886,24 +851,6 @@ class OPPSerialCommunicator(object):
                                          ((version_int >> 16) & 0xff), ((version_int >> 8) & 0xff),
                                          (version_int & 0xff)))
 
-    def stop(self):
-        """Stop and shut down this serial connection."""
-        self.log.error("Stop called on serial connection")
-        self.read_task.cancel()
-        self.writer.close()
-
-    def send(self, msg):
-        """Send a message to the remote processor over the serial connection.
-
-        Args:
-            msg: String of the message you want to send. We don't need no
-            steenking line feed character
-
-        """
-        if self.debug:
-            self.log.debug("Sending: %s", "".join(" 0x%02x" % b for b in msg))
-        self.writer.write(msg)
-
     def _parse_msg(self, msg):
         self.partMsg += msg
         strlen = len(self.partMsg)
@@ -938,21 +885,3 @@ class OPPSerialCommunicator(object):
                         break
                     self.partMsg = self.partMsg[1:]
                     strlen -= 1
-
-    @asyncio.coroutine
-    def _socket_reader(self):
-        while True:
-            try:
-                resp = yield from self.reader.read(100)
-            except:
-                resp = None
-
-            # we either got empty response (-> socket closed) or and error
-            if not resp:
-                self.log.warning("Serial of OPP closed.")
-                self.machine.stop()
-                return
-
-            if self.debug:
-                self.log.debug("Received: %s", "".join(" 0x%02x" % b for b in resp))
-            self._parse_msg(resp)
