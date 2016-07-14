@@ -42,7 +42,7 @@ class HardwarePlatform(LedPlatform):
     def stop(self):
         """Stop platform."""
         # disconnect sender
-        self.opc_client.serial_sender.close()
+        self.opc_client.socket_sender.close()
 
     def configure_led(self, config, channels):
         """Configure an LED.
@@ -113,11 +113,11 @@ class OpenPixelClient(object):
         self.machine = machine
         self.dirty = True
         self.update_every_tick = False
-        self.serial_sender = None
+        self.socket_sender = None
         self.channels = list()
 
         connector = self.machine.clock.loop.create_connection(asyncio.Protocol, config['host'], config['port'])
-        self.serial_sender, _ = self.machine.clock.loop.run_until_complete(connector)
+        self.socket_sender, _ = self.machine.clock.loop.run_until_complete(connector)
 
         # Update the FadeCandy at a regular interval
         self.machine.clock.schedule_interval(self.tick, 1 / self.machine.config['mpf']['default_led_hw_update_hz'])
@@ -212,4 +212,4 @@ class OpenPixelClient(object):
         Args:
             message: Message to send
         """
-        self.serial_sender.write(message)
+        self.socket_sender.write(message)
