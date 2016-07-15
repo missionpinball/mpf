@@ -1,5 +1,6 @@
 """Classes which manage BCP transports."""
 
+
 class BcpTransportManager:
 
     """Manages BCP transports."""
@@ -8,6 +9,7 @@ class BcpTransportManager:
         self._machine = machine
         self._transports = []
         self._handlers = {}
+        self._machine.events.add_handler("shutdown", self.shutdown)
 
     def add_handler_to_transport(self, handler, transport):
         if handler not in self._handlers:
@@ -68,6 +70,7 @@ class BcpTransport:
     """Baseclass for BCP transports."""
 
     def __init__(self, transport_manager, bcp_handler):
+        """Initialise bcp transport."""
         self._transport_manager = transport_manager
         self._bcp_handler = bcp_handler
         self._disconnect_callbacks = []
