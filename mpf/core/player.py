@@ -127,7 +127,7 @@ class Player(object):
         except TypeError:
             change = prev_value != value
 
-        if (change or new_entry) and type(value) in (int, str, float):
+        if (change or new_entry) and isinstance(value, (int, str, float)):
 
             self.log.debug("Setting '%s' to: %s, (prior: %s, change: %s)",
                            name, self.vars[name], prev_value, change)
