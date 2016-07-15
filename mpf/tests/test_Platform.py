@@ -22,7 +22,7 @@ class TestPlatform(MpfTestCase):
 
     def _mock_loop(self):
         self._mock_socket = MockSocket()
-        self.loop.mock_socket("localhost", 7890, self._mock_socket)
+        self.clock.mock_socket("localhost", 7890, self._mock_socket)
 
     def test_platform_from_device(self):
         # tests that a platform can be added by a device, even if it's not

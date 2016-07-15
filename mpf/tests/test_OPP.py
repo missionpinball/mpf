@@ -62,7 +62,7 @@ class TestOPP(MpfTestCase):
         return crc_msg
 
     def _mock_loop(self):
-        self.loop.mock_serial("com1", self.serialMock)
+        self.clock.mock_serial("com1", self.serialMock)
 
     def setUp(self):
         self.expected_duration = 1.5

@@ -22,7 +22,7 @@ class TestOpenpixel(MpfTestCase):
 
     def _mock_loop(self):
         self._mock_socket = MockSocket()
-        self.loop.mock_socket("localhost", 7890, self._mock_socket)
+        self.clock.mock_socket("localhost", 7890, self._mock_socket)
         # connect socket to test
         self._mock_socket.send = self._send_mock
 
