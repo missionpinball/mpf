@@ -5,7 +5,6 @@ https://github.com/zestyping/openpixelcontrol/blob/master/python_clients/opc.py
 """
 
 import logging
-import asyncio
 
 from mpf.core.platform import LedPlatform
 from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
@@ -116,8 +115,8 @@ class OpenPixelClient(object):
         self.socket_sender = None
         self.channels = list()
 
-        connector = self.machine.clock.loop.create_connection(asyncio.Protocol, config['host'], config['port'])
-        self.socket_sender, _ = self.machine.clock.loop.run_until_complete(connector)
+        connector = self.machine.clock.open_connection(config['host'], config['port'])
+        _, self.socket_sender = self.machine.clock.loop.run_until_complete(connector)
 
         # Update the FadeCandy at a regular interval
         self.machine.clock.schedule_interval(self.tick, 1 / self.machine.config['mpf']['default_led_hw_update_hz'])
