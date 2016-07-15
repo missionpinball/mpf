@@ -11,6 +11,9 @@ class TestBcpClient:
     def send(self, bcp_command, kwargs):
         self.queue.put((bcp_command, kwargs))
 
+    def stop(self):
+        pass
+
 
 class TestBcp(MpfTestCase):
 
