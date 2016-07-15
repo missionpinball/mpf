@@ -10,6 +10,7 @@ class PluginPlayer(ConfigPlayer):
     """
 
     def __init__(self, machine):
+        """Initialise plugin player."""
         super().__init__(machine)
         self.bcp_client = None
 
@@ -49,8 +50,10 @@ class PluginPlayer(ConfigPlayer):
             self.machine.bcp.interface.add_registered_trigger_event_for_client(self.bcp_client, event)
             event_list.append(event)
 
-        self.machine.bcp.interface.add_registered_trigger_event_for_client(self.bcp_client, '{}_play'.format(self.show_section))
-        self.machine.bcp.interface.add_registered_trigger_event_for_client(self.bcp_client, '{}_clear'.format(self.show_section))
+        self.machine.bcp.interface.add_registered_trigger_event_for_client(
+            self.bcp_client, '{}_play'.format(self.show_section))
+        self.machine.bcp.interface.add_registered_trigger_event_for_client(
+            self.bcp_client, '{}_clear'.format(self.show_section))
 
         return event_list
 
