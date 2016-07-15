@@ -2,9 +2,7 @@
 import copy
 import logging
 
-from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.player import Player
-from mpf.core.utility_functions import Util
 
 
 class BcpInterface(object):
