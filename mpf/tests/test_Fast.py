@@ -93,9 +93,9 @@ class TestFast(MpfTestCase):
         return 'fast'
 
     def _mock_loop(self):
-        self.loop.mock_serial("com4", self.net_cpu)
-        self.loop.mock_serial("com5", self.rgb_cpu)
-        self.loop.mock_serial("com6", self.dmd_cpu)
+        self.clock.mock_serial("com4", self.net_cpu)
+        self.clock.mock_serial("com5", self.rgb_cpu)
+        self.clock.mock_serial("com6", self.dmd_cpu)
 
     def setUp(self):
         self.net_cpu = MockFastNet()
@@ -114,14 +114,14 @@ class TestFast(MpfTestCase):
         }
         self.net_cpu.expected_commands = {
             'ID:': 'ID:NET FP-CPU-002-1 00.88',
-            'NN:0': 'NN:0,asd,0.87,8,10,,,,,,',
-            'NN:1': 'NN:1,asd,0.87,8,10,,,,,,',
-            'NN:2': 'NN:2,asd,0.87,8,10,,,,,,',
-            'NN:3': 'NN:3,asd,0.87,8,10,,,,,,',
-            'NN:4': 'NN:4,asd,0.87,8,10,,,,,,',
-            'NN:5': 'NN:5,asd,0.87,8,10,,,,,,',
-            'NN:6': 'NN:6,asd,0.87,8,10,,,,,,',
-            'NN:7': 'NN:7,asd,0.87,8,10,,,,,,',
+            'NN:0': 'NN:00,FP-I/O-3208-2   ,01.00,08,20,04,06,00,00,00,00',     # 3208 board
+            'NN:1': 'NN:01,FP-I/O-0804-1   ,01.00,04,08,04,06,00,00,00,00',     # 0804 board
+            'NN:2': 'NN:02,FP-I/O-1616-2   ,01.00,10,10,04,06,00,00,00,00',     # 1616 board
+            'NN:3': 'NN:03,FP-I/O-1616-2   ,01.00,10,10,04,06,00,00,00,00',     # 1616 board
+            'NN:4': 'NN:04,,00.00,00,00,00,00,00,00,00,00',                     # unpopulated
+            'NN:5': 'NN:05,,00.00,00,00,00,00,00,00,00,00',                     # unpopulated
+            'NN:6': 'NN:06,,00.00,00,00,00,00,00,00,00,00',                     # unpopulated
+            'NN:7': 'NN:07,,00.00,00,00,00,00,00,00,00,00',                     # unpopulated
             "SA:": "SA:1,00,8,05000000",
             "SN:01,01,0A,0A": "SN:P",
             "SN:02,01,0A,0A": "SN:P",
@@ -131,7 +131,7 @@ class TestFast(MpfTestCase):
             "SN:1A,01,0A,0A": "SN:P",
             "DN:04,00,00,00": False,
             "DN:06,00,00,00": False,
-            "DN:09,00,00,00": False,
+            "DN:07,00,00,00": False,
             "DN:10,00,00,00": False,
             "DN:11,00,00,00": False,
             "DN:12,00,00,00": False,
@@ -139,18 +139,51 @@ class TestFast(MpfTestCase):
             "DN:21,00,00,00": False,
             "GI:2A,FF": False,
         }
-        BaseMockFast.ignore_matrix = True
 
         super().setUp()
         self.assertFalse(self.net_cpu.expected_commands)
         self.assertFalse(self.rgb_cpu.expected_commands)
         self.assertFalse(self.dmd_cpu.expected_commands)
 
+        # test io board detection
+        self.assertEqual(4, len(self.machine.default_platform.io_boards))
+        self.assertEqual(32, self.machine.default_platform.io_boards[0].switch_count)
+        self.assertEqual(8, self.machine.default_platform.io_boards[0].driver_count)
+        self.assertEqual(8, self.machine.default_platform.io_boards[1].switch_count)
+        self.assertEqual(4, self.machine.default_platform.io_boards[1].driver_count)
+        self.assertEqual(16, self.machine.default_platform.io_boards[2].switch_count)
+        self.assertEqual(16, self.machine.default_platform.io_boards[2].driver_count)
+        self.assertEqual(16, self.machine.default_platform.io_boards[3].switch_count)
+        self.assertEqual(16, self.machine.default_platform.io_boards[3].driver_count)
+
     def test_coils(self):
         self._test_pulse()
         self._test_long_pulse()
         self._test_enable_exception()
         self._test_allow_enable()
+        self._test_coil_configure()
+
+    def _test_coil_configure(self):
+        # last driver on board
+        self.net_cpu.expected_commands = {
+            "DN:2B,00,00,00": False
+        }
+        coil = self.machine.default_platform.configure_driver({'number': '3-15'})
+        self.assertEqual('2B', coil.number)
+        self.machine_run()
+        self.assertFalse(self.net_cpu.expected_commands)
+
+        # board 0 has 8 drivers. configuring driver 9 should not work
+        with self.assertRaises(AssertionError):
+            self.machine.default_platform.configure_driver({'number': '0-8'})
+
+        # only boards 0-3 exist
+        with self.assertRaises(AssertionError):
+            self.machine.default_platform.configure_driver({'number': '4-0'})
+
+        # only 8 + 4 + 16 + 16 = 44 = 0x2C driver exist
+        with self.assertRaises(AssertionError):
+            self.machine.default_platform.configure_driver({'number': '2C'})
 
     def _test_pulse(self):
         self.net_cpu.expected_commands = {
@@ -200,6 +233,24 @@ class TestFast(MpfTestCase):
         self._test_hw_rule_pulse_pwm()
         self._test_hw_rule_pulse_pwm32()
         self._test_hw_rule_pulse_inverted_switch()
+        self._test_hw_rule_same_board()
+
+    def _test_hw_rule_same_board(self):
+        self.net_cpu.expected_commands = {
+            "DN:21,01,07,10,0A,ff,00,00,14": False,
+            "SN:07,01,02,02": False
+        }
+        # coil and switch are on different boards but first 8 switches always work
+        self.machine.autofires.ac_different_boards.enable()
+        self.machine_run()
+        self.assertFalse(self.net_cpu.expected_commands)
+
+        self.net_cpu.expected_commands = {
+            "DN:10,01,03,10,0A,89,00,00,14": False,
+        }
+        # coil and switch are on different boards
+        with self.assertRaises(AssertionError):
+            self.machine.autofires.ac_broken_combination.enable()
 
     def _test_enable_exception_hw_rule(self):
         # enable coil which does not have allow_enable
@@ -220,14 +271,14 @@ class TestFast(MpfTestCase):
 
     def _test_hw_rule_pulse(self):
         self.net_cpu.expected_commands = {
-            "DN:09,01,16,10,0A,ff,00,00,14": False,  # hw rule
+            "DN:07,01,16,10,0A,ff,00,00,14": False,  # hw rule
             "SN:16,01,02,02": False                  # debounce quick on switch
         }
         self.machine.autofires.ac_slingshot_test.enable()
         self.assertFalse(self.net_cpu.expected_commands)
 
         self.net_cpu.expected_commands = {
-            "DN:09,81": False
+            "DN:07,81": False
         }
         self.machine.autofires.ac_slingshot_test.disable()
         self.assertFalse(self.net_cpu.expected_commands)
@@ -260,7 +311,7 @@ class TestFast(MpfTestCase):
 
     def _test_hw_rule_pulse_inverted_switch(self):
         self.net_cpu.expected_commands = {
-            "DN:09,11,1A,10,0A,ff,00,00,14": False,
+            "DN:07,11,1A,10,0A,ff,00,00,14": False,
             "SN:1A,01,02,02": False
         }
         self.machine.autofires.ac_inverted_switch.enable()
@@ -287,6 +338,35 @@ class TestFast(MpfTestCase):
     def test_switches(self):
         self._test_switch_changes()
         self._test_switch_changes_nc()
+        self._test_switch_configure()
+
+    def _test_switch_configure(self):
+        # last switch on first board
+        self.net_cpu.expected_commands = {
+            "SN:1F,01,0A,0A": False
+        }
+        self.machine.default_platform.configure_switch({'number': '0-31', 'debounce': 'auto'})
+        self.machine_run()
+        self.assertFalse(self.net_cpu.expected_commands)
+
+        # next should not work
+        with self.assertRaises(AssertionError):
+            self.machine.default_platform.configure_switch({'number': '0-32', 'debounce': 'auto'})
+
+        self.net_cpu.expected_commands = {
+            "SN:47,01,0A,0A": False
+        }
+        self.machine.default_platform.configure_switch({'number': '3-15', 'debounce': 'auto'})
+        self.machine_run()
+        self.assertFalse(self.net_cpu.expected_commands)
+
+        # invalid board
+        with self.assertRaises(AssertionError):
+            self.machine.default_platform.configure_switch({'number': '4-0', 'debounce': 'auto'})
+
+        # last switch is 0x47
+        with self.assertRaises(AssertionError):
+            self.machine.default_platform.configure_switch({'number': '48', 'debounce': 'auto'})
 
     def _test_switch_changes(self):
         self.assertFalse(self.machine.switch_controller.is_active("s_flipper"))
@@ -438,7 +518,6 @@ class TestFast(MpfTestCase):
         self._test_rdb_led()
 
     def _test_matrix_light(self):
-        BaseMockFast.ignore_matrix = False
         # test enable of matrix light
         self.net_cpu.expected_commands = {
             "L1:23,FF": False,

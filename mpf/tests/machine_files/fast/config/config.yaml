@@ -31,7 +31,7 @@ coils:
         pulse_ms: 23
         allow_enable: true
     c_slingshot_test:
-        number: 9
+        number: 7
     c_pulse_pwm_mask:
         number: 10
         pulse_pwm_mask: 10001001
@@ -67,6 +67,12 @@ autofire_coils:
         coil: c_test_allow_enable
         switch: s_autofire
         enable_events: ac_same_switch
+    ac_broken_combination:
+        coil: c_flipper_hold
+        switch: s_slingshot_test
+    ac_different_boards:
+        coil: c_flipper_hold
+        switch: s_test
 
 servos:
     servo1:
