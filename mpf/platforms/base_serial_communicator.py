@@ -25,7 +25,6 @@ class BaseSerialCommunicator(object):
         self.log.debug("Connecting to %s at %sbps", port, baud)
 
         connector = self.machine.clock.open_serial_connection(
-            loop=self.machine.clock.loop,
             url=port, baudrate=baud)
         self.reader, self.writer = yield from connector
 
@@ -55,7 +54,7 @@ class BaseSerialCommunicator(object):
 
     def stop(self):
         """Stop and shut down this serial connection."""
-        self.log.error("Stop called on serial connection")
+        self.log.error("Stop called on serial connection %s", self.port)
         self.read_task.cancel()
         self.writer.close()
 
