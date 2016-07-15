@@ -20,17 +20,13 @@ def callback(dt):
     global counter
     counter += 1
 
-class MockMachine:
-    def get_event_loop(self):
-        return asyncio.get_event_loop()
-
 
 class ClockTestCase(unittest.TestCase):
 
     def setUp(self):
         global counter
         counter = 0
-        self.clock = ClockBase(MockMachine())
+        self.clock = ClockBase()
         self.callback_order = []
 
     def advance_time_and_run(self, delta=1.0):
