@@ -66,7 +66,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         self.config = None
         self.machine_type = None
         self.hw_switch_data = None
-        self.io_boards = {}
+        self.io_boards = {}     # type: dict[int,FastIoBoard]
 
         # todo verify this list
         self.fast_commands = {'ID': self.receive_id,  # processor ID
@@ -115,10 +115,15 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             connection.stop()
 
     def __repr__(self):
+        """Return str representation."""
         return '<Platform.FAST>'
 
     def register_io_board(self, board):
-        """Register an IO board."""
+        """Register an IO board.
+
+        Args:
+            board: FastIoBoard to register
+        """
         if board.node_id in self.io_boards:
             raise AssertionError("Duplicate node_id")
         self.io_boards[board.node_id] = board
@@ -332,6 +337,39 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         else:
             return Util.normalize_hex_string(number)
 
+    def _parse_driver_number(self, number):
+        try:
+            board_str, driver_str = number.split("-")
+        except ValueError:
+            total_drivers = 0
+            for board_obj in self.io_boards.values():
+                total_drivers += board_obj.driver_count
+            index = self._convert_number_from_config(number)
+
+            if int(index, 16) >= total_drivers:
+                raise AssertionError("Driver {} does not exist. Only {} drivers found. Driver number: {}".format(
+                    int(index, 16), total_drivers, number))
+
+            return index
+
+        board = int(board_str)
+        driver = int(driver_str)
+
+        if board not in self.io_boards:
+            raise AssertionError("Board {} does not exist for driver {}".format(board, number))
+
+        if self.io_boards[board].driver_count <= driver:
+            raise AssertionError("Board {} only has {} drivers. Driver: {}".format(
+                board, self.io_boards[board].driver_count, number))
+
+        index = 0
+        for board_number, board_obj in self.io_boards.items():
+            if board_number >= board:
+                continue
+            index += board_obj.driver_count
+
+        return Util.int_to_hex_string(index + driver)
+
     def configure_driver(self, config: dict) -> FASTDriver:
         """Configure a driver.
 
@@ -365,7 +403,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         # If we have FAST IO boards, we need to make sure we have hex strings
         elif self.machine_type == 'fast':
 
-            config['number'] = self._convert_number_from_config(config['number'])
+            config['number'] = self._parse_driver_number(config['number'])
 
             # Now figure out the connection type
             if ('connection' in config and
@@ -391,6 +429,39 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         number = self._convert_number_from_config(config['number'])
 
         return FastServo(number, self.net_connection)
+
+    def _parse_switch_number(self, number):
+        try:
+            board_str, switch_str = number.split("-")
+        except ValueError:
+            total_switches = 0
+            for board_obj in self.io_boards.values():
+                total_switches += board_obj.switch_count
+            index = self._convert_number_from_config(number)
+
+            if int(index, 16) >= total_switches:
+                raise AssertionError("Switch {} does not exist. Only {} switches found. Switch number: {}".format(
+                    int(index, 16), total_switches, number))
+
+            return index
+
+        board = int(board_str)
+        switch = int(switch_str)
+
+        if board not in self.io_boards:
+            raise AssertionError("Board {} does not exist for switch {}".format(board, number))
+
+        if self.io_boards[board].switch_count <= switch:
+            raise AssertionError("Board {} only has {} switches. Switch: {}".format(
+                board, self.io_boards[board].switch_count, number))
+
+        index = 0
+        for board_number, board_obj in self.io_boards.items():
+            if board_number >= board:
+                continue
+            index += board_obj.switch_count
+
+        return Util.int_to_hex_string(index + switch)
 
     def configure_switch(self, config: dict) -> FASTSwitch:
         """Configure the switch object for a FAST Pinball controller.
@@ -443,7 +514,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
                 config['connection'] = 0  # local switch
 
             try:
-                config['number'] = self._convert_number_from_config(config['number'])
+                config['number'] = self._parse_switch_number(config['number'])
             except ValueError:
                 raise AssertionError("Could not parse switch number %s. Seems "
                                      "to be not a valid switch number for the"
@@ -585,11 +656,32 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             switch, config_overwrite)
         return config_overwrite
 
+    def _check_switch_coil_combincation(self, switch, coil):
+        switch_number = int(switch.hw_switch.number[0], 16)
+        coil_number = int(coil.hw_driver.number, 16)
+
+        # first 8 switches always work
+        if 0 <= switch_number <= 7:
+            return
+
+        switch_index = 0
+        coil_index = 0
+        for board_number, board_obj in self.io_boards.items():
+            # if switch and coil are on the same board we are fine
+            if switch_index <= switch_number < switch_index + board_obj.switch_count and \
+                    coil_index <= coil_number < coil_index + board_obj.driver_count:
+                return
+
+        raise AssertionError("Driver {} and switch {} are on different boards. Cannot apply rule!".format(
+            coil.hw_driver.number, coil.hw_driver.number))
+
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
         """Set pulse on hit and release rule to driver."""
         self.debug_log("Setting Pulse on hit and release HW Rule. Switch: %s,"
                        "Driver: %s", enable_switch.hw_switch.number,
                        coil.hw_driver.number)
+
+        self._check_switch_coil_combincation(enable_switch, coil)
 
         driver = coil.hw_driver
 
@@ -635,6 +727,8 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
                        "Driver: %s", enable_switch.hw_switch.number,
                        coil.hw_driver.number)
 
+        self._check_switch_coil_combincation(enable_switch, coil)
+
         driver = coil.hw_driver
 
         cmd = '{}{},{},{},10,{},{},00,00,{}'.format(
@@ -657,6 +751,8 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         self.debug_log("Setting Pulse on hit and enable and release HW Rule. "
                        "Switch: %s, Driver: %s",
                        enable_switch.hw_switch.number, coil.hw_driver.number)
+
+        self._check_switch_coil_combincation(enable_switch, coil)
 
         driver = coil.hw_driver
         if (driver.get_pwm1_for_cmd(coil) == "ff" and
@@ -758,12 +854,13 @@ class FASTDMD(object):
         self.send(data)
 
 
-class FastIOBoard:
+class FastIoBoard:
 
     """A fast IO board on the NET processor."""
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, node_id, model_string, firmware_version, switch_count, driver_count):
+        """Initialise FastIoBoard."""
         self.node_id = node_id
         self.model_string = model_string
         self.firmware_version = firmware_version
@@ -800,7 +897,6 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
     def __init__(self, platform, port, baud):
         """Initialise communicator."""
-
         self.dmd = False
 
         self.remote_processor = None
@@ -884,7 +980,6 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                 msg = (yield from self.readuntil(b'\r')).decode()
                 if not msg.startswith('NN:'):
                     self.platform.debug_log("Got unexpected message from FAST: {}".format(msg))
-
             node_id, model, fw, dr, sw, _, _, _, _, _, _ = msg.split(',')
             node_id = node_id[3:]
 
@@ -894,7 +989,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             if not len(model):
                 continue
 
-            self.platform.register_io_board(FastIOBoard(node_id, model, fw, int(sw, 16), int(dr, 16)))
+            self.platform.register_io_board(FastIoBoard(int(node_id, 16), model, fw, int(sw, 16), int(dr, 16)))
 
             self.platform.debug_log('Fast IO Board {0}: Model: {1}, '
                                     'Firmware: {2}, Switches: {3}, '
@@ -946,9 +1041,6 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
             if not msg:
                 continue
-
-            if self.debug and msg[0:2] != b"WD":
-                self.platform.log.debug("Received: %s", msg.decode())
 
             if msg.decode() not in self.ignored_messages:
                 self.platform.process_received_message(msg.decode())
