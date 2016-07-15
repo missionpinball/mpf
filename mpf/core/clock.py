@@ -11,6 +11,7 @@ class PeriodicTask:
     """A periodic asyncio task."""
 
     def __init__(self, interval, loop, callback):
+        """Initialise periodic task."""
         self._canceled = False
         self._interval = interval
         self._callback = callback
@@ -41,13 +42,18 @@ class PeriodicTask:
 
 
 class ClockBase:
+
     """A clock object with event support."""
 
-    def __init__(self, machine):
+    def __init__(self):
         """Initialise clock."""
         self._log = logging.getLogger("Clock")
         self._log.debug("Starting tickless clock")
-        self.loop = machine.get_event_loop()
+        self.loop = self._create_event_loop()
+
+    # pylint: disable-msg=no-self-use
+    def _create_event_loop(self):
+        return asyncio.get_event_loop()
 
     def run(self):
         """Run the clock."""
@@ -58,12 +64,35 @@ class ClockBase:
         return self.loop.time()
 
     @asyncio.coroutine
-    def open_serial_connection(self, loop=None, limit=None, **kwargs):
-        """A wrapper for create_serial_connection() returning a (reader,
-        writer) pair.
+    def open_connection(self, host=None, port=None, *,
+                        limit=None, **kwds):
+        """A wrapper for create_connection() returning a (reader, writer) pair.
 
         The reader returned is a StreamReader instance; the writer is a
         StreamWriter instance.
+
+        The arguments are all the usual arguments to create_connection()
+        except protocol_factory; most common are positional host and port,
+        with various optional keyword arguments following.
+
+        Additional optional keyword arguments are loop (to set the event loop
+        instance to use) and limit (to set the buffer limit passed to the
+        StreamReader).
+
+        (If you want to customize the StreamReader and/or
+        StreamReaderProtocol classes, just copy the code -- there's
+        really nothing special here except some convenience.)
+        """
+        if not limit:
+            # pylint: disable-msg=protected-access
+            limit = asyncio.streams._DEFAULT_LIMIT
+        return asyncio.open_connection(host=host, port=port, loop=self.loop, limit=limit, **kwds)
+
+    @asyncio.coroutine
+    def open_serial_connection(self, limit=None, **kwargs):
+        """A wrapper for create_serial_connection() returning a (reader, writer) pair.
+
+        The reader returned is a StreamReader instance; the writer is a StreamWriter instance.
 
         The arguments are all the usual arguments to Serial(). Additional
         optional keyword arguments are loop (to set the event loop instance
@@ -71,41 +100,23 @@ class ClockBase:
         StreamReader.
 
         This function is a coroutine.
+
+        Args:
+            loop: asyncio loop
+            limit: line length limit
         """
-        if not loop:
-            loop = asyncio.get_event_loop()
         if not limit:
+            # pylint: disable-msg=protected-access
             limit = asyncio.streams._DEFAULT_LIMIT
 
-        # this is supposed to be in the loop
-        if hasattr(loop, "open_serial_connection"):
-            return loop.open_serial_connection(loop=loop, limit=limit, **kwargs)
-
-        reader = asyncio.StreamReader(limit=limit, loop=loop)
-        protocol = asyncio.StreamReaderProtocol(reader, loop=loop)
+        reader = asyncio.StreamReader(limit=limit, loop=self.loop)
+        protocol = asyncio.StreamReaderProtocol(reader, loop=self.loop)
         transport, _ = yield from create_serial_connection(
-                loop=loop,
-                protocol_factory=lambda: protocol,
-                **kwargs)
-        writer = asyncio.StreamWriter(transport, protocol, reader, loop)
+            loop=self.loop,
+            protocol_factory=lambda: protocol,
+            **kwargs)
+        writer = asyncio.StreamWriter(transport, protocol, reader, self.loop)
         return reader, writer
-
-    def schedule_socket_read_callback(self, socket, callback):
-        """Schedule a callback when the socket is ready.
-
-        Args:
-            socket: Any type of socket which can be passed to select.
-            callback: Callback to call
-        """
-        self.loop.add_reader(fd=socket, callback=callback)
-
-    def unschedule_socket_read_callback(self, socket):
-        """Remove a socket callback which has to be registered.
-
-        Args:
-            socket: Socket so remove.
-        """
-        self.loop.remove_reader(fd=socket)
 
     def schedule_once(self, callback, timeout=0):
         """Schedule an event in <timeout> seconds.
