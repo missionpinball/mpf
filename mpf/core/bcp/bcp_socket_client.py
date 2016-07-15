@@ -1,8 +1,10 @@
 """BCP socket client."""
 import json
 import logging
-import socket
 import urllib
+
+import asyncio
+
 from mpf._version import __version__, __bcp_version__
 
 
@@ -132,31 +134,36 @@ class BCPClientSocket(object):
         self.config = self.machine.config_validator.validate_config(
             'bcp:connections', config, 'bcp:connections')
 
-        self.socket = None
+        self._sender = None
+        self._receiver = None
         self._send_goodbye = True
         self.receive_buffer = b''
 
         self.bcp_client_socket_commands = {'hello': self.receive_hello,
                                            'goodbye': self.receive_goodbye}
 
-        self.setup_client_socket()
+        self.machine.clock.loop.run_until_complete(self._setup_client_socket())
 
-    def setup_client_socket(self):
+    @asyncio.coroutine
+    def _setup_client_socket(self):
         """Set up the client socket."""
         self.log.info("Connecting to BCP Media Controller at %s:%s...",
                       self.config['host'], self.config['port'])
 
         while True:
+            connector = self.machine.clock.open_connection(self.config['host'], self.config['port'])
             try:
-                self.socket = socket.create_connection((self.config['host'], self.config['port']))
-                self.log.debug("Connected to remote BCP host %s:%s",
-                               self.config['host'], self.config['port'])
-                break
-            except socket.error:
-                pass
+                self._receiver, self._sender = yield from connector
+            except ConnectionRefusedError:
+                yield from asyncio.sleep(.1)
+                continue
 
-        self.machine.clock.schedule_socket_read_callback(self.socket, self._receive)
+            break
+
+        self.log.debug("Connected to remote BCP host %s:%s", self.config['host'], self.config['port'])
+
         self.send_hello()
+        self.read_task = self.machine.clock.loop.create_task(self._receive_loop())
 
     def stop(self):
         """Stop and shut down the socket client."""
@@ -165,44 +172,49 @@ class BCPClientSocket(object):
         if self._send_goodbye:
             self.send_goodbye()
 
-        self.socket.close()
-        self.socket = None  # Socket threads will exit on this
+        self.read_task.cancel()
+        self._sender.close()
 
     def send(self, bcp_command, bcp_command_args):
         """Send a message to the BCP host.
 
         Args:
             bcp_command: command to send
-            **kwargs: parameters to command
-
+            bcp_command_args: parameters to command
         """
         bcp_string = encode_command_string(bcp_command, **bcp_command_args)
 
         self.log.debug('Sending "%s"', bcp_string)
         try:
-            self.socket.sendall((bcp_string + '\n').encode())
+            self._sender.write((bcp_string + '\n').encode())
         except BrokenPipeError:
             self._handle_connection_close()
 
     def _handle_connection_close(self):
         # connection has been closed
-        self.socket.close()
-        self.machine.clock.unschedule_socket_read_callback(self.socket)
         self.machine.stop()
 
+    @asyncio.coroutine
+    def _receive_loop(self):
+        while True:
+            should_continue = yield from self._receive()
+            if not should_continue:
+                break
+
+    @asyncio.coroutine
     def _receive(self):
         """Receive loop."""
         try:
-            buffer = self.socket.recv(4096)
+            buffer = yield from self._receiver.read(4096)
         except ConnectionResetError:
             # handle connection reset
             self._handle_connection_close()
-            return
+            return False
 
         # handle EOF
         if not buffer:
             self._handle_connection_close()
-            return
+            return False
 
         self.receive_buffer += buffer
 
@@ -234,6 +246,8 @@ class BCPClientSocket(object):
                 self.receive_buffer = leftovers
                 self._process_command(message)
 
+        return True
+
     def _process_command(self, message, rawbytes=None):
         self.log.debug('Received "%s"', message)
 
@@ -255,8 +269,6 @@ class BCPClientSocket(object):
         self._send_goodbye = False
         self.stop()
         self.machine.bcp.interface.remove_bcp_connection(self)
-
-        self.machine.bcp.interface.shutdown()
         self.machine.stop()
 
     def send_hello(self):
