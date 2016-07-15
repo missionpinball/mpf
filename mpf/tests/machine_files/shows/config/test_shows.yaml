@@ -8,10 +8,10 @@ modes:
 leds:
     led_01:
         number: 0
-        tags: tag1
+        tags: tag1, row0
     led_02:
         number: 1
-        tags: tag1
+        tags: tag1, row0
     led_03:
         number: 2
     led_04:
