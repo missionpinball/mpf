@@ -9,13 +9,6 @@ import asyncio
 
 from mpf.platforms.base_serial_communicator import BaseSerialCommunicator
 
-try:
-    import serial
-    serial_imported = True
-except ImportError:
-    serial = None
-    serial_imported = False
-
 from mpf.platforms.opp.opp_coil import OPPSolenoidCard
 from mpf.platforms.opp.opp_incand import OPPIncandCard
 from mpf.platforms.opp.opp_neopixel import OPPNeopixelCard
@@ -44,10 +37,6 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger('OPP')
         self.log.info("Configuring OPP hardware.")
-
-        if not serial_imported:
-            raise AssertionError('Could not import "pySerial". This is required for '
-                                 'the OPP platform interface')
 
         self.opp_connection = {}
         self.serial_connections = set()
