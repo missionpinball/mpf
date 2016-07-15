@@ -93,6 +93,13 @@ class TestRGBColor(unittest.TestCase):
         corrected_color = color_correction_profile.apply(color)
         self.assertEqual((77, 67, 77), corrected_color.rgb)
 
+        # Test default correction profile
+        default_profile = RGBColorCorrectionProfile.default()
+        corrected_color = default_profile.apply(color)
+        self.assertEqual((81, 81, 81), corrected_color.rgb)
+        corrected_color = default_profile.apply(RGBColor((254, 254, 254)))
+        self.assertEqual((252, 252, 252), corrected_color.rgb)
+
     def test_init_and_equal(self):
         black = RGBColor("black")
         color = RGBColor(red=1, green=2, blue=3)

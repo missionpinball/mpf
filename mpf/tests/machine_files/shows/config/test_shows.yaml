@@ -8,12 +8,10 @@ modes:
 leds:
     led_01:
         number: 0
-        color_correction_profile: default
-        tags: tag1, row0
+        tags: tag1
     led_02:
         number: 1
-        color_correction_profile: default
-        tags: tag1, row0
+        tags: tag1
     led_03:
         number: 2
     led_04:
@@ -102,6 +100,14 @@ shows:
         led_02: red
     - time: 10s
       duration: 3s
+  leds_color_token_and_fade:
+    - time: 0
+      leds:
+        led_01: (color1)
+    - time: +1
+      leds:
+        led_02: (color2)-f900ms
+    - time: +1
 
 show_player:
   play_test_show1: test_show1
