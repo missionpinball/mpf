@@ -11,7 +11,7 @@ from unittest.mock import *
 
 import asyncio
 import ruamel.yaml as yaml
-from mpf.tests.loop import TimeTravelLoop
+from mpf.tests.loop import TimeTravelLoop, TestClock
 
 import mpf.core
 import mpf.core.config_validator
@@ -30,6 +30,9 @@ class MockBcpClient():
     def send(self, bcp_command, bcp_command_args):
         pass
 
+    def stop(self):
+        pass
+
 
 class TestMachineController(MachineController):
 
@@ -37,20 +40,20 @@ class TestMachineController(MachineController):
 
     local_mpf_config_cache = {}
 
-    def __init__(self, mpf_path, machine_path, options, config_patches, loop,
+    def __init__(self, mpf_path, machine_path, options, config_patches, clock,
                  enable_plugins=False):
         self.test_config_patches = config_patches
         self.test_init_complete = False
         self._enable_plugins = enable_plugins
-        self._loop = loop
+        self._test_clock = clock
         super().__init__(mpf_path, machine_path, options)
 
-    def get_event_loop(self):
-        return self._loop
+    def _load_clock(self):
+        return self._test_clock
 
     def __del__(self):
-        if self._loop:
-            self._loop.close()
+        if self._test_clock:
+            self._test_clock.loop.close()
 
     def sleep_until_next_event_mock(self):
         for socket, callback in self.clock.read_sockets.items():
@@ -75,6 +78,7 @@ class MpfTestCase(unittest.TestCase):
         super().__init__(methodName)
         self.machine_config_patches = dict()
         self.machine_config_patches['mpf'] = dict()
+        self.machine_config_patches['mpf']['default_platform_hz'] = 100
         self.machine_config_patches['mpf']['save_machine_vars_to_disk'] = False
         self.machine_config_patches['mpf']['plugins'] = list()
         self.machine_config_patches['bcp'] = []
@@ -233,13 +237,14 @@ class MpfTestCase(unittest.TestCase):
         self._mock_data_manager()
 
         self.loop = TimeTravelLoop()
+        self.clock = TestClock(self.loop)
         self._mock_loop()
 
         try:
             self.machine = TestMachineController(
                 os.path.abspath(os.path.join(
                     mpf.core.__path__[0], os.pardir)), machine_path,
-                self.getOptions(), self.machine_config_patches, self.loop,
+                self.getOptions(), self.machine_config_patches, self.clock,
                 self.get_enable_plugins())
 
             start = time.time()
@@ -303,6 +308,7 @@ class MpfTestCase(unittest.TestCase):
             self.min_frame_time = 20.0
             self.advance_time_and_run(300)
         self.machine.stop()
+        self.machine._do_stop()
         self.machine.clock.loop.close()
         self.machine = None
 

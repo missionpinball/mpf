@@ -11,7 +11,6 @@ import queue
 import sys
 import threading
 
-import asyncio
 from pkg_resources import iter_entry_points
 
 from mpf._version import __version__
@@ -98,7 +97,7 @@ class MachineController(object):
 
         self._load_config()
 
-        self.clock = ClockBase(self)
+        self.clock = self._load_clock()
         self._crash_queue_checker = self.clock.schedule_interval(self._check_crash_queue, 1)
         self.configure_debugger()
 
@@ -127,6 +126,10 @@ class MachineController(object):
         ConfigValidator.unload_config_spec()
 
         self.clear_boot_hold('init')
+
+    # pylint: disable-msg=no-self-use
+    def _load_clock(self):
+        return ClockBase()
 
     def _run_init_phases(self):
         self.events.post("init_phase_1")
@@ -167,7 +170,7 @@ class MachineController(object):
         for platform in list(self.hardware_platforms.values()):
             platform.initialize()
             if not platform.features['tickless']:
-                self.clock.schedule_interval(platform.tick, 0.01)
+                self.clock.schedule_interval(platform.tick, 1 / self.config['mpf']['default_platform_hz'])
 
     def _initialize_credit_string(self):
         # Do this here so there's a credit_string var even if they're not using
@@ -550,17 +553,28 @@ class MachineController(object):
         self.events.process_event_queue()
         self.thread_stopper.set()
         self._platform_stop()
-        # todo change this to look for the shutdown event
+
+        self.clock.loop.stop()
+
+    def _do_stop(self):
+        if self._done:
+            return
+
         self._done = True
         self.clock.loop.stop()
+        # this is needed to properly close all sockets
+        self.clock.loop.run_forever()
 
     def _run_loop(self):
         # Main machine run loop with when the default platform interface
         # specifies the MPF should control the main timer
 
-        self.clock.run()
+        try:
+            self.clock.run()
+        except KeyboardInterrupt:
+            self.stop()
 
-        self.stop()
+        self._do_stop()
         self.clock.loop.close()
 
     def _platform_stop(self):
@@ -776,6 +790,3 @@ class MachineController(object):
 
         ConfigValidator.unload_config_spec()
         self.reset()
-
-    def get_event_loop(self):
-        return asyncio.get_event_loop()
