@@ -1,3 +1,4 @@
+"""Test OSC."""
 from mpf.plugins import osc
 from mpf.plugins import auditor
 from mpf.tests.MpfTestCase import MpfTestCase
@@ -432,7 +433,7 @@ class TestOSC(MpfTestCase):
         # put light on 10%
         self.machine.lights.light1.hw_driver.on = MagicMock()
         self.osc.process_message("/light/light1", [], [0.1], "123")
-        self.machine_run()
+        self.advance_time_and_run(.02)
         self.machine.lights.light1.hw_driver.on.assert_called_once_with(25)
 
         self.advance_time_and_run(1)
@@ -445,7 +446,7 @@ class TestOSC(MpfTestCase):
         # put light on 100%
         self.machine.lights.light1.hw_driver.on = MagicMock()
         self.osc.process_message("/light/light1", [], [1], "123")
-        self.machine_run()
+        self.advance_time_and_run(.02)
         self.machine.lights.light1.hw_driver.on.assert_called_once_with(255)
 
         self.assertAlmostEqual(1.0, self.osc.osc_message.data, delta=0.05)
@@ -462,7 +463,7 @@ class TestOSC(MpfTestCase):
         # put light on 10%
         self.machine.lights.light1.hw_driver.on = MagicMock()
         self.osc.process_message("/light/l77", [], [0.1], "123")
-        self.machine_run()
+        self.advance_time_and_run(.02)
         self.machine.lights.light1.hw_driver.on.assert_called_once_with(25)
 
         self.advance_time_and_run(1)
@@ -475,7 +476,7 @@ class TestOSC(MpfTestCase):
         # put light on 100% (should still work with name)
         self.machine.lights.light1.hw_driver.on = MagicMock()
         self.osc.process_message("/light/light1", [], [1], "123")
-        self.machine_run()
+        self.advance_time_and_run(.02)
         self.machine.lights.light1.hw_driver.on.assert_called_once_with(255)
 
         self.assertAlmostEqual(1.0, self.osc.osc_message.data, delta=0.05)
@@ -486,7 +487,7 @@ class TestOSC(MpfTestCase):
         # put light2 on 100%. we skip the starting 0
         self.machine.lights.light2.hw_driver.on = MagicMock()
         self.osc.process_message("/light/2", [], [1], "123")
-        self.machine_run()
+        self.advance_time_and_run(.02)
         self.machine.lights.light2.hw_driver.on.assert_called_once_with(255)
 
         self.assertAlmostEqual(1.0, self.osc.osc_message.data, delta=0.05)

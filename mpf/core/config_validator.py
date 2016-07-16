@@ -1,5 +1,5 @@
-"""Config specs and validator."""
 # pylint: disable-msg=too-many-lines
+"""Config specs and validator."""
 import logging
 import re
 from copy import deepcopy
@@ -182,6 +182,7 @@ bcp:
     connections:
         host: single|str|None
         port: single|int|5050
+        type: single|str|
 coils:
     __valid_in__: machine
     number: single|str|
@@ -580,6 +581,7 @@ opp:
     ports: list|str|
     baud: single|int|115200
     debug: single|bool|False
+    chains: dict|str:str|None
 osc:
     __valid_in__: machine
     client_port: single|int|8000
@@ -592,7 +594,7 @@ open_pixel_control:
     __valid_in__: machine
     connection_required: single|bool|False
     host: single|str|localhost
-    port: single|str|7890
+    port: single|int|7890
     connection_attempts: single|int|-1
     number_format: single|enum(int,hex)|int
     debug: single|bool|False
@@ -694,7 +696,7 @@ score_reel_groups:
     lights_tag: single|str|None
     confirm: single|str|lazy
 scoring:
-    __valid_in__: machine, modes                    # todo add to validator
+    __valid_in__: modes                             # todo add to validator
 scriptlets:
     __valid_in__: machine                           # todo add to validator
 servo_controller:

@@ -1,4 +1,4 @@
-""" Contains the base class for ball devices."""
+"""Contains the base class for ball devices."""
 
 from collections import deque
 from mpf.core.delays import DelayManager
@@ -7,14 +7,16 @@ from mpf.core.utility_functions import Util
 
 
 class BallDevice(SystemWideDevice):
-    """Base class for a 'Ball Device' in a pinball machine.
+
+    """
+    Base class for a 'Ball Device' in a pinball machine.
 
     A ball device is anything that can hold one or more balls, such as a
     trough, an eject hole, a VUK, a catapult, etc.
 
     Args: Same as Device.
-
     """
+
     config_section = 'ball_devices'
     collection = 'ball_devices'
     class_label = 'ball_device'
@@ -39,6 +41,7 @@ class BallDevice(SystemWideDevice):
     )
 
     def __init__(self, machine, name):
+        """Initialise ball device."""
         super().__init__(machine, name)
 
         self.delay = DelayManager(machine.delayRegistry)
@@ -95,6 +98,8 @@ class BallDevice(SystemWideDevice):
 
         self.jam_switch_state_during_eject = False
 
+        self._eject_status_logger = None
+
         self._incoming_balls = deque()
         # deque of tuples that tracks incoming balls this device should expect
         # each tuple is (self.machine.clock.get_time() formatted timeout, source device)
@@ -111,7 +116,7 @@ class BallDevice(SystemWideDevice):
         self.eject_start_time = None
 
     def _initialize(self):
-        # initialize right away
+        """Initialize right away."""
         self._initialize_phase_2()
         self._initialize_phase_3()
 
@@ -375,7 +380,7 @@ class BallDevice(SystemWideDevice):
             # Default: wait
 
     def add_incoming_ball(self, source):
-        """Notifies this device that there is a ball heading its way.
+        """Notify this device that there is a ball heading its way.
 
         Args:
             source: The source device this ball is coming from
@@ -405,8 +410,8 @@ class BallDevice(SystemWideDevice):
             return self._switch_state("idle")
 
     def remove_incoming_ball(self, source):
+        """Remove a ball from the incoming balls queue."""
         del source
-        # Removes a ball from the incoming balls queue
         self._incoming_balls.popleft()
 
     # -------------------------- State: ball_left -----------------------------
@@ -825,6 +830,7 @@ class BallDevice(SystemWideDevice):
                 self._target_ready, target=target)
 
     def load_config(self, config):
+        """Load config."""
         super().load_config(config)
 
         # load targets and timeouts
@@ -892,6 +898,7 @@ class BallDevice(SystemWideDevice):
             return True
 
     def ball_search(self, phase, iteration):
+        """Run ball search."""
         del iteration
         if phase == 1:
             # round 1: only idle + no ball
@@ -908,7 +915,7 @@ class BallDevice(SystemWideDevice):
                 return self._fire_coil_for_search(True)
 
     def get_status(self, request=None):  # pragma: no cover
-        """Returns a dictionary of current status of this ball device.
+        """Return a dictionary of current status of this ball device.
 
         Args:
             request: A string of what status item you'd like to request.
@@ -937,8 +944,7 @@ class BallDevice(SystemWideDevice):
                     }
 
     def status_dump(self):  # pragma: no cover
-        """Dumps the full current status of the ball device to the log."""
-
+        """Dump the full current status of the ball device to the log."""
         if self.debug:
             self.log.debug("+-----------------------------------------+")
             self.log.debug("| balls: {}".format(
@@ -1075,12 +1081,12 @@ class BallDevice(SystemWideDevice):
         self.config['ball_missing_target'].add_missing_balls(balls)
 
     def is_full(self):
-        """Checks to see if this device is full, meaning it is holding either
-        the max number of balls it can hold, or it's holding all the known
+        """Check to see if this device is full.
+
+        Full meaning it is holding either the max number of balls it can hold, or it's holding all the known
         balls in the machine.
 
         Returns: True or False
-
         """
         if self.config['ball_capacity'] and self.balls >= self.config['ball_capacity']:
             return True
@@ -1090,7 +1096,7 @@ class BallDevice(SystemWideDevice):
             return False
 
     def entrance(self, **kwargs):
-        # event handler for entrance events
+        """Event handler for entrance events."""
         del kwargs
         self._entrance_switch_handler()
 
@@ -1120,14 +1126,17 @@ class BallDevice(SystemWideDevice):
             self.machine.ball_controller.trigger_ball_count()
 
     def is_ball_count_stable(self):
+        """Return if ball count is stable."""
         return self._state == "idle" and self._idle_counted and not len(self._incoming_balls)
 
     def is_ready_to_receive(self):
+        """Return if device is ready to receive a ball."""
         return ((self._state == "idle" and self._idle_counted) or
                 (self._state == "waiting_for_ball") and
                 self.balls < self.config['ball_capacity'])
 
     def get_real_additional_capacity(self):
+        """Return how many more balls this device can hold."""
         if self.config['ball_capacity'] - self.balls < 0:
             self.log.warning("Device reporting more balls contained than its "
                              "capacity.")
@@ -1135,11 +1144,12 @@ class BallDevice(SystemWideDevice):
         return self.config['ball_capacity'] - self.balls
 
     def get_additional_ball_capacity(self):
-        """Returns an integer value of the number of balls this device can
-            receive. A return value of 0 means that this device is full and/or
-            that it's not able to receive any balls at this time due to a
-            current eject_in_progress.
+        """Return an integer value of the number of balls this device can receive.
 
+        A return value of 0 means that this device is full and/or
+        that it's not able to receive any balls at this time due to a
+        current eject_in_progress. This methods also accounts for incoming balls which means that there may be more
+        space in the device then this method returns.
         """
         capacity = self.get_real_additional_capacity()
         capacity -= len(self._incoming_balls)
@@ -1151,6 +1161,7 @@ class BallDevice(SystemWideDevice):
             return capacity
 
     def find_one_available_ball(self, path=deque()):
+        """Find a path to a source device which has at least one available ball."""
         # copy path
         path = deque(path)
 
@@ -1213,6 +1224,7 @@ class BallDevice(SystemWideDevice):
         return True
 
     def setup_player_controlled_eject(self, balls=1, target=None):
+        """Setup a player controlled eject."""
         if self.debug:
             self.log.debug("Setting up player-controlled eject. Balls: %s, "
                            "Target: %s, player_controlled_eject_event: %s",
@@ -1233,6 +1245,7 @@ class BallDevice(SystemWideDevice):
             self.eject(balls, target=target)
 
     def setup_eject_chain(self, path, player_controlled=False):
+        """Setup an eject chain."""
         path = deque(path)
         if self.available_balls <= 0:
             raise AssertionError("Tried to setup an eject chain, but there are"
@@ -1256,6 +1269,7 @@ class BallDevice(SystemWideDevice):
         '''
 
     def setup_eject_chain_next_hop(self, path, player_controlled):
+        """Setup one hop of the eject chain."""
         next_hop = path.popleft()
 
         if next_hop not in self.config['eject_targets']:
@@ -1278,6 +1292,7 @@ class BallDevice(SystemWideDevice):
         method()
 
     def find_path_to_trough(self):
+        """Find a path to the next trough."""
         # are we a trough?
         if 'trough' in self.tags:
             path = deque()
@@ -1296,6 +1311,7 @@ class BallDevice(SystemWideDevice):
         return False
 
     def find_path_to_target(self, target):
+        """Find a path to this target."""
         # if we can eject to target directly just do it
         if target in self.config['eject_targets']:
             path = deque()
@@ -1315,6 +1331,7 @@ class BallDevice(SystemWideDevice):
         return False
 
     def eject(self, balls=1, target=None, **kwargs):
+        """Eject ball to target."""
         del kwargs
         if not target:
             target = self._target_on_unexpected_ball
@@ -1331,7 +1348,7 @@ class BallDevice(SystemWideDevice):
             self.log.debug('Queue %s.', self.eject_queue)
 
     def eject_all(self, target=None, **kwargs):
-        """Ejects all the balls from this device
+        """Eject all the balls from this device.
 
         Args:
             target: The string or BallDevice target for this eject. Default of
@@ -1340,7 +1357,6 @@ class BallDevice(SystemWideDevice):
 
         Returns:
             True if there are balls to eject. False if this device is empty.
-
         """
         del kwargs
         if self.debug:
@@ -1438,6 +1454,7 @@ class BallDevice(SystemWideDevice):
                            "balls: %s.", self.balls)
 
     def hold(self, **kwargs):
+        """Event handler for hold event."""
         del kwargs
         # do not enable coil when we are ejecting
         if self.hold_release_in_progress:
@@ -1557,7 +1574,7 @@ class BallDevice(SystemWideDevice):
             self.log.debug("Setting up eject confirmation")
             self.eject_start_time = self.machine.clock.get_time()
             self.log.debug("Eject start time: %s", self.eject_start_time)
-            self.machine.clock.schedule_interval(self._eject_status, 0.25)
+            self._eject_status_logger = self.machine.clock.schedule_interval(self._eject_status, 1)
 
         timeout = self.config['eject_timeouts'][target]
         if timeout:
@@ -1588,7 +1605,9 @@ class BallDevice(SystemWideDevice):
     def _cancel_eject_confirmation(self):
         if self.debug:
             self.log.debug("Canceling eject confirmations")
-            self.machine.clock.unschedule(self._eject_status)
+            if self._eject_status_logger:
+                self.machine.clock.unschedule(self._eject_status_logger)
+                self._eject_status_logger = None
         self.eject_in_progress_target = None
 
         # Remove any event watching for success
@@ -1629,10 +1648,7 @@ class BallDevice(SystemWideDevice):
         target.remove_incoming_ball(self)
 
     def eject_success(self, **kwargs):
-        # We got an eject success for this device.
-        # **kwargs because there are many ways to get here, some with kwargs
-        # and some without. Also, since there are many ways we can get here,
-        # let's first make sure we actually had an eject in progress
+        """We got an eject success for this device."""
         del kwargs
 
         if self._state == "ejecting":
@@ -1707,7 +1723,7 @@ class BallDevice(SystemWideDevice):
             raise AssertionError("Invalid state " + self._state)
 
     def eject_failed(self, retry=True):
-        """Marks the current eject in progress as 'failed.'
+        """Mark the current eject in progress as 'failed'.
 
         Note this is not typically a method that would be called manually. It's
         called automatically based on ejects timing out or balls falling back
@@ -1790,8 +1806,5 @@ class BallDevice(SystemWideDevice):
 
     @classmethod
     def is_playfield(cls):
-        """Returns True if this ball device is a Playfield-type device, False
-        if it's a regular ball device.
-
-        """
+        """Return True if this ball device is a Playfield-type device, False if it's a regular ball device."""
         return False

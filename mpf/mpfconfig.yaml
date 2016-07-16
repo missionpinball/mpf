@@ -16,7 +16,7 @@ mpf:
         - ball_controller: mpf.core.ball_controller.BallController
         - asset_manager: mpf.core.assets.AssetManager
         - show_controller: mpf.core.show_controller.ShowController
-        - bcp: mpf.core.bcp.BCP
+        - bcp: mpf.core.bcp.bcp.Bcp
         - logic_blocks: mpf.core.logic_blocks.LogicBlocks
         - scoring: mpf.core.scoring.ScoreController
 
@@ -100,6 +100,9 @@ mpf:
     allow_invalid_config_sections: false
     save_machine_vars_to_disk: true
     hz: auto
+    default_led_hw_update_hz: 50
+    default_matrix_light_hw_update_hz: 50
+    default_platform_hz: 1000
 
     device_collection_control_events:
         autofires:
@@ -211,6 +214,7 @@ bcp:
         local_display:
             host: localhost
             port: 5050
+            type: mpf.core.bcp.bcp_socket_client.BCPClientSocket
 
     event_map:
         player_turn_start:

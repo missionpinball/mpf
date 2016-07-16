@@ -2,11 +2,11 @@ from unittest.mock import MagicMock
 import json
 
 from mpf.core.rgb_color import RGBColor
-from mpf.platforms import openpixel
 from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.loop import MockSocket
 
 
-class TestOpenpixel(MpfTestCase):
+class TestFadecandy(MpfTestCase):
     def getConfigFile(self):
         return 'fadecandy.yaml'
 
@@ -18,10 +18,6 @@ class TestOpenpixel(MpfTestCase):
 
     def setUp(self):
         self._messages = []
-        self._opcthread = openpixel.OPCThread
-        openpixel.OPCThread = MagicMock()
-        self._send = openpixel.OpenPixelClient.send
-        openpixel.OpenPixelClient.send = self._send_mock
         super().setUp()
         color_correct = self._messages.pop(0)
         color_correct_binary = b'\x00\xff\x00Z\x00\x01\x00\x01'
@@ -34,10 +30,11 @@ class TestOpenpixel(MpfTestCase):
 
         self.assertOpenPixelLedsSent({}, {})
 
-    def tearDown(self):
-        super().tearDown()
-        openpixel.OPCThread = self._opcthread
-        openpixel.OpenPixelClient.send = self._send
+    def _mock_loop(self):
+        self._mock_socket = MockSocket()
+        self.clock.mock_socket("localhost", 7890, self._mock_socket)
+        # connect socket to test
+        self._mock_socket.send = self._send_mock
 
     def _build_message(self, channel, leds):
         out = bytearray()
@@ -52,6 +49,7 @@ class TestOpenpixel(MpfTestCase):
 
     def _send_mock(self, message):
         self._messages.append(message)
+        return len(message)
 
     def assertOpenPixelLedsSent(self, leds1, leds2):
         bank1 = self._build_message(0, leds1)
@@ -76,20 +74,20 @@ class TestOpenpixel(MpfTestCase):
     def test_led_color(self):
         # test led on channel 0. position 99
         self.machine.leds.test_led.on()
-        self.machine_run()
+        self.advance_time_and_run(.02)
         self._messages = []
         self.advance_time_and_run(1)
         self.assertOpenPixelLedsSent({99: (255, 255, 255)}, {})
 
         # test led 20 ond channel 0
         self.machine.leds.test_led2.color(RGBColor((255, 0, 0)))
-        self.machine_run()
+        self.advance_time_and_run(.02)
         self._messages = []
         self.advance_time_and_run(1)
         self.assertOpenPixelLedsSent({20: (255, 0, 0), 99: (255, 255, 255)}, {})
 
         self.machine.leds.test_led.off()
-        self.machine_run()
+        self.advance_time_and_run(.02)
         self._messages = []
         self.advance_time_and_run(1)
         self.assertOpenPixelLedsSent({20: (255, 0, 0), 99: (0, 0, 0)}, {})
@@ -97,14 +95,14 @@ class TestOpenpixel(MpfTestCase):
 
         # test led color
         self.machine.leds.test_led.color(RGBColor((2, 23, 42)))
-        self.machine_run()
+        self.advance_time_and_run(.02)
         self._messages = []
         self.advance_time_and_run(1)
         self.assertOpenPixelLedsSent({20: (255, 0, 0), 99: (2, 23, 42)}, {})
 
         # test led on channel 1
         self.machine.leds.test_led3.on()
-        self.machine_run()
+        self.advance_time_and_run(.02)
         self._messages = []
         self.advance_time_and_run(1)
         self.assertOpenPixelLedsSent({20: (255, 0, 0), 99: (2, 23, 42)}, {99: (255, 255, 255)})

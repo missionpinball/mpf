@@ -20,7 +20,7 @@ class TestShots(MpfTestCase):
         # shots only work in games so we have to do this a lot
         self.machine.playfield.add_ball = MagicMock()
         self.machine.events.post('game_start')
-        self.advance_time_and_run()
+        self.advance_time_and_run(1.02)
         self.machine.game.balls_in_play = 1
         self.assertIsNotNone(self.machine.game)
 
@@ -401,7 +401,7 @@ class TestShots(MpfTestCase):
 
         # step 3 is rainbow 2 show, so make sure it switches
         self.hit_and_release_switch("switch_12")
-        self.machine_run()
+        self.advance_time_and_run(0.02)
         self.assertEqual(list(RGBColor('aliceblue').rgb),
                          self.machine.leds.led_12.hw_driver.current_color)
 
@@ -421,6 +421,7 @@ class TestShots(MpfTestCase):
 
         # it should loop
         self.advance_time_and_run(1)
+
         self.assertEqual(list(RGBColor('aliceblue').rgb),
                          self.machine.leds.led_12.hw_driver.current_color)
         self.advance_time_and_run(1)
@@ -869,7 +870,7 @@ class TestShots(MpfTestCase):
 
         # start mode1, should flip to show 2 colors
         self.machine.modes.mode1.start()
-        self.machine_run()
+        self.advance_time_and_run(0.02)
 
         self.assertEqual(list(RGBColor('aliceblue').rgb),
                          self.machine.leds.led_23.hw_driver.current_color)
@@ -885,12 +886,16 @@ class TestShots(MpfTestCase):
 
         # stop the mode, make sure the show from the base is still running
         self.machine.modes.mode1.stop()
-        self.machine_run()
+        self.advance_time_and_run(0.02)
         self.assertEqual(list(RGBColor('blue').rgb),
                          self.machine.leds.led_23.hw_driver.current_color)
 
         self.advance_time_and_run(1)
         self.assertEqual(list(RGBColor('purple').rgb),
+                         self.machine.leds.led_23.hw_driver.current_color)
+
+        self.advance_time_and_run(1)
+        self.assertEqual(list(RGBColor('red').rgb),
                          self.machine.leds.led_23.hw_driver.current_color)
 
     def test_hold_true(self):

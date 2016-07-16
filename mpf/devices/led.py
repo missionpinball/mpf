@@ -1,11 +1,15 @@
-""" Contains the Led parent classes. """
+"""Contains the Led class."""
 from operator import itemgetter
+
+from mpf.core.machine import MachineController
+from mpf.core.mode import Mode
 from mpf.core.rgb_color import RGBColor
 from mpf.core.rgb_color import RGBColorCorrectionProfile
 from mpf.core.system_wide_device import SystemWideDevice
 
 
 class Led(SystemWideDevice):
+
     """An RGB LED in a pinball machine."""
 
     config_section = 'leds'
@@ -14,12 +18,19 @@ class Led(SystemWideDevice):
     machine = None
 
     leds_to_update = set()
+    leds_to_fade = set()
+    _updater_task = None
 
     @classmethod
-    def device_class_init(cls, machine):
-        """Class initializer method"""
+    def device_class_init(cls, machine: MachineController):
+        """Initialise all LEDs.
 
+        Args:
+            machine: MachineController which is used
+        """
         cls.machine = machine
+        cls.leds_to_fade = set()
+        cls.leds_to_update = set()
 
         machine.validate_machine_config_section('led_settings')
 
@@ -54,19 +65,25 @@ class Led(SystemWideDevice):
 
         # schedule the single machine-wide update to write the current led of
         # each LED to the hardware
-        # todo make time configurable
-        machine.clock.schedule_interval(cls.update_leds, 0, -100)
+        cls._updater_task = machine.clock.schedule_interval(
+            cls.update_leds, 1 / machine.config['mpf']['default_led_hw_update_hz'])
 
         machine.mode_controller.register_stop_method(cls.mode_stop)
 
     @classmethod
     def update_leds(cls, dt):
-        """Called periodically (default at the end of every frame) to write the
+        """Write leds to hardware platform.
+
+        Called periodically (default at the end of every frame) to write the
         new led colors to the hardware for the LEDs that changed during that
         frame.
 
+        Args:
+            dt: time since last call
         """
-        del dt
+        for led in list(Led.leds_to_fade):
+            if led.fade_in_progress:
+                led.fade_task(dt)
 
         # todo we could make a change here (or an option) so that it writes
         # every led, every frame. That way they'd fix themselves if something
@@ -79,11 +96,17 @@ class Led(SystemWideDevice):
             Led.leds_to_update = set()
 
     @classmethod
-    def mode_stop(cls, mode):
+    def mode_stop(cls, mode: Mode):
+        """Remove all entries from mode.
+
+        Args:
+            mode: Mode which was removed
+        """
         for led in cls.machine.leds:
             led.remove_from_stack_by_mode(mode)
 
     def __init__(self, machine, name):
+        """Initialise LED."""
         self.hw_driver = None
         super().__init__(machine, name)
 
@@ -164,7 +187,7 @@ class Led(SystemWideDevice):
                            self.default_fade_ms)
 
     def set_color_correction_profile(self, profile):
-        """Applies a color correction profile to this LED.
+        """Apply a color correction profile to this LED.
 
         Args:
             profile: An RGBColorCorrectionProfile() instance
@@ -174,8 +197,7 @@ class Led(SystemWideDevice):
 
     # pylint: disable-msg=too-many-arguments
     def color(self, color, fade_ms=None, priority=0, key=None, mode=None):
-        """Adds or updates a color entry in this LED's stack, which is how you
-        tell this LED what color you want it to be.
+        """Add or update a color entry in this LED's stack, which is how you tell this LED what color you want it to be.
 
         Args:
             color: RGBColor() instance, or a string color name, hex value, or
@@ -255,7 +277,7 @@ class Led(SystemWideDevice):
         Led.leds_to_update.add(self)
 
     def clear_stack(self):
-        """Removes all entries from the stack and resets this LED to 'off'."""
+        """Remove all entries from the stack and resets this LED to 'off'."""
         self.stack[:] = []
 
         if self.debug:
@@ -264,7 +286,7 @@ class Led(SystemWideDevice):
         Led.leds_to_update.add(self)
 
     def remove_from_stack_by_key(self, key):
-        """Removes a group of color settings from the stack.
+        """Remove a group of color settings from the stack.
 
         Args:
             key: The key of the settings to remove (based on the 'key'
@@ -273,26 +295,23 @@ class Led(SystemWideDevice):
         This method triggers a LED update, so if the highest priority settings
         were removed, the LED will be updated with whatever's below it. If no
         settings remain after these are removed, the LED will turn off.
-
         """
-
         if self.debug:
             self.log.debug("Removing key '%s' from stack", key)
 
         self.stack[:] = [x for x in self.stack if x['key'] != key]
         Led.leds_to_update.add(self)
 
-    def remove_from_stack_by_mode(self, mode):
-        """Removes a group of color settings from the stack.
+    def remove_from_stack_by_mode(self, mode: Mode):
+        """Remove a group of color settings from the stack.
 
         Args:
+            mode: Mode which was removed
 
         This method triggers a LED update, so if the highest priority settings
         were removed, the LED will be updated with whatever's below it. If no
         settings remain after these are removed, the LED will turn off.
-
         """
-
         if self.debug:
             self.log.debug("Removing mode '%s' from stack", mode)
 
@@ -300,14 +319,14 @@ class Led(SystemWideDevice):
         Led.leds_to_update.add(self)
 
     def get_color(self):
-        """Returns an RGBColor() instance of the 'color' setting of the highest
-        color setting in the stack. This is usually the same color as the
+        """Return an RGBColor() instance of the 'color' setting of the highest color setting in the stack.
+
+        This is usually the same color as the
         physical LED, but not always (since physical LEDs are updated once per
         frame, this value could vary.
 
         Also note the color returned is the "raw" color that does has not had
         the color correction profile applied.
-
         """
         try:
             return self.stack[0]['color']
@@ -321,12 +340,13 @@ class Led(SystemWideDevice):
             return 0
 
     def write_color_to_hw_driver(self):
-        """Physically updates the LED hardware object based on the 'color'
+        """Set color to hardware platform.
+
+        Physically update the LED hardware object based on the 'color'
         setting of the highest priority setting from the stack.
 
         This method is automatically called whenever a color change has been
         made (including when fades are active).
-
         """
         if not self.stack:
             self.color('off')
@@ -385,7 +405,7 @@ class Led(SystemWideDevice):
         return color_channels
 
     def color_correct(self, color):
-        """Applies the current color correction profile to the color passed.
+        """Apply the current color correction profile to the color passed.
 
         Args:
             color: The RGBColor() instance you want to get color corrected.
@@ -396,7 +416,6 @@ class Led(SystemWideDevice):
 
         Note that if there is no current color correction profile applied, the
         returned color will be the same as the color that was passed.
-
         """
         if self._color_correction_profile is None:
             return color
@@ -411,21 +430,43 @@ class Led(SystemWideDevice):
             return self._color_correction_profile.apply(color)
 
     def on(self, fade_ms=None, priority=0, key=None, **kwargs):
+        """Turn LED on.
+
+        Args:
+            key: key for removal later on
+            priority: priority on stack
+            fade_ms: duration of fade
+        """
         del kwargs
         self.color(color=self.config['default_color'], fade_ms=fade_ms,
                    priority=priority, key=key)
 
     def off(self, fade_ms=None, priority=0, key=None, **kwargs):
+        """Turn LED off.
+
+        Args:
+            key: key for removal later on
+            priority: priority on stack
+            fade_ms: duration of fade
+        """
         del kwargs
         self.color(color=RGBColor(), fade_ms=fade_ms, priority=priority,
                    key=key)
 
     def add_handler(self, callback):
-        """Registers a handler to be called when this light changes state."""
+        """Register a handler to be called when this light changes state.
+
+        Args:
+            callback: callback for monitor
+        """
         self.registered_handlers.append(callback)
 
     def remove_handler(self, callback=None):
-        """Removes a handler from the list of registered handlers."""
+        """Remove a handler from the list of registered handlers.
+
+        Args:
+            callback: callback of monitor to remove
+        """
         if not callback:  # remove all
             self.registered_handlers = []
             return
@@ -442,9 +483,14 @@ class Led(SystemWideDevice):
         if self.debug:
             self.log.debug("Setting up the fade task")
 
-        self.machine.clock.schedule_interval(self._fade_task, 0)
+        Led.leds_to_fade.add(self)
 
-    def _fade_task(self, dt):
+    def fade_task(self, dt):
+        """Perform a fade depending on the current time.
+
+        Args:
+            dt: time since last call
+        """
         del dt
 
         # not sure why this is needed, but sometimes the fade task tries to
@@ -494,7 +540,7 @@ class Led(SystemWideDevice):
     def _stop_fade_task(self):
         # stops the fade task. Light is left in whatever state it was in
         self.fade_in_progress = False
-        self.machine.clock.unschedule(self._fade_task)
+        Led.leds_to_fade.remove(self)
 
         if self.debug:
             self.log.debug("Stopping fade task")

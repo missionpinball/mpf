@@ -42,3 +42,5 @@ class TestModesConfigValidation(MpfTestCase):
         super(TestModesConfigValidation, self).setUp()
 
         self.assertTrue("broken_mode2" in self.machine.modes)
+
+        super().tearDown()

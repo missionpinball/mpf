@@ -1,15 +1,18 @@
 from unittest.mock import MagicMock, patch, call
 
 from mpf.tests.MpfTestCase import MpfTestCase
-from mpf.core.bcp import decode_command_string, encode_command_string
+from mpf.core.bcp.bcp_socket_client import decode_command_string, encode_command_string
 
 
 class TestBcpClient:
     def __init__(self, queue):
         self.queue = queue
 
-    def send(self, msg):
-        self.queue.put(decode_command_string(msg))
+    def send(self, bcp_command, kwargs):
+        self.queue.put((bcp_command, kwargs))
+
+    def stop(self):
+        pass
 
 
 class TestBcp(MpfTestCase):
@@ -18,6 +21,8 @@ class TestBcp(MpfTestCase):
         super().__init__(methodName)
         # remove config patch which disables bcp
         del self.machine_config_patches['bcp']
+        self.machine_config_patches['bcp'] = dict()
+        self.machine_config_patches['bcp']['connections'] = []
 
     def test_decode_command_string(self):
         # test strings
@@ -109,11 +114,10 @@ class TestBcp(MpfTestCase):
                          dict(key3='value5', key4='value6'))
 
     def test_receive_register_trigger(self):
-        self.machine.bcp.receive_queue.put(('register_trigger',
-                                            {'event': 'test_event'}, None))
+        self.machine.bcp.interface.process_bcp_message('register_trigger', {'event': 'test_event'}, None)
         self.advance_time_and_run()
 
-        self.assertIn('test_event', self.machine.bcp.registered_trigger_events)
+        self.assertIn('test_event', self.machine.bcp.transport._handlers)
 
     def test_bcp_mpf_and_mpf_mc(self):
         self.kivy = MagicMock()
@@ -136,19 +140,30 @@ class TestBcp(MpfTestCase):
         bcp_processor.BcpProcessor._start_socket_thread = MagicMock()
         bcp_mc = bcp_processor.BcpProcessor(mc)
         bcp_mc.enabled = True
-        self.advance_time_and_run()
+        self.machine_run()
         mc.events.post = MagicMock()
 
-        bcp_mpf = self.machine.bcp
-        bcp_mpf.bcp_clients = [TestBcpClient(bcp_mc.receive_queue)]
+        client = TestBcpClient(bcp_mc.receive_queue)
+        self.machine.bcp.transport.register_transport(client)
+
+        self.machine.bcp.interface.process_bcp_message("register_trigger", {"event": "ball_started"}, client)
+        self.machine.bcp.interface.process_bcp_message("register_trigger", {"event": "ball_ended"}, client)
+        self.machine_run()
 
         self.machine.events.post('ball_started', ball=17,
                                  player=23)
 
-        self.advance_time_and_run()
+        self.machine_run()
 
         mc.events.post.assert_has_calls([
             call("ball_started", ball=17, player=23),
+        ])
+        mc.events.post.reset_mock()
+
+        self.machine.events.post('ball_ended')
+        self.machine_run()
+        mc.events.post.assert_has_calls([
+            call("ball_ended")
         ])
 
         self.module_patcher.stop()

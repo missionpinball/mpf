@@ -2,6 +2,7 @@ from unittest.mock import MagicMock
 
 from mpf.tests.MpfTestCase import MpfTestCase
 from mpf.platforms import openpixel
+from mpf.tests.loop import MockSocket
 
 
 class TestPlatform(MpfTestCase):
@@ -16,8 +17,12 @@ class TestPlatform(MpfTestCase):
         return False
 
     def setUp(self):
-        openpixel.OPCThread = MagicMock()
+        openpixel.OPCSerialSender = MagicMock()
         super().setUp()
+
+    def _mock_loop(self):
+        self._mock_socket = MockSocket()
+        self.clock.mock_socket("localhost", 7890, self._mock_socket)
 
     def test_platform_from_device(self):
         # tests that a platform can be added by a device, even if it's not

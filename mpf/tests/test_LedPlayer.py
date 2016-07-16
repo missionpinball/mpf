@@ -1,3 +1,6 @@
+"""Test led player."""
+from mpf.devices.led import Led
+
 from mpf.core.rgb_color import RGBColor
 from mpf.tests.MpfTestCase import MpfTestCase
 
@@ -12,13 +15,18 @@ class TestLedPlayer(MpfTestCase):
     def getMachinePath(self):
         return 'tests/machine_files/led_player/'
 
+    def _synchronise_led_update(self):
+        ts = Led._updater_task.get_next_call_time()
+        self.assertTrue(ts)
+        self.advance_time_and_run(ts - self.machine.clock.get_time())
+        self.advance_time_and_run(.01)
+
     def test_config_player_config_processing(self):
         self.assertIn('led_player', ConfigPlayer.config_file_players)
 
         led1 = self.machine.leds.led1
         led2 = self.machine.leds.led2
         led3 = self.machine.leds.led3
-        led4 = self.machine.leds.led4
 
         self.assertEqual(self.machine.config['led_player']['event1']['leds'][led1]['color'], 'red')
         self.assertEqual(self.machine.config['led_player']['event1']['leds'][led1]['fade_ms'], 0)
@@ -29,10 +37,10 @@ class TestLedPlayer(MpfTestCase):
         self.assertEqual(self.machine.config['led_player']['event1']['leds'][led3]['fade_ms'], 0)
 
         self.assertEqual(self.machine.config['led_player']['event2']['leds'][led1]['color'], 'blue')
-        self.assertEqual(self.machine.config['led_player']['event2']['leds'][led1]['fade_ms'], 20)
+        self.assertEqual(self.machine.config['led_player']['event2']['leds'][led1]['fade_ms'], 200)
         self.assertEqual(self.machine.config['led_player']['event2']['leds'][led1]['priority'], 100)
         self.assertEqual(self.machine.config['led_player']['event2']['leds'][led2]['color'], 'blue')
-        self.assertEqual(self.machine.config['led_player']['event2']['leds'][led2]['fade_ms'], 20)
+        self.assertEqual(self.machine.config['led_player']['event2']['leds'][led2]['fade_ms'], 200)
         self.assertEqual(self.machine.config['led_player']['event2']['leds'][led1]['priority'], 100)
 
         self.assertEqual(self.machine.config['led_player']['event3']['leds'][led1]['color'], 'lime')
@@ -77,16 +85,16 @@ class TestLedPlayer(MpfTestCase):
         # post event2, which is a tag with led1 and led2, but at priority 100
         # led1 should remain unchanged since it was set at priority 200,
         # led2 should fade to blue since it was red before at priority 0
+        self._synchronise_led_update()
         self.machine.events.post('event2')
-        self.advance_time_and_run(.01)
+        self.advance_time_and_run(.1)
 
         self.assertEqual(list(RGBColor('red').rgb),
                          self.machine.leds.led1.hw_driver.current_color)
         self.assertEqual(200, self.machine.leds.led1.stack[0]['priority'])
 
         # fade is half way from red to blue
-        self.assertEqual([128, 0, 127],
-                         self.machine.leds.led2.hw_driver.current_color)
+        self.assertEqual([141, 0, 114], self.machine.leds.led2.hw_driver.current_color)
         self.assertEqual(100, self.machine.leds.led2.stack[0]['priority'])
 
         self.advance_time_and_run()
@@ -114,10 +122,11 @@ class TestLedPlayer(MpfTestCase):
         self.assertEqual(0, self.machine.leds.led3.stack[0]['priority'])
 
         # test fades via express config with a few different options
+        self._synchronise_led_update()
         self.machine.events.post('event3')
 
         # fades are 500ms, so advance 250 and check
-        self.advance_time_and_run(.25)
+        self.advance_time_and_run(.26)
         self.assertEqual([0, 127, 0],
                          self.machine.leds.led1.hw_driver.current_color)
         self.assertEqual([0, 127, 0],

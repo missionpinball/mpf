@@ -1,6 +1,8 @@
 """ Contains the parent classes Platform"""
 import abc
 
+from mpf.devices.switch import Switch
+
 
 class BasePlatform(metaclass=abc.ABCMeta):
 
@@ -25,6 +27,7 @@ class BasePlatform(metaclass=abc.ABCMeta):
         self.features['has_leds'] = False
         self.features['has_switches'] = False
         self.features['has_drivers'] = False
+        self.features['tickless'] = False
 
     def debug_log(self, msg, *args, **kwargs):
         """Log when debug is set to True for platform."""
@@ -286,15 +289,29 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """Return config section for additional switch config overwrite items."""
         return None
 
-    def validate_switch_overwrite_section(self, switch, config_overwrite):
-        """Validate a switch overwrite config for platform."""
+    def validate_switch_overwrite_section(self, switch: Switch, config_overwrite: dict) -> dict:
+        """Validate switch overwrite section for platform.
+
+        Args:
+            switch: Switch to validate.
+            config_overwrite: Overwrite config to validate.
+
+        Returns: Validated config.
+        """
         switch.machine.config_validator.validate_config(
             "switch_overwrites", config_overwrite, switch.name,
             base_spec=self.__class__.get_switch_overwrite_section())
         return config_overwrite
 
-    def validate_switch_section(self, switch, config):
-        """Validate a switch config for platform."""
+    def validate_switch_section(self, switch: Switch, config: dict) -> dict:
+        """Validate a switch config for platform.
+
+        Args:
+            switch: Switch to validate.
+            config: Config to validate.
+
+        Returns: Validated config.
+        """
         switch.machine.config_validator.validate_config(
             "switches", config, switch.name,
             base_spec=self.__class__.get_switch_config_section())
@@ -383,7 +400,8 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """Set pulse on hit and release rule to driver.
 
         Pulses a driver when a switch is hit. When the switch is released the pulse is canceled. Typically used on
-        the main coil for dual coil flippers without eos switch. """
+        the main coil for dual coil flippers without eos switch.
+        """
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -391,7 +409,8 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """Set pulse on hit and enable and relase rule on driver.
 
         Pulses a driver when a switch is hit. Then enables the driver (may be with pwm). When the switch is released
-        the pulse is canceled and the driver gets disabled. Typically used for single coil flippers. """
+        the pulse is canceled and the driver gets disabled. Typically used for single coil flippers.
+        """
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -400,7 +419,8 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
         Pulses a driver when a switch is hit. Then enables the driver (may be with pwm). When the switch is released
         the pulse is canceled and the driver gets disabled. When the second disable_switch is hit the pulse is canceled
-        and the driver gets disabled. Typically used on the main coil for dual coil flippers with eos switch. """
+        and the driver gets disabled. Typically used on the main coil for dual coil flippers with eos switch.
+        """
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -408,5 +428,6 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """Set pulse on hit rule on driver.
 
         Pulses a driver when a switch is hit. When the switch is released the pulse continues. Typically used for
-         autofire coils such as pop bumpers. """
+        autofire coils such as pop bumpers.
+        """
         raise NotImplementedError

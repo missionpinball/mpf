@@ -17,6 +17,7 @@ environment:
 
 install:
   - "%PYTHON%\\python.exe -m pip install -U setuptools wheel pip mock twine"
+  - "%PYTHON%\\python.exe -m pip install https://github.com/jabdoa2/pyserial-asyncio/zipball/master"
 
 build: off
 

@@ -10,10 +10,10 @@ import tempfile
 import queue
 import sys
 import threading
+
 from pkg_resources import iter_entry_points
 
 from mpf._version import __version__
-from mpf.core.bcp import BCP
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.clock import ClockBase
 from mpf.core.config_processor import ConfigProcessor
@@ -21,9 +21,7 @@ from mpf.core.config_validator import ConfigValidator
 from mpf.core.data_manager import DataManager
 from mpf.core.delays import DelayManager, DelayManagerRegistry
 from mpf.core.device_manager import DeviceCollection
-from mpf.core.events import EventManager
 from mpf.core.utility_functions import Util
-from mpf.modes.game.code.game import Game
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -70,9 +68,10 @@ class MachineController(object):
         self.verify_system_info()
 
         self._boot_holds = set()
+        self.is_init_done = False
         self.register_boot_hold('init')
 
-        self.done = False
+        self._done = False
         self.monitors = dict()
         self.plugins = list()
         self.scriptlets = list()
@@ -89,7 +88,6 @@ class MachineController(object):
 
         self.crash_queue = queue.Queue()
 
-        self.is_init_done = False
         self.config = None
         self.events = None
         self.machine_config = None
@@ -99,9 +97,8 @@ class MachineController(object):
 
         self._load_config()
 
-        self.clock = ClockBase(self.config['mpf']['hz'])
-        self.log.info("Starting clock at %sHz", self.clock.max_fps)
-        self.clock.schedule_interval(self._check_crash_queue, 1)
+        self.clock = self._load_clock()
+        self._crash_queue_checker = self.clock.schedule_interval(self._check_crash_queue, 1)
         self.configure_debugger()
 
         self.hardware_platforms = dict()
@@ -130,9 +127,9 @@ class MachineController(object):
 
         self.clear_boot_hold('init')
 
-    @property
-    def bcp_client_connected(self):
-        return BCP.active_connections > 0
+    # pylint: disable-msg=no-self-use
+    def _load_clock(self):
+        return ClockBase()
 
     def _run_init_phases(self):
         self.events.post("init_phase_1")
@@ -172,6 +169,8 @@ class MachineController(object):
     def _initialize_platforms(self):
         for platform in list(self.hardware_platforms.values()):
             platform.initialize()
+            if not platform.features['tickless']:
+                self.clock.schedule_interval(platform.tick, 1 / self.config['mpf']['default_platform_hz'])
 
     def _initialize_credit_string(self):
         # Do this here so there's a credit_string var even if they're not using
@@ -416,11 +415,11 @@ class MachineController(object):
 
                 self.log.debug("Loading '%s' scriptlet", scriptlet)
 
-                i = __import__(self.config['mpf']['paths']['scriptlets'] + '.' + scriptlet.split('.')[0], fromlist=[''])
+                scriptlet_obj = Util.string_to_class(self.config['mpf']['paths']['scriptlets'] + "." + scriptlet)(
+                    machine=self,
+                    name=scriptlet.split('.')[1])
 
-                self.scriptlets.append(getattr(i, scriptlet.split('.')[1])
-                                       (machine=self,
-                                        name=scriptlet.split('.')[1]))
+                self.scriptlets.append(scriptlet_obj)
 
     def reset(self):
         """Resets the machine.
@@ -541,6 +540,9 @@ class MachineController(object):
 
     def stop(self):
         """Performs a graceful exit of MPF."""
+        if self._done:
+            return
+
         self.log.info("Shutting down...")
         self.events.post('shutdown')
         '''event: shutdown
@@ -551,37 +553,29 @@ class MachineController(object):
         self.events.process_event_queue()
         self.thread_stopper.set()
         self._platform_stop()
-        # todo change this to look for the shutdown event
-        self.done = True
+
+        self.clock.loop.stop()
+
+    def _do_stop(self):
+        if self._done:
+            return
+
+        self._done = True
+        self.clock.loop.stop()
+        # this is needed to properly close all sockets
+        self.clock.loop.run_forever()
 
     def _run_loop(self):
         # Main machine run loop with when the default platform interface
         # specifies the MPF should control the main timer
 
         try:
-            while not self.done:
-                self.process_frame()
+            self.clock.run()
         except KeyboardInterrupt:
-            pass
+            self.stop()
 
-        self.stop()
-        self.log_loop_rate()
-
-    def process_frame(self):
-        """Processes the current frame and ticks the clock to wait for the
-        next one"""
-        # TODO: Replace the function call below
-        # todo should the platforms register for their own ticks?
-        self.default_platform.tick(self.clock.frametime)
-
-        # Process events before processing the clock
-        self.events.process_event_queue()
-
-        # update dt
-        self.clock.tick()
-
-        # tick before draw
-        self.clock.tick_draw()
+        self._do_stop()
+        self.clock.loop.close()
 
     def _platform_stop(self):
         for platform in list(self.hardware_platforms.values()):
@@ -593,10 +587,6 @@ class MachineController(object):
         This method is not yet implemented.
         """
         pass
-
-    def log_loop_rate(self):
-        self.log.info("Actual MPF loop rate: %s Hz",
-                      round(self.clock.get_fps(), 2))
 
     def bcp_reset_complete(self):
         pass
@@ -775,9 +765,13 @@ class MachineController(object):
             return self.default_platform
 
     def register_boot_hold(self, hold):
+        if self.is_init_done:
+            raise AssertionError("Register hold after init_done")
         self._boot_holds.add(hold)
 
     def clear_boot_hold(self, hold):
+        if self.is_init_done:
+            raise AssertionError("Clearing hold after init_done")
         self._boot_holds.remove(hold)
         self.log.debug('Clearing boot hold %s. Holds remaining: %s', hold, self._boot_holds)
         if not self._boot_holds:

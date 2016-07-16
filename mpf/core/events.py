@@ -1,4 +1,4 @@
-"""Contains the base classes for the EventManager and QueuedEvents"""
+"""Classes for the EventManager and QueuedEvents."""
 
 import logging
 from collections import deque
@@ -7,7 +7,10 @@ import uuid
 
 class EventManager(object):
 
+    """Handles all the events and manages the handlers in MPF."""
+
     def __init__(self, machine):
+        """Initialise EventManager."""
         self.log = logging.getLogger("Events")
         self.machine = machine
         self.registered_handlers = {}
@@ -17,7 +20,7 @@ class EventManager(object):
         self.debug = True
 
     def add_handler(self, event, handler, priority=1, **kwargs):
-        """Registers an event handler to respond to an event.
+        """Register an event handler to respond to an event.
 
         If you add a handlers for an event for which it has already been
         registered, the new one will overwrite the old one. This is useful for
@@ -51,9 +54,7 @@ class EventManager(object):
         Then later to remove all the handlers that a module added, you could:
         for handler in handler_list:
         ``events.remove_handler(handler)``
-
         """
-
         if not callable(handler):
             raise ValueError('Cannot add handler "{}" for event "{}". Did you '
                              'accidentally add parenthesis to the end of the '
@@ -87,8 +88,7 @@ class EventManager(object):
         return key
 
     def replace_handler(self, event, handler, priority=1, **kwargs):
-        """Checks to see if a handler (optionally with kwargs) is registered for
-        an event and replaces it if so.
+        """Check to see if a handler (optionally with kwargs) is registered for an event and replaces it if so.
 
         Args:
             event: The event you want to check to see if this handler is
@@ -105,7 +105,6 @@ class EventManager(object):
 
         If this method doesn't find a match, it will still add the new handler.
         """
-
         # Check to see if this handler is already registered for this event.
         # If we don't have kwargs, then we'll look for just the handler meth.
         # If we have kwargs, we'll look for that combination. If it finds it,
@@ -128,13 +127,11 @@ class EventManager(object):
         self.add_handler(event, handler, priority, **kwargs)
 
     def remove_handler(self, method):
-        """Removes an event handler from all events a method is registered to
-        handle.
+        """Remove an event handler from all events a method is registered to handle.
 
         Args:
             method : The method whose handlers you want to remove.
         """
-
         events_to_delete_if_empty = []
         for event, handler_list in self.registered_handlers.items():
             for handler_tup in handler_list[:]:  # copy via slice
@@ -148,7 +145,7 @@ class EventManager(object):
             self._remove_event_if_empty(event)
 
     def remove_handler_by_event(self, event, handler):
-        """Removes the handler you pass from the event you pass.
+        """Remove the handler you pass from the event you pass.
 
         Args:
             event: The name of the event you want to remove the handler from.
@@ -160,7 +157,6 @@ class EventManager(object):
         handler / event combination, regardless of whether the keyword
         arguments match or not.
         """
-
         event = event.lower()
 
         events_to_delete_if_empty = []
@@ -176,12 +172,11 @@ class EventManager(object):
             self._remove_event_if_empty(event)
 
     def remove_handler_by_key(self, key):
-        """Removes a registered event handler by key.
+        """Remove a registered event handler by key.
 
         Args:
             key: The key of the handler you want to remove
         """
-
         events_to_delete_if_empty = []
         for event, handler_list in self.registered_handlers.items():
             for handler_tup in handler_list[:]:  # copy via slice
@@ -194,7 +189,7 @@ class EventManager(object):
             self._remove_event_if_empty(event)
 
     def remove_handlers_by_keys(self, key_list):
-        """Removes multiple event handlers based on a passed list of keys
+        """Remove multiple event handlers based on a passed list of keys.
 
         Args:
             key_list: A list of keys of the handlers you want to remove
@@ -216,8 +211,7 @@ class EventManager(object):
                                " handlers registered for it", event)
 
     def does_event_exist(self, event_name):
-        """Checks to see if any handlers are registered for the event name that
-        is passed.
+        """Check to see if any handlers are registered for the event name that is passed.
 
         Args:
             event_name : The string name of the event you want to check. This
@@ -225,14 +219,11 @@ class EventManager(object):
 
         Returns:
             True or False
-
         """
-
         return event_name.lower() in self.registered_handlers
 
     def post(self, event, callback=None, **kwargs):
-        """Posts an event which causes all the registered handlers to be
-        called.
+        """Post an event which causes all the registered handlers to be called.
 
         Events are processed serially (e.g. one at a time), so if the event
         core is in the process of handling another event, this event is
@@ -256,12 +247,12 @@ class EventManager(object):
                 certain ones don't need them.)
 
         """
-
         self._post(event, ev_type=None, callback=callback, **kwargs)
 
     def post_boolean(self, event, callback=None, **kwargs):
-        """Posts an boolean event which causes all the registered handlers to
-        be called one-by-one. Boolean events differ from regular events in that
+        """Post an boolean event which causes all the registered handlers to be called one-by-one.
+
+        Boolean events differ from regular events in that
         if any handler returns False, the remaining handlers will not be
         called.
 
@@ -288,13 +279,11 @@ class EventManager(object):
                 passed to each handler. (Just make sure your handlers are
                 expecting them. You can add **kwargs to your handler methods if
                 certain ones don't need them.)
-
         """
         self._post(event, ev_type='boolean', callback=callback, **kwargs)
 
     def post_queue(self, event, callback, **kwargs):
-        """Posts a queue event which causes all the registered handlers to be
-        called.
+        """Post a queue event which causes all the registered handlers to be called.
 
         Queue events differ from standard events in that individual handlers
         are given the option to register a "wait", and the callback will not be
@@ -323,13 +312,13 @@ class EventManager(object):
                 passed to each handler. (Just make sure your handlers are
                 expecting them. You can add **kwargs to your handler methods if
                 certain ones don't need them.)
-
         """
         self._post(event, ev_type='queue', callback=callback, **kwargs)
 
     def post_relay(self, event, callback=None, **kwargs):
-        """Posts a relay event which causes all the registered handlers to be
-        called. A dictionary can be passed from handler-to-handler and modified
+        """Post a relay event which causes all the registered handlers to be called.
+
+        A dictionary can be passed from handler-to-handler and modified
         as needed.
 
         Args:
@@ -358,7 +347,6 @@ class EventManager(object):
         stanard events mean that all the handlers get the same initial kwargs,
         whereas relay events "relay" the resulting kwargs from one handler to
         the next.)
-
         """
         self._post(event, ev_type='relay', callback=callback, **kwargs)
 
@@ -369,6 +357,9 @@ class EventManager(object):
         if self.debug:
             self.log.debug("^^^^ Posted event '%s'. Type: %s, Callback: %s, "
                            "Args: %s", event, ev_type, callback, kwargs)
+
+        if not self.event_queue and hasattr(self.machine.clock, "loop"):
+            self.machine.clock.loop.call_soon(self.process_event_queue)
 
         self.event_queue.append((event, ev_type, callback, kwargs))
         if self.debug:
@@ -468,8 +459,7 @@ class EventManager(object):
             queue.event_finished()
 
     def process_event_queue(self):
-        # Method which checks to see if there are any other events
-        # that need to be processed, and then processes them.
+        """Check if there are any other events that need to be processed, and then process them."""
         while len(self.event_queue) > 0 or len(self.callback_queue) > 0:
             # first process all events. if they post more events we will
             # process them in the same loop.
@@ -489,11 +479,11 @@ class EventManager(object):
 
 
 class QueuedEvent(object):
-    """Base class for an event queue which is created each time a queue
-    event is called.
 
-    """
+    """Base class for an event queue which is created each time a queue event is called."""
+
     def __init__(self, callback, **kwargs):
+        """Initialise QueueEvent."""
         self.log = logging.getLogger("Queue")
 
         self.debug = True
@@ -507,22 +497,24 @@ class QueuedEvent(object):
         self._is_event_finished = False
 
     def __repr__(self):
+        """Return str representation."""
         return '<QueuedEvent for callback {}>'.format(self.callback)
 
     def event_finished(self):
+        """Return true if event is finished."""
         self._is_event_finished = True
 
     def wait(self):
-        """Registers a wait for this QueueEvent."""
+        """Register a wait for this QueueEvent."""
         self.num_waiting += 1
         if self.debug:
             self.log.debug("Registering a wait. Current count: %s",
                            self.num_waiting)
 
     def clear(self):
-        """Clears a wait. If the number of waits drops to 0, the callbacks will
-        be called.
+        """Clear a wait.
 
+        If the number of waits drops to 0, the callbacks will be called.
         """
         self.num_waiting -= 1
         if self.debug:
@@ -537,14 +529,14 @@ class QueuedEvent(object):
             callback(**self.kwargs)
 
     def kill(self):
-        """Kills this QueuedEvent by removing all waits. Does not process the
-        callback.
+        """Kill this QueuedEvent by removing all waits.
 
+        Does not process the callback.
         """
         self.num_waiting = 0
 
     def is_empty(self):
-        """Checks to see if this QueuedEvent has any waits.
+        """Check to see if this QueuedEvent has any waits.
 
         Returns:
             True is there are 1 or more waits, False if there are no more

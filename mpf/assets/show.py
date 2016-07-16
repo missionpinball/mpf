@@ -440,6 +440,7 @@ class RunningShow(object):
         self.reset = reset
         # self.mode = mode
         self.show_tokens = show_tokens
+        self._delay_handler = None
 
         del mode
         # TODO: remove mode from __init__
@@ -480,14 +481,14 @@ class RunningShow(object):
             delay_secs = (sync_ms / 1000.0) - (self.next_step_time % (sync_ms /
                                                1000.0))
             self.next_step_time += delay_secs
-            self.machine.clock.schedule_once(self._run_next_step,
-                                             delay_secs)
+            self._delay_handler = self.machine.clock.schedule_once(self._run_next_step,
+                                                                   delay_secs)
         else:  # run now
             self._run_next_step()
 
     def __repr__(self):
         """Return str representation."""
-        return 'Running Show Instance: "{}"'.format(self.name)
+        return 'Running Show Instance: "{}" {} {}'.format(self.name, self.show_tokens, self.next_step_index)
 
     def _replace_tokens(self, **kwargs):
         keys_replaced = dict()
@@ -538,7 +539,9 @@ class RunningShow(object):
 
         self.machine.show_controller.notify_show_stopping(self)
         self.show.running.remove(self)
-        self.machine.clock.unschedule(self._run_next_step, True)
+        if self._delay_handler:
+            self.machine.clock.unschedule(self._delay_handler)
+            self._delay_handler = None
 
         # clear context in used players
         for player in self._players:
@@ -549,7 +552,9 @@ class RunningShow(object):
 
     def pause(self):
         """Pause show."""
-        self.machine.clock.unschedule(self._run_next_step, True)
+        if self._delay_handler:
+            self.machine.clock.unschedule(self._delay_handler)
+            self._delay_handler = None
 
     def resume(self):
         """Resume paused show."""
@@ -571,7 +576,9 @@ class RunningShow(object):
             raise ValueError('Cannot advance {} to step "{}" as that is'
                              'not a valid step number.'.format(self, show_step))
 
-        self.machine.clock.unschedule(self._run_next_step, True)
+        if self._delay_handler:
+            self.machine.clock.unschedule(self._delay_handler)
+            self._delay_handler = None
         steps_to_advance = steps - 1  # since current_step is really next step
 
         # todo should this end the show if there are more steps than in the
@@ -627,7 +634,7 @@ class RunningShow(object):
         time_to_next_step = self.show_steps[current_step_index]['duration'] / self.speed
         if not self.manual_advance and time_to_next_step > 0:
             self.next_step_time += time_to_next_step
-            self.machine.clock.schedule_once(self._run_next_step,
-                                             self.next_step_time - self.machine.clock.get_time())
+            self._delay_handler = self.machine.clock.schedule_once(self._run_next_step,
+                                                                   self.next_step_time - self.machine.clock.get_time())
 
             return time_to_next_step

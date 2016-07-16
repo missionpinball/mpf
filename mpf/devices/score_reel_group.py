@@ -47,6 +47,8 @@ class ScoreReelGroup(SystemWideDevice):
         self.jump_in_progress = False
         # Boolean attribute that is True when a jump advance is in progress.
 
+        self._tick_task = None
+
     def _initialize(self):
         self.reels = self.config['reels']
         self.reels.reverse()  # We want our smallest digit in the 0th element
@@ -68,7 +70,7 @@ class ScoreReelGroup(SystemWideDevice):
         self.machine.events.add_handler('init_phase_4',
                                         self.initialize)
 
-        self.machine.clock.schedule_interval(self.tick, 0.1)
+        self._tick_task = self.machine.clock.schedule_interval(self.tick, 0.01)
 
         # Need to hook this in case reels aren't done when ball ends
         self.machine.events.add_handler('ball_ending', self._ball_ending, 900)

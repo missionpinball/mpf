@@ -13,12 +13,14 @@ class HardwarePlatform(ServoPlatform):
     """
 
     def __init__(self, machine):
+        """Initialise Pololu Servo Controller platform."""
         super().__init__(machine)
         self.log = logging.getLogger("Pololu Maestro")
         self.log.debug("Configuring template hardware interface.")
         self.config = self.machine.config['pololu_maestro']
         self.platform = None
         self.serial = None
+        self.features['tickless'] = True
 
     def __repr__(self):
         return '<Platform.Pololu_Maestro>'
@@ -41,15 +43,24 @@ class HardwarePlatform(ServoPlatform):
         self.serial = serial.Serial(self.platform.config['port'])
 
     def stop(self):
+        """Close serial."""
         self.serial.close()
 
     def configure_servo(self, config):
+        """Configure a servo device in paltform.
+
+        Args:
+            config (dict): Configuration of device
+        """
         return PololuServo(int(config['number']), self.config, self.serial)
 
 
 class PololuServo(ServoPlatformInterface):
 
+    """A servo on the pololu servo controller."""
+
     def __init__(self, number, config, serial_port):
+        """Initialise Pololu servo."""
         self.log = logging.getLogger('PololuServo')
         self.number = number
         self.config = config
@@ -57,16 +68,20 @@ class PololuServo(ServoPlatformInterface):
         self.cmd_header = chr(0xaa) + chr(0xc)
 
     def go_to_position(self, position):
-        # Set channel to a specified target value.  Servo will begin moving
-        # based on Speed and Acceleration parameters previously set.
-        # Target values will be constrained within Min and Max range, if set.
-        # For servos, target represents the pulse width in of
-        # quarter-microseconds.
-        # Servo center is at 1500 microseconds, or 6000 quarter-microseconds
-        # Typcially valid servo range is 3000 to 9000 quarter-microseconds
-        # If channel is configured for digital output, values < 6000 =
-        # Low ouputco
+        """Set channel to a specified target value.
 
+        Servo will begin moving
+        based on Speed and Acceleration parameters previously set.
+        Target values will be constrained within Min and Max range, if set.
+        For servos, target represents the pulse width in of
+        quarter-microseconds.
+        Servo center is at 1500 microseconds, or 6000 quarter-microseconds
+        Typcially valid servo range is 3000 to 9000 quarter-microseconds
+        If channel is configured for digital output, values < 6000 = Low ouputco.
+
+        Args:
+            position: Servo position between 0 and 1
+        """
         servo_min = self.config['servo_min']
         servo_max = self.config['servo_max']
         value = int(servo_min + position * (servo_max - servo_min))
@@ -102,7 +117,6 @@ class PololuServo(ServoPlatformInterface):
             speed:
 
         Returns:
-
         """
         lsb = speed & 0x7f  # 7 bits for least significant byte
         msb = (speed >> 7) & 0x7f  # shift 7 and take next 7 bits for msb
@@ -118,7 +132,6 @@ class PololuServo(ServoPlatformInterface):
         Valid values are from 0 to 255. 0=unrestricted, 1 is slowest start.
         A value of 1 will take the servo about 3s to move between 1ms to 2ms
         range.
-
         """
         lsb = accel & 0x7f  # 7 bits for least significant byte
         msb = (accel >> 7) & 0x7f  # shift 7 and take next 7 bits for msb

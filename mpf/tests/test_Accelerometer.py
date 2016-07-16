@@ -1,3 +1,4 @@
+"""Test accelerometer device."""
 import math
 
 from mpf.tests.MpfTestCase import MpfTestCase
@@ -11,9 +12,11 @@ class TestAccelerometer(MpfTestCase):
         return 'tests/machine_files/accelerometer/'
 
     def _event_level1(self, **kwargs):
+        del kwargs
         self._level1 = True
 
     def _event_level2(self, **kwargs):
+        del kwargs
         self._level2 = True
 
     def test_leveling(self):
@@ -73,9 +76,11 @@ class TestAccelerometer(MpfTestCase):
         self.assertTrue(self._level2)
 
     def _event_hit1(self, **kwargs):
+        del kwargs
         self._hit1 = True
 
     def _event_hit2(self, **kwargs):
+        del kwargs
         self._hit2 = True
 
     def test_hits(self):

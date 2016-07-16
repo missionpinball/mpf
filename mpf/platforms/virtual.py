@@ -31,6 +31,7 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
         # switches
         self.hw_switches = dict()
         self.initial_states_sent = False
+        self.features['tickless'] = True
 
     def __repr__(self):
         return '<Platform.Virtual>'
@@ -207,7 +208,7 @@ class VirtualLED(RGBLEDPlatformInterface):
     def __init__(self, number):
         self.log = logging.getLogger('VirtualLED')
         self.number = number
-        self.current_color = RGBColor()
+        self.current_color = list(RGBColor().rgb)
 
     def color(self, color):
         self.current_color = color
@@ -259,6 +260,7 @@ class VirtualDriver(DriverPlatformInterface):
     def enable(self, coil):
         """Enable virtual coil."""
         del coil
+        # pylint: disable-msg=too-many-boolean-expressions
         if (not self.config.get("allow_enable", False) and not self.config.get("hold_power", 0) and     # defaults
                 not self.config.get("pwm_on_ms", 0) and not self.config.get("pwm_off_ms", 0) and        # p-roc
                 not self.config.get("hold_power32", 0) and not self.config.get("hold_pwm_mask", 0) and  # fast

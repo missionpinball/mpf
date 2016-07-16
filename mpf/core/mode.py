@@ -57,7 +57,7 @@ class Mode(object):
         self.restart_on_next_ball = self.config['mode']['restart_on_next_ball']
         '''Controls whether this mode will restart on the next ball. This only
         works if the mode was running when the ball ended. It's tracked per-
-        player in the '_restart_modes_on_next_ball' untracked player variable.
+        player in the 'restart_modes_on_next_ball' player variable.
         '''
 
         # Call registered remote loader methods

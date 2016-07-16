@@ -32,7 +32,7 @@ led_player:
   event2:
     tag1:
       color: blue
-      fade: 20ms
+      fade: 200ms
       priority: 100
   event3:
     led1: lime-f500

@@ -13,6 +13,19 @@ class TestMpfTestCase(MpfTestCase):
     def get_platform(self):
         return 'smart_virtual'
 
+    def _interval(self, dt=None):
+        self.counter += 1
+
+    def test_schedule_interval_in_tests(self):
+        self.counter = 0
+        self.machine.clock.schedule_interval(self._interval, 1)
+
+        self.advance_time_and_run(1.1)
+        self.assertEqual(1, self.counter)
+        for i in range(10):
+            self.advance_time_and_run(.1)
+        self.assertEqual(2, self.counter)
+
     def test_test_case(self):
         # test the delay
         self.delay_callback = MagicMock()

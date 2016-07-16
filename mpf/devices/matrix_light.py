@@ -1,17 +1,18 @@
-""" Contains the MatrixLight parent classes. """
+"""Contains the MatrixLight class."""
 
 from operator import itemgetter
 
+from mpf.core.machine import MachineController
+from mpf.core.mode import Mode
 from mpf.core.system_wide_device import SystemWideDevice
 
 
 class MatrixLight(SystemWideDevice):
-    """ Represents a light connected to a traditional lamp matrix in a pinball
-    machine.
+
+    """Represents a light connected to a traditional lamp matrix in a pinball machine.
 
     This light could be an incandescent lamp or a replacement single-color
     LED. The key is that they're connected up to a lamp matrix.
-
     """
 
     config_section = 'matrix_lights'
@@ -20,22 +21,38 @@ class MatrixLight(SystemWideDevice):
     machine = None
 
     lights_to_update = set()
+    lights_to_fade = set()
+    _updater_task = None
 
     @classmethod
-    def device_class_init(cls, machine):
+    def device_class_init(cls, machine: MachineController):
+        """Initialise lights.
 
+        Args:
+            machine: MachineController object
+        """
         cls.machine = machine
+        cls.lights_to_fade = set()
+        cls.lights_to_update = set()
 
         machine.validate_machine_config_section('matrix_light_settings')
 
-        # todo make time configurable
-        machine.clock.schedule_interval(cls.update_matrix_lights, 0, -100)
+        cls._updater_task = machine.clock.schedule_interval(
+            cls.update_matrix_lights, 1 / machine.config['mpf']['default_matrix_light_hw_update_hz'])
 
         machine.mode_controller.register_stop_method(cls.mode_stop)
 
     @classmethod
     def update_matrix_lights(cls, dt):
-        del dt
+        """Write changed lights to hardware.
+
+        Args:
+            dt: time since last call
+        """
+        for light in list(MatrixLight.lights_to_fade):
+            if light.fade_in_progress:
+                light.fade_task(dt)
+
         # called periodically (default at the end of every frame) to actually
         # write the new light states to the hardware
         if MatrixLight.lights_to_update:
@@ -45,11 +62,17 @@ class MatrixLight(SystemWideDevice):
             MatrixLight.lights_to_update = set()
 
     @classmethod
-    def mode_stop(cls, mode):
+    def mode_stop(cls, mode: Mode):
+        """Remove all mode entries from stack.
+
+        Args:
+            mode: Mode which was removed
+        """
         for light in cls.machine.lights:
             light.remove_from_stack_by_mode(mode)
 
     def __init__(self, machine, name):
+        """Initialise light."""
         self.hw_driver = None
         super().__init__(machine, name)
 
@@ -117,7 +140,9 @@ class MatrixLight(SystemWideDevice):
     # pylint: disable-msg=too-many-arguments
     def on(self, brightness=255, fade_ms=None, priority=0, key=None, mode=None,
            **kwargs):
-        """Adds or updates a brightness entry in this lights's stack, which is
+        """Turn light on.
+
+        Add or updates a brightness entry in this lights's stack, which is
         how you tell this light how bright you want it to be.
 
         Args:
@@ -144,7 +169,6 @@ class MatrixLight(SystemWideDevice):
             **kwargs: Not used. Only included so this method can be used as
                 an event callback since events could pass random kwargs.
         """
-
         del kwargs
 
         if self.debug:
@@ -202,7 +226,7 @@ class MatrixLight(SystemWideDevice):
         MatrixLight.lights_to_update.add(self)
 
     def clear_stack(self):
-        """Removes all entries from the stack and resets this light to 'off'."""
+        """Remove all entries from the stack and resets this light to 'off'."""
         self.stack[:] = []
 
         if self.debug:
@@ -211,7 +235,7 @@ class MatrixLight(SystemWideDevice):
         MatrixLight.lights_to_update.add(self)
 
     def remove_from_stack_by_key(self, key):
-        """Removes a group of brightness settings from the stack.
+        """Remove a group of brightness settings from the stack.
 
         Args:
             key: The key of the settings to remove (based on the 'key'
@@ -220,26 +244,23 @@ class MatrixLight(SystemWideDevice):
         This method triggers a light update, so if the highest priority settings
         were removed, the light will be updated with whatever's below it. If no
         settings remain after these are removed, the light will turn off.
-
         """
-
         if self.debug:
             self.log.debug("Removing key '%s' from stack", key)
 
         self.stack[:] = [x for x in self.stack if x['key'] != key]
         MatrixLight.lights_to_update.add(self)
 
-    def remove_from_stack_by_mode(self, mode):
-        """Removes a group of brightness settings from the stack.
+    def remove_from_stack_by_mode(self, mode: Mode):
+        """Remove a group of brightness settings from the stack.
 
         Args:
+            mode: Mode which was removed
 
         This method triggers a light update, so if the highest priority settings
         were removed, the light will be updated with whatever's below it. If no
         settings remain after these are removed, the light will turn off.
-
         """
-
         if self.debug:
             self.log.debug("Removing mode '%s' from stack", mode)
 
@@ -247,14 +268,14 @@ class MatrixLight(SystemWideDevice):
         MatrixLight.lights_to_update.add(self)
 
     def get_brightness(self):
-        """Returns an RGBColor() instance of the 'color' setting of the highest
-        color setting in the stack. This is usually the same color as the
+        """Return an RGBColor() instance of the 'color' setting of the highest color setting in the stack.
+
+        This is usually the same color as the
         physical LED, but not always (since physical LEDs are updated once per
         frame, this value could vary.
 
         Also note the color returned is the "raw" color that does has not had
         the color correction profile applied.
-
         """
         try:
             return self.stack[0]['brightness']
@@ -268,12 +289,13 @@ class MatrixLight(SystemWideDevice):
             return 0
 
     def update_hw_light(self):
-        """Physically updates the light hardware object based on the
+        """Set brightness to hardware platform.
+
+        Physically updates the light hardware object based on the
         'brightness' setting of the highest priority setting from the stack.
 
         This method is automatically called whenever a brightness change has been
         made (including when fades are active).
-
         """
         if not self.stack:
             self.off()
@@ -299,7 +321,7 @@ class MatrixLight(SystemWideDevice):
                             brightness=self.stack[0]['brightness'])
 
     def off(self, fade_ms=0, priority=0, key=None, mode=None, **kwargs):
-        """Turns this light off.
+        """Turn this light off.
 
         Args:
             fade_ms: Int of the number of ms you want this light to fade to the
@@ -326,11 +348,19 @@ class MatrixLight(SystemWideDevice):
                 mode=mode)
 
     def add_handler(self, callback):
-        """Registers a handler to be called when this light changes state."""
+        """Register a handler to be called when this light changes state.
+
+        Args:
+            callback: Monitor callback to add
+        """
         self.registered_handlers.append(callback)
 
     def remove_handler(self, callback=None):
-        """Removes a handler from the list of registered handlers."""
+        """Remove a handler from the list of registered handlers.
+
+        Args:
+            callback: Monitor callback to remove
+        """
         if not callback:  # remove all
             self.registered_handlers = []
             return
@@ -348,9 +378,14 @@ class MatrixLight(SystemWideDevice):
         if self.debug:
             self.log.debug("Setting up the fade task")
 
-        self.machine.clock.schedule_interval(self._fade_task, 0)
+        MatrixLight.lights_to_fade.add(self)
 
-    def _fade_task(self, dt):
+    def fade_task(self, dt):
+        """Update the brightness depending on the time for a fade.
+
+        Args:
+            dt: time since last call
+        """
         del dt
 
         # not sure why this is needed, but sometimes the fade task tries to
@@ -394,14 +429,14 @@ class MatrixLight(SystemWideDevice):
         MatrixLight.lights_to_update.add(self)
 
     def _end_fade(self):
-        # stops the fade and instantly sets the light to its destination brightness
+        """Stop the fade and instantly sets the light to its destination brightness."""
         self._stop_fade_task()
         self.stack[0]['dest_time'] = 0
 
     def _stop_fade_task(self):
-        # stops the fade task. Light is left in whatever state it was in
+        """Stop the fade task. Light is left in whatever state it was in."""
         self.fade_in_progress = False
-        self.machine.clock.unschedule(self._fade_task)
+        MatrixLight.lights_to_fade.remove(self)
 
         if self.debug:
             self.log.debug("Stopping fade task")

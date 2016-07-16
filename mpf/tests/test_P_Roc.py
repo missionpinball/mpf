@@ -144,26 +144,26 @@ class TestPRoc(MpfTestCase):
         # closed debounced -> switch active
         self.machine.default_platform.proc.get_events = MagicMock(return_value=[
             {'type': 1, 'value': 23}])
-        self.machine_run()
+        self.advance_time_and_run(.01)
         self.assertTrue(self.machine.switch_controller.is_active("s_test"))
 
         # open debounces -> inactive
         self.machine.default_platform.proc.get_events = MagicMock(return_value=[
             {'type': 2, 'value': 23}])
-        self.machine_run()
+        self.advance_time_and_run(.01)
         self.assertFalse(self.machine.switch_controller.is_active("s_test"))
 
         self.assertFalse(self.machine.switch_controller.is_active("s_test_no_debounce"))
         # closed non debounced -> should be active
         self.machine.default_platform.proc.get_events = MagicMock(return_value=[
             {'type': 3, 'value': 24}])
-        self.machine_run()
+        self.advance_time_and_run(.01)
         self.assertTrue(self.machine.switch_controller.is_active("s_test_no_debounce"))
 
         # open non debounced -> should be inactive
         self.machine.default_platform.proc.get_events = MagicMock(return_value=[
             {'type': 4, 'value': 24}])
-        self.machine_run()
+        self.advance_time_and_run(.01)
         self.assertFalse(self.machine.switch_controller.is_active("s_test_no_debounce"))
 
     def test_dmd_update(self):
@@ -214,7 +214,7 @@ class TestPRoc(MpfTestCase):
         # test enable of matrix light
         assert not self.machine.lights.test_pdb_light.hw_driver.proc.driver_schedule.called
         self.machine.lights.test_pdb_light.on()
-        self.machine_run()
+        self.advance_time_and_run(.02)
         self.machine.lights.test_pdb_light.hw_driver.proc.driver_schedule.assert_called_with(
             cycle_seconds=0, schedule=4294967295, now=True, number=32
         )
@@ -222,7 +222,7 @@ class TestPRoc(MpfTestCase):
         # test disable of matrix light
         assert not self.machine.lights.test_pdb_light.hw_driver.proc.driver_disable.called
         self.machine.lights.test_pdb_light.off()
-        self.machine_run()
+        self.advance_time_and_run(.1)
         self.machine.lights.test_pdb_light.hw_driver.proc.driver_disable.assert_called_with(32)
 
     def test_pdb_gi_light(self):

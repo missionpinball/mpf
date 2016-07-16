@@ -1,25 +1,31 @@
 import copy
-import time
-from queue import Queue
 from unittest.mock import MagicMock
 
 from mpf.platforms.opp import opp
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.loop import MockSerial
 
 
-class SerialMock:
+class MockOppSocket(MockSerial):
+
     def read(self, length):
         del length
-        msg = self.queue.get()
+        msg = self.queue.pop()
         return msg
+
+    def read_ready(self):
+        return self.queue
+
+    def write_ready(self):
+        return True
 
     def write(self, msg):
         if msg in self.permanent_commands:
-            self.queue.put(self.permanent_commands[msg])
-            return
+            self.queue.append(self.permanent_commands[msg])
+            return len(msg)
 
-        # print("Serial received: " + "".join("\\x%02x" % ord(b) for b in msg) + " len: " + str(len(msg)))
+        # print("Serial received: " + "".join("\\x%02x" % b for b in msg) + " len: " + str(len(msg)))
         if msg not in self.expected_commands:
             self.crashed = True
             print("Unexpected command: " + "".join("\\x%02x" % b for b in msg) + " len: " + str(len(msg)))
@@ -27,19 +33,18 @@ class SerialMock:
                                  " len: " + str(len(msg)))
 
         if self.expected_commands[msg] is not False:
-            self.queue.put(self.expected_commands[msg])
+            self.queue.append(self.expected_commands[msg])
 
         del self.expected_commands[msg]
+        return len(msg)
 
     def __init__(self):
+        super().__init__()
         self.name = "SerialMock"
         self.expected_commands = {}
-        self.queue = Queue()
+        self.queue = []
         self.permanent_commands = {}
         self.crashed = False
-
-    def close(self):
-        pass
 
 
 class TestOPP(MpfTestCase):
@@ -56,11 +61,14 @@ class TestOPP(MpfTestCase):
             crc_msg += b'\xff'
         return crc_msg
 
+    def _mock_loop(self):
+        self.clock.mock_serial("com1", self.serialMock)
+
     def setUp(self):
         self.expected_duration = 1.5
         opp.serial_imported = True
         opp.serial = MagicMock()
-        self.serialMock = SerialMock()
+        self.serialMock = MockOppSocket()
         board1_config = b'\x20\x0d\x01\x02\x03\x03'      # wing1: solenoids, wing2: inputs, wing3: lamps, wing4: lamps
         board2_config = b'\x21\x0d\x06\x02\x02\x01'      # wing1: neo, wing2: inputs, wing3: inputs, wing4: solenoids
         board1_version = b'\x20\x02\x00\x00\x10\x00'     # 0.0.16.0
@@ -105,13 +113,11 @@ class TestOPP(MpfTestCase):
         else:
             self.serialMock.queue.put(msg)
         while not self.serialMock.queue.empty() and not self.serialMock.crashed:
-            time.sleep(.00001)
             self.advance_time_and_run(1)
 
     def _wait_for_processing(self):
         while self.serialMock.expected_commands and not self.serialMock.crashed:
-            time.sleep(.00001)
-            self.machine_run()
+            self.advance_time_and_run(.01)
 
     def test_opp(self):
         self._test_coils()
@@ -139,8 +145,7 @@ class TestOPP(MpfTestCase):
         }
 
         while self.machine.switch_controller.is_active("s_test_nc"):
-            time.sleep(.0001)
-            self.machine_run()
+            self.advance_time_and_run(0.1)
 
         self.assertTrue(self.machine.switch_controller.is_active("s_test"))
         self.assertTrue(self.machine.switch_controller.is_active("s_test_no_debounce"))

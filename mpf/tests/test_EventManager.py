@@ -761,8 +761,6 @@ class TestEventManager(MpfTestCase):
         self.delay.add(ms=6001, name="second", callback=self.delay_second)
         self.delay.add(ms=6000, name="first", callback=self.delay_first)
 
-        self.assertAlmostEqual(6000,
-                               (self.machine.delayRegistry.get_next_event() - self.machine.clock.get_time()) * 1000)
         self.advance_time_and_run(10)
 
     def test_delay_remove_race(self):

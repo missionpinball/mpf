@@ -1,3 +1,4 @@
+"""OPP WS2812 wing."""
 import logging
 
 from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
@@ -6,19 +7,25 @@ from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 
 
 class OPPNeopixelCard(object):
-    def __init__(self, addr, neo_card_dict, platform):
+
+    """OPP Neopixel/WS2812 card."""
+
+    def __init__(self, chain_serial, addr, neo_card_dict, platform):
+        """Initialise OPP Neopixel/WS2812 card."""
         self.log = logging.getLogger('OPPNeopixel')
+        self.chain_serial = chain_serial
         self.addr = addr
         self.platform = platform
         self.card = str(addr - ord(OppRs232Intf.CARD_ID_GEN2_CARD))
         self.numPixels = 0
         self.numColorEntries = 0
         self.colorTableDict = dict()
-        neo_card_dict[self.card] = self
+        neo_card_dict[chain_serial + '-' + self.card] = self
 
         self.log.debug("Creating OPP Neopixel card at hardware address: 0x%02x", addr)
 
     def add_neopixel(self, number, neo_dict):
+        """Add a LED channel."""
         if number > self.numPixels:
             self.numPixels = number + 1
         pixel_number = self.card + '-' + str(number)
@@ -28,6 +35,8 @@ class OPPNeopixelCard(object):
 
 
 class OPPNeopixel(RGBLEDPlatformInterface):
+
+    """One WS2812 LED."""
 
     def __init__(self, number, neo_card):
         self.log = logging.getLogger('OPPNeopixel')
@@ -40,7 +49,7 @@ class OPPNeopixel(RGBLEDPlatformInterface):
         self.log.debug("Creating OPP Neopixel: %s", number)
 
     def color(self, color):
-        """Instantly sets this LED to the color passed.
+        """Instantly set this LED to the color passed.
 
         Args:
             color: a 3-item list of integers representing R, G, and B values,
@@ -68,7 +77,7 @@ class OPPNeopixel(RGBLEDPlatformInterface):
                 msg.extend(OppRs232Intf.calc_crc8_whole_msg(msg))
                 cmd = bytes(msg)
                 self.log.debug("Add Neo color table entry: %s", "".join(" 0x%02x" % b for b in cmd))
-                self.neoCard.platform.opp_connection.send(cmd)
+                self.neoCard.platform.send_to_processor(self.neoCard.chain_serial, cmd)
                 self.neoCard.numColorEntries += 1
             else:
                 error = True
@@ -84,4 +93,4 @@ class OPPNeopixel(RGBLEDPlatformInterface):
             msg.extend(OppRs232Intf.calc_crc8_whole_msg(msg))
             cmd = bytes(msg)
             self.log.debug("Set Neopixel color: %s", "".join(" 0x%02x" % b for b in cmd))
-            self.neoCard.platform.opp_connection.send(cmd)
+            self.neoCard.platform.send_to_processor(self.neoCard.chain_serial, cmd)

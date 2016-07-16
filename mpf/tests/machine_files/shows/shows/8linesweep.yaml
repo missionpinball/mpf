@@ -1,0 +1,36 @@
+#show_version=4
+- time: 0
+  leds:
+    (line1num): (line1color)
+- time: +1s
+  leds:
+    (line1num): black
+    (line2num): (line2color)
+- time: +1s
+  leds:
+    (line2num): black
+    (line3num): (line3color)
+- time: +1s
+  leds:
+    (line3num): black
+    (line4num): (line4color)
+- time: +1s
+  leds:
+    (line4num): black
+    (line5num): (line5color)
+- time: +1s
+  leds:
+    (line5num): off
+    (line6num): (line6color)
+- time: +1s
+  leds:
+    (line6num): off
+    (line7num): (line7color)
+- time: +1s
+  leds:
+    (line7num): off
+    (line8num): (line8color)
+- time: +1s
+  leds:
+    (line8num): off
+- time: +1s

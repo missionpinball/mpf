@@ -30,8 +30,8 @@ class Driver(SystemWideDevice):
         self.hw_driver = None
         super().__init__(machine, name)
 
-        self.time_last_changed = 0
-        self.time_when_done = 0
+        self.time_last_changed = -1
+        self.time_when_done = -1
         self._configured_driver = None
 
     def validate_and_parse_config(self, config: dict, is_mode_config: bool) -> dict:

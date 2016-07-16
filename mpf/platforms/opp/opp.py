@@ -1,21 +1,13 @@
-"""Contains the hardware interface and drivers for the Open Pinball Project
+"""OPP Hardware interface.
+
+Contains the hardware interface and drivers for the Open Pinball Project
 platform hardware, including the solenoid, input, incandescent, and neopixel
 boards.
-
 """
 import logging
-import time
-import sys
-import threading
-import queue
-import traceback
+import asyncio
 
-try:
-    import serial
-    serial_imported = True
-except ImportError:
-    serial = None
-    serial_imported = False
+from mpf.platforms.base_serial_communicator import BaseSerialCommunicator
 
 from mpf.platforms.opp.opp_coil import OPPSolenoidCard
 from mpf.platforms.opp.opp_incand import OPPIncandCard
@@ -32,6 +24,7 @@ BAD_FW_VERSION = 0x01020304
 
 # pylint: disable-msg=too-many-instance-attributes
 class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, DriverPlatform):
+
     """Platform class for the OPP hardware.
 
     Args:
@@ -40,17 +33,13 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
     """
 
     def __init__(self, machine):
+        """Initialise OPP platform."""
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger('OPP')
         self.log.info("Configuring OPP hardware.")
 
-        if not serial_imported:
-            raise AssertionError('Could not import "pySerial". This is required for '
-                                 'the OPP platform interface')
-
-        self.opp_connection = None
-        self.connection_threads = set()
-        self.receive_queue = queue.Queue()
+        self.opp_connection = {}
+        self.serial_connections = set()
         self.opp_incands = []
         self.incandDict = dict()
         self.opp_solenoid = []
@@ -58,16 +47,14 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self.opp_inputs = []
         self.inpDict = dict()
         self.inpAddrDict = dict()
-        self.read_input_msg = OppRs232Intf.EOM_CMD
+        self.read_input_msg = {}
         self.opp_neopixels = []
         self.neoCardDict = dict()
         self.neoDict = dict()
         self.incand_reg = False
         self.numGen2Brd = 0
         self.gen2AddrArr = []
-        self.currInpData = []
         self.badCRC = 0
-        self.oppFirmwareVers = []
         self.minVersion = 0xffffffff
         self.tickCnt = 0
 
@@ -90,28 +77,31 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
             ord(OppRs232Intf.INV_CMD): self.inv_resp,
             ord(OppRs232Intf.EOM_CMD): self.eom_resp,
             ord(OppRs232Intf.GET_GEN2_CFG): self.get_gen2_cfg_resp,
-            ord(OppRs232Intf.READ_GEN2_INP_CMD): self.read_gen2_inp_resp,
+            ord(OppRs232Intf.READ_GEN2_INP_CMD): self.read_gen2_inp_resp_initial,
             ord(OppRs232Intf.GET_GET_VERS_CMD): self.vers_resp,
         }
 
-        self._connect_to_hardware()
-
     def initialize(self):
-        pass
+        """Initialise connections to OPP hardware."""
+        self._connect_to_hardware()
+        self.opp_commands[ord(OppRs232Intf.READ_GEN2_INP_CMD)] = self.read_gen2_inp_resp
 
     def stop(self):
-        for connections in self.connection_threads:
+        """Stop hardware and close connections."""
+        for connections in self.serial_connections:
             connections.stop()
 
     def __repr__(self):
+        """String representation."""
         return '<Platform.OPP>'
 
-    def process_received_message(self, msg):
-        """Sends an incoming message from the OPP hardware to the proper
-        method for servicing.
+    def process_received_message(self, chain_serial, msg):
+        """Send an incoming message from the OPP hardware to the proper method for servicing.
 
+        Args:
+            chain_serial: Serial of the chain which received the message.
+            msg: Message to parse.
         """
-
         if len(msg) >= 1:
             if ((msg[0] >= ord(OppRs232Intf.CARD_ID_GEN2_CARD)) and
                     (msg[0] < (ord(OppRs232Intf.CARD_ID_GEN2_CARD) + 0x20))):
@@ -130,7 +120,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
         # Can't use try since it swallows too many errors for now
         if cmd in self.opp_commands:
-            self.opp_commands[cmd](msg)
+            self.opp_commands[cmd](chain_serial, msg)
         else:
             self.log.warning("Received unknown serial command?%s. (This is "
                              "very worrisome.)", "".join(" 0x%02x" % b for b in msg))
@@ -139,26 +129,37 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
             #  until they come back
 
     def _connect_to_hardware(self):
-        # Connect to each port from the config. This procuess will cause the
-        # connection threads to figure out which processor they've connected to
-        # and to register themselves.
-        for port in self.config['ports']:
-            self.connection_threads.add(SerialCommunicator(
-                platform=self, port=port, baud=self.config['baud'],
-                send_queue=queue.Queue(), receive_queue=self.receive_queue))
+        """Connect to each port from the config.
 
-    def register_processor_connection(self, name, communicator):
-        """Once a communication link has been established with one of the
-        OPP boards, this method sets the communicator link.
-
+        This process will cause the OPPSerialCommunicator to figure out which chains they've connected to
+        and to register themselves.
         """
-        del name
+        for port in self.config['ports']:
+            self.serial_connections.add(OPPSerialCommunicator(
+                platform=self, port=port, baud=self.config['baud']))
 
-        self.opp_connection = communicator
+    def register_processor_connection(self, serial_number, communicator):
+        """Register the processors to the platform.
+
+        Args:
+            serial_number: Serial number of chain.
+            communicator: Instance of OPPSerialCommunicator
+        """
+        self.opp_connection[serial_number] = communicator
+
+    def send_to_processor(self, chain_serial, msg):
+        """Send message to processor with specific serial number.
+
+        Args:
+            chain_serial: Serial of the processor.
+            msg: Message to send.
+        """
+        self.opp_connection[chain_serial].send(msg)
 
     def update_incand(self):
-        """Updates all the incandescents connected to OPP hardware. This is done
-        once per game loop if changes have been made.
+        """Update all the incandescents connected to OPP hardware.
+
+        This is done once per game loop if changes have been made.
 
         It is currently assumed that the oversampling will guarantee proper communication
         with the boards.  If this does not end up being the case, this will be changed
@@ -166,11 +167,9 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
         Note:  This could be made much more efficient by supporting a command
         that simply sets the state of all 32 of the LEDs as either on or off.
-
         """
-
-        whole_msg = bytearray()
         for incand in self.opp_incands:
+            whole_msg = bytearray()
             # Check if any changes have been made
             if (incand.oldState ^ incand.newState) != 0:
                 # Update card
@@ -186,47 +185,68 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                 msg.extend(OppRs232Intf.calc_crc8_whole_msg(msg))
                 whole_msg.extend(msg)
 
-        if len(whole_msg) != 0:
-            whole_msg.extend(OppRs232Intf.EOM_CMD)
-            send_cmd = bytes(whole_msg)
+            if len(whole_msg) != 0:
+                whole_msg.extend(OppRs232Intf.EOM_CMD)
+                send_cmd = bytes(whole_msg)
 
-            self.opp_connection.send(send_cmd)
-            self.log.debug("Update incand cmd:%s", "".join(" 0x%02x" % b for b in send_cmd))
+                self.send_to_processor(incand.chain_serial, send_cmd)
+                self.log.debug("Update incand cmd:%s", "".join(" 0x%02x" % b for b in send_cmd))
 
     @classmethod
     def get_coil_config_section(cls):
+        """Return coil config section."""
         return "opp_coils"
 
     def get_hw_switch_states(self):
+        """Get initial hardware switch states."""
         hw_states = dict()
         for opp_inp in self.opp_inputs:
             curr_bit = 1
             for index in range(0, 32):
                 if (curr_bit & opp_inp.mask) != 0:
                     if (curr_bit & opp_inp.oldState) == 0:
-                        hw_states[opp_inp.cardNum + '-' + str(index)] = 1
+                        hw_states[opp_inp.chain_serial + '-' + opp_inp.cardNum + '-' + str(index)] = 1
                     else:
-                        hw_states[opp_inp.cardNum + '-' + str(index)] = 0
+                        hw_states[opp_inp.chain_serial + '-' + opp_inp.cardNum + '-' + str(index)] = 0
                 curr_bit <<= 1
         return hw_states
 
-    def inv_resp(self, msg):
+    def inv_resp(self, chain_serial, msg):
+        """Parse inventory response.
+
+        Args:
+            chain_serial: Serial of the chain which received the message.
+            msg: Message to parse.
+        """
+        # TODO: use chain_serial/move to serial communicator
         self.log.debug("Received Inventory Response:%s", "".join(" 0x%02x" % b for b in msg))
 
         index = 1
         while msg[index] != ord(OppRs232Intf.EOM_CMD):
             if (msg[index] & ord(OppRs232Intf.CARD_ID_TYPE_MASK)) == ord(OppRs232Intf.CARD_ID_GEN2_CARD):
                 self.numGen2Brd += 1
-                self.gen2AddrArr.append(msg[index])
-                self.currInpData.append(0)
+                self.gen2AddrArr.append((chain_serial, msg[index]))
             index += 1
         self.log.debug("Found %d Gen2 OPP boards.", self.numGen2Brd)
 
-    def eom_resp(self, msg):
+    @staticmethod
+    def eom_resp(chain_serial, msg):
+        """Process an EOM.
+
+        Args:
+            chain_serial: Serial of the chain which received the message.
+            msg: Message to parse.
+        """
         # An EOM command can be used to resynchronize communications if message synch is lost
         pass
 
-    def get_gen2_cfg_resp(self, msg):
+    def get_gen2_cfg_resp(self, chain_serial, msg):
+        """Process cfg response.
+
+        Args:
+            chain_serial: Serial of the chain which received the message.
+            msg: Message to parse.
+        """
         # Multiple get gen2 cfg responses can be received at once
         self.log.debug("Received Gen2 Cfg Response:%s", "".join(" 0x%02x" % b for b in msg))
         curr_index = 0
@@ -257,12 +277,13 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                         has_neo = True
                     wing_index += 1
                 if incand_mask != 0:
-                    self.opp_incands.append(OPPIncandCard(msg[curr_index], incand_mask, self.incandDict))
+                    self.opp_incands.append(OPPIncandCard(chain_serial, msg[curr_index], incand_mask, self.incandDict))
                 if sol_mask != 0:
-                    self.opp_solenoid.append(OPPSolenoidCard(msg[curr_index], sol_mask, self.solDict, self))
+                    self.opp_solenoid.append(
+                        OPPSolenoidCard(chain_serial, msg[curr_index], sol_mask, self.solDict, self))
                 if inp_mask != 0:
                     # Create the input object, and add to the command to read all inputs
-                    self.opp_inputs.append(OPPInputCard(msg[curr_index], inp_mask, self.inpDict,
+                    self.opp_inputs.append(OPPInputCard(chain_serial, msg[curr_index], inp_mask, self.inpDict,
                                            self.inpAddrDict))
 
                     # Add command to read all inputs to read input message
@@ -277,7 +298,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                     whole_msg.extend(inp_msg)
 
                 if has_neo:
-                    self.opp_neopixels.append(OPPNeopixelCard(msg[curr_index], self.neoCardDict, self))
+                    self.opp_neopixels.append(OPPNeopixelCard(chain_serial, msg[curr_index], self.neoCardDict, self))
 
             if msg[curr_index + 7] == ord(OppRs232Intf.EOM_CMD):
                 break
@@ -292,9 +313,16 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                 #  until they come back
 
         whole_msg.extend(OppRs232Intf.EOM_CMD)
-        self.read_input_msg = bytes(whole_msg)
+        self.read_input_msg[chain_serial] = bytes(whole_msg)
 
-    def vers_resp(self, msg):
+    def vers_resp(self, chain_serial, msg):
+        """Process version response.
+
+        Args:
+            chain_serial: Serial of the chain which received the message.
+            msg: Message to parse.
+        """
+        del chain_serial
         # Multiple get version responses can be received at once
         self.log.debug("Received Version Response:%s", "".join(" 0x%02x" % b for b in msg))
         end = False
@@ -319,9 +347,8 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                     self.minVersion = version
                 if version == BAD_FW_VERSION:
                     raise AssertionError("Original firmware sent only to Brian before adding "
-                                         "real version numbers.  The firmware must be updated before "
+                                         "real version numbers. The firmware must be updated before "
                                          "MPF will work.")
-                self.oppFirmwareVers.append(version)
             if not end:
                 if msg[curr_index + 7] == ord(OppRs232Intf.EOM_CMD):
                     end = True
@@ -335,7 +362,35 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                     # TODO: This means synchronization is lost.  Send EOM characters
                     #  until they come back
 
-    def read_gen2_inp_resp(self, msg):
+    def read_gen2_inp_resp_initial(self, chain_serial, msg):
+        """Read initial switch states.
+
+        Args:
+            chain_serial: Serial of the chain which received the message.
+            msg: Message to parse.
+        """
+        # Verify the CRC8 is correct
+        crc8 = OppRs232Intf.calc_crc8_part_msg(msg, 0, 6)
+        if msg[6] != ord(crc8):
+            self.badCRC += 1
+            hex_string = "".join(" 0x%02x" % b for b in msg)
+            self.log.warning("Msg contains bad CRC:%s.", hex_string)
+        else:
+            opp_inp = self.inpAddrDict[chain_serial + '-' + str(msg[0])]
+            new_state = (msg[2] << 24) | \
+                (msg[3] << 16) | \
+                (msg[4] << 8) | \
+                msg[5]
+
+            opp_inp.oldState = new_state
+
+    def read_gen2_inp_resp(self, chain_serial, msg):
+        """Read switch changes.
+
+        Args:
+            chain_serial: Serial of the chain which received the message.
+            msg: Message to parse.
+        """
         # Single read gen2 input response.  Receive function breaks them down
 
         # Verify the CRC8 is correct
@@ -345,33 +400,38 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
             hex_string = "".join(" 0x%02x" % b for b in msg)
             self.log.warning("Msg contains bad CRC:%s.", hex_string)
         else:
-            opp_inp = self.inpAddrDict[msg[0]]
+            opp_inp = self.inpAddrDict[chain_serial + '-' + str(msg[0])]
             new_state = (msg[2] << 24) | \
                 (msg[3] << 16) | \
                 (msg[4] << 8) | \
                 msg[5]
 
             # Update the state which holds inputs that are active
-            if hasattr(self.machine, 'switch_controller'):
-                changes = opp_inp.oldState ^ new_state
-                if changes != 0:
-                    curr_bit = 1
-                    for index in range(0, 32):
-                        if (curr_bit & changes) != 0:
-                            if (curr_bit & new_state) == 0:
-                                self.machine.switch_controller.process_switch_by_num(
-                                    state=1,
-                                    num=opp_inp.cardNum + '-' + str(index),
-                                    platform=self)
-                            else:
-                                self.machine.switch_controller.process_switch_by_num(
-                                    state=0,
-                                    num=opp_inp.cardNum + '-' + str(index),
-                                    platform=self)
-                        curr_bit <<= 1
+            changes = opp_inp.oldState ^ new_state
+            if changes != 0:
+                curr_bit = 1
+                for index in range(0, 32):
+                    if (curr_bit & changes) != 0:
+                        if (curr_bit & new_state) == 0:
+                            self.machine.switch_controller.process_switch_by_num(
+                                state=1,
+                                num=opp_inp.chain_serial + '-' + opp_inp.cardNum + '-' + str(index),
+                                platform=self)
+                        else:
+                            self.machine.switch_controller.process_switch_by_num(
+                                state=0,
+                                num=opp_inp.chain_serial + '-' + opp_inp.cardNum + '-' + str(index),
+                                platform=self)
+                    curr_bit <<= 1
             opp_inp.oldState = new_state
 
-    def reconfigure_driver(self, driver, use_hold):
+    def reconfigure_driver(self, driver, use_hold: bool):
+        """Reconfigure a driver.
+
+        Args:
+            driver: Driver object.
+            use_hold: Whether this driver stays enabled after a trigger or not.
+        """
         # If hold is 0, set the auto clear bit
         if not use_hold:
             cmd = ord(OppRs232Intf.CFG_SOL_AUTO_CLR)
@@ -405,21 +465,50 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         final_cmd = bytes(msg)
 
         self.log.debug("Writing individual config: %s", "".join(" 0x%02x" % b for b in final_cmd))
-        self.opp_connection.send(final_cmd)
+        self.send_to_processor(driver.hw_driver.solCard.chain_serial, final_cmd)
 
-    def configure_driver(self, config):
+    def _get_dict_index(self, input_str):
+        try:
+            chain_str, card_str, number_str = input_str.split("-")
+        except ValueError:
+            chain_str = '0'
+            try:
+                card_str, number_str = input_str.split("-")
+            except ValueError:
+                card_str = '0'
+                number_str = input_str
+
+        if chain_str not in self.config['chains']:
+            if len(self.config['ports']) > 1:
+                raise AssertionError("Chain {} is unconfigured".format(chain_str))
+            else:
+                # when there is only one port, use only available chain
+                chain_serial = list(self.serial_connections)[0].chain_serial
+        else:
+            chain_serial = self.config['chains'][chain_str]
+
+        return chain_serial + "-" + card_str + "-" + number_str
+
+    def configure_driver(self, config: dict):
+        """Configure a driver.
+
+        Args:
+            config: Config dict.
+        """
         if not self.opp_connection:
             raise AssertionError("A request was made to configure an OPP solenoid, "
                                  "but no OPP connection is available")
 
-        if not config['number'] in self.solDict:
+        number = self._get_dict_index(config['number'])
+
+        if number not in self.solDict:
             raise AssertionError("A request was made to configure an OPP solenoid "
-                                 "with number %s which doesn't exist", config['number'])
+                                 "with number {} which doesn't exist".format(config['number']))
 
         # Use new update individual solenoid command
-        opp_sol = self.solDict[config['number']]
+        opp_sol = self.solDict[number]
         opp_sol.config = config
-        self.log.debug("Config driver %s, %s, %s", config['number'],
+        self.log.debug("Config driver %s, %s, %s", number,
                        opp_sol.config['pulse_ms'], opp_sol.config['hold_power'])
 
         hold = self.get_hold_value(opp_sol)
@@ -427,51 +516,79 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
         return opp_sol
 
-    def configure_switch(self, config):
+    def configure_switch(self, config: dict):
+        """Configure a switch.
+
+        Args:
+            config: Config dict.
+        """
         # A switch is termed as an input to OPP
         if not self.opp_connection:
             raise AssertionError("A request was made to configure an OPP switch, "
                                  "but no OPP connection is available")
 
-        if not config['number'] in self.inpDict:
+        number = self._get_dict_index(config['number'])
+
+        if number not in self.inpDict:
             raise AssertionError("A request was made to configure an OPP switch "
-                                 "with number %s which doesn't exist", config['number'])
+                                 "with number %s which doesn't exist", number)
 
-        return self.inpDict[config['number']]
+        return self.inpDict[number]
 
-    def configure_led(self, config, channels):
+    def configure_led(self, config: dict, channels: int):
+        """Configure LED.
+
+        Args:
+            config: Config dict.
+            channels: Number of channels. OPP supports up to three.
+        """
         if channels > 3:
             raise AssertionError("OPP only supports RGB LEDs")
         if not self.opp_connection:
             raise AssertionError("A request was made to configure an OPP LED, "
                                  "but no OPP connection is available")
 
-        card, pixel_num = config['number'].split('-')
-        if card not in self.neoCardDict:
+        number = self._get_dict_index(config['number'])
+
+        chain_serial, card, pixel_num = number.split('-')
+        index = chain_serial + '-' + card
+        if index not in self.neoCardDict:
             raise AssertionError("A request was made to configure an OPP neopixel "
                                  "with card number %s which doesn't exist", card)
 
-        neo = self.neoCardDict[card]
+        neo = self.neoCardDict[index]
         pixel = neo.add_neopixel(int(pixel_num), self.neoDict)
 
         return pixel
 
     def configure_matrixlight(self, config):
+        """Configure a direct incandescent bulb.
 
+        Args:
+            config: Config dict.
+        """
         if not self.opp_connection:
             raise AssertionError("A request was made to configure an OPP matrix "
                                  "light (incand board), but no OPP connection "
                                  "is available")
 
-        if not config['number'] in self.incandDict:
+        number = self._get_dict_index(config['number'])
+
+        if number not in self.incandDict:
             raise AssertionError("A request was made to configure a OPP matrix "
                                  "light (incand board), with number %s "
-                                 "which doesn't exist", config['number'])
+                                 "which doesn't exist", number)
 
         self.incand_reg = True
-        return self.incandDict[config['number']]
+        return self.incandDict[number]
 
     def tick(self, dt):
+        """Tick function.
+
+        Args:
+            dt: delta since last call
+        """
+        # TODO: remove and replace by schedule_interval
         del dt
         self.tickCnt += 1
         curr_tick = self.tickCnt % 10
@@ -479,29 +596,42 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
             if curr_tick == 5:
                 self.update_incand()
 
-        while not self.receive_queue.empty():
-            self.process_received_message(self.receive_queue.get(False))
-
-        self.opp_connection.send(self.read_input_msg)
+        for chain_serial in self.read_input_msg:
+            self.send_to_processor(chain_serial, self.read_input_msg[chain_serial])
 
     @classmethod
     def _verify_coil_and_switch_fit(cls, switch, coil):
-        card, solenoid = coil.hw_driver.number.split('-')
-        sw_card, sw_num = switch.hw_switch.number.split('-')
+        chain_serial, card, solenoid = coil.hw_driver.number.split('-')
+        sw_chain_serial, sw_card, sw_num = switch.hw_switch.number.split('-')
         matching_sw = ((int(solenoid) & 0x0c) << 1) | (int(solenoid) & 0x03)
-        if (card != sw_card) or (matching_sw != int(sw_num)):
+        if chain_serial != sw_chain_serial or card != sw_card or matching_sw != int(sw_num):
             raise AssertionError('Invalid switch being configured for driver. Driver = %s '
                                  'Switch = %s' % (coil.hw_driver.number, switch.hw_switch.number))
 
     def set_pulse_on_hit_rule(self, enable_switch, coil):
+        """Set pulse on hit rule on driver.
+
+        Pulses a driver when a switch is hit. When the switch is released the pulse continues. Typically used for
+        autofire coils such as pop bumpers.
+        """
         # OPP always does the full pulse
         self._write_hw_rule(enable_switch, coil, False)
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
+        """Set pulse on hit and release rule to driver.
+
+        Pulses a driver when a switch is hit. When the switch is released the pulse is canceled. Typically used on
+        the main coil for dual coil flippers without eos switch.
+        """
         # OPP always does the full pulse. So this is not 100% correct
         self.set_pulse_on_hit_rule(enable_switch, coil)
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
+        """Set pulse on hit and enable and relase rule on driver.
+
+        Pulses a driver when a switch is hit. Then enables the driver (may be with pwm). When the switch is released
+        the pulse is canceled and the driver gets disabled. Typically used for single coil flippers.
+        """
         # OPP always does the full pulse. Therefore, this is mostly right.
         if not self.get_hold_value(coil):
             raise AssertionError("Set allow_enable if you want to enable a coil without hold_power")
@@ -509,10 +639,17 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self._write_hw_rule(enable_switch, coil, True)
 
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
+        """Set pulse on hit and enable and release and disable rule on driver.
+
+        Pulses a driver when a switch is hit. Then enables the driver (may be with pwm). When the switch is released
+        the pulse is canceled and the driver gets disabled. When the second disable_switch is hit the pulse is canceled
+        and the driver gets disabled. Typically used on the main coil for dual coil flippers with eos switch.
+        """
         raise AssertionError("Not implemented in OPP currently")
 
     @classmethod
     def get_hold_value(cls, coil):
+        """Get OPP hold value (0-15)."""
         if coil.config['hold_power16']:
             return coil.config['hold_power16']
         elif coil.config['hold_power']:
@@ -529,6 +666,10 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
     @classmethod
     def get_minimum_off_time(cls, coil):
+        """Return minimum off factor.
+
+        The hardware applies this factor to pulse_ms to prevent the coil from burning.
+        """
         if not coil.config['recycle']:
             return 0
         elif coil.config['recycle_factor']:
@@ -557,7 +698,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self.reconfigure_driver(driver_obj, use_hold)
 
     def clear_hw_rule(self, switch, coil):
-        """Clears a hardware rule.
+        """Clear a hardware rule.
 
         This is used if you want to remove the linkage between a switch and
         some driver activity. For example, if you wanted to disable your
@@ -573,49 +714,40 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self.reconfigure_driver(coil, not coil.hw_driver.can_be_pulsed)
 
 
-class SerialCommunicator(object):
+class OPPSerialCommunicator(BaseSerialCommunicator):
+
+    """Manages a Serial connection to the first processor in a OPP serial chain."""
 
     # pylint: disable=too-many-arguments
-    def __init__(self, platform, port, baud, send_queue, receive_queue):
-        self.machine = platform.machine
-        self.platform = platform
-        self.send_queue = send_queue
-        self.receive_queue = receive_queue
-        self.debug = False
-        self.log = self.platform.log
+    def __init__(self, platform: HardwarePlatform, port, baud):
+        """Initialise Serial Connection to OPP Hardware."""
         self.partMsg = b""
+        self.chain_serial = None
 
-        self.remote_processor = "OPP Gen2"
-        self.remote_model = None
+        super().__init__(platform, port, baud)
 
-        self.log.debug("Connecting to %s at %sbps", port, baud)
-        try:
-            self.serial_connection = serial.Serial(port=port, baudrate=baud,
-                                                   timeout=.01, writeTimeout=0)
-        except serial.SerialException:
-            raise AssertionError('Could not open port: {}'.format(port))
-
-        self.identify_connection()
-        self.platform.register_processor_connection(self.remote_processor, self)
-        self._start_threads()
-
-    def identify_connection(self):
-        """Identifies which processor this serial connection is talking to."""
-
+    @asyncio.coroutine
+    def _identify_connection(self):
+        """Identify which processor this serial connection is talking to."""
         # keep looping and wait for an ID response
         count = 0
+        resp = b''
         while True:
             if (count % 10) == 0:
                 self.log.debug("Sending EOM command to port '%s'",
-                               self.serial_connection.name)
+                               self.port)
             count += 1
-            self.serial_connection.write(OppRs232Intf.EOM_CMD)
-            time.sleep(.01)
-            resp = self.serial_connection.read(30)
+            self.writer.write(OppRs232Intf.EOM_CMD)
+            yield from asyncio.sleep(.01, loop=self.machine.clock.loop)
+            resp = yield from self.reader.read(30)
             if resp.startswith(OppRs232Intf.EOM_CMD):
                 break
             if count == 100:
-                raise AssertionError('No response from OPP hardware: {}'.format(self.serial_connection.name))
+                raise AssertionError('No response from OPP hardware: {}'.format(self.port))
+
+        self.log.debug("Got ID response: %s", "".join(" 0x%02x" % b for b in resp))
+        # TODO: implement real ID here
+        self.chain_serial = self.port
 
         # Send inventory command to figure out number of cards
         msg = bytearray()
@@ -624,49 +756,48 @@ class SerialCommunicator(object):
         cmd = bytes(msg)
 
         self.log.debug("Sending inventory command: %s", "".join(" 0x%02x" % b for b in cmd))
-        self.serial_connection.write(cmd)
+        self.writer.write(cmd)
 
-        time.sleep(.1)
-        resp = self.serial_connection.read(30)
+        resp = yield from self.readuntil(b'\xff')
 
         # resp will contain the inventory response.
-        self.platform.process_received_message(resp)
+        self.platform.process_received_message(self.chain_serial, resp)
 
         # Now send get gen2 configuration message to find populated wing boards
         self.send_get_gen2_cfg_cmd()
-
-        time.sleep(.1)
-        resp = self.serial_connection.read(30)
+        resp = yield from self.readuntil(b'\xff')
 
         # resp will contain the gen2 cfg reponses.  That will end up creating all the
         # correct objects.
-        self.platform.process_received_message(resp)
+        self.platform.process_received_message(self.chain_serial, resp)
 
         # get the version of the firmware
         self.send_vers_cmd()
-        time.sleep(.1)
-        resp = self.serial_connection.read(30)
-        self.platform.process_received_message(resp)
+        resp = yield from self.readuntil(b'\xff')
+        self.platform.process_received_message(self.chain_serial, resp)
 
         # see if version of firmware is new enough
         if self.platform.minVersion < MIN_FW:
             raise AssertionError("Firmware version mismatch. MPF requires"
-                                 " the {} processor to be firmware {}, but yours is {}".
-                                 format(self.remote_processor, self.create_vers_str(MIN_FW),
-                                        self.create_vers_str(self.platform.minVersion)))
+                                 " the OPP Gen2 processor to be firmware {}, but yours is {}".
+                                 format(self._create_vers_str(MIN_FW),
+                                        self._create_vers_str(self.platform.minVersion)))
 
         # get initial value for inputs
-        self.serial_connection.write(self.platform.read_input_msg)
-        time.sleep(.1)
-        resp = self.serial_connection.read(100)
+        self.writer.write(self.platform.read_input_msg[self.chain_serial])
+        yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
+        resp = yield from self.reader.read(100)
         self.log.debug("Init get input response: %s", "".join(" 0x%02x" % b for b in resp))
-        self.platform.process_received_message(resp)
+        self._parse_msg(resp)
+
+        self.platform.register_processor_connection(self.chain_serial, self)
 
     def send_get_gen2_cfg_cmd(self):
-        # Now send get gen2 configuration message to find populated wing boards
+        """Send get gen2 configuration message to find populated wing boards."""
         whole_msg = bytearray()
-        for cardAddr in self.platform.gen2AddrArr:
-            # Turn on the bulbs that are non-zero
+        for chain_serial, cardAddr in self.platform.gen2AddrArr:
+            if chain_serial != self.chain_serial:
+                continue
             msg = bytearray()
             msg.append(cardAddr)
             msg.extend(OppRs232Intf.GET_GEN2_CFG)
@@ -680,13 +811,14 @@ class SerialCommunicator(object):
         whole_msg.extend(OppRs232Intf.EOM_CMD)
         cmd = bytes(whole_msg)
         self.log.debug("Sending get Gen2 Cfg command: %s", "".join(" 0x%02x" % b for b in cmd))
-        self.serial_connection.write(cmd)
+        self.writer.write(cmd)
 
     def send_vers_cmd(self):
-        # Now send get firmware version message
+        """Send get firmware version message."""
         whole_msg = bytearray()
-        for card_addr in self.platform.gen2AddrArr:
-            # Turn on the bulbs that are non-zero
+        for chain_serial, card_addr in self.platform.gen2AddrArr:
+            if chain_serial != self.chain_serial:
+                continue
             msg = bytearray()
             msg.append(card_addr)
             msg.extend(OppRs232Intf.GET_GET_VERS_CMD)
@@ -700,113 +832,45 @@ class SerialCommunicator(object):
         whole_msg.extend(OppRs232Intf.EOM_CMD)
         cmd = bytes(whole_msg)
         self.log.debug("Sending get version command: %s", "".join(" 0x%02x" % b for b in cmd))
-        self.serial_connection.write(cmd)
+        self.writer.write(cmd)
 
     @classmethod
-    def create_vers_str(cls, version_int):
+    def _create_vers_str(cls, version_int):
         return ("%02d.%02d.%02d.%02d" % (((version_int >> 24) & 0xff),
                                          ((version_int >> 16) & 0xff), ((version_int >> 8) & 0xff),
                                          (version_int & 0xff)))
 
-    def _start_threads(self):
+    def _parse_msg(self, msg):
+        self.partMsg += msg
+        strlen = len(self.partMsg)
+        lost_synch = False
+        # Split into individual responses
+        while strlen >= 7:
+            # Check if this is a gen2 card address
+            if (self.partMsg[0] & 0xe0) == 0x20:
+                # Only command expect to receive back is
+                if self.partMsg[1] == ord(OppRs232Intf.READ_GEN2_INP_CMD):
+                    self.platform.process_received_message(self.chain_serial, self.partMsg[:7])
+                    self.partMsg = self.partMsg[7:]
+                    strlen -= 7
+                else:
+                    # Lost synch
+                    self.partMsg = self.partMsg[2:]
+                    strlen -= 2
+                    lost_synch = True
 
-        self.serial_connection.timeout = None
-
-        self.receive_thread = threading.Thread(target=self._receive_loop)
-        self.receive_thread.daemon = True
-        self.receive_thread.start()
-
-        self.sending_thread = threading.Thread(target=self._sending_loop)
-        self.sending_thread.daemon = True
-        self.sending_thread.start()
-
-    def stop(self):
-        """Stops and shuts down this serial connection."""
-        self.log.error("Stop called on serial connection")
-        self.serial_connection.close()
-        self.serial_connection = None  # child threads stop when this is None
-
-    def send(self, msg):
-        """Sends a message to the remote processor over the serial connection.
-
-        Args:
-            msg: String of the message you want to send. We don't need no
-            steenking line feed character
-
-        """
-        self.send_queue.put(msg)
-
-    def _sending_loop(self):
-
-        debug = self.platform.config['debug']
-
-        try:
-            while self.serial_connection:
-                msg = self.send_queue.get()
-                self.serial_connection.write(msg)
-
-                if debug:
-                    self.log.debug("Sending: %s", "".join(" 0x%02x" % b for b in msg))
-
-        # pylint: disable-msg=broad-except
-        except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            lines = traceback.format_exception(exc_type, exc_value, exc_traceback)
-            msg = ''.join(line for line in lines)
-            self.machine.crash_queue.put(msg)
-
-    def _receive_loop(self):
-
-        debug = self.platform.config['debug']
-
-        try:
-            self.log.debug("Starting receive loop")
-            while self.serial_connection:
-                resp = self.serial_connection.read(30)
-                if debug:
-                    self.log.debug("Received: %s", "".join(" 0x%02x" % b for b in resp))
-                self.partMsg += resp
-                end_string = False
-                strlen = len(self.partMsg)
-                lost_synch = False
-                # Split into individual responses
-                while strlen >= 7 and not end_string:
-                    # Check if this is a gen2 card address
+            elif self.partMsg[0] == ord(OppRs232Intf.EOM_CMD):
+                self.partMsg = self.partMsg[1:]
+                strlen -= 1
+            else:
+                # Lost synch
+                self.partMsg = self.partMsg[1:]
+                strlen -= 1
+                lost_synch = True
+            if lost_synch:
+                while strlen > 0:
                     if (self.partMsg[0] & 0xe0) == 0x20:
-                        # Only command expect to receive back is
-                        if self.partMsg[1] == ord(OppRs232Intf.READ_GEN2_INP_CMD):
-                            self.receive_queue.put(self.partMsg[:7])
-                            self.partMsg = self.partMsg[7:]
-                            strlen -= 7
-                        else:
-                            # Lost synch
-                            self.partMsg = self.partMsg[2:]
-                            strlen -= 2
-                            lost_synch = True
-
-                    elif self.partMsg[0] == ord(OppRs232Intf.EOM_CMD):
-                        self.partMsg = self.partMsg[1:]
-                        strlen -= 1
-                    else:
-                        # Lost synch
-                        self.partMsg = self.partMsg[1:]
-                        strlen -= 1
-                        lost_synch = True
-                    if lost_synch:
-                        while strlen > 0:
-                            if (self.partMsg[0] & 0xe0) == 0x20:
-                                lost_synch = False
-                                break
-                            self.partMsg = self.partMsg[1:]
-                            strlen -= 1
-            self.log.critical("Exit rcv loop")
-
-        # pylint: disable-msg=broad-except
-        except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            lines = traceback.format_exception(exc_type, exc_value,
-                                               exc_traceback)
-            msg = ''.join(line for line in lines)
-            self.log.critical("!!! Receive loop error exception")
-            self.machine.crash_queue.put(msg)
-        self.log.critical("!!! Receive loop exited")
+                        lost_synch = False
+                        break
+                    self.partMsg = self.partMsg[1:]
+                    strlen -= 1

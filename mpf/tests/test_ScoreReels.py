@@ -1,14 +1,22 @@
-from mock import MagicMock
+"""Test score reels."""
+from unittest.mock import MagicMock
+
 from mpf.tests.MpfTestCase import MpfTestCase
 
 
-class TestShots(MpfTestCase):
+class TestScoreReels(MpfTestCase):
 
     def getConfigFile(self):
         return 'config.yaml'
 
     def getMachinePath(self):
         return 'tests/machine_files/score_reels/'
+
+    def _synchronise_to_reel(self):
+        ts =  self.machine.score_reel_groups.player1._tick_task.get_next_call_time()
+        self.assertTrue(ts)
+        self.advance_time_and_run(ts - self.machine.clock.get_time())
+        self.advance_time_and_run(.01)
 
     def start_game(self):
         # shots only work in games so we have to do this a lot
@@ -36,6 +44,7 @@ class TestShots(MpfTestCase):
         player1_10.pulse = MagicMock(return_value=10)
         self.start_game()
 
+        self._synchronise_to_reel()
         self.machine.scoring.add(110)
         self.advance_time_and_run(.1)
         self.assertEqual(0, player1_10k.pulse.call_count)
@@ -58,40 +67,33 @@ class TestShots(MpfTestCase):
         player1_100.pulse = MagicMock(return_value=10)
         player1_10.pulse = MagicMock(return_value=10)
 
+        self._synchronise_to_reel()
         self.machine.scoring.add(11097)  # result: 11207
-        self.advance_time_and_run(.1)
-        self.advance_time_and_run(.1)
+        self.advance_time_and_run(.05)
         self.assertEqual(0, player1_10k.pulse.call_count)
         self.assertEqual(0, player1_1k.pulse.call_count)
         self.assertEqual(0, player1_100.pulse.call_count)
         self.assertEqual(1, player1_10.pulse.call_count)
 
-        self.advance_time_and_run(.3)
-        self.machine_run()
+        self.advance_time_and_run(.4)
         self.assertEqual(2, player1_10.pulse.call_count)
 
         self.advance_time_and_run(.3)
-        self.machine_run()
         self.assertEqual(3, player1_10.pulse.call_count)
 
         self.advance_time_and_run(.3)
-        self.machine_run()
         self.assertEqual(4, player1_10.pulse.call_count)
 
         self.advance_time_and_run(.3)
-        self.machine_run()
         self.assertEqual(5, player1_10.pulse.call_count)
 
         self.advance_time_and_run(.3)
-        self.machine_run()
         self.assertEqual(6, player1_10.pulse.call_count)
 
         self.advance_time_and_run(.3)
-        self.machine_run()
         self.assertEqual(7, player1_10.pulse.call_count)
 
         self.advance_time_and_run(.3)
-        self.machine_run()
         self.assertEqual(0, player1_10k.pulse.call_count)
         self.assertEqual(0, player1_1k.pulse.call_count)
         self.assertEqual(0, player1_100.pulse.call_count)
@@ -99,9 +101,6 @@ class TestShots(MpfTestCase):
         self.hit_switch_and_run("score_1p_10_9", 0)
 
         self.advance_time_and_run(.3)
-        self.machine_run()
-        self.assertEqual(0, player1_10k.pulse.call_count)
-        self.assertEqual(0, player1_1k.pulse.call_count)
         self.assertEqual(1, player1_100.pulse.call_count)
         self.assertEqual(9, player1_10.pulse.call_count)
 
@@ -109,8 +108,7 @@ class TestShots(MpfTestCase):
         self.hit_switch_and_run("score_1p_10_0", 0)
 
         # only two coils at a time. postpone 1k and 10k
-        self.advance_time_and_run(.2)
-        self.machine_run()
+        self.advance_time_and_run(.1)
         self.assertEqual(1, player1_10k.pulse.call_count)
         self.assertEqual(1, player1_1k.pulse.call_count)
         self.assertEqual(1, player1_100.pulse.call_count)
@@ -136,6 +134,7 @@ class TestShots(MpfTestCase):
         player1_10.pulse = MagicMock(return_value=10)
         self.start_game()
 
+        self._synchronise_to_reel()
         self.machine.scoring.add(110)
         self.advance_time_and_run(.1)
         self.assertEqual(0, player1_10k.pulse.call_count)
@@ -146,16 +145,14 @@ class TestShots(MpfTestCase):
         # switch for pos 0 stays on
 
         # it retries
-        self.advance_time_and_run(.3)
-        self.machine_run()
+        self.advance_time_and_run(.4)
         self.assertEqual(0, player1_10k.pulse.call_count)
         self.assertEqual(0, player1_1k.pulse.call_count)
         self.assertEqual(2, player1_100.pulse.call_count)
         self.assertEqual(1, player1_10.pulse.call_count)
 
         # and again
-        self.advance_time_and_run(.3)
-        self.machine_run()
+        self.advance_time_and_run(.4)
         self.assertEqual(0, player1_10k.pulse.call_count)
         self.assertEqual(0, player1_1k.pulse.call_count)
         self.assertEqual(3, player1_100.pulse.call_count)
@@ -165,7 +162,6 @@ class TestShots(MpfTestCase):
 
         # no more retries
         self.advance_time_and_run(10)
-        self.machine_run()
         self.assertEqual(0, player1_10k.pulse.call_count)
         self.assertEqual(0, player1_1k.pulse.call_count)
         self.assertEqual(3, player1_100.pulse.call_count)
@@ -190,6 +186,7 @@ class TestShots(MpfTestCase):
         self.machine_run()
         self.assertEqual(3, self.machine.game.num_players)
 
+        self._synchronise_to_reel()
         self.machine.scoring.add(110)
         self.advance_time_and_run(.1)
         self.assertEqual(0, player1_10k.pulse.call_count)
@@ -240,7 +237,7 @@ class TestShots(MpfTestCase):
 
         # drain ball
         self.machine.game.balls_in_play = 0
-        self.machine_run()
+        self.advance_time_and_run(.15)
         self.assertEqual(3, self.machine.game.player.number)
 
         # player3 reuses the reels from player 1. machine resets them
@@ -252,7 +249,6 @@ class TestShots(MpfTestCase):
 
         for i in range(7):
             self.advance_time_and_run(.3)
-            self.machine_run()
 
         self.assertEqual(0, player1_10k.pulse.call_count)
         self.assertEqual(0, player1_1k.pulse.call_count)
@@ -264,7 +260,6 @@ class TestShots(MpfTestCase):
         self.hit_switch_and_run("score_1p_100_9", 0)
 
         self.advance_time_and_run(.3)
-        self.machine_run()
 
         self.assertEqual(0, player1_10k.pulse.call_count)
         self.assertEqual(0, player1_1k.pulse.call_count)
@@ -278,7 +273,6 @@ class TestShots(MpfTestCase):
         self.release_switch_and_run("score_1p_100_9", 0)
 
         self.advance_time_and_run(10)
-        self.machine_run()
 
         self.assertEqual(0, player1_10k.pulse.call_count)
         self.assertEqual(0, player1_1k.pulse.call_count)

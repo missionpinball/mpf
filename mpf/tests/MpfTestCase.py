@@ -1,3 +1,4 @@
+"""Baseclass for all tests."""
 import copy
 import inspect
 import logging
@@ -8,7 +9,9 @@ import unittest
 
 from unittest.mock import *
 
+import asyncio
 import ruamel.yaml as yaml
+from mpf.tests.loop import TimeTravelLoop, TestClock
 
 import mpf.core
 import mpf.core.config_validator
@@ -20,16 +23,42 @@ from mpf.file_interfaces.yaml_interface import YamlInterface
 YamlInterface.cache = True
 
 
+class MockBcpClient():
+    def __init__(self, machine, name, settings, bcp):
+        self.name = name
+
+    def send(self, bcp_command, bcp_command_args):
+        pass
+
+    def stop(self):
+        pass
+
+
 class TestMachineController(MachineController):
+
+    """MachineController used in tests."""
+
     local_mpf_config_cache = {}
 
-    def __init__(self, mpf_path, machine_path, options, config_patches,
+    def __init__(self, mpf_path, machine_path, options, config_patches, clock,
                  enable_plugins=False):
         self.test_config_patches = config_patches
         self.test_init_complete = False
         self._enable_plugins = enable_plugins
+        self._test_clock = clock
         super().__init__(mpf_path, machine_path, options)
-        self.clock._max_fps = 0
+
+    def _load_clock(self):
+        return self._test_clock
+
+    def __del__(self):
+        if self._test_clock:
+            self._test_clock.loop.close()
+
+    def sleep_until_next_event_mock(self):
+        for socket, callback in self.clock.read_sockets.items():
+            if socket.ready():
+                callback()
 
     def _reset_complete(self):
         self.test_init_complete = True
@@ -49,6 +78,7 @@ class MpfTestCase(unittest.TestCase):
         super().__init__(methodName)
         self.machine_config_patches = dict()
         self.machine_config_patches['mpf'] = dict()
+        self.machine_config_patches['mpf']['default_platform_hz'] = 100
         self.machine_config_patches['mpf']['save_machine_vars_to_disk'] = False
         self.machine_config_patches['mpf']['plugins'] = list()
         self.machine_config_patches['bcp'] = []
@@ -113,50 +143,13 @@ class MpfTestCase(unittest.TestCase):
             'create_config_cache': True,
         }
 
-    def set_time(self, new_time):
-        self.machine.log.debug("Moving time forward %ss",
-                               new_time - self.testTime)
-        self.testTime = new_time
-        self.machine.clock.time.return_value = self.testTime
-
-    def advance_time(self, delta=1):
-        self.testTime += delta
-        self.machine.clock.time.return_value = self.testTime
-
     def advance_time_and_run(self, delta=1.0):
-        self.machine_run()
-        end_time = self.machine.clock.get_time() + delta
-
-        # todo do we want to add clock scheduled events here?
-
-        while True:
-            next_delay_event = self.machine.delayRegistry.get_next_event()
-            next_switch = \
-                self.machine.switch_controller.get_next_timed_switch_event()
-            next_show_step = self.machine.show_controller.get_next_show_step()
-
-            wait_until = next_delay_event
-
-            if not wait_until or (next_switch and wait_until > next_switch):
-                wait_until = next_switch
-
-            if not wait_until or (next_show_step and wait_until > next_show_step):
-                wait_until = next_show_step
-
-            if wait_until and wait_until - self.machine.clock.get_time() < self.min_frame_time:
-                wait_until = self.machine.clock.get_time() + self.min_frame_time
-
-            if wait_until and self.machine.clock.get_time() < wait_until < end_time:
-                self.set_time(wait_until)
-                self.machine_run()
-            else:
-                break
-
-        self.set_time(end_time)
-        self.machine_run()
+        self.machine.log.info("Advancing time by %s", delta)
+        self.loop.run_until_complete(asyncio.sleep(delay=delta, loop=self.loop))
 
     def machine_run(self):
-        self.machine.process_frame()
+        #self.machine.events.process_event_queue()
+        self.advance_time_and_run(0)
 
     def unittest_verbosity(self):
         """Return the verbosity setting of the currently running unittest
@@ -179,6 +172,14 @@ class MpfTestCase(unittest.TestCase):
         mpf_path = os.path.abspath(os.path.join(mpf.core.__path__[0], os.pardir))
         if mpf_path in sys.path:
             sys.path.remove(mpf_path)
+
+        # make tests path independent. remove current dir absolue
+        if os.curdir in sys.path:
+            sys.path.remove(os.curdir)
+
+        # make tests path independent. remove current dir relative
+        if "" in sys.path:
+            sys.path.remove("")
 
     def restore_sys_path(self):
         # restore sys path
@@ -206,6 +207,9 @@ class MpfTestCase(unittest.TestCase):
         DataManager.save_all = self._data_manager[1]
         DataManager.get_data = self._data_manager[2]
 
+    def _mock_loop(self):
+        pass
+
     def setUp(self):
         # we want to reuse config_specs to speed tests up
         mpf.core.config_validator.ConfigValidator.unload_config_spec = (
@@ -232,20 +236,22 @@ class MpfTestCase(unittest.TestCase):
 
         self._mock_data_manager()
 
+        self.loop = TimeTravelLoop()
+        self.clock = TestClock(self.loop)
+        self._mock_loop()
+
         try:
             self.machine = TestMachineController(
                 os.path.abspath(os.path.join(
                     mpf.core.__path__[0], os.pardir)), machine_path,
-                self.getOptions(), self.machine_config_patches,
+                self.getOptions(), self.machine_config_patches, self.clock,
                 self.get_enable_plugins())
-            self.realTime = self.machine.clock.time
-            self.testTime = self.realTime()
-            self.machine.clock.time = MagicMock(return_value=self.testTime)
 
             start = time.time()
             while not self.machine.test_init_complete and time.time() < start + 20:
                 self.advance_time_and_run(0.01)
 
+            self.machine.events.process_event_queue()
             self.advance_time_and_run(1)
 
         except Exception as e:
@@ -257,7 +263,7 @@ class MpfTestCase(unittest.TestCase):
                 pass
             raise e
 
-        self.assertFalse(self.machine.done, "Machine crashed during start")
+        self.assertFalse(self.machine._done, "Machine crashed during start")
 
     def _mock_event_handler(self, event_name, **kwargs):
         self._last_event_kwargs[event_name] = kwargs
@@ -301,20 +307,13 @@ class MpfTestCase(unittest.TestCase):
             # fire all delays
             self.min_frame_time = 20.0
             self.advance_time_and_run(300)
-        self.machine.clock.time = self.realTime
         self.machine.stop()
+        self.machine._do_stop()
+        self.machine.clock.loop.close()
         self.machine = None
-        self.realTime = None
 
         self._unmock_data_manager()
         self.restore_sys_path()
-
-    def patch_bcp(self):
-        self.sent_bcp_commands = list()
-        self.machine.bcp.send = self._bcp_send
-
-    def _bcp_send(self, bcp_command, callback=None, **kwargs):
-        self.sent_bcp_commands.append((bcp_command, callback, kwargs))
 
     def add_to_config_validator(self, key, new_dict):
         if mpf.core.config_validator.ConfigValidator.config_spec:

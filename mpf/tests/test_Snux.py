@@ -1,3 +1,4 @@
+"""Test snux platform."""
 from mpf.devices.driver import ConfiguredHwDriver
 
 from mpf.tests.MpfTestCase import MpfTestCase, MagicMock
@@ -28,9 +29,6 @@ class TestSnux(MpfTestCase):
             if driver.number + "c" == coil.hw_driver.number:
                 return driver
         return False
-
-#    def test_enable_flippers(self):
-#        c_flipper_enable_driver = self.machine.coils.c_flipper_enable_driver
 
     def test_ac_switch_and_pulse(self):
         # test diag led flashing. otherwise snux is not running
@@ -65,14 +63,14 @@ class TestSnux(MpfTestCase):
         # a side should be triggered first. c side should wait
         self.machine.coils.c_side_a1.pulse(50)
         self.machine.coils.c_side_c1.pulse(50)
-        self.machine_run()
+        self.advance_time_and_run(0.001)
         c_side_a1.pulse.assert_called_with(self.machine.coils.c_side_a1, 50)
         c_side_a1.pulse = MagicMock()
         assert not c_side_c1.pulse.called
         assert not c_ac_relay.enable.called
 
         # after 50ms + 75ms transition c side should get triggered
-        self.advance_time_and_run(0.050)
+        self.advance_time_and_run(0.075)
         c_ac_relay.enable.assert_called_with()
         c_ac_relay.enable = MagicMock()
         assert not c_side_a1.pulse.called
@@ -84,7 +82,7 @@ class TestSnux(MpfTestCase):
         c_side_c1.pulse.assert_called_with(self.machine.coils.c_side_c1, 50)
 
         # it should switch back to a side when idle
-        self.advance_time_and_run(0.050)
+        self.advance_time_and_run(0.052)
         c_ac_relay.disable.assert_called_with()
         c_ac_relay.disable = MagicMock()
 
@@ -123,4 +121,3 @@ class TestSnux(MpfTestCase):
         # it should enable a side coils now
         self.advance_time_and_run(0.075)
         c_side_a2.enable.assert_called_with(self.machine.coils.c_side_a2.get_configured_driver())
-

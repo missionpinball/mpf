@@ -1,1 +1,1 @@
-
+"""Contains all MPF plugins."""

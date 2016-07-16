@@ -1,4 +1,5 @@
 # pylint: disable-msg=too-many-lines
+"""Config Migrator for v4."""
 import os
 import re
 from copy import deepcopy
@@ -15,6 +16,8 @@ from mpf.file_interfaces.yaml_interface import YamlInterface, \
 
 
 class V4Migrator(VersionMigrator):
+
+    """Migrate config to v4."""
 
     config_version = 4
 
@@ -217,105 +220,103 @@ class V4Migrator(VersionMigrator):
             self.fc['displays'][V4Migrator.default_display]['default'] = True
 
     def _migrate_slide_player(self):
-        if 'slide_player' in self.fc:
-            self.log.debug("Converting slide_player: entries to slides:")
+        if 'slide_player' not in self.fc:
+            return
 
-            self.fc['slides'] = CommentedMap()
-            new_slide_player = CommentedMap()
+        self.log.debug("Converting slide_player: entries to slides:")
 
-            for event, elements in self.fc['slide_player'].items():
-                self.log.debug("Converting '%s' display_elements to widgets",
-                               event)
+        self.fc['slides'] = CommentedMap()
+        new_slide_player = CommentedMap()
 
-                display = None
-                transition = None
-                expire = None
-                priority = None
-                persist = None
-                slide = None
+        for event, elements in self.fc['slide_player'].items():
+            self._migrate_slide_player_instance(elements, event, new_slide_player)
 
-                if isinstance(elements, dict):
-                    elements = [elements]
+        self.fc['slide_player'] = new_slide_player
 
-                for element in elements:
-                    if 'display' in element:
-                        self.log.debug("Converting display: to target:")
-                        display = element['display']
-                        del element['display']
+    def _migrate_slide_player_instance(self, elements, event, new_slide_player):
+        self.log.debug("Converting '%s' display_elements to widgets",
+                       event)
 
-                    if 'transition' in element:
-                        transition = (element['transition'],
-                                      element.ca.items.get('transition', None))
-                        del element['transition']
+        if isinstance(elements, dict):
+            elements = [elements]
+        display, expire, persist, priority, slide, transition = self._get_slide_player_attributes(elements)
+        elements = self._migrate_elements(elements, display)
+        if not slide:
+            slide = V4Migrator._get_slide_name(display)
+        new_slide_player[event] = CommentedMap()
+        new_slide_player[event][slide] = CommentedMap()
+        self.log.debug("Adding slide:%s to slide_player:%s", slide,
+                       event)
+        if transition:
+            self.log.debug("Moving transition: from slide: to "
+                           "slide_player:")
+            new_slide_player[event][slide]['transition'] = transition[0]
+            new_slide_player[event][slide].ca.items['transition'] = (
+                transition[1])
+        if display:
+            self.log.debug("Setting slide_player:target: to '%s'",
+                           display)
+            new_slide_player[event][slide]['target'] = display
+        if expire:
+            self.log.debug("Setting slide_player:expire: to '%s'",
+                           expire)
+            new_slide_player[event][slide]['expire'] = expire
+        if priority:
+            self.log.debug("Setting slide_player:priority: to '%s'",
+                           priority)
+            new_slide_player[event][slide]['priority'] = priority
+        if persist:
+            self.log.debug("Setting slide_player:persist: to '%s'",
+                           persist)
+            new_slide_player[event][slide]['persist'] = persist
+        if not new_slide_player[event][slide]:
+            new_slide_player[event] = slide
+        self.log.debug("Creating slide: '%s' with %s migrated "
+                       "widget(s)", slide, len(elements))
+        self.fc['slides'][slide] = elements
 
-                    if 'expire' in element:
-                        expire = element['expire']
-                        del element['expire']
+    def _get_slide_player_attributes(self, elements):
+        display = None
+        transition = None
+        expire = None
+        priority = None
+        persist = None
+        slide = None
 
-                    if 'slide_priority' in element:
-                        priority = element['slide_priority']
-                        del element['slide_priority']
+        for element in elements:
+            if 'display' in element:
+                self.log.debug("Converting display: to target:")
+                display = element['display']
+                del element['display']
 
-                    if 'priority' in element:
-                        priority = element['priority']
-                        del element['priority']
+            if 'transition' in element:
+                transition = (element['transition'],
+                              element.ca.items.get('transition', None))
+                del element['transition']
 
-                    if 'persist_slide' in element:
-                        persist = element['persist_slide']
-                        del element['persist_slide']
+            if 'expire' in element:
+                expire = element['expire']
+                del element['expire']
 
-                    if 'slide_name' in element:
-                        slide = element['slide_name']
-                        del element['slide_name']
+            if 'slide_priority' in element:
+                priority = element['slide_priority']
+                del element['slide_priority']
 
-                    if 'clear_slide' in element:
-                        del element['clear_slide']
+            if 'priority' in element:
+                priority = element['priority']
+                del element['priority']
 
-                elements = self._migrate_elements(elements, display)
+            if 'persist_slide' in element:
+                persist = element['persist_slide']
+                del element['persist_slide']
 
-                if not slide:
-                    slide = V4Migrator._get_slide_name(display)
+            if 'slide_name' in element:
+                slide = element['slide_name']
+                del element['slide_name']
 
-                new_slide_player[event] = CommentedMap()
-                new_slide_player[event][slide] = CommentedMap()
-                self.log.debug("Adding slide:%s to slide_player:%s", slide,
-                               event)
-
-                if transition:
-                    self.log.debug("Moving transition: from slide: to "
-                                   "slide_player:")
-                    new_slide_player[event][slide]['transition'] = transition[0]
-                    new_slide_player[event][slide].ca.items['transition'] = (
-                        transition[1])
-
-                if display:
-                    self.log.debug("Setting slide_player:target: to '%s'",
-                                   display)
-                    new_slide_player[event][slide]['target'] = display
-
-                if expire:
-                    self.log.debug("Setting slide_player:expire: to '%s'",
-                                   expire)
-                    new_slide_player[event][slide]['expire'] = expire
-
-                if priority:
-                    self.log.debug("Setting slide_player:priority: to '%s'",
-                                   priority)
-                    new_slide_player[event][slide]['priority'] = priority
-
-                if persist:
-                    self.log.debug("Setting slide_player:persist: to '%s'",
-                                   persist)
-                    new_slide_player[event][slide]['persist'] = persist
-
-                if not new_slide_player[event][slide]:
-                    new_slide_player[event] = slide
-
-                self.log.debug("Creating slide: '%s' with %s migrated "
-                               "widget(s)", slide, len(elements))
-                self.fc['slides'][slide] = elements
-
-            self.fc['slide_player'] = new_slide_player
+            if 'clear_slide' in element:
+                del element['clear_slide']
+        return display, expire, persist, priority, slide, transition
 
     def _migrate_shots(self):
         if 'shots' not in self.fc:
@@ -576,7 +577,8 @@ class V4Migrator(VersionMigrator):
         except KeyError:
             pass
 
-    def _convert_show_call_to_tokens(self, settings):
+    @classmethod
+    def _convert_show_call_to_tokens(cls, settings):
         token_list = ['light', 'lights', 'leds', 'led']
 
         for token in token_list:
@@ -830,7 +832,6 @@ class V4Migrator(VersionMigrator):
             if 'loops' in element:  # indented on purpose
                 YamlInterface.rename_key('loops', 'loop', element, self.log)
 
-
         self._convert_tokens(element)
 
         return element
@@ -1016,7 +1017,8 @@ class V4Migrator(VersionMigrator):
 
         self.fc['sound_player'] = temp_sound_player
 
-    def _add_to_sound_player(self, sound_player, event, sound, settings):
+    @classmethod
+    def _add_to_sound_player(cls, sound_player, event, sound, settings):
         if event not in sound_player:
             if settings:
                 sound_player[event] = CommentedMap()
@@ -1037,37 +1039,39 @@ class V4Migrator(VersionMigrator):
             sound_player[event][sound] = CommentedMap()
             sound_player[event][sound]['action'] = 'play'
 
+    @staticmethod
+    def _migrate_logic_block(settings):
+        try:
+            if 'reset_each_ball' in settings:
+                reset_each_ball = bool(settings['reset_each_ball'])
+
+                del settings['reset_each_ball']
+
+                if reset_each_ball:
+                    if 'reset_events' in settings:
+                        if isinstance(settings['reset_events'], dict):
+                            settings['reset_events']['ball_starting'] = 0
+                        elif isinstance(settings['reset_events'], list):
+                            settings['reset_events'].append('ball_starting')
+                        elif isinstance(settings['reset_events'], str):
+                            settings['reset_events'] += ', ball_starting'
+
+                    else:
+                        settings['reset_events'] = 'ball_starting'
+        except TypeError:
+            pass
+        return settings
+
     def _migrate_logic_blocks(self):
         if 'logic_blocks' not in self.fc:
             return
 
         for lb_type in self.fc['logic_blocks'].keys():
-            for lb, settings in self.fc['logic_blocks'][lb_type].items():
-                try:
-                    if 'reset_each_ball' in settings:
-                        if settings['reset_each_ball']:
-                            reset_each_ball = True
-                        else:
-                            reset_each_ball = False
-
-                        del settings['reset_each_ball']
-
-                        if reset_each_ball:
-                            if 'reset_events' in settings:
-                                if isinstance(settings['reset_events'], dict):
-                                    settings['reset_events']['ball_starting'] = 0
-                                elif isinstance(settings['reset_events'], list):
-                                    settings['reset_events'].append('ball_starting')
-                                elif isinstance(settings['reset_events'], str):
-                                    settings['reset_events'] += ', ball_starting'
-
-                            else:
-                                settings['reset_events'] = 'ball_starting'
-                except TypeError:
-                    pass
+            for settings in self.fc['logic_blocks'][lb_type].values():
+                self._migrate_logic_block(settings)
 
     def is_show_file(self):
-        # Verify we have a show file and that it's an old version
+        """Verify we have a show file and that it's an old version."""
         if 'tocks' in self.fc[0]:
             return True
 
