@@ -459,10 +459,34 @@ leds:
     on_events:  dict|str:ms|None
     off_events:  dict|str:ms|None
     platform: single|str|None
-    x: single|int|None
-    y: single|int|None
-    z: single|int|None
+    x: single|float|None
+    y: single|float|None
+    z: single|float|None
     # color_channel_map: single|str|rgb     # not implemented
+led_stripes:
+    __valid_in__: machine
+    number_start: single|int|
+    start_x: single|float|None
+    start_y: single|float|None
+    direction: single|float|None
+    distance: single|float|None
+    count: single|int|
+    led_template: single|subconfig(leds)|
+    tags: list|str|None
+    label: single|str|%
+    debug: single|bool|False
+led_rings:
+    __valid_in__: machine
+    number_start: single|int|
+    center_x: single|float|None
+    center_y: single|float|None
+    start_angle: single|float|0
+    radius: single|float|None
+    count: single|int|
+    led_template: single|subconfig(leds)|
+    tags: list|str|None
+    label: single|str|%
+    debug: single|bool|False
 light_player:
     __valid_in__: machine, mode, show
     brightness: single|int_from_hex|ff
