@@ -186,9 +186,6 @@ class Mode(object):
 
         self.start_callback = callback
 
-        if 'timers' in self.config:
-            self._setup_timers()
-
         self.log.debug("Calling mode_start handlers")
 
         for item in self.machine.mode_controller.start_methods:
@@ -218,6 +215,9 @@ class Mode(object):
         self.log.debug('Mode Started. Priority: %s', self.priority)
 
         self.active = True
+
+        if 'timers' in self.config:
+            self._setup_timers()
 
         self._start_timers()
 
