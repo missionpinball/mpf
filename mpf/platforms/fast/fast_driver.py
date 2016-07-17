@@ -1,3 +1,4 @@
+"""A driver/coil in the fast platform."""
 import logging
 
 from mpf.core.utility_functions import Util
@@ -5,15 +6,11 @@ from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInt
 
 
 class FASTDriver(DriverPlatformInterface):
-    """Base class for drivers connected to a FAST Controller.
 
-    """
+    """Base class for drivers connected to a FAST Controller."""
 
     def __init__(self, config, sender, machine):
-        """
-
-        """
-
+        """Initialise driver."""
         self.autofire = None
         self.machine = machine
         self.driver_settings = dict()
@@ -42,6 +39,7 @@ class FASTDriver(DriverPlatformInterface):
             return coil.config['pulse_ms']
 
     def get_pulse_ms_for_cmd(self, coil):
+        """Return pulse ms."""
         pulse_ms = self._get_pulse_ms(coil)
         if pulse_ms > 255:
             return "00"
@@ -50,6 +48,7 @@ class FASTDriver(DriverPlatformInterface):
 
     @classmethod
     def get_pwm1_for_cmd(cls, coil):
+        """Return pwm1/pulse pwm."""
         if coil.config['pulse_pwm_mask']:
             pulse_pwm_mask = str(coil.config['pulse_pwm_mask'])
             if len(pulse_pwm_mask) == 32:
@@ -67,6 +66,7 @@ class FASTDriver(DriverPlatformInterface):
 
     @classmethod
     def get_pwm2_for_cmd(cls, coil):
+        """Return pwm2/hold pwm."""
         if coil.config['hold_pwm_mask']:
             hold_pwm_mask = str(coil.config['hold_pwm_mask'])
             if len(hold_pwm_mask) == 32:
@@ -83,6 +83,7 @@ class FASTDriver(DriverPlatformInterface):
             return "ff"
 
     def get_recycle_ms_for_cmd(self, coil):
+        """Return recycle ms."""
         if not coil.config['recycle']:
             return "00"
         elif coil.config['recycle_ms'] is not None:
@@ -96,24 +97,23 @@ class FASTDriver(DriverPlatformInterface):
                 return Util.int_to_hex_string(pulse_ms * 2)
 
     def get_config_cmd(self):
+        """Return config cmd str."""
         return self.driver_settings['config_cmd']
 
     def get_trigger_cmd(self):
+        """Return trigger cmd."""
         return self.driver_settings['trigger_cmd']
 
     @classmethod
     def get_control_for_cmd(cls, switch):
+        """Return control bytes."""
         control = 0x01  # Driver enabled
         if switch.invert:
             control += 0x10
         return Util.int_to_hex_string(int(control))
 
     def reset(self):
-        """
-
-        Resets a driver
-
-        """
+        """Reset a driver."""
         self.log.debug("Resetting driver %s", self.driver_settings)
         # cmd = (self.get_config_cmd() +
         #        self.number +
@@ -124,7 +124,7 @@ class FASTDriver(DriverPlatformInterface):
         self.send(cmd)
 
     def disable(self, coil):
-        """Disables (turns off) this driver. """
+        """Disable (turn off) this driver."""
         del coil
 
         # cmd = (self.get_trigger_cmd() +
@@ -137,8 +137,7 @@ class FASTDriver(DriverPlatformInterface):
         self.check_auto()
 
     def enable(self, coil):
-        """Enables (turns on) this driver. """
-
+        """Enable (turn on) this driver."""
         if self.autofire:
             # If this driver is also configured for an autofire rule, we just
             # manually trigger it with the trigger_cmd and manual on ('03')
@@ -184,8 +183,7 @@ class FASTDriver(DriverPlatformInterface):
         # todo change hold to pulse with re-ups
 
     def pulse(self, coil, milliseconds):
-        """Pulses this driver. """
-
+        """Pulse this driver."""
         if isinstance(milliseconds, int):
             hex_ms_string = Util.int_to_hex_string(milliseconds)
         else:
@@ -213,7 +211,7 @@ class FASTDriver(DriverPlatformInterface):
         return Util.hex_string_to_int(hex_ms_string)
 
     def check_auto(self):
-
+        """Reenable autofire if configured."""
         if self.autofire:
             cmd = '{}{},00'.format(self.get_trigger_cmd(), self.number)
 
