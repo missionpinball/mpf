@@ -427,7 +427,11 @@ class ConfigValidator(object):
 
     @classmethod
     def _validate_type_color(cls, item, validation_failure_info):
-        del validation_failure_info
+        if isinstance(item, tuple):
+            if len(item) != 3:
+                cls.validation_error(item, validation_failure_info, "Color needs three components")
+            return item
+
         # Validates colors by name, hex, or list, into a 3-item list, RGB,
         # with individual values from 0-255
         color_string = str(item).lower()
