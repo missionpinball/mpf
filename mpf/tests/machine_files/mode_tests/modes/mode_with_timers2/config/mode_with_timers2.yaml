@@ -2,6 +2,7 @@
 mode:
     start_events: mode_game_started
     stop_events: stop_mode_with_timers2
+    priority: 200
 timers:
     timer_start_with_game:
         debug: True
