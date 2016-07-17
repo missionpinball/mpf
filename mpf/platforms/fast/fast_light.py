@@ -1,3 +1,4 @@
+"""A direct light on a fast controller."""
 import logging
 
 from mpf.core.utility_functions import Util
@@ -6,18 +7,21 @@ from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLight
 
 class FASTMatrixLight(MatrixLightPlatformInterface):
 
+    """A direct light on a fast controller."""
+
     def __init__(self, number, sender):
+        """Initialise light."""
         self.log = logging.getLogger('FASTMatrixLight')
         self.number = number
         self.send = sender
 
     def off(self):
-        """Disables (turns off) this matrix light."""
+        """Disable (turn off) this matrix light."""
         # self.send('L1:' + self.number + ',00')
         self.send('L1:{},00'.format(self.number))
 
     def on(self, brightness=255):
-        """Enables (turns on) this driver."""
+        """Enable (turn on) this driver."""
         if brightness == 0:
             self.off()
             return
