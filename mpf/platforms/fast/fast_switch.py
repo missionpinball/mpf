@@ -1,3 +1,4 @@
+"""A switch conntected to a fast controller."""
 import logging
 
 from mpf.core.utility_functions import Util
@@ -6,7 +7,10 @@ from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInt
 
 class FASTSwitch(SwitchPlatformInterface):
 
+    """A switch conntected to a fast controller."""
+
     def __init__(self, config, sender, platform):
+        """Initialise switch."""
         super().__init__(config, config['number'])
         self.log = logging.getLogger('FASTSwitch')
         self.connection = config['number'][1]
@@ -16,6 +20,7 @@ class FASTSwitch(SwitchPlatformInterface):
         self.configure_debounce(config)
 
     def configure_debounce(self, config):
+        """Configure debounce settings."""
         if config['debounce'] in ("normal", "auto"):
             debounce_open = self.platform.config['default_normal_debounce_open']
             debounce_close = self.platform.config['default_normal_debounce_close']
