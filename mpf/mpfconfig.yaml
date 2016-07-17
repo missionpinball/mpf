@@ -59,6 +59,8 @@ mpf:
         accelerometer.Accelerometer
         servo.Servo
         achievement.Achievement
+        led_group.LedStrip
+        led_group.LedRing
 
     plugins:
         mpf.plugins.auditor.Auditor
