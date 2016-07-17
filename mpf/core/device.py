@@ -1,5 +1,5 @@
 """Contains the Device base class."""
-
+import abc
 import logging
 
 from mpf.core.machine import MachineController
@@ -122,6 +122,7 @@ class Device(object):
         """
         return cls.collection, cls.config_section
 
+    @abc.abstractmethod
     def _initialize(self):
         """Default initialize method."""
         pass
