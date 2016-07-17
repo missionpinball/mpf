@@ -1,10 +1,8 @@
-"""Contains the Game class which is the Machine Mode that actually runs and
-manages an the game in a pinball machine.
+"""Contains the Game class which is the Machine Mode that actually runs and manages an the game in a pinball machine.
 
 Note that in the Mission Pinball Framework, a distinction is made between a
 *game* and a *machine*. A *game* refers to a game in progress, whereas a
 *machine* is the physical pinball machine.
-
 """
 
 from mpf.core.mode import Mode
@@ -12,14 +10,15 @@ from mpf.core.player import Player
 
 
 class Game(Mode):
+
     """Base mode that runs an active game on a pinball machine.
 
     Responsible for creating players, starting and ending balls, rotating to
     the next player, etc.
-
     """
 
     def __init__(self, machine, config, name, path):
+        """Initialise game."""
         super().__init__(machine, config, name, path)
         self._balls_in_play = 0
         self.player_list = list()
@@ -31,10 +30,12 @@ class Game(Mode):
 
     @property
     def balls_in_play(self):
+        """Return balls in play."""
         return self._balls_in_play
 
     @balls_in_play.setter
     def balls_in_play(self, value):
+        """Set balls in play."""
         prev_balls_in_play = self._balls_in_play
 
         if value > self.machine.ball_controller.num_balls_known:
@@ -110,14 +111,11 @@ class Game(Mode):
         '''
 
     def mode_stop(self, **kwargs):
+        """Stop mode."""
         self.machine.game = None
 
     def game_started(self, ev_result=True, **kwargs):
-        """All the modules that needed to do something on game start are done,
-        so our game is officially 'started'.
-
-        """
-
+        """All the modules that needed to do something on game start are done, so our game is officially 'started'."""
         del kwargs
 
         if ev_result:
@@ -139,9 +137,9 @@ class Game(Mode):
             self.game_ending()
 
     def player_add_success(self, player, **kwargs):
-        """Called when a new player is successfully added to the current game
-        (including when the first player is added).
+        """Called when a new player is successfully added to the current game.
 
+        This includes when the first player is added.
         """
         del player
         del kwargs
@@ -184,6 +182,7 @@ class Game(Mode):
         actually start until the queue is cleared.'''
 
     def ball_started(self, ev_result=True):
+        """Ball started."""
         self.log.debug("Game Machine Mode ball_started()")
         """Called when the other modules have approved a ball start.
 
@@ -228,6 +227,7 @@ class Game(Mode):
         self.machine.playfield.add_ball(player_controlled=True)
 
     def ball_drained(self, balls=0, **kwargs):
+        """Ball drained."""
         del kwargs
         self.log.debug("Entering Game.ball_drained()")
 
@@ -238,7 +238,7 @@ class Game(Mode):
         return {'balls': balls}
 
     def ball_ending(self):
-        """Starts the ball ending process.
+        """Start the ball ending process.
 
         This method posts the queue event *ball_ending*, giving other modules
         an opportunity to finish up whatever they need to do before the ball
@@ -248,7 +248,6 @@ class Game(Mode):
         Currently this method also disables the autofire_coils and flippers,
         though that's temporary as we'll move those into config file options.
         """
-
         # remove the handlers that were looking for ball drain since they'll
         # be re-added on next ball start
         self.machine.events.remove_handler(self.ball_drained)
@@ -421,9 +420,7 @@ class Game(Mode):
         Note this method is only called when a new player is first up. So if
         the same player shoots again due to an extra ball, this method is not
         called again.
-
         """
-
         # If we get a request to start a turn but we haven't done a rotate to
         # set the first player, do that now.
 
@@ -444,7 +441,7 @@ class Game(Mode):
         '''
 
     def player_turn_stop(self):
-
+        """Called when player turn stopped."""
         if not self.player:
             return
 
@@ -480,7 +477,7 @@ class Game(Mode):
         self.ball_starting()
 
     def player_rotate(self):
-        """Rotates the game to the next player.
+        """Rotate the game to the next player.
 
         This method is called after a player's turn is over, so it's even used
         in single-player games between balls.
