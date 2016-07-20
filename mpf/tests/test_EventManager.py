@@ -755,14 +755,6 @@ class TestEventManager(MpfTestCase):
 
         self.advance_time_and_run(10)
 
-    def test_delay_remove_race(self):
-        self.called = False
-        self.delay = DelayManager(self.machine.delayRegistry)
-
-        self.delay.add(ms=6000, name="first", callback=self.delay_first)
-        self.delay.add(ms=6000, name="second", callback=self.delay_second)
-        self.advance_time_and_run(10)
-
     def delay_zero_ms(self, start):
         self.delay.add(ms=0, name="second", callback=self.delay_zero_ms_next_frame, start=start)
 
