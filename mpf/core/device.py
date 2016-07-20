@@ -5,7 +5,7 @@ import logging
 from mpf.core.machine import MachineController
 
 
-class Device(object):
+class Device(object, metaclass=abc.ABCMeta):
 
     """Generic parent class of for every hardware device in a pinball machine."""
 
@@ -122,7 +122,6 @@ class Device(object):
         """
         return cls.collection, cls.config_section
 
-    @abc.abstractmethod
     def _initialize(self):
         """Default initialize method."""
         pass
