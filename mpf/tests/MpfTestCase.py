@@ -145,7 +145,16 @@ class MpfTestCase(unittest.TestCase):
 
     def advance_time_and_run(self, delta=1.0):
         self.machine.log.info("Advancing time by %s", delta)
-        self.loop.run_until_complete(asyncio.sleep(delay=delta, loop=self.loop))
+        try:
+            self.loop.run_until_complete(asyncio.sleep(delay=delta, loop=self.loop))
+            return
+        except RuntimeError as e:
+            pass
+
+        if self._exception:
+            raise self._exception['exception']
+        else:
+            raise e
 
     def machine_run(self):
         #self.machine.events.process_event_queue()
@@ -210,6 +219,10 @@ class MpfTestCase(unittest.TestCase):
     def _mock_loop(self):
         pass
 
+    def _exception_handler(self, loop, context):
+        loop.stop()
+        self._exception = context
+
     def setUp(self):
         # we want to reuse config_specs to speed tests up
         mpf.core.config_validator.ConfigValidator.unload_config_spec = (
@@ -217,6 +230,7 @@ class MpfTestCase(unittest.TestCase):
 
         self._events = {}
         self._last_event_kwargs = {}
+        self._exception = None
 
         # print(threading.active_count())
 
@@ -237,6 +251,7 @@ class MpfTestCase(unittest.TestCase):
         self._mock_data_manager()
 
         self.loop = TimeTravelLoop()
+        self.loop.set_exception_handler(self._exception_handler)
         self.clock = TestClock(self.loop)
         self._mock_loop()
 
