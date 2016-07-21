@@ -325,6 +325,12 @@ class TestClock(ClockBase):
         socket.is_open = True
         return socket
 
+    @asyncio.coroutine
+    def start_server(self, client_connected_cb, host=None, port=None, **kwd):
+        """Mock listening server."""
+        # TODO: actually mock it
+        return None
+
     @coroutine
     def open_connection(self, host=None, port=None, *,
                         limit=None, **kwds):

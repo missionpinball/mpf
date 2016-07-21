@@ -64,6 +64,10 @@ class ClockBase:
         return self.loop.time()
 
     @asyncio.coroutine
+    def start_server(self, client_connected_cb, host=None, port=None, **kwd):
+        yield from asyncio.streams.start_server(client_connected_cb, host, port, **kwd)
+
+    @asyncio.coroutine
     def open_connection(self, host=None, port=None, *,
                         limit=None, **kwds):
         """A wrapper for create_connection() returning a (reader, writer) pair.
