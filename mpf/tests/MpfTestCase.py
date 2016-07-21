@@ -11,6 +11,8 @@ from unittest.mock import *
 
 import asyncio
 import ruamel.yaml as yaml
+
+from mpf.core.bcp.bcp_client import BaseBcpClient
 from mpf.tests.loop import TimeTravelLoop, TestClock
 
 import mpf.core
@@ -23,9 +25,15 @@ from mpf.file_interfaces.yaml_interface import YamlInterface
 YamlInterface.cache = True
 
 
-class MockBcpClient():
-    def __init__(self, machine, name, settings, bcp):
+class MockBcpClient(BaseBcpClient):
+    def __init__(self, machine, name, bcp):
         self.name = name
+
+    def connect(self, config):
+        pass
+
+    def accept_connection(self, receiver, sender):
+        pass
 
     def send(self, bcp_command, bcp_command_args):
         pass
