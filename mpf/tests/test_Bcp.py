@@ -1,10 +1,11 @@
 from unittest.mock import MagicMock, patch, call
 
+from mpf.core.bcp.bcp_client import BaseBcpClient
 from mpf.tests.MpfTestCase import MpfTestCase
 from mpf.core.bcp.bcp_socket_client import decode_command_string, encode_command_string
 
 
-class TestBcpClient:
+class TestBcpClient(BaseBcpClient):
     def __init__(self, queue):
         self.queue = queue
 
