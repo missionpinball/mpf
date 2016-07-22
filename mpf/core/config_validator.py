@@ -839,10 +839,6 @@ smartmatrix:
 sound_player:
     __valid_in__: machine, mode, show
     action: single|enum(play,stop,stop_looping)|play
-    volume: single|gain|None
-    loops: single|int|None
-    priority: single|int|None
-    max_queue_time: single|secs|None
     __allow_others__:
 sound_pools:
     __valid_in__: machine, mode                      # todo add to validator
@@ -857,7 +853,7 @@ sound_system:
 sounds:
     __valid_in__: machine, mode
     file: single|str|None
-    track: single|str|None
+    track: list|str|None
     volume: single|gain|0.5
     loops: single|int|0
     priority: single|int|0
@@ -865,6 +861,7 @@ sounds:
     events_when_played: list|str|None
     events_when_stopped: list|str|None
     events_when_looping: list|str|None
+    markers: ignore                                 # todo add subconfig
     ducking:
         target: single|str|
         delay: single|str|0
