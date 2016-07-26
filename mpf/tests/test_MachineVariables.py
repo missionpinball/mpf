@@ -34,6 +34,7 @@ class TestMalformedMachineVariables(MpfTestCase):
                                  "player3_score": {"value": 17789290},
                                  "player4_score": {"value": 3006600},
                                  "player5_score": 123,
+                                 "player6_score": {"asd": 3006600},
                                  "value": 0}}
 
     def testVarLoads(self):
