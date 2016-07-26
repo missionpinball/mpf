@@ -160,10 +160,17 @@ class FileManager(object):
 
     @staticmethod
     def save(filename, data, **kwargs):
+        """Save data to file."""
         ext = os.path.splitext(filename)[1]
 
+        # save to temp file and move afterwards. prevents broken files
+        temp_file = os.path.dirname(filename) + os.sep + "_" + os.path.basename(filename)
+
         try:
-            FileManager.file_interfaces[ext].save(filename, data,
+            FileManager.file_interfaces[ext].save(temp_file, data,
                                                   **kwargs)
         except KeyError:
             raise AssertionError("No config file processor available for file type {}".format(ext))
+
+        # move temp file
+        os.rename(temp_file, filename)
