@@ -222,8 +222,16 @@ class MachineController(object):
             self.log.debug("Registering %s", entry_point)
             entry_point.load()(self)
 
+    def create_data_manager(self, config_name):
+        """Return a new DataManager for a certain config.
+
+        Args:
+            config_name: Name of the config
+        """
+        return DataManager(self, config_name)
+
     def _load_machine_vars(self):
-        self.machine_var_data_manager = DataManager(self, 'machine_vars')
+        self.machine_var_data_manager = self.create_data_manager('machine_vars')
 
         current_time = self.clock.get_time()
 
