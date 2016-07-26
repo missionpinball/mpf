@@ -143,7 +143,7 @@ class DataManager(object):
         except KeyError:
             pass
 
-    def _writing_thread(self):
+    def _writing_thread(self):  # pragma: no cover
         while not self.machine.thread_stopper.is_set():
             if not self._dirty.wait(1):
                 continue
