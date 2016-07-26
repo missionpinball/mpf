@@ -11,6 +11,8 @@ from mpf.core.file_manager import FileManager
 
 class DataManager(object):
 
+    """Handles key value data loading and saving for the machine."""
+
     def __init__(self, machine, name):
         """
         The DataManager is responsible for reading and writing data to/from a
@@ -131,6 +133,7 @@ class DataManager(object):
         self.save_all(delay_secs=delay_secs)
 
     def remove_key(self, key):
+        """Remove key by name."""
         try:
             del self.data[key]
             self.save_all()
@@ -139,4 +142,9 @@ class DataManager(object):
 
     def _writing_thread(self, data):
         self.log.debug("Writing %s to: %s", self.name, self.filename)
-        FileManager.save(self.filename, data)
+        # save to temp file and move afterwards. prevents broken files
+        temp_file = os.path.dirname(self.filename) + os.sep + "_" + os.path.basename(self.filename)
+        FileManager.save(temp_file, data)
+
+        # move temp file
+        os.rename(temp_file, self.filename)
