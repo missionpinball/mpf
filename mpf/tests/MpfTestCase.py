@@ -152,7 +152,6 @@ class MpfTestCase(unittest.TestCase):
         self.loop.run_until_complete(asyncio.sleep(delay=delta, loop=self.loop))
 
     def machine_run(self):
-        #self.machine.events.process_event_queue()
         self.advance_time_and_run(0)
 
     def unittest_verbosity(self):
