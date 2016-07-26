@@ -238,7 +238,7 @@ class MachineController(object):
         for name, settings in (
                 iter(self.machine_var_data_manager.get_data().items())):
 
-            if not isinstance(settings, dict):
+            if not isinstance(settings, dict) or "value" not in settings:
                 continue
 
             if ('expire' in settings and settings['expire'] and
