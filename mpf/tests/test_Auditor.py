@@ -1,17 +1,5 @@
 from mpf.plugins.auditor import Auditor
 from mpf.tests.MpfTestCase import MpfTestCase
-from unittest.mock import patch, MagicMock
-from mpf.plugins import auditor
-
-class TestDataManager:
-    def __init__(self, machine, section):
-        pass
-
-    def get_data(self):
-        return dict()
-
-    def save_all(self, data, delay_secs):
-        pass
 
 
 class TestAuditor(MpfTestCase):
@@ -27,13 +15,7 @@ class TestAuditor(MpfTestCase):
 
     def setUp(self):
         self.machine_config_patches['mpf']['plugins'] = ['mpf.plugins.auditor.Auditor']
-        self.dataManager = auditor.DataManager
-        auditor.DataManager = TestDataManager
         super().setUp()
-
-    def tearDown(self):
-        super().tearDown()
-        auditor.DataManager = self.dataManager
 
     def test_auditor_switches(self):
         self.machine.ball_controller.num_balls_known = 1
