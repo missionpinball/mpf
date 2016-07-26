@@ -1,7 +1,6 @@
 """Contains the High Score mode code"""
 
 from collections import OrderedDict
-from mpf.core.data_manager import DataManager
 from mpf.core.mode import Mode
 from mpf.core.player import Player
 
@@ -17,7 +16,7 @@ class HighScore(Mode):
         super().__init__(machine, config, name, path)
 
     def mode_init(self):
-        self.data_manager = DataManager(self.machine, 'high_scores')
+        self.data_manager = self.machine.create_data_manager('high_scores')
         self.high_scores = self.data_manager.get_data()
 
         self.high_score_config = self.machine.config_validator.validate_config(
