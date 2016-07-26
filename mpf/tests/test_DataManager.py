@@ -20,7 +20,11 @@ class TestDataManager(MpfTestCase):
     def test_save_and_load(self):
         open_mock = mock_open(read_data="")
         with patch('mpf.file_interfaces.yaml_interface.open', open_mock, create=True):
-            manager = DataManager(self.machine, "machine_vars")
+            with patch('os.path.isfile') as isfile_mock:
+                isfile_mock.return_value = True
+                manager = DataManager(self.machine, "machine_vars")
+                self.assertTrue(isfile_mock.called)
+                self.assertTrue(open_mock.called)
 
         self.assertNotIn("hallo", manager.get_data())
 
@@ -35,7 +39,11 @@ class TestDataManager(MpfTestCase):
 
         open_mock = mock_open(read_data='hallo: world\n')
         with patch('mpf.file_interfaces.yaml_interface.open', open_mock, create=True):
-            manager2 = DataManager(self.machine, "machine_vars")
+            with patch('os.path.isfile') as isfile_mock:
+                isfile_mock.return_value = True
+                manager2 = DataManager(self.machine, "machine_vars")
+                self.assertTrue(isfile_mock.called)
+                self.assertTrue(open_mock.called)
 
         self.assertEqual("world", manager2.get_data()["hallo"])
         self.assertEqual({}, manager.get_data("hallo"))
@@ -43,8 +51,10 @@ class TestDataManager(MpfTestCase):
     def test_get_data(self):
         open_mock = mock_open(read_data='hallo:\n  test: world\n')
         with patch('mpf.file_interfaces.yaml_interface.open', open_mock, create=True):
-            manager = DataManager(self.machine, "machine_vars")
-            self.assertTrue(open_mock.called)
+            with patch('os.path.isfile') as isfile_mock:
+                manager = DataManager(self.machine, "machine_vars")
+                self.assertTrue(isfile_mock.called)
+                self.assertTrue(open_mock.called)
 
         self.assertEqual({"test": "world"}, manager.get_data("hallo"))
         self.assertEqual({}, manager.get_data("invalid"))
