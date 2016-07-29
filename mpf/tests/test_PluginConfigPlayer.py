@@ -114,6 +114,7 @@ class TestPluginConfigPlayer(MpfTestCase):
         # use bcp mock
         self.machine_config_patches['bcp'] =\
             {"connections": {"local_display": {"type": "mpf.tests.MpfTestCase.MockBcpClient"}}}
+        self.machine_config_patches['bcp']['servers'] = []
 
     def test_plugin_config_player(self):
         self.assertIn('tests', ConfigPlayer.show_players)

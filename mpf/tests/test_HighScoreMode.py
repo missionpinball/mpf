@@ -12,6 +12,7 @@ class TestHighScoreMode(MpfTestCase):
         # use bcp mock
         self.machine_config_patches['bcp'] = \
             {"connections": {"local_display": {"type": "mpf.tests.MpfTestCase.MockBcpClient"}}}
+        self.machine_config_patches['bcp']['servers'] = []
 
     def getConfigFile(self):
         return 'high_score.yaml'

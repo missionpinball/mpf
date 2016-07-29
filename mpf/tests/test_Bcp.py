@@ -24,6 +24,7 @@ class TestBcp(MpfTestCase):
         del self.machine_config_patches['bcp']
         self.machine_config_patches['bcp'] = dict()
         self.machine_config_patches['bcp']['connections'] = []
+        self.machine_config_patches['bcp']['servers'] = []
 
     def test_decode_command_string(self):
         # test strings
