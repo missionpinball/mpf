@@ -124,7 +124,7 @@ class BCPClientSocket(BaseBcpClient):
 
     def __init__(self, machine, name, bcp):
         """Initialise BCP client socket."""
-        self.log = logging.getLogger('BCPClientSocket.' + name)
+        self.log = logging.getLogger('BCPClientSocket.' + str(name))
         self.log.debug('Setting up BCP Client...')
 
         super().__init__(machine, name, bcp)
@@ -205,7 +205,8 @@ class BCPClientSocket(BaseBcpClient):
 
     def _handle_connection_close(self):
         # connection has been closed
-        self.machine.stop()
+        if self._stop_machine_on_stop:
+            self.machine.stop()
 
     @asyncio.coroutine
     def _receive_loop(self):
@@ -281,8 +282,8 @@ class BCPClientSocket(BaseBcpClient):
         """Process incoming BCP 'goodbye' command."""
         self._send_goodbye = False
         self.stop()
-        self.machine.bcp.interface.remove_bcp_connection(self)
-        self.machine.stop()
+        self.machine.bcp.transport.unregister_transport(self)
+        self._handle_connection_close()
 
     def send_hello(self):
         """Send BCP 'hello' command."""
