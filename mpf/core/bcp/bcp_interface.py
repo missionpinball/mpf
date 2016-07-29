@@ -53,7 +53,6 @@ class BcpInterface(object):
             register_trigger=self.bcp_receive_register_trigger,
             monitor_machine_vars=self._monitor_machine_vars,
             monitor_player_vars=self._monitor_player_vars,
-            reset_complete=self.bcp_receive_reset_complete,
             dmd_frame=self.bcp_receive_dmd_frame,
             rgb_dmd_frame=self.bcp_receive_rgb_dmd_frame)
 
@@ -303,10 +302,6 @@ class BcpInterface(object):
         """
         self.log.warning('Received Error command from host with parameters: %s',
                          kwargs)
-
-    def bcp_receive_reset_complete(self, client, **kwargs):
-        del kwargs
-        self.machine.bcp_reset_complete()
 
     def bcp_mode_start(self, config, priority, mode, **kwargs):
         """Send BCP 'mode_start' to the connected BCP hosts.
