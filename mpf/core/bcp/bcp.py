@@ -11,6 +11,7 @@ class Bcp:
     """BCP Module."""
 
     def __init__(self, machine):
+        """Initialise BCP module."""
         self.interface = BcpInterface(machine)
         self.transport = BcpTransportManager(machine)
         self.machine = machine

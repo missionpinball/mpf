@@ -139,6 +139,7 @@ class BCPClientSocket(BaseBcpClient):
                                             'goodbye': self._receive_goodbye}
 
     def connect(self, config):
+        """Actively connect to server."""
         config = self.machine.config_validator.validate_config(
             'bcp:connections', config, 'bcp:connections')
 
@@ -167,6 +168,7 @@ class BCPClientSocket(BaseBcpClient):
         self._start_reader()
 
     def accept_connection(self, receiver, sender):
+        """Create client for incoming connection."""
         self._receiver = receiver
         self._sender = sender
 

@@ -168,6 +168,7 @@ class BcpInterface(object):
         pass
 
     def add_registered_trigger_event_for_client(self, client, event):
+        """Add trigger for event."""
         # register handler if first transport
         if not self.machine.bcp.transport.get_transports_for_handler(event):
             self.machine.events.add_handler(event=event,
@@ -177,6 +178,7 @@ class BcpInterface(object):
         self.machine.bcp.transport.add_handler_to_transport(event, client)
 
     def remove_registered_trigger_event_for_client(self, client, event):
+        """Remove trigger for event."""
         # unregister transport
         self.machine.bcp.transport.remove_transport_from_handle(event, client)
 
@@ -355,6 +357,7 @@ class BcpInterface(object):
                                                       logical=True)
 
     def bcp_receive_register_trigger(self, client, event, **kwargs):
+        """Register a trigger for a client."""
         del kwargs
         self.add_registered_trigger_event_for_client(client, event)
 
