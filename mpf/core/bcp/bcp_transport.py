@@ -63,25 +63,3 @@ class BcpTransportManager:
         """Prepare the BCP clients for MPF shutdown."""
         for client in self._transports:
             client.stop()
-
-
-class BcpTransport:
-
-    """Baseclass for BCP transports."""
-
-    def __init__(self, transport_manager, bcp_handler):
-        """Initialise bcp transport."""
-        self._transport_manager = transport_manager
-        self._bcp_handler = bcp_handler
-        self._disconnect_callbacks = []
-        self.name = None
-
-    def send(self, bcp_command, **kwargs):
-        raise NotImplementedError()
-
-    def add_disconnect_callback(self, callback):
-        self._disconnect_callbacks.append(callback)
-
-    def close(self):
-        for callback in self._disconnect_callbacks:
-            callback(self)
