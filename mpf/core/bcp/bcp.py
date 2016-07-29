@@ -14,12 +14,17 @@ class Bcp:
         self.interface = BcpInterface(machine)
         self.transport = BcpTransportManager(machine)
         self.machine = machine
+        self.servers = []
 
         self.machine.events.add_handler('init_phase_2',
                                         self._setup_bcp_connections)
 
         self.machine.events.add_handler('init_phase_4',
-                                        self._setup_bcp_server)
+                                        self._setup_bcp_servers)
+
+        self.machine.events.add_handler('shutdown',
+                                        self._stop_servers)
+
 
     def send(self, bcp_command, **kwargs):
         """Emulate legacy send.
@@ -39,7 +44,17 @@ class Bcp:
             client.connect(settings)
             self.transport.register_transport(client)
 
-    def _setup_bcp_server(self):
-        """Start an BCP server to allow other clients to connect."""
-        self.server = BcpServer(self.machine)
-        self.machine.clock.loop.run_until_complete(self.server.start())
+    def _setup_bcp_servers(self):
+        """Start BCP servers to allow other clients to connect."""
+        if 'servers' not in self.machine.config['bcp'] or not self.machine.config['bcp']['servers']:
+            return
+
+        for settings in self.machine.config['bcp']['servers'].values():
+            server = BcpServer(self.machine, settings['ip'], settings['port'], settings['type'])
+            self.machine.clock.loop.run_until_complete(server.start())
+            self.servers.append(server)
+
+    def _stop_servers(self):
+        """Stop BCP servers."""
+        for server in self.servers:
+            server.stop()
