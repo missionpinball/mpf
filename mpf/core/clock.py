@@ -65,6 +65,7 @@ class ClockBase:
 
     @asyncio.coroutine
     def start_server(self, client_connected_cb, host=None, port=None, **kwd):
+        """Start a server."""
         yield from asyncio.streams.start_server(client_connected_cb, host, port, **kwd)
 
     @asyncio.coroutine

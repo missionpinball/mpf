@@ -10,6 +10,7 @@ class BcpServer():
     """Server socket which listens for incoming BCP clients."""
 
     def __init__(self, machine, ip, port, type):
+        """Initialise BCP server."""
         self.machine = machine
         self.log = logging.getLogger('BCPServer')
         self._server = None

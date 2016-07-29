@@ -159,10 +159,12 @@ class BcpInterface(object):
         return '<BCP Interface>'
 
     def register_command_callback(self, cmd, callback):
+        """Register a BCP command."""
         # TODO: implement
         pass
 
     def unregister_command_callback(self, cmd, callback):
+        """Unregister a BCP command."""
         # TODO: implement
         pass
 
@@ -294,8 +296,7 @@ class BcpInterface(object):
             self.log.warning("Received invalid BCP command: %s from client: %s", cmd, client.name)
 
     def bcp_receive_error(self, client, **kwargs):
-        """A remote BCP host has sent a BCP error message, indicating that a
-        command from MPF was not recognized.
+        """A remote BCP host has sent a BCP error message, indicating that a command from MPF was not recognized.
 
         This method only posts a warning to the log. It doesn't do anything else
         at this point.
