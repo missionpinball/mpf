@@ -216,6 +216,12 @@ bcp:
             port: 5050
             type: mpf.core.bcp.bcp_socket_client.BCPClientSocket
 
+    servers:
+        url_style:
+            ip: 127.0.0.1
+            port: 5051
+            type: mpf.core.bcp.bcp_socket_client.BCPClientSocket
+
     event_map:
         player_turn_start:
             command: player_turn_start
