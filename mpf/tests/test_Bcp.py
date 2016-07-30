@@ -1,16 +1,25 @@
 from unittest.mock import MagicMock, patch, call
 
+import asyncio
+
 from mpf.core.bcp.bcp_client import BaseBcpClient
 from mpf.tests.MpfTestCase import MpfTestCase
 from mpf.core.bcp.bcp_socket_client import decode_command_string, encode_command_string
 
 
 class TestBcpClient(BaseBcpClient):
-    def __init__(self, queue):
+    def __init__(self, queue, receive_queue):
         self.queue = queue
+        self._receive_queue = receive_queue
+        self.exit_on_close = False
 
     def send(self, bcp_command, kwargs):
         self.queue.put((bcp_command, kwargs))
+
+    @asyncio.coroutine
+    def read_message(self):
+        obj = yield from self._receive_queue.get()
+        return obj
 
     def stop(self):
         pass
@@ -145,11 +154,11 @@ class TestBcp(MpfTestCase):
         self.machine_run()
         mc.events.post = MagicMock()
 
-        client = TestBcpClient(bcp_mc.receive_queue)
+        receive_queue = asyncio.Queue()
+        client = TestBcpClient(bcp_mc.receive_queue, receive_queue)
         self.machine.bcp.transport.register_transport(client)
-
-        self.machine.bcp.interface.process_bcp_message("register_trigger", {"event": "ball_started"}, client)
-        self.machine.bcp.interface.process_bcp_message("register_trigger", {"event": "ball_ended"}, client)
+        receive_queue.put_nowait(("register_trigger", {"event": "ball_started"}))
+        receive_queue.put_nowait(("register_trigger", {"event": "ball_ended"}))
         self.machine_run()
 
         self.machine.events.post('ball_started', ball=17,
@@ -167,5 +176,8 @@ class TestBcp(MpfTestCase):
         mc.events.post.assert_has_calls([
             call("ball_ended")
         ])
+
+        self.machine.bcp.transport.unregister_transport(client)
+        self.machine_run()
 
         self.module_patcher.stop()

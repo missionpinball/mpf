@@ -27,10 +27,17 @@ YamlInterface.cache = True
 
 class MockBcpClient(BaseBcpClient):
     def __init__(self, machine, name, bcp):
+        super().__init__(machine, name, bcp)
         self.name = name
+        self.receive_queue = asyncio.Queue()
 
     def connect(self, config):
         pass
+
+    @asyncio.coroutine
+    def read_message(self):
+        obj = yield from self.receive_queue.get()
+        return obj
 
     def accept_connection(self, receiver, sender):
         pass
