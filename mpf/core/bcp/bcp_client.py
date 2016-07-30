@@ -1,6 +1,8 @@
 """Base class for all bcp clients."""
 import abc
 
+import asyncio
+
 
 class BaseBcpClient(metaclass=abc.ABCMeta):
 
@@ -11,9 +13,15 @@ class BaseBcpClient(metaclass=abc.ABCMeta):
         self.name = name
         self.machine = machine
         self.bcp = bcp
+        self.exit_on_close = False
 
     def connect(self, config):
         """Actively connect client."""
+        raise NotImplementedError("implement")
+
+    @asyncio.coroutine
+    def read_message(self):
+        """Read one message from client."""
         raise NotImplementedError("implement")
 
     def accept_connection(self, receiver, sender):
