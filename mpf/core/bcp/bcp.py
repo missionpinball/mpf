@@ -43,6 +43,7 @@ class Bcp:
         for name, settings in self.machine.config['bcp']['connections'].items():
             client = Util.string_to_class(settings['type'])(self.machine, name, self.machine.bcp)
             client.connect(settings)
+            client.exit_on_close = True
             self.transport.register_transport(client)
 
     def _setup_bcp_servers(self):

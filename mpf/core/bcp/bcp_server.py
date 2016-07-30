@@ -37,4 +37,5 @@ class BcpServer():
         self.log.info("New client connected.")
         client = Util.string_to_class(self._type)(self.machine, None, self.machine.bcp)
         client.accept_connection(client_reader, client_writer)
+        client.exit_on_close = False
         self.machine.bcp.transport.register_transport(client)
