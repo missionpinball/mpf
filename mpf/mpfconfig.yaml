@@ -222,18 +222,6 @@ bcp:
             port: 5051
             type: mpf.core.bcp.bcp_socket_client.BCPClientSocket
 
-    event_map:
-        player_turn_start:
-            command: player_turn_start
-            params:
-                player_num: "%number"
-
-        clear:
-            command: trigger
-            params:
-                name: clear
-                key: "%key"
-
     player_variables:
       __all__
 
