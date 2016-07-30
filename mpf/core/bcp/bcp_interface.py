@@ -13,16 +13,13 @@ class BcpInterface(object):
         machine: A reference to the main MPF machine object.
 
     The following BCP commands are currently implemented:
-        config?volume=0.5
         error
         get
-        goodbye
         hello?version=xxx&controller_name=xxx&controller_version=xxx
         mode_start?name=xxx&priority=xxx
         mode_stop?name=xxx
         player_added?player_num=x
         player_score?value=x&prev_value=x&change=x&player_num=x
-        player_turn_start?player_num=x
         player_variable?name=x&value=x&prev_value=x&change=x&player_num=x
         set
         shot?name=x
@@ -60,14 +57,6 @@ class BcpInterface(object):
         self.physical_dmd_update_callback = None
         self.physical_rgb_dmd_update_callback = None
         self.connection_callbacks = list()
-        # TODO end
-
-        # TODO: remove event_map
-        try:
-            self.bcp_events = self.config['event_map']
-            self.process_bcp_events()
-        except KeyError:
-            pass
         # TODO end
 
         self._setup_player_monitor()
@@ -160,13 +149,11 @@ class BcpInterface(object):
 
     def register_command_callback(self, cmd, callback):
         """Register a BCP command."""
-        # TODO: implement
-        pass
+        self.bcp_receive_commands[cmd] = callback
 
-    def unregister_command_callback(self, cmd, callback):
+    def unregister_command_callback(self, cmd):
         """Unregister a BCP command."""
-        # TODO: implement
-        pass
+        del self.bcp_receive_commands[cmd]
 
     def add_registered_trigger_event_for_client(self, client, event):
         """Add trigger for event."""
@@ -234,52 +221,6 @@ class BcpInterface(object):
             value=value,
             prev_value=prev_value,
             change=change)
-
-    # TODO: remove event_map
-    def process_bcp_events(self):
-        """Process the BCP Events from the config."""
-        # config is localized to BCPEvents
-        for event, settings in self.bcp_events.items():
-            if 'params' in settings:
-                self.machine.events.add_handler(event,
-                                                self._bcp_event_callback,
-                                                command=settings['command'],
-                                                params=settings['params'])
-
-            else:
-                self.machine.events.add_handler(event,
-                                                self._bcp_event_callback,
-                                                command=settings['command'])
-
-    def _replace_variables(self, value, kwargs):
-        # Are there any text variables to replace on the fly?
-        # todo should this go here?
-        if '%' in value:
-            # first check for player vars (%var_name%)
-            if self.machine.game and self.machine.game.player:
-                for name, val in self.machine.game.player:
-                    if '%' + name + '%' in value:
-                        value = value.replace('%' + name + '%',
-                                              str(val))
-
-            # now check for single % which means event kwargs
-            for name, val in kwargs.items():
-                if '%' + name in value:
-                    value = value.replace('%' + name, str(val))
-
-        return value
-
-    def _bcp_event_callback(self, command, params=None, **kwargs):
-        if params:
-            params = copy.deepcopy(params)
-            for param, value in params.items():
-                params[param] = self._replace_variables(value, kwargs)
-
-            self.machine.bcp.transport.send_to_all_clients(command, **params)
-
-        else:
-            self.machine.bcp.transport.send_to_all_clients(command)
-    # TODO end
 
     def process_bcp_message(self, cmd, kwargs, client):
         """Process BCP message.
