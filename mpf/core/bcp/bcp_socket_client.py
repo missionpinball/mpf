@@ -1,7 +1,7 @@
 """BCP socket client."""
 import json
 import logging
-import urllib
+from urllib.parse import urlsplit, parse_qs, quote, unquote, urlunparse
 
 import asyncio
 
@@ -27,10 +27,10 @@ def decode_command_string(bcp_string):
     will be preserved.
 
     """
-    bcp_command = urllib.parse.urlsplit(bcp_string)
+    bcp_command = urlsplit(bcp_string)
 
     try:
-        kwargs = urllib.parse.parse_qs(bcp_command.query)
+        kwargs = parse_qs(bcp_command.query)
         if 'json' in kwargs:
             kwargs = json.loads(kwargs['json'][0])
             return bcp_command.path.lower(), kwargs
@@ -51,7 +51,7 @@ def decode_command_string(bcp_string):
             elif v[0] == 'NoneType:':
                 v[0] = None
             else:
-                v[0] = urllib.parse.unquote(v[0])
+                v[0] = unquote(v[0])
 
             kwargs[k] = v
 
@@ -87,7 +87,7 @@ def encode_command_string(bcp_command, **kwargs):
             json_needed = True
             break
 
-        value = urllib.parse.quote(str(v), '')
+        value = quote(str(v), '')
 
         if isinstance(v, bool):  # bool isinstance of int, so this goes first
             value = 'bool:{}'.format(value)
@@ -98,7 +98,7 @@ def encode_command_string(bcp_command, **kwargs):
         elif v is None:
             value = 'NoneType:'
 
-        kwarg_string += '{}={}&'.format(urllib.parse.quote(k.lower(), ''),
+        kwarg_string += '{}={}&'.format(quote(k.lower(), ''),
                                         value)
 
     kwarg_string = kwarg_string[:-1]
@@ -106,8 +106,7 @@ def encode_command_string(bcp_command, **kwargs):
     if json_needed:
         kwarg_string = 'json={}'.format(json.dumps(kwargs))
 
-    return str(urllib.parse.urlunparse(('', '', bcp_command.lower(), '',
-                                        kwarg_string, '')))
+    return str(urlunparse(('', '', bcp_command.lower(), '', kwarg_string, '')))
 
 
 class BCPClientSocket(BaseBcpClient):
