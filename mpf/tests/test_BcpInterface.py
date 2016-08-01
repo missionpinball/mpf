@@ -1,14 +1,7 @@
-from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.MpfBcpTestCase import MpfBcpTestCase
 
 
-class TestBcpInterface(MpfTestCase):
-
-    def __init__(self, methodName):
-        super().__init__(methodName)
-        # remove config patch which disables bcp
-        self.machine_config_patches['bcp'] = \
-            {"connections": {"local_display": {"type":  "mpf.tests.MpfTestCase.MockBcpClient"}}}
-        self.machine_config_patches['bcp']['servers'] = []
+class TestBcpInterface(MpfBcpTestCase):
 
     def getConfigFile(self):
         return 'config.yaml'
