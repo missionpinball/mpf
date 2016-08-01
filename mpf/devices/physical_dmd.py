@@ -21,6 +21,7 @@ class PhysicalDmd(SystemWideDevice):
             machine: MachineController which is used
         """
         cls.machine = machine
+        cls.machine.bcp.interface.register_command_callback("dmd_frame", cls._bcp_receive_dmd_frame)
 
     def __init__(self, machine, name):
         """Initialise DMD."""
@@ -30,7 +31,6 @@ class PhysicalDmd(SystemWideDevice):
     def _initialize(self):
         self.load_platform_section("dmd")
         self.hw_device = self.platform.configure_dmd()
-        self.machine.bcp.interface.register_command_callback("dmd_frame", self._bcp_receive_dmd_frame)
 
     @classmethod
     def _bcp_receive_dmd_frame(cls, client, name, rawbytes, **kwargs):
