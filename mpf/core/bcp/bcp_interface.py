@@ -49,9 +49,7 @@ class BcpInterface(object):
             trigger=self.bcp_receive_trigger,
             register_trigger=self.bcp_receive_register_trigger,
             monitor_machine_vars=self._monitor_machine_vars,
-            monitor_player_vars=self._monitor_player_vars,
-            dmd_frame=self.bcp_receive_dmd_frame,
-            rgb_dmd_frame=self.bcp_receive_rgb_dmd_frame)
+            monitor_player_vars=self._monitor_player_vars)
 
         # TODO: remove/move dmd handlers
         self.physical_dmd_update_callback = None
@@ -63,9 +61,6 @@ class BcpInterface(object):
 
         self._setup_machine_var_monitor()
 
-        self.machine.events.add_handler('init_phase_1',
-                                        self._setup_dmds)
-
         self.machine.events.add_handler('player_add_success',
                                         self.bcp_player_added)
         self.machine.events.add_handler('machine_reset_phase_1',
@@ -75,73 +70,9 @@ class BcpInterface(object):
             self.bcp_mode_start, 'mode')
 
     # TODO: move DMD code to device
-    def _setup_dmds(self):
-        if 'physical_dmd' in self.machine.config:
-            self._setup_dmd()
-
-        if 'physical_rgb_dmd' in self.machine.config:
-            self._setup_rgb_dmd()
-
-    def _setup_dmd(self):
-        if self.machine.config['hardware']['dmd'] == 'default':
-            platform = self.machine.default_platform
-        else:
-            try:
-                platform = self.machine.hardware_platforms[
-                    self.machine.config['hardware']['dmd']]
-            except KeyError:
-                return
-
-        if platform.features['has_dmd']:
-            self._register_connection_callback(platform.configure_dmd)
-
-    def _setup_rgb_dmd(self):
-        if self.machine.config['hardware']['rgb_dmd'] == 'default':
-            platform = self.machine.default_platform
-        else:
-            try:
-                platform = self.machine.hardware_platforms[
-                    self.machine.config['hardware']['rgb_dmd']]
-            except KeyError:
-                return
-
-        if platform.features['has_rgb_dmd']:
-            # print("RGB DMD PLATFORM ", platform)
-            self._register_connection_callback(platform.configure_rgb_dmd)
-
-    def register_dmd(self, dmd_update_meth):
-        self.physical_dmd_update_callback = dmd_update_meth
-        self.machine.bcp.transport.send_to_all_clients('dmd_start')
-
     def register_rgb_dmd(self, dmd_update_meth):
         self.physical_rgb_dmd_update_callback = dmd_update_meth
         self.machine.bcp.transport.send_to_all_clients('rgb_dmd_start')
-
-    def _register_connection_callback(self, callback):
-        # This is a callback that is called after BCP is connected. If
-        # bcp is connected when this is called, the callback will be called
-        # at the end of the current frame.
-        if callable(callback):
-            self.connection_callbacks.append(callback)
-
-            if False:
-                self.machine.clock.schedule_once(callback, -1)
-
-    def bcp_receive_dmd_frame(self, client, rawbytes, **kwargs):
-        """Called when the BCP client receives a new DMD frame from the remote BCP host.
-
-        This method forwards the frame to the physical DMD.
-        """
-        del kwargs
-        self.physical_dmd_update_callback(rawbytes)
-
-    def bcp_receive_rgb_dmd_frame(self, client, rawbytes, **kwargs):
-        """Called when the BCP client receives a new RGB DMD frame from the remote BCP host.
-
-        This method forwards the frame to the physical DMD.
-        """
-        del kwargs
-        self.physical_rgb_dmd_update_callback(rawbytes)
     # TODO: end
 
     def __repr__(self):
@@ -232,7 +163,11 @@ class BcpInterface(object):
         self.log.debug("Processing command: %s %s", cmd, kwargs)
 
         if cmd in self.bcp_receive_commands:
-            self.bcp_receive_commands[cmd](client=client, **kwargs)
+            try:
+                self.bcp_receive_commands[cmd](client=client, **kwargs)
+            except TypeError as e:
+                self.machine.bcp.transport.send_to_client(client, "error", cmd=cmd, error=str(e), kwargs=kwargs)
+
         else:
             self.log.warning("Received invalid BCP command: %s from client: %s", cmd, client.name)
 
