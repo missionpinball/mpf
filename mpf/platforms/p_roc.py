@@ -16,6 +16,7 @@ https://github.com/preble/pyprocgame
 import logging
 
 from mpf.core.platform import DmdPlatform
+from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.platforms.p_roc_common import PDBConfig, PROCBasePlatform
 from mpf.core.utility_functions import Util
 from mpf.platforms.p_roc_devices import PROCDriver, PROCGiString, PROCMatrixLight
@@ -176,7 +177,7 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
     def configure_dmd(self):
         """Configure a hardware DMD connected to a classic P-ROC."""
         self.dmd = PROCDMD(self.pinproc, self.proc, self.machine)
-        self.machine.bcp.interface.register_dmd(self.dmd.update)
+        return self.dmd
 
     def tick(self, dt):
         """Check the P-ROC for any events (switch state changes or notification that a DMD frame was updated).
@@ -210,7 +211,7 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
         self.proc.flush()
 
 
-class PROCDMD(object):
+class PROCDMD(DmdPlatformInterface):
 
     """Parent class for a physical DMD attached to a P-ROC.
 
