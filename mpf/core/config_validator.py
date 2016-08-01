@@ -620,6 +620,18 @@ physical_dmd:
     luminosity: list|float|.299, .587, .114
     brightness: single|float|0.5
     only_send_changes: single|bool|False
+physical_dmds:
+    __valid_in__: machine
+    platform: single|str|None
+    tags: list|str|None
+    label: single|str|%
+    debug: single|bool|False
+    shades: single|pow2|16
+    fps: single|int|30
+    source_display: single|str|dmd
+    luminosity: list|float|.299, .587, .114
+    brightness: single|float|0.5
+    only_send_changes: single|bool|False
 physical_rgb_dmd:
     __valid_in__: machine
     fps: single|int|30
