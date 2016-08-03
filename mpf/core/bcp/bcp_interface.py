@@ -51,12 +51,6 @@ class BcpInterface(object):
             monitor_machine_vars=self._monitor_machine_vars,
             monitor_player_vars=self._monitor_player_vars)
 
-        # TODO: remove/move dmd handlers
-        self.physical_dmd_update_callback = None
-        self.physical_rgb_dmd_update_callback = None
-        self.connection_callbacks = list()
-        # TODO end
-
         self._setup_player_monitor()
 
         self._setup_machine_var_monitor()
@@ -69,22 +63,14 @@ class BcpInterface(object):
         self.machine.mode_controller.register_start_method(
             self.bcp_mode_start, 'mode')
 
-    # TODO: move DMD code to device
-    def register_rgb_dmd(self, dmd_update_meth):
-        self.physical_rgb_dmd_update_callback = dmd_update_meth
-        self.machine.bcp.transport.send_to_all_clients('rgb_dmd_start')
-    # TODO: end
-
     def __repr__(self):
         return '<BCP Interface>'
 
     def register_command_callback(self, cmd, callback):
         """Register a BCP command."""
+        if not self.configured:
+            return
         self.bcp_receive_commands[cmd] = callback
-
-    def unregister_command_callback(self, cmd):
-        """Unregister a BCP command."""
-        del self.bcp_receive_commands[cmd]
 
     def add_registered_trigger_event_for_client(self, client, event):
         """Add trigger for event."""
@@ -255,13 +241,11 @@ class BcpInterface(object):
         self.machine.bcp.transport.send_to_clients_with_handler(
             handler=name, bcp_command='trigger', name=name, **kwargs)
 
-    def bcp_receive_trigger(self, client, name=None, **kwargs):
+    def bcp_receive_trigger(self, client, name, callback=None, **kwargs):
         """Process an incoming trigger command from a remote BCP host."""
         del client
-        if not name:
-            return
 
-        if 'callback' in kwargs:
+        if callback:
             self.machine.events.post(event=name,
                                      callback=self.bcp_trigger,
                                      name=kwargs.pop('callback'),
