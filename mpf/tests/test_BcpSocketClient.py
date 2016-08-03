@@ -1,9 +1,12 @@
 import unittest
+from unittest.mock import MagicMock
 
 from mpf.core.bcp.bcp_socket_client import decode_command_string, encode_command_string
+from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.loop import MockQueueSocket
 
 
-class TestBcpSocketClient(unittest.TestCase):
+class TestBcpSocketClientEncoding(unittest.TestCase):
 
     def test_decode_command_string(self):
         # test strings
@@ -93,3 +96,55 @@ class TestBcpSocketClient(unittest.TestCase):
                          dict(key3='value3', key4='value4'))
         self.assertEqual(decoded_dict['dict2'][1],
                          dict(key3='value5', key4='value6'))
+
+
+class TestBcpSocketClient(MpfTestCase):
+
+    def __init__(self, methodName='runTest'):
+        super().__init__(methodName)
+
+        # use normal client
+        self.machine_config_patches['bcp'] = {}
+        self.machine_config_patches['bcp']['servers'] = []
+
+    def setUp(self):
+        super().setUp()
+        self._bcp_client = self.machine.bcp.transport.get_named_client("local_display")
+
+    def _mock_loop(self):
+        self.client_socket = MockQueueSocket()
+        self.clock.mock_socket("localhost", 5050, self.client_socket)
+
+    def testReceiveMessages(self):
+        # test message with bytes
+        receiver = MagicMock()
+        self.machine.bcp.interface.register_command_callback("receive_bytes", receiver)
+        self.client_socket.recv_queue.append(b'receive_bytes?name=default&bytes=4096\n')
+        data = b'0' * 4096
+        self.client_socket.recv_queue.append(data)
+        self.advance_time_and_run()
+        receiver.assert_called_once_with(name="default", client=self._bcp_client, rawbytes=data)
+        receiver.reset_mock()
+
+        # data and cmd in two packets
+        self.client_socket.recv_queue.append(b'receive_bytes?name=defa')
+        self.client_socket.recv_queue.append(b'ult&bytes=4096\n')
+        data = b'0' * 4096
+        self.client_socket.recv_queue.append(data[0:1000])
+        self.client_socket.recv_queue.append(data[1000:])
+        self.advance_time_and_run()
+        receiver.assert_called_once_with(name="default", client=self._bcp_client, rawbytes=data)
+        receiver.reset_mock()
+
+        # test message without bytes
+        receiver2 = MagicMock()
+        self.machine.bcp.interface.register_command_callback("receive_msg", receiver2)
+        self.client_socket.recv_queue.append(b'receive_msg?param1=1&param2=2\n')
+        self.advance_time_and_run()
+        receiver2.assert_called_once_with(param1="1", param2="2", client=self._bcp_client)
+        receiver2.reset_mock()
+
+        # unknown method. should not crash
+        self._bcp_client.send = MagicMock()
+        self.client_socket.recv_queue.append(b'invalid_method?param1=1&param2=2\n')
+        self.advance_time_and_run()
