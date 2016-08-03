@@ -638,6 +638,16 @@ physical_rgb_dmd:
     source_display: single|str|dmd
     only_send_changes: single|bool|False
     brightness: single|float|1.0
+physical_rgb_dmds:
+    __valid_in__: machine
+    platform: single|str|None
+    tags: list|str|None
+    label: single|str|%
+    debug: single|bool|False
+    fps: single|int|30
+    source_display: single|str|dmd
+    only_send_changes: single|bool|False
+    brightness: single|float|1.0
 playfields:
     __valid_in__: machine
     tags: list|str|None
