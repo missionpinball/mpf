@@ -1,4 +1,4 @@
-"""Implements support for physical DMDs."""
+"""Support for physical DMDs."""
 from mpf.core.machine import MachineController
 
 from mpf.core.system_wide_device import SystemWideDevice
