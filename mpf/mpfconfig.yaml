@@ -60,6 +60,7 @@ mpf:
         servo.Servo
         achievement.Achievement
         physical_dmd.PhysicalDmd
+        physical_rgb_dmd.PhysicalRgbDmd
 
     plugins:
         mpf.plugins.auditor.Auditor
