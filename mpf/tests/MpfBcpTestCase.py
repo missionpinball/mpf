@@ -9,6 +9,7 @@ class MockBcpClient(BaseBcpClient):
         super().__init__(machine, name, bcp)
         self.name = name
         self.receive_queue = asyncio.Queue(loop=self.machine.clock.loop)
+        self.send_queue = []
 
     def connect(self, config):
         pass
@@ -24,7 +25,7 @@ class MockBcpClient(BaseBcpClient):
     def send(self, bcp_command, bcp_command_args):
         if bcp_command == "error":
             raise AssertionError("Got bcp error")
-        pass
+        self.send_queue.append((bcp_command, bcp_command_args))
 
     def stop(self):
         pass
