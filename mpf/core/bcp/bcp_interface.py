@@ -49,11 +49,14 @@ class BcpInterface(object):
             trigger=self.bcp_receive_trigger,
             register_trigger=self.bcp_receive_register_trigger,
             monitor_machine_vars=self._monitor_machine_vars,
-            monitor_player_vars=self._monitor_player_vars)
+            monitor_player_vars=self._monitor_player_vars,
+            monitor_switches=self._monitor_switches)
 
         self._setup_player_monitor()
 
         self._setup_machine_var_monitor()
+
+        self._switch_monitor_registered = False
 
         self.machine.events.add_handler('player_add_success',
                                         self.bcp_player_added)
@@ -98,6 +101,32 @@ class BcpInterface(object):
     def _monitor_machine_vars(self, client):
         self._send_machine_vars(client)
         self.machine.bcp.transport.add_handler_to_transport("_machine_vars", client)
+
+    def _monitor_switches(self, client):
+        """Send switch changes to client."""
+        # register monitor in switch_controller
+        if not self._switch_monitor_registered:
+            self.machine.switch_controller.add_monitor(self._switch_change)
+            self._switch_monitor_registered = True
+
+        # add handler
+        self.machine.bcp.transport.add_handler_to_transport("_switches", client)
+
+        # initially send all switch states
+        for switch_name, switch in self.machine.switches.items():
+            self.machine.bcp.transport.send_to_client(
+                client=client,
+                bcp_command='switch',
+                name=switch_name,
+                state=switch.state)
+
+    def _switch_change(self, switch_name, state):
+        """Send switch change via BCP."""
+        self.machine.bcp.transport.send_to_clients_with_handler(
+            handler="_switches",
+            bcp_command='switch',
+            name=switch_name,
+            state=state)
 
     def _send_machine_vars(self, client):
         for var_name, settings in self.machine.machine_vars.items():
