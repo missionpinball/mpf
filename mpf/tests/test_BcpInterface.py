@@ -16,37 +16,67 @@ class TestBcpInterface(MpfBcpTestCase):
 
         self.assertIn('test_event', self.machine.bcp.transport._handlers)
 
-    def test_receive_switch(self):
-        client = self.machine.bcp.transport.get_named_client("local_display")
+    def test_switch_monitor(self):
+        self.hit_switch_and_run("s_test", .1)
+        self.release_switch_and_run("s_test2", .1)
+        self._bcp_client.send_queue.clear()
 
+        # register monitor
+        self._bcp_client.receive_queue.put_nowait(('monitor_switches', {}))
+        self.advance_time_and_run()
+
+        # initial states
+        self.assertIn(("switch", {"name": "s_test", "state": 1}), self._bcp_client.send_queue)
+        self.assertNotIn(("switch", {"name": "s_test", "state": 0}), self._bcp_client.send_queue)
+        self.assertIn(("switch", {"name": "s_test2", "state": 0}), self._bcp_client.send_queue)
+        self.assertNotIn(("switch", {"name": "s_test2", "state": 1}), self._bcp_client.send_queue)
+        self._bcp_client.send_queue.clear()
+
+        # change switch
+        self.release_switch_and_run("s_test", .1)
+        self.assertIn(("switch", {"name": "s_test", "state": 0}), self._bcp_client.send_queue)
+        self.assertNotIn(("switch", {"name": "s_test", "state": 1}), self._bcp_client.send_queue)
+        self._bcp_client.send_queue.clear()
+
+        # nothing should happen
+        self.release_switch_and_run("s_test", .1)
+        self.assertNotIn(("switch", {"name": "s_test", "state": 0}), self._bcp_client.send_queue)
+        self.assertNotIn(("switch", {"name": "s_test", "state": 1}), self._bcp_client.send_queue)
+
+        # change again
+        self.hit_switch_and_run("s_test", .1)
+        self.assertIn(("switch", {"name": "s_test", "state": 1}), self._bcp_client.send_queue)
+        self.assertNotIn(("switch", {"name": "s_test", "state": 0}), self._bcp_client.send_queue)
+
+    def test_receive_switch(self):
         # should not crash
-        client.receive_queue.put_nowait(('switch', {'name': 'invalid_switch', 'state': 1}))
+        self._bcp_client.receive_queue.put_nowait(('switch', {'name': 'invalid_switch', 'state': 1}))
         self.advance_time_and_run()
 
         # initially inactive
         self.assertFalse(self.machine.switch_controller.is_active('s_test'))
 
         # receive active
-        client.receive_queue.put_nowait(('switch', {'name': 's_test', 'state': 1}))
+        self._bcp_client.receive_queue.put_nowait(('switch', {'name': 's_test', 'state': 1}))
         self.advance_time_and_run()
         self.assertTrue(self.machine.switch_controller.is_active('s_test'))
 
         # receive active
-        client.receive_queue.put_nowait(('switch', {'name': 's_test', 'state': 1}))
+        self._bcp_client.receive_queue.put_nowait(('switch', {'name': 's_test', 'state': 1}))
         self.advance_time_and_run()
         self.assertTrue(self.machine.switch_controller.is_active('s_test'))
 
         # and inactive again
-        client.receive_queue.put_nowait(('switch', {'name': 's_test', 'state': 0}))
+        self._bcp_client.receive_queue.put_nowait(('switch', {'name': 's_test', 'state': 0}))
         self.advance_time_and_run()
         self.assertFalse(self.machine.switch_controller.is_active('s_test'))
 
         # invert
-        client.receive_queue.put_nowait(('switch', {'name': 's_test', 'state': -1}))
+        self._bcp_client.receive_queue.put_nowait(('switch', {'name': 's_test', 'state': -1}))
         self.advance_time_and_run()
         self.assertTrue(self.machine.switch_controller.is_active('s_test'))
 
         # invert
-        client.receive_queue.put_nowait(('switch', {'name': 's_test', 'state': -1}))
+        self._bcp_client.receive_queue.put_nowait(('switch', {'name': 's_test', 'state': -1}))
         self.advance_time_and_run()
         self.assertFalse(self.machine.switch_controller.is_active('s_test'))
