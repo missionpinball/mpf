@@ -59,6 +59,8 @@ mpf:
         accelerometer.Accelerometer
         servo.Servo
         achievement.Achievement
+        physical_dmd.PhysicalDmd
+        physical_rgb_dmd.PhysicalRgbDmd
         led_group.LedStrip
         led_group.LedRing
 

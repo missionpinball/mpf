@@ -1,8 +1,9 @@
 """ Implements a servo in MPF """
-
+from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.system_wide_device import SystemWideDevice
 
 
+@DeviceMonitor("_position")
 class Servo(SystemWideDevice):
     """Represents a servo in a pinball machine.
 
@@ -15,6 +16,7 @@ class Servo(SystemWideDevice):
 
     def __init__(self, machine, name):
         self.hw_servo = None
+        self._position = None
         super().__init__(machine, name)
 
     def _initialize(self):
@@ -39,6 +41,8 @@ class Servo(SystemWideDevice):
         # linearly interpolate between servo limits
         position = self.config['servo_min'] + position * (
             self.config['servo_max'] - self.config['servo_min'])
+
+        self._position = position
 
         # call platform with calculated position
         self.hw_servo.go_to_position(position)

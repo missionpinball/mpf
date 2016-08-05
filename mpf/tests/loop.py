@@ -109,7 +109,7 @@ class MockQueueSocket(MockSocket):
         return bool(len(self.recv_queue))
 
     def recv(self, size):
-        return self.recv_queue.pop()
+        return self.recv_queue.pop(0)
 
     def send(self, data):
         self.send_queue.append(data)

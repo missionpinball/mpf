@@ -605,10 +605,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
                                  "but no connection to a DMD processor is "
                                  "available.")
 
-        self.machine.bcp.interface.register_dmd(
-            FASTDMD(self.machine, self.dmd_connection.send).update)
-
-        return
+        return FASTDMD(self.machine, self.dmd_connection.send)
 
     @classmethod
     def get_coil_config_section(cls):

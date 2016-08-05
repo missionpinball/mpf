@@ -1,10 +1,12 @@
 """ Contains the base classes for drop targets and drop target banks."""
 
 from mpf.core.delays import DelayManager
+from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
 
 
+@DeviceMonitor("complete")
 class DropTarget(SystemWideDevice):
     """Represents a single drop target in a pinball machine.
 

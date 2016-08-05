@@ -3,11 +3,12 @@
 import logging
 import random
 
+from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 
 from mpf.core.platform import ServoPlatform, MatrixLightsPlatform, GiPlatform, LedPlatform, \
-    SwitchPlatform, DriverPlatform, AccelerometerPlatform, I2cPlatform
+    SwitchPlatform, DriverPlatform, AccelerometerPlatform, I2cPlatform, DmdPlatform, RgbDmdPlatform
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
@@ -17,7 +18,7 @@ from mpf.core.rgb_color import RGBColor
 
 
 class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, MatrixLightsPlatform, GiPlatform,
-                       LedPlatform, SwitchPlatform, DriverPlatform):
+                       LedPlatform, SwitchPlatform, DriverPlatform, DmdPlatform, RgbDmdPlatform):
     """Base class for the virtual hardware platform."""
 
     def __init__(self, machine):
@@ -183,9 +184,34 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
     def set_pulse_on_hit_rule(self, enable_switch, coil):
         pass
 
+    def configure_dmd(self):
+        return VirtualDmd()
+
+    def configure_rgb_dmd(self):
+        pass
+
+
+class VirtualDmd(DmdPlatformInterface):
+
+    """Virtual DMD."""
+
+    def __init__(self):
+        """Initialise virtual DMD."""
+        self.data = None
+
+    def update(self, data: bytes):
+        """Update data on the DMD.
+
+        Args:
+            data: bytes to send to DMD
+        """
+        self.data = data
+
 
 class VirtualSwitch(SwitchPlatformInterface):
+
     """Represents a switch in a pinball machine used with virtual hardware."""
+
     def __init__(self, config):
         super().__init__(config, config['number'])
         self.log = logging.getLogger('VirtualSwitch')

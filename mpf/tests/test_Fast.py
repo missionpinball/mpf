@@ -52,7 +52,7 @@ class BaseMockFast(MockSerial):
             del self.expected_commands[cmd]
             return msg_len
         else:
-            raise Exception(self.type + ": " + cmd)
+            raise Exception(self.type + ": " + str(cmd))
 
     def stop(self):
         pass
@@ -62,6 +62,27 @@ class MockFastDmd(BaseMockFast):
     def __init__(self):
         super().__init__()
         self.type = "DMD"
+
+    def write(self, msg):
+        msg_len = len(msg)
+        if msg == (b' ' * 256) + b"\r":
+            return msg_len
+
+        cmd = msg
+
+        if cmd[:3] == "WD:":
+            return msg_len
+
+        if cmd in self.ignore_commands:
+            return msg_len
+
+        if cmd in self.expected_commands:
+            if self.expected_commands[cmd]:
+                self.queue.append(self.expected_commands[cmd])
+            del self.expected_commands[cmd]
+            return msg_len
+        else:
+            raise Exception(self.type + ": " + str(cmd))
 
 
 class MockFastRgb(BaseMockFast):
@@ -103,7 +124,7 @@ class TestFast(MpfTestCase):
         self.dmd_cpu = MockFastDmd()
 
         self.dmd_cpu.expected_commands = {
-            'ID:': 'ID:DMD FP-CPU-002-1 00.88',
+            b'ID:\r': 'ID:DMD FP-CPU-002-1 00.88',
 
         }
         self.rgb_cpu.expected_commands = {
@@ -498,7 +519,7 @@ class TestFast(MpfTestCase):
     def test_dmd_update(self):
 
         # test configure
-        self.machine.default_platform.configure_dmd()
+        dmd = self.machine.default_platform.configure_dmd()
 
         # test set frame to buffer
         frame = bytearray()
@@ -509,8 +530,13 @@ class TestFast(MpfTestCase):
 
         # test draw
         self.dmd_cpu.expected_commands = {
-            frame: False
+            b'BM:' + frame: False
         }
+        dmd.update(frame)
+
+        self.machine_run()
+
+        self.assertFalse(self.dmd_cpu.expected_commands)
 
     def test_lights_and_leds(self):
         self._test_matrix_light()

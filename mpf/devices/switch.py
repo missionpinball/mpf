@@ -1,9 +1,11 @@
 """ Contains the Switch parent class. """
 import copy
 
+from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.system_wide_device import SystemWideDevice
 
 
+@DeviceMonitor("state", "recycle_jitter_count")
 class Switch(SystemWideDevice):
     """ A switch in a pinball machine."""
 

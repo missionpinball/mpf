@@ -208,7 +208,7 @@ class BCPClientSocket(BaseBcpClient):
                 message, bytes_needed = message.split(b'&bytes=')
                 bytes_needed = int(bytes_needed)
 
-                rawbytes = self._receiver.readexactly(bytes_needed)
+                rawbytes = yield from self._receiver.readexactly(bytes_needed)
 
                 message_obj = self._process_command(message, rawbytes)
 

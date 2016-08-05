@@ -459,9 +459,9 @@ leds:
     on_events:  dict|str:ms|None
     off_events:  dict|str:ms|None
     platform: single|str|None
-    x: single|float|None
-    y: single|float|None
-    z: single|float|None
+    x: single|int|None
+    y: single|int|None
+    z: single|int|None
     # color_channel_map: single|str|rgb     # not implemented
 led_stripes:
     __valid_in__: machine
@@ -633,8 +633,30 @@ physical_dmd:
     luminosity: list|float|.299, .587, .114
     brightness: single|float|0.5
     only_send_changes: single|bool|False
+physical_dmds:
+    __valid_in__: machine
+    platform: single|str|None
+    tags: list|str|None
+    label: single|str|%
+    debug: single|bool|False
+    shades: single|pow2|16
+    fps: single|int|30
+    source_display: single|str|dmd
+    luminosity: list|float|.299, .587, .114
+    brightness: single|float|0.5
+    only_send_changes: single|bool|False
 physical_rgb_dmd:
     __valid_in__: machine
+    fps: single|int|30
+    source_display: single|str|dmd
+    only_send_changes: single|bool|False
+    brightness: single|float|1.0
+physical_rgb_dmds:
+    __valid_in__: machine
+    platform: single|str|None
+    tags: list|str|None
+    label: single|str|%
+    debug: single|bool|False
     fps: single|int|30
     source_display: single|str|dmd
     only_send_changes: single|bool|False

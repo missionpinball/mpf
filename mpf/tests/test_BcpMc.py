@@ -1,7 +1,8 @@
 from queue import Queue
 from unittest.mock import MagicMock, patch, call
 
-from mpf.tests.MpfTestCase import MpfTestCase, MockBcpClient
+from mpf.tests.MpfBcpTestCase import MockBcpClient
+from mpf.tests.MpfTestCase import MpfTestCase
 
 
 class TestBcpClient(MockBcpClient):
