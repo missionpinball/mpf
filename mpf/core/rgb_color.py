@@ -1,3 +1,10 @@
+"""The Color module provides utilities for working with RGB colors.
+
+It is based on the colorutils open-source library:
+https://github.com/edaniszewski/colorutils
+Copyright (c) 2015 Erick Daniszewski
+The MIT License (MIT)
+"""
 import random
 
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
@@ -154,17 +161,11 @@ named_rgb_colors = CaseInsensitiveDict(
 
 
 class RGBColor(object):
-    """
-    The Color module provides utilities for working with RGB colors.  It is
-    based on the colorutils open-source library:
-    https://github.com/edaniszewski/colorutils
-    Copyright (c) 2015 Erick Daniszewski
-    The MIT License (MIT)
 
-    """
+    """One RGB Color."""
+
     def __init__(self, color=None, **kwargs):
-        """ Initialization """
-
+        """Initialise color."""
         if isinstance(color, RGBColor):
             self._color = color.rgb
         elif isinstance(color, str):
@@ -180,17 +181,17 @@ class RGBColor(object):
             setattr(self, k, v)
 
     def __eq__(self, other):
-        """ Equals """
+        """Return true if equal."""
         if isinstance(other, RGBColor):
             return self.rgb == other.rgb
         return False
 
     def __ne__(self, other):
-        """ Not Equals """
+        """Return true if not equal."""
         return not self.__eq__(other)
 
     def __add__(self, other):
-        """ Addition of two RGB colors """
+        """Return sum of two RGB colors."""
         if isinstance(other, RGBColor):
             r1, g1, b1 = self.rgb
             r2, g2, b2 = other.rgb
@@ -207,7 +208,7 @@ class RGBColor(object):
                          min(b1 + b2, channel_max_val)))
 
     def __sub__(self, other):
-        """ Subtraction of two RGB colors """
+        """Return difference of two RGB colors."""
         if isinstance(other, RGBColor):
             r1, g1, b1 = self.rgb
             r2, g2, b2 = other.rgb
@@ -224,20 +225,20 @@ class RGBColor(object):
                          max(b1 - b2, channel_min_val)))
 
     def __iter__(self):
-        """ Iterator """
+        """Return iterator."""
         return iter(self._color)
 
     def __str__(self):
-        """ String representation """
+        """Return string representation."""
         return "{}".format(self._color)
 
     def __repr__(self):
-        """ General representation """
+        """Return general representation."""
         return "<RGBColor {}>".format(self._color)
 
     @property
     def red(self):
-        """ The red component of the RGB color representation. """
+        """Return the red component of the RGB color representation."""
         return self._color[0]
 
     @red.setter
@@ -248,7 +249,7 @@ class RGBColor(object):
 
     @property
     def green(self):
-        """ The green component of the RGB color representation. """
+        """Return the green component of the RGB color representation."""
         return self._color[1]
 
     @green.setter
@@ -259,7 +260,7 @@ class RGBColor(object):
 
     @property
     def blue(self):
-        """ The blue component of the RGB color representation. """
+        """Return the blue component of the RGB color representation."""
         return self._color[2]
 
     @blue.setter
@@ -270,7 +271,7 @@ class RGBColor(object):
 
     @property
     def rgb(self):
-        """ An RGB representation of the color. """
+        """Return an RGB representation of the color."""
         return self._color
 
     @rgb.setter
@@ -279,7 +280,7 @@ class RGBColor(object):
 
     @property
     def hex(self):
-        """ A 6-char HEX representation of the color. """
+        """Return a 6-char HEX representation of the color."""
         return RGBColor.rgb_to_hex(self.rgb)
 
     @hex.setter
@@ -288,8 +289,10 @@ class RGBColor(object):
 
     @property
     def name(self):
-        """ A string containing a standard color name or None if the current
-        RGB color does not have a standard name
+        """Return the color name or None.
+
+        Returns a string containing a standard color name or None
+        if the current RGB color does not have a standard name.
         """
         return dict(
             [(_v, _k) for _k, _v in list(named_rgb_colors.items())]).get(
@@ -301,8 +304,8 @@ class RGBColor(object):
 
     @staticmethod
     def rgb_to_hex(rgb):
-        """
-        Convert an RGB color representation to a HEX color representation.
+        """Convert an RGB color representation to a HEX color representation.
+
         (r, g, b) :: r -> [0, 255]
                      g -> [0, 255]
                      b -> [0, 255]
@@ -341,7 +344,7 @@ class RGBColor(object):
 
     @staticmethod
     def blend(start_color, end_color, fraction):
-        """
+        """Blend two colors.
 
         Args:
             start_color: The start color
@@ -369,8 +372,8 @@ class RGBColor(object):
 
     @staticmethod
     def random_rgb():
-        """
-        Generate a uniformly random RGB value.
+        """Generate a uniformly random RGB value.
+
         :return: A tuple of three integers with values between 0 and 255 inclusive
         """
         return random.randint(0, 255), random.randint(0, 255), random.randint(
@@ -378,9 +381,9 @@ class RGBColor(object):
 
     @staticmethod
     def name_to_rgb(name, default=rgb_min):
-        """
-        Converts a standard color name to an RGB value (tuple). If the name is not found,
-        the default value is returned.
+        """Convert a standard color name to an RGB value (tuple).
+
+        If the name is not found, the default value is returned.
         :param name: A standard color name.
         :param default: The default value to return if the color name is not found.
         :return: RGB representation of the named color.
@@ -390,9 +393,9 @@ class RGBColor(object):
 
     @staticmethod
     def string_to_rgb(value, default=rgb_min):
-        """
-        Converts a string which could be either a standard color name or a hex value to
-        an RGB value (tuple). If the name is not found and the supplied value is not a
+        """Convert a string which could be either a standard color name or a hex value to an RGB value (tuple).
+
+        If the name is not found and the supplied value is not a
         valid hex string it raises an error.
         :param value: A standard color name or hex value.
         :param default: The default value to return if the color name is not found and
@@ -400,7 +403,6 @@ class RGBColor(object):
         :return: RGB representation of the named color.
         :rtype: tuple
         """
-
         if not value:
             return default
 
@@ -416,7 +418,9 @@ class RGBColor(object):
 
     @staticmethod
     def add_color(name, color):
-        """Adds (or updates if it already exists) a color. Note that this is not
+        """Add (or updates if it already exists) a color.
+
+        Note that this is not
         permanent, the list is reset when MPF restarts (though you can define your
         own custom colors in your config file's colors: section). You *can* use
         this function to dynamically change the values of colors in shows (they
@@ -434,18 +438,19 @@ class RGBColor(object):
 
 
 class ColorException(Exception):
+
     """General exception thrown for color utilities non-exit exceptions."""
+
     pass
 
 
 class RGBColorCorrectionProfile(object):
-    """Encapsulates a named RGB color correction profile and its associated
-    lookup tables.
 
-    """
+    """Encapsulates a named RGB color correction profile and its associated lookup tables."""
+
     def __init__(self, name=None):
-        """
-        Constructor.  Creates a linear correction profile that does not alter color values by default.
+        """Create a linear correction profile that does not alter color values by default.
+
         Args:
             name: The color correction profile name
 
@@ -461,8 +466,7 @@ class RGBColorCorrectionProfile(object):
 
     def generate_from_parameters(self, gamma=2.5, whitepoint=(1.0, 1.0, 1.0),
                                  linear_slope=1.0, linear_cutoff=0.0):
-        """Generates an RGB color correction profile lookup table based on the
-        parameters supplied.
+        """Generate an RGB color correction profile lookup table based on the parameters supplied.
 
         Args:
             gamma: Exponent for the nonlinear portion of the brightness curve.
@@ -474,7 +478,6 @@ class RGBColorCorrectionProfile(object):
                 and nonlinear curves.
 
         Returns: None
-
         """
         # Lookup table generation algorithm from the Fadecandy open source
         # server code:
@@ -499,14 +502,13 @@ class RGBColorCorrectionProfile(object):
                 self._lookup_table[channel][index] = max(0, min(value, 255))
 
     def assign_channel_lookup_table_values(self, channel, table_values):
-        """
-        Assigns the specified lookup table values to the profile channel
+        """Assign the specified lookup table values to the profile channel.
+
         Args:
             channel: The channel number (0..2)
             table_values: A list of 256 integer values between 0 and 255
 
         """
-
         if channel not in range(3):
             raise ValueError('Invalid channel number in color correction profile')
 
@@ -524,22 +526,20 @@ class RGBColorCorrectionProfile(object):
 
     @property
     def name(self):
-        """
-        The color correction profile name.
+        """Return the color correction profile name.
+
         Returns:
             str
         """
         return self._name
 
     def apply(self, color):
-        """Applies the current color correction profile to the specified RGBColor
-        object.
+        """Apply the current color correction profile to the specified RGBColor object.
 
         Args:
             color: The RGBColor object which to apply the color correction profile.
 
         Returns: RGBColor
-
         """
         return RGBColor((self._lookup_table[0][color.red],
                          self._lookup_table[1][color.green],
@@ -547,12 +547,11 @@ class RGBColorCorrectionProfile(object):
 
     @staticmethod
     def default():
-        """Creates a default profile (gamma-corrected).
+        """Create a default profile (gamma-corrected).
 
         The values for this table come from a web article:
         https://learn.adafruit.com/led-tricks-gamma-correction/the-quick-fix
         """
-
         default_profile = RGBColorCorrectionProfile('default')
 
         # Create standard gamma correction lookup table values

@@ -162,7 +162,7 @@ class BallSave(SystemWideDevice, ModeDevice):
             if self.debug:
                 self.log.debug("Saves remaining: %s", self.saves_remaining)
         elif self.debug:
-            self.log.debug("Unlimited Saves enabled")
+            self.log.debug("Unlimited saves remaining")
 
         if self.saves_remaining <= 0 and not self.unlimited_saves:
             if self.debug:

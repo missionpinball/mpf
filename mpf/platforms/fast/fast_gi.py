@@ -1,3 +1,4 @@
+"""GI on fast."""
 import logging
 
 from mpf.core.utility_functions import Util
@@ -5,8 +6,11 @@ from mpf.platforms.interfaces.gi_platform_interface import GIPlatformInterface
 
 
 class FASTGIString(GIPlatformInterface):
+
+    """A FAST GI string in a WPC machine."""
+
     def __init__(self, number, sender):
-        """A FAST GI string in a WPC machine.
+        """Initialise GI string.
 
         TODO: Need to implement the enable_relay and control which strings are
         dimmable.
@@ -16,10 +20,12 @@ class FASTGIString(GIPlatformInterface):
         self.send = sender
 
     def off(self):
+        """Turn off GI string."""
         self.log.debug("Turning Off GI String")
         self.send('GI:' + self.number + ',00')
 
     def on(self, brightness=255):
+        """Turn on GI string."""
         if brightness >= 255:
             brightness = 255
 

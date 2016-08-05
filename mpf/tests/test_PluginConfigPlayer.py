@@ -114,6 +114,7 @@ class TestPluginConfigPlayer(MpfTestCase):
         # use bcp mock
         self.machine_config_patches['bcp'] =\
             {"connections": {"local_display": {"type": "mpf.tests.MpfTestCase.MockBcpClient"}}}
+        self.machine_config_patches['bcp']['servers'] = []
 
     def test_plugin_config_player(self):
         self.assertIn('tests', ConfigPlayer.show_players)
@@ -167,8 +168,7 @@ class TestPluginConfigPlayer(MpfTestCase):
         self.client.send.assert_has_calls([
             call('mode_stop', {'name': 'mode1'}),
             call('trigger', {'context': 'mode1', 'name': 'tests_clear'}),
-            call('trigger', {'context': 'mode1', 'name':'test2s_clear'}),
-            call('trigger', {'key': 'mode1', 'name': 'clear'})]
+            call('trigger', {'context': 'mode1', 'name':'test2s_clear'})]
         )
         self.client.send.reset_mock()
 

@@ -114,9 +114,6 @@ show_player:
   play_with_priority:
     test_show1:
       priority: 15
-  play_with_hold:
-    test_show1:
-      hold: True
   play_with_speed:
     test_show1:
       speed: 2
@@ -141,43 +138,12 @@ show_player:
   play_with_manual_advance:
     test_show1:
       manual_advance: True
-  play_with_keys:
-    test_show1:
-      key: key1
-    test_show2:
-      key: key1
-    test_show3:
-      key: key2
-  stop_key1:
-    key1:
-      action: stop
-  stop_key2:
-    key2:
-      action: stop
-  stop_test_show1:
-    test_show1:
-      action: stop
   pause_test_show1:
     test_show1:
       action: pause
   resume_test_show1:
     test_show1:
       action: resume
-  invalid_show_stop_name:
-    fake_show:
-      action: stop
-  adjust_running_show_by_key:
-    key1:
-      action: update
-      speed: 2
-  stop_by_multiple_keys:
-    key1:
-      action: stop
-    key2:
-      action: stop
-  stop_by_show_name:
-    leds_extended:
-      action: stop
   play_show_assoc_tokens:
     show_assoc_tokens:
       speed: 1

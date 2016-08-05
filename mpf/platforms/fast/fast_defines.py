@@ -1,4 +1,4 @@
-
+"""Defines for FAST WPC."""
 wpc_switch_map = {
 
     # WPC   HEX    DEC

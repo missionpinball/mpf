@@ -4,8 +4,6 @@ from mpf.plugins import auditor
 from mpf.tests.MpfTestCase import MpfTestCase
 from unittest.mock import MagicMock
 
-from mpf.tests.test_Auditor import TestDataManager
-
 
 class MockMessage:
     def __init__(self, cat):
@@ -49,9 +47,6 @@ class TestOSC(MpfTestCase):
         osc.OSCmodule.OSCMessage = MockMessage
         osc.threading = MagicMock()
 
-        self.dataManager = auditor.DataManager
-        auditor.DataManager = TestDataManager
-
         self.machine_config_patches['mpf']['plugins'] = ['mpf.plugins.osc.OSC', 'mpf.plugins.auditor.Auditor']
         super().setUp()
 
@@ -61,10 +56,6 @@ class TestOSC(MpfTestCase):
         self.assertIsInstance(self.auditor, auditor.Auditor)
         # self.auditor.enable()
         # TODO: test audits
-
-    def tearDown(self):
-        super().tearDown()
-        auditor.DataManager = self.dataManager
 
     def test_unknown_message(self):
         # should not crash
