@@ -1438,10 +1438,11 @@ class ConfigValidator(object):
         del validation_failure_info
         return Util.string_to_list(item)
 
-    @classmethod
-    def _validate_type_int_from_hex(cls, item, validation_failure_info):
-        del validation_failure_info
-        return Util.hex_string_to_int(item)
+    def _validate_type_int_from_hex(self, item, validation_failure_info):
+        try:
+            return Util.hex_string_to_int(item)
+        except ValueError:
+            self.validation_error(item, validation_failure_info, "Could hex convert to int")
 
     @classmethod
     def _validate_type_gain(cls, item, validation_failure_info):
