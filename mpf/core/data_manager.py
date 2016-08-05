@@ -5,11 +5,14 @@ import logging
 import os
 import errno
 import _thread
+import threading
 
 from mpf.core.file_manager import FileManager
 
 
 class DataManager(object):
+
+    """Handles key value data loading and saving for the machine."""
 
     def __init__(self, machine, name):
         """
@@ -32,8 +35,11 @@ class DataManager(object):
         self.log = logging.getLogger('DataInterface')
 
         self.data = dict()
+        self._dirty = threading.Event()
 
         self._setup_file()
+
+        _thread.start_new_thread(self._writing_thread, ())
 
     def _setup_file(self):
         self._make_sure_path_exists(os.path.dirname(self.filename))
@@ -101,13 +107,12 @@ class DataManager(object):
 
         if delay_secs:
             self.machine.delay.add(callback=self._delayed_save_callback,
-                                   data=copy.deepcopy(self.data),
                                    ms=delay_secs * 1000)
         else:
-            _thread.start_new_thread(self._writing_thread, (copy.deepcopy(self.data), ))
+            self._dirty.set()
 
-    def _delayed_save_callback(self, data):
-        _thread.start_new_thread(self._writing_thread, (data, ))
+    def _delayed_save_callback(self):
+        self._dirty.set()
 
     def save_key(self, key, value, delay_secs=0):
         """Updates an individual key and then writes the entire dictionary to
@@ -131,12 +136,24 @@ class DataManager(object):
         self.save_all(delay_secs=delay_secs)
 
     def remove_key(self, key):
+        """Remove key by name."""
         try:
             del self.data[key]
             self.save_all()
         except KeyError:
             pass
 
-    def _writing_thread(self, data):
-        self.log.debug("Writing %s to: %s", self.name, self.filename)
-        FileManager.save(self.filename, data)
+    def _writing_thread(self):  # pragma: no cover
+        while not self.machine.thread_stopper.is_set():
+            if not self._dirty.wait(1):
+                continue
+            self._dirty.clear()
+
+            data = copy.deepcopy(self.data)
+            self.log.debug("Writing %s to: %s", self.name, self.filename)
+            # save to temp file and move afterwards. prevents broken files
+            temp_file = os.path.dirname(self.filename) + os.sep + "_" + os.path.basename(self.filename)
+            FileManager.save(temp_file, data)
+
+            # move temp file
+            os.rename(temp_file, self.filename)

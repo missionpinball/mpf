@@ -1,7 +1,6 @@
 """Contains the Credit (coin play) mode code"""
 
 from math import floor
-from mpf.core.data_manager import DataManager
 
 from mpf.core.mode import Mode
 
@@ -21,7 +20,7 @@ class Credits(Mode):
         super().__init__(machine, config, name, path)
 
     def mode_init(self):
-        self.data_manager = DataManager(self.machine, 'earnings')
+        self.data_manager = self.machine.create_data_manager('earnings')
         self.earnings = self.data_manager.get_data()
 
         self.credit_units_per_game = 0

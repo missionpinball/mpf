@@ -66,6 +66,7 @@ class MachineController(object):
 
         self.log.debug("Command line arguments: %s", self.options)
         self.verify_system_info()
+        self._exception = None
 
         self._boot_holds = set()
         self.is_init_done = False
@@ -127,9 +128,22 @@ class MachineController(object):
 
         self.clear_boot_hold('init')
 
+    def _exception_handler(self, loop, context):
+        # stop machine
+        self.stop()
+
+        # call original exception handler
+        loop.set_exception_handler(None)
+        loop.call_exception_handler(context)
+
+        # remember exception
+        self._exception = context
+
     # pylint: disable-msg=no-self-use
     def _load_clock(self):
-        return ClockBase()
+        clock = ClockBase()
+        clock.loop.set_exception_handler(self._exception_handler)
+        return clock
 
     def _run_init_phases(self):
         self.events.post("init_phase_1")
@@ -222,13 +236,24 @@ class MachineController(object):
             self.log.debug("Registering %s", entry_point)
             entry_point.load()(self)
 
+    def create_data_manager(self, config_name):
+        """Return a new DataManager for a certain config.
+
+        Args:
+            config_name: Name of the config
+        """
+        return DataManager(self, config_name)
+
     def _load_machine_vars(self):
-        self.machine_var_data_manager = DataManager(self, 'machine_vars')
+        self.machine_var_data_manager = self.create_data_manager('machine_vars')
 
         current_time = self.clock.get_time()
 
         for name, settings in (
                 iter(self.machine_var_data_manager.get_data().items())):
+
+            if not isinstance(settings, dict) or "value" not in settings:
+                continue
 
             if ('expire' in settings and settings['expire'] and
                     settings['expire'] < current_time):
@@ -573,6 +598,10 @@ class MachineController(object):
             self.clock.run()
         except KeyboardInterrupt:
             self.stop()
+
+        if self._exception:
+            print("Shutdown because of an exception:")
+            raise self._exception['exception']
 
         self._do_stop()
         self.clock.loop.close()

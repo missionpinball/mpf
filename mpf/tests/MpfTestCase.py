@@ -13,11 +13,11 @@ import asyncio
 import ruamel.yaml as yaml
 
 from mpf.core.bcp.bcp_client import BaseBcpClient
+from mpf.tests.TestDataManager import TestDataManager
 from mpf.tests.loop import TimeTravelLoop, TestClock
 
 import mpf.core
 import mpf.core.config_validator
-from mpf.core.data_manager import DataManager
 from mpf.core.machine import MachineController
 from mpf.core.utility_functions import Util
 from mpf.file_interfaces.yaml_interface import YamlInterface
@@ -55,13 +55,17 @@ class TestMachineController(MachineController):
 
     local_mpf_config_cache = {}
 
-    def __init__(self, mpf_path, machine_path, options, config_patches, clock,
+    def __init__(self, mpf_path, machine_path, options, config_patches, clock, mock_data,
                  enable_plugins=False):
         self.test_config_patches = config_patches
         self.test_init_complete = False
         self._enable_plugins = enable_plugins
         self._test_clock = clock
+        self._mock_data = mock_data
         super().__init__(mpf_path, machine_path, options)
+
+    def create_data_manager(self, config_name):
+        return TestDataManager(self._mock_data.get(config_name, {}))
 
     def _load_clock(self):
         return self._test_clock
@@ -94,7 +98,6 @@ class MpfTestCase(unittest.TestCase):
         self.machine_config_patches = dict()
         self.machine_config_patches['mpf'] = dict()
         self.machine_config_patches['mpf']['default_platform_hz'] = 100
-        self.machine_config_patches['mpf']['save_machine_vars_to_disk'] = False
         self.machine_config_patches['mpf']['plugins'] = list()
         self.machine_config_patches['bcp'] = []
         self._last_event_kwargs = {}
@@ -160,10 +163,18 @@ class MpfTestCase(unittest.TestCase):
 
     def advance_time_and_run(self, delta=1.0):
         self.machine.log.info("Advancing time by %s", delta)
-        self.loop.run_until_complete(asyncio.sleep(delay=delta, loop=self.loop))
+        try:
+            self.loop.run_until_complete(asyncio.sleep(delay=delta, loop=self.loop))
+            return
+        except RuntimeError as e:
+            pass
+
+        if self._exception:
+            raise self._exception['exception']
+        else:
+            raise e
 
     def machine_run(self):
-        #self.machine.events.process_event_queue()
         self.advance_time_and_run(0)
 
     def unittest_verbosity(self):
@@ -200,30 +211,16 @@ class MpfTestCase(unittest.TestCase):
         # restore sys path
         sys.path = self._sys_path
 
-    def _get_data(self, section=None):
-        del section
+    def _get_mock_data(self):
+        """Return data for MockDataMangager in test."""
         return dict()
-
-    def _setup_file(self):
-        pass
-
-    def _save_all(self, data=None, delay_secs=0):
-        pass
-
-    def _mock_data_manager(self):
-        self._data_manager = (DataManager._setup_file, DataManager.save_all, DataManager.get_data)
-
-        DataManager._setup_file = self._setup_file
-        DataManager.save_all = self._save_all
-        DataManager.get_data = self._get_data
-
-    def _unmock_data_manager(self):
-        DataManager._setup_file = self._data_manager[0]
-        DataManager.save_all = self._data_manager[1]
-        DataManager.get_data = self._data_manager[2]
 
     def _mock_loop(self):
         pass
+
+    def _exception_handler(self, loop, context):
+        loop.stop()
+        self._exception = context
 
     def setUp(self):
         # we want to reuse config_specs to speed tests up
@@ -232,6 +229,7 @@ class MpfTestCase(unittest.TestCase):
 
         self._events = {}
         self._last_event_kwargs = {}
+        self._exception = None
 
         # print(threading.active_count())
 
@@ -249,9 +247,8 @@ class MpfTestCase(unittest.TestCase):
         # init machine
         machine_path = self.getAbsoluteMachinePath()
 
-        self._mock_data_manager()
-
         self.loop = TimeTravelLoop()
+        self.loop.set_exception_handler(self._exception_handler)
         self.clock = TestClock(self.loop)
         self._mock_loop()
 
@@ -259,7 +256,7 @@ class MpfTestCase(unittest.TestCase):
             self.machine = TestMachineController(
                 os.path.abspath(os.path.join(
                     mpf.core.__path__[0], os.pardir)), machine_path,
-                self.getOptions(), self.machine_config_patches, self.clock,
+                self.getOptions(), self.machine_config_patches, self.clock, self._get_mock_data(),
                 self.get_enable_plugins())
 
             start = time.time()
@@ -327,7 +324,6 @@ class MpfTestCase(unittest.TestCase):
         self.machine.clock.loop.close()
         self.machine = None
 
-        self._unmock_data_manager()
         self.restore_sys_path()
 
     def add_to_config_validator(self, key, new_dict):
