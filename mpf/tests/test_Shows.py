@@ -31,6 +31,57 @@ class TestShows(MpfTestCase):
                 abs(color1[2] - color2[2])
         self.assertLessEqual(difference, delta, "Colors do not match: " + str(color1) + " " + str(color2))
 
+    def test_default_shows(self):
+        # test off
+        show_on = self.machine.shows['off'].play(show_tokens=dict(leds='led_01', lights='light_01'))
+        self.advance_time_and_run(.1)
+        self.assertEqual([0, 0, 0], self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(0, self.machine.lights.light_01.hw_driver.current_brightness)
+        show_on.stop()
+        self.advance_time_and_run(.1)
+        self.assertEqual([0, 0, 0], self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(0, self.machine.lights.light_01.hw_driver.current_brightness)
+
+        # test on
+        show_off = self.machine.shows['on'].play(show_tokens=dict(leds='led_01', lights='light_01'))
+        self.advance_time_and_run(.1)
+        self.assertEqual([255, 255, 255], self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(255, self.machine.lights.light_01.hw_driver.current_brightness)
+        show_off.stop()
+        self.advance_time_and_run(.1)
+        self.assertEqual([0, 0, 0], self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(0, self.machine.lights.light_01.hw_driver.current_brightness)
+
+        # test flash
+        # initially on
+        show_flash = self.machine.shows['flash'].play(show_tokens=dict(leds='led_01', lights='light_01'))
+        self.advance_time_and_run(.1)
+        self.assertEqual([255, 255, 255], self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(255, self.machine.lights.light_01.hw_driver.current_brightness)
+
+        # after 1s off
+        self.advance_time_and_run(1)
+        self.assertEqual([0, 0, 0], self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(0, self.machine.lights.light_01.hw_driver.current_brightness)
+
+        # on after another 1s
+        self.advance_time_and_run(1)
+        self.assertEqual([255, 255, 255], self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(255, self.machine.lights.light_01.hw_driver.current_brightness)
+
+        show_flash.stop()
+        self.advance_time_and_run(.1)
+        self.assertEqual([0, 0, 0], self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(0, self.machine.lights.light_01.hw_driver.current_brightness)
+
+        # test led_color
+        show_led_color = self.machine.shows['led_color'].play(show_tokens=dict(leds='led_01', color="red"))
+        self.advance_time_and_run(.1)
+        self.assertEqual([255, 0, 0], self.machine.leds.led_01.hw_driver.current_color)
+        show_led_color.stop()
+        self.advance_time_and_run(.1)
+        self.assertEqual([0, 0, 0], self.machine.leds.led_01.hw_driver.current_color)
+
     def test_shows(self):
         # Make sure required modes have been loaded
         self.assertIn('mode1', self.machine.modes)
