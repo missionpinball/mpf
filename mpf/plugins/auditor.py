@@ -2,7 +2,6 @@
 etc."""
 
 import logging
-from mpf.core.data_manager import DataManager
 from mpf.devices.shot import Shot
 
 
@@ -35,7 +34,7 @@ class Auditor(object):
         disable() methods.
         """
 
-        self.data_manager = DataManager(self.machine, 'audits')
+        self.data_manager = self.machine.create_data_manager('audits')
 
         self.machine.events.add_handler('init_phase_4', self._initialize)
 
