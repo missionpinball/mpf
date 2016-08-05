@@ -3,6 +3,7 @@ import copy
 import logging
 
 from mpf.core.player import Player
+from mpf.core.utility_functions import Util
 
 
 class BcpInterface(object):
@@ -50,13 +51,13 @@ class BcpInterface(object):
             register_trigger=self.bcp_receive_register_trigger,
             monitor_machine_vars=self._monitor_machine_vars,
             monitor_player_vars=self._monitor_player_vars,
-            monitor_switches=self._monitor_switches)
+            monitor_devices=self._monitor_devices)
 
         self._setup_player_monitor()
 
         self._setup_machine_var_monitor()
 
-        self._switch_monitor_registered = False
+        self._monitorable_devices = []
 
         self.machine.events.add_handler('player_add_success',
                                         self.bcp_player_added)
@@ -94,6 +95,40 @@ class BcpInterface(object):
         if not self.machine.bcp.transport.get_transports_for_handler(event):
             self.machine.events.remove_handler_by_event(event=event, handler=self.bcp_trigger)
 
+    def _monitor_devices(self, client):
+        """Register client to get notified of device changes."""
+        self.machine.bcp.transport.add_handler_to_transport("_devices", client)
+
+        # initially send all states
+        for device in self._monitorable_devices:
+            self.machine.bcp.transport.send_to_client(
+                client=client,
+                bcp_command='device',
+                type=device.class_label,
+                name=device.name,
+                changes=False,
+                state=device.get_monitorable_state())
+
+    def register_monitorable_device(self, device):
+        """Register monitorable device to BCP."""
+        if not self.configured:
+            return
+
+        self._monitorable_devices.append(device)
+
+    def notify_device_changes(self, device, attribute_name, old_value, new_value):
+        """Notify all listeners about device change."""
+        if not self.configured:
+            return
+
+        self.machine.bcp.transport.send_to_clients_with_handler(
+            handler="_devices",
+            bcp_command='device',
+            type=device.class_label,
+            name=device.name,
+            changes=(attribute_name, Util.convert_to_simply_type(old_value), Util.convert_to_simply_type(new_value)),
+            state=device.get_monitorable_state())
+
     def _monitor_player_vars(self, client):
         self.machine.bcp.transport.add_handler_to_transport("_player_vars", client)
         self.add_registered_trigger_event_for_client(client, 'player_score')
@@ -101,32 +136,6 @@ class BcpInterface(object):
     def _monitor_machine_vars(self, client):
         self._send_machine_vars(client)
         self.machine.bcp.transport.add_handler_to_transport("_machine_vars", client)
-
-    def _monitor_switches(self, client):
-        """Send switch changes to client."""
-        # register monitor in switch_controller
-        if not self._switch_monitor_registered:
-            self.machine.switch_controller.add_monitor(self._switch_change)
-            self._switch_monitor_registered = True
-
-        # add handler
-        self.machine.bcp.transport.add_handler_to_transport("_switches", client)
-
-        # initially send all switch states
-        for switch_name, switch in self.machine.switches.items():
-            self.machine.bcp.transport.send_to_client(
-                client=client,
-                bcp_command='switch',
-                name=switch_name,
-                state=switch.state)
-
-    def _switch_change(self, switch_name, state):
-        """Send switch change via BCP."""
-        self.machine.bcp.transport.send_to_clients_with_handler(
-            handler="_switches",
-            bcp_command='switch',
-            name=switch_name,
-            state=state)
 
     def _send_machine_vars(self, client):
         for var_name, settings in self.machine.machine_vars.items():
