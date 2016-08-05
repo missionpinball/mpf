@@ -21,6 +21,7 @@ class ShowController(object):
         self.machine = machine
 
         self.running_shows = list()
+        self._next_show_id = 0
 
         # Registers Show with the asset manager
         Show.initialize(self.machine)
