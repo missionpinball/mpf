@@ -21,6 +21,7 @@ class ShowController(object):
         self.machine = machine
 
         self.running_shows = list()
+        self._next_show_id = 0
 
         # Registers Show with the asset manager
         Show.initialize(self.machine)
@@ -33,6 +34,11 @@ class ShowController(object):
     def _initialize(self):
         if 'shows' in self.machine.config:
             self._process_config_shows_section(self.machine.config['shows'])
+
+    def get_next_show_id(self):
+        """Return the next show id."""
+        self._next_show_id += 1
+        return self._next_show_id
 
     def _process_config_shows_section(self, config, **kwargs):
         # processes the shows: section of a mode or machine config
