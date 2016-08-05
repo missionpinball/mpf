@@ -1,10 +1,10 @@
 # TODO: test remaining actions
 # TODO: test empty control_events
 
-from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
 
-class TestModeTimer(MpfTestCase):
+class TestModeTimer(MpfFakeGameTestCase):
 
     def getConfigFile(self):
         return 'test_mode_timers.yaml'
@@ -23,6 +23,15 @@ class TestModeTimer(MpfTestCase):
     def _mode_timer_complete(self, **kwargs):
         del kwargs
         self.started = False
+
+    def test_start_with_game(self):
+        self.start_game()
+        self.advance_time_and_run()
+        self.assertIn(self.machine.modes.mode_with_timers2,
+                      self.machine.mode_controller.active_modes)
+
+        self.assertIn(self.machine.modes.game,
+                      self.machine.mode_controller.active_modes)
 
     def test_mode_timer_down_with_player(self):
         self.machine.events.add_handler("timer_timer_down_tick", self._mode_timer_tick)
