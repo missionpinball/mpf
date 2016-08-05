@@ -2,9 +2,11 @@
 
 from collections import deque
 from mpf.core.delays import DelayManager
+from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.system_wide_device import SystemWideDevice
 
 
+@DeviceMonitor("active", "enabled", "eject_state")
 class Diverter(SystemWideDevice):
     """Represents a diverter in a pinball machine.
 

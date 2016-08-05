@@ -1,10 +1,12 @@
 """Device that implements a ball save."""
 
 from mpf.core.delays import DelayManager
+from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
 
 
+@DeviceMonitor("saves_remaining", "enabled", "timer_started")
 class BallSave(SystemWideDevice, ModeDevice):
     config_section = 'ball_saves'
     collection = 'ball_saves'

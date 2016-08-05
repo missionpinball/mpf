@@ -1,8 +1,9 @@
 """ Contains the GI (General Illumination) parent classes. """
-
+from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.system_wide_device import SystemWideDevice
 
 
+@DeviceMonitor("_brightness")
 class Gi(SystemWideDevice):
     """ Represents a light connected to a traditional lamp matrix in a pinball
     machine.
@@ -21,6 +22,7 @@ class Gi(SystemWideDevice):
         super().__init__(machine, name)
 
         self.registered_handlers = []
+        self._brightness = 0
 
     def _initialize(self):
         self.load_platform_section('gis')
@@ -46,10 +48,12 @@ class Gi(SystemWideDevice):
                 handler(light_name=self.name, brightness=brightness)
 
         self.hw_driver.on(brightness)
+        self._brightness = brightness
 
     def disable(self, **kwargs):
         """Disables this GI string."""
         del kwargs
+        self._brightness = 0
         self.hw_driver.off()
 
     def add_handler(self, callback):

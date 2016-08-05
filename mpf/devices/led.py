@@ -1,6 +1,7 @@
 """Contains the Led class."""
 from operator import itemgetter
 
+from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
 from mpf.core.rgb_color import RGBColor
@@ -8,6 +9,7 @@ from mpf.core.rgb_color import RGBColorCorrectionProfile
 from mpf.core.system_wide_device import SystemWideDevice
 
 
+@DeviceMonitor("_brightness")
 class Led(SystemWideDevice):
 
     """An RGB LED in a pinball machine."""
@@ -108,6 +110,7 @@ class Led(SystemWideDevice):
     def __init__(self, machine, name):
         """Initialise LED."""
         self.hw_driver = None
+        self._color = [0, 0, 0]
         super().__init__(machine, name)
 
         self.fade_in_progress = False
@@ -363,6 +366,7 @@ class Led(SystemWideDevice):
         # fade
         else:
             corrected_color = self.color_correct(self.stack[0]['color'])
+            self._color = list(corrected_color)
             if self.debug:
                 self.log.debug("Writing color to hw driver: %s", corrected_color)
 

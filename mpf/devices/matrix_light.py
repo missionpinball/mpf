@@ -2,11 +2,13 @@
 
 from operator import itemgetter
 
+from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
 from mpf.core.system_wide_device import SystemWideDevice
 
 
+@DeviceMonitor("_brightness")
 class MatrixLight(SystemWideDevice):
 
     """Represents a light connected to a traditional lamp matrix in a pinball machine.
@@ -74,6 +76,7 @@ class MatrixLight(SystemWideDevice):
     def __init__(self, machine, name):
         """Initialise light."""
         self.hw_driver = None
+        self._brightness = 0
         super().__init__(machine, name)
 
         self.x = None
@@ -312,6 +315,7 @@ class MatrixLight(SystemWideDevice):
         # fade
         else:
             self.hw_driver.on(self.stack[0]['brightness'])
+            self._brightness = self.stack[0]['brightness']
 
             if self.registered_handlers:
                 # Handlers are not sent brightness corrected brightnesss
