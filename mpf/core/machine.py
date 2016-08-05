@@ -66,6 +66,7 @@ class MachineController(object):
 
         self.log.debug("Command line arguments: %s", self.options)
         self.verify_system_info()
+        self._exception = None
 
         self._boot_holds = set()
         self.is_init_done = False
@@ -127,9 +128,22 @@ class MachineController(object):
 
         self.clear_boot_hold('init')
 
+    def _exception_handler(self, loop, context):
+        # stop machine
+        self.stop()
+
+        # call original exception handler
+        loop.set_exception_handler(None)
+        loop.call_exception_handler(context)
+
+        # remember exception
+        self._exception = context
+
     # pylint: disable-msg=no-self-use
     def _load_clock(self):
-        return ClockBase()
+        clock = ClockBase()
+        clock.loop.set_exception_handler(self._exception_handler)
+        return clock
 
     def _run_init_phases(self):
         self.events.post("init_phase_1")
@@ -584,6 +598,10 @@ class MachineController(object):
             self.clock.run()
         except KeyboardInterrupt:
             self.stop()
+
+        if self._exception:
+            print("Shutdown because of an exception:")
+            raise self._exception['exception']
 
         self._do_stop()
         self.clock.loop.close()
