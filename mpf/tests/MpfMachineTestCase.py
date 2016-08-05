@@ -12,7 +12,7 @@ class MpfMachineTestCase(MpfTestCase):
         self.machine_config_patches = dict()
         # use bcp mock
         self.machine_config_patches['bcp'] = \
-            {"connections": {"local_display": {"type": "mpf.tests.MpfTestCase.MockBcpClient"}}}
+            {"connections": {"local_display": {"type": "mpf.tests.MpfTestCase.MockBcpClient"}}, "servers": []}
 
         # increase test expected duration
         self.expected_duration = 5.0

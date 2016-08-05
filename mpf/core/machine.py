@@ -617,9 +617,6 @@ class MachineController(object):
         """
         pass
 
-    def bcp_reset_complete(self):
-        pass
-
     def _reset_complete(self):
         self.log.debug('Reset Complete')
         self.events.post('reset_complete')

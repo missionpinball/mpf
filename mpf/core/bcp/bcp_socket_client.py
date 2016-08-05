@@ -1,11 +1,12 @@
 """BCP socket client."""
 import json
 import logging
-import urllib
+from urllib.parse import urlsplit, parse_qs, quote, unquote, urlunparse
 
 import asyncio
 
 from mpf._version import __version__, __bcp_version__
+from mpf.core.bcp.bcp_client import BaseBcpClient
 
 
 def decode_command_string(bcp_string):
@@ -26,10 +27,10 @@ def decode_command_string(bcp_string):
     will be preserved.
 
     """
-    bcp_command = urllib.parse.urlsplit(bcp_string)
+    bcp_command = urlsplit(bcp_string)
 
     try:
-        kwargs = urllib.parse.parse_qs(bcp_command.query)
+        kwargs = parse_qs(bcp_command.query)
         if 'json' in kwargs:
             kwargs = json.loads(kwargs['json'][0])
             return bcp_command.path.lower(), kwargs
@@ -50,7 +51,7 @@ def decode_command_string(bcp_string):
             elif v[0] == 'NoneType:':
                 v[0] = None
             else:
-                v[0] = urllib.parse.unquote(v[0])
+                v[0] = unquote(v[0])
 
             kwargs[k] = v
 
@@ -86,7 +87,7 @@ def encode_command_string(bcp_command, **kwargs):
             json_needed = True
             break
 
-        value = urllib.parse.quote(str(v), '')
+        value = quote(str(v), '')
 
         if isinstance(v, bool):  # bool isinstance of int, so this goes first
             value = 'bool:{}'.format(value)
@@ -97,7 +98,7 @@ def encode_command_string(bcp_command, **kwargs):
         elif v is None:
             value = 'NoneType:'
 
-        kwarg_string += '{}={}&'.format(urllib.parse.quote(k.lower(), ''),
+        kwarg_string += '{}={}&'.format(quote(k.lower(), ''),
                                         value)
 
     kwarg_string = kwarg_string[:-1]
@@ -105,11 +106,10 @@ def encode_command_string(bcp_command, **kwargs):
     if json_needed:
         kwarg_string = 'json={}'.format(json.dumps(kwargs))
 
-    return str(urllib.parse.urlunparse(('', '', bcp_command.lower(), '',
-                                        kwarg_string, '')))
+    return str(urlunparse(('', '', bcp_command.lower(), '', kwarg_string, '')))
 
 
-class BCPClientSocket(object):
+class BCPClientSocket(BaseBcpClient):
 
     """Parent class for a BCP client socket.
 
@@ -118,40 +118,39 @@ class BCPClientSocket(object):
     Args:
         machine: The main MachineController object.
         name: String name this client.
-        config: A dictionary containing the configuration for this client.
         bcp: The bcp object.
     """
 
-    def __init__(self, machine, name, config, bcp):
+    def __init__(self, machine, name, bcp):
         """Initialise BCP client socket."""
-        self.log = logging.getLogger('BCPClientSocket.' + name)
+        self.log = logging.getLogger('BCPClientSocket.' + str(name))
         self.log.debug('Setting up BCP Client...')
 
-        self.machine = machine
-        self.name = name
-        self.bcp = bcp
-
-        self.config = self.machine.config_validator.validate_config(
-            'bcp:connections', config, 'bcp:connections')
+        super().__init__(machine, name, bcp)
 
         self._sender = None
         self._receiver = None
         self._send_goodbye = True
-        self.receive_buffer = b''
+        self._receive_buffer = b''
 
-        self.bcp_client_socket_commands = {'hello': self.receive_hello,
-                                           'goodbye': self.receive_goodbye}
+        self._bcp_client_socket_commands = {'hello': self._receive_hello,
+                                            'goodbye': self._receive_goodbye}
 
-        self.machine.clock.loop.run_until_complete(self._setup_client_socket())
+    def connect(self, config):
+        """Actively connect to server."""
+        config = self.machine.config_validator.validate_config(
+            'bcp:connections', config, 'bcp:connections')
+
+        self.machine.clock.loop.run_until_complete(self._setup_client_socket(config['host'], config['port']))
 
     @asyncio.coroutine
-    def _setup_client_socket(self):
+    def _setup_client_socket(self, client_host, client_port):
         """Set up the client socket."""
         self.log.info("Connecting to BCP Media Controller at %s:%s...",
-                      self.config['host'], self.config['port'])
+                      client_host, client_port)
 
         while True:
-            connector = self.machine.clock.open_connection(self.config['host'], self.config['port'])
+            connector = self.machine.clock.open_connection(client_host, client_port)
             try:
                 self._receiver, self._sender = yield from connector
             except ConnectionRefusedError:
@@ -160,10 +159,16 @@ class BCPClientSocket(object):
 
             break
 
-        self.log.debug("Connected to remote BCP host %s:%s", self.config['host'], self.config['port'])
+        self.log.debug("Connected to remote BCP host %s:%s", client_host, client_port)
 
         self.send_hello()
-        self.read_task = self.machine.clock.loop.create_task(self._receive_loop())
+
+    def accept_connection(self, receiver, sender):
+        """Create client for incoming connection."""
+        self._receiver = receiver
+        self._sender = sender
+
+        self.send_hello()
 
     def stop(self):
         """Stop and shut down the socket client."""
@@ -172,7 +177,6 @@ class BCPClientSocket(object):
         if self._send_goodbye:
             self.send_goodbye()
 
-        self.read_task.cancel()
         self._sender.close()
 
     def send(self, bcp_command, bcp_command_args):
@@ -185,68 +189,34 @@ class BCPClientSocket(object):
         bcp_string = encode_command_string(bcp_command, **bcp_command_args)
 
         self.log.debug('Sending "%s"', bcp_string)
-        try:
-            self._sender.write((bcp_string + '\n').encode())
-        except BrokenPipeError:
-            self._handle_connection_close()
-
-    def _handle_connection_close(self):
-        # connection has been closed
-        self.machine.stop()
+        self._sender.write((bcp_string + '\n').encode())
 
     @asyncio.coroutine
-    def _receive_loop(self):
+    def read_message(self):
+        """Read the next message."""
         while True:
-            should_continue = yield from self._receive()
-            if not should_continue:
-                break
+            message = yield from self._receiver.readline()
 
-    @asyncio.coroutine
-    def _receive(self):
-        """Receive loop."""
-        try:
-            buffer = yield from self._receiver.read(4096)
-        except ConnectionResetError:
-            # handle connection reset
-            self._handle_connection_close()
-            return False
+            # handle EOF
+            if not message:
+                raise BrokenPipeError()
 
-        # handle EOF
-        if not buffer:
-            self._handle_connection_close()
-            return False
-
-        self.receive_buffer += buffer
-
-        while True:
-            # All this code exists to build complete messages since what we
-            # get from the socket could be partial messages and/or could
-            # include multiple messages.
-            message, nl, leftovers = self.receive_buffer.partition(b'\n')
-
-            if not nl:  # \n not found. msg not complete. wait for later
-                break
+            # strip newline
+            message = message[0:-1]
 
             if b'&bytes=' in message:
                 message, bytes_needed = message.split(b'&bytes=')
                 bytes_needed = int(bytes_needed)
 
-                rawbytes = leftovers
-                if len(rawbytes) < bytes_needed:
-                    break
+                rawbytes = self._receiver.readexactly(bytes_needed)
 
-                rawbytes, next_message = (
-                    rawbytes[0:bytes_needed],
-                    rawbytes[bytes_needed:])
-
-                self._process_command(message, rawbytes)
-                self.receive_buffer = next_message
+                message_obj = self._process_command(message, rawbytes)
 
             else:  # no bytes in the message
-                self.receive_buffer = leftovers
-                self._process_command(message)
+                message_obj = self._process_command(message)
 
-        return True
+            if message_obj:
+                return message_obj
 
     def _process_command(self, message, rawbytes=None):
         self.log.debug('Received "%s"', message)
@@ -255,21 +225,19 @@ class BCPClientSocket(object):
         if rawbytes:
             kwargs['rawbytes'] = rawbytes
 
-        if cmd in self.bcp_client_socket_commands:
-            self.bcp_client_socket_commands[cmd](**kwargs)
+        if cmd in self._bcp_client_socket_commands:
+            self._bcp_client_socket_commands[cmd](**kwargs)
         else:
-            self.bcp.interface.process_bcp_message(cmd, kwargs, self)
+            return cmd, kwargs
 
-    def receive_hello(self, **kwargs):
+    def _receive_hello(self, **kwargs):
         """Process incoming BCP 'hello' command."""
         self.log.debug('Received BCP Hello from host with kwargs: %s', kwargs)
 
-    def receive_goodbye(self):
+    def _receive_goodbye(self):
         """Process incoming BCP 'goodbye' command."""
         self._send_goodbye = False
         self.stop()
-        self.machine.bcp.interface.remove_bcp_connection(self)
-        self.machine.stop()
 
     def send_hello(self):
         """Send BCP 'hello' command."""
