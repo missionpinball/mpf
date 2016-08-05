@@ -1,3 +1,4 @@
+"""Test the bcp interface."""
 from mpf.tests.MpfBcpTestCase import MpfBcpTestCase
 
 
@@ -22,31 +23,54 @@ class TestBcpInterface(MpfBcpTestCase):
         self._bcp_client.send_queue.clear()
 
         # register monitor
-        self._bcp_client.receive_queue.put_nowait(('monitor_switches', {}))
+        self._bcp_client.receive_queue.put_nowait(('monitor_devices', {}))
         self.advance_time_and_run()
 
         # initial states
-        self.assertIn(("switch", {"name": "s_test", "state": 1}), self._bcp_client.send_queue)
-        self.assertNotIn(("switch", {"name": "s_test", "state": 0}), self._bcp_client.send_queue)
-        self.assertIn(("switch", {"name": "s_test2", "state": 0}), self._bcp_client.send_queue)
-        self.assertNotIn(("switch", {"name": "s_test2", "state": 1}), self._bcp_client.send_queue)
+        self.assertIn(
+            ("device", {"type": "switch",
+                        "name": "s_test",
+                        "state": {'state': 1, 'recycle_jitter_count': 0},
+                        "changes": False}), self._bcp_client.send_queue)
+        self.assertNotIn(
+            ("device", {"type": "switch",
+                        "name": "s_test",
+                        "state": {'state': 0, 'recycle_jitter_count': 0},
+                        "changes": False}), self._bcp_client.send_queue)
+        self.assertIn(
+            ("device", {"type": "switch",
+                        "name": "s_test2",
+                        "state": {'state': 0, 'recycle_jitter_count': 0},
+                        "changes": False}), self._bcp_client.send_queue)
+        self.assertNotIn(
+            ("device", {"type": "switch",
+                        "name": "s_test2",
+                        "state": {'state': 1, 'recycle_jitter_count': 0},
+                        "changes": False}), self._bcp_client.send_queue)
         self._bcp_client.send_queue.clear()
 
         # change switch
         self.release_switch_and_run("s_test", .1)
-        self.assertIn(("switch", {"name": "s_test", "state": 0}), self._bcp_client.send_queue)
-        self.assertNotIn(("switch", {"name": "s_test", "state": 1}), self._bcp_client.send_queue)
+        self.assertIn(
+            ("device", {"type": "switch",
+                        "name": "s_test",
+                        "state": {'state': 0, 'recycle_jitter_count': 0},
+                        "changes": ('state', 1, 0)}),
+            self._bcp_client.send_queue)
         self._bcp_client.send_queue.clear()
 
         # nothing should happen
         self.release_switch_and_run("s_test", .1)
-        self.assertNotIn(("switch", {"name": "s_test", "state": 0}), self._bcp_client.send_queue)
-        self.assertNotIn(("switch", {"name": "s_test", "state": 1}), self._bcp_client.send_queue)
+        self.assertFalse(self._bcp_client.send_queue)
 
         # change again
         self.hit_switch_and_run("s_test", .1)
-        self.assertIn(("switch", {"name": "s_test", "state": 1}), self._bcp_client.send_queue)
-        self.assertNotIn(("switch", {"name": "s_test", "state": 0}), self._bcp_client.send_queue)
+        self.assertIn(
+            ("device", {"type": "switch",
+                        "name": "s_test",
+                        "state": {'state': 1, 'recycle_jitter_count': 0},
+                        "changes": ('state', 0, 1)}),
+            self._bcp_client.send_queue)
 
     def test_receive_switch(self):
         # should not crash
