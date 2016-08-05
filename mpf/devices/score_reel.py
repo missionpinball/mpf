@@ -104,7 +104,6 @@ class ScoreReel(SystemWideDevice):
 
         This method also schedules delays to post the following events:
 
-        `reel_<name>_pulse_done`: When the coil is done pulsing
         `reel_<name>_ready`: When the config['repeat_pulse_time'] time is up
         `reel_<name>_hw_value`: When the config['hw_confirm_time'] time is up
 
@@ -170,13 +169,6 @@ class ScoreReel(SystemWideDevice):
                              "we're at the max limit and this reel "
                              "cannot roll over")
             return False
-
-    def _pulse_done(self):
-        # automatically called (via a delay) after the reel fires to post an
-        # event that the reel's coil is done pulsing
-        self.machine.events.post('reel_' + self.name + "_pulse_done")
-        '''event: reel_(name)_pulse_done
-        desc: The score real (name) is done pulsing.'''
 
     def _ready_to_fire(self):
         # automatically called (via a delay) after the reel fires to post an

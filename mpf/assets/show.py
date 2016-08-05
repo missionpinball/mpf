@@ -36,15 +36,6 @@ class Show(Asset):
     pool_config_section = 'show_pools'
     asset_group_class = ShowPool
 
-    next_id = 0
-
-    @classmethod
-    def get_id(cls):
-        """Return the next show id."""
-        # TODO: remove global here #349
-        Show.next_id += 1
-        return Show.next_id
-
     # pylint: disable-msg=too-many-arguments
     def __init__(self, machine, name, file=None, config=None, data=None):
         """Initialise show."""
@@ -448,7 +439,7 @@ class RunningShow(object):
 
         self.name = show.name
 
-        self.id = Show.get_id()
+        self.id = self.machine.show_controller.get_next_show_id()
         self._players = list()
 
         # if show_tokens:

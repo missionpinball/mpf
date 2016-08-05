@@ -202,6 +202,20 @@ class TestConfig(MpfTestCase):
         self.assertEqual(results, 1)
         self.assertIs(type(results), int)
 
+        # test int_from_hex
+        validation_string = 'single|int_from_hex|ff'
+        results = self.machine.config_validator.validate_config_item(
+                validation_string, 'test_failure_info')  # no item in config
+        self.assertEqual(results, 255)
+
+        results = self.machine.config_validator.validate_config_item(
+            validation_string, 'test_failure_info', '0a')
+        self.assertEqual(results, 10)
+
+        with self.assertRaises(AssertionError):
+            self.machine.config_validator.validate_config_item(
+                validation_string, validation_failure_info, 'white')
+
         # test bool validations
         validation_string = 'single|bool|'
         results = self.machine.config_validator.validate_config_item(

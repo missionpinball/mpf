@@ -22,6 +22,9 @@ class ModeTimer(object):
         self.name = name
         self.config = config
 
+        if mode.player is None:
+            raise AssertionError("Cannot use ModeTimer in mode without player.")
+
         self.tick_var = self.mode.name + '_' + self.name + '_tick'
         self.mode.player[self.tick_var] = 0
 
