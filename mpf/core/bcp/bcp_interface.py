@@ -1,5 +1,4 @@
 """RPC Interface for BCP clients."""
-import copy
 import logging
 
 from mpf.core.player import Player
