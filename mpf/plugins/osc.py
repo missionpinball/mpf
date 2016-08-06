@@ -11,7 +11,7 @@ import locale
 
 try:
     # noinspection PyPep8Naming
-    from . import OSC as OSCmodule
+    from . import OSC as OSCmodule  # noqa
     socket.gethostbyname(socket.gethostname())
     import_success = True
 except ImportError:
