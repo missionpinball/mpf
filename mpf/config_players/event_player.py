@@ -20,8 +20,6 @@ class EventPlayer(ConfigPlayer):
 
     def play(self, settings, context, priority=0, **kwargs):
         """Post (delayed) events."""
-        if 'events' in settings:
-            settings = settings['events']
 
         for event, s in settings.items():
             s.update(kwargs)
@@ -49,14 +47,28 @@ class EventPlayer(ConfigPlayer):
         new_config = dict()
 
         for event, settings in config.items():
-            if not isinstance(settings, list) or not isinstance(settings, dict):
+            if isinstance(settings, dict):
+                # dicts are fine
+                new_config[event] = settings
+
+                # just check that all values are dicts again
+                for event1, args in settings.items():
+                    if not isinstance(args, dict):
+                        raise AssertionError("Invalid args {}:{} in {} event_player".format(event, settings, event1))
+            elif isinstance(settings, str):
+                # convert str to list and then to dict
                 new_config[event] = dict()
 
                 for event1 in Util.string_to_list(settings):
                     new_config[event][event1] = dict()
+            elif isinstance(settings, list):
+                # convert list to dict
+                new_config[event] = dict()
 
+                for event1 in settings:
+                    new_config[event][event1] = dict()
             else:
-                new_config[event] = settings
+                raise AssertionError("Invalid entry {}:{} in event_player".format(event, settings))
 
         super().validate_config(new_config)
 
