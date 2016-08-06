@@ -16,14 +16,15 @@ class DeviceMonitor:
 
         old_init = getattr(cls, '__init__', None)
 
-        def __init__(self_inner, *args, **kwargs):
+        def __init__(self_inner, *args, **kwargs):  # noqa
             """Register class at BCP."""
             old_init(self_inner, *args, **kwargs)
             self_inner.machine.bcp.interface.register_monitorable_device(self_inner)
 
         old_setattr = getattr(cls, '__setattr__', None)
 
-        def __setattr__(self_inner, name, value):
+        # pylint: disable-msg=
+        def __setattr__(self_inner, name, value):   # noqa
             """If the value changed notify subscribers via BCP."""
             notify = False
             if name in self._attributes_to_monitor:
