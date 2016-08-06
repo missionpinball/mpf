@@ -20,7 +20,6 @@ class EventPlayer(ConfigPlayer):
 
     def play(self, settings, context, priority=0, **kwargs):
         """Post (delayed) events."""
-
         for event, s in settings.items():
             s.update(kwargs)
             if ':' in event:
