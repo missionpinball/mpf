@@ -8,8 +8,6 @@ boards.
 import logging
 from copy import deepcopy
 
-import asyncio
-
 from mpf.platforms.fast.fast_servo import FastServo
 from mpf.platforms.fast import fast_defines
 from mpf.platforms.fast.fast_dmd import FASTDMD
