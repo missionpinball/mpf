@@ -258,6 +258,7 @@ class MpfTestCase(unittest.TestCase):
 
     def mock_event(self, event_name):
         self._events[event_name] = 0
+        self.machine.events.remove_handler_by_event(event=event_name, handler=self._mock_event_handler)
         self.machine.events.add_handler(event=event_name,
                                         handler=self._mock_event_handler,
                                         event_name=event_name)
