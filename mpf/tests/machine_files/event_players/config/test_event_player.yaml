@@ -1,0 +1,21 @@
+#config_version=4
+
+event_player:
+    play_express_single: event1
+    play_express_multiple: event1, event2
+    play_single_list:
+        - event1
+    play_single_string:
+        event1
+    play_multiple_list:
+        - event1
+        - event2
+        - event3
+    play_multiple_string:
+        event1
+        event2
+        event3
+    play_multiple_args:
+        event1: {"a": "b"}
+        event2: {}
+        event3: {"a": 1, "b": 2}
