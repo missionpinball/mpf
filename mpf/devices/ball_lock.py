@@ -1,4 +1,4 @@
-""" Contains the BallLock device class."""
+"""Contains the BallLock device class."""
 
 from collections import deque
 
@@ -9,11 +9,15 @@ from mpf.core.system_wide_device import SystemWideDevice
 
 @DeviceMonitor("balls_locked", "enabled", "lock_queue")
 class BallLock(SystemWideDevice, ModeDevice):
+
+    """Ball lock device which can be used to keep balls in ball devices and control their eject later on."""
+
     config_section = 'ball_locks'
     collection = 'ball_locks'
     class_label = 'ball_lock'
 
     def __init__(self, machine, name):
+        """Initialise ball lock."""
         self.lock_devices = None
         self.source_playfield = None
         super().__init__(machine, name)
@@ -24,11 +28,13 @@ class BallLock(SystemWideDevice, ModeDevice):
         self.lock_queue = deque()
 
     def device_removed_from_mode(self, mode):
+        """Disable ball lock when mode ends."""
         del mode
         self.disable()
 
     @classmethod
     def prepare_config(cls, config, is_mode_config):
+        """Add default events when outside mode."""
         if not is_mode_config:
             if 'enable_events' not in config:
                 config['enable_events'] = 'ball_started'
@@ -46,8 +52,9 @@ class BallLock(SystemWideDevice, ModeDevice):
         self.source_playfield = self.config['source_playfield']
 
     def enable(self, **kwargs):
-        """ Enables the lock. If the lock is not enabled, no balls will be
-        locked.
+        """Enable the lock.
+
+        If the lock is not enabled, no balls will be locked.
 
         Args:
             **kwargs: unused
@@ -59,8 +66,9 @@ class BallLock(SystemWideDevice, ModeDevice):
         self.enabled = True
 
     def disable(self, **kwargs):
-        """ Disables the lock. If the lock is not enabled, no balls will be
-        locked.
+        """Disable the lock.
+
+        If the lock is not enabled, no balls will be locked.
 
         Args:
             **kwargs: unused
@@ -71,8 +79,9 @@ class BallLock(SystemWideDevice, ModeDevice):
         self.enabled = False
 
     def reset(self, **kwargs):
-        """Resets the lock. Will release locked balls. Device will status will
-        stay the same (enabled/disabled)
+        """Reset the lock.
+
+        Will release locked balls. Device will status will stay the same (enabled/disabled).
 
         Args:
             **kwargs: unused
@@ -82,7 +91,7 @@ class BallLock(SystemWideDevice, ModeDevice):
         self.balls_locked = 0
 
     def release_one(self, **kwargs):
-        """ Releases one ball
+        """Release one ball.
 
         Args:
             **kwargs: unused
@@ -91,9 +100,7 @@ class BallLock(SystemWideDevice, ModeDevice):
         self.release_balls(balls_to_release=1)
 
     def release_all_balls(self):
-        """ Releases all balls in lock
-
-        """
+        """Release all balls in lock."""
         self.release_balls(self.balls_locked)
 
     def release_balls(self, balls_to_release):
@@ -153,19 +160,19 @@ class BallLock(SystemWideDevice, ModeDevice):
         # unregister ball_enter handlers
         self.machine.events.remove_handler(self._lock_ball)
 
-    # return true if lock is full
     def is_full(self):
+        """Return true if lock is full."""
         return self.remaining_space_in_lock() == 0
 
-    # return the remaining capacity of the lock
     def remaining_space_in_lock(self):
+        """Return the remaining capacity of the lock."""
         balls = self.config['balls_to_lock'] - self.balls_locked
         if balls < 0:
             balls = 0
         return balls
 
-    # callback for _ball_enter event of lock_devices
     def _lock_ball(self, device, new_balls, unclaimed_balls, **kwargs):
+        """Callback for _ball_enter event of lock_devices."""
         del new_balls
         del kwargs
         # if full do not take any balls
@@ -213,10 +220,11 @@ class BallLock(SystemWideDevice, ModeDevice):
         self.lock_queue.append((device, unclaimed_balls))
 
         # schedule eject of new balls
-        self.request_new_balls(balls_to_lock)
+        self._request_new_balls(balls_to_lock)
 
         return {'unclaimed_balls': unclaimed_balls - balls_to_lock}
 
-    def request_new_balls(self, balls):
+    def _request_new_balls(self, balls):
+        """Request new ball to playfield."""
         if self.config['request_new_balls_to_pf']:
             self.source_playfield.add_ball(balls=balls)
