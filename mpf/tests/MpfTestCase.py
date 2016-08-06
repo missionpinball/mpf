@@ -138,6 +138,7 @@ class MpfTestCase(unittest.TestCase):
 
     def advance_time_and_run(self, delta=1.0):
         self.machine.log.info("Advancing time by %s", delta)
+        e = False
         try:
             self.loop.run_until_complete(asyncio.sleep(delay=delta, loop=self.loop))
             return
@@ -146,8 +147,10 @@ class MpfTestCase(unittest.TestCase):
 
         if self._exception:
             raise self._exception['exception']
-        else:
+        elif e:
             raise e
+        else:
+            raise AssertionError("error")
 
     def machine_run(self):
         self.advance_time_and_run(0)
