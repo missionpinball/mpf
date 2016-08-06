@@ -17,6 +17,7 @@ class Util(object):
 
         # for list and dict repeat per entry
         if isinstance(value, (list, dict)):
+            # pylint: disable-msg=bad-builtin
             return map(value, Util.convert_to_simply_type)
 
         # otherwise just cast to string
