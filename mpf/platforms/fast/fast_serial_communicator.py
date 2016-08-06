@@ -58,7 +58,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
     @asyncio.coroutine
     def _identify_connection(self):
-        """Identifie which processor this serial connection is talking to."""
+        """Identify which processor this serial connection is talking to."""
         # keep looping and wait for an ID response
 
         msg = ''
@@ -114,15 +114,23 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
     @asyncio.coroutine
     def query_fast_io_boards(self):
-        """Querie the NET processor to see if any FAST IO boards are connected.
+        """Query the NET processor to see if any FAST IO boards are connected.
 
         If so, queries the IO boards to log them and make sure they're the  proper firmware version.
         """
+        self.writer.write('SA:\r'.encode())
+        msg = ''
+        while not msg.startswith('SA:'):
+            msg = (yield from self.readuntil(b'\r')).decode()
+            if not msg.startswith('SA:'):
+                self.platform.debug_log("Got unexpected message from FAST: {}".format(msg))
+
+        self.platform.process_received_message(msg)
         self.platform.debug_log('Querying FAST IO boards...')
 
         firmware_ok = True
 
-        for board_id in range(8):
+        for board_id in range(self.platform.num_boards):
             self.writer.write('NN:{0}\r'.format(board_id).encode())
             msg = ''
             while not msg.startswith('NN:'):
@@ -134,9 +142,9 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
             model = model.strip('\x00')
 
-            # skip non-existing boards
+            # We only iterate known boards
             if not len(model):
-                continue
+                raise AssertionError("Got invalid board response from FAST: {}".format(msg))
 
             self.platform.register_io_board(FastIoBoard(int(node_id, 16), model, fw, int(sw, 16), int(dr, 16)))
 
