@@ -15,7 +15,7 @@ class PhysicalRgbDmd(SystemWideDevice):
 
     @classmethod
     def device_class_init(cls, machine: MachineController):
-        """Create BCP methods
+        """Create BCP methods.
 
         Args:
             machine: MachineController which is used
@@ -30,7 +30,7 @@ class PhysicalRgbDmd(SystemWideDevice):
 
     def _initialize(self):
         self.load_platform_section("dmd")
-        self.hw_device = self.platform.configure_dmd()
+        self.hw_device = self.platform.configure_rgb_dmd()
 
     @classmethod
     def _bcp_receive_dmd_frame(cls, client, name, rawbytes, **kwargs):
