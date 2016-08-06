@@ -8,11 +8,15 @@ from mpf.core.system_wide_device import SystemWideDevice
 
 @DeviceMonitor("enabled", "shoot_again", "balls_ejected")
 class Multiball(SystemWideDevice, ModeDevice):
+
+    """Multiball device for MPF."""
+
     config_section = 'multiballs'
     collection = 'multiballs'
     class_label = 'multiball'
 
     def __init__(self, machine, name):
+        """Initialise multiball."""
         self.ball_locks = None
         self.source_playfield = None
         super().__init__(machine, name)
@@ -23,6 +27,7 @@ class Multiball(SystemWideDevice, ModeDevice):
         self.shoot_again = False
 
     def device_removed_from_mode(self, mode):
+        """Disable and stop mb when mode stops."""
         del mode
         # disable mb when mode ends
         self.disable()
@@ -36,6 +41,7 @@ class Multiball(SystemWideDevice, ModeDevice):
 
     @classmethod
     def prepare_config(cls, config, is_mode_config):
+        """Add default enable_events and disable_events outside mode."""
         if not is_mode_config:
             if 'enable_events' not in config:
                 config['enable_events'] = 'ball_started'
@@ -44,6 +50,7 @@ class Multiball(SystemWideDevice, ModeDevice):
         return super().prepare_config(config, is_mode_config)
 
     def start(self, **kwargs):
+        """Start multiball."""
         del kwargs
         if not self.enabled:
             return
@@ -145,6 +152,7 @@ class Multiball(SystemWideDevice, ModeDevice):
         return {'balls': balls, 'mb_claimed': claimed}
 
     def stop(self, **kwargs):
+        """Stop shoot again."""
         del kwargs
         self.log.debug("Stopping shoot again of multiball")
         self.shoot_again = False
@@ -157,8 +165,9 @@ class Multiball(SystemWideDevice, ModeDevice):
                                         self._ball_drain_count_balls)
 
     def enable(self, **kwargs):
-        """ Enables the multiball. If the multiball is not enabled, it cannot
-        start.
+        """Enable the multiball.
+
+        If the multiball is not enabled, it cannot start.
 
         Args:
             **kwargs: unused
@@ -168,8 +177,9 @@ class Multiball(SystemWideDevice, ModeDevice):
         self.enabled = True
 
     def disable(self, **kwargs):
-        """ Disabless the multiball. If the multiball is not enabled, it cannot
-        start. Will not stop a running multiball.
+        """Disable the multiball.
+
+        If the multiball is not enabled, it cannot start. Will not stop a running multiball.
 
         Args:
             **kwargs: unused
@@ -179,7 +189,7 @@ class Multiball(SystemWideDevice, ModeDevice):
         self.enabled = False
 
     def reset(self, **kwargs):
-        """Resets the multiball and disables it.
+        """Reset the multiball and disable it.
 
         Args:
             **kwargs: unused
