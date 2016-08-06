@@ -1,4 +1,4 @@
-"""Contains the Util class which includes many utility functions"""
+"""Contains the Util class which includes many utility functions."""
 from copy import deepcopy
 import re
 from functools import reduce
@@ -6,6 +6,9 @@ from ruamel.yaml.compat import ordereddict
 
 
 class Util(object):
+
+    """Utility functions for MPF."""
+
     hex_matcher = re.compile("(?:[a-fA-F0-9]{6,8})")
 
     @staticmethod
@@ -123,7 +126,7 @@ class Util(object):
 
     @staticmethod
     def chunker(l, n):
-        """Yields successive n-sized chunks from l."""
+        """Yield successive n-sized chunks from l."""
         for i in range(0, len(l), n):
             yield l[i:i + n]
 
@@ -268,7 +271,7 @@ class Util(object):
 
     @staticmethod
     def pwm8_to_hex_string(source_int):
-
+        """Convert an int to a PWM8 string."""
         lookup_table = {
             0: '00',  # 00000000
             1: '01',  # 00000001
@@ -444,11 +447,13 @@ class Util(object):
 
     @staticmethod
     def bin_str_to_hex_str(source_int_str, num_chars):
+        """Convert binary string to hex string."""
         return Util.normalize_hex_string('%0X' % int(source_int_str, 2),
                                          num_chars)
 
     @staticmethod
     def is_hex_string(string):
+        """Return true if string is hex."""
         return Util.hex_matcher.fullmatch(str(string)) is not None
 
     @staticmethod
@@ -507,7 +512,6 @@ class Util(object):
         See 'string_to_ms' for a description of the time string.
 
         """
-
         time_string = str(time_string)
 
         if not any(c.isalpha() for c in time_string):
@@ -564,7 +568,6 @@ class Util(object):
     @staticmethod
     def set_in_dict(dic, key_path, value):
         """Set a value in a nested dict-like object based on an iterable of nested keys.
-
 
         Args:
             dic: Nested dict of dicts to set the value in.
