@@ -9,8 +9,6 @@ exclude_lines =
 
 omit =
     *__init__.py
-    mpf/devices/new_device_template.py
-    mpf/platforms/new_platform_template.py
     mpf/tests/*
     mpf/__main__.py
     mpf/migrator/config_version_3.py
