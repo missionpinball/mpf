@@ -1,5 +1,4 @@
-""" Contains the Accelerometer """
-# Written by Jan Kantert
+"""Contains the Accelerometer device."""
 
 import math
 
@@ -9,7 +8,8 @@ from mpf.core.system_wide_device import SystemWideDevice
 
 @DeviceMonitor("value")
 class Accelerometer(SystemWideDevice):
-    """Implements an accelerometer
+
+    """Implement an accelerometer.
 
     Args: Same as the Device parent class
 
@@ -20,6 +20,7 @@ class Accelerometer(SystemWideDevice):
     class_label = 'accelerometer'
 
     def __init__(self, machine, name):
+        """Initialise accelerometer."""
         super().__init__(machine, name)
 
         self.history = None
@@ -45,6 +46,7 @@ class Accelerometer(SystemWideDevice):
         return math.acos((x1 * x2 + y1 * y2 + z1 * z2) / dividor)
 
     def update_acceleration(self, x, y, z):
+        """Calculate acceleration based on readings from hardware."""
         self.value = (x, y, z)
 
         if not self.history:
@@ -64,6 +66,7 @@ class Accelerometer(SystemWideDevice):
         self._handle_level()
 
     def get_level_xyz(self):
+        """Return current 3D level."""
         return self._calculate_angle(self.config['level_x'],
                                      self.config['level_y'],
                                      self.config['level_z'],
@@ -71,11 +74,13 @@ class Accelerometer(SystemWideDevice):
                                      self.value[2])
 
     def get_level_xz(self):
+        """Return current 2D x/z level."""
         return self._calculate_angle(self.config['level_x'],
                                      0.0, self.config['level_z'],
                                      self.value[0], 0.0, self.value[2])
 
     def get_level_yz(self):
+        """Return current 2D y/z level."""
         return self._calculate_angle(0.0,
                                      self.config['level_y'],
                                      self.config['level_z'],

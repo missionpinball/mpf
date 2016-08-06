@@ -1,4 +1,4 @@
-""" Contains the base classes for drop targets and drop target banks."""
+"""Contains the base classes for drop targets and drop target banks."""
 
 from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
@@ -8,15 +8,18 @@ from mpf.core.system_wide_device import SystemWideDevice
 
 @DeviceMonitor("complete")
 class DropTarget(SystemWideDevice):
+
     """Represents a single drop target in a pinball machine.
 
-    Args: Same as the `Target` parent class"""
+    Args: Same as the `Target` parent class
+    """
 
     config_section = 'drop_targets'
     collection = 'drop_targets'
     class_label = 'drop_target'
 
     def __init__(self, machine, name):
+        """Initialise drop target."""
         self.reset_coil = None
         self.knockdown_coil = None
         self.banks = None
@@ -123,7 +126,7 @@ class DropTarget(SystemWideDevice):
             self._update_state_from_switch, 1)
 
     def knockdown(self, **kwargs):
-        """Pulses the knockdown coil to knock down this drop target."""
+        """Pulse the knockdown coil to knock down this drop target."""
         del kwargs
         if self.knockdown_coil:
             self.knockdown_coil.pulse()
@@ -158,26 +161,25 @@ class DropTarget(SystemWideDevice):
             bank.member_target_change()
 
     def add_to_bank(self, bank):
-        """Adds this drop target to a drop target bank, which allows the bank to
-        update its status based on state changes to this drop target.
+        """Add this drop target to a drop target bank.
+
+         This allows the bank to update its status based on state changes to this drop target.
 
         Args:
             bank: DropTargetBank object to add this drop target to.
-
         """
         self.banks.add(bank)
 
     def remove_from_bank(self, bank):
-        """Remove the DropTarget from a bank
+        """Remove the DropTarget from a bank.
 
         Args:
             bank: DropTargetBank object to remove
-
         """
         self.banks.remove(bank)
 
     def reset(self, **kwargs):
-        """Resets this drop target.
+        """Reset this drop target.
 
         If this drop target is configured with a reset coil, then this method
         will pulse that coil. If not, then it checks to see if this drop target
@@ -187,7 +189,6 @@ class DropTarget(SystemWideDevice):
         This method does not reset the target profile, however, the switch event
         handler should reset the target profile on its own when the drop target
         physically moves back to the up position.
-
         """
         del kwargs
 
@@ -196,15 +197,15 @@ class DropTarget(SystemWideDevice):
 
 
 class DropTargetBank(SystemWideDevice, ModeDevice):
-    """Represents a bank of drop targets in a pinball machine by grouping
-    together multiple `DropTarget` class devices.
 
-    """
+    """A bank of drop targets in a pinball machine by grouping together multiple `DropTarget` class devices."""
+
     config_section = 'drop_target_banks'
     collection = 'drop_target_banks'
     class_label = 'drop_target_bank'
 
     def __init__(self, machine, name):
+        """Initialise drop target bank."""
         super().__init__(machine, name)
 
         self.drop_targets = list()
@@ -228,7 +229,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
             self.log.debug('Drop Targets: %s', self.drop_targets)
 
     def reset(self, **kwargs):
-        """Resets this bank of drop targets.
+        """Reset this bank of drop targets.
 
         This method has some intelligence to figure out what coil(s) it should
         fire. It builds up a set by looking at its own reset_coil and
@@ -236,7 +237,6 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         targets and collecting their coils. Then it pulses each of them. (This
         coil list is a "set" which means it only sends a single pulse to each
         coil, even if each drop target is configured with its own coil.)
-
         """
         del kwargs
         if self.debug:
@@ -268,7 +268,6 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
 
         This method causes this group to update its down and up counts and
         complete status.
-
         """
         self.down = 0
         self.up = 0
@@ -324,5 +323,6 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         drop target changes but the overall bank is not not complete.'''
 
     def device_removed_from_mode(self, mode):
+        """Remove targets which were added in this mode."""
         for target in self.drop_targets:
             target.remove_from_bank(self)

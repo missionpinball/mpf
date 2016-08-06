@@ -8,11 +8,15 @@ from mpf.core.system_wide_device import SystemWideDevice
 
 @DeviceMonitor("saves_remaining", "enabled", "timer_started")
 class BallSave(SystemWideDevice, ModeDevice):
+
+    """Ball save device which will give back the ball within a certain time."""
+
     config_section = 'ball_saves'
     collection = 'ball_saves'
     class_label = 'ball_save'
 
     def __init__(self, machine, name):
+        """Initialise ball save."""
         self.unlimited_saves = None
         self.source_playfield = None
         super().__init__(machine, name)
@@ -30,6 +34,7 @@ class BallSave(SystemWideDevice, ModeDevice):
         # events, but that will require moving timers out of mode conde
 
     def enable(self, **kwargs):
+        """Enable ball save."""
         del kwargs
         if self.enabled:
             return
@@ -55,6 +60,7 @@ class BallSave(SystemWideDevice, ModeDevice):
         '''
 
     def disable(self, **kwargs):
+        """Disable ball save."""
         del kwargs
         if not self.enabled:
             return
@@ -73,6 +79,10 @@ class BallSave(SystemWideDevice, ModeDevice):
         '''
 
     def timer_start(self, **kwargs):
+        """Start the timer.
+
+        This is usually called after the ball was ejected while the ball save may have been enabled earlier.
+        """
         del kwargs
         if self.timer_started or not self.enabled:
             return
@@ -174,6 +184,7 @@ class BallSave(SystemWideDevice, ModeDevice):
         return {'balls': balls - balls_to_save}
 
     def device_removed_from_mode(self, mode):
+        """Disable ball save when mode ends."""
         del mode
         if self.debug:
             self.log.debug("Removing...")

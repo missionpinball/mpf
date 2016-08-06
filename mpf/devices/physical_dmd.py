@@ -15,7 +15,7 @@ class PhysicalDmd(SystemWideDevice):
 
     @classmethod
     def device_class_init(cls, machine: MachineController):
-        """Create BCP methods
+        """Create BCP methods.
 
         Args:
             machine: MachineController which is used

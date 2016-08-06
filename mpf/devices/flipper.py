@@ -1,4 +1,4 @@
-""" Contains the base class for flippers."""
+"""Contains the base class for flippers."""
 from mpf.devices.driver import ReconfiguredDriver
 
 from mpf.core.system_wide_device import SystemWideDevice
@@ -6,6 +6,7 @@ from mpf.devices.switch import ReconfiguredSwitch
 
 
 class Flipper(SystemWideDevice):
+
     """Represents a flipper in a pinball machine. Subclass of Device.
 
     Contains several methods for actions that can be performed on this flipper,
@@ -20,11 +21,13 @@ class Flipper(SystemWideDevice):
         machine: A reference to the machine controller instance.
         name: A string of the name you'll refer to this flipper object as.
     """
+
     config_section = 'flippers'
     collection = 'flippers'
     class_label = 'flipper'
 
     def __init__(self, machine, name):
+        """Initialise flipper."""
         super().__init__(machine, name)
 
         self.main_coil = None
@@ -52,8 +55,7 @@ class Flipper(SystemWideDevice):
             self.log.debug('Platform Driver: %s', self.platform)
 
     def enable(self, **kwargs):
-        """Enables the flipper by writing the necessary hardware rules to the
-        hardware controller.
+        """Enable the flipper by writing the necessary hardware rules to the hardware controller.
 
         The hardware rules for coils can be kind of complex given all the
         options, so we've mapped all the options out here. We literally have
@@ -114,12 +116,11 @@ class Flipper(SystemWideDevice):
             # todo detect bad EOS and program around it
 
     def disable(self, **kwargs):
-        """Disables the flipper.
+        """Disable the flipper.
 
         This method makes it so the cabinet flipper buttons no longer control
         the flippers. Used when no game is active and when the player has
         tilted.
-
         """
         del kwargs
         self.log.debug("Disabling")
@@ -154,8 +155,7 @@ class Flipper(SystemWideDevice):
             self.switch, self.eos_switch)
 
     def sw_flip(self):
-        """Activates the flipper via software as if the flipper button was
-        pushed.
+        """Activate the flipper via software as if the flipper button was pushed.
 
         This is needed because the real flipper activations are handled in
         hardware, so if you want to flip the flippers with the keyboard or OSC
@@ -164,9 +164,7 @@ class Flipper(SystemWideDevice):
         Note this method will keep this flipper enabled until you call
         sw_release().
         """
-
         # todo add support for other types of flipper coils
-
         # Send the activation switch press to the switch controller
         self.machine.switch_controller.process_switch(
             name=self.config['activation_switch'].name,
@@ -176,10 +174,10 @@ class Flipper(SystemWideDevice):
         self.config['main_coil'].enable()
 
     def sw_release(self):
-        """Deactives the flipper via software as if the flipper button was
-        released. See the documentation for sw_flip() for details.
-        """
+        """Deactive the flipper via software as if the flipper button was released.
 
+        See the documentation for sw_flip() for details.
+        """
         # Send the activation switch release to the switch controller
         self.machine.switch_controller.process_switch(
             name=self.config['activation_switch'].name,

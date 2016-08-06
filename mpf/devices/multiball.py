@@ -1,4 +1,4 @@
-""" Contains the MultiBall device class."""
+"""Contains the MultiBall device class."""
 
 from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor

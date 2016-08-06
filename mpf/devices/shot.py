@@ -1,10 +1,4 @@
-"""
-Shot
-====
-
-A shot in MPF is a cool thing.
-
-"""
+"""A shot in MPF."""
 
 import uuid
 from copy import copy
@@ -15,6 +9,9 @@ from mpf.core.system_wide_device import SystemWideDevice
 
 
 class Shot(ModeDevice, SystemWideDevice):
+
+    """A device which represents a generic shot."""
+
     config_section = 'shots'
     collection = 'shots'
     class_label = 'shot'
@@ -25,6 +22,7 @@ class Shot(ModeDevice, SystemWideDevice):
     """
 
     def __init__(self, machine, name):
+        """Initialise shot."""
         # If this device is setup in a machine-wide config, make sure it has
         # a default enable event.
         super(Shot, self).__init__(machine, name)
@@ -47,10 +45,12 @@ class Shot(ModeDevice, SystemWideDevice):
 
     @property
     def enabled(self):
+        """Return true if enabled."""
         return [x for x in self.profiles if x['enable']]
 
     @classmethod
     def prepare_config(cls, config, is_mode_config):
+        """Add default events when not in mode."""
         if not is_mode_config:
             if 'enable_events' not in config:
                 config['enable_events'] = 'ball_starting'
@@ -61,7 +61,7 @@ class Shot(ModeDevice, SystemWideDevice):
         return config
 
     def device_added_system_wide(self):
-        # Called when a device is added system wide
+        """Called when a device is added system wide."""
         super().device_added_system_wide()
         self._created_system_wide = True
 
@@ -69,11 +69,11 @@ class Shot(ModeDevice, SystemWideDevice):
                             mode=None)
 
     def device_added_to_mode(self, mode, player):
-        """Called when this shot is dynamically added to a mode that was
-        already started. Automatically enables the shot and calls the the method
+        """Called when this shot is dynamically added to a mode that was already started.
+
+        Automatically enables the shot and calls the the method
         that's usually called when a player's turn starts since that was missed
         since the mode started after that.
-
         """
         super().device_added_to_mode(mode, player)
 
@@ -145,12 +145,11 @@ class Shot(ModeDevice, SystemWideDevice):
         self.switch_handlers_active = False
 
     def advance(self, steps=1, mode=None, force=False, **kwargs):
-        """Advances a shot profile forward.
+        """Advance a shot profile forward.
 
         If this profile is at the last step and configured to loop, it will
         roll over to the first step. If this profile is at the last step and not
         configured to loop, this method has no effect.
-
         """
         del kwargs
 
@@ -306,31 +305,31 @@ class Shot(ModeDevice, SystemWideDevice):
         # show. Leave it alone doing whatever it was doing before.
 
     def player_turn_start(self, player, **kwargs):
-        """Called by the shot profile manager when a player's turn starts to
-        update the player reference to the current player and to apply the
-        default machine-wide shot profile.
+        """Update the player reference to the current player and to apply the default machine-wide shot profile.
 
+        Called by the shot profile manager when a player's turn starts.
         """
         del kwargs
         self.player = player
         self._update_shows(advance=False)
 
     def player_turn_stop(self):
-        """Called by the shot profile manager when the player's turn ends.
-        Removes the profiles from the shot and removes the player reference.
+        """Remove the profiles from the shot and remove the player reference.
 
+        Called by the shot profile manager when the player's turn ends.
         """
         self.player = None
         self.remove_profile_by_mode(None)
 
     def add_control_events_in_mode(self, mode):
+        """Add control events in mode."""
         enable = not mode.config['shots'][self.name]['enable_events']
         self.update_profile(enable=enable, mode=mode)
 
     def device_removed_from_mode(self, mode):
-        """Remove this shot device. Destroys it and removes it from the shots
-        collection.
+        """Remove this shot device.
 
+        Destroys it and removes it from the shots collection.
         """
         del mode
         if self._created_system_wide:
@@ -355,8 +354,7 @@ class Shot(ModeDevice, SystemWideDevice):
         return _wf
 
     def hit(self, mode='default#$%', _wf=None, **kwargs):
-        """Method which is called to indicate this shot was just hit. This
-        method will advance the currently-active shot profile.
+        """Advance the currently-active shot profile.
 
         Args:
             mode: (Optional) The mode instance that was hit. If this is not
@@ -373,7 +371,6 @@ class Shot(ModeDevice, SystemWideDevice):
 
         Note that the shot must be enabled in order for this hit to be
         processed.
-
         """
         del kwargs
 
@@ -609,7 +606,7 @@ class Shot(ModeDevice, SystemWideDevice):
         self.active_sequences = list()
 
     def jump(self, mode, state, show_step=1, force=True):
-        """Jumps to a certain state in the active shot profile.
+        """Jump to a certain state in the active shot profile.
 
         Args:
             state: int of the state number you want to jump to. Note that states
@@ -641,6 +638,7 @@ class Shot(ModeDevice, SystemWideDevice):
         self._update_show(mode=mode, show_step=show_step)
 
     def enable(self, mode=None, profile=None, **kwargs):
+        """Enable shot."""
         del kwargs
 
         self.debug_log("Received command to enable this shot from mode: %s "
@@ -649,18 +647,15 @@ class Shot(ModeDevice, SystemWideDevice):
         self.update_profile(profile=profile, enable=True, mode=mode)
 
     def disable(self, mode=None, **kwargs):
-        """Disables this shot. If the shot is not enabled, hits to it will
-        not be processed.
+        """Disable this shot.
 
+        If the shot is not enabled, hits to it will not be processed.
         """
         del kwargs
         self.update_profile(enable=False, mode=mode)
 
     def reset(self, mode=None, **kwargs):
-        """Resets the shot profile for the passed mode back to the first state (State 0) and
-        resets all sequences.
-
-        """
+        """Reset the shot profile for the passed mode back to the first state (State 0) and reset all sequences."""
         del kwargs
         self.debug_log("Resetting. Mode profile '%s' will be reset to "
                        "its initial state", mode)
@@ -669,7 +664,7 @@ class Shot(ModeDevice, SystemWideDevice):
         self.jump(mode, state=0)
 
     def update_current_state_name(self, mode):
-
+        """Update current state name."""
         profile = self.get_profile_by_key('mode', mode)
 
         try:
@@ -682,6 +677,7 @@ class Shot(ModeDevice, SystemWideDevice):
             profile['current_state_name'] = None
 
     def remove_active_profile(self, mode='default#$%', **kwargs):
+        """Remove the active profile."""
         del kwargs
         # this has the effect of changing out this mode's profile in the
         # profiles list with the next highest visible one.
@@ -698,10 +694,11 @@ class Shot(ModeDevice, SystemWideDevice):
         # todo
 
     def update_profile(self, profile=None, enable=None, mode=None):
+        """Update profile."""
         existing_profile = self.get_profile_by_key('mode', mode)
 
         if not existing_profile:  # we're adding, not updating
-            self.add_profile2(profile=profile, enable=enable, mode=mode)
+            self._add_profile2(profile=profile, enable=enable, mode=mode)
             return
 
         update_needed = False
@@ -730,11 +727,12 @@ class Shot(ModeDevice, SystemWideDevice):
             self.update_current_state_name(mode)  # todo
 
     def add_profile(self, profile_dict):
+        """Add a profile to shot."""
         self.profiles.append(profile_dict)
         self._update_show(mode=profile_dict['mode'], advance=False)
         self._sort_profiles()
 
-    def add_profile2(self, profile=None, enable=None, mode=None):
+    def _add_profile2(self, profile=None, enable=None, mode=None):
         if mode:
             priority = mode.priority
         else:
@@ -773,11 +771,13 @@ class Shot(ModeDevice, SystemWideDevice):
         self.update_current_state_name(mode)  # todo
 
     def remove_profile_by_mode(self, mode):
+        """Remove profile for mode."""
         self._stop_show(mode)  # todo
         self.profiles[:] = [x for x in self.profiles if x['mode'] != mode]
         self._process_changed_profiles()
 
     def get_profile_by_key(self, key, value):
+        """Return profile for a key value pair."""
         try:
             return [x for x in self.profiles if x[key] == value][0]
         except IndexError:
@@ -798,19 +798,25 @@ class Shot(ModeDevice, SystemWideDevice):
             self._remove_switch_handlers()
 
     def register_group(self, group):
-        """Notifies this shot that it has been added to a group, meaning it
+        """Register a group.
+
+        Notify this shot that it has been added to a group, meaning it
         will update this group of its state changes. Note this is called by
         :class:``ShotGroup``. If you want to manually add a shot to a group,
-        do it from there."""
+        do it from there.
+        """
         self.debug_log("Received request to register this shot to the %s "
                        "group", group)
 
         self.groups.add(group)
 
     def deregister_group(self, group):
-        """Notifies this shot that it is no longer part of this group. Note
+        """Deregister a group.
+
+        Notify this shot that it is no longer part of this group. Note
         this is called by :class:``ShotGroup``. If you want to manually
-        remove a shot from a group, do it from there."""
+        remove a shot from a group, do it from there.
+        """
         self.debug_log("Received request to deregister this shot from the %s "
                        "group", group)
 

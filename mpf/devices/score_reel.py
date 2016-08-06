@@ -1,12 +1,12 @@
-""" Contains the base classes for mechanical EM-style score reels."""
+"""Contains the base classes for mechanical EM-style score reels."""
 
 from mpf.core.delays import DelayManager
 from mpf.core.system_wide_device import SystemWideDevice
 
 
 class ScoreReel(SystemWideDevice):
-    """Represents an individual electro-mechanical score reel in a pinball
-    machine.
+
+    """Represents an individual electro-mechanical score reel in a pinball machine.
 
     Multiples reels of this class can be grouped together into ScoreReelGroups
     which collectively make up a display like "Player 1 Score" or "Player 2
@@ -22,6 +22,7 @@ class ScoreReel(SystemWideDevice):
     class_label = 'score_reel'
 
     def __init__(self, machine, name):
+        """Initialise score reel."""
         super().__init__(machine, name)
         self.delay = DelayManager(machine.delayRegistry)
 
@@ -93,14 +94,12 @@ class ScoreReel(SystemWideDevice):
             self.value_switches.append(self.config.get('switch_' + str(value)))
 
     def set_rollover_reel(self, reel):
-        # Sets this reels' rollover_reel to the object of the next higher
-        # reel
+        """Set this reels' rollover_reel to the object of the next higher reel."""
         self.log.debug("Setting rollover reel: %s", reel.name)
         self.rollover_reel = reel
 
     def advance(self):
-        """Performs the coil firing to advance this reel one position (up or
-        down).
+        """Perform the coil firing to advance this reel one position (up or down).
 
         This method also schedules delays to post the following events:
 
@@ -179,7 +178,7 @@ class ScoreReel(SystemWideDevice):
         desc: The score real (name) is ready to be pulsed again.'''
 
     def check_hw_switches(self, no_event=False):
-        """Checks all the value switches for this score reel.
+        """Check all the value switches for this score reel.
 
         This check only happens if `self.ready` is `True`. If the reel is not
         ready, it means another advance request has come in after the initial
@@ -245,7 +244,7 @@ class ScoreReel(SystemWideDevice):
             return False
 
     def set_destination_value(self):
-        """Returns the integer value of the destination this reel is moving to.
+        """Return the integer value of the destination this reel is moving to.
 
         Args:
 

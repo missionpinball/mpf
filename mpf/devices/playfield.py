@@ -7,6 +7,7 @@ from mpf.core.delays import DelayManager
 
 @DeviceMonitor("available_balls", "unexpected_balls", "num_balls_requested", "balls")
 class Playfield(SystemWideDevice):
+
     """One playfield in a pinball machine."""
 
     config_section = 'playfields'

@@ -217,6 +217,7 @@ class ConfiguredHwDriver:
         return self.hw_driver == other.hw_driver and self.config == other.config
 
     def __hash__(self):
+        """Return id of hw_driver and config for comparison."""
         return id((self.hw_driver, self.config))
 
 
@@ -235,6 +236,7 @@ class ReconfiguredDriver(Driver):
         self._configured_driver = None
 
     def __getattr__(self, item):
+        """Return parent attributes."""
         return getattr(self._driver, item)
 
     def get_configured_driver(self):

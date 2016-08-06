@@ -1,5 +1,4 @@
-""" Template file for a new device driver."""
-
+"""Template file for a new device driver."""
 # Search this file for 'YourNewDevice' and replace with your device name
 import logging
 
@@ -8,11 +7,10 @@ from mpf.core.system_wide_device import SystemWideDevice
 
 
 class YourNewDevice(SystemWideDevice, ModeDevice):
-    config_section = 'your_new_devices'
-    collection = 'your_new_devices'
-    class_label = 'your_new_device'
 
-    """ The two class attributes above control how devices based on this class
+    """Device in MPF.
+
+    The two class attributes above control how devices based on this class
     are configured and how they're presented to the MPF.
 
     `config_section` is the name of the section in the machine configuration
@@ -37,11 +35,18 @@ class YourNewDevice(SystemWideDevice, ModeDevice):
     `collection` is the DeviceCollection instance that will be created to hold
     all the devices of this new type. For example, if collection is
     'yournewdevice', a collection will be created which is accessible via
-    self.machine.yournewdevices. """
+    self.machine.yournewdevices.
+    """
+
+    config_section = 'your_new_devices'
+    collection = 'your_new_devices'
+    class_label = 'your_new_device'
 
     @classmethod
     def device_class_init(cls, machine):
-        """This @classmethod is optional, but is called automatically before
+        """Initialise type of device.
+
+        This @classmethod is optional, but is called automatically before
         individual devices based on this device class are created. You can use
         it for any core-wide settings, configurations, or objects that you
         might need for these types of devices outside of the individual devices
@@ -57,6 +62,7 @@ class YourNewDevice(SystemWideDevice, ModeDevice):
         pass
 
     def __init__(self, machine, name):
+        """Initialise device."""
         self.log = logging.getLogger('YourNewDevice.' + name)
         super().__init__(machine, name)
 
