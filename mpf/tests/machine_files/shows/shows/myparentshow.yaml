@@ -1,0 +1,6 @@
+#show_version=4
+- duration: -1
+  shows:
+    mychildshow:
+      speed: 1
+      loops: 0

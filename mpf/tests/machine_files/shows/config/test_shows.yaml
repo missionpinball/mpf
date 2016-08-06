@@ -49,15 +49,6 @@ flashers:
         label: Test flasher
         flash_ms: 40
 
-assets:
-    file_shows:
-        test_show1:
-            preload: yes
-        test_show2:
-            preload: yes
-        test_show3:
-            preload: yes
-
 shows:
   leds_name_token:
     - time: 0

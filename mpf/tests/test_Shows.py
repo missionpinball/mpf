@@ -703,3 +703,27 @@ class TestShows(MpfTestCase):
         self.machine.shows['multiple_tokens'].play(show_tokens=dict(
             lights='light_01'))
 
+    def test_nested_shows(self):
+        self.mock_event("test")
+        self.assertFalse(self.machine.shows['mychildshow'].loaded)
+        show = self.machine.shows['myparentshow'].play(loops=0)
+
+        self.advance_time_and_run(5)
+        while not self.machine.shows['mychildshow'].loaded:
+            self.advance_time_and_run(1)
+        self.assertEqual(1, self._events['test'])
+        self.assertTrue(self.machine.shows['mychildshow'].loaded)
+        show.stop()
+
+    def test_nested_shows_stop_before_load(self):
+        self.mock_event("test")
+        self.assertFalse(self.machine.shows['mychildshow'].loaded)
+        show = self.machine.shows['myparentshow'].play(loops=0)
+        show.stop()
+        self.assertEqual(0, self._events['test'])
+
+        self.advance_time_and_run(5)
+        while not self.machine.shows['mychildshow'].loaded:
+            self.advance_time_and_run(1)
+        self.assertEqual(0, self._events['test'])
+        self.assertTrue(self.machine.shows['mychildshow'].loaded)
