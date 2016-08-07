@@ -339,6 +339,7 @@ class Show(Asset):
             the show is not loaded. (In this case the show will be loaded and
             will automatically play once its loaded.)
         """
+        del mode
         # todo bugfix, currently there is only one set of autoplay seetings,
         # so if multiple show instances are played but the show is not loaded,
         # only the last one will play
