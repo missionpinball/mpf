@@ -1,5 +1,4 @@
-""" I2C servo controller platform
-"""
+"""I2C servo controller platform."""
 
 import logging
 import time
@@ -10,9 +9,11 @@ from mpf.core.platform import ServoPlatform
 
 
 class HardwarePlatform(ServoPlatform):
-    """Supports the PCA9685/PCA9635 chip via I2C"""
+
+    """Supports the PCA9685/PCA9635 chip via I2C."""
 
     def __init__(self, machine):
+        """Initialise I2C servo platform."""
         super().__init__(machine)
         self.log = logging.getLogger("I2C Servo Controller Platform")
         self.log.debug("Configuring template hardware interface.")
@@ -24,9 +25,7 @@ class HardwarePlatform(ServoPlatform):
         return '<Platform.I2C_Servo_Controller_Platform>'
 
     def initialize(self):
-        """
-        Method is called after all hardware platforms were instantiated.
-        """
+        """Method is called after all hardware platforms were instantiated."""
         super().initialize()
 
         # validate our config (has to be in intialize since config_processor
@@ -51,6 +50,7 @@ class HardwarePlatform(ServoPlatform):
         time.sleep(.01)  # needed to end sleep according to datasheet
 
     def configure_servo(self, config):
+        """Configure servo."""
         number = int(config['number'])
 
         # check bounds
@@ -60,23 +60,28 @@ class HardwarePlatform(ServoPlatform):
         return I2cServo(number, self.config, self.platform)
 
     def stop(self):
+        """Stop platform."""
         pass
 
 
 class I2cServo(ServoPlatformInterface):
+
+    """A servo hw device."""
+
     def __init__(self, number, config, platform):
+        """Initialise I2C hw servo."""
         self.log = logging.getLogger('I2cServo')
         self.number = number
         self.config = config
         self.platform = platform
 
     def go_to_position(self, position):
-        """
+        """Move servo to position.
+
         Args:
             position: Position to set the servo. 0 to 1
 
         """
-
         # check bounds
         if position < 0 or position > 1:
             raise AssertionError("Position has to be between 0 and 1")
