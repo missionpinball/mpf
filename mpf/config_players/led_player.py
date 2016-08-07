@@ -45,8 +45,8 @@ class LedPlayer(ConfigPlayer):
         led = self.machine.leds[led_name]
         self._led_color(led, instance_dict, full_context, color, **s)
 
-    def _led_color(self, led, instance_dict, full_context, color, **s):
-
+    @staticmethod
+    def _led_color(led, instance_dict, full_context, color, **s):
         if color == "on":
             color = led.config['default_color']
         else:
