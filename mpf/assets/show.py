@@ -376,7 +376,6 @@ class Show(Asset):
                                    loops=int(loops),
                                    sync_ms=int(sync_ms),
                                    reset=bool(reset),
-                                   mode=mode,
                                    manual_advance=manual_advance,
                                    show_tokens=show_tokens)
 
@@ -408,7 +407,7 @@ class RunningShow(object):
     # pylint: disable-msg=too-many-locals
     def __init__(self, machine, show, show_steps, priority,
                  speed, start_step, callback, loops,
-                 sync_ms, reset, mode, manual_advance, show_tokens):
+                 sync_ms, reset, manual_advance, show_tokens):
         """Initialise an instance of a show."""
         self.machine = machine
         self.show = show
@@ -427,8 +426,6 @@ class RunningShow(object):
 
         self.next_step_time = self.machine.clock.get_time()
 
-        del mode
-        # TODO: remove mode from __init__
         self.manual_advance = manual_advance
 
         self.name = show.name
