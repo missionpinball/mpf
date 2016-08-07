@@ -78,6 +78,8 @@ class TestBallSearch(MpfTestCase):
         self.machine.switch_controller.process_switch("s_playfield", 0)
         self.advance_time_and_run(1)
 
+        self.machine.servos.servo1.go_to_position(0.7)
+
         self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.enabled)
         self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
 
@@ -86,11 +88,21 @@ class TestBallSearch(MpfTestCase):
         self.advance_time_and_run(5)
         self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)
 
+        # test servo
+        self.assertEqual(0.0, self.machine.servos.servo1.hw_servo.current_position)
+        self.advance_time_and_run(5)
+        self.assertEqual(1.0, self.machine.servos.servo1.hw_servo.current_position)
+        self.advance_time_and_run(5)
+        self.assertEqual(0.0, self.machine.servos.servo1.hw_servo.current_position)
+
         # ball drains
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
         self.advance_time_and_run(1)
         self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.enabled)
         self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
+
+        # servo should return to its position
+        self.assertEqual(0.7, self.machine.servos.servo1.hw_servo.current_position)
 
     def test_ball_search_iterations_and_give_up_with_new_ball(self):
         self.machine.ball_controller.num_balls_known = 0
