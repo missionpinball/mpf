@@ -107,6 +107,8 @@ mpf:
     default_led_hw_update_hz: 50
     default_matrix_light_hw_update_hz: 50
     default_platform_hz: 1000
+    default_ball_search: False
+
 
     device_collection_control_events:
         autofires:

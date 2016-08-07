@@ -56,7 +56,9 @@ class BallSearch(object):
 
         Ball search is started by a timeout. Enable also resets that timer.
         """
-        if not self.playfield.config['enable_ball_search']:
+        if self.playfield.config['enable_ball_search'] is False or (
+            not self.playfield.config['enable_ball_search'] and not self.machine.config['mpf']['default_ball_search']
+        ):
             return
 
         if not self.callbacks:

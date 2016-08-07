@@ -666,7 +666,7 @@ playfields:
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False
-    enable_ball_search: single|bool|False
+    enable_ball_search: single|bool|None
     ball_search_timeout: single|ms|20s
     ball_search_interval: single|ms|250ms
     ball_search_phase_1_searches: single|int|3
