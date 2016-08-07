@@ -54,6 +54,9 @@ class AssetManager(object):
 
         self._start_loader_thread()
 
+        self._next_id = 0
+        # id of next asset
+
         self.machine.mode_controller.register_start_method(
             start_method=self._load_mode_assets)
 
@@ -64,6 +67,11 @@ class AssetManager(object):
         # Picks up asset load information from connected BCP client(s)
         self.machine.events.add_handler('assets_to_load',
                                         self._bcp_client_asset_load)
+
+    def get_next_id(self):
+        """Return the next free id."""
+        self._next_id += 1
+        return self._next_id
 
     @property
     def loading_percent(self):
@@ -771,18 +779,6 @@ class Asset(object):
     pool_config_section = None  # Create an associated AssetPool instance
     asset_group_class = AssetPool  # replace with your own asset group class
 
-    _next_id = 0
-
-    @classmethod
-    def _get_id(cls):
-        # Since the asset loader priority queue needs a way to break ties if
-        # two assets are loading with the same priority, we need to implement
-        # a comparison operator on the Asset, so we just increment and ID.
-        # This means the assets will load in the order they were added to the
-        # queue
-        cls._next_id += 1
-        return cls._next_id
-
     @classmethod
     def initialize(cls, machine):
         """Initialise asset class."""
@@ -811,7 +807,7 @@ class Asset(object):
 
         self.priority = self.config.get('priority', 0)
         self._callbacks = set()
-        self._id = Asset._get_id()
+        self._id = machine.asset_manager.get_next_id()
         self.lock = threading.Lock()
 
         self.loading = False  # Is this asset in the process of loading?
