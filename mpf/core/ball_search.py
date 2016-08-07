@@ -1,4 +1,4 @@
-"""Implements the ball search procedure"""
+"""Implements the ball search procedure."""
 
 import logging
 
@@ -7,7 +7,10 @@ from mpf.core.delays import DelayManager
 
 class BallSearch(object):
 
+    """Ball search controller."""
+
     def __init__(self, machine, playfield):
+        """Initialise ball search."""
         self.machine = machine
         self.playfield = playfield
         self.log = logging.getLogger("BallSearch " + playfield.name)
@@ -36,8 +39,9 @@ class BallSearch(object):
             return
 
     def register(self, priority, callback):
-        """Registers a callback for sequential ballsearch. Callbacks are called by priority.
-         Ball search only waits if the callback returns true.
+        """Register a callback for sequential ballsearch.
+
+        Callbacks are called by priority. Ball search only waits if the callback returns true.
 
         Args:
             priority: priority of this callback in the ball search procedure
@@ -48,8 +52,10 @@ class BallSearch(object):
         self.callbacks = sorted(self.callbacks, key=lambda entry: entry[0])
 
     def enable(self):
-        # enables but does not start ball search. ball search is started by a timeout.
-        # enable also resets that timer
+        """Enable but do not start ball search.
+
+        Ball search is started by a timeout. Enable also resets that timer.
+        """
         if not self.playfield.config['enable_ball_search']:
             return
 
@@ -62,7 +68,10 @@ class BallSearch(object):
         self.reset_timer()
 
     def disable(self):
-        # disables ball search. will stop the ball search if it is running
+        """Disable ball search.
+
+        Will stop the ball search if it is running.
+        """
         if self.started:
             self.machine.events.post('ball_search_stopped')
         '''event: ball_search_stopped
@@ -79,12 +88,15 @@ class BallSearch(object):
         self.delay.remove('run')
 
     def reset_timer(self):
-        # resets the start timer. called by playfield
+        """Reset the start timer.
+
+        Called by playfield.
+        """
         if self.enabled and not self.started:
             self.delay.reset(name='start', callback=self.start, ms=self.playfield.config['ball_search_timeout'])
 
     def start(self):
-        # actually starts ball search
+        """Actually start ball search."""
         self.started = True
         self.iteration = 1
         self.phase = 1
@@ -98,7 +110,10 @@ class BallSearch(object):
         self.run()
 
     def run(self):
-        # runs one iteration of the ball search. will schedule itself for the next run
+        """Run one iteration of the ball search.
+
+        Will schedule itself for the next run.
+        """
         timeout = self.playfield.config['ball_search_interval']
         # iterate until we are done with all callbacks
         while True:
@@ -126,6 +141,10 @@ class BallSearch(object):
                 return
 
     def give_up(self):
+        """Give up the ball search.
+
+        Did not find the missing ball. Execute the failed action which either adds a replacement ball or ends the game.
+        """
         self.log.warning("Ball Search failed to find ball. Giving up!")
         self.disable()
         self.machine.events.post('ball_search_failed')
