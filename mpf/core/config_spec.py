@@ -666,7 +666,7 @@ playfields:
     tags: list|str|None
     label: single|str|%
     debug: single|bool|False
-    enable_ball_search: single|bool|False
+    enable_ball_search: single|bool|None
     ball_search_timeout: single|ms|20s
     ball_search_interval: single|ms|250ms
     ball_search_phase_1_searches: single|int|3
@@ -750,8 +750,11 @@ servos:
     positions: dict|float:str|None
     servo_min: single|float|0.0
     servo_max: single|float|1.0
+    ball_search_min: single|float|0.0
+    ball_search_max: single|float|1.0
+    ball_search_wait: single|ms|5s
     reset_position: single|float|0.5
-    reset_events: dict|str:ms|ball_starting
+    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_ending
     debug: single|bool|False
     tags: list|str|None
     label: single|str|%

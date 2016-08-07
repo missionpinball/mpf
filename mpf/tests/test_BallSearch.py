@@ -13,6 +13,37 @@ class TestBallSearch(MpfTestCase):
     def get_platform(self):
         return 'smart_virtual'
 
+    def test_ball_search_does_not_start_when_disabled(self):
+        self.machine.playfields.playfield.config['enable_ball_search'] = False
+
+        self.machine.ball_controller.num_balls_known = 0
+        self.machine.switch_controller.process_switch("s_ball_switch1", 1)
+        self.machine.switch_controller.process_switch("s_ball_switch2", 1)
+        self.machine.switch_controller.process_switch("s_ball_switch3", 1)
+        self.advance_time_and_run(1)
+
+        self.machine.switch_controller.process_switch("s_start", 1)
+        self.machine.switch_controller.process_switch("s_start", 0)
+        self.advance_time_and_run(1)
+        self.assertNotEqual(None, self.machine.game)
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.enabled)
+
+        self.advance_time_and_run(30)
+        self.assertFalse(self.machine.ball_devices['playfield'].ball_search.enabled)
+        self.assertFalse(self.machine.ball_devices['playfield'].ball_search.started)
+
+        self.machine.playfields.playfield.config['enable_ball_search'] = None
+        self.machine.config['mpf']['default_ball_search'] = True
+        self.machine.ball_devices['playfield'].ball_search.enable()
+        self.assertTrue(self.machine.ball_devices['playfield'].ball_search.enabled)
+        self.machine.ball_devices['playfield'].ball_search.disable()
+        self.assertFalse(self.machine.ball_devices['playfield'].ball_search.enabled)
+
+        self.machine.playfields.playfield.config['enable_ball_search'] = None
+        self.machine.config['mpf']['default_ball_search'] = False
+        self.machine.ball_devices['playfield'].ball_search.enable()
+        self.assertFalse(self.machine.ball_devices['playfield'].ball_search.enabled)
+
     def test_game_with_no_switches(self):
         self.machine.ball_controller.num_balls_known = 0
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
@@ -78,6 +109,8 @@ class TestBallSearch(MpfTestCase):
         self.machine.switch_controller.process_switch("s_playfield", 0)
         self.advance_time_and_run(1)
 
+        self.machine.servos.servo1.go_to_position(0.7)
+
         self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.enabled)
         self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
 
@@ -86,11 +119,21 @@ class TestBallSearch(MpfTestCase):
         self.advance_time_and_run(5)
         self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)
 
+        # test servo
+        self.assertEqual(0.0, self.machine.servos.servo1.hw_servo.current_position)
+        self.advance_time_and_run(5)
+        self.assertEqual(1.0, self.machine.servos.servo1.hw_servo.current_position)
+        self.advance_time_and_run(5)
+        self.assertEqual(0.0, self.machine.servos.servo1.hw_servo.current_position)
+
         # ball drains
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
         self.advance_time_and_run(1)
         self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.enabled)
         self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
+
+        # servo should return to its position
+        self.assertEqual(0.7, self.machine.servos.servo1.hw_servo.current_position)
 
     def test_ball_search_iterations_and_give_up_with_new_ball(self):
         self.machine.ball_controller.num_balls_known = 0

@@ -33,6 +33,11 @@ playfields:
         enable_ball_search: True
         ball_search_timeout: 20s
 
+servos:
+    servo1:
+        number:
+        reset_events:
+
 switches:
     s_start:
         number:
