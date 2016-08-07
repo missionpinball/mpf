@@ -64,6 +64,7 @@ class Servo(SystemWideDevice):
         self.hw_servo.go_to_position(position)
 
     def _ball_search_start(self, **kwargs):
+        del kwargs
         # we do not touch self._position during ball search so we can reset to it later
         self._ball_search_started = True
         self._ball_search_go_to_min()
@@ -77,6 +78,7 @@ class Servo(SystemWideDevice):
         self.delay.add(name="ball_search", callback=self._ball_search_go_to_min, ms=self.config['ball_search_wait'])
 
     def _ball_search_stop(self, **kwargs):
+        del kwargs
         # stop delay
         self.delay.remove("ball_search")
         self._ball_search_started = False
