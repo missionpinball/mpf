@@ -285,8 +285,8 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         hw_states = dict()
 
         num_local, local_states, num_nw, nw_states = msg.split(',')
-        num_local = Util.hex_string_to_int(num_local)
-        self.num_boards = Util.hex_string_to_int(num_nw)
+        num_local = Util.hex_string_to_int(num_local) - 1
+        self.num_boards = Util.hex_string_to_int(num_nw) - 1
 
         for offset, byte in enumerate(bytearray.fromhex(nw_states)):
             for i in range(self.num_boards):
