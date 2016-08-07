@@ -423,6 +423,9 @@ class RunningShow(object):
         # self.mode = mode
         self.show_tokens = show_tokens
         self._delay_handler = None
+        self.next_step_index = None
+
+        self.next_step_time = self.machine.clock.get_time()
 
         del mode
         # TODO: remove mode from __init__
@@ -448,6 +451,11 @@ class RunningShow(object):
             self._show_loaded = False
 
     def show_loaded(self, show):
+        """Called when a deferred show was loaded.
+
+        Start playing the show as if it started earlier.
+        """
+        del show
         self._show_loaded = True
         self.show_steps = self.show.get_show_steps()
         self._start_play()
@@ -472,8 +480,6 @@ class RunningShow(object):
         self.machine.show_controller.notify_show_starting(self)
 
         # Figure out the show start time
-        self.next_step_time = self.machine.clock.get_time()
-
         if self.sync_ms:
             delay_secs = (self.sync_ms / 1000.0) - (self.next_step_time % (self.sync_ms / 1000.0))
             self.next_step_time += delay_secs
