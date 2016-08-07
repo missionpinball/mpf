@@ -155,6 +155,7 @@ class TestFast(MpfTestCase):
             "DN:20,00,00,00": False,
             "DN:21,00,00,00": False,
             "GI:2A,FF": False,
+            "XO:03,7F": False
         }
 
         super().setUp()
