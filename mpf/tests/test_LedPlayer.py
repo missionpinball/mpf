@@ -162,6 +162,15 @@ class TestLedPlayer(MpfTestCase):
         self.assertEqual(list(RGBColor('off').rgb),
                          self.machine.leds.led3.hw_driver.current_color)
 
+        # test led5 with default color red
+        self.assertEqual(list(RGBColor('off').rgb),
+                         self.machine.leds.led5.hw_driver.current_color)
+
+        self.post_event("event5")
+        self.advance_time_and_run()
+        self.assertEqual(list(RGBColor('red').rgb),
+                         self.machine.leds.led5.hw_driver.current_color)
+
     def test_single_step_show(self):
         # with single step shows, loops are automatically set to 0, hold is
         # automatically set to true
