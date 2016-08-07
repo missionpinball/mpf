@@ -339,6 +339,7 @@ class Show(Asset):
             the show is not loaded. (In this case the show will be loaded and
             will automatically play once its loaded.)
         """
+        del mode
         # todo bugfix, currently there is only one set of autoplay seetings,
         # so if multiple show instances are played but the show is not loaded,
         # only the last one will play
@@ -361,40 +362,28 @@ class Show(Asset):
                              'expected: {}. Tokens submitted: {}'.
                              format(self.name, self.tokens, set(show_tokens.keys())))
 
+        if self.loaded:
+            show_steps = self.get_show_steps()
+        else:
+            show_steps = False
+
+        running_show = RunningShow(machine=self.machine,
+                                   show=self,
+                                   show_steps=show_steps,
+                                   priority=int(priority),
+                                   speed=float(speed),
+                                   start_step=int(start_step),
+                                   callback=callback,
+                                   loops=int(loops),
+                                   sync_ms=int(sync_ms),
+                                   reset=bool(reset),
+                                   manual_advance=manual_advance,
+                                   show_tokens=show_tokens)
+
         if not self.loaded:
-            self._autoplay_settings = dict(priority=priority,
-                                           speed=speed,
-                                           start_step=start_step,
-                                           callback=callback,
-                                           loops=loops,
-                                           sync_ms=sync_ms,
-                                           reset=reset,
-                                           mode=mode,
-                                           manual_advance=manual_advance,
-                                           show_tokens=show_tokens
-                                           )
+            self.load(callback=running_show.show_loaded, priority=priority)
 
-            self.load(callback=self._autoplay, priority=priority)
-            return False
-
-        return RunningShow(machine=self.machine,
-                           show=self,
-                           show_steps=self.get_show_steps(),
-                           priority=int(priority),
-                           speed=float(speed),
-                           start_step=int(start_step),
-                           callback=callback,
-                           loops=int(loops),
-                           sync_ms=int(sync_ms),
-                           reset=bool(reset),
-                           mode=mode,
-                           manual_advance=manual_advance,
-                           show_tokens=show_tokens)
-
-    def _autoplay(self, *args, **kwargs):
-        del args
-        del kwargs
-        self.play(**self._autoplay_settings)
+        return running_show
 
     def load_show_from_disk(self):
         """Load show from disk."""
@@ -419,7 +408,7 @@ class RunningShow(object):
     # pylint: disable-msg=too-many-locals
     def __init__(self, machine, show, show_steps, priority,
                  speed, start_step, callback, loops,
-                 sync_ms, reset, mode, manual_advance, show_tokens):
+                 sync_ms, reset, manual_advance, show_tokens):
         """Initialise an instance of a show."""
         self.machine = machine
         self.show = show
@@ -429,12 +418,15 @@ class RunningShow(object):
         self.callback = callback
         self.loops = loops
         self.reset = reset
+        self.start_step = start_step
+        self.sync_ms = sync_ms
         # self.mode = mode
         self.show_tokens = show_tokens
         self._delay_handler = None
+        self.next_step_index = None
 
-        del mode
-        # TODO: remove mode from __init__
+        self.next_step_time = self.machine.clock.get_time()
+
         self.manual_advance = manual_advance
 
         self.name = show.name
@@ -450,27 +442,44 @@ class RunningShow(object):
         self.debug = False
         self._stopped = False
 
-        self._total_steps = len(show_steps)
+        if show_steps:
+            self._show_loaded = True
+            self._start_play()
+        else:
+            self._show_loaded = False
 
-        if start_step > 0:
-            self.next_step_index = start_step - 1
-        elif start_step < 0:
-            self.next_step_index = self._total_steps + start_step
+    def show_loaded(self, show):
+        """Called when a deferred show was loaded.
+
+        Start playing the show as if it started earlier.
+        """
+        del show
+        self._show_loaded = True
+        self.show_steps = self.show.get_show_steps()
+        self._start_play()
+
+    def _start_play(self):
+        if self._stopped:
+            return
+
+        self._total_steps = len(self.show_steps)
+
+        if self.start_step > 0:
+            self.next_step_index = self.start_step - 1
+        elif self.start_step < 0:
+            self.next_step_index = self._total_steps + self.start_step
         else:
             self.next_step_index = 0
 
-        if show_tokens and show.tokens:
-            self._replace_tokens(**show_tokens)
+        if self.show_tokens and self.show.tokens:
+            self._replace_tokens(**self.show_tokens)
 
-        show.running.add(self)
+        self.show.running.add(self)
         self.machine.show_controller.notify_show_starting(self)
 
         # Figure out the show start time
-        self.next_step_time = self.machine.clock.get_time()
-
-        if sync_ms:
-            delay_secs = (sync_ms / 1000.0) - (self.next_step_time % (sync_ms /
-                                               1000.0))
+        if self.sync_ms:
+            delay_secs = (self.sync_ms / 1000.0) - (self.next_step_time % (self.sync_ms / 1000.0))
             self.next_step_time += delay_secs
             self._delay_handler = self.machine.clock.schedule_once(self._run_next_step,
                                                                    delay_secs)
@@ -524,6 +533,10 @@ class RunningShow(object):
             return
 
         self._stopped = True
+
+        if not self._show_loaded:
+            return
+
         # todo I think there's a potential memory leak here as shows stop but
         # some things still hold references to them. (Shots, for example).
         # need to investigate more
@@ -549,6 +562,8 @@ class RunningShow(object):
 
     def resume(self):
         """Resume paused show."""
+        if not self._show_loaded:
+            return
         self.next_step_time = self.machine.clock.get_time()
         self._run_next_step()
 
@@ -563,6 +578,9 @@ class RunningShow(object):
 
     def advance(self, steps=1, show_step=None):
         """Manually advance this show to the next step."""
+        if not self._show_loaded:
+            # todo: this is suboptimal
+            return
         if isinstance(show_step, int) and show_step < 0:    # pragma: no cover
             raise ValueError('Cannot advance {} to step "{}" as that is'
                              'not a valid step number.'.format(self, show_step))
