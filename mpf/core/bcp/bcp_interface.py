@@ -19,7 +19,6 @@ class BcpInterface(object):
         mode_start?name=xxx&priority=xxx
         mode_stop?name=xxx
         player_added?player_num=x
-        player_score?value=x&prev_value=x&change=x&player_num=x
         player_variable?name=x&value=x&prev_value=x&change=x&player_num=x
         set
         shot?name=x
@@ -130,7 +129,6 @@ class BcpInterface(object):
 
     def _monitor_player_vars(self, client):
         self.machine.bcp.transport.add_handler_to_transport("_player_vars", client)
-        self.add_registered_trigger_event_for_client(client, 'player_score')
 
     def _monitor_machine_vars(self, client):
         self._send_machine_vars(client)
@@ -152,20 +150,14 @@ class BcpInterface(object):
 
     # pylint: disable-msg=too-many-arguments
     def _player_var_change(self, name, value, prev_value, change, player_num):
-        if name == 'score':
-            self.machine.bcp.transport.send_to_clients_with_handler(
-                handler="_player_vars",
-                bcp_command='player_score', value=value, prev_value=prev_value,
-                change=change, player_num=player_num)
-        else:
-            self.machine.bcp.transport.send_to_clients_with_handler(
-                handler="_player_vars",
-                bcp_command='player_variable',
-                name=name,
-                value=value,
-                prev_value=prev_value,
-                change=change,
-                player_num=player_num)
+        self.machine.bcp.transport.send_to_clients_with_handler(
+            handler="_player_vars",
+            bcp_command='player_variable',
+            name=name,
+            value=value,
+            prev_value=prev_value,
+            change=change,
+            player_num=player_num)
 
     def _machine_var_change(self, name, value, prev_value, change):
         self.machine.bcp.transport.send_to_clients_with_handler(
