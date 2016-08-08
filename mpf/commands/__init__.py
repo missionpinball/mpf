@@ -1,3 +1,4 @@
+"""Cli commands in MPF."""
 import argparse
 from importlib import import_module
 import os
@@ -13,8 +14,11 @@ CONFIG_FOLDER = 'config'
 
 
 class CommandLineUtility(object):
-    def __init__(self, path=None):
 
+    """Default cli entry point."""
+
+    def __init__(self, path=None):
+        """Initialise cli entry point."""
         self.argv = sys.argv[:]
         self.path = path
         self.mpf_path = os.path.abspath(os.path.join(mpf.core.__path__[0],
@@ -23,12 +27,17 @@ class CommandLineUtility(object):
         self.get_external_commands()
 
     def get_external_commands(self):
+        """Entry point to hook more commands.
+
+        This is used from mpf mc.
+        """
         for entry_point in iter_entry_points(group='mpf.command', name=None):
             command, function = entry_point.load()()
             self.external_commands[command] = function
 
     @classmethod
     def check_python_version(cls):
+        """Check that we have at least python 3."""
         if sys.version_info[0] != 3:
             print("MPF requires Python 3. You have Python {}.{}.{}".format(
                 sys.version_info[0], sys.version_info[1], sys.version_info[2]
@@ -36,8 +45,7 @@ class CommandLineUtility(object):
             sys.exit()
 
     def execute(self):
-        """Actually runs the command that was just set up."""
-
+        """Actually run the command that was just set up."""
         self.check_python_version()
 
         commands = set()
@@ -63,7 +71,7 @@ class CommandLineUtility(object):
         module.Command(self.mpf_path, machine_path, remaining_args)
 
     def parse_args(self):
-
+        """Parse arguments."""
         parser = argparse.ArgumentParser(description='MPF Command')
 
         parser.add_argument("machine_path", help="Path of the machine folder.",
@@ -96,6 +104,7 @@ class CommandLineUtility(object):
         return machine_path, remaining_args
 
     def get_machine_path(self, machine_path_hint):
+        """Return machine path."""
         machine_path = None
 
         if machine_path_hint:
@@ -130,6 +139,7 @@ class CommandLineUtility(object):
 
 
 def run_from_command_line(args=None):
+    """Run cli command."""
     del args
     path = os.path.abspath(os.path.curdir)
     CommandLineUtility(path).execute()

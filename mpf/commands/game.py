@@ -13,7 +13,11 @@ from mpf.core.utility_functions import Util
 
 
 class Command(object):
+
+    """Runs the mpf game."""
+
     def __init__(self, mpf_path, machine_path, args):
+        """Run mpf game."""
         parser = argparse.ArgumentParser(
             description='Starts the MPF game engine')
 

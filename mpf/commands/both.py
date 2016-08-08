@@ -1,3 +1,4 @@
+"""Runs mc and game."""
 import os
 import platform
 import subprocess
@@ -6,7 +7,11 @@ import sys
 
 
 class Command(object):
+
+    """Command which runs game and mc."""
+
     def __init__(self, mpf_path, machine_path, args):
+        """Run game and mc."""
         if platform.system() == 'Windows':
             subprocess.Popen(
                 '{} -m mpf game {} {}'.format(
