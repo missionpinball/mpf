@@ -2,7 +2,6 @@
 
 Fixes for octal and boolean values are from here:
 http://stackoverflow.com/questions/32965846/cant-parse-yaml-correctly/
-
 """
 import copy
 import logging
@@ -26,8 +25,10 @@ log = logging.getLogger('YAML Interface')
 
 
 class MpfResolver(BaseResolver):
-    def __init__(self):
-        super().__init__()
+
+    """Resolver with mentioned fixes."""
+
+    pass
 
 MpfResolver.add_implicit_resolver(
     # Process any item beginning with a plus sign (+) as a string
@@ -107,10 +108,11 @@ MpfResolver.add_implicit_resolver(
 
 
 class MpfRoundTripConstructor(RoundTripConstructor):
-    def __init__(self):
-        super().__init__()
+
+    """Resolver with fix."""
 
     def construct_yaml_int(self, node):
+        """Add int fix."""
         value = to_str(self.construct_scalar(node))
         value = value.replace('_', '')
         sign = +1
@@ -142,10 +144,11 @@ class MpfRoundTripConstructor(RoundTripConstructor):
 
 
 class MpfConstructor(Constructor):
-    def __init__(self):
-        super().__init__()
+
+    """Constructor with fix."""
 
     def construct_yaml_int(self, node):
+        """Add int fix."""
         value = to_str(self.construct_scalar(node))
         value = value.replace('_', '')
         sign = +1
@@ -185,7 +188,11 @@ MpfConstructor.add_constructor(
 
 
 class MpfRoundTripLoader(Reader, RoundTripScanner, Parser, Composer, MpfRoundTripConstructor, MpfResolver):
+
+    """Config loader which can roundtrip."""
+
     def __init__(self, stream):
+        """Initialise loader."""
         Reader.__init__(self, stream)
         RoundTripScanner.__init__(self)
         Parser.__init__(self)
@@ -195,7 +202,11 @@ class MpfRoundTripLoader(Reader, RoundTripScanner, Parser, Composer, MpfRoundTri
 
 
 class MpfLoader(Reader, Scanner, Parser, Composer, MpfConstructor, MpfResolver):
+
+    """Config loader."""
+
     def __init__(self, stream):
+        """Initialise loader."""
         Reader.__init__(self, stream)
         Scanner.__init__(self)
         Parser.__init__(self)
@@ -210,13 +221,15 @@ for ch in list(u'yYnNoO'):
 
 class YamlInterface(FileInterface):
 
+    """File interface for yaml files."""
+
     file_types = ['.yaml', '.yml']
     cache = False
     file_cache = dict()
 
     @staticmethod
     def get_config_file_version(filename):
-
+        """Return config file version."""
         with open(filename) as f:
             file_version = f.readline().split('config_version=')[-1:][0]
 
@@ -227,7 +240,7 @@ class YamlInterface(FileInterface):
 
     @staticmethod
     def get_show_file_version(filename):
-
+        """Return show file version."""
         with open(filename) as f:
             file_version = f.readline().split('show_version=')[-1:][0]
 
@@ -238,15 +251,13 @@ class YamlInterface(FileInterface):
 
     @staticmethod
     def check_config_file_version(filename):
-        """Checks to see if the version of the file name passed matches the
-        config version MPF needs.
+        """Check to see if the version of the file name passed matches the config version MPF needs.
 
         Args:
             filename: The file with path to check.
 
         Raises:
             exception if the version of the file doesn't match what MPF needs.
-
         """
         filename = FileManager.locate_file(filename)
         file_interface = FileManager.get_file_interface(filename)
@@ -269,7 +280,7 @@ class YamlInterface(FileInterface):
 
     def load(self, filename, verify_version=True, halt_on_error=True,
              round_trip=False):
-        """Loads a YAML file from disk.
+        """Load a YAML file from disk.
 
         Args:
             filename: The file to load.
@@ -285,9 +296,7 @@ class YamlInterface(FileInterface):
 
         Returns:
             A dictionary of the settings from this YAML file.
-
         """
-
         if YamlInterface.cache and filename in YamlInterface.file_cache:
             return copy.deepcopy(YamlInterface.file_cache[filename])
 
@@ -327,13 +336,14 @@ class YamlInterface(FileInterface):
 
     @staticmethod
     def process(data_string, round_trip=False):
+        """Parse yaml from a string."""
         if round_trip:
             return yaml.load(data_string, Loader=MpfRoundTripLoader)
         else:
             return Util.keys_to_lower(yaml.load(data_string, Loader=MpfLoader))
 
     def save(self, filename, data, **kwargs):
-
+        """Save config to yaml file."""
         try:
             include_comments = kwargs.pop('include_comments')
         except KeyError:
@@ -350,14 +360,15 @@ class YamlInterface(FileInterface):
 
     @staticmethod
     def save_to_str(data):
+        """Return yaml string from config."""
         return yaml.dump(data, Dumper=RoundTripDumper,
                          default_flow_style=False, indent=4, width=10)
 
     @staticmethod
     def rename_key(old_key, new_key, commented_map, logger=None):
-        """Used to rename a key in YAML file data that was loaded with the
-        RoundTripLoader (e.g. that contains comments. Comments are retained
-        for the renamed key. Order of keys is also maintained.
+        """Used to rename a key in YAML file data that was loaded with the RoundTripLoader (e.g. that contains comments.
+
+        Comments are retained for the renamed key. Order of keys is also maintained.
 
         Args:
             old_key: The existing key name you want to change.
@@ -371,7 +382,6 @@ class YamlInterface(FileInterface):
             The updated CommentedMap YAML dict. (Note that this method does not
             change the dict object (e.g. it's changed in place), you you most
             likely don't need to do anything with the returned dict.
-
         """
         if old_key == new_key or old_key not in commented_map:
             return commented_map
@@ -401,8 +411,8 @@ class YamlInterface(FileInterface):
 
     # pylint: disable-msg=too-many-arguments
     @staticmethod
-    def copy_with_comments(source_dict, source_key, dest_dict, dest_key,
-                           delete_source=False, logger=None):
+    def copy_with_comments(source_dict, source_key, dest_dict, dest_key, delete_source=False, logger=None):
+        """Copy dict with comments in config."""
         dest_dict[dest_key] = source_dict[source_key]
 
         try:
@@ -424,7 +434,7 @@ class YamlInterface(FileInterface):
 
     @staticmethod
     def del_key_with_comments(dic, key, logger=None):
-
+        """Delete section with comments."""
         if key not in dic:
             return
 
@@ -436,6 +446,7 @@ class YamlInterface(FileInterface):
 
     @staticmethod
     def pretty_format(dic):
+        """Return pretty printed config."""
         return '\r' + yaml.dump(dic, Dumper=RoundTripDumper, indent=4)
 
 file_interface_class = YamlInterface
