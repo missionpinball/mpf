@@ -8,7 +8,11 @@ from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 
 
 class DeviceManager(object):
+
+    """Manages devices in a MPF machine."""
+
     def __init__(self, machine):
+        """Initialise device manager."""
         self.machine = machine
         self.log = logging.getLogger("DeviceManager")
 
@@ -60,6 +64,7 @@ class DeviceManager(object):
         self.initialize_devices()
 
     def create_devices(self, collection_name, config):
+        """Create devices for collection."""
         cls = self.device_classes[collection_name]
 
         collection = getattr(self.machine, collection_name)
@@ -83,7 +88,7 @@ class DeviceManager(object):
             collection[device_name] = cls(self.machine, device_name)
 
     def load_devices_config(self, validate=True):
-
+        """Load all devices."""
         if validate:
             for device_type in self.machine.config['mpf']['device_modules']:
 
@@ -121,6 +126,7 @@ class DeviceManager(object):
                 collection[device_name].load_config(config[device_name])
 
     def initialize_devices(self):
+        """Initialise devices."""
         for device_type in self.machine.config['mpf']['device_modules']:
 
             device_cls = Util.string_to_class("mpf.devices." + device_type)
@@ -139,8 +145,9 @@ class DeviceManager(object):
                 collection[device_name].device_added_system_wide()
 
     def get_device_control_events(self, config):
-        """Scans a config dictionary and yields events, methods, delays, and
-        devices for all the devices and control_events in that config.
+        """Scan a config dictionary for control_events.
+
+         Yields events, methods, delays, and devices for all the devices and control_events in that config.
 
         Args:
             config: An MPF config dictionary (either machine-wide or mode-
@@ -152,7 +159,6 @@ class DeviceManager(object):
                 * The callback method of the device
                 * The delay in ms
                 * The device object
-
         """
         for collection in self.collections:
             if self.collections[collection].config_section in config:
@@ -173,7 +179,7 @@ class DeviceManager(object):
                                        self.collections[collection][device])
 
     def create_machinewide_device_control_events(self):
-
+        """Create machine wide control events."""
         for event, method, delay, _ in (
                 self.get_device_control_events(self.machine.config)):
 
@@ -190,6 +196,7 @@ class DeviceManager(object):
                 delay_mgr=self.machine.delay)
 
     def create_collection_control_events(self):
+        """Create control events for collection."""
         for collection, events in iter(self.machine.config['mpf']['device_collection_control_events'].items()):
 
             for event in events:
@@ -232,14 +239,15 @@ class DeviceManager(object):
 
 
 class DeviceCollection(CaseInsensitiveDict):
+
     """A collection of Devices.
 
     One instance of this class will be created for each different type of
-    hardware device (such as coils, lights, switches, ball devices, etc.)
-
+    hardware device (such as coils, lights, switches, ball devices, etc.).
     """
 
     def __init__(self, machine, collection, config_section):
+        """Initialise device collection."""
         super().__init__()
 
         self.machine = machine
@@ -247,6 +255,7 @@ class DeviceCollection(CaseInsensitiveDict):
         self.config_section = config_section
 
     def __getattr__(self, attr):
+        """Return device by lowercase key."""
         # We use this to allow the programmer to access a hardware item like
         # self.coils.coilname
 
@@ -256,16 +265,16 @@ class DeviceCollection(CaseInsensitiveDict):
             raise KeyError('Error: No device exists with the name:', attr)
 
     def __iter__(self):
+        """Iterate collection."""
         for item in self.values():
             yield item
 
-            # todo add an exception here if this isn't found?
-
     def __getitem__(self, key):
+        """Return device by lowercase key."""
         return super().__getitem__(self.__class__.lower(key))
 
     def items_tagged(self, tag):
-        """Returns of list of device objects which have a certain tag.
+        """Return of list of device objects which have a certain tag.
 
         Args:
             tag: A string of the tag name which specifies what devices are
@@ -281,7 +290,7 @@ class DeviceCollection(CaseInsensitiveDict):
         return output
 
     def sitems_tagged(self, tag):
-        """Returns of list of device names (strings) which have a certain tag.
+        """Return of list of device names (strings) which have a certain tag.
 
         Args:
             tag: A string of the tag name which specifies what devices are
@@ -297,7 +306,7 @@ class DeviceCollection(CaseInsensitiveDict):
         return output
 
     def items_not_tagged(self, tag):
-        """Returns of list of device objects which do not have a certain tag.
+        """Return of list of device objects which do not have a certain tag.
 
         Args:
             tag: A string of the tag name which specifies what devices are
@@ -314,7 +323,7 @@ class DeviceCollection(CaseInsensitiveDict):
         return output
 
     def is_valid(self, name):
-        """Checks to see if the name passed is a valid device.
+        """Check to see if the name passed is a valid device.
 
         Args:
             name: The string of the device name you want to check.
@@ -325,14 +334,16 @@ class DeviceCollection(CaseInsensitiveDict):
         return name.lower() in iter(self.keys())
 
     def number(self, number):
-        """Returns a device object based on its number."""
+        """Return a device object based on its number."""
         for name, obj in self.items():
             if obj.config['number'] == number:
                 return self[name]
 
     def multilist_to_names(self, multilist):
-        """Takes a list of strings (including tag strings of device names from
-        this collection, including tags, and returns a list of string names.
+        """Convert list of devices to string list.
+
+        Take a list of strings (including tag strings of device names from this collection, including tags, and returns
+        a list of string names.
 
         Args:
             multilist: List of strings, or a single string separated by commas
@@ -350,15 +361,11 @@ class DeviceCollection(CaseInsensitiveDict):
             return: [led1, led2, led3, led4, led5]
 
         """
-
         multilist = self.multilist_to_objects(multilist)
         return [x.name for x in multilist]
 
     def multilist_to_objects(self, multilist):
-        """Same as multilist_to_names() method, except it returns a list of
-        objects instead of a list of strings.
-
-        """
+        """Same as multilist_to_names() method, except it returns a list of objects instead of a list of strings."""
         multilist = Util.string_to_list(multilist)
         final_list = list()
 

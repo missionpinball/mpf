@@ -26,6 +26,7 @@ class SwitchController(object):
     log = logging.getLogger('SwitchController')
 
     def __init__(self, machine):
+        """Initialise switch controller."""
         self.machine = machine
         self.registered_switches = CaseInsensitiveDict()
         # Dictionary of switches and states that have been registered for
@@ -219,14 +220,11 @@ class SwitchController(object):
                              ms=ms)
 
     def ms_since_change(self, switch_name):
-        """Returns the number of ms that have elapsed since this switch
-        last changed state.
-        """
-
+        """Return the number of ms that have elapsed since this switch last changed state."""
         return round((self.machine.clock.get_time() - self.switches[switch_name]['time']) * 1000.0, 0)
 
     def secs_since_change(self, switch_name):
-        """Return the number of ms that have elapsed since this switch last changed state."""
+        """Return the number of secs that have elapsed since this switch last changed state."""
         return self.machine.clock.get_time() - self.switches[switch_name]['time']
 
     def set_state(self, switch_name, state=1, reset_time=False):
@@ -577,7 +575,6 @@ class SwitchController(object):
 
     def _post_switch_events(self, switch_name, state):
         """Post the game events based on this switch changing state."""
-
         # the following events all fire the moment a switch goes active
         if state == 1:
 

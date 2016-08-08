@@ -66,6 +66,7 @@ class BcpInterface(object):
             self.bcp_mode_start, 'mode')
 
     def __repr__(self):
+        """Return string representation."""
         return '<BCP Interface>'
 
     def register_command_callback(self, cmd, callback):

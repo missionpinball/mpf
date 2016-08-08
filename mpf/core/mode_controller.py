@@ -1,4 +1,4 @@
-""" Contains the ModeController class for MPF."""
+"""Contains the ModeController class for MPF."""
 import importlib
 import logging
 import os
@@ -21,8 +21,10 @@ be called on mode_start or mode_stop.
 
 
 class ModeController(object):
-    """Parent class for the Mode Controller. There is one instance of this in
-    MPF and it's responsible for loading, unloading, and managing all modes.
+
+    """Parent class for the Mode Controller.
+
+    There is one instance of this in MPF and it's responsible for loading, unloading, and managing all modes.
 
     Args:
         machine: The main MachineController instance.
@@ -30,6 +32,7 @@ class ModeController(object):
     """
 
     def __init__(self, machine):
+        """Initialise mode controller."""
         self.machine = machine
         self.log = logging.getLogger('Mode Controller')
 
@@ -152,14 +155,12 @@ class ModeController(object):
         return config
 
     def _load_mode(self, mode_string):
-        """Loads a mode, reads in its config, and creates the Mode object.
+        """Load a mode, reads in its config, and creates the Mode object.
 
         Args:
             mode_string: String name of the mode you're loading. This is the name of
                 the mode's folder in your game's machine_files/modes folder.
-
         """
-
         mode_string = mode_string.lower()
 
         if self.debug:
@@ -302,7 +303,9 @@ class ModeController(object):
 
     def register_load_method(self, load_method, config_section_name=None,
                              priority=0, **kwargs):
-        """Used by core components, plugins, etc. to register themselves with
+        """Register a method which is called when the mode is loaded.
+
+        Used by core components, plugins, etc. to register themselves with
         the Mode Controller for anything they need a mode to do when it's
         registered.
 
@@ -320,9 +323,7 @@ class ModeController(object):
 
         Note that these methods will be called once, when the mode code is first
         initialized during the MPF boot process.
-
         """
-
         if not callable(load_method):
             raise ValueError("Cannot add load method '{}' as it is not"
                              "callable".format(load_method))
@@ -333,7 +334,9 @@ class ModeController(object):
 
     def register_start_method(self, start_method, config_section_name=None,
                               priority=0, **kwargs):
-        """Used by core components, plugins, etc. to register themselves with
+        """Register a method which is called when the mode is started.
+
+        Used by core components, plugins, etc. to register themselves with
         the Mode Controller for anything that they a mode to do when it starts.
 
         Args:
@@ -350,9 +353,7 @@ class ModeController(object):
 
         Note that these methods will be called every single time this mode is
         started.
-
         """
-
         if not callable(start_method):
             raise ValueError("Cannot add start method '{}' as it is not"
                              "callable".format(start_method))
@@ -369,10 +370,11 @@ class ModeController(object):
         self.start_methods.sort(key=lambda x: x.priority, reverse=True)
 
     def register_stop_method(self, callback, priority=0):
-        # these are universal, in that they're called every time a mode stops
-        # priority is the priority they're called. Has nothing to do with mode
-        # priority
+        """Register a method which is called when the mode is stopped.
 
+        These are universal, in that they're called every time a mode stops priority is the priority they're called.
+        Has nothing to do with mode priority.
+        """
         if not callable(callback):
             raise ValueError("Cannot add stop method '{}' as it is not"
                              "callable".format(callback))
@@ -382,8 +384,7 @@ class ModeController(object):
         self.stop_methods.sort(key=lambda x: x[1], reverse=True)
 
     def set_mode_state(self, mode, active):
-        # called when a mode goes active or inactive
-
+        """Called when a mode goes active or inactive."""
         if active:
             self.active_modes.append(mode)
         else:
@@ -395,8 +396,7 @@ class ModeController(object):
         self.dump()
 
     def dump(self):
-        """Dumps the current status of the running modes to the log file."""
-
+        """Dump the current status of the running modes to the log file."""
         self.log.debug('+=========== ACTIVE MODES ============+')
 
         for mode in self.active_modes:
@@ -407,15 +407,13 @@ class ModeController(object):
         self.log.debug('+-------------------------------------+')
 
     def is_active(self, mode_name):
-        """
-        Checks where a model is active
+        """Return true if the mode is active.
 
         Args:
             mode_name: String name of the mode to check.
 
         Returns:
             True if the mode is active, False if it is not.
-
         """
         return mode_name in [x.name for x in self.active_modes
                              if x.active is True]

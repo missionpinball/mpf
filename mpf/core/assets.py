@@ -441,9 +441,8 @@ class AssetManager(object):
     def load_assets_by_load_key(self, key_name, priority=0):
         """Load all the assets with a given load key.
 
-            Args:
-                key_name: String of the load: key name.
-
+        Args:
+            key_name: String of the load: key name.
         """
         del priority
         assets = set()
@@ -462,10 +461,9 @@ class AssetManager(object):
     def unload_assets(cls, assets):
         """Unload multiple assets.
 
-            Args:
-                assets: An iterable of asset objects. You can safely mix
+        Args:
+            assets: An iterable of asset objects. You can safely mix
                     different classes of assets.
-
         """
         for asset in assets:
             asset.unload()
@@ -676,6 +674,7 @@ class AssetPool(object):
         self._configure_return_asset()
 
     def __repr__(self):
+        """Return string representation."""
         return '<AssetPool: {}>'.format(self.name)
 
     @property
@@ -815,6 +814,7 @@ class Asset(object):
         self.unloading = False  # Is this asset in the process of unloading?
 
     def __repr__(self):
+        """Return string representation."""
         return '<{} Asset: {}, loaded={}>'.format(self.attribute.capitalize(),
                                                   self.name, self.loaded)
 

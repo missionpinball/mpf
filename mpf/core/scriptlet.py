@@ -17,6 +17,7 @@ class Scriptlet(object):
         self.on_load()
 
     def __repr__(self):
+        """Return string representation."""
         return '<Scriptlet.{}>'.format(self.name)
 
     def on_load(self):

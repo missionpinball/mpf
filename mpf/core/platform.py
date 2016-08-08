@@ -1,4 +1,4 @@
-""" Contains the parent classes Platform"""
+"""Contains the parent class for all platforms."""
 import abc
 
 from mpf.devices.switch import Switch
@@ -133,6 +133,7 @@ class I2cPlatform(BasePlatform, metaclass=abc.ABCMeta):
     """Baseclass for I2C Platforms."""
 
     def __init__(self, machine):
+        """Initialise I2C platform and set feature."""
         super().__init__(machine)
         self.features['has_i2c'] = True
 

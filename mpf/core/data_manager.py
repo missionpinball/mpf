@@ -15,7 +15,8 @@ class DataManager(object):
     """Handles key value data loading and saving for the machine."""
 
     def __init__(self, machine, name):
-        """
+        """Initialise data manger.
+
         The DataManager is responsible for reading and writing data to/from a
         file on disk.
 
@@ -25,7 +26,6 @@ class DataManager(object):
                 is for. This name is used to lookup the configuration option
                 in the machine config in the mpf:paths:<name> location. That's
                 how you specify the file name this DataManager will use.
-
         """
         self.machine = machine
         self.name = name
@@ -64,13 +64,12 @@ class DataManager(object):
                            "it when we save.", self.name)
 
     def get_data(self, section=None):
-        """Returns the value of this DataManager's data.
+        """Return the value of this DataManager's data.
 
         Args:
             section: Optional string name of a section (dictionary key) for the
                 data you want returned. Default is None which returns the
                 entire dictionary.
-
         """
         if not section:
             data = copy.copy(self.data)
@@ -87,7 +86,7 @@ class DataManager(object):
             return dict()
 
     def save_all(self, data=None, delay_secs=0):
-        """Writes this DataManager's data to the disk.
+        """Write this DataManager's data to the disk.
 
         Args:
             data: An optional dict() of the data you want to write. If None
@@ -97,7 +96,6 @@ class DataManager(object):
                 to wait before the disk write occurs. Useful for writes that
                 occur when MPF is busy, so you can delay them by a few seconds
                 so they don't slow down MPF. Default is 0.
-
         """
         self.log.debug("Will write %s to disk in %s sec(s)", self.name,
                        delay_secs)
@@ -115,15 +113,13 @@ class DataManager(object):
         self._dirty.set()
 
     def save_key(self, key, value, delay_secs=0):
-        """Updates an individual key and then writes the entire dictionary to
-        disk.
+        """Update an individual key and then write the entire dictionary to disk.
 
         Args:
             key: String name of the key to add/update.
             value: Value of the key
             delay_secs: Optional number of seconds to wait before writing the
                 data to disk. Default is 0.
-
         """
         try:
             self.data[key] = value

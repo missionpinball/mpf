@@ -1,5 +1,4 @@
-"""Base class used for things that "play" from the config files, such as
-WidgetPlayer, SlidePlayer, etc."""
+"""Base class used for things that "play" from the config files, such as WidgetPlayer, SlidePlayer, etc."""
 
 
 class ConfigPlayer(object):

@@ -94,6 +94,7 @@ class Device(object, metaclass=abc.ABCMeta):
             self.log.debug("Configuring device with settings: '%s'", config)
 
     def __repr__(self):
+        """Return string representation."""
         return '<{self.class_label}.{self.name}>'.format(self=self)
 
     def enable_debugging(self):

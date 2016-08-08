@@ -41,7 +41,6 @@ class MachineController(object):
             used to launch mpf.py.
         config(dict): A dictionary of machine's configuration settings, merged from
             various sources.
-        done(bool): Boolean. Set to True and MPF exits.
         game(Game): the current game
         machine_path: The root path of this machine_files folder
         plugins:
@@ -52,6 +51,7 @@ class MachineController(object):
     """
 
     def __init__(self, mpf_path: str, machine_path: str, options: dict):
+        """Initialise machine controller."""
         self.log = logging.getLogger("Machine")
         self.log.info("Mission Pinball Framework Core Engine v%s", __version__)
 
@@ -100,7 +100,6 @@ class MachineController(object):
 
         self.clock = self._load_clock()
         self._crash_queue_checker = self.clock.schedule_interval(self._check_crash_queue, 1)
-        self.configure_debugger()
 
         self.hardware_platforms = dict()
         self.default_platform = None
@@ -202,6 +201,7 @@ class MachineController(object):
         self.validate_machine_config_section('game')
 
     def validate_machine_config_section(self, section):
+        """Validate a config section."""
         if section not in ConfigValidator.config_spec:
             return
 
@@ -377,11 +377,10 @@ class MachineController(object):
             self.log.info('Config file cache created: %s', self._get_mpfcache_file_name())
 
     def verify_system_info(self):
-        """Dumps information about the Python installation to the log.
+        """Dump information about the Python installation to the log.
 
         Information includes Python version, Python executable, platform, and
         core architecture.
-
         """
         python_version = sys.version_info
 
@@ -447,14 +446,13 @@ class MachineController(object):
                 self.scriptlets.append(scriptlet_obj)
 
     def reset(self):
-        """Resets the machine.
+        """Reset the machine.
 
         This method is safe to call. It essentially sets up everything from
         scratch without reloading the config files and assets from disk. This
         method is called after a game ends and before attract mode begins.
 
         Note: This method is not yet implemented.
-
         """
         self.log.debug('Resetting...')
         self.events.process_event_queue()
@@ -495,15 +493,13 @@ class MachineController(object):
         self._reset_complete()
 
     def add_platform(self, name):
-        """Makes an additional hardware platform interface available to MPF.
+        """Make an additional hardware platform interface available to MPF.
 
         Args:
             name: String name of the platform to add. Must match the name of a
                 platform file in the mpf/platforms folder (without the .py
                 extension).
-
         """
-
         if name not in self.hardware_platforms:
 
             try:
@@ -516,13 +512,12 @@ class MachineController(object):
                 hardware_platform(self))
 
     def set_default_platform(self, name):
-        """Sets the default platform which is used if a device class-specific or
-        device-specific platform is not specified. The default platform also
-        controls whether a platform timer or MPF's timer is used.
+        """Set the default platform.
+
+        It is used if a device class-specific or device-specific platform is not specified.
 
         Args:
             name: String name of the platform to set to default.
-
         """
         try:
             self.default_platform = self.hardware_platforms[name]
@@ -532,7 +527,7 @@ class MachineController(object):
                            " a currently active platform", name)
 
     def register_monitor(self, monitor_class, monitor):
-        """Registers a monitor.
+        """Register a monitor.
 
         Args:
             monitor_class: String name of the monitor class for this monitor
@@ -558,13 +553,13 @@ class MachineController(object):
         self.monitors[monitor_class].add(monitor)
 
     def run(self):
-        """Starts the main machine run loop."""
+        """Start the main machine run loop."""
         self.log.debug("Starting the main run loop.")
 
         self._run_loop()
 
     def stop(self):
-        """Performs a graceful exit of MPF."""
+        """Perform a graceful exit of MPF."""
         if self._done:
             return
 
@@ -611,7 +606,7 @@ class MachineController(object):
             platform.stop()
 
     def power_off(self):
-        """Attempts to perform a power down of the pinball machine and ends MPF.
+        """Attempt to perform a power down of the pinball machine and ends MPF.
 
         This method is not yet implemented.
         """
@@ -626,11 +621,8 @@ class MachineController(object):
 
         '''
 
-    def configure_debugger(self):
-        pass
-
     def set_machine_var(self, name, value, force_events=False):
-        """Sets the value of a machine variable.
+        """Set the value of a machine variable.
 
         Args:
             name: String name of the variable you're setting the value for.
@@ -639,7 +631,6 @@ class MachineController(object):
                 machine monitor callback, and writing the variable to disk (if
                 it's set to persist). By default these things only happen if
                 the new value is different from the old value.
-
         """
         if name not in self.machine_vars:
             self.log.warning("Received request to set machine_var '%s', but "
@@ -697,7 +688,7 @@ class MachineController(object):
                              prev_value=prev_value, change=change)
 
     def get_machine_var(self, name):
-        """Returns the value of a machine variable.
+        """Return the value of a machine variable.
 
         Args:
             name: String name of the variable you want to get that value for.
@@ -713,12 +704,12 @@ class MachineController(object):
             return None
 
     def is_machine_var(self, name):
+        """Return true if machine variable exists."""
         return name in self.machine_vars
 
     # pylint: disable-msg=too-many-arguments
-    def create_machine_var(self, name, value=0, persist=False,
-                           expire_secs=None, silent=False):
-        """Creates a new machine variable:
+    def create_machine_var(self, name, value=0, persist=False, expire_secs=None, silent=False):
+        """Create a new machine variable.
 
         Args:
             name: String name of the variable.
@@ -731,7 +722,6 @@ class MachineController(object):
                 of 0. For example, this lets you write the number of credits on
                 the machine to disk to persist even during power off, but you
                 could set it so that those only stay persisted for an hour.
-
         """
         var = CaseInsensitiveDict()
 
@@ -745,12 +735,12 @@ class MachineController(object):
             self.set_machine_var(name, value, force_events=True)
 
     def remove_machine_var(self, name):
-        """Removes a machine variable by name. If this variable persists to
-        disk, it will remove it from there too.
+        """Remove a machine variable by name.
+
+        If this variable persists to disk, it will remove it from there too.
 
         Args:
             name: String name of the variable you want to remove.
-
         """
         try:
             del self.machine_vars[name]
@@ -759,7 +749,7 @@ class MachineController(object):
             pass
 
     def remove_machine_var_search(self, startswith='', endswith=''):
-        """Removes a machine variable by matching parts of its name.
+        """Remove a machine variable by matching parts of its name.
 
         Args:
             startswith: Optional start of the variable name to match.
@@ -767,7 +757,6 @@ class MachineController(object):
 
         For example, if you pass startswit='player' and endswith='score', this
         method will match and remove player1_score, player2_score, etc.
-
         """
         for var in list(self.machine_vars.keys()):
             if var.startswith(startswith) and var.endswith(endswith):
@@ -775,6 +764,7 @@ class MachineController(object):
                 self.machine_var_data_manager.remove_key(var)
 
     def get_platform_sections(self, platform_section, overwrite):
+        """Return platform section."""
         if not self.options['force_platform']:
             if not overwrite:
                 if self.config['hardware'][platform_section] != 'default':
@@ -791,11 +781,13 @@ class MachineController(object):
             return self.default_platform
 
     def register_boot_hold(self, hold):
+        """Register a boot hold."""
         if self.is_init_done:
             raise AssertionError("Register hold after init_done")
         self._boot_holds.add(hold)
 
     def clear_boot_hold(self, hold):
+        """Clear a boot hold."""
         if self.is_init_done:
             raise AssertionError("Clearing hold after init_done")
         self._boot_holds.remove(hold)
@@ -804,6 +796,10 @@ class MachineController(object):
             self.init_done()
 
     def init_done(self):
+        """Finish init.
+
+        Called when init is done and all boot holds are cleared.
+        """
         self.is_init_done = True
 
         self.events.post("init_done")

@@ -6,6 +6,7 @@ from mpf.assets.show import Show
 
 
 class ShowController(object):
+
     """Manages all the shows in a pinball machine.
 
     'hardware shows' are coordinated light, flasher, coil, and event effects.
@@ -17,6 +18,7 @@ class ShowController(object):
     """
 
     def __init__(self, machine):
+        """Initialise show controller."""
         self.log = logging.getLogger("ShowController")
         self.machine = machine
 
@@ -48,7 +50,7 @@ class ShowController(object):
             self.register_show(show, settings)
 
     def get_running_shows(self, name):
-        """Returns a list of running shows by show name or instance name.
+        """Return a list of running shows by show name or instance name.
 
         Args:
             name: String name of the running shows you want to get. This can
@@ -60,10 +62,10 @@ class ShowController(object):
             A list of RunningShow() objects.
 
         """
-
         return [x for x in self.running_shows if x.name == name]
 
     def register_show(self, name, settings):
+        """Register a named show."""
         if name in self.machine.shows:
             raise ValueError("Show named '{}' was just registered, but "
                              "there's already a show with that name. Shows are"
@@ -75,8 +77,10 @@ class ShowController(object):
                                             file=None)
 
     def notify_show_starting(self, show):
+        """Register a running show."""
         self.running_shows.append(show)
         self.running_shows.sort(key=lambda x: x.priority)
 
     def notify_show_stopping(self, show):
+        """Remove a running show."""
         self.running_shows.remove(show)

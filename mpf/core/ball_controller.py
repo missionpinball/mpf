@@ -1,5 +1,4 @@
-"""Contains the BallController class which manages and tracks all the balls in
-a pinball machine."""
+"""Contains the BallController class which manages and tracks all the balls in a pinball machine."""
 
 import logging
 
@@ -8,17 +7,18 @@ from mpf.core.utility_functions import Util
 
 
 class BallController(object):
-    """Base class for the Ball Controller which is used to keep track of all
-    the balls in a pinball machine.
+
+    """Base class for the Ball Controller which is used to keep track of all the balls in a pinball machine.
 
     Parameters
     ----------
 
     machine : :class:`MachineController`
         A reference to the instance of the MachineController object.
-
     """
+
     def __init__(self, machine):
+        """Initialise ball controller."""
         self.machine = machine
         self.log = logging.getLogger("BallController")
         self.log.debug("Loading the BallController")
@@ -164,6 +164,7 @@ class BallController(object):
         return balls_removed
 
     def trigger_ball_count(self):
+        """Count the balls now if possible."""
         self._update_num_balls_known()
         self._correct_playfield_count()
 
@@ -261,8 +262,7 @@ class BallController(object):
             return False
 
     def are_balls_collected(self, target):
-        """Checks to see if all the balls are contained in devices tagged with
-        the parameter that was passed.
+        """Check to see if all the balls are contained in devices tagged with the parameter that was passed.
 
         Note if you pass a target that's not used in any ball devices, this
         method will return True. (Because you're asking if all balls are
@@ -272,9 +272,7 @@ class BallController(object):
             target: String or list of strings of the tags you'd like to
                 collect the balls to. Default of None will be replaced with
                 'home' and 'trough'.
-
         """
-
         self.log.debug("Checking to see if all the balls are in devices tagged"
                        " with '%s'", target)
 
@@ -307,8 +305,7 @@ class BallController(object):
             return False
 
     def collect_balls(self, target='home, trough'):
-        """Used to ensure that all balls are in contained in ball devices with
-        the tag or list of tags you pass.
+        """Used to ensure that all balls are in contained in ball devices with the tag or list of tags you pass.
 
         Typically this would be used after a game ends, or when the machine is
         reset or first starts up, to ensure that all balls are in devices
@@ -320,8 +317,6 @@ class BallController(object):
                 ['home', 'trough'].
 
         """
-        # I'm embarrassed at how ugly this code is. But meh, it works...
-
         tag_list = Util.string_to_list(target)
 
         self.log.debug("Collecting all balls to devices with tags '%s'",
