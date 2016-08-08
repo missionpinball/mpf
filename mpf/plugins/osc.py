@@ -21,8 +21,10 @@ except ImportError:
 
 class OSC(object):
 
-    def __init__(self, machine):
+    """OSC plugin."""
 
+    def __init__(self, machine):
+        """Initialise OSC plugin."""
         if 'osc' not in machine.config:
             machine.log.debug('"OSC:" section not found in the machine '
                               'configuration, so the OSC plugin will not '
@@ -66,7 +68,7 @@ class OSC(object):
             "LIGHT": self.process_light,
             "COIL": self.process_coil,
             "EV": self.process_event,
-            "AUDITS": self.update_audits,
+            "AUDITS": self._update_audits,
             "CONFIG": self.process_config,
             "SYNC": self.process_sync,
             "WPCSYNC": self.process_wpcsync,
@@ -74,7 +76,7 @@ class OSC(object):
         }
 
     def start(self):
-        """Starts the OSC server."""
+        """Start the OSC server."""
         receive_address = (self.config['machine_ip'],
                            self.config['machine_port'])
         self.server = OSCmodule.OSCServer(receive_address)
@@ -95,18 +97,17 @@ class OSC(object):
             self.register_lights()
 
         if 'data' in self.config['client_updates']:
-            self.register_data()
+            self._register_data()
 
     def stop(self):
-        """Stops the OSC server."""
+        """Stop the OSC server."""
         self.server.close()
         self.log.info("Waiting for the OSC host thread to finish")
         self.server_thread.join()
         self.log.debug("OSC host thread is done.")
 
     def process_message(self, addr, tags, data, client_address):
-        """Receives OSC messages and acts on them."""
-
+        """Receive OSC messages and act on them."""
         if self.config['debug_messages']:
             self.log.debug("Incoming OSC message. Client IP: %s, Message: %s, %s"
                            ", %s", client_address, addr, tags, data)
@@ -123,7 +124,7 @@ class OSC(object):
 
         # if this client is not connected, set up a connection
         if client_address not in self.osc_clients:
-            self.found_new_osc_client(client_address)
+            self._found_new_osc_client(client_address)
 
         if cat.upper() in self.message_parsers:
             self.message_parsers[cat.upper()](name, data)
@@ -132,23 +133,25 @@ class OSC(object):
 
     # legacy method which does nothing
     def process_refresh(self, name, data):
+        """Process refresh."""
         pass
 
     def process_sync(self, name, data):
+        """Process sync."""
         del name
         if data[0] == 1:
             self.client_mode = 'name'
             self.client_update_all()
 
     def process_wpcsync(self, name, data):
+        """Process wpc sync."""
         del name
         if data[0] == 1:
             self.client_mode = 'wpc'
             self.client_update_all()
 
     def process_switch(self, switch, data):
-        """Processes a switch event received from the OSC client."""
-
+        """Process a switch event received from the OSC client."""
         # if the switch name is not valid and we're on WPC hardware, let's try
         # it as a number
         if (switch not in self.machine.switches and self.wpc and
@@ -164,8 +167,7 @@ class OSC(object):
                            "Ignoring...", switch)
 
     def process_light(self, light, data):
-        """Processes a light event received from the OSC client."""
-
+        """Process a light event received from the OSC client."""
         if light not in self.machine.lights and self.wpc:
 
             if len(light) == 1:
@@ -183,7 +185,7 @@ class OSC(object):
                            "Ignorring...", light)
 
     def process_coil(self, coil, data):
-        """Processes a coil event received from the OSC client."""
+        """Process a coil event received from the OSC client."""
         del data
         if coil in self.machine.coils:
             self.machine.coils[coil].pulse()
@@ -191,61 +193,56 @@ class OSC(object):
             # configurable pulse times, etc. But this is a start.
 
     def process_event(self, event, data):
-        """Posts an MPF event based on an event received from the OSC client."""
+        """Post an MPF event based on an event received from the OSC client."""
         del data
         self.machine.events.post(event)
 
     def process_flipper(self, flipper, data):
-        """Calls the flipper's sw_flip() or sw_release() event."""
-
+        """Call the flipper's sw_flip() or sw_release() event."""
         if data[0] == 1:
             self.machine.flippers[flipper].sw_flip()
         else:
             self.machine.flippers[flipper].sw_release()
 
     def register_switches(self):
-        """Adds switch handlers to all switches so the OSC client can receive
-        updates."""
+        """Add switch handlers to all switches so the OSC client can receive updates."""
         for switch in self.machine.switches:
-            self.machine.switch_controller.add_switch_handler(switch.name, self.client_update_switch,
+            self.machine.switch_controller.add_switch_handler(switch.name, self._client_update_switch,
                                                               1, return_info=True)
-            self.machine.switch_controller.add_switch_handler(switch.name, self.client_update_switch,
+            self.machine.switch_controller.add_switch_handler(switch.name, self._client_update_switch,
                                                               0, return_info=True)
 
     def register_lights(self):
-        """Adds handlers to all lights so the OSC client can receive
-        updates."""
-
+        """Add handlers to all lights so the OSC client can receive updates."""
         try:
             for light in self.machine.lights:
-                light.add_handler(self.client_update_light)
+                light.add_handler(self._client_update_light)
         except AttributeError:
             pass
 
-    def register_data(self):
-        self.machine.events.add_handler('player_turn_start', self.update_player)
-        self.machine.events.add_handler('ball_started', self.update_ball)
-        self.machine.events.add_handler('score_change', self.update_score)
+    def _register_data(self):
+        self.machine.events.add_handler('player_turn_start', self._update_player)
+        self.machine.events.add_handler('ball_started', self._update_ball)
+        self.machine.events.add_handler('score_change', self._update_score)
 
-    def update_player(self, **kwargs):
+    def _update_player(self, **kwargs):
         del kwargs
-        self.update_score()
+        self._update_score()
         self.client_send_osc_message("data", "player",
                                      self.machine.game.player['number'])
 
-    def update_ball(self, **kwargs):
+    def _update_ball(self, **kwargs):
         del kwargs
         self.client_send_osc_message("data", "ball",
                                      self.machine.game.player['ball'])
 
-    def update_score(self, **kwargs):
+    def _update_score(self, **kwargs):
         del kwargs
         self.client_send_osc_message("data", "score", locale.format("%d", self.machine.game.player['score'],
                                                                     grouping=True))
 
-    def update_audits(self, event, data):
-        """Sends audit data to the OSC client."""
-
+    def _update_audits(self, event, data):
+        """Send audit data to the OSC client."""
         # This method just sends all audits to the client whenever any OSC
         # message comes in that starts with /audits
         del event
@@ -277,32 +274,31 @@ class OSC(object):
                     i += 1
 
     def process_config(self, event, data):
-        """Sends config data to the OSC client."""
-
+        """Send config data to the OSC client."""
         # This method just sends all config data to the client whenever any OSC
         # message comes in that starts with /config
         pass
 
     def client_update_all(self):
-        """ Update the OSC client.
-        Good for when it switches to a new tab or connects a new client
-        """
-        self.client_update_all_switches()
+        """Update the OSC client.
 
-    def client_update_switch(self, switch_name, ms, state):
+        Good for when it switches to a new tab or connects a new client.
+        """
+        self._client_update_all_switches()
+
+    def _client_update_switch(self, switch_name, ms, state):
         del ms
         if self.client_mode == 'wpc':
             switch_name = str(self.machine.switches[switch_name].config['number']).lower()
         self.client_send_osc_message("sw", switch_name, state)
 
-    def client_update_light(self, light_name, brightness):
+    def _client_update_light(self, light_name, brightness):
         if self.client_mode == 'wpc':
             light_name = str(self.machine.lights[light_name].config['number']).lower()
         self.client_send_osc_message("light", light_name, float(brightness / 255))
 
-    def client_update_all_switches(self):
-        """ Updates all the switch states on the OSC client."""
-
+    def _client_update_all_switches(self):
+        """Update all the switch states on the OSC client."""
         if self.client_mode == 'name':
             for switch in self.machine.switches:
                 if self.machine.switch_controller.is_active(switch.name):
@@ -320,14 +316,15 @@ class OSC(object):
                 self.client_send_osc_message("sw", str(switch.config['number']).lower(), data)
 
     def client_send_osc_message(self, category, name, data):
-        """Sends an OSC message to the client to update it
+        """Send an OSC message to the client to update it.
+
         Parameters:
         category - type of update, sw, coil, lamp, led, etc.
         name - the name of the object we're updating
         data - the data we're sending
         """
         for client in self.clients_to_add:
-            self.setup_osc_client(client)
+            self._setup_osc_client(client)
 
         if self.osc_clients:
             self.osc_message = OSCmodule.OSCMessage("/" + str(category) + "/" +
@@ -352,12 +349,12 @@ class OSC(object):
                 del self.osc_clients[client]
         self.clients_to_delete = []
 
-    def found_new_osc_client(self, address):
+    def _found_new_osc_client(self, address):
         if address not in self.osc_clients:
             self.clients_to_add.append(address)
 
-    def setup_osc_client(self, address):
-        """Setup a new OSC client"""
+    def _setup_osc_client(self, address):
+        """Setup a new OSC client."""
         self.log.info("OSC client at address %s connected", address[0])
         self.osc_clients[address] = OSCmodule.OSCClient()
         self.osc_clients[address].connect((address[0],

@@ -1,5 +1,4 @@
-"""MPF plugin for an auditor which records switch events, high scores, shots,
-etc."""
+"""MPF plugin for an auditor which records switch events, high scores, shots, etc."""
 
 import logging
 from mpf.devices.shot import Shot
@@ -7,13 +6,14 @@ from mpf.devices.shot import Shot
 
 class Auditor(object):
 
+    """Base class for the auditor.
+
+    Args:
+        machine: A refence to the machine controller object.
+    """
+
     def __init__(self, machine):
-        """Base class for the auditor.
-
-        Args:
-            machine: A refence to the machine controller object.
-        """
-
+        """Initialise auditor."""
         if 'auditor' not in machine.config:
             machine.log.debug('"Auditor:" section not found in machine '
                               'configuration, so the auditor will not be '
@@ -39,6 +39,7 @@ class Auditor(object):
         self.machine.events.add_handler('init_phase_4', self._initialize)
 
     def __repr__(self):
+        """Return string representation."""
         return '<Auditor>'
 
     def _initialize(self):
@@ -115,10 +116,12 @@ class Auditor(object):
         self.current_audits[audit_class][event] += 1
 
     def audit_switch(self, switch_name, state):
+        """Record switch change."""
         if self.enabled and state and switch_name in self.switchnames_to_audit:
             self.audit('switches', switch_name)
 
     def audit_shot(self, name, profile, state):
+        """Record shot hit."""
         del profile
         del state
         self.audit('shots', name)
@@ -136,8 +139,9 @@ class Auditor(object):
         self.current_audits['events'][eventname] += 1
 
     def audit_player(self, **kwargs):
-        """Called to write player data to the audit log. Typically this is only
-        called at the end of a game.
+        """Called to write player data to the audit log.
+
+        Typically this is only called at the end of a game.
 
         Args:
             **kwargs, not used, but included since some types of events include
@@ -170,7 +174,7 @@ class Auditor(object):
         return current_list[0:num_items]
 
     def enable(self, **kwags):
-        """Enables the auditor.
+        """Enable the auditor.
 
         This method lets you enable the auditor so it only records things when
         you want it to. Typically this is called at the beginning of a game.
@@ -208,7 +212,7 @@ class Auditor(object):
                                    delay_secs=delay_secs)
 
     def disable(self, **kwargs):
-        """Disables the auditor."""
+        """Disable the auditor."""
         del kwargs
         self.log.debug("Disabling the Auditor")
         self.enabled = False
