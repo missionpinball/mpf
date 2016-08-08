@@ -7,9 +7,11 @@ from mpf.platforms.virtual import (HardwarePlatform as VirtualPlatform, VirtualD
 
 
 class HardwarePlatform(VirtualPlatform):
+
     """Base class for the smart_virtual hardware platform."""
 
     def __init__(self, machine):
+        """Initialise smart virtual platform."""
         super().__init__(machine)
         self.log = logging.getLogger("Smart Virtual Platform")
         self.log.debug("Configuring smart_virtual hardware interface.")
@@ -17,14 +19,16 @@ class HardwarePlatform(VirtualPlatform):
         self.delay = DelayManager(self.machine.delayRegistry)
 
     def __repr__(self):
+        """Return string representation."""
         return '<Platform.SmartVirtual>'
 
     def initialize(self):
+        """Initialise platform."""
         self.machine.events.add_handler('machine_reset_phase_1',
                                         self._initialize2)
 
     @classmethod
-    def set_target(cls, source, target, **kwargs):
+    def _set_target(cls, source, target, **kwargs):
         del kwargs
         driver = None
         if source.config['eject_coil']:
@@ -41,7 +45,7 @@ class HardwarePlatform(VirtualPlatform):
 
             # we assume that the device always reaches its target. diverters are ignored
             self.machine.events.add_handler('balldevice_{}_ball_eject_attempt'.format(device.name),
-                                            self.set_target)
+                                            self._set_target)
 
             if device.config['eject_coil']:
                 device.config['eject_coil'].hw_driver.register_ball_switches(
@@ -70,6 +74,7 @@ class HardwarePlatform(VirtualPlatform):
                     device.config['hold_coil'].hw_driver.confirm_eject_switch = device.config['confirm_eject_switch']
 
     def configure_driver(self, config):
+        """Configure driver."""
         # todo should probably throw out the number that we get since it could
         # be a weird string and just return an incremental int?
 
@@ -78,10 +83,12 @@ class HardwarePlatform(VirtualPlatform):
         return driver
 
     def confirm_eject_via_switch(self, switch):
+        """Simulate eject via switch."""
         self.machine.switch_controller.process_switch(switch.name, 1)
         self.machine.switch_controller.process_switch(switch.name, 0)
 
     def add_ball_to_device(self, device):
+        """Add ball to device."""
         if device.config['entrance_switch']:
             pass  # todo
 
@@ -101,7 +108,11 @@ class HardwarePlatform(VirtualPlatform):
 
 
 class SmartVirtualDriver(VirtualDriver):
+
+    """Smart virtual driver."""
+
     def __init__(self, config, machine, platform):
+        """Initialise smart virtual driver."""
         super().__init__(config)
         self.log = logging.getLogger('SmartVirtualDriver')
         self.machine = machine
@@ -112,14 +123,17 @@ class SmartVirtualDriver(VirtualDriver):
         self.confirm_eject_switch = None
 
     def __repr__(self):
+        """Return string representation."""
         return "SmartVirtualDriver.{}".format(self.number)
 
     def disable(self, coil):
+        """Disable driver."""
         del coil
         if self.type == 'hold':
             self._handle_ball()
 
     def enable(self, coil):
+        """Enable driver."""
         pass
 
     def _handle_ball(self):
@@ -140,6 +154,7 @@ class SmartVirtualDriver(VirtualDriver):
                                     device=self.target_device)
 
     def pulse(self, coil, milliseconds):
+        """Pulse driver."""
         del coil
         if self.type == 'eject':
             self._handle_ball()
@@ -147,7 +162,9 @@ class SmartVirtualDriver(VirtualDriver):
         return milliseconds
 
     def register_ball_switches(self, switches):
+        """Register ball switches."""
         self.ball_switches.extend(switches)
 
     def set_target_device(self, target):
+        """Set target of driver for ball simulation."""
         self.target_device = target

@@ -71,6 +71,7 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
             self.debug_log("Configuring P-ROC for OEM driver boards")
 
     def __repr__(self):
+        """Return string representation."""
         return '<Platform.P-ROC>'
 
     def configure_driver(self, config):

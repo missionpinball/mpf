@@ -23,6 +23,7 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
     """Base class for the virtual hardware platform."""
 
     def __init__(self, machine):
+        """Initialise virtual platform."""
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger("Virtual Platform")
         self.log.debug("Configuring virtual hardware interface.")
@@ -36,6 +37,7 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
         self.features['tickless'] = True
 
     def __repr__(self):
+        """Return string representation."""
         return '<Platform.Virtual>'
 
     def initialize(self):

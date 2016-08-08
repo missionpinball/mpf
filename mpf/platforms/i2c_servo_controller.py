@@ -22,6 +22,7 @@ class HardwarePlatform(ServoPlatform):
         self.features['tickless'] = True
 
     def __repr__(self):
+        """Return string representation."""
         return '<Platform.I2C_Servo_Controller_Platform>'
 
     def initialize(self):
