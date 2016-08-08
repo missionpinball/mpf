@@ -1,4 +1,4 @@
-"""Contains the Credit (coin play) mode code"""
+"""Contains the Credit (coin play) mode code."""
 
 from math import floor
 
@@ -7,7 +7,10 @@ from mpf.core.mode import Mode
 
 class Credits(Mode):
 
+    """Mode which manages the credits and prevents the game from starting without credits."""
+
     def __init__(self, machine, config, name, path):
+        """Initialise credits mode."""
         self.data_manager = None
         self.earnings = None
 
@@ -20,6 +23,7 @@ class Credits(Mode):
         super().__init__(machine, config, name, path)
 
     def mode_init(self):
+        """Initialise mode."""
         self.data_manager = self.machine.create_data_manager('earnings')
         self.earnings = self.data_manager.get_data()
 
@@ -35,6 +39,7 @@ class Credits(Mode):
             section_name='credits')
 
     def mode_start(self, **kwargs):
+        """Start mode."""
         self.add_mode_event_handler('enable_free_play',
                                     self.enable_free_play)
         self.add_mode_event_handler('enable_credit_play',
@@ -52,6 +57,7 @@ class Credits(Mode):
             self.enable_credit_play(post_event=False)
 
     def mode_stop(self, **kwargs):
+        """Stop mode."""
         self.enable_free_play()
 
     def _calculate_credit_units(self):
@@ -116,6 +122,7 @@ class Credits(Mode):
             self.pricing_tiers.add((credit_units, bonus))
 
     def enable_credit_play(self, post_event=True, **kwargs):
+        """Enable credits play."""
         del kwargs
 
         self.credits_config['free_play'] = False
@@ -164,6 +171,7 @@ class Credits(Mode):
         '''
 
     def enable_free_play(self, post_event=True, **kwargs):
+        """Enable free play."""
         del kwargs
         self.credits_config['free_play'] = True
 
@@ -187,6 +195,7 @@ class Credits(Mode):
         '''
 
     def toggle_credit_play(self, **kwargs):
+        """Toggle between free and credits play."""
         del kwargs
 
         if self.credits_config['free_play']:
@@ -314,7 +323,7 @@ class Credits(Mode):
             machine.'''
 
     def add_credit(self, price_tiering=True):
-        """Adds a single credit to the machine.
+        """Add a single credit to the machine.
 
         Args:
             price_tiering: Boolean which controls whether this credit will be
@@ -413,6 +422,7 @@ class Credits(Mode):
         self._update_credit_strings()
 
     def clear_all_credits(self):
+        """Clear all credits."""
         self.log.debug("Clearing all credits")
         self.machine.set_machine_var('credit_units', 0)
         self._update_credit_strings()

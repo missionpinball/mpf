@@ -1,0 +1,1 @@
+"""Contains MPF default modes."""

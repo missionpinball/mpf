@@ -1,0 +1,1 @@
+"""Default credits mode."""

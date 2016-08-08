@@ -1,3 +1,4 @@
+"""Mode which allows the player to select another mode to run."""
 import copy
 
 from mpf.core.utility_functions import Util
@@ -6,7 +7,11 @@ from mpf.core.mode import Mode
 
 
 class Carousel(Mode):
+
+    """Mode which allows the player to select another mode to run."""
+
     def __init__(self, machine, config, name, path):
+        """Initialise carousel mode."""
         self._items = None
         self._select_item_events = None
         self._next_item_events = None
@@ -15,6 +20,8 @@ class Carousel(Mode):
         super().__init__(machine, config, name, path)
 
     def mode_init(self):
+        """Initialise mode and read all settings from config."""
+        super().mode_init()
         mode_settings = self.config.get("mode_settings", [])
         self._items = Util.string_to_list(mode_settings.get("selectable_items", ""))
         self._select_item_events = Util.string_to_list(mode_settings.get("select_item_events", ""))
@@ -26,11 +33,13 @@ class Carousel(Mode):
             raise AssertionError("Specify at least one item to select from")
 
     def mode_start(self, **kwargs):
+        """Start mode and let the player select."""
+        super().mode_start(**kwargs)
         self.log.info("Carousel Mode Starting")
 
-        self._register_handlers(self._next_item_events, self.next_item)
-        self._register_handlers(self._previous_item_events, self.previous_item)
-        self._register_handlers(self._select_item_events, self.select_item)
+        self._register_handlers(self._next_item_events, self._next_item)
+        self._register_handlers(self._previous_item_events, self._previous_item)
+        self._register_handlers(self._select_item_events, self._select_item)
 
         player = self.machine.game.player
         if not player.is_player_var('available_items_{}'.format(self.name)):
@@ -40,6 +49,8 @@ class Carousel(Mode):
         self._update_highlighted_item()
 
     def mode_stop(self, **kwargs):
+        """Stop mode."""
+        super().mode_stop(**kwargs)
         self.log.info("Carousel Mode Stopping")
 
     def _register_handlers(self, events, handler):
@@ -60,7 +71,7 @@ class Carousel(Mode):
         player = self.machine.game.player
         return player['available_items_{}'.format(self.name)]
 
-    def next_item(self, **kwargs):
+    def _next_item(self, **kwargs):
         del kwargs
         self._highlighted_item_index += 1
         if self._highlighted_item_index >= len(self._get_available_items()):
@@ -68,7 +79,7 @@ class Carousel(Mode):
 
         self._update_highlighted_item()
 
-    def previous_item(self, **kwargs):
+    def _previous_item(self, **kwargs):
         del kwargs
         self._highlighted_item_index -= 1
         if self._highlighted_item_index < 0:
@@ -76,7 +87,7 @@ class Carousel(Mode):
 
         self._update_highlighted_item()
 
-    def select_item(self, **kwargs):
+    def _select_item(self, **kwargs):
         del kwargs
         self.log.info("Selected mode: " + str(self._get_highlighted_item()))
 

@@ -1,18 +1,19 @@
-"""Contains the Attract class which is the attract mode in a pinball machine.
-"""
+"""Contains the Attract class which is the attract mode in a pinball machine."""
 
 from mpf.core.mode import Mode
 
 
 class Attract(Mode):
-    """ Base mode for the active mode for a machine when a game is not in
-    progress. Its main job is to watch for the start button to be pressed, to
+
+    """Default mode running in a machine when a game is not in progress.
+
+    Its main job is to watch for the start button to be pressed, to
     post the requests to start games, and to move the machine flow to the next
     mode if the request to start game comes back as approved.
-
     """
 
     def __init__(self, machine, config, name, path):
+        """Initialise mode."""
         super().__init__(machine, config, name, path)
 
         self.start_button_pressed_time = 0.0
@@ -20,10 +21,7 @@ class Attract(Mode):
         self.start_buttons_held = list()
 
     def mode_start(self, **kwargs):
-        """ Automatically called when the Attract game mode becomes active.
-
-        """
-
+        """Automatically called when the Attract game mode becomes active."""
         # register switch handlers for the start button press so we can
         # capture long presses
 
@@ -46,16 +44,15 @@ class Attract(Mode):
         # todo
 
     def start_button_pressed(self):
-        """ Called when the a switch tagged with *start* is activated."""
+        """Called when the a switch tagged with *start* is activated."""
         self.start_button_pressed_time = self.machine.clock.get_time()
 
     def start_button_released(self):
-        """ Called when the a switch tagged with *start* is deactivated.
+        """Called when the a switch tagged with *start* is deactivated.
 
         Since this is the Attract mode, this method posts a boolean event
         called *request_to_start_game*. If that event comes back True, this
         method calls :meth:`result_of_start_request`.
-
         """
         self.start_hold_time = self.machine.clock.get_time() - self.start_button_pressed_time
         self.start_buttons_held = list()
@@ -65,7 +62,6 @@ class Attract(Mode):
                 self.start_buttons_held.append(switch.name)
 
         # todo test for active?
-        # todo should this be a decorator?
         self.machine.events.post_boolean('request_to_start_game',
                                          callback=self.result_of_start_request)
         '''event: request_to_start_game
@@ -89,7 +85,6 @@ class Attract(Mode):
             ev_result : Bool result of the boolean event
                 *request_to_start_game.* If any registered event handler did not
                 want the game to start, this will be False. Otherwise it's True.
-
         """
         if ev_result is False:
             self.log.debug("Game start was denied")

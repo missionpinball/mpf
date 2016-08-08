@@ -1,4 +1,4 @@
-"""Contains the High Score mode code"""
+"""Contains the High Score mode code."""
 
 from collections import OrderedDict
 from mpf.core.mode import Mode
@@ -7,7 +7,10 @@ from mpf.core.player import Player
 
 class HighScore(Mode):
 
+    """Mode which tracks high scores and lets the player enter its initials."""
+
     def __init__(self, machine, config, name, path):
+        """Initialise high score mode."""
         self.data_manager = None
         self.high_scores = None
         self.high_score_config = None
@@ -16,6 +19,7 @@ class HighScore(Mode):
         super().__init__(machine, config, name, path)
 
     def mode_init(self):
+        """Initialise high score mode."""
         self.data_manager = self.machine.create_data_manager('high_scores')
         self.high_scores = self.data_manager.get_data()
 
@@ -49,7 +53,7 @@ class HighScore(Mode):
                     self.high_scores[entries] = list()
 
     def mode_start(self, **kwargs):
-
+        """Start high score mode."""
         self.add_mode_event_handler('text_input_high_score_complete',
                                     self._receive_player_name)
 
@@ -121,7 +125,7 @@ class HighScore(Mode):
                                                   value)
                         return
 
-        self.high_scores_done()
+        self._high_scores_done()
 
     # pylint: disable-msg=too-many-arguments
     def _get_player_name(self, player, config_cat_name, index, award_label, value):
@@ -168,12 +172,12 @@ class HighScore(Mode):
             self._get_player_names()
 
     def _send_award_slide(self, player_name, award, value):
-        self.send_award_slide_event(
+        self._send_award_slide_event(
             award_slide_name='high_score_award_display',
             player_name=player_name,
             award=award,
             value=value)
-        self.send_award_slide_event(
+        self._send_award_slide_event(
             award_slide_name='{}_award_display'.format(award),
             player_name=player_name,
             award=award,
@@ -183,7 +187,7 @@ class HighScore(Mode):
             ms=self.high_score_config['award_slide_display_time'],
             callback=self._get_player_names)
 
-    def high_scores_done(self):
+    def _high_scores_done(self):
         self._stop_sending_switches()
         self.high_scores = self.new_high_score_list
         self._write_scores_to_disk()
@@ -198,55 +202,55 @@ class HighScore(Mode):
                 self.high_score_config['shift_left_tag']):
             self.machine.switch_controller.add_switch_handler(
                 switch_name=switch.name,
-                callback=self.send_left)
+                callback=self._send_left)
 
         for switch in self.machine.switches.items_tagged(
                 self.high_score_config['shift_right_tag']):
             self.machine.switch_controller.add_switch_handler(
                 switch_name=switch.name,
-                callback=self.send_right)
+                callback=self._send_right)
 
         for switch in self.machine.switches.items_tagged(
                 self.high_score_config['select_tag']):
             self.machine.switch_controller.add_switch_handler(
                 switch_name=switch.name,
-                callback=self.send_select)
+                callback=self._send_select)
 
     def _stop_sending_switches(self):
         for switch in self.machine.switches.items_tagged(
                 self.high_score_config['shift_left_tag']):
             self.machine.switch_controller.remove_switch_handler(
                 switch_name=switch.name,
-                callback=self.send_left)
+                callback=self._send_left)
         for switch in self.machine.switches.items_tagged(
                 self.high_score_config['shift_right_tag']):
             self.machine.switch_controller.remove_switch_handler(
                 switch_name=switch.name,
-                callback=self.send_right)
+                callback=self._send_right)
 
         for switch in self.machine.switches.items_tagged(
                 self.high_score_config['select_tag']):
             self.machine.switch_controller.remove_switch_handler(
                 switch_name=switch.name,
-                callback=self.send_select)
+                callback=self._send_select)
 
-    def send_left(self):
+    def _send_left(self):
         self.machine.bcp.send(bcp_command='trigger',
                               name='switch_{}_active'.format(
                                   self.high_score_config['shift_left_tag']))
 
-    def send_right(self):
+    def _send_right(self):
         self.machine.bcp.send(bcp_command='trigger',
                               name='switch_{}_active'.format(
                                   self.high_score_config['shift_right_tag']))
 
-    def send_select(self):
+    def _send_select(self):
         self.machine.bcp.send(bcp_command='trigger',
                               name='switch_{}_active'.format(
                                   self.high_score_config['select_tag']))
 
-    def send_award_slide_event(self, award_slide_name, player_name, award,
-                               value):
+    def _send_award_slide_event(self, award_slide_name, player_name, award,
+                                value):
         self.machine.bcp.send(bcp_command='trigger',
                               name=award_slide_name,
                               player_name=player_name,
