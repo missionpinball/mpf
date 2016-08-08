@@ -1,3 +1,4 @@
+# pylint: disable-msg=too-many-lines
 """Contains the base class for ball devices."""
 
 from collections import deque
@@ -7,6 +8,7 @@ from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.utility_functions import Util
 
 
+# pylint: disable-msg=too-many-instance-attributes
 @DeviceMonitor("_state", "balls", "available_balls", "num_eject_attempts", "eject_queue", "eject_in_progress_target",
                "mechanical_eject_in_progress", "_incoming_balls", "ball_requests", "trigger_event")
 class BallDevice(SystemWideDevice):

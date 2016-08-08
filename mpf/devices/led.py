@@ -9,7 +9,7 @@ from mpf.core.rgb_color import RGBColorCorrectionProfile
 from mpf.core.system_wide_device import SystemWideDevice
 
 
-@DeviceMonitor("_brightness")
+@DeviceMonitor("_color")
 class Led(SystemWideDevice):
 
     """An RGB LED in a pinball machine."""
