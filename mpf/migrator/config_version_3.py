@@ -1,4 +1,4 @@
-
+"""Migrate to config version 3."""
 
 section_deprecations = '''
 - max balls
