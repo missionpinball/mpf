@@ -28,7 +28,9 @@ class MpfResolver(BaseResolver):
 
     """Resolver with mentioned fixes."""
 
-    pass
+    def __init__(self):
+        """Initialise."""
+        super().__init__()
 
 MpfResolver.add_implicit_resolver(
     # Process any item beginning with a plus sign (+) as a string
@@ -110,6 +112,10 @@ MpfResolver.add_implicit_resolver(
 class MpfRoundTripConstructor(RoundTripConstructor):
 
     """Resolver with fix."""
+
+    def __init__(self):
+        """Initialise."""
+        super().__init__()
 
     def construct_yaml_int(self, node):
         """Add int fix."""
