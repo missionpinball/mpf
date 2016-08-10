@@ -812,7 +812,8 @@ class SerialCommunicator(object):
 
     def stop(self):
         """Stops and shuts down this serial connection."""
-        self.serial_connection.close()
+        if self.serial_connection:
+            self.serial_connection.close()
         self.serial_connection = None  # child threads stop when this is None
 
         # todo clear the hw?
