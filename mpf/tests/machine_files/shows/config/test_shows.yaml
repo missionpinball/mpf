@@ -101,6 +101,20 @@ shows:
     - time: +1
 
 show_player:
+  play_on_led1:
+    on:
+      key: on_led_01
+      show_tokens:
+        leds: led_01
+  play_on_led2:
+    on:
+      key: on_led2
+      show_tokens:
+        leds: led_02
+  stop_on_led1:
+    on_led_01: stop
+  stop_on_led2:
+    on_led2: stop
   play_test_show1: test_show1
   play_with_priority:
     test_show1:
