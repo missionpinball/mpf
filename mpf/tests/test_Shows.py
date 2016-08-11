@@ -703,6 +703,27 @@ class TestShows(MpfTestCase):
         self.machine.shows['multiple_tokens'].play(show_tokens=dict(
             lights='light_01'))
 
+    def test_keys_in_show_player(self):
+        self.post_event("play_on_led1")
+        self.advance_time_and_run()
+        self.assertEqual([255, 255, 255], self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual([0, 0, 0], self.machine.leds.led_02.hw_driver.current_color)
+
+        self.post_event("play_on_led2")
+        self.advance_time_and_run()
+        self.assertEqual([255, 255, 255], self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual([255, 255, 255], self.machine.leds.led_02.hw_driver.current_color)
+
+        self.post_event("stop_on_led1")
+        self.advance_time_and_run()
+        self.assertEqual([0, 0, 0], self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual([255, 255, 255], self.machine.leds.led_02.hw_driver.current_color)
+
+        self.post_event("stop_on_led2")
+        self.advance_time_and_run()
+        self.assertEqual([0, 0, 0], self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual([0, 0, 0], self.machine.leds.led_02.hw_driver.current_color)
+
     def test_nested_shows(self):
         self.mock_event("test")
         self.assertFalse(self.machine.shows['mychildshow'].loaded)
