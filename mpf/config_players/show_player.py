@@ -35,9 +35,14 @@ class ShowPlayer(ConfigPlayer):
 
     def _update_show(self, show, s, context):
         instance_dict = self._get_instance_dict(context)
+        if 'key' in s and s['key']:
+            key = s['key']
+        else:
+            key = show
+
         if s['action'].lower() == 'play':
-            if show in instance_dict:
-                instance_dict[show].stop()
+            if key in instance_dict:
+                instance_dict[key].stop()
             try:
                 show_instance = self.machine.shows[show].play(
                     show_tokens=s['show_tokens'],
@@ -49,31 +54,31 @@ class ShowPlayer(ConfigPlayer):
                     reset=s['reset'],
                     manual_advance=s['manual_advance'],
                 )
-                instance_dict[show] = show_instance
+                instance_dict[key] = show_instance
             except KeyError:
                 raise KeyError("Cannot play show '{}'. No show with that "
                                "name.".format(show))
 
         elif s['action'].lower() == 'stop':
-            if show in instance_dict:
-                instance_dict[show].stop()
-                del instance_dict[show]
+            if key in instance_dict:
+                instance_dict[key].stop()
+                del instance_dict[key]
 
         elif s['action'].lower() == 'pause':
-            if show in instance_dict:
-                instance_dict[show].pause()
+            if key in instance_dict:
+                instance_dict[key].pause()
 
         elif s['action'].lower() == 'resume':
-            if show in instance_dict:
-                instance_dict[show].resume()
+            if key in instance_dict:
+                instance_dict[key].resume()
 
         elif s['action'].lower() == 'advance':
-            if show in instance_dict:
-                instance_dict[show].advance()
+            if key in instance_dict:
+                instance_dict[key].advance()
 
         elif s['action'].lower() == 'update':
-            if show in instance_dict:
-                instance_dict[show].update(
+            if key in instance_dict:
+                instance_dict[key].update(
                     show_tokens=s['show_tokens'],
                     priority=s['priority'])
 
@@ -85,6 +90,6 @@ class ShowPlayer(ConfigPlayer):
 
     def get_express_config(self, value):
         """Parse express config."""
-        return dict()
+        return {"action": value}
 
 player_cls = ShowPlayer
