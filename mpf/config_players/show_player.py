@@ -90,6 +90,6 @@ class ShowPlayer(ConfigPlayer):
 
     def get_express_config(self, value):
         """Parse express config."""
-        return dict()
+        return {"action": value}
 
 player_cls = ShowPlayer
