@@ -33,6 +33,17 @@ class BallSave(SystemWideDevice, ModeDevice):
         # todo change the delays to timers so we can add pause and extension
         # events, but that will require moving timers out of mode conde
 
+    def validate_and_parse_config(self, config: dict, is_mode_config: bool):
+        """Make sure timer_start_events are not in enable_events."""
+        config = super().validate_and_parse_config(config, is_mode_config)
+
+        for event in config['timer_start_events']:
+            if event in config['enable_events']:
+                raise AssertionError("{}: event {} in timer_start_events will not work because it is also in "
+                                     "enable_events. Omit it!".format(event, str(self)))
+
+        return config
+
     def enable(self, **kwargs):
         """Enable ball save."""
         del kwargs
@@ -86,6 +97,8 @@ class BallSave(SystemWideDevice, ModeDevice):
         del kwargs
         if self.timer_started or not self.enabled:
             return
+
+        self.timer_started = True
 
         self.machine.events.post('ball_save_{}_timer_start'.format(self.name))
         '''event: ball_save_(name)_timer_start:
