@@ -18,10 +18,9 @@ class Util(object):
         if isinstance(value, (int, str, float)):
             return value
 
-        # for list and dict repeat per entry
-        if isinstance(value, (list, dict)):
-            # pylint: disable-msg=bad-builtin
-            return map(value, Util.convert_to_simply_type)
+        # for list repeat per entry
+        elif isinstance(value, list):
+            return [Util.convert_to_simply_type(x) for x in value]
 
         # otherwise just cast to string
         return str(value)
