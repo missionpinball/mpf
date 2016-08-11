@@ -294,6 +294,10 @@ diverters:
     targets_when_active: list|machine(ball_devices)|playfield
     targets_when_inactive: list|machine(ball_devices)|playfield
     type: single|enum(hold,pulse)|hold
+diypinball:
+    __valid_in__: machine
+    debug: single|bool|False
+    can_device: single|str|
 drop_targets:
     __valid_in__: machine
     switch: single|machine(switches)|
