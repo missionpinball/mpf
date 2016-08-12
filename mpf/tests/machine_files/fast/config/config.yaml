@@ -21,6 +21,8 @@ switches:
         number: 2
     s_autofire:
         number: 3
+    s_test3:
+        number: 3-1
 
 coils:
     c_test:
@@ -49,7 +51,7 @@ coils:
         pulse_ms: 10
         hold_power: 1
     c_flipper_hold:
-        number: 21
+        number: 3-5
         hold_power: 1
 
 autofire_coils:
@@ -73,6 +75,9 @@ autofire_coils:
     ac_different_boards:
         coil: c_flipper_hold
         switch: s_test
+    ac_board_3:
+        coil: c_flipper_hold
+        switch: s_test3
 
 servos:
     servo1:
