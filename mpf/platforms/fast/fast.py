@@ -645,9 +645,11 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             if switch_index <= switch_number < switch_index + board_obj.switch_count and \
                     coil_index <= coil_number < coil_index + board_obj.driver_count:
                 return
+            coil_index += board_obj.driver_count
+            switch_index += board_obj.switch_count
 
         raise AssertionError("Driver {} and switch {} are on different boards. Cannot apply rule!".format(
-            coil.hw_driver.number, coil.hw_driver.number))
+            coil.hw_driver.number, switch.hw_switch.number))
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
         """Set pulse on hit and release rule to driver."""

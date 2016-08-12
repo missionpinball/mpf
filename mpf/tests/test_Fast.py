@@ -146,6 +146,7 @@ class TestFast(MpfTestCase):
             "SN:16,01,0A,0A": "SN:P",
             "SN:07,01,0A,0A": "SN:P",
             "SN:1A,01,0A,0A": "SN:P",
+            "SN:39,01,0A,0A": "SN:P",
             "DN:04,00,00,00": False,
             "DN:06,00,00,00": False,
             "DN:07,00,00,00": False,
@@ -260,6 +261,15 @@ class TestFast(MpfTestCase):
         }
         # coil and switch are on different boards but first 8 switches always work
         self.machine.autofires.ac_different_boards.enable()
+        self.machine_run()
+        self.assertFalse(self.net_cpu.expected_commands)
+
+        # switch and coil on board 3. should work
+        self.net_cpu.expected_commands = {
+            "DN:21,01,39,10,0A,ff,00,00,14": False,
+            "SN:39,01,02,02": False
+        }
+        self.machine.autofires.ac_board_3.enable()
         self.machine_run()
         self.assertFalse(self.net_cpu.expected_commands)
 
