@@ -153,6 +153,10 @@ class MpfConstructor(Constructor):
 
     """Constructor with fix."""
 
+    def __init__(self):
+        """Initialise."""
+        super().__init__()
+
     def construct_yaml_int(self, node):
         """Add int fix."""
         value = to_str(self.construct_scalar(node))
