@@ -626,8 +626,6 @@ class RunningShow(object):
                 continue
 
             elif item_type in ConfigPlayer.show_players:
-                if item_type in item_dict:
-                    item_dict = item_dict[item_type]
 
                 ConfigPlayer.show_players[item_type].show_play_callback(
                     settings=item_dict,
