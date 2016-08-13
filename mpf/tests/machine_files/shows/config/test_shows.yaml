@@ -99,6 +99,16 @@ shows:
       leds:
         led_02: (color2)-f900ms
     - time: +1
+  manual_advance:
+    - duration: -1
+      leds:
+        (leds): red
+    - duration: -1
+      leds:
+        (leds): lime
+    - duration: -1
+      leds:
+        (leds): blue
 
 show_player:
   play_on_led1:
@@ -179,7 +189,12 @@ show_player:
          line7color: violet
          line8num: row7
          line8color: midnightblue
-
   test_mode_stopped:
     8linesweep:
       action: stop
+  play_manual_advance:
+    manual_advance:
+      show_tokens:
+        leds: led_01
+  advance_manual_advance:
+    manual_advance: advance
