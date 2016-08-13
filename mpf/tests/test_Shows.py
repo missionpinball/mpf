@@ -757,6 +757,14 @@ class TestShows(MpfTestCase):
         self.advance_time_and_run()
         self.assertEqual([0, 0, 255], self.machine.leds.led_01.hw_driver.current_color)
 
+        self.post_event("advance_manual_step_back")
+        self.advance_time_and_run()
+        self.assertEqual([0, 255, 0], self.machine.leds.led_01.hw_driver.current_color)
+
+        self.post_event("advance_manual_advance")
+        self.advance_time_and_run()
+        self.assertEqual([0, 0, 255], self.machine.leds.led_01.hw_driver.current_color)
+
         self.post_event("play_manual_advance")
         self.advance_time_and_run()
         self.assertEqual([255, 0, 0], self.machine.leds.led_01.hw_driver.current_color)

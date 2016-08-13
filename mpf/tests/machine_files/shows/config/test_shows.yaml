@@ -195,3 +195,5 @@ show_player:
         leds: led_01
   advance_manual_advance:
     manual_advance: advance
+  advance_manual_step_back:
+    manual_advance: step_back
