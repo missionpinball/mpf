@@ -84,7 +84,6 @@ class ShowPlayer(ConfigPlayer):
     @staticmethod
     def _update(key, instance_dict, show, show_settings):
         del show
-        del show_settings
         if key in instance_dict:
             instance_dict[key].update(
                 show_tokens=show_settings['show_tokens'],
