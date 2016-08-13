@@ -1,5 +1,4 @@
 import os
-import pipes
 import platform
 import subprocess
 from importlib import import_module
