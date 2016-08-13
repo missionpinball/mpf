@@ -21,66 +21,97 @@ class ShowPlayer(ConfigPlayer):
 
         # show_tokens = kwargs.get('show_tokens', None)
 
-        for show, s in settings.items():
-            if 'hold' in s and s['hold'] is not None:
+        for show, show_settings in settings.items():
+            if 'hold' in show_settings and show_settings['hold'] is not None:
                 raise AssertionError("Setting 'hold' is no longer supported for shows. Use duration -1 in your show.")
             try:
-                s['priority'] += priority
+                show_settings['priority'] += priority
             except KeyError:
-                s['priority'] = priority
+                show_settings['priority'] = priority
 
             # todo need to add this key back to the config player
 
-            self._update_show(show, s, context)
+            self._update_show(show, show_settings, context)
 
-    def _update_show(self, show, s, context):
+    def _play(self, key, instance_dict, show, show_settings):
+        if key in instance_dict:
+            instance_dict[key].stop()
+        try:
+            show_instance = self.machine.shows[show].play(
+                show_tokens=show_settings['show_tokens'],
+                priority=show_settings['priority'],
+                speed=show_settings['speed'],
+                start_step=show_settings['start_step'],
+                loops=show_settings['loops'],
+                sync_ms=show_settings['sync_ms'],
+                reset=show_settings['reset'],
+                manual_advance=show_settings['manual_advance'],
+            )
+            instance_dict[key] = show_instance
+        except KeyError:
+            raise KeyError("Cannot play show '{}'. No show with that "
+                           "name.".format(show))
+
+    @staticmethod
+    def _stop(key, instance_dict, show, show_settings):
+        del show
+        del show_settings
+        if key in instance_dict:
+            instance_dict[key].stop()
+            del instance_dict[key]
+
+    @staticmethod
+    def _pause(key, instance_dict, show, show_settings):
+        del show
+        del show_settings
+        if key in instance_dict:
+            instance_dict[key].pause()
+
+    @staticmethod
+    def _resume(key, instance_dict, show, show_settings):
+        del show
+        del show_settings
+        if key in instance_dict:
+            instance_dict[key].resume()
+
+    @staticmethod
+    def _advance(key, instance_dict, show, show_settings):
+        del show
+        del show_settings
+        if key in instance_dict:
+            instance_dict[key].advance()
+
+    @staticmethod
+    def _update(key, instance_dict, show, show_settings):
+        del show
+        del show_settings
+        if key in instance_dict:
+            instance_dict[key].update(
+                show_tokens=show_settings['show_tokens'],
+                priority=show_settings['priority'])
+
+    def _update_show(self, show, show_settings, context):
         instance_dict = self._get_instance_dict(context)
-        if 'key' in s and s['key']:
-            key = s['key']
+        if 'key' in show_settings and show_settings['key']:
+            key = show_settings['key']
         else:
             key = show
 
-        if s['action'].lower() == 'play':
-            if key in instance_dict:
-                instance_dict[key].stop()
-            try:
-                show_instance = self.machine.shows[show].play(
-                    show_tokens=s['show_tokens'],
-                    priority=s['priority'],
-                    speed=s['speed'],
-                    start_step=s['start_step'],
-                    loops=s['loops'],
-                    sync_ms=s['sync_ms'],
-                    reset=s['reset'],
-                    manual_advance=s['manual_advance'],
-                )
-                instance_dict[key] = show_instance
-            except KeyError:
-                raise KeyError("Cannot play show '{}'. No show with that "
-                               "name.".format(show))
+        actions = {
+            'play': self._play,
+            'stop': self._stop,
+            'pause': self._pause,
+            'resume': self._resume,
+            'advance': self._advance,
+            'update': self._update
+        }
 
-        elif s['action'].lower() == 'stop':
-            if key in instance_dict:
-                instance_dict[key].stop()
-                del instance_dict[key]
+        action = actions.get(show_settings['action'].lower(), None)
 
-        elif s['action'].lower() == 'pause':
-            if key in instance_dict:
-                instance_dict[key].pause()
+        if not callable(action):
+            raise AssertionError("Invalid action {} in show_player {}".format(show_settings['action'], key))
 
-        elif s['action'].lower() == 'resume':
-            if key in instance_dict:
-                instance_dict[key].resume()
-
-        elif s['action'].lower() == 'advance':
-            if key in instance_dict:
-                instance_dict[key].advance()
-
-        elif s['action'].lower() == 'update':
-            if key in instance_dict:
-                instance_dict[key].update(
-                    show_tokens=s['show_tokens'],
-                    priority=s['priority'])
+        action(key, instance_dict, show, show_settings)
 
     def clear_context(self, context):
         """Stop running shows from context."""
