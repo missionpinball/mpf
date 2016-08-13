@@ -17,8 +17,6 @@ class LedPlayer(ConfigPlayer):
         instance_dict = self._get_instance_dict(context)
         full_context = self._get_full_context(context)
         del kwargs
-        if 'leds' in settings:
-            settings = settings['leds']
 
         for led, s in settings.items():
             try:
