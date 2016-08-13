@@ -127,7 +127,7 @@ class MachineController(object):
 
         self.clear_boot_hold('init')
 
-    def _exception_handler(self, loop, context):
+    def _exception_handler(self, loop, context):    # pragma: no cover
         # stop machine
         self.stop()
 
@@ -139,7 +139,7 @@ class MachineController(object):
         self._exception = context
 
     # pylint: disable-msg=no-self-use
-    def _load_clock(self):
+    def _load_clock(self):  # pragma: no cover
         clock = ClockBase()
         clock.loop.set_exception_handler(self._exception_handler)
         return clock
@@ -236,7 +236,7 @@ class MachineController(object):
             self.log.debug("Registering %s", entry_point)
             entry_point.load()(self)
 
-    def create_data_manager(self, config_name):
+    def create_data_manager(self, config_name):     # pragma: no cover
         """Return a new DataManager for a certain config.
 
         Args:
@@ -286,7 +286,7 @@ class MachineController(object):
         result = os.path.join(cache_dir, path_hash)
         return result
 
-    def _load_config(self):
+    def _load_config(self):     # pragma: no cover
         if self.options['no_load_cache']:
             load_from_cache = False
         else:
@@ -347,7 +347,7 @@ class MachineController(object):
 
             # unfortunately pickle can raise all kinds of exceptions and we dont want to crash on corrupted cache
             # pylint: disable-msg=broad-except
-            except Exception:
+            except Exception:   # pragma: no cover
                 self.log.warning("Could not load config from cache")
                 return False
 
@@ -371,7 +371,7 @@ class MachineController(object):
 
         return latest_time
 
-    def _cache_config(self):
+    def _cache_config(self):    # pragma: no cover
         with open(self._get_mpfcache_file_name(), 'wb') as f:
             pickle.dump(self.config, f, protocol=4)
             self.log.info('Config file cache created: %s', self._get_mpfcache_file_name())
@@ -504,7 +504,7 @@ class MachineController(object):
 
             try:
                 hardware_platform = Util.string_to_class(self.config['mpf']['platforms'][name])
-            except ImportError:
+            except ImportError:     # pragma: no cover
                 raise ImportError("Cannot add hardware platform {}. This is "
                                   "not a valid platform name".format(name))
 
@@ -523,8 +523,8 @@ class MachineController(object):
             self.default_platform = self.hardware_platforms[name]
             self.log.debug("Setting default platform to '%s'", name)
         except KeyError:
-            self.log.error("Cannot set default platform to '%s', as that's not"
-                           " a currently active platform", name)
+            raise AssertionError("Cannot set default platform to '{}', as that's not"
+                                 " a currently active platform".format(name))
 
     def register_monitor(self, monitor_class, monitor):
         """Register a monitor.
@@ -585,7 +585,7 @@ class MachineController(object):
         # this is needed to properly close all sockets
         self.clock.loop.run_forever()
 
-    def _run_loop(self):
+    def _run_loop(self):    # pragma: no cover
         # Main machine run loop with when the default platform interface
         # specifies the MPF should control the main timer
 
