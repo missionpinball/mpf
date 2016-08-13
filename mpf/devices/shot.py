@@ -280,8 +280,6 @@ class Shot(ModeDevice, SystemWideDevice):
         s.pop('show')
         s.pop('name')
         s.pop('action')
-        s.pop('key')
-        s.pop('reset')
 
         profile['running_show'] = self.machine.shows[show_name].play(**s)
 
