@@ -13,9 +13,6 @@ class FlasherPlayer(ConfigPlayer):
         """Flash flashers."""
         del kwargs
 
-        if 'flashers' in settings:
-            settings = settings['flashers']
-
         for flasher, s in settings.items():
             try:
                 flasher.flash(**s)

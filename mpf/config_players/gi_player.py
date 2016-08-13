@@ -14,9 +14,6 @@ class GiPlayer(ConfigPlayer):
         del kwargs
         instance_dict = self._get_instance_dict(context)
 
-        if 'gis' in settings:
-            settings = settings['gis']
-
         for gi, s in settings.items():
             try:
                 gi.enable(**s)

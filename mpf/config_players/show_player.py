@@ -14,9 +14,6 @@ class ShowPlayer(ConfigPlayer):
 
     def play(self, settings, context, priority=0, **kwargs):
         """Play, start, stop, pause, resume or advance show based on config."""
-        if 'shows' in settings:
-            settings = settings['shows']
-
         settings = deepcopy(settings)
 
         # show_tokens = kwargs.get('show_tokens', None)

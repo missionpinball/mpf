@@ -16,9 +16,6 @@ class CoilPlayer(ConfigPlayer):
         del kwargs
         instance_dict = self._get_instance_dict(context)
 
-        if 'coils' in settings:
-            settings = settings['coils']
-
         for coil, s in settings.items():
             s = copy.deepcopy(s)
             action = s.pop('action')
