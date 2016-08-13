@@ -812,7 +812,7 @@ shot_profiles:
         name: single|str|
         # These settings are same as show_player. Could probably get fancy with
         # the validator to make this automatically pull them in.
-        action: single|enum(play,stop,pause,resume,advance,update)|play
+        action: single|enum(play,stop,pause,resume,advance,step_back,update)|play
         priority: single|int|0
         speed: single|float|1
         start_step: single|int|1
@@ -822,7 +822,7 @@ shot_profiles:
         show_tokens: dict|str:str|None
 show_player:
     __valid_in__: machine, mode, show
-    action: single|enum(play,stop,pause,resume,advance,update)|play
+    action: single|enum(play,stop,pause,resume,advance,step_back,update)|play
     priority: single|int|0
     speed: single|float|1
     start_step: single|int|1

@@ -78,6 +78,13 @@ class ShowPlayer(ConfigPlayer):
             instance_dict[key].advance()
 
     @staticmethod
+    def _step_back(key, instance_dict, show, show_settings):
+        del show
+        del show_settings
+        if key in instance_dict:
+            instance_dict[key].step_back()
+
+    @staticmethod
     def _update(key, instance_dict, show, show_settings):
         del show
         if key in instance_dict:
@@ -98,6 +105,7 @@ class ShowPlayer(ConfigPlayer):
             'pause': self._pause,
             'resume': self._resume,
             'advance': self._advance,
+            'step_back': self._step_back,
             'update': self._update
         }
 
