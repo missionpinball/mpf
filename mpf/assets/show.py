@@ -578,35 +578,26 @@ class RunningShow(object):
 
     def advance(self, steps=1, show_step=None):
         """Manually advance this show to the next step."""
-        if not self._show_loaded:
-            # todo: this is suboptimal
-            return
-        if isinstance(show_step, int) and show_step < 0:    # pragma: no cover
-            raise ValueError('Cannot advance {} to step "{}" as that is'
-                             'not a valid step number.'.format(self, show_step))
-
         if self._delay_handler:
             self.machine.clock.unschedule(self._delay_handler)
             self._delay_handler = None
-        steps_to_advance = steps - 1  # since current_step is really next step
 
-        # todo should this end the show if there are more steps than in the
-        # show and it's not set to loop?
-
-        if steps_to_advance:
-            self.next_step_index = self._total_steps % steps_to_advance
+        if steps != 1:
+            self.next_step_index += steps - 1
         elif show_step is not None:
+            if not isinstance(show_step, int) or show_step < 0:
+                raise AssertionError('Cannot advance {} to step "{}" as that is'
+                                     'not a valid step number.'.format(self, show_step))
             self.next_step_index = show_step - 1
 
-        self._run_next_step()
-        return self.next_step_index - 1  # current step is actually the next
-        #  step
+        if self._show_loaded:
+            self._run_next_step()
 
     def _run_next_step(self, dt=None):
         del dt
 
         # if we're at the end of the show
-        if self.next_step_index == self._total_steps:
+        if self.next_step_index >= self._total_steps:
 
             if self.loops > 0:
                 self.loops -= 1
