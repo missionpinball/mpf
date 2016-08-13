@@ -147,9 +147,6 @@ show_player:
   play_with_sync_ms_500:
     test_show1:
       sync_ms: 500
-  play_with_reset:
-    test_show1:
-      reset: False
   play_with_manual_advance:
     test_show1:
       manual_advance: True

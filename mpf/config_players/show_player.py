@@ -41,7 +41,6 @@ class ShowPlayer(ConfigPlayer):
                 start_step=show_settings['start_step'],
                 loops=show_settings['loops'],
                 sync_ms=show_settings['sync_ms'],
-                reset=show_settings['reset'],
                 manual_advance=show_settings['manual_advance'],
             )
             instance_dict[key] = show_instance

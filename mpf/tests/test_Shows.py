@@ -651,12 +651,6 @@ class TestShows(MpfTestCase):
         self.assertAlmostEqual(0.0, self.machine.show_controller.running_shows[0].next_step_time % 0.5, delta=(1 / 30))
         self._stop_shows()
 
-        # Test reset
-        self.machine.events.post('play_with_reset')
-        self.advance_time_and_run()
-        self.assertFalse(self.machine.show_controller.running_shows[0].reset)
-        self._stop_shows()
-
         # Test manual advance
         self.machine.events.post('play_with_manual_advance')
         self.advance_time_and_run(10)

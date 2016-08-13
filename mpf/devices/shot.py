@@ -236,20 +236,7 @@ class Shot(ModeDevice, SystemWideDevice):
                     # state, do nothing. Let it continue
                     return
 
-            # If we're here then we need to start the show from this state
-            s = copy(state_settings)
-            s['show_tokens'] = self.config['show_tokens']
-            s['priority'] += profile['priority']
-            s.pop('show')
-
-            s.pop('action')  # temp todo
-            s.pop('name')
-            # TODO: remove from config here
-            s.pop('key')
-
-            profile['running_show'] = (
-                self.machine.shows[state_settings['show']].play(
-                    mode=profile['mode'], **s))
+            self._play_show(profile=profile, settings=state_settings)
 
         elif profile['settings']['show']:
             # no show for this state, but we have a profile root show
@@ -261,48 +248,42 @@ class Shot(ModeDevice, SystemWideDevice):
                     self._stop_show(profile['mode'])
 
                     # start the new show at this step
-                    s = copy(state_settings)
-                    s['show_tokens'] = self.config['show_tokens']
-                    s['manual_advance'] = True
-                    s['priority'] += profile['priority']
-                    s['start_step'] = self.player[profile[
-                        'settings']['player_variable']] + 1
-                    # +1 above because show steps are 1-based while player var
-                    # profile index is 0-based
-
-                    s.pop('show')
-                    s.pop('name')
-                    s.pop('action')  # temp todo
-
-                    # TODO: remove from config here
-                    s.pop('key')
-
-                    profile['running_show'] = (self.machine.shows[
-                        profile['settings']['show']].play(
-                        mode=mode, **s))
+                    self._play_show(profile=profile, settings=state_settings, start_step=self.player[profile[
+                        'settings']['player_variable']] + 1)
 
                 elif advance:  # our show is the current one, just advance it
                     profile['running_show'].advance(show_step=show_step)
 
             else:  # no running show, so start the profile root show
-                s = copy(state_settings)
-                s['show_tokens'] = self.config['show_tokens']
-                s['priority'] += profile['priority']
-                s.pop('show')
-                s.pop('name')
-                s.pop('action')  # temp todo
-                s['manual_advance'] = True
-
-                # TODO: remove from config here
-                s.pop('key')
-
-                profile['running_show'] = (self.machine.shows[
-                    profile['settings']['show']].play(
-                    mode=mode, **s))
+                self._play_show(profile=profile, settings=state_settings)
 
         # if neither if/elif above happens, it means the current step has no
         # show but the previous step had one. That means we do nothing for the
         # show. Leave it alone doing whatever it was doing before.
+
+    def _play_show(self, profile, settings, start_step=None):
+
+        s = copy(settings)
+        if settings['show']:
+            show_name = settings['show']
+            s['manual_advance'] = False
+
+        else:
+            show_name = profile['settings']['show']
+            s['manual_advance'] = True
+
+        s['show_tokens'] = self.config['show_tokens']
+        s['priority'] += profile['priority']
+        if start_step:
+            s['start_step'] = start_step
+
+        s.pop('show')
+        s.pop('name')
+        s.pop('action')
+        s.pop('key')
+        s.pop('reset')
+
+        profile['running_show'] = self.machine.shows[show_name].play(**s)
 
     def player_turn_start(self, player, **kwargs):
         """Update the player reference to the current player and to apply the default machine-wide shot profile.

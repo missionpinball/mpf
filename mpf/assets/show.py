@@ -272,8 +272,7 @@ class Show(Asset):
 
     # pylint: disable-msg=too-many-arguments
     def play(self, priority=0, speed=1.0, start_step=1, callback=None,
-             loops=-1, sync_ms=0, reset=True, mode=None,
-             manual_advance=False, show_tokens=None):
+             loops=-1, sync_ms=0, manual_advance=False, show_tokens=None):
         """Play a Show.
 
         There are many parameters you can use here which
@@ -320,26 +319,16 @@ class Show(Asset):
             sync_ms: Number of ms of the show sync cycle. A value of zero means
                 this show will also start playing immediately. See the full MPF
                 documentation for details on how this works.
-            reset: Boolean which controls whether this show will reset to its
-                first position once it ends. Default is True.
-            mode: A reference to the Mode instance that's playing this show.
-                The show's priority will be based on this mode, and the show
-                will automatically stop when this mode ends. Default is None.
             manual_advance: Boolean that controls whether this show should be
                 advanced manually (e.g. time values are ignored and the show
                 doesn't move to the next step until it's told to.) Default is
                 False.
-            key: String name of a key you can use to reference the running
-                instance of this show. Useful when you have a show with tokens
-                where you'll have multiple instances running and you need a way
-                to idenify a specific instance.
             show_tokens: Replacement tokens for the show
 
         Returns: The RunningShow() instance if this show plays now, or False if
             the show is not loaded. (In this case the show will be loaded and
             will automatically play once its loaded.)
         """
-        del mode
         # todo bugfix, currently there is only one set of autoplay seetings,
         # so if multiple show instances are played but the show is not loaded,
         # only the last one will play
@@ -376,7 +365,6 @@ class Show(Asset):
                                    callback=callback,
                                    loops=int(loops),
                                    sync_ms=int(sync_ms),
-                                   reset=bool(reset),
                                    manual_advance=manual_advance,
                                    show_tokens=show_tokens)
 
@@ -408,7 +396,7 @@ class RunningShow(object):
     # pylint: disable-msg=too-many-locals
     def __init__(self, machine, show, show_steps, priority,
                  speed, start_step, callback, loops,
-                 sync_ms, reset, manual_advance, show_tokens):
+                 sync_ms, manual_advance, show_tokens):
         """Initialise an instance of a show."""
         self.machine = machine
         self.show = show
@@ -417,7 +405,6 @@ class RunningShow(object):
         self.speed = speed
         self.callback = callback
         self.loops = loops
-        self.reset = reset
         self.start_step = start_step
         self.sync_ms = sync_ms
         # self.mode = mode
