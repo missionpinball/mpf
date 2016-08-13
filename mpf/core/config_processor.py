@@ -1,6 +1,5 @@
 """Contains the Config and CaseInsensitiveDict base classes."""
 
-import logging
 import os
 
 from mpf.core.file_manager import FileManager
