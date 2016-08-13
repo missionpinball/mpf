@@ -68,7 +68,7 @@ class TestConfigPlayers(MpfTestCase):
 
         play_call = self.machine.banana_play_calls.pop()
 
-        self.assertEqual(play_call.settings, {'bananas': {'express': {}}})
+        self.assertEqual(play_call.settings, {'express': {}})
         self.assertEqual(play_call.key, None)
         self.assertEqual(play_call.kwargs, {})
 
@@ -78,7 +78,7 @@ class TestConfigPlayers(MpfTestCase):
         play_call = self.machine.banana_play_calls.pop()
 
         self.assertEqual(play_call.settings,
-                         {'bananas': {'some': {'banana': 'key'}}})
+                         {'some': {'banana': 'key'}})
         self.assertEqual(play_call.key, None)
         self.assertEqual(play_call.kwargs, {})  # todo
 
@@ -88,8 +88,8 @@ class TestConfigPlayers(MpfTestCase):
         play_call = self.machine.banana_play_calls.pop()
 
         self.assertEqual(play_call.settings,
-                         {'bananas': {'this_banana': {'some': 'key'},
-                                      'that_banana': {'some': 'key'}}})
+                         {'this_banana': {'some': 'key'},
+                          'that_banana': {'some': 'key'}})
         self.assertEqual(play_call.key, None)
         self.assertEqual(play_call.kwargs, {})  # todo
 
@@ -111,7 +111,7 @@ class TestConfigPlayers(MpfTestCase):
 
         play_call = self.machine.banana_play_calls.pop()
 
-        self.assertEqual(play_call.settings, {'bananas': {'express': {}}})
+        self.assertEqual(play_call.settings, {'express': {}})
         # Mode should be passed properly
         # self.assertEqual(play_call.key, 'mode1')
         self.assertEqual(play_call.kwargs, {})  # todo
