@@ -1,5 +1,6 @@
 """Runs mc and game."""
 import os
+import pipes
 import platform
 import subprocess
 from importlib import import_module
@@ -13,12 +14,16 @@ class Command(object):
     def __init__(self, mpf_path, machine_path, args):
         """Run game and mc."""
         if platform.system() == 'Windows':
-            subprocess.Popen(
-                '{} -m mpf game {} {}'.format(
-                    sys.executable, machine_path, ' '.join(args)))
+            game_cmd = [sys.executable, "-m", "mpf", "game", machine_path]
+            game_cmd.extend(args)
+            game = subprocess.Popen(game_cmd)
 
-            os.system('{} -m mpf mc {} {}'.format(
-                sys.executable, machine_path, ' '.join(args)))
+            mc_cmd = [sys.executable, "-m", "mpf", "mc", machine_path]
+            mc_cmd.extend(args)
+            mc = subprocess.Popen(mc_cmd)
+
+            game.wait()
+            mc.wait()
 
         else:
             if os.fork():
