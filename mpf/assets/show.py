@@ -543,9 +543,7 @@ class RunningShow(object):
 
         self.machine.show_controller.notify_show_stopping(self)
         self.show.running.remove(self)
-        if self._delay_handler:
-            self.machine.clock.unschedule(self._delay_handler)
-            self._delay_handler = None
+        self._remove_delay_handler()
 
         # clear context in used players
         for player in self._players:
@@ -554,11 +552,14 @@ class RunningShow(object):
         if self.callback and callable(self.callback):
             self.callback()
 
-    def pause(self):
-        """Pause show."""
+    def _remove_delay_handler(self):
         if self._delay_handler:
             self.machine.clock.unschedule(self._delay_handler)
             self._delay_handler = None
+
+    def pause(self):
+        """Pause show."""
+        self._remove_delay_handler()
 
     def resume(self):
         """Resume paused show."""
@@ -578,9 +579,7 @@ class RunningShow(object):
 
     def advance(self, steps=1, show_step=None):
         """Manually advance this show to the next step."""
-        if self._delay_handler:
-            self.machine.clock.unschedule(self._delay_handler)
-            self._delay_handler = None
+        self._remove_delay_handler()
 
         if steps != 1:
             self.next_step_index += steps - 1
@@ -593,8 +592,20 @@ class RunningShow(object):
         if self._show_loaded:
             self._run_next_step()
 
+    def step_back(self, steps=1):
+        """Manually step back this show to a previous step."""
+        self._remove_delay_handler()
+
+        self.next_step_index -= steps + 1
+
+        if self._show_loaded:
+            self._run_next_step()
+
     def _run_next_step(self, dt=None):
         del dt
+
+        if self.next_step_index < 0:
+            self.next_step_index %= self._total_steps
 
         # if we're at the end of the show
         if self.next_step_index >= self._total_steps:
