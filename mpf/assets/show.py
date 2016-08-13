@@ -454,7 +454,7 @@ class RunningShow(object):
         if self.start_step > 0:
             self.next_step_index = self.start_step - 1
         elif self.start_step < 0:
-            self.next_step_index = self._total_steps + self.start_step
+            self.next_step_index = self.start_step % self._total_steps
         else:
             self.next_step_index = 0
 
@@ -523,10 +523,6 @@ class RunningShow(object):
 
         if not self._show_loaded:
             return
-
-        # todo I think there's a potential memory leak here as shows stop but
-        # some things still hold references to them. (Shots, for example).
-        # need to investigate more
 
         self.machine.show_controller.notify_show_stopping(self)
         self.show.running.remove(self)
