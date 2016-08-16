@@ -1,0 +1,22 @@
+#config_version=4
+mode:
+    # Note: its not a good idea to use game_started and game_ended for your base mode. We suggest you use
+    #       ball_starting as start_event and set stop_on_ball_end to true (default).
+    start_events: game_started
+    stop_events: game_ended
+    priority: 100
+    stop_on_ball_end: false
+
+shot_groups:
+  special2:
+    shots: lane_special_right
+    profile: prof_toggle2
+
+shot_profiles:
+    prof_toggle2:
+        states:
+            - name: unlit2
+              show: off
+            - name: lit2
+              show: on
+        loop: true
