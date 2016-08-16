@@ -266,6 +266,43 @@ class MpfTestCase(unittest.TestCase):
                                         handler=self._mock_event_handler,
                                         event_name=event_name)
 
+    def assertModeRunning(self, mode_name):
+        if mode_name not in self.machine.modes:
+            raise AssertionError("Mode {} not known.".format(mode_name))
+        self.assertIn(self.machine.modes[mode_name], self.machine.mode_controller.active_modes,
+                      "Mode {} not running.".format(mode_name))
+
+    def assertModeNotRunning(self, mode_name):
+        if mode_name not in self.machine.modes:
+            raise AssertionError("Mode {} not known.".format(mode_name))
+        self.assertNotIn(self.machine.modes[mode_name], self.machine.mode_controller.active_modes,
+                         "Mode {} running but should not.".format(mode_name))
+
+    def assertEventNotCalled(self, event_name):
+        """Assert that event was not called."""
+        if event_name not in self._events:
+            raise AssertionError("Event {} not mocked.".format(event_name))
+
+        if self._events[event_name] != 0:
+            raise AssertionError("Event {} was called {} times.".format(event_name, self._events[event_name]))
+
+    def assertEventCalled(self, event_name, times=None):
+        """Assert that event was called."""
+        if event_name not in self._events:
+            raise AssertionError("Event {} not mocked.".format(event_name))
+
+        if self._events[event_name] == 0:
+            raise AssertionError("Event {} was not called.".format(event_name))
+
+        if times is not None and self._events[event_name] != times:
+            raise AssertionError("Event {} was called {} instead of {}.".format(
+                event_name, self._events[event_name], times))
+
+    def assertEventCalledWith(self, event_name, **kwargs):
+        """Assert that event was called with kwargs."""
+        self.assertEventCalled(event_name)
+        self.assertEqual(kwargs, self._last_event_kwargs[event_name], "Args for {} differ.".format(event_name))
+
     def reset_mock_events(self):
         for event in self._events.keys():
             self._events[event] = 0
