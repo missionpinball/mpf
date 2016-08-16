@@ -1,0 +1,13 @@
+#config_version=4
+mode:
+  code: service.Service
+  priority: 100000
+  start_events: start_service_mode
+  stop_events: stop_service_mode
+  stop_on_ball_end: False
+
+mode_settings:
+  enter_events: enter_service_mode
+  esc_events: esc_service_mode
+  up_events: up_service_mode
+  down_events: down_service_mode
