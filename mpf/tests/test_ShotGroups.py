@@ -1,30 +1,16 @@
 from unittest.mock import MagicMock
 
 from mpf.core.rgb_color import RGBColor
-from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
 
-class TestShotGroups(MpfTestCase):
+class TestShotGroups(MpfFakeGameTestCase):
 
     def getConfigFile(self):
         return 'test_shot_groups.yaml'
 
     def getMachinePath(self):
         return 'tests/machine_files/shots/'
-
-    def start_game(self):
-        # shots only work in games so we have to do this a lot
-        self.machine.playfield.add_ball = MagicMock()
-        self.machine.events.post('game_start')
-        self.advance_time_and_run()
-        self.machine.game.balls_in_play = 1
-        self.assertIsNotNone(self.machine.game)
-
-    def stop_game(self):
-        # stop game
-        self.machine.game.game_ending()
-        self.advance_time_and_run()
-        self.assertIsNone(self.machine.game)
 
     def test_disabled_when_no_game(self):
         # all shot group functionality should be disabled if there is not a
@@ -691,3 +677,45 @@ class TestShotGroups(MpfTestCase):
             self.machine.leds.l_gas_a.hw_driver.current_color)
         self.assertEqual(list(RGBColor('white').rgb),
             self.machine.leds.l_gas_s.hw_driver.current_color)
+
+    def test_profile_on_second_ball(self):
+        self.start_game()
+
+        self.assertEqual(0, self.machine.lights.l_special_left.hw_driver.current_brightness)
+        self.assertEqual(0, self.machine.lights.l_special_right.hw_driver.current_brightness)
+
+        shot = self.machine.shots.lane_special_left
+
+        self.assertEqual('prof_toggle', shot.profiles[0]['profile'])
+        self.assertEqual('unlit_toggle', shot.profiles[0]['current_state_name'])
+
+        # toggle on
+        self.hit_and_release_switch("s_special_left")
+        self.advance_time_and_run(.1)
+        self.assertEqual(255, self.machine.lights.l_special_left.hw_driver.current_brightness)
+        self.assertEqual('lit_toggle', shot.profiles[0]['current_state_name'])
+
+        # toggle off
+        self.hit_and_release_switch("s_special_left")
+        self.advance_time_and_run(.1)
+        self.assertEqual(0, self.machine.lights.l_special_left.hw_driver.current_brightness)
+        self.assertEqual('unlit_toggle', shot.profiles[0]['current_state_name'])
+
+        # drain ball and try on the second ball
+        self.drain_ball()
+        self.assertBallNumber(2)
+
+        self.assertEqual('prof_toggle', shot.profiles[0]['profile'])
+        self.assertEqual('unlit_toggle', shot.profiles[0]['current_state_name'])
+
+        # toggle on
+        self.hit_and_release_switch("s_special_left")
+        self.advance_time_and_run(.1)
+        self.assertEqual(255, self.machine.lights.l_special_left.hw_driver.current_brightness)
+        self.assertEqual('lit_toggle', shot.profiles[0]['current_state_name'])
+
+        # toggle off
+        self.hit_and_release_switch("s_special_left")
+        self.advance_time_and_run(.1)
+        self.assertEqual(0, self.machine.lights.l_special_left.hw_driver.current_brightness)
+        self.assertEqual('unlit_toggle', shot.profiles[0]['current_state_name'])
