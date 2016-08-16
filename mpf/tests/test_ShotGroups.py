@@ -719,3 +719,47 @@ class TestShotGroups(MpfFakeGameTestCase):
         self.advance_time_and_run(.1)
         self.assertEqual(0, self.machine.lights.l_special_left.hw_driver.current_brightness)
         self.assertEqual('unlit_toggle', shot.profiles[0]['current_state_name'])
+
+    def test_profile_in_mode(self):
+        self.start_game()
+
+        #self.machine.modes.mode_shot_groups.start()
+        self.advance_time_and_run()
+
+        self.assertEqual(0, self.machine.lights.l_special_right.hw_driver.current_brightness)
+
+        shot = self.machine.shots.lane_special_right
+
+        #self.assertEqual('prof_toggle2', shot.profiles[0]['profile'])
+        #self.assertEqual('unlit2', shot.profiles[0]['current_state_name'])
+
+        # toggle on
+        self.hit_and_release_switch("s_special_right")
+        self.advance_time_and_run(.1)
+        self.assertEqual(255, self.machine.lights.l_special_right.hw_driver.current_brightness)
+        self.assertEqual('lit2', shot.profiles[0]['current_state_name'])
+
+        # toggle off
+        self.hit_and_release_switch("s_special_right")
+        self.advance_time_and_run(.1)
+        self.assertEqual(0, self.machine.lights.l_special_right.hw_driver.current_brightness)
+        self.assertEqual('unlit2', shot.profiles[0]['current_state_name'])
+
+        # drain ball and try on the second ball
+        #self.stop_game()
+        #self.assertBallNumber(2)
+
+        self.assertEqual('prof_toggle2', shot.profiles[0]['profile'])
+        self.assertEqual('unlit2', shot.profiles[0]['current_state_name'])
+
+        # toggle on
+        self.hit_and_release_switch("s_special_right")
+        self.advance_time_and_run(.1)
+        self.assertEqual(255, self.machine.lights.l_special_right.hw_driver.current_brightness)
+        self.assertEqual('lit2', shot.profiles[0]['current_state_name'])
+
+        # toggle off
+        self.hit_and_release_switch("s_special_right")
+        self.advance_time_and_run(.1)
+        self.assertEqual(0, self.machine.lights.l_special_right.hw_driver.current_brightness)
+        self.assertEqual('unlit2', shot.profiles[0]['current_state_name'])

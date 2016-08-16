@@ -2,6 +2,7 @@
 
 modes:
   - mode_shot_groups
+  - base
 
 switches:
   switch_1:
@@ -268,9 +269,8 @@ shot_groups:
     reset_events:
       group_GAS_default_lit_complete: 2s
   special:
-    shots: lane_special_left, lane_special_right
+    shots: lane_special_left
     profile: prof_toggle
-    reset_events: special_complete
 
 shows:
     rainbow:
