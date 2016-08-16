@@ -129,11 +129,11 @@ class Game(Mode):
                 # have to here if there aren't any players yet.
                 self._player_add()
 
+            self.player_turn_start()
+
             self.machine.events.post('game_started')
             '''event: game_started
             desc: A new game has started.'''
-
-            self.player_turn_start()
 
         else:  # something canceled the game start
             self.game_ending()
