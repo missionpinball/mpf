@@ -340,7 +340,7 @@ class YamlInterface(FileInterface):
                 raise ValueError("Error found in file %s" % filename)
 
         if YamlInterface.cache and config:
-            YamlInterface.file_cache[filename] = config
+            YamlInterface.file_cache[filename] = copy.deepcopy(config)
 
         return config
 
