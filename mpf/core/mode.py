@@ -75,6 +75,14 @@ class Mode(object):
 
         self.mode_init()
 
+    @staticmethod
+    def get_config_spec():
+        """Return config spec for mode_settings."""
+        return '''
+                __valid_in__: mode
+                __allow_others__:
+                '''
+
     def __repr__(self):
         """Return string representation."""
         return '<Mode.{}>'.format(self.name)
