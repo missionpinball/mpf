@@ -1,0 +1,10 @@
+#config_version=4
+mode:
+  start_events: start_service_mode, s_door_open_active
+  stop_events: stop_service_mode, s_door_open_inactive
+
+mode_settings:
+  enter_events: enter_service_mode, s_service_enter_active
+  esc_events: esc_service_mode, s_service_esc_active
+  up_events: up_service_mode, s_service_up_active
+  down_events: down_service_mode, s_service_down_active
