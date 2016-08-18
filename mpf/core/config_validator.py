@@ -857,6 +857,8 @@ sounds:
     volume: single|gain|0.5
     loops: single|int|0
     priority: single|int|0
+    fade_in: single|secs|0
+    fade_out: single|secs|0
     max_queue_time: single|secs|None
     events_when_played: list|str|None
     events_when_stopped: list|str|None
