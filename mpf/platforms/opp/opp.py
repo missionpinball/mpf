@@ -58,6 +58,8 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self._poll_task = None
         self._light_update_task = None
 
+        self.features['tickless'] = True
+
         self.config = self.machine.config['opp']
         self.machine.config_validator.validate_config("opp", self.config)
 
