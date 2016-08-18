@@ -22,10 +22,10 @@ week. It's MIT licensed, actively developed by fun people, and supported by a vi
 
 The MPF project homepage is here : https://missionpinball.com/mpf/
 
-Master (current release):
-[![Coverage Status](https://coveralls.io/repos/missionpinball/mpf/badge.svg?branch=master&service=github)](https://coveralls.io/github/missionpinball/mpf?branch=master)
-[![Build Status](https://travis-ci.org/missionpinball/mpf.svg?branch=master)](https://travis-ci.org/missionpinball/mpf)
-[![Code Health](https://landscape.io/github/missionpinball/mpf/master/landscape.svg?style=flat)](https://landscape.io/github/missionpinball/mpf/master)
+0.30 (current release):
+[![Coverage Status](https://coveralls.io/repos/missionpinball/mpf/badge.svg?branch=0.30&service=github)](https://coveralls.io/github/missionpinball/mpf?branch=0.30)
+[![Build Status](https://travis-ci.org/missionpinball/mpf.svg?branch=0.30)](https://travis-ci.org/missionpinball/mpf)
+[![Code Health](https://landscape.io/github/missionpinball/mpf/0.30/landscape.svg?style=flat)](https://landscape.io/github/missionpinball/mpf/0.30)
 
 Dev (next release):
 [![Coverage Status](https://coveralls.io/repos/missionpinball/mpf/badge.svg?branch=dev&service=github)](https://coveralls.io/github/missionpinball/mpf?branch=dev)
@@ -42,7 +42,7 @@ Installation, Documentation, and Examples
 
 Support
 -------
-We have an active online user support forum at : https://missionpinball.com/forum/mpf-users
+We have a user support forum at : https://groups.google.com/forum/#!forum/mpf-users
 
 Authors & Contributing
 ----------------------

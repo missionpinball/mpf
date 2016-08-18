@@ -1,0 +1,12 @@
+#config_version=4
+mode:
+    start_events: game_started
+    stop_events: stop_mode_with_timers2
+timers:
+    timer_start_with_game:
+        debug: True
+        start_value: 0
+        end_value: 10
+        direction: up
+        tick_interval: 1s
+        start_running: yes
