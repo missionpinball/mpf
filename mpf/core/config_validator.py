@@ -1258,6 +1258,11 @@ class ConfigValidator(object):
 
         processed_config = source
 
+        if not isinstance(source, (list, dict)):
+            self.validation_error("", validation_failure_info, "Source should be list or dict but is {}".format(
+                source.__class__
+            ))
+
         for k in list(this_spec.keys()):
             if this_spec[k] == 'ignore' or k[0] == '_':
                 continue
