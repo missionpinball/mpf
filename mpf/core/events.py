@@ -249,6 +249,9 @@ class EventManager(object):
     def _wait_handler(self, _future: asyncio.Future, _keys: [str], **kwargs):
         for key in _keys:
             self.remove_handler_by_key(key)
+
+        if _future.cancelled():
+            return
         _future.set_result(result=kwargs)
 
     def does_event_exist(self, event_name):
