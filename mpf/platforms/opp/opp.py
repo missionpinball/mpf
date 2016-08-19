@@ -627,7 +627,7 @@ class SerialCommunicator(object):
         self.serial_connection.write(cmd)
 
         time.sleep(.1)
-        resp = self.serial_connection.read(30)
+        resp = self.serial_connection.read(200)
 
         # resp will contain the inventory response.
         self.platform.process_received_message(resp)
@@ -636,7 +636,7 @@ class SerialCommunicator(object):
         self.send_get_gen2_cfg_cmd()
 
         time.sleep(.1)
-        resp = self.serial_connection.read(30)
+        resp = self.serial_connection.read(200)
 
         # resp will contain the gen2 cfg reponses.  That will end up creating all the
         # correct objects.
@@ -645,7 +645,7 @@ class SerialCommunicator(object):
         # get the version of the firmware
         self.send_vers_cmd()
         time.sleep(.1)
-        resp = self.serial_connection.read(30)
+        resp = self.serial_connection.read(200)
         self.platform.process_received_message(resp)
 
         # see if version of firmware is new enough
