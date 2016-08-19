@@ -8,10 +8,11 @@ import logging
 from collections import defaultdict
 
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
+from mpf.core.mpf_controller import MpfController
 from mpf.core.utility_functions import Util
 
 
-class SwitchController(object):
+class SwitchController(MpfController):
 
     """Handles all switches in the machine.
 
@@ -27,7 +28,7 @@ class SwitchController(object):
 
     def __init__(self, machine):
         """Initialise switch controller."""
-        self.machine = machine
+        super().__init__(machine)
         self.registered_switches = CaseInsensitiveDict()
         # Dictionary of switches and states that have been registered for
         # callbacks.
