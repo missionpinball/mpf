@@ -22,9 +22,7 @@ down_events: list|str|
 '''
 
     def _service_mode_exit(self):
-        # this event starts attract mode again
-        self.machine.events.post("service_mode_exited")
-        self.machine.reset()
+        self.machine.service.stop_service()
 
     @asyncio.coroutine
     def _get_key(self):
@@ -48,13 +46,12 @@ down_events: list|str|
                 if key == "ENTER":
                     # start main menu
                     yield from self._start_main_menu()
-
                 elif key == "UP":
-                    # TODO: volume up
-                    pass
+                    # post event for mc to increase volume
+                    self.machine.events.post("master_volume_increase")
                 elif key == "DOWN":
-                    # TODO: volume down
-                    pass
+                    # post event for mc to decrease volume
+                    self.machine.events.post("master_volume_decrease")
 
         except asyncio.CancelledError:
             self.machine.events.post("service_door_closed")
@@ -74,12 +71,7 @@ down_events: list|str|
 
     @asyncio.coroutine
     def _start_main_menu(self):
-        self.log.info("Entered service mode. Resetting game if running. Resetting hardware interface now.")
-        # this will stop attact and game mode
-        self.machine.events.post("service_mode_entered")
-
-        # TODO: reset hardware interface
-
+        self.machine.service.start_service()
         try:
             yield from self._service_mode_main_menu()
         except asyncio.CancelledError:
