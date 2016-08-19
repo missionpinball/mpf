@@ -31,6 +31,57 @@ class TestShows(MpfTestCase):
                 abs(color1[2] - color2[2])
         self.assertLessEqual(difference, delta, "Colors do not match: " + str(color1) + " " + str(color2))
 
+    def test_default_shows(self):
+        # test off
+        show_on = self.machine.shows['off'].play(show_tokens=dict(leds='led_01', lights='light_01'))
+        self.advance_time_and_run(.1)
+        self.assertEqual([0, 0, 0], self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(0, self.machine.lights.light_01.hw_driver.current_brightness)
+        show_on.stop()
+        self.advance_time_and_run(.1)
+        self.assertEqual([0, 0, 0], self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(0, self.machine.lights.light_01.hw_driver.current_brightness)
+
+        # test on
+        show_off = self.machine.shows['on'].play(show_tokens=dict(leds='led_01', lights='light_01'))
+        self.advance_time_and_run(.1)
+        self.assertEqual([255, 255, 255], self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(255, self.machine.lights.light_01.hw_driver.current_brightness)
+        show_off.stop()
+        self.advance_time_and_run(.1)
+        self.assertEqual([0, 0, 0], self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(0, self.machine.lights.light_01.hw_driver.current_brightness)
+
+        # test flash
+        # initially on
+        show_flash = self.machine.shows['flash'].play(show_tokens=dict(leds='led_01', lights='light_01'))
+        self.advance_time_and_run(.1)
+        self.assertEqual([255, 255, 255], self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(255, self.machine.lights.light_01.hw_driver.current_brightness)
+
+        # after 1s off
+        self.advance_time_and_run(1)
+        self.assertEqual([0, 0, 0], self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(0, self.machine.lights.light_01.hw_driver.current_brightness)
+
+        # on after another 1s
+        self.advance_time_and_run(1)
+        self.assertEqual([255, 255, 255], self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(255, self.machine.lights.light_01.hw_driver.current_brightness)
+
+        show_flash.stop()
+        self.advance_time_and_run(.1)
+        self.assertEqual([0, 0, 0], self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual(0, self.machine.lights.light_01.hw_driver.current_brightness)
+
+        # test led_color
+        show_led_color = self.machine.shows['led_color'].play(show_tokens=dict(leds='led_01', color="red"))
+        self.advance_time_and_run(.1)
+        self.assertEqual([255, 0, 0], self.machine.leds.led_01.hw_driver.current_color)
+        show_led_color.stop()
+        self.advance_time_and_run(.1)
+        self.assertEqual([0, 0, 0], self.machine.leds.led_01.hw_driver.current_color)
+
     def test_shows(self):
         # Make sure required modes have been loaded
         self.assertIn('mode1', self.machine.modes)
@@ -600,12 +651,6 @@ class TestShows(MpfTestCase):
         self.assertAlmostEqual(0.0, self.machine.show_controller.running_shows[0].next_step_time % 0.5, delta=(1 / 30))
         self._stop_shows()
 
-        # Test reset
-        self.machine.events.post('play_with_reset')
-        self.advance_time_and_run()
-        self.assertFalse(self.machine.show_controller.running_shows[0].reset)
-        self._stop_shows()
-
         # Test manual advance
         self.machine.events.post('play_with_manual_advance')
         self.advance_time_and_run(10)
@@ -652,3 +697,79 @@ class TestShows(MpfTestCase):
         self.machine.shows['multiple_tokens'].play(show_tokens=dict(
             lights='light_01'))
 
+    def test_keys_in_show_player(self):
+        self.post_event("play_on_led1")
+        self.advance_time_and_run()
+        self.assertEqual([255, 255, 255], self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual([0, 0, 0], self.machine.leds.led_02.hw_driver.current_color)
+
+        self.post_event("play_on_led2")
+        self.advance_time_and_run()
+        self.assertEqual([255, 255, 255], self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual([255, 255, 255], self.machine.leds.led_02.hw_driver.current_color)
+
+        self.post_event("stop_on_led1")
+        self.advance_time_and_run()
+        self.assertEqual([0, 0, 0], self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual([255, 255, 255], self.machine.leds.led_02.hw_driver.current_color)
+
+        self.post_event("stop_on_led2")
+        self.advance_time_and_run()
+        self.assertEqual([0, 0, 0], self.machine.leds.led_01.hw_driver.current_color)
+        self.assertEqual([0, 0, 0], self.machine.leds.led_02.hw_driver.current_color)
+
+    def test_nested_shows(self):
+        self.mock_event("test")
+        self.assertFalse(self.machine.shows['mychildshow'].loaded)
+        show = self.machine.shows['myparentshow'].play(loops=0)
+
+        self.advance_time_and_run(5)
+        while not self.machine.shows['mychildshow'].loaded:
+            self.advance_time_and_run(1)
+        self.assertEqual(1, self._events['test'])
+        self.assertTrue(self.machine.shows['mychildshow'].loaded)
+        show.stop()
+
+    def test_nested_shows_stop_before_load(self):
+        self.mock_event("test")
+        self.assertFalse(self.machine.shows['mychildshow'].loaded)
+        show = self.machine.shows['myparentshow'].play(loops=0)
+        show.stop()
+        self.assertEqual(0, self._events['test'])
+
+        self.advance_time_and_run(5)
+        while not self.machine.shows['mychildshow'].loaded:
+            self.advance_time_and_run(1)
+        self.assertEqual(0, self._events['test'])
+        self.assertTrue(self.machine.shows['mychildshow'].loaded)
+
+    def test_manual_advance(self):
+        self.assertEqual([0, 0, 0], self.machine.leds.led_01.hw_driver.current_color)
+        self.post_event("play_manual_advance")
+        self.advance_time_and_run()
+        self.assertEqual([255, 0, 0], self.machine.leds.led_01.hw_driver.current_color)
+
+        self.post_event("advance_manual_advance")
+        self.advance_time_and_run()
+        self.assertEqual([0, 255, 0], self.machine.leds.led_01.hw_driver.current_color)
+
+        self.post_event("advance_manual_advance")
+        self.advance_time_and_run()
+        self.assertEqual([0, 0, 255], self.machine.leds.led_01.hw_driver.current_color)
+
+        self.post_event("advance_manual_step_back")
+        self.advance_time_and_run()
+        self.assertEqual([0, 255, 0], self.machine.leds.led_01.hw_driver.current_color)
+
+        self.post_event("advance_manual_advance")
+        self.advance_time_and_run()
+        self.assertEqual([0, 0, 255], self.machine.leds.led_01.hw_driver.current_color)
+
+        self.post_event("play_manual_advance")
+        self.advance_time_and_run()
+        self.assertEqual([255, 0, 0], self.machine.leds.led_01.hw_driver.current_color)
+
+        # test wrap around
+        self.post_event("advance_manual_step_back")
+        self.advance_time_and_run()
+        self.assertEqual([0, 0, 255], self.machine.leds.led_01.hw_driver.current_color)

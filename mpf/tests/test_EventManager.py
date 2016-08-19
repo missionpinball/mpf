@@ -1,3 +1,4 @@
+"""Test event manager."""
 from mpf.core.delays import DelayManager
 from mpf.tests.MpfTestCase import MpfTestCase
 from unittest.mock import patch
@@ -446,8 +447,7 @@ class TestEventManager(MpfTestCase):
                                        callback=self.queue_callback)
         self.advance_time_and_run(1)
 
-        self.assertEqual(
-                self._handlers_called.count(self.event_handler_add_queue), 1)
+        self.assertEqual(self._handlers_called.count(self.event_handler_add_queue), 1)
         self.assertEqual(self._handlers_called.count(self.queue_callback), 0)
         self.assertEqual(False, self._queue.is_empty())
 
@@ -469,8 +469,7 @@ class TestEventManager(MpfTestCase):
                                        callback=self.queue_callback)
         self.advance_time_and_run(1)
 
-        self.assertEqual(
-                self._handlers_called.count(self.event_handler_add_queue), 1)
+        self.assertEqual(self._handlers_called.count(self.event_handler_add_queue), 1)
         self.assertEqual(self._handlers_called.count(self.queue_callback), 0)
 
         self._queue.kill()
@@ -511,11 +510,8 @@ class TestEventManager(MpfTestCase):
                                        callback=self.queue_callback)
         self.advance_time_and_run(1)
 
-        self.assertEqual(
-                self._handlers_called.count(self.event_handler_returns_false),
-                1)
-        self.assertEqual(
-                self._handlers_called.count(self.event_handler_add_queue), 0)
+        self.assertEqual(self._handlers_called.count(self.event_handler_returns_false), 1)
+        self.assertEqual(self._handlers_called.count(self.event_handler_add_queue), 0)
         self.assertEqual(self._handlers_called.count(self.queue_callback), 1)
         self.assertEqual(self._queue_callback_kwargs, {'ev_result': False})
 
@@ -531,9 +527,7 @@ class TestEventManager(MpfTestCase):
                                        callback=self.queue_callback)
         self.advance_time_and_run(1)
 
-        self.assertEqual(
-                self._handlers_called.count(
-                    self.event_handler_add_quick_queue), 1)
+        self.assertEqual(self._handlers_called.count(self.event_handler_add_quick_queue), 1)
 
         self.assertEqual(self._handlers_called.count(self.queue_callback), 1)
         self.assertEqual(True, self._queue.is_empty())
@@ -563,9 +557,7 @@ class TestEventManager(MpfTestCase):
                                        callback=self.queue_callback)
         self.advance_time_and_run(1)
 
-        self.assertEqual(
-                self._handlers_called.count(
-                    self.event_handler_add_quick_queue), 2)
+        self.assertEqual(self._handlers_called.count(self.event_handler_add_quick_queue), 2)
 
         self.assertEqual(self._handlers_called.count(self.queue_callback), 1)
         self.assertEqual(True, self._queue.is_empty())
@@ -761,14 +753,6 @@ class TestEventManager(MpfTestCase):
         self.delay.add(ms=6001, name="second", callback=self.delay_second)
         self.delay.add(ms=6000, name="first", callback=self.delay_first)
 
-        self.advance_time_and_run(10)
-
-    def test_delay_remove_race(self):
-        self.called = False
-        self.delay = DelayManager(self.machine.delayRegistry)
-
-        self.delay.add(ms=6000, name="first", callback=self.delay_first)
-        self.delay.add(ms=6000, name="second", callback=self.delay_second)
         self.advance_time_and_run(10)
 
     def delay_zero_ms(self, start):

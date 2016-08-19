@@ -13,9 +13,6 @@ class TriggerPlayer(ConfigPlayer):
         """Execute BCP triggers."""
         del kwargs
 
-        if 'triggers' in settings:
-            settings = settings['triggers']
-
         for trigger, s in settings.items():
             self.machine.bcp.bcp_trigger(trigger, **s)
 

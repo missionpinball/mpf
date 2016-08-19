@@ -1,10 +1,12 @@
 """Contains a class to implement mode devices."""
+import abc
+
 from mpf.core.device import Device
 from mpf.core.mode import Mode
 from mpf.core.player import Player
 
 
-class ModeDevice(Device):
+class ModeDevice(Device, metaclass=abc.ABCMeta):
 
     """A device in a mode."""
 

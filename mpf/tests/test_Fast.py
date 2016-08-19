@@ -52,7 +52,7 @@ class BaseMockFast(MockSerial):
             del self.expected_commands[cmd]
             return msg_len
         else:
-            raise Exception(self.type + ": " + cmd)
+            raise Exception(self.type + ": " + str(cmd))
 
     def stop(self):
         pass
@@ -62,6 +62,27 @@ class MockFastDmd(BaseMockFast):
     def __init__(self):
         super().__init__()
         self.type = "DMD"
+
+    def write(self, msg):
+        msg_len = len(msg)
+        if msg == (b' ' * 256) + b"\r":
+            return msg_len
+
+        cmd = msg
+
+        if cmd[:3] == "WD:":
+            return msg_len
+
+        if cmd in self.ignore_commands:
+            return msg_len
+
+        if cmd in self.expected_commands:
+            if self.expected_commands[cmd]:
+                self.queue.append(self.expected_commands[cmd])
+            del self.expected_commands[cmd]
+            return msg_len
+        else:
+            raise Exception(self.type + ": " + str(cmd))
 
 
 class MockFastRgb(BaseMockFast):
@@ -103,7 +124,7 @@ class TestFast(MpfTestCase):
         self.dmd_cpu = MockFastDmd()
 
         self.dmd_cpu.expected_commands = {
-            'ID:': 'ID:DMD FP-CPU-002-1 00.88',
+            b'ID:\r': 'ID:DMD FP-CPU-002-1 00.88',
 
         }
         self.rgb_cpu.expected_commands = {
@@ -118,17 +139,14 @@ class TestFast(MpfTestCase):
             'NN:1': 'NN:01,FP-I/O-0804-1   ,01.00,04,08,04,06,00,00,00,00',     # 0804 board
             'NN:2': 'NN:02,FP-I/O-1616-2   ,01.00,10,10,04,06,00,00,00,00',     # 1616 board
             'NN:3': 'NN:03,FP-I/O-1616-2   ,01.00,10,10,04,06,00,00,00,00',     # 1616 board
-            'NN:4': 'NN:04,,00.00,00,00,00,00,00,00,00,00',                     # unpopulated
-            'NN:5': 'NN:05,,00.00,00,00,00,00,00,00,00,00',                     # unpopulated
-            'NN:6': 'NN:06,,00.00,00,00,00,00,00,00,00,00',                     # unpopulated
-            'NN:7': 'NN:07,,00.00,00,00,00,00,00,00,00,00',                     # unpopulated
-            "SA:": "SA:1,00,8,05000000",
+            "SA:": "SA:01,00,05,05000000",
             "SN:01,01,0A,0A": "SN:P",
             "SN:02,01,0A,0A": "SN:P",
             "SN:03,01,0A,0A": "SN:P",
             "SN:16,01,0A,0A": "SN:P",
             "SN:07,01,0A,0A": "SN:P",
             "SN:1A,01,0A,0A": "SN:P",
+            "SN:39,01,0A,0A": "SN:P",
             "DN:04,00,00,00": False,
             "DN:06,00,00,00": False,
             "DN:07,00,00,00": False,
@@ -138,6 +156,7 @@ class TestFast(MpfTestCase):
             "DN:20,00,00,00": False,
             "DN:21,00,00,00": False,
             "GI:2A,FF": False,
+            "XO:03,7F": False
         }
 
         super().setUp()
@@ -242,6 +261,15 @@ class TestFast(MpfTestCase):
         }
         # coil and switch are on different boards but first 8 switches always work
         self.machine.autofires.ac_different_boards.enable()
+        self.machine_run()
+        self.assertFalse(self.net_cpu.expected_commands)
+
+        # switch and coil on board 3. should work
+        self.net_cpu.expected_commands = {
+            "DN:21,01,39,10,0A,ff,00,00,14": False,
+            "SN:39,01,02,02": False
+        }
+        self.machine.autofires.ac_board_3.enable()
         self.machine_run()
         self.assertFalse(self.net_cpu.expected_commands)
 
@@ -498,7 +526,7 @@ class TestFast(MpfTestCase):
     def test_dmd_update(self):
 
         # test configure
-        self.machine.default_platform.configure_dmd()
+        dmd = self.machine.default_platform.configure_dmd()
 
         # test set frame to buffer
         frame = bytearray()
@@ -509,8 +537,13 @@ class TestFast(MpfTestCase):
 
         # test draw
         self.dmd_cpu.expected_commands = {
-            frame: False
+            b'BM:' + frame: False
         }
+        dmd.update(frame)
+
+        self.machine_run()
+
+        self.assertFalse(self.dmd_cpu.expected_commands)
 
     def test_lights_and_leds(self):
         self._test_matrix_light()

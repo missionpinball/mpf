@@ -4,7 +4,11 @@ import sys
 
 
 class Command(object):
+
+    """Deprecated command."""
+
     def __init__(self, mpf_path, machine_path, args):
+        """Show error."""
         del mpf_path
         del machine_path
         del args

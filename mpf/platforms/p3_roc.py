@@ -1,5 +1,4 @@
-"""Contains the drivers and interface code for pinball machines which
-use the Multimorphic P3-ROC hardware controllers.
+"""Contains the drivers and interface code for pinball machines which use the Multimorphic P3-ROC hardware controllers.
 
 Much of this code is from the P-ROC drivers section of the pyprocgame project,
 written by Adam Preble and Gerry Stellenberg. It was originally released under
@@ -19,6 +18,7 @@ from mpf.platforms.p_roc_devices import PROCDriver, PROCGiString, PROCMatrixLigh
 
 
 class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
+
     """Platform class for the P3-ROC hardware controller.
 
     Args:
@@ -29,6 +29,7 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
     """
 
     def __init__(self, machine):
+        """Initialise and connect P3-Roc."""
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger('P3-ROC')
         self.debug_log("Configuring P3-ROC hardware.")
@@ -54,6 +55,7 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
         self.accelerometer_device = None
 
     def __repr__(self):
+        """Return string representation."""
         return '<Platform.P3-ROC>'
 
     def i2c_write8(self, address, register, value):
@@ -116,7 +118,7 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
         self.proc.flush()
 
     def configure_driver(self, config):
-        """ Creates a P3-ROC driver.
+        """Create a P3-ROC driver.
 
         Typically drivers are coils or flashers, but for the P3-ROC this is
         also used for matrix-based lights.
@@ -127,7 +129,6 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
         Returns:
             A reference to the PROCDriver object which is the actual object you
             can use to pulse(), patter(), enable(), etc.
-
         """
         # todo need to add virtual driver support for driver counts > 256
 
@@ -167,7 +168,7 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
         return proc_driver_object
 
     def configure_switch(self, config):
-        """Configures a P3-ROC switch.
+        """Configure a P3-ROC switch.
 
         Args:
             config: Dictionary of settings for the switch. In the case
@@ -205,7 +206,7 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
         return states
 
     def tick(self, dt):
-        """Checks the P3-ROC for any events (switch state changes).
+        """Check the P3-ROC for any events (switch state changes).
 
         Also tickles the watchdog and flushes any queued commands to the P3-ROC.
         """

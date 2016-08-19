@@ -1,0 +1,1 @@
+"""Default high score mode."""

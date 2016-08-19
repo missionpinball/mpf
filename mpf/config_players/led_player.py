@@ -17,35 +17,39 @@ class LedPlayer(ConfigPlayer):
         instance_dict = self._get_instance_dict(context)
         full_context = self._get_full_context(context)
         del kwargs
-        if 'leds' in settings:
-            settings = settings['leds']
 
         for led, s in settings.items():
-            s['color'] = RGBColor(s['color'])
             try:
                 s['priority'] += priority
             except KeyError:
                 s['priority'] = priority
 
             try:
-                led.color(key=full_context, **s)
-                instance_dict[led.name] = led
+                self._led_color(led, instance_dict, full_context, **s)
 
             except AttributeError:
                 try:
-                    self._led_color(led, instance_dict, full_context, **s)
+                    self._led_named_color(led, instance_dict, full_context, **s)
                 except KeyError:
                     led_list = Util.string_to_list(led)
                     if len(led_list) > 1:
                         for led1 in led_list:
-                            self._led_color(led1, instance_dict, full_context, **s)
+                            self._led_named_color(led1, instance_dict, full_context, **s)
                     else:
                         for led1 in self.machine.leds.sitems_tagged(led):
-                            self._led_color(led1, instance_dict, full_context, **s)
+                            self._led_named_color(led1, instance_dict, full_context, **s)
 
-    def _led_color(self, led_name, instance_dict, full_context, **s):
+    def _led_named_color(self, led_name, instance_dict, full_context, color, **s):
         led = self.machine.leds[led_name]
-        led.color(key=full_context, **s)
+        self._led_color(led, instance_dict, full_context, color, **s)
+
+    @staticmethod
+    def _led_color(led, instance_dict, full_context, color, **s):
+        if color == "on":
+            color = led.config['default_color']
+        else:
+            color = RGBColor(color)
+        led.color(color, key=full_context, **s)
         instance_dict[led.name] = led
 
     def clear_context(self, context):

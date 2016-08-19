@@ -89,7 +89,7 @@ class Tilt(Mode):
     # ignore false positives about self.player
     # pylint: disable-msg=unsubscriptable-object
     def tilt_warning(self):
-        """Process a tilt warning
+        """Process a tilt warning.
 
          If the number of warnings is the number to
         cause a tilt, a tilt will be processed.

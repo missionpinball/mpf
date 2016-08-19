@@ -1,11 +1,11 @@
 """Contains the Device base class."""
-
+import abc
 import logging
 
 from mpf.core.machine import MachineController
 
 
-class Device(object):
+class Device(object, metaclass=abc.ABCMeta):
 
     """Generic parent class of for every hardware device in a pinball machine."""
 
@@ -94,6 +94,7 @@ class Device(object):
             self.log.debug("Configuring device with settings: '%s'", config)
 
     def __repr__(self):
+        """Return string representation."""
         return '<{self.class_label}.{self.name}>'.format(self=self)
 
     def enable_debugging(self):

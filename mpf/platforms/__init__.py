@@ -1,1 +1,1 @@
-# This list is only for platform overlays
+"""Hardware platforms in MPF."""

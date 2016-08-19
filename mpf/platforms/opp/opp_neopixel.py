@@ -39,6 +39,7 @@ class OPPNeopixel(RGBLEDPlatformInterface):
     """One WS2812 LED."""
 
     def __init__(self, number, neo_card):
+        """Initialise LED."""
         self.log = logging.getLogger('OPPNeopixel')
         self.number = number
         self.current_color = '000000'
@@ -55,7 +56,6 @@ class OPPNeopixel(RGBLEDPlatformInterface):
             color: a 3-item list of integers representing R, G, and B values,
             0-255 each.
         """
-
         new_color = "{0}{1}{2}".format(hex(int(color[0]))[2:].zfill(2),
                                        hex(int(color[1]))[2:].zfill(2),
                                        hex(int(color[2]))[2:].zfill(2))

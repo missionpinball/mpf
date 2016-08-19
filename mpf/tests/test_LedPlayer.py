@@ -28,32 +28,32 @@ class TestLedPlayer(MpfTestCase):
         led2 = self.machine.leds.led2
         led3 = self.machine.leds.led3
 
-        self.assertEqual(self.machine.config['led_player']['event1']['leds'][led1]['color'], 'red')
-        self.assertEqual(self.machine.config['led_player']['event1']['leds'][led1]['fade_ms'], 0)
-        self.assertEqual(self.machine.config['led_player']['event1']['leds'][led1]['priority'], 200)
-        self.assertEqual(self.machine.config['led_player']['event1']['leds'][led2]['color'], 'ff0000')
-        self.assertEqual(self.machine.config['led_player']['event1']['leds'][led2]['fade_ms'], 0)
-        self.assertEqual(self.machine.config['led_player']['event1']['leds'][led3]['color'], 'red')
-        self.assertEqual(self.machine.config['led_player']['event1']['leds'][led3]['fade_ms'], 0)
+        self.assertEqual(self.machine.config['led_player']['event1'][led1]['color'], 'red')
+        self.assertEqual(self.machine.config['led_player']['event1'][led1]['fade_ms'], 0)
+        self.assertEqual(self.machine.config['led_player']['event1'][led1]['priority'], 200)
+        self.assertEqual(self.machine.config['led_player']['event1'][led2]['color'], 'ff0000')
+        self.assertEqual(self.machine.config['led_player']['event1'][led2]['fade_ms'], 0)
+        self.assertEqual(self.machine.config['led_player']['event1'][led3]['color'], 'red')
+        self.assertEqual(self.machine.config['led_player']['event1'][led3]['fade_ms'], 0)
 
-        self.assertEqual(self.machine.config['led_player']['event2']['leds'][led1]['color'], 'blue')
-        self.assertEqual(self.machine.config['led_player']['event2']['leds'][led1]['fade_ms'], 200)
-        self.assertEqual(self.machine.config['led_player']['event2']['leds'][led1]['priority'], 100)
-        self.assertEqual(self.machine.config['led_player']['event2']['leds'][led2]['color'], 'blue')
-        self.assertEqual(self.machine.config['led_player']['event2']['leds'][led2]['fade_ms'], 200)
-        self.assertEqual(self.machine.config['led_player']['event2']['leds'][led1]['priority'], 100)
+        self.assertEqual(self.machine.config['led_player']['event2'][led1]['color'], 'blue')
+        self.assertEqual(self.machine.config['led_player']['event2'][led1]['fade_ms'], 200)
+        self.assertEqual(self.machine.config['led_player']['event2'][led1]['priority'], 100)
+        self.assertEqual(self.machine.config['led_player']['event2'][led2]['color'], 'blue')
+        self.assertEqual(self.machine.config['led_player']['event2'][led2]['fade_ms'], 200)
+        self.assertEqual(self.machine.config['led_player']['event2'][led1]['priority'], 100)
 
-        self.assertEqual(self.machine.config['led_player']['event3']['leds'][led1]['color'], 'lime')
-        self.assertEqual(self.machine.config['led_player']['event3']['leds'][led1]['fade_ms'], 500)
-        self.assertEqual(self.machine.config['led_player']['event3']['leds'][led2]['color'], 'lime')
-        self.assertEqual(self.machine.config['led_player']['event3']['leds'][led2]['fade_ms'], 500)
-        self.assertEqual(self.machine.config['led_player']['event3']['leds'][led3]['color'], '00ff00')
-        self.assertEqual(self.machine.config['led_player']['event3']['leds'][led3]['fade_ms'], 500)
+        self.assertEqual(self.machine.config['led_player']['event3'][led1]['color'], 'lime')
+        self.assertEqual(self.machine.config['led_player']['event3'][led1]['fade_ms'], 500)
+        self.assertEqual(self.machine.config['led_player']['event3'][led2]['color'], 'lime')
+        self.assertEqual(self.machine.config['led_player']['event3'][led2]['fade_ms'], 500)
+        self.assertEqual(self.machine.config['led_player']['event3'][led3]['color'], '00ff00')
+        self.assertEqual(self.machine.config['led_player']['event3'][led3]['fade_ms'], 500)
 
-        self.assertEqual(self.machine.config['led_player']['event4']['leds'][led1]['color'], '00ffff')
-        self.assertEqual(self.machine.config['led_player']['event4']['leds'][led1]['fade_ms'], 0)
-        self.assertEqual(self.machine.config['led_player']['event4']['leds'][led2]['color'], '00ffff')
-        self.assertEqual(self.machine.config['led_player']['event4']['leds'][led2]['fade_ms'], 0)
+        self.assertEqual(self.machine.config['led_player']['event4'][led1]['color'], '00ffff')
+        self.assertEqual(self.machine.config['led_player']['event4'][led1]['fade_ms'], 0)
+        self.assertEqual(self.machine.config['led_player']['event4'][led2]['color'], '00ffff')
+        self.assertEqual(self.machine.config['led_player']['event4'][led2]['fade_ms'], 0)
 
     def test_led_player(self):
         # led_player just sets these colors and that's it.
@@ -161,6 +161,15 @@ class TestLedPlayer(MpfTestCase):
                          self.machine.leds.led3.hw_driver.current_color)
         self.assertEqual(list(RGBColor('off').rgb),
                          self.machine.leds.led3.hw_driver.current_color)
+
+        # test led5 with default color red
+        self.assertEqual(list(RGBColor('off').rgb),
+                         self.machine.leds.led5.hw_driver.current_color)
+
+        self.post_event("event5")
+        self.advance_time_and_run()
+        self.assertEqual(list(RGBColor('red').rgb),
+                         self.machine.leds.led5.hw_driver.current_color)
 
     def test_single_step_show(self):
         # with single step shows, loops are automatically set to 0, hold is

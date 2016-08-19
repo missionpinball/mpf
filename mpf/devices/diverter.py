@@ -2,10 +2,13 @@
 
 from collections import deque
 from mpf.core.delays import DelayManager
+from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.system_wide_device import SystemWideDevice
 
 
+@DeviceMonitor("active", "enabled", "eject_state")
 class Diverter(SystemWideDevice):
+
     """Represents a diverter in a pinball machine.
 
     Args: Same as the Device parent class.
@@ -16,6 +19,7 @@ class Diverter(SystemWideDevice):
     class_label = 'diverter'
 
     def __init__(self, machine, name):
+        """Initialise diverter."""
         super().__init__(machine, name)
 
         self.delay = DelayManager(machine.delayRegistry)
@@ -64,12 +68,12 @@ class Diverter(SystemWideDevice):
                 switch.name, self.disable)
 
     def reset(self, **kwargs):
-        """Resets and deactivates the diverter"""
+        """Reset and deactivate the diverter."""
         del kwargs
         self.deactivate()
 
     def enable(self, auto=False, **kwargs):
-        """Enables this diverter.
+        """Enable this diverter.
 
         Args:
             auto: Boolean value which is used to indicate whether this
@@ -83,7 +87,6 @@ class Diverter(SystemWideDevice):
 
         If no `activation_switches` is specified, then the diverter is activated
         immediately.
-
         """
         del kwargs
         self.enabled = True
@@ -103,12 +106,12 @@ class Diverter(SystemWideDevice):
         '''
 
         if self.config['activation_switches']:
-            self.enable_switches()
+            self._enable_switches()
         else:
             self.activate()
 
     def disable(self, auto=False, **kwargs):
-        """Disables this diverter.
+        """Disable this diverter.
 
         This method will remove the hardware rule if this diverter is activated
         via a hardware switch.
@@ -141,14 +144,14 @@ class Diverter(SystemWideDevice):
 
         self.log.debug("Disabling Diverter")
         if self.config['activation_switches']:
-            self.disable_switches()
+            self._disable_switches()
         # if there is no deactivation way
         if not (self.config['activation_time'] or self.config['deactivation_switches'] or
            self.config['deactivate_events']):
             self.deactivate()
 
     def activate(self, **kwargs):
-        """Physically activates this diverter's coil."""
+        """Physically activate this diverter's coil."""
         del kwargs
         self.log.debug("Activating Diverter")
         self.active = True
@@ -161,7 +164,7 @@ class Diverter(SystemWideDevice):
         self.schedule_deactivation()
 
     def deactivate(self, **kwargs):
-        """Deactivates this diverter.
+        """Deactivate this diverter.
 
         This method will disable the activation_coil, and (optionally) if it's
         configured with a deactivation coil, it will pulse it.
@@ -184,13 +187,13 @@ class Diverter(SystemWideDevice):
             self.config['deactivation_coil'].pulse()
 
     def schedule_deactivation(self):
-        """Schedules a delay to deactivate this diverter.
-        """
+        """Schedule a delay to deactivate this diverter."""
         if self.config['activation_time']:
             self.delay.add(name='deactivate_timed', ms=self.config['activation_time'],
                            callback=self.deactivate)
 
-    def enable_switches(self):
+    def _enable_switches(self):
+        """Register switch handler on activation switches."""
         self.log.debug("Enabling Diverter sw switches: %s",
                        self.config['activation_switches'])
 
@@ -198,7 +201,8 @@ class Diverter(SystemWideDevice):
             self.machine.switch_controller.add_switch_handler(
                 switch_name=switch.name, callback=self.activate)
 
-    def disable_switches(self):
+    def _disable_switches(self):
+        """Deregister switch handlers for activation switches."""
         self.log.debug("Disabling Diverter sw switches: %s",
                        self.config['activation_switches'])
 

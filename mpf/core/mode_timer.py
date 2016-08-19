@@ -1,3 +1,4 @@
+"""Mode timers."""
 import logging
 
 from mpf.core.delays import DelayManager
@@ -5,6 +6,7 @@ from mpf.core.delays import DelayManager
 
 # pylint: disable-msg=too-many-instance-attributes
 class ModeTimer(object):
+
     """Parent class for a mode timer.
 
     Args:
@@ -17,10 +19,14 @@ class ModeTimer(object):
     """
 
     def __init__(self, machine, mode, name, config):
+        """Initialise mode timer."""
         self.machine = machine
         self.mode = mode
         self.name = name
         self.config = config
+
+        if mode.player is None:
+            raise AssertionError("Cannot use ModeTimer in mode without player.")
 
         self.tick_var = self.mode.name + '_' + self.name + '_tick'
         self.mode.player[self.tick_var] = 0
@@ -122,8 +128,9 @@ class ModeTimer(object):
             self.machine.events.remove_handler_by_key(key)
 
     def reset(self, **kwargs):
-        """Resets this timer based to the starting value that's already been
-        configured. Does not start or stop the timer.
+        """Reset this timer based to the starting value that's already been configured.
+
+        Does not start or stop the timer.
 
         Args:
             **kwargs: Not used in this method. Only exists since this method is
@@ -138,9 +145,9 @@ class ModeTimer(object):
         self.set_current_time(self.start_value)
 
     def start(self, **kwargs):
-        """Starts this timer based on the starting value that's already been
-        configured. Use set_current_time() if you want to set the starting time
-        value.
+        """Start this timer based on the starting value that's already been configured.
+
+        Use set_current_time() if you want to set the starting time value.
 
         Args:
             **kwargs: Not used in this method. Only exists since this method is
@@ -178,21 +185,21 @@ class ModeTimer(object):
                                   ticks_remaining=self.ticks_remaining)
 
     def restart(self, **kwargs):
-        """Restarts the timer by resetting it and then starting it. Essentially
-        this is just a reset() then a start()
+        """Restart the timer by resetting it and then starting it.
+
+        Essentially this is just a reset() then a start().
 
         Args:
             **kwargs: Not used in this method. Only exists since this method is
                 often registered as an event handler which may contain
                 additional keyword arguments.
-
         """
         del kwargs
         self.reset()
         self.start()
 
     def stop(self, **kwargs):
-        """Stops the timer and posts the 'timer_<name>_stopped' event.
+        """Stop the timer and posts the 'timer_<name>_stopped' event.
 
         Args:
             **kwargs: Not used in this method. Only exists since this method is
@@ -230,7 +237,7 @@ class ModeTimer(object):
                                   ticks_remaining=self.ticks_remaining)
 
     def pause(self, timer_value=0, **kwargs):
-        """Pauses the timer and posts the 'timer_<name>_paused' event
+        """Pause the timer and posts the 'timer_<name>_paused' event.
 
         Args:
             timer_value: How many seconds you want to pause the timer for. Note
@@ -270,9 +277,9 @@ class ModeTimer(object):
             self.delay.add(name='pause', ms=pause_secs, callback=self.start)
 
     def timer_complete(self, **kwargs):
-        """Automatically called when this timer completes. Posts the
-        'timer_<name>_complete' event. Can be manually called to mark this timer
-        as complete.
+        """Automatically called when this timer completes.
+
+        Posts the 'timer_<name>_complete' event. Can be manually called to mark this timer as complete.
 
         Args:
             **kwargs: Not used in this method. Only exists since this method is
@@ -359,7 +366,7 @@ class ModeTimer(object):
                                       ticks_remaining=self.ticks_remaining)
 
     def add_time(self, timer_value, **kwargs):
-        """Adds ticks to this timer.
+        """Add ticks to this timer.
 
         Args:
             timer_value: The number of ticks you want to add to this timer's
@@ -403,7 +410,7 @@ class ModeTimer(object):
         self._check_for_done()
 
     def subtract_time(self, timer_value, **kwargs):
-        """Subtracts ticks from this timer.
+        """Subtract ticks from this timer.
 
         Args:
             timer_value: The number of ticks you want to subtract from this
@@ -483,7 +490,7 @@ class ModeTimer(object):
             self.timer = None
 
     def change_tick_interval(self, change=0.0, **kwargs):
-        """Changes the interval for each "tick" of this timer.
+        """Change the interval for each "tick" of this timer.
 
         Args:
             change: Float or int of the change you want to make to this timer's
@@ -500,9 +507,9 @@ class ModeTimer(object):
         self._create_system_timer()
 
     def set_tick_interval(self, timer_value, **kwargs):
-        """Sets the number of seconds between ticks for this timer. This is an
-        absolute setting. To apply a change to the current value, use the
-        change_tick_interval() method.
+        """Set the number of seconds between ticks for this timer.
+
+        This is an absolute setting. To apply a change to the current value, use the change_tick_interval() method.
 
         Args:
             timer_value: The new number of seconds between each tick of this
@@ -517,9 +524,9 @@ class ModeTimer(object):
         self._create_system_timer()
 
     def set_current_time(self, timer_value, **kwargs):
-        """Sets the current amount of time of this timer. This value is
-        expressed in "ticks" since the interval per tick can be something other
-        than 1 second).
+        """Set the current amount of time of this timer.
+
+        This value is expressed in "ticks" since the interval per tick can be something other than 1 second).
 
         Args:
             timer_value: Integer of the current value you want this timer to be.
@@ -535,8 +542,6 @@ class ModeTimer(object):
             self.mode.player[self.tick_var] = self.max_value
 
     def kill(self):
-        """Stops this timer and also removes all the control events.
-        """
-
+        """Stop this timer and also removes all the control events."""
         self.stop()
         self._remove_control_events()

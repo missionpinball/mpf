@@ -1,4 +1,4 @@
-""" Contains the ShotProfileManager class."""
+"""Contains the ShotProfileManager class."""
 
 import logging
 from collections import deque
@@ -6,8 +6,10 @@ from collections import deque
 
 class ShotProfileManager(object):
 
-    def __init__(self, machine):
+    """Controller for show profiles."""
 
+    def __init__(self, machine):
+        """Initialise shot profile manager."""
         self.machine = machine
 
         self.log = logging.getLogger('ShotProfileManager')
@@ -35,8 +37,7 @@ class ShotProfileManager(object):
                                         priority=0)
 
     def register_profile(self, name, profile):
-        """Registers a new shot profile with the shot controller which will
-        allow it to be applied to shots.
+        """Register a new shot profile with the shot controller which will allow it to be applied to shots.
 
         Args:
             name: String name of the profile you're registering.
@@ -49,7 +50,7 @@ class ShotProfileManager(object):
         self.profiles[name] = self.process_profile_config(name, profile)
 
     def register_profiles(self, config, **kwargs):
-        """Registers multiple shot profiles.
+        """Register multiple shot profiles.
 
         Args:
             config: Dict containing the profiles you're registering. Keys are
@@ -63,14 +64,12 @@ class ShotProfileManager(object):
             self.register_profile(name, profile)
 
     def process_profile_config(self, profile_name, config):
-        """Processes a shot profile config to convert everything to the format
-        the shot controller needs.
+        """Process a shot profile config to convert everything to the format the shot controller needs.
 
         Args:
             config: Dict of the profile settings to process.
 
         """
-
         config = self.machine.config_validator.validate_config(
             'shot_profiles', config, 'shot_profiles')
 
@@ -105,8 +104,9 @@ class ShotProfileManager(object):
             shot.player_turn_stop()
 
     def mode_start_for_shots(self, config, mode, **kwargs):
-        """ runs on mode start, sets the shots' enable_tables
+        """Set the shots' enable_tables.
 
+        Called on mode start.
         """
         del kwargs
         if self.debug:
@@ -139,10 +139,7 @@ class ShotProfileManager(object):
         return self.mode_stop_for_shots, mode
 
     def mode_stop_for_shots(self, mode):
-        """Runs on mode end
-
-        """
-
+        """Remove shot profile from mode."""
         if self.debug:
             self.log.debug("Removing mode %s from all shots' enable_tables",
                            mode)
@@ -153,7 +150,7 @@ class ShotProfileManager(object):
             shot.remove_profile_by_mode(mode)
 
     def mode_start_for_shot_groups(self, config, priority, mode, **kwargs):
-        """Applies profiles to member shots of a dict of shot groups.
+        """Apply profiles to member shots of a dict of shot groups.
 
         Args:
             config: Dict containing shot groups. Keys are shot group names.
@@ -163,7 +160,6 @@ class ShotProfileManager(object):
                 profiles. Used as the key to remove the profiles a specific mode
                 applied later.
             kwargs: unused
-
         """
         del kwargs
         del priority
@@ -214,14 +210,12 @@ class ShotProfileManager(object):
         return self.mode_stop_for_shot_groups, mode
 
     def mode_stop_for_shot_groups(self, mode):
-        """Removes all the profiles that were applied to shots based on shot
-        group settings in a mode.
+        """Remove all the profiles that were applied to shots based on shot group settings in a mode.
 
         Args:
             mode: A Mode class which represents the mode that applied the
                 profiles originally which will be used to determine which shot
                 profiles should be removed.
-
         """
         # todo this should be smarter and only run on shots that are not in
         # this mode's config? meh.. premature optimization though?

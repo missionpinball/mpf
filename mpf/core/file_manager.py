@@ -8,15 +8,19 @@ import mpf.file_interfaces
 
 class FileInterface(object):
 
+    """Interface for config files."""
+
     file_types = list()
 
     def __init__(self):
+        """Initialise file manager."""
         self.log = logging.getLogger('{} File Interface'.format(
             self.file_types[0][1:].upper()))
 
     def find_file(self, filename):
-        """Tests whether the passed file is valid. If the file does not have an
-        externsion, this method will test for files with that base name with
+        """Test whether the passed file is valid.
+
+        If the file does not have an externsion, this method will test for files with that base name with
         all the extensions it can read.
 
         Args:
@@ -40,9 +44,9 @@ class FileInterface(object):
 
     @staticmethod
     def get_config_file_version(filename):
-        """Gets the config version number from a file. Since this technique
-        varies depending on the file type, it needs to be implemented in the
-        chile class
+        """Get the config version number from a file.
+
+        Since this technique varies depending on the file type, it needs to be implemented in the child class
 
         Args:
             filename: The file with path to check.
@@ -55,13 +59,17 @@ class FileInterface(object):
 
     def load(self, filename, verify_version=True, halt_on_error=True,
              round_trip=False):
+        """Load file."""
         raise NotImplementedError
 
     def save(self, filename, data, **kwargs):
+        """Save file."""
         raise NotImplementedError
 
 
 class FileManager(object):
+
+    """Manages file interfaces."""
 
     log = logging.getLogger('FileManager')
     file_interfaces = dict()
@@ -69,6 +77,7 @@ class FileManager(object):
 
     @classmethod
     def init(cls):
+        """Initialise file manager."""
         # Needs to be a separate method to prevent circular import
         for module in mpf.file_interfaces.__all__:
             importlib.import_module('mpf.file_interfaces.{}'.format(module))
@@ -84,15 +93,13 @@ class FileManager(object):
 
     @staticmethod
     def locate_file(filename) -> str:
-        """
+        """Find a file location.
 
         Args:
             filename: Filename to locate
 
         Returns: Location of file
-
         """
-
         if not filename:
             raise FileNotFoundError("No filename provided")
 
@@ -117,6 +124,7 @@ class FileManager(object):
 
     @staticmethod
     def get_file_interface(filename):
+        """Return a file interface."""
         try:
             FileManager.locate_file(filename)
         except FileNotFoundError:
@@ -131,7 +139,7 @@ class FileManager(object):
 
     @staticmethod
     def load(filename, verify_version=False, halt_on_error=False, round_trip=False):
-
+        """Load a file by name."""
         if not FileManager.initialized:
             FileManager.init()
 
@@ -160,10 +168,17 @@ class FileManager(object):
 
     @staticmethod
     def save(filename, data, **kwargs):
+        """Save data to file."""
         ext = os.path.splitext(filename)[1]
 
+        # save to temp file and move afterwards. prevents broken files
+        temp_file = os.path.dirname(filename) + os.sep + "_" + os.path.basename(filename)
+
         try:
-            FileManager.file_interfaces[ext].save(filename, data,
+            FileManager.file_interfaces[ext].save(temp_file, data,
                                                   **kwargs)
         except KeyError:
             raise AssertionError("No config file processor available for file type {}".format(ext))
+
+        # move temp file
+        os.rename(temp_file, filename)

@@ -17,9 +17,6 @@ class LightPlayer(ConfigPlayer):
         instance_dict = self._get_instance_dict(context)
         full_context = self._get_full_context(context)
 
-        if 'lights' in settings:
-            settings = settings['lights']
-
         for light, s in settings.items():
             try:
                 s['priority'] += priority

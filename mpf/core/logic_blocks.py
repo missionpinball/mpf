@@ -1,4 +1,5 @@
 """MPF plugin which implements Logic Blocks."""
+import abc
 import copy
 import logging
 
@@ -162,6 +163,7 @@ class LogicBlock(object):
             self.config['events_when_hit'] = ['logicblock_' + self.name + '_hit']
 
     @property
+    @abc.abstractmethod
     def config_section_name(self):
         """Return config section name."""
         raise NotImplementedError("Please implement")
@@ -223,10 +225,12 @@ class LogicBlock(object):
         self.enabled = True
         self.add_event_handlers()
 
+    @abc.abstractmethod
     def add_event_handlers(self):
         """Add handler to advance block."""
         raise NotImplementedError("Not implemented")
 
+    @abc.abstractmethod
     def hit(self, **kwargs):
         """Hit block."""
         raise NotImplementedError("Not implemented")

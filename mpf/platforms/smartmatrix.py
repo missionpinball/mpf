@@ -1,4 +1,4 @@
-"""Contains code for an SmartMatrix Shield connected to a Teensy"""
+"""Contains code for an SmartMatrix Shield connected to a Teensy."""
 
 import logging
 import sys
@@ -11,8 +11,10 @@ from mpf.core.platform import RgbDmdPlatform
 
 class HardwarePlatform(RgbDmdPlatform):
 
-    def __init__(self, machine):
+    """SmartMatrix shield via Teensy."""
 
+    def __init__(self, machine):
+        """Initialise smart matrix."""
         super().__init__(machine)
 
         self.log = logging.getLogger('SmartMatrix')
@@ -27,39 +29,43 @@ class HardwarePlatform(RgbDmdPlatform):
             source=self.machine.config['smartmatrix'])
 
     def initialize(self):
+        """Initialise platform."""
         pass
 
     def stop(self):
+        """Stop platform."""
         self.serial_port.close()
 
     def __repr__(self):
+        """Return string representation."""
         return '<Platform.SmartMatrix>'
 
     def configure_rgb_dmd(self):
+        """Configure rgb dmd."""
         self.log.debug("Configuring SmartMatrix DMD")
         self.serial_port = serial.Serial(port=self.config['port'],
                                          baudrate=2500000)
 
         if self.config['use_separate_thread']:
             self.queue = Queue()
-            self.dmd_thread = threading.Thread(target=self.dmd_sender_thread)
+            self.dmd_thread = threading.Thread(target=self._dmd_sender_thread)
             self.dmd_thread.daemon = True
             self.dmd_thread.start()
-            self.machine.bcp.register_rgb_dmd(self.update_separate_thread)
+            self.machine.bcp.register_rgb_dmd(self._update_separate_thread)
         else:
-            self.machine.bcp.register_rgb_dmd(self.update_non_thread)
+            self.machine.bcp.register_rgb_dmd(self._update_non_thread)
 
-    def update_non_thread(self, data):
+    def _update_non_thread(self, data):
         try:
             self.serial_port.write(bytearray([0x01]))
             self.serial_port.write(bytearray(data))
         except TypeError:
             pass
 
-    def update_separate_thread(self, data):
+    def _update_separate_thread(self, data):
         self.queue.put(bytearray(data))
 
-    def dmd_sender_thread(self):
+    def _dmd_sender_thread(self):
         while True:
             data = self.queue.get()  # this will block
 

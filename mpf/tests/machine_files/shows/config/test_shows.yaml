@@ -49,15 +49,6 @@ flashers:
         label: Test flasher
         flash_ms: 40
 
-assets:
-    file_shows:
-        test_show1:
-            preload: yes
-        test_show2:
-            preload: yes
-        test_show3:
-            preload: yes
-
 shows:
   leds_name_token:
     - time: 0
@@ -108,15 +99,36 @@ shows:
       leds:
         led_02: (color2)-f900ms
     - time: +1
+  manual_advance:
+    - duration: -1
+      leds:
+        (leds): red
+    - duration: -1
+      leds:
+        (leds): lime
+    - duration: -1
+      leds:
+        (leds): blue
 
 show_player:
+  play_on_led1:
+    on:
+      key: on_led_01
+      show_tokens:
+        leds: led_01
+  play_on_led2:
+    on:
+      key: on_led2
+      show_tokens:
+        leds: led_02
+  stop_on_led1:
+    on_led_01: stop
+  stop_on_led2:
+    on_led2: stop
   play_test_show1: test_show1
   play_with_priority:
     test_show1:
       priority: 15
-  play_with_hold:
-    test_show1:
-      hold: True
   play_with_speed:
     test_show1:
       speed: 2
@@ -135,49 +147,15 @@ show_player:
   play_with_sync_ms_500:
     test_show1:
       sync_ms: 500
-  play_with_reset:
-    test_show1:
-      reset: False
   play_with_manual_advance:
     test_show1:
       manual_advance: True
-  play_with_keys:
-    test_show1:
-      key: key1
-    test_show2:
-      key: key1
-    test_show3:
-      key: key2
-  stop_key1:
-    key1:
-      action: stop
-  stop_key2:
-    key2:
-      action: stop
-  stop_test_show1:
-    test_show1:
-      action: stop
   pause_test_show1:
     test_show1:
       action: pause
   resume_test_show1:
     test_show1:
       action: resume
-  invalid_show_stop_name:
-    fake_show:
-      action: stop
-  adjust_running_show_by_key:
-    key1:
-      action: update
-      speed: 2
-  stop_by_multiple_keys:
-    key1:
-      action: stop
-    key2:
-      action: stop
-  stop_by_show_name:
-    leds_extended:
-      action: stop
   play_show_assoc_tokens:
     show_assoc_tokens:
       speed: 1
@@ -208,7 +186,14 @@ show_player:
          line7color: violet
          line8num: row7
          line8color: midnightblue
-
   test_mode_stopped:
     8linesweep:
       action: stop
+  play_manual_advance:
+    manual_advance:
+      show_tokens:
+        leds: led_01
+  advance_manual_advance:
+    manual_advance: advance
+  advance_manual_step_back:
+    manual_advance: step_back

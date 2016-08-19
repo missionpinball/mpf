@@ -1,16 +1,22 @@
 """Device that implements a ball save."""
 
 from mpf.core.delays import DelayManager
+from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
 
 
+@DeviceMonitor("saves_remaining", "enabled", "timer_started")
 class BallSave(SystemWideDevice, ModeDevice):
+
+    """Ball save device which will give back the ball within a certain time."""
+
     config_section = 'ball_saves'
     collection = 'ball_saves'
     class_label = 'ball_save'
 
     def __init__(self, machine, name):
+        """Initialise ball save."""
         self.unlimited_saves = None
         self.source_playfield = None
         super().__init__(machine, name)
@@ -27,7 +33,19 @@ class BallSave(SystemWideDevice, ModeDevice):
         # todo change the delays to timers so we can add pause and extension
         # events, but that will require moving timers out of mode conde
 
+    def validate_and_parse_config(self, config: dict, is_mode_config: bool):
+        """Make sure timer_start_events are not in enable_events."""
+        config = super().validate_and_parse_config(config, is_mode_config)
+
+        for event in config['timer_start_events']:
+            if event in config['enable_events']:
+                raise AssertionError("{}: event {} in timer_start_events will not work because it is also in "
+                                     "enable_events. Omit it!".format(event, str(self)))
+
+        return config
+
     def enable(self, **kwargs):
+        """Enable ball save."""
         del kwargs
         if self.enabled:
             return
@@ -53,6 +71,7 @@ class BallSave(SystemWideDevice, ModeDevice):
         '''
 
     def disable(self, **kwargs):
+        """Disable ball save."""
         del kwargs
         if not self.enabled:
             return
@@ -71,9 +90,15 @@ class BallSave(SystemWideDevice, ModeDevice):
         '''
 
     def timer_start(self, **kwargs):
+        """Start the timer.
+
+        This is usually called after the ball was ejected while the ball save may have been enabled earlier.
+        """
         del kwargs
         if self.timer_started or not self.enabled:
             return
+
+        self.timer_started = True
 
         self.machine.events.post('ball_save_{}_timer_start'.format(self.name))
         '''event: ball_save_(name)_timer_start:
@@ -172,6 +197,7 @@ class BallSave(SystemWideDevice, ModeDevice):
         return {'balls': balls - balls_to_save}
 
     def device_removed_from_mode(self, mode):
+        """Disable ball save when mode ends."""
         del mode
         if self.debug:
             self.log.debug("Removing...")

@@ -1,10 +1,4 @@
-"""
-Delays
-======
-
-MPF contains a Delay Manager.
-
-"""
+"""Manages delays within a context."""
 
 import logging
 import uuid
@@ -12,18 +6,25 @@ from functools import partial
 
 
 class DelayManagerRegistry(object):
+
+    """Keeps references to all DelayManager instances."""
+
     def __init__(self, machine):
+        """Initialise delay registry."""
         self.delay_managers = set()
         self.machine = machine
 
     def add_delay_manager(self, delay_manager):
+        """Add a delay manager to the list."""
         self.delay_managers.add(delay_manager)
 
 
 class DelayManager(object):
-    """Handles delays for one object"""
+
+    """Handles delays for one object."""
 
     def __init__(self, registry):
+        """Initialise delay manager."""
         self.log = logging.getLogger("DelayManager")
         self.delays = {}
         self.machine = registry.machine
@@ -31,7 +32,7 @@ class DelayManager(object):
         self.registry.add_delay_manager(self)
 
     def add(self, ms, callback, name=None, **kwargs):
-        """Adds a delay.
+        """Add a delay.
 
         Args:
             ms: Int of the number of milliseconds you want this delay to be for.
@@ -50,7 +51,6 @@ class DelayManager(object):
 
         Returns:
             String name of the delay which you can use to remove it later.
-
         """
         if not name:
             name = uuid.uuid4()
@@ -68,14 +68,14 @@ class DelayManager(object):
         return name
 
     def remove(self, name):
-        """Removes a delay. (i.e. prevents the callback from being fired and
-        cancels the delay.)
+        """Remove a delay by name.
+
+        I.e. prevents the callback from being fired and cancels the delay.
 
         Args:
             name: String name of the delay you want to remove. If there is no
                 delay with this name, that's ok. Nothing happens.
         """
-
         self.log.debug("Removing delay: '%s'", name)
         if name in self.delays:
             self.machine.clock.unschedule(self.delays[name])
@@ -85,7 +85,7 @@ class DelayManager(object):
                 pass
 
     def check(self, delay):
-        """Checks to see if a delay exists.
+        """Check to see if a delay exists.
 
         Args:
             delay: A string of the delay you're checking for.
@@ -96,8 +96,7 @@ class DelayManager(object):
             return delay
 
     def reset(self, name, ms, callback, **kwargs):
-        """Resets a delay, first deleting the old one (if it exists) and then
-        adding new delay with the new settings.
+        """Reset a delay, first deleting the old one (if it exists) and then adding new delay with the new settings.
 
         Args:
             same as add()
@@ -108,7 +107,7 @@ class DelayManager(object):
         self.add(ms, callback, name, **kwargs)
 
     def clear(self):
-        """Removes (clears) all the delays associated with this DelayManager."""
+        """Remove (clear) all the delays associated with this DelayManager."""
         for name in list(self.delays.keys()):
             self.machine.clock.unschedule(self.delays[name])
             self.remove(name)

@@ -1,28 +1,12 @@
-from unittest.mock import MagicMock, patch, call
+import unittest
+from unittest.mock import MagicMock
 
-from mpf.tests.MpfTestCase import MpfTestCase
 from mpf.core.bcp.bcp_socket_client import decode_command_string, encode_command_string
+from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.loop import MockQueueSocket
 
 
-class TestBcpClient:
-    def __init__(self, queue):
-        self.queue = queue
-
-    def send(self, bcp_command, kwargs):
-        self.queue.put((bcp_command, kwargs))
-
-    def stop(self):
-        pass
-
-
-class TestBcp(MpfTestCase):
-
-    def __init__(self, methodName):
-        super().__init__(methodName)
-        # remove config patch which disables bcp
-        del self.machine_config_patches['bcp']
-        self.machine_config_patches['bcp'] = dict()
-        self.machine_config_patches['bcp']['connections'] = []
+class TestBcpSocketClientEncoding(unittest.TestCase):
 
     def test_decode_command_string(self):
         # test strings
@@ -113,57 +97,54 @@ class TestBcp(MpfTestCase):
         self.assertEqual(decoded_dict['dict2'][1],
                          dict(key3='value5', key4='value6'))
 
-    def test_receive_register_trigger(self):
-        self.machine.bcp.interface.process_bcp_message('register_trigger', {'event': 'test_event'}, None)
+
+class TestBcpSocketClient(MpfTestCase):
+
+    def __init__(self, methodName='runTest'):
+        super().__init__(methodName)
+
+        # use normal client
+        self.machine_config_patches['bcp'] = {}
+        self.machine_config_patches['bcp']['servers'] = []
+
+    def setUp(self):
+        super().setUp()
+        self._bcp_client = self.machine.bcp.transport.get_named_client("local_display")
+
+    def _mock_loop(self):
+        self.client_socket = MockQueueSocket()
+        self.clock.mock_socket("localhost", 5050, self.client_socket)
+
+    def testReceiveMessages(self):
+        # test message with bytes
+        receiver = MagicMock()
+        self.machine.bcp.interface.register_command_callback("receive_bytes", receiver)
+        self.client_socket.recv_queue.append(b'receive_bytes?name=default&bytes=4096\n')
+        data = b'0' * 4096
+        self.client_socket.recv_queue.append(data)
         self.advance_time_and_run()
+        receiver.assert_called_once_with(name="default", client=self._bcp_client, rawbytes=data)
+        receiver.reset_mock()
 
-        self.assertIn('test_event', self.machine.bcp.transport._handlers)
+        # data and cmd in two packets
+        self.client_socket.recv_queue.append(b'receive_bytes?name=defa')
+        self.client_socket.recv_queue.append(b'ult&bytes=4096\n')
+        data = b'0' * 4096
+        self.client_socket.recv_queue.append(data[0:1000])
+        self.client_socket.recv_queue.append(data[1000:])
+        self.advance_time_and_run()
+        receiver.assert_called_once_with(name="default", client=self._bcp_client, rawbytes=data)
+        receiver.reset_mock()
 
-    def test_bcp_mpf_and_mpf_mc(self):
-        self.kivy = MagicMock()
-        self.kivy.clock.Clock = self.machine.clock
-        modules = {
-            'kivy': self.kivy,
-            'kivy.clock': self.kivy.clock,
-            'kivy.logger': self.kivy.logger,
-        }
-        self.module_patcher = patch.dict('sys.modules', modules)
-        self.module_patcher.start()
+        # test message without bytes
+        receiver2 = MagicMock()
+        self.machine.bcp.interface.register_command_callback("receive_msg", receiver2)
+        self.client_socket.recv_queue.append(b'receive_msg?param1=1&param2=2\n')
+        self.advance_time_and_run()
+        receiver2.assert_called_once_with(param1="1", param2="2", client=self._bcp_client)
+        receiver2.reset_mock()
 
-        try:
-            from mpfmc.core import bcp_processor
-        except ImportError:
-            self.skipTest("Cannot import mpfmc.core.bcp_processor")
-            return
-
-        mc = MagicMock()
-        bcp_processor.BcpProcessor._start_socket_thread = MagicMock()
-        bcp_mc = bcp_processor.BcpProcessor(mc)
-        bcp_mc.enabled = True
-        self.machine_run()
-        mc.events.post = MagicMock()
-
-        client = TestBcpClient(bcp_mc.receive_queue)
-        self.machine.bcp.transport.register_transport(client)
-
-        self.machine.bcp.interface.process_bcp_message("register_trigger", {"event": "ball_started"}, client)
-        self.machine.bcp.interface.process_bcp_message("register_trigger", {"event": "ball_ended"}, client)
-        self.machine_run()
-
-        self.machine.events.post('ball_started', ball=17,
-                                 player=23)
-
-        self.machine_run()
-
-        mc.events.post.assert_has_calls([
-            call("ball_started", ball=17, player=23),
-        ])
-        mc.events.post.reset_mock()
-
-        self.machine.events.post('ball_ended')
-        self.machine_run()
-        mc.events.post.assert_has_calls([
-            call("ball_ended")
-        ])
-
-        self.module_patcher.stop()
+        # unknown method. should not crash
+        self._bcp_client.send = MagicMock()
+        self.client_socket.recv_queue.append(b'invalid_method?param1=1&param2=2\n')
+        self.advance_time_and_run()

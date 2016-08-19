@@ -4,8 +4,8 @@ import logging
 
 
 class Player(object):
-    """ Base class for a player. One instance of this class is created for each
-    player.
+
+    """Base class for a player. One instance of this class is created for each player.
 
     The Game class maintains a "player" attribute which always points to the
     current player. You can access this via game.player. (Or
@@ -50,7 +50,6 @@ class Player(object):
 
     Event posted:
     'player_score' with Args: value=1200, change=700, prev_value=500
-
     """
 
     monitor_enabled = False
@@ -59,6 +58,7 @@ class Player(object):
     """
 
     def __init__(self, machine, player_list):
+        """Initialise player."""
         # use self.__dict__ below since __setattr__ would make these player vars
         self.__dict__['log'] = logging.getLogger("Player")
         self.__dict__['machine'] = machine
@@ -93,19 +93,23 @@ class Player(object):
         '''
 
     def _player_add_done(self, **kwargs):
-        """ do it this way so we get the player_score event
-        use a callback so this event is posted after the player add event
+        """Set score to 0 for new player.
+
+        Do it this way so we get the player_score event use a callback so this event is posted after the player add
+        event.
         """
         del kwargs
         self.__setattr__("score", 0)
 
     def __repr__(self):
+        """Return string representation."""
         try:
             return "<Player {}>".format(self.vars['number'])
         except KeyError:
             return '<Player (new)>'
 
     def __getattr__(self, name):
+        """Return value of attribute or initialise it with 0 when it does not exist."""
         if name in self.vars:
             return self.vars[name]
         else:
@@ -113,6 +117,7 @@ class Player(object):
             return 0
 
     def __setattr__(self, name, value):
+        """Set value and post event to inform about the change."""
         new_entry = False
         prev_value = 0
         if name in self.vars:
@@ -188,16 +193,18 @@ class Player(object):
                              player_num=self.vars['number'])
 
     def __getitem__(self, name):
+        """Allow array get access."""
         return self.__getattr__(name)
 
     def __setitem__(self, name, value):
+        """Allow array set access."""
         self.__setattr__(name, value)
 
     def __iter__(self):
+        """Iterate all player vars."""
         for name, value in self.vars.items():
             yield name, value
 
     def is_player_var(self, var_name):
+        """Check if player var exists."""
         return var_name in self.vars
-
-    # todo method to dump the player vars to disk?

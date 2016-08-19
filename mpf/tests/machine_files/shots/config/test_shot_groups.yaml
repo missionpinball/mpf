@@ -2,6 +2,7 @@
 
 modes:
   - mode_shot_groups
+  - base
 
 switches:
   switch_1:
@@ -60,6 +61,10 @@ switches:
     number:
   s_GAS_S:
     number:
+  s_special_left:
+    number:
+  s_special_right:
+    number:
 
 leds:
   led_10:
@@ -97,6 +102,12 @@ leds:
   l_GAS_A:
     number:
   l_GAS_S:
+    number:
+
+matrix_lights:
+  l_special_right:
+    number:
+  l_special_left:
     number:
 
 shots:
@@ -203,6 +214,15 @@ shots:
     switch: s_GAS_S
     show_tokens:
       led: l_GAS_S
+  lane_special_left:
+      switch: s_special_left
+      show_tokens:
+          light: l_special_left
+  lane_special_right:
+      switch: s_special_right
+      show_tokens:
+          light: l_special_right
+
 
 shot_groups:
   test_group:
@@ -245,9 +265,12 @@ shot_groups:
     profile: rainbow_no_hold
     shots: shot_45, shot_46
   group_GAS:
-   shots: shot_GAS_G, shot_GAS_A, shot_GAS_S
-   reset_events:
-     group_GAS_default_lit_complete: 2s
+    shots: shot_GAS_G, shot_GAS_A, shot_GAS_S
+    reset_events:
+      group_GAS_default_lit_complete: 2s
+  special:
+    shots: lane_special_left
+    profile: prof_toggle
 
 shows:
     rainbow:
@@ -312,3 +335,10 @@ shot_profiles:
         - name: orange
         - name: yellow
         - name: green
+    prof_toggle:
+      states:
+        - name: unlit_toggle
+          show: off
+        - name: lit_toggle
+          show: on
+      loop: true

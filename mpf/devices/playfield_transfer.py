@@ -1,28 +1,34 @@
-""" Transfer a ball between two playfields. E.g. lower to upper playfield via a
-ramp"""
+"""Transfer a ball between two playfields.
+
+E.g. lower to upper playfield via a ramp.
+"""
 
 from mpf.core.system_wide_device import SystemWideDevice
 
 
 class PlayfieldTransfer(SystemWideDevice):
+
+    """Device which move a ball from one playfield to another."""
+
     config_section = 'playfield_transfers'
     collection = 'playfield_transfers'
     class_label = 'playfield_transfer'
 
     def __init__(self, machine, name):
+        """Initialise playfield transfer."""
         self.target = None
         self.source = None
         super().__init__(machine, name)
 
     def _initialize(self):
         self.machine.events.add_handler('init_phase_3',
-                                        self.configure_switch)
+                                        self._configure_switch)
 
         # load target playfield
         self.target = self.config['eject_target']
         self.source = self.config['captures_from']
 
-    def configure_switch(self):
+    def _configure_switch(self):
         self.machine.switch_controller.add_switch_handler(
             switch_name=self.config['ball_switch'].name,
             callback=self._ball_went_through,

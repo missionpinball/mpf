@@ -1,0 +1,1 @@
+"""Default attract mode."""

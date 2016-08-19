@@ -1,3 +1,1 @@
-# __all__ = [
-#            'MpfTestCase',
-#           ]
+"""Unit tests for the MPF framework."""

@@ -59,6 +59,10 @@ mpf:
         accelerometer.Accelerometer
         servo.Servo
         achievement.Achievement
+        physical_dmd.PhysicalDmd
+        physical_rgb_dmd.PhysicalRgbDmd
+        led_group.LedStrip
+        led_group.LedRing
 
     plugins:
         mpf.plugins.auditor.Auditor
@@ -103,6 +107,8 @@ mpf:
     default_led_hw_update_hz: 50
     default_matrix_light_hw_update_hz: 50
     default_platform_hz: 1000
+    default_ball_search: False
+
 
     device_collection_control_events:
         autofires:
@@ -216,17 +222,11 @@ bcp:
             port: 5050
             type: mpf.core.bcp.bcp_socket_client.BCPClientSocket
 
-    event_map:
-        player_turn_start:
-            command: player_turn_start
-            params:
-                player_num: "%number"
-
-        clear:
-            command: trigger
-            params:
-                name: clear
-                key: "%key"
+    servers:
+        url_style:
+            ip: 127.0.0.1
+            port: 5051
+            type: mpf.core.bcp.bcp_socket_client.BCPClientSocket
 
     player_variables:
       __all__

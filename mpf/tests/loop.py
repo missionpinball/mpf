@@ -96,6 +96,51 @@ class MockSocket(MockFd):
         raise AssertionError("Not implemented")
 
 
+class MockQueueSocket(MockSocket):
+    def __init__(self):
+        super().__init__()
+        self.send_queue = []
+        self.recv_queue = []
+
+    def write_ready(self):
+        return True
+
+    def read_ready(self):
+        return bool(len(self.recv_queue))
+
+    def recv(self, size):
+        return self.recv_queue.pop(0)
+
+    def send(self, data):
+        self.send_queue.append(data)
+        return len(data)
+
+
+class MockServer:
+    def __init__(self, loop):
+        self.loop = loop
+        self.is_bound = False
+        self.client_connected_cb = None
+
+    def add_client(self, socket):
+        if not self.is_bound:
+            raise AssertionError("Server not running")
+
+        limit = asyncio.streams._DEFAULT_LIMIT
+        reader = asyncio.streams.StreamReader(limit=limit, loop=self.loop)
+        protocol = asyncio.streams.StreamReaderProtocol(reader, loop=self.loop)
+        transport = _SelectorSocketTransport(self.loop, socket, protocol)
+        writer = asyncio.streams.StreamWriter(transport, protocol, reader, self.loop)
+        self.loop.run_until_complete(self.client_connected_cb(reader, writer))
+
+    def close(self):
+        pass
+
+    @asyncio.coroutine
+    def wait_closed(self):
+        return True
+
+
 class MockSerial(MockFd):
     def __init__(self):
         super().__init__()
@@ -305,6 +350,7 @@ class TestClock(ClockBase):
         self._test_loop = loop
         super().__init__()
         self._mock_sockets = {}
+        self._mock_servers = {}
         self._mock_serials = {}
 
     def _create_event_loop(self):
@@ -313,6 +359,10 @@ class TestClock(ClockBase):
     def mock_socket(self, host, port, socket):
         """Mock a socket and use it for connections."""
         self._mock_sockets[host + ":" + str(port)] = socket
+
+    def mock_server(self, host, port, server):
+        """Mock a server and use it for connections."""
+        self._mock_servers[host + ":" + str(port)] = server
 
     def _open_mock_socket(self, host, port):
         key = host + ":" + str(port)
@@ -324,6 +374,20 @@ class TestClock(ClockBase):
 
         socket.is_open = True
         return socket
+
+    @asyncio.coroutine
+    def start_server(self, client_connected_cb, host=None, port=None, **kwd):
+        """Mock listening server."""
+        key = host + ":" + str(port)
+        if key not in self._mock_servers:
+            raise AssertionError("server not mocked for key {}".format(key))
+        server = self._mock_servers[key]
+        if server.is_bound:
+            raise AssertionError("server already bound for key {}".format(key))
+
+        server.is_bound = True
+        server.client_connected_cb = client_connected_cb
+        return server
 
     @coroutine
     def open_connection(self, host=None, port=None, *,

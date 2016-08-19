@@ -1,15 +1,15 @@
-""" Contains the GI (General Illumination) parent classes. """
-
+"""Contains the GI (General Illumination) parent classes."""
+from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.system_wide_device import SystemWideDevice
 
 
+@DeviceMonitor("_brightness")
 class Gi(SystemWideDevice):
-    """ Represents a light connected to a traditional lamp matrix in a pinball
-    machine.
+
+    """Represents a light connected to a traditional lamp matrix in a pinball machine.
 
     This light could be an incandescent lamp or a replacement single-color
     LED. The key is that they're connected up to a lamp matrix.
-
     """
 
     config_section = 'gis'
@@ -17,10 +17,12 @@ class Gi(SystemWideDevice):
     class_label = 'gi'
 
     def __init__(self, machine, name):
+        """Initialise GI."""
         self.hw_driver = None
         super().__init__(machine, name)
 
         self.registered_handlers = []
+        self._brightness = 0
 
     def _initialize(self):
         self.load_platform_section('gis')
@@ -28,7 +30,7 @@ class Gi(SystemWideDevice):
         self.hw_driver = self.platform.configure_gi(self.config)
 
     def enable(self, brightness=255, **kwargs):
-        """Enables this GI string.
+        """Enable this GI string.
 
         Args:
             brightness: Int from 0-255 of how bright you want this to be. 255 is
@@ -46,18 +48,20 @@ class Gi(SystemWideDevice):
                 handler(light_name=self.name, brightness=brightness)
 
         self.hw_driver.on(brightness)
+        self._brightness = brightness
 
     def disable(self, **kwargs):
-        """Disables this GI string."""
+        """Disable this GI string."""
         del kwargs
+        self._brightness = 0
         self.hw_driver.off()
 
     def add_handler(self, callback):
-        """Registers a handler to be called when this GI changes state."""
+        """Register a handler to be called when this GI changes state."""
         self.registered_handlers.append(callback)
 
     def remove_handler(self, callback=None):
-        """Removes a handler from the list of registered handlers."""
+        """Remove a handler from the list of registered handlers."""
         if not callback:  # remove all
             self.registered_handlers = []
             return

@@ -1,4 +1,4 @@
-"""Pololu Maestro servo controller platform"""
+"""Pololu Maestro servo controller platform."""
 
 import logging
 import serial
@@ -8,8 +8,10 @@ from mpf.core.platform import ServoPlatform
 
 
 class HardwarePlatform(ServoPlatform):
-    """Supports the Pololu Maestro servo controllers via PySerial. Works with
-    Micro Maestro 6, and Mini Maestro 12, 18, and 24.
+
+    """Supports the Pololu Maestro servo controllers via PySerial.
+
+    Works with Micro Maestro 6, and Mini Maestro 12, 18, and 24.
     """
 
     def __init__(self, machine):
@@ -23,12 +25,11 @@ class HardwarePlatform(ServoPlatform):
         self.features['tickless'] = True
 
     def __repr__(self):
+        """Return string representation."""
         return '<Platform.Pololu_Maestro>'
 
     def initialize(self):
-        """Method is called after all hardware platforms were instantiated.
-
-        """
+        """Method is called after all hardware platforms were instantiated."""
         super().initialize()
 
         # validate our config (has to be in intialize since config_processor

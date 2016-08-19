@@ -1,10 +1,13 @@
 """Contains the Playfield device class which represents the actual playfield in a pinball machine."""
+from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.ball_search import BallSearch
 from mpf.core.delays import DelayManager
 
 
+@DeviceMonitor("available_balls", "unexpected_balls", "num_balls_requested", "balls")
 class Playfield(SystemWideDevice):
+
     """One playfield in a pinball machine."""
 
     config_section = 'playfields'

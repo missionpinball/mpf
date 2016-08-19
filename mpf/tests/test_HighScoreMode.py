@@ -2,16 +2,10 @@
 from collections import OrderedDict
 
 from unittest.mock import MagicMock, call
-from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.MpfBcpTestCase import MpfBcpTestCase
 
 
-class TestHighScoreMode(MpfTestCase):
-
-    def __init__(self, methodName):
-        super().__init__(methodName)
-        # use bcp mock
-        self.machine_config_patches['bcp'] = \
-            {"connections": {"local_display": {"type": "mpf.tests.MpfTestCase.MockBcpClient"}}}
+class TestHighScoreMode(MpfBcpTestCase):
 
     def getConfigFile(self):
         return 'high_score.yaml'
@@ -20,8 +14,7 @@ class TestHighScoreMode(MpfTestCase):
         return 'tests/machine_files/high_score/'
 
     def start_game(self, num_players=1):
-        self.client = self.machine.bcp.transport.get_named_client("local_display")
-        self.client.send = MagicMock()
+        self._bcp_client.send = MagicMock()
 
         self.machine.playfield.add_ball = MagicMock()
         self.machine.events.post('game_start')
@@ -67,12 +60,11 @@ class TestHighScoreMode(MpfTestCase):
         self.advance_time_and_run()
         self.assertTrue(self.machine.modes.high_score.active)
 
-        self.client.send.assert_called_with('trigger', {'value': 8000000, 'player_num': 1,
+        self._bcp_client.send.assert_called_with('trigger', {'value': 8000000, 'player_num': 1,
                                                         'award': 'GRAND CHAMPION',
                                                         'name': 'new_high_score'})
 
-        self.machine.bcp.interface.process_bcp_message(
-            'trigger', dict(name='text_input_high_score_complete', text='NEW'), self.client)
+        self._bcp_client.receive_queue.put_nowait(('trigger', dict(name='text_input_high_score_complete', text='NEW')))
 
         # award slide display time is 4 secs
         self.advance_time_and_run(2)
@@ -108,22 +100,21 @@ class TestHighScoreMode(MpfTestCase):
         self.machine.game.player_list[1].score = 10000000
         self.machine.game.player_list[2].score = 1000
         self.machine.game.player_list[3].score = 1000
-        self.client.send.reset_mock()
+        self._bcp_client.send.reset_mock()
         self.machine.game.game_ending()
         self.advance_time_and_run()
         self.assertTrue(self.machine.modes.high_score.active)
 
         # GC
 
-        self.client.send.assert_has_calls([
+        self._bcp_client.send.assert_has_calls([
             call('trigger', {'value': 10000000, 'player_num': 2,
                              'award': 'GRAND CHAMPION',
                              'name': 'new_high_score'})
         ])
-        self.client.send.reset_mock()
+        self._bcp_client.send.reset_mock()
 
-        self.machine.bcp.interface.process_bcp_message(
-            'trigger', dict(name='text_input_high_score_complete', text='NEW'), self.client)
+        self._bcp_client.receive_queue.put_nowait(('trigger', dict(name='text_input_high_score_complete', text='NEW')))
         self.advance_time_and_run(1)
 
         # High score 1
@@ -134,19 +125,18 @@ class TestHighScoreMode(MpfTestCase):
             call('trigger', {'value': 8000000, 'player_num': 1,
                              'award': 'HIGH SCORE 1',
                              'name': 'new_high_score'}),
-            self.client.send.mock_calls
+            self._bcp_client.send.mock_calls
         )
 
         # advance 4 secs and it should be sent
         self.advance_time_and_run(4)
-        self.client.send.assert_has_calls([
+        self._bcp_client.send.assert_has_calls([
             call('trigger', {'value': 8000000, 'player_num': 1,
                              'award': 'HIGH SCORE 1',
                              'name': 'new_high_score'})
         ])
 
-        self.machine.bcp.interface.process_bcp_message(
-            'trigger', dict(name='text_input_high_score_complete', text='P2'), self.client)
+        self._bcp_client.receive_queue.put_nowait(('trigger', dict(name='text_input_high_score_complete', text='P2')))
         self.advance_time_and_run(5)
 
         # High score done
@@ -177,12 +167,11 @@ class TestHighScoreMode(MpfTestCase):
         self.advance_time_and_run()
         self.assertTrue(self.machine.modes.high_score.active)
 
-        self.client.send.assert_called_with('trigger',  {'value': 1500, 'player_num': 1,
-                                                         'award': 'HIGH SCORE 2',
-                                                         'name': 'new_high_score'})
+        self._bcp_client.send.assert_called_with('trigger', {'value': 1500, 'player_num': 1,
+                                                        'award': 'HIGH SCORE 2',
+                                                        'name': 'new_high_score'})
 
-        self.machine.bcp.interface.process_bcp_message(
-            'trigger', dict(name='text_input_high_score_complete', text='NEW'), self.client)
+        self._bcp_client.receive_queue.put_nowait(('trigger', dict(name='text_input_high_score_complete', text='NEW')))
 
         self.advance_time_and_run(5)
         self.assertFalse(self.machine.modes.high_score.active)
@@ -214,12 +203,11 @@ class TestHighScoreMode(MpfTestCase):
         self.advance_time_and_run()
         self.assertTrue(self.machine.modes.high_score.active)
 
-        self.client.send.assert_called_with('trigger', {'value': 8000000, 'player_num': 1,
+        self._bcp_client.send.assert_called_with('trigger', {'value': 8000000, 'player_num': 1,
                                                         'award': 'GRAND CHAMPION',
                                                         'name': 'new_high_score'})
 
-        self.machine.bcp.interface.process_bcp_message(
-            'trigger', dict(name='text_input_high_score_complete', text='NEWNEW'), self.client)
+        self._bcp_client.receive_queue.put_nowait(('trigger', dict(name='text_input_high_score_complete', text='NEWNEW')))
 
         self.advance_time_and_run(5)
         self.assertFalse(self.machine.modes.high_score.active)
@@ -263,33 +251,30 @@ class TestHighScoreMode(MpfTestCase):
 
         # GC
 
-        self.client.send.assert_called_with('trigger', {'value': 10000000, 'player_num': 2,
+        self._bcp_client.send.assert_called_with('trigger', {'value': 10000000, 'player_num': 2,
                                                         'award': 'GRAND CHAMPION',
                                                         'name': 'new_high_score'})
-        self.client.send.reset_mock()
+        self._bcp_client.send.reset_mock()
 
-        self.machine.bcp.interface.process_bcp_message(
-            'trigger', dict(name='text_input_high_score_complete', text='NEW'), self.client)
+        self._bcp_client.receive_queue.put_nowait(('trigger', dict(name='text_input_high_score_complete', text='NEW')))
         self.advance_time_and_run(5)
 
         # High score 1
 
-        self.client.send.assert_called_with('trigger', {'value': 8000000, 'player_num': 1,
+        self._bcp_client.send.assert_called_with('trigger', {'value': 8000000, 'player_num': 1,
                                                         'award': 'HIGH SCORE 1',
                                                         'name': 'new_high_score'})
 
-        self.machine.bcp.interface.process_bcp_message(
-            'trigger', dict(name='text_input_high_score_complete', text='P1'), self.client)
+        self._bcp_client.receive_queue.put_nowait(('trigger', dict(name='text_input_high_score_complete', text='P1')))
         self.advance_time_and_run(5)
 
         # Loops champ
 
-        self.client.send.assert_called_with('trigger', {'value': 50, 'player_num': 1,
+        self._bcp_client.send.assert_called_with('trigger', {'value': 50, 'player_num': 1,
                                                         'award': 'LOOP CHAMP',
                                                         'name': 'new_high_score'})
 
-        self.machine.bcp.interface.process_bcp_message(
-            'trigger', dict(name='text_input_high_score_complete', text='YAY'), self.client)
+        self._bcp_client.receive_queue.put_nowait(('trigger', dict(name='text_input_high_score_complete', text='YAY')))
         self.advance_time_and_run(5)
 
         # High score done

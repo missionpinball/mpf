@@ -1,4 +1,4 @@
-""" Contains the Mode and ModeTimers parent classes"""
+"""Contains the Mode base class."""
 
 import copy
 import logging
@@ -6,18 +6,17 @@ import logging
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.delays import DelayManager
 
-# todo
-# override player var
-# override event strings
 from mpf.core.mode_timer import ModeTimer
 from mpf.core.utility_functions import Util
 
 
 # pylint: disable-msg=too-many-instance-attributes
 class Mode(object):
+
     """Parent class for in-game mode code."""
 
     def __init__(self, machine, config, name, path):
+        """Initialise mode."""
         self.machine = machine
         self.config = config
         self.name = name.lower()
@@ -77,23 +76,23 @@ class Mode(object):
         self.mode_init()
 
     def __repr__(self):
+        """Return string representation."""
         return '<Mode.{}>'.format(self.name)
 
     @property
     def active(self):
+        """Return true if mode is active."""
         return self._active
 
     @active.setter
     def active(self, active):
+        """Setter for _active."""
         if self._active != active:
             self._active = active
             self.machine.mode_controller.set_mode_state(self, self._active)
 
     def configure_mode_settings(self, config):
-        """Processes this mode's configuration settings from a config
-        dictionary.
-        """
-
+        """Process this mode's configuration settings from a config dictionary."""
         self.config['mode'] = self.machine.config_validator.validate_config(
             config_spec='mode', source=config, section_name='mode')
 
@@ -103,6 +102,7 @@ class Mode(object):
                                             self.config['mode']['start_priority'])
 
     def _validate_mode_config(self):
+        """Validate mode config."""
         for section in self.machine.config['mpf']['mode_config_sections']:
             this_section = self.config.get(section, None)
 
@@ -117,9 +117,7 @@ class Mode(object):
                     self.config[section] = (self.machine.config_validator.validate_config(section, this_section))
 
     def _get_merged_settings(self, section_name):
-        # Returns a dict_merged dict of a config section from the machine-wide
-        # config with the mode-specific config merged in.
-
+        """Return a dict of a config section from the machine-wide config with the mode-specific config merged in."""
         if section_name in self.machine.config:
             return_dict = copy.deepcopy(self.machine.config[section_name])
         else:
@@ -133,7 +131,7 @@ class Mode(object):
         return return_dict
 
     def start(self, priority=None, callback=None, **kwargs):
-        """Starts this mode.
+        """Start this mode.
 
         Args:
             priority: Integer value of what you want this mode to run at. If you
@@ -147,7 +145,6 @@ class Mode(object):
         put whatever code you want to run when this mode starts in the
         mode_start method which will be called automatically.
         """
-
         self.log.debug("Received request to start")
 
         if self._active:
@@ -210,8 +207,7 @@ class Mode(object):
         '''
 
     def _started(self):
-        # Called after the mode_<name>_starting queue event has finished.
-
+        """Called after the mode_<name>_starting queue event has finished."""
         self.log.debug('Mode Started. Priority: %s', self.priority)
 
         self.active = True
@@ -233,7 +229,7 @@ class Mode(object):
         '''
 
     def _mode_started_callback(self, **kwargs):
-        # Called after the mode_<name>_started queue event has finished.
+        """Called after the mode_<name>_started queue event has finished."""
         del kwargs
         self.mode_start(**self.start_event_kwargs)
 
@@ -245,7 +241,7 @@ class Mode(object):
         self.log.debug('Mode Start process complete.')
 
     def stop(self, callback=None, **kwargs):
-        """Stops this mode.
+        """Stop this mode.
 
         Args:
             **kwargs: Catch-all since this mode might start from events with
@@ -360,9 +356,7 @@ class Mode(object):
                                                 player=self.player)
 
     def _create_mode_devices(self):
-        # Creates new devices that are specified in a mode config that haven't
-        # been created in the machine-wide config
-
+        """Create new devices that are specified in a mode config that haven't been created in the machine-wide."""
         self.log.debug("Scanning config for mode-based devices")
 
         for collection_name, device_class in (
@@ -400,7 +394,6 @@ class Mode(object):
                         device.load_config(settings)
 
     def _remove_mode_devices(self):
-
         for device in self.mode_devices:
             device.device_removed_from_mode(self)
 
@@ -446,8 +439,7 @@ class Mode(object):
             callback(mode=self)
 
     def add_mode_event_handler(self, event, handler, priority=1, **kwargs):
-        """Registers an event handler which is automatically removed when this
-        mode stops.
+        """Register an event handler which is automatically removed when this mode stops.
 
         This method is similar to the Event Manager's add_handler() method,
         except this method automatically unregisters the handlers when the mode
@@ -478,9 +470,7 @@ class Mode(object):
         Note that if you do add a handler via this method and then remove it
         manually, that's ok too.
         """
-
-        key = self.machine.events.add_handler(event, handler, priority,
-                                              mode=self, **kwargs)
+        key = self.machine.events.add_handler(event, handler, priority, mode=self, **kwargs)
 
         self.event_handlers.add(key)
 
@@ -522,19 +512,13 @@ class Mode(object):
         self.timers = dict()
 
     def mode_init(self):
-        """User-overrideable method which will be called when this mode
-        initializes as part of the MPF boot process.
-        """
+        """User-overrideable method which will be called when this mode initializes as part of the MPF boot process."""
         pass
 
     def mode_start(self, **kwargs):
-        """User-overrideable method which will be called whenever this mode
-        starts (i.e. whenever it becomes active).
-        """
+        """User-overrideable method which will be called whenever this mode starts (i.e. whenever it becomes active)."""
         pass
 
     def mode_stop(self, **kwargs):
-        """User-overrideable method which will be called whenever this mode
-        stops (i.e. whenever it becomes inactive).
-        """
+        """User-overrideable method which will be called whenever this mode stops."""
         pass

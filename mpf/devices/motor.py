@@ -1,13 +1,14 @@
+"""Motor device."""
 from mpf.core.system_wide_device import SystemWideDevice
 
 
 class Motor(SystemWideDevice):
+
+    """A motor which can be controlled using drivers."""
+
     config_section = 'motors'
     collection = 'motors'
     class_label = 'motor'
-
-    def __init__(self, machine, name):
-        super().__init__(machine, name)
 
     def _initialize(self):
         super()._initialize()
@@ -21,6 +22,7 @@ class Motor(SystemWideDevice):
             self.machine.events.add_handler(event, self.go_to_position, position=position)
 
     def reset(self, **kwargs):
+        """Go to reset position."""
         del kwargs
         self.go_to_position(self.config['reset_position'])
 

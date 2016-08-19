@@ -1,5 +1,4 @@
-"""Base class used for things that "play" from the config files, such as
-WidgetPlayer, SlidePlayer, etc."""
+"""Base class used for things that "play" from the config files, such as WidgetPlayer, SlidePlayer, etc."""
 
 
 class ConfigPlayer(object):
@@ -85,7 +84,7 @@ class ConfigPlayer(object):
 
         for event, settings in config.items():
             validated_config[event] = dict()
-            validated_config[event][self.show_section] = dict()
+            validated_config[event] = dict()
 
             # settings here is the same as a show entry, so we process with
             # that
@@ -97,7 +96,7 @@ class ConfigPlayer(object):
 
             # settings here are dicts of devices/settings
             for device, device_settings in settings.items():
-                validated_config[event][self.show_section].update(
+                validated_config[event].update(
                     self.validate_show_config(device, device_settings))
 
         return validated_config

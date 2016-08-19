@@ -25,7 +25,11 @@ INDENTATION_SPACES = 4
 
 
 class Migrator(object):
+
+    """Migrates a config."""
+
     def __init__(self, mpf_path, machine_path):
+        """Initialise migrator."""
         self.log = logging.getLogger('Migrator')
         self.start_time = time.time()
         self.num_config_files = 0
@@ -55,6 +59,7 @@ class Migrator(object):
         self.migrate_files()
 
     def build_file_list(self):
+        """Build file list for machine."""
         for root, _, files in os.walk(self.machine_path):
             for file in files:
                 if (os.path.splitext(file)[1].lower() == EXTENSION and
@@ -66,12 +71,14 @@ class Migrator(object):
         self.log.debug("Detected base folder: %s", self.base_folder)
 
     def create_backup_folder(self):
+        """Create backup folder."""
         this_time = datetime.datetime.fromtimestamp(time.time()).strftime(
             '%Y-%m-%d-%H-%M-%S')
         self.backup_folder = os.path.join(self.machine_path,
                                           BACKUP_FOLDER_NAME, this_time)
 
     def backup_files(self):
+        """Create folder and backup config."""
         self.create_backup_folder()
         self.log.info("Backing up files to %s", self.backup_folder)
         shutil.copytree(self.base_folder, self.backup_folder,
@@ -100,6 +107,7 @@ class Migrator(object):
         return return_list
 
     def migrate_files(self):
+        """Migrate files in machine."""
         # We need to migrate show files after config files since we need
         # to pull some things out of the configs for the shows.
         round2_files = list()
@@ -131,15 +139,18 @@ class Migrator(object):
         self.log.info("Original YAML files are in %s", self.backup_folder)
 
     def save_file(self, file_name, file_contents):
+        """Save file."""
         self.log.info("Writing file: %s", file_name)
         FileManager.save(file_name, file_contents, include_comments=True)
 
 
 class VersionMigrator(object):
-    """Parent class for a version-specific migrator. One instance of this base
-    class exists for each different config file version.
 
+    """Parent class for a version-specific migrator.
+
+    One instance of this base class exists for each different config file version.
     """
+
     initialized = False
     deprecations = ''
     renames = ''
@@ -150,8 +161,9 @@ class VersionMigrator(object):
     log = logging.getLogger('Migrator')
 
     def __init__(self, file_name, file_contents):
-        """Initializes a specific instance of this file migrator. A new
-        instance is created for each file to be migrated
+        """Initialize a specific instance of this file migrator.
+
+        A new instance is created for each file to be migrated.
 
         Args:
             file_name: Full path and file name of the file being migrated.
@@ -160,7 +172,6 @@ class VersionMigrator(object):
 
         Returns:
             Modified file_contents instance with the migrations applied.
-
         """
         self.log = logging.getLogger(os.path.basename(file_name))
         self.file_name = file_name
@@ -217,6 +228,7 @@ class VersionMigrator(object):
         cls.initialized = True
 
     def migrate(self):
+        """Migrate configs and shows."""
         if isinstance(self.fc, CommentedMap):
             if not self._migrate_config_file():
                 return False
@@ -232,6 +244,7 @@ class VersionMigrator(object):
 
     # pylint: disable-msg=no-self-use
     def is_show_file(self):
+        """Return true if show file."""
         return False
 
     def _migrate_show_file(self):
@@ -283,7 +296,6 @@ class VersionMigrator(object):
                     return False
 
     def _update_config_version(self):
-
         # Do a str.replace to preserve any spaces or comments in the header
         self.fc.ca.comment[1][0].value = (
             self.fc.ca.comment[1][0].value.replace(

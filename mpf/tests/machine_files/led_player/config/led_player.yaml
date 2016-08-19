@@ -16,6 +16,10 @@ leds:
   led4:
     number:
     tags:
+  led5:
+    number:
+    default_color: red
+
 
 led_player:
   event1:
@@ -40,7 +44,8 @@ led_player:
     led3: 00ff00-f.5s
   event4:
     tag1: 00ffff
-
+  event5:
+    led5: on
 
 shows:
   show1:

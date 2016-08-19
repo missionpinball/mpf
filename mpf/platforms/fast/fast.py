@@ -8,8 +8,6 @@ boards.
 import logging
 from copy import deepcopy
 
-import asyncio
-
 from mpf.platforms.fast.fast_servo import FastServo
 from mpf.platforms.fast import fast_defines
 from mpf.platforms.fast.fast_dmd import FASTDMD
@@ -55,6 +53,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         self.machine_type = None
         self.hw_switch_data = None
         self.io_boards = {}     # type: dict[int,FastIoBoard]
+        self.num_boards = None
 
         # todo verify this list
         self.fast_commands = {'ID': self.receive_id,  # processor ID
@@ -195,19 +194,9 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
                                 for led in self.fast_leds])
         self.rgb_connection.send(msg)
 
-    @asyncio.coroutine
-    def _get_hw_switch_states(self):
-        self.hw_switch_data = None
-        self.net_connection.send('SA:')
-
-        while not self.hw_switch_data:
-            yield from asyncio.sleep(.001, loop=self.machine.clock.loop)
-
-        return self.hw_switch_data
-
     def get_hw_switch_states(self):
-        """Return initial hardware states."""
-        return self.machine.clock.loop.run_until_complete(self._get_hw_switch_states())
+        """Return hardware states."""
+        return self.hw_switch_data
 
     def receive_id(self, msg):
         """Ignore command."""
@@ -296,11 +285,11 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         hw_states = dict()
 
         num_local, local_states, num_nw, nw_states = msg.split(',')
-        del num_local
-        del num_nw
+        num_local = Util.hex_string_to_int(num_local) - 1
+        self.num_boards = Util.hex_string_to_int(num_nw) - 1
 
         for offset, byte in enumerate(bytearray.fromhex(nw_states)):
-            for i in range(8):
+            for i in range(self.num_boards):
                 num = Util.int_to_hex_string((offset * 8) + i)
                 if byte & (2**i):
                     hw_states[(num, 1)] = 1
@@ -308,7 +297,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
                     hw_states[(num, 1)] = 0
 
         for offset, byte in enumerate(bytearray.fromhex(local_states)):
-            for i in range(8):
+            for i in range(num_local):
 
                 num = Util.int_to_hex_string((offset * 8) + i)
 
@@ -605,10 +594,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
                                  "but no connection to a DMD processor is "
                                  "available.")
 
-        self.machine.bcp.interface.register_dmd(
-            FASTDMD(self.machine, self.dmd_connection.send).update)
-
-        return
+        return FASTDMD(self.machine, self.dmd_connection.send)
 
     @classmethod
     def get_coil_config_section(cls):
@@ -659,9 +645,11 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             if switch_index <= switch_number < switch_index + board_obj.switch_count and \
                     coil_index <= coil_number < coil_index + board_obj.driver_count:
                 return
+            coil_index += board_obj.driver_count
+            switch_index += board_obj.switch_count
 
         raise AssertionError("Driver {} and switch {} are on different boards. Cannot apply rule!".format(
-            coil.hw_driver.number, coil.hw_driver.number))
+            coil.hw_driver.number, switch.hw_switch.number))
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
         """Set pulse on hit and release rule to driver."""

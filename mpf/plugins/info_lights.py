@@ -1,5 +1,7 @@
-"""MPF plugin which uses lights to represent Game functions. Typically in an
-EM machine"""
+"""MPF plugin which uses lights to represent Game functions.
+
+Typically in an EM machine.
+"""
 
 import logging
 
@@ -8,7 +10,10 @@ from mpf.devices.led import Led
 
 class InfoLights(object):
 
+    """Plugin which uses lights to represent game state."""
+
     def __init__(self, machine):
+        """Initialise info lights plugin."""
         self.log = logging.getLogger('infolights')
         self.machine = machine
         self.game_over_show = None
@@ -34,16 +39,16 @@ class InfoLights(object):
                 else:
                     raise AssertionError("Invalid light or led {}".format(value['light']))
 
-        self.machine.events.add_handler('ball_started', self.ball_started)
-        self.machine.events.add_handler('game_ended', self.game_ended)
-        self.machine.events.add_handler('game_starting', self.game_starting)
-        self.machine.events.add_handler('player_add_success', self.player_added)
-        self.machine.events.add_handler('tilt', self.tilt)
-        self.machine.events.add_handler('match', self.match)
+        self.machine.events.add_handler('ball_started', self._ball_started)
+        self.machine.events.add_handler('game_ended', self._game_ended)
+        self.machine.events.add_handler('game_starting', self._game_starting)
+        self.machine.events.add_handler('player_add_success', self._player_added)
+        self.machine.events.add_handler('tilt', self._tilt)
+        self.machine.events.add_handler('match', self._match)
 
-        self.game_ended()  # set the initial lights to the game ended state
+        self._game_ended()  # set the initial lights to the game ended state
 
-    def reset_game_lights(self):
+    def _reset_game_lights(self):
         self.log.debug("reset_game_lights")
         # turn off the game-specific lights (player, ball & match)
         for key, value in self.config.items():
@@ -54,7 +59,7 @@ class InfoLights(object):
             if key.startswith('match_'):
                 value['light'].off()
 
-    def ball_started(self, **kwargs):
+    def _ball_started(self, **kwargs):
         del kwargs
         self.log.debug("ball_started")
         # turn off all the ball lights
@@ -71,10 +76,10 @@ class InfoLights(object):
         if 'tilt' in self.config:
             self.config['tilt']['light'].off()
 
-    def game_ended(self, **kwargs):
+    def _game_ended(self, **kwargs):
         del kwargs
         self.log.debug("game_ended")
-        self.reset_game_lights()
+        self._reset_game_lights()
 
         # turn on game over
         if 'game_over' in self.config:
@@ -87,14 +92,14 @@ class InfoLights(object):
                 self.game_over_show = self.machine.shows['flash'].play(
                     show_tokens=dict(lights=self.config['game_over']['light']))
 
-    def game_starting(self, **kwargs):
+    def _game_starting(self, **kwargs):
         del kwargs
         self.log.debug("game_starting")
-        self.reset_game_lights()
+        self._reset_game_lights()
         if self.game_over_show:
             self.game_over_show.stop()
 
-    def player_added(self, player, **kwargs):
+    def _player_added(self, player, **kwargs):
         del kwargs
         self.log.debug("player_added. player=%s", player)
         player_str = 'player_' + str(player.number)
@@ -102,13 +107,13 @@ class InfoLights(object):
         if player_str in self.config:
             self.config[player_str]['light'].on()
 
-    def tilt(self, **kwargs):
+    def _tilt(self, **kwargs):
         del kwargs
         self.log.debug("tilt")
         if 'tilt' in self.config:
             self.config['tilt']['light'].on()
 
-    def match(self, match, **kwargs):
+    def _match(self, match, **kwargs):
         del kwargs
         self.log.debug("Match")
         match_str = 'match_' + str(match)

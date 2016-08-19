@@ -1,4 +1,4 @@
-"""Migrates YAML configuration files for MPF from one version to another."""
+"""Migrate YAML configuration files for MPF from one version to another."""
 
 import argparse
 import logging
@@ -10,7 +10,11 @@ from mpf.migrator.migrator import Migrator
 
 
 class Command(object):
+
+    """Run the migrator."""
+
     def __init__(self, mpf_path, machine_path, args):
+        """Run the migrator."""
         parser = argparse.ArgumentParser(
             description='Migrates config and show files to the latest version')
 

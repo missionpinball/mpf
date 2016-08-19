@@ -1,4 +1,10 @@
+"""Defines for OPP platform."""
+
+
 class OppRs232Intf:
+
+    """Constants for OPP serial protocol."""
+
     GET_SER_NUM_CMD = b'\x00'
     GET_PROD_ID_CMD = b'\x01'
     GET_GET_VERS_CMD = b'\x02'
@@ -93,6 +99,7 @@ class OppRs232Intf:
 
     @staticmethod
     def calc_crc8_whole_msg(msg_chars):
+        """Calculate CRC for message."""
         crc8_byte = 0xff
         for ind_char in msg_chars:
             ind_int = ind_char
@@ -101,6 +108,7 @@ class OppRs232Intf:
 
     @staticmethod
     def calc_crc8_part_msg(msg_chars, start_index, num_chars):
+        """Calculate CRC for part of a message."""
         crc8_byte = 0xff
         index = 0
         if len(msg_chars) < start_index + num_chars:

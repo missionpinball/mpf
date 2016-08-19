@@ -1,9 +1,10 @@
+"""Score reel controller."""
 import logging
 
 
 class ScoreReelController(object):
-    """The overall controller that is in charge of and manages the score reels
-    in a pinball machine.
+
+    """The overall controller that is in charge of and manages the score reels in a pinball machine.
 
     The main thing this controller does is keep track of how many
     ScoreReelGroups there are in the machine and how many players there are,
@@ -24,6 +25,7 @@ class ScoreReelController(object):
     """
 
     def __init__(self, machine):
+        """Initialise score reel controller."""
         self.machine = machine
         self.log = logging.getLogger("ScoreReelController")
         self.log.debug("Loading the ScoreReelController")
@@ -100,8 +102,7 @@ class ScoreReelController(object):
         self.active_scorereelgroup.light()
 
     def map_new_score_reel_group(self):
-        """Creates a mapping of a player to a score reel group."""
-
+        """Create a mapping of a player to a score reel group."""
         # do we have a reel group tagged for this player?
         for reel_group in self.machine.score_reel_groups.items_tagged(
                 "player" + str(self.machine.game.player.number)):
@@ -118,8 +119,7 @@ class ScoreReelController(object):
         self.player_to_scorereel_map.append(self.player_to_scorereel_map[0])
 
     def score_change(self, value, change, **kwargs):
-        """Called whenever the score changes and adds the score increase to the
-        current active ScoreReelGroup.
+        """Called whenever the score changes and adds the score increase to the current active ScoreReelGroup.
 
         This method is the handler for the score change event, so it's called
         automatically.
@@ -133,7 +133,7 @@ class ScoreReelController(object):
         self.active_scorereelgroup.add_value(value=change, target=value)
 
     def game_starting(self, queue, game):
-        """Resets the score reels when a new game starts.
+        """Reset the score reels when a new game starts.
 
         This is a queue event so it doesn't allow the game start to continue
         until it's done.

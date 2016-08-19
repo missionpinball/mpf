@@ -1,25 +1,29 @@
+"""A group of score reels."""
 from collections import deque
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.devices.score_reel_controller import ScoreReelController
 
 
 class ScoreReelGroup(SystemWideDevice):
-    """Represents a logical grouping of score reels in a pinball machine, where
-    multiple individual ScoreReel object make up the individual digits of this
+
+    """Represents a logical grouping of score reels in a pinball machine.
+
+    Multiple individual ScoreReel object make up the individual digits of this
     group. This group also has support for the blank zero "inserts" that some
     machines use. This is a subclass of mpf.core.device.Device.
     """
+
     config_section = 'score_reel_groups'
     collection = 'score_reel_groups'
     class_label = 'score_reel_group'
 
     @classmethod
     def device_class_init(cls, machine):
-        # If we have at least one score reel group, we need a
-        # ScoreReelController
+        """If we have at least one score reel group, we need a ScoreReelController."""
         machine.score_reel_controller = ScoreReelController(machine)
 
     def __init__(self, machine, name):
+        """Initialise score reel group."""
         super().__init__(machine, name)
 
         self.wait_for_valid_queue = None
@@ -78,13 +82,14 @@ class ScoreReelGroup(SystemWideDevice):
     # ----- temp method for chime ------------------------------------
     @classmethod
     def chime(cls, chime):
+        """Pulse chime."""
         chime.pulse()
 
     # ---- temp chimes code end --------------------------------------
 
     @property
     def assumed_value_list(self):
-        # List that holds the values of the reels in the group
+        """Return list that holds the values of the reels in the group."""
         value_list = []
         for reel in self.reels:
             if reel:
@@ -96,24 +101,24 @@ class ScoreReelGroup(SystemWideDevice):
 
     @property
     def assumed_value_int(self):
-        # Integer representation of the value we assume is shown on this
-        # ScoreReelGroup. A value of -999 means the value is unknown.
+        """Return integer representation of the value we assume is shown on this ScoreReelGroup.
 
+        A value of -999 means the value is unknown.
+        """
         return self.reel_list_to_int(self.assumed_value_list)
 
     def initialize(self):
-        """Initialized the score reels by reading their current physical values
-        and setting each reel's rollover reel. This is a separate method since
-        it can't run int __iniit__() because all the other reels have to be
-        setup first.
+        """Initialize the score reels by reading their current physical values and setting each reel's rollover reel.
+
+        This is a separate method since it can't run int __iniit__() because all the other reels have to be setup first.
         """
         self.get_physical_value_list()
         self.set_rollover_reels()
 
     def set_rollover_reels(self):
-        """Calls each reel's `set_rollover_reel` method and passes it a
-        pointer to the next higher up reel. This is how we know whether we're
-        able to advance the next higher up reel when a particular reel rolls
+        """Call each reel's `set_rollover_reel` method and passes it a pointer to the next higher up reel.
+
+        This is how we know whether we're able to advance the next higher up reel when a particular reel rolls
         over during a step advance.
         """
         for reel in range(len(self.reels)):
@@ -121,8 +126,9 @@ class ScoreReelGroup(SystemWideDevice):
                 self.reels[reel].set_rollover_reel(self.reels[reel + 1])
 
     def tick(self, dt):
-        """Automatically called once per machine tick and checks to see if there
-        are any jumps or advances in progress, and, if so, calls those methods.
+        """Automatically called once per machine tick and checks to see if there are any jumps or advances in progress.
+
+        If so, calls those methods.
         """
         del dt
         if self.jump_in_progress:
@@ -133,11 +139,9 @@ class ScoreReelGroup(SystemWideDevice):
             self.validate()
 
     def is_desired_valid(self, notify_event=False):
-        """Tests to see whether the machine thinks the ScoreReelGroup is
-        currently showing the desired value. In other words, is the
-        ScoreReelGroup "done" moving?
+        """Test to see whether the machine thinks the ScoreReelGroup is currently showing the desired value.
 
-        Note this ignores placeholder non-controllable digits.
+        In other words, is the ScoreReelGroup "done" moving? Note this ignores placeholder non-controllable digits.
 
         Returns: True or False
         """
@@ -157,11 +161,10 @@ class ScoreReelGroup(SystemWideDevice):
         return True
 
     def get_physical_value_list(self):
-        """Queries all the reels in the group and builds a list of their actual
-        current physical state, with either the value of the current switch
-        or -999 if no switch is active.
+        """Query all the reels in the group and builds a list of their actual current physical state.
 
-        This method also updates each reel's physical value.
+        This is either the value of the current switch or -999 if no switch is active. This method also updates each
+        reel's physical value.
 
         Returns: List of physical reel values.
         """
@@ -173,8 +176,7 @@ class ScoreReelGroup(SystemWideDevice):
         return output_list
 
     def validate(self, value=None):
-        """Called to validate that this score reel group is in the position
-        the machine wants it to be in.
+        """Validate that this score reel group is in the position the machine wants it to be in.
 
         If lazy or strict confirm is enabled, this method will also make sure
         the reels are in their proper physical positions.
@@ -243,7 +245,7 @@ class ScoreReelGroup(SystemWideDevice):
         return True
 
     def add_value(self, value, jump=False, target=None):
-        """Adds value to a ScoreReelGroup.
+        """Add value to a ScoreReelGroup.
 
         You can also pass a negative value to subtract points.
 
@@ -314,7 +316,7 @@ class ScoreReelGroup(SystemWideDevice):
             self._step_advance_add_steps(value)
 
     def set_value(self, value=None, value_list=None):
-        """Resets the score reel group to display the value passed.
+        """Reset the score reel group to display the value passed.
 
         This method will "jump" the score reel group to display the value
         that's passed as an it. (Note this "jump" technique means it will just
@@ -336,7 +338,6 @@ class ScoreReelGroup(SystemWideDevice):
             value_list: A list of the value you'd like the reel group to
                 display.
         """
-
         if value is None and value_list is None:
             return  # we can't do anything here if we don't get a new value
 
@@ -522,8 +523,7 @@ class ScoreReelGroup(SystemWideDevice):
                            reel.name)
 
     def int_to_reel_list(self, value):
-        """Converts an integer to a list of integers that represent each
-        positional digit in this ScoreReelGroup.
+        """Convert an integer to a list of integers that represent each positional digit in this ScoreReelGroup.
 
         The list returned is in reverse order. (See the example below.)
 
@@ -550,7 +550,6 @@ class ScoreReelGroup(SystemWideDevice):
             with the lowest reel digit position in list position 0.
 
         """
-
         if value == -999:
             value = 0
             # todo hack
@@ -589,7 +588,7 @@ class ScoreReelGroup(SystemWideDevice):
 
     @classmethod
     def reel_list_to_int(cls, reel_list):
-        """Converts an list of integers to a single integer.
+        """Convert an list of integers to a single integer.
 
         This method is like `int_to_reel_list` except that it works in the
         opposite direction.
@@ -628,9 +627,7 @@ class ScoreReelGroup(SystemWideDevice):
         return int(output)
 
     def light(self, relight_on_valid=False, **kwargs):
-        """Lights up this ScoreReelGroup based on the 'light_tag' in its
-        config.
-        """
+        """Light up this ScoreReelGroup based on the 'light_tag' in its config."""
         del kwargs
         self.log.debug("Turning on Lights")
         for light in self.machine.lights.items_tagged(
@@ -649,9 +646,7 @@ class ScoreReelGroup(SystemWideDevice):
             self.machine.events.remove_handler_by_key(self.light_on_valid_key)
 
     def unlight(self, relight_on_valid=False, **kwargs):
-        """Turns off the lights for this ScoreReelGroup based on the
-        'light_tag' in its config.
-        """
+        """Turn off the lights for this ScoreReelGroup based on the 'light_tag' in its config."""
         del kwargs
         self.log.debug("Turning off Lights")
         for light in self.machine.lights.items_tagged(

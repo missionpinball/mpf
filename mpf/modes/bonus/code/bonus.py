@@ -3,9 +3,11 @@ from mpf.core.mode import Mode
 
 
 class Bonus(Mode):
+
     """Bonus mode for MPF.
 
-    Give a player bonus for his achievements. But only if the machine is not tilted."""
+    Give a player bonus for his achievements. But only if the machine is not tilted.
+    """
 
     def __init__(self, machine, config, name, path):
         """Initialise bonus mode."""

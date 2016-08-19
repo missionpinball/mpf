@@ -1,4 +1,4 @@
-""" Contains the ShotGroup base class."""
+"""Contains the ShotGroup base class."""
 
 from collections import deque
 
@@ -8,19 +8,21 @@ from mpf.core.utility_functions import Util
 
 
 class ShotGroup(ModeDevice, SystemWideDevice):
-    """Represents a group of shots in a pinball machine by grouping
-    together multiple `Shot` class devices. This is used so you get get
+
+    """Represents a group of shots in a pinball machine by grouping together multiple `Shot` class devices.
+
+    This is used so you get get
     "group-level" functionality, like shot rotation, shot group completion,
     etc. This would be used for a group of rollover lanes, a bank of standups,
     etc.
-
     """
+
     config_section = 'shot_groups'
     collection = 'shot_groups'
     class_label = 'shot_group'
 
     def __init__(self, machine, name):
-
+        """Initialise shot group."""
         super().__init__(machine, name)
 
         self.rotation_enabled = True
@@ -31,10 +33,12 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
     @property
     def enabled(self):
+        """Return true if enabled."""
         return self._enabled
 
     @classmethod
     def prepare_config(cls, config, is_mode_config):
+        """Add default events if not in mode."""
         if not is_mode_config:
             # If this device is setup in a machine-wide config, make sure it has
             # a default enable event.
@@ -47,17 +51,13 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         return config
 
     def device_added_system_wide(self):
-        # Called when a device is added system wide
+        """Called when a device is added system wide."""
         super().device_added_system_wide()
 
         self._created_system_wide = True
 
-        if 'profile' in self.config:
-            for shot in self.config['shots']:
-                shot.update_profile(profile=self.config['profile'],
-                                    mode=None)
-
     def device_added_to_mode(self, mode, player):
+        """Add device in mode."""
         super().device_added_to_mode(mode, player)
 
         # If there are no enable_events configured, then we enable this shot
@@ -90,7 +90,6 @@ class ShotGroup(ModeDevice, SystemWideDevice):
                 was hit.
             mode: unused
             kwargs: unused
-
         """
         del mode
         del kwargs
@@ -158,9 +157,9 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         profile: The name of the profile that was active when hit.
         state: The name of the state the profile was in when it was hit'''
     def enable(self, mode=None, profile=None, **kwargs):
-        """Enables this shot group. Also enables all the shots in this
-        group.
+        """Enable this shot group.
 
+        Also enables all the shots in this group.
         """
         del kwargs
 
@@ -194,13 +193,16 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
     def _enable_from_system_wide(self, profile=None):
         for shot in self.config['shots']:
+            if 'profile' in self.config:
+                shot.update_profile(profile=self.config['profile'],
+                                    mode=None)
             shot.enable(profile=profile)
             shot.register_group(self)
 
     def disable(self, mode=None, **kwargs):
-        """Disables this shot group. Also disables all the shots in this
-        group.
+        """Disable this shot group.
 
+        Also disables all the shots in this group.
         """
         del kwargs
         self._enabled = False
@@ -211,28 +213,27 @@ class ShotGroup(ModeDevice, SystemWideDevice):
             shot.deregister_group(self)
 
     def enable_rotation(self, **kwargs):
-        """Enables shot rotation. If disabled, rotation events do not actually
-        rotate the shots.
+        """Enable shot rotation.
 
+        If disabled, rotation events do not actually rotate the shots.
         """
         del kwargs
         self.debug_log('Enabling rotation')
         self.rotation_enabled = True
 
     def disable_rotation(self, **kwargs):
-        """Disables shot rotation. If disabled, rotation events do not actually
-        rotate the shots.
+        """Disable shot rotation.
 
+        If disabled, rotation events do not actually rotate the shots.
         """
         del kwargs
         self.debug_log('Disabling rotation')
         self.rotation_enabled = False
 
     def reset(self, mode=None, **kwargs):
-        """Resets each of the shots in this group back to the initial state in
-        whatever shot profile they have applied. This is the same as calling
-        each shot's reset() method one-by-one.
+        """Reset each of the shots in this group back to the initial state in whatever shot profile they have applied.
 
+        This is the same as calling each shot's reset() method one-by-one.
         """
         del kwargs
         self.debug_log('Resetting')
@@ -240,19 +241,14 @@ class ShotGroup(ModeDevice, SystemWideDevice):
             shot.reset(mode)
 
     def remove_active_profile(self, mode, **kwargs):
-        """Removes the current active profile from every shot in the group.
-
-        """
+        """Remove the current active profile from every shot in the group."""
         del kwargs
         self.debug_log('Removing active profile')
         for shot in self.config['shots']:
             shot.remove_active_profile(mode)
 
     def advance(self, steps=1, mode=None, force=False, **kwargs):
-        """Advances the current active profile from every shot in the group
-        one step forward.
-
-        """
+        """Advance the current active profile from every shot in the group one step forward."""
         del kwargs
 
         if not (self._enabled or force):
@@ -264,7 +260,8 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
     def rotate(self, direction=None, states=None,
                exclude_states=None, mode=None, **kwargs):
-        """Rotates (or "shifts") the state of all the shots in this group.
+        """Rotate (or "shift") the state of all the shots in this group.
+
         This is used for things like lane change, where hitting the flipper
         button shifts all the states of the shots in the group to the left or
         right.
@@ -290,7 +287,6 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
         Note that this shot group must, and rotation_events for this
         shot group, must both be enabled for the rotation events to work.
-
         """
         del kwargs
 
@@ -373,8 +369,9 @@ class ShotGroup(ModeDevice, SystemWideDevice):
                       show_step=shot_state_list[i][1], force=True)
 
     def rotate_right(self, mode=None, **kwargs):
-        """Rotates the state of the shots to the right. This method is the
-        same as calling rotate('right')
+        """Rotate the state of the shots to the right.
+
+        This method is the same as calling rotate('right')
 
         Args:
             kwargs: unused
@@ -384,8 +381,9 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         self.rotate(direction='right', mode=mode)
 
     def rotate_left(self, mode=None, **kwargs):
-        """Rotates the state of the shots to the left. This method is the
-        same as calling rotate('left')
+        """Rotate the state of the shots to the left.
+
+        This method is the same as calling rotate('left')
 
         Args:
             kwargs: unused
@@ -395,13 +393,11 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         self.rotate(direction='left', mode=mode)
 
     def check_for_complete(self, mode):
-        """Checks all the shots in this shot group. If they are all in the
-        same state, then a complete event is posted.
+        """Check all the shots in this shot group.
 
+        If they are all in the same state, then a complete event is posted.
         """
-
         # TODO should be made to work for lower priority things too?
-
         if not self._enabled:
             return
 
@@ -450,6 +446,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
             '''
 
     def add_control_events_in_mode(self, mode):
+        """Add control events in mode."""
         # called if any control_events for this shot_group exist in the mode
         # config, regardless of whether or not the shot_group device was
         # initially created in this mode
@@ -470,6 +467,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
                 shot.update_profile(profile=profile, enable=enable, mode=mode)
 
     def device_removed_from_mode(self, mode):
+        """Disable device when mode stops."""
         del mode
         if self._created_system_wide:
             return

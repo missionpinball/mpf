@@ -1,7 +1,8 @@
 """Fast DMD support."""
+from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 
 
-class FASTDMD(object):
+class FASTDMD(DmdPlatformInterface):
 
     """Object for a FAST DMD."""
 

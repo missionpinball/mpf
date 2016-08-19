@@ -1196,4 +1196,5 @@ class V4Migrator(VersionMigrator):
 
 
 def migrate_file(file_name, file_content):
+    """Migrate file."""
     return V4Migrator(file_name, file_content).migrate()
