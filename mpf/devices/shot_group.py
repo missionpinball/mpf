@@ -90,6 +90,9 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         del mode
         del kwargs
 
+        if not profile:
+            raise AssertionError("Called hit without profile")
+
         if not self._enabled:
             return
 
