@@ -314,7 +314,8 @@ class Shot(ModeDevice, SystemWideDevice):
         del kwargs
         self.player = player
         self._update_shows(advance=False)
-        self.update_profile()
+        if self._created_system_wide:
+            self.update_profile()
 
     def player_turn_stop(self):
         """Called by the shot profile manager when the player's turn ends.
