@@ -25,7 +25,7 @@ class BaseSerialCommunicator(object):
         self.log.debug("Connecting to %s at %sbps", port, baud)
 
         connector = self.machine.clock.open_serial_connection(
-            url=port, baudrate=baud)
+            url=port, baudrate=baud, limit=0)
         self.reader, self.writer = yield from connector
 
         yield from self._identify_connection()
@@ -33,18 +33,19 @@ class BaseSerialCommunicator(object):
         self.read_task = self.machine.clock.loop.create_task(self._socket_reader())
 
     @asyncio.coroutine
-    def readuntil(self, separator):
+    def readuntil(self, separator, min_chars = 0):
         """Read until separator.
 
         Args:
             separator: Read until this separator byte.
+            min_chars: Minimum message length before separator
         """
         # asyncio StreamReader only supports this from python 3.5.2 on
         buffer = b''
         while True:
             char = yield from self.reader.readexactly(1)
             buffer += char
-            if char == separator:
+            if char == separator and len(buffer) > min_chars:
                 return buffer
 
     @asyncio.coroutine

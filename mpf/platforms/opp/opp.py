@@ -38,7 +38,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self.log = logging.getLogger('OPP')
         self.log.info("Configuring OPP hardware.")
 
-        self.opp_connection = {}
+        self.opp_connection = {}    # type: {OPPSerialCommunicator}
         self.serial_connections = set()
         self.opp_incands = []
         self.incandDict = dict()
@@ -51,12 +51,14 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self.opp_neopixels = []
         self.neoCardDict = dict()
         self.neoDict = dict()
-        self.incand_reg = False
         self.numGen2Brd = 0
         self.gen2AddrArr = []
         self.badCRC = 0
         self.minVersion = 0xffffffff
-        self.tickCnt = 0
+        self._poll_task = None
+        self._light_update_task = None
+
+        self.features['tickless'] = True
 
         self.config = self.machine.config['opp']
         self.machine.config_validator.validate_config("opp", self.config)
@@ -85,9 +87,16 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         """Initialise connections to OPP hardware."""
         self._connect_to_hardware()
         self.opp_commands[ord(OppRs232Intf.READ_GEN2_INP_CMD)] = self.read_gen2_inp_resp
+        self._poll_task = self.machine.clock.loop.create_task(self._poll_sender())
 
     def stop(self):
         """Stop hardware and close connections."""
+        if self._poll_task:
+            self._poll_task.cancel()
+
+        if self._light_update_task:
+            self._light_update_task.cancel()
+
         for connections in self.serial_connections:
             connections.stop()
 
@@ -252,12 +261,15 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         curr_index = 0
         whole_msg = bytearray()
         while True:
+            # check that message is long enough
+            if len(msg) < curr_index + 6:
+                self.log.warning("Msg is too short: %s.", "".join(" 0x%02x" % b for b in msg))
+                self.opp_connection[chain_serial].lost_synch()
             # Verify the CRC8 is correct
             crc8 = OppRs232Intf.calc_crc8_part_msg(msg, curr_index, 6)
             if msg[curr_index + 6] != ord(crc8):
                 self.badCRC += 1
-                hex_string = "".join(" 0x%02x" % b for b in msg)
-                self.log.warning("Msg contains bad CRC:%s.", hex_string)
+                self.log.warning("Msg contains bad CRC:%s.", "".join(" 0x%02x" % b for b in msg))
                 break
             else:
                 has_neo = False
@@ -307,10 +319,8 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
             else:
                 self.log.warning("Malformed GET_GEN2_CFG response:%s.",
                                  "".join(" 0x%02x" % b for b in msg))
+                self.opp_connection[chain_serial].lost_synch()
                 break
-
-                # TODO: This means synchronization is lost.  Send EOM characters
-                #  until they come back
 
         whole_msg.extend(OppRs232Intf.EOM_CMD)
         self.read_input_msg[chain_serial] = bytes(whole_msg)
@@ -358,9 +368,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                     hex_string = "".join(" 0x%02x" % b for b in msg)
                     self.log.warning("Malformed GET_VERS_CMD response:%s.", hex_string)
                     end = True
-
-                    # TODO: This means synchronization is lost.  Send EOM characters
-                    #  until they come back
+                    self.opp_connection[chain_serial].lost_synch()
 
     def read_gen2_inp_resp_initial(self, chain_serial, msg):
         """Read initial switch states.
@@ -370,11 +378,12 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
             msg: Message to parse.
         """
         # Verify the CRC8 is correct
+        if len(msg) < 6:
+            raise AssertionError("Received too short initial input response: " + "".join(" 0x%02x" % b for b in msg))
         crc8 = OppRs232Intf.calc_crc8_part_msg(msg, 0, 6)
         if msg[6] != ord(crc8):
             self.badCRC += 1
-            hex_string = "".join(" 0x%02x" % b for b in msg)
-            self.log.warning("Msg contains bad CRC:%s.", hex_string)
+            self.log.warning("Msg contains bad CRC:%s.", "".join(" 0x%02x" % b for b in msg))
         else:
             opp_inp = self.inpAddrDict[chain_serial + '-' + str(msg[0])]
             new_state = (msg[2] << 24) | \
@@ -394,11 +403,15 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         # Single read gen2 input response.  Receive function breaks them down
 
         # Verify the CRC8 is correct
+        if len(msg) < 6:
+            self.log.warning("Msg too shortC: %s.", "".join(" 0x%02x" % b for b in msg))
+            self.opp_connection[chain_serial].lost_synch()
+            return
+
         crc8 = OppRs232Intf.calc_crc8_part_msg(msg, 0, 6)
         if msg[6] != ord(crc8):
             self.badCRC += 1
-            hex_string = "".join(" 0x%02x" % b for b in msg)
-            self.log.warning("Msg contains bad CRC:%s.", hex_string)
+            self.log.warning("Msg contains bad CRC:%s.", "".join(" 0x%02x" % b for b in msg))
         else:
             opp_inp = self.inpAddrDict[chain_serial + '-' + str(msg[0])]
             new_state = (msg[2] << 24) | \
@@ -579,25 +592,29 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                                  "light (incand board), with number %s "
                                  "which doesn't exist", number)
 
-        self.incand_reg = True
+        if not self._light_update_task:
+            self._light_update_task = self.machine.clock.loop.create_task(self._update_lights())
         return self.incandDict[number]
 
-    def tick(self, dt):
-        """Tick function.
+    @asyncio.coroutine
+    def _poll_sender(self):
+        """Poll switches."""
+        while True:
+            for chain_serial in self.read_input_msg:
+                self.send_to_processor(chain_serial, self.read_input_msg[chain_serial])
+                yield from self.opp_connection[chain_serial].writer.drain()
+                # the line above saturates the link and seems to overhelm the hardware. limit it to 100Hz
+                yield from asyncio.sleep(.01, loop=self.machine.clock.loop)
 
-        Args:
-            dt: delta since last call
-        """
-        # TODO: remove and replace by schedule_interval
-        del dt
-        self.tickCnt += 1
-        curr_tick = self.tickCnt % 10
-        if self.incand_reg:
-            if curr_tick == 5:
-                self.update_incand()
-
-        for chain_serial in self.read_input_msg:
-            self.send_to_processor(chain_serial, self.read_input_msg[chain_serial])
+    @asyncio.coroutine
+    def _update_lights(self):
+        """Update matrix lights."""
+        while True:
+            self.update_incand()
+            for connection in self.opp_connection.values():
+                yield from connection.writer.drain()
+            # limit to 50Hz
+            yield from asyncio.sleep(.02, loop=self.machine.clock.loop)
 
     @classmethod
     def _verify_coil_and_switch_fit(cls, switch, coil):
@@ -723,6 +740,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
         """Initialise Serial Connection to OPP Hardware."""
         self.partMsg = b""
         self.chain_serial = None
+        self.lost_synch = False
 
         super().__init__(platform, port, baud)
 
@@ -732,6 +750,10 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
         # keep looping and wait for an ID response
         count = 0
         resp = b''
+        # read and discard all messages in buffer
+        self.writer.write(OppRs232Intf.EOM_CMD)
+        yield from asyncio.sleep(.01, loop=self.machine.clock.loop)
+        yield from self.reader.read(1000)
         while True:
             if (count % 10) == 0:
                 self.log.debug("Sending EOM command to port '%s'",
@@ -765,7 +787,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
 
         # Now send get gen2 configuration message to find populated wing boards
         self.send_get_gen2_cfg_cmd()
-        resp = yield from self.readuntil(b'\xff')
+        resp = yield from self.readuntil(b'\xff', 6)
 
         # resp will contain the gen2 cfg reponses.  That will end up creating all the
         # correct objects.
@@ -773,7 +795,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
 
         # get the version of the firmware
         self.send_vers_cmd()
-        resp = yield from self.readuntil(b'\xff')
+        resp = yield from self.readuntil(b'\xff', 6)
         self.platform.process_received_message(self.chain_serial, resp)
 
         # see if version of firmware is new enough
@@ -785,8 +807,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
 
         # get initial value for inputs
         self.writer.write(self.platform.read_input_msg[self.chain_serial])
-        yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
-        resp = yield from self.reader.read(100)
+        resp = yield from self.readuntil(b'\xff', 6)
         self.log.debug("Init get input response: %s", "".join(" 0x%02x" % b for b in resp))
         self._parse_msg(resp)
 
@@ -840,12 +861,23 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
                                          ((version_int >> 16) & 0xff), ((version_int >> 8) & 0xff),
                                          (version_int & 0xff)))
 
+    def lost_synch(self):
+        """Mark connection as desynchronised."""
+        self.lost_synch = True
+
     def _parse_msg(self, msg):
         self.partMsg += msg
         strlen = len(self.partMsg)
-        lost_synch = False
         # Split into individual responses
         while strlen >= 7:
+            if self.lost_synch:
+                while strlen > 0:
+                    if (self.partMsg[0] & 0xe0) == 0x20:
+                        self.lost_synch = False
+                        break
+                    self.partMsg = self.partMsg[1:]
+                    strlen -= 1
+
             # Check if this is a gen2 card address
             if (self.partMsg[0] & 0xe0) == 0x20:
                 # Only command expect to receive back is
@@ -857,7 +889,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
                     # Lost synch
                     self.partMsg = self.partMsg[2:]
                     strlen -= 2
-                    lost_synch = True
+                    self.lost_synch = True
 
             elif self.partMsg[0] == ord(OppRs232Intf.EOM_CMD):
                 self.partMsg = self.partMsg[1:]
@@ -866,11 +898,4 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
                 # Lost synch
                 self.partMsg = self.partMsg[1:]
                 strlen -= 1
-                lost_synch = True
-            if lost_synch:
-                while strlen > 0:
-                    if (self.partMsg[0] & 0xe0) == 0x20:
-                        lost_synch = False
-                        break
-                    self.partMsg = self.partMsg[1:]
-                    strlen -= 1
+                self.lost_synch = True
