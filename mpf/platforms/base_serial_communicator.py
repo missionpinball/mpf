@@ -7,8 +7,14 @@ class BaseSerialCommunicator(object):
     """Basic Serial Communcator for platforms."""
 
     # pylint: disable=too-many-arguments
-    def __init__(self, platform, port, baud):
-        """Initialise Serial Connection Hardware."""
+    def __init__(self, platform, port: str, baud: int):
+        """Initialise Serial Connection Hardware.
+
+        Args:
+            platform(mpf.core.platform.BasePlatform): the platform
+            port:
+            baud:
+        """
         self.machine = platform.machine
         self.platform = platform
         self.log = self.platform.log
@@ -33,7 +39,7 @@ class BaseSerialCommunicator(object):
         self.read_task = self.machine.clock.loop.create_task(self._socket_reader())
 
     @asyncio.coroutine
-    def readuntil(self, separator, min_chars = 0):
+    def readuntil(self, separator, min_chars: int=0):
         """Read until separator.
 
         Args:
