@@ -249,6 +249,47 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         # An EOM command can be used to resynchronize communications if message synch is lost
         pass
 
+    def _parse_gen2_board(self, chain_serial, msg, read_input_msg):
+        has_neo = False
+        wing_index = 0
+        sol_mask = 0
+        inp_mask = 0
+        incand_mask = 0
+        while wing_index < OppRs232Intf.NUM_G2_WING_PER_BRD:
+            if msg[2 + wing_index] == ord(OppRs232Intf.WING_SOL):
+                sol_mask |= (0x0f << (4 * wing_index))
+                inp_mask |= (0x0f << (8 * wing_index))
+            elif msg[2 + wing_index] == ord(OppRs232Intf.WING_INP):
+                inp_mask |= (0xff << (8 * wing_index))
+            elif msg[2 + wing_index] == ord(OppRs232Intf.WING_INCAND):
+                incand_mask |= (0xff << (8 * wing_index))
+            elif msg[2 + wing_index] == ord(OppRs232Intf.WING_NEO):
+                has_neo = True
+            wing_index += 1
+        if incand_mask != 0:
+            self.opp_incands.append(OPPIncandCard(chain_serial, msg[0], incand_mask, self.incandDict))
+        if sol_mask != 0:
+            self.opp_solenoid.append(
+                OPPSolenoidCard(chain_serial, msg[0], sol_mask, self.solDict, self))
+        if inp_mask != 0:
+            # Create the input object, and add to the command to read all inputs
+            self.opp_inputs.append(OPPInputCard(chain_serial, msg[0], inp_mask, self.inpDict,
+                                   self.inpAddrDict))
+
+            # Add command to read all inputs to read input message
+            inp_msg = bytearray()
+            inp_msg.append(msg[0])
+            inp_msg.extend(OppRs232Intf.READ_GEN2_INP_CMD)
+            inp_msg.append(0)
+            inp_msg.append(0)
+            inp_msg.append(0)
+            inp_msg.append(0)
+            inp_msg.extend(OppRs232Intf.calc_crc8_whole_msg(inp_msg))
+            read_input_msg.extend(inp_msg)
+
+        if has_neo:
+            self.opp_neopixels.append(OPPNeopixelCard(chain_serial, msg[0], self.neoCardDict, self))
+
     def get_gen2_cfg_resp(self, chain_serial, msg):
         """Process cfg response.
 
@@ -259,7 +300,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         # Multiple get gen2 cfg responses can be received at once
         self.log.debug("Received Gen2 Cfg Response:%s", "".join(" 0x%02x" % b for b in msg))
         curr_index = 0
-        whole_msg = bytearray()
+        read_input_msg = bytearray()
         while True:
             # check that message is long enough
             if len(msg) < curr_index + 6:
@@ -272,45 +313,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                 self.log.warning("Msg contains bad CRC:%s.", "".join(" 0x%02x" % b for b in msg))
                 break
             else:
-                has_neo = False
-                wing_index = 0
-                sol_mask = 0
-                inp_mask = 0
-                incand_mask = 0
-                while wing_index < OppRs232Intf.NUM_G2_WING_PER_BRD:
-                    if msg[curr_index + 2 + wing_index] == ord(OppRs232Intf.WING_SOL):
-                        sol_mask |= (0x0f << (4 * wing_index))
-                        inp_mask |= (0x0f << (8 * wing_index))
-                    elif msg[curr_index + 2 + wing_index] == ord(OppRs232Intf.WING_INP):
-                        inp_mask |= (0xff << (8 * wing_index))
-                    elif msg[curr_index + 2 + wing_index] == ord(OppRs232Intf.WING_INCAND):
-                        incand_mask |= (0xff << (8 * wing_index))
-                    elif msg[curr_index + 2 + wing_index] == ord(OppRs232Intf.WING_NEO):
-                        has_neo = True
-                    wing_index += 1
-                if incand_mask != 0:
-                    self.opp_incands.append(OPPIncandCard(chain_serial, msg[curr_index], incand_mask, self.incandDict))
-                if sol_mask != 0:
-                    self.opp_solenoid.append(
-                        OPPSolenoidCard(chain_serial, msg[curr_index], sol_mask, self.solDict, self))
-                if inp_mask != 0:
-                    # Create the input object, and add to the command to read all inputs
-                    self.opp_inputs.append(OPPInputCard(chain_serial, msg[curr_index], inp_mask, self.inpDict,
-                                           self.inpAddrDict))
-
-                    # Add command to read all inputs to read input message
-                    inp_msg = bytearray()
-                    inp_msg.append(msg[curr_index])
-                    inp_msg.extend(OppRs232Intf.READ_GEN2_INP_CMD)
-                    inp_msg.append(0)
-                    inp_msg.append(0)
-                    inp_msg.append(0)
-                    inp_msg.append(0)
-                    inp_msg.extend(OppRs232Intf.calc_crc8_whole_msg(inp_msg))
-                    whole_msg.extend(inp_msg)
-
-                if has_neo:
-                    self.opp_neopixels.append(OPPNeopixelCard(chain_serial, msg[curr_index], self.neoCardDict, self))
+                self._parse_gen2_board(chain_serial, msg[curr_index:curr_index + 6], read_input_msg)
 
             if msg[curr_index + 7] == ord(OppRs232Intf.EOM_CMD):
                 break
@@ -322,8 +325,8 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                 self.opp_connection[chain_serial].lost_synch()
                 break
 
-        whole_msg.extend(OppRs232Intf.EOM_CMD)
-        self.read_input_msg[chain_serial] = bytes(whole_msg)
+        read_input_msg.extend(OppRs232Intf.EOM_CMD)
+        self.read_input_msg[chain_serial] = bytes(read_input_msg)
 
     def vers_resp(self, chain_serial, msg):
         """Process version response.
@@ -332,7 +335,6 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
             chain_serial: Serial of the chain which received the message.
             msg: Message to parse.
         """
-        del chain_serial
         # Multiple get version responses can be received at once
         self.log.debug("Received Version Response:%s", "".join(" 0x%02x" % b for b in msg))
         end = False
@@ -740,7 +742,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
         """Initialise Serial Connection to OPP Hardware."""
         self.partMsg = b""
         self.chain_serial = None
-        self.lost_synch = False
+        self._lost_synch = False
 
         super().__init__(platform, port, baud)
 
@@ -863,17 +865,17 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
 
     def lost_synch(self):
         """Mark connection as desynchronised."""
-        self.lost_synch = True
+        self._lost_synch = True
 
     def _parse_msg(self, msg):
         self.partMsg += msg
         strlen = len(self.partMsg)
         # Split into individual responses
         while strlen >= 7:
-            if self.lost_synch:
+            if self._lost_synch:
                 while strlen > 0:
                     if (self.partMsg[0] & 0xe0) == 0x20:
-                        self.lost_synch = False
+                        self._lost_synch = False
                         break
                     self.partMsg = self.partMsg[1:]
                     strlen -= 1
@@ -889,7 +891,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
                     # Lost synch
                     self.partMsg = self.partMsg[2:]
                     strlen -= 2
-                    self.lost_synch = True
+                    self._lost_synch = True
 
             elif self.partMsg[0] == ord(OppRs232Intf.EOM_CMD):
                 self.partMsg = self.partMsg[1:]
@@ -898,4 +900,4 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
                 # Lost synch
                 self.partMsg = self.partMsg[1:]
                 strlen -= 1
-                self.lost_synch = True
+                self._lost_synch = True
