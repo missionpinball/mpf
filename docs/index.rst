@@ -6,12 +6,15 @@
 Welcome to MPF Developer's documentation!
 =========================================
 
+This is the developer / API reference for The Mission Pinball Framework (MPF)
+|version|.
+
 Contents:
 
 .. toctree::
    :maxdepth: 2
 
-
+   mpf/mpf
 
 Indices and tables
 ==================
