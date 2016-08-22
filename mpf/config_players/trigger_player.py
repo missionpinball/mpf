@@ -1,8 +1,8 @@
 """Trigger config player."""
-from mpf.core.config_player import ConfigPlayer
+from mpf.config_players.device_config_player import DeviceConfigPlayer
 
 
-class TriggerPlayer(ConfigPlayer):
+class TriggerPlayer(DeviceConfigPlayer):
 
     """Executes BCP triggers based on config."""
 

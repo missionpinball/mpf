@@ -1,11 +1,11 @@
 """Event Config Player."""
+from mpf.config_players.flat_config_player import FlatConfigPlayer
 from mpf.core.delays import DelayManager
 
-from mpf.core.config_player import ConfigPlayer
 from mpf.core.utility_functions import Util
 
 
-class EventPlayer(ConfigPlayer):
+class EventPlayer(FlatConfigPlayer):
 
     """Posts events based on config."""
 
@@ -32,45 +32,16 @@ class EventPlayer(ConfigPlayer):
     def _post_event(self, event, s):
         self.machine.events.post(event, **s)
 
+    def get_list_config(self, value):
+        """Parse list."""
+        result = {}
+        for event in value:
+            result[event] = {}
+        return result
+
     def get_express_config(self, value):
         """Parse short config."""
-        return_dict = dict()
-        return_dict[value] = dict()
-        return return_dict
+        return self.get_list_config(Util.string_to_list(value))
 
-    def validate_config(self, config):
-        """Validate the config.
-
-        Override because we want to let events just be a list of events.
-        """
-        new_config = dict()
-
-        for event, settings in config.items():
-            if isinstance(settings, dict):
-                # dicts are fine
-                new_config[event] = settings
-
-                # just check that all values are dicts again
-                for event1, args in settings.items():
-                    if not isinstance(args, dict):
-                        raise AssertionError("Invalid args {}:{} in {} event_player".format(event, settings, event1))
-            elif isinstance(settings, str):
-                # convert str to list and then to dict
-                new_config[event] = dict()
-
-                for event1 in Util.string_to_list(settings):
-                    new_config[event][event1] = dict()
-            elif isinstance(settings, list):
-                # convert list to dict
-                new_config[event] = dict()
-
-                for event1 in settings:
-                    new_config[event][event1] = dict()
-            else:
-                raise AssertionError("Invalid entry {}:{} in event_player".format(event, settings))
-
-        super().validate_config(new_config)
-
-        return new_config
 
 player_cls = EventPlayer

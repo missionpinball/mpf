@@ -1,8 +1,8 @@
 """Flasher config player."""
-from mpf.core.config_player import ConfigPlayer
+from mpf.config_players.device_config_player import DeviceConfigPlayer
 
 
-class FlasherPlayer(ConfigPlayer):
+class FlasherPlayer(DeviceConfigPlayer):
 
     """Triggers flashers based on config."""
 

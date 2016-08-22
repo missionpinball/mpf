@@ -1,10 +1,10 @@
 """LED config player."""
-from mpf.core.config_player import ConfigPlayer
+from mpf.config_players.device_config_player import DeviceConfigPlayer
 from mpf.core.rgb_color import RGBColor
 from mpf.core.utility_functions import Util
 
 
-class LedPlayer(ConfigPlayer):
+class LedPlayer(DeviceConfigPlayer):
 
     """Sets LED color based on config."""
 
