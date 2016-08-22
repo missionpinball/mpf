@@ -6,12 +6,14 @@
 Welcome to MPF Developer's documentation!
 =========================================
 
+This is the developer / API reference for MPF v|version|.
+
 Contents:
 
 .. toctree::
    :maxdepth: 2
 
-
+   mpf/mpf
 
 Indices and tables
 ==================
