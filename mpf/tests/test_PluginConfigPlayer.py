@@ -33,7 +33,7 @@ class TestConfigPlayer(PluginPlayer):
 
         return validated_config
 
-    def validate_show_config(self, device, device_settings):
+    def _validate_config_item(self, device, device_settings):
         if device_settings is None:
             device_settings = device
 
@@ -71,7 +71,7 @@ class TestConfigPlayer2(PluginPlayer):
 
         return validated_config
 
-    def validate_show_config(self, device, device_settings):
+    def _validate_config_item(self, device, device_settings):
         if device_settings is None:
             device_settings = device
 

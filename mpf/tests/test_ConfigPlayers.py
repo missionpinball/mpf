@@ -2,15 +2,16 @@
 # generic ConfigPlayer functionality
 from collections import namedtuple
 
-import mpf.core.config_validator
 from mpf.assets.show import Show
+from mpf.config_players.device_config_player import DeviceConfigPlayer
 from mpf.tests.MpfTestCase import MpfTestCase
 from mpf.core.config_player import ConfigPlayer
 
 PlayCall = namedtuple('PlayCall', 'settings key priority kwargs',
                       verbose=False)
 
-class BananaPlayer(ConfigPlayer):
+
+class BananaPlayer(DeviceConfigPlayer):
     config_file_section = 'banana_player'
     show_section = 'bananas'
     machine_collection_name = 'bananas'
