@@ -6,7 +6,8 @@
 Welcome to MPF Developer's documentation!
 =========================================
 
-This is the developer / API reference for MPF v|version|.
+This is the developer / API reference for The Mission Pinball Framework (MPF)
+|version|.
 
 Contents:
 
