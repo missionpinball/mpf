@@ -19,3 +19,10 @@ event_player:
         event1: {"a": "b"}
         event2: {}
         event3: {"a": 1, "b": 2}
+
+shows:
+  test_event_show:
+    - events:
+      - event1
+      - event2
+      - event3
