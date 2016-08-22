@@ -36,7 +36,7 @@ extensions = [
     # 'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
     'sphinx.ext.inheritance_diagram',
-    # 'autoapi.sphinx',
+    'autoapi.sphinx',
     'sphinx.ext.graphviz',
     'sphinxcontrib.napoleon',
 ]
