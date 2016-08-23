@@ -362,7 +362,7 @@ class Counter(LogicBlock):
         elif self.config['direction'] == 'up' and self.hit_value < 0:
             self.hit_value *= -1
 
-        if not self.config['persist_state']:
+        if not self.config['persist_state'] or not self.player.is_player_var(self.config['player_variable']):
             self.player[self.config['player_variable']] = self.config['starting_count']
 
     def add_event_handlers(self):
