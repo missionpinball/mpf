@@ -1,7 +1,7 @@
-from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
 
-class TestLogicBlocks(MpfTestCase):
+class TestLogicBlocks(MpfFakeGameTestCase):
 
     def getConfigFile(self):
         return 'config.yaml'
@@ -9,28 +9,8 @@ class TestLogicBlocks(MpfTestCase):
     def getMachinePath(self):
         return 'tests/machine_files/logic_blocks/'
 
-    def _start_game(self):
-        self.machine.ball_controller.num_balls_known = 0
-        self.hit_switch_and_run("s_ball_switch1", 1)
-        self.advance_time_and_run(2)
-
-        # start game
-        self.hit_and_release_switch("s_start")
-        self.assertNotEqual(None, self.machine.game)
-
-        self.advance_time_and_run(1)
-        self.release_switch_and_run("s_ball_switch1", 1)
-
-    def _stop_game(self):
-        self.advance_time_and_run(10)
-        self.hit_switch_and_run("s_ball_switch1", 1)
-
-        self.assertEqual(None, self.machine.game)
-
-    # TODO: should it complete again when enabled but not reset?
-
     def test_accruals_simple(self):
-        self._start_game()
+        self.start_game()
         self.mock_event("accrual1_complete1")
         self.mock_event("accrual1_hit")
         self.mock_event("accrual1_complete2")
@@ -104,7 +84,7 @@ class TestLogicBlocks(MpfTestCase):
         self.assertEqual(2, self._events["accrual1_complete2"])
 
     def test_counter_simple_down(self):
-        self._start_game()
+        self.start_game()
         self.mock_event("logicblock_counter1_complete")
         self.mock_event("logicblock_counter1_hit")
 
@@ -153,7 +133,7 @@ class TestLogicBlocks(MpfTestCase):
         self.assertEqual(14, self._events["logicblock_counter1_hit"])
 
     def test_sequence_simple(self):
-        self._start_game()
+        self.start_game()
         self.mock_event("sequence1_complete")
         self.mock_event("logicblock_sequence1_hit")
 
@@ -210,7 +190,7 @@ class TestLogicBlocks(MpfTestCase):
         self.assertEqual(2, self._events["sequence1_complete"])
 
     def test_counter_in_mode(self):
-        self._start_game()
+        self.start_game()
         self.mock_event("counter2_complete")
         self.mock_event("counter2_hit")
 
@@ -255,13 +235,13 @@ class TestLogicBlocks(MpfTestCase):
         self.post_event("accrual2_step2")
         self.assertEqual(0, self._events["logicblock_accrual2_complete"])
 
-        self._start_game()
+        self.start_game()
         # should work during game
         self.post_event("accrual2_step1")
         self.post_event("accrual2_step2")
         self.assertEqual(1, self._events["logicblock_accrual2_complete"])
 
-        self._stop_game()
+        self.stop_game()
 
         # does not work after game
         self.post_event("accrual2_step1")
@@ -272,7 +252,7 @@ class TestLogicBlocks(MpfTestCase):
         self.mock_event("logicblock_accrual3_complete")
 
         # start game
-        self._start_game()
+        self.start_game()
         # and enable
         self.post_event("accrual3_enable")
 
@@ -316,7 +296,7 @@ class TestLogicBlocks(MpfTestCase):
         self.mock_event("logicblock_accrual4_complete")
 
         # start game
-        self._start_game()
+        self.start_game()
         # and enable
         self.post_event("accrual4_enable")
 
@@ -341,7 +321,7 @@ class TestLogicBlocks(MpfTestCase):
 
         self.machine.config['game']['balls_per_game'] = 2
 
-        self._start_game()
+        self.start_game()
         # add player
         self.hit_and_release_switch("s_start")
 
@@ -352,22 +332,16 @@ class TestLogicBlocks(MpfTestCase):
         self.assertEqual(1, self._events["logicblock_accrual5_complete"])
 
         # player2
-        self.advance_time_and_run(10)
-        self.hit_switch_and_run("s_ball_switch1", 1)
-        self.release_switch_and_run("s_ball_switch1", 4)
-        self.assertNotEqual(None, self.machine.game)
-        self.assertEqual(2, self.machine.game.player.number)
+        self.drain_ball()
+        self.assertPlayerNumber(2)
 
         # not yet complete
         self.post_event("accrual5_step1")
         self.assertEqual(1, self._events["logicblock_accrual5_complete"])
 
         # player1 again
-        self.advance_time_and_run(10)
-        self.hit_switch_and_run("s_ball_switch1", 1)
-        self.release_switch_and_run("s_ball_switch1", 4)
-        self.assertNotEqual(None, self.machine.game)
-        self.assertEqual(1, self.machine.game.player.number)
+        self.drain_ball()
+        self.assertPlayerNumber(1)
 
         # nothing should happen because its disabled and completed for player1
         self.post_event("accrual5_step1")
@@ -375,17 +349,14 @@ class TestLogicBlocks(MpfTestCase):
         self.assertEqual(1, self._events["logicblock_accrual5_complete"])
 
         # player2 again
-        self.advance_time_and_run(10)
-        self.hit_switch_and_run("s_ball_switch1", 1)
-        self.release_switch_and_run("s_ball_switch1", 4)
-        self.assertNotEqual(None, self.machine.game)
-        self.assertEqual(2, self.machine.game.player.number)
+        self.drain_ball()
+        self.assertPlayerNumber(2)
 
         # complete it
         self.post_event("accrual5_step2")
         self.assertEqual(2, self._events["logicblock_accrual5_complete"])
 
-        self._stop_game()
+        self.stop_game()
 
         # does not work after game
         self.post_event("accrual5_step1")
@@ -393,7 +364,7 @@ class TestLogicBlocks(MpfTestCase):
         self.assertEqual(2, self._events["logicblock_accrual5_complete"])
 
     def test_counter_hit_window(self):
-        self._start_game()
+        self.start_game()
         self.mock_event("logicblock_counter3_complete")
         self.mock_event("counter_counter3_hit")
 
