@@ -321,9 +321,7 @@ class TestLogicBlocks(MpfFakeGameTestCase):
 
         self.machine.config['game']['balls_per_game'] = 2
 
-        self.start_game()
-        # add player
-        self.hit_and_release_switch("s_start")
+        self.start_two_player_game()
 
         # should work during game - player1
         self.assertEqual(1, self.machine.game.player.number)
@@ -389,3 +387,36 @@ class TestLogicBlocks(MpfFakeGameTestCase):
         self.post_event("counter3_count")
         self.assertEqual(1, self._events["logicblock_counter3_complete"])
         self.assertEqual(5, self._events["counter_counter3_hit"])
+
+    def test_counter_persist(self):
+        self.mock_event("logicblock_counter_persist_complete")
+        self.mock_event("counter_counter_persist_hit")
+        self.start_two_player_game()
+        self.post_event("start_mode1")
+        self.assertTrue("mode1" in self.machine.modes)
+        self.post_event("counter_persist_enable")
+
+        for i in range(3):
+            self.post_event("counter_persist_count")
+            self.assertEqual(i + 1, self._events["counter_counter_persist_hit"])
+
+        self.assertEqual(0, self._events["logicblock_counter_persist_complete"])
+
+        self.drain_ball()
+        self.assertPlayerNumber(2)
+
+        for i in range(10):
+            self.post_event("counter_persist_count")
+
+        self.drain_ball()
+        self.assertPlayerNumber(1)
+        self.post_event("start_mode1")
+        self.post_event("counter_persist_enable")
+
+        self.assertEqual(0, self._events["logicblock_counter_persist_complete"])
+
+        for i in range(2):
+            self.post_event("counter_persist_count")
+            self.assertEqual(i + 4, self._events["counter_counter_persist_hit"])
+
+        self.assertEqual(1, self._events["logicblock_counter_persist_complete"])
