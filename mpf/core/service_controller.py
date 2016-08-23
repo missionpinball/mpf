@@ -13,6 +13,7 @@ class ServiceController(MpfController):
     """Provides all service information and can perform service tasks."""
 
     def __init__(self, machine):
+        """Initialise service controller."""
         super().__init__(machine)
         self._enabled = False
         self.log = logging.getLogger("ServiceController")
