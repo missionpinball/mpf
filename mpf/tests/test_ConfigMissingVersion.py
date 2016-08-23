@@ -16,3 +16,4 @@ class TestConfigMissingVersion(MpfTestCase):
 
     def test_config_file_with_missing_version(self):
         self.assertRaises(ValueError, super().setUp)
+        self.loop.close()

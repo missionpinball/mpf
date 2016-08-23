@@ -15,8 +15,18 @@ class Mode(object):
 
     """Parent class for in-game mode code."""
 
-    def __init__(self, machine, config, name, path):
-        """Initialise mode."""
+    def __init__(self, machine, config: dict, name: str, path):
+        """Initialise mode.
+
+        Args:
+            machine(mpf.core.machine.MachineController): the machine controller
+            config: config dict for mode
+            name: name of mode
+            path: path of mode
+
+        Returns:
+
+        """
         self.machine = machine
         self.config = config
         self.name = name.lower()
@@ -74,6 +84,14 @@ class Mode(object):
                             **item.kwargs)
 
         self.mode_init()
+
+    @staticmethod
+    def get_config_spec():
+        """Return config spec for mode_settings."""
+        return '''
+                __valid_in__: mode
+                __allow_others__:
+                '''
 
     def __repr__(self):
         """Return string representation."""

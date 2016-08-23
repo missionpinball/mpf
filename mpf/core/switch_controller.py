@@ -8,10 +8,11 @@ import logging
 from collections import defaultdict
 
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
+from mpf.core.mpf_controller import MpfController
 from mpf.core.utility_functions import Util
 
 
-class SwitchController(object):
+class SwitchController(MpfController):
 
     """Handles all switches in the machine.
 
@@ -27,7 +28,7 @@ class SwitchController(object):
 
     def __init__(self, machine):
         """Initialise switch controller."""
-        self.machine = machine
+        super().__init__(machine)
         self.registered_switches = CaseInsensitiveDict()
         # Dictionary of switches and states that have been registered for
         # callbacks.
@@ -582,25 +583,29 @@ class SwitchController(object):
                 self.machine.events.post(event)
 
             for tag in self.machine.switches[switch_name].tags:
-                self.machine.events.post(
-                    self.switch_tag_event.replace('%', tag))
-            '''event: sw_(tag_name)
+                self.machine.events.post(self.switch_tag_event.replace('%', tag))
+                '''event: sw_(tag_name)
 
-            desc: A switch tagged with *tag_name* was just activated.
+                desc: A switch tagged with *tag_name* was just activated.
 
-            For example, if in the ``switches:`` section of your config, you
-            have a switch with ``tags: start, hello``, then the events
-            *sw_start* and *sw_hello* will be posted when that switch is hit.
+                For example, if in the ``switches:`` section of your config, you
+                have a switch with ``tags: start, hello``, then the events
+                *sw_start* and *sw_hello* will be posted when that switch is hit.
 
-            Note that you can change the format of these events in your
-            machine config file, but *sw_(tag_name)* is the default.
+                Note that you can change the format of these events in your
+                machine config file, but *sw_(tag_name)* is the default.
 
-            '''
+                '''
+
+                self.machine.events.post(self.switch_tag_event.replace('%', tag) + "_active")
 
         # the following events all fire the moment a switch becomes inactive
         elif state == 0:
             for event in self.machine.switches[switch_name].deactivation_events:
                 self.machine.events.post(event)
+
+            for tag in self.machine.switches[switch_name].tags:
+                self.machine.events.post(self.switch_tag_event.replace('%', tag) + "_inactive")
 
     def get_next_timed_switch_event(self):
         """Return time of the next timed switch event."""

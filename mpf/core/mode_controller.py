@@ -154,6 +154,9 @@ class ModeController(object):
 
         return config
 
+    def _load_mode_config_spec(self, mode_string, mode_class):
+        self.machine.config_validator.load_mode_config_spec(mode_string, mode_class.get_config_spec())
+
     def _load_mode(self, mode_string):
         """Load a mode, reads in its config, and creates the Mode object.
 
@@ -173,7 +176,7 @@ class ModeController(object):
 
         config = self._load_mode_config(mode_string)
 
-        self.machine.config_validator.validate_config("mode", config['mode'])
+        config['mode'] = self.machine.config_validator.validate_config("mode", config['mode'])
 
         # Figure out where the code is for this mode.
         if config['mode']['code']:
@@ -183,9 +186,7 @@ class ModeController(object):
                     self._machine_mode_folders[mode_string] + '.code.' +
                     config['mode']['code'].split('.')[0])
 
-                mode_object = getattr(i, config['mode']['code'].split('.')[1])(
-                    self.machine, config,
-                    self._machine_mode_folders[mode_string], mode_path)
+                mode_class = getattr(i, config['mode']['code'].split('.')[1])
 
                 if self.debug:
                     self.log.debug("Loaded code from %s",
@@ -199,8 +200,7 @@ class ModeController(object):
                     self._mpf_mode_folders[mode_string] + '.code.' +
                     config['mode']['code'].split('.')[0])
 
-                mode_object = getattr(i, config['mode']['code'].split('.')[1])(
-                    self.machine, config, mode_string, mode_path)
+                mode_class = getattr(i, config['mode']['code'].split('.')[1])
 
                 if self.debug:
                     self.log.debug("Loaded code from %s",
@@ -209,11 +209,16 @@ class ModeController(object):
                                    config['mode']['code'].split('.')[0])
 
         else:  # no code specified, so using the default Mode class
-            mode_object = Mode(self.machine, config, mode_string, mode_path)
+            mode_class = Mode
             if self.debug:
                 self.log.debug("Loaded default Mode() class code.")
 
-        return mode_object
+        self._load_mode_config_spec(mode_string, mode_class)
+
+        config['mode_settings'] = self.machine.config_validator.validate_config(
+            "_mode_settings:{}".format(mode_string), config.get('mode_settings', None))
+
+        return mode_class(self.machine, config, mode_string, mode_path)
 
     def _build_mode_folder_dicts(self):
         self._mpf_mode_folders = (

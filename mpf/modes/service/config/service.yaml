@@ -1,0 +1,13 @@
+#config_version=4
+mode:
+  code: service.Service
+  priority: 100000
+  start_events: sw_service_door_open_active
+  stop_events: sw_service_door_open_inactive
+  stop_on_ball_end: False
+
+mode_settings:
+  enter_events: sw_service_enter_active
+  esc_events: sw_service_esc_active
+  up_events: sw_service_up_active
+  down_events: sw_service_down_active

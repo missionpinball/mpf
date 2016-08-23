@@ -24,6 +24,8 @@ class TestModesConfigValidation(MpfTestCase):
         with self.assertRaises(ValueError) as context:
             super(TestModesConfigValidation, self).setUp()
 
+        self.loop.close()
+
         self.assertEqual("No folder found for mode 'invalid'. Is your "
                          "mode folder in your machine's 'modes' folder?",
                          str(context.exception))
@@ -32,6 +34,8 @@ class TestModesConfigValidation(MpfTestCase):
         self.config = 'test_broken_mode_config.yaml'
         with self.assertRaises(AssertionError) as context:
             super(TestModesConfigValidation, self).setUp()
+
+        self.loop.close()
 
         self.assertEqual('Your config contains a value for the setting "'
                          'mode:invalid_key", but this is not a valid '
