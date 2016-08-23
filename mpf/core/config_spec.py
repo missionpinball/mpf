@@ -417,7 +417,7 @@ hardware:
     accelerometers: single|str|
     i2c: single|str|
 high_score:
-    __valid_in__: machine, mode
+    __valid_in__: mode
     award_slide_display_time: single|ms|4s
     categories: list|str:list|
     shift_left_tag: single|str|left_flipper
