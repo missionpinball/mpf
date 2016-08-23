@@ -5,6 +5,9 @@ mode:
   start_events: game_ending, start_high_score
   use_wait_queue: true
 
+# Instructions on how to use this mode:
+# http://docs.missionpinball.org/en/latest/game_logic/high_score.html
+
 high_score:
   award_slide_display_time: 4s
   categories:
