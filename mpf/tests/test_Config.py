@@ -1,3 +1,4 @@
+from mpf.core.utility_functions import Util
 from mpf.tests.MpfTestCase import MpfTestCase
 from mpf.core.config_validator import ConfigValidator
 
@@ -449,3 +450,17 @@ class TestConfig(MpfTestCase):
         results = self.machine.config_validator.validate_config_item(
             validation_string, validation_failure_info, False)
         self.assertEqual('no', results)
+
+    def test_config_merge(self):
+        a = {"test": {"a": [1], "b": [2, 3]}, "test2": 2}
+        b = {"test": {"a": [3], "c": 7}}
+        c = Util.dict_merge(a, b)
+        self.assertEqual({'test': {'a': [1, 3], 'b': [2, 3], 'c': 7}, 'test2': 2}, c)
+
+        b2 = {"test": {"_overwrite": True, "a": [3], "c": 7}}
+        c = Util.dict_merge(a, b2)
+        self.assertEqual({'test': {'a': [3], 'c': 7}, 'test2': 2}, c)
+
+        b3 = {"test": {"_delete": True}}
+        c = Util.dict_merge(a, b3)
+        self.assertEqual({'test2': 2}, c)

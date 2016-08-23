@@ -6,94 +6,78 @@ mode:
   use_wait_queue: true
 
 # Instructions on how to use this mode:
-# https://missionpinball.com/docs/howto/high-scores/
+# http://docs.missionpinball.org/en/latest/game_logic/high_score.html
 
-# You can copy the sections below to your own machine config as a starting point
+high_score:
+  award_slide_display_time: 4s
+  categories:
+  - score:
+      - GRAND CHAMPION
+      - HIGH SCORE 1
+      - HIGH SCORE 2
+      - HIGH SCORE 3
+      - HIGH SCORE 4
 
+slide_player:
+  high_score_enter_initials: high_score_enter_initials
+  high_score_award_display: high_score_award_display
 
-#high_score:
-#  shift_left_tag: left_flipper
-#  shift_right_tag: right_flipper
-#  select_tag: start
-#  award_slide_display_time: 4s
-#  categories:
-#  - score:
-#      - GRAND CHAMPION
-#      - HIGH SCORE 1
-#      - HIGH SCORE 2
-#      - HIGH SCORE 3
-#      - HIGH SCORE 4
-
-# Be sure to put this slide_player config in your modes/high_score folder, not your
-# machine-wide config, because you want it to run at the priority of the mode
-
-#slide_player:
-#  high_score:
-#    - type: text
-#      text: PLAYER %player_num%
-#      font: medium
-#      v_pos: bottom
-#      h_pos: center
-#      x: -27
-#      y: -21
-#    - type: text
-#      text: "%award%"
-#      font: small
-#      v_pos: bottom
-#      h_pos: center
-#      x: -27
-#      y: -12
-#    - type: character_picker
-#      name: high_score
-#      slide_name: high_score
-#      clear_slide: true
-#      persist: no
-#      height: 9
-#      font: medium
-#      v_pos: bottom
-#      selected_char_color: 0
-#      selected_char_bg: 15
-#      char_x_offset: 1
-#      char_y_offset: 1
-#      char_width: 7
-#      char_list: "ABCDEFGHIJKLMNOPQRSTUVWXYZ_- "
-#      back_char: back_arrow_7x7
-#      end_char: end_11x7
-#      back_char_selected: back_arrow_7x7_selected
-#      end_char_selected: end_11x7_selected
-#      image_padding: 1
-#      shift_left_tag: left_flipper
-#      shift_right_tag: right_flipper
-#      select_tag: start
-#      max_chars: 3
-#      timeout: 30s
-#      return_param: award
-#
-#    - type: entered_chars
-#      character_picker: high_score
-#      cursor_char: _
-#      v_pos: bottom
-#      h_pos: left
-#      x: 90
-#      y: -12
-#      cursor_offset_x: 0
-#      cursor_offset_y: 0
-#      cursor_decorators:
-#        type: blink
-#
-#  high_score_award_display:
-#    - type: text
-#      text: "%player_name%"
-#      color: 0
-#      bg_color: 15
-#      v_pos: center
-#      y: 2
-#      decorators:
-#        type: blink
-#        on_secs: .05
-#        off_secs: .05
-#    - type: text
-#      text: "%award%"
-#      font: medium
-#      v_pos: top
-#      y: 2
+slides:
+  high_score_enter_initials:
+  - type: text
+    text: PLAYER (player_num)
+    style: medium
+    anchor_y: bottom
+    x: center-27
+    y: bottom+21
+  - type: text
+    text: (award)
+    style: small
+    anchor_y: bottom
+    x: center-27
+    y: bottom+12
+  - type: text_input
+    key: high_score
+    style: medium
+    anchor_y: bottom
+    max_chars: 3
+    y: bottom
+    shift_left_event: sw_high_score_left
+    shift_right_event: sw_high_score_right
+    select_event: sw_high_score_select
+  - type: text
+    text: ""
+    key: high_score
+    anchor_y: bottom
+    anchor_x: left
+    x: left+90
+    y: bottom+12
+    style: medium
+    animations:
+      show_slide:
+      - property: opacity
+        value: 1
+        duration: 0.5s
+      - property: opacity
+        value: 0
+        duration: 0.5s
+        repeat: true
+  high_score_award_display:
+  - type: text
+    text: (player_name)
+    color: 0
+    y: middle-2
+    animations:
+      show_slide:
+      - property: opacity
+        value: 1
+        duration: 0.05s
+      - property: opacity
+        value: 0
+        duration: 0.05s
+        repeat: true
+  - type: text
+    text: (award)
+    style: medium
+    anchor_y: top
+    y: top-2
