@@ -45,7 +45,13 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                         ]
 
     def __init__(self, platform, port, baud):
-        """Initialise communicator."""
+        """Initialise communicator.
+
+        Args:
+            platform(mpf.platforms.fast.fast.HardwarePlatform): the fast hardware platform
+            port: serial port
+            baud: baud rate
+        """
         self.dmd = False
 
         self.remote_processor = None
@@ -144,7 +150,8 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
             # We only iterate known boards
             if not len(model):
-                raise AssertionError("Got invalid board response from FAST: {}".format(msg))
+                self.platform.log.critical("Got invalid board response from FAST: {}".format(msg))
+                continue
 
             self.platform.register_io_board(FastIoBoard(int(node_id, 16), model, fw, int(sw, 16), int(dr, 16)))
 

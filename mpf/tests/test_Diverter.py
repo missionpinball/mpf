@@ -370,3 +370,63 @@ class TestDiverter(MpfTestCase):
 
         self.advance_time_and_run(4)
         assert not self.machine.coils.c_diverter.enable.called
+
+    def test_diverter_dual_wound_coil(self):
+        diverter = self.machine.diverters.d_test_dual_wound
+
+        self.assertEqual("idle", self.machine.ball_devices.test_trough._state)
+        self.assertEqual("idle", self.machine.ball_devices.test_target._state)
+
+        self.machine.coils.c_hold.enable = MagicMock()
+        self.machine.coils.c_hold.disable = MagicMock()
+        self.machine.coils.c_power.pulse = MagicMock()
+
+        self.assertFalse(diverter.enabled)
+        self.assertFalse(diverter.active)
+
+        # test active side
+        self.machine.ball_devices.test_trough.tags.append("ball_add_live")
+        self.machine.playfield.add_ball()
+
+        self.advance_time_and_run(1)
+        self.assertTrue(diverter.enabled)
+        self.assertFalse(diverter.active)
+
+        self.hit_and_release_switch("s_diverter")
+        self.advance_time_and_run(0.5)
+        self.assertTrue(diverter.enabled)
+        self.assertTrue(diverter.active)
+        self.machine.coils.c_hold.enable.assert_called_once_with()
+        self.machine.coils.c_hold.enable = MagicMock()
+        self.machine.coils.c_power.pulse.assert_called_once_with()
+        self.machine.coils.c_power.pulse = MagicMock()
+        assert not self.machine.coils.c_hold.disable.called
+
+        self.advance_time_and_run(4)
+        assert not self.machine.coils.c_hold.disable.called
+
+        self.hit_and_release_switch("s_playfield")
+        self.machine_run()
+        self.assertFalse(diverter.active)
+        self.machine.coils.c_hold.disable.assert_called_once_with()
+
+        self.hit_switch_and_run("s_ball_switch1", 1)
+        # test inactive side
+        self.machine.ball_devices.test_trough.tags.remove("ball_add_live")
+        self.machine.ball_devices.test_target.tags.append("ball_add_live")
+        self.machine.playfield.add_ball()
+
+        self.advance_time_and_run(3)
+        self.assertFalse(diverter.enabled)
+        self.assertFalse(diverter.active)
+
+        self.hit_and_release_switch("s_diverter")
+        self.advance_time_and_run(0.5)
+        self.assertFalse(diverter.enabled)
+        self.assertFalse(diverter.active)
+
+        self.advance_time_and_run(4)
+        assert not self.machine.coils.c_hold.enable.called
+        assert not self.machine.coils.c_power.pulse.called
+
+        self.hit_switch_and_run("s_ball_switch1", 1)

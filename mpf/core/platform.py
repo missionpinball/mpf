@@ -9,7 +9,11 @@ class BasePlatform(metaclass=abc.ABCMeta):
     """Base class for all hardware platforms in MPF."""
 
     def __init__(self, machine):
-        """Create features and set default variables."""
+        """Create features and set default variables.
+
+        Args:
+            machine(mpf.core.machine.MachineController:
+        """
         self.machine = machine
         self.features = {}
         self.log = None

@@ -56,11 +56,6 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
         self._created_system_wide = True
 
-        if 'profile' in self.config:
-            for shot in self.config['shots']:
-                shot.update_profile(profile=self.config['profile'],
-                                    mode=None)
-
     def device_added_to_mode(self, mode, player):
         """Add device in mode."""
         super().device_added_to_mode(mode, player)
@@ -98,6 +93,9 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         """
         del mode
         del kwargs
+
+        if not profile:
+            raise AssertionError("Called hit without profile")
 
         if not self._enabled:
             return
@@ -198,6 +196,9 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
     def _enable_from_system_wide(self, profile=None):
         for shot in self.config['shots']:
+            if 'profile' in self.config:
+                shot.update_profile(profile=self.config['profile'],
+                                    mode=None)
             shot.enable(profile=profile)
             shot.register_group(self)
 
