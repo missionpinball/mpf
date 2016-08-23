@@ -51,7 +51,7 @@ slides:
     y: bottom+12
     style: medium
     animations:
-      entrance:
+      show_slide:
       - property: opacity
         value: 1
         duration: 0.5s
@@ -65,7 +65,7 @@ slides:
     color: 0
     y: middle-2
     animations:
-      entrance:
+      show_slide:
       - property: opacity
         value: 1
         duration: 0.05s
