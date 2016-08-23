@@ -1,9 +1,9 @@
 """Light config player."""
-from mpf.core.config_player import ConfigPlayer
+from mpf.config_players.device_config_player import DeviceConfigPlayer
 from mpf.core.utility_functions import Util
 
 
-class LightPlayer(ConfigPlayer):
+class LightPlayer(DeviceConfigPlayer):
 
     """Sets lights based on config."""
 

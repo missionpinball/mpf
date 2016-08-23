@@ -1,7 +1,8 @@
 """Base class used for things that "play" from the config files, such as WidgetPlayer, SlidePlayer, etc."""
+import abc
 
 
-class ConfigPlayer(object):
+class ConfigPlayer(object, metaclass=abc.ABCMeta):
 
     """Base class for players which play things based on config."""
 
@@ -83,62 +84,27 @@ class ConfigPlayer(object):
         validated_config = dict()
 
         for event, settings in config.items():
-            validated_config[event] = dict()
-            validated_config[event] = dict()
-
-            # settings here is the same as a show entry, so we process with
-            # that
-            if not isinstance(settings, dict):
-                if isinstance(settings, str):
-                    settings = {settings: dict()}
-                else:
-                    raise AssertionError("Invalid settings for player {}".format(self.show_section))
-
-            # settings here are dicts of devices/settings
-            for device, device_settings in settings.items():
-                validated_config[event].update(
-                    self.validate_show_config(device, device_settings))
+            validated_config[event] = self.validate_config_entry(settings, event)
 
         return validated_config
 
-    def validate_show_config(self, device, device_settings):
-        """Validate show config."""
-        # override if you need a different show processor from config file
-        # processor
+    def validate_config_entry(self, settings, name):
+        """Validate one entry of this player."""
+        raise NotImplementedError("implement")
 
-        # the input values are this section's single step in a show.
-
-        # keys are device names
-        # vales are either scalars with express settings, or dicts with full
-        # settings
-
-        if device_settings is None:
-            device_settings = device
-
-        if not isinstance(device_settings, dict):
+    def _parse_config(self, config, name):
+        if isinstance(config, (str, int, float, type(None))):
             # express config, convert to full
-            device_settings = self.get_express_config(device_settings)
+            config = self.get_express_config(config)
+        elif isinstance(config, list):
+            # list config. convert from list to full
+            config = self.get_list_config(config)
 
-        device_settings = self.get_full_config(device_settings)
-        # Now figure out if our device is a single or a tag
+        if not isinstance(config, dict):
+            raise AssertionError("Player config for {} is supposed to be dict. Config: {}".
+                                 format(name, str(config)))
 
-        try:
-            if self.device_collection:
-                devices = self.device_collection.items_tagged(device)
-                if not devices:
-                    devices = [self.device_collection[device]]
-
-            else:
-                devices = [device]
-
-        except KeyError:
-            devices = [device]
-
-        return_dict = dict()
-        for device in devices:
-            return_dict[device] = device_settings
-
-        return return_dict
+        return self.get_full_config(config)
 
     def process_mode_config(self, config, root_config_dict, mode, **kwargs):
         """Parse mode config."""
@@ -170,6 +136,12 @@ class ConfigPlayer(object):
         del kwargs
         return config
 
+    def get_list_config(self, value):
+        """Parse config list."""
+        del value
+        raise AssertionError("Player {} does not support lists.".format(self.config_file_section))
+
+    @abc.abstractmethod
     def get_express_config(self, value):
         """Parse short config version.
 
@@ -275,6 +247,7 @@ class ConfigPlayer(object):
         """Callback if show stops."""
         self.clear_context(context)
 
+    @abc.abstractmethod
     def play(self, settings, context, priority=0, **kwargs):
         """Directly play player."""
         # **kwargs since this is an event callback

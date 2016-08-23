@@ -1,8 +1,8 @@
 """Plugin config player."""
-from mpf.core.config_player import ConfigPlayer
+from mpf.config_players.device_config_player import DeviceConfigPlayer
 
 
-class PluginPlayer(ConfigPlayer):
+class PluginPlayer(DeviceConfigPlayer):
 
     """Base class for a remote ConfigPlayer that is registered as a plug-in to MPF.
 
