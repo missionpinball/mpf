@@ -1,8 +1,8 @@
 """GI config player."""
-from mpf.core.config_player import ConfigPlayer
+from mpf.config_players.device_config_player import DeviceConfigPlayer
 
 
-class GiPlayer(ConfigPlayer):
+class GiPlayer(DeviceConfigPlayer):
 
     """Enables GIs based on config."""
 

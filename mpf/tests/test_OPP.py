@@ -11,11 +11,13 @@ class MockOppSocket(MockSerial):
 
     def read(self, length):
         del length
+        if not self.queue:
+            return b""
         msg = self.queue.pop()
         return msg
 
     def read_ready(self):
-        return self.queue
+        return bool(self.queue)
 
     def write_ready(self):
         return True
@@ -77,7 +79,6 @@ class TestOPP(MpfTestCase):
         inputs2_message = b"\x21\x08\x00\x00\x00\x00"
 
         self.serialMock.expected_commands = {
-            b'\xff': b'\xff',
             b'\xf0\xff': b'\xf0\x20\x21\xff',     # boards 20 + 21 installed
             self._crc_message(b'\x20\x0d\x00\x00\x00\x00', False) + self._crc_message(b'\x21\x0d\x00\x00\x00\x00'):
                 self._crc_message(board1_config, False) + self._crc_message(board2_config),     # get config
@@ -89,10 +90,10 @@ class TestOPP(MpfTestCase):
             self._crc_message(b'\x20\x14\x03\x00\x0a\x06'): False,    # configure coil 3
         }
         self.serialMock.permanent_commands = {
+            b'\xff': b'\xff',
             self._crc_message(b'\x20\x08\x00\x00\x00\x00', False) + self._crc_message(b'\x21\x08\x00\x00\x00\x00'):
                 self._crc_message(inputs1_message, False) + self._crc_message(inputs2_message),  # read inputs
         }
-        opp.serial.Serial = MagicMock(return_value=self.serialMock)
         super(TestOPP, self).setUp()
 
         self._wait_for_processing()
@@ -105,15 +106,6 @@ class TestOPP(MpfTestCase):
 
     def get_platform(self):
         return 'opp'
-
-    def _write_message(self, msg, crc=True):
-        self.machine_run()
-        if crc:
-            self.serialMock.queue.put(self._crc_message(msg))
-        else:
-            self.serialMock.queue.put(msg)
-        while not self.serialMock.queue.empty() and not self.serialMock.crashed:
-            self.advance_time_and_run(1)
 
     def _wait_for_processing(self):
         while self.serialMock.expected_commands and not self.serialMock.crashed:

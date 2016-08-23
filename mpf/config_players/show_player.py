@@ -1,10 +1,10 @@
 """Show config player."""
 from copy import deepcopy
 
-from mpf.core.config_player import ConfigPlayer
+from mpf.config_players.device_config_player import DeviceConfigPlayer
 
 
-class ShowPlayer(ConfigPlayer):
+class ShowPlayer(DeviceConfigPlayer):
 
     """Plays, starts, stops, pauses, resumes or advances shows based on config."""
 

@@ -291,6 +291,8 @@ class Shot(ModeDevice, SystemWideDevice):
         del kwargs
         self.player = player
         self._update_shows(advance=False)
+        if self._created_system_wide:
+            self.update_profile()
 
     def player_turn_stop(self):
         """Remove the profiles from the shot and remove the player reference.

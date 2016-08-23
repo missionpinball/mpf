@@ -178,6 +178,8 @@ class Show(Asset):
         raise AssertionError("Show {}: {}".format(identifier, msg))
 
     def _process_step_actions(self, step, actions):
+        if not isinstance(step, dict):
+            raise AssertionError("Steps in show {} need to be dicts.".format(self.name))
         for key, value in step.items():
 
             # key: the section of the show, like 'leds'
@@ -185,19 +187,7 @@ class Show(Asset):
 
             # check to see if we know how to process this kind of entry
             if key in ConfigPlayer.show_players.keys():
-                validated_config = dict()
-
-                # we're now at a dict for this section in the show
-                # key
-                if not isinstance(value, dict):
-                    value = {value: dict()}
-
-                for device, settings in value.items():
-                    validated_config.update(
-                        ConfigPlayer.show_players[key].validate_show_config(
-                            device, settings))
-
-                actions[key] = validated_config
+                actions[key] = ConfigPlayer.show_players[key].validate_config_entry(value, self.name)
 
             elif key != 'duration' and key != 'time':   # pragma: no cover
                 self._show_validation_error('Invalid section "{}:" found in show'.format(key))

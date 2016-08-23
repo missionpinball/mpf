@@ -182,7 +182,13 @@ class Util(object):
             return b
         result = deepcopy(a)
         for k, v in b.items():
-            if k in result and isinstance(result[k], dict):
+            if isinstance(v, dict) and '_overwrite' in v:
+                result[k] = v
+                del result[k]['_overwrite']
+            elif isinstance(v, dict) and '_delete' in v:
+                if k in result:
+                    del result[k]
+            elif k in result and isinstance(result[k], dict):
                 result[k] = Util.dict_merge(result[k], v)
             elif k in result and isinstance(result[k], list) and combine_lists:
                 result[k].extend(v)
