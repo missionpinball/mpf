@@ -378,8 +378,12 @@ class SwitchController(MpfController):
         if obj.hw_state == hw_state:
             self.process_switch(obj.name, state, logical)
 
+    def wait_for_switch(self, switch_name: str, state: int=1, only_on_change=True, ms=0):
+        """Wait for a switch to change into state."""
+        return self.wait_for_any_switch([switch_name], state, only_on_change, ms)
+
     def wait_for_any_switch(self, switch_names: [str], state: int=1, only_on_change=True, ms=0):
-        """Wait for any event from event_names."""
+        """Wait for the first switch in the list to change into state."""
         future = asyncio.Future(loop=self.machine.clock.loop)
 
         if not only_on_change:
