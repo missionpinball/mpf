@@ -7,6 +7,9 @@ states and posting events to the framework.
 import logging
 from collections import defaultdict
 
+import asyncio
+from functools import partial
+
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.mpf_controller import MpfController
 from mpf.core.utility_functions import Util
@@ -374,6 +377,36 @@ class SwitchController(MpfController):
     def _recycle_passed(self, obj, state, logical, hw_state):
         if obj.hw_state == hw_state:
             self.process_switch(obj.name, state, logical)
+
+    def wait_for_any_switch(self, switch_names: [str], state: int=1, only_on_change=True, ms=0):
+        """Wait for any event from event_names."""
+        future = asyncio.Future(loop=self.machine.clock.loop)
+
+        if not only_on_change:
+            for switch_name in switch_names:
+                if self.is_state(switch_name, state, ms):
+                    future.set_result({"switch_name": switch_name, "state": state, "ms": ms})
+                    return future
+
+        handlers = []
+        future.add_done_callback(partial(self._future_done, handlers))
+        for switch_name in switch_names:
+            handlers.append(self.add_switch_handler(switch_name, state=state, ms=ms,
+                                                    callback=partial(self._wait_handler,
+                                                                     ms=ms,
+                                                                     _future=future,
+                                                                     switch_name=switch_name)))
+        return future
+
+    def _future_done(self, handlers, future):
+        del future
+        for handler in handlers:
+            self.remove_switch_handler(**handler)
+
+    def _wait_handler(self, _future: asyncio.Future, **kwargs):
+        if _future.done():
+            return
+        _future.set_result(result=kwargs)
 
     def _cancel_timed_handlers(self, name, state):
         # now check if the opposite state is in the active timed switches list
