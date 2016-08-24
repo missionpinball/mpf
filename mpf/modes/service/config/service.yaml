@@ -10,3 +10,56 @@ event_player:
         service_door_opened
     sw_service_door_open_inactive:
         service_door_closed
+    sw_power_off_inactive:
+        service_power_on
+    sw_power_off_active:
+        service_power_off
+
+slide_player:
+  service_door_opened: service_door_open
+  service_door_closed:
+    service_door_open:
+      action: remove
+
+widget_player:
+  service_power_off:
+    service_power_off_door_open:
+      action: add
+      slide: service_door_open
+  service_power_on:
+    service_power_off_door_open:
+      action: remove
+      slide: service_door_open
+
+slides:
+  service_door_open:
+  - type: text
+    text: Door Open
+    style: medium
+    anchor_y: bottom
+    x: center
+    y: bottom+21
+  - type: text
+    text: Press enter for service
+    style: small
+    anchor_y: bottom
+    x: center
+    y: bottom+12
+
+widgets:
+  service_power_off_door_open:
+    type: text
+    text: Coil Power Off
+    anchor_y: bottom
+    x: center
+    y: bottom+4
+    style: medium
+    animations:
+      add_to_slide:
+      - property: opacity
+        value: 1
+        duration: 0.5s
+      - property: opacity
+        value: 0
+        duration: 0.5s
+        repeat: true

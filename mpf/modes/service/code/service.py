@@ -16,10 +16,10 @@ class Service(AsyncMode):
     def get_config_spec():
         """Add validation for mode."""
         return '''
-door_opened_events: list|str|sw_service_door_open_active
-door_closed_events: list|str|sw_service_door_open_inactive
-high_power_on_events: list|str|sw_power_on_active
-high_power_off_events: list|str|sw_power_on_inactive
+door_opened_events: list|str|service_door_opened
+door_closed_events: list|str|service_door_closed
+high_power_on_events: list|str|service_power_on
+high_power_off_events: list|str|service_power_off
 enter_events: list|str|sw_service_enter_active
 esc_events: list|str|sw_service_esc_active
 up_events: list|str|sw_service_up_active
