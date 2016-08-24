@@ -2,12 +2,11 @@
 mode:
   code: service.Service
   priority: 100000
-  start_events: sw_service_door_open_active
-  stop_events: sw_service_door_open_inactive
+  start_events: reset_complete
   stop_on_ball_end: False
 
-mode_settings:
-  enter_events: sw_service_enter_active
-  esc_events: sw_service_esc_active
-  up_events: sw_service_up_active
-  down_events: sw_service_down_active
+event_player:
+    sw_service_door_open_active:
+        service_door_opened
+    sw_service_door_open_inactive:
+        service_door_closed
