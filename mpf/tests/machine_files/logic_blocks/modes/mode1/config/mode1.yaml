@@ -14,3 +14,10 @@ logic_blocks:
             direction: up
             reset_on_complete: True
             disable_on_complete: False
+        counter_persist:
+            count_events: counter_persist_count
+            enable_events: counter_persist_enable
+            direction: down
+            starting_count: 5
+            count_complete_value: 0
+            persist_state: true
