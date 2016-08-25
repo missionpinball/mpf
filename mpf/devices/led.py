@@ -153,12 +153,21 @@ class Led(SystemWideDevice):
             entries when a mode ends.
         """
 
+    def _load_hw_driver(self):
+        if self.config["platform"] == "lights":
+            self.platform = None
+            self.hw_driver = []
+            lights_names = self.config['number'].split(",")
+            for light_name in lights_names:
+                self.hw_driver.append(self.machine.lights[light_name])
+        else:
+            self.load_platform_section('leds')
+            self.hw_driver = self.platform.configure_led(self.config, len(self.config['type']))
+
     def _initialize(self):
-        self.load_platform_section('leds')
+        self._load_hw_driver()
 
         self.config['default_color'] = RGBColor(self.config['default_color'])
-
-        self.hw_driver = self.platform.configure_led(self.config, len(self.config['type']))
 
         if self.config['color_correction_profile'] is not None:
             if self.config['color_correction_profile'] in (
@@ -342,6 +351,13 @@ class Led(SystemWideDevice):
         except IndexError:
             return 0
 
+    def _write_color_to_hw_driver(self, reordered_color):
+        if self.platform:
+            self.hw_driver.color(reordered_color)
+        else:
+            for i in range(len(self.hw_driver)):
+                self.hw_driver[i].on(reordered_color[i])
+
     def write_color_to_hw_driver(self):
         """Set color to hardware platform.
 
@@ -372,7 +388,7 @@ class Led(SystemWideDevice):
 
             reordered_color = self._get_color_channels_for_hw(corrected_color)
 
-            self.hw_driver.color(reordered_color)
+            self._write_color_to_hw_driver(reordered_color)
 
             if self.registered_handlers:
                 # Handlers are not sent color corrected colors
