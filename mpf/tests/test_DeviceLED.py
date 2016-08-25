@@ -1,3 +1,4 @@
+"""Test the LED device."""
 from mpf.devices.led import Led
 
 from mpf.core.rgb_color import RGBColor
@@ -329,3 +330,12 @@ class TestLed(MpfTestCase):
         self.advance_time_and_run(1)
 
         self.assertEqual([100, 255, 0], led.hw_driver.current_color)
+
+    def test_leds_on_matrix_lights(self):
+        led = self.machine.leds.led_lights
+        led.color(RGBColor((11, 23, 42)))
+        self.advance_time_and_run(1)
+
+        self.assertEqual(11, self.machine.lights.light_r.hw_driver.current_brightness)
+        self.assertEqual(23, self.machine.lights.light_g.hw_driver.current_brightness)
+        self.assertEqual(42, self.machine.lights.light_b.hw_driver.current_brightness)
