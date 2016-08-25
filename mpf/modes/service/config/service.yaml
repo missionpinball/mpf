@@ -15,6 +15,10 @@ event_player:
     sw_power_off_active:
         service_power_off
 
+
+sound_player:
+    service_power_off: power_off
+
 slide_player:
   service_door_opened: service_door_open
   service_door_closed:
