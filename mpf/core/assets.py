@@ -905,10 +905,10 @@ class Asset(object):
 
     def is_loaded(self):
         """Called when asset has been loaded."""
+        self._call_callbacks()
         self.loading = False
         self.loaded = True
         self.unloading = False
-        self._call_callbacks()
 
     def unload(self):
         """Called when the asset has been unloaded."""
