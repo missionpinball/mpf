@@ -9,7 +9,7 @@ from mpf.core.rgb_color import RGBColorCorrectionProfile
 from mpf.core.system_wide_device import SystemWideDevice
 
 
-@DeviceMonitor("_color")
+@DeviceMonitor("_color", "_corrected_color")
 class Led(SystemWideDevice):
 
     """An RGB LED in a pinball machine."""
@@ -111,6 +111,7 @@ class Led(SystemWideDevice):
         """Initialise LED."""
         self.hw_driver = None
         self._color = [0, 0, 0]
+        self._corrected_color = [0, 0, 0]
         super().__init__(machine, name)
 
         self.fade_in_progress = False
@@ -381,8 +382,11 @@ class Led(SystemWideDevice):
         # If there's no current fade and no new fade, or a current fade and new
         # fade
         else:
-            corrected_color = self.color_correct(self.stack[0]['color'])
-            self._color = list(corrected_color)
+            corrected_color = self.gamma_correct(self.stack[0]['color'])
+            corrected_color = self.color_correct(corrected_color)
+
+            self._color = list(self.stack[0]['color'])
+            self._corrected_color = corrected_color
             if self.debug:
                 self.log.debug("Writing color to hw driver: %s", corrected_color)
 
@@ -423,6 +427,22 @@ class Led(SystemWideDevice):
                     color_name, self.config['type'], self.name))
 
         return color_channels
+
+    def gamma_correct(self, color):
+        """Apply max brightness correction to color.
+
+        Args:
+            color: The RGBColor() instance you want to have gamma applied.
+
+        Returns:
+            An updated RGBColor() instance with gamma corrected.
+        """
+        factor = self.machine.get_machine_var("brightness")
+        # do not correct when there is no config or when using lights as channels (they are corrected on their own)
+        if factor is None or not self.platform:
+            return color
+        else:
+            return RGBColor([int(x * factor) for x in color])
 
     def color_correct(self, color):
         """Apply the current color correction profile to the color passed.
