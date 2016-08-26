@@ -8,7 +8,7 @@ from mpf.core.mode import Mode
 from mpf.core.system_wide_device import SystemWideDevice
 
 
-@DeviceMonitor("_brightness")
+@DeviceMonitor("_brightness", "_corrected_brightness")
 class MatrixLight(SystemWideDevice):
 
     """Represents a light connected to a traditional lamp matrix in a pinball machine.
@@ -77,6 +77,7 @@ class MatrixLight(SystemWideDevice):
         """Initialise light."""
         self.hw_driver = None
         self._brightness = 0
+        self._corrected_brightness = 0
         super().__init__(machine, name)
 
         self.x = None
@@ -291,6 +292,13 @@ class MatrixLight(SystemWideDevice):
         except IndexError:
             return 0
 
+    def _gamma_correct(self, brightness):
+        factor = self.machine.get_machine_var("brightness")
+        if not factor:
+            return brightness
+        else:
+            return factor * brightness
+
     def update_hw_light(self):
         """Set brightness to hardware platform.
 
@@ -314,7 +322,8 @@ class MatrixLight(SystemWideDevice):
         # If there's no current fade and no new fade, or a current fade and new
         # fade
         else:
-            self.hw_driver.on(self.stack[0]['brightness'])
+            self._corrected_brightness = self._gamma_correct(self.stack[0]['brightness'])
+            self.hw_driver.on(self._corrected_brightness)
             self._brightness = self.stack[0]['brightness']
 
             if self.registered_handlers:

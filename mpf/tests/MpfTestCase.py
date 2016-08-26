@@ -70,6 +70,7 @@ class TestMachineController(MachineController):
 class MpfTestCase(unittest.TestCase):
     def __init__(self, methodName='runTest'):
         super().__init__(methodName)
+        self.machine = None     # type: TestMachineController
         self.machine_config_patches = dict()
         self.machine_config_patches['mpf'] = dict()
         self.machine_config_patches['mpf']['default_platform_hz'] = 100

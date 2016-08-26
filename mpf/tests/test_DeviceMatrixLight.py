@@ -179,3 +179,16 @@ class TestDeviceMatrixLight(MpfTestCase):
         # Fade should have been completed when ended
         self.assertEqual(131, light.hw_driver.current_brightness)
         self.assertFalse(light.fade_in_progress)
+
+    def test_gamma_correct(self):
+        """Test that we can dim the machine."""
+        light1 = self.machine.lights.light_01
+
+        light1.on(200)
+        self.advance_time_and_run()
+        self.assertEqual(200, light1.hw_driver.current_brightness)
+
+        self.machine.create_machine_var("brightness", 0.8)
+        light1.on(200)
+        self.advance_time_and_run()
+        self.assertEqual(160, light1.hw_driver.current_brightness)
