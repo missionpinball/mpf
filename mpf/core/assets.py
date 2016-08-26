@@ -1,5 +1,5 @@
 """Contains AssetManager, AssetLoader, and Asset parent classes."""
-
+import concurrent
 import copy
 import logging
 import os
@@ -10,12 +10,14 @@ import traceback
 from collections import deque
 from queue import PriorityQueue, Queue, Empty
 
+import asyncio
 
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
+from mpf.core.delays import DelayManager
 from mpf.core.utility_functions import Util
 
 
-class AssetManager(object):
+class BaseAssetManager(object):
 
     """Base class for the Asset Manager.
 
@@ -46,13 +48,6 @@ class AssetManager(object):
 
         self.num_bcp_assets_to_load = 0
         self.num_bcp_assets_loaded = 0
-
-        self.loader_queue = PriorityQueue()  # assets for to the loader thread
-        self.loaded_queue = Queue()  # assets loaded from the loader thread
-        self.loader_thread = None
-        self._loaded_watcher = False
-
-        self._start_loader_thread()
 
         self._next_id = 0
         # id of next asset
@@ -93,14 +88,6 @@ class AssetManager(object):
 
         except ZeroDivisionError:
             return 100
-
-    def _start_loader_thread(self):
-        self.loader_thread = AssetLoader(loader_queue=self.loader_queue,
-                                         loaded_queue=self.loaded_queue,
-                                         exception_queue=self.machine.crash_queue,
-                                         thread_stopper=self.machine.thread_stopper)
-        self.loader_thread.daemon = True
-        self.loader_thread.start()
 
     # pylint: disable-msg=too-many-arguments
     def register_asset_class(self, asset_class, attribute, config_section,
@@ -469,41 +456,7 @@ class AssetManager(object):
             asset.unload()
 
     def load_asset(self, asset):
-        """Put asset in loader queue."""
-        # Internal method which handles the logistics of actually loading an
-        # asset. Should only be called by Asset.load() as that method does
-        # additional things that are needed.
-
-        self.num_assets_to_load += 1
-
-        # It's ok for an asset to make it onto this queue twice as the loader
-        # thread will check the asset's loaded attribute to make sure it needs
-        # to load it.
-
-        # This is a PriorityQueue which will automatically put the asset into
-        # the proper position in the queue based on its priority.
-
-        self.loader_queue.put(asset)
-
-        if not self._loaded_watcher:
-            self._loaded_watcher = self.machine.clock.schedule_interval(self._check_loader_status, 0.001)
-
-    def _check_loader_status(self, *args):
-        del args
-        # checks the loaded queue and updates loading stats
-        try:
-            while not self.loaded_queue.empty():
-                self.loaded_queue.get().is_loaded()
-                self.num_assets_loaded += 1
-                self._post_loading_event()
-        except AttributeError:
-            pass
-
-        if self.num_assets_to_load == self.num_assets_loaded:
-            self.num_assets_loaded = 0
-            self.num_assets_to_load = 0
-            self.machine.clock.unschedule(self._loaded_watcher)
-            self._loaded_watcher = None
+        raise NotImplementedError("implement")
 
     def _bcp_client_asset_load(self, total, remaining):
         # Callback for the BCP assets_to_load command which tracks asset
@@ -572,6 +525,92 @@ class AssetManager(object):
 
         if not remaining and not self.machine.is_init_done:
             self.machine.clear_boot_hold('assets')
+
+
+class AsyncioAssetManager(BaseAssetManager):
+
+    """AssetManager which uses asyncio to load assets."""
+
+    def __init__(self, machine):
+        super().__init__(machine)
+        self.delay = DelayManager(self.machine.delayRegistry)
+        self.asset_loader_threads = concurrent.futures.ThreadPoolExecutor(max_workers=4)
+
+    @staticmethod
+    def _load_sync(asset):
+        asset.do_load()
+
+    @asyncio.coroutine
+    def wait_for_asset_load(self, asset):
+        """Wait for an asset to load."""
+        yield from self.machine.clock.loop.run_in_executor(self.asset_loader_threads, self._load_sync, asset)
+        asset.is_loaded()
+        self.num_assets_loaded += 1
+        self._post_loading_event()
+
+    def load_asset(self, asset):
+        """Load an asset."""
+        self.num_assets_to_load += 1
+        self.machine.clock.loop.create_task(self.wait_for_asset_load(asset))
+
+
+class AssetManager(BaseAssetManager):
+
+    """AssetManager which uses the Threading module."""
+
+    def __init__(self, machine):
+        super().__init__(machine)
+        self.loader_queue = PriorityQueue()  # assets for to the loader thread
+        self.loaded_queue = Queue()  # assets loaded from the loader thread
+        self.loader_thread = None
+        self._loaded_watcher = False
+
+        self._start_loader_thread()
+
+    def _start_loader_thread(self):
+        self.loader_thread = AssetLoader(loader_queue=self.loader_queue,
+                                         loaded_queue=self.loaded_queue,
+                                         exception_queue=self.machine.crash_queue,
+                                         thread_stopper=self.machine.thread_stopper)
+        self.loader_thread.daemon = True
+        self.loader_thread.start()
+
+    def load_asset(self, asset):
+        """Put asset in loader queue."""
+        # Internal method which handles the logistics of actually loading an
+        # asset. Should only be called by Asset.load() as that method does
+        # additional things that are needed.
+
+        self.num_assets_to_load += 1
+
+        # It's ok for an asset to make it onto this queue twice as the loader
+        # thread will check the asset's loaded attribute to make sure it needs
+        # to load it.
+
+        # This is a PriorityQueue which will automatically put the asset into
+        # the proper position in the queue based on its priority.
+
+        self.loader_queue.put(asset)
+
+        if not self._loaded_watcher:
+            self._loaded_watcher = self.machine.clock.schedule_interval(self._check_loader_status, 0.001)
+
+    def _check_loader_status(self, *args):
+        del args
+        # checks the loaded queue and updates loading stats
+        try:
+            while not self.loaded_queue.empty():
+                self.loaded_queue.get().is_loaded()
+                self.num_assets_loaded += 1
+                self._post_loading_event()
+        except AttributeError:
+            pass
+
+        if self.num_assets_to_load == self.num_assets_loaded:
+            self.num_assets_loaded = 0
+            self.num_assets_to_load = 0
+            self.machine.clock.unschedule(self._loaded_watcher)
+            self._loaded_watcher = None
 
 
 class AssetLoader(threading.Thread):
