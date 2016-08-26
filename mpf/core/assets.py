@@ -456,6 +456,7 @@ class BaseAssetManager(object):
             asset.unload()
 
     def load_asset(self, asset):
+        """Load an asset."""
         raise NotImplementedError("implement")
 
     def _bcp_client_asset_load(self, total, remaining):
@@ -532,6 +533,7 @@ class AsyncioAssetManager(BaseAssetManager):
     """AssetManager which uses asyncio to load assets."""
 
     def __init__(self, machine):
+        """Initialise thread pool."""
         super().__init__(machine)
         self.delay = DelayManager(self.machine.delayRegistry)
         self.asset_loader_threads = concurrent.futures.ThreadPoolExecutor(max_workers=4)
@@ -559,6 +561,7 @@ class AssetManager(BaseAssetManager):
     """AssetManager which uses the Threading module."""
 
     def __init__(self, machine):
+        """Initialise queues and start loader thread."""
         super().__init__(machine)
         self.loader_queue = PriorityQueue()  # assets for to the loader thread
         self.loaded_queue = Queue()  # assets loaded from the loader thread
