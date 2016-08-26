@@ -41,12 +41,12 @@ class MachineController(object):
             used to launch mpf.py.
         config(dict): A dictionary of machine's configuration settings, merged from
             various sources.
-        game(Game): the current game
+        game(mpf.modes.game.code.game.Game): the current game
         machine_path: The root path of this machine_files folder
         plugins:
         scriptlets:
         hardware_platforms:
-        events(EventManager):
+        events(mpf.core.events.EventManager):
 
     """
 

@@ -94,7 +94,7 @@ class TestOPP(MpfTestCase):
             self._crc_message(b'\x20\x08\x00\x00\x00\x00', False) + self._crc_message(b'\x21\x08\x00\x00\x00\x00'):
                 self._crc_message(inputs1_message, False) + self._crc_message(inputs2_message),  # read inputs
         }
-        super(TestOPP, self).setUp()
+        super().setUp()
 
         self._wait_for_processing()
 
@@ -102,7 +102,7 @@ class TestOPP(MpfTestCase):
 
     def tearDown(self):
         self.assertFalse(self.serialMock.crashed)
-        super(TestOPP, self).tearDown()
+        super().tearDown()
 
     def get_platform(self):
         return 'opp'

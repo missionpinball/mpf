@@ -49,6 +49,7 @@ class TestBcp(MpfTestCase):
         try:
             from mpfmc.core import bcp_processor
         except ImportError:
+            super().tearDown()
             self.skipTest("Cannot import mpfmc.core.bcp_processor")
             return
 

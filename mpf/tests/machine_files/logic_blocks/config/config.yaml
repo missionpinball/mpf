@@ -1,28 +1,5 @@
 #config_version=4
 
-# minimal config to start game
-game:
-    balls_per_game: 1
-
-coils:
-    eject_coil1:
-        number:
-
-switches:
-    s_start:
-        number:
-        tags: start
-    s_ball_switch1:
-        number:
-    s_ball_switch2:
-        number:
-
-ball_devices:
-    test_trough:
-        ball_switches: s_ball_switch1, s_ball_switch2
-        eject_coil: eject_coil1
-        tags: trough, drain, home, ball_add_live
-
 # system wide logic blocks
 logic_blocks:
     accruals:

@@ -1,8 +1,15 @@
 """Classes for the EventManager and QueuedEvents."""
 
 import logging
-from collections import deque
+from collections import deque, namedtuple
 import uuid
+
+import asyncio
+from functools import partial
+
+EventHandlerKey = namedtuple("EventHandlerKey", ["key", "event"])
+RegisteredHandler = namedtuple("RegisteredHandler", ["callback", "priority", "kwargs", "key"])
+PostedEvent = namedtuple("PostedEvent", ["event", "type", "callback", "kwargs"])
 
 
 class EventManager(object):
@@ -13,7 +20,7 @@ class EventManager(object):
         """Initialise EventManager."""
         self.log = logging.getLogger("Events")
         self.machine = machine
-        self.registered_handlers = {}
+        self.registered_handlers = {}   # type: {str: [RegisteredHandler]}
         self.event_queue = deque([])
         self.callback_queue = deque([])
 
@@ -71,7 +78,7 @@ class EventManager(object):
         # An event 'handler' in our case is a tuple with 4 elements:
         # the handler method, priority, dict of kwargs, & uuid key
 
-        self.registered_handlers[event].append((handler, priority, kwargs, key))
+        self.registered_handlers[event].append(RegisteredHandler(handler, priority, kwargs, key))
         if self.debug:
             try:
                 self.log.debug("Registered %s as a handler for '%s', priority: %s, "
@@ -83,9 +90,9 @@ class EventManager(object):
         # Sort the handlers for this event based on priority. We do it now
         # so the list is pre-sorted so we don't have to do that with each
         # event post.
-        self.registered_handlers[event].sort(key=lambda x: x[1], reverse=True)
+        self.registered_handlers[event].sort(key=lambda x: x.priority, reverse=True)
 
-        return key
+        return EventHandlerKey(key, event)
 
     def replace_handler(self, event, handler, priority=1, **kwargs):
         """Check to see if a handler (optionally with kwargs) is registered for an event and replaces it if so.
@@ -171,20 +178,21 @@ class EventManager(object):
         for event in events_to_delete_if_empty:
             self._remove_event_if_empty(event)
 
-    def remove_handler_by_key(self, key):
+    def remove_handler_by_key(self, key: EventHandlerKey):
         """Remove a registered event handler by key.
 
         Args:
             key: The key of the handler you want to remove
         """
+        if key.event not in self.registered_handlers:
+            return
         events_to_delete_if_empty = []
-        for event, handler_list in self.registered_handlers.items():
-            for handler_tup in handler_list[:]:  # copy via slice
-                if handler_tup[3] == key:
-                    handler_list.remove(handler_tup)
-                    if self.debug:
-                        self.log.debug("Removing method %s from event %s", (str(handler_tup[0]).split(' '))[2], event)
-                    events_to_delete_if_empty.append(event)
+        for handler_tup in self.registered_handlers[key.event][:]:  # copy via slice
+            if handler_tup.key == key.key:
+                self.registered_handlers[key.event].remove(handler_tup)
+                if self.debug:
+                    self.log.debug("Removing method %s from event %s", (str(handler_tup[0]).split(' '))[2], key.event)
+                events_to_delete_if_empty.append(key.event)
         for event in events_to_delete_if_empty:
             self._remove_event_if_empty(event)
 
@@ -209,6 +217,42 @@ class EventManager(object):
             if self.debug:
                 self.log.debug("Removing event %s since there are no more"
                                " handlers registered for it", event)
+
+    def wait_for_event(self, event_name: str):
+        """Wait for event."""
+        return self.wait_for_any_event([event_name])
+
+    def wait_for_any_event(self, event_names: [str]):
+        """Wait for any event from event_names."""
+        future = asyncio.Future(loop=self.machine.clock.loop)
+        keys = []
+        for event_name in event_names:
+            keys.append(self.add_handler(event_name, partial(self._wait_handler,
+                                                             _future=future,
+                                                             _keys=keys,
+                                                             event=event_name)))
+        return future
+
+    def wait_for_event_group_race(self, event_groups: {str: [str]}):
+        """Wait for any event from event_group and return the key of the group."""
+        future = asyncio.Future(loop=self.machine.clock.loop)
+        keys = []
+        for group, event_names in event_groups.items():
+            for event_name in event_names:
+                keys.append(self.add_handler(event_name, partial(self._wait_handler,
+                                                                 _future=future,
+                                                                 _keys=keys,
+                                                                 group=group,
+                                                                 event=event_name)))
+        return future
+
+    def _wait_handler(self, _future: asyncio.Future, _keys: [str], **kwargs):
+        for key in _keys:
+            self.remove_handler_by_key(key)
+
+        if _future.cancelled():
+            return
+        _future.set_result(result=kwargs)
 
     def does_event_exist(self, event_name):
         """Check to see if any handlers are registered for the event name that is passed.
@@ -361,7 +405,7 @@ class EventManager(object):
         if not self.event_queue and hasattr(self.machine.clock, "loop"):
             self.machine.clock.loop.call_soon(self.process_event_queue)
 
-        self.event_queue.append((event, ev_type, callback, kwargs))
+        self.event_queue.append(PostedEvent(event, ev_type, callback, kwargs))
         if self.debug:
             self.log.debug("============== EVENTS QUEUE =============")
             for event in list(self.event_queue):
@@ -391,20 +435,20 @@ class EventManager(object):
 
                 # merge the post's kwargs with the registered handler's kwargs
                 # in case of conflict, posts kwargs will win
-                merged_kwargs = dict(list(handler[2].items()) + list(kwargs.items()))
+                merged_kwargs = dict(list(handler.kwargs.items()) + list(kwargs.items()))
 
                 # log if debug is enabled and this event is not the timer tick
                 if self.debug:
                     try:
                         self.log.debug("%s (priority: %s) responding to event '%s'"
                                        " with args %s",
-                                       (str(handler[0]).split(' '))[2], handler[1],
+                                       (str(handler.callback).split(' ')), handler.priority,
                                        event, merged_kwargs)
                     except IndexError:
                         pass
 
                 # call the handler and save the results
-                result = handler[0](**merged_kwargs)
+                result = handler.callback(**merged_kwargs)
 
                 # If whatever handler we called returns False, we stop
                 # processing the remaining handlers for boolean or queue events

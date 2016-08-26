@@ -16,3 +16,4 @@ class TestConfigOldVersion(MpfTestCase):
 
     def test_config_file_with_old_version(self):
         self.assertRaises(ValueError, super().setUp)
+        self.loop.close()

@@ -658,7 +658,7 @@ class ScoreReelGroup(SystemWideDevice):
                 'scorereelgroup_' + self.name + '_valid',
                 self.light,
                 relight_on_valid=True)
-        else:
+        elif self.unlight_on_resync_key:
             self.machine.events.remove_handler_by_key(
                 self.unlight_on_resync_key)
 

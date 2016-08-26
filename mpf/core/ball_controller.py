@@ -24,8 +24,6 @@ class BallController(object):
         self.log.debug("Loading the BallController")
         self.delay = DelayManager(self.machine.delayRegistry)
 
-        self.game = None
-
         self.num_balls_known = -999
 
         # register for events
