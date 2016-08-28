@@ -183,7 +183,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         if self.dmd:
             self.writer.write(b'BM:' + msg)
             if debug:
-                self.platform.log.debug("Send: %s", msg.decode())
+                self.platform.log.debug("Send: %s", "".join(" 0x%02x" % b for b in msg))
 
         else:
             self.writer.write(msg.encode() + b'\r')
