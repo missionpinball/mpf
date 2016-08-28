@@ -17,11 +17,17 @@ class FASTSwitch(SwitchPlatformInterface):
 
     def configure_debounce(self, config):
         if config['debounce'] in ("normal", "auto"):
-            debounce_open = self.platform.config['default_normal_debounce_open']
-            debounce_close = self.platform.config['default_normal_debounce_close']
+            debounce_open = Util.int_to_hex_string(self.platform.config['default_normal_debounce_open'])
+            debounce_close = Util.int_to_hex_string(self.platform.config['default_normal_debounce_close'])
         else:
-            debounce_open = self.platform.config['default_quick_debounce_open']
-            debounce_close = self.platform.config['default_quick_debounce_close']
+            debounce_open = Util.int_to_hex_string(self.platform.config['default_quick_debounce_open'])
+            debounce_close = Util.int_to_hex_string(self.platform.config['default_quick_debounce_close'])
+
+        if 'debounce_open' in config and config['debounce_open'] is not None:
+            debounce_open = self.platform.convert_number_from_config(config['debounce_open'])
+
+        if 'debounce_close' in config and config['debounce_close'] is not None:
+            debounce_close = self.platform.convert_number_from_config(config['debounce_close'])
 
         if self.connection:
             cmd = 'SN:'
@@ -37,7 +43,7 @@ class FASTSwitch(SwitchPlatformInterface):
         cmd = '{}{},01,{},{}'.format(
             cmd,
             self.number[0],
-            Util.int_to_hex_string(debounce_open),
-            Util.int_to_hex_string(debounce_close))
+            debounce_open,
+            debounce_close)
 
         self.send(cmd)
