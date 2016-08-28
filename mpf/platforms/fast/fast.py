@@ -127,14 +127,14 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         if msg[2:3] == ':':
             cmd = msg[0:2]
             payload = msg[3:].replace('\r', '')
-        else:
+        else:   # pragma: no cover
             self.log.warning("Received malformed message: %s", msg)
             return
 
         # Can't use try since it swallows too many errors for now
         if cmd in self.fast_commands:
             self.fast_commands[cmd](payload)
-        else:
+        else:   # pragma: no cover
             self.log.warning("Received unknown serial command? %s. (This is ok"
                              " to ignore for now while the FAST platform is in "
                              "development)", msg)
