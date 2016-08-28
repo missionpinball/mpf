@@ -80,9 +80,9 @@ down_events: list|str|sw_service_down_active
 
         self._service_mode_exit()
 
-    @asyncio.coroutine
     def _update_main_menu(self, items: [ServiceMenuEntry], position: int):
-        self.machine.events.post("service_menu_selected", item=items[position].label)
+        self.machine.events.post("service_menu_show")
+        self.machine.events.post("service_menu_selected_{}".format(items[position].label))
 
     def _load_menu_entries(self):
         """Return the menu items wich label and callback."""
@@ -102,6 +102,7 @@ down_events: list|str|sw_service_down_active
         while True:
             key = yield from self._get_key()
             if key == 'ESC':
+                self.machine.events.post("service_menu_hide")
                 return
             elif key == 'UP':
                 position += 1

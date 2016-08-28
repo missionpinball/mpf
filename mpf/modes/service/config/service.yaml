@@ -7,23 +7,33 @@ mode:
 
 event_player:
     sw_service_door_open_active:
-        service_door_opened
+        - service_door_opened
     sw_service_door_open_inactive:
-        service_door_closed
+        - service_door_closed
     sw_power_off_inactive:
-        service_power_on
+        - service_power_on
     sw_power_off_active:
-        service_power_off
-
+        - service_power_off
 
 sound_player:
     service_power_off: power_off
 
 slide_player:
-  service_door_opened: service_door_open
+  service_door_opened:
+    service_door_open:
+      action: play
   service_door_closed:
     service_door_open:
       action: remove
+
+  service_menu_show:
+    service_menu:
+      action: play
+      priority: 1
+  service_menu_hide:
+    service_menu:
+      action: remove
+
 
 widget_player:
   service_power_off:
@@ -49,6 +59,13 @@ slides:
     anchor_y: bottom
     x: center
     y: bottom+12
+  service_menu:
+  - type: text
+    text: Service
+    style: small
+    anchor_y: top
+    x: center
+    y: top
 
 widgets:
   service_power_off_door_open:
