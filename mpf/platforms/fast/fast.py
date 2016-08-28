@@ -52,24 +52,23 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         self.config = None
         self.machine_type = None
         self.hw_switch_data = None
-        self.io_boards = {}     # type: dict[int,FastIoBoard]
+        self.io_boards = {}     # type: dict[int, 'mpf.platform.fast.fast_io_board.FastIoBoard']
         self.num_boards = None
 
-        # todo verify this list
-        self.fast_commands = {'ID': self.receive_id,  # processor ID
-                              'WX': self.receive_wx,  # watchdog
-                              'NI': self.receive_ni,  # node ID
-                              'RX': self.receive_rx,  # RGB cmd received
-                              'DX': self.receive_dx,  # DMD cmd received
-                              'SX': self.receive_sx,  # sw config received
-                              'LX': self.receive_lx,  # lamp cmd received
-                              'PX': self.receive_px,  # segment cmd received
+        self.fast_commands = {'ID': lambda x: None,  # processor ID
+                              'WX': lambda x: None,  # watchdog
+                              'NI': lambda x: None,  # node ID
+                              'RX': lambda x: None,  # RGB cmd received
+                              'DX': lambda x: None,  # DMD cmd received
+                              'SX': lambda x: None,  # sw config received
+                              'LX': lambda x: None,  # lamp cmd received
+                              'PX': lambda x: None,  # segment cmd received
+                              'WD': lambda x: None,  # watchdog
                               'SA': self.receive_sa,  # all switch states
                               '/N': self.receive_nw_open,    # nw switch open
                               '-N': self.receive_nw_closed,  # nw switch closed
                               '/L': self.receive_local_open,    # local sw open
                               '-L': self.receive_local_closed,  # local sw cls
-                              'WD': self.receive_wd,  # watchdog
                               }
 
     def initialize(self):
@@ -109,7 +108,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         """Register an IO board.
 
         Args:
-            board: FastIoBoard to register
+            board: 'mpf.platform.fast.fast_io_board.FastIoBoard' to register
         """
         if board.node_id in self.io_boards:
             raise AssertionError("Duplicate node_id")
@@ -197,42 +196,6 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
     def get_hw_switch_states(self):
         """Return hardware states."""
         return self.hw_switch_data
-
-    def receive_id(self, msg):
-        """Ignore command."""
-        pass
-
-    def receive_wx(self, msg):
-        """Ignore command."""
-        pass
-
-    def receive_ni(self, msg):
-        """Ignore command."""
-        pass
-
-    def receive_rx(self, msg):
-        """Ignore command."""
-        pass
-
-    def receive_dx(self, msg):
-        """Ignore command."""
-        pass
-
-    def receive_sx(self, msg):
-        """Ignore command."""
-        pass
-
-    def receive_lx(self, msg):
-        """Ignore command."""
-        pass
-
-    def receive_px(self, msg):
-        """Ignore command."""
-        pass
-
-    def receive_wd(self, msg):
-        """Ignore command."""
-        pass
 
     def receive_nw_open(self, msg):
         """Process network switch open.
