@@ -6,6 +6,7 @@ hardware:
 
 fast:
     ports: com4, com5, com6
+    debug: true
 
 switches:
     s_test:
