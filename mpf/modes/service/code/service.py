@@ -84,13 +84,18 @@ down_events: list|str|sw_service_down_active
     def _update_main_menu(self, items: [ServiceMenuEntry], position: int):
         self.machine.events.post("service_menu_selected", item=items[position].label)
 
-    @asyncio.coroutine
-    def _service_mode_main_menu(self):
-        items = [
+    def _load_menu_entries(self):
+        """Return the menu items wich label and callback."""
+        # If you want to add menu entries overload the mode and this method.
+        return [
             ServiceMenuEntry("switch", self._switch_test_menu),
             ServiceMenuEntry("coil", self._coil_test_menu),
             ServiceMenuEntry("settings", self._settings_menu)
         ]
+
+    @asyncio.coroutine
+    def _service_mode_main_menu(self):
+        items = self._load_menu_entries()
         position = 0
         self._update_main_menu(items, position)
 
