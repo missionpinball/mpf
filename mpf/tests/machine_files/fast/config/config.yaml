@@ -10,6 +10,8 @@ fast:
 switches:
     s_test:
         number: 7
+        debounce_open: 5
+        debounce_close: 5
     s_test_nc:
         number: 1A
         type: 'NC'
