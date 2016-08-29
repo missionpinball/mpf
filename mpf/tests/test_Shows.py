@@ -726,6 +726,8 @@ class TestShows(MpfTestCase):
         self.advance_time_and_run(5)
         while not self.machine.shows['mychildshow'].loaded:
             self.advance_time_and_run(1)
+
+        self.advance_time_and_run(1)
         self.assertEqual(1, self._events['test'])
         self.assertTrue(self.machine.shows['mychildshow'].loaded)
         show.stop()
