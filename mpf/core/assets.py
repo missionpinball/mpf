@@ -10,11 +10,11 @@ from collections import deque
 import asyncio
 
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
-from mpf.core.delays import DelayManager
+from mpf.core.mpf_controller import MpfController
 from mpf.core.utility_functions import Util
 
 
-class BaseAssetManager(object):
+class BaseAssetManager(MpfController):
 
     """Base class for the Asset Manager.
 
@@ -24,10 +24,9 @@ class BaseAssetManager(object):
 
     def __init__(self, machine):
         """Initialise asset manager."""
+        super().__init__(machine)
         self.log = logging.getLogger('AssetManager')
         self.log.debug("Initializing...")
-
-        self.machine = machine
 
         self.machine.register_boot_hold('assets')
 
@@ -532,20 +531,57 @@ class AsyncioAssetManager(BaseAssetManager):
     def __init__(self, machine):
         """Initialise thread pool."""
         super().__init__(machine)
-        self.delay = DelayManager(self.machine.delayRegistry)
         self.asset_loader_threads = concurrent.futures.ThreadPoolExecutor(max_workers=4)
+
+        # Register shutdown handler
+        self.machine.events.add_handler('shutdown',
+                                        self._shutdown)
+
+    def _shutdown(self):
+        self.asset_loader_threads.shutdown()
 
     @staticmethod
     def _load_sync(asset):
         with asset.lock:
             if not asset.loaded:
                 asset.do_load()
+                return True
+            else:
+                return False
 
     @asyncio.coroutine
     def wait_for_asset_load(self, asset):
         """Wait for an asset to load."""
-        yield from self.machine.clock.loop.run_in_executor(self.asset_loader_threads, self._load_sync, asset)
-        asset.is_loaded()
+        result = yield from self.machine.clock.loop.run_in_executor(self.asset_loader_threads, self._load_sync, asset)
+        if result:
+            asset.is_loaded()
+        self.num_assets_loaded += 1
+        self._post_loading_event()
+
+    def load_asset(self, asset):
+        """Load an asset."""
+        self.num_assets_to_load += 1
+        self.machine.clock.loop.create_task(self.wait_for_asset_load(asset))
+
+
+class AsyncioSyncAssetManager(BaseAssetManager):
+
+    """AssetManager which uses asyncio to load assets."""
+
+    @staticmethod
+    def _load_sync(asset):
+        if not asset.loaded:
+            asset.do_load()
+            return True
+        else:
+            return False
+
+    @asyncio.coroutine
+    def wait_for_asset_load(self, asset):
+        """Wait for an asset to load."""
+        result = self._load_sync(asset)
+        if result:
+            asset.is_loaded()
         self.num_assets_loaded += 1
         self._post_loading_event()
 
