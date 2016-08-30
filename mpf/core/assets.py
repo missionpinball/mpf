@@ -528,18 +528,6 @@ class AsyncioAssetManager(BaseAssetManager):
 
     """AssetManager which uses asyncio to load assets."""
 
-    def __init__(self, machine):
-        """Initialise thread pool."""
-        super().__init__(machine)
-        self.asset_loader_threads = concurrent.futures.ThreadPoolExecutor(max_workers=4)
-
-        # Register shutdown handler
-        self.machine.events.add_handler('shutdown',
-                                        self._shutdown)
-
-    def _shutdown(self):
-        self.asset_loader_threads.shutdown()
-
     @staticmethod
     def _load_sync(asset):
         with asset.lock:
@@ -552,7 +540,7 @@ class AsyncioAssetManager(BaseAssetManager):
     @asyncio.coroutine
     def wait_for_asset_load(self, asset):
         """Wait for an asset to load."""
-        result = yield from self.machine.clock.loop.run_in_executor(self.asset_loader_threads, self._load_sync, asset)
+        result = yield from self.machine.clock.loop.run_in_executor(None, self._load_sync, asset)
         if result:
             asset.is_loaded()
         self.num_assets_loaded += 1
