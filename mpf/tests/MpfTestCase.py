@@ -70,6 +70,9 @@ class TestMachineController(MachineController):
 
 class MpfTestCase(unittest.TestCase):
     def __init__(self, methodName='runTest'):
+        self._get_event_loop = None
+        self._get_event_loop2 = None
+
         super().__init__(methodName)
         self.machine = None     # type: TestMachineController
         self.machine_config_patches = dict()
@@ -342,7 +345,6 @@ class MpfTestCase(unittest.TestCase):
         self.machine = None
 
         self.restore_sys_path()
-
         asyncio.get_event_loop = self._get_event_loop
         self._get_event_loop = None
         events.get_event_loop = self._get_event_loop2
