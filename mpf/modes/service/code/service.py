@@ -120,18 +120,27 @@ down_events: list|str|sw_service_down_active
                 yield from items[position].callback()
                 self._update_main_menu(items, position)
 
+    def _switch_monitor(self, name, label, platform, num, state):
+        del platform
+        if state:
+            state_string = "active"
+        else:
+            state_string = "inactive"
+
+        self.machine.events.post("service_switch_test_start",
+                                 switch_name=name,
+                                 switch_num=num,
+                                 switch_label=label,
+                                 switch_state=state_string)
+
     @asyncio.coroutine
     def _switch_test_menu(self):
-        self.machine.events.post("service_switch_test_start", switch_name="name", switch_state="active")
-        while True:
-            esc = self.machine.events.wait_for_any_event(self.config['mode_settings']['esc_events'])
-            switch = self.machine.switch_controller.wait_for_switch("s_start_front")
-            future = yield from Util.first([esc, switch], self.machine.clock.loop)
-            if future == esc:
-                self.machine.events.post("service_switch_test_stop")
-                return
-            elif future == switch:
-                self.machine.events.post("service_switch_test_start", switch_name="s_start", switch_state="active")
+        self.machine.switch_controller.add_monitor(self._switch_monitor)
+        self.machine.events.post("service_switch_test_start",
+                                 switch_name="", switch_state="", switch_num="", switch_label="")
+        yield from self.machine.events.wait_for_any_event(self.config['mode_settings']['esc_events'])
+        self.machine.events.post("service_switch_test_stop")
+        self.machine.switch_controller.remove_monitor(self._switch_monitor)
 
     @asyncio.coroutine
     def _coil_test_menu(self):
