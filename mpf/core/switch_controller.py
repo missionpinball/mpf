@@ -13,6 +13,7 @@ from functools import partial
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.mpf_controller import MpfController
 from mpf.core.utility_functions import Util
+from mpf.devices.switch import Switch
 
 
 class SwitchController(MpfController):
@@ -253,6 +254,10 @@ class SwitchController(MpfController):
             if switch.hw_switch.number == num and switch.platform == platform:
                 self.process_switch_obj(obj=switch, state=state, logical=logical)
                 return
+        else:
+            for monitor in self.monitors:
+                monitor(name=str(num), label="{}-{}".format(str(platform), str(num)), platform=platform, num=num,
+                        state=state)
 
     def process_switch(self, name, state=1, logical=False):
         """Process a new switch state change for a switch by name.
@@ -290,7 +295,7 @@ class SwitchController(MpfController):
 
         self.process_switch_obj(obj, state, logical)
 
-    def process_switch_obj(self, obj, state, logical):
+    def process_switch_obj(self, obj: Switch, state, logical):
         """Process a new switch state change for a switch by name.
 
         Args:
@@ -370,7 +375,7 @@ class SwitchController(MpfController):
         self._cancel_timed_handlers(obj.name, state)
 
         for monitor in self.monitors:
-            monitor(obj.name, state)
+            monitor(name=obj.name, label=obj.label, platform=obj.platform, num=obj.hw_switch.number, state=state)
 
         self._post_switch_events(obj.name, state)
 
@@ -475,6 +480,11 @@ class SwitchController(MpfController):
         """Add a monitor callback which is called on switch changes."""
         if monitor not in self.monitors:
             self.monitors.append(monitor)
+
+    def remove_monitor(self, monitor):
+        """Remove a monitor callback."""
+        if monitor in self.monitors:
+            self.monitors.remove(monitor)
 
     # pylint: disable-msg=too-many-arguments
     def add_switch_handler(self, switch_name, callback, state=1, ms=0,
