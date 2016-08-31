@@ -115,10 +115,11 @@ class Auditor(object):
 
         self.current_audits[audit_class][event] += 1
 
-    def audit_switch(self, switch_name, state):
+    def audit_switch(self, name, state, **kwargs):
         """Record switch change."""
-        if self.enabled and state and switch_name in self.switchnames_to_audit:
-            self.audit('switches', switch_name)
+        del kwargs
+        if self.enabled and state and name in self.switchnames_to_audit:
+            self.audit('switches', name)
 
     def audit_shot(self, name, profile, state):
         """Record shot hit."""
