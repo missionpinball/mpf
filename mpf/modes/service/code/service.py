@@ -81,6 +81,7 @@ down_events: list|str|sw_service_down_active
         self._service_mode_exit()
 
     def _update_main_menu(self, items: [ServiceMenuEntry], position: int):
+        self.machine.events.post("service_menu_deselected")
         self.machine.events.post("service_menu_show")
         self.machine.events.post("service_menu_selected_{}".format(items[position].label))
 
@@ -108,12 +109,12 @@ down_events: list|str|sw_service_down_active
                 position += 1
                 if position >= len(items):
                     position = 0
-                    self._update_main_menu(items, position)
+                self._update_main_menu(items, position)
             elif key == 'DOWN':
                 position -= 1
                 if position < 0:
                     position = len(items) - 1
-                    self._update_main_menu(items, position)
+                self._update_main_menu(items, position)
             elif key == 'ENTER':
                 # call submenu
                 yield from items[position].callback()
@@ -121,7 +122,16 @@ down_events: list|str|sw_service_down_active
 
     @asyncio.coroutine
     def _switch_test_menu(self):
-        pass
+        self.machine.events.post("service_switch_test_start", switch_name="name", switch_state="active")
+        while True:
+            esc = self.machine.events.wait_for_any_event(self.config['mode_settings']['esc_events'])
+            switch = self.machine.switch_controller.wait_for_switch("s_start_front")
+            future = yield from Util.first([esc, switch], self.machine.clock.loop)
+            if future == esc:
+                self.machine.events.post("service_switch_test_stop")
+                return
+            elif future == switch:
+                self.machine.events.post("service_switch_test_start", switch_name="s_start", switch_state="active")
 
     @asyncio.coroutine
     def _coil_test_menu(self):

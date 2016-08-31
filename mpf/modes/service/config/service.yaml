@@ -34,6 +34,14 @@ slide_player:
     service_menu:
       action: remove
 
+  service_switch_test_start:
+    service_switch_test:
+      action: play
+      priority: 2
+  service_switch_test_stop:
+    service_switch_test:
+      action: remove
+
 
 widget_player:
   service_power_off:
@@ -44,6 +52,30 @@ widget_player:
     service_power_off_door_open:
       action: remove
       slide: service_door_open
+
+  service_menu_deselected:
+    service_menu_item_switch:
+      action: remove
+      slide: service_menu
+    service_menu_item_coil:
+      action: remove
+      slide: service_menu
+    service_menu_item_settings:
+      action: remove
+      slide: service_menu
+  service_menu_selected_switch:
+    service_menu_item_switch:
+      action: add
+      slide: service_menu
+  service_menu_selected_coil:
+    service_menu_item_coil:
+      action: add
+      slide: service_menu
+  service_menu_selected_settings:
+    service_menu_item_settings:
+      action: add
+      slide: service_menu
+
 
 slides:
   service_door_open:
@@ -61,11 +93,28 @@ slides:
     y: bottom+12
   service_menu:
   - type: text
-    text: Service
+    text: Service Menu
     style: small
     anchor_y: top
     x: center
     y: top
+  service_switch_test:
+  - type: text
+    text: Switch Test
+    style: small
+    anchor_y: top
+    x: center
+    y: top
+  - type: text
+    text: "Last: (switch_name)"
+    style: small
+    y: center
+  - type: text
+    text: (switch_state)
+    style: small
+    anchor_y: bottom
+    y: bottom
+
 
 widgets:
   service_power_off_door_open:
@@ -84,3 +133,19 @@ widgets:
         value: 0
         duration: 0.5s
         repeat: true
+
+  service_menu_item_switch:
+    type: text
+    text: Switch Test
+    anchor_y: center
+    style: medium
+  service_menu_item_coil:
+    type: text
+    text: Coil Test
+    anchor_y: center
+    style: medium
+  service_menu_item_settings:
+    type: text
+    text: Settings
+    anchor_y: center
+    style: medium
