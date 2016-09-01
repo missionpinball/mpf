@@ -14,7 +14,7 @@ mpf:
         - device_manager: mpf.core.device_manager.DeviceManager
         - switch_controller: mpf.core.switch_controller.SwitchController
         - ball_controller: mpf.core.ball_controller.BallController
-        - asset_manager: mpf.core.assets.AsyncioAssetManager
+        - asset_manager: mpf.core.assets.AsyncioSyncAssetManager
         - show_controller: mpf.core.show_controller.ShowController
         - bcp: mpf.core.bcp.bcp.Bcp
         - logic_blocks: mpf.core.logic_blocks.LogicBlocks

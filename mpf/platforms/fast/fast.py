@@ -53,7 +53,6 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         self.machine_type = None
         self.hw_switch_data = None
         self.io_boards = {}     # type: dict[int, 'mpf.platform.fast.fast_io_board.FastIoBoard']
-        self.num_boards = None
 
         self.fast_commands = {'ID': lambda x: None,  # processor ID
                               'WX': lambda x: None,  # watchdog
@@ -249,10 +248,10 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         num_local, local_states, num_nw, nw_states = msg.split(',')
         num_local = Util.hex_string_to_int(num_local) - 1
-        self.num_boards = Util.hex_string_to_int(num_nw) - 1
+        num_nw = Util.hex_string_to_int(num_nw) - 1
 
         for offset, byte in enumerate(bytearray.fromhex(nw_states)):
-            for i in range(self.num_boards):
+            for i in range(num_nw):
                 num = Util.int_to_hex_string((offset * 8) + i)
                 if byte & (2**i):
                     hw_states[(num, 1)] = 1

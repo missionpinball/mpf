@@ -136,7 +136,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
         firmware_ok = True
 
-        for board_id in range(self.platform.num_boards):
+        for board_id in range(128):
             self.writer.write('NN:{0}\r'.format(board_id).encode())
             msg = ''
             while not msg.startswith('NN:'):
@@ -148,10 +148,9 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
             model = model.strip('\x00')
 
-            # We only iterate known boards
+            # Iterate as many boards as possible
             if not len(model):
-                self.platform.log.critical("Got invalid board response from FAST: {}".format(msg))
-                continue
+                break
 
             self.platform.register_io_board(FastIoBoard(int(node_id, 16), model, fw, int(sw, 16), int(dr, 16)))
 

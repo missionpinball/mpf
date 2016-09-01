@@ -10,6 +10,7 @@ import unittest
 from unittest.mock import *
 
 import asyncio
+from asyncio import events
 import ruamel.yaml as yaml
 
 from mpf.tests.TestDataManager import TestDataManager
@@ -70,6 +71,7 @@ class TestMachineController(MachineController):
 class MpfTestCase(unittest.TestCase):
     def __init__(self, methodName='runTest'):
         self._get_event_loop = None
+        self._get_event_loop2 = None
 
         super().__init__(methodName)
         self.machine = None     # type: TestMachineController
@@ -200,6 +202,8 @@ class MpfTestCase(unittest.TestCase):
     def setUp(self):
         self._get_event_loop = asyncio.get_event_loop
         asyncio.get_event_loop = None
+        self._get_event_loop2 = asyncio.events.get_event_loop
+        events.get_event_loop = None
 
         # we want to reuse config_specs to speed tests up
         mpf.core.config_validator.ConfigValidator.unload_config_spec = (
@@ -343,6 +347,8 @@ class MpfTestCase(unittest.TestCase):
         self.restore_sys_path()
         asyncio.get_event_loop = self._get_event_loop
         self._get_event_loop = None
+        events.get_event_loop = self._get_event_loop2
+        self._get_event_loop2 = None
 
     def add_to_config_validator(self, key, new_dict):
         if mpf.core.config_validator.ConfigValidator.config_spec:
