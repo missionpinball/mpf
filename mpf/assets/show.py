@@ -101,9 +101,9 @@ class Show(Asset):
             return Util.string_to_secs(step['duration'])
 
     def _do_load_show(self, data):
+        # do not use machine or the logger here because it will block
         self.show_steps = list()
 
-        self.machine.show_controller.log.debug("Loading Show %s", self.file)
         if not data and self.file:
             data = self.load_show_from_disk()
 

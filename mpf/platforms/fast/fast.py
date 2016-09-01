@@ -52,24 +52,23 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         self.config = None
         self.machine_type = None
         self.hw_switch_data = None
-        self.io_boards = {}     # type: dict[int,FastIoBoard]
+        self.io_boards = {}     # type: dict[int, 'mpf.platform.fast.fast_io_board.FastIoBoard']
         self.num_boards = None
 
-        # todo verify this list
-        self.fast_commands = {'ID': self.receive_id,  # processor ID
-                              'WX': self.receive_wx,  # watchdog
-                              'NI': self.receive_ni,  # node ID
-                              'RX': self.receive_rx,  # RGB cmd received
-                              'DX': self.receive_dx,  # DMD cmd received
-                              'SX': self.receive_sx,  # sw config received
-                              'LX': self.receive_lx,  # lamp cmd received
-                              'PX': self.receive_px,  # segment cmd received
+        self.fast_commands = {'ID': lambda x: None,  # processor ID
+                              'WX': lambda x: None,  # watchdog
+                              'NI': lambda x: None,  # node ID
+                              'RX': lambda x: None,  # RGB cmd received
+                              'DX': lambda x: None,  # DMD cmd received
+                              'SX': lambda x: None,  # sw config received
+                              'LX': lambda x: None,  # lamp cmd received
+                              'PX': lambda x: None,  # segment cmd received
+                              'WD': lambda x: None,  # watchdog
                               'SA': self.receive_sa,  # all switch states
                               '/N': self.receive_nw_open,    # nw switch open
                               '-N': self.receive_nw_closed,  # nw switch closed
                               '/L': self.receive_local_open,    # local sw open
                               '-L': self.receive_local_closed,  # local sw cls
-                              'WD': self.receive_wd,  # watchdog
                               }
 
     def initialize(self):
@@ -109,7 +108,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         """Register an IO board.
 
         Args:
-            board: FastIoBoard to register
+            board: 'mpf.platform.fast.fast_io_board.FastIoBoard' to register
         """
         if board.node_id in self.io_boards:
             raise AssertionError("Duplicate node_id")
@@ -128,14 +127,14 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         if msg[2:3] == ':':
             cmd = msg[0:2]
             payload = msg[3:].replace('\r', '')
-        else:
+        else:   # pragma: no cover
             self.log.warning("Received malformed message: %s", msg)
             return
 
         # Can't use try since it swallows too many errors for now
         if cmd in self.fast_commands:
             self.fast_commands[cmd](payload)
-        else:
+        else:   # pragma: no cover
             self.log.warning("Received unknown serial command? %s. (This is ok"
                              " to ignore for now while the FAST platform is in "
                              "development)", msg)
@@ -197,42 +196,6 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
     def get_hw_switch_states(self):
         """Return hardware states."""
         return self.hw_switch_data
-
-    def receive_id(self, msg):
-        """Ignore command."""
-        pass
-
-    def receive_wx(self, msg):
-        """Ignore command."""
-        pass
-
-    def receive_ni(self, msg):
-        """Ignore command."""
-        pass
-
-    def receive_rx(self, msg):
-        """Ignore command."""
-        pass
-
-    def receive_dx(self, msg):
-        """Ignore command."""
-        pass
-
-    def receive_sx(self, msg):
-        """Ignore command."""
-        pass
-
-    def receive_lx(self, msg):
-        """Ignore command."""
-        pass
-
-    def receive_px(self, msg):
-        """Ignore command."""
-        pass
-
-    def receive_wd(self, msg):
-        """Ignore command."""
-        pass
 
     def receive_nw_open(self, msg):
         """Process network switch open.
@@ -308,7 +271,8 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         self.hw_switch_data = hw_states
 
-    def _convert_number_from_config(self, number):
+    def convert_number_from_config(self, number):
+        """Convert a number from config format to int."""
         if self.config['config_number_format'] == 'int':
             return Util.int_to_hex_string(number)
         else:
@@ -321,7 +285,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             total_drivers = 0
             for board_obj in self.io_boards.values():
                 total_drivers += board_obj.driver_count
-            index = self._convert_number_from_config(number)
+            index = self.convert_number_from_config(number)
 
             if int(index, 16) >= total_drivers:
                 raise AssertionError("Driver {} does not exist. Only {} drivers found. Driver number: {}".format(
@@ -403,7 +367,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         Returns: Servo object.
         """
-        number = self._convert_number_from_config(config['number'])
+        number = self.convert_number_from_config(config['number'])
 
         return FastServo(number, self.net_connection)
 
@@ -414,7 +378,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             total_switches = 0
             for board_obj in self.io_boards.values():
                 total_switches += board_obj.switch_count
-            index = self._convert_number_from_config(number)
+            index = self.convert_number_from_config(number)
 
             if int(index, 16) >= total_switches:
                 raise AssertionError("Switch {} does not exist. Only {} switches found. Switch number: {}".format(
@@ -538,7 +502,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             num = str(config['number']).split('-')
             number = Util.int_to_hex_string((int(num[0]) * 64) + int(num[1]))
         else:
-            number = self._convert_number_from_config(config['number'])
+            number = self.convert_number_from_config(config['number'])
 
         this_fast_led = FASTDirectLED(number)
         self.fast_leds.add(this_fast_led)
@@ -563,7 +527,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         if self.machine_type == 'wpc':  # translate switch num to FAST switch
             number = fast_defines.wpc_gi_map.get(str(config['number']).upper())
         else:
-            number = self._convert_number_from_config(config['number'])
+            number = self.convert_number_from_config(config['number'])
 
         return FASTGIString(number, self.net_connection.send)
 
@@ -583,7 +547,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         if self.machine_type == 'wpc':  # translate number to FAST light num
             number = fast_defines.wpc_light_map.get(str(config['number']).upper())
         else:
-            number = self._convert_number_from_config(config['number'])
+            number = self.convert_number_from_config(config['number'])
 
         return FASTMatrixLight(number, self.net_connection.send)
 

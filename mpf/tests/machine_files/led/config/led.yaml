@@ -19,3 +19,14 @@ leds:
     number: 12, 13, 14
     type: w+-
     debug: True
+  led_lights:
+    number: light_r,light_g,light_b
+    platform: lights
+
+matrix_lights:
+    light_r:
+        number: 2
+    light_g:
+        number: 3
+    light_b:
+        number: 4

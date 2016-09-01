@@ -445,7 +445,7 @@ class Util(object):
         Example usage: Send "c" as source_hex, returns "0C".
 
         """
-        if len(source_hex) > num_chars:
+        if len(str(source_hex)) > num_chars:
             raise ValueError("Hex string is too long.")
 
         return str(source_hex).upper().zfill(num_chars)

@@ -69,7 +69,10 @@ class TestMachineController(MachineController):
 
 class MpfTestCase(unittest.TestCase):
     def __init__(self, methodName='runTest'):
+        self._get_event_loop = None
+
         super().__init__(methodName)
+        self.machine = None     # type: TestMachineController
         self.machine_config_patches = dict()
         self.machine_config_patches['mpf'] = dict()
         self.machine_config_patches['mpf']['default_platform_hz'] = 100
@@ -195,6 +198,9 @@ class MpfTestCase(unittest.TestCase):
         self._exception = context
 
     def setUp(self):
+        self._get_event_loop = asyncio.get_event_loop
+        asyncio.get_event_loop = None
+
         # we want to reuse config_specs to speed tests up
         mpf.core.config_validator.ConfigValidator.unload_config_spec = (
             MagicMock())
@@ -335,6 +341,8 @@ class MpfTestCase(unittest.TestCase):
         self.machine = None
 
         self.restore_sys_path()
+        asyncio.get_event_loop = self._get_event_loop
+        self._get_event_loop = None
 
     def add_to_config_validator(self, key, new_dict):
         if mpf.core.config_validator.ConfigValidator.config_spec:

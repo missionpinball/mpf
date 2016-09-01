@@ -144,7 +144,7 @@ class TestFast(MpfTestCase):
             "SN:02,01,0A,0A": "SN:P",
             "SN:03,01,0A,0A": "SN:P",
             "SN:16,01,0A,0A": "SN:P",
-            "SN:07,01,0A,0A": "SN:P",
+            "SN:07,01,05,05": "SN:P",
             "SN:1A,01,0A,0A": "SN:P",
             "SN:39,01,0A,0A": "SN:P",
             "DN:04,00,00,00": False,
@@ -256,8 +256,7 @@ class TestFast(MpfTestCase):
 
     def _test_hw_rule_same_board(self):
         self.net_cpu.expected_commands = {
-            "DN:21,01,07,10,0A,ff,00,00,14": False,
-            "SN:07,01,02,02": False
+            "DN:21,01,07,10,0A,ff,00,00,14": False
         }
         # coil and switch are on different boards but first 8 switches always work
         self.machine.autofires.ac_different_boards.enable()
