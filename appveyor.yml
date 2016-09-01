@@ -17,11 +17,12 @@ environment:
 
 install:
   - "%PYTHON%\\python.exe -m pip install -U setuptools wheel pip mock twine"
+  - "%PYTHON%\\python.exe setup.py install --process-dependency-links -e ."
 
 build: off
 
 test_script:
-  - "%PYTHON%\\python.exe setup.py test --process-dependency-links -q"
+  - "%PYTHON%\\python.exe setup.py test -q"
 
 after_test:
   - "%PYTHON%\\python.exe setup.py sdist --formats=gztar"
