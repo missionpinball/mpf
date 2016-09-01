@@ -872,6 +872,15 @@ smartmatrix:
 sound_player:
     __valid_in__: machine, mode, show
     action: single|enum(play,stop,stop_looping)|play
+    volume: single|gain|None
+    loops: single|int|None
+    priority: single|int|None
+    fade_in: single|secs|None
+    fade_out: single|secs|None
+    max_queue_time: single|secs|-1
+    events_when_played: list|str|ignore
+    events_when_stopped: list|str|ignore
+    events_when_looping: list|str|ignore
     __allow_others__:
 sound_pools:
     __valid_in__: machine, mode                      # todo add to validator
