@@ -17,7 +17,7 @@ environment:
 
 install:
   - "%PYTHON%\\python.exe -m pip install -U setuptools wheel pip mock twine"
-  - "%PYTHON%\\python.exe setup.py install --process-dependency-links -e ."
+  - "%PYTHON%\\python.exe -m pip install --process-dependency-links -e ."
 
 build: off
 
