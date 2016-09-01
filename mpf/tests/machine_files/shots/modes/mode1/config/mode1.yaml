@@ -23,6 +23,10 @@ shots:
   shot_26:
     profile: mode1_shot_26
 
+shot_groups:
+    mode_group:
+      shots: mode1_shot_17,mode1_shot_1
+
 shot_profiles:
   mode1_shot_21:
     block: true
