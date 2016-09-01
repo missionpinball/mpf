@@ -148,9 +148,8 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
             model = model.strip('\x00')
 
-            # We only iterate known boards
+            # Iterate as many boards as possible
             if not len(model):
-                self.platform.log.critical("Got invalid board response from FAST: {}".format(msg))
                 break
 
             self.platform.register_io_board(FastIoBoard(int(node_id, 16), model, fw, int(sw, 16), int(dr, 16)))
