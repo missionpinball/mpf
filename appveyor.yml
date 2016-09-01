@@ -21,7 +21,7 @@ install:
 build: off
 
 test_script:
-  - "%PYTHON%\\python.exe setup.py --process-dependency-links test -q"
+  - "%PYTHON%\\python.exe setup.py test --process-dependency-links -q"
 
 after_test:
   - "%PYTHON%\\python.exe setup.py sdist --formats=gztar"
