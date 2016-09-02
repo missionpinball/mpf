@@ -18,8 +18,20 @@ coils:
       number: 2
     device2:
       number: 3
+    coil1:
+      number:
+    coil3:
+      number:
+    coil4:
+      number:
 
 switches:
+    switch1:
+      number:
+    switch2:
+      number:
+    switch3:
+      number:
     start:
         number: 1
         tags: start
@@ -44,6 +56,23 @@ switches:
       number: 10
     device2_s2:
       number: 11
+
+drop_targets:
+   left1:
+     switch: switch1
+   left2:
+     switch: switch2
+   left3:
+     switch: switch3
+     reset_coil: coil3
+     knockdown_coil: coil4
+
+drop_target_banks:
+   left_bank:
+     drop_targets: left1, left2
+     reset_coils: coil1
+     reset_events:
+       drop_target_bank_left_bank_down: 1s
 
 ball_devices:
     outhole:
