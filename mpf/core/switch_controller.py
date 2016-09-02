@@ -5,11 +5,17 @@ states and posting events to the framework.
 """
 
 import logging
-from collections import defaultdict
+from collections import defaultdict, namedtuple
+
+import asyncio
+from functools import partial
 
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.mpf_controller import MpfController
 from mpf.core.utility_functions import Util
+from mpf.devices.switch import Switch
+
+MonitoredSwitchChange = namedtuple("MonitoredSwitchChange", ["name", "label", "platform", "num", "state"])
 
 
 class SwitchController(MpfController):
@@ -251,6 +257,11 @@ class SwitchController(MpfController):
                 self.process_switch_obj(obj=switch, state=state, logical=logical)
                 return
 
+        # if the switch is not configured still trigger the monitor
+        for monitor in self.monitors:
+            monitor(MonitoredSwitchChange(name=str(num), label="{}-{}".format(str(platform), str(num)),
+                                          platform=platform, num=num, state=state))
+
     def process_switch(self, name, state=1, logical=False):
         """Process a new switch state change for a switch by name.
 
@@ -287,7 +298,7 @@ class SwitchController(MpfController):
 
         self.process_switch_obj(obj, state, logical)
 
-    def process_switch_obj(self, obj, state, logical):
+    def process_switch_obj(self, obj: Switch, state, logical):
         """Process a new switch state change for a switch by name.
 
         Args:
@@ -367,13 +378,49 @@ class SwitchController(MpfController):
         self._cancel_timed_handlers(obj.name, state)
 
         for monitor in self.monitors:
-            monitor(obj.name, state)
+            monitor(MonitoredSwitchChange(name=obj.name, label=obj.label, platform=obj.platform,
+                                          num=obj.hw_switch.number, state=state))
 
         self._post_switch_events(obj.name, state)
 
     def _recycle_passed(self, obj, state, logical, hw_state):
         if obj.hw_state == hw_state:
             self.process_switch(obj.name, state, logical)
+
+    def wait_for_switch(self, switch_name: str, state: int=1, only_on_change=True, ms=0):
+        """Wait for a switch to change into state."""
+        return self.wait_for_any_switch([switch_name], state, only_on_change, ms)
+
+    def wait_for_any_switch(self, switch_names: [str], state: int=1, only_on_change=True, ms=0):
+        """Wait for the first switch in the list to change into state."""
+        future = asyncio.Future(loop=self.machine.clock.loop)
+
+        if not only_on_change:
+            for switch_name in switch_names:
+                if self.is_state(switch_name, state, ms):
+                    future.set_result({"switch_name": switch_name, "state": state, "ms": ms})
+                    return future
+
+        handlers = []
+        future.add_done_callback(partial(self._future_done, handlers))
+        for switch_name in switch_names:
+            handlers.append(self.add_switch_handler(switch_name, state=state, ms=ms,
+                                                    callback=partial(self._wait_handler,
+                                                                     ms=ms,
+                                                                     _future=future,
+                                                                     switch_name=switch_name)))
+        return future
+
+    def _future_done(self, handlers, future):
+        del future
+        for handler in handlers:
+            self.remove_switch_handler(**handler)
+
+    @staticmethod
+    def _wait_handler(_future: asyncio.Future, **kwargs):
+        if _future.done():
+            return
+        _future.set_result(result=kwargs)
 
     def _cancel_timed_handlers(self, name, state):
         # now check if the opposite state is in the active timed switches list
@@ -438,6 +485,11 @@ class SwitchController(MpfController):
         """Add a monitor callback which is called on switch changes."""
         if monitor not in self.monitors:
             self.monitors.append(monitor)
+
+    def remove_monitor(self, monitor):
+        """Remove a monitor callback."""
+        if monitor in self.monitors:
+            self.monitors.remove(monitor)
 
     # pylint: disable-msg=too-many-arguments
     def add_switch_handler(self, switch_name, callback, state=1, ms=0,

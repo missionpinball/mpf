@@ -91,6 +91,7 @@ class TestPRoc(MpfTestCase):
         super().setUp()
 
     def test_pulse_and_hold(self):
+        self.assertEqual("P-Roc Board 1", self.machine.coils.c_test.hw_driver.get_board_name())
         # pulse coil A1-B1-2
         self.machine.coils.c_test.pulse()
         # A1-B1-2 -> address 16 + 8 + 2 = 26 in P3-Roc

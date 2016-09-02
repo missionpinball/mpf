@@ -11,6 +11,11 @@ class DriverPlatformInterface(metaclass=abc.ABCMeta):
     methods are implemented to support driver operations in MPF.
     """
 
+    def __init__(self, config, number):
+        """Initialise driver."""
+        self.number = number
+        self.config = config
+
     @abc.abstractmethod
     def disable(self, coil):
         """Disable the driver."""
@@ -20,6 +25,11 @@ class DriverPlatformInterface(metaclass=abc.ABCMeta):
     def enable(self, coil):
         """Enable this driver, which means it's held "on" indefinitely until it's explicitly disabled."""
         raise NotImplementedError('enable method must be defined to use this base class')
+
+    @abc.abstractmethod
+    def get_board_name(self):
+        """Return the name of the board of this driver."""
+        raise NotImplementedError('implement')
 
     @abc.abstractmethod
     def pulse(self, coil, milliseconds):
