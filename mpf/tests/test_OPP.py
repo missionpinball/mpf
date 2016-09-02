@@ -148,6 +148,7 @@ class TestOPP(MpfTestCase):
         self.serialMock.permanent_commands = permanent_commands
 
     def _test_coils(self):
+        self.assertEqual("OPP com1 Board 0x20", self.machine.coils.c_test.hw_driver.get_board_name())
         # pulse coil
         self.serialMock.expected_commands[self._crc_message(b'\x20\x07\x00\x01\x00\x01', False)] = False
         self.machine.coils.c_test.pulse()
