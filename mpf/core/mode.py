@@ -52,9 +52,11 @@ class Mode(object):
         self.player = None
         '''Reference to the current player object.'''
 
+        self._create_mode_devices()
+
         self._validate_mode_config()
 
-        self._create_mode_devices()
+        self._initialise_mode_devices()
 
         self.configure_mode_settings(config.get('mode', dict()))
 
@@ -123,6 +125,10 @@ class Mode(object):
         """Validate mode config."""
         for section in self.machine.config['mpf']['mode_config_sections']:
             this_section = self.config.get(section, None)
+
+            # do not double validate devices
+            if section in self.machine.device_manager.device_classes:
+                continue
 
             if this_section:
                 if isinstance(this_section, dict):
@@ -377,39 +383,60 @@ class Mode(object):
         """Create new devices that are specified in a mode config that haven't been created in the machine-wide."""
         self.log.debug("Scanning config for mode-based devices")
 
-        for collection_name, device_class in (
-                iter(self.machine.device_manager.device_classes.items())):
+        for collection_name, device_class in iter(self.machine.device_manager.device_classes.items()):
 
             # check if there is config for the device type
-            if device_class.config_section in self.config:
+            if device_class.config_section not in self.config:
+                continue
 
-                # check if it is supposed to be used in mode
-                if collection_name not in self.machine.config['mpf']['mode_config_sections']:
-                    raise AssertionError("Found config for device {} in mode {} which may not be used in modes".format(
-                        collection_name, self.name
-                    ))
+            # check if it is supposed to be used in mode
+            if collection_name not in self.machine.config['mpf']['mode_config_sections']:
+                raise AssertionError("Found config for device {} in mode {} which may not be used in modes".format(
+                    collection_name, self.name
+                ))
 
-                for device, settings in (
-                        iter(self.config[device_class.config_section].items())):
+            for device, settings in iter(self.config[device_class.config_section].items()):
 
-                    collection = getattr(self.machine, collection_name)
+                collection = getattr(self.machine, collection_name)
 
-                    if device not in collection:  # no existing device, create
+                if device not in collection:  # no existing device, create
 
-                        self.log.debug("Creating mode-based device: %s",
-                                       device)
+                    self.log.debug("Creating mode-based device: %s",
+                                   device)
 
-                        self.machine.device_manager.create_devices(
-                            collection.name, {device: settings})
+                    self.machine.device_manager.create_devices(
+                        collection.name, {device: settings})
 
-                        # change device from str to object
-                        device = collection[device]
+    def _initialise_mode_devices(self):
+        """Initialise new devices that are specified in a mode config."""
 
-                        # prepare config for mode
-                        settings = device.prepare_config(settings, True)
+        for collection_name, device_class in iter(self.machine.device_manager.device_classes.items()):
 
-                        # config is already validated. just load it
-                        device.load_config(settings)
+            # check if there is config for the device type
+            if device_class.config_section not in self.config:
+                continue
+
+            for device, settings in iter(self.config[device_class.config_section].items()):
+
+                collection = getattr(self.machine, collection_name)
+                device = collection[device]
+                if device.config:
+                    self.log.debug("Overwrite mode-based device: %s", device)
+                    # TODO: implement this
+                    # 1. check if the device allows this
+                    # 2. validate overload section
+                    self.config[collection_name][device.name] = device.validate_and_parse_config(settings, True)
+                    # 3. load overload
+
+                else:
+                    self.log.debug("Initialising mode-based device: %s", device)
+
+                    # prepare config for mode
+                    settings = device.prepare_config(settings, True)
+                    settings = device.validate_and_parse_config(settings, True)
+
+                    # load config
+                    device.load_config(settings)
 
     def _remove_mode_devices(self):
         for device in self.mode_devices:
