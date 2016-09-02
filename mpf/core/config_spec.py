@@ -899,9 +899,12 @@ sounds:
     volume: single|gain|0.5
     loops: single|int|0
     priority: single|int|0
+    start_at: single|secs|0
     fade_in: single|secs|0
     fade_out: single|secs|0
     max_queue_time: single|secs|None
+    max_instances: single|int|None
+    stealing_method: single|enum(skip,oldest,newest)|oldest
     events_when_played: list|str|None
     events_when_stopped: list|str|None
     events_when_looping: list|str|None
