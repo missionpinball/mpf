@@ -1,6 +1,8 @@
 """MPF plugin for an auditor which records switch events, high scores, shots, etc."""
 
 import logging
+
+from mpf.core.switch_controller import MonitoredSwitchChange
 from mpf.devices.shot import Shot
 
 
@@ -115,11 +117,10 @@ class Auditor(object):
 
         self.current_audits[audit_class][event] += 1
 
-    def audit_switch(self, name, state, **kwargs):
+    def audit_switch(self, change: MonitoredSwitchChange):
         """Record switch change."""
-        del kwargs
-        if self.enabled and state and name in self.switchnames_to_audit:
-            self.audit('switches', name)
+        if self.enabled and change.state and change.name in self.switchnames_to_audit:
+            self.audit('switches', change.name)
 
     def audit_shot(self, name, profile, state):
         """Record shot hit."""

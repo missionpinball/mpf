@@ -5,7 +5,7 @@ states and posting events to the framework.
 """
 
 import logging
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
 import asyncio
 from functools import partial
@@ -14,6 +14,8 @@ from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.mpf_controller import MpfController
 from mpf.core.utility_functions import Util
 from mpf.devices.switch import Switch
+
+MonitoredSwitchChange = namedtuple("MonitoredSwitchChange", ["name", "label", "platform", "num", "state"])
 
 
 class SwitchController(MpfController):
@@ -254,10 +256,11 @@ class SwitchController(MpfController):
             if switch.hw_switch.number == num and switch.platform == platform:
                 self.process_switch_obj(obj=switch, state=state, logical=logical)
                 return
-        else:
-            for monitor in self.monitors:
-                monitor(name=str(num), label="{}-{}".format(str(platform), str(num)), platform=platform, num=num,
-                        state=state)
+
+        # if the switch is not configured still trigger the monitor
+        for monitor in self.monitors:
+            monitor(MonitoredSwitchChange(name=str(num), label="{}-{}".format(str(platform), str(num)),
+                                          platform=platform, num=num, state=state))
 
     def process_switch(self, name, state=1, logical=False):
         """Process a new switch state change for a switch by name.
@@ -375,7 +378,8 @@ class SwitchController(MpfController):
         self._cancel_timed_handlers(obj.name, state)
 
         for monitor in self.monitors:
-            monitor(name=obj.name, label=obj.label, platform=obj.platform, num=obj.hw_switch.number, state=state)
+            monitor(MonitoredSwitchChange(name=obj.name, label=obj.label, platform=obj.platform,
+                                          num=obj.hw_switch.number, state=state))
 
         self._post_switch_events(obj.name, state)
 
@@ -412,7 +416,8 @@ class SwitchController(MpfController):
         for handler in handlers:
             self.remove_switch_handler(**handler)
 
-    def _wait_handler(self, _future: asyncio.Future, **kwargs):
+    @staticmethod
+    def _wait_handler(_future: asyncio.Future, **kwargs):
         if _future.done():
             return
         _future.set_result(result=kwargs)
