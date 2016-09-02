@@ -96,6 +96,7 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
 
     """Hit switches when coil is pulsed."""
 
+    # pylint: disable-msg=too-many-arguments
     def __init__(self, actions, machine, platform, confirm_eject_switch, ball_switches):
         """Initialise add ball to target action."""
         super().__init__(actions, machine)
@@ -163,6 +164,7 @@ class HardwarePlatform(VirtualPlatform):
     def _initialize2(self):
         self._initialise_ball_devices()
         self._initialise_drop_targets()
+        self._initialise_drop_target_banks()
 
     def _initialise_drop_targets(self):
         for device in self.machine.drop_targets:
@@ -173,6 +175,7 @@ class HardwarePlatform(VirtualPlatform):
                 device.config['knockdown_coil'].hw_driver.action = SwitchEnableAction(
                     ["pulse"], self.machine, [device.config['switch']])
 
+    def _initialise_drop_target_banks(self):
         for device in self.machine.drop_target_banks:
             if device.config['reset_coil']:
                 device.config['reset_coil'].hw_driver.action = ResetDropTargetAction(
