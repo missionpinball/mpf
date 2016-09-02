@@ -3,6 +3,7 @@ import asyncio
 from collections import namedtuple
 
 from mpf.core.async_mode import AsyncMode
+from mpf.core.switch_controller import MonitoredSwitchChange
 from mpf.core.utility_functions import Util
 
 ServiceMenuEntry = namedtuple("ServiceMenuEntry", ["label", "callback"])
@@ -120,17 +121,16 @@ down_events: list|str|sw_service_down_active
                 yield from items[position].callback()
                 self._update_main_menu(items, position)
 
-    def _switch_monitor(self, name, label, platform, num, state):
-        del platform
-        if state:
+    def _switch_monitor(self, change: MonitoredSwitchChange):
+        if change.state:
             state_string = "active"
         else:
             state_string = "inactive"
 
         self.machine.events.post("service_switch_test_start",
-                                 switch_name=name,
-                                 switch_num=num,
-                                 switch_label=label,
+                                 switch_name=change.name,
+                                 switch_num=change.num,
+                                 switch_label=change.label,
                                  switch_state=state_string)
 
     @asyncio.coroutine
@@ -142,9 +142,39 @@ down_events: list|str|sw_service_down_active
         self.machine.events.post("service_switch_test_stop")
         self.machine.switch_controller.remove_monitor(self._switch_monitor)
 
+    def _update_coil_slide(self, items, position):
+        board, coil = items[position]
+        self.machine.events.post("service_coil_test_start",
+                                 board_name=board,
+                                 coil_name=coil.name,
+                                 coil_label=coil.config['label'],
+                                 coil_num=coil.hw_driver.number)
+
     @asyncio.coroutine
     def _coil_test_menu(self):
-        pass
+        position = 0
+        items = self.machine.service.get_coil_map()
+        self._update_coil_slide(items, position)
+
+        while True:
+            key = yield from self._get_key()
+            if key == 'ESC':
+                break
+            elif key == 'UP':
+                position += 1
+                if position >= len(items):
+                    position = 0
+                self._update_coil_slide(items, position)
+            elif key == 'DOWN':
+                position -= 1
+                if position < 0:
+                    position = len(items) - 1
+                self._update_coil_slide(items, position)
+            elif key == 'ENTER':
+                # pulse coil
+                items[position].coil.pulse()
+
+        self.machine.events.post("service_coil_test_stop")
 
     @asyncio.coroutine
     def _settings_menu(self):
