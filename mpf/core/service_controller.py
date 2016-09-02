@@ -4,8 +4,11 @@ Controller provides all service information and can perform service tasks. Displ
 the service mode or other components.
 """
 import logging
+from collections import namedtuple
 
 from mpf.core.mpf_controller import MpfController
+
+CoilMap = namedtuple("CoilMap", ["board", "coil"])
 
 
 class ServiceController(MpfController):
@@ -50,8 +53,14 @@ class ServiceController(MpfController):
             raise AssertionError("Not in service mode!")
         pass
 
-    def get_coil_map(self):
+    def get_coil_map(self) -> [CoilMap]:
         """Return a map of all coils in the machine."""
         if not self.is_in_service():
             raise AssertionError("Not in service mode!")
-        pass
+        coil_map = []
+        for coil in self.machine.coils.values():
+            coil_map.append(CoilMap(coil.hw_driver.get_board_name(), coil))
+
+        # sort by board + driver number
+        coil_map.sort(key=lambda x: x[0] + str(x[1].hw_driver.number))
+        return coil_map
