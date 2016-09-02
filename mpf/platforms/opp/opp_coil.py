@@ -13,12 +13,15 @@ class OPPSolenoid(DriverPlatformInterface):
 
     def __init__(self, sol_card, number):
         """Initialise OPP solenoid driver."""
+        super().__init__({}, number)
         self.solCard = sol_card
-        self.number = number
         self.log = sol_card.log
-        self.config = {}
         self.can_be_pulsed = False
         self.use_switch = False
+
+    def get_board_name(self):
+        """Return OPP chain and addr."""
+        return "OPP {} Board {}".format(str(self.solCard.chain_serial), "0x%02x" % self.solCard.addr)
 
     def _kick_coil(self, sol_int, on):
         mask = 1 << sol_int

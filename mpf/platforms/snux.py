@@ -372,16 +372,20 @@ class SnuxDriver(DriverPlatformInterface):
     Two of those drivers may be created for one real driver. One for the A and one for the C side.
     """
 
-    def __init__(self, number, platform_driver, overlay):
+    def __init__(self, number, platform_driver: DriverPlatformInterface, overlay):
         """Initialize driver."""
+        super().__init__(platform_driver.config, number)
         self.number = number
         self.platform_driver = platform_driver
         self.overlay = overlay
-        self.config = platform_driver.config
 
     def __repr__(self):
         """Pretty print."""
         return "SnuxDriver.{}".format(self.number)
+
+    def get_board_name(self):
+        """Return name of driver board."""
+        return self.platform_driver.get_board_name()
 
     def pulse(self, coil, milliseconds):
         """Pulse driver."""

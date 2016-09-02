@@ -139,7 +139,7 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
         if proc_num == -1:
             raise AssertionError("Driver {} cannot be controlled by the P3-ROC. ".format(str(config['number'])))
 
-        proc_driver_object = PROCDriver(proc_num, self.proc, config, self.machine)
+        proc_driver_object = PROCDriver(proc_num, config, self)
 
         return proc_driver_object
 
