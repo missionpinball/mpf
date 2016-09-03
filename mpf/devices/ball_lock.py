@@ -113,7 +113,7 @@ class BallLock(SystemWideDevice, ModeDevice):
             ball_to_reduce = balls
 
         self._released_balls -= ball_to_reduce
-        self.log.debug("{} ball of lock drained.".format(ball_to_reduce))
+        self.log.debug("%s ball of lock drained.", ball_to_reduce)
 
         if self._released_balls <= 0:
             if self._release_lock:
