@@ -76,7 +76,7 @@ autofire_coils:
     label: single|str|%
     debug: single|bool|False
     enable_events: dict|str:ms|ball_started
-    disable_events: dict|str:ms|ball_ending
+    disable_events: dict|str:ms|ball_will_end
     coil_overwrite: dict|str:str|None
     switch_overwrite: dict|str:str|None
 
@@ -150,7 +150,7 @@ ball_locks:
     debug: single|bool|False
     enable_events: dict|str:ms|None
     disable_events: dict|str:ms|None
-    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_ending
+    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_will_end
     release_one_events: dict|str:ms|None
 ball_saves:
     __valid_in__: machine, mode
@@ -164,7 +164,7 @@ ball_saves:
     label: single|str|%
     debug: single|bool|False
     enable_events: dict|str:ms|None
-    disable_events: dict|str:ms|ball_ending
+    disable_events: dict|str:ms|ball_will_end
     timer_start_events: dict|str:ms|None
 bcp:
     __valid_in__: machine
@@ -371,7 +371,7 @@ flippers:
     label: single|str|%
     debug: single|bool|False
     enable_events: dict|str:ms|ball_started
-    disable_events: dict|str:ms|ball_ending
+    disable_events: dict|str:ms|ball_will_end
     # enable_no_hold_events: dict|str:ms|None
     # invert_events: dict|str:ms|None
     main_coil_overwrite: dict|str:str|None
@@ -751,7 +751,7 @@ servos:
     ball_search_max: single|float|1.0
     ball_search_wait: single|ms|5s
     reset_position: single|float|0.5
-    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_ending
+    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_will_end
     debug: single|bool|False
     tags: list|str|None
     label: single|str|%
@@ -940,7 +940,7 @@ tilt:
     tilt_switch_tag: single|str|tilt
     slam_tilt_switch_tag: single|str|slam_tilt
     warnings_to_tilt: single|int|3
-    reset_warnings_events: list|str|ball_ending
+    reset_warnings_events: list|str|ball_will_end
     multiple_hit_window: single|ms|300ms
     settle_time: single|ms|5s
     tilt_warnings_player_var: single|str|tilt_warnings

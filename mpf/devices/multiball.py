@@ -46,7 +46,7 @@ class Multiball(SystemWideDevice, ModeDevice):
             if 'enable_events' not in config:
                 config['enable_events'] = 'ball_started'
             if 'disable_events' not in config:
-                config['disable_events'] = 'ball_ending'
+                config['disable_events'] = 'ball_will_end'
         return super().prepare_config(config, is_mode_config)
 
     def start(self, **kwargs):
