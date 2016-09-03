@@ -233,19 +233,6 @@ class EventManager(object):
                                                              event=event_name)))
         return future
 
-    def wait_for_event_group_race(self, event_groups: {str: [str]}):
-        """Wait for any event from event_group and return the key of the group."""
-        future = asyncio.Future(loop=self.machine.clock.loop)
-        keys = []
-        for group, event_names in event_groups.items():
-            for event_name in event_names:
-                keys.append(self.add_handler(event_name, partial(self._wait_handler,
-                                                                 _future=future,
-                                                                 _keys=keys,
-                                                                 group=group,
-                                                                 event=event_name)))
-        return future
-
     def _wait_handler(self, _future: asyncio.Future, _keys: [str], **kwargs):
         for key in _keys:
             self.remove_handler_by_key(key)

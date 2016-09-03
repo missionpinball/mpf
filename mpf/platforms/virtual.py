@@ -319,9 +319,12 @@ class VirtualDriver(DriverPlatformInterface):
     def __init__(self, config):
         """Initialise virtual driver to disabled."""
         self.log = logging.getLogger('VirtualDriver')
-        self.number = config['number']
-        self.config = config
+        super().__init__(config, config['number'])
         self.state = "disabled"
+
+    def get_board_name(self):
+        """Return the name of the board of this driver."""
+        return "Virtual"
 
     def __repr__(self):
         """Str representation."""

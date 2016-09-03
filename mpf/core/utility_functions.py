@@ -2,6 +2,8 @@
 from copy import deepcopy
 import re
 from functools import reduce
+
+import asyncio
 from ruamel.yaml.compat import ordereddict
 
 
@@ -642,3 +644,27 @@ class Util(object):
             return min(max(float(gain_string), 0.0), 1.0)
         except (TypeError, ValueError):
             return 1.0
+
+    @staticmethod
+    @asyncio.coroutine
+    def first(futures: [asyncio.Future], loop):
+        """Return first future and cancel others."""
+        # wait for first
+        done, pending = yield from asyncio.wait(iter(futures), loop=loop, return_when=asyncio.FIRST_COMPLETED)
+        # cancel all other futures
+        for future in pending:
+            future.cancel()
+        return next(iter(done))
+
+    @staticmethod
+    @asyncio.coroutine
+    def race(futures: {asyncio.Future: str}, loop):
+        """Return key of first future and cancel others."""
+        # wait for first
+        first = yield from Util.first(futures.keys(), loop=loop)
+        return futures[first]
+
+    @staticmethod
+    def get_named_list_from_objects(switches: []) -> [str]:
+        """Return a list of names from a list of switch objects."""
+        return [switch.name for switch in switches]

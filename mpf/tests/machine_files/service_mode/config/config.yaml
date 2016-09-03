@@ -8,7 +8,7 @@ modes:
 switches:
     s_door_open:
         number:
-        tags: service_door_open
+        tags: service_door_open, power_off
     s_service_enter:
         number:
         tags: service_enter

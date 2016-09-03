@@ -20,6 +20,15 @@ class AsyncMode(Mode, metaclass=abc.ABCMeta):
         super()._started()
 
         self._task = self.machine.clock.loop.create_task(self._run())
+        self._task.add_done_callback(self._done)
+
+    @staticmethod
+    def _done(future):
+        """Evaluate result of task.
+
+        Will raise exceptions from within task.
+        """
+        future.result()
 
     def _stopped(self):
         """Cancel task."""

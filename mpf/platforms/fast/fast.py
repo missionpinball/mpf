@@ -356,7 +356,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             raise AssertionError("Invalid machine type: {}".format(
                 self.machine_type))
 
-        return FASTDriver(config, self.net_connection.send, self.machine)
+        return FASTDriver(config, self.net_connection.send, self.machine, self)
 
     def configure_servo(self, config: dict):
         """Configure a servo.

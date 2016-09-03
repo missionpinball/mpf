@@ -9,17 +9,14 @@ class FASTDriver(DriverPlatformInterface):
 
     """Base class for drivers connected to a FAST Controller."""
 
-    def __init__(self, config, sender, machine):
+    def __init__(self, config, sender, machine, platform):
         """Initialise driver."""
+        super().__init__(config, config['number'])
+        self.log = logging.getLogger('FASTDriver')
         self.autofire = None
         self.machine = machine
+        self.platform = platform
         self.driver_settings = dict()
-        self.config = config
-
-        self.log = logging.getLogger('FASTDriver')
-
-        # Number is already normalized FAST hex string at this point
-        self.number = config['number']
         self.send = sender
 
         if config['connection'] == 1:
@@ -31,6 +28,21 @@ class FASTDriver(DriverPlatformInterface):
 
         self.log.debug("Driver Settings: %s", self.driver_settings)
         self.reset()
+
+    def get_board_name(self):
+        """Return the board of this driver."""
+        if self.platform.machine_type == 'wpc':
+            return "FAST WPC"
+        else:
+            coil_index = 0
+            number = Util.hex_string_to_int(self.number)
+            for board_obj in self.platform.io_boards.values():
+                if coil_index <= number < coil_index + board_obj.driver_count:
+                    return "FAST Board {}".format(str(board_obj.node_id))
+                coil_index += board_obj.driver_count
+
+            # fall back if not found
+            return "FAST Unknown Board"
 
     def _get_pulse_ms(self, coil):
         if coil.config['pulse_ms'] is None:

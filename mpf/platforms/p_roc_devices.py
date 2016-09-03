@@ -33,15 +33,22 @@ class PROCDriver(DriverPlatformInterface):
 
     """
 
-    def __init__(self, number, proc_driver, config, machine):
+    def __init__(self, number, config, platform):
         """Initialise driver."""
         self.log = logging.getLogger('PROCDriver')
-        self.number = number
-        self.proc = proc_driver
-        self.machine = machine
-        self.config = config
+        super().__init__(config, number)
+        self.proc = platform.proc
+        self.machine = platform.machine
+        self.pdbconfig = getattr(platform, "pdbconfig", None)
 
         self.log.debug("Driver Settings for %s", self.number)
+
+    def get_board_name(self):
+        """Return board of the driver."""
+        if not self.pdbconfig:
+            return "P-Roc"
+        else:
+            return "P-Roc Board {}".format(str(self.pdbconfig.get_coil_bank(self.config['number'])))
 
     @classmethod
     def get_pwm_on_ms(cls, coil):

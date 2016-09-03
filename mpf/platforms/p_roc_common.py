@@ -556,6 +556,15 @@ class PDBConfig(object):
                                          self.use_watchdog,  # Enable watchdog
                                          self.watchdog_time)
 
+    def get_coil_bank(self, number_str):
+        """Return the bank of a coil.
+
+        Args:
+            number_str (str): PDB string
+        """
+        coil = PDBCoil(self, number_str)
+        return coil.boardnum
+
     def get_proc_coil_number(self, number_str):
         """Get the actual number of a coil from the bank index config.
 

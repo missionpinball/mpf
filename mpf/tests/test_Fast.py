@@ -184,6 +184,8 @@ class TestFast(MpfTestCase):
         self._test_coil_configure()
 
     def _test_coil_configure(self):
+        self.assertEqual("FAST Board 0", self.machine.coils.c_test.hw_driver.get_board_name())
+        self.assertEqual("FAST Board 3", self.machine.coils.c_flipper_hold.hw_driver.get_board_name())
         # last driver on board
         self.net_cpu.expected_commands = {
             "DN:2B,00,00,00": False
