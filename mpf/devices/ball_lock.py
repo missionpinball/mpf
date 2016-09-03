@@ -90,7 +90,7 @@ class BallLock(SystemWideDevice, ModeDevice):
             **kwargs: unused
         """
         del kwargs
-        self._released_balls = self.release_all_balls()
+        self._released_balls += self.release_all_balls()
         self.balls_locked = 0
 
         if self._released_balls > 0:
