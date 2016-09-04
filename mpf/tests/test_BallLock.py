@@ -1,3 +1,5 @@
+from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
+
 from mpf.tests.MpfTestCase import MpfTestCase
 from unittest.mock import MagicMock
 
@@ -63,12 +65,10 @@ class TestBallLock(MpfTestCase):
 
         self.machine.events.add_handler('balldevice_captured_from_playfield', self._captured_from_pf)
         self.machine.events.add_handler('balldevice_1_ball_missing', self._missing_ball)
-        self.machine.events.add_handler('collecting_balls_complete', self._collecting_balls_complete_handler)
 
         self._enter = 0
         self._captured = 0
         self._missing = 0
-        self._collecting_balls_complete = 0
 
         # add an initial ball to trough
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
@@ -173,7 +173,7 @@ class TestBallLock(MpfTestCase):
         self.assertEqual(0, self._captured)
         self.assertEqual(0, self._missing)
 
-        # ball drains and game ends
+        # ball drains
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
         self.advance_time_and_run(1)
 
@@ -194,18 +194,19 @@ class TestBallLock(MpfTestCase):
         self.assertEqual(0, lock_logic.balls_locked)
         self.assertEqual(0, self._captured)
         self.assertEqual(0, self._missing)
-
-        self.assertEqual(0, self._collecting_balls_complete)
+        # game did not end because ball has not drained
+        self.assertIsNotNone(self.machine.game)
 
         # ball also drains
         self.machine.switch_controller.process_switch("s_ball_switch2", 1)
         self.advance_time_and_run(1)
+        # game ends
+        self.assertIsNone(self.machine.game)
         self.assertEqual(0, playfield.balls)
         self.assertEqual(1, self._captured)
         self.assertEqual(0, self._missing)
 
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(1, self._collecting_balls_complete)
 
         self.advance_time_and_run(100)
         self.assertEqual(0, playfield.balls)
@@ -213,7 +214,6 @@ class TestBallLock(MpfTestCase):
         self.assertEqual(0, self._missing)
 
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(1, self._collecting_balls_complete)
 
     def test_lock_full_and_release(self):
         coil1 = self.machine.coils['eject_coil1']
@@ -519,3 +519,52 @@ class TestBallLock(MpfTestCase):
         self.assertEqual(0, self._missing)
 
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
+
+
+class TestBallLockSmart(MpfTestCase):
+
+    def getConfigFile(self):
+        return 'test_ball_lock.yaml'
+
+    def getMachinePath(self):
+        return 'tests/machine_files/ball_lock/'
+
+    def get_platform(self):
+        return 'smart_virtual'
+
+    def testBallEnd(self):
+        self.machine.config['game']['balls_per_game'] = 3
+        # add an initial ball to trough
+        self.hit_switch_and_run("s_ball_switch1", 1)
+        self.hit_switch_and_run("s_ball_switch2", 1)
+        self.advance_time_and_run(1)
+        self.assertEqual(0, self.machine.playfield.balls)
+        self.assertEqual(2, self.machine.ball_controller.num_balls_known)
+
+        # press start
+        self.hit_and_release_switch("s_start")
+
+        # wait until ball is on pf
+        self.advance_time_and_run(10)
+        self.assertEqual(1, self.machine.game.player.ball)
+        self.assertEqual(1, self.machine.playfield.balls)
+
+        # lock one ball
+        self.machine.ball_locks.lock_test.enable()
+        self.hit_switch_and_run("s_ball_switch_lock1", 1)
+
+        # wait for a new ball
+        self.advance_time_and_run(10)
+        self.assertEqual(1, self.machine.ball_locks.lock_test.balls_locked)
+        self.assertEqual(1, self.machine.playfield.balls)
+
+        # drain ball on pf
+        self.hit_switch_and_run("s_ball_switch1", 1)
+
+        # maschine waits for the lock
+        self.advance_time_and_run(10)
+        self.assertEqual(1, self.machine.game.player.ball)
+
+        # once the ball drains go to the second
+        self.hit_switch_and_run("s_ball_switch2", 1)
+        self.assertEqual(2, self.machine.game.player.ball)

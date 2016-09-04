@@ -262,6 +262,7 @@ class Game(Mode):
         # todo everything below is hard coded temporary
 
         self.log.debug("Entering Game.ball_ending()")
+        self.machine.events.post('ball_will_end')
 
         self.machine.events.post_queue('ball_ending',
                                        callback=self._ball_ending_done)

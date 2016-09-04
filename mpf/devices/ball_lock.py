@@ -25,6 +25,8 @@ class BallLock(SystemWideDevice, ModeDevice):
         # initialise variables
         self.balls_locked = 0
         self.enabled = False
+        self._released_balls = 0
+        self._release_lock = None
         self.lock_queue = deque()
 
     def device_removed_from_mode(self, mode):
@@ -39,7 +41,7 @@ class BallLock(SystemWideDevice, ModeDevice):
             if 'enable_events' not in config:
                 config['enable_events'] = 'ball_started'
             if 'disable_events' not in config:
-                config['disable_events'] = 'ball_ending'
+                config['disable_events'] = 'ball_will_end'
         return super().prepare_config(config, is_mode_config)
 
     def _initialize(self):
@@ -81,14 +83,52 @@ class BallLock(SystemWideDevice, ModeDevice):
     def reset(self, **kwargs):
         """Reset the lock.
 
-        Will release locked balls. Device will status will stay the same (enabled/disabled).
+        Will release locked balls. Device will status will stay the same (enabled/disabled). It will wait for those
+        balls to drain and block ball_ending until they did. Those balls are not included in ball_in_play.
 
         Args:
             **kwargs: unused
         """
         del kwargs
-        self.release_all_balls()
+        self._released_balls += self.release_all_balls()
         self.balls_locked = 0
+
+        if self._released_balls > 0:
+            # add handler for ball_drain until self._released_balls are drained
+            self.machine.events.add_handler(event='ball_drain',
+                                            handler=self._wait_for_drain)
+
+            # block ball_ending
+            self.machine.events.add_handler(event='ball_ending', priority=10000,
+                                            handler=self._block_during_drain)
+
+    def _wait_for_drain(self, balls, **kwargs):
+        del kwargs
+        if balls <= 0:
+            return {'balls': balls}
+
+        if balls > self._released_balls:
+            ball_to_reduce = self._released_balls
+        else:
+            ball_to_reduce = balls
+
+        self._released_balls -= ball_to_reduce
+        self.log.debug("%s ball of lock drained.", ball_to_reduce)
+
+        if self._released_balls <= 0:
+            if self._release_lock:
+                self._release_lock.clear()
+            self.log.debug("All released balls of lock drained.")
+            self.machine.events.remove_handler_by_event('ball_ending', self._wait_for_drain)
+            self.machine.events.remove_handler_by_event('ball_drain', self._block_during_drain)
+
+        return {'balls': balls - ball_to_reduce}
+
+    def _block_during_drain(self, queue, **kwargs):
+        del kwargs
+        if self._released_balls > 0:
+            queue.wait()
+            self._release_lock = queue
 
     def release_one(self, **kwargs):
         """Release one ball.
@@ -101,7 +141,7 @@ class BallLock(SystemWideDevice, ModeDevice):
 
     def release_all_balls(self):
         """Release all balls in lock."""
-        self.release_balls(self.balls_locked)
+        return self.release_balls(self.balls_locked)
 
     def release_balls(self, balls_to_release):
         """Release all balls and return the actual amount of balls released.
