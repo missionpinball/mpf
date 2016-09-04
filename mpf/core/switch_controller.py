@@ -26,7 +26,7 @@ class SwitchController(MpfController):
     all switch activity in the machine and converting them into events.
 
     More info:
-    http://missionpinball.com/docs/core-components/switch-controller/
+    http://docs.missionpinball.org/en/stable/core/switch_controller.html
 
     """
 
@@ -158,7 +158,7 @@ class SwitchController(MpfController):
                                      "switch %s, but that switch is not in "
                                      "your config. Just FYI.", number)
 
-    def verify_switches(self):
+    def verify_switches(self) -> bool:
         """Verify that switches states match the hardware.
 
         Loop through all the switches and queries their hardware states via
@@ -176,12 +176,17 @@ class SwitchController(MpfController):
 
         self.update_switches_from_hw()
 
+        ok = True
+
         for switch in self.machine.switches:
-            if switch.state ^ switch.invert != current_states[switch]:
+            if switch.state != current_states[switch]:  # pragma: no cover
+                ok = False
                 self.log.warning("Switch State Error! Switch: %s, HW State: "
                                  "%s, MPF State: %s", switch.name,
                                  current_states[switch],
-                                 switch.state ^ switch.invert)
+                                 switch.state)
+
+        return ok
 
     def is_state(self, switch_name, state, ms=0):
         """Check if switch is in state.
@@ -230,10 +235,6 @@ class SwitchController(MpfController):
         """Return the number of ms that have elapsed since this switch last changed state."""
         return round((self.machine.clock.get_time() - self.switches[switch_name]['time']) * 1000.0, 0)
 
-    def secs_since_change(self, switch_name):
-        """Return the number of secs that have elapsed since this switch last changed state."""
-        return self.machine.clock.get_time() - self.switches[switch_name]['time']
-
     def set_state(self, switch_name, state=1, reset_time=False):
         """Set the state of a switch."""
         if reset_time:
@@ -260,7 +261,7 @@ class SwitchController(MpfController):
         # if the switch is not configured still trigger the monitor
         for monitor in self.monitors:
             monitor(MonitoredSwitchChange(name=str(num), label="{}-{}".format(str(platform), str(num)),
-                                          platform=platform, num=num, state=state))
+                                          platform=platform, num=str(num), state=state))
 
     def process_switch(self, name, state=1, logical=False):
         """Process a new switch state change for a switch by name.
@@ -292,7 +293,7 @@ class SwitchController(MpfController):
 
         try:
             obj = self.machine.switches[name]
-        except KeyError:
+        except KeyError:    # pragma: no cover
             raise AssertionError("Cannot process switch \"" + name + "\" as "
                                  "this is not a valid switch name.")
 
@@ -418,8 +419,6 @@ class SwitchController(MpfController):
 
     @staticmethod
     def _wait_handler(_future: asyncio.Future, **kwargs):
-        if _future.done():
-            return
         _future.set_result(result=kwargs)
 
     def _cancel_timed_handlers(self, name, state):
@@ -662,7 +661,7 @@ class SwitchController(MpfController):
     def get_next_timed_switch_event(self):
         """Return time of the next timed switch event."""
         if not self.active_timed_switches:
-            return False
+            raise AssertionError("No active timed switches")
         return min(self.active_timed_switches.keys())
 
     def _process_active_timed_switches(self, dt):
