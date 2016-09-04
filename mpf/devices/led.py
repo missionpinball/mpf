@@ -117,7 +117,6 @@ class Led(SystemWideDevice):
         self.fade_in_progress = False
         self.default_fade_ms = None
 
-        self.registered_handlers = list()
         self._color_correction_profile = None
 
         self.stack = list()
@@ -392,13 +391,6 @@ class Led(SystemWideDevice):
 
             self._write_color_to_hw_driver(reordered_color)
 
-            if self.registered_handlers:
-                # Handlers are not sent color corrected colors
-                # todo make this a config option?
-                for handler in self.registered_handlers:
-                    handler(led_name=self.name,
-                            color=self.stack[0]['color'])
-
     def _get_color_channels_for_hw(self, color):
         color_channels = []
         for color_name in self.config['type']:
@@ -490,27 +482,6 @@ class Led(SystemWideDevice):
         del kwargs
         self.color(color=RGBColor(), fade_ms=fade_ms, priority=priority,
                    key=key)
-
-    def add_handler(self, callback):
-        """Register a handler to be called when this light changes state.
-
-        Args:
-            callback: callback for monitor
-        """
-        self.registered_handlers.append(callback)
-
-    def remove_handler(self, callback=None):
-        """Remove a handler from the list of registered handlers.
-
-        Args:
-            callback: callback of monitor to remove
-        """
-        if not callback:  # remove all
-            self.registered_handlers = []
-            return
-
-        if callback in self.registered_handlers:
-            self.registered_handlers.remove(callback)
 
     def _setup_fade(self):
         if self.fade_in_progress:
