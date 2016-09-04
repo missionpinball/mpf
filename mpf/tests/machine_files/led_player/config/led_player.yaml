@@ -5,18 +5,23 @@ modes:
 
 leds:
   led1:
+    debug: True
     number:
     tags: tag1
   led2:
+    debug: True
     number:
     tags: tag1
   led3:
+    debug: True
     number:
     tags:
   led4:
+    debug: True
     number:
     tags:
   led5:
+    debug: True
     number:
     default_color: red
 

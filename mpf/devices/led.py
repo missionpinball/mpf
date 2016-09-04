@@ -117,7 +117,6 @@ class Led(SystemWideDevice):
         self.fade_in_progress = False
         self.default_fade_ms = None
 
-        self.registered_handlers = list()
         self._color_correction_profile = None
 
         self.stack = list()
@@ -178,7 +177,7 @@ class Led(SystemWideDevice):
 
                 if profile is not None:
                     self.set_color_correction_profile(profile)
-            else:
+            else:   # pragma: no cover
                 error = "Color correction profile '{}' was specified for LED '{}'"\
                         " but the color correction profile does not exist."\
                     .format(self.config['color_correction_profile'], self.name)
@@ -187,11 +186,9 @@ class Led(SystemWideDevice):
 
         if self.config['fade_ms'] is not None:
             self.default_fade_ms = self.config['fade_ms']
-        elif self.machine.config['led_settings']:
+        else:
             self.default_fade_ms = (self.machine.config['led_settings']
                                     ['default_led_fade_ms'])
-        else:
-            self.default_fade_ms = 0
 
         if self.debug:
             self.log.debug("Initializing LED. Platform: %s, CC Profile: %s, "
@@ -394,13 +391,6 @@ class Led(SystemWideDevice):
 
             self._write_color_to_hw_driver(reordered_color)
 
-            if self.registered_handlers:
-                # Handlers are not sent color corrected colors
-                # todo make this a config option?
-                for handler in self.registered_handlers:
-                    handler(led_name=self.name,
-                            color=self.stack[0]['color'])
-
     def _get_color_channels_for_hw(self, color):
         color_channels = []
         for color_name in self.config['type']:
@@ -493,31 +483,7 @@ class Led(SystemWideDevice):
         self.color(color=RGBColor(), fade_ms=fade_ms, priority=priority,
                    key=key)
 
-    def add_handler(self, callback):
-        """Register a handler to be called when this light changes state.
-
-        Args:
-            callback: callback for monitor
-        """
-        self.registered_handlers.append(callback)
-
-    def remove_handler(self, callback=None):
-        """Remove a handler from the list of registered handlers.
-
-        Args:
-            callback: callback of monitor to remove
-        """
-        if not callback:  # remove all
-            self.registered_handlers = []
-            return
-
-        if callback in self.registered_handlers:
-            self.registered_handlers.remove(callback)
-
     def _setup_fade(self):
-        if self.fade_in_progress:
-            return
-
         self.fade_in_progress = True
 
         if self.debug:
@@ -532,12 +498,6 @@ class Led(SystemWideDevice):
             dt: time since last call
         """
         del dt
-
-        # not sure why this is needed, but sometimes the fade task tries to
-        # run even though self.fade_in_progress is False. Maybe
-        # clock.unschedule doesn't happen right away?
-        if not self.fade_in_progress:
-            return
 
         try:
             color_settings = self.stack[0]
