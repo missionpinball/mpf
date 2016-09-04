@@ -575,6 +575,7 @@ mpf-mc:
 multiballs:
     __valid_in__: machine, mode
     ball_count: single|int|
+    ball_count_type: single|enum(add,total)|total
     source_playfield: single|machine(ball_devices)|playfield
     shoot_again: single|ms|10s
     ball_locks: list|machine(ball_locks)|None

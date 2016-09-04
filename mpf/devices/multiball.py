@@ -6,7 +6,7 @@ from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
 
 
-@DeviceMonitor("enabled", "shoot_again", "balls_ejected")
+@DeviceMonitor("enabled", "shoot_again", "balls_added_live", "ball_live_target")
 class Multiball(SystemWideDevice, ModeDevice):
 
     """Multiball device for MPF."""
@@ -22,7 +22,8 @@ class Multiball(SystemWideDevice, ModeDevice):
         super().__init__(machine, name)
 
         self.delay = DelayManager(machine.delayRegistry)
-        self.balls_ejected = 0
+        self.balls_added_live = 0
+        self.balls_live_target = 0
         self.enabled = False
         self.shoot_again = False
 
@@ -49,39 +50,51 @@ class Multiball(SystemWideDevice, ModeDevice):
                 config['disable_events'] = 'ball_will_end'
         return super().prepare_config(config, is_mode_config)
 
+    def _handle_balls_in_play_and_balls_live(self):
+        if self.config['ball_count_type'] == "total":
+            # policy: total balls
+            if self.config['ball_count'] > self.machine.game.balls_in_play:
+                self.balls_added_live = self.config['ball_count'] - self.machine.game.balls_in_play
+                self.machine.game.balls_in_play = self.config['ball_count']
+            self.balls_live_target = self.config['ball_count']
+        else:
+            # policy: add balls
+            self.balls_added_live = self.config['ball_count']
+            self.machine.game.balls_in_play += self.balls_added_live
+            self.balls_live_target = self.machine.game.balls_in_play
+
     def start(self, **kwargs):
         """Start multiball."""
         del kwargs
         if not self.enabled:
             return
 
-        if self.balls_ejected > 0:
+        if self.balls_live_target > 0:
             self.log.debug("Cannot start MB because %s are still in play",
-                           self.balls_ejected)
+                           self.balls_added_live)
             return
 
         self.shoot_again = True
         self.log.debug("Starting multiball with %s balls",
                        self.config['ball_count'])
 
-        self.balls_ejected = self.config['ball_count'] - 1
-
-        self.machine.game.balls_in_play += self.balls_ejected
+        self._handle_balls_in_play_and_balls_live()
 
         balls_added = 0
 
-        # use lock_devices first
+        # always eject all locks
         for device in self.ball_locks:
-            balls_added += device.release_balls(
-                self.balls_ejected - balls_added)
+            balls_added += device.release_all_balls()
 
-            if self.balls_ejected - balls_added <= 0:
-                break
+        # increase balls_in_play if necessary
+        if balls_added > self.balls_added_live:
+            self.log.info("Added %s excess balls found in locks.", balls_added - self.balls_added_live)
+            self.machine.game.balls_in_play += balls_added - self.balls_added_live
+            self.balls_added_live = balls_added
 
         # request remaining balls
-        if self.balls_ejected - balls_added > 0:
-            self.source_playfield.add_ball(
-                balls=self.balls_ejected - balls_added)
+        if self.balls_added_live - balls_added > 0:
+            self.source_playfield.add_ball(balls=self.balls_added_live - balls_added)
 
         if not self.config['shoot_again']:
             # No shoot again. Just stop multiball right away
@@ -107,11 +120,13 @@ class Multiball(SystemWideDevice, ModeDevice):
 
     def _ball_drain_shoot_again(self, balls, **kwargs):
         del kwargs
-        if balls <= 0:
+
+        balls_to_safe = self.balls_live_target - self.machine.game.balls_in_play + balls
+
+        if balls_to_safe <= 0:
             return {'balls': balls}
 
-        self.machine.events.post("multiball_" + self.name + "_shoot_again",
-                                 balls=balls)
+        self.machine.events.post("multiball_" + self.name + "_shoot_again", balls=balls_to_safe)
         '''event: multiball_(name)_shoot_again
         desc: A ball has drained during the multiball called (name) while the
         ball save timer for that multiball was running, so a ball (or balls)
@@ -122,34 +137,20 @@ class Multiball(SystemWideDevice, ModeDevice):
         '''
 
         self.log.debug("Ball drained during MB. Requesting a new one")
-        self.source_playfield.add_ball(balls=balls)
-        return {'balls': 0}
+        self.source_playfield.add_ball(balls=balls_to_safe)
+        return {'balls': balls - balls_to_safe}
 
     def _ball_drain_count_balls(self, balls, **kwargs):
-        if "mb_claimed" in kwargs:
-            claimed = kwargs['mb_claimed']
-        else:
-            claimed = 0
-
-        # balls available to claim
-        available_balls = balls - claimed
-
-        if available_balls >= self.balls_ejected:
-            claimed = self.balls_ejected
-            self.balls_ejected = 0
+        del kwargs
+        if self.machine.game.balls_in_play - balls < 1:
+            self.balls_added_live = 0
+            self.balls_live_target = 0
             self.machine.events.remove_handler(self._ball_drain_count_balls)
             self.machine.events.post("multiball_" + self.name + "_ended")
             '''event: multiball_(name)_ended
             desc: The multiball called (name) has just ended.
             '''
             self.log.debug("Ball drained. MB ended.")
-        else:
-            self.balls_ejected -= available_balls
-            self.log.debug("Ball drained. %s balls remain until MB ends",
-                           self.balls_ejected)
-            claimed = available_balls
-
-        return {'balls': balls, 'mb_claimed': claimed}
 
     def stop(self, **kwargs):
         """Stop shoot again."""
@@ -161,8 +162,7 @@ class Multiball(SystemWideDevice, ModeDevice):
         self.machine.events.remove_handler(self._ball_drain_shoot_again)
 
         # add handler for ball_drain until self.balls_ejected are drained
-        self.machine.events.add_handler('ball_drain',
-                                        self._ball_drain_count_balls)
+        self.machine.events.add_handler('ball_drain', self._ball_drain_count_balls)
 
     def enable(self, **kwargs):
         """Enable the multiball.
@@ -197,4 +197,4 @@ class Multiball(SystemWideDevice, ModeDevice):
         del kwargs
         self.enabled = False
         self.shoot_again = False
-        self.balls_ejected = 0
+        self.balls_added_live = 0
