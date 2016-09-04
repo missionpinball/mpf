@@ -59,6 +59,15 @@ slide_player:
     service_coil_test:
       action: remove
 
+  # settings:
+  service_settings_start:
+    service_settings:
+      action: play
+      priority: 2
+  service_settings_stop:
+    service_settings:
+      action: remove
+
 widget_player:
   # power off
   service_power_off:
@@ -169,6 +178,22 @@ slides:
     text: "(coil_num)"
     style: small
     y: center-6
+  # settings
+  service_settings:
+  - type: text
+    text: "Settings"
+    style: small
+    anchor_y: top
+    x: center
+    y: top
+  - type: text
+    text: "(settings_label)"
+    style: small
+    y: center+6
+  - type: text
+    text: "(value_label)"
+    style: small
+    y: center
 
 widgets:
   # power off on door open slide
