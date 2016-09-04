@@ -178,7 +178,7 @@ class Led(SystemWideDevice):
 
                 if profile is not None:
                     self.set_color_correction_profile(profile)
-            else:
+            else:   # pragma: no cover
                 error = "Color correction profile '{}' was specified for LED '{}'"\
                         " but the color correction profile does not exist."\
                     .format(self.config['color_correction_profile'], self.name)
@@ -187,11 +187,9 @@ class Led(SystemWideDevice):
 
         if self.config['fade_ms'] is not None:
             self.default_fade_ms = self.config['fade_ms']
-        elif self.machine.config['led_settings']:
+        else:
             self.default_fade_ms = (self.machine.config['led_settings']
                                     ['default_led_fade_ms'])
-        else:
-            self.default_fade_ms = 0
 
         if self.debug:
             self.log.debug("Initializing LED. Platform: %s, CC Profile: %s, "
@@ -532,12 +530,6 @@ class Led(SystemWideDevice):
             dt: time since last call
         """
         del dt
-
-        # not sure why this is needed, but sometimes the fade task tries to
-        # run even though self.fade_in_progress is False. Maybe
-        # clock.unschedule doesn't happen right away?
-        if not self.fade_in_progress:
-            return
 
         try:
             color_settings = self.stack[0]
