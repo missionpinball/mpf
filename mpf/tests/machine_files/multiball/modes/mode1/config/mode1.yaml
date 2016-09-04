@@ -5,7 +5,8 @@ mode:
 
 multiballs:
     mb4:
-        ball_count: 2
+        ball_count: 1
+        ball_count_type: add
         shoot_again: 30s
         enable_events: mb4_enable
         disable_events: mb4_disable
