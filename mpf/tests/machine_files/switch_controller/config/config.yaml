@@ -10,3 +10,6 @@ switches:
     s_test_window_ms:
         number: 3
         ignore_window_ms: 100ms
+    s_test_invert:
+        number: 4
+        type: 'NC'
