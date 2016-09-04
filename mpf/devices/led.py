@@ -6,6 +6,7 @@ from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
 from mpf.core.rgb_color import RGBColor
 from mpf.core.rgb_color import RGBColorCorrectionProfile
+from mpf.core.settings_controller import SettingEntry
 from mpf.core.system_wide_device import SystemWideDevice
 
 
@@ -71,6 +72,9 @@ class Led(SystemWideDevice):
             cls.update_leds, 1 / machine.config['mpf']['default_led_hw_update_hz'])
 
         machine.mode_controller.register_stop_method(cls.mode_stop)
+
+        machine.settings.add_setting(SettingEntry("brightness", "Brightness", 100, "brightness", 1.0,
+                                                  {0.25: "25\%", 0.5: "50\%", 0.75: "75\%", 1.0: "100\% (default)"}))
 
     @classmethod
     def update_leds(cls, dt):
