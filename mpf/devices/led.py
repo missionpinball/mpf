@@ -484,9 +484,6 @@ class Led(SystemWideDevice):
                    key=key)
 
     def _setup_fade(self):
-        if self.fade_in_progress:
-            return
-
         self.fade_in_progress = True
 
         if self.debug:
