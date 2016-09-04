@@ -5,6 +5,14 @@ modes:
     - game
     - service
 
+coils:
+    c_test:
+        number: 1
+        label: First coil
+    c_test2:
+        number: 2
+        label: Second coil
+
 switches:
     s_door_open:
         number:
