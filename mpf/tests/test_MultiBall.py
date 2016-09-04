@@ -37,14 +37,14 @@ class TestMultiBall(MpfTestCase):
 
         # mb1 should not start because its not enabled
         self.post_event("mb1_start")
-        self.assertEqual(0, self.machine.multiballs.mb1.balls_ejected)
+        self.assertEqual(0, self.machine.multiballs.mb1.balls_live)
         self.assertFalse(self.machine.multiballs.mb1.enabled)
 
         self.post_event("mb1_enable")
 
         # multiball should be enabled now but not started
         self.assertTrue(self.machine.multiballs.mb1.enabled)
-        self.assertEqual(0, self.machine.multiballs.mb1.balls_ejected)
+        self.assertEqual(0, self.machine.multiballs.mb1.balls_live)
 
         # takes roughly 4s to get ball confirmed
         self.advance_time_and_run(4)
@@ -75,12 +75,12 @@ class TestMultiBall(MpfTestCase):
         self.post_event("mb1_disable")
         # nothing happens
         self.post_event("mb1_start")
-        self.assertEqual(0, self.machine.multiballs.mb1.balls_ejected)
+        self.assertEqual(0, self.machine.multiballs.mb1.balls_live)
 
         # mb start
         self.post_event("mb1_enable")
         self.post_event("mb1_start")
-        self.assertEqual(1, self.machine.multiballs.mb1.balls_ejected)
+        self.assertEqual(1, self.machine.multiballs.mb1.balls_live)
 
         # another ball should be ejected to pf
         self.advance_time_and_run(10)
@@ -159,7 +159,7 @@ class TestMultiBall(MpfTestCase):
 
         # mb started
         self.post_event("mb1_start")
-        self.assertEqual(1, self.machine.multiballs.mb1.balls_ejected)
+        self.assertEqual(1, self.machine.multiballs.mb1.balls_live)
 
         # another ball should be ejected to pf
         self.advance_time_and_run(10)
@@ -180,7 +180,7 @@ class TestMultiBall(MpfTestCase):
 
         # mb cannot start again/nothing happens
         self.post_event("mb1_start")
-        self.assertEqual(1, self.machine.multiballs.mb1.balls_ejected)
+        self.assertEqual(1, self.machine.multiballs.mb1.balls_live)
         self.assertEqual(2, self.machine.playfield.available_balls)
 
         # shoot again ends
@@ -188,7 +188,7 @@ class TestMultiBall(MpfTestCase):
 
         # mb cannot start again because balls are still in play
         self.post_event("mb1_start")
-        self.assertEqual(1, self.machine.multiballs.mb1.balls_ejected)
+        self.assertEqual(1, self.machine.multiballs.mb1.balls_live)
         self.assertEqual(2, self.machine.playfield.available_balls)
         self.assertEqual(0, self._events['multiball_mb1_ended'])
 
@@ -197,13 +197,13 @@ class TestMultiBall(MpfTestCase):
         self.advance_time_and_run(1)
 
         # mb ends
-        self.assertEqual(0, self.machine.multiballs.mb1.balls_ejected)
+        self.assertEqual(0, self.machine.multiballs.mb1.balls_live)
         self.assertEqual(1, self._events['multiball_mb1_ended'])
 
         # restart mb
         self.post_event("mb1_start")
         self.advance_time_and_run(1)
-        self.assertEqual(1, self.machine.multiballs.mb1.balls_ejected)
+        self.assertEqual(1, self.machine.multiballs.mb1.balls_live)
         self.assertEqual(2, self.machine.playfield.available_balls)
         self.assertEqual(1, self.machine.playfield.balls)
 
@@ -252,7 +252,7 @@ class TestMultiBall(MpfTestCase):
 
         # mb started
         self.post_event("mb2_start")
-        self.assertEqual(2, self.machine.multiballs.mb2.balls_ejected)
+        self.assertEqual(2, self.machine.multiballs.mb2.balls_live)
 
         # another two balls should be ejected to pf
         self.advance_time_and_run(10)
@@ -354,7 +354,7 @@ class TestMultiBall(MpfTestCase):
 
         # mb started
         self.post_event("mb2_start")
-        self.assertEqual(2, self.machine.multiballs.mb2.balls_ejected)
+        self.assertEqual(2, self.machine.multiballs.mb2.balls_live)
 
         # another two balls should be ejected to pf
         self.advance_time_and_run(10)
@@ -362,7 +362,7 @@ class TestMultiBall(MpfTestCase):
 
         # start mb3
         self.post_event("mb3_start")
-        self.assertEqual(1, self.machine.multiballs.mb3.balls_ejected)
+        self.assertEqual(1, self.machine.multiballs.mb3.balls_live)
 
         # another ball should appear
         self.advance_time_and_run(10)
@@ -520,11 +520,11 @@ class TestMultiBall(MpfTestCase):
 
         # mode loaded. mb5 should enabled but not started
         self.assertTrue(self.machine.multiballs.mb5.enabled)
-        self.assertEqual(0, self.machine.multiballs.mb5.balls_ejected)
+        self.assertEqual(0, self.machine.multiballs.mb5.balls_live)
 
         # start it
         self.post_event("mb5_start")
-        self.assertEqual(1, self.machine.multiballs.mb5.balls_ejected)
+        self.assertEqual(1, self.machine.multiballs.mb5.balls_live)
 
         self.advance_time_and_run(4)
         self.assertEqual(2, self.machine.playfield.available_balls)
@@ -597,7 +597,7 @@ class TestMultiBall(MpfTestCase):
 
         # start mb
         self.post_event("mb6_start")
-        self.assertEqual(2, self.machine.multiballs.mb6.balls_ejected)
+        self.assertEqual(2, self.machine.multiballs.mb6.balls_live)
 
         # three balls on pf
         self.advance_time_and_run(10)
