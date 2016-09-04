@@ -70,6 +70,10 @@ class TestAuditor(MpfTestCase):
 
         self.assertEqual(2, auditor.current_audits['switches']['s_test'])
 
+        # should not crash on unknown switch
+        self.machine.switch_controller.process_switch_by_num(123123123123, 1, self.machine.default_platform)
+        self.advance_time_and_run()
+
         auditor.disable()
 
         self.machine.switch_controller.process_switch("s_test", 1)
