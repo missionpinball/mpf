@@ -674,11 +674,28 @@ class TestMultiBall(MpfTestCase):
         self.assertTrue(self.machine.multiballs.mb11.shoot_again)
 
         # but the second one should come back
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
         self.advance_time_and_run(4)
         self.assertEqual(2, self.machine.playfield.balls)
         self.assertEqual(2, self.machine.game.balls_in_play)
         self.assertTrue(self.machine.multiballs.mb11.shoot_again)
+
+        # shoot again ends
+        self.advance_time_and_run(10)
+        self.assertFalse(self.machine.multiballs.mb10.shoot_again)
+        self.assertFalse(self.machine.multiballs.mb11.shoot_again)
+        self.assertEqual(3, self.machine.multiballs.mb10.balls_live_target)
+        self.assertEqual(2, self.machine.multiballs.mb11.balls_live_target)
+        self.assertEqual(2, self.machine.game.balls_in_play)
+
+        # drain one balls
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.advance_time_and_run()
+        self.assertEqual(1, self.machine.game.balls_in_play)
+
+        # both mbs should end
+        self.assertEqual(0, self.machine.multiballs.mb10.balls_live_target)
+        self.assertEqual(0, self.machine.multiballs.mb11.balls_live_target)
 
     def test_total_ball_count_with_lock(self):
         # prepare game
