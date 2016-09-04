@@ -20,6 +20,7 @@ mpf:
         - logic_blocks: mpf.core.logic_blocks.LogicBlocks
         - scoring: mpf.core.scoring.ScoreController
         - service: mpf.core.service_controller.ServiceController
+        - settings: mpf.core.settings_controller.SettingsController
 
     config_players:
         coil: mpf.config_players.coil_player
