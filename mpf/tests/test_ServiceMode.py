@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
 
@@ -95,5 +97,112 @@ class TestServiceMode(MpfFakeGameTestCase):
         self.assertModeRunning("attract")
         self.assertEventCalled('service_mode_exited')
 
-    def test_start_enter_service(self):
-        pass
+    def test_start_menu(self):
+        self.mock_event("service_menu_selected_switch")
+        self.mock_event("service_menu_selected_coil")
+        self.mock_event("service_menu_selected_settings")
+        # enter menu
+        self.hit_and_release_switch("s_service_enter")
+        self.advance_time_and_run()
+
+        self.assertEventCalled("service_menu_selected_switch", 1)
+
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+        self.assertEventCalled("service_menu_selected_coil", 1)
+
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+        self.assertEventCalled("service_menu_selected_settings", 1)
+
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+        self.assertEventCalled("service_menu_selected_switch", 2)
+
+        self.hit_and_release_switch("s_service_down")
+        self.advance_time_and_run()
+        self.assertEventCalled("service_menu_selected_settings", 2)
+
+    def test_switch_test(self):
+        # enter menu
+        self.hit_and_release_switch("s_service_enter")
+        self.advance_time_and_run()
+
+        # enter switch test
+        self.hit_and_release_switch("s_service_enter")
+        self.advance_time_and_run()
+
+        self.mock_event("service_switch_test_start")
+        self.mock_event("service_switch_test_stop")
+        self.hit_switch_and_run("s_start", 1)
+
+        self.assertEventCalledWith("service_switch_test_start", switch_label='%', switch_name='s_start',
+                                   switch_num='', switch_state='active')
+
+        # leave switch test
+        self.hit_and_release_switch("s_service_esc")
+        self.advance_time_and_run()
+        self.assertEventCalled("service_switch_test_stop")
+
+    def test_coil_test(self):
+        self.mock_event("service_coil_test_start")
+        self.mock_event("service_coil_test_stop")
+        # enter menu
+        self.hit_and_release_switch("s_service_enter")
+        self.advance_time_and_run()
+
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+
+        # enter coil test
+        self.hit_and_release_switch("s_service_enter")
+        self.advance_time_and_run()
+
+        # selects the first coil
+        self.assertEventCalledWith("service_coil_test_start", board_name='Virtual', coil_label='First coil',
+                                   coil_name='c_test', coil_num='1')
+
+        # select test2
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+        self.assertEventCalledWith("service_coil_test_start", board_name='Virtual', coil_label='Second coil',
+                                   coil_name='c_test2', coil_num='2')
+
+        self.machine.coils.c_test2.pulse = MagicMock()
+        # pulse it
+        self.hit_and_release_switch("s_service_enter")
+        self.advance_time_and_run()
+        self.machine.coils.c_test2.pulse.assert_called_with()
+
+        # wrap to first
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+
+        # selects the first coil
+        self.assertEventCalledWith("service_coil_test_start", board_name='Virtual', coil_label='First coil',
+                                   coil_name='c_test', coil_num='1')
+
+        # wrap back to last
+        self.hit_and_release_switch("s_service_down")
+        self.advance_time_and_run()
+        self.assertEventCalledWith("service_coil_test_start", board_name='Virtual', coil_label='Second coil',
+                                   coil_name='c_test2', coil_num='2')
+
+        # leave coil test
+        self.hit_and_release_switch("s_service_esc")
+        self.advance_time_and_run()
+        self.assertEventCalled("service_coil_test_stop")
+
+    def test_volume(self):
+        self.mock_event("master_volume_increase")
+        self.mock_event("master_volume_decrease")
+
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+        self.assertEventCalled("master_volume_increase", 1)
+        self.assertEventCalled("master_volume_decrease", 0)
+
+        self.hit_and_release_switch("s_service_down")
+        self.advance_time_and_run()
+        self.assertEventCalled("master_volume_increase", 1)
+        self.assertEventCalled("master_volume_decrease", 1)
