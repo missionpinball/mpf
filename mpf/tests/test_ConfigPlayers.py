@@ -60,8 +60,7 @@ class TestConfigPlayers(MpfTestCase):
         super().setUp()
 
     def test_config_player(self):
-        self.assertIn('bananas', ConfigPlayer.show_players)
-        self.assertIn('banana_player', ConfigPlayer.config_file_players)
+        self.assertIn('bananas', self.machine.show_controller.show_players)
 
         # post events to make sure banana_player is called
         self.machine.events.post('event1')

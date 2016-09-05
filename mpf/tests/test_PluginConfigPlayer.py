@@ -109,10 +109,8 @@ class TestPluginConfigPlayer(MpfBcpTestCase):
         self._bcp_client.send = MagicMock()
 
     def test_plugin_config_player(self):
-        self.assertIn('tests', ConfigPlayer.show_players)
-        self.assertIn('test_player', ConfigPlayer.config_file_players)
-        self.assertIn('test2s', ConfigPlayer.show_players)
-        self.assertIn('test2_player', ConfigPlayer.config_file_players)
+        self.assertIn('tests', self.machine.show_controller.show_players)
+        self.assertIn('test2s', self.machine.show_controller.show_players)
 
         # event1 is in the test_player only. Check that it's sent as a
         # trigger
