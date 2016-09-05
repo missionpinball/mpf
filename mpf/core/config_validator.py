@@ -888,8 +888,8 @@ switches:
     platform: single|str|None
 fast_switches:
     __valid_in__: machine
-    debounce_open: single|ms|None
-    debounce_close: single|ms|None
+    debounce_open: single|str|None
+    debounce_close: single|str|None
 system11:
     __valid_in__: machine
     ac_relay_delay_ms: single|ms|75ms
