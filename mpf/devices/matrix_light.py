@@ -46,7 +46,7 @@ class MatrixLight(SystemWideDevice):
         machine.mode_controller.register_stop_method(cls.mode_stop)
 
         machine.settings.add_setting(SettingEntry("brightness", "Brightness", 100, "brightness", 1.0,
-                                                  {0.25: "25\%", 0.5: "50\%", 0.75: "75\%", 1.0: "100\% (default)"}))
+                                                  {0.25: "25%", 0.5: "50%", 0.75: "75%", 1.0: "100% (default)"}))
 
     @classmethod
     def update_matrix_lights(cls, dt):

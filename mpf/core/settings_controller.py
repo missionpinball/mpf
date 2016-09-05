@@ -26,9 +26,9 @@ class SettingsController(MpfController):
 
     def get_settings(self) -> {str, SettingEntry}:
         """Return all available settings."""
-        sorted = list(self._settings.values())
-        sorted.sort(key=lambda x: x.sort)
-        return sorted
+        sorted_list = list(self._settings.values())
+        sorted_list.sort(key=lambda x: x.sort)
+        return sorted_list
 
     def get_setting_value_label(self, setting_name):
         """Return label for value."""
