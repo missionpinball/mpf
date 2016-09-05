@@ -88,6 +88,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self._connect_to_hardware()
         self.opp_commands[ord(OppRs232Intf.READ_GEN2_INP_CMD)] = self.read_gen2_inp_resp
         self._poll_task = self.machine.clock.loop.create_task(self._poll_sender())
+        self._poll_task.add_done_callback(self._done)
 
     def stop(self):
         """Stop hardware and close connections."""
@@ -596,7 +597,16 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
         if not self._light_update_task:
             self._light_update_task = self.machine.clock.loop.create_task(self._update_lights())
+            self._light_update_task.add_done_callback(self._done)
         return self.incandDict[number]
+
+    @staticmethod
+    def _done(future):
+        """Evaluate result of task.
+
+        Will raise exceptions from within task.
+        """
+        future.result()
 
     @asyncio.coroutine
     def _poll_sender(self):

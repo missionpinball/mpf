@@ -575,7 +575,16 @@ class AsyncioSyncAssetManager(BaseAssetManager):
     def load_asset(self, asset):
         """Load an asset."""
         self.num_assets_to_load += 1
-        self.machine.clock.loop.create_task(self.wait_for_asset_load(asset))
+        task = self.machine.clock.loop.create_task(self.wait_for_asset_load(asset))
+        task.add_done_callback(self._done)
+
+    @staticmethod
+    def _done(future):
+        """Evaluate result of task.
+
+        Will raise exceptions from within task.
+        """
+        future.result()
 
 
 class AssetPool(object):
