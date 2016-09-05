@@ -1,20 +1,5 @@
 #config_version=4
 
-leds:
-    led_01:
-        number: 0
-    led_02:
-        number: 1
-        color_correction_profile: correction_profile_1
-
-led_settings:
-    color_correction_profiles:
-        correction_profile_1:
-            gamma: 1
-            whitepoint: [185, 201, 240]
-            linear_slope: 1.5
-            linear_cutoff: 0.5
-
 matrix_lights:
     light_01:
         number: 0
