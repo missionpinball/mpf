@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock
 
+from mpf.core.settings_controller import SettingEntry
 from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
 
@@ -206,3 +207,64 @@ class TestServiceMode(MpfFakeGameTestCase):
         self.advance_time_and_run()
         self.assertEventCalled("master_volume_increase", 1)
         self.assertEventCalled("master_volume_decrease", 1)
+
+    def test_settings(self):
+        self.machine.settings.add_setting(SettingEntry("test1", "Test1", 1, "test1", "b",
+                                                       {"a": "A", "b": "B (default)", "c": "C"}))
+        self.machine.settings.add_setting(SettingEntry("test2", "Test2", 2, "test2", False,
+                                                       {True: "Yes", False: "No (default)"}))
+        self.mock_event("service_settings_start")
+        self.mock_event("service_settings_stop")
+        # enter menu
+        self.hit_and_release_switch("s_service_enter")
+        self.advance_time_and_run()
+
+        self.hit_and_release_switch("s_service_down")
+        self.advance_time_and_run()
+
+        # enter settings
+        self.hit_and_release_switch("s_service_enter")
+        self.advance_time_and_run()
+
+        self.assertEventCalledWith("service_settings_start", settings_label='Test1', value_label="B (default)")
+
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+        self.assertEventCalledWith("service_settings_start", settings_label='Test2', value_label="No (default)")
+
+        # change setting
+        self.hit_and_release_switch("s_service_enter")
+        self.advance_time_and_run()
+        self.assertEventCalledWith("service_settings_start", settings_label='Test2', value_label="No (default)")
+
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+        self.assertEventCalledWith("service_settings_start", settings_label='Test2', value_label="Yes")
+
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+        self.assertEventCalledWith("service_settings_start", settings_label='Test2', value_label="No (default)")
+
+        self.hit_and_release_switch("s_service_down")
+        self.advance_time_and_run()
+        self.assertEventCalledWith("service_settings_start", settings_label='Test2', value_label="Yes")
+
+        # exit setting change
+        self.hit_and_release_switch("s_service_esc")
+        self.advance_time_and_run()
+
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+        self.assertEventCalledWith("service_settings_start", settings_label='Test1', value_label="B (default)")
+
+        self.hit_and_release_switch("s_service_down")
+        self.advance_time_and_run()
+        self.assertEventCalledWith("service_settings_start", settings_label='Test2', value_label="Yes")
+
+        self.assertEventNotCalled("service_settings_stop")
+
+        # exit settings change
+        self.hit_and_release_switch("s_service_esc")
+        self.advance_time_and_run()
+
+        self.assertEventCalled("service_settings_stop")
