@@ -1,0 +1,19 @@
+#config_version=4
+
+coils:
+    c_eject:
+        number:
+
+switches:
+    s_trough:
+        number:
+
+virtual_platform_start_active_switches:
+  s_trough
+
+ball_devices:
+    trough:
+        eject_coil: c_eject
+        ball_switches: s_trough
+        tags: home, trough, drain, ball_add_live
+        debug: True
