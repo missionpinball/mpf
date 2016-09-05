@@ -1046,6 +1046,10 @@ class BallDevice(SystemWideDevice):
                 for dummy_iterator in range(unclaimed_balls):
                     self.setup_eject_chain(path, not self.config['auto_fire_on_unexpected_ball'])
 
+        # we might have ball requests locally. serve them first
+        if self.ball_requests:
+            self._source_device_balls_available()
+
         # tell targets that we have balls available
         for dummy_iterator in range(new_balls):
             self.machine.events.post_boolean('balldevice_balls_available')
@@ -1320,8 +1324,8 @@ class BallDevice(SystemWideDevice):
             target = self._target_on_unexpected_ball
 
         if self.debug:
-            self.log.debug('Adding %s ball(s) to the eject_queue.',
-                           balls)
+            self.log.debug('Adding %s ball(s) to the eject_queue with target %s.',
+                           balls, target)
 
         # add request to queue
         for dummy_iterator in range(balls):
