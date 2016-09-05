@@ -22,8 +22,6 @@ class TestLedPlayer(MpfTestCase):
         self.advance_time_and_run(.01)
 
     def test_config_player_config_processing(self):
-        self.assertIn('led_player', ConfigPlayer.config_file_players)
-
         led1 = self.machine.leds.led1
         led2 = self.machine.leds.led2
         led3 = self.machine.leds.led3

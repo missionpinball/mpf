@@ -10,17 +10,15 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
     show_section = None
     machine_collection_name = None
 
-    show_players = dict()
-    config_file_players = dict()
-
     def __init__(self, machine):
         """Initialise config player."""
         self.device_collection = None
 
         self.machine = machine
 
-        ConfigPlayer.show_players[self.show_section] = self
-        ConfigPlayer.config_file_players[self.config_file_section] = self
+        # MPF only
+        if hasattr(self.machine, "show_controller"):
+            self.machine.show_controller.show_players[self.show_section] = self
 
         self._add_handlers()
 

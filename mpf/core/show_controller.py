@@ -22,6 +22,7 @@ class ShowController(object):
         self.log = logging.getLogger("ShowController")
         self.machine = machine
 
+        self.show_players = {}
         self.running_shows = list()
         self._next_show_id = 0
 
