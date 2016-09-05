@@ -264,8 +264,14 @@ class ConfigValidator(object):
                                                                          'setting name.')
 
     def _validate_type_subconfig(self, item, param, validation_failure_info):
-        del validation_failure_info
-        return self.validate_config(param, item)
+        try:
+            attribute, base_spec_str = param.split(",", 1)
+            base_spec = base_spec_str.split(",")
+        except ValueError:
+            base_spec = None
+            attribute = param
+
+        return self.validate_config(attribute, item, section_name=str(validation_failure_info), base_spec=base_spec)
 
     def _validate_type_enum(self, item, param, validation_failure_info):
         enum_values = param.lower().split(",")
