@@ -232,7 +232,7 @@ color_correction_profile:
     linear_slope: single|float|1.0
     linear_cutoff: single|float|0.0
 config:
-    __valid_in__: machine                           # todo add to validator
+    __valid_in__: machine, mode                           # todo add to validator
 config_player_common:
     __valid_in__: None
     priority: single|int|0
