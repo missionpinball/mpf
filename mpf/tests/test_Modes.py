@@ -35,6 +35,9 @@ class TestModes(MpfTestCase):
         self.assertIn(self.machine.modes.mode1,
                       self.machine.mode_controller.active_modes)
 
+        # test config via include
+        self.assertEqual(123, self.machine.modes.mode1.config['mode_settings']['test'])
+
         # start a mode that's already started and make sure it doesn't explode
         self.machine.modes.mode1.start()
 
