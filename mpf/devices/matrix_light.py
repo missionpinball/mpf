@@ -5,6 +5,7 @@ from operator import itemgetter
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
+from mpf.core.settings_controller import SettingEntry
 from mpf.core.system_wide_device import SystemWideDevice
 
 
@@ -43,6 +44,9 @@ class MatrixLight(SystemWideDevice):
             cls.update_matrix_lights, 1 / machine.config['mpf']['default_matrix_light_hw_update_hz'])
 
         machine.mode_controller.register_stop_method(cls.mode_stop)
+
+        machine.settings.add_setting(SettingEntry("brightness", "Brightness", 100, "brightness", 1.0,
+                                                  {0.25: "25%", 0.5: "50%", 0.75: "75%", 1.0: "100% (default)"}))
 
     @classmethod
     def update_matrix_lights(cls, dt):

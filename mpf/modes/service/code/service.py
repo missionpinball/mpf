@@ -38,20 +38,6 @@ down_events: list|str|sw_service_down_active
             self.machine.events.wait_for_any_event(self.config['mode_settings']['down_events']): "DOWN",
         }, self.machine.clock.loop)
 
-    def _register_service_door_handler(self):
-        for switch in self.config['mode_settings']['door_open_switch']:
-            self.machine.switch_controller.add_switch_handler(
-                switch.name, self._service_door_handler, state=1, return_info=True)
-            self.machine.switch_controller.add_switch_handler(
-                switch.name, self._service_door_handler, state=0, return_info=True)
-
-    def _service_door_handler(self, state, **kwargs):
-        del kwargs
-        if state == 1:
-            self.machine.events.post("service_door_opened")
-        else:
-            self.machine.events.post("service_door_closed")
-
     @asyncio.coroutine
     def _run(self):
         while True:
@@ -74,7 +60,7 @@ down_events: list|str|sw_service_down_active
         self.machine.events.post("service_main_menu")
         try:
             yield from self._service_mode_main_menu()
-        except asyncio.CancelledError:
+        except asyncio.CancelledError:  # pragma: no cover
             # mode is stopping
             self._service_mode_exit()
             raise
@@ -154,6 +140,11 @@ down_events: list|str|sw_service_down_active
     def _coil_test_menu(self):
         position = 0
         items = self.machine.service.get_coil_map()
+
+        # do not crash if no coils are configured
+        if not items:   # pragma: no cover
+            return
+
         self._update_coil_slide(items, position)
 
         while True:
@@ -176,6 +167,64 @@ down_events: list|str|sw_service_down_active
 
         self.machine.events.post("service_coil_test_stop")
 
+    def _update_settings_slide(self, items, position):
+        setting = items[position]
+        label = self.machine.settings.get_setting_value_label(setting.name)
+        self.machine.events.post("service_settings_start",
+                                 settings_label=setting.label,
+                                 value_label=label)
+
     @asyncio.coroutine
     def _settings_menu(self):
-        pass
+        position = 0
+        items = self.machine.settings.get_settings()
+
+        # do not crash if no settings
+        if not items:   # pragma: no cover
+            return
+
+        self._update_settings_slide(items, position)
+
+        while True:
+            key = yield from self._get_key()
+            if key == 'ESC':
+                break
+            elif key == 'UP':
+                position += 1
+                if position >= len(items):
+                    position = 0
+                self._update_settings_slide(items, position)
+            elif key == 'DOWN':
+                position -= 1
+                if position < 0:
+                    position = len(items) - 1
+                self._update_settings_slide(items, position)
+            elif key == 'ENTER':
+                # change setting
+                yield from self._settings_change(items, position)
+
+        self.machine.events.post("service_settings_stop")
+
+    @asyncio.coroutine
+    def _settings_change(self, items, position):
+        self._update_settings_slide(items, position)
+
+        values = list(items[position].values.keys())
+        value_position = values.index(self.machine.settings.get_setting_value(items[position].name))
+
+        while True:
+            key = yield from self._get_key()
+            if key == 'ESC':
+                break
+            elif key == 'UP':
+                value_position += 1
+                if value_position >= len(values):
+                    value_position = 0
+                self.machine.settings.set_setting_value(items[position].name, values[value_position])
+                self._update_settings_slide(items, position)
+            elif key == 'DOWN':
+                value_position -= 1
+                if value_position < 0:
+                    value_position = len(values) - 1
+                self.machine.settings.set_setting_value(items[position].name, values[value_position])
+                self._update_settings_slide(items, position)

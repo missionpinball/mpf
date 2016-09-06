@@ -1,3 +1,7 @@
+from unittest.mock import MagicMock
+
+from mpf.core.switch_controller import MonitoredSwitchChange
+
 from mpf.tests.MpfTestCase import MpfTestCase
 
 
@@ -9,8 +13,57 @@ class TestSwitchController(MpfTestCase):
     def getMachinePath(self):
         return 'tests/machine_files/switch_controller/'
 
-    def _callback(self):
-         self.isActive = self.machine.switch_controller.is_active("s_test", ms=300)
+    def _callback(self, state, ms, switch_name):
+        assert(switch_name == "s_test")
+        assert(ms == 300)
+        assert(state == 1)
+        self.isActive = self.machine.switch_controller.is_active("s_test", ms=300)
+
+    def test_monitor(self):
+        # add monitor
+        monitor = MagicMock()
+        self.machine.switch_controller.add_monitor(monitor)
+
+        # hit
+        self.hit_switch_and_run("s_test", 1)
+        monitor.assert_called_with(MonitoredSwitchChange(
+            name='s_test', label='%', platform=self.machine.default_platform, num='1', state=1))
+        monitor.reset_mock()
+
+        # release
+        self.release_switch_and_run("s_test", 1)
+        monitor.assert_called_with(MonitoredSwitchChange(
+            name='s_test', label='%', platform=self.machine.default_platform, num='1', state=0))
+        monitor.reset_mock()
+
+        # test unknown switch
+        self.machine.switch_controller.process_switch_by_num(123123123, 1, self.machine.default_platform)
+        monitor.assert_called_with(MonitoredSwitchChange(name='123123123', label='<Platform.Virtual>-123123123',
+                                                         platform=self.machine.default_platform, num='123123123',
+                                                         state=1))
+        monitor.reset_mock()
+
+        # remove monitor
+        self.machine.switch_controller.remove_monitor(monitor)
+
+        # no more events
+        self.hit_switch_and_run("s_test", 1)
+        monitor.assert_not_called()
+
+    def test_wait_futures(self):
+        self.hit_switch_and_run("s_test", 1)
+        future = self.machine.switch_controller.wait_for_switch("s_test")
+        future2 = self.machine.switch_controller.wait_for_switch("s_test", only_on_change=False)
+        future3 = self.machine.switch_controller.wait_for_switch("s_test")
+        future3.cancel()
+        self.assertTrue(future2.done())
+        self.release_switch_and_run("s_test", 1)
+        self.assertFalse(future.done())
+        self.hit_switch_and_run("s_test", 1)
+        self.assertTrue(future.done())
+
+    def test_verify_switches(self):
+        self.assertTrue(self.machine.switch_controller.verify_switches())
 
     def test_is_active_timing(self):
         self.isActive = None
@@ -18,7 +71,7 @@ class TestSwitchController(MpfTestCase):
         self.machine.switch_controller.add_switch_handler(
                 switch_name="s_test",
                 callback=self._callback,
-                state=1, ms=300)
+                state=1, ms=300, return_info=True)
         self.machine.switch_controller.process_switch("s_test", 1, True)
 
         self.advance_time_and_run(3)
@@ -52,6 +105,30 @@ class TestSwitchController(MpfTestCase):
                 state=0, ms=250)
 
         self.advance_time_and_run(5)
+
+        cb = MagicMock()
+        self.hit_switch_and_run("s_test", .1)
+        self.machine.switch_controller.add_switch_handler(
+            switch_name="s_test",
+            callback=cb,
+            state=1, ms=300)
+        cb.assert_not_called()
+        self.advance_time_and_run(.1)
+        cb.assert_not_called()
+        self.advance_time_and_run(.1)
+        cb.assert_called_with()
+
+        cb = MagicMock()
+        self.release_switch_and_run("s_test", .1)
+        self.machine.switch_controller.add_switch_handler(
+            switch_name="s_test",
+            callback=cb,
+            state=0, ms=300)
+        cb.assert_not_called()
+        self.advance_time_and_run(.1)
+        cb.assert_not_called()
+        self.advance_time_and_run(.1)
+        cb.assert_called_with()
 
     def test_activation_and_deactivation_events(self):
         self.mock_event("test_active")
@@ -115,3 +192,20 @@ class TestSwitchController(MpfTestCase):
         self.assertFalse(self.machine.switch_controller.is_active("s_test_window_ms"))
         self.advance_time_and_run(.05)
         self.assertTrue(self.machine.switch_controller.is_active("s_test_window_ms"))
+
+    def test_invert(self):
+        self.machine.switch_controller.process_switch("s_test_invert", 1, logical=False)
+        self.advance_time_and_run()
+        self.assertFalse(self.machine.switch_controller.is_active("s_test_invert"))
+
+        self.machine.switch_controller.process_switch("s_test_invert", 1, logical=True)
+        self.advance_time_and_run()
+        self.assertTrue(self.machine.switch_controller.is_active("s_test_invert"))
+
+        self.machine.switch_controller.process_switch("s_test_invert", 0, logical=False)
+        self.advance_time_and_run()
+        self.assertTrue(self.machine.switch_controller.is_active("s_test_invert"))
+
+        self.machine.switch_controller.process_switch("s_test_invert", 0, logical=True)
+        self.advance_time_and_run()
+        self.assertFalse(self.machine.switch_controller.is_active("s_test_invert"))

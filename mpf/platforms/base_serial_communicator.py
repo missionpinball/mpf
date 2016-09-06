@@ -37,6 +37,15 @@ class BaseSerialCommunicator(object):
         yield from self._identify_connection()
 
         self.read_task = self.machine.clock.loop.create_task(self._socket_reader())
+        self.read_task.add_done_callback(self._done)
+
+    @staticmethod
+    def _done(future):
+        """Evaluate result of task.
+
+        Will raise exceptions from within task.
+        """
+        future.result()
 
     @asyncio.coroutine
     def readuntil(self, separator, min_chars: int=0):

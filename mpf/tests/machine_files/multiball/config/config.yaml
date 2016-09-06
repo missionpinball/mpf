@@ -58,30 +58,45 @@ modes:
 
 multiballs:
     mb1:
-        ball_count: 2
+        ball_count: 1
+        ball_count_type: add
         shoot_again: 30s
         enable_events: mb1_enable
         disable_events: mb1_disable
         start_events: mb1_start
         stop_events: mb1_stop
     mb2:
-        ball_count: 3
+        ball_count: 2
+        ball_count_type: add
         shoot_again: -1
         enable_events: mb2_enable
         disable_events: mb2_disable
         start_events: mb2_start
         stop_events: mb2_stop
     mb3:
-        ball_count: 2
+        ball_count: 1
+        ball_count_type: add
         shoot_again: 0
         enable_events: mb3_enable
         disable_events: mb3_disable
         start_events: mb3_start
         stop_events: mb3_stop
     mb6:
-        ball_count: 3
+        ball_count: 2
+        ball_count_type: add
         shoot_again: 0
         start_events: mb6_start
+        ball_locks: lock_mb6
+    mb10:
+        ball_count: 3
+        ball_count_type: total
+        shoot_again: 20s
+        start_events: mb10_start
+    mb11:
+        ball_count: 2
+        ball_count_type: total
+        shoot_again: 20s
+        start_events: mb11_start
         ball_locks: lock_mb6
 
 ball_locks:

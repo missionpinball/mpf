@@ -186,8 +186,8 @@ class Show(Asset):
             # value: dic of express settings or dic of dics w full settings
 
             # check to see if we know how to process this kind of entry
-            if key in ConfigPlayer.show_players.keys():
-                actions[key] = ConfigPlayer.show_players[key].validate_config_entry(value, self.name)
+            if key in self.machine.show_controller.show_players.keys():
+                actions[key] = self.machine.show_controller.show_players[key].validate_config_entry(value, self.name)
 
             elif key != 'duration' and key != 'time':   # pragma: no cover
                 self._show_validation_error('Invalid section "{}:" found in show'.format(key))
@@ -520,7 +520,7 @@ class RunningShow(object):
 
         # clear context in used players
         for player in self._players:
-            ConfigPlayer.show_players[player].show_stop_callback("show_" + str(self.id))
+            self.machine.show_controller.show_players[player].show_stop_callback("show_" + str(self.id))
 
         if self.callback and callable(self.callback):
             self.callback()
@@ -600,9 +600,9 @@ class RunningShow(object):
             if item_type == 'duration':
                 continue
 
-            elif item_type in ConfigPlayer.show_players:
+            elif item_type in self.machine.show_controller.show_players:
 
-                ConfigPlayer.show_players[item_type].show_play_callback(
+                self.machine.show_controller.show_players[item_type].show_play_callback(
                     settings=item_dict,
                     context="show_" + str(self.id),
                     priority=self.priority,

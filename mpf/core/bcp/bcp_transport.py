@@ -36,6 +36,15 @@ class BcpTransportManager:
         """Register a client."""
         self._transports.append(transport)
         self._readers[transport] = self._machine.clock.loop.create_task(self._receive_loop(transport))
+        self._readers[transport].add_done_callback(self._done)
+
+    @staticmethod
+    def _done(future):
+        """Evaluate result of task.
+
+        Will raise exceptions from within task.
+        """
+        future.result()
 
     @asyncio.coroutine
     def _receive_loop(self, transport: BaseBcpClient):

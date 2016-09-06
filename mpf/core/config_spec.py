@@ -76,7 +76,7 @@ autofire_coils:
     label: single|str|%
     debug: single|bool|False
     enable_events: dict|str:ms|ball_started
-    disable_events: dict|str:ms|ball_ending
+    disable_events: dict|str:ms|ball_will_end
     coil_overwrite: dict|str:str|None
     switch_overwrite: dict|str:str|None
 
@@ -150,7 +150,7 @@ ball_locks:
     debug: single|bool|False
     enable_events: dict|str:ms|None
     disable_events: dict|str:ms|None
-    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_ending
+    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_will_end
     release_one_events: dict|str:ms|None
 ball_saves:
     __valid_in__: machine, mode
@@ -164,7 +164,7 @@ ball_saves:
     label: single|str|%
     debug: single|bool|False
     enable_events: dict|str:ms|None
-    disable_events: dict|str:ms|ball_ending
+    disable_events: dict|str:ms|ball_will_end
     timer_start_events: dict|str:ms|None
 bcp:
     __valid_in__: machine
@@ -232,7 +232,7 @@ color_correction_profile:
     linear_slope: single|float|1.0
     linear_cutoff: single|float|0.0
 config:
-    __valid_in__: machine                           # todo add to validator
+    __valid_in__: machine, mode                           # todo add to validator
 config_player_common:
     __valid_in__: None
     priority: single|int|0
@@ -371,7 +371,7 @@ flippers:
     label: single|str|%
     debug: single|bool|False
     enable_events: dict|str:ms|ball_started
-    disable_events: dict|str:ms|ball_ending
+    disable_events: dict|str:ms|ball_will_end
     # enable_no_hold_events: dict|str:ms|None
     # invert_events: dict|str:ms|None
     main_coil_overwrite: dict|str:str|None
@@ -575,6 +575,7 @@ mpf-mc:
 multiballs:
     __valid_in__: machine, mode
     ball_count: single|int|
+    ball_count_type: single|enum(add,total)|total
     source_playfield: single|machine(ball_devices)|playfield
     shoot_again: single|ms|10s
     ball_locks: list|machine(ball_locks)|None
@@ -751,7 +752,7 @@ servos:
     ball_search_max: single|float|1.0
     ball_search_wait: single|ms|5s
     reset_position: single|float|0.5
-    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_ending
+    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_will_end
     debug: single|bool|False
     tags: list|str|None
     label: single|str|%
@@ -934,8 +935,8 @@ switches:
     platform: single|str|None
 fast_switches:
     __valid_in__: machine
-    debounce_open: single|ms|None
-    debounce_close: single|ms|None
+    debounce_open: single|str|None
+    debounce_close: single|str|None
 system11:
     __valid_in__: machine
     ac_relay_delay_ms: single|ms|75ms
@@ -951,7 +952,7 @@ tilt:
     tilt_switch_tag: single|str|tilt
     slam_tilt_switch_tag: single|str|slam_tilt
     warnings_to_tilt: single|int|3
-    reset_warnings_events: list|str|ball_ending
+    reset_warnings_events: list|str|ball_will_end
     multiple_hit_window: single|ms|300ms
     settle_time: single|ms|5s
     tilt_warnings_player_var: single|str|tilt_warnings

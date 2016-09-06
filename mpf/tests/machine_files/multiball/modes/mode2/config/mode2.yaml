@@ -5,5 +5,6 @@ mode:
 
 multiballs:
     mb5:
-        ball_count: 2
+        ball_count: 1
+        ball_count_type: add
         start_events: mb5_start
