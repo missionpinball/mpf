@@ -75,7 +75,7 @@ class Device(object, metaclass=abc.ABCMeta):
         """
         del is_mode_config
         self.machine.config_validator.validate_config(
-            self.config_section, config, self.name)
+            self.config_section, config, self.name, "device")
         return config
 
     def load_config(self, config: dict):
