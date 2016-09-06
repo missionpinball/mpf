@@ -141,7 +141,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
             self._add_hw_rule(switch, coil,
                               self.pinproc.driver_state_pulse(coil.hw_driver.state(), 0))
 
-    def _add_relase_disable_rule_to_switch(self, switch, coil):
+    def _add_release_disable_rule_to_switch(self, switch, coil):
         self._add_hw_rule(switch, coil,
                           self.pinproc.driver_state_disable(coil.hw_driver.state()), invert = True)
 
@@ -176,7 +176,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
                        enable_switch.hw_switch.number, coil.hw_driver.number)
 
         self._add_pulse_rule_to_switch(enable_switch, coil)
-        self._add_relase_disable_rule_to_switch(enable_switch, coil)
+        self._add_release_disable_rule_to_switch(enable_switch, coil)
 
         self._write_rules_to_switch(enable_switch, coil, False)
 
@@ -186,7 +186,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
                        enable_switch.hw_switch.number, coil.hw_driver.number)
 
         self._add_pulse_and_hold_rule_to_switch(enable_switch, coil)
-        self._add_relase_disable_rule_to_switch(enable_switch, coil)
+        self._add_release_disable_rule_to_switch(enable_switch, coil)
 
         self._write_rules_to_switch(enable_switch, coil, False)
 
@@ -197,7 +197,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
                        disable_switch.hw_switch.number, coil.hw_driver.number)
 
         self._add_pulse_and_hold_rule_to_switch(enable_switch, coil)
-        self._add_relase_disable_rule_to_switch(enable_switch, coil)
+        self._add_release_disable_rule_to_switch(enable_switch, coil)
         self._add_disable_rule_to_switch(disable_switch, coil)
 
         self._write_rules_to_switch(enable_switch, coil, False)
