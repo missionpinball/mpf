@@ -1,10 +1,13 @@
 """Contains the base class for flippers."""
+from mpf.core.device_monitor import DeviceMonitor
+
 from mpf.devices.driver import ReconfiguredDriver
 
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.devices.switch import ReconfiguredSwitch
 
 
+@DeviceMonitor("_enabled")
 class Flipper(SystemWideDevice):
 
     """Represents a flipper in a pinball machine. Subclass of Device.
@@ -34,6 +37,7 @@ class Flipper(SystemWideDevice):
         self.hold_coil = None
         self.switch = None
         self.eos_switch = None
+        self._enabled = False
 
     def _initialize(self):
         if "debounce" not in self.config['switch_overwrite']:
@@ -95,6 +99,10 @@ class Flipper(SystemWideDevice):
         I. Enable power if button is active and EOS is not active
         """
         del kwargs
+
+        # prevent duplicate enable
+        if self._enabled:
+            return
 
         # todo disable first to clear any old rules?
 

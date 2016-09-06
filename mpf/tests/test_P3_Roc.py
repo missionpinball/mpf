@@ -358,6 +358,30 @@ class TestP3Roc(MpfTestCase):
         p_roc_common.pinproc.driver_state_pulse.assert_called_with = MagicMock()
         self.machine.default_platform.proc.switch_update_rule = MagicMock()
 
+        # test setting the same rule again
+        self.machine.coils.c_test.hw_driver.state = MagicMock(return_value=8)
+        self.machine.default_platform.set_pulse_on_hit_rule(
+                self.machine.switches.s_test,
+                self.machine.coils.c_test)
+
+        self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
+            call(
+                23, 'closed_debounced',
+                {'notifyHost': True, 'reloadActive': False},
+                [{'patterEnable': False,
+                  'patterOnTime': 0,
+                  'timeslots': 0,
+                  'futureEnable': False,
+                  'state': False,
+                  'patterOffTime': 0,
+                  'outputDriveTime': 0,
+                  'driverNum': 8,
+                  'polarity': True,
+                  'waitForFirstTimeSlot': False}],
+                False),
+        ], any_order=True)
+
+
         self.machine.coils.c_coil_pwm_test.hw_driver.state = MagicMock(return_value=9)
         self.machine.default_platform.set_pulse_on_hit_rule(
             self.machine.switches.s_test,
@@ -511,7 +535,10 @@ class TestP3Roc(MpfTestCase):
                   'waitForFirstTimeSlot': False},
                  ],
                 False),
+            call(1, 'open_debounced', {'reloadActive': False, 'notifyHost': True}, [], False),
+            call(1, 'closed_debounced', {'reloadActive': False, 'notifyHost': True}, [], False)
         ], any_order=True)
+        self.assertEqual(4, self.machine.default_platform.proc.switch_update_rule.call_count)
 
         # disable
         self.machine.default_platform.proc.switch_update_rule = MagicMock()
@@ -522,6 +549,7 @@ class TestP3Roc(MpfTestCase):
             call(1, 'open_debounced', {'notifyHost': True, 'reloadActive': False}, []),
             call(1, 'closed_debounced', {'notifyHost': True, 'reloadActive': False}, []),
         ], any_order=True)
+        self.assertEqual(4, self.machine.default_platform.proc.switch_update_rule.call_count)
 
     def test_flipper_two_coils(self):
         # we pulse the main coil (20)

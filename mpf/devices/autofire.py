@@ -1,9 +1,12 @@
 """Contains the base class for autofire coil devices."""
+from mpf.core.device_monitor import DeviceMonitor
+
 from mpf.devices.driver import ReconfiguredDriver
 from mpf.devices.switch import ReconfiguredSwitch
 from mpf.core.system_wide_device import SystemWideDevice
 
 
+@DeviceMonitor("_enabled")
 class AutofireCoil(SystemWideDevice):
 
     """Coils in the pinball machine which should fire automatically based on switch hits using hardware switch rules.
@@ -25,6 +28,7 @@ class AutofireCoil(SystemWideDevice):
         """Initialise autofire."""
         self.coil = None
         self.switch = None
+        self._enabled = False
         super().__init__(machine, name)
 
     def _initialize(self):
@@ -43,6 +47,10 @@ class AutofireCoil(SystemWideDevice):
         """Enable the autofire coil rule."""
         del kwargs
 
+        if self._enabled:
+            return
+        self._enabled = True
+
         self.log.debug("Enabling")
 
         self.coil.set_pulse_on_hit_rule(self.switch)
@@ -50,5 +58,10 @@ class AutofireCoil(SystemWideDevice):
     def disable(self, **kwargs):
         """Disable the autofire coil rule."""
         del kwargs
+
+        if not self._enabled:
+            return
+        self._enabled = False
+
         self.log.debug("Disabling")
         self.coil.clear_hw_rule(self.switch)
