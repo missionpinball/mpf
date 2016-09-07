@@ -9,6 +9,7 @@ led_stripes:
     debug: True
   stripe2:
     number_start: 200
+    number_template: 7-{}
     count: 5
     direction: 90
     start_x: 10
