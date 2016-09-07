@@ -109,15 +109,15 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
         """Additional config validation for coils overwrites."""
         return "p_roc_coil_overwrites"
 
-    def _add_hw_rule(self, switch, coil, rule, invert = False):
-        type = self._get_event_type(switch.invert == invert, switch.config['debounce'])
+    def _add_hw_rule(self, switch, coil, rule, invert=False):
+        rule_type = self._get_event_type(switch.invert == invert, switch.config['debounce'])
 
         # overwrite rules for the same switch and coil combination
-        for rule_num, rule_obj in enumerate(switch.hw_switch.hw_rules[type]):
+        for rule_num, rule_obj in enumerate(switch.hw_switch.hw_rules[rule_type]):
             if rule_obj[0] == switch.hw_switch.number and rule_obj[1] == coil.hw_driver.number:
-                del switch.hw_switch.hw_rules[type][rule_num]
+                del switch.hw_switch.hw_rules[rule_type][rule_num]
 
-        switch.hw_switch.hw_rules[type].append(
+        switch.hw_switch.hw_rules[rule_type].append(
             (switch.hw_switch.number, coil.hw_driver.number, rule)
         )
 
@@ -143,7 +143,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
 
     def _add_release_disable_rule_to_switch(self, switch, coil):
         self._add_hw_rule(switch, coil,
-                          self.pinproc.driver_state_disable(coil.hw_driver.state()), invert = True)
+                          self.pinproc.driver_state_disable(coil.hw_driver.state()), invert=True)
 
     def _add_disable_rule_to_switch(self, switch, coil):
         self._add_hw_rule(switch, coil,
