@@ -16,6 +16,7 @@ environment:
     secure: nmmwU7UgFbrGUJwIr0Vo6cHzCuxlvW4vjg9TjkwrjmE=
 
 install:
+  - "git submodule update --init --recursive"
   - "%PYTHON%\\python.exe -m pip install -U setuptools wheel pip mock twine"
 
 build: off
