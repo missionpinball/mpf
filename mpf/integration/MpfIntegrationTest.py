@@ -1,4 +1,5 @@
 import os
+
 os.environ["KIVY_NO_ARGS"] = "1"
 
 from queue import Queue
@@ -103,6 +104,7 @@ class MpfIntegrationTest(MpfTestCase):
 
         while not self.mc.is_init_done:
             EventLoop.idle()
+        print("+")
 
     def _start_mc(self):
         from mpfmc.core.mc import MpfMc
@@ -138,7 +140,6 @@ class MpfIntegrationTest(MpfTestCase):
 
     def _run_mc(self, dt):
         del dt
-        Clock.time = self._mc_time
         if self.unittest_verbosity() > 1:
             time.sleep(.05)
         EventLoop.idle()
@@ -156,8 +157,12 @@ class MpfIntegrationTest(MpfTestCase):
     def setUp(self):
         super().setUp()
         self._start_time = time.time()
+        Clock._start_tick = self._start_time
+        Clock._last_tick = self._start_time
+        Clock.time = self._mc_time
+        Clock._events = [[] for i in range(256)]
         self._start_mc()
-        self.clock.schedule_interval(self._run_mc, 1 / 30)
+        self.mc_task = self.clock.schedule_interval(self._run_mc, 1 / 30)
 
         client = self.machine.bcp.transport.get_named_client("local_display")
         bcp_mc = self.mc.bcp_processor
@@ -171,6 +176,7 @@ class MpfIntegrationTest(MpfTestCase):
 
     def tearDown(self):
         self.mc.stop()
-        EventLoop.close()
+        self.clock.unschedule(self.mc_task)
         super().tearDown()
-        Clock._events = [[] for i in range(256)]
+        EventLoop.close()
+
