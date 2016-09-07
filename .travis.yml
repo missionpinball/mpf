@@ -15,7 +15,6 @@ install:
       brew install python3;
   fi;
 - pip3 install coveralls
-- pip3 install https://github.com/pyserial/pyserial-asyncio/archive/master.zip
 - python3 setup.py install
 - git clone --branch $TRAVIS_BRANCH https://github.com/missionpinball/mpf-examples.git || git clone --branch `python3 get_version.py` https://github.com/missionpinball/mpf-examples.git || git clone --branch dev https://github.com/missionpinball/mpf-examples.git
 - git clone --branch $TRAVIS_BRANCH https://github.com/missionpinball/mpf-mc.git || git clone --branch `python3 get_version.py` https://github.com/missionpinball/mpf-mc.git || git clone --branch dev https://github.com/missionpinball/mpf-mc.git
