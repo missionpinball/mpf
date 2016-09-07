@@ -63,7 +63,10 @@ class LedGroup(SystemWideDevice):
         tags = [self.name]
         tags.extend(self.config['tags'])
         led_config = copy.deepcopy(self.config['led_template'])
-        led_config['number'] = index
+        if self.config['number_template']:
+            led_config['number'] = self.config['number_template'].format(index)
+        else:
+            led_config['number'] = index
         led_config['tags'].append(self.name)
         led_config['debug'] = self.debug
         led_config['x'] = x
