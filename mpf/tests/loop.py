@@ -10,7 +10,7 @@ import asyncio
 
 from mpf.core.clock import ClockBase
 
-from serial_asyncio import SerialTransport
+from mpf.pyserial_asyncio.serial_asyncio import SerialTransport
 
 
 class NextTimers:
