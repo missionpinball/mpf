@@ -1,5 +1,4 @@
 """Contains the Mode base class."""
-
 import copy
 import logging
 
