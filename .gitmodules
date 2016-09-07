@@ -1,0 +1,3 @@
+[submodule "mpf/pyserial_asyncio"]
+	path = mpf/pyserial_asyncio
+	url = https://github.com/pyserial/pyserial-asyncio.git
