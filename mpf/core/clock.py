@@ -3,7 +3,7 @@ import logging
 import asyncio
 from functools import partial
 
-from serial_asyncio import create_serial_connection
+from mpf.pyserial_asyncio.serial_asyncio import create_serial_connection
 
 
 class PeriodicTask:
