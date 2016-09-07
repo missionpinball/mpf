@@ -68,7 +68,8 @@ community.''',
 
     zip_safe=False,
 
-    install_requires=['ruamel.yaml>=0.10, <0.11', 'pyserial'],
+    dependency_links=['https://github.com/pyserial/pyserial-asyncio/archive/master.zip#egg=pyserial-asyncio-0.0.1'],
+    install_requires=['ruamel.yaml>=0.10, <0.11', 'pyserial', 'pyserial-asyncio>=0.0.1'],
 
     tests_require=[],
     test_suite="mpf.tests",
