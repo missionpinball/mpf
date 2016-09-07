@@ -104,7 +104,6 @@ class MpfIntegrationTest(MpfTestCase):
 
         while not self.mc.is_init_done:
             EventLoop.idle()
-        print("+")
 
     def _start_mc(self):
         from mpfmc.core.mc import MpfMc
@@ -116,8 +115,7 @@ class MpfIntegrationTest(MpfTestCase):
             os.path.join(mpfmc.__path__[0], os.pardir,
                          self.get_options()['mcconfigfile'])), 'machine')
 
-        machine_path = os.path.abspath(os.path.join(
-            mpfmc.__path__[0], os.pardir, 'mpfmc', self.getAbsoluteMachinePath()))
+        machine_path = self.getAbsoluteMachinePath()
 
         mpf_config = load_machine_config(
             Util.string_to_list(self.getConfigFile()),
@@ -149,7 +147,10 @@ class MpfIntegrationTest(MpfTestCase):
 
     def __init__(self, methodName):
         super().__init__(methodName)
-        del self.machine_config_patches['mpf']['plugins']
+        try:
+            del self.machine_config_patches['mpf']['plugins']
+        except KeyError:
+            pass
         self.machine_config_patches['bcp'] = \
             {"connections": {"local_display": {"type": "mpf.integration.MpfIntegrationTest.TestBcpClient"}}}
         self.machine_config_patches['bcp']['servers'] = []
