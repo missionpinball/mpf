@@ -420,6 +420,7 @@ leds:
 led_stripes:
     __valid_in__: machine
     number_start: single|int|
+    number_template: single|str|None
     start_x: single|float|None
     start_y: single|float|None
     direction: single|float|None
@@ -429,6 +430,7 @@ led_stripes:
 led_rings:
     __valid_in__: machine
     number_start: single|int|
+    number_template: single|str|None
     center_x: single|float|None
     center_y: single|float|None
     start_angle: single|float|0

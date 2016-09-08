@@ -35,15 +35,15 @@ class TestLedPlayer(MpfTestCase):
         self.assertListEqual(["test", "stripe1"], self.machine.leds["stripe1_led_14"].config['tags'])
 
         # stripe 2
-        self.assertEqual("200", self.machine.leds["stripe2_led_200"].hw_driver.number)
+        self.assertEqual("7-200", self.machine.leds["stripe2_led_200"].hw_driver.number)
         self.assertEqual(10, self.machine.leds["stripe2_led_200"].config['x'])
         self.assertEqual(20, self.machine.leds["stripe2_led_200"].config['y'])
-        self.assertEqual("201", self.machine.leds["stripe2_led_201"].hw_driver.number)
+        self.assertEqual("7-201", self.machine.leds["stripe2_led_201"].hw_driver.number)
         self.assertEqual(15, self.machine.leds["stripe2_led_201"].config['x'])
         self.assertEqual(20, self.machine.leds["stripe2_led_201"].config['y'])
-        self.assertEqual("202", self.machine.leds["stripe2_led_202"].hw_driver.number)
-        self.assertEqual("203", self.machine.leds["stripe2_led_203"].hw_driver.number)
-        self.assertEqual("204", self.machine.leds["stripe2_led_204"].hw_driver.number)
+        self.assertEqual("7-202", self.machine.leds["stripe2_led_202"].hw_driver.number)
+        self.assertEqual("7-203", self.machine.leds["stripe2_led_203"].hw_driver.number)
+        self.assertEqual("7-204", self.machine.leds["stripe2_led_204"].hw_driver.number)
 
         # ring 1
         self.assertEqual("20", self.machine.leds["ring1_led_20"].hw_driver.number)
