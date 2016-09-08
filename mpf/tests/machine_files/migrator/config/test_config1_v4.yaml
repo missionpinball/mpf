@@ -405,7 +405,7 @@ slides:
         z: 1
         color: red
         animations:
-            entrance:
+            show_slide:
             -   property: opacity
                 value: 1
                 duration: 0.4s

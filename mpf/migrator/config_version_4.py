@@ -888,14 +888,14 @@ class V4Migrator(VersionMigrator):
         decorator = element[old_key]
 
         element[new_key] = CommentedMap()
-        element[new_key]['entrance'] = CommentedSeq()
+        element[new_key]['show_slide'] = CommentedSeq()
 
         on_dict = CommentedMap()
         on_dict['property'] = 'opacity'
         on_dict['value'] = 1
         on_dict['duration'] = str(decorator.get('on_secs', .5)) + 's'
 
-        element[new_key]['entrance'].append(on_dict)
+        element[new_key]['show_slide'].append(on_dict)
 
         off_dict = CommentedMap()
         off_dict['property'] = 'opacity'
@@ -903,7 +903,7 @@ class V4Migrator(VersionMigrator):
         off_dict['duration'] = str(decorator.get('off_secs', .5)) + 's'
         off_dict['repeat'] = True
 
-        element[new_key]['entrance'].append(off_dict)
+        element[new_key]['show_slide'].append(off_dict)
 
         del element[old_key]
 
