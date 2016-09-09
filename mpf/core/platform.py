@@ -317,9 +317,12 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
         Returns: Validated config.
         """
+        base_spec = ["device"]
+        if self.__class__.get_switch_config_section():
+            base_spec.append(self.__class__.get_switch_config_section())
         switch.machine.config_validator.validate_config(
             "switches", config, switch.name,
-            base_spec=self.__class__.get_switch_config_section())
+            base_spec=base_spec)
         return config
 
     @abc.abstractmethod
@@ -395,9 +398,12 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     def validate_coil_section(self, driver, config):
         """Validate coil config for platform."""
+        base_spec = ["device"]
+        if self.__class__.get_coil_config_section():
+            base_spec.append(self.__class__.get_coil_config_section())
         driver.machine.config_validator.validate_config(
             "coils", config, driver.name,
-            base_spec=self.__class__.get_coil_config_section())
+            base_spec=base_spec)
         return config
 
     @abc.abstractmethod

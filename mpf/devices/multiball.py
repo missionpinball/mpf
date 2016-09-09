@@ -6,7 +6,7 @@ from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
 
 
-@DeviceMonitor("enabled", "shoot_again", "balls_added_live", "ball_live_target")
+@DeviceMonitor("enabled", "shoot_again", "balls_added_live", "balls_live_target")
 class Multiball(SystemWideDevice, ModeDevice):
 
     """Multiball device for MPF."""

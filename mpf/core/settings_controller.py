@@ -15,6 +15,7 @@ class SettingsController(MpfController):
     """
 
     def __init__(self, machine):
+        """Initialise settings controller."""
         super().__init__(machine)
 
         # start with default settings
@@ -46,6 +47,7 @@ class SettingsController(MpfController):
         return self.machine.get_machine_var(self._settings[setting_name].machine_var)
 
     def set_setting_value(self, setting_name, value):
+        """Set the value of a setting."""
         if setting_name not in self._settings:
             raise AssertionError("Invalid setting {}".format(setting_name))
 

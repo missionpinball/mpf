@@ -1,6 +1,5 @@
 """Contains show related classes."""
 from mpf.core.assets import Asset, AssetPool
-from mpf.core.config_player import ConfigPlayer
 from mpf.core.file_manager import FileManager
 from mpf.core.utility_functions import Util
 from mpf.file_interfaces.yaml_interface import YamlInterface

@@ -114,7 +114,7 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
 
     def validate_switch_section(self, switch, config):
         """Validate switch sections."""
-        sections = []
+        sections = ["device"]
         for platform in self._get_platforms():
             if hasattr(platform, "get_switch_config_section") and platform.get_switch_config_section():
                 sections.append(platform.get_switch_config_section())
@@ -147,7 +147,7 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
 
     def validate_coil_section(self, driver, config):
         """Validate coil sections."""
-        sections = []
+        sections = ["device"]
         for platform in self._get_platforms():
             if hasattr(platform, "get_coil_config_section") and platform.get_coil_config_section():
                 sections.append(platform.get_coil_config_section())

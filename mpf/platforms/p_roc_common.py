@@ -109,42 +109,45 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
         """Additional config validation for coils overwrites."""
         return "p_roc_coil_overwrites"
 
+    def _add_hw_rule(self, switch, coil, rule, invert=False):
+        rule_type = self._get_event_type(switch.invert == invert, switch.config['debounce'])
+
+        # overwrite rules for the same switch and coil combination
+        for rule_num, rule_obj in enumerate(switch.hw_switch.hw_rules[rule_type]):
+            if rule_obj[0] == switch.hw_switch.number and rule_obj[1] == coil.hw_driver.number:
+                del switch.hw_switch.hw_rules[rule_type][rule_num]
+
+        switch.hw_switch.hw_rules[rule_type].append(
+            (switch.hw_switch.number, coil.hw_driver.number, rule)
+        )
+
     def _add_pulse_rule_to_switch(self, switch, coil):
         # TODO: properly implement pulse_power. previously implemented pwm_on_ms/pwm_off_ms were incorrect here
 
-        switch.hw_switch.hw_rules[self._get_event_type(not switch.invert, switch.config['debounce'])].append(
-            (switch.hw_switch.number, coil.hw_driver.number,
-             self.pinproc.driver_state_pulse(coil.hw_driver.state(), coil.hw_driver.get_pulse_ms(coil)))
-        )
+        self._add_hw_rule(switch, coil,
+                          self.pinproc.driver_state_pulse(coil.hw_driver.state(), coil.hw_driver.get_pulse_ms(coil)))
 
     def _add_pulse_and_hold_rule_to_switch(self, switch, coil):
         if coil.hw_driver.get_pwm_on_ms(coil) and coil.hw_driver.get_pwm_off_ms(coil):
-            switch.hw_switch.hw_rules[self._get_event_type(not switch.invert, switch.config['debounce'])].append(
-                (switch.hw_switch.number, coil.hw_driver.number,
-                 self.pinproc.driver_state_patter(
-                     coil.hw_driver.state(), coil.hw_driver.get_pwm_on_ms(coil), coil.hw_driver.get_pwm_off_ms(coil),
-                     coil.hw_driver.get_pulse_ms(coil), True))
-            )
+            self._add_hw_rule(switch, coil,
+                              self.pinproc.driver_state_patter(
+                                  coil.hw_driver.state(), coil.hw_driver.get_pwm_on_ms(coil),
+                                  coil.hw_driver.get_pwm_off_ms(coil), coil.hw_driver.get_pulse_ms(coil), True))
         else:
             if not coil.config['allow_enable']:
                 raise AssertionError("Coil {} may not be enabled at 100% without allow_enabled or pwm settings".format(
                     coil.hw_driver.number
                 ))
-            switch.hw_switch.hw_rules[self._get_event_type(not switch.invert, switch.config['debounce'])].append(
-                (switch.hw_switch.number, coil.hw_driver.number,
-                 self.pinproc.driver_state_pulse(coil.hw_driver.state(), 0))
-            )
+            self._add_hw_rule(switch, coil,
+                              self.pinproc.driver_state_pulse(coil.hw_driver.state(), 0))
 
-    def _add_relase_disable_rule_to_switch(self, switch, coil):
-        switch.hw_switch.hw_rules[self._get_event_type(switch.invert, switch.config['debounce'])].append(
-            (switch.hw_switch.number, coil.hw_driver.number, self.pinproc.driver_state_disable(coil.hw_driver.state()))
-        )
+    def _add_release_disable_rule_to_switch(self, switch, coil):
+        self._add_hw_rule(switch, coil,
+                          self.pinproc.driver_state_disable(coil.hw_driver.state()), invert=True)
 
     def _add_disable_rule_to_switch(self, switch, coil):
-        switch.hw_switch.hw_rules[self._get_event_type(not switch.invert, switch.config['debounce'])].append(
-            (switch.hw_switch.number, coil.hw_driver.number,
-             self.pinproc.driver_state_disable(coil.hw_driver.state()))
-        )
+        self._add_hw_rule(switch, coil,
+                          self.pinproc.driver_state_disable(coil.hw_driver.state()))
 
     def _write_rules_to_switch(self, switch, coil, drive_now):
         for event_type, driver_rules in switch.hw_switch.hw_rules.items():
@@ -173,7 +176,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
                        enable_switch.hw_switch.number, coil.hw_driver.number)
 
         self._add_pulse_rule_to_switch(enable_switch, coil)
-        self._add_relase_disable_rule_to_switch(enable_switch, coil)
+        self._add_release_disable_rule_to_switch(enable_switch, coil)
 
         self._write_rules_to_switch(enable_switch, coil, False)
 
@@ -183,7 +186,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
                        enable_switch.hw_switch.number, coil.hw_driver.number)
 
         self._add_pulse_and_hold_rule_to_switch(enable_switch, coil)
-        self._add_relase_disable_rule_to_switch(enable_switch, coil)
+        self._add_release_disable_rule_to_switch(enable_switch, coil)
 
         self._write_rules_to_switch(enable_switch, coil, False)
 
@@ -194,7 +197,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
                        disable_switch.hw_switch.number, coil.hw_driver.number)
 
         self._add_pulse_and_hold_rule_to_switch(enable_switch, coil)
-        self._add_relase_disable_rule_to_switch(enable_switch, coil)
+        self._add_release_disable_rule_to_switch(enable_switch, coil)
         self._add_disable_rule_to_switch(disable_switch, coil)
 
         self._write_rules_to_switch(enable_switch, coil, False)

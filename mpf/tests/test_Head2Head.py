@@ -12,7 +12,7 @@ class TestHead2Head(MpfTestCase):
     def get_platform(self):
         return 'smart_virtual'
 
-    def _prepare_trought(self):
+    def _prepare_troughs(self):
         self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_trough_front)
         self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_trough_front)
         self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_trough_front)
@@ -28,7 +28,7 @@ class TestHead2Head(MpfTestCase):
         self.assertEqual(0, self.machine.playfields.playfield_back.balls)
 
     def testEject(self):
-        self._prepare_trought()
+        self._prepare_troughs()
         self.machine.playfields.playfield_front.add_ball()
         self.machine.playfields.playfield_back.add_ball()
 
@@ -92,7 +92,8 @@ class TestHead2Head(MpfTestCase):
         self.assertEqual(2, self.machine.playfields.playfield_back.balls)
 
     def testPhantomballsAndGameStart(self):
-        self._prepare_trought()
+        self.mock_event("playfield_jump")
+        self._prepare_troughs()
         self.machine.playfields.playfield_front.add_ball()
         self.machine.playfields.playfield_back.add_ball()
         self.advance_time_and_run(10)
@@ -140,10 +141,15 @@ class TestHead2Head(MpfTestCase):
         self.assertEqual(1, pf2.balls)
         self.assertEqual(1, pf2.available_balls)
 
+        # from the machine perspective one ball jumped from back to front
+        self.assertEventCalledWith("playfield_jump", source=pf2, target=pf1)
+        self.assertEventCalled("playfield_jump", 1)
+        self.mock_event("playfield_jump")
+
         self.assertFalse(self.machine.ball_controller.request_to_start_game())
 
         # second ball also drains
-        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_trough_front)
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_trough_back)
         self.advance_time_and_run()
 
         self.assertEqual(0, pf1.balls)
@@ -153,3 +159,33 @@ class TestHead2Head(MpfTestCase):
 
         # game should start
         self.assertIsNone(self.machine.ball_controller.request_to_start_game())
+        self.assertEventNotCalled("playfield_jump")
+
+    def testPlayfieldJump(self):
+        self.mock_event("playfield_jump")
+        self._prepare_troughs()
+        self.machine.playfields.playfield_front.add_ball()
+        self.advance_time_and_run(10)
+
+        # only front has a ball
+        pf1 = self.machine.ball_devices['playfield_front']
+        pf2 = self.machine.ball_devices['playfield_back']
+
+        self.assertEqual(1, pf1.balls)
+        self.assertEqual(1, pf1.available_balls)
+        self.assertEqual(0, pf1.unexpected_balls)
+        self.assertEqual(0, pf2.balls)
+        self.assertEqual(0, pf2.available_balls)
+        self.assertEqual(0, pf2.unexpected_balls)
+
+        # balls jumps to back pf and falls into a device
+        self.hit_switch_and_run("s_feeder_back", 5)
+
+        self.assertEqual(0, pf1.balls)
+        self.assertEqual(0, pf1.available_balls)
+        self.assertEqual(0, pf1.unexpected_balls)
+        self.assertEqual(1, pf2.balls)
+        self.assertEqual(1, pf2.available_balls)
+        self.assertEqual(1, pf2.unexpected_balls)
+
+        self.assertEventCalledWith("playfield_jump", source=pf1, target=pf2)

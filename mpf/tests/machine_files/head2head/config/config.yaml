@@ -1,6 +1,8 @@
 #config_version=4
 
 playfields:
+    playfield:    # remove default playfield
+        _delete: True
     playfield_front:
         label: Playfield Front
     playfield_back:
@@ -75,6 +77,7 @@ ball_devices:
     eject_targets: bd_launcher_front
     tags: trough, home, drain
     captures_from: playfield_front
+    ball_missing_target: playfield_front
     debug: true
   bd_trough_back:
     ball_switches: s_trough1_back, s_trough2_back, s_trough3_back, s_trough4_back
@@ -82,6 +85,7 @@ ball_devices:
     eject_targets: bd_launcher_back
     tags: trough, home, drain
     captures_from: playfield_back
+    ball_missing_target: playfield_back
     debug: true
   bd_launcher_front:
     ball_switches: s_launcher_lane_front
@@ -90,6 +94,7 @@ ball_devices:
     eject_coil: c_launcher_eject_front
     eject_targets: bd_feeder_back, bd_trough_back
     captures_from: playfield_front
+    ball_missing_target: playfield_back
     debug: true
   bd_launcher_back:
     ball_switches: s_launcher_lane_back
@@ -98,6 +103,7 @@ ball_devices:
     eject_coil: c_launcher_eject_back
     eject_targets: bd_feeder_front, bd_trough_front
     captures_from: playfield_back
+    ball_missing_target: playfield_front
     debug: true
   bd_middle_front:
     hold_switches: s_middle_front1
@@ -106,6 +112,7 @@ ball_devices:
     hold_coil: c_lock_figur_front
     eject_targets: playfield_front
     captures_from: playfield_back
+    ball_missing_target: playfield_front
     target_on_unexpected_ball: playfield_front
     debug: true
   bd_middle_back:
@@ -115,6 +122,7 @@ ball_devices:
     hold_coil: c_lock_figur_back
     eject_targets: playfield_back
     captures_from: playfield_front
+    ball_missing_target: playfield_back
     target_on_unexpected_ball: playfield_back
     debug: true
   bd_feeder_front:
@@ -123,6 +131,7 @@ ball_devices:
     hold_coil: c_feeder_front
     eject_targets: playfield_front
     captures_from: playfield_front
+    ball_missing_target: playfield_front
     eject_timeouts: 2s
     tags: ball_add_live
     debug: true
@@ -132,6 +141,7 @@ ball_devices:
     hold_coil: c_feeder_back
     eject_targets: playfield_back
     captures_from: playfield_back
+    ball_missing_target: playfield_back
     eject_timeouts: 2s
     tags: ball_add_live
     debug: true
