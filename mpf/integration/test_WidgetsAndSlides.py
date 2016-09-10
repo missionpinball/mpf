@@ -6,7 +6,7 @@ from mpf.integration.MpfSlideTestCase import MpfSlideTestCase
 from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
 
-class TestService(MpfIntegrationTest, MpfSlideTestCase):
+class TestSlidesAndWidgets(MpfIntegrationTest, MpfSlideTestCase):
 
     def getConfigFile(self):
         return 'config.yaml'
