@@ -29,6 +29,9 @@ switches:
     s_service_down:
         number:
         tags: service_down
+    s_test:
+        number:
+        label: "The test switch label"
 
 sound_system:
   tracks:
