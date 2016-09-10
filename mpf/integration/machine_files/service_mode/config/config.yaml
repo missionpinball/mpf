@@ -58,7 +58,7 @@ physical_dmd:
 window:
   width: 600
   height: 200
-  title: Good vs Evil
+  title: Service Test
   resizable: true
   fullscreen: false
   borderless: false
@@ -93,15 +93,6 @@ slides:
     height: 130
     z: 2
     color: 444444
-  - type: text
-    text: GvE
-    anchor_x: right
-    anchor_y: bottom
-    y: bottom+3
-    x: right-42
-    font_size: 30
-    z: 1
-    color: red
 
   waiting_for_connection:
   - type: text
