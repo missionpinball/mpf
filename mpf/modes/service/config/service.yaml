@@ -12,10 +12,18 @@ event_player:
         - service_door_opened
     sw_service_door_open_inactive:
         - service_door_closed
+    sw_service_door_closed_active:
+        - service_door_closed
+    sw_service_door_closed_inactive:
+        - service_door_opened
     sw_power_off_inactive:
         - service_power_on
     sw_power_off_active:
         - service_power_off
+    sw_power_on_inactive:
+        - service_power_off
+    sw_power_on_active:
+        - service_power_on
 
 sounds:
   power_off:
