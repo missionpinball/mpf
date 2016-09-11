@@ -13,7 +13,7 @@ from kivy.uix.widget import Widget
 import mpfmc
 from mpf.core.utility_functions import Util
 from mpf.tests.MpfBcpTestCase import MockBcpClient
-from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.MpfTestCase import MpfTestCase, patch
 from mpfmc.core.config_processor import ConfigProcessor
 from mpfmc.core.utils import load_machine_config
 
@@ -154,6 +154,7 @@ class MpfIntegrationTest(MpfTestCase):
         self.machine_config_patches['bcp'] = \
             {"connections": {"local_display": {"type": "mpf.integration.MpfIntegrationTest.TestBcpClient"}}}
         self.machine_config_patches['bcp']['servers'] = []
+        self.expected_duration = 60
 
     def setUp(self):
         super().setUp()
@@ -162,13 +163,14 @@ class MpfIntegrationTest(MpfTestCase):
         Clock._last_tick = self._start_time
         Clock.time = self._mc_time
         Clock._events = [[] for i in range(256)]
-        self._start_mc()
+        with patch("mpfmc.core.bcp_processor.BCPServer"):
+            self._start_mc()
         self.mc_task = self.clock.schedule_interval(self._run_mc, 1 / 30)
 
         client = self.machine.bcp.transport.get_named_client("local_display")
         bcp_mc = self.mc.bcp_processor
         bcp_mc.send = client.receive
-        bcp_mc._client_connected()
+        self.mc.events.post("client_connected")
         self.machine_run()
         while not client.queue.empty():
             bcp_mc.receive_queue.put(client.queue.get())

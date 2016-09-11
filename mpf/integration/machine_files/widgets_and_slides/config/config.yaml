@@ -1,58 +1,8 @@
 #config_version=4
 
 modes:
-    - attract
-    - game
-    - service
-
-coils:
-    c_test:
-        number: 1
-        label: First coil
-    c_test2:
-        number: 2
-        label: Second coil
-
-switches:
-    s_door_open:
-        number:
-        tags: service_door_open, power_off
-    s_service_enter:
-        number:
-        tags: service_enter
-    s_service_esc:
-        number:
-        tags: service_esc
-    s_service_up:
-        number:
-        tags: service_up
-    s_service_down:
-        number:
-        tags: service_down
-    s_test:
-        number:
-        label: "The test switch label"
-
-sound_system:
-  tracks:
-    voice:
-      volume: 1
-      priority: 2
-      simultaneous_sounds: 1
-      preload: true
-    sfx:
-      volume: 1
-      priority: 1
-      preload: true
-      simultaneous_sounds: 7
-    music:
-      volume: 0.5
-      simultaneous_sounds: 1
-  buffer: 2048  # previous value was 512
-  frequency: 44100
-  channels: 1
-  master_volume: 0.8
-  enabled: true
+    - mode1
+    - mode2
 
 physical_dmd:
   shades: 16
@@ -61,7 +11,7 @@ physical_dmd:
 window:
   width: 600
   height: 200
-  title: Service Test
+  title: Widgets and Slides Test
   resizable: true
   fullscreen: false
   borderless: false
