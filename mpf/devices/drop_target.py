@@ -128,7 +128,7 @@ class DropTarget(SystemWideDevice):
     def knockdown(self, **kwargs):
         """Pulse the knockdown coil to knock down this drop target."""
         del kwargs
-        if self.knockdown_coil:
+        if self.knockdown_coil and not self.machine.switch_controller.is_active(self.config['switch'].name):
             self.knockdown_coil.pulse()
 
     def _update_state_from_switch(self):
@@ -192,7 +192,7 @@ class DropTarget(SystemWideDevice):
         """
         del kwargs
 
-        if self.reset_coil:
+        if self.reset_coil and self.machine.switch_controller.is_active(self.config['switch'].name):
             self.reset_coil.pulse()
 
 
