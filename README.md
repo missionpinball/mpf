@@ -42,7 +42,7 @@ Installation, Documentation, and Examples
 
 Support
 -------
-We have an active online user support forum at : https://missionpinball.com/forum/mpf-users
+We have a user support forum at : https://groups.google.com/forum/#!forum/mpf-users
 
 Authors & Contributing
 ----------------------

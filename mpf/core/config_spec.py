@@ -791,7 +791,12 @@ sound_player:
     volume: single|gain|None
     loops: single|int|None
     priority: single|int|None
-    max_queue_time: single|secs|None
+    fade_in: single|secs|None
+    fade_out: single|secs|None
+    max_queue_time: single|secs|-1
+    events_when_played: list|str|ignore
+    events_when_stopped: list|str|ignore
+    events_when_looping: list|str|ignore
     __allow_others__:
 sound_pools:
     __valid_in__: machine, mode                      # todo add to validator
@@ -810,12 +815,18 @@ sounds:
     volume: single|gain|0.5
     loops: single|int|0
     priority: single|int|0
+    start_at: single|secs|0
+    fade_in: single|secs|0
+    fade_out: single|secs|0
     max_queue_time: single|secs|None
+    max_instances: single|int|None
+    stealing_method: single|enum(skip,oldest,newest)|oldest
     events_when_played: list|str|None
     events_when_stopped: list|str|None
     events_when_looping: list|str|None
+    markers: ignore                                 # todo add subconfig
     ducking:
-        target: single|str|
+        target: list|str|
         delay: single|str|0
         attack: single|str|10ms
         attenuation: single|gain|1.0

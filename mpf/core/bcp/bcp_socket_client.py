@@ -153,7 +153,7 @@ class BCPClientSocket(BaseBcpClient):
             connector = self.machine.clock.open_connection(client_host, client_port)
             try:
                 self._receiver, self._sender = yield from connector
-            except ConnectionRefusedError:
+            except (ConnectionRefusedError, OSError):
                 yield from asyncio.sleep(.1)
                 continue
 
