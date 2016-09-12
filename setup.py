@@ -61,7 +61,7 @@ community.''',
 
     include_package_data=True,
 
-    package_data={'': ['*.yaml', '*.png', '*.so', '*.pyd', 'mpf/pyserial_asyncio/*']},
+    package_data={'': ['*.yaml', '*.png', '*.so', '*.pyd', '*.ogg', '*.wav', 'mpf/pyserial_asyncio/*']},
 
     # MANIFEST.in picks up the rest
     packages=['mpf'],
