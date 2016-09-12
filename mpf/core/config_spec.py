@@ -791,13 +791,13 @@ sound_player:
     volume: single|gain|None
     loops: single|int|None
     priority: single|int|None
+    start_at: single|secs|None
     fade_in: single|secs|None
     fade_out: single|secs|None
     max_queue_time: single|secs|-1
-    events_when_played: list|str|ignore
-    events_when_stopped: list|str|ignore
-    events_when_looping: list|str|ignore
-    __allow_others__:
+    events_when_played: list|str|use_sound_setting
+    events_when_stopped: list|str|use_sound_setting
+    events_when_looping: list|str|use_sound_setting
 sound_pools:
     __valid_in__: machine, mode                      # todo add to validator
 sound_system:
