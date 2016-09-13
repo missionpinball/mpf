@@ -15,6 +15,8 @@ class BaseSmartVirtualCoilAction:
         self.actions = actions
         self.machine = machine
         self.delay = DelayManager(self.machine.delayRegistry)
+        self.machine.config['smart_virtual'] = self.machine.config_validator.validate_config(
+            "smart_virtual", self.machine.config.get('smart_virtual', {}))
 
     def enable(self, coil):
         """Enable driver."""
@@ -121,9 +123,10 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
         if driver and driver.action:
             driver.action.target_device = target
 
-        if mechanical_eject:
+        if mechanical_eject and self.machine.config['smart_virtual']['simulate_manual_plunger']:
             # simulate mechanical eject
-            self.delay.add(ms=3000, callback=self._perform_action)
+            self.delay.add(ms=self.machine.config['smart_virtual']['simulate_manual_plunger_timeout'],
+                           callback=self._perform_action)
 
     def _perform_action(self):
         for switch in self.ball_switches:
