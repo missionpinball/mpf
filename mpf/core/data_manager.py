@@ -147,9 +147,5 @@ class DataManager(object):
 
             data = copy.deepcopy(self.data)
             self.log.debug("Writing %s to: %s", self.name, self.filename)
-            # save to temp file and move afterwards. prevents broken files
-            temp_file = os.path.dirname(self.filename) + os.sep + "_" + os.path.basename(self.filename)
-            FileManager.save(temp_file, data)
-
-            # move temp file
-            os.rename(temp_file, self.filename)
+            # save data
+            FileManager.save(self.filename, data)
