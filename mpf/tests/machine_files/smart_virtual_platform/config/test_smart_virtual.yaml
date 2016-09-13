@@ -5,6 +5,10 @@ virtual_platform_start_active_switches:
   - trough2
   - trough3
 
+smart_virtual:
+    simulate_manual_plunger: True
+    simulate_manual_plunger_timeout: 3s
+
 coils:
     outhole:
         number: C09

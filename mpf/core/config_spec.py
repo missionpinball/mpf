@@ -785,6 +785,10 @@ smartmatrix:
     __valid_in__: machine
     port: single|str|
     use_separate_thread: single|bool|true
+smart_virtual:
+    __valid_in__: machine
+    simulate_manual_plunger: single|bool|False
+    simulate_manual_plunger_timeout: single|ms|10s
 sound_player:
     __valid_in__: machine, mode, show
     action: single|enum(play,stop,stop_looping)|play
