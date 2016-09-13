@@ -20,7 +20,7 @@ class TestDataManager(MpfTestCase):
     def test_save_and_load(self):
         open_mock = mock_open(read_data="")
         with patch('mpf.file_interfaces.yaml_interface.open', open_mock, create=True):
-            with patch('os.path.isfile') as isfile_mock:
+            with patch('mpf.core.file_manager.os.path.isfile') as isfile_mock:
                 isfile_mock.return_value = True
                 manager = DataManager(self.machine, "machine_vars")
                 self.assertTrue(isfile_mock.called)
@@ -30,7 +30,7 @@ class TestDataManager(MpfTestCase):
 
         open_mock = mock_open(read_data="")
         with patch('mpf.file_interfaces.yaml_interface.open', open_mock, create=True):
-            with patch('os.replace') as move_mock:
+            with patch('mpf.core.data_manager.os.replace') as move_mock:
                 manager.save_key("hallo", "world")
                 while not move_mock.called:
                     time.sleep(.00001)
@@ -39,7 +39,7 @@ class TestDataManager(MpfTestCase):
 
         open_mock = mock_open(read_data='hallo: world\n')
         with patch('mpf.file_interfaces.yaml_interface.open', open_mock, create=True):
-            with patch('os.path.isfile') as isfile_mock:
+            with patch('mpf.core.file_manager.os.path.isfile') as isfile_mock:
                 isfile_mock.return_value = True
                 manager2 = DataManager(self.machine, "machine_vars")
                 self.assertTrue(isfile_mock.called)
@@ -51,7 +51,7 @@ class TestDataManager(MpfTestCase):
     def test_get_data(self):
         open_mock = mock_open(read_data='hallo:\n  test: world\n')
         with patch('mpf.file_interfaces.yaml_interface.open', open_mock, create=True):
-            with patch('os.path.isfile') as isfile_mock:
+            with patch('mpf.core.file_manager.os.path.isfile') as isfile_mock:
                 manager = DataManager(self.machine, "machine_vars")
                 self.assertTrue(isfile_mock.called)
                 self.assertTrue(open_mock.called)
