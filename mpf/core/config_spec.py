@@ -931,7 +931,6 @@ virtual_platform_start_active_switches:
     __valid_in__: machine                           # todo add to validator
 widget_player:
     __valid_in__: machine, mode, show
-    target: single|str|None
     slide: single|str|None
     action: single|enum(add,remove,update)|add
     key: single|str|None
