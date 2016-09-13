@@ -181,4 +181,4 @@ class FileManager(object):
             raise AssertionError("No config file processor available for file type {}".format(ext))
 
         # move temp file
-        os.rename(temp_file, filename)
+        os.replace(temp_file, filename)
