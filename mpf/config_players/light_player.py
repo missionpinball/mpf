@@ -1,4 +1,5 @@
 """Light config player."""
+from copy import deepcopy
 from mpf.config_players.device_config_player import DeviceConfigPlayer
 from mpf.core.utility_functions import Util
 
@@ -18,6 +19,7 @@ class LightPlayer(DeviceConfigPlayer):
         full_context = self._get_full_context(context)
 
         for light, s in settings.items():
+            s = deepcopy(s)
             try:
                 s['priority'] += priority
             except KeyError:

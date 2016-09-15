@@ -1,5 +1,5 @@
 """Coil config player."""
-import copy
+from copy import deepcopy
 
 from mpf.config_players.device_config_player import DeviceConfigPlayer
 
@@ -17,7 +17,7 @@ class CoilPlayer(DeviceConfigPlayer):
         instance_dict = self._get_instance_dict(context)
 
         for coil, s in settings.items():
-            s = copy.deepcopy(s)
+            s = deepcopy(s)
             action = s.pop('action')
             try:
                 coil = getattr(coil, action)

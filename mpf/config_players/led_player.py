@@ -1,4 +1,5 @@
 """LED config player."""
+from copy import deepcopy
 from mpf.config_players.device_config_player import DeviceConfigPlayer
 from mpf.core.rgb_color import RGBColor
 from mpf.core.utility_functions import Util
@@ -19,6 +20,7 @@ class LedPlayer(DeviceConfigPlayer):
         del kwargs
 
         for led, s in settings.items():
+            s = deepcopy(s)
             try:
                 s['priority'] += priority
             except KeyError:

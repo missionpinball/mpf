@@ -1,7 +1,7 @@
 """Event Config Player."""
+from copy import deepcopy
 from mpf.config_players.flat_config_player import FlatConfigPlayer
 from mpf.core.delays import DelayManager
-
 from mpf.core.utility_functions import Util
 
 
@@ -21,6 +21,7 @@ class EventPlayer(FlatConfigPlayer):
     def play(self, settings, context, priority=0, **kwargs):
         """Post (delayed) events."""
         for event, s in settings.items():
+            s = deepcopy(s)
             s.update(kwargs)
             if ':' in event:
                 event, delay = event.split(":")

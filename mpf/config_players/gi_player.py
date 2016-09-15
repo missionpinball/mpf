@@ -1,4 +1,5 @@
 """GI config player."""
+from copy import deepcopy
 from mpf.config_players.device_config_player import DeviceConfigPlayer
 
 
@@ -15,6 +16,7 @@ class GiPlayer(DeviceConfigPlayer):
         instance_dict = self._get_instance_dict(context)
 
         for gi, s in settings.items():
+            s = deepcopy(s)
             try:
                 gi.enable(**s)
                 instance_dict[gi.name] = gi

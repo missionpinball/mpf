@@ -1,4 +1,5 @@
 """Flasher config player."""
+from copy import deepcopy
 from mpf.config_players.device_config_player import DeviceConfigPlayer
 
 
@@ -14,6 +15,7 @@ class FlasherPlayer(DeviceConfigPlayer):
         del kwargs
 
         for flasher, s in settings.items():
+            s = deepcopy(s)
             try:
                 flasher.flash(**s)
             except AttributeError:
