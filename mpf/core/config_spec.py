@@ -1048,8 +1048,8 @@ widgets:
         font_name: ignore
         bold: single|bool|False
         italic: single|bool|False
-        number_grouping: single|bool|True
-        min_digits: single|int|1
+        number_grouping: single|bool|False
+        min_digits: single|int|0
         halign: single|str|center
         valign: single|str|middle
         # text_size: single|int|None  # sets width of bounding box, not font
