@@ -160,9 +160,9 @@ class MockSerial(MockFd):
     @property
     def out_waiting(self):
         if self.write_ready():
-            return 1
-        else:
             return 0
+        else:
+            return 1
 
     def read(self, length):
         raise AssertionError("Not implemented")
