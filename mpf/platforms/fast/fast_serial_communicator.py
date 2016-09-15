@@ -78,6 +78,11 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                                     self.port)
             self.writer.write('ID:\r'.encode())
             msg = (yield from self.readuntil(b'\r')).decode()
+
+            # ignore XX replies here.
+            if msg.startswith('XX:'):
+                msg = (yield from self.readuntil(b'\r')).decode()
+
             if msg.startswith('ID:'):
                 break
 
