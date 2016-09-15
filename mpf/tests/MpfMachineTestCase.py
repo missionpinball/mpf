@@ -2,8 +2,6 @@ import inspect
 
 from mpf.core.machine import MachineController
 from mpf.tests.MpfTestCase import MpfTestCase
-from mpfmc.tests.MpfIntegrationTestCase import MpfIntegrationTestCase
-from mpfmc.tests.MpfSlideTestCase import MpfSlideTestCase
 
 
 class BaseMpfMachineTestCase(MpfTestCase):
@@ -57,12 +55,3 @@ class MpfMachineTestCase(BaseMpfMachineTestCase):
 
         # increase test expected duration
         self.expected_duration = 5.0
-
-
-class FullMachineTestCase(BaseMpfMachineTestCase, MpfIntegrationTestCase, MpfSlideTestCase):
-
-    """MPF + MC machine test case."""
-
-    fps = 3
-
-    pass
