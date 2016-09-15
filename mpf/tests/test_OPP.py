@@ -1,6 +1,8 @@
 import copy
 from unittest.mock import MagicMock
 
+import time
+
 from mpf.platforms.opp import opp
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 from mpf.tests.MpfTestCase import MpfTestCase
@@ -108,7 +110,8 @@ class TestOPP(MpfTestCase):
         return 'opp'
 
     def _wait_for_processing(self):
-        while self.serialMock.expected_commands and not self.serialMock.crashed:
+        start = time.time()
+        while self.serialMock.expected_commands and not self.serialMock.crashed and time.time() < start + 10:
             self.advance_time_and_run(.01)
 
     def test_opp(self):
