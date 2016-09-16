@@ -177,8 +177,6 @@ class TestFast(MpfTestCase):
         self.assertEqual(16, self.machine.default_platform.io_boards[3].driver_count)
 
     def test_coils(self):
-        self.skipTest("Causing appveyor tests to hang")
-
         self._test_pulse()
         self._test_long_pulse()
         self._test_enable_exception()
