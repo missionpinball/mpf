@@ -22,7 +22,7 @@ class BaseMockFast(MockSerial):
         return bool(len(self.queue) > 0)
 
     def write_ready(self):
-        return False
+        return True
 
     def _parse(self, msg):
         return False
