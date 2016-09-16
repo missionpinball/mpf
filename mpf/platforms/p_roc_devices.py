@@ -79,20 +79,20 @@ class PROCDriver(DriverPlatformInterface):
             return 0
 
     def get_pulse_ms(self, coil):
-        """Find out the ppulse_ms for this driver."""
+        """Find out the pulse_ms for this driver."""
         if coil.config['pulse_ms']:
             return int(coil.config['pulse_ms'])
         else:
             return self.machine.config['mpf']['default_pulse_ms']
 
     def disable(self, coil):
-        """Disable (turns off) this driver."""
+        """Disable (turn off) this driver."""
         del coil
         self.log.debug('Disabling Driver')
         self.proc.driver_disable(self.number)
 
     def enable(self, coil):
-        """Enable (turns on) this driver."""
+        """Enable (turn on) this driver."""
         if self.get_pwm_on_ms(coil) and self.get_pwm_off_ms(coil):
             self.log.debug('Enabling. Initial pulse_ms:%s, pwm_on_ms: %s'
                            'pwm_off_ms: %s',
