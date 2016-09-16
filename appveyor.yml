@@ -22,7 +22,7 @@ install:
 build: off
 
 test_script:
-  - "%PYTHON%\\python.exe setup.py test -q -v"
+  - "%PYTHON%\\python.exe setup.py test -q"
 
 after_test:
   - "%PYTHON%\\python.exe setup.py sdist --formats=gztar"
