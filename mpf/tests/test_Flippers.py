@@ -75,6 +75,42 @@ class TestFlippers(MpfTestCase):
              call(self.machine.flippers.f_test_hold_eos.switch, self.machine.flippers.f_test_hold_eos.hold_coil)]
         )
 
+    def test_flipper_with_settings(self):
+        flipper = self.machine.flippers.f_test_flippers_with_settings
+        self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule = MagicMock()
+
+        flipper.enable()
+        self.assertEqual(1, len(self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule.
+                                _mock_call_args_list))
+        self.assertEqual(
+            (flipper.switch.get_configured_switch(),
+             flipper.main_coil.get_configured_driver()),
+            self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule._mock_call_args_list[0][0])
+
+        self.assertEqual(10, flipper.main_coil.get_configured_driver().config['pulse_ms'])
+
+        self.machine.default_platform.clear_hw_rule = MagicMock()
+        flipper.disable()
+
+        self.assertEqual(1, self.machine.default_platform.clear_hw_rule.called)
+        self.machine.default_platform.clear_hw_rule.assert_called_once_with(
+            flipper.switch.get_configured_switch(),
+            flipper.main_coil.get_configured_driver())
+
+        self.machine.settings.set_setting_value("flipper_power", 0.8)
+        self.advance_time_and_run()
+
+        self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule = MagicMock()
+        flipper.enable()
+        self.assertEqual(1, len(self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule.
+                                _mock_call_args_list))
+        self.assertEqual(
+            (flipper.switch.get_configured_switch(),
+             flipper.main_coil.get_configured_driver()),
+            self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule._mock_call_args_list[0][0])
+
+        self.assertEqual(8, flipper.main_coil.get_configured_driver().config['pulse_ms'])
+
     def test_sw_flip_and_release(self):
 
         self.machine.coils.c_flipper_main.enable = MagicMock()
