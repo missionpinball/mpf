@@ -341,6 +341,7 @@ flippers:
     hold_coil_overwrite: dict|str:str|None
     switch_overwrite: dict|str:str|None
     eos_switch_overwrite: dict|str:str|None
+    power_setting_name: single|str|None
 game:
     __valid_in__: machine
     balls_per_game: single|int|3
@@ -679,6 +680,14 @@ servos:
     reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_will_end
     number: single|str|
     platform: single|str|None
+settings:
+    __valid_in__: machine
+    label: single|str|
+    sort: single|int|
+    values: dict|str:str|
+    key_type: single|enum(str,float,int)|str
+    default: single|str|
+    machine_var: single|str|None
 shots:
     __valid_in__: machine, mode
     profile: single|str|None
