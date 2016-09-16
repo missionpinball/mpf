@@ -312,6 +312,17 @@ shows:
             (led): (color)
             (leds): (color)
 
+settings:
+  flipper_power:
+    label: Flipper power
+    sort: 1000
+    values:
+      0.8: Weak
+      1.0: Normal (default)
+      1.2: Strong
+    key_type: float
+    default: 1.0
+
 playfields:
     playfield:
         tags: default
