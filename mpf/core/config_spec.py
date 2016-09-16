@@ -802,6 +802,7 @@ sound_player:
     events_when_played: list|str|use_sound_setting
     events_when_stopped: list|str|use_sound_setting
     events_when_looping: list|str|use_sound_setting
+    mode_end_action: single|enum(stop,stop_looping,use_sound_setting)|use_sound_setting
 sound_pools:
     __valid_in__: machine, mode                      # todo add to validator
 sound_system:
@@ -828,6 +829,7 @@ sounds:
     events_when_played: list|str|None
     events_when_stopped: list|str|None
     events_when_looping: list|str|None
+    mode_end_action: single|enum(stop,stop_looping)|stop_looping
     markers: ignore                                 # todo add subconfig
     ducking:
         target: list|str|
