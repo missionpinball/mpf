@@ -204,6 +204,18 @@ auditor:
     player:
         score
 
+sound_system:
+    tracks:
+        music:
+            volume: 0.5
+            simultaneous_sounds: 1
+        sfx:
+            volume: 0.5
+            simultaneous_sounds: 8
+        voice:
+            volume: 0.5
+            simultaneous_sounds: 1
+
 assets:
 #    default:
 #        load: preload
@@ -216,6 +228,15 @@ assets:
             load: on_demand
         mode_start:
             load: mode_start
+    sounds:
+        default:
+             track: sfx
+        music:
+             track: music
+        sfx:
+             track: sfx
+        voice:
+             track: voice
 
 bcp:
     connections:

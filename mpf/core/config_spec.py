@@ -831,11 +831,11 @@ sounds:
     markers: ignore                                 # todo add subconfig
     ducking:
         target: list|str|
-        delay: single|str|0
-        attack: single|str|10ms
+        delay: single|secs|0
+        attack: single|secs|10ms
         attenuation: single|gain|1.0
-        release_point: single|str|0
-        release: single|str|10ms
+        release_point: single|secs|0
+        release: single|secs|10ms
 switch_player:
     __valid_in__: machine
     start_event: single|str|machine_reset_phase_3
