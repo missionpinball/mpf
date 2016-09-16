@@ -115,9 +115,6 @@ class TestOPP(MpfTestCase):
             self.advance_time_and_run(.01)
 
     def test_opp(self):
-        # Added temporarily to allow wheel to build on appveyor
-        self.skipTest("Test running forever on appveyor")
-
         self._test_coils()
         self._test_leds()
         self._test_matrix_lights()
