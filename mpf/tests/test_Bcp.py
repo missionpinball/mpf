@@ -138,6 +138,7 @@ class TestBcp(MpfTestCase):
         bcp_mc.enabled = True
         self.advance_time_and_run()
         mc.events.post = MagicMock()
+        self.machine.options['bcp'] = True
 
         bcp_mpf = self.machine.bcp
         bcp_mpf.bcp_clients = [TestBcpClient(bcp_mc.receive_queue)]

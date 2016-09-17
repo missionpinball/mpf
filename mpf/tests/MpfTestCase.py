@@ -312,6 +312,7 @@ class MpfTestCase(unittest.TestCase):
     def patch_bcp(self):
         self.sent_bcp_commands = list()
         self.machine.bcp.send = self._bcp_send
+        self.machine.bcp.configured = True
 
     def _bcp_send(self, bcp_command, callback=None, **kwargs):
         self.sent_bcp_commands.append((bcp_command, callback, kwargs))
