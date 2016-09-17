@@ -802,6 +802,7 @@ sound_player:
     events_when_played: list|str|use_sound_setting
     events_when_stopped: list|str|use_sound_setting
     events_when_looping: list|str|use_sound_setting
+    mode_end_action: single|enum(stop,stop_looping,use_sound_setting)|use_sound_setting
 sound_pools:
     __valid_in__: machine, mode                      # todo add to validator
 sound_system:
@@ -823,19 +824,20 @@ sounds:
     fade_in: single|secs|0
     fade_out: single|secs|0
     max_queue_time: single|secs|None
-    max_instances: single|int|None
+    simultaneous_limit: single|int|None
     stealing_method: single|enum(skip,oldest,newest)|oldest
     events_when_played: list|str|None
     events_when_stopped: list|str|None
     events_when_looping: list|str|None
+    mode_end_action: single|enum(stop,stop_looping)|stop_looping
     markers: ignore                                 # todo add subconfig
     ducking:
         target: list|str|
-        delay: single|str|0
-        attack: single|str|10ms
+        delay: single|secs|0
+        attack: single|secs|10ms
         attenuation: single|gain|1.0
-        release_point: single|str|0
-        release: single|str|10ms
+        release_point: single|secs|0
+        release: single|secs|10ms
 switch_player:
     __valid_in__: machine
     start_event: single|str|machine_reset_phase_3
