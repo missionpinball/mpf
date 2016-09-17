@@ -24,15 +24,11 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
     ignored_messages = ['RX:P',  # RGB Pass
                         'SN:P',  # Network Switch pass
-                        'SN:F',  #
                         'SL:P',  # Local Switch pass
-                        'SL:F',
                         'LX:P',  # Lamp pass
                         'PX:P',  # Segment pass
                         'DN:P',  # Network driver pass
-                        'DN:F',
                         'DL:P',  # Local driver pass
-                        'DL:F',  # Local driver fail
                         'XX:F',  # Unrecognized command?
                         'R1:F',
                         'L1:P',
@@ -41,7 +37,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                         'TN:P',
                         'XO:P',  # Servo/Daughterboard Pass
                         'XX:U',
-                        'XX:N',
+                        'XX:N'
                         ]
 
     def __init__(self, platform, port, baud):
@@ -57,10 +53,21 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         self.remote_processor = None
         self.remote_model = None
         self.remote_firmware = 0.0
+        self.max_messages_in_flight = 10
+        self.messages_in_flight = 0
+        self.send_ready = asyncio.Event(loop=platform.machine.clock.loop)
+        self.send_ready.set()
 
         self.received_msg = b''
 
+        self.send_queue = asyncio.Queue(loop=platform.machine.clock.loop)
+
         super().__init__(platform, port, baud)
+
+    def stop(self):
+        """Stop and shut down this serial connection."""
+        self.write_task.cancel()
+        super().stop()
 
     @asyncio.coroutine
     def _identify_connection(self):
@@ -123,6 +130,9 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
         self.platform.register_processor_connection(self.remote_processor, self)
 
+        self.write_task = self.machine.clock.loop.create_task(self._socket_writer())
+        self.write_task.add_done_callback(self._done)
+
     @asyncio.coroutine
     def query_fast_io_boards(self):
         """Query the NET processor to see if any FAST IO boards are connected.
@@ -183,6 +193,9 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                 be added automatically.
 
         """
+        self.send_queue.put_nowait(msg)
+
+    def _send(self, msg):
         debug = self.platform.config['debug']
         if self.dmd:
             self.writer.write(b'BM:' + msg)
@@ -190,9 +203,26 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                 self.platform.log.debug("Send: %s", "".join(" 0x%02x" % b for b in msg))
 
         else:
+            self.messages_in_flight += 1
+            if self.messages_in_flight > self.max_messages_in_flight:
+                self.send_ready.clear()
+
             self.writer.write(msg.encode() + b'\r')
             if debug and msg[0:2] != "WD":
                 self.platform.log.debug("Send: %s", msg)
+
+    @asyncio.coroutine
+    def _socket_writer(self):
+        while True:
+            msg = yield from self.send_queue.get()
+            try:
+                yield from asyncio.wait_for(self.send_ready.wait(), 1.0, loop=self.machine.clock.loop)
+            except asyncio.TimeoutError:
+                self.log.warning("Port %s was blocked for more than 1s. Reseting send queue! If this happens frequently"
+                                 "report a bug!", self.port)
+                self.messages_in_flight = 0
+
+            self._send(msg)
 
     def _parse_msg(self, msg):
         self.received_msg += msg
@@ -206,6 +236,13 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
             msg = self.received_msg[:pos]
             self.received_msg = self.received_msg[pos + 1:]
+
+            self.messages_in_flight -= 1
+            if self.messages_in_flight <= self.max_messages_in_flight:
+                self.send_ready.set()
+            if self.messages_in_flight < 0:
+                self.log.warning("Port %s received more messages than were send! Resetting!", self.port)
+                self.messages_in_flight = 0
 
             if not msg:
                 continue
