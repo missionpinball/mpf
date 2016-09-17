@@ -494,7 +494,7 @@ class BCP(object):
                 trigger?ball=1&string=hello
 
         """
-        if not self.configured:
+        if not self.configured or not self.machine.options['bcp']:
             return
         bcp_string = encode_command_string(bcp_command, **kwargs)
 
