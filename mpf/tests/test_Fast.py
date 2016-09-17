@@ -38,9 +38,11 @@ class BaseMockFast(MockSerial):
             return msg_len
 
         if cmd[:3] == "WD:":
+            self.queue.append("WD:P")
             return msg_len
 
         if cmd in self.ignore_commands:
+            self.queue.append(cmd[:3] + "P")
             return msg_len
 
         if self._parse(cmd):
@@ -71,9 +73,11 @@ class MockFastDmd(BaseMockFast):
         cmd = msg
 
         if cmd[:3] == "WD:":
+            self.queue.append("WD:P")
             return msg_len
 
         if cmd in self.ignore_commands:
+            self.queue.append(cmd[:3] + "P")
             return msg_len
 
         if cmd in self.expected_commands:
@@ -95,6 +99,7 @@ class MockFastRgb(BaseMockFast):
     def _parse(self, cmd):
         if cmd[:3] == "RS:":
             self.leds[cmd[3:5]] = cmd[5:]
+            self.queue.append("RX:P")
             return True
 
 class MockFastNet(BaseMockFast):
@@ -129,9 +134,9 @@ class TestFast(MpfTestCase):
         }
         self.rgb_cpu.expected_commands = {
             'ID:': 'ID:RGB FP-CPU-002-1 00.88',
-            "RF:0": False,
-            "RA:000000": False,
-            "RF:00": False,
+            "RF:0": "RF:P",
+            "RA:000000": "RA:P",
+            "RF:00": "RF:P",
         }
         self.net_cpu.expected_commands = {
             'ID:': 'ID:NET FP-CPU-002-1 00.88',
@@ -148,16 +153,16 @@ class TestFast(MpfTestCase):
             "SN:07,01,1A,05": "SN:P",
             "SN:1A,01,0A,0A": "SN:P",
             "SN:39,01,0A,0A": "SN:P",
-            "DN:04,00,00,00": False,
-            "DN:06,00,00,00": False,
-            "DN:07,00,00,00": False,
-            "DN:10,00,00,00": False,
-            "DN:11,00,00,00": False,
-            "DN:12,00,00,00": False,
-            "DN:20,00,00,00": False,
-            "DN:21,00,00,00": False,
-            "GI:2A,FF": False,
-            "XO:03,7F": False
+            "DN:04,00,00,00": "DN:P",
+            "DN:06,00,00,00": "DN:P",
+            "DN:07,00,00,00": "DN:P",
+            "DN:10,00,00,00": "DN:P",
+            "DN:11,00,00,00": "DN:P",
+            "DN:12,00,00,00": "DN:P",
+            "DN:20,00,00,00": "DN:P",
+            "DN:21,00,00,00": "DN:P",
+            "GI:2A,FF": "GI:P",
+            "XO:03,7F": "XO:P"
         }
 
         super().setUp()
@@ -188,11 +193,11 @@ class TestFast(MpfTestCase):
         self.assertEqual("FAST Board 3", self.machine.coils.c_flipper_hold.hw_driver.get_board_name())
         # last driver on board
         self.net_cpu.expected_commands = {
-            "DN:2B,00,00,00": False
+            "DN:2B,00,00,00": "DN:P"
         }
         coil = self.machine.default_platform.configure_driver({'number': '3-15'})
         self.assertEqual('2B', coil.number)
-        self.machine_run()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         # board 0 has 8 drivers. configuring driver 9 should not work
@@ -209,23 +214,25 @@ class TestFast(MpfTestCase):
 
     def _test_pulse(self):
         self.net_cpu.expected_commands = {
-            "DN:04,89,00,10,17,ff,00,00,00": False
+            "DN:04,89,00,10,17,ff,00,00,00": "DN:P"
         }
         # pulse coil 4
         self.machine.coils.c_test.pulse()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
     def _test_long_pulse(self):
         # enable command
         self.net_cpu.expected_commands = {
-            "DN:12,C1,00,18,00,ff,ff,00": False
+            "DN:12,C1,00,18,00,ff,ff,00": "DN:P"
         }
         self.machine.coils.c_long_pulse.pulse()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         # disable command
         self.net_cpu.expected_commands = {
-            "TN:12,02": False
+            "TN:12,02": "TN:P"
         }
 
         self.advance_time_and_run(1)
@@ -240,12 +247,14 @@ class TestFast(MpfTestCase):
         # enable coil which does not have allow_enable
         with self.assertRaises(AssertionError):
             self.machine.coils.c_test.enable()
+            self.advance_time_and_run(.1)
 
     def _test_allow_enable(self):
         self.net_cpu.expected_commands = {
-            "DN:06,C1,00,18,17,ff,ff,00": False
+            "DN:06,C1,00,18,17,ff,ff,00": "DN:P"
         }
         self.machine.coils.c_test_allow_enable.enable()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
     def test_rules(self):
@@ -259,28 +268,29 @@ class TestFast(MpfTestCase):
 
     def _test_hw_rule_same_board(self):
         self.net_cpu.expected_commands = {
-            "DN:21,01,07,10,0A,ff,00,00,14": False
+            "DN:21,01,07,10,0A,ff,00,00,14": "DN:P"
         }
         # coil and switch are on different boards but first 8 switches always work
         self.machine.autofires.ac_different_boards.enable()
-        self.machine_run()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         # switch and coil on board 3. should work
         self.net_cpu.expected_commands = {
-            "DN:21,01,39,10,0A,ff,00,00,14": False,
-            "SN:39,01,02,02": False
+            "DN:21,01,39,10,0A,ff,00,00,14": "DN:P",
+            "SN:39,01,02,02": "SN:P"
         }
         self.machine.autofires.ac_board_3.enable()
-        self.machine_run()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         self.net_cpu.expected_commands = {
-            "DN:10,01,03,10,0A,89,00,00,14": False,
+            "DN:10,01,03,10,0A,89,00,00,14": "DN:P",
         }
         # coil and switch are on different boards
         with self.assertRaises(AssertionError):
             self.machine.autofires.ac_broken_combination.enable()
+            self.advance_time_and_run(.1)
 
     def _test_enable_exception_hw_rule(self):
         # enable coil which does not have allow_enable
@@ -291,75 +301,85 @@ class TestFast(MpfTestCase):
 
     def _test_two_rules_one_switch(self):
         self.net_cpu.expected_commands = {
-            "SN:03,01,02,02": False,
-            "DN:04,01,03,10,17,ff,00,00,2E": False,
-            "DN:06,01,03,10,17,ff,00,00,2E": False
+            "SN:03,01,02,02": "SN:P",
+            "DN:04,01,03,10,17,ff,00,00,2E": "DN:P",
+            "DN:06,01,03,10,17,ff,00,00,2E": "DN:P"
         }
         self.post_event("ac_same_switch")
         self.hit_and_release_switch("s_flipper")
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
     def _test_hw_rule_pulse(self):
         self.net_cpu.expected_commands = {
-            "DN:07,01,16,10,0A,ff,00,00,14": False,  # hw rule
-            "SN:16,01,02,02": False                  # debounce quick on switch
+            "DN:07,01,16,10,0A,ff,00,00,14": "DN:P",  # hw rule
+            "SN:16,01,02,02": "SN:P"                  # debounce quick on switch
         }
         self.machine.autofires.ac_slingshot_test.enable()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         self.net_cpu.expected_commands = {
-            "DN:07,81": False
+            "DN:07,81": "DN:P"
         }
         self.machine.autofires.ac_slingshot_test.disable()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
     def _test_hw_rule_pulse_pwm(self):
         self.net_cpu.expected_commands = {
-            "DN:10,89,00,10,0A,89,00,00,00": False
+            "DN:10,89,00,10,0A,89,00,00,00": "DN:P"
         }
         self.machine.coils.c_pulse_pwm_mask.pulse()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         self.net_cpu.expected_commands = {
-            "DN:10,C1,00,18,0A,89,AA,00": False
+            "DN:10,C1,00,18,0A,89,AA,00": "DN:P"
         }
         self.machine.coils.c_pulse_pwm_mask.enable()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
     def _test_hw_rule_pulse_pwm32(self):
         self.net_cpu.expected_commands = {
-            "DN:11,89,00,10,0A,89898989,00,00,00": False
+            "DN:11,89,00,10,0A,89898989,00,00,00": "DN:P"
         }
         self.machine.coils.c_pulse_pwm32_mask.pulse()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         self.net_cpu.expected_commands = {
-            "DN:11,C1,00,18,0A,89898989,AA89AA89,00": False
+            "DN:11,C1,00,18,0A,89898989,AA89AA89,00": "DN:P"
         }
         self.machine.coils.c_pulse_pwm32_mask.enable()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
     def _test_hw_rule_pulse_inverted_switch(self):
         self.net_cpu.expected_commands = {
-            "DN:07,11,1A,10,0A,ff,00,00,14": False,
-            "SN:1A,01,02,02": False
+            "DN:07,11,1A,10,0A,ff,00,00,14": "DN:P",
+            "SN:1A,01,02,02": "SN:P"
         }
         self.machine.autofires.ac_inverted_switch.enable()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
     def test_servo(self):
         # go to min position
         self.net_cpu.expected_commands = {
-                "XO:03,00": False
+                "XO:03,00": "XO:P"
         }
         self.machine.servos.servo1.go_to_position(0)
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         # go to max position
         self.net_cpu.expected_commands = {
-                "XO:03,FF": False
+                "XO:03,FF": "XO:P"
         }
         self.machine.servos.servo1.go_to_position(1)
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
     def _switch_hit_cb(self):
@@ -373,10 +393,10 @@ class TestFast(MpfTestCase):
     def _test_switch_configure(self):
         # last switch on first board
         self.net_cpu.expected_commands = {
-            "SN:1F,01,0A,0A": False
+            "SN:1F,01,0A,0A": "SN:P"
         }
         self.machine.default_platform.configure_switch({'number': '0-31', 'debounce': 'auto'})
-        self.machine_run()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         # next should not work
@@ -384,10 +404,10 @@ class TestFast(MpfTestCase):
             self.machine.default_platform.configure_switch({'number': '0-32', 'debounce': 'auto'})
 
         self.net_cpu.expected_commands = {
-            "SN:47,01,0A,0A": False
+            "SN:47,01,0A,0A": "SN:P"
         }
         self.machine.default_platform.configure_switch({'number': '3-15', 'debounce': 'auto'})
-        self.machine_run()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         # invalid board
@@ -450,79 +470,89 @@ class TestFast(MpfTestCase):
     def test_flipper_single_coil(self):
         # manual flip no hw rule
         self.net_cpu.expected_commands = {
-            "DN:20,89,00,10,0A,ff,00,00,00": False
+            "DN:20,89,00,10,0A,ff,00,00,00": "DN:P"
         }
         self.machine.coils.c_flipper_main.pulse()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         # manual enable no hw rule
         self.net_cpu.expected_commands = {
-            "DN:20,C1,00,18,0A,ff,01,00": False
+            "DN:20,C1,00,18,0A,ff,01,00": "DN:P"
         }
         self.machine.coils.c_flipper_main.enable()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         # manual disable no hw rule
         self.net_cpu.expected_commands = {
-            "TN:20,02": False
+            "TN:20,02": "TN:P"
         }
         self.machine.coils.c_flipper_main.disable()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         # enable
         self.net_cpu.expected_commands = {
-            "DN:20,01,01,18,0B,ff,01,00,00": False,
-            "SN:01,01,02,02": False
+            "DN:20,01,01,18,0B,ff,01,00,00": "DN:P",
+            "SN:01,01,02,02": "SN:P"
         }
         self.machine.flippers.f_test_single.enable()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         # manual flip with hw rule in action
         self.net_cpu.expected_commands = {
-            "TN:20,01": False,  # pulse
-            "TN:20,00": False   # reenable autofire rule
+            "TN:20,01": "TN:P",  # pulse
+            "TN:20,00": "TN:P"   # reenable autofire rule
         }
         self.machine.coils.c_flipper_main.pulse()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         # manual enable with hw rule
         self.net_cpu.expected_commands = {
-            "TN:20,03": False
+            "TN:20,03": "TN:P"
         }
         self.machine.coils.c_flipper_main.enable()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         # manual disable with hw rule
         self.net_cpu.expected_commands = {
-            "TN:20,02": False,
-            "TN:20,00": False   # reenable autofire rule
+            "TN:20,02": "TN:P",
+            "TN:20,00": "TN:P"   # reenable autofire rule
         }
         self.machine.coils.c_flipper_main.disable()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         # disable
         self.net_cpu.expected_commands = {
-            "DN:20,81": False
+            "DN:20,81": "DN:P"
         }
         self.machine.flippers.f_test_single.disable()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
     def test_flipper_two_coils(self):
         # we pulse the main coil (20)
         # hold coil (21) is pulsed + enabled
         self.net_cpu.expected_commands = {
-            "DN:20,01,01,18,0A,ff,00,00,00": False,
-            "DN:21,01,01,18,0A,ff,01,00,00": False,
-            "SN:01,01,02,02": False,
+            "DN:20,01,01,18,0A,ff,00,00,00": "DN:P",
+            "DN:21,01,01,18,0A,ff,01,00,00": "DN:P",
+            "SN:01,01,02,02": "SN:P",
         }
         self.machine.flippers.f_test_hold.enable()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         self.net_cpu.expected_commands = {
-            "DN:20,81": False,
-            "DN:21,81": False
+            "DN:20,81": "DN:P",
+            "DN:21,81": "DN:P"
         }
         self.machine.flippers.f_test_hold.disable()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
     def test_dmd_update(self):
@@ -543,7 +573,7 @@ class TestFast(MpfTestCase):
         }
         dmd.update(frame)
 
-        self.machine_run()
+        self.advance_time_and_run(.1)
 
         self.assertFalse(self.dmd_cpu.expected_commands)
 
@@ -555,7 +585,7 @@ class TestFast(MpfTestCase):
     def _test_matrix_light(self):
         # test enable of matrix light
         self.net_cpu.expected_commands = {
-            "L1:23,FF": False,
+            "L1:23,FF": "L1:P",
         }
         self.machine.lights.test_pdb_light.on()
         self.advance_time_and_run(.1)
@@ -563,7 +593,7 @@ class TestFast(MpfTestCase):
 
         # test enable of matrix light with brightness
         self.net_cpu.expected_commands = {
-            "L1:23,80": False,
+            "L1:23,80": "L1:P",
         }
         self.machine.lights.test_pdb_light.on(brightness=128)
         self.advance_time_and_run(.1)
@@ -571,7 +601,7 @@ class TestFast(MpfTestCase):
 
         # test disable of matrix light
         self.net_cpu.expected_commands = {
-            "L1:23,00": False,
+            "L1:23,00": "L1:P",
         }
         self.machine.lights.test_pdb_light.off()
         self.advance_time_and_run(.1)
@@ -579,7 +609,7 @@ class TestFast(MpfTestCase):
 
         # test disable of matrix light with brightness
         self.net_cpu.expected_commands = {
-            "L1:23,00": False,
+            "L1:23,00": "L1:P",
         }
         self.machine.lights.test_pdb_light.on(brightness=0)
         self.advance_time_and_run(.1)
@@ -589,39 +619,39 @@ class TestFast(MpfTestCase):
         # test gi on
         device = self.machine.gis.test_gi
         self.net_cpu.expected_commands = {
-            "GI:2A,FF": False,
+            "GI:2A,FF": "GI:P",
         }
         device.enable()
-        self.machine_run()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         self.net_cpu.expected_commands = {
-            "GI:2A,80": False,
+            "GI:2A,80": "GI:P",
         }
         device.enable(brightness=128)
-        self.machine_run()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         self.net_cpu.expected_commands = {
-            "GI:2A,F5": False,
+            "GI:2A,F5": "GI:P",
         }
         device.enable(brightness=245)
-        self.machine_run()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         # test gi off
         self.net_cpu.expected_commands = {
-            "GI:2A,00": False,
+            "GI:2A,00": "GI:P",
         }
         device.disable()
-        self.machine_run()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         self.net_cpu.expected_commands = {
-            "GI:2A,00": False,
+            "GI:2A,00": "GI:P",
         }
         device.enable(brightness=0)
-        self.machine_run()
+        self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
     def _test_rdb_led(self):
