@@ -1,7 +1,7 @@
-from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.MpfGameTestCase import MpfGameTestCase
 
 
-class TestBallSave(MpfTestCase):
+class TestBallSave(MpfGameTestCase):
 
     def getConfigFile(self):
         return 'config.yaml'
@@ -263,3 +263,68 @@ class TestBallSave(MpfTestCase):
         # first one ball is saved (but will drain soon)
         self.assertEqual(1, self.machine.ball_devices.bd_trough.balls)
         self.advance_time_and_run(10)
+
+    def test_eject_delay(self):
+        # prepare game
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+        self.advance_time_and_run()
+
+        # start game
+        self.hit_and_release_switch("s_start")
+        self.advance_time_and_run()
+        self.post_event("enable4")
+        self.advance_time_and_run()
+        self.assertBallNumber(1)
+        # one ball on pf
+        self.assertEqual(1, self.machine.playfield.available_balls)
+
+        # ball drains
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.advance_time_and_run(1)
+
+        # still the same ball
+        self.assertBallNumber(1)
+
+        # but no ball on pf
+        self.assertEqual(0, self.machine.playfield.available_balls)
+
+        # eject after 10s
+        self.advance_time_and_run(10)
+        self.assertEqual(1, self.machine.playfield.available_balls)
+
+    def test_only_last(self):
+        # prepare game
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+        self.advance_time_and_run()
+
+        # start game
+        self.hit_and_release_switch("s_start")
+        self.advance_time_and_run()
+        self.machine.playfield.add_ball(1)
+        self.advance_time_and_run()
+        self.machine.game.balls_in_play = 2
+
+        self.post_event("enable3")
+        self.advance_time_and_run()
+        self.assertBallNumber(1)
+        # two balls on pf
+        self.assertEqual(2, self.machine.playfield.available_balls)
+
+        # ball drains
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.advance_time_and_run(1)
+
+        # still the same ball. one ball on pf. no save
+        self.assertBallNumber(1)
+        self.assertEqual(1, self.machine.playfield.available_balls)
+
+        # last ball drains
+        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+        self.advance_time_and_run(1)
+
+        # should be safed
+        self.advance_time_and_run(1)
+        self.assertEqual(1, self.machine.playfield.available_balls)
+        self.assertBallNumber(1)
