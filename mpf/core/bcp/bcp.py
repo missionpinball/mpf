@@ -1,4 +1,6 @@
 """BCP module."""
+from mpf.core.mpf_controller import MpfController
+
 from mpf.core.bcp.bcp_server import BcpServer
 from mpf.core.utility_functions import Util
 
@@ -6,16 +8,19 @@ from mpf.core.bcp.bcp_interface import BcpInterface
 from mpf.core.bcp.bcp_transport import BcpTransportManager
 
 
-class Bcp:
+class Bcp(MpfController):
 
     """BCP Module."""
 
     def __init__(self, machine):
         """Initialise BCP module."""
+        super().__init__(machine)
         self.interface = BcpInterface(machine)
         self.transport = BcpTransportManager(machine)
-        self.machine = machine
         self.servers = []
+
+        if not self.machine.options['bcp']:
+            return
 
         self.machine.events.add_handler('init_phase_2',
                                         self._setup_bcp_connections)
