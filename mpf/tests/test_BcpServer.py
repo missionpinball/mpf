@@ -26,6 +26,9 @@ class TestBcp(MpfTestCase):
         self.machine_config_patches['bcp'] = dict()
         self.machine_config_patches['bcp']['connections'] = []
 
+    def get_use_bcp(self):
+        return True
+
     def _mock_loop(self):
         self.mock_server = MockServer(self.clock.loop)
         self.clock.mock_server("127.0.0.1", 5051, self.mock_server)

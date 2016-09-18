@@ -107,6 +107,9 @@ class TestBcpSocketClient(MpfTestCase):
         self.machine_config_patches['bcp'] = {}
         self.machine_config_patches['bcp']['servers'] = []
 
+    def get_use_bcp(self):
+        return True
+
     def setUp(self):
         super().setUp()
         self._bcp_client = self.machine.bcp.transport.get_named_client("local_display")

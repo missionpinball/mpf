@@ -42,6 +42,9 @@ class MpfBcpTestCase(MpfTestCase):
         self.machine_config_patches['bcp'] = \
             {"connections": {"local_display": {"type": "mpf.tests.MpfBcpTestCase.MockBcpClient"}}, "servers": []}
 
+    def get_use_bcp(self):
+        return True
+
     def setUp(self):
         super().setUp()
         self._bcp_client = self.machine.bcp.transport.get_named_client("local_display")
