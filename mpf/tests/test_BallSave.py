@@ -303,7 +303,7 @@ class TestBallSave(MpfGameTestCase):
         self.hit_and_release_switch("s_start")
         self.advance_time_and_run()
         self.machine.playfield.add_ball(1)
-        self.advance_time_and_run()
+        self.advance_time_and_run(10)
         self.machine.game.balls_in_play = 2
 
         self.post_event("enable3")
