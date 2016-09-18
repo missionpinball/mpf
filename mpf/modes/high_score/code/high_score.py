@@ -141,8 +141,8 @@ class HighScore(Mode):
                                      player_num=player.number,
                                      value=value)
 
-    def _receive_player_name(self, text, mode):
-        del mode
+    def _receive_player_name(self, text, **kwargs):
+        del kwargs
 
         if not text:
             text = ''
