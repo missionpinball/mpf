@@ -144,20 +144,24 @@ class BallSave(SystemWideDevice, ModeDevice):
     def _ball_drain_while_active(self, balls, **kwargs):
         del kwargs
         if balls <= 0:
-            return {'balls': balls}
+            return
 
         no_balls_in_play = False
 
         try:
             if not self.machine.game.balls_in_play:
                 no_balls_in_play = True
+
+            if self.config['only_last_ball'] and self.machine.game.balls_in_play > 1:
+                self.log.debug("Will only save last ball but %s are in play.", self.machine.game.balls_in_play)
+                return
         except AttributeError:
             no_balls_in_play = True
 
         if no_balls_in_play:
             self.log.debug("Received request to save ball, but no balls are in"
                            " play. Discarding request.")
-            return {'balls': balls}
+            return
 
         balls_to_save = balls
 
@@ -179,8 +183,7 @@ class BallSave(SystemWideDevice, ModeDevice):
             balls: The number of balls this ball saver is saving.
         '''
 
-        self.source_playfield.add_ball(balls=balls_to_save,
-                                       player_controlled=self.config['auto_launch'] ^ 1)
+        self._schedule_balls(balls_to_save)
 
         if not self.unlimited_saves:
             self.saves_remaining -= balls_to_save
@@ -195,6 +198,17 @@ class BallSave(SystemWideDevice, ModeDevice):
             self.disable()
 
         return {'balls': balls - balls_to_save}
+
+    def _schedule_balls(self, balls_to_save):
+        if self.config['eject_delay']:
+            self.delay.add(self.config['eject_delay'], self._add_balls, balls_to_save=balls_to_save)
+        else:
+            self._add_balls(balls_to_save)
+
+    def _add_balls(self, balls_to_save, **kwargs):
+        del kwargs
+        self.source_playfield.add_ball(balls=balls_to_save,
+                                       player_controlled=self.config['auto_launch'] ^ 1)
 
     def device_removed_from_mode(self, mode):
         """Disable ball save when mode ends."""

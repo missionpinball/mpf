@@ -141,6 +141,8 @@ ball_saves:
     __valid_in__: machine, mode
     source_playfield: single|machine(ball_devices)|playfield
     active_time: single|ms|0
+    eject_delay: single|ms|0
+    only_last_ball: single|bool|False
     hurry_up_time: single|ms|0
     grace_period: single|ms|0
     auto_launch: single|bool|True

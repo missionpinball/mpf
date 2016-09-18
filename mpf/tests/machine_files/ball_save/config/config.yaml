@@ -57,3 +57,11 @@ ball_saves:
         auto_launch: yes
         balls_to_save: -1
         debug: yes
+    only_last:
+        enable_events: enable3
+        only_last_ball: True
+        debug: yes
+    eject_delay:
+        enable_events: enable4
+        eject_delay: 1s
+        debug: yes
