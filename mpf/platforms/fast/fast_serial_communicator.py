@@ -227,6 +227,8 @@ class FastSerialCommunicator(BaseSerialCommunicator):
     def _parse_msg(self, msg):
         self.received_msg += msg
 
+        ignored_messages = {b'-N', b'/N', b'/L', b'-L'}
+
         while True:
             pos = self.received_msg.find(b'\r')
 
@@ -237,12 +239,14 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             msg = self.received_msg[:pos]
             self.received_msg = self.received_msg[pos + 1:]
 
-            self.messages_in_flight -= 1
-            if self.messages_in_flight <= self.max_messages_in_flight:
-                self.send_ready.set()
-            if self.messages_in_flight < 0:
-                self.log.warning("Port %s received more messages than were send! Resetting!", self.port)
-                self.messages_in_flight = 0
+            if msg[:2] not in ignored_messages:
+
+                self.messages_in_flight -= 1
+                if self.messages_in_flight <= self.max_messages_in_flight:
+                    self.send_ready.set()
+                if self.messages_in_flight < 0:
+                    self.log.warning("Port %s received more messages than were send! Resetting!", self.port)
+                    self.messages_in_flight = 0
 
             if not msg:
                 continue
