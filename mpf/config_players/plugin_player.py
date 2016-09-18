@@ -44,6 +44,10 @@ class PluginPlayer(DeviceConfigPlayer):
         the local play() method.
         """
         event_list = list()
+        # when bcp is disabled do not register plugin_player
+        if not self.machine.options['bcp']:
+            return event_list
+
         self.bcp_client = self._get_bcp_client(config)
 
         for event in config:
