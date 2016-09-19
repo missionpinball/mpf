@@ -221,6 +221,12 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             if self.messages_in_flight > self.max_messages_in_flight:
                 self.send_ready.clear()
 
+                self.log.debug("Enabling Flow Control for %s connection. "
+                               "Messages in flight: %s, Max setting: %s",
+                               self.remote_processor,
+                               self.messages_in_flight,
+                               self.max_messages_in_flight)
+
             self.writer.write(msg.encode() + b'\r')
             if debug and msg[0:2] != "WD":
                 self.platform.log.debug("Send: %s", msg)
