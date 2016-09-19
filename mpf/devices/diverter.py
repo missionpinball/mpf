@@ -56,7 +56,8 @@ class Diverter(SystemWideDevice):
 
         self.platform = self.config['activation_coil'].platform
 
-    def _register_switches(self):
+    def _register_switches(self, **kwargs):
+        del kwargs
         # register for deactivation switches
         for switch in self.config['deactivation_switches']:
             self.machine.switch_controller.add_switch_handler(

@@ -28,7 +28,8 @@ class PlayfieldTransfer(SystemWideDevice):
         self.target = self.config['eject_target']
         self.source = self.config['captures_from']
 
-    def _configure_switch(self):
+    def _configure_switch(self, **kwargs):
+        del kwargs
         self.machine.switch_controller.add_switch_handler(
             switch_name=self.config['ball_switch'].name,
             callback=self._ball_went_through,

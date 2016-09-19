@@ -81,8 +81,9 @@ class ScoreReelGroup(SystemWideDevice):
 
     # ----- temp method for chime ------------------------------------
     @classmethod
-    def chime(cls, chime):
+    def chime(cls, chime, **kwargs):
         """Pulse chime."""
+        del kwargs
         chime.pulse()
 
     # ---- temp chimes code end --------------------------------------
@@ -107,11 +108,12 @@ class ScoreReelGroup(SystemWideDevice):
         """
         return self.reel_list_to_int(self.assumed_value_list)
 
-    def initialize(self):
+    def initialize(self, **kwargs):
         """Initialize the score reels by reading their current physical values and setting each reel's rollover reel.
 
         This is a separate method since it can't run int __iniit__() because all the other reels have to be setup first.
         """
+        del kwargs
         self.get_physical_value_list()
         self.set_rollover_reels()
 
@@ -662,7 +664,8 @@ class ScoreReelGroup(SystemWideDevice):
             self.machine.events.remove_handler_by_key(
                 self.unlight_on_resync_key)
 
-    def _ball_ending(self, queue=None):
+    def _ball_ending(self, queue=None, **kwargs):
+        del kwargs
         # We need to hook the ball_ending event in case the ball ends while the
         # score reel is still catching up.
 

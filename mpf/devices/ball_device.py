@@ -493,7 +493,8 @@ class BallDevice(SystemWideDevice):
                 self.trigger_event,
                 self._trigger_eject_by_event)
 
-    def _trigger_eject_by_event(self):
+    def _trigger_eject_by_event(self, **kwargs):
+        del kwargs
         self.machine.events.remove_handler(self._trigger_eject_by_event)
 
         if self.mechanical_eject_in_progress:
@@ -887,7 +888,8 @@ class BallDevice(SystemWideDevice):
 
                     break
 
-    def _initialize_phase_4(self):
+    def _initialize_phase_4(self, **kwargs):
+        del kwargs
         self._state_invalid_start()
 
     def _fire_coil_for_search(self, full_power):
