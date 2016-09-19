@@ -21,6 +21,30 @@ class SettingsController(MpfController):
         # start with default settings
         self._settings = {}
 
+        self._add_entries_from_config()
+
+    def _add_entries_from_config(self):
+        # add entries from config
+        self.config = self.machine.config.get('settings', {})
+        for name, settings in self.config.items():
+            settings = self.machine.config_validator.validate_config("settings", settings)
+            if not settings['machine_var']:
+                settings['machine_var'] = name
+            values = {}
+            for key, value in settings['values'].items():
+                if settings['key_type'] == "int":
+                    key = int(key)
+                elif settings['key_type'] == "float":
+                    key = float(key)
+                values[key] = value
+            if settings['key_type'] == "int":
+                settings['default'] = int(settings['default'])
+            elif settings['key_type'] == "float":
+                settings['default'] = float(settings['default'])
+
+            self.add_setting(SettingEntry(name, settings['label'], settings['sort'], settings['machine_var'],
+                                          settings['default'], values))
+
     def add_setting(self, setting: SettingEntry):
         """Add a setting."""
         self._settings[setting.name] = setting

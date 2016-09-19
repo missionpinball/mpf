@@ -325,7 +325,7 @@ class ConfigValidator(object):
     def _validate_type_gain(cls, item, validation_failure_info):
         del validation_failure_info
         if item is None:
-            return None;
+            return None
         return Util.string_to_gain(item)
 
     @classmethod

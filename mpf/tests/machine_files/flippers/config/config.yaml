@@ -37,3 +37,9 @@ flippers:
         activation_switch: s_flipper
         eos_switch: s_flipper_eos
         use_eos: true
+
+    f_test_flippers_with_settings:
+        debug: true
+        main_coil: c_flipper_main
+        power_setting_name: flipper_power
+        activation_switch: s_flipper

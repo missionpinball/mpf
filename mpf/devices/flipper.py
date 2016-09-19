@@ -1,4 +1,6 @@
 """Contains the base class for flippers."""
+import copy
+
 from mpf.core.device_monitor import DeviceMonitor
 
 from mpf.devices.driver import ReconfiguredDriver
@@ -46,17 +48,38 @@ class Flipper(SystemWideDevice):
             self.config['eos_switch_overwrite']['debounce'] = "quick"
 
         self.platform = self.config['main_coil'].platform
-        self.main_coil = ReconfiguredDriver(self.config['main_coil'], self.config['main_coil_overwrite'])
+
         self.switch = ReconfiguredSwitch(self.config['activation_switch'], self.config['switch_overwrite'], False)
-
-        if self.config['hold_coil']:
-            self.hold_coil = ReconfiguredDriver(self.config['hold_coil'], self.config['hold_coil_overwrite'])
-
+        self._reconfigure_drivers()
         if self.config['eos_switch']:
             self.eos_switch = ReconfiguredSwitch(self.config['eos_switch'], self.config['eos_switch_overwrite'], False)
 
         if self.debug:
             self.log.debug('Platform Driver: %s', self.platform)
+
+        if self.config['power_setting_name']:
+            self.machine.events.add_handler("machine_var_{}".format(self.config['power_setting_name']),
+                                            self._power_changed)
+
+    def _reconfigure_drivers(self):
+        self.main_coil = self._reconfigure_driver(self.config['main_coil'], self.config['main_coil_overwrite'])
+        if self.config['hold_coil']:
+            self.hold_coil = self._reconfigure_driver(self.config['hold_coil'], self.config['hold_coil_overwrite'])
+
+    def _reconfigure_driver(self, driver, overwrite_config):
+        if self.config['power_setting_name']:
+            overwrite_config = copy.deepcopy(overwrite_config)
+            pulse_ms = driver.config.get(
+                "pulse_ms", overwrite_config.get("pulse_ms",self.machine.config['mpf']['default_pulse_ms']))
+            settings_factor = self.machine.settings.get_setting_value(self.config['power_setting_name'])
+            overwrite_config['pulse_ms'] = int(pulse_ms * settings_factor)
+            self.log.info("Configuring driver %s with a pulse time of %s ms for flipper",
+                          driver.name, overwrite_config['pulse_ms'])
+        return ReconfiguredDriver(driver, overwrite_config)
+
+    def _power_changed(self, **kwargs):
+        del kwargs
+        self._reconfigure_drivers()
 
     def enable(self, **kwargs):
         """Enable the flipper by writing the necessary hardware rules to the hardware controller.

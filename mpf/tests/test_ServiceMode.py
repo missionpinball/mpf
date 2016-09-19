@@ -209,6 +209,7 @@ class TestServiceMode(MpfFakeGameTestCase):
         self.assertEventCalled("master_volume_decrease", 1)
 
     def test_settings(self):
+        self.machine.settings._settings = {}
         self.machine.settings.add_setting(SettingEntry("test1", "Test1", 1, "test1", "b",
                                                        {"a": "A", "b": "B (default)", "c": "C"}))
         self.machine.settings.add_setting(SettingEntry("test2", "Test2", 2, "test2", False,
