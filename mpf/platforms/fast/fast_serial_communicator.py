@@ -113,12 +113,24 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             min_version = DMD_MIN_FW
             # latest_version = DMD_LATEST_FW
             self.dmd = True
+            self.max_messages_in_flight = self.platform.config['dmd_buffer']
+            self.platform.debug_log("Setting DMD buffer size: %s",
+                                    self.max_messages_in_flight)
         elif self.remote_processor == 'NET':
             min_version = NET_MIN_FW
             # latest_version = NET_LATEST_FW
-        else:
+            self.max_messages_in_flight = self.platform.config['net_buffer']
+            self.platform.debug_log("Setting NET buffer size: %s",
+                                    self.max_messages_in_flight)
+        elif self.remote_processor == 'RGB':
             min_version = RGB_MIN_FW
             # latest_version = RGB_LATEST_FW
+            self.max_messages_in_flight = self.platform.config['rgb_buffer']
+            self.platform.debug_log("Setting RGB buffer size: %s",
+                                    self.max_messages_in_flight)
+        else:
+            raise AttributeError("Unrecognized FAST processor type: %s",
+                                 self.remote_processor)
 
         if StrictVersion(min_version) > StrictVersion(self.remote_firmware):
             raise AssertionError('Firmware version mismatch. MPF requires'
