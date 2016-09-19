@@ -28,7 +28,7 @@ class BaseSerialCommunicator(object):
 
     @asyncio.coroutine
     def _connect_to_hardware(self, port, baud):
-        self.log.debug("Connecting to %s at %sbps", port, baud)
+        self.log.info("Connecting to %s at %sbps", port, baud)
 
         connector = self.machine.clock.open_serial_connection(
             url=port, baudrate=baud, limit=0)

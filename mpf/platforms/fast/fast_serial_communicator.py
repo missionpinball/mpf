@@ -104,10 +104,10 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         except ValueError:
             self.remote_processor, self.remote_model, = msg[3:].split()
 
-        self.platform.debug_log("Received ID acknowledgement. Processor: %s, "
-                                "Board: %s, Firmware: %s",
-                                self.remote_processor, self.remote_model,
-                                self.remote_firmware)
+        self.platform.log.info("Connected! Processor: %s, "
+                               "Board Type: %s, Firmware: %s",
+                               self.remote_processor, self.remote_model,
+                               self.remote_firmware)
 
         if self.remote_processor == 'DMD':
             min_version = DMD_MIN_FW
@@ -257,7 +257,9 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                 if self.messages_in_flight <= self.max_messages_in_flight:
                     self.send_ready.set()
                 if self.messages_in_flight < 0:
-                    self.log.warning("Port %s received more messages than were send! Resetting!", self.port)
+                    self.log.warning("Port %s received more messages than "
+                                     "were sent! Resetting!",
+                                     self.remote_processor)
                     self.messages_in_flight = 0
 
             if not msg:
