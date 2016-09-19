@@ -44,7 +44,8 @@ class Auditor(object):
         """Return string representation."""
         return '<Auditor>'
 
-    def _initialize(self):
+    def _initialize(self, **kwargs):
+        del kwargs
         # Initializes the auditor. We do this separate from __init__() since
         # we need everything else to be setup first.
 
@@ -175,7 +176,7 @@ class Auditor(object):
         current_list.sort(reverse=True)
         return current_list[0:num_items]
 
-    def enable(self, **kwags):
+    def enable(self, **kwargs):
         """Enable the auditor.
 
         This method lets you enable the auditor so it only records things when
@@ -187,7 +188,7 @@ class Auditor(object):
                 keyword arguments.
 
         """
-        del kwags
+        del kwargs
         if self.enabled:
             return  # this will happen if we get a mid game restart
 
@@ -209,7 +210,8 @@ class Auditor(object):
             self.machine.events.add_handler(event, self._save_audits,
                                             priority=0)
 
-    def _save_audits(self, delay_secs=3):
+    def _save_audits(self, delay_secs=3, **kwargs):
+        del kwargs
         self.data_manager.save_all(data=self.current_audits,
                                    delay_secs=delay_secs)
 

@@ -75,8 +75,9 @@ class OSC(object):
             "FLIPPER": self.process_flipper,
         }
 
-    def start(self):
+    def start(self, **kwargs):
         """Start the OSC server."""
+        del kwargs
         receive_address = (self.config['machine_ip'],
                            self.config['machine_port'])
         self.server = OSCmodule.OSCServer(receive_address)
