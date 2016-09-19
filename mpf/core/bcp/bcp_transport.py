@@ -105,8 +105,9 @@ class BcpTransportManager:
         for client in self._transports:
             self.send_to_client(client, bcp_command, **kwargs)
 
-    def shutdown(self):
+    def shutdown(self, **kwargs):
         """Prepare the BCP clients for MPF shutdown."""
+        del kwargs
         for client in self._transports:
             client.stop()
             self.unregister_transport(client)

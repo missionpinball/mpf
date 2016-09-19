@@ -165,7 +165,8 @@ class BaseAssetManager(MpfController):
 
         asset_class['defaults'] = default_config_dict
 
-    def _create_assets(self):
+    def _create_assets(self, **kwargs):
+        del kwargs
         # Called once on boot to create all the asset objects
         # Create the machine-wide assets
 
@@ -454,9 +455,10 @@ class BaseAssetManager(MpfController):
         """Load an asset."""
         raise NotImplementedError("implement")
 
-    def _bcp_client_asset_load(self, total, remaining):
+    def _bcp_client_asset_load(self, total, remaining, **kwargs):
         # Callback for the BCP assets_to_load command which tracks asset
         # loading from a connected BCP client.
+        del kwargs
         self.num_bcp_assets_loaded = int(total) - int(remaining)
         self.num_bcp_assets_to_load = int(total)
         self._post_loading_event()

@@ -81,7 +81,8 @@ class SwitchController(MpfController):
 
         self.set_state(name, 0, reset_time=True)
 
-    def _initialize_switches(self):
+    def _initialize_switches(self, **kwargs):
+        del kwargs
         self.update_switches_from_hw()
 
         for switch in self.machine.switches:
@@ -600,7 +601,7 @@ class SwitchController(MpfController):
                 if entry['switch_action'] == entry_key and entry['ms'] == ms and entry['callback'] == callback:
                     entry['removed'] = True
 
-    def log_active_switches(self):
+    def log_active_switches(self, **kwargs):
         """Write out entries to the log file of all switches that are currently active.
 
         This is used to set the "initial" switch states of standalone testing
@@ -609,6 +610,7 @@ class SwitchController(MpfController):
 
         This method dumps these events with logging level "INFO."
         """
+        del kwargs
         for k, v in self.switches.items():
             if v['state']:
                 self.log.info("Active Switch|%s", k)

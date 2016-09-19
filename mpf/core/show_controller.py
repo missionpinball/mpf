@@ -34,7 +34,8 @@ class ShowController(object):
         self.machine.mode_controller.register_load_method(
             self._process_config_shows_section, 'shows')
 
-    def _initialize(self):
+    def _initialize(self, **kwargs):
+        del kwargs
         if 'shows' in self.machine.config:
             self._process_config_shows_section(self.machine.config['shows'])
 

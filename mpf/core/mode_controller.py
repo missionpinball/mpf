@@ -74,13 +74,14 @@ class ModeController(object):
                                         self._player_turn_stop,
                                         priority=1000000)
 
-    def _load_modes(self):
+    def _load_modes(self, **kwargs):
         # Loads the modes from the modes: section of the machine configuration
         # file.
 
         # todo if we get the config validator to validate files pre-merge, then
         # we can handle proper merging if people don't use dashes in their list
         # of modes
+        del kwargs
 
         self._build_mode_folder_dicts()
 
@@ -252,8 +253,9 @@ class ModeController(object):
         return final_mode_folders
 
     @classmethod
-    def _player_added(cls, player, num):
+    def _player_added(cls, player, num, **kwargs):
         del num
+        del kwargs
         player.restart_modes_on_next_ball = list()
 
     def _player_turn_start(self, player, **kwargs):
@@ -267,7 +269,8 @@ class ModeController(object):
         for mode in self.machine.modes:
             mode.player = None
 
-    def _ball_starting(self, queue):
+    def _ball_starting(self, queue, **kwargs):
+        del kwargs
         del queue
         for mode in self.machine.game.player.restart_modes_on_next_ball:
             self.log.debug("Restarting mode %s based on 'restart_on_next_ball"
@@ -277,8 +280,9 @@ class ModeController(object):
 
         self.machine.game.player.restart_modes_on_next_ball = list()
 
-    def _ball_ending(self, queue):
-        # unloads all the active modes
+    def _ball_ending(self, queue, **kwargs):
+        """Unload all the active modes."""
+        del kwargs
 
         if not self.active_modes:
             return ()

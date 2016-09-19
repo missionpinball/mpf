@@ -564,8 +564,9 @@ class MachineController(object):
 
         self._run_loop()
 
-    def stop(self):
+    def stop(self, **kwargs):
         """Perform a graceful exit of MPF."""
+        del kwargs
         if self._done:
             return
 
@@ -611,7 +612,7 @@ class MachineController(object):
         for platform in list(self.hardware_platforms.values()):
             platform.stop()
 
-    def power_off(self):
+    def power_off(self, **kwargs):
         """Attempt to perform a power down of the pinball machine and ends MPF.
 
         This method is not yet implemented.

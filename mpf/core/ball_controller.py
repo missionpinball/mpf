@@ -34,7 +34,8 @@ class BallController(object):
         self.machine.events.add_handler('init_phase_2',
                                         self._init2)
 
-    def _init2(self):
+    def _init2(self, **kwargs):
+        del kwargs
         # register a handler for all switches
         for device in self.machine.ball_devices:
             if 'ball_switches' not in device.config:
@@ -224,10 +225,11 @@ class BallController(object):
 
         return balls
 
-    def _initialize(self):
+    def _initialize(self, **kwargs):
 
         # If there are no ball devices, then the ball controller has no work to
         # do and will create errors, so we just abort.
+        del kwargs
         if not hasattr(self.machine, 'ball_devices'):
             return
 
@@ -237,13 +239,14 @@ class BallController(object):
                                                 '_ball_enter',
                                                 self._ball_drained_handler)
 
-    def request_to_start_game(self):
+    def request_to_start_game(self, **kwargs):
         """Method registered for the *request_to_start_game* event.
 
         Checks to make sure that the balls are in all the right places and
         returns. If too many balls are missing (based on the config files 'Min
         Balls' setting), it will return False to reject the game start request.
         """
+        del kwargs
         try:
             balls = self._count_balls()
         except ValueError:

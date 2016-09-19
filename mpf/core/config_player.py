@@ -35,7 +35,8 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
         """Return string representation."""
         return 'ConfigPlayer.{}'.format(self.show_section)
 
-    def _initialize_in_mode(self):
+    def _initialize_in_mode(self, **kwargs):
+        del kwargs
         self.machine.mode_controller.register_load_method(
             self.process_mode_config, self.config_file_section)
 
@@ -47,7 +48,8 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
 
         # if self.config_file_section in self.machine.config:
 
-    def _initialise_system_wide(self):
+    def _initialise_system_wide(self, **kwargs):
+        del kwargs
         if self.machine_collection_name:
             self.device_collection = getattr(self.machine,
                                              self.machine_collection_name)

@@ -28,7 +28,8 @@ class DeviceManager(object):
         self.machine.events.add_handler('init_phase_2',
                                         self.create_collection_control_events)
 
-    def _load_device_modules(self):
+    def _load_device_modules(self, **kwargs):
+        del kwargs
         self.log.debug("Loading devices...")
         self.machine.config['mpf']['device_modules'] = (
             self.machine.config['mpf']['device_modules'].split(' '))
@@ -178,8 +179,9 @@ class DeviceManager(object):
                                        delay,
                                        self.collections[collection][device])
 
-    def create_machinewide_device_control_events(self):
+    def create_machinewide_device_control_events(self, **kwargs):
         """Create machine wide control events."""
+        del kwargs
         for event, method, delay, _ in (
                 self.get_device_control_events(self.machine.config)):
 
@@ -195,8 +197,9 @@ class DeviceManager(object):
                 ms_delay=delay,
                 delay_mgr=self.machine.delay)
 
-    def create_collection_control_events(self):
+    def create_collection_control_events(self, **kwargs):
         """Create control events for collection."""
+        del kwargs
         for collection, events in iter(self.machine.config['mpf']['device_collection_control_events'].items()):
 
             for event in events:
@@ -206,7 +209,8 @@ class DeviceManager(object):
                                                 collection=collection,
                                                 method=event)
 
-    def _collection_control_event_handler(self, collection, method):
+    def _collection_control_event_handler(self, collection, method, **kwargs):
+        del kwargs
         for device in self.collections[collection]:
             getattr(device, method)()
 
