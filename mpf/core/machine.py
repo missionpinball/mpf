@@ -313,6 +313,7 @@ class MachineController(object):
         self.log.info("Loading config from original files")
 
         self.config = self._get_mpf_config()
+        self.config['_mpf_version'] = __version__
 
         for num, config_file in enumerate(self.options['configfile']):
 
@@ -349,6 +350,11 @@ class MachineController(object):
             # pylint: disable-msg=broad-except
             except Exception:   # pragma: no cover
                 self.log.warning("Could not load config from cache")
+                return False
+
+            if self.config.get('_mpf_version') != __version__:
+                self.log.info(
+                    "Cached config is from a different version of MPF.")
                 return False
 
             return True
