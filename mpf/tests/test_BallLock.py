@@ -12,7 +12,8 @@ class TestBallLock(MpfTestCase):
     def getMachinePath(self):
         return 'tests/machine_files/ball_lock/'
 
-    def _missing_ball(self):
+    def _missing_ball(self, **kwargs):
+        del kwargs
         self._missing += 1
 
     def _ball_enter(self, new_balls, unclaimed_balls, **kwargs):

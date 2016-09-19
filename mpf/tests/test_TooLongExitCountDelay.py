@@ -10,7 +10,7 @@ class TestTooLongExitCountDelay(MpfTestCase):
     def getMachinePath(self):
         return 'tests/machine_files/ball_device/'
 
-    def _ball_drained(self, *kwargs):
+    def _ball_drained(self, **kwargs):
         del kwargs
         self._num_balls_drained += 1
 
