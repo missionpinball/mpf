@@ -408,7 +408,6 @@ class Mode(object):
 
     def _initialise_mode_devices(self):
         """Initialise new devices that are specified in a mode config."""
-
         for collection_name, device_class in iter(self.machine.device_manager.device_classes.items()):
 
             # check if there is config for the device type

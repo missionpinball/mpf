@@ -70,7 +70,7 @@ class Flipper(SystemWideDevice):
         if self.config['power_setting_name']:
             overwrite_config = copy.deepcopy(overwrite_config)
             pulse_ms = driver.config.get(
-                "pulse_ms", overwrite_config.get("pulse_ms",self.machine.config['mpf']['default_pulse_ms']))
+                "pulse_ms", overwrite_config.get("pulse_ms", self.machine.config['mpf']['default_pulse_ms']))
             settings_factor = self.machine.settings.get_setting_value(self.config['power_setting_name'])
             overwrite_config['pulse_ms'] = int(pulse_ms * settings_factor)
             self.log.info("Configuring driver %s with a pulse time of %s ms for flipper",

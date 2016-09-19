@@ -31,7 +31,6 @@ class Bcp(MpfController):
         self.machine.events.add_handler('shutdown',
                                         self._stop_servers)
 
-
     def send(self, bcp_command, **kwargs):
         """Emulate legacy send.
 
