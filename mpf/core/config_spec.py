@@ -272,6 +272,7 @@ drop_targets:
     reset_events: dict|str:ms|ball_starting, machine_reset_phase_3
     knockdown_events: dict|str:ms|None
     ball_search_order: single|int|100
+    playfield: single|machine(playfields)|playfield
 drop_target_banks:
     __valid_in__: machine, mode
     drop_targets: list|machine(drop_targets)|

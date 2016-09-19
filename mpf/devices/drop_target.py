@@ -40,8 +40,7 @@ class DropTarget(SystemWideDevice):
         self.machine.events.add_handler('init_phase_4',
                                         self._register_switch_handlers)
 
-        # TODO: make playfield name configurable
-        self.machine.ball_devices['playfield'].ball_search.register(
+        self.config['playfield'].ball_search.register(
             self.config['ball_search_order'], self._ball_search)
 
     def _ball_search_phase1(self):
@@ -147,14 +146,14 @@ class DropTarget(SystemWideDevice):
 
     def _down(self):
         self.complete = True
-        self.machine.events.post('drop_target_' + self.name + '_down')
+        self.machine.events.post('drop_target_' + self.name + '_down', device=self)
         '''event: drop_target_(name)_down
         desc: The drop target with the (name) has just changed to the "down"
         state.'''
 
     def _up(self):
         self.complete = False
-        self.machine.events.post('drop_target_' + self.name + '_up')
+        self.machine.events.post('drop_target_' + self.name + '_up', device=self)
         '''event: drop_target_(name)_up
         desc: The drop target (name) has just changed to the "up" state.'''
 
