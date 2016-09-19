@@ -55,6 +55,8 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         self.remote_firmware = 0.0
         self.max_messages_in_flight = 10
         self.messages_in_flight = 0
+        self.ignored_messages_in_flight = {b'-N', b'/N', b'/L', b'-L'}
+
         self.send_ready = asyncio.Event(loop=platform.machine.clock.loop)
         self.send_ready.set()
 
@@ -239,8 +241,6 @@ class FastSerialCommunicator(BaseSerialCommunicator):
     def _parse_msg(self, msg):
         self.received_msg += msg
 
-        ignored_messages = {b'-N', b'/N', b'/L', b'-L'}
-
         while True:
             pos = self.received_msg.find(b'\r')
 
@@ -251,7 +251,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             msg = self.received_msg[:pos]
             self.received_msg = self.received_msg[pos + 1:]
 
-            if msg[:2] not in ignored_messages:
+            if msg[:2] not in self.ignored_messages_in_flight:
 
                 self.messages_in_flight -= 1
                 if self.messages_in_flight <= self.max_messages_in_flight:
@@ -261,6 +261,8 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                                      "were sent! Resetting!",
                                      self.remote_processor)
                     self.messages_in_flight = 0
+
+                print(self.remote_processor, self.messages_in_flight)
 
             if not msg:
                 continue
