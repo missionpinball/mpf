@@ -262,8 +262,6 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                                      self.remote_processor)
                     self.messages_in_flight = 0
 
-                print(self.remote_processor, self.messages_in_flight)
-
             if not msg:
                 continue
 
