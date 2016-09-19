@@ -113,7 +113,8 @@ class DropTarget(SystemWideDevice):
             # phase3: reset no matter what
             return self._ball_search_phase3()
 
-    def _register_switch_handlers(self):
+    def _register_switch_handlers(self, **kwargs):
+        del kwargs
         # register for notification of switch state
         # this is in addition to the parent since drop targets track
         # self.complete in separately
@@ -131,7 +132,8 @@ class DropTarget(SystemWideDevice):
         if self.knockdown_coil and not self.machine.switch_controller.is_active(self.config['switch'].name):
             self.knockdown_coil.pulse()
 
-    def _update_state_from_switch(self):
+    def _update_state_from_switch(self, **kwargs):
+        del kwargs
         if self._in_ball_search:
             return
 

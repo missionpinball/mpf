@@ -382,7 +382,7 @@ class TestFast(MpfTestCase):
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
-    def _switch_hit_cb(self):
+    def _switch_hit_cb(self, **kwargs):
         self.switch_hit = True
 
     def test_switches(self):

@@ -26,7 +26,7 @@ class TestDeviceManager(MpfTestCase):
                     "Method {}.{} is missing self. Actual signature: {}".format(
                     device_type, method_name, sig))
 
-                self.assertTrue(sig.parameters['kwargs'],
+                self.assertTrue('kwargs' in sig.parameters,
                     "Method {}.{} is missing **kwargs. Actual signature: {}".format(
                     device_type, method_name, sig))
 

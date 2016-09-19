@@ -26,8 +26,9 @@ class Motor(SystemWideDevice):
         del kwargs
         self.go_to_position(self.config['reset_position'])
 
-    def go_to_position(self, position):
+    def go_to_position(self, position, **kwargs):
         """Move motor to a specific position."""
+        del kwargs
         switch = self.config['position_switches'][position]
         # check if we are already in this position
         if self.machine.switch_controller.is_active(switch.name):

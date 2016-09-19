@@ -164,7 +164,8 @@ class HardwarePlatform(VirtualPlatform):
         self.machine.events.add_handler('machine_reset_phase_1',
                                         self._initialize2)
 
-    def _initialize2(self):
+    def _initialize2(self, **kwargs):
+        del kwargs
         self._initialise_ball_devices()
         self._initialise_drop_targets()
         self._initialise_drop_target_banks()

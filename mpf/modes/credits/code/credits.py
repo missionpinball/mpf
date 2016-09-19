@@ -209,7 +209,8 @@ class Credits(Mode):
             credit_units = 0
         return credit_units
 
-    def _player_add_request(self):
+    def _player_add_request(self, **kwargs):
+        del kwargs
         if (self._get_credit_units() >=
                 self.credit_units_per_game):
             self.log.debug("Received request to add player. Request Approved")
@@ -225,7 +226,8 @@ class Credits(Mode):
             '''
             return False
 
-    def _request_to_start_game(self):
+    def _request_to_start_game(self, **kwargs):
+        del kwargs
         if (self._get_credit_units() >=
                 self.credit_units_per_game):
             self.log.debug("Received request to start game. Request Approved")
@@ -387,7 +389,8 @@ class Credits(Mode):
 
         self.data_manager.save_all(data=self.earnings)
 
-    def _game_started(self):
+    def _game_started(self, **kwargs):
+        del kwargs
         self.log.debug("Removing credit clearing delays")
         self.delay.remove('clear_fractional_credits')
         self.delay.remove('clear_all_credits')
@@ -407,7 +410,8 @@ class Credits(Mode):
                 callback=self.clear_all_credits,
                 name='clear_all_credits')
 
-    def _game_ended(self):
+    def _game_ended(self, **kwargs):
+        del kwargs
         self._reset_timeouts()
 
         self.reset_pricing_tier_count_this_game = False
@@ -421,8 +425,9 @@ class Credits(Mode):
         self.machine.set_machine_var('credit_units', credit_units)
         self._update_credit_strings()
 
-    def clear_all_credits(self):
+    def clear_all_credits(self, **kwargs):
         """Clear all credits."""
+        del kwargs
         self.log.debug("Clearing all credits")
         self.machine.set_machine_var('credit_units', 0)
         self._update_credit_strings()

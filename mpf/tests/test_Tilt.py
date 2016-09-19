@@ -13,7 +13,8 @@ class TestTilt(MpfTestCase):
     def get_platform(self):
         return 'smart_virtual'
 
-    def _tilted(self):
+    def _tilted(self, **kwargs):
+        del kwargs
         self._is_tilted = True
 
     def test_simple_tilt(self):

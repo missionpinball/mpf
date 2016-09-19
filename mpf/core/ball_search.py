@@ -28,11 +28,12 @@ class BallSearch(object):
         self.machine.events.add_handler('request_to_start_game',
                                         self.request_to_start_game)
 
-    def request_to_start_game(self):
+    def request_to_start_game(self, **kwargs):
         """Method registered for the *request_to_start_game* event.
 
         Returns false if the ball search is running.
         """
+        del kwargs
         if self.started:
             return False
         else:

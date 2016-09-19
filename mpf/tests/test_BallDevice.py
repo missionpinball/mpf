@@ -17,7 +17,8 @@ class TestBallDevice(MpfTestCase):
     def getMachinePath(self):
         return 'tests/machine_files/ball_device/'
 
-    def _missing_ball(self):
+    def _missing_ball(self, **kwargs):
+        del kwargs
         self._missing += 1
 
     def test_ball_count_during_eject(self):

@@ -28,7 +28,8 @@ class InfoLights(object):
 
         self.machine.events.add_handler('machine_reset_phase_3', self._initialize)
 
-    def _initialize(self):
+    def _initialize(self, **kwargs):
+        del kwargs
         # convert any light names we find to objects
         for key, value in self.config.items():
             if 'light' in value:

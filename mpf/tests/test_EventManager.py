@@ -65,13 +65,15 @@ class TestEventManager(MpfTestCase):
 
         return False
 
-    def event_handler_relay1(self, relay_test):
+    def event_handler_relay1(self, relay_test, **kwargs):
+        del kwargs
         self._relay1_called += 1
         self._handlers_called.append(self.event_handler_relay1)
 
         return {'relay_test': relay_test}
 
-    def event_handler_relay2(self, relay_test):
+    def event_handler_relay2(self, relay_test, **kwargs):
+        del kwargs
         self._relay2_called += 1
         self._handlers_called.append(self.event_handler_relay2)
 
@@ -89,22 +91,26 @@ class TestEventManager(MpfTestCase):
         self._relay_callback_called += 1
         self._handlers_called.append(self.relay_callback)
 
-    def event_handler_calls_second_event(self):
+    def event_handler_calls_second_event(self, **kwargs):
+        del kwargs
         self.machine.events.post('second_event')
         self._handlers_called.append(self.event_handler_calls_second_event)
 
-    def event_handler_add_queue(self, queue):
+    def event_handler_add_queue(self, queue, **kwargs):
+        del kwargs
         self._handlers_called.append(self.event_handler_add_queue)
         self._queue = queue
         self._queue.wait()
 
-    def event_handler_add_quick_queue(self, queue):
+    def event_handler_add_quick_queue(self, queue, **kwargs):
+        del kwargs
         self._handlers_called.append(self.event_handler_add_quick_queue)
         self._queue = queue
         self._queue.wait()
         self._queue.clear()
 
-    def event_handler_clear_queue(self):
+    def event_handler_clear_queue(self, **kwargs):
+        del kwargs
         self._handlers_called.append(self.event_handler_clear_queue)
         self._queue.clear()
 
@@ -706,22 +712,28 @@ class TestEventManager(MpfTestCase):
         self.assertEqual(1, self._handler2_called)
         self.assertEqual(0, self._handler3_called)
 
-    def delay1_cb(self):
+    def delay1_cb(self, **kwargs):
+        del kwargs
         self.machine.events.post("event1")
 
-    def event1_cb(self):
+    def event1_cb(self, **kwargs):
+        del kwargs
         self.delay.add(ms=100, callback=self.delay2_cb)
 
-    def delay2_cb(self):
+    def delay2_cb(self, **kwargs):
+        del kwargs
         self.machine.events.post("event2")
 
-    def event2_cb(self):
+    def event2_cb(self, **kwargs):
+        del kwargs
         self.delay.add(ms=100, callback=self.delay3_cb)
 
-    def delay3_cb(self):
+    def delay3_cb(self, **kwargs):
+        del kwargs
         self.machine.events.post("event3")
 
-    def event3_cb(self):
+    def event3_cb(self, **kwargs):
+        del kwargs
         self.correct = True
 
     def test_event_in_delay(self):

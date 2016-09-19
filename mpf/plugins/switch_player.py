@@ -35,7 +35,8 @@ class SwitchPlayer(object):
         """Return string representation."""
         return '<SwitchPlayer>'
 
-    def _start_event_callback(self):
+    def _start_event_callback(self, **kwargs):
+        del kwargs
         self.delay.add(name='switch_player_next_step',
                        ms=Util.string_to_ms(self.step_list[self.current_step]['time']),
                        callback=self._do_step)

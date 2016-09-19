@@ -132,7 +132,7 @@ class ScoreReelController(object):
         del kwargs
         self.active_scorereelgroup.add_value(value=change, target=value)
 
-    def game_starting(self, queue, game):
+    def game_starting(self, queue, game, **kwargs):
         """Reset the score reels when a new game starts.
 
         This is a queue event so it doesn't allow the game start to continue
@@ -144,6 +144,7 @@ class ScoreReelController(object):
                 included because the game_starting event passes it.
         """
         del game
+        del kwargs
         self.queue = queue
         # tell the game_starting event queue that we have stuff to do
         self.queue.wait()
@@ -157,7 +158,8 @@ class ScoreReelController(object):
         # todo right now this sorts by ScoreGroupName. Need to change to tags
         self._reset_next_group()  # kick off the reset process
 
-    def _reset_next_group(self, value=0):
+    def _reset_next_group(self, value=0, **kwargs):
+        del kwargs
         # param `value` since that's what validate passes. Dunno if we need it.
         if self.reset_queue:  # there's still more to reset
             next_group = self.reset_queue.pop(0)

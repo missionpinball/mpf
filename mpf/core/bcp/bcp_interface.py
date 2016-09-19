@@ -212,8 +212,9 @@ class BcpInterface(object):
         del kwargs
         self.machine.bcp.transport.send_to_all_clients('mode_stop', name=name)
 
-    def bcp_reset(self):
+    def bcp_reset(self, **kwargs):
         """Send the 'reset' command to the remote BCP host."""
+        del kwargs
         self.machine.bcp.transport.send_to_all_clients("reset")
 
     def bcp_receive_switch(self, client, name, state, **kwargs):

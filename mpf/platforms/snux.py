@@ -73,7 +73,8 @@ class HardwarePlatform(DriverPlatform):
         # we have to wait for coils to be initialized
         self.machine.events.add_handler("init_phase_1", self._initialize)
 
-    def _initialize(self):
+    def _initialize(self, **kwargs):
+        del kwargs
         self._validate_config()
 
         self.log.debug("Configuring Snux Diag LED for driver %s",
@@ -104,7 +105,8 @@ class HardwarePlatform(DriverPlatform):
         self.machine.events.add_handler('init_phase_5',
                                         self._initialize_phase_2)
 
-    def _initialize_phase_2(self):
+    def _initialize_phase_2(self, **kwargs):
+        del kwargs
         self.machine.clock.schedule_interval(self._flash_diag_led, 0.5)
 
     def _validate_config(self):
