@@ -7,13 +7,14 @@ import copy
 import logging
 import re
 
+import collections
 import ruamel.yaml as yaml
 from ruamel.yaml.reader import Reader
 from ruamel.yaml.resolver import BaseResolver, Resolver
 from ruamel.yaml.scanner import Scanner, RoundTripScanner
 from ruamel.yaml.parser_ import Parser
 from ruamel.yaml.composer import Composer
-from ruamel.yaml.constructor import Constructor, RoundTripConstructor
+from ruamel.yaml.constructor import Constructor, RoundTripConstructor, ConstructorError
 from ruamel.yaml.compat import to_str
 from ruamel.yaml.dumper import RoundTripDumper
 
@@ -156,6 +157,36 @@ class MpfConstructor(Constructor):
     def __init__(self):
         """Initialise."""
         super().__init__()
+
+    def construct_mapping(self, node, deep=False):
+        """Construct mapping but raise error when a section is defined twice.
+
+        From: http://stackoverflow.com/questions/34358974/how-to-prevent-re-definition-of-keys-in-yaml
+        """
+        if not isinstance(node, yaml.MappingNode):
+            raise ConstructorError(
+                None, None,
+                "expected a mapping node, but found %s" % node.id,
+                node.start_mark)
+        mapping = {}
+        for key_node, value_node in node.value:
+            # keys can be list -> deep
+            key = self.construct_object(key_node, deep=True)
+            # lists are not hashable, but tuples are
+            if not isinstance(key, collections.Hashable):
+                if isinstance(key, list):
+                    key = tuple(key)
+            if not isinstance(key, collections.Hashable):
+                raise ConstructorError(
+                    "while constructing a mapping", node.start_mark,
+                    "found unhashable key", key_node.start_mark)
+
+            value = self.construct_object(value_node, deep=deep)
+            # next two lines differ from original
+            if key in mapping:
+                raise KeyError("Key \"{}\" was defined multiple times in config.".format(key))
+            mapping[key] = value
+        return mapping
 
     def construct_yaml_int(self, node):
         """Add int fix."""
