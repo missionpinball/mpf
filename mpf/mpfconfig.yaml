@@ -174,6 +174,9 @@ fast:
     default_normal_debounce_open: 10ms
     default_quick_debounce_close: 2ms
     default_quick_debounce_open: 2ms
+    net_buffer: 10
+    rgb_buffer: 3
+    dmd_buffer: 3
 
 fadecandy:
     gamma: 2.5
