@@ -305,6 +305,9 @@ fast:
     default_normal_debounce_close: single|ms|
     hardware_led_fade_time: single|ms|0
     debug: single|bool|False
+    net_buffer: single|int|10
+    rgb_buffer: single|int|3
+    dmd_buffer: single|int|3
 file_shows:
     __valid_in__: machine, mode                      # todo add to validator
 flasher_player:

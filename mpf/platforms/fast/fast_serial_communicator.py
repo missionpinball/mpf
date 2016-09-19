@@ -24,15 +24,11 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
     ignored_messages = ['RX:P',  # RGB Pass
                         'SN:P',  # Network Switch pass
-                        'SN:F',  #
                         'SL:P',  # Local Switch pass
-                        'SL:F',
                         'LX:P',  # Lamp pass
                         'PX:P',  # Segment pass
                         'DN:P',  # Network driver pass
-                        'DN:F',
                         'DL:P',  # Local driver pass
-                        'DL:F',  # Local driver fail
                         'XX:F',  # Unrecognized command?
                         'R1:F',
                         'L1:P',
@@ -41,7 +37,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                         'TN:P',
                         'XO:P',  # Servo/Daughterboard Pass
                         'XX:U',
-                        'XX:N',
+                        'XX:N'
                         ]
 
     def __init__(self, platform, port, baud):
@@ -57,10 +53,23 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         self.remote_processor = None
         self.remote_model = None
         self.remote_firmware = 0.0
+        self.max_messages_in_flight = 10
+        self.messages_in_flight = 0
+        self.ignored_messages_in_flight = {b'-N', b'/N', b'/L', b'-L'}
+
+        self.send_ready = asyncio.Event(loop=platform.machine.clock.loop)
+        self.send_ready.set()
 
         self.received_msg = b''
 
+        self.send_queue = asyncio.Queue(loop=platform.machine.clock.loop)
+
         super().__init__(platform, port, baud)
+
+    def stop(self):
+        """Stop and shut down this serial connection."""
+        self.write_task.cancel()
+        super().stop()
 
     @asyncio.coroutine
     def _identify_connection(self):
@@ -97,21 +106,33 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         except ValueError:
             self.remote_processor, self.remote_model, = msg[3:].split()
 
-        self.platform.debug_log("Received ID acknowledgement. Processor: %s, "
-                                "Board: %s, Firmware: %s",
-                                self.remote_processor, self.remote_model,
-                                self.remote_firmware)
+        self.platform.log.info("Connected! Processor: %s, "
+                               "Board Type: %s, Firmware: %s",
+                               self.remote_processor, self.remote_model,
+                               self.remote_firmware)
 
         if self.remote_processor == 'DMD':
             min_version = DMD_MIN_FW
             # latest_version = DMD_LATEST_FW
             self.dmd = True
+            self.max_messages_in_flight = self.platform.config['dmd_buffer']
+            self.platform.debug_log("Setting DMD buffer size: %s",
+                                    self.max_messages_in_flight)
         elif self.remote_processor == 'NET':
             min_version = NET_MIN_FW
             # latest_version = NET_LATEST_FW
-        else:
+            self.max_messages_in_flight = self.platform.config['net_buffer']
+            self.platform.debug_log("Setting NET buffer size: %s",
+                                    self.max_messages_in_flight)
+        elif self.remote_processor == 'RGB':
             min_version = RGB_MIN_FW
             # latest_version = RGB_LATEST_FW
+            self.max_messages_in_flight = self.platform.config['rgb_buffer']
+            self.platform.debug_log("Setting RGB buffer size: %s",
+                                    self.max_messages_in_flight)
+        else:
+            raise AttributeError("Unrecognized FAST processor type: %s",
+                                 self.remote_processor)
 
         if StrictVersion(min_version) > StrictVersion(self.remote_firmware):
             raise AssertionError('Firmware version mismatch. MPF requires'
@@ -122,6 +143,9 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             yield from self.query_fast_io_boards()
 
         self.platform.register_processor_connection(self.remote_processor, self)
+
+        self.write_task = self.machine.clock.loop.create_task(self._socket_writer())
+        self.write_task.add_done_callback(self._done)
 
     @asyncio.coroutine
     def query_fast_io_boards(self):
@@ -183,6 +207,9 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                 be added automatically.
 
         """
+        self.send_queue.put_nowait(msg)
+
+    def _send(self, msg):
         debug = self.platform.config['debug']
         if self.dmd:
             self.writer.write(b'BM:' + msg)
@@ -190,9 +217,32 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                 self.platform.log.debug("Send: %s", "".join(" 0x%02x" % b for b in msg))
 
         else:
+            self.messages_in_flight += 1
+            if self.messages_in_flight > self.max_messages_in_flight:
+                self.send_ready.clear()
+
+                self.log.debug("Enabling Flow Control for %s connection. "
+                               "Messages in flight: %s, Max setting: %s",
+                               self.remote_processor,
+                               self.messages_in_flight,
+                               self.max_messages_in_flight)
+
             self.writer.write(msg.encode() + b'\r')
             if debug and msg[0:2] != "WD":
                 self.platform.log.debug("Send: %s", msg)
+
+    @asyncio.coroutine
+    def _socket_writer(self):
+        while True:
+            msg = yield from self.send_queue.get()
+            try:
+                yield from asyncio.wait_for(self.send_ready.wait(), 1.0, loop=self.machine.clock.loop)
+            except asyncio.TimeoutError:
+                self.log.warning("Port %s was blocked for more than 1s. Reseting send queue! If this happens frequently"
+                                 "report a bug!", self.port)
+                self.messages_in_flight = 0
+
+            self._send(msg)
 
     def _parse_msg(self, msg):
         self.received_msg += msg
@@ -206,6 +256,17 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
             msg = self.received_msg[:pos]
             self.received_msg = self.received_msg[pos + 1:]
+
+            if msg[:2] not in self.ignored_messages_in_flight:
+
+                self.messages_in_flight -= 1
+                if self.messages_in_flight <= self.max_messages_in_flight:
+                    self.send_ready.set()
+                if self.messages_in_flight < 0:
+                    self.log.warning("Port %s received more messages than "
+                                     "were sent! Resetting!",
+                                     self.remote_processor)
+                    self.messages_in_flight = 0
 
             if not msg:
                 continue
