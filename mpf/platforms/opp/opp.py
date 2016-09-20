@@ -418,6 +418,8 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
         # Use new update individual solenoid command
         opp_sol = self.solDict[config['number']]
+        if not config['pulse_ms']:
+            config['pulse_ms'] = self.machine.config['mpf']['default_pulse_ms']
         opp_sol.config = config
         self.log.debug("Config driver %s, %s, %s", config['number'],
                        opp_sol.config['pulse_ms'], opp_sol.config['hold_power'])
