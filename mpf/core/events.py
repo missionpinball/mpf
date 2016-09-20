@@ -1,5 +1,5 @@
 """Classes for the EventManager and QueuedEvents."""
-
+import inspect
 import logging
 from collections import deque, namedtuple
 import uuid
@@ -66,6 +66,15 @@ class EventManager(object):
             raise ValueError('Cannot add handler "{}" for event "{}". Did you '
                              'accidentally add parenthesis to the end of the '
                              'handler you passed?'.format(handler, event))
+
+        sig = inspect.signature(handler)
+        if 'kwargs' not in sig.parameters:
+            raise AssertionError("Handler {} for event '{}' is missing **kwargs. Actual signature: {}".format(
+                handler, event, sig))
+
+        if sig.parameters['kwargs'].kind != inspect.Parameter.VAR_KEYWORD:
+            raise AssertionError("Handler {} for event '{}' param kwargs is missing '**'. Actual signature: {}".format(
+                handler, event, sig))
 
         event = event.lower()
 
