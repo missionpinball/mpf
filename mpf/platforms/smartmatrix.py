@@ -18,11 +18,12 @@ class HardwarePlatform(RgbDmdPlatform):
         super().__init__(machine)
 
         self.log = logging.getLogger('SmartMatrix')
-        self.log.info("Configuring SmartMatrix hardware interface.")
+        self.log.debug("Configuring SmartMatrix hardware interface.")
 
         self.queue = None
         self.serial_port = None
         self.dmd_thread = None
+        self.update = None
 
         self.config = self.machine.config_validator.validate_config(
             config_spec='smartmatrix',
@@ -34,7 +35,11 @@ class HardwarePlatform(RgbDmdPlatform):
 
     def stop(self):
         """Stop platform."""
-        self.serial_port.close()
+        try:
+            self.log.info("Disconnecting from SmartMatrix hardware...")
+            self.serial_port.close()
+        except AttributeError:
+            pass
 
     def __repr__(self):
         """Return string representation."""
@@ -42,7 +47,8 @@ class HardwarePlatform(RgbDmdPlatform):
 
     def configure_rgb_dmd(self):
         """Configure rgb dmd."""
-        self.log.debug("Configuring SmartMatrix DMD")
+        self.log.info("Connecting to SmartMatrix DMD on %s",
+                       self.config['port'])
         self.serial_port = serial.Serial(port=self.config['port'],
                                          baudrate=2500000)
 
@@ -51,9 +57,11 @@ class HardwarePlatform(RgbDmdPlatform):
             self.dmd_thread = threading.Thread(target=self._dmd_sender_thread)
             self.dmd_thread.daemon = True
             self.dmd_thread.start()
-            self.machine.bcp.register_rgb_dmd(self._update_separate_thread)
+            self.update = self._update_separate_thread
         else:
-            self.machine.bcp.register_rgb_dmd(self._update_non_thread)
+            self.update = self._update_non_thread
+
+        return self
 
     def _update_non_thread(self, data):
         try:
