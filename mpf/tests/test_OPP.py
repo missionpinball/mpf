@@ -158,6 +158,10 @@ class TestOPP(MpfTestCase):
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x02\x02\x0a\x00')] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x07\x00\x04\x00\x04', False)] = False
+        self.machine.coils.c_flipper_hold.pulse(10)
+
         # enable coil (not allowed)
         with self.assertRaises(AssertionError):
             self.machine.coils.c_test.enable()
