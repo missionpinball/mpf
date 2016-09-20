@@ -900,6 +900,11 @@ timers:
     control_events: list|subconfig(control_events)|None
     restart_on_complete: single|bool|False
     bcp: single|bool|False
+track_player:
+    __valid_in__: machine, mode, show
+    action: single|enum(play,stop,pause,set_volume)|
+    volume: single|gain|None
+    fade: single|secs|0
 transitions:
     __valid_in__: None
     push:
