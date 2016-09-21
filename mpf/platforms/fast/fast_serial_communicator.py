@@ -59,6 +59,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
         self.send_ready = asyncio.Event(loop=platform.machine.clock.loop)
         self.send_ready.set()
+        self.write_task = None
 
         self.received_msg = b''
 

@@ -20,7 +20,7 @@ which is used to control graphics and sounds, including high-res LCD displays, c
 MPF is a work-in-progress that's not yet complete, though we're actively developing it and checking in several commits a
 week. It's MIT licensed, actively developed by fun people, and supported by a vibrant pinball-loving community.
 
-The MPF project homepage is here : https://missionpinball.com/mpf/
+The MPF project homepage is here : http://missionpinball.org
 
 0.30 (current release):
 [![Coverage Status](https://coveralls.io/repos/missionpinball/mpf/badge.svg?branch=0.30&service=github)](https://coveralls.io/github/missionpinball/mpf?branch=0.30)
