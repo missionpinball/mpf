@@ -14,6 +14,7 @@ class TestMultiBall(MpfTestCase):
 
     def testSimpleMultiball(self):
         self.mock_event("multiball_mb1_ended")
+        self.mock_event("multiball_mb1_ball_lost")
 
         # prepare game
         self.machine.ball_controller.num_balls_known = 0
@@ -107,6 +108,7 @@ class TestMultiBall(MpfTestCase):
         # they should be readded because of shoot again
         self.advance_time_and_run(10)
         self.assertEqual(2, self.machine.playfield.balls)
+        self.assertEventNotCalled("multiball_mb1_ball_lost")
 
         # shoot again ends
         self.advance_time_and_run(10)
@@ -114,6 +116,7 @@ class TestMultiBall(MpfTestCase):
         # ball drains
         self.machine.switch_controller.process_switch('s_ball_switch1', 1)
         self.advance_time_and_run(1)
+        self.assertEventCalled("multiball_mb1_ball_lost", 1)
 
         # mb ends
         self.assertEqual(1, self._events['multiball_mb1_ended'])
