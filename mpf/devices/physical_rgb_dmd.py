@@ -29,7 +29,7 @@ class PhysicalRgbDmd(SystemWideDevice):
         super().__init__(machine, name)
 
     def _initialize(self):
-        self.load_platform_section("dmd")
+        self.load_platform_section("rgb_dmd")
         self.hw_device = self.platform.configure_rgb_dmd()
 
     @classmethod
