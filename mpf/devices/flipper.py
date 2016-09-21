@@ -20,8 +20,6 @@ class Flipper(SystemWideDevice):
     Flippers have several options, including player buttons, EOS swtiches,
     multiple coil options (pulsing, hold coils, etc.)
 
-    More details: http://missionpinball.com/docs/devices/flippers/
-
     Args:
         machine: A reference to the machine controller instance.
         name: A string of the name you'll refer to this flipper object as.
