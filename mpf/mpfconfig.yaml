@@ -34,37 +34,37 @@ mpf:
         trigger: mpf.config_players.trigger_player
 
     device_modules:
-        driver.Driver
-        dual_wound_coil.DualWoundCoil
-        switch.Switch
-        matrix_light.MatrixLight
-        led.Led
-        gi.Gi
-        autofire.AutofireCoil
-        ball_device.BallDevice
-        playfield.Playfield
-        drop_target.DropTarget
-        drop_target.DropTargetBank
-        extra_ball.ExtraBall
-        shot.Shot
-        shot_group.ShotGroup
-        flipper.Flipper
-        diverter.Diverter
-        score_reel.ScoreReel
-        score_reel_group.ScoreReelGroup
-        flasher.Flasher
-        playfield_transfer.PlayfieldTransfer
-        ball_lock.BallLock
-        multiball.Multiball
-        motor.Motor
-        ball_save.BallSave
-        accelerometer.Accelerometer
-        servo.Servo
-        achievement.Achievement
-        physical_dmd.PhysicalDmd
-        physical_rgb_dmd.PhysicalRgbDmd
-        led_group.LedStrip
-        led_group.LedRing
+        - mpf.devices.driver.Driver
+        - mpf.devices.dual_wound_coil.DualWoundCoil
+        - mpf.devices.switch.Switch
+        - mpf.devices.matrix_light.MatrixLight
+        - mpf.devices.led.Led
+        - mpf.devices.gi.Gi
+        - mpf.devices.autofire.AutofireCoil
+        - mpf.devices.ball_device.BallDevice
+        - mpf.devices.playfield.Playfield
+        - mpf.devices.drop_target.DropTarget
+        - mpf.devices.drop_target.DropTargetBank
+        - mpf.devices.extra_ball.ExtraBall
+        - mpf.devices.shot.Shot
+        - mpf.devices.shot_group.ShotGroup
+        - mpf.devices.flipper.Flipper
+        - mpf.devices.diverter.Diverter
+        - mpf.devices.score_reel.ScoreReel
+        - mpf.devices.score_reel_group.ScoreReelGroup
+        - mpf.devices.flasher.Flasher
+        - mpf.devices.playfield_transfer.PlayfieldTransfer
+        - mpf.devices.ball_lock.BallLock
+        - mpf.devices.multiball.Multiball
+        - mpf.devices.motor.Motor
+        - mpf.devices.ball_save.BallSave
+        - mpf.devices.accelerometer.Accelerometer
+        - mpf.devices.servo.Servo
+        - mpf.devices.achievement.Achievement
+        - mpf.devices.physical_dmd.PhysicalDmd
+        - mpf.devices.physical_rgb_dmd.PhysicalRgbDmd
+        - mpf.devices.led_group.LedStrip
+        - mpf.devices.led_group.LedRing
 
     plugins:
         mpf.plugins.auditor.Auditor
