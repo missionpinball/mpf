@@ -9,7 +9,7 @@ class TestDeviceManager(MpfTestCase):
     def test_control_events_arguments(self):
         for device_type in self.machine.config['mpf']['device_modules']:
 
-            device_cls = Util.string_to_class("mpf.devices." + device_type)
+            device_cls = Util.string_to_class(device_type)
 
             config_spec = self.machine.config_validator.config_spec[device_cls.config_section]
 
