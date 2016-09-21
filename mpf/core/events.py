@@ -72,7 +72,7 @@ class EventManager(object):
             raise AssertionError("Handler for event {} is missing **kwargs. Actual signature: {}".format(
                 event, sig))
 
-        if sig.parameters['kwargs'].kind != inspect._VAR_KEYWORD:
+        if sig.parameters['kwargs'].kind != inspect.Parameter.VAR_KEYWORD:
             raise AssertionError("Handler for event {} param kwargs is missing '**'. Actual signature: {}".format(
                 event, sig))
 

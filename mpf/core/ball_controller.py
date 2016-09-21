@@ -139,7 +139,7 @@ class BallController(object):
         for _ in range(min(len(jump_sources), len(jump_targets))):
             source = jump_sources.pop()
             target = jump_targets.pop()
-            self.log.warning("Suspecting that ball jumped from {} to {}".format(str(source), str(target)))
+            self.log.warning("Suspecting that ball jumped from %s to %s", str(source), str(target))
             self.machine.events.post("playfield_jump", source=source, target=target)
 
     def _fix_jumped_balls(self, balls_to_remove, jump_sources):

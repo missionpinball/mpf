@@ -9,14 +9,14 @@ class BcpServer():
 
     """Server socket which listens for incoming BCP clients."""
 
-    def __init__(self, machine, ip, port, type):
+    def __init__(self, machine, ip, port, server_type):
         """Initialise BCP server."""
         self.machine = machine
         self.log = logging.getLogger('BCPServer')
         self._server = None
         self._ip = ip
         self._port = port
-        self._type = type
+        self._type = server_type
 
     @asyncio.coroutine
     def start(self):
