@@ -51,6 +51,11 @@ class ConfigValidator(object):
             ConfigValidator.load_config_spec()
 
     @classmethod
+    def load_device_config_spec(cls, config_section, config_spec):
+        """Load config specs for a device."""
+        cls.config_spec[config_section] = YamlInterface.process(config_spec)
+
+    @classmethod
     def load_mode_config_spec(cls, mode_string, config_spec):
         """Load config specs for a mode."""
         if '_mode_settings' not in cls.config_spec:
