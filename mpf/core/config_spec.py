@@ -955,6 +955,7 @@ widget_player:
     action: single|enum(add,remove,update)|add
     key: single|str|None
     widget_settings: ignore
+    target: single|str|None
 widget_styles:
     __valid_in__: machine, mode, show
     color: single|kivycolor|ffffffff
@@ -1046,7 +1047,7 @@ widgets:
         close: single|bool|False
     points:
         points: list|num|
-        size: single|float|1.0
+        pointsize: single|float|1.0
     quad:
         points: list|num|
     rectangle:
