@@ -23,10 +23,16 @@ class EventPlayer(FlatConfigPlayer):
         for event, s in settings.items():
             s = deepcopy(s)
             s.update(kwargs)
-            if ':' in event:
+            if '|' in event:
+                event, delay = event.split("|")
+                delay = Util.string_to_ms(delay)
+                self.delay.add(callback=self._post_event, ms=delay,
+                               event=event, s=s)
+            elif ':' in event:
                 event, delay = event.split(":")
                 delay = Util.string_to_ms(delay)
-                self.delay.add(callback=self._post_event, ms=delay, event=event, s=s)
+                self.delay.add(callback=self._post_event, ms=delay,
+                               event=event, s=s)
             else:
                 self.machine.events.post(event, **s)
 
