@@ -126,6 +126,9 @@ class Multiball(SystemWideDevice, ModeDevice):
         if balls_to_safe <= 0:
             return {'balls': balls}
 
+        if balls_to_safe > balls:
+            balls_to_safe = balls
+
         self.machine.events.post("multiball_" + self.name + "_shoot_again", balls=balls_to_safe)
         '''event: multiball_(name)_shoot_again
         desc: A ball has drained during the multiball called (name) while the
@@ -142,11 +145,16 @@ class Multiball(SystemWideDevice, ModeDevice):
 
     def _ball_drain_count_balls(self, balls, **kwargs):
         del kwargs
+        self.machine.events.post("multiball_{}_ball_lost".format(self.name))
+        '''event: multiball_(name)_lost_ball
+        desc: The multiball called (name) has lost a ball after ball save expired.
+        '''
+
         if self.machine.game.balls_in_play - balls < 1:
             self.balls_added_live = 0
             self.balls_live_target = 0
             self.machine.events.remove_handler(self._ball_drain_count_balls)
-            self.machine.events.post("multiball_" + self.name + "_ended")
+            self.machine.events.post("multiball_{}_ended".format(self.name))
             '''event: multiball_(name)_ended
             desc: The multiball called (name) has just ended.
             '''

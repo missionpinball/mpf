@@ -79,8 +79,7 @@ class BcpTransportManager:
         for client in self._transports:
             if client.name == client_name:
                 return client
-        else:
-            return False
+        return False
 
     def send_to_clients(self, clients, bcp_command, **kwargs):
         """Send command to a list of clients."""

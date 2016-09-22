@@ -193,8 +193,8 @@ class BcpInterface(object):
         This method only posts a warning to the log. It doesn't do anything else
         at this point.
         """
-        self.log.warning('Received Error command from host with parameters: %s',
-                         kwargs)
+        self.log.warning('Received Error command from host with parameters: %s, from client %s',
+                         kwargs, str(client))
 
     def bcp_mode_start(self, config, priority, mode, **kwargs):
         """Send BCP 'mode_start' to the connected BCP hosts.

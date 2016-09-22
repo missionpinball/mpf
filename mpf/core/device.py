@@ -29,6 +29,11 @@ class Device(object, metaclass=abc.ABCMeta):
         self.platform = None
         self.config = dict()
 
+    @classmethod
+    def get_config_spec(cls):
+        """Return config spec for this device."""
+        return False
+
     def load_platform_section(self, platform_section: str):
         """Can be called in _initialize to load the platform section.
 

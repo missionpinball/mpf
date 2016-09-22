@@ -31,11 +31,13 @@ class DeviceManager(object):
     def _load_device_modules(self, **kwargs):
         del kwargs
         self.log.debug("Loading devices...")
-        self.machine.config['mpf']['device_modules'] = (
-            self.machine.config['mpf']['device_modules'].split(' '))
         for device_type in self.machine.config['mpf']['device_modules']:
+            device_cls = Util.string_to_class(device_type)
 
-            device_cls = Util.string_to_class("mpf.devices." + device_type)
+            if device_cls.get_config_spec():
+                # add specific config spec if device has any
+                self.machine.config_validator.load_device_config_spec(
+                    device_cls.config_section, device_cls.get_config_spec())
 
             collection_name, config = device_cls.get_config_info()
 
@@ -93,7 +95,7 @@ class DeviceManager(object):
         if validate:
             for device_type in self.machine.config['mpf']['device_modules']:
 
-                device_cls = Util.string_to_class("mpf.devices." + device_type)
+                device_cls = Util.string_to_class(device_type)
 
                 collection_name, config_name = device_cls.get_config_info()
 
@@ -111,7 +113,7 @@ class DeviceManager(object):
 
         for device_type in self.machine.config['mpf']['device_modules']:
 
-            device_cls = Util.string_to_class("mpf.devices." + device_type)
+            device_cls = Util.string_to_class(device_type)
 
             collection_name, config_name = device_cls.get_config_info()
 
@@ -130,7 +132,7 @@ class DeviceManager(object):
         """Initialise devices."""
         for device_type in self.machine.config['mpf']['device_modules']:
 
-            device_cls = Util.string_to_class("mpf.devices." + device_type)
+            device_cls = Util.string_to_class(device_type)
 
             collection_name, config_name = device_cls.get_config_info()
 
