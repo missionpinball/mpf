@@ -126,6 +126,9 @@ class Multiball(SystemWideDevice, ModeDevice):
         if balls_to_safe <= 0:
             return {'balls': balls}
 
+        if balls_to_safe > balls:
+            balls_to_safe = balls
+
         self.machine.events.post("multiball_" + self.name + "_shoot_again", balls=balls_to_safe)
         '''event: multiball_(name)_shoot_again
         desc: A ball has drained during the multiball called (name) while the
