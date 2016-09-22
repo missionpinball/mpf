@@ -16,7 +16,8 @@ class ConfigProcessor(object):
         pass
 
     @staticmethod
-    def load_config_file(filename, config_type, verify_version=True, halt_on_error=True):   # pragma: no cover
+    def load_config_file(filename, config_type, verify_version=True, halt_on_error=True,
+                         ignore_unknown_sections=False):   # pragma: no cover
         """Load a config file."""
         # config_type is str 'machine' or 'mode', which specifies whether this
         # file being loaded is a machine config or a mode config file
@@ -33,9 +34,10 @@ class ConfigProcessor(object):
                                      'but that section is not valid in {} config '
                                      'files.'.format(k, filename, config_type))
             except KeyError:
-                raise ValueError('Found a "{}:" section in config file {}, '
-                                 'but that section is not valid in {} config '
-                                 'files.'.format(k, filename, config_type))
+                if not ignore_unknown_sections:
+                    raise ValueError('Found a "{}:" section in config file {}, '
+                                     'but that section is not valid in {} config '
+                                     'files.'.format(k, filename, config_type))
 
         try:
             if 'config' in config:
