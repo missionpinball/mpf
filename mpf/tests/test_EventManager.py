@@ -591,12 +591,15 @@ class TestEventManager(MpfTestCase):
 
     def test_event_player_delay(self):
         self.mock_event('test_event_player2')
+        self.mock_event('test_event_player3')
 
         self.machine.events.post('test_event_player_delayed')
         self.machine_run()
         self.assertEqual(0, self._events['test_event_player2'])
+        self.assertEqual(0, self._events['test_event_player3'])
         self.advance_time_and_run(2)
         self.assertEqual(1, self._events['test_event_player2'])
+        self.assertEqual(1, self._events['test_event_player3'])
 
     def test_random_event_player(self):
         self.machine.events.add_handler('test_random_event_player1', self.event_handler1)
