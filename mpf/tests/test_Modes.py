@@ -94,7 +94,7 @@ class TestModes(MpfTestCase):
         # pass a priority at start
         self.machine.modes.mode1.stop()
         self.advance_time_and_run()
-        self.machine.modes.mode1.start(priority=500)
+        self.machine.modes.mode1.start(mode_priority=500)
         self.advance_time_and_run()
         self.assertEqual(self.machine.modes.mode1.priority, 500)
         self.advance_time_and_run()
