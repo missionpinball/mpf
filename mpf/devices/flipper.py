@@ -125,7 +125,7 @@ class Flipper(SystemWideDevice):
         if self._enabled:
             return
 
-        # todo disable first to clear any old rules?
+        self._enabled = True
 
         self.log.debug('Enabling flipper with config: %s', self.config)
 
@@ -159,6 +159,8 @@ class Flipper(SystemWideDevice):
 
         if self.hold_coil:
             self.hold_coil.clear_hw_rule(self.switch)
+
+        self._enabled = False
 
     def _enable_single_coil_rule(self):
         self.log.debug('Enabling single coil rule')

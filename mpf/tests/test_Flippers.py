@@ -36,6 +36,7 @@ class TestFlippers(MpfTestCase):
         self.machine.default_platform.set_pulse_on_hit_and_release_rule = MagicMock()
         self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule = MagicMock()
 
+        self.assertFalse(self.machine.flippers.f_test_hold._enabled)
         self.machine.flippers.f_test_hold.enable()
         #     def set_hw_rule(self, sw_name, sw_activity, driver_name, driver_action,
         #                     disable_on_release=True, drive_now=False,
@@ -48,6 +49,7 @@ class TestFlippers(MpfTestCase):
 
         self.machine.default_platform.clear_hw_rule = MagicMock()
         self.machine.flippers.f_test_hold.disable()
+        self.assertFalse(self.machine.flippers.f_test_hold._enabled)
 
         self.machine.default_platform.clear_hw_rule.assert_has_calls(
             [call(self.machine.flippers.f_test_hold.switch.get_configured_switch(),
@@ -55,6 +57,14 @@ class TestFlippers(MpfTestCase):
              call(self.machine.flippers.f_test_hold.switch.get_configured_switch(),
                   self.machine.flippers.f_test_hold.hold_coil.get_configured_driver())]
         )
+
+        self.machine.default_platform.set_pulse_on_hit_and_release_rule = MagicMock()
+        self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule = MagicMock()
+        self.machine.flippers.f_test_hold.enable()
+        self.assertTrue(self.machine.flippers.f_test_hold._enabled)
+        self.assertEqual(1, len(self.machine.default_platform.set_pulse_on_hit_and_release_rule._mock_call_args_list))
+        self.assertEqual(1, len(self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule.
+                                _mock_call_args_list))
 
     def test_hold_with_eos(self):
         self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_and_disable_rule = MagicMock()
