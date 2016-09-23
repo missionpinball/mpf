@@ -799,3 +799,16 @@ class TestEventManager(MpfTestCase):
 
         self.post_event_with_params("test", param=3)
         self.assertEqual(1, self._called)
+
+    def test_handler_with_settings_condition(self):
+        self._called = 0
+        self.machine.events.add_handler("test{settings_test == 7}", self._handler)
+
+        self.post_event("test")
+        self.assertEqual(0, self._called)
+
+        self.post_event_with_params("test", settings_test=6)
+        self.assertEqual(0, self._called)
+
+        self.post_event_with_params("test", settings_test=7)
+        self.assertEqual(1, self._called)
