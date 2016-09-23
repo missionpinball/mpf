@@ -212,7 +212,7 @@ class TestShots(MpfTestCase):
 
     def test_profile_advancing_no_loop(self):
         self.start_game()
-
+        self.mock_event("shot_27_hit")
         # unlit and two states in the beginning
         self.assertEqual(2, len(self.machine.shots.shot_1.get_profile_by_key('mode', None)[
                                 'settings']['states']))
@@ -230,6 +230,17 @@ class TestShots(MpfTestCase):
         self.assertEqual("lit", self.machine.shots.shot_1.get_profile_by_key('mode', None)[
             'current_state_name'])
         self.assertEqual(1, self.machine.game.player["shot_1_default"])
+        self.assertEventCalled("shot_27_hit")
+
+    def test_shots_with_events(self):
+        self.start_game()
+        self.mock_event("shot_28_hit")
+        self.post_event("event2")
+        self.post_event("event1")
+        self.assertEventNotCalled("shot_28_hit")
+
+        self.post_event("event2")
+        self.assertEventCalled("shot_28_hit")
 
     def test_profile_advancing_with_loop(self):
         self.start_game()
