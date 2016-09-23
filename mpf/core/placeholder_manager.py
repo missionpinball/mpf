@@ -10,7 +10,11 @@ class PlaceholderManager(MpfController):
 
     def build_bool_template(self, template_str):
         """Build a template from a string."""
-        return parse_expr(template_str)
+        template = parse_expr(template_str)
+        if isinstance(template, bool):
+            raise AssertionError("Condition '{}' does not depend on variables.".format(template_str))
+
+        return template
 
     def evaluate_bool_template(self, template, parameters, fail_on_missing_params=False):
         """Return True if the placeholder"""
