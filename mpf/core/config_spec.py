@@ -700,6 +700,7 @@ shots:
     switch: list|machine(switches)|None
     switches: list|machine(switches)|None
     switch_sequence: list|machine(switches)|None
+    sequence: list|str|None
     cancel_switch: list|machine(switches)|None
     delay_switch: dict|machine(switches):ms|None
     time: single|ms|0
@@ -746,7 +747,7 @@ shot_profiles:
         start_step: single|int|1
         loops: single|int|-1
         sync_ms: single|int|0
-        manual_advance: single|bool|False
+        manual_advance: single|bool|None
         show_tokens: dict|str:str|None
 show_player:
     __valid_in__: machine, mode, show
