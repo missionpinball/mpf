@@ -715,12 +715,12 @@ class TestShots(MpfTestCase):
             shot19.get_profile_by_key('mode', None)['settings']['show_when_disabled'])
 
         # show should still be at the same step
-        self.assertEqual(list(RGBColor('yellow').rgb),
+        self.assertEqual(list(RGBColor('red').rgb),
                          self.machine.leds.led_19.hw_driver.current_color)
 
         # but it should also still be running
         self.advance_time_and_run(1)
-        self.assertEqual(list(RGBColor('green').rgb),
+        self.assertEqual(list(RGBColor('orange').rgb),
                          self.machine.leds.led_19.hw_driver.current_color)
 
         # hit the shot
@@ -745,7 +745,7 @@ class TestShots(MpfTestCase):
 
         # and show should still be running
         self.advance_time_and_run()
-        self.assertEqual(list(RGBColor('aquamarine').rgb),
+        self.assertEqual(list(RGBColor('aliceblue').rgb),
                          self.machine.leds.led_19.hw_driver.current_color)
 
     def test_no_show_when_disabled(self):
@@ -898,15 +898,15 @@ class TestShots(MpfTestCase):
         # stop the mode, make sure the show from the base is still running
         self.machine.modes.mode1.stop()
         self.advance_time_and_run(0.02)
+        self.assertEqual(list(RGBColor('yellow').rgb),
+                         self.machine.leds.led_23.hw_driver.current_color)
+
+        self.advance_time_and_run(1)
+        self.assertEqual(list(RGBColor('green').rgb),
+                         self.machine.leds.led_23.hw_driver.current_color)
+
+        self.advance_time_and_run(1)
         self.assertEqual(list(RGBColor('blue').rgb),
-                         self.machine.leds.led_23.hw_driver.current_color)
-
-        self.advance_time_and_run(1)
-        self.assertEqual(list(RGBColor('purple').rgb),
-                         self.machine.leds.led_23.hw_driver.current_color)
-
-        self.advance_time_and_run(1)
-        self.assertEqual(list(RGBColor('red').rgb),
                          self.machine.leds.led_23.hw_driver.current_color)
 
     def test_hold_true(self):
@@ -1044,3 +1044,40 @@ class TestShots(MpfTestCase):
 
         # step3
         self.assertLedColor("led_27", "yellow")
+
+    def test_show_restore_in_mode_start_step(self):
+        # same as previous test but with a profile with start steps
+        self.start_game()
+
+        self.assertLedColor("led_28", "black")
+
+        self.machine.modes.mode2.start()
+        self.advance_time_and_run()
+
+        # step1 red
+        self.assertLedColor("led_28", "red")
+
+        self.hit_and_release_switch("switch_28")
+        self.advance_time_and_run()
+
+        # step2 orange
+        self.assertLedColor("led_28", "orange")
+
+        self.machine.modes.mode2.stop()
+        self.advance_time_and_run()
+
+        # mode stopped. led off
+        self.assertLedColor("led_28", "black")
+
+
+        self.machine.modes.mode2.start()
+        self.advance_time_and_run()
+
+        # back to step2. orange
+        self.assertLedColor("led_28", "orange")
+
+        self.hit_and_release_switch("switch_28")
+        self.advance_time_and_run()
+
+        # step3
+        self.assertLedColor("led_28", "yellow")
