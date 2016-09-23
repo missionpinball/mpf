@@ -21,6 +21,7 @@ mpf:
         - scoring: mpf.core.scoring.ScoreController
         - service: mpf.core.service_controller.ServiceController
         - settings: mpf.core.settings_controller.SettingsController
+        - placeholder_manager: mpf.core.placeholder_manager.PlaceholderManager
 
     config_players:
         coil: mpf.config_players.coil_player
