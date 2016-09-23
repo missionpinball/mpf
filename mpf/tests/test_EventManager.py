@@ -1,5 +1,6 @@
 """Test event manager."""
 from mpf.core.delays import DelayManager
+from mpf.core.settings_controller import SettingEntry
 from mpf.tests.MpfTestCase import MpfTestCase
 from unittest.mock import patch
 
@@ -789,26 +790,36 @@ class TestEventManager(MpfTestCase):
 
     def test_handler_with_condition(self):
         self._called = 0
-        self.machine.events.add_handler("test{param > 1}", self._handler)
+        self.machine.events.add_handler("test{param > 1 and a == True}", self._handler)
 
         self.post_event("test")
         self.assertEqual(0, self._called)
 
-        self.post_event_with_params("test", param=0)
+        self.post_event_with_params("test", param=3, a=False)
         self.assertEqual(0, self._called)
 
-        self.post_event_with_params("test", param=3)
+        self.post_event_with_params("test", param=3, a=True)
         self.assertEqual(1, self._called)
 
     def test_handler_with_settings_condition(self):
         self._called = 0
-        self.machine.events.add_handler("test{settings_test == 7}", self._handler)
+        self.machine.events.add_handler("test{settings.test == True}", self._handler)
 
+        # invalid setting
+        with self.assertRaises(AssertionError):
+            self.post_event("test")
+            self.assertEqual(0, self._called)
+
+        self.machine.settings._settings = {}
+        self.machine.settings.add_setting(SettingEntry("test", "Test", 1, "test", "a",
+                                                       {False: "A (default)", True: "B"}))
+
+        # setting false
         self.post_event("test")
         self.assertEqual(0, self._called)
 
-        self.post_event_with_params("test", settings_test=6)
-        self.assertEqual(0, self._called)
+        self.machine.settings.set_setting_value("test", True)
 
-        self.post_event_with_params("test", settings_test=7)
+        # settings true
+        self.post_event("test")
         self.assertEqual(1, self._called)
