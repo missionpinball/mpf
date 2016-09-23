@@ -1008,3 +1008,39 @@ class TestShots(MpfTestCase):
         self.assertEqual(1, self._events["shot_26_hit"])
         self.assertEqual(1, self._events["shot_26_profile_26_hit"])
         self.assertEqual(1, self._events["shot_26_profile_26_base_one_hit"])
+
+    def test_show_restore_in_mode(self):
+        self.start_game()
+
+        self.assertLedColor("led_27", "black")
+
+        self.machine.modes.mode2.start()
+        self.advance_time_and_run()
+
+        # step1 red
+        self.assertLedColor("led_27", "red")
+
+        self.hit_and_release_switch("switch_27")
+        self.advance_time_and_run()
+
+        # step2 orange
+        self.assertLedColor("led_27", "orange")
+
+        self.machine.modes.mode2.stop()
+        self.advance_time_and_run()
+
+        # mode stopped. led off
+        self.assertLedColor("led_27", "black")
+
+
+        self.machine.modes.mode2.start()
+        self.advance_time_and_run()
+
+        # back to step2. orange
+        self.assertLedColor("led_27", "orange")
+
+        self.hit_and_release_switch("switch_27")
+        self.advance_time_and_run()
+
+        # step3
+        self.assertLedColor("led_27", "yellow")
