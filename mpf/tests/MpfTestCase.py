@@ -114,6 +114,10 @@ class MpfTestCase(unittest.TestCase):
         self.machine.events.post(event_name)
         self.machine_run()
 
+    def post_event_with_params(self, event_name, **params):
+        self.machine.events.post(event_name, **params)
+        self.machine_run()
+
     def set_num_balls_known(self, balls):
         # in case the test does not have any ball devices
         self.machine.ball_controller.num_balls_known = balls
