@@ -821,9 +821,10 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
 
         # get initial value for inputs
         self.writer.write(self.platform.read_input_msg[self.chain_serial])
-        resp = yield from self.readuntil(b'\xff', 6)
-        self.log.debug("Init get input response: %s", "".join(" 0x%02x" % b for b in resp))
-        self._parse_msg(resp)
+        while True:
+            resp = yield from self.readuntil(b'\xff', 6)
+            if self._parse_msg(resp):
+                break
 
         self.platform.register_processor_connection(self.chain_serial, self)
 
@@ -882,6 +883,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
     def _parse_msg(self, msg):
         self.partMsg += msg
         strlen = len(self.partMsg)
+        messaged_found = 0
         # Split into individual responses
         while strlen >= 7:
             if self._lost_synch:
@@ -897,6 +899,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
                 # Only command expect to receive back is
                 if self.partMsg[1] == ord(OppRs232Intf.READ_GEN2_INP_CMD):
                     self.platform.process_received_message(self.chain_serial, self.partMsg[:7])
+                    messaged_found += 1
                     self.partMsg = self.partMsg[7:]
                     strlen -= 7
                 else:
@@ -913,3 +916,5 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
                 self.partMsg = self.partMsg[1:]
                 strlen -= 1
                 self._lost_synch = True
+
+            return messaged_found
