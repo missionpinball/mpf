@@ -782,3 +782,20 @@ class TestEventManager(MpfTestCase):
 
         self.delay.add(ms=0, name="first", callback=self.delay_zero_ms, start=self.machine.clock.get_time())
         self.advance_time_and_run(10)
+
+    def _handler(self, **kwargs):
+        del kwargs
+        self._called += 1
+
+    def test_handler_with_condition(self):
+        self._called = 0
+        self.machine.events.add_handler("test{param > 1}", self._handler)
+
+        self.post_event("test")
+        self.assertEqual(0, self._called)
+
+        self.post_event_with_params("test", param=0)
+        self.assertEqual(0, self._called)
+
+        self.post_event_with_params("test", param=3)
+        self.assertEqual(1, self._called)
