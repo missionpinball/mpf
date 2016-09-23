@@ -211,10 +211,6 @@ class Shot(ModeDevice, SystemWideDevice):
             self._update_show(mode=profile['mode'], show_step=show_step,
                               advance=advance)
 
-    def _get_current_state_position(self, profile, state_settings):
-        """Return the position of the current state."""
-        return [i for i, x in enumerate(profile['settings']['states']) if x["name"] == state_settings['name']][0] + 1
-
     def _update_show(self, mode, show_step=None, advance=True):
         if not self.player:
             return
@@ -235,7 +231,9 @@ class Shot(ModeDevice, SystemWideDevice):
 
         if state_settings['show']:  # there's a show specified this state
             if profile['running_show']:
-                if profile['running_show'].show.name != state_settings['show']:
+                if (profile['running_show'].show.name != state_settings['show'] or
+                        profile['running_show'].current_step_index != state_settings['start_step'] or
+                        profile['running_show'].manual_advance != state_settings['manual_advance']):
                     # if there's a show running and it's not the show for this
                     # state, stop it (and then continue)
                     self._stop_show(mode)
@@ -263,7 +261,7 @@ class Shot(ModeDevice, SystemWideDevice):
                     profile['running_show'].advance(show_step=show_step)
 
             else:  # no running show, so start the profile root show
-                start_step = self._get_current_state_position(profile, state_settings)
+                start_step = self.player[profile['settings']['player_variable']] + 1
                 self._play_show(profile=profile, settings=state_settings, start_step=start_step)
 
         # if neither if/elif above happens, it means the current step has no
@@ -275,11 +273,13 @@ class Shot(ModeDevice, SystemWideDevice):
         s = copy(settings)
         if settings['show']:
             show_name = settings['show']
-            s['manual_advance'] = False
+            if s['manual_advance'] is None:
+                s['manual_advance'] = False
 
         else:
             show_name = profile['settings']['show']
-            s['manual_advance'] = True
+            if s['manual_advance'] is None:
+                s['manual_advance'] = True
 
         s['show_tokens'] = self.config['show_tokens']
         s['priority'] += profile['priority']
@@ -558,8 +558,7 @@ class Shot(ModeDevice, SystemWideDevice):
 
         else:
             current_position_index += 1
-            next_event = (self.config['sequence']
-                           [current_position_index + 1])
+            next_event = self.config['sequence'][current_position_index + 1]
 
             self.debug_log("Advancing the sequence. Next: %s",
                            next_event)
