@@ -209,6 +209,10 @@ class Shot(ModeDevice, SystemWideDevice):
             self._update_show(mode=profile['mode'], show_step=show_step,
                               advance=advance)
 
+    def _get_current_state_position(self, profile, state_settings):
+        """Return the position of the current state."""
+        return [i for i, x in enumerate(profile['settings']['states']) if x["name"] == state_settings['name']][0] + 1
+
     def _update_show(self, mode, show_step=None, advance=True):
         if not self.player:
             return
@@ -257,7 +261,8 @@ class Shot(ModeDevice, SystemWideDevice):
                     profile['running_show'].advance(show_step=show_step)
 
             else:  # no running show, so start the profile root show
-                self._play_show(profile=profile, settings=state_settings)
+                start_step = self._get_current_state_position(profile, state_settings)
+                self._play_show(profile=profile, settings=state_settings, start_step=start_step)
 
         # if neither if/elif above happens, it means the current step has no
         # show but the previous step had one. That means we do nothing for the
