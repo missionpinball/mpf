@@ -76,13 +76,13 @@ class EventManager(object):
             raise AssertionError("Handler {} for event '{}' param kwargs is missing '**'. Actual signature: {}".format(
                 handler, event, sig))
 
-        event = event.lower()
-
         if event.find("{") > 0 and event[-1:] == "}":
             condition = self.machine.placeholder_manager.build_bool_template(event[event.find("{")+1:-1])
             event = event[0:event.find("{")]
         else:
             condition = None
+
+        event = event.lower()
 
         # Add an entry for this event if it's not there already
         if event not in self.registered_handlers:
