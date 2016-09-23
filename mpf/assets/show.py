@@ -400,6 +400,7 @@ class RunningShow(object):
         self.show_tokens = show_tokens
         self._delay_handler = None
         self.next_step_index = None
+        self.current_step_index = None
 
         self.next_step_time = self.machine.clock.get_time()
 
@@ -591,10 +592,10 @@ class RunningShow(object):
                 self.stop()
                 return False
 
-        current_step_index = self.next_step_index
+        self.current_step_index = self.next_step_index
 
         for item_type, item_dict in (
-                iter(self.show_steps[current_step_index].items())):
+                iter(self.show_steps[self.current_step_index].items())):
 
             if item_type == 'duration':
                 continue
@@ -612,7 +613,7 @@ class RunningShow(object):
 
         self.next_step_index += 1
 
-        time_to_next_step = self.show_steps[current_step_index]['duration'] / self.speed
+        time_to_next_step = self.show_steps[self.current_step_index]['duration'] / self.speed
         if not self.manual_advance and time_to_next_step > 0:
             self.next_step_time += time_to_next_step
             self._delay_handler = self.machine.clock.schedule_once(self._run_next_step,
