@@ -53,6 +53,8 @@ switches:
     number:
   switch_26:
     number:
+  switch_27:
+    number:
 
 matrix_lights:
   light_1:
@@ -102,6 +104,8 @@ leds:
   led_25:
     number:
   led_26:
+    number:
+  led_27:
     number:
 
 shots:

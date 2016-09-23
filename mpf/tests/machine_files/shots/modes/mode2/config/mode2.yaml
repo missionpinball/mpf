@@ -10,6 +10,11 @@ shots:
     profile: mode2_shot_22
   shot_26:
     profile: mode2_shot_26
+  mode2_shot_rainbow:
+    switch: switch_27
+    show_tokens:
+      leds: led_27
+    profile: rainbow
 
 shot_profiles:
   mode2_shot_21:
