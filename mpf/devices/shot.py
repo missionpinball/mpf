@@ -32,7 +32,7 @@ class Shot(ModeDevice, SystemWideDevice):
         self.active_sequences = list()
         """List of tuples: (id, current_position_index, next_switch)"""
         self.player = None
-        self.active_delay_switches = set()
+        self.active_delays = set()
         self.switch_handlers_active = False
         self.profiles = list()
         self.groups = set()  # shot_groups this shot belongs to
@@ -112,9 +112,8 @@ class Shot(ModeDevice, SystemWideDevice):
             self.machine.switch_controller.add_switch_handler(
                 switch.name, self.hit, 1)
 
-        for switch in self.config['switch_sequence']:
-            self.machine.switch_controller.add_switch_handler(
-                switch.name, self._sequence_switch_hit, 1, return_info=True)
+        for event in self.config['sequence']:
+            self.machine.events.add_handler(event, self._sequence_advance, event_name=event)
 
         for switch in self.config['cancel_switch']:
             self.machine.switch_controller.add_switch_handler(
@@ -137,9 +136,7 @@ class Shot(ModeDevice, SystemWideDevice):
             self.machine.switch_controller.remove_switch_handler(
                 switch.name, self.hit, 1)
 
-        for switch in self.config['switch_sequence']:
-            self.machine.switch_controller.remove_switch_handler(
-                switch.name, self._sequence_switch_hit, 1)
+        self.machine.events.remove_handler(self._sequence_advance)
 
         for switch in self.config['cancel_switch']:
             self.machine.switch_controller.remove_switch_handler(
@@ -363,8 +360,8 @@ class Shot(ModeDevice, SystemWideDevice):
         del kwargs
 
         # Stop if there is an active delay but no sequence
-        if (self.active_delay_switches and
-                not len(self.config['switch_sequence'])):
+        if (self.active_delays and
+                not len(self.config['sequence'])):
             return
 
         if mode == 'default#$%':
@@ -484,24 +481,27 @@ class Shot(ModeDevice, SystemWideDevice):
             for callback in self.machine.monitors['shots']:
                 callback(name=self.name, profile=profile, state=state)
 
-    def _sequence_switch_hit(self, switch_name, state, ms):
+    def _sequence_advance(self, event_name, **kwargs):
         # Since we can track multiple simulatenous sequences (e.g. two balls
         # going into an orbit in a row), we first have to see whether this
         # switch is starting a new sequence or continuing an existing one
-        del state
-        del ms
+        del kwargs
 
-        self.debug_log("Sequence switch hit: %s", switch_name)
+        self.debug_log("Sequence advance: %s", event_name)
 
-        if switch_name == self.config['switch_sequence'][0].name:
-
-            self._start_new_sequence()
+        if event_name == self.config['sequence'][0]:
+            if len(self.config['sequence']) > 1:
+                # if there is more than one step
+                self._start_new_sequence()
+            else:
+                # only one step means we complete instantly
+                self.hit()
 
         else:
             # Get the seq_id of the first sequence this switch is next for.
             # This is not a loop because we only want to advance 1 sequence
             seq_id = next((x[0] for x in self.active_sequences if
-                           x[2] == switch_name), None)
+                           x[2] == event_name), None)
 
             if seq_id:
                 # advance this sequence
@@ -511,19 +511,19 @@ class Shot(ModeDevice, SystemWideDevice):
         # If the sequence hasn't started, make sure we're not within the
         # delay_switch hit window
 
-        if self.active_delay_switches:
+        if self.active_delays:
             self.debug_log("There's a delay switch timer in effect from "
                            "switch(es) %s. Sequence will not be started.",
-                           self.active_delay_switches)
+                           self.active_delays)
             return
 
         # create a new sequence
         seq_id = uuid.uuid4()
-        next_switch = self.config['switch_sequence'][1].name
+        next_event = self.config['sequence'][1]
 
-        self.debug_log("Setting up a new sequence. Next switch: %s", next_switch)
+        self.debug_log("Setting up a new sequence. Next: %s", next_event)
 
-        self.active_sequences.append((seq_id, 0, next_switch))
+        self.active_sequences.append((seq_id, 0, next_event))
 
         # if this sequence has a time limit, set that up
         if self.config['time']:
@@ -537,14 +537,14 @@ class Shot(ModeDevice, SystemWideDevice):
 
     def _advance_sequence(self, seq_id):
         # get this sequence
-        seq_id, current_position_index, next_switch = next(
+        seq_id, current_position_index, next_event = next(
             x for x in self.active_sequences if x[0] == seq_id)
 
         # Remove this sequence from the list
         self.active_sequences.remove((seq_id, current_position_index,
-                                      next_switch))
+                                      next_event))
 
-        if current_position_index == (len(self.config['switch_sequence']) - 2):  # complete
+        if current_position_index == (len(self.config['sequence']) - 2):  # complete
 
             self.debug_log("Sequence complete!")
 
@@ -553,14 +553,14 @@ class Shot(ModeDevice, SystemWideDevice):
 
         else:
             current_position_index += 1
-            next_switch = (self.config['switch_sequence']
-                           [current_position_index + 1].name)
+            next_event = (self.config['sequence']
+                           [current_position_index + 1])
 
-            self.debug_log("Advancing the sequence. Next switch: %s",
-                           next_switch)
+            self.debug_log("Advancing the sequence. Next: %s",
+                           next_event)
 
             self.active_sequences.append(
-                (seq_id, current_position_index, next_switch))
+                (seq_id, current_position_index, next_event))
 
     def _cancel_switch_hit(self):
         self._reset_all_sequences()
@@ -574,10 +574,10 @@ class Shot(ModeDevice, SystemWideDevice):
                          callback=self._release_delay,
                          switch=switch_name)
 
-        self.active_delay_switches.add(switch_name)
+        self.active_delays.add(switch_name)
 
     def _release_delay(self, switch):
-        self.active_delay_switches.remove(switch)
+        self.active_delays.remove(switch)
 
     def _reset_sequence(self, seq_id):
         self.debug_log("Resetting this sequence")
