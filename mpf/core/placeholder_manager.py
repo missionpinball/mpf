@@ -1,5 +1,5 @@
 """Templates and placeholders."""
-import sympy
+from sympy.parsing.sympy_parser import parse_expr
 
 from mpf.core.mpf_controller import MpfController
 
@@ -10,7 +10,7 @@ class PlaceholderManager(MpfController):
 
     def build_bool_template(self, template_str):
         """Build a template from a string."""
-        return sympy.sympify(template_str)
+        return parse_expr(template_str)
 
     def evaluate_bool_template(self, template, parameters, fail_on_missing_params=False):
         """Return True if the placeholder"""
