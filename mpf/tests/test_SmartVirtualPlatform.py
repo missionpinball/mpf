@@ -66,6 +66,57 @@ class TestSmartVirtualPlatform(MpfTestCase):
         self.assertEqual(False, self.machine.switch_controller.is_active('device1_s1'))
         self.assertEqual(False, self.machine.switch_controller.is_active('device1_s2'))
 
+    def _ball_swallower(self, unclaimed_balls, **kwargs):
+        return {'unclaimed_balls': 0}
+
+    def test_ball_device_with_entrance_switch(self):
+        self.machine.events.add_handler('balldevice_device3_ball_enter',
+                                        self._ball_swallower)
+
+        self.assertEqual(0, self.machine.ball_devices.device3.balls)
+        self.advance_time_and_run(1)
+
+        self.hit_and_release_switch('device3_s')
+        self.advance_time_and_run()
+        self.assertEqual(1, self.machine.ball_devices.device3.balls)
+
+        self.hit_and_release_switch('device3_s')
+        self.advance_time_and_run()
+        self.assertEqual(2, self.machine.ball_devices.device3.balls)
+
+        self.hit_and_release_switch('device3_s')
+        self.advance_time_and_run()
+        self.assertEqual(3, self.machine.ball_devices.device3.balls)
+
+        self.machine.ball_devices.device3.eject()
+        self.advance_time_and_run()
+        self.assertEqual(2, self.machine.ball_devices.device3.balls)
+
+    def test_ball_device_with_entrance_switch_full_timeout(self):
+        self.machine.events.add_handler('balldevice_device4_ball_enter',
+                                        self._ball_swallower)
+
+        self.assertEqual(0, self.machine.ball_devices.device4.balls)
+        self.advance_time_and_run(1)
+
+        self.hit_and_release_switch('device4_s')
+        self.advance_time_and_run()
+        self.assertEqual(1, self.machine.ball_devices.device4.balls)
+
+        self.hit_and_release_switch('device4_s')
+        self.advance_time_and_run()
+        self.assertEqual(2, self.machine.ball_devices.device4.balls)
+
+        self.hit_switch_and_run('device4_s', 1)
+        self.assertEqual(3, self.machine.ball_devices.device4.balls)
+
+        self.machine.playfield.add_ball(1, self.machine.ball_devices.device4)
+        self.advance_time_and_run(3)
+        self.hit_switch_and_run('playfield', 1)
+
+        self.assertEqual(2, self.machine.ball_devices.device4.balls)
+        self.assertFalse(self.machine.switch_controller.is_active('device4_s'))
+
     def test_eject_with_no_ball(self):
         # tests that firing a coil of a device with no balls in it does not
         # put a ball in the target device.
@@ -127,5 +178,3 @@ class TestSmartVirtualPlatform(MpfTestCase):
         self.assertFalse(self.machine.drop_targets['left1'].complete)
         self.assertFalse(self.machine.drop_targets['left2'].complete)
         self.assertFalse(self.machine.drop_target_banks['left_bank'].complete)
-
-

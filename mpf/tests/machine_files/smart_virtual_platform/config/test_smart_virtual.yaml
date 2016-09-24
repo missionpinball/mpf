@@ -28,6 +28,10 @@ coils:
       number:
     coil4:
       number:
+    device3_c:
+      number:
+    device4_c:
+      number:
 
 switches:
     switch1:
@@ -60,6 +64,10 @@ switches:
       number: 10
     device2_s2:
       number: 11
+    device3_s:
+      number: 12
+    device4_s:
+      number: 13
 
 drop_targets:
    left1:
@@ -110,3 +118,18 @@ ball_devices:
 #        eject_targets: device2
         confirm_eject_type: target
         mechanical_eject: true
+    device3:
+        tags: home
+        entrance_switch: device3_s
+        eject_coil: device3_c
+        ball_capacity: 3
+        auto_fire_on_unexpected_ball: False
+        debug: true
+    device4:
+        tags: home
+        entrance_switch: device4_s
+        eject_coil: device4_c
+        ball_capacity: 3
+        entrance_switch_full_timeout: 500ms
+        auto_fire_on_unexpected_ball: False
+        debug: true

@@ -5,13 +5,13 @@ import logging
 from mpf.core.delays import DelayManager
 from mpf.platforms.virtual import (HardwarePlatform as VirtualPlatform, VirtualDriver)
 
-
 class BaseSmartVirtualCoilAction:
 
     """A action for a coil."""
 
     def __init__(self, actions, machine):
         """Initialise switch enable action."""
+        self.log = logging.getLogger("SmartVirtual Coil Action")
         self.actions = actions
         self.machine = machine
         self.delay = DelayManager(self.machine.delayRegistry)
@@ -99,12 +99,13 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
     """Hit switches when coil is pulsed."""
 
     # pylint: disable-msg=too-many-arguments
-    def __init__(self, actions, machine, platform, confirm_eject_switch, ball_switches):
+    def __init__(self, actions, machine, platform, device):
         """Initialise add ball to target action."""
         super().__init__(actions, machine)
-        self.ball_switches = ball_switches
+        self.device = device
+        self.ball_switches = device.config['ball_switches']
         self.platform = platform
-        self.confirm_eject_switch = confirm_eject_switch
+        self.confirm_eject_switch = device.config['confirm_eject_switch']
         self.target_device = None
 
     def confirm_eject_via_switch(self, switch):
@@ -114,6 +115,8 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
 
     def set_target(self, source, target, mechanical_eject, **kwargs):
         """Set target for action."""
+        self.log.debug("Setting eject target. {} -> {}. Mechanical: {}".format(
+                       source.name, target.name, mechanical_eject))
         del kwargs
         driver = None
         if source.config['eject_coil']:
@@ -129,17 +132,35 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
                            callback=self._perform_action)
 
     def _perform_action(self):
+        self.log.debug("Removing ball from device {}".format(
+                       self.device.name))
+
         for switch in self.ball_switches:
             if self.machine.switch_controller.is_active(switch.name):
                 self.machine.switch_controller.process_switch(switch.name, 0,
                                                               logical=True)
+                self.log.debug("Deactivating: {}".format(switch.name))
                 break
 
+        if (self.device.config['entrance_switch_full_timeout'] and
+                    self.device.machine.switch_controller.is_active(
+                        self.device.config['entrance_switch'].name)):
+
+            self.machine.switch_controller.process_switch(
+                self.device.config['entrance_switch'].name, 0, True)
+            self.log.debug("Deactivating:".format(
+                self.device.config['entrance_switch'].name))
+
         if self.confirm_eject_switch:
-            self.delay.add(ms=50, callback=self.confirm_eject_via_switch, switch=self.confirm_eject_switch)
+            self.delay.add(ms=50, callback=self.confirm_eject_via_switch,
+                           switch=self.confirm_eject_switch)
+            self.log.debug("Adding delay for confirm eject switch")
 
         if self.target_device and not self.target_device.is_playfield():
-            self.delay.add(ms=100, callback=self.platform.add_ball_to_device, device=self.target_device)
+            self.delay.add(ms=100, callback=self.platform.add_ball_to_device,
+                           device=self.target_device)
+            self.log.debug("Adding delay for {} to receive ball in "
+                           "100ms".format(self.target_device.name))
             self.target_device = None
 
 
@@ -198,15 +219,11 @@ class HardwarePlatform(VirtualPlatform):
             action = None
             if device.config['eject_coil']:
                 action = device.config['eject_coil'].hw_driver.action = AddBallToTargetAction(
-                    ["pulse"], self.machine, self, device.config['confirm_eject_switch'],
-                    device.config['ball_switches']
-                )
+                    ["pulse", "enable"], self.machine, self, device)
 
             elif device.config['hold_coil']:
                 action = device.config['hold_coil'].hw_driver.action = AddBallToTargetAction(
-                    ["disable"], self.machine, self, device.config['confirm_eject_switch'],
-                    device.config['ball_switches']
-                )
+                    ["disable"], self.machine, self, device)
             if action:
                 # we assume that the device always reaches its target. diverters are ignored
                 self.machine.events.add_handler('balldevice_{}_ball_eject_attempt'.format(device.name),
@@ -223,16 +240,44 @@ class HardwarePlatform(VirtualPlatform):
 
     def add_ball_to_device(self, device):
         """Add ball to device."""
+
+        if device.balls + 1 < device.config['ball_capacity']:
+            "KABOOM! We just added a ball to {} which has a capacity "
+            "of {} but already had {} ball(s)".format(
+                device.name, device.config['ball_capacity'],
+                device.balls)
+
         if device.config['entrance_switch']:
-            pass  # todo
+
+            # if there's an entrance_switch_full_timeout, that means the ball
+            # will sit on this switch if the device is full, otherwise, it
+            # will pass over it, hitting during the process
+
+            if device.config['entrance_switch_full_timeout']:
+                if device.balls == device.config['ball_capacity'] - 1:
+
+                    if self.machine.switch_controller.is_active(
+                            device.config['entrance_switch'].name):
+                        raise AssertionError(
+                            "KABOOM! We just added a ball to {} which already "
+                            "had an active entrance switch".format(
+                                device.name))
+
+                    self.machine.switch_controller.process_switch(
+                        device.config['entrance_switch'].name, 1, True)
+                    return
+
+            self.machine.switch_controller.process_switch(
+                        device.config['entrance_switch'].name, 1, True)
+            self.machine.switch_controller.process_switch(
+                        device.config['entrance_switch'].name, 0, True)
 
         if device.config['ball_switches']:
             found_switch = False
             for switch in device.config['ball_switches']:
                 if self.machine.switch_controller.is_inactive(switch.name):
-                    self.machine.switch_controller.process_switch(switch.name,
-                                                                  1,
-                                                                  True)
+                    self.machine.switch_controller.process_switch(
+                        switch.name, 1, True)
                     found_switch = True
                     break
 
