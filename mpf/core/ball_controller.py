@@ -368,7 +368,10 @@ class BallController(object):
 
             for device in source_devices:
                 if not device.is_playfield():
-                    device.eject_all()
+                    if "drain" in device.tags:
+                        device.eject_all(device.find_next_trough())
+                    else:
+                        device.eject_all()
         else:
             self.log.debug("All balls are collected")
             self._collecting_balls_complete()
