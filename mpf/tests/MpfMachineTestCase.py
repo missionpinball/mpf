@@ -9,9 +9,9 @@ class BaseMpfMachineTestCase(MpfTestCase):
     @staticmethod
     def _load_mc_players(cls):
         mc_players = {
-            "sound_player": "mpfmc.config_players.sound_player",
-            "widget_player": "mpfmc.config_players.widget_player",
-            "slide_player": "mpfmc.config_players.slide_player"
+            "sound_player": "mpfmc.config_players.plugins.sound_player",
+            "widget_player": "mpfmc.config_players.plugins.widget_player",
+            "slide_player": "mpfmc.config_players.plugins.slide_player"
         }
 
         for name, module in mc_players.items():
