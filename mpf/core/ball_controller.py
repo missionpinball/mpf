@@ -130,7 +130,8 @@ class BallController(object):
 
         for playfield in self.machine.playfields:
             if playfield.balls != playfield.available_balls:
-                self.log.warning("Corecting available_balls %s to %s on playfield %s",
+                self.log.warning("Correcting available_balls %s to %s on "
+                                 "playfield %s",
                                  playfield.available_balls, playfield.balls, playfield.name)
                 if playfield.balls > playfield.available_balls:
                     jump_targets.append(playfield)
@@ -146,7 +147,8 @@ class BallController(object):
         balls_removed = 0
         for dummy_i in range(balls_to_remove):
             for playfield in self.machine.playfields:
-                self.log.warning("Corecting balls on pf from %s to %s on playfield %s (preferred)",
+                self.log.warning("Correcting balls on pf from %s to %s on "
+                                 "playfield %s (preferred)",
                                  playfield.balls, playfield.balls - 1, playfield.name)
                 if playfield.available_balls == playfield.balls and playfield.balls > 0:
                     jump_sources.append(playfield)
@@ -162,7 +164,8 @@ class BallController(object):
         balls_removed = 0
         for dummy_i in range(balls_to_remove):
             for playfield in self.machine.playfields:
-                self.log.warning("Corecting balls on pf from %s to %s on playfield %s",
+                self.log.warning("Correcting balls on pf from %s to %s on "
+                                 "playfield %s",
                                  playfield.balls, playfield.balls - 1, playfield.name)
                 if playfield.balls > 0:
                     jump_sources.append(playfield)
