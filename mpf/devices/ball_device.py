@@ -972,17 +972,22 @@ class BallDevice(SystemWideDevice):
 
     def _count_balls(self, **kwargs):
         del kwargs
-        if self.debug:
-            self.log.debug("Counting balls")
 
         if self.config['ball_switches']:
+            if self.debug:
+                self.log.debug("Counting balls by checking switches")
             try:
                 balls = self._count_ball_switches()
             except ValueError:
-                # This happens when switches are not stable.
-                # We will be called again!
+                if self.debug:
+                    self.log.debug(
+                        "Switches are not stable. Will count again later")
                 return
         else:
+            self.log.debug(
+                "Received request to count balls, but this device has no "
+                "ball switches. Will return current ball count of %s",
+                self.balls)
             balls = self.balls
 
         # current status handler will handle the new count (or ignore it)
