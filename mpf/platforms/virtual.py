@@ -25,8 +25,7 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
     def __init__(self, machine):
         """Initialise virtual platform."""
         super(HardwarePlatform, self).__init__(machine)
-        self.log = logging.getLogger("Virtual Platform")
-        self.log.debug("Configuring virtual hardware interface.")
+        self._setup_log()
 
         # Since the virtual platform doesn't have real hardware, we need to
         # maintain an internal list of switches that were confirmed so we have
@@ -39,6 +38,10 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
     def __repr__(self):
         """Return string representation."""
         return '<Platform.Virtual>'
+
+    def _setup_log(self):
+        self.log = logging.getLogger("Virtual Platform")
+        self.log.debug("Configuring virtual hardware interface.")
 
     def initialize(self):
         """Initialise platform."""

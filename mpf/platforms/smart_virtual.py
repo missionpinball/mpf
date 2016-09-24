@@ -150,14 +150,15 @@ class HardwarePlatform(VirtualPlatform):
     def __init__(self, machine):
         """Initialise smart virtual platform."""
         super().__init__(machine)
-        self.log = logging.getLogger("Smart Virtual Platform")
-        self.log.debug("Configuring smart_virtual hardware interface.")
-
         self.delay = DelayManager(self.machine.delayRegistry)
 
     def __repr__(self):
         """Return string representation."""
         return '<Platform.SmartVirtual>'
+
+    def _setup_log(self):
+        self.log = logging.getLogger("Smart Virtual Platform")
+        self.log.debug("Configuring smart_virtual hardware interface.")
 
     def initialize(self):
         """Initialise platform."""
