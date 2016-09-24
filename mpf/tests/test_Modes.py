@@ -55,12 +55,11 @@ class TestModes(MpfTestCase):
         # test the start priorities TODO there's got to be a better way?
         found_it = False
 
-        for callback, priority, _, _ \
-                in self.machine.events.registered_handlers['start_mode1']:
+        for handler in self.machine.events.registered_handlers['start_mode1']:
 
-            if callback == self.machine.modes.mode1.start:
+            if handler.callback == self.machine.modes.mode1.start:
                 found_it = True
-                self.assertEqual(priority, 201)
+                self.assertEqual(handler.priority, 201)
 
         self.assertTrue(found_it)
 
@@ -74,21 +73,19 @@ class TestModes(MpfTestCase):
 
         # test the stop priorities
         found_it = False
-        for callback, priority, _, _ \
-                in self.machine.events.registered_handlers['stop_mode1']:
-            if callback == self.machine.modes.mode1.stop:
+        for handler in self.machine.events.registered_handlers['stop_mode1']:
+            if handler.callback == self.machine.modes.mode1.stop:
                 found_it = True
                 # 201 because stop priorities are always +1 over mode priority
-                self.assertEqual(priority, 201)
+                self.assertEqual(handler.priority, 201)
         self.assertTrue(found_it)
 
         found_it = False
-        for callback, priority, _, _ \
-                in self.machine.events.registered_handlers['stop_mode2']:
-            if callback == self.machine.modes.mode2.stop:
+        for handler in self.machine.events.registered_handlers['stop_mode2']:
+            if handler.callback == self.machine.modes.mode2.stop:
                 found_it = True
                 # base priority 100, +1 default bump, +2 stop_priority config
-                self.assertEqual(priority, 103)
+                self.assertEqual(handler.priority, 103)
         self.assertTrue(found_it)
 
         # pass a priority at start

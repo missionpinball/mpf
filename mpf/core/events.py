@@ -8,7 +8,7 @@ import asyncio
 from functools import partial
 
 EventHandlerKey = namedtuple("EventHandlerKey", ["key", "event"])
-RegisteredHandler = namedtuple("RegisteredHandler", ["callback", "priority", "kwargs", "key"])
+RegisteredHandler = namedtuple("RegisteredHandler", ["callback", "priority", "kwargs", "key", "condition"])
 PostedEvent = namedtuple("PostedEvent", ["event", "type", "callback", "kwargs"])
 
 
@@ -76,6 +76,12 @@ class EventManager(object):
             raise AssertionError("Handler {} for event '{}' param kwargs is missing '**'. Actual signature: {}".format(
                 handler, event, sig))
 
+        if event.find("{") > 0 and event[-1:] == "}":
+            condition = self.machine.placeholder_manager.build_bool_template(event[event.find("{")+1:-1])
+            event = event[0:event.find("{")]
+        else:
+            condition = None
+
         event = event.lower()
 
         # Add an entry for this event if it's not there already
@@ -87,7 +93,7 @@ class EventManager(object):
         # An event 'handler' in our case is a tuple with 4 elements:
         # the handler method, priority, dict of kwargs, & uuid key
 
-        self.registered_handlers[event].append(RegisteredHandler(handler, priority, kwargs, key))
+        self.registered_handlers[event].append(RegisteredHandler(handler, priority, kwargs, key, condition))
         if self.debug:
             try:
                 self.log.debug("Registered %s as a handler for '%s', priority: %s, "
@@ -432,6 +438,11 @@ class EventManager(object):
                 # merge the post's kwargs with the registered handler's kwargs
                 # in case of conflict, posts kwargs will win
                 merged_kwargs = dict(list(handler.kwargs.items()) + list(kwargs.items()))
+
+                # if condition exists and is not true skip
+                if (handler.condition is not None and
+                        not self.machine.placeholder_manager.evaluate_bool_template(handler.condition, merged_kwargs)):
+                    continue
 
                 # log if debug is enabled and this event is not the timer tick
                 if self.debug:
