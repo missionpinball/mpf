@@ -39,10 +39,6 @@ class Attract(Mode):
         if hasattr(self.machine, 'ball_devices'):
             self.machine.ball_controller.collect_balls()
 
-        self.machine.events.post('enable_volume_keys')
-        # move volume to its own mode?
-        # todo
-
     def start_button_pressed(self):
         """Called when the a switch tagged with *start* is activated."""
         self.start_button_pressed_time = self.machine.clock.get_time()

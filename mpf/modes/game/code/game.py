@@ -97,9 +97,6 @@ class Game(Mode):
         self.add_mode_event_handler('ball_ended', self.ball_ended)
         self.add_mode_event_handler('game_ended', self.game_ended)
 
-        self.machine.events.post('enable_volume_keys')
-        # todo
-
         self.machine.events.post_queue('game_starting',
                                        callback=self.game_started, game=self)
         '''event: game_starting
