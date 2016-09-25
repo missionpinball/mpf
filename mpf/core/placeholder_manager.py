@@ -123,7 +123,10 @@ class PlaceholderManager(MpfController):
         elif isinstance(node, ast.Subscript):
             return self._eval_subscript(node, variables)
         elif isinstance(node, ast.Name):
-            if node.id in variables:
+            var = self.get_global_parameters(node.id)
+            if var:
+               return var
+            elif node.id in variables:
                 return variables[node.id]
             else:
                 raise ValueError("Mising variable {}".format(node.id))
@@ -142,11 +145,18 @@ class PlaceholderManager(MpfController):
         """Build a bool template from a string."""
         return BoolTemplate(self._parse_template(template_str), self, default_value)
 
+    def get_global_parameters(self, name):
+        if name == "settings":
+            return self.machine.settings
+        elif self.machine.game:
+            if name == "current_player":
+                return self.machine.game.player
+            elif name == "players":
+                return self.machine.game.player_list
+            elif name == "game":
+                return self.machine.game
+        return False
+
     def evaluate_template(self, template, parameters):
         """Evaluate template."""
-        parameters["settings"] = self.machine.settings
-        if self.machine.game:
-            parameters["current_player"] = self.machine.game.player
-            parameters["players"] = self.machine.game.player_list
-            parameters["game"] = self.machine.game
         return self._eval(template, parameters)
