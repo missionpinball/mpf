@@ -5,6 +5,7 @@ import logging
 from mpf.core.delays import DelayManager
 from mpf.platforms.virtual import (HardwarePlatform as VirtualPlatform, VirtualDriver)
 
+
 class BaseSmartVirtualCoilAction:
 
     """A action for a coil."""
@@ -143,8 +144,8 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
                 break
 
         if (self.device.config['entrance_switch_full_timeout'] and
-                    self.device.machine.switch_controller.is_active(
-                        self.device.config['entrance_switch'].name)):
+                self.device.machine.switch_controller.is_active(
+                self.device.config['entrance_switch'].name)):
 
             self.machine.switch_controller.process_switch(
                 self.device.config['entrance_switch'].name, 0, True)
@@ -240,7 +241,6 @@ class HardwarePlatform(VirtualPlatform):
 
     def add_ball_to_device(self, device):
         """Add ball to device."""
-
         if device.balls + 1 < device.config['ball_capacity']:
             "KABOOM! We just added a ball to {} which has a capacity "
             "of {} but already had {} ball(s)".format(
@@ -268,9 +268,9 @@ class HardwarePlatform(VirtualPlatform):
                     return
 
             self.machine.switch_controller.process_switch(
-                        device.config['entrance_switch'].name, 1, True)
+                device.config['entrance_switch'].name, 1, True)
             self.machine.switch_controller.process_switch(
-                        device.config['entrance_switch'].name, 0, True)
+                device.config['entrance_switch'].name, 0, True)
 
         if device.config['ball_switches']:
             found_switch = False
