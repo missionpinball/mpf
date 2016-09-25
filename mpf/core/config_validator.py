@@ -31,6 +31,9 @@ class ConfigValidator(object):
             "int": self._validate_type_int,
             "num": self._validate_type_num,
             "bool": self._validate_type_bool,
+            "template_float": self._validate_type_template_float,
+            "template_int": self._validate_type_template_int,
+            "template_bool": self._validate_type_template_bool,
             "boolean": self._validate_type_bool,
             "ms": self._validate_type_ms,
             "secs": self._validate_type_secs,
@@ -348,6 +351,24 @@ class ConfigValidator(object):
             return str(item).lower()
         else:
             return None
+
+    def _validate_type_template_float(self, item, validation_failure_info):
+        if not isinstance(item, str):
+            self.validation_error(item, validation_failure_info, "Template has to be string.")
+
+        return self.machine.placeholder_manager.build_float_template(item)
+
+    def _validate_type_template_int(self, item, validation_failure_info):
+        if not isinstance(item, str):
+            self.validation_error(item, validation_failure_info, "Template has to be string.")
+
+        return self.machine.placeholder_manager.build_int_template(item)
+
+    def _validate_type_template_bool(self, item, validation_failure_info):
+        if not isinstance(item, str):
+            self.validation_error(item, validation_failure_info, "Template has to be string.")
+
+        return self.machine.placeholder_manager.build_bool_template(item)
 
     def _validate_type_float(self, item, validation_failure_info):
         if item is None:
