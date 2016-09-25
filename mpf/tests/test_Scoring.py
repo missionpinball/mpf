@@ -77,7 +77,7 @@ class TestScoring(MpfTestCase):
         self.post_event("test_event1")
         self.assertEqual(1000, self.machine.game.player.score)
         # var_a is 0
-        self.assertEqual(0, self.machine.game.player.vars['var_a'])
+        self.assertEqual(0, self.machine.game.player.var_a)
         # but we count var_b
         self.assertEqual(1, self.machine.game.player.vars['var_b'])
 
