@@ -446,9 +446,7 @@ class EventManager(object):
 
             # If whatever handler we called returns False, we stop
             # processing the remaining handlers for boolean or queue events
-            if ((ev_type == 'boolean' or ev_type == 'queue') and
-                        result is False):
-
+            if (ev_type == 'boolean' or ev_type == 'queue') and result is False:
                 # add a False result so our callback knows something failed
                 kwargs['ev_result'] = False
 
