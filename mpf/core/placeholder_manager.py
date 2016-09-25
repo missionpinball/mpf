@@ -140,7 +140,8 @@ class PlaceholderManager(MpfController):
     def evaluate_template(self, template, parameters):
         """Evaluate template"""
         parameters["settings"] = self.machine.settings
-        parameters["current_player"] = self.machine.game.player
-        parameters["players"] = self.machine.game.player_list
-        parameters["game"] = self.machine.game
+        if self.machine.game:
+            parameters["current_player"] = self.machine.game.player
+            parameters["players"] = self.machine.game.player_list
+            parameters["game"] = self.machine.game
         return self._eval(template, parameters)
