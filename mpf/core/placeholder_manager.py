@@ -87,6 +87,10 @@ class PlaceholderManager(MpfController):
     def _eval(self, node, variables):
         if isinstance(node, ast.Num):   # <number>
             return node.n
+        elif isinstance(node, ast.Str):
+            return node.s
+        elif node is None:
+            return None
         elif isinstance(node, ast.NameConstant):   # <number>
             return node.value
         elif isinstance(node, ast.BinOp):       # <left> <operator> <right>
@@ -105,17 +109,21 @@ class PlaceholderManager(MpfController):
                                                        self._eval(node.values[i], variables))
             return result
         elif isinstance(node, ast.Attribute):
-            if node.value.id == "settings":
-                return self.machine.settings.get_setting_value(node.attr)
+            return getattr(self._eval(node.value, variables), node.attr)
+        elif isinstance(node, ast.Subscript):
+            if isinstance(node.slice, ast.Index):
+                return self._eval(node.value, variables)[self._eval(node.slice.value, variables)]
+            elif isinstance(node.slice, ast.Slice):
+                return self._eval(node.value, variables)[self._eval(node.slice.lower, variables):self._eval(node.slice.upper, variables):self._eval(node.slice.step, variables)]
             else:
-                raise AssertionError("Invalid attribute")
+                raise TypeError(type(node))
         elif isinstance(node, ast.Name):
             if node.id in variables:
                 return variables[node.id]
             else:
                 raise ValueError("Mising variable {}".format(node.id))
         else:
-            raise TypeError(node)
+            raise TypeError(type(node))
 
     def build_float_template(self, template_str, default_value=0.0):
         """Build a float template from a string."""
@@ -131,4 +139,8 @@ class PlaceholderManager(MpfController):
 
     def evaluate_template(self, template, parameters):
         """Evaluate template"""
+        parameters["settings"] = self.machine.settings
+        parameters["current_player"] = self.machine.game.player
+        parameters["players"] = self.machine.game.player_list
+        parameters["game"] = self.machine.game
         return self._eval(template, parameters)
