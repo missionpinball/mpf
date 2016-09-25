@@ -211,7 +211,7 @@ class LogicBlock(object):
         self._remove_all_event_handlers()
         try:
             self.machine.game.player.logic_blocks.remove(self)
-        except KeyError:
+        except AttributeError:
             pass
 
     def enable(self, **kwargs):
