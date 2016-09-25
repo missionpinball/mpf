@@ -10,3 +10,4 @@ scoring:
         score: 1000|block
         var_a: 0|block
         var_b: 1
+        var_c: current_player.ramps * 10|block

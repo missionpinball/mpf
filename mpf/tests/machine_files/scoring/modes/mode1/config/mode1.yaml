@@ -8,3 +8,4 @@ scoring:
     test_event1:
         score: 100
         var_a: 1
+        var_c: current_player.ramps

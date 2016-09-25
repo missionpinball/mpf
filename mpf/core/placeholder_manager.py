@@ -1,6 +1,8 @@
 """Templates and placeholders."""
 import ast
 import operator as op
+import abc
+
 from mpf.core.mpf_controller import MpfController
 
 # supported operators
@@ -13,20 +15,92 @@ bool_operators = {ast.And: lambda a, b: a and b, ast.Or: lambda a, b: a or b}
 comparisons = {ast.Eq: op.eq, ast.Lt: op.lt, ast.Gt: op.gt, ast.LtE: op.le, ast.GtE: op.ge}
 
 
+class BaseTemplate(metaclass=abc.ABCMeta):
+
+    """Base class for templates."""
+
+    def __init__(self, template, placeholder_manger, default_value):
+        """Initialise template."""
+        self.template = template
+        self.placeholder_manager = placeholder_manger
+        self.default_value = default_value
+
+    @abc.abstractmethod
+    def evaluate(self, parameters, fail_on_missing_params=False):
+        """Evaluate template."""
+        pass
+
+
+class BoolTemplate(BaseTemplate):
+
+    """Bool template."""
+
+    def evaluate(self, parameters, fail_on_missing_params=False):
+        """Evaluate template to bool."""
+        try:
+            result = self.placeholder_manager.evaluate_template(self.template, parameters)
+        except ValueError:
+            if fail_on_missing_params:
+                raise
+            return self.default_value
+        return bool(result)
+
+
+class FloatTemplate(BaseTemplate):
+
+    """Float template."""
+
+    def evaluate(self, parameters, fail_on_missing_params=False):
+        """Evaluate template to float."""
+        try:
+            result = self.placeholder_manager.evaluate_template(self.template, parameters)
+        except ValueError:
+            if fail_on_missing_params:
+                raise
+            return self.default_value
+        return float(result)
+
+
+class IntTemplate(BaseTemplate):
+
+    """Float template."""
+
+    def evaluate(self, parameters, fail_on_missing_params=False):
+        """Evaluate template to float."""
+        try:
+            result = self.placeholder_manager.evaluate_template(self.template, parameters)
+        except ValueError:
+            if fail_on_missing_params:
+                raise
+            return self.default_value
+        return int(result)
+
+
 class PlaceholderManager(MpfController):
 
     """Manages templates and placeholders for MPF."""
 
-    def _parse_template(selfc, template_str):
+    @staticmethod
+    def _parse_template(template_str):
         return ast.parse(template_str, mode='eval').body
 
-    def _eval_template(self, template, variables):
-        """Evaluate a template."""
-        return self._eval(template, variables)
+    def _eval_subscript(self, node, variables):
+        if isinstance(node.slice, ast.Index):
+            return self._eval(node.value, variables)[self._eval(node.slice.value, variables)]
+        elif isinstance(node.slice, ast.Slice):
+            return self._eval(node.value, variables)[self._eval(node.slice.lower, variables):
+                                                     self._eval(node.slice.upper, variables):
+                                                     self._eval(node.slice.step, variables)]
+        else:
+            raise TypeError(type(node))
 
     def _eval(self, node, variables):
         if isinstance(node, ast.Num):   # <number>
             return node.n
+        elif isinstance(node, ast.Str):
+            return node.s
+        elif node is None:
+            return None
         elif isinstance(node, ast.NameConstant):   # <number>
             return node.value
         elif isinstance(node, ast.BinOp):       # <left> <operator> <right>
@@ -45,30 +119,34 @@ class PlaceholderManager(MpfController):
                                                        self._eval(node.values[i], variables))
             return result
         elif isinstance(node, ast.Attribute):
-            if node.value.id == "settings":
-                return self.machine.settings.get_setting_value(node.attr)
-            else:
-                raise AssertionError("Invalid attribute")
+            return getattr(self._eval(node.value, variables), node.attr)
+        elif isinstance(node, ast.Subscript):
+            return self._eval_subscript(node, variables)
         elif isinstance(node, ast.Name):
             if node.id in variables:
                 return variables[node.id]
             else:
                 raise ValueError("Mising variable {}".format(node.id))
         else:
-            raise TypeError(node)
+            raise TypeError(type(node))
 
-    def build_bool_template(self, template_str):
-        """Build a template from a string."""
-        template = self._parse_template(template_str)
-        return template
+    def build_float_template(self, template_str, default_value=0.0):
+        """Build a float template from a string."""
+        return FloatTemplate(self._parse_template(template_str), self, default_value)
 
-    def evaluate_bool_template(self, template, parameters, fail_on_missing_params=False):
-        """Return True if the placeholder"""
-        # replace parameters
-        try:
-            result = self._eval_template(template, parameters)
-        except ValueError:
-            if fail_on_missing_params:
-                raise
-            return False
-        return result == True
+    def build_int_template(self, template_str, default_value=0):
+        """Build a int template from a string."""
+        return IntTemplate(self._parse_template(template_str), self, default_value)
+
+    def build_bool_template(self, template_str, default_value=False):
+        """Build a bool template from a string."""
+        return BoolTemplate(self._parse_template(template_str), self, default_value)
+
+    def evaluate_template(self, template, parameters):
+        """Evaluate template."""
+        parameters["settings"] = self.machine.settings
+        if self.machine.game:
+            parameters["current_player"] = self.machine.game.player
+            parameters["players"] = self.machine.game.player_list
+            parameters["game"] = self.machine.game
+        return self._eval(template, parameters)

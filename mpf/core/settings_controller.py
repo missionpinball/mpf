@@ -60,6 +60,10 @@ class SettingsController(MpfController):
         value = self.get_setting_value(setting_name)
         return self._settings[setting_name].values.get(value, "invalid")
 
+    def __getattr__(self, item):
+        """Return setting."""
+        return self.get_setting_value(item)
+
     def get_setting_value(self, setting_name):
         """Return the current value of a setting."""
         if setting_name not in self._settings:
