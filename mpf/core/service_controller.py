@@ -33,6 +33,11 @@ class ServiceController(MpfController):
 
         self.log.info("Entered service mode. Resetting game if running. Resetting hardware interface now.")
         # this will stop attact and game mode
+        for mode in self.machine.modes.values():
+            if not mode.active or mode.name == "service":
+                continue
+            mode.stop()
+
         self.machine.events.post("service_mode_entered")
 
         # TODO: reset hardware interface
