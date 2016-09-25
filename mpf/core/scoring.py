@@ -28,8 +28,7 @@ class ScoreController(object):
         self.mode_scores = {}
         self.score_events = {}
 
-    @classmethod
-    def _validate_entry(cls, entry, mode):
+    def _validate_entry(self, entry, mode):
         entries = []
         for var, value in entry.items():
             if isinstance(value, int):
@@ -37,13 +36,17 @@ class ScoreController(object):
             elif isinstance(value, str):
                 try:
                     value, block = value.split('|')
+                except ValueError:
+                    block = False
+                else:
                     if block != "block":
                         raise AssertionError("Invalid action in scoring entry: {} in mode {}".format(
                             entry, mode.name))
-                    entries.append(ScoreEntry(var, int(value), True))
+                    block = True
+                try:
+                    entries.append(ScoreEntry(var, int(value), block))
                 except ValueError:
-                    raise AssertionError("Invalid scoring entry: {} in mode {}".format(
-                        entry, mode.name))
+                    entries.append(ScoreEntry(var, self.machine.placeholder_manager.build_int_template(value), block))
         return entries
 
     def mode_start(self, config: dict, mode: Mode, priority: int, **kwargs):
@@ -116,7 +119,10 @@ class ScoreController(object):
         if not value:
             return
 
-        value = int(value)
+        if isinstance(value, int):
+            value = value
+        else:
+            value = value.evaluate({})
         prev_value = value
         self.machine.game.player[var_name] += value
 
