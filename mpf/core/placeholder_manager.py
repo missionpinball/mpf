@@ -84,6 +84,16 @@ class PlaceholderManager(MpfController):
     def _parse_template(template_str):
         return ast.parse(template_str, mode='eval').body
 
+    def _eval_subscript(self, node, variables):
+        if isinstance(node.slice, ast.Index):
+            return self._eval(node.value, variables)[self._eval(node.slice.value, variables)]
+        elif isinstance(node.slice, ast.Slice):
+            return self._eval(node.value, variables)[self._eval(node.slice.lower, variables):
+                                                     self._eval(node.slice.upper, variables):
+                                                     self._eval(node.slice.step, variables)]
+        else:
+            raise TypeError(type(node))
+
     def _eval(self, node, variables):
         if isinstance(node, ast.Num):   # <number>
             return node.n
@@ -111,12 +121,7 @@ class PlaceholderManager(MpfController):
         elif isinstance(node, ast.Attribute):
             return getattr(self._eval(node.value, variables), node.attr)
         elif isinstance(node, ast.Subscript):
-            if isinstance(node.slice, ast.Index):
-                return self._eval(node.value, variables)[self._eval(node.slice.value, variables)]
-            elif isinstance(node.slice, ast.Slice):
-                return self._eval(node.value, variables)[self._eval(node.slice.lower, variables):self._eval(node.slice.upper, variables):self._eval(node.slice.step, variables)]
-            else:
-                raise TypeError(type(node))
+            return self._eval_subscript(node, variables)
         elif isinstance(node, ast.Name):
             if node.id in variables:
                 return variables[node.id]
@@ -138,7 +143,7 @@ class PlaceholderManager(MpfController):
         return BoolTemplate(self._parse_template(template_str), self, default_value)
 
     def evaluate_template(self, template, parameters):
-        """Evaluate template"""
+        """Evaluate template."""
         parameters["settings"] = self.machine.settings
         if self.machine.game:
             parameters["current_player"] = self.machine.game.player
