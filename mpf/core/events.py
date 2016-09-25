@@ -427,8 +427,7 @@ class EventManager(object):
             merged_kwargs = dict(list(handler.kwargs.items()) + list(kwargs.items()))
 
             # if condition exists and is not true skip
-            if (handler.condition is not None and
-                    not self.machine.placeholder_manager.evaluate_bool_template(handler.condition, merged_kwargs)):
+            if handler.condition is not None and not handler.condition.evaluate(merged_kwargs):
                 continue
 
             # log if debug is enabled and this event is not the timer tick
