@@ -57,7 +57,7 @@ class ScoreController(object):
                                                key=lambda x: x[0].priority,
                                                reverse=True))
 
-        for event in list(config.keys()):
+        for event in config:
             self._validate_entry(config[event], mode)
 
             mode.add_mode_event_handler(event, self._score_event_callback,
