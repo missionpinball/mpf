@@ -248,6 +248,8 @@ bcp:
             host: localhost
             port: 5050
             type: mpf.core.bcp.bcp_socket_client.BCPClientSocket
+            required: True
+            exit_on_close: True
 
     servers:
         url_style:
