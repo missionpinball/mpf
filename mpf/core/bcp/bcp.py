@@ -42,14 +42,15 @@ class Bcp(MpfController):
     def _setup_bcp_connections(self, **kwargs):
         """Connect to BCP servers from MPF config."""
         del kwargs
-        if 'connections' not in self.machine.config['bcp'] or not self.machine.config['bcp']['connections']:
+        if ('connections' not in self.machine.config['bcp'] or not
+                self.machine.config['bcp']['connections']):
             return
 
         for name, settings in self.machine.config['bcp']['connections'].items():
             client = Util.string_to_class(settings['type'])(self.machine, name, self.machine.bcp)
-            client.connect(settings)
-            client.exit_on_close = True
-            self.transport.register_transport(client)
+            if client.connect(settings):
+                client.exit_on_close = settings['exit_on_close']
+                self.transport.register_transport(client)
 
     def _setup_bcp_servers(self, **kwargs):
         """Start BCP servers to allow other clients to connect."""

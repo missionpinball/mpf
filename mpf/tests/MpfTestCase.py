@@ -12,6 +12,7 @@ from unittest.mock import *
 import asyncio
 from asyncio import events
 import ruamel.yaml as yaml
+from mpf.core.rgb_color import RGBColor
 
 from mpf.tests.TestDataManager import TestDataManager
 from mpf.tests.loop import TimeTravelLoop, TestClock
@@ -111,6 +112,10 @@ class MpfTestCase(unittest.TestCase):
 
     def post_event(self, event_name):
         self.machine.events.post(event_name)
+        self.machine_run()
+
+    def post_event_with_params(self, event_name, **params):
+        self.machine.events.post(event_name, **params)
         self.machine_run()
 
     def set_num_balls_known(self, balls):
@@ -269,6 +274,9 @@ class MpfTestCase(unittest.TestCase):
         self.machine.events.add_handler(event=event_name,
                                         handler=self._mock_event_handler,
                                         event_name=event_name)
+
+    def assertLedColor(self, led_name, color):
+        self.assertEqual(list(RGBColor(color).rgb), self.machine.leds[led_name].hw_driver.current_color)
 
     def assertModeRunning(self, mode_name):
         if mode_name not in self.machine.modes:

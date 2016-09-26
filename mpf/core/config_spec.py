@@ -156,6 +156,8 @@ bcp:
         host: single|str|None
         port: single|int|5050
         type: single|str|
+        required: single|bool|True
+        exit_on_close: single|bool|True
 coils:
     __valid_in__: machine
     number: single|str|
@@ -700,6 +702,7 @@ shots:
     switch: list|machine(switches)|None
     switches: list|machine(switches)|None
     switch_sequence: list|machine(switches)|None
+    sequence: list|str|None
     cancel_switch: list|machine(switches)|None
     delay_switch: dict|machine(switches):ms|None
     time: single|ms|0
@@ -746,7 +749,7 @@ shot_profiles:
         start_step: single|int|1
         loops: single|int|-1
         sync_ms: single|int|0
-        manual_advance: single|bool|False
+        manual_advance: single|bool|None
         show_tokens: dict|str:str|None
 show_player:
     __valid_in__: machine, mode, show
@@ -961,6 +964,7 @@ widget_player:
     action: single|enum(add,remove,update)|add
     key: single|str|None
     widget_settings: ignore
+    target: single|str|None
 widget_styles:
     __valid_in__: machine, mode, show
     color: single|kivycolor|ffffffff
@@ -1052,7 +1056,7 @@ widgets:
         close: single|bool|False
     points:
         points: list|num|
-        size: single|float|1.0
+        pointsize: single|float|1.0
     quad:
         points: list|num|
     rectangle:

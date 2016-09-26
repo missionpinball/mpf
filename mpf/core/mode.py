@@ -153,11 +153,11 @@ class Mode(object):
 
         return return_dict
 
-    def start(self, priority=None, callback=None, **kwargs):
+    def start(self, mode_priority=None, callback=None, **kwargs):
         """Start this mode.
 
         Args:
-            priority: Integer value of what you want this mode to run at. If you
+            mode_priority: Integer value of what you want this mode to run at. If you
                 don't specify one, it will use the "Mode: priority" setting from
                 this mode's configuration file.
             **kwargs: Catch-all since this mode might start from events with
@@ -180,8 +180,8 @@ class Mode(object):
             self._mode_start_wait_queue = kwargs['queue']
             self._mode_start_wait_queue.wait()
 
-        if isinstance(priority, int):
-            self.priority = priority
+        if isinstance(mode_priority, int):
+            self.priority = mode_priority
         else:
             self.priority = self.config['mode']['priority']
 

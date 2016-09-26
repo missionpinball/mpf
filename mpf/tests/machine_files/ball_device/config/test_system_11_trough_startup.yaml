@@ -1,0 +1,9 @@
+#config_version=4
+
+config: test_system_11_trough.yaml
+
+virtual_platform_start_active_switches:
+  - trough1
+  - trough2
+  - trough3
+  - outhole

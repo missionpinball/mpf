@@ -1,5 +1,6 @@
 """Test event manager."""
 from mpf.core.delays import DelayManager
+from mpf.core.settings_controller import SettingEntry
 from mpf.tests.MpfTestCase import MpfTestCase
 from unittest.mock import patch
 
@@ -591,12 +592,15 @@ class TestEventManager(MpfTestCase):
 
     def test_event_player_delay(self):
         self.mock_event('test_event_player2')
+        self.mock_event('test_event_player3')
 
         self.machine.events.post('test_event_player_delayed')
         self.machine_run()
         self.assertEqual(0, self._events['test_event_player2'])
+        self.assertEqual(0, self._events['test_event_player3'])
         self.advance_time_and_run(2)
         self.assertEqual(1, self._events['test_event_player2'])
+        self.assertEqual(1, self._events['test_event_player3'])
 
     def test_random_event_player(self):
         self.machine.events.add_handler('test_random_event_player1', self.event_handler1)
@@ -779,3 +783,43 @@ class TestEventManager(MpfTestCase):
 
         self.delay.add(ms=0, name="first", callback=self.delay_zero_ms, start=self.machine.clock.get_time())
         self.advance_time_and_run(10)
+
+    def _handler(self, **kwargs):
+        del kwargs
+        self._called += 1
+
+    def test_handler_with_condition(self):
+        self._called = 0
+        self.machine.events.add_handler("test{param > 1 and a == True}", self._handler)
+
+        self.post_event("test")
+        self.assertEqual(0, self._called)
+
+        self.post_event_with_params("test", param=3, a=False)
+        self.assertEqual(0, self._called)
+
+        self.post_event_with_params("test", param=3, a=True)
+        self.assertEqual(1, self._called)
+
+    def test_handler_with_settings_condition(self):
+        self._called = 0
+        self.machine.events.add_handler("test{settings.test == True}", self._handler)
+
+        # invalid setting
+        with self.assertRaises(AssertionError):
+            self.post_event("test")
+            self.assertEqual(0, self._called)
+
+        self.machine.settings._settings = {}
+        self.machine.settings.add_setting(SettingEntry("test", "Test", 1, "test", "a",
+                                                       {False: "A (default)", True: "B"}))
+
+        # setting false
+        self.post_event("test")
+        self.assertEqual(0, self._called)
+
+        self.machine.settings.set_setting_value("test", True)
+
+        # settings true
+        self.post_event("test")
+        self.assertEqual(1, self._called)

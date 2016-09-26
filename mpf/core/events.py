@@ -8,7 +8,7 @@ import asyncio
 from functools import partial
 
 EventHandlerKey = namedtuple("EventHandlerKey", ["key", "event"])
-RegisteredHandler = namedtuple("RegisteredHandler", ["callback", "priority", "kwargs", "key"])
+RegisteredHandler = namedtuple("RegisteredHandler", ["callback", "priority", "kwargs", "key", "condition"])
 PostedEvent = namedtuple("PostedEvent", ["event", "type", "callback", "kwargs"])
 
 
@@ -76,6 +76,12 @@ class EventManager(object):
             raise AssertionError("Handler {} for event '{}' param kwargs is missing '**'. Actual signature: {}".format(
                 handler, event, sig))
 
+        if event.find("{") > 0 and event[-1:] == "}":
+            condition = self.machine.placeholder_manager.build_bool_template(event[event.find("{") + 1:-1])
+            event = event[0:event.find("{")]
+        else:
+            condition = None
+
         event = event.lower()
 
         # Add an entry for this event if it's not there already
@@ -87,7 +93,7 @@ class EventManager(object):
         # An event 'handler' in our case is a tuple with 4 elements:
         # the handler method, priority, dict of kwargs, & uuid key
 
-        self.registered_handlers[event].append(RegisteredHandler(handler, priority, kwargs, key))
+        self.registered_handlers[event].append(RegisteredHandler(handler, priority, kwargs, key, condition))
         if self.debug:
             try:
                 self.log.debug("Registered %s as a handler for '%s', priority: %s, "
@@ -409,6 +415,50 @@ class EventManager(object):
                                event[2], event[3])
             self.log.debug("=========================================")
 
+    def _run_handlers(self, event, ev_type, kwargs):
+        """Run all handlers for an event."""
+        result = None
+        for handler in self.registered_handlers[event][:]:
+            # use slice above so we don't process new handlers that came
+            # in while we were processing previous handlers
+
+            # merge the post's kwargs with the registered handler's kwargs
+            # in case of conflict, posts kwargs will win
+            merged_kwargs = dict(list(handler.kwargs.items()) + list(kwargs.items()))
+
+            # if condition exists and is not true skip
+            if handler.condition is not None and not handler.condition.evaluate(merged_kwargs):
+                continue
+
+            # log if debug is enabled and this event is not the timer tick
+            if self.debug:
+                try:
+                    self.log.debug("%s (priority: %s) responding to event '%s'"
+                                   " with args %s",
+                                   (str(handler.callback).split(' ')), handler.priority,
+                                   event, merged_kwargs)
+                except IndexError:
+                    pass
+
+            # call the handler and save the results
+            result = handler.callback(**merged_kwargs)
+
+            # If whatever handler we called returns False, we stop
+            # processing the remaining handlers for boolean or queue events
+            if (ev_type == 'boolean' or ev_type == 'queue') and result is False:
+                # add a False result so our callback knows something failed
+                kwargs['ev_result'] = False
+
+                if self.debug:
+                    self.log.debug("Aborting future event processing")
+
+                break
+
+            elif ev_type == 'relay' and isinstance(result, dict):
+                kwargs.update(result)
+
+        return result
+
     def _process_event(self, event, ev_type, callback=None, **kwargs):
         # Internal method which actually handles the events. Don't call this.
 
@@ -425,42 +475,7 @@ class EventManager(object):
                 queue = QueuedEvent(callback, **kwargs)
                 kwargs['queue'] = queue
 
-            for handler in self.registered_handlers[event][:]:
-                # use slice above so we don't process new handlers that came
-                # in while we were processing previous handlers
-
-                # merge the post's kwargs with the registered handler's kwargs
-                # in case of conflict, posts kwargs will win
-                merged_kwargs = dict(list(handler.kwargs.items()) + list(kwargs.items()))
-
-                # log if debug is enabled and this event is not the timer tick
-                if self.debug:
-                    try:
-                        self.log.debug("%s (priority: %s) responding to event '%s'"
-                                       " with args %s",
-                                       (str(handler.callback).split(' ')), handler.priority,
-                                       event, merged_kwargs)
-                    except IndexError:
-                        pass
-
-                # call the handler and save the results
-                result = handler.callback(**merged_kwargs)
-
-                # If whatever handler we called returns False, we stop
-                # processing the remaining handlers for boolean or queue events
-                if ((ev_type == 'boolean' or ev_type == 'queue') and
-                        result is False):
-
-                    # add a False result so our callback knows something failed
-                    kwargs['ev_result'] = False
-
-                    if self.debug:
-                        self.log.debug("Aborting future event processing")
-
-                    break
-
-                elif ev_type == 'relay' and isinstance(result, dict):
-                    kwargs.update(result)
+            result = self._run_handlers(event, ev_type, kwargs)
 
         if self.debug:
             self.log.debug("vvvv Finished event '%s'. Type: %s. Callback: %s. "

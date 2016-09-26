@@ -787,7 +787,7 @@ class BallDevice(SystemWideDevice):
             raise AssertionError("When using confirm_eject_type switch you " +
                                  "to specify a confirm_eject_switch")
 
-        if "drain" in self.tags and "trough" not in self.tags and not self.find_path_to_trough():
+        if "drain" in self.tags and "trough" not in self.tags and not self.find_next_trough():
             raise AssertionError("No path to trough but device is tagged as drain")
 
         if ("drain" not in self.tags and "trough" not in self.tags and
@@ -972,17 +972,22 @@ class BallDevice(SystemWideDevice):
 
     def _count_balls(self, **kwargs):
         del kwargs
-        if self.debug:
-            self.log.debug("Counting balls")
 
         if self.config['ball_switches']:
+            if self.debug:
+                self.log.debug("Counting balls by checking switches")
             try:
                 balls = self._count_ball_switches()
             except ValueError:
-                # This happens when switches are not stable.
-                # We will be called again!
+                if self.debug:
+                    self.log.debug(
+                        "Switches are not stable. Will count again later")
                 return
         else:
+            self.log.debug(
+                "Received request to count balls, but this device has no "
+                "ball switches. Will return current ball count of %s",
+                self.balls)
             balls = self.balls
 
         # current status handler will handle the new count (or ignore it)
@@ -1037,13 +1042,13 @@ class BallDevice(SystemWideDevice):
                 pass
             elif 'drain' in self.tags:
                 # try to eject to next trough
-                path = self.find_path_to_trough()
+                trough = self.find_next_trough()
 
-                if not path:
+                if not trough:
                     raise AssertionError("Could not find path to trough")
 
                 for dummy_iterator in range(unclaimed_balls):
-                    self.setup_eject_chain(path)
+                    self._setup_or_queue_eject_to_target(trough)
             else:
                 target = self._target_on_unexpected_ball
 
@@ -1302,22 +1307,19 @@ class BallDevice(SystemWideDevice):
         method = getattr(self, method_name, lambda: None)
         method()
 
-    def find_path_to_trough(self):
-        """Find a path to the next trough."""
+    def find_next_trough(self):
+        """Find next trough after device."""
         # are we a trough?
         if 'trough' in self.tags:
-            path = deque()
-            path.appendleft(self)
-            return path
+            return self
 
         # otherwise find any target which can
         for target_device in self.config['eject_targets']:
             if target_device.is_playfield():
                 continue
-            path = target_device.find_path_to_trough()
-            if path:
-                path.appendleft(self)
-                return path
+            trough = target_device.find_next_trough()
+            if trough:
+                return trough
 
         return False
 

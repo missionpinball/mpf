@@ -47,8 +47,7 @@ class HardwarePlatform(RgbDmdPlatform):
 
     def configure_rgb_dmd(self):
         """Configure rgb dmd."""
-        self.log.info("Connecting to SmartMatrix DMD on %s",
-                       self.config['port'])
+        self.log.info("Connecting to SmartMatrix DMD on %s", self.config['port'])
         self.serial_port = serial.Serial(port=self.config['port'],
                                          baudrate=2500000)
 

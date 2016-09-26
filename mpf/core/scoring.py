@@ -1,10 +1,11 @@
 """MPF device for a score controller which handles all scoring and bonus tracking."""
-
 import logging
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 
 from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
+
+ScoreEntry = namedtuple("ScoreEntry", ["var", "value", "block"])
 
 
 class ScoreController(object):
@@ -24,23 +25,29 @@ class ScoreController(object):
         self.machine.mode_controller.register_start_method(self.mode_start,
                                                            'scoring')
         self.mode_configs = OrderedDict()
-        self.mode_scores = dict()
+        self.mode_scores = {}
+        self.score_events = {}
 
-    @classmethod
-    def _validate_entry(cls, entry, mode):
-        for value in entry.values():
+    def _validate_entry(self, entry, mode):
+        entries = []
+        for var, value in entry.items():
             if isinstance(value, int):
-                continue
+                entries.append(ScoreEntry(var, value, False))
             elif isinstance(value, str):
                 try:
                     value, block = value.split('|')
-                    int(value)
+                except ValueError:
+                    block = False
+                else:
                     if block != "block":
                         raise AssertionError("Invalid action in scoring entry: {} in mode {}".format(
                             entry, mode.name))
+                    block = True
+                try:
+                    entries.append(ScoreEntry(var, int(value), block))
                 except ValueError:
-                    raise AssertionError("Invalid scoring entry: {} in mode {}".format(
-                        entry, mode.name))
+                    entries.append(ScoreEntry(var, self.machine.placeholder_manager.build_int_template(value), block))
+        return entries
 
     def mode_start(self, config: dict, mode: Mode, priority: int, **kwargs):
         """Called when mode is started.
@@ -51,17 +58,18 @@ class ScoreController(object):
             priority: Priority of mode.
         """
         del kwargs
-        self.mode_configs[mode] = config
+        self.mode_configs[mode] = {}
         self.mode_scores[mode] = dict()
         self.mode_configs = OrderedDict(sorted(iter(self.mode_configs.items()),
                                                key=lambda x: x[0].priority,
                                                reverse=True))
 
-        for event in list(config.keys()):
-            self._validate_entry(config[event], mode)
+        for event in config:
+            self.mode_configs[mode][event] = self._validate_entry(config[event], mode)
 
-            mode.add_mode_event_handler(event, self._score_event_callback,
-                                        priority, event_name=event)
+            if event not in self.score_events:
+                self.score_events[event] = self.machine.events.add_handler(
+                    event, self._score_event_callback, priority, event_name=event)
 
         return self.mode_stop, mode
 
@@ -73,6 +81,7 @@ class ScoreController(object):
         """
         del kwargs
         try:
+            # we could unregister the event handlers here if this causes any problems
             del self.mode_configs[mode]
         except KeyError:
             pass
@@ -82,7 +91,7 @@ class ScoreController(object):
         except KeyError:
             pass
 
-    def _score_event_callback(self, event_name, mode, **kwargs):
+    def _score_event_callback(self, event_name, **kwargs):
         del kwargs
         if not (self.machine.game.player and self.machine.game.balls_in_play):
             return
@@ -91,19 +100,13 @@ class ScoreController(object):
 
         for entry_mode, settings in self.mode_configs.items():
             if event_name in settings:
-                for var_name, value in settings[event_name].items():
+                for score_entry in settings[event_name]:
+                    if score_entry.var in blocked_variables:
+                        continue
 
-                    if (isinstance(value, int) and
-                            entry_mode == mode and
-                            var_name not in blocked_variables):
-                        self.add(value, var_name, mode)
-
-                    elif isinstance(value, str):
-                        value, block = value.split('|')
-                        if entry_mode == mode and var_name not in blocked_variables:
-                            self.add(value, var_name, mode)
-                        if block.lower() == 'block':
-                            blocked_variables.add(var_name)
+                    if score_entry.block:
+                        blocked_variables.add(score_entry.var)
+                    self.add(score_entry.value, score_entry.var, entry_mode)
 
     def add(self, value: int, var_name: str='score', mode: Mode=None):
         """Add score to current player.
@@ -116,7 +119,10 @@ class ScoreController(object):
         if not value:
             return
 
-        value = int(value)
+        if isinstance(value, int):
+            value = value
+        else:
+            value = value.evaluate({})
         prev_value = value
         self.machine.game.player[var_name] += value
 

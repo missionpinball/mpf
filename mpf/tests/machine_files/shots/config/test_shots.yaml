@@ -53,6 +53,10 @@ switches:
     number:
   switch_26:
     number:
+  switch_27:
+    number:
+  switch_28:
+    number:
 
 matrix_lights:
   light_1:
@@ -102,6 +106,10 @@ leds:
   led_25:
     number:
   led_26:
+    number:
+  led_27:
+    number:
+  led_28:
     number:
 
 shots:
@@ -224,6 +232,10 @@ shots:
     show_tokens:
       leds: led_26
     profile: profile_26
+  shot_27:  # only one switch in sequence
+    switch_sequence: switch_1
+  shot_28:
+    sequence: event1, event2
 
 shot_profiles:
     three_states_loop:

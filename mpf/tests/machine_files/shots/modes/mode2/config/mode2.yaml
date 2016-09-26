@@ -10,7 +10,16 @@ shots:
     profile: mode2_shot_22
   shot_26:
     profile: mode2_shot_26
-
+  mode2_shot_rainbow:
+    switch: switch_27
+    show_tokens:
+      leds: led_27
+    profile: rainbow
+  mode2_shot_rainbow_start_step:
+    switch: switch_28
+    show_tokens:
+      leds: led_28
+    profile: rainbow_start_step
 shot_profiles:
   mode2_shot_21:
     block: false
@@ -24,6 +33,32 @@ shot_profiles:
       - name: mode2_one
       - name: mode2_two
       - name: mode2_three
+  rainbow_start_step:
+    states:
+      - name: red
+        show: rainbow
+        start_step: 1
+        manual_advance: True
+      - name: orange
+        show: rainbow
+        start_step: 2
+        manual_advance: True
+      - name: yellow
+        show: rainbow
+        start_step: 3
+        manual_advance: True
+      - name: green
+        show: rainbow
+        start_step: 4
+        manual_advance: True
+      - name: blue
+        show: rainbow
+        start_step: 5
+        manual_advance: True
+      - name: purple
+        show: rainbow
+        start_step: 6
+        manual_advance: True
   mode2_shot_26:
     block: false
     states:

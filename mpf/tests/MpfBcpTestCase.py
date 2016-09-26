@@ -12,7 +12,7 @@ class MockBcpClient(BaseBcpClient):
         self.send_queue = []
 
     def connect(self, config):
-        pass
+        return True
 
     @asyncio.coroutine
     def read_message(self):

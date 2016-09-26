@@ -148,3 +148,36 @@ class TestSystem11Trough(MpfTestCase):
         self.machine.switch_controller.process_switch("outhole", 0)
         self.advance_time_and_run(.1)
         self.machine.switch_controller.process_switch("trough1", 1)
+
+
+class TestSystem11TroughStartup(MpfTestCase):
+
+    def getConfigFile(self):
+        return 'test_system_11_trough_startup.yaml'
+
+    def getMachinePath(self):
+        return 'tests/machine_files/ball_device/'
+
+    def get_platform(self):
+        return "smart_virtual"
+
+    def test_start_with_four_balls(self):
+        self.assertEqual('wait_for_eject', self.machine.ball_devices.outhole._state)
+        self.assertEqual('idle', self.machine.ball_devices.trough._state)
+        self.assertEqual('idle', self.machine.ball_devices.plunger._state)
+        self.assertEqual(1, self.machine.ball_devices.outhole.balls)
+        self.assertEqual(3, self.machine.ball_devices.trough.balls)
+        self.assertEqual(0, self.machine.ball_devices.plunger.balls)
+        self.assertEqual(0, self.machine.ball_devices.playfield.balls)
+
+        self.hit_and_release_switch("start")
+        self.advance_time_and_run(20)
+        self.release_switch_and_run("plunger", 10)
+
+        self.assertEqual(0, self.machine.ball_devices.outhole.balls)
+        self.assertEqual(3, self.machine.ball_devices.trough.balls)
+        self.assertEqual(0, self.machine.ball_devices.plunger.balls)
+        self.assertEqual(1, self.machine.ball_devices.playfield.balls)
+        self.assertEqual('idle', self.machine.ball_devices.outhole._state)
+        self.assertEqual('idle', self.machine.ball_devices.trough._state)
+        self.assertEqual('idle', self.machine.ball_devices.plunger._state)
