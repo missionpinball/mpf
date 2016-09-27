@@ -28,9 +28,12 @@ event_player:
 sounds:
   power_off:
     track: sfx
+  switch_hit:
+    track: sfx
 
 sound_player:
     service_power_off: power_off
+    service_switch_hit: switch_hit
 
 slide_player:
   # doof open
