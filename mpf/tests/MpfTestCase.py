@@ -275,6 +275,10 @@ class MpfTestCase(unittest.TestCase):
                                         handler=self._mock_event_handler,
                                         event_name=event_name)
 
+    def assertSwitchState(self, name, state):
+        self.assertIn(name, self.machine.switch_controller.switches, "Switch {} does not exist.".format(name))
+        self.assertEqual(state, self.machine.switch_controller.is_active(name))
+
     def assertLedColor(self, led_name, color):
         self.assertEqual(list(RGBColor(color).rgb), self.machine.leds[led_name].hw_driver.current_color)
 
