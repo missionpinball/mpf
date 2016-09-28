@@ -266,6 +266,8 @@ bcp:
     shots:
       __all__
 
+    debug: false
+
 open_pixel_control:
     host: localhost
     port: 7890

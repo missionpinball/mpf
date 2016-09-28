@@ -152,6 +152,7 @@ ball_saves:
     timer_start_events: dict|str:ms|None
 bcp:
     __valid_in__: machine
+    debug: False
     connections:
         host: single|str|None
         port: single|int|5050
