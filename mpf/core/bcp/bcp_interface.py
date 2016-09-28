@@ -1,4 +1,6 @@
 """RPC Interface for BCP clients."""
+from copy import deepcopy
+
 import logging
 
 from mpf.core.player import Player
@@ -41,6 +43,8 @@ class BcpInterface(object):
 
         self.config = machine.config['bcp']
         self.bcp_events = dict()
+
+        self.debug_log = self.config['debug']
 
         self.bcp_receive_commands = dict(
             error=self.bcp_receive_error,
@@ -176,7 +180,16 @@ class BcpInterface(object):
             cmd:
             kwargs:
         """
-        self.log.debug("Processing command: %s %s", cmd, kwargs)
+
+        if self.debug_log:
+            if 'rawbytes' in kwargs:
+                debug_kwargs = deepcopy(kwargs)
+                debug_kwargs['rawbytes'] = '<{} bytes>'.format(
+                    len(debug_kwargs.pop('rawbytes')))
+
+                self.log.debug("Processing command: %s %s", cmd, debug_kwargs)
+            else:
+                self.log.debug("Processing command: %s %s", cmd, kwargs)
 
         if cmd in self.bcp_receive_commands:
             try:

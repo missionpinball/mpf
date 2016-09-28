@@ -219,7 +219,8 @@ class BCPClientSocket(BaseBcpClient):
                 return message_obj
 
     def _process_command(self, message, rawbytes=None):
-        self.log.debug('Received "%s"', message)
+        if self.debug_log:
+            self.log.debug('Received "%s"', message)
 
         cmd, kwargs = decode_command_string(message.decode())
         if rawbytes:

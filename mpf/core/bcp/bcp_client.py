@@ -14,6 +14,7 @@ class BaseBcpClient(metaclass=abc.ABCMeta):
         self.machine = machine
         self.bcp = bcp
         self.exit_on_close = False
+        self.debug_log = self.machine.config['bcp']['debug']
 
     def connect(self, config):
         """Actively connect client."""
