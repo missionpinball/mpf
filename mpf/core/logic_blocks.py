@@ -120,6 +120,7 @@ class LogicBlocks(object):
         # Enable any logic blocks that do not have specific enable events
         for block in blocks_added:
             if not block.config['enable_events']:
+                block.log.debug("Enabling")
                 block.enabled = True
 
         player.logic_blocks |= blocks_added
