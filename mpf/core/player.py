@@ -57,17 +57,14 @@ class Player(object):
     to track player variable changes.
     """
 
-    def __init__(self, machine, player_list):
+    def __init__(self, machine, index):
         """Initialise player."""
         # use self.__dict__ below since __setattr__ would make these player vars
         self.__dict__['log'] = logging.getLogger("Player")
         self.__dict__['machine'] = machine
         self.__dict__['vars'] = dict()
 
-        player_list.append(self)
-
-        index = len(player_list) - 1
-        number = len(player_list)
+        number = index + 1
 
         self.log.debug("Creating new player: Player %s. (player index '%s')", number, index)
 
