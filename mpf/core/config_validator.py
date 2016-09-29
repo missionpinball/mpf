@@ -240,36 +240,43 @@ class ConfigValidator(object):
     def check_for_invalid_sections(self, spec, config,
                                    validation_failure_info):
         """Check if all attributes are defined in spec."""
-        for k in config:
-            if not isinstance(k, dict):
-                if k not in spec and k[0] != '_':
+        try:
+            for k in config:
+                if not isinstance(k, dict):
+                    if k not in spec and k[0] != '_':
 
-                    path_list = validation_failure_info[0].split(':')
+                        path_list = validation_failure_info[0].split(':')
 
-                    if len(path_list) > 1 and path_list[-1] == validation_failure_info[1]:
-                        path_list.append('[list_item]')
-                    elif path_list[0] == validation_failure_info[1]:
-                        path_list = list()
+                        if len(path_list) > 1 and path_list[-1] == validation_failure_info[1]:
+                            path_list.append('[list_item]')
+                        elif path_list[0] == validation_failure_info[1]:
+                            path_list = list()
 
-                    path_list.append(validation_failure_info[1])
-                    path_list.append(k)
+                        path_list.append(validation_failure_info[1])
+                        path_list.append(k)
 
-                    path_string = ':'.join(path_list)
+                        path_string = ':'.join(path_list)
 
-                    if self.machine.machine_config['mpf']['allow_invalid_config_sections']:
+                        if self.machine.machine_config['mpf']['allow_invalid_config_sections']:
 
-                        self.log.warning('Unrecognized config setting. "%s" is '
-                                         'not a valid setting name.',
-                                         path_string)
+                            self.log.warning('Unrecognized config setting. "%s" is '
+                                             'not a valid setting name.',
+                                             path_string)
 
-                    else:
-                        self.log.error('Your config contains a value for the '
-                                       'setting "%s", but this is not a valid '
-                                       'setting name.', path_string)
+                        else:
+                            self.log.error('Your config contains a value for the '
+                                           'setting "%s", but this is not a valid '
+                                           'setting name.', path_string)
 
-                        raise AssertionError('Your config contains a value for the '
-                                             'setting "' + path_string + '", but this is not a valid '
-                                                                         'setting name.')
+                            raise AssertionError('Your config contains a value for the '
+                                                 'setting "' + path_string + '", but this is not a valid '
+                                                                             'setting name.')
+
+        except TypeError:
+            raise AssertionError(
+                'Error in config. Your "{}:" section contains a value that is '
+                'not a parent with sub-settings'.format(
+                    validation_failure_info[0]))
 
     def _validate_type_subconfig(self, item, param, validation_failure_info):
         try:
