@@ -49,8 +49,7 @@ class TestBonusMode(MpfTestCase):
         self.post_event("score_modes")
         self.post_event("score_modes")
 
-        # increase multiplier to 5
-        self.post_event("add_multiplier")
+        # increase multiplier to 5 (by hitting it 4 times)
         self.post_event("add_multiplier")
         self.post_event("add_multiplier")
         self.post_event("add_multiplier")
@@ -120,8 +119,7 @@ class TestBonusMode(MpfTestCase):
         self.post_event("score_modes")
         self.post_event("score_modes")
 
-        # increase multiplier to 5
-        self.post_event("add_multiplier")
+        # increase multiplier to 5 (by hitting it 4 times)
         self.post_event("add_multiplier")
         self.post_event("add_multiplier")
         self.post_event("add_multiplier")

@@ -402,7 +402,8 @@ class Game(Mode):
             self.log.debug("Request to add player has been denied.")
             return False
         else:
-            player = Player(self.machine, self.player_list)
+            player = Player(self.machine, len(self.player_list))
+            self.player_list.append(player)
             self.num_players = len(self.player_list)
 
             self.machine.create_machine_var(

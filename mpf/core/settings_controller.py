@@ -1,6 +1,8 @@
 """Manages operator controllable settings."""
 from collections import namedtuple
 
+from mpf.core.utility_functions import Util
+
 from mpf.core.mpf_controller import MpfController
 
 SettingEntry = namedtuple("SettingEntry", ["name", "label", "sort", "machine_var", "default", "values"])
@@ -31,16 +33,12 @@ class SettingsController(MpfController):
             if not settings['machine_var']:
                 settings['machine_var'] = name
             values = {}
+            # convert types
             for key, value in settings['values'].items():
-                if settings['key_type'] == "int":
-                    key = int(key)
-                elif settings['key_type'] == "float":
-                    key = float(key)
-                values[key] = value
-            if settings['key_type'] == "int":
-                settings['default'] = int(settings['default'])
-            elif settings['key_type'] == "float":
-                settings['default'] = float(settings['default'])
+                values[Util.convert_to_type(key, settings['key_type'])] = value
+
+            # convert default key
+            settings['default'] = Util.convert_to_type(settings['default'], settings['key_type'])
 
             self.add_setting(SettingEntry(name, settings['label'], settings['sort'], settings['machine_var'],
                                           settings['default'], values))
