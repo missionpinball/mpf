@@ -28,6 +28,20 @@ class Util(object):
         return str(value)
 
     @staticmethod
+    def convert_to_type(value, type_name):
+        """Convert value to type."""
+        if type_name == "int":
+            result_value = int(value)
+        elif type_name == "float":
+            result_value = float(value)
+        elif type_name == "str":
+            result_value = str(value)
+        else:
+            raise AssertionError("Unknown type {}".format(type_name))
+
+        return result_value
+
+    @staticmethod
     def keys_to_lower(source_dict):
         """Convert the keys of a dictionary to lowercase.
 

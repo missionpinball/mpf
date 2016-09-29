@@ -110,6 +110,7 @@ down_events: list|str|sw_service_down_active
     def _switch_monitor(self, change: MonitoredSwitchChange):
         if change.state:
             state_string = "active"
+            self.machine.events.post("service_switch_hit")
         else:
             state_string = "inactive"
 

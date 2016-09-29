@@ -85,8 +85,9 @@ class Shot(ModeDevice, SystemWideDevice):
     def _validate_config(self):
         if len(self.config['switch_sequence']) and (len(self.config['switch']) or len(self.config['switches']) or
                                                     len(self.config['sequence'])):
-            raise AssertionError("A shot can have either switch_sequence, sequence or "
-                                 "switch/switches")
+            raise AssertionError("Config error in shot {}. A shot can have "
+                                 "either switch_sequence, sequence or "
+                                 "switch/switches".format(self))
 
     def _initialize(self):
         self._validate_config()
@@ -97,6 +98,7 @@ class Shot(ModeDevice, SystemWideDevice):
         if self.config['switch_sequence']:
             self.config['sequence'] = [self.machine.switch_controller.get_active_event_for_switch(x.name)
                                        for x in self.config['switch_sequence']]
+            self.config['switch_sequence'] = []
 
         for switch in self.config['switch']:
             if switch not in self.config['switches']:

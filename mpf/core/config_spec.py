@@ -152,6 +152,7 @@ ball_saves:
     timer_start_events: dict|str:ms|None
 bcp:
     __valid_in__: machine
+    debug: False
     connections:
         host: single|str|None
         port: single|int|5050
@@ -606,6 +607,10 @@ physical_rgb_dmds:
     source_display: single|str|dmd
     only_send_changes: single|bool|False
     brightness: single|float|1.0
+player_vars:
+    __valid_in__: machine
+    initial_value: single|str|
+    value_type: single|enum(str,float,int)|int
 playfields:
     __valid_in__: machine
     enable_ball_search: single|bool|None
