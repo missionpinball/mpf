@@ -11,3 +11,7 @@ switches:
     s_start:
         number:
         tags: start
+
+player_vars:
+    bonus_multiplier:
+        initial_value: 1
