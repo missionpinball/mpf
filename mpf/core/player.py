@@ -1,6 +1,8 @@
 """Contains the Player class which represents a player in a pinball game."""
-
+import copy
 import logging
+
+from mpf.core.utility_functions import Util
 
 
 class Player(object):
@@ -88,6 +90,17 @@ class Player(object):
         have *num=1*, Player 4 will have *num=4*, etc.)
 
         '''
+        self._load_initial_player_vars()
+
+    def _load_initial_player_vars(self):
+        """Load initial player var values from config."""
+        if 'player_vars' not in self.machine.config:
+            return
+
+        config = self.machine.config['player_vars']
+        for name, element in config.items():
+            element = self.machine.config_validator.validate_config("player_vars", copy.deepcopy(element))
+            self[name] = Util.convert_to_type(element['initial_value'], element['value_type'])
 
     def _player_add_done(self, **kwargs):
         """Set score to 0 for new player.

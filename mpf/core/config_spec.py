@@ -607,6 +607,10 @@ physical_rgb_dmds:
     source_display: single|str|dmd
     only_send_changes: single|bool|False
     brightness: single|float|1.0
+player_vars:
+    __valid_in__: machine
+    initial_value: single|str|
+    value_type: single|enum(str,float,int)|int
 playfields:
     __valid_in__: machine
     enable_ball_search: single|bool|None
