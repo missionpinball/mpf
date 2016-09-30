@@ -1415,6 +1415,24 @@ class BallDevice(SystemWideDevice):
         del kwargs
         self._setup_eject_confirmation(target)
         self.log.debug("Ejecting ball to %s", target.name)
+        self.machine.events.post('balldevice_{}_ejecting_ball'.format(self.name),
+                                 balls=1,
+                                 target=self.eject_in_progress_target,
+                                 source=self,
+                                 mechanical_eject=self.mechanical_eject_in_progress,
+                                 num_attempts=self.num_eject_attempts)
+        '''event: balldevice_(name)_ejecting_ball
+
+        desc: The ball device called "name" is ejecting a ball right now.
+
+        args:
+
+        balls: The number of balls that are to be ejected.
+        taget: The target ball device that will receive these balls.
+        source: The source device that will be ejecting the balls.
+        mechanical_eject: Boolean as to whether this is a mechanical eject.
+        num_attempts: How many eject attempts have been tried so far.
+        '''
 
         if self.config['ball_switches']:
             # wait until one of the active switches turns off
