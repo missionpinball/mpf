@@ -209,3 +209,39 @@ class TestSwitchController(MpfTestCase):
         self.machine.switch_controller.process_switch("s_test_invert", 0, logical=True)
         self.advance_time_and_run()
         self.assertFalse(self.machine.switch_controller.is_active("s_test_invert"))
+
+    def _cb1a(self, **kwargs):
+        del kwargs
+        self.called1 = 1
+        self.machine.switch_controller.remove_switch_handler("s_test", self._cb1a)
+
+    def _cb2(self, **kwargs):
+        del kwargs
+        self.called2 = 1
+
+    def _cb1b(self, **kwargs):
+        del kwargs
+        self.called1 = 1
+        self.machine.switch_controller.remove_switch_handler("s_test", self._cb2)
+
+    def test_remove_in_handler(self):
+        self.called1 = 0
+        self.called2 = 0
+        self.machine.switch_controller.add_switch_handler("s_test", self._cb1a)
+        self.machine.switch_controller.add_switch_handler("s_test", self._cb2)
+
+        self.machine.switch_controller.process_switch("s_test", 1)
+        self.advance_time_and_run()
+        self.assertEqual(1, self.called1)
+        self.assertEqual(1, self.called2)
+
+    def test_remove_in_handler2(self):
+        self.called1 = 0
+        self.called2 = 0
+        self.machine.switch_controller.add_switch_handler("s_test", self._cb1b)
+        self.machine.switch_controller.add_switch_handler("s_test", self._cb2)
+
+        self.machine.switch_controller.process_switch("s_test", 1)
+        self.advance_time_and_run()
+        self.assertEqual(1, self.called1)
+        self.assertEqual(0, self.called2)
