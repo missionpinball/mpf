@@ -368,6 +368,7 @@ class BallDevice(SystemWideDevice):
             self.eject_in_progress_target = self.config['eject_targets'][0]
 
         self.mechanical_eject_in_progress = True
+        self.num_eject_attempts += 1
         self._notify_target_of_incoming_ball(self.eject_in_progress_target)
         self._do_eject_attempt()
 
@@ -376,8 +377,11 @@ class BallDevice(SystemWideDevice):
             # We dont have balls. How can that happen?
             raise AssertionError("We dont have balls but lose one!")
         elif self.balls < balls:
-            self._cancel_incoming_ball_at_target(self.eject_in_progress_target)
+            target = self.eject_in_progress_target
+            self.eject_in_progress_target = None
+            self._cancel_incoming_ball_at_target(target)
             self._cancel_eject_confirmation()
+            self._inform_target_about_failed_confirm(target, 1, True)
 
             # Go to idle state
             return self._switch_state("idle")
@@ -1775,7 +1779,9 @@ class BallDevice(SystemWideDevice):
 
         # cancel eject confirmations
         self._cancel_eject_confirmation()
+        self._inform_target_about_failed_confirm(target, balls, retry)
 
+    def _inform_target_about_failed_confirm(self, target, balls, retry):
         self.machine.events.post('balldevice_' + self.name +
                                  '_ball_eject_failed',
                                  target=target,
