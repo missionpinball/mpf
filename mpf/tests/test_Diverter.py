@@ -20,6 +20,63 @@ class TestDiverter(MpfTestCase):
         self.machine.game.balls_in_play = 1
         self.assertIsNotNone(self.machine.game)
 
+    def _block_device(self, queue, **kwargs):
+        del kwargs
+        self.queue = queue
+        queue.wait()
+
+    def test_delayed_eject(self):
+        self.queue = None
+        diverter = self.machine.diverters.d_test_delayed_eject
+
+        self.machine.coils.c_diverter.enable = MagicMock()
+        self.machine.coils.c_diverter.disable = MagicMock()
+
+        self.assertFalse(diverter.enabled)
+        self.assertFalse(diverter.active)
+
+        self.machine.events.add_handler("balldevice_test_trough_ball_eject_attempt", self._block_device)
+
+        self.machine.ball_devices.test_trough.tags.append("ball_add_live")
+        self.machine.playfield.add_ball()
+
+        self.advance_time_and_run(20)
+        self.queue.clear()
+
+        self.advance_time_and_run(1)
+        self.machine.events.remove_handler_by_event("balldevice_test_trough_ball_eject_attempt", self._block_device)
+
+        self.assertTrue(diverter.enabled)
+        self.assertTrue(diverter.active)
+        self.machine.coils.c_diverter.enable.assert_called_once_with()
+        self.machine.coils.c_diverter.enable = MagicMock()
+        assert not self.machine.coils.c_diverter.disable.called
+
+        self.advance_time_and_run(4)
+        self.machine.coils.c_diverter.disable.assert_called_once_with()
+        assert not self.machine.coils.c_diverter.enable.called
+
+        self.hit_and_release_switch("s_playfield")
+        self.machine_run()
+        self.assertFalse(diverter.active)
+
+        self.hit_switch_and_run("s_ball_switch1", 1)
+        self.machine.ball_devices.test_trough.tags.remove("ball_add_live")
+        self.machine.ball_devices.test_target.tags.append("ball_add_live")
+        self.machine.playfield.add_ball()
+
+        self.advance_time_and_run(3)
+        self.assertFalse(diverter.enabled)
+        self.assertFalse(diverter.active)
+
+        self.hit_and_release_switch("s_diverter")
+        self.advance_time_and_run(0.5)
+        self.assertFalse(diverter.enabled)
+        self.assertFalse(diverter.active)
+
+        self.advance_time_and_run(4)
+        assert not self.machine.coils.c_diverter.enable.called
+
     def test_hold_activation_time(self):
         diverter = self.machine.diverters.d_test_hold_activation_time
 
