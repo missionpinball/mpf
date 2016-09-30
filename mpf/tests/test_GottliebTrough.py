@@ -56,7 +56,7 @@ class TestGottliebTrough(MpfTestCase):
         self.assertEqual(0, self.machine.ball_devices.playfield.balls)
         self.assertEqual(0, self.machine.coils.outhole.pulse.call_count)
         self.assertEqual(0, self.machine.coils.trough.pulse.call_count)
-        self.assertEqual('wait_for_eject', self.machine.ball_devices.outhole._state)
+        self.assertEqual('idle', self.machine.ball_devices.outhole._state)
         self.assertEqual('idle', self.machine.ball_devices.trough._state)
         self.assertEqual('idle', self.machine.ball_devices.plunger._state)
 
@@ -162,7 +162,7 @@ class TestGottliebTrough(MpfTestCase):
 
         self.hit_switch_and_run("outhole", 1)
 
-        self.assertEqual('wait_for_eject', self.machine.ball_devices.outhole._state)
+        self.assertEqual('idle', self.machine.ball_devices.outhole._state)
         self.assertEqual('idle', self.machine.ball_devices.trough._state)
         self.assertEqual('idle', self.machine.ball_devices.plunger._state)
 
