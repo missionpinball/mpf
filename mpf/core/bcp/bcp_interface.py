@@ -180,7 +180,6 @@ class BcpInterface(object):
             cmd:
             kwargs:
         """
-
         if self.debug_log:
             if 'rawbytes' in kwargs:
                 debug_kwargs = deepcopy(kwargs)

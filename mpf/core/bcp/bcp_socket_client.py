@@ -165,8 +165,7 @@ class BCPClientSocket(BaseBcpClient):
 
             break
 
-        self.log.info("Connected BCP to '%s' %s:%s", self.name, client_host,
-                       client_port)
+        self.log.info("Connected BCP to '%s' %s:%s", self.name, client_host, client_port)
 
         self.send_hello()
         return True
