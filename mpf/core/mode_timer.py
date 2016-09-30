@@ -156,6 +156,10 @@ class ModeTimer(object):
         """
         del kwargs
 
+        # do not start if timer is already running
+        if self.running:
+            return
+
         if self.debug:
             self.log.debug("Starting Timer.")
 
