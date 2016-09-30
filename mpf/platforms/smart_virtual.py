@@ -239,8 +239,9 @@ class HardwarePlatform(VirtualPlatform):
         """Add ball to device."""
         if device.balls + 1 > device.config['ball_capacity']:
             raise AssertionError("KABOOM! We just added a ball to {} which has a capacity "
-                                 "of {} but already had {} ball(s)".format(
-                device.name, device.config['ball_capacity'], device.balls))
+                                 "of {} but already had {} ball(s)".format(device.name,
+                                                                           device.config['ball_capacity'],
+                                                                           device.balls))
 
         if device.config['entrance_switch']:
 
