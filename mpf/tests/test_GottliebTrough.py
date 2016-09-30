@@ -108,13 +108,21 @@ class TestGottliebTrough(MpfTestCase):
         self.assertEqual('idle', self.machine.ball_devices.outhole._state)
         self.assertEqual('idle', self.machine.ball_devices.trough._state)
         self.assertEqual('ejecting', self.machine.ball_devices.plunger._state)
-        # self.assertEquals(1,
-        #                   self.machine.ball_devices.playfield.num_balls_requested)
+        self.assertEqual(0, self.machine.ball_devices.playfield.balls)
+        self.assertEqual(1, self.machine.ball_devices.playfield.num_balls_requested)
+        self.machine.switch_controller.process_switch("plunger", 0)
 
         self.advance_time_and_run(1)
         self.machine.switch_controller.process_switch("playfield", 1)
         self.machine.switch_controller.process_switch("playfield", 0)
         self.advance_time_and_run(1)
+
+        self.assertEqual('idle', self.machine.ball_devices.outhole._state)
+        self.assertEqual('idle', self.machine.ball_devices.trough._state)
+        self.assertEqual('idle', self.machine.ball_devices.plunger._state)
+
+        self.assertEqual(0, self.machine.ball_devices.playfield.num_balls_requested)
+        self.assertEqual(1, self.machine.ball_devices.playfield.balls)
 
     def test_boot_and_start_game_with_ball_in_plunger(self):
         self.machine.ball_controller.num_balls_known = 0
