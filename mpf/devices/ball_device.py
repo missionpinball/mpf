@@ -28,7 +28,7 @@ class BallDevice(SystemWideDevice):
 
     _state_transitions = dict(
         invalid=['idle'],
-        idle=['waiting_for_ball', 'wait_for_eject', 'missing_balls',
+        idle=['waiting_for_ball', 'ejecting', 'missing_balls',
               'waiting_for_ball_mechanical'],
         lost_balls=['idle'],
         missing_balls=['ball_left', 'idle'],
@@ -36,7 +36,6 @@ class BallDevice(SystemWideDevice):
         waiting_for_ball_mechanical=['idle', 'waiting_for_ball',
                                      'eject_confirmed'],
         ball_left=['eject_confirmed', 'failed_confirm'],
-        wait_for_eject=['ejecting'],
         ejecting=['ball_left', 'failed_eject'],
         failed_eject=['eject_broken', 'ejecting'],
         eject_broken=[],
@@ -170,8 +169,8 @@ class BallDevice(SystemWideDevice):
         del kwargs
         del target
 
-        if self._state == "wait_for_eject":
-            self._state_wait_for_eject_start()
+        if self._state == "idle":
+            self._check_eject_queue()
 
     # ---------------------------- State: invalid -----------------------------
     def _state_invalid_start(self):
@@ -301,9 +300,15 @@ class BallDevice(SystemWideDevice):
         if self.eject_queue:
             self.num_eject_attempts = 0
             if self.balls > 0:
-                return self._switch_state("wait_for_eject")
+                self._check_eject_queue()
             else:
                 return self._switch_state("waiting_for_ball")
+
+    def _check_eject_queue(self):
+        if self.eject_queue:
+            target = self.eject_queue[0][0]
+            if target.get_additional_ball_capacity():
+                return self._switch_state("ejecting")
 
     # ------------------------ State: lost_balls ------------------------------
 
@@ -453,13 +458,6 @@ class BallDevice(SystemWideDevice):
             self.delay.add(name='playfield_confirmation',
                            ms=timeout,
                            callback=self.eject_success)
-
-    # ------------------------ State: wait_for_eject --------------------------
-
-    def _state_wait_for_eject_start(self):
-        target = self.eject_queue[0][0]
-        if target.get_additional_ball_capacity():
-            return self._switch_state("ejecting")
 
     # --------------------------- State: ejecting -----------------------------
 
