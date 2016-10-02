@@ -116,7 +116,7 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
 
     def set_target(self, source, target, mechanical_eject, **kwargs):
         """Set target for action."""
-        self.log.debug("Setting eject target. {} -> %s. Mechanical: %s", source.name, target.name, mechanical_eject)
+        self.log.debug("Setting eject target. %s -> %s. Mechanical: %s", source.name, target.name, mechanical_eject)
         del kwargs
         driver = None
         if source.config['eject_coil']:
