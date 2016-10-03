@@ -42,7 +42,7 @@ mpf:
         - mpf.devices.led.Led
         - mpf.devices.gi.Gi
         - mpf.devices.autofire.AutofireCoil
-        - mpf.devices.ball_device.BallDevice
+        - mpf.devices.ball_device.ball_device.BallDevice
         - mpf.devices.playfield.Playfield
         - mpf.devices.drop_target.DropTarget
         - mpf.devices.drop_target.DropTargetBank
