@@ -81,16 +81,16 @@ class LogicBlocks(object):
             # we're iterating over
             block.player_turn_stop()
 
-    def _process_config(self, config: dict, priority: int=0, mode: Mode=None):
+    def _process_config(self, config: dict, mode: Mode, priority: int=0):
         del priority
         self.log.debug("Processing LogicBlock configuration.")
 
         blocks_added = self._create_logic_blocks(config=config,
                                                  player=self.machine.game.player)
 
-        if mode:
-            for block in blocks_added:
-                block.create_control_events()
+        for block in blocks_added:
+            block.create_control_events()
+            mode.add_mode_event_handler("mode_{}_started".format(mode.name), block.mode_started)
 
         return self._unload_logic_blocks, blocks_added
 
@@ -117,12 +117,6 @@ class LogicBlocks(object):
                                           config['sequences'][item])
                 blocks_added.add(sequence_block)
 
-        # Enable any logic blocks that do not have specific enable events
-        for block in blocks_added:
-            if not block.config['enable_events']:
-                block.log.debug("Enabling")
-                block.enabled = True
-
         player.logic_blocks |= blocks_added
 
         return blocks_added
@@ -146,9 +140,6 @@ class LogicBlock(object):
         self.handler_keys = set()
         self.log = None
 
-        self.enabled = False
-        self.completed = False
-
         # LogicBlocks are loaded multiple times and config_validator changes the config
         # therefore we have to copy the config
         config = copy.deepcopy(config)
@@ -157,11 +148,37 @@ class LogicBlock(object):
             'logic_blocks:{}'.format(self.config_section_name), config,
             base_spec='logic_blocks:common')
 
+        self.player_state_variable = "{}_state".format(self.name)
+        if not player.is_player_var(self.player_state_variable) or not self.config['persist_state']:
+            player[self.player_state_variable] = {
+                "enabled": False,
+                "completed": False
+            }
+            if not self.config['enable_events']:
+                self.enabled = True
+
+
         if not self.config['events_when_complete']:
             self.config['events_when_complete'] = ['logicblock_' + self.name + '_complete']
 
         if not self.config['events_when_hit']:
             self.config['events_when_hit'] = ['logicblock_' + self.name + '_hit']
+
+    @property
+    def enabled(self):
+        return self.player[self.player_state_variable]["enabled"]
+
+    @enabled.setter
+    def enabled(self, value):
+        self.player[self.player_state_variable]["enabled"] = value
+
+    @property
+    def completed(self):
+        return self.player[self.player_state_variable]["completed"]
+
+    @completed.setter
+    def completed(self, value):
+        self.player[self.player_state_variable]["completed"] = value
 
     @property
     @abc.abstractmethod
@@ -172,6 +189,25 @@ class LogicBlock(object):
     def __repr__(self):
         """Return str representation of class."""
         return '<LogicBlock.{}>'.format(self.name)
+
+    def post_update_event(self):
+        """Post an event to notify about changes."""
+        self.machine.events.post("logicblock_{}_updated".format(self.name))
+        '''event: logicblock_(name)_updated
+
+        desc: The logic block called "name" has just been completed.
+
+        Note that this is the default completion event for logic blocks, but
+        this can be changed in a logic block's "events_when_complete:" setting,
+        so this might not be the actual event that's posted for all logic
+        blocks in your machine.
+        '''
+
+    def mode_started(self, **kwargs):
+        """Perform actions on mode start."""
+        del kwargs
+
+        self.post_update_event()
 
     def create_control_events(self):
         """Create control events."""
@@ -208,7 +244,6 @@ class LogicBlock(object):
 
     def unload(self):
         """Unload block."""
-        self.disable()
         self._remove_all_event_handlers()
         try:
             self.machine.game.player.logic_blocks.remove(self)
@@ -225,6 +260,7 @@ class LogicBlock(object):
         self.log.debug("Enabling")
         self.enabled = True
         self.add_event_handlers()
+        self.post_update_event()
 
     @abc.abstractmethod
     def add_event_handlers(self):
@@ -237,6 +273,7 @@ class LogicBlock(object):
         raise NotImplementedError("Not implemented")
 
     def _post_hit_events(self, **kwargs):
+        self.post_update_event()
         for event in self.config['events_when_hit']:
             self.machine.events.post(event, **kwargs)
             '''event: logicblock_(name)_hit
@@ -392,6 +429,9 @@ class Counter(LogicBlock):
         called.
         """
         del kwargs
+        if not self.enabled:
+            return
+
         if not self.ignore_hits:
             self.player[self.config['player_variable']] += self.hit_value
             self.log.debug("Processing Count change. Total: %s",
@@ -485,6 +525,9 @@ class Accrual(LogicBlock):
             step: Integer of the step number (0 indexed) that was just hit.
         """
         del kwargs
+        if not self.enabled:
+            return
+
         self.log.debug("Processing hit for step: %s", step)
         if not self.player[self.config['player_variable']][step]:
             self.player[self.config['player_variable']][step] = True
@@ -540,6 +583,8 @@ class Sequence(LogicBlock):
         called.
         """
         del kwargs
+        if not self.enabled:
+            return
         self.log.debug("Processing Hit")
         # remove the event handlers for this step
         self.machine.events.remove_handler(self.hit)

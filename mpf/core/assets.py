@@ -189,7 +189,11 @@ class BaseAssetManager(MpfController):
         for asset in preload_assets:
             asset.load()
 
-        if not preload_assets:
+        # check if all assets are loaded already
+        for asset in preload_assets:
+            if hasattr(asset, "is_loaded") and not asset.is_loaded:
+                break
+        else:
             self.machine.clear_boot_hold('assets')
 
     def _create_assets_from_disk(self, config, mode=None):

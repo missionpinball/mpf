@@ -9,6 +9,54 @@ class TestLogicBlocks(MpfFakeGameTestCase):
     def getMachinePath(self):
         return 'tests/machine_files/logic_blocks/'
 
+    def test_counter_with_lights(self):
+        self.start_game()
+        self.post_event("start_mode2")
+        self.advance_time_and_run()
+
+        self.assertLedColor("led1", "white")
+        self.assertLedColor("led2", "black")
+        self.assertLedColor("led3", "black")
+
+        # nothing happens because it is disabled
+        self.post_event("counter_with_lights_count")
+        self.advance_time_and_run()
+        self.assertLedColor("led1", "white")
+        self.assertLedColor("led2", "black")
+        self.assertLedColor("led3", "black")
+
+        # advance
+        self.post_event("counter_with_lights_enable")
+        self.post_event("counter_with_lights_count")
+        self.advance_time_and_run()
+        self.assertLedColor("led1", "black")
+        self.assertLedColor("led2", "white")
+        self.assertLedColor("led3", "black")
+
+        # stop mode
+        self.post_event("stop_mode2")
+        self.advance_time_and_run()
+
+        # all off
+        self.assertLedColor("led1", "black")
+        self.assertLedColor("led2", "black")
+        self.assertLedColor("led3", "black")
+
+        # restart mode. should restore state
+        self.post_event("start_mode2")
+        self.advance_time_and_run()
+        self.assertLedColor("led1", "black")
+        self.assertLedColor("led2", "white")
+        self.assertLedColor("led3", "black")
+
+        # and complete
+        self.post_event("counter_with_lights_count")
+        self.advance_time_and_run()
+        self.assertLedColor("led1", "black")
+        self.assertLedColor("led2", "black")
+        self.assertLedColor("led3", "white")
+
+
     def test_accruals_simple(self):
         self.start_game()
         self.mock_event("accrual1_complete1")

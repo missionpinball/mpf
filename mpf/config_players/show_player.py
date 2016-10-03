@@ -14,11 +14,8 @@ class ShowPlayer(DeviceConfigPlayer):
 
     def play(self, settings, context, priority=0, **kwargs):
         """Play, start, stop, pause, resume or advance show based on config."""
-        settings = deepcopy(settings)
-
-        # show_tokens = kwargs.get('show_tokens', None)
-
         for show, show_settings in settings.items():
+            show_settings = dict(show_settings)
             if 'hold' in show_settings and show_settings['hold'] is not None:
                 raise AssertionError("Setting 'hold' is no longer supported for shows. Use duration -1 in your show.")
             try:
@@ -38,7 +35,7 @@ class ShowPlayer(DeviceConfigPlayer):
                 show_tokens=show_settings['show_tokens'],
                 priority=show_settings['priority'],
                 speed=show_settings['speed'],
-                start_step=show_settings['start_step'],
+                start_step=show_settings['start_step'].evaluate({}),
                 loops=show_settings['loops'],
                 sync_ms=show_settings['sync_ms'],
                 manual_advance=show_settings['manual_advance'],
