@@ -191,7 +191,7 @@ class BaseAssetManager(MpfController):
 
         # check if all assets are loaded already
         for asset in preload_assets:
-            if not asset.is_loaded:
+            if hasattr(asset, "is_loaded") and not asset.is_loaded:
                 break
         else:
             self.machine.clear_boot_hold('assets')
