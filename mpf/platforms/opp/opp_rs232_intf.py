@@ -53,6 +53,7 @@ class OppRs232Intf:
     NUM_G2_SOL_PER_BRD = 16
     CFG_SOL_USE_SWITCH = b'\x01'
     CFG_SOL_AUTO_CLR = b'\x02'
+    CFG_SOL_ON_OFF = b'\x04'
 
     NUM_COLOR_TBL = 32
     NEO_CMD_ON = 0x80
