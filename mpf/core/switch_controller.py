@@ -450,8 +450,12 @@ class SwitchController(MpfController):
 
         # Do we have any registered handlers for this switch/state combo?
         if switch_key in self.registered_switches:
-            for entry in self.registered_switches[switch_key]:  # generator?
+            for entry in self.registered_switches[switch_key][:]:  # generator?
                 # Found an entry.
+
+                # skip if the handler has been removed in the meantime
+                if entry not in self.registered_switches[switch_key]:
+                    continue
 
                 if entry['ms']:
                     # This entry is for a timed switch, so add it to our

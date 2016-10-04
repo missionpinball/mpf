@@ -27,6 +27,29 @@ class TestHead2Head(MpfTestCase):
         self.assertEqual(0, self.machine.playfields.playfield_front.balls)
         self.assertEqual(0, self.machine.playfields.playfield_back.balls)
 
+    def test_loop(self):
+        self._prepare_troughs()
+        self.machine.ball_devices.bd_trough_front.eject(target=self.machine.ball_devices.bd_trough_back)
+        self.machine.ball_devices.bd_trough_back.eject(target=self.machine.ball_devices.bd_trough_front)
+        self.machine.ball_devices.bd_trough_front.eject(target=self.machine.ball_devices.bd_trough_back)
+        self.machine.ball_devices.bd_trough_back.eject(target=self.machine.ball_devices.bd_trough_front)
+
+        self.advance_time_and_run(100)
+
+        self.assertEqual("idle", self.machine.ball_devices.bd_trough_front._state)
+        self.assertEqual("idle", self.machine.ball_devices.bd_trough_back._state)
+        self.assertEqual("idle", self.machine.ball_devices.bd_launcher_front._state)
+        self.assertEqual("idle", self.machine.ball_devices.bd_launcher_back._state)
+        self.assertEqual("idle", self.machine.ball_devices.bd_feeder_front._state)
+        self.assertEqual("idle", self.machine.ball_devices.bd_feeder_back._state)
+        self.assertEqual("idle", self.machine.ball_devices.bd_middle_front._state)
+        self.assertEqual("idle", self.machine.ball_devices.bd_middle_back._state)
+
+        self.assertEqual(3, self.machine.ball_devices.bd_trough_front.balls)
+        self.assertEqual(3, self.machine.ball_devices.bd_trough_back.balls)
+        self.assertEqual(0, self.machine.playfields.playfield_front.balls)
+        self.assertEqual(0, self.machine.playfields.playfield_back.balls)
+
     def testEject(self):
         self._prepare_troughs()
         self.machine.playfields.playfield_front.add_ball()

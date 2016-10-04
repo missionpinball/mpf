@@ -31,7 +31,7 @@ class ModeTimer(object):
         self.tick_var = self.mode.name + '_' + self.name + '_tick'
         self.mode.player[self.tick_var] = 0
 
-        self.running = self.config['start_running']
+        self.running = False
         self.start_value = self.config['start_value']
         self.restart_on_complete = self.config['restart_on_complete']
         self._ticks = 0
@@ -155,6 +155,10 @@ class ModeTimer(object):
                 additional keyword arguments.
         """
         del kwargs
+
+        # do not start if timer is already running
+        if self.running:
+            return
 
         if self.debug:
             self.log.debug("Starting Timer.")

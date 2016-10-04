@@ -545,7 +545,7 @@ class Mode(object):
 
     def _start_timers(self):
         for timer in list(self.timers.values()):
-            if timer.running:
+            if timer.config['start_running']:
                 timer.start()
 
     def _kill_timers(self, ):

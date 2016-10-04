@@ -43,6 +43,11 @@ class Diverter(SystemWideDevice):
 
             self.machine.events.add_handler(
                 'balldevice_' + feeder_device.name +
+                '_ejecting_ball',
+                self._feeder_ejecting)
+
+            self.machine.events.add_handler(
+                'balldevice_' + feeder_device.name +
                 '_ball_eject_failed',
                 self._feeder_eject_count_decrease)
 
@@ -241,6 +246,15 @@ class Diverter(SystemWideDevice):
                 # if diverter is active and no more ejects are ongoing
                 self.deactivate()
 
+    def _get_desired_state(self, target):
+        desired_state = None
+        if target in self.config['targets_when_active']:
+            desired_state = True
+
+        elif target in self.config['targets_when_inactive']:
+            desired_state = False
+        return desired_state
+
     def _feeder_eject_attempt(self, queue, target, **kwargs):
         # Event handler which is called when one of this diverter's feeder
         # devices attempts to eject a ball. This is what allows this diverter
@@ -252,12 +266,7 @@ class Diverter(SystemWideDevice):
         del kwargs
         self.log.debug("Feeder device eject attempt for target: %s", target)
 
-        desired_state = None
-        if target in self.config['targets_when_active']:
-            desired_state = True
-
-        elif target in self.config['targets_when_inactive']:
-            desired_state = False
+        desired_state = self._get_desired_state(target)
 
         if desired_state is None:
             self.log.debug("Feeder device ejects to an unknown target: %s. "
@@ -273,14 +282,25 @@ class Diverter(SystemWideDevice):
             return
 
         self.diverting_ejects_count += 1
+        self.eject_state = desired_state
+
+    def _feeder_ejecting(self, target, **kwargs):
+        """Enable or disable diverter on eject."""
+        del kwargs
+        self.log.debug("Feeder device is ejecting for target: %s", target)
+
+        desired_state = self._get_desired_state(target)
+
+        if desired_state is None:
+            self.log.debug("Feeder device ejects to an unknown target: %s. "
+                           "Ignoring!", target.name)
+            return
 
         if desired_state:
             self.log.debug("Enabling diverter since eject target is on the "
                            "active target list")
-            self.eject_state = desired_state
             self.enable()
         elif not desired_state:
             self.log.debug("Enabling diverter since eject target is on the "
                            "inactive target list")
-            self.eject_state = desired_state
             self.disable()

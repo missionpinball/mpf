@@ -116,8 +116,7 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
 
     def set_target(self, source, target, mechanical_eject, **kwargs):
         """Set target for action."""
-        self.log.debug("Setting eject target. {} -> {}. Mechanical: {}".format(
-                       source.name, target.name, mechanical_eject))
+        self.log.debug("Setting eject target. %s -> %s. Mechanical: %s", source.name, target.name, mechanical_eject)
         del kwargs
         driver = None
         if source.config['eject_coil']:
@@ -133,14 +132,13 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
                            callback=self._perform_action)
 
     def _perform_action(self):
-        self.log.debug("Removing ball from device {}".format(
-                       self.device.name))
+        self.log.debug("Removing ball from device %s", self.device.name)
 
         for switch in self.ball_switches:
             if self.machine.switch_controller.is_active(switch.name):
                 self.machine.switch_controller.process_switch(switch.name, 0,
                                                               logical=True)
-                self.log.debug("Deactivating: {}".format(switch.name))
+                self.log.debug("Deactivating: %s", switch.name)
                 break
 
         if (self.device.config['entrance_switch_full_timeout'] and
@@ -149,8 +147,7 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
 
             self.machine.switch_controller.process_switch(
                 self.device.config['entrance_switch'].name, 0, True)
-            self.log.debug("Deactivating:".format(
-                self.device.config['entrance_switch'].name))
+            self.log.debug("Deactivating: %s", self.device.config['entrance_switch'].name)
 
         if self.confirm_eject_switch:
             self.delay.add(ms=50, callback=self.confirm_eject_via_switch,
@@ -160,8 +157,7 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
         if self.target_device and not self.target_device.is_playfield():
             self.delay.add(ms=100, callback=self.platform.add_ball_to_device,
                            device=self.target_device)
-            self.log.debug("Adding delay for {} to receive ball in "
-                           "100ms".format(self.target_device.name))
+            self.log.debug("Adding delay for %s to receive ball in 100ms", self.target_device.name)
             self.target_device = None
 
 
@@ -241,11 +237,11 @@ class HardwarePlatform(VirtualPlatform):
 
     def add_ball_to_device(self, device):
         """Add ball to device."""
-        if device.balls + 1 < device.config['ball_capacity']:
-            "KABOOM! We just added a ball to {} which has a capacity "
-            "of {} but already had {} ball(s)".format(
-                device.name, device.config['ball_capacity'],
-                device.balls)
+        if device.balls + 1 > device.config['ball_capacity']:
+            raise AssertionError("KABOOM! We just added a ball to {} which has a capacity "
+                                 "of {} but already had {} ball(s)".format(device.name,
+                                                                           device.config['ball_capacity'],
+                                                                           device.balls))
 
         if device.config['entrance_switch']:
 

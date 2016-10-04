@@ -80,11 +80,27 @@ class PlaceholderManager(MpfController):
 
     """Manages templates and placeholders for MPF."""
 
+    def __init__(self, machine):
+        """Initialise."""
+        super().__init__(machine)
+        self._eval_methods = {
+            ast.Num: self._eval_num,
+            ast.Str: self._eval_str,
+            ast.NameConstant: self._eval_name_constant,
+            ast.BinOp: self._eval_bin_op,
+            ast.UnaryOp: self._eval_unary_op,
+            ast.Compare: self._eval_compare,
+            ast.BoolOp: self._eval_bool_op,
+            ast.Attribute: self._eval_attribute,
+            ast.Subscript: self._eval_subscript,
+            ast.Name: self._eval_name
+        }
+
     @staticmethod
     def _parse_template(template_str):
         return ast.parse(template_str, mode='eval').body
 
-    def _eval_subscript(self, node, variables):
+    def _eval_subscript2(self, node, variables):
         if isinstance(node.slice, ast.Index):
             return self._eval(node.value, variables)[self._eval(node.slice.value, variables)]
         elif isinstance(node.slice, ast.Slice):
@@ -94,42 +110,57 @@ class PlaceholderManager(MpfController):
         else:
             raise TypeError(type(node))
 
+    def _eval_num(self, node, variables):
+        del variables
+        return node.n
+
+    def _eval_str(self, node, variables):
+        del variables
+        return node.s
+
+    def _eval_name_constant(self, node, variables):
+        del variables
+        return node.value
+
+    def _eval_bin_op(self, node, variables):
+        return operators[type(node.op)](self._eval(node.left, variables), self._eval(node.right, variables))
+
+    def _eval_unary_op(self, node, variables):
+        return operators[type(node.op)](self._eval(node.operand, variables))
+
+    def _eval_compare(self, node, variables):
+        if len(node.ops) > 1:
+            raise AssertionError("Only single comparisons are supported.")
+        return comparisons[type(node.ops[0])](self._eval(node.left, variables),
+                                              self._eval(node.comparators[0], variables))
+
+    def _eval_bool_op(self, node, variables):
+        result = self._eval(node.values[0], variables)
+        for i in range(1, len(node.values)):
+            result = bool_operators[type(node.op)](result,
+                                                   self._eval(node.values[i], variables))
+        return result
+
+    def _eval_attribute(self, node, variables):
+        return getattr(self._eval(node.value, variables), node.attr)
+
+    def _eval_subscript(self, node, variables):
+        return self._eval_subscript2(node, variables)
+
+    def _eval_name(self, node, variables):
+        var = self.get_global_parameters(node.id)
+        if var:
+            return var
+        elif node.id in variables:
+            return variables[node.id]
+        else:
+            raise ValueError("Mising variable {}".format(node.id))
+
     def _eval(self, node, variables):
-        if isinstance(node, ast.Num):   # <number>
-            return node.n
-        elif isinstance(node, ast.Str):
-            return node.s
-        elif node is None:
+        if node is None:
             return None
-        elif isinstance(node, ast.NameConstant):   # <number>
-            return node.value
-        elif isinstance(node, ast.BinOp):       # <left> <operator> <right>
-            return operators[type(node.op)](self._eval(node.left, variables), self._eval(node.right, variables))
-        elif isinstance(node, ast.UnaryOp):     # <operator> <operand> e.g., -1
-            return operators[type(node.op)](self._eval(node.operand, variables))
-        elif isinstance(node, ast.Compare):
-            if len(node.ops) > 1:
-                raise AssertionError("Only single comparisons are supported.")
-            return comparisons[type(node.ops[0])](self._eval(node.left, variables),
-                                                  self._eval(node.comparators[0], variables))
-        elif isinstance(node, ast.BoolOp):
-            result = self._eval(node.values[0], variables)
-            for i in range(1, len(node.values)):
-                result = bool_operators[type(node.op)](result,
-                                                       self._eval(node.values[i], variables))
-            return result
-        elif isinstance(node, ast.Attribute):
-            return getattr(self._eval(node.value, variables), node.attr)
-        elif isinstance(node, ast.Subscript):
-            return self._eval_subscript(node, variables)
-        elif isinstance(node, ast.Name):
-            var = self.get_global_parameters(node.id)
-            if var:
-               return var
-            elif node.id in variables:
-                return variables[node.id]
-            else:
-                raise ValueError("Mising variable {}".format(node.id))
+        elif type(node) in self._eval_methods:
+            return self._eval_methods[type(node)](node, variables)
         else:
             raise TypeError(type(node))
 
@@ -146,6 +177,7 @@ class PlaceholderManager(MpfController):
         return BoolTemplate(self._parse_template(template_str), self, default_value)
 
     def get_global_parameters(self, name):
+        """Return global params."""
         if name == "settings":
             return self.machine.settings
         elif self.machine.game:

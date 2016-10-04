@@ -1,5 +1,14 @@
 #config_version=4
 
+leds:
+  led1:
+    number:
+  led2:
+    number:
+  led3:
+    number:
+
+
 # system wide logic blocks
 logic_blocks:
     accruals:
@@ -75,3 +84,4 @@ logic_blocks:
 # logic blocks in mode1
 modes:
     - mode1
+    - mode2
