@@ -186,14 +186,12 @@ class BaseAssetManager(MpfController):
                 [x for x in getattr(self.machine, ac['attribute']).values() if
                  x.config['load'] == 'preload'])
 
+        wait_for_assets = False
         for asset in preload_assets:
-            asset.load()
+            if not asset.load():
+                wait_for_assets = True
 
-        # check if all assets are loaded already
-        for asset in preload_assets:
-            if hasattr(asset, "is_loaded") and not asset.is_loaded:
-                break
-        else:
+        if not wait_for_assets:
             self.machine.clear_boot_hold('assets')
 
     def _create_assets_from_disk(self, config, mode=None):
@@ -663,12 +661,13 @@ class AssetPool(object):
                                             self.assets[index][1])
             self._asset_sequence.rotate(1)
 
-    def load(self, callback=None, priority=None):
+    def load(self, callback=None, priority=None) -> bool:
         """Load pool."""
         if priority is not None:
             self.priority = priority
 
-        self._callbacks.add(callback)
+        if callback:
+            self._callbacks.add(callback)
 
         for asset in self.assets:
             if not asset[0].loaded:
@@ -677,6 +676,9 @@ class AssetPool(object):
 
         if not self.loading_members:
             self._call_callbacks()
+            return True
+
+        return False
 
     def _group_member_loaded(self, asset):
         self.loading_members.discard(asset)
@@ -794,16 +796,20 @@ class Asset(object):
         """Return id."""
         return self._id
 
-    def load(self, callback=None, priority=None):
-        """Start loading the asset."""
+    def load(self, callback=None, priority=None) -> bool:
+        """Start loading the asset.
+
+        Returns True if the asset is already loaded.
+        """
         if priority is not None:
             self.priority = priority
 
-        self._callbacks.add(callback)
+        if callback:
+            self._callbacks.add(callback)
 
         if self.loaded:
             self._call_callbacks()
-            return
+            return True
 
         if self.unloading:
             pass
@@ -811,6 +817,7 @@ class Asset(object):
 
         self.loading = True
         self.machine.asset_manager.load_asset(self)
+        return False
 
     def _call_callbacks(self):
         for callback in self._callbacks:
