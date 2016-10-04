@@ -52,7 +52,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self.neoCardDict = dict()
         self.neoDict = dict()
         self.numGen2Brd = 0
-        self.gen2AddrArr = []
+        self.gen2AddrArr = {}
         self.badCRC = 0
         self.minVersion = 0xffffffff
         self._poll_task = None
@@ -232,10 +232,11 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self.log.debug("Received Inventory Response:%s", "".join(" 0x%02x" % b for b in msg))
 
         index = 1
+        self.gen2AddrArr[chain_serial] = []
         while msg[index] != ord(OppRs232Intf.EOM_CMD):
             if (msg[index] & ord(OppRs232Intf.CARD_ID_TYPE_MASK)) == ord(OppRs232Intf.CARD_ID_GEN2_CARD):
                 self.numGen2Brd += 1
-                self.gen2AddrArr.append((chain_serial, msg[index]))
+                self.gen2AddrArr[chain_serial].append(msg[index])
             index += 1
         self.log.debug("Found %d Gen2 OPP boards.", self.numGen2Brd)
 
@@ -821,9 +822,11 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
 
         # get initial value for inputs
         self.writer.write(self.platform.read_input_msg[self.chain_serial])
+        cards = len(self.platform.gen2AddrArr[self.chain_serial])
         while True:
-            resp = yield from self.readuntil(b'\xff', 6)
-            if self._parse_msg(resp):
+            resp = yield from self.readuntil(b'\xff')
+            cards -= self._parse_msg(resp)
+            if cards <= 0:
                 break
 
         self.platform.register_processor_connection(self.chain_serial, self)
@@ -831,11 +834,9 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
     def send_get_gen2_cfg_cmd(self):
         """Send get gen2 configuration message to find populated wing boards."""
         whole_msg = bytearray()
-        for chain_serial, cardAddr in self.platform.gen2AddrArr:
-            if chain_serial != self.chain_serial:
-                continue
+        for card_addr in self.platform.gen2AddrArr[self.chain_serial]:
             msg = bytearray()
-            msg.append(cardAddr)
+            msg.append(card_addr)
             msg.extend(OppRs232Intf.GET_GEN2_CFG)
             msg.append(0)
             msg.append(0)
@@ -852,9 +853,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
     def send_vers_cmd(self):
         """Send get firmware version message."""
         whole_msg = bytearray()
-        for chain_serial, card_addr in self.platform.gen2AddrArr:
-            if chain_serial != self.chain_serial:
-                continue
+        for card_addr in self.platform.gen2AddrArr[self.chain_serial]:
             msg = bytearray()
             msg.append(card_addr)
             msg.extend(OppRs232Intf.GET_GET_VERS_CMD)
@@ -920,4 +919,4 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
                 strlen -= 1
                 self._lost_synch = True
 
-            return messaged_found
+        return messaged_found
