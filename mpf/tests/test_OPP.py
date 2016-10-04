@@ -101,7 +101,7 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
             self._crc_message(b'\x20\x02\x00\x00\x00\x00', False) + self._crc_message(b'\x21\x02\x00\x00\x00\x00'):
                 self._crc_message(board1_version, False) + self._crc_message(board2_version),   # get version
             self._crc_message(b'\x20\x14\x00\x02\x17\x00'): False,   # configure coil 0
-            self._crc_message(b'\x20\x14\x01\x00\x17\x0f'): False,   # configure coil 1
+            self._crc_message(b'\x20\x14\x01\x04\x17\x0f'): False,   # configure coil 1
             self._crc_message(b'\x20\x14\x02\x00\x0a\x01'): False,   # configure coil 2
             self._crc_message(b'\x20\x14\x03\x00\x0a\x06'): False,    # configure coil 3
         }
