@@ -797,8 +797,13 @@ class MachineController(object):
         """Clear a boot hold."""
         if self.is_init_done:
             raise AssertionError("Clearing hold after init_done")
-        self._boot_holds.remove(hold)
-        self.log.debug('Clearing boot hold %s. Holds remaining: %s', hold, self._boot_holds)
+
+        try:
+            self._boot_holds.remove(hold)
+            self.log.debug('Clearing boot hold %s. Holds remaining: %s', hold, self._boot_holds)
+        except KeyError:
+            pass
+
         if not self._boot_holds:
             self.init_done()
 
