@@ -437,7 +437,13 @@ class Counter(LogicBlock):
             self.log.debug("Processing Count change. Total: %s",
                            self.player[self.config['player_variable']])
 
-            self._post_hit_events(count=self.player[self.config['player_variable']])
+            args = {
+                "count": self.player[self.config['player_variable']]
+            }
+            if self.config['count_complete_value'] is not None:
+                args['remaining'] = self.config['count_complete_value'] - self.player[self.config['player_variable']]
+
+            self._post_hit_events(**args)
 
             if self.config['count_complete_value'] is not None:
 
