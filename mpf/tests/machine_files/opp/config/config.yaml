@@ -34,11 +34,14 @@ coils:
         allow_enable: true
     c_flipper_hold:
         number: 0-2
-        hold_power16: 1
+        allow_enable: true
     c_flipper_main:
         number: 0-3
         pulse_ms: 10
         hold_power: 3
+    c_holdpower_16:
+        number: 1-12
+        hold_power16: 1
 
 matrix_lights:
   test_light1:
