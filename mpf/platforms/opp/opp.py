@@ -888,11 +888,14 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
         while strlen >= 7:
             if self._lost_synch:
                 while strlen > 0:
+                    # wait for next gen2 card message
                     if (self.partMsg[0] & 0xe0) == 0x20:
                         self._lost_synch = False
                         break
                     self.partMsg = self.partMsg[1:]
                     strlen -= 1
+                # continue because we could have less then 7 bytes in the buffer
+                continue
 
             # Check if this is a gen2 card address
             if (self.partMsg[0] & 0xe0) == 0x20:
