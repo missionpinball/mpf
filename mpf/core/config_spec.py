@@ -814,7 +814,7 @@ smart_virtual:
     simulate_manual_plunger_timeout: single|ms|10s
 sound_player:
     __valid_in__: machine, mode, show
-    action: single|enum(play,stop,stop_looping)|play
+    action: single|enum(play,stop,stop_looping,load,unload)|play
     volume: single|gain|None
     loops: single|int|None
     priority: single|int|None
@@ -835,12 +835,20 @@ sound_system:
     frequency: single|int|44100
     channels: single|int|1
     master_volume: single|gain|0.5
-    tracks: ignore                                  # todo add subconfig
+    tracks:
+        type: single|enum(standard|playlist|live_loop)|standard
+        volume: single|gain|0.5
+        simultaneous_sounds: single|int|8
+        events_when_played: list|str|None
+        events_when_stopped: list|str|None
+        events_when_paused: list|str|None
+        events_when_resumed: list|str|None
 sounds:
     __valid_in__: machine, mode
     file: single|str|None
     track: single|str|None
     volume: single|gain|0.5
+    streaming: single|bool|False
     loops: single|int|0
     priority: single|int|0
     start_at: single|secs|0
