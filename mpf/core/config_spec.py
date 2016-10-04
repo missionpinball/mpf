@@ -67,7 +67,7 @@ autofire_coils:
     switch: single|machine(switches)|
     reverse_switch: single|bool|False
     enable_events: dict|str:ms|ball_started
-    disable_events: dict|str:ms|ball_will_end
+    disable_events: dict|str:ms|ball_will_end, service_mode_entered
     coil_overwrite: dict|str:str|None
     switch_overwrite: dict|str:str|None
 
@@ -135,7 +135,7 @@ ball_locks:
     request_new_balls_to_pf: single|bool|True
     enable_events: dict|str:ms|None
     disable_events: dict|str:ms|None
-    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_will_end
+    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
     release_one_events: dict|str:ms|None
 ball_saves:
     __valid_in__: machine, mode
@@ -148,7 +148,7 @@ ball_saves:
     auto_launch: single|bool|True
     balls_to_save: single|int|1
     enable_events: dict|str:ms|None
-    disable_events: dict|str:ms|ball_will_end
+    disable_events: dict|str:ms|ball_will_end, service_mode_entered
     timer_start_events: dict|str:ms|None
 bcp:
     __valid_in__: machine
@@ -343,7 +343,7 @@ flippers:
     eos_switch: single|machine(switches)|None
     use_eos: single|bool|False
     enable_events: dict|str:ms|ball_started
-    disable_events: dict|str:ms|ball_will_end
+    disable_events: dict|str:ms|ball_will_end, service_mode_entered
     # enable_no_hold_events: dict|str:ms|None
     # invert_events: dict|str:ms|None
     main_coil_overwrite: dict|str:str|None
@@ -690,7 +690,7 @@ servos:
     ball_search_max: single|float|1.0
     ball_search_wait: single|ms|5s
     reset_position: single|float|0.5
-    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_will_end
+    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
     number: single|str|
     platform: single|str|None
 settings:
