@@ -627,14 +627,21 @@ class Shot(ModeDevice, SystemWideDevice):
                 in the show)
 
         """
+
+        self.debug_log("Received jump request. Mode: %s, State: %s, Show step:"
+                       " %s, Force: %s", mode.name, state, show_step, force)
+
         if not (self.get_profile_by_key('mode', mode)['enable'] or force):
+            self.debug_log("Profile is disabled and force is False. Not "
+                           "jumping")
             return
 
         try:
             if state == self.player[self.get_profile_by_key('mode', mode)['settings']['player_variable']]:
-                # we're already at that state
+                self.debug_log("Shot is already in the jump destination state")
                 return
-        except KeyError:  # no profile for this mode
+        except KeyError:
+            self.debug_log("No shot profile for this mode")
             return
 
         self.debug_log("Jumping to profile state '%s'", state)

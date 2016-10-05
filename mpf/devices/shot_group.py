@@ -31,6 +31,12 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         # todo remove this hack
         self._created_system_wide = False
 
+        # If debug is enabled for this shot group, enable debug
+        # for all the member shots too.
+        if self.debug:
+            for shot in self.config['shots']:
+                shot.debug = True
+
     @property
     def enabled(self):
         """Return true if enabled."""
