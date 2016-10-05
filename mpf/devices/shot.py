@@ -629,7 +629,7 @@ class Shot(ModeDevice, SystemWideDevice):
         """
 
         self.debug_log("Received jump request. Mode: %s, State: %s, Show step:"
-                       " %s, Force: %s", mode.name, state, show_step, force)
+                       " %s, Force: %s", mode, state, show_step, force)
 
         if not (self.get_profile_by_key('mode', mode)['enable'] or force):
             self.debug_log("Profile is disabled and force is False. Not "
