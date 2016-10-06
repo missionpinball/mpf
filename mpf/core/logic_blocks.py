@@ -195,12 +195,7 @@ class LogicBlock(object):
         self.machine.events.post("logicblock_{}_updated".format(self.name))
         '''event: logicblock_(name)_updated
 
-        desc: The logic block called "name" has just been completed.
-
-        Note that this is the default completion event for logic blocks, but
-        this can be changed in a logic block's "events_when_complete:" setting,
-        so this might not be the actual event that's posted for all logic
-        blocks in your machine.
+        desc: The logic block called "name" has just been updated.
         '''
 
     def mode_started(self, **kwargs):
@@ -437,17 +432,24 @@ class Counter(LogicBlock):
             self.log.debug("Processing Count change. Total: %s",
                            self.player[self.config['player_variable']])
 
-            self._post_hit_events(count=self.player[self.config['player_variable']])
+            remaining = -1
 
             if self.config['count_complete_value'] is not None:
 
-                if (self.config['direction'] == 'up' and
-                        self.player[self.config['player_variable']] >= self.config['count_complete_value']):
-                    self.complete()
+                if self.config['direction'] == 'up':
+                    remaining = (self.config['count_complete_value'] -
+                                 self.player[self.config['player_variable']])
 
-                elif (self.config['direction'] == 'down' and
-                        self.player[self.config['player_variable']] <= self.config['count_complete_value']):
-                    self.complete()
+                elif self.config['direction'] == 'down':
+                    remaining = (self.player[self.config['player_variable']] -
+                                 self.config['count_complete_value'])
+
+            self._post_hit_events(
+                count=self.player[self.config['player_variable']],
+                remaining=remaining)
+
+            if not remaining:
+                self.complete()
 
             if self.config['multiple_hit_window']:
                 self.log.debug("Beginning Ignore Hits")
