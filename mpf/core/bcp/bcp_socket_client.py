@@ -195,7 +195,8 @@ class BCPClientSocket(BaseBcpClient):
         """
         bcp_string = encode_command_string(bcp_command, **bcp_command_args)
 
-        self.log.debug('Sending "%s"', bcp_string)
+        if self.debug_log:
+            self.log.debug('Sending "%s"', bcp_string)
         self._sender.write((bcp_string + '\n').encode())
 
     @asyncio.coroutine
