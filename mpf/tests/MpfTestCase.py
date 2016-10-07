@@ -275,6 +275,11 @@ class MpfTestCase(unittest.TestCase):
                                         handler=self._mock_event_handler,
                                         event_name=event_name)
 
+    def assertPlayerVarEqual(self, value, player_var):
+        self.assertIsNotNone(self.machine.game, "There is no game.")
+        self.assertEqual(value, self.machine.game.player[player_var], "Value of player var {} is {} but should be {}".
+                         format(player_var, self.machine.game.player[player_var], value))
+
     def assertSwitchState(self, name, state):
         self.assertIn(name, self.machine.switch_controller.switches, "Switch {} does not exist.".format(name))
         self.assertEqual(state, self.machine.switch_controller.is_active(name))
