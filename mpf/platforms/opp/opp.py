@@ -832,7 +832,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
 
         # get initial value for inputs
         self.writer.write(self.platform.read_input_msg[self.chain_serial])
-        cards = len(self.platform.gen2AddrArr[self.chain_serial])
+        cards = len([x for x in self.platform.opp_inputs if x.chain_serial == self.chain_serial])
         while True:
             resp = yield from self.readuntil(b'\xff')
             cards -= self._parse_msg(resp)
