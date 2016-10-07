@@ -169,6 +169,11 @@ class Multiball(SystemWideDevice, ModeDevice):
         # disable shoot again
         self.machine.events.remove_handler(self._ball_drain_shoot_again)
 
+        self.machine.events.post("multiball_" + self.name + "_shoot_again_ended")
+        '''event: multiball_(name)_shoot_again_ended
+        desc: Shoot again for multiball (name) has ended.
+        '''
+
         # add handler for ball_drain until self.balls_ejected are drained
         self.machine.events.add_handler('ball_drain', self._ball_drain_count_balls)
 
