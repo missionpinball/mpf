@@ -50,8 +50,7 @@ class MockOppSocket(MockSerial):
         self.permanent_commands = {}
         self.crashed = False
 
-
-class TestOPP(MpfTestCase):
+class OPPCommon(MpfTestCase):
 
     def getConfigFile(self):
         return 'config.yaml'
@@ -68,6 +67,21 @@ class TestOPP(MpfTestCase):
     def _mock_loop(self):
         self.clock.mock_serial("com1", self.serialMock)
 
+    def tearDown(self):
+        self.assertFalse(self.serialMock.crashed)
+        super().tearDown()
+
+    def get_platform(self):
+        return 'opp'
+
+    def _wait_for_processing(self):
+        start = time.time()
+        while self.serialMock.expected_commands and not self.serialMock.crashed and time.time() < start + 10:
+            self.advance_time_and_run(.01)
+
+
+class TestOPPFirmware2(OPPCommon, MpfTestCase):
+
     def setUp(self):
         self.expected_duration = 1.5
         opp.serial_imported = True
@@ -75,8 +89,8 @@ class TestOPP(MpfTestCase):
         self.serialMock = MockOppSocket()
         board1_config = b'\x20\x0d\x01\x02\x03\x03'      # wing1: solenoids, wing2: inputs, wing3: lamps, wing4: lamps
         board2_config = b'\x21\x0d\x06\x02\x02\x01'      # wing1: neo, wing2: inputs, wing3: inputs, wing4: solenoids
-        board1_version = b'\x20\x02\x00\x00\x10\x00'     # 0.0.16.0
-        board2_version = b'\x21\x02\x00\x00\x10\x01'     # 0.0.16.01
+        board1_version = b'\x20\x02\x00\x02\x00\x00'     # 0.2.0.0
+        board2_version = b'\x21\x02\x00\x02\x00\x00'     # 0.2.0.0
         inputs1_message = b"\x20\x08\x00\x00\x00\x0c"     # inputs 0+1 off, 2+3 on, 8 on
         inputs2_message = b"\x21\x08\x00\x00\x00\x00"
 
@@ -87,9 +101,10 @@ class TestOPP(MpfTestCase):
             self._crc_message(b'\x20\x02\x00\x00\x00\x00', False) + self._crc_message(b'\x21\x02\x00\x00\x00\x00'):
                 self._crc_message(board1_version, False) + self._crc_message(board2_version),   # get version
             self._crc_message(b'\x20\x14\x00\x02\x17\x00'): False,   # configure coil 0
-            self._crc_message(b'\x20\x14\x01\x00\x17\x0f'): False,   # configure coil 1
-            self._crc_message(b'\x20\x14\x02\x00\x0a\x01'): False,   # configure coil 2
+            self._crc_message(b'\x20\x14\x01\x04\x17\x0f'): False,   # configure coil 1
+            self._crc_message(b'\x20\x14\x02\x04\x0a\x0f'): False,   # configure coil 2
             self._crc_message(b'\x20\x14\x03\x00\x0a\x06'): False,    # configure coil 3
+            self._crc_message(b'\x21\x14\x0c\x00\x0a\x01'): False,    # configure coil 1-12
         }
         self.serialMock.permanent_commands = {
             b'\xff': b'\xff',
@@ -102,17 +117,56 @@ class TestOPP(MpfTestCase):
 
         self.assertFalse(self.serialMock.expected_commands)
 
-    def tearDown(self):
-        self.assertFalse(self.serialMock.crashed)
-        super().tearDown()
+    def testDualWoundCoils(self):
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x02\x05\x0a\x0f')] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x03\x0a\x00')] = False
+        self.machine.flippers.f_test_hold.enable()
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
 
-    def get_platform(self):
-        return 'opp'
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x02\x04\x0a\x0f')] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x02\x0a\x00')] = False
+        self.machine.flippers.f_test_hold.disable()
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
 
-    def _wait_for_processing(self):
-        start = time.time()
-        while self.serialMock.expected_commands and not self.serialMock.crashed and time.time() < start + 10:
-            self.advance_time_and_run(.01)
+
+class TestOPP(OPPCommon, MpfTestCase):
+
+    def setUp(self):
+        self.expected_duration = 1.5
+        opp.serial_imported = True
+        opp.serial = MagicMock()
+        self.serialMock = MockOppSocket()
+        board1_config = b'\x20\x0d\x01\x02\x03\x03'      # wing1: solenoids, wing2: inputs, wing3: lamps, wing4: lamps
+        board2_config = b'\x21\x0d\x06\x02\x02\x01'      # wing1: neo, wing2: inputs, wing3: inputs, wing4: solenoids
+        board1_version = b'\x20\x02\x00\x01\x01\x00'     # 0.1.1.0
+        board2_version = b'\x21\x02\x00\x01\x01\x00'     # 0.1.1.0
+        inputs1_message = b"\x20\x08\x00\x00\x00\x0c"     # inputs 0+1 off, 2+3 on, 8 on
+        inputs2_message = b"\x21\x08\x00\x00\x00\x00"
+
+        self.serialMock.expected_commands = {
+            b'\xf0\xff': b'\xf0\x20\x21\xff',     # boards 20 + 21 installed
+            self._crc_message(b'\x20\x0d\x00\x00\x00\x00', False) + self._crc_message(b'\x21\x0d\x00\x00\x00\x00'):
+                self._crc_message(board1_config, False) + self._crc_message(board2_config),     # get config
+            self._crc_message(b'\x20\x02\x00\x00\x00\x00', False) + self._crc_message(b'\x21\x02\x00\x00\x00\x00'):
+                self._crc_message(board1_version, False) + self._crc_message(board2_version),   # get version
+            self._crc_message(b'\x20\x14\x00\x02\x17\x00'): False,   # configure coil 0
+            self._crc_message(b'\x20\x14\x01\x00\x17\x0f'): False,   # configure coil 1
+            self._crc_message(b'\x20\x14\x02\x00\x0a\x0f'): False,   # configure coil 2
+            self._crc_message(b'\x20\x14\x03\x00\x0a\x06'): False,    # configure coil 3
+            self._crc_message(b'\x21\x14\x0c\x00\x0a\x01'): False,    # configure coil 1-12
+        }
+        self.serialMock.permanent_commands = {
+            b'\xff': b'\xff',
+            self._crc_message(b'\x20\x08\x00\x00\x00\x00', False) + self._crc_message(b'\x21\x08\x00\x00\x00\x00'):
+                self._crc_message(inputs1_message, False) + self._crc_message(inputs2_message),  # read inputs
+        }
+        super().setUp()
+
+        self._wait_for_processing()
+
+        self.assertFalse(self.serialMock.expected_commands)
 
     def test_opp(self):
         self._test_coils()
@@ -158,9 +212,9 @@ class TestOPP(MpfTestCase):
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
-        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x02\x02\x0a\x00')] = False
-        self.serialMock.expected_commands[self._crc_message(b'\x20\x07\x00\x04\x00\x04', False)] = False
-        self.machine.coils.c_flipper_hold.pulse(10)
+        self.serialMock.expected_commands[self._crc_message(b'\x21\x14\x0c\x02\x0a\x00')] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x21\x07\x10\x00\x10\x00', False)] = False
+        self.machine.coils.c_holdpower_16.pulse(10)
 
         # enable coil (not allowed)
         with self.assertRaises(AssertionError):

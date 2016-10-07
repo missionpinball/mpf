@@ -460,6 +460,11 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
             hold = self.get_hold_value(driver)
             if not hold:
                 raise AssertionError("Hold may not be 0")
+            if hold >= 16:
+                hold = 15
+                if self.minVersion >= 0x00020000:
+                    # set flag for full power
+                    cmd += ord(OppRs232Intf.CFG_SOL_ON_OFF)
 
         # TODO: implement separate hold power (0-f) and minimum off time (0-7)
         minimum_off = self.get_minimum_off_time(driver)
@@ -631,14 +636,20 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
             # limit to 50Hz
             yield from asyncio.sleep(.02, loop=self.machine.clock.loop)
 
-    @classmethod
-    def _verify_coil_and_switch_fit(cls, switch, coil):
+    def _verify_coil_and_switch_fit(self, switch, coil):
         chain_serial, card, solenoid = coil.hw_driver.number.split('-')
         sw_chain_serial, sw_card, sw_num = switch.hw_switch.number.split('-')
         matching_sw = ((int(solenoid) & 0x0c) << 1) | (int(solenoid) & 0x03)
-        if chain_serial != sw_chain_serial or card != sw_card or matching_sw != int(sw_num):
-            raise AssertionError('Invalid switch being configured for driver. Driver = %s '
-                                 'Switch = %s' % (coil.hw_driver.number, switch.hw_switch.number))
+        if self.minVersion >= 0x00020000:
+            if chain_serial != sw_chain_serial or card != sw_card:
+                raise AssertionError('Invalid switch being configured for driver. Driver = %s '
+                                     'Switch = %s. For Firmware 2.0+ driver and switch have to be on the same board.'
+                                     % (coil.hw_driver.number, switch.hw_switch.number))
+        else:
+            if chain_serial != sw_chain_serial or card != sw_card or matching_sw != int(sw_num):
+                raise AssertionError('Invalid switch being configured for driver. Driver = %s '
+                                     'Switch = %s. For Firmware <2.0 they have to be on the same board and have the '
+                                     'same number' % (coil.hw_driver.number, switch.hw_switch.number))
 
     def set_pulse_on_hit_rule(self, enable_switch, coil):
         """Set pulse on hit rule on driver.
@@ -686,13 +697,12 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
             return coil.config['hold_power16']
         elif coil.config['hold_power']:
             if coil.config['hold_power'] >= 8:
-                # OPP supports a maximum 15/16ms hold power
-                return 15
+                return 16
             else:
-                # hold_power is 0-8 and OPP supports 0-15
+                # hold_power is 0-8 and OPP supports 0-16
                 return coil.config['hold_power'] * 2
         elif coil.config['allow_enable']:
-            return 15
+            return 16
         else:
             return 0
 
