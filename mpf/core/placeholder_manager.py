@@ -12,7 +12,7 @@ operators = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul,
 
 bool_operators = {ast.And: lambda a, b: a and b, ast.Or: lambda a, b: a or b}
 
-comparisons = {ast.Eq: op.eq, ast.Lt: op.lt, ast.Gt: op.gt, ast.LtE: op.le, ast.GtE: op.ge}
+comparisons = {ast.Eq: op.eq, ast.Lt: op.lt, ast.Gt: op.gt, ast.LtE: op.le, ast.GtE: op.ge, ast.NotEq: op.ne}
 
 
 class BaseTemplate(metaclass=abc.ABCMeta):
