@@ -448,6 +448,10 @@ class Counter(LogicBlock):
                 count=self.player[self.config['player_variable']],
                 remaining=remaining)
 
+            # Bug todo, if count_interval (hit_value) is less than -1 and the
+            # count gets off by one and there's a stop value of 0, then it
+            # won't recognize that it completed. 
+
             if not remaining:
                 self.complete()
 
