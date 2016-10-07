@@ -56,6 +56,7 @@ class TestLogicBlocks(MpfFakeGameTestCase):
         self.assertLedColor("led2", "black")
         self.assertLedColor("led3", "white")
 
+
     def test_accruals_simple(self):
         self.start_game()
         self.mock_event("accrual1_complete1")
@@ -138,8 +139,6 @@ class TestLogicBlocks(MpfFakeGameTestCase):
         self.post_event("counter1_enable")
         for i in range(4):
             self.post_event("counter1_count")
-            self.assertEqual(4-i, self._last_event_kwargs["logicblock_counter1_hit"]["count"])
-            self.assertEqual(4-i, self._last_event_kwargs["logicblock_counter1_hit"]["remaining"])
             self.assertEqual(0, self._events["logicblock_counter1_complete"])
 
         # nothing should happen when disabled
@@ -152,15 +151,11 @@ class TestLogicBlocks(MpfFakeGameTestCase):
         self.post_event("counter1_count")
         self.assertEqual(1, self._events["logicblock_counter1_complete"])
         self.assertEqual(5, self._events["logicblock_counter1_hit"])
-        self.assertEqual(0, self._last_event_kwargs["logicblock_counter1_hit"]["count"])
-        self.assertEqual(0, self._last_event_kwargs["logicblock_counter1_hit"]["remaining"])
 
         # it should disable
         self.post_event("counter1_count")
         self.assertEqual(1, self._events["logicblock_counter1_complete"])
         self.assertEqual(5, self._events["logicblock_counter1_hit"])
-        self.assertEqual(0, self._last_event_kwargs["logicblock_counter1_hit"]["count"])
-        self.assertEqual(0, self._last_event_kwargs["logicblock_counter1_hit"]["remaining"])
 
         self.post_event("counter1_restart")
 
@@ -170,8 +165,6 @@ class TestLogicBlocks(MpfFakeGameTestCase):
         # 4 more hits but not completed
         self.assertEqual(1, self._events["logicblock_counter1_complete"])
         self.assertEqual(9, self._events["logicblock_counter1_hit"])
-        self.assertEqual(1, self._last_event_kwargs["logicblock_counter1_hit"]["count"])
-        self.assertEqual(1, self._last_event_kwargs["logicblock_counter1_hit"]["remaining"])
 
         # reset
         self.post_event("counter1_reset")
@@ -181,15 +174,11 @@ class TestLogicBlocks(MpfFakeGameTestCase):
         # another 4 hits still not complete
         self.assertEqual(1, self._events["logicblock_counter1_complete"])
         self.assertEqual(13, self._events["logicblock_counter1_hit"])
-        self.assertEqual(1, self._last_event_kwargs["logicblock_counter1_hit"]["count"])
-        self.assertEqual(1, self._last_event_kwargs["logicblock_counter1_hit"]["remaining"])
 
         # and complete again
         self.post_event("counter1_count")
         self.assertEqual(2, self._events["logicblock_counter1_complete"])
         self.assertEqual(14, self._events["logicblock_counter1_hit"])
-        self.assertEqual(0, self._last_event_kwargs["logicblock_counter1_hit"]["count"])
-        self.assertEqual(0, self._last_event_kwargs["logicblock_counter1_hit"]["remaining"])
 
     def test_sequence_simple(self):
         self.start_game()
@@ -440,6 +429,7 @@ class TestLogicBlocks(MpfFakeGameTestCase):
             self.assertEqual(0, self._events["logicblock_counter3_complete"])
             self.assertEqual(2+i, self._events["counter_counter3_hit"])
             self.advance_time_and_run(1)
+
 
         # it should complete
         self.post_event("counter3_count")
