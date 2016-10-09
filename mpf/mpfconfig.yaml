@@ -293,9 +293,9 @@ shows:
               brightness: ff
           leds:
             (led):
-              color: white
+              color: on
             (leds):
-              color: white
+              color: on
         - time: 1
           lights:
             (light):
@@ -318,9 +318,9 @@ shows:
               brightness: ff
           leds:
             (led):
-              color: white
+              color: on
             (leds):
-              color: white
+              color: on
     off:
         - time: 0
           duration: -1
