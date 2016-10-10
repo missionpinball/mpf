@@ -624,7 +624,8 @@ playfields:
     ball_search_wait_after_iteration: single|ms|10s
 playfield_transfers:
     __valid_in__: machine
-    ball_switch: single|machine(switches)|
+    ball_switch: single|machine(switches)|None
+    transfer_events: list|str:ms|None
     eject_target: single|machine(ball_devices)|
     captures_from: single|machine(ball_devices)|
 plugins:
