@@ -789,6 +789,7 @@ slide_player:
     transition_out: ignore
     widgets: ignore
     expire: single|secs|None
+    slide: single|str|None
     action: single|enum(play,remove)|play
     persist: single|bool|False                      # todo
 slides:
