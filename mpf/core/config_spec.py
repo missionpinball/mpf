@@ -137,6 +137,7 @@ ball_locks:
     disable_events: dict|str:ms|None
     reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
     release_one_events: dict|str:ms|None
+    release_one_if_full_events: dict|str:ms|None
 ball_saves:
     __valid_in__: machine, mode
     source_playfield: single|machine(ball_devices)|playfield
@@ -788,6 +789,7 @@ slide_player:
     transition_out: ignore
     widgets: ignore
     expire: single|secs|None
+    slide: single|str|None
     action: single|enum(play,remove)|play
     persist: single|bool|False                      # todo
 slides:

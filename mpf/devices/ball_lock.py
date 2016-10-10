@@ -130,6 +130,12 @@ class BallLock(SystemWideDevice, ModeDevice):
             queue.wait()
             self._release_lock = queue
 
+    def release_one_if_full(self, **kwargs):
+        """Release one ball if lock is full."""
+        del kwargs
+        if self.is_full():
+            self.release_one()
+
     def release_one(self, **kwargs):
         """Release one ball.
 
