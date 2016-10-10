@@ -242,6 +242,11 @@ class BallController(object):
                                                 '_ball_enter',
                                                 self._ball_drained_handler)
 
+    def dump_ball_counts(self):
+        """Dump ball count of all devices."""
+        for device in self.machine.ball_devices:
+            self.log.info("%s contains %s balls. Tags %s", device.name, device.balls, device.tags)
+
     def request_to_start_game(self, **kwargs):
         """Method registered for the *request_to_start_game* event.
 
@@ -255,12 +260,10 @@ class BallController(object):
         except ValueError:
             balls = -1
         self.log.debug("Received request to start game.")
-        self.log.debug("Balls contained: %s, Min balls needed: %s",
-                       balls,
-                       self.machine.config['machine']['min_balls'])
         if balls < self.machine.config['machine']['min_balls']:
+            self.dump_ball_counts()
             self.log.warning("BallController denies game start. Not enough "
-                             "balls")
+                             "balls. %s found. %s required", balls, self.machine.config['machine']['min_balls'])
             return False
 
         if self.machine.config['game']['allow_start_with_ball_in_drain']:
@@ -273,6 +276,7 @@ class BallController(object):
 
         elif not self.are_balls_collected(allowed_positions):
             self.collect_balls('home')
+            self.dump_ball_counts()
             self.log.warning("BallController denies game start. Balls are not "
                              "in their home positions.")
             return False
