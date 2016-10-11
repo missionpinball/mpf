@@ -324,6 +324,19 @@ class MpfTestCase(unittest.TestCase):
         self.assertEventCalled(event_name)
         self.assertEqual(kwargs, self._last_event_kwargs[event_name], "Args for {} differ.".format(event_name))
 
+    def assertShotShow(self, shot_name, show_name):
+        """Assert that the highest priority runnning show for a shot is a
+        certain show name."""
+        if shot_name not in self.machine.shots:
+            raise AssertionError("Shot {} is not a valid shot".format(shot_name))
+
+        if show_name:
+            self.assertIsNotNone(self.machine.shots[shot_name].profiles)
+            self.assertIsNotNone(self.machine.shots[shot_name].profiles[0]['running_show'])
+            self.assertEqual(show_name, self.machine.shots[shot_name].profiles[0]['running_show'].name)
+        else:
+            self.assertIsNone(self.machine.shots[shot_name].profiles[0]['running_show'])
+
     def reset_mock_events(self):
         for event in self._events.keys():
             self._events[event] = 0
