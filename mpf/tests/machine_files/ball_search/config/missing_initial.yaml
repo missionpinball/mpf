@@ -1,0 +1,10 @@
+#config_version=4
+
+machine:
+    balls_installed: 3
+
+config:
+  - config.yaml
+
+virtual_platform_start_active_switches:
+  - s_ball_switch1

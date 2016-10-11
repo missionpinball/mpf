@@ -93,7 +93,7 @@ class ScoreController(object):
 
     def _score_event_callback(self, event_name, **kwargs):
         del kwargs
-        if not (self.machine.game.player and self.machine.game.balls_in_play):
+        if not self.machine.game or not self.machine.game.player or not self.machine.game.balls_in_play:
             return
 
         blocked_variables = set()

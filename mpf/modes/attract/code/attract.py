@@ -39,6 +39,12 @@ class Attract(Mode):
         if hasattr(self.machine, 'ball_devices'):
             self.machine.ball_controller.collect_balls()
 
+        # trigger ball search if we are missing balls
+        if self.machine.ball_controller.num_balls_known < self.machine.config['machine']['balls_installed']:
+            for playfield in self.machine.playfields:
+                playfield.ball_search.enable()
+                playfield.ball_search.start()
+
     def start_button_pressed(self):
         """Called when the a switch tagged with *start* is activated."""
         self.start_button_pressed_time = self.machine.clock.get_time()
