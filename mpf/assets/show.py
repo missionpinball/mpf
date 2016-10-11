@@ -261,7 +261,7 @@ class Show(Asset):
 
     # pylint: disable-msg=too-many-arguments
     def play(self, priority=0, speed=1.0, start_step=1, callback=None,
-             loops=-1, sync_ms=0, manual_advance=False, show_tokens=None):
+             loops=-1, sync_ms=None, manual_advance=False, show_tokens=None):
         """Play a Show.
 
         There are many parameters you can use here which
@@ -306,8 +306,8 @@ class Show(Asset):
                 indefinitely. If the show only has one step, loops will be set
                 to 0, regardless of the actual number of loops
             sync_ms: Number of ms of the show sync cycle. A value of zero means
-                this show will also start playing immediately. See the full MPF
-                documentation for details on how this works.
+                this show will also start playing immediately. A value of None
+                means the mpf:default_show_sync_ms will be used.
             manual_advance: Boolean that controls whether this show should be
                 advanced manually (e.g. time values are ignored and the show
                 doesn't move to the next step until it's told to.) Default is
@@ -353,7 +353,7 @@ class Show(Asset):
                                    start_step=int(start_step),
                                    callback=callback,
                                    loops=int(loops),
-                                   sync_ms=int(sync_ms),
+                                   sync_ms=sync_ms,
                                    manual_advance=manual_advance,
                                    show_tokens=show_tokens)
 
@@ -415,6 +415,9 @@ class RunningShow(object):
         #     self.show_tokens = show_tokens
         # else:
         #     self.show_tokens = dict()
+
+        if self.sync_ms is None:
+            self.sync_ms = self.machine.config['mpf']['default_show_sync_ms']
 
         self.debug = False
         self._stopped = False

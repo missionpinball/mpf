@@ -528,6 +528,7 @@ mpf:
     allow_invalid_config_sections: single|bool|false
     save_machine_vars_to_disk: single|bool|true
     hz: single|float|30.0
+    default_show_sync_ms: single|int|0
 mpf-mc:
     __valid_in__: machine                           # todo add to validator
 multiballs:
@@ -755,7 +756,7 @@ shot_profiles:
         speed: single|float|1
         start_step: single|int|1
         loops: single|int|-1
-        sync_ms: single|int|0
+        sync_ms: single|int|None
         manual_advance: single|bool|None
         show_tokens: dict|str:str|None
 show_player:
@@ -765,7 +766,7 @@ show_player:
     speed: single|float|1
     start_step: single|template_int|1
     loops: single|int|-1
-    sync_ms: single|int|0
+    sync_ms: single|int|None
     reset: single|bool|True
     manual_advance: single|bool|False
     key: single|str|None
