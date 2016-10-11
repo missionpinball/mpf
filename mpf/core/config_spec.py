@@ -406,7 +406,7 @@ kivy_config:
 led_player:
     __valid_in__: machine, mode, show
     color: single|str|white
-    fade: single|ms|0
+    fade: single|ms|None
     __allow_others__:
 led_settings:
     __valid_in__: machine
