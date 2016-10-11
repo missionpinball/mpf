@@ -28,7 +28,10 @@ class AsyncMode(Mode, metaclass=abc.ABCMeta):
 
         Will raise exceptions from within task.
         """
-        future.result()
+        try:
+            future.result()
+        except asyncio.CancelledError:
+            pass
 
     def _stopped(self):
         """Cancel task."""
