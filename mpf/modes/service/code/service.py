@@ -58,12 +58,7 @@ down_events: list|str|sw_service_down_active
     def _start_main_menu(self):
         self.machine.service.start_service()
         self.machine.events.post("service_main_menu")
-        try:
-            yield from self._service_mode_main_menu()
-        except asyncio.CancelledError:  # pragma: no cover
-            # mode is stopping
-            self._service_mode_exit()
-            raise
+        yield from self._service_mode_main_menu()
 
         self._service_mode_exit()
 
