@@ -28,6 +28,12 @@ class BallSearch(object):
         self.machine.events.add_handler('request_to_start_game',
                                         self.request_to_start_game)
 
+        self.machine.events.add_handler('cancel_ball_search',
+                                        self.cancel_ball_search)
+        '''event: cancel_ball_search
+        desc: This event will cancel all running ball searches and mark the balls as lost. This is only a handler
+        so all you have to do is to post the event.'''
+
     def request_to_start_game(self, **kwargs):
         """Method registered for the *request_to_start_game* event.
 
@@ -144,6 +150,11 @@ class BallSearch(object):
             if callback(self.phase, self.iteration):
                 self.delay.add(name='run', callback=self.run, ms=timeout)
                 return
+
+    def cancel_ball_search(self, **kwargs):
+        """Cancel the current ballsearch and mark the ball as missing."""
+        if self.started:
+            self.give_up()
 
     def give_up(self):
         """Give up the ball search.
