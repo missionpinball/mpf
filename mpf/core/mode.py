@@ -170,6 +170,9 @@ class Mode(object):
         """
         self.log.debug("Received request to start")
 
+        if self.config['mode']['game_mode'] and not self.machine.game:
+            raise AssertionError("Can only start mode {} during a game.".format(self.name))
+
         if self._active:
             self.log.debug("Mode is already active. Aborting start")
             return
