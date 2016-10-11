@@ -27,6 +27,11 @@ class Multiball(SystemWideDevice, ModeDevice):
         self.enabled = False
         self.shoot_again = False
 
+    @property
+    def can_exist_outside_of_game(self):
+        """Return true if this device can exist outside of a game."""
+        return True
+
     def device_removed_from_mode(self, mode):
         """Disable and stop mb when mode stops."""
         del mode

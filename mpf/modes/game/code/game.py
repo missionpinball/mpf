@@ -109,6 +109,9 @@ class Game(Mode):
 
     def mode_stop(self, **kwargs):
         """Stop mode."""
+        for mode in self.machine.modes:
+            if mode.active and not mode.stopping and mode.config['mode']['game_mode']:
+                raise AssertionError("Mode {} is not supposed to run outside of game.".format(mode.name))
         self.machine.game = None
 
     def game_started(self, ev_result=True, **kwargs):

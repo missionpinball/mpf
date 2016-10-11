@@ -47,6 +47,7 @@ class Mode(object):
         self.mode_stop_kwargs = dict()
         self.mode_devices = set()
         self.start_event_kwargs = None
+        self.stopping = False
 
         self.player = None
         '''Reference to the current player object.'''
@@ -170,6 +171,9 @@ class Mode(object):
         """
         self.log.debug("Received request to start")
 
+        if self.config['mode']['game_mode'] and not self.machine.game:
+            raise AssertionError("Can only start mode {} during a game.".format(self.name))
+
         if self._active:
             self.log.debug("Mode is already active. Aborting start")
             return
@@ -277,6 +281,7 @@ class Mode(object):
         """
         if not self._active:
             return
+        self.stopping = True
 
         self.mode_stop_kwargs = kwargs
 
@@ -307,6 +312,7 @@ class Mode(object):
 
         self.priority = 0
         self.active = False
+        self.stopping = False
 
         for callback in self.machine.mode_controller.stop_methods:
             callback[0](self)
@@ -373,6 +379,10 @@ class Mode(object):
                     # Track that this device was added via this mode so we
                     # can remove it when the mode ends.
                     self.mode_devices.add(device)
+                    if not self.config['mode']['game_mode'] and not device.can_exist_outside_of_game:
+                        raise AssertionError("Device {} cannot exist in non game-mode {}.".format(
+                            device, self.name
+                        ))
 
                     # This lets the device know it was added to a mode
                     device.device_added_to_mode(mode=self,

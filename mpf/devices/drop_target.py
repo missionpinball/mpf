@@ -216,6 +216,11 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         self.down = 0
         self.up = 0
 
+    @property
+    def can_exist_outside_of_game(self):
+        """Return true if this device can exist outside of a game."""
+        return True
+
     def _initialize(self):
         self.drop_targets = self.config['drop_targets']
         self.reset_coil = self.config['reset_coil']

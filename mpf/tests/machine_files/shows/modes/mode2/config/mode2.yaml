@@ -5,6 +5,7 @@ mode:
   priority: 300
   start_priority: 1
   stop_on_ball_end: false
+  game_mode: False
 
 show_player:
   mode_mode2_started: test_show2

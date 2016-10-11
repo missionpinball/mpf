@@ -2,8 +2,7 @@
 
 mode:
   priority: 100
-
-
+  game_mode: False
 
 drop_target_banks:
    left_bank_2:

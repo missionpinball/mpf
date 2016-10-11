@@ -2,6 +2,7 @@
 
 mode:
   priority: 100
+  game_mode: False
 
 led_player:
   event5:
