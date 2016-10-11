@@ -8,6 +8,10 @@ from mpf.core.player import Player
 
 class ModeDevice(Device, metaclass=abc.ABCMeta):
 
+    def __init__(self, machine, name):
+        super().__init__(machine, name)
+        self.loaded_in_mode = None
+
     """A device in a mode."""
 
     def device_added_to_mode(self, mode: Mode, player: Player):
@@ -25,6 +29,10 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
     def can_exist_outside_of_game(self):
         """Return true if this device can exist outside of a game."""
         return False
+
+    def overload_config_in_mode(self, mode, config):
+        """Overload config in mode."""
+        raise AssertionError("Device {} cannot be overloaded.".format(self))
 
     def add_control_events_in_mode(self, mode):
         """Called on mode start if this device has any control events in that mode.

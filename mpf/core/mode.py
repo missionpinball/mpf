@@ -428,21 +428,16 @@ class Mode(object):
 
                 collection = getattr(self.machine, collection_name)
                 device = collection[device]
+                settings = device.prepare_config(settings, True)
+                settings = device.validate_and_parse_config(settings, True)
+
                 if device.config:
                     self.log.debug("Overwrite mode-based device: %s", device)
-                    # TODO: implement this
-                    # 1. check if the device allows this
-                    # 2. validate overload section
-                    self.config[collection_name][device.name] = device.validate_and_parse_config(settings, True)
-                    # 3. load overload
+                    # overload
+                    device.overload_config_in_mode(self, settings)
 
                 else:
                     self.log.debug("Initialising mode-based device: %s", device)
-
-                    # prepare config for mode
-                    settings = device.prepare_config(settings, True)
-                    settings = device.validate_and_parse_config(settings, True)
-
                     # load config
                     device.load_config(settings)
 
