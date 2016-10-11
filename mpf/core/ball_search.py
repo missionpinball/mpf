@@ -100,6 +100,8 @@ class BallSearch(object):
 
     def start(self):
         """Actually start ball search."""
+        if not self.enabled or self.started or not self.callbacks:
+            return
         self.started = True
         self.iteration = 1
         self.phase = 1
@@ -162,6 +164,12 @@ class BallSearch(object):
         self.machine.ball_controller.num_balls_known -= lost_balls
         self.playfield.balls = 0
         self.playfield.available_balls = 0
+
+        self._compensate_lost_balls(lost_balls)
+
+    def _compensate_lost_balls(self, lost_balls):
+        if not self.machine.game:
+            return
 
         if self.playfield.config['ball_search_failed_action'] == "new_ball":
             if self.machine.ball_controller.num_balls_known > 0:
