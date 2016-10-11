@@ -2,6 +2,7 @@
 mode:
   code: service.Service
   priority: 100000
+  game_mode: False
   start_events: reset_complete
   stop_events: shutdown
   stop_on_ball_end: False
