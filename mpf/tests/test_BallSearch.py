@@ -5,7 +5,10 @@ from unittest.mock import MagicMock
 class TestBallSearch(MpfTestCase):
 
     def getConfigFile(self):
-        return 'config.yaml'
+        if self._testMethodName == "test_missing_initial":
+            return 'missing_initial.yaml'
+        else:
+            return 'config.yaml'
 
     def getMachinePath(self):
         return 'tests/machine_files/ball_search/'
@@ -348,3 +351,17 @@ class TestBallSearch(MpfTestCase):
         self.assertEqual(0, self.machine.ball_devices['playfield'].balls)
         self.assertEqual(0, self.machine.ball_controller.num_balls_known)
         self.assertEqual(None, self.machine.game)
+
+    def test_missing_initial(self):
+        self.assertEqual(1, self.machine.ball_controller.num_balls_known)
+        self.assertEqual(0, self.machine.playfield.available_balls)
+
+        self.assertTrue(self.machine.playfield.ball_search.started)
+        self.advance_time_and_run(20)
+        self.hit_switch_and_run("s_ball_switch2", 1)
+
+        # TODO: should we wait for all balls?
+
+        self.assertFalse(self.machine.playfield.ball_search.started)
+        self.assertEqual(2, self.machine.ball_controller.num_balls_known)
+        self.assertEqual(0, self.machine.playfield.available_balls)
