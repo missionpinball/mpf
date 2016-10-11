@@ -94,6 +94,7 @@ class TestScoring(MpfTestCase):
         # mode2 should auto start
         self.assertFalse(self.machine.mode_controller.is_active('mode1'))
         self.assertTrue(self.machine.mode_controller.is_active('mode2'))
+        self.assertTrue(self.machine.modes.mode2.active)
 
         # same score as during last ball
         self.assertEqual(1200, self.machine.game.player.score)
