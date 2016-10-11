@@ -65,7 +65,7 @@ class LedPlayer(DeviceConfigPlayer):
     def get_express_config(self, value):
         """Parse express config."""
         value = str(value).replace(' ', '').lower()
-        fade = 0
+        fade = None
         if '-f' in value:
             # Value contains both a color value and a fade value, parse it into
             # its individual components
