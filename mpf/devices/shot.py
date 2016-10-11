@@ -35,6 +35,7 @@ class Shot(ModeDevice, SystemWideDevice):
         self.active_delays = set()
         self.switch_handlers_active = False
         self.profiles = list()
+        self.mode_config = {}
         self.groups = set()  # shot_groups this shot belongs to
 
         # todo is this a hack??
@@ -316,9 +317,17 @@ class Shot(ModeDevice, SystemWideDevice):
         self.player = None
         self.remove_profile_by_mode(None)
 
+    def overload_config_in_mode(self, mode, config):
+        """Overload config in mode."""
+        self.mode_config[mode] = config
+
     def add_control_events_in_mode(self, mode):
         """Add control events in mode."""
-        enable = not mode.config['shots'][self.name]['enable_events']
+        try:
+            # in case this is an overload
+            enable = not self.mode_config[mode]['enable_events']
+        except KeyError:
+            enable = not self.config['enable_events']
         self.update_profile(enable=enable, mode=mode)
 
     def device_removed_from_mode(self, mode):
