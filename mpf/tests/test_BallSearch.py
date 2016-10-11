@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 class TestBallSearch(MpfTestCase):
 
     def getConfigFile(self):
-        if self._testMethodName == "test_missing_initial":
+        if self._testMethodName == "test_missing_initial" or self._testMethodName == "test_missing_initial2":
             return 'missing_initial.yaml'
         else:
             return 'config.yaml'
@@ -360,8 +360,29 @@ class TestBallSearch(MpfTestCase):
         self.advance_time_and_run(20)
         self.hit_switch_and_run("s_ball_switch2", 1)
 
-        # TODO: should we wait for all balls?
-
         self.assertFalse(self.machine.playfield.ball_search.started)
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
         self.assertEqual(0, self.machine.playfield.available_balls)
+
+    def test_missing_initial2(self):
+        self.assertEqual(1, self.machine.ball_controller.num_balls_known)
+        self.assertEqual(0, self.machine.playfield.available_balls)
+
+        self.assertTrue(self.machine.playfield.ball_search.started)
+        self.advance_time_and_run(20)
+
+        # game does not start because of ball search
+        self.assertEqual(None, self.machine.game)
+        self.hit_and_release_switch("s_start")
+        self.advance_time_and_run(1)
+        self.assertEqual(None, self.machine.game)
+
+        # cancel ball search
+        self.post_event("cancel_ball_search")
+        self.advance_time_and_run(1)
+
+        # game should start
+        self.assertEqual(None, self.machine.game)
+        self.hit_and_release_switch("s_start")
+        self.advance_time_and_run(1)
+        self.assertNotEqual(None, self.machine.game)
