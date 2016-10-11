@@ -2,6 +2,7 @@
 mode:
   start_events: start_mode1
   stop_events: stop_mode1
+  game_mode: False
 
 ball_locks:
     lock_test2:

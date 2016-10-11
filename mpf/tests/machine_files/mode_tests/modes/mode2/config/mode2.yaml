@@ -4,3 +4,4 @@ mode:
   stop_events: stop_mode2
   stop_priority: 2
   restart_on_next_ball: true
+  game_mode: False

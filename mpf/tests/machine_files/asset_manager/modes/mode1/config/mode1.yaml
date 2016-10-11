@@ -2,3 +2,4 @@
 
 mode:
   priority: 300
+  game_mode: False

@@ -4,6 +4,7 @@ mode:
   stop_events: stop_mode1
   priority: 200
   start_priority: 1
+  game_mode: False
   stop_on_ball_end: false
 
 show_player:
