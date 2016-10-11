@@ -105,3 +105,11 @@ class TestScoring(MpfTestCase):
         self.assertEqual(2200, self.machine.game.player.score)
         self.assertEqual(2, self.machine.game.player.vars['var_a'])
         self.assertEqual(2, self.machine.game.player.vars['var_b'])
+
+        # stop game and mode
+        self.machine.service.start_service()
+        self.advance_time_and_run()
+
+        # it should not crash
+        self.post_event("test_event1")
+        self.advance_time_and_run()
