@@ -626,6 +626,18 @@ playfield_transfers:
     ball_switch: single|machine(switches)|
     eject_target: single|machine(ball_devices)|
     captures_from: single|machine(ball_devices)|
+playlists:
+    __valid_in__: machine, mode
+    track: single|str|None
+    random: single|bool|False
+    crossfade_time: single|secs|0
+    fade_in_first_sound: single|bool|False
+    fade_out_last_sound: single|bool|False
+    events_when_played: list|str|None
+    events_when_stopped: list|str|None
+    mode_end_action: single|enum(stop,finish_sound)|finish_sound
+    sounds: list|str|
+
 plugins:
     __valid_in__: machine                      # todo add to validator
 pololu_maestro:
