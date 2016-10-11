@@ -501,6 +501,7 @@ mode:
     stop_events: list|str|None
     start_priority: single|int|0
     stop_priority: single|int|0
+    game_mode: single|bool|True
     use_wait_queue: single|bool|False
     code: single|str|None
     stop_on_ball_end: single|bool|True
