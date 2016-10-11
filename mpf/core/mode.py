@@ -376,6 +376,10 @@ class Mode(object):
                     # Track that this device was added via this mode so we
                     # can remove it when the mode ends.
                     self.mode_devices.add(device)
+                    if not self.config['mode']['game_mode'] and not device.can_exist_outside_of_game:
+                        raise AssertionError("Device {} cannot exist in non game-mode {}.".format(
+                            device, self.name
+                        ))
 
                     # This lets the device know it was added to a mode
                     device.device_added_to_mode(mode=self,

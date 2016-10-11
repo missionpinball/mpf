@@ -21,6 +21,11 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
         del player
         self._initialize()
 
+    @property
+    def can_exist_outside_of_game(self):
+        """Return true if this device can exist outside of a game."""
+        return False
+
     def add_control_events_in_mode(self, mode):
         """Called on mode start if this device has any control events in that mode.
 
