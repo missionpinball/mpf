@@ -42,6 +42,11 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         """Return true if enabled."""
         return self._enabled
 
+    @property
+    def can_exist_outside_of_game(self):
+        """Return true if this device can exist outside of a game."""
+        return True
+
     @classmethod
     def prepare_config(cls, config, is_mode_config):
         """Add default events if not in mode."""

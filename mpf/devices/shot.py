@@ -44,6 +44,11 @@ class Shot(ModeDevice, SystemWideDevice):
         self._created_system_wide = False
 
     @property
+    def can_exist_outside_of_game(self):
+        """Return true if this device can exist outside of a game."""
+        return True
+
+    @property
     def enabled(self):
         """Return true if enabled."""
         return [x for x in self.profiles if x['enable']]

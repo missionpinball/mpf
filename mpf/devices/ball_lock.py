@@ -34,6 +34,11 @@ class BallLock(SystemWideDevice, ModeDevice):
         del mode
         self.disable()
 
+    @property
+    def can_exist_outside_of_game(self):
+        """Return true if this device can exist outside of a game."""
+        return True
+
     @classmethod
     def prepare_config(cls, config, is_mode_config):
         """Add default events when outside mode."""
