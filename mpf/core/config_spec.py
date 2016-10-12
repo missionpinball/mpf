@@ -287,10 +287,16 @@ event_player:
     __valid_in__: machine, mode, show
     __allow_others__:
 queue_event_player:
-    __valid_in__: machine, mode, show
+    __valid_in__: machine, mode
     args: dict|str:str|None
     queue_event: single|str|
     events_when_finished: single|str|None
+queue_relay_player:
+    __valid_in__: machine, mode
+    args: dict|str:str|None
+    post: single|str|
+    wait_for: single|str|
+    priority: single|int|0
 extra_balls:
     __valid_in__: mode
     award_events: dict|str:ms|None
