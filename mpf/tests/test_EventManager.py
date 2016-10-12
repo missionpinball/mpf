@@ -459,30 +459,10 @@ class TestEventManager(MpfTestCase):
         self.assertEqual(False, self._queue.is_empty())
 
         self.event_handler_clear_queue()
+        self.advance_time_and_run()
 
         self.assertEqual(self._handlers_called.count(self.queue_callback), 1)
         self.assertEqual(True, self._queue.is_empty())
-
-    def test_queue_kill(self):
-        # tests that a queue event can be killed without the callback being
-        # called
-
-        self.machine.events.add_handler('test_event',
-                                        self.event_handler_add_queue)
-
-        self.advance_time_and_run(1)
-
-        self.machine.events.post_queue('test_event',
-                                       callback=self.queue_callback)
-        self.advance_time_and_run(1)
-
-        self.assertEqual(self._handlers_called.count(self.event_handler_add_queue), 1)
-        self.assertEqual(self._handlers_called.count(self.queue_callback), 0)
-
-        self._queue.kill()
-        self.advance_time_and_run(1)
-
-        self.assertEqual(self._handlers_called.count(self.queue_callback), 0)
 
     def test_queue_event_with_no_queue(self):
         # tests that a queue event works and the callback is called right away
@@ -499,28 +479,6 @@ class TestEventManager(MpfTestCase):
 
         self.assertEqual(self._handlers_called.count(self.event_handler1), 1)
         self.assertEqual(self._handlers_called.count(self.queue_callback), 1)
-
-    def test_queue_event_with_handler_that_returns_false(self):
-        # tests that a queue event stops processing additional handlers if one
-        # of the handlers returns false
-
-        self.machine.events.add_handler('test_event',
-                                        self.event_handler_add_queue,
-                                        priority=100)
-        self.machine.events.add_handler('test_event',
-                                        self.event_handler_returns_false,
-                                        priority=200)
-
-        self.advance_time_and_run(1)
-
-        self.machine.events.post_queue('test_event',
-                                       callback=self.queue_callback)
-        self.advance_time_and_run(1)
-
-        self.assertEqual(self._handlers_called.count(self.event_handler_returns_false), 1)
-        self.assertEqual(self._handlers_called.count(self.event_handler_add_queue), 0)
-        self.assertEqual(self._handlers_called.count(self.queue_callback), 1)
-        self.assertEqual(self._queue_callback_kwargs, {'ev_result': False})
 
     def test_queue_event_with_quick_queue_clear(self):
         # tests that a queue event that quickly creates and clears a queue
