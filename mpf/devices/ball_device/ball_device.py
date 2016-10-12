@@ -1416,9 +1416,7 @@ class BallDevice(SystemWideDevice):
             # wait until one of the active switches turns off
             for switch in self.config['ball_switches']:
                 # only consider active switches
-                if self.machine.switch_controller.is_active(switch.name,
-                                                            ms=self.config[
-                                                                'entrance_count_delay']):
+                if self.machine.switch_controller.is_active(switch.name):
                     self.machine.switch_controller.add_switch_handler(
                         switch_name=switch.name,
                         callback=self._ball_left_device,
@@ -1607,7 +1605,7 @@ class BallDevice(SystemWideDevice):
         del kwargs
 
         if self._state == "ejecting":
-            self.log.debug("Got an eject_success before the switch changed"
+            self.log.debug("Got an eject_success before the switch changed "
                            "state in the device. Ignoring!")
             return
 
