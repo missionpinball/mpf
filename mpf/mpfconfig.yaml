@@ -26,6 +26,7 @@ mpf:
     config_players:
         coil: mpf.config_players.coil_player
         event: mpf.config_players.event_player
+        queue_event: mpf.config_players.queue_event_player
         flasher: mpf.config_players.flasher_player
         gi: mpf.config_players.gi_player
         led: mpf.config_players.led_player
