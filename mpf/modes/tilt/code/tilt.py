@@ -227,7 +227,9 @@ class Tilt(Mode):
             start until the plumb bob has settled to prevent tilt throughs.
             '''
 
-            self.ball_ending_tilted_queue.clear()
+            if self.ball_ending_tilted_queue:
+                self.ball_ending_tilted_queue.clear()
+                self.ball_ending_tilted_queue = None
 
             self.machine.events.remove_handlers_by_keys(
                 self.tilt_event_handlers)
