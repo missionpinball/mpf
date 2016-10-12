@@ -59,7 +59,7 @@ class PlayfieldTransfer(SystemWideDevice):
 
         # inform target playfield about incomming ball
         self.machine.events.post(
-            'balldevice_' + self.name + '_ball_eject_attempt',
+            'balldevice_' + self.name + '_ejecting_ball',
             balls=1,
             target=self.target,
             timeout=0,
