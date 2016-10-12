@@ -296,7 +296,6 @@ queue_relay_player:
     args: dict|str:str|None
     post: single|str|
     wait_for: single|str|
-    priority: single|int|0
 extra_balls:
     __valid_in__: mode
     award_events: dict|str:ms|None
