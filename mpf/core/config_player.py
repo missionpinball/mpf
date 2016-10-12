@@ -198,6 +198,9 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
 
         if config:
             for event, settings in config.items():
+                if event.find(".") > 0:
+                    priority += int(event[event.find(".")+1:])
+                    event = event[0:event.find(".")]
                 key_list.append(
                     self.machine.events.add_handler(
                         event=event,

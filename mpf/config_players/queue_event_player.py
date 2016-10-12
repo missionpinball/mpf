@@ -9,7 +9,7 @@ class QueueEventPlayer(ConfigPlayer):
     """Posts queue events based on config."""
 
     config_file_section = 'queue_event_player'
-    show_section = 'queue_events'
+    show_section = None
     device_collection = None
 
     def play(self, settings, context, priority=0, **kwargs):
