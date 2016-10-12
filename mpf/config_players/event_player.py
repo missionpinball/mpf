@@ -34,7 +34,7 @@ class EventPlayer(FlatConfigPlayer):
                 self.delay.add(callback=self._post_event, ms=delay,
                                event=event, s=s)
             else:
-                self.machine.events.post(event, **s)
+                self._post_event(event, s)
 
     def _post_event(self, event, s):
         self.machine.events.post(event, **s)

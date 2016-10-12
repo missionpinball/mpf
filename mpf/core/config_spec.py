@@ -286,6 +286,11 @@ drop_target_banks:
 event_player:
     __valid_in__: machine, mode, show
     __allow_others__:
+queue_event_player:
+    __valid_in__: machine, mode, show
+    args: dict|str:str|None
+    queue_event: single|str|
+    events_when_finished: single|str|None
 extra_balls:
     __valid_in__: mode
     award_events: dict|str:ms|None
