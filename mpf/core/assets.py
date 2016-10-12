@@ -52,9 +52,12 @@ class BaseAssetManager(MpfController):
 
         # Modes load in init_phase_1, so by 2 we have everything to create
         # the assets.
+        if 'force_assets_load' in self.machine.options:
+            force_assets_load = self.machine.options['force_assets_load']
+        else:
+            force_assets_load = False
         self.machine.events.add_handler('init_phase_3', self._create_assets,
-                                        force_assets_load=self.machine.options[
-                                            'force_assets_load'])
+                                        force_assets_load=force_assets_load)
 
         # Picks up asset load information from connected BCP client(s)
         self.machine.events.add_handler('assets_to_load',
@@ -190,7 +193,7 @@ class BaseAssetManager(MpfController):
         for ac in self._asset_classes:
             preload_assets.extend(
                 [x for x in getattr(self.machine, ac['attribute']).values() if
-                 x.config['load'] == 'preload'] or force_assets_load)
+                 x.config['load'] == 'preload' or force_assets_load])
 
         wait_for_assets = False
         for asset in preload_assets:
