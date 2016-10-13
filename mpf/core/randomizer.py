@@ -1,11 +1,14 @@
+"""Generic list randomizer."""
 from uuid import uuid4
 import random
 
 
 class Randomizer(object):
 
-    def __init__(self, items):
+    """Generic list randomizer."""
 
+    def __init__(self, items):
+        """Initialise Randomizer."""
         self.force_different = True
         self.force_all = False
         self.disable_random = False
@@ -32,10 +35,11 @@ class Randomizer(object):
         self._init_data(self.data)
 
     def __iter__(self):
+        """Return iterator."""
         return self
 
     def __next__(self):
-
+        """Return next."""
         if self.disable_random:
             return self._next_not_random()
 
@@ -69,10 +73,12 @@ class Randomizer(object):
 
     @property
     def loop(self):
+        """Return loop property."""
         return self._loop
 
     @loop.setter
     def loop(self, loop):
+        """Set loop property."""
         if loop:
             self._loop = True
         else:
@@ -93,23 +99,31 @@ class Randomizer(object):
 
         return self.data['current_item']
 
-    def _init_data(self, data_dict):
+    @staticmethod
+    def _init_data(data_dict):
+        """Initialise dict."""
         data_dict['current_item'] = None
         data_dict['items_sent'] = set()
         data_dict['current_item_index'] = 0  # only used with disable random
 
     def get_current(self):
+        """Return current item."""
         if self.data['current_item']:
             return self.data['current_item']
         else:
             return self.__next__()
 
     def get_next(self):
+        """Return next item."""
         return self.__next__()
 
     @staticmethod
     def pick_weighted_random(items):
+        """Pick a random item.
 
+        Args:
+            items: Items to select from
+        """
         total_weights = sum([x[1] for x in items])
         value = random.randint(1, total_weights)
         index_value = 0
