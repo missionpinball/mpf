@@ -45,7 +45,7 @@ class TestScoreReels(MpfTestCase):
         self.start_game()
 
         self._synchronise_to_reel()
-        self.machine.scoring.add(110)
+        self.machine.game.player.score += 110
         self.advance_time_and_run(.1)
         self.assertEqual(0, player1_10k.pulse.call_count)
         self.assertEqual(0, player1_1k.pulse.call_count)
@@ -68,7 +68,7 @@ class TestScoreReels(MpfTestCase):
         player1_10.pulse = MagicMock(return_value=10)
 
         self._synchronise_to_reel()
-        self.machine.scoring.add(11097)  # result: 11207
+        self.machine.game.player.score += 11097  # result: 11207
         self.advance_time_and_run(.05)
         self.assertEqual(0, player1_10k.pulse.call_count)
         self.assertEqual(0, player1_1k.pulse.call_count)
@@ -135,7 +135,7 @@ class TestScoreReels(MpfTestCase):
         self.start_game()
 
         self._synchronise_to_reel()
-        self.machine.scoring.add(110)
+        self.machine.game.player.score += 110
         self.advance_time_and_run(.1)
         self.assertEqual(0, player1_10k.pulse.call_count)
         self.assertEqual(0, player1_1k.pulse.call_count)
@@ -187,7 +187,7 @@ class TestScoreReels(MpfTestCase):
         self.assertEqual(3, self.machine.game.num_players)
 
         self._synchronise_to_reel()
-        self.machine.scoring.add(110)
+        self.machine.game.player.score += 110
         self.advance_time_and_run(.1)
         self.assertEqual(0, player1_10k.pulse.call_count)
         self.assertEqual(0, player1_1k.pulse.call_count)
@@ -209,7 +209,7 @@ class TestScoreReels(MpfTestCase):
         self.machine_run()
         self.assertEqual(2, self.machine.game.player.number)
 
-        self.machine.scoring.add(20)
+        self.machine.game.player.score += 20
         self.advance_time_and_run(.1)
         self.assertEqual(0, player1_10k.pulse.call_count)
         self.assertEqual(0, player1_1k.pulse.call_count)
