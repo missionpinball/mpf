@@ -1,7 +1,7 @@
 """A shot in MPF."""
 
 import uuid
-from copy import copy
+from copy import copy, deepcopy
 
 import mpf.core.delays
 from mpf.core.mode_device import ModeDevice
@@ -287,7 +287,7 @@ class Shot(ModeDevice, SystemWideDevice):
             if s['manual_advance'] is None:
                 s['manual_advance'] = True
 
-        s['show_tokens'] = self.config['show_tokens']
+        s['show_tokens'] = deepcopy(self.config['show_tokens'])
         s['priority'] += profile['priority']
         if start_step:
             s['start_step'] = start_step
@@ -295,6 +295,8 @@ class Shot(ModeDevice, SystemWideDevice):
         s.pop('show')
         s.pop('name')
         s.pop('action')
+
+        self.debug_log("Playing show: %s. %s", show_name, s)
 
         profile['running_show'] = self.machine.shows[show_name].play(**s)
 
@@ -728,6 +730,9 @@ class Shot(ModeDevice, SystemWideDevice):
         """Update profile."""
         existing_profile = self.get_profile_by_key('mode', mode)
 
+        self.debug_log("Updating profile. Existing profile: %s",
+                       existing_profile)
+
         if not existing_profile:  # we're adding, not updating
             self._add_profile2(profile=profile, enable=enable, mode=mode)
             return
@@ -778,6 +783,8 @@ class Shot(ModeDevice, SystemWideDevice):
         if enable is None:
             enable = False
 
+        self.debug_log("Adding profile: %s", profile)
+
         try:
             profile_settings = (
                 self.machine.shot_profile_manager.profiles[profile].copy())
@@ -796,6 +803,8 @@ class Shot(ModeDevice, SystemWideDevice):
         this_entry['profile'] = profile
         this_entry['settings'] = profile_settings
         this_entry['enable'] = enable
+
+        self.debug_log('This profile settings: %s', this_entry)
 
         self.add_profile(this_entry)
 
