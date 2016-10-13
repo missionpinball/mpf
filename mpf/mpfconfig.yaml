@@ -87,6 +87,7 @@ mpf:
         pololu_maestro: mpf.platforms.pololu_maestro.HardwarePlatform
         smart_virtual: mpf.platforms.smart_virtual.HardwarePlatform
         smartmatrix: mpf.platforms.smartmatrix.HardwarePlatform
+        eli_dmd: mpf.platforms.eli_dmd.EliDmd
         snux: mpf.platforms.snux.HardwarePlatform
         virtual: mpf.platforms.virtual.HardwarePlatform
 
