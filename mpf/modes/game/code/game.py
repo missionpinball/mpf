@@ -155,7 +155,7 @@ class Game(Mode):
             This event is typically used to switch the score display from the
             single player layout to the multiplayer layout.'''
 
-    def ball_starting(self):
+    def ball_starting(self, is_extra_ball=False):
         """Called when a new ball is starting.
 
         Note this method is called for each ball that starts, even if it's
@@ -176,13 +176,17 @@ class Game(Mode):
         self.log.debug("***************************************************")
 
         self.machine.events.post_queue('ball_starting',
+                                       balls_remaining=self.machine.config['game'][
+                                                           'balls_per_game'] - self.player.ball,
+                                       is_extra_ball=is_extra_ball,
                                        callback=self.ball_started)
         '''event: ball_starting
         desc: A ball is starting. This is a queue event, so the ball won't
         actually start until the queue is cleared.'''
 
-    def ball_started(self, ev_result=True):
+    def ball_started(self, ev_result=True, **kwargs):
         """Ball started."""
+        del kwargs
         self.log.debug("Game Machine Mode ball_started()")
         """Called when the other modules have approved a ball start.
 
@@ -354,7 +358,7 @@ class Game(Mode):
         """Called when the same player should shoot again."""
         self.log.debug("Awarded extra ball to Player %s. Shoot Again", self.player.index + 1)
         self.player.extra_balls -= 1
-        self.ball_starting()
+        self.ball_starting(is_extra_ball=True)
 
     def request_player_add(self, **kwargs):
         """Called by any module that wants to add a player to an active game.
