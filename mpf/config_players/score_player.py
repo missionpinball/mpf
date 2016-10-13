@@ -37,7 +37,12 @@ class ScorePlayer(ConfigPlayer):
         return priority_sorted[0][1] != context + "_" + calling_context
 
     def _score(self, var, entry):
-        self.machine.game.player[var] += entry['score'].evaluate([])
+        if entry['action'] == "add":
+            self.machine.game.player[var] += entry['score'].evaluate([])
+        elif entry['action'] == "set":
+            self.machine.game.player[var] = entry['score'].evaluate([])
+        else:
+            raise AssertionError("Invalid value {}".format(entry['action']))
 
     def clear_context(self, context):
         for var in self.blocks:
