@@ -9,7 +9,7 @@ class TriggerPlayer(DeviceConfigPlayer):
     config_file_section = 'trigger_player'
     show_section = 'triggers'
 
-    def play(self, settings, context, priority=0, **kwargs):
+    def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Execute BCP triggers."""
         del kwargs
 

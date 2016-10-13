@@ -12,7 +12,7 @@ class ShowPlayer(DeviceConfigPlayer):
     show_section = 'shows'
     device_collection = None
 
-    def play(self, settings, context, priority=0, **kwargs):
+    def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Play, start, stop, pause, resume or advance show based on config."""
         for show, show_settings in settings.items():
             show_settings = dict(show_settings)

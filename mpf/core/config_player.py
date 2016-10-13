@@ -202,6 +202,7 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
                     self.machine.events.add_handler(
                         event=event,
                         handler=self.config_play_callback,
+                        calling_context=event,
                         priority=priority,
                         mode=mode,
                         settings=settings))
@@ -212,7 +213,7 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
         """Remove event for standalone player."""
         self.machine.events.remove_handlers_by_keys(key_list)
 
-    def config_play_callback(self, settings, priority=0, mode=None, **kwargs):
+    def config_play_callback(self, settings, calling_context, priority=0, mode=None, **kwargs):
         """Callback for standalone player."""
         # called when a config_player event is posted
         if mode:
@@ -229,9 +230,9 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
         else:
             context = "_global"
 
-        self.play(settings=settings, context=context, priority=priority, **kwargs)
+        self.play(settings=settings, context=context, calling_context=calling_context, priority=priority, **kwargs)
 
-    def show_play_callback(self, settings, priority, show_tokens, context):
+    def show_play_callback(self, settings, priority, calling_context, show_tokens, context):
         """Callback if used in a show."""
         # called from a show step
         if context not in self.instances:
@@ -240,7 +241,7 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
         if self.config_file_section not in self.instances[context]:
             self.instances[context][self.config_file_section] = dict()
 
-        self.play(settings=settings, priority=priority,
+        self.play(settings=settings, priority=priority, calling_context=calling_context,
                   show_tokens=show_tokens, context=context)
 
     def show_stop_callback(self, context):
@@ -248,7 +249,7 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
         self.clear_context(context)
 
     @abc.abstractmethod
-    def play(self, settings, context, priority=0, **kwargs):
+    def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Directly play player."""
         # **kwargs since this is an event callback
         raise NotImplementedError

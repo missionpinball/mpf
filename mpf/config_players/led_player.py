@@ -13,7 +13,7 @@ class LedPlayer(DeviceConfigPlayer):
     show_section = 'leds'
     machine_collection_name = "leds"
 
-    def play(self, settings, context, priority=0, **kwargs):
+    def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Set LED color based on config."""
         instance_dict = self._get_instance_dict(context)
         full_context = self._get_full_context(context)
