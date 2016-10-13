@@ -9,6 +9,7 @@ from mpf.core.player import Player
 
 
 class AchievementGroup(ModeDevice):
+
     """An achievement group in a pinball machine.
 
     It is tracked per player and can automatically restore state on the next
@@ -27,9 +28,13 @@ class AchievementGroup(ModeDevice):
         self._show = None
 
         self._enabled = False
-        self._complete_achievements = set()
+        self._selected = None
 
     def enable(self, **kwargs):
+        del kwargs
+        if self._enabled:
+            return
+
         self._enabled = True
 
         show = self.config['show_when_enabled']
@@ -45,40 +50,59 @@ class AchievementGroup(ModeDevice):
         for e in self.config['events_when_enabled']:
             self.machine.events.post(e)
 
+        self._selected = None
+        self._get_current().select()
+
     def disable(self, **kwargs):
+        del kwargs
+        if not self._enabled:
+            return
         self._stop_show()
         self._enabled = False
+        self._selected = None
 
     def _stop_show(self):
         if self._show:
             self._show.stop()
             self._show = None
 
+    def _get_available_achievements(self):
+        return [x for x in self.config['achievements'] if
+                x.state == 'enabled' or
+                x.state == 'selected' or
+                (x.state == 'stopped' and
+                x.config['restart_after_stop_possible'])]
+
+    def _get_current(self):
+        if not self._selected:
+            self._selected = choice(self._get_available_achievements())
+
+        return self._selected
+
     def start_selected(self, **kwargs):
+        del kwargs
         if not self._enabled:
             return
-
-        for ach in [x for x in self.config['achievements'] if
-                    x.state == 'selected']:
-            ach.start()
+        self._get_current().start()
+        self.disable()
 
     def rotate_right(self, reverse=False, **kwargs):
-        achievements = ([x for x in self.config['achievements'] if
-            x.state in ('enabled', 'selected')])
-
-        for index, a in enumerate(achievements):
-            if a.state == 'selected':
-                a.enable()
-
-                if not reverse:
-                    try:
-                        achievements[index+1].select()
-                    except IndexError:
-                        achievements[0].select()
-                else:
-                    achievements[index-1].select()
-
-                return
+        del kwargs
+        if not self._enabled:
+            return
+        if self._selected and self._selected.state == "selected":
+            self._selected.enable()
+        achievements = self._get_available_achievements()
+        try:
+            current_index = achievements.index(self._get_current())
+        except ValueError:
+            self._selected = self._get_current()
+        else:
+            if reverse:
+                self._selected = achievements[(current_index - 1) % len(achievements)]
+            else:
+                self._selected = achievements[(current_index + 1) % len(achievements)]
+        self._selected.select()
 
     def rotate_left(self, **kwargs):
         self.rotate_right(reverse=True)
@@ -90,13 +114,19 @@ class AchievementGroup(ModeDevice):
     def all_complete(self):
         for e in self.config['events_when_all_complete']:
             self.machine.events.post(e)
+        self.disable()
 
     def select_random_achievement(self, **kwargs):
+        del kwargs
+        # TODO: do we need this?
+        if not self._enabled:
+            return
+
+        if self._selected and self._selected.state == "selected":
+            self._selected.enable()
         try:
-            ach = choice([x for x in self.config['achievements'] if
-                 x.state == 'enabled' or
-                 (x.state == 'stopped' and
-                  x.config['restart_after_stop_possible'])])
+            ach = choice(self._get_available_achievements())
+            self._selected = ach
             ach.select()
 
         except IndexError:
@@ -104,19 +134,16 @@ class AchievementGroup(ModeDevice):
 
     def _member_state_changed(self, achievement, **kwargs):
         del kwargs
-
-        state = achievement.state
-
-        if state == 'completed':
-            self._complete_achievements.add(achievement)
-        else:
-            self._complete_achievements.discard(achievement)
+        del achievement
 
         self._check_for_all_complete()
 
+        if self._enabled and self._selected and self._selected.state != "selected":
+            self._selected = None
+            self._get_current().select()
+
     def _check_for_all_complete(self):
-        if len(self._complete_achievements) == len(
-                self.config['achievements']):
+        if not [x for x in self.config['achievements'] if x.state != "complete"]:
             self.all_complete()
 
     def device_added_to_mode(self, mode: Mode, player: Player):
