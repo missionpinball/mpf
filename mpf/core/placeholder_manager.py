@@ -110,15 +110,18 @@ class PlaceholderManager(MpfController):
         else:
             raise TypeError(type(node))
 
-    def _eval_num(self, node, variables):
+    @staticmethod
+    def _eval_num(node, variables):
         del variables
         return node.n
 
-    def _eval_str(self, node, variables):
+    @staticmethod
+    def _eval_str(node, variables):
         del variables
         return node.s
 
-    def _eval_name_constant(self, node, variables):
+    @staticmethod
+    def _eval_name_constant(node, variables):
         del variables
         return node.value
 
@@ -159,7 +162,8 @@ class PlaceholderManager(MpfController):
     def _eval(self, node, variables):
         if node is None:
             return None
-        elif type(node) in self._eval_methods:
+
+        elif type(node) in self._eval_methods:  # pylint: disable-msg=unidiomatic-typecheck
             return self._eval_methods[type(node)](node, variables)
         else:
             raise TypeError(type(node))

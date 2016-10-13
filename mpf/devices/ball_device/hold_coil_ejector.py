@@ -6,6 +6,10 @@ class HoldCoilEjector(BallDeviceEjector):
 
     """Hold balls by enabling and releases by disabling a coil."""
 
+    def eject_all_balls(self):
+        """Eject all balls."""
+        raise NotImplementedError()
+
     def __init__(self, ball_device):
         """Initialise hold coil ejector."""
         super().__init__(ball_device)

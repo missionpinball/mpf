@@ -641,7 +641,6 @@ class Shot(ModeDevice, SystemWideDevice):
                 in the show)
 
         """
-
         self.debug_log("Received jump request. Mode: %s, State: %s, Show step:"
                        " %s, Force: %s", mode, state, show_step, force)
 

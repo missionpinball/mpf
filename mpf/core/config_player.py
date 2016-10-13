@@ -232,6 +232,7 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
 
         self.play(settings=settings, context=context, calling_context=calling_context, priority=priority, **kwargs)
 
+    # pylint: disable-msg=too-many-arguments
     def show_play_callback(self, settings, priority, calling_context, show_tokens, context):
         """Callback if used in a show."""
         # called from a show step

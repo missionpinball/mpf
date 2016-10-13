@@ -153,6 +153,7 @@ class BallSearch(object):
 
     def cancel_ball_search(self, **kwargs):
         """Cancel the current ballsearch and mark the ball as missing."""
+        del kwargs
         if self.started:
             self.give_up()
 

@@ -8,11 +8,12 @@ from mpf.core.player import Player
 
 class ModeDevice(Device, metaclass=abc.ABCMeta):
 
+    """A device in a mode."""
+
     def __init__(self, machine, name):
+        """Initialise mode device."""
         super().__init__(machine, name)
         self.loaded_in_mode = None
-
-    """A device in a mode."""
 
     def device_added_to_mode(self, mode: Mode, player: Player):
         """Called when a device is created by a mode.
@@ -32,6 +33,8 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
 
     def overload_config_in_mode(self, mode, config):
         """Overload config in mode."""
+        del mode
+        del config
         raise AssertionError("Device {} cannot be overloaded.".format(self))
 
     def add_control_events_in_mode(self, mode):

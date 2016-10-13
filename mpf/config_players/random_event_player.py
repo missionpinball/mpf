@@ -1,6 +1,4 @@
 """Random event config player."""
-import random
-
 from mpf.core.config_player import ConfigPlayer
 from mpf.core.randomizer import Randomizer
 from mpf.core.utility_functions import Util
@@ -15,6 +13,7 @@ class RandomEventPlayer(ConfigPlayer):
     device_collection = None
 
     def __init__(self, machine):
+        """Initialise random event player."""
         super().__init__(machine)
         self._machine_wide_dict = {}
 
@@ -33,8 +32,7 @@ class RandomEventPlayer(ConfigPlayer):
         """Play a random event from list based on config."""
         del priority
         randomizer = self._get_randomizer(settings, context, calling_context)
-        next = randomizer.get_next()
-        self.machine.events.post(next, **kwargs)
+        self.machine.events.post(randomizer.get_next(), **kwargs)
 
     def validate_config_entry(self, settings, name):
         """Validate one entry of this player."""

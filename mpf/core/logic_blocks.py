@@ -157,7 +157,6 @@ class LogicBlock(object):
             if not self.config['enable_events']:
                 self.enabled = True
 
-
         if not self.config['events_when_complete']:
             self.config['events_when_complete'] = ['logicblock_' + self.name + '_complete']
 
@@ -166,18 +165,22 @@ class LogicBlock(object):
 
     @property
     def enabled(self):
+        """Return if enabled."""
         return self.player[self.player_state_variable]["enabled"]
 
     @enabled.setter
     def enabled(self, value):
+        """Set enable."""
         self.player[self.player_state_variable]["enabled"] = value
 
     @property
     def completed(self):
+        """Return if completed."""
         return self.player[self.player_state_variable]["completed"]
 
     @completed.setter
     def completed(self, value):
+        """Set if completed."""
         self.player[self.player_state_variable]["completed"] = value
 
     @property

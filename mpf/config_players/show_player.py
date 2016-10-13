@@ -1,6 +1,4 @@
 """Show config player."""
-from copy import deepcopy
-
 from mpf.config_players.device_config_player import DeviceConfigPlayer
 
 
