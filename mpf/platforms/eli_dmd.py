@@ -5,6 +5,8 @@ import sys
 import threading
 import traceback
 from queue import Queue
+
+import asyncio
 import serial
 from mpf.core.platform import RgbDmdPlatform
 
@@ -16,14 +18,13 @@ class EliDmd(RgbDmdPlatform):
     def __init__(self, machine):
         """Initialise RGB DMD."""
         super().__init__(machine)
+        self.features['tickless'] = True
 
         self.log = logging.getLogger('RgbDmd')
         self.log.debug("Configuring RGB DMD hardware interface.")
 
-        self.queue = None
-        self.serial_port = None
-        self.dmd_thread = None
-        self.update = None
+        self.reader = None
+        self.writer = None
 
         self.config = self.machine.config_validator.validate_config(
             config_spec='eli_dmd',
@@ -37,7 +38,7 @@ class EliDmd(RgbDmdPlatform):
         """Stop platform."""
         try:
             self.log.info("Disconnecting from RGB DMD hardware...")
-            self.serial_port.close()
+            self.writer.close()
         except AttributeError:
             pass
 
@@ -47,32 +48,25 @@ class EliDmd(RgbDmdPlatform):
 
     def configure_rgb_dmd(self):
         """Configure rgb dmd."""
-        self.log.info("Connecting to RGB DMD on %s baud %s", self.config['port'], self.config['baud'])
-        self.serial_port = serial.Serial(port=self.config['port'], baudrate=self.config['baud'])
-
-        self.queue = Queue()
-        self.dmd_thread = threading.Thread(target=self._dmd_sender_thread)
-        self.dmd_thread.daemon = True
-        self.dmd_thread.start()
-        self.update = self._update_separate_thread
-
+        self.machine.clock.loop.run_until_complete(self._connect())
         return self
 
-    def _update_separate_thread(self, data):
-        self.queue.put(bytearray(data))
+    @staticmethod
+    def _done(future):
+        """Evaluate result of task.
 
-    def _dmd_sender_thread(self):
-        while True:
-            print(".")
-            data = self.queue.get()  # this will block
+        Will raise exceptions from within task.
+        """
+        future.result()
 
-            try:
-                self.serial_port.write(bytearray([0xBA, 0x11, 0x00, 0x03, 0x04, 0x00, 0x00, 0x00]))
-                self.serial_port.write(bytearray(data))
+    @asyncio.coroutine
+    def _connect(self):
+        self.log.info("Connecting to RGB DMD on %s baud %s", self.config['port'], self.config['baud'])
+        connector = self.machine.clock.open_serial_connection(
+            url=self.config['port'], baudrate=self.config['baud'], limit=0)
+        self.reader, self.writer = yield from connector
 
-            except IOError:
-                exc_type, exc_value, exc_traceback = sys.exc_info()
-                lines = traceback.format_exception(exc_type, exc_value,
-                                                   exc_traceback)
-                msg = ''.join(line for line in lines)
-                self.machine.crash_queue.put(msg)
+    def update(self, data):
+        if self.writer:
+            self.writer.write(bytearray([0xBA, 0x11, 0x00, 0x03, 0x04, 0x00, 0x00, 0x00]))
+            self.writer.write(bytearray(data))

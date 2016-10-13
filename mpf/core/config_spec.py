@@ -851,7 +851,6 @@ eli_dmd:
     __valid_in__: machine
     port: single|str|
     baud: single|int|
-    use_separate_thread: single|bool|true
 smart_virtual:
     __valid_in__: machine
     simulate_manual_plunger: single|bool|False
