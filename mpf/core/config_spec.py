@@ -678,6 +678,8 @@ score_reel_groups:
     confirm: single|str|lazy
 scoring:
     __valid_in__: modes                             # todo add to validator
+    score: single|template_int|
+    block: single|bool|False
 scriptlets:
     __valid_in__: machine                           # todo add to validator
 servo_controller:
