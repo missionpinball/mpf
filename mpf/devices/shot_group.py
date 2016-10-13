@@ -87,7 +87,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         # group when its created on mode start
 
         config = self._get_mode_config(mode)
-        if ((not config['enable_events']) or 'mode_{}_started'.format(mode.name) in config['enable_events']):
+        if not config['enable_events'] or 'mode_{}_started'.format(mode.name) in config['enable_events']:
             self.enable(mode)
         else:
             # manually call disable here so it disables the member shots

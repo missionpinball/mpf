@@ -21,7 +21,7 @@ class BananaPlayer(DeviceConfigPlayer):
         self.machine.bananas = dict()
         self.machine.banana_play_calls = list()
 
-    def play(self, settings, context, key=None, priority=0, **kwargs):
+    def play(self, settings, context, calling_context, key=None, priority=0, **kwargs):
         self.machine.banana_play_calls.append(PlayCall(
             settings, key, priority, kwargs))
 

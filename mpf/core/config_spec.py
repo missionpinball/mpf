@@ -649,7 +649,11 @@ pololu_maestro:
     servo_max: single|int|9000
 random_event_player:
     __valid_in__: machine, mode, show
-    event_list: list|str|
+    events: list|str|
+    force_different: single|bool|true
+    force_all: single|bool|true
+    disable_random: single|bool|false
+    scope: single|enum(player,machine)|player
 score_reels:
     __valid_in__: machine
     coil_inc: single|machine(coils)|None

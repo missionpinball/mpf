@@ -851,9 +851,9 @@ class BallDevice(SystemWideDevice):
         self._validate_config()
 
         if self.config['eject_coil']:
-            self.ejector = PulseCoilEjector(self)
+            self.ejector = PulseCoilEjector(self)   # pylint: disable-msg=redefined-variable-type
         elif self.config['hold_coil']:
-            self.ejector = HoldCoilEjector(self)
+            self.ejector = HoldCoilEjector(self)    # pylint: disable-msg=redefined-variable-type
 
         # register switch and event handlers
         self._register_handlers()
@@ -1438,6 +1438,7 @@ class BallDevice(SystemWideDevice):
 
     def hold(self, **kwargs):
         """Event handler for hold event."""
+        del kwargs
         # TODO: remove when migrating config to ejectors
         self.ejector.hold()
 

@@ -18,7 +18,7 @@ class EventPlayer(FlatConfigPlayer):
         super().__init__(machine)
         self.delay = DelayManager(self.machine.delayRegistry)
 
-    def play(self, settings, context, priority=0, **kwargs):
+    def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Post (delayed) events."""
         for event, s in settings.items():
             s = deepcopy(s)

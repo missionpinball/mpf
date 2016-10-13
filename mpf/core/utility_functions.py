@@ -31,11 +31,11 @@ class Util(object):
     def convert_to_type(value, type_name):
         """Convert value to type."""
         if type_name == "int":
-            result_value = int(value)
+            result_value = int(value)   # pylint: disable-msg=redefined-variable-type
         elif type_name == "float":
-            result_value = float(value)
+            result_value = float(value)     # pylint: disable-msg=redefined-variable-type
         elif type_name == "str":
-            result_value = str(value)
+            result_value = str(value)   # pylint: disable-msg=redefined-variable-type
         else:
             raise AssertionError("Unknown type {}".format(type_name))
 

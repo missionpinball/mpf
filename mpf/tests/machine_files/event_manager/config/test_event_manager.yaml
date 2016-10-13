@@ -15,8 +15,10 @@ event_player:
 
 random_event_player:
     test_random_event_player1:
+      events:
         - test_random_event_player2
         - test_random_event_player3
+      scope: machine
 
 modes:
   - test_mode

@@ -631,7 +631,8 @@ class SwitchController(MpfController):
                 switch.recycle_jitter_count += 1
             return False
 
-    def get_active_event_for_switch(self, switch_name):
+    @staticmethod
+    def get_active_event_for_switch(switch_name):
         """Return the event name which is posted when switch_name becomes active."""
         return "{}_active".format(switch_name)
 

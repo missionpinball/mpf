@@ -1,11 +1,12 @@
 """Test event manager."""
 from mpf.core.delays import DelayManager
 from mpf.core.settings_controller import SettingEntry
+from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 from mpf.tests.MpfTestCase import MpfTestCase
 from unittest.mock import patch
 
 
-class TestEventManager(MpfTestCase):
+class TestEventManager(MpfFakeGameTestCase, MpfTestCase):
     def __init__(self, test_map):
         super().__init__(test_map)
         self._handler1_args = tuple()
@@ -566,10 +567,10 @@ class TestEventManager(MpfTestCase):
         self.machine.events.add_handler('test_random_event_player3', self.event_handler3)
         self.advance_time_and_run(1)
 
-        with patch('random.choice', return_value="test_random_event_player2") as mock_random:
+        with patch('random.randint', return_value=1) as mock_random:
             self.machine.events.post('test_random_event_player1', test="123")
             self.advance_time_and_run(1)
-            mock_random.assert_called_once_with(['test_random_event_player2', 'test_random_event_player3'])
+            mock_random.assert_called_once_with(1, 2)
 
         self.assertEqual(1, self._handler1_called)
         self.assertEqual(1, self._handler2_called)
@@ -579,10 +580,10 @@ class TestEventManager(MpfTestCase):
         self.assertEqual(tuple(), self._handler2_args)
         self.assertEqual(dict(test="123"), self._handler2_kwargs)
 
-        with patch('random.choice', return_value="test_random_event_player3") as mock_random:
+        with patch('random.randint', return_value=1) as mock_random:
             self.machine.events.post('test_random_event_player1', test="123")
             self.advance_time_and_run(1)
-            mock_random.assert_called_once_with(['test_random_event_player2', 'test_random_event_player3'])
+            mock_random.assert_called_once_with(1, 1)
 
         self.assertEqual(2, self._handler1_called)
         self.assertEqual(1, self._handler2_called)
@@ -633,6 +634,7 @@ class TestEventManager(MpfTestCase):
         self.assertEqual(1, self._handler3_called)
 
     def test_random_event_player_in_mode(self):
+        self.start_game()
         self.machine.events.add_handler('test_random_event_player_mode1', self.event_handler1)
         self.machine.events.add_handler('test_random_event_player_mode2', self.event_handler2)
         self.machine.events.add_handler('test_random_event_player_mode3', self.event_handler3)
@@ -652,10 +654,10 @@ class TestEventManager(MpfTestCase):
         self.assertTrue(self.machine.mode_controller.is_active("test_mode"))
 
         # now the event should get replayed
-        with patch('random.choice', return_value="test_random_event_player_mode2") as mock_random:
+        with patch('random.randint', return_value=1) as mock_random:
             self.machine.events.post('test_random_event_player_mode1', test="123")
             self.advance_time_and_run(1)
-            mock_random.assert_called_once_with(['test_random_event_player_mode2', 'test_random_event_player_mode3'])
+            mock_random.assert_called_once_with(1, 2)
 
         self.assertEqual(2, self._handler1_called)
         self.assertEqual(1, self._handler2_called)

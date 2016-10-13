@@ -608,6 +608,7 @@ class RunningShow(object):
                 self.machine.show_controller.show_players[item_type].show_play_callback(
                     settings=item_dict,
                     context="show_" + str(self.id),
+                    calling_context=self.current_step_index,
                     priority=self.priority,
                     show_tokens=self.show_tokens)
 
