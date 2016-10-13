@@ -55,7 +55,7 @@ class Achievement(ModeDevice):
         It can only start if it was enabled before.
         """
         del kwargs
-        if self._state in ("disabled", "selected"):
+        if self._state in ("disabled", "selected", "started"):
             self._state = "enabled"
             self._run_state()
 
