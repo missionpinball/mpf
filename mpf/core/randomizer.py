@@ -4,7 +4,7 @@ import random
 
 class Randomizer(object):
 
-    def __init__(self, machine, items, memory='player'):
+    def __init__(self, items):
 
         self.force_different = True
         self.force_all = False
@@ -13,15 +13,13 @@ class Randomizer(object):
         self.items = list()
 
         self._loop = True
-        self._machine = machine
+        self.data = None
         self._uuid = uuid4()
-        self._data = None
-        self._player_memory = True
 
         assert(isinstance(items, list) or isinstance(items, tuple))
 
         for i in items:
-            if hasattr(i, '__iter__'):
+            if isinstance(i, (tuple, list)):
                 this_item = i[0]
                 this_weight = int(i[1])
             else:
@@ -30,16 +28,8 @@ class Randomizer(object):
 
             self.items.append((this_item, this_weight))
 
-        if memory == 'player':
-            self._player_memory = True
-        elif memory == 'machine':
-            self._player_memory = False
-
-            self._data = dict()
-            self._init_data(self._data)
-
-        else:
-            raise ValueError("Memory should be 'machine' or 'player")
+        self.data = dict()
+        self._init_data(self.data)
 
     def __iter__(self):
         return self
@@ -78,22 +68,6 @@ class Randomizer(object):
         return self.data['current_item']
 
     @property
-    def data(self):
-        if self._player_memory:
-            try:
-                if not self._machine.game.player[self._uuid]:
-                    self._machine.game.player[self._uuid] = dict()
-                    self._init_data(self._machine.game.player[self._uuid])
-            except AttributeError:
-                raise AssertionError("Cannot access 'player memory' Randomizer"
-                                     " as there is no active game or player")
-
-            return self._machine.game.player[self._uuid]
-
-        else:
-            return self._data
-
-    @property
     def loop(self):
         return self._loop
 
@@ -113,7 +87,7 @@ class Randomizer(object):
                 self.data['current_item_index'] = 0
 
         self.data['current_item'] = (
-            self.items[self._data['current_item_index']][0])
+            self.items[self.data['current_item_index']][0])
 
         self.data['current_item_index'] += 1
 
