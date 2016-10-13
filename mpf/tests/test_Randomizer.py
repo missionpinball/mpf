@@ -1,10 +1,9 @@
-"""Test Randomizer class"""
-from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
+"""Test Randomizer class."""
 from mpf.tests.MpfTestCase import MpfTestCase
 from mpf.core.randomizer import Randomizer
 
 
-class TestRandomizer(MpfFakeGameTestCase, MpfTestCase):
+class TestRandomizer(MpfTestCase):
 
     def getConfigFile(self):
         return 'randomizer.yaml'
@@ -15,12 +14,12 @@ class TestRandomizer(MpfFakeGameTestCase, MpfTestCase):
     def test_machine_randomizer(self):
 
         items = [
-            ('1', 1),
-            ('2', 1),
-            ('3', 1),
+            '1',
+            '2',
+            '3',
         ]
 
-        r = Randomizer(self.machine, items, 'machine')
+        r = Randomizer(items)
 
         results = list()
 
@@ -39,7 +38,7 @@ class TestRandomizer(MpfFakeGameTestCase, MpfTestCase):
             ('3', 1),
         ]
 
-        r = Randomizer(self.machine, items, 'machine')
+        r = Randomizer(items)
         r.force_different = True
 
         last_item = None
@@ -56,7 +55,7 @@ class TestRandomizer(MpfFakeGameTestCase, MpfTestCase):
             ('3', 1),
         ]
 
-        r = Randomizer(self.machine, items, 'machine')
+        r = Randomizer(items)
         r.force_all = True
 
         last_item = None
@@ -77,7 +76,7 @@ class TestRandomizer(MpfFakeGameTestCase, MpfTestCase):
             ('3', 1),
         ]
 
-        r = Randomizer(self.machine, items, 'machine')
+        r = Randomizer(items)
         r.loop = False
 
         x = 0
@@ -86,51 +85,6 @@ class TestRandomizer(MpfFakeGameTestCase, MpfTestCase):
 
         self.assertEqual(3, x)
 
-    def test_player_memory(self):
-
-        items = [
-            ('1', 1),
-            ('2', 1),
-            ('3', 1),
-        ]
-
-        # make sure we can instantiate the randomizer before we have players
-        r = Randomizer(self.machine, items, 'player')
-        r.force_all = True
-
-        # should raise this error if there's no player
-        with self.assertRaises(AssertionError):
-            next(r)
-
-        for _ in range(50):
-
-            p1_items = list()
-            p2_items = list()
-
-            self.start_game()
-
-            p1_items.append(next(r))
-            p1_items.append(next(r))
-
-            # add a second player
-            self.add_player()
-            self.drain_ball()
-
-            self.assertEqual(self.machine.game.player.number, 2)
-
-            p2_items.append(next(r))
-            p2_items.append(next(r))
-
-            self.drain_ball()
-
-            self.assertNotIn(next(r), p1_items)
-
-            self.drain_ball()
-
-            self.assertNotIn(next(r), p2_items)
-
-            self.stop_game()
-
     def test_weights(self):
         items = [
             ('1', 2),
@@ -138,7 +92,7 @@ class TestRandomizer(MpfFakeGameTestCase, MpfTestCase):
             ('3', 1),
         ]
 
-        r = Randomizer(self.machine, items, 'machine')
+        r = Randomizer(items)
         r.force_different = False
 
         results = list()
@@ -156,7 +110,7 @@ class TestRandomizer(MpfFakeGameTestCase, MpfTestCase):
             ('3', 3),
         ]
 
-        r = Randomizer(self.machine, items, 'machine')
+        r = Randomizer(items)
         r.force_different = False
 
         results = list()
@@ -174,7 +128,7 @@ class TestRandomizer(MpfFakeGameTestCase, MpfTestCase):
             ('3', 3),
         ]
 
-        r = Randomizer(self.machine, items, 'machine')
+        r = Randomizer(items)
         r.force_different = False
 
         results = list()
@@ -194,7 +148,7 @@ class TestRandomizer(MpfFakeGameTestCase, MpfTestCase):
             ('3', 1),
         ]
 
-        r = Randomizer(self.machine, items, 'machine')
+        r = Randomizer(items)
         r.disable_random = True
 
         for i1 in range(50):
@@ -212,7 +166,7 @@ class TestRandomizer(MpfFakeGameTestCase, MpfTestCase):
 
         for _ in range(50):
 
-            r = Randomizer(self.machine, items, 'machine')
+            r = Randomizer(items)
             r.loop = False
             r.disable_random = True
 
