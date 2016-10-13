@@ -93,7 +93,9 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
         raise NotImplementedError("implement")
 
     def _parse_config(self, config, name):
-        if isinstance(config, (str, int, float, type(None))):
+        if config is None:
+            raise AssertionError("Empty config player {}".format(name))
+        elif isinstance(config, (str, int, float)):
             # express config, convert to full
             config = self.get_express_config(config)
         elif isinstance(config, list):
