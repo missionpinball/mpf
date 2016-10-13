@@ -32,7 +32,8 @@ class AchievementGroup(ModeDevice):
 
     def enable(self, **kwargs):
         del kwargs
-        if self._enabled:
+        if self._enabled and self._selected and self._show:
+            # todo hack - how does it get here with no selecter and/or no show?
             return
 
         self._enabled = True
