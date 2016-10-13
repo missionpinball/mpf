@@ -64,6 +64,7 @@ mpf:
         - mpf.devices.accelerometer.Accelerometer
         - mpf.devices.servo.Servo
         - mpf.devices.achievement.Achievement
+        - mpf.devices.achievement_group.AchievementGroup
         - mpf.devices.physical_dmd.PhysicalDmd
         - mpf.devices.physical_rgb_dmd.PhysicalRgbDmd
         - mpf.devices.led_group.LedStrip
@@ -162,6 +163,7 @@ mpf:
       - switches
       - timers
       - achievements
+      - achievement_groups
 
 # Default settings for machines. All can be overridden
 

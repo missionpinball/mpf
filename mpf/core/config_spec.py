@@ -14,6 +14,20 @@ accelerometers:
     level_y: single|int|0
     level_z: single|int|1
     number: single|str|
+achievement_groups:
+    __valid_in__: mode
+    achievements: list|machine(achievements)|
+    enable_events: dict|str:ms|None
+    disable_events: dict|str:ms|None
+    start_selected_events: dict|str:ms|None
+    select_random_achievement_events: dict|str:ms|None
+    rotate_right_events: dict|str:ms|None
+    rotate_left_events: dict|str:ms|None
+    events_when_all_complete: list|str|None
+    events_when_no_more_enabled: list|str|None
+    events_when_enabled: list|str|None
+    show_tokens: dict|str:str|None
+    show_when_enabled: single|str|None
 achievements:
     __valid_in__: mode
     enable_events: dict|str:ms|None
@@ -22,16 +36,19 @@ achievements:
     disable_events: dict|str:ms|None
     stop_events: dict|str:ms|None
     reset_events: dict|str:ms|None
+    select_events: dict|str:ms|None
     events_when_enabled: list|str|None
     events_when_started: list|str|None
     events_when_completed: list|str|None
     events_when_stopped: list|str|None
     events_when_disabled: list|str|None
+    events_when_selected: list|str|None
     show_when_enabled: single|str|None
     show_when_started: single|str|None
     show_when_completed: single|str|None
     show_when_stopped: single|str|None
     show_when_disabled: single|str|None
+    show_when_selected: single|str|None
     show_tokens: dict|str:str|None
     restart_on_next_ball_when_started: single|bool|True
     enable_on_next_ball_when_enabled: single|bool|True
