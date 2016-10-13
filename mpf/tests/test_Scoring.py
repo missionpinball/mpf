@@ -47,6 +47,13 @@ class TestScoring(MpfTestCase):
         self.assertEqual(2, self.machine.game.player.vars['var_a'])
         self.assertEqual(3, self.machine.game.player.var_c)
 
+        self.post_event("test_set_100")
+        self.assertEqual(100, self.machine.game.player.test1)
+        self.post_event("test_set_200")
+        self.assertEqual(200, self.machine.game.player.test1)
+        self.post_event("test_set_100")
+        self.assertEqual(100, self.machine.game.player.test1)
+
         # start mode 2
         self.post_event('start_mode2')
         self.assertTrue(self.machine.mode_controller.is_active('mode2'))

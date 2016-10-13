@@ -18,7 +18,6 @@ mpf:
         - show_controller: mpf.core.show_controller.ShowController
         - bcp: mpf.core.bcp.bcp.Bcp
         - logic_blocks: mpf.core.logic_blocks.LogicBlocks
-        - scoring: mpf.core.scoring.ScoreController
         - service: mpf.core.service_controller.ServiceController
         - settings: mpf.core.settings_controller.SettingsController
         - placeholder_manager: mpf.core.placeholder_manager.PlaceholderManager
@@ -35,6 +34,7 @@ mpf:
         random_event: mpf.config_players.random_event_player
         show: mpf.config_players.show_player
         trigger: mpf.config_players.trigger_player
+        score: mpf.config_players.score_player
 
     device_modules:
         - mpf.devices.driver.Driver
