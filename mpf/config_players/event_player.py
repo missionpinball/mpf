@@ -20,9 +20,9 @@ class EventPlayer(FlatConfigPlayer):
 
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Post (delayed) events."""
+        del kwargs
         for event, s in settings.items():
             s = deepcopy(s)
-            s.update(kwargs)
             if '|' in event:
                 event, delay = event.split("|")
                 delay = Util.string_to_ms(delay)

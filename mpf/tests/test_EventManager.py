@@ -543,11 +543,9 @@ class TestEventManager(MpfFakeGameTestCase, MpfTestCase):
         self.assertEqual(tuple(), self._handler1_args)
         self.assertEqual(dict(test="123"), self._handler1_kwargs)
         self.assertEqual(tuple(), self._handler2_args)
-        self.assertEqual(dict(test="123", priority=0),
-                         self._handler2_kwargs)
+        self.assertEqual(dict(priority=0), self._handler2_kwargs)
         self.assertEqual(tuple(), self._handler3_args)
-        self.assertEqual(dict(test="123", priority=0),
-                         self._handler3_kwargs)
+        self.assertEqual(dict(priority=0), self._handler3_kwargs)
 
     def test_event_player_delay(self):
         self.mock_event('test_event_player2')
