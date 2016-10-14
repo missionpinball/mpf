@@ -1374,10 +1374,10 @@ class BallDevice(SystemWideDevice):
                                round(self.machine.clock.get_time() - self.eject_start_time,
                                      2))
 
-    def _ball_left_device(self, balls, **kwargs):
+    def _ball_left_device(self, **kwargs):
         del kwargs
-        assert balls == 1
-        assert self._state == "ejecting"
+        if self._state != "ejecting":
+            raise AssertionError("Device in wrong state {}. Should be in ejecting.".format(self._state))
         # remove handler
         for switch in self.config['ball_switches']:
             self.machine.switch_controller.remove_switch_handler(
@@ -1420,7 +1420,6 @@ class BallDevice(SystemWideDevice):
                     self.machine.switch_controller.add_switch_handler(
                         switch_name=switch.name,
                         callback=self._ball_left_device,
-                        callback_kwargs={'balls': 1},
                         state=0)
 
         if self.ejector:
