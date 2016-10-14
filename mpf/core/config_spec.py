@@ -846,7 +846,8 @@ snux:
 smartmatrix:
     __valid_in__: machine
     port: single|str|
-    use_separate_thread: single|bool|true
+    baud: single|int|
+    old_cookie: single|bool|False
 smart_virtual:
     __valid_in__: machine
     simulate_manual_plunger: single|bool|False
