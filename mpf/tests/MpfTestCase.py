@@ -287,6 +287,16 @@ class MpfTestCase(unittest.TestCase):
     def assertLedColor(self, led_name, color):
         self.assertEqual(list(RGBColor(color).rgb), self.machine.leds[led_name].hw_driver.current_color)
 
+    def assertLedColors(self, led_name, color_list, secs, check_delta=.1):
+        colors = list()
+
+        for x in range(secs*10):
+            colors.append(RGBColor(self.machine.leds[led_name].hw_driver.current_color))
+            self.advance_time_and_run(check_delta)
+
+        for color in color_list:
+            self.assertIn(RGBColor(color), colors)
+
     def assertModeRunning(self, mode_name):
         if mode_name not in self.machine.modes:
             raise AssertionError("Mode {} not known.".format(mode_name))
@@ -336,6 +346,14 @@ class MpfTestCase(unittest.TestCase):
             self.assertEqual(show_name, self.machine.shots[shot_name].profiles[0]['running_show'].name)
         else:
             self.assertIsNone(self.machine.shots[shot_name].profiles[0]['running_show'])
+
+    def get_timer(self, timer):
+        for mode in self.machine.modes:
+            for t in mode.timers:
+                if t == timer:
+                    return mode.timers[t]
+
+        raise AssertionError("Timer {} not found".format(timer))
 
     def reset_mock_events(self):
         for event in self._events.keys():
