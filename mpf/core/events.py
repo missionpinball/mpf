@@ -422,7 +422,9 @@ class EventManager(object):
             self.log.debug("^^^^ Processing queue event '%s'. Callback: %s,"
                            " Args: %s", event, callback, kwargs)
 
-        blocked = False
+        # all handlers may have been removed in the meantime
+        if event not in self.registered_handlers:
+            return
 
         # Now let's call the handlers one-by-one, including any kwargs
         for handler in self.registered_handlers[event][:]:
@@ -460,10 +462,7 @@ class EventManager(object):
                            "Args: %s", event, callback, kwargs)
 
         if callback:
-            #if blocked:
-                callback(**kwargs)
-            #else:
-            #    self.callback_queue.append((callback, kwargs))
+            callback(**kwargs)
 
     def _run_handlers(self, event, ev_type, kwargs):
         """Run all handlers for an event."""
