@@ -360,16 +360,16 @@ class MpfTestCase(unittest.TestCase):
             self._events[event] = 0
 
     def hit_switch_and_run(self, name, delta):
-        self.machine.switch_controller.process_switch(name, 1)
+        self.machine.switch_controller.process_switch(name, 1, True)
         self.advance_time_and_run(delta)
 
     def release_switch_and_run(self, name, delta):
-        self.machine.switch_controller.process_switch(name, 0)
+        self.machine.switch_controller.process_switch(name, 0, True)
         self.advance_time_and_run(delta)
 
     def hit_and_release_switch(self, name):
-        self.machine.switch_controller.process_switch(name, 1)
-        self.machine.switch_controller.process_switch(name, 0)
+        self.machine.switch_controller.process_switch(name, 1, True)
+        self.machine.switch_controller.process_switch(name, 0, True)
         self.machine_run()
 
     def tearDown(self):
