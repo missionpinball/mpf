@@ -23,6 +23,7 @@ class EventManager(object):
         self.registered_handlers = {}   # type: {str: [RegisteredHandler]}
         self.event_queue = deque([])
         self.callback_queue = deque([])
+        self.monitor_events = False
 
         self.debug = True
 
@@ -407,7 +408,12 @@ class EventManager(object):
         if not self.event_queue and hasattr(self.machine.clock, "loop"):
             self.machine.clock.loop.call_soon(self.process_event_queue)
 
-        self.event_queue.append(PostedEvent(event, ev_type, callback, kwargs))
+        posted_event = PostedEvent(event, ev_type, callback, kwargs)
+
+        if self.monitor_events:
+            self.machine.bcp.interface.monitor_posted_event(posted_event)
+
+        self.event_queue.append(posted_event)
         if self.debug:
             self.log.debug("============== EVENTS QUEUE =============")
             for event in list(self.event_queue):
