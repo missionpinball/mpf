@@ -22,10 +22,25 @@ class RandomEventPlayer(ConfigPlayer):
         if settings['scope'] == "player":
             if not self.machine.game.player[key]:
                 self.machine.game.player[key] = Randomizer(settings['events'])
+
+            if settings['force_all']:
+                self.machine.game.player[key].force_all = True
+
+            if settings['force_different']:
+                self.machine.game.player[key].force_different = True
+
             return self.machine.game.player[key]
+
         else:
             if key not in self._machine_wide_dict:
                 self._machine_wide_dict[key] = Randomizer(settings['events'])
+
+            if settings['force_all']:
+                self._machine_wide_dict[key].force_all = True
+
+            if settings['force_different']:
+                self._machine_wide_dict[key].force_different = True
+
             return self._machine_wide_dict[key]
 
     def play(self, settings, context, calling_context, priority=0, **kwargs):
