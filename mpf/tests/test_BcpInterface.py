@@ -53,9 +53,9 @@ class TestBcpInterface(MpfBcpTestCase):
             self._bcp_client.send_queue)
 
         self._bcp_client.send_queue.clear()
-        self.machine.events.post("test3", callback=self._cb)
+        self.machine.events.post("test3", callback=handler)
         self.assertIn(
-            ('monitored_event', {'registered_handlers': [], 'posted_event': "PostedEvent(event='test3', type=None, callback=<bound method TestBcpInterface._cb of <mpf.tests.test_BcpInterface.TestBcpInterface testMethod=test_monitor_events>>, kwargs={})"}),
+            ('monitored_event', {'registered_handlers': [], 'posted_event': "PostedEvent(event='test3', type=None, callback=handler, kwargs={})"}),
             self._bcp_client.send_queue)
 
     def test_switch_monitor(self):
