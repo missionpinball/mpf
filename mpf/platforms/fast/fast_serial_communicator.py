@@ -81,7 +81,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
         # send enough dummy commands to clear out any buffers on the FAST
         # board that might be waiting for more commands
-        self.writer.write(((' ' * 256) + '\r').encode())
+        self.writer.write(((' ' * 256 * 4) + '\r').encode())
 
         while True:
             self.platform.debug_log("Sending 'ID:' command to port '%s'",

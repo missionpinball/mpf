@@ -147,6 +147,9 @@ class MockSerial(MockFd):
         self.fd = self
         self.timeout = None
 
+    def reset_input_buffer(self):
+        pass
+
     def nonblocking(self):
         pass
 
