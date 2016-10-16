@@ -741,7 +741,7 @@ settings:
     machine_var: single|str|None
 shots:
     __valid_in__: machine, mode
-    profile: single|str|None
+    profile: single|str|default
     switch: list|machine(switches)|None
     switches: list|machine(switches)|None
     switch_sequence: list|machine(switches)|None
