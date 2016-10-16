@@ -72,7 +72,7 @@ class TestHighScoreMode(MpfBcpTestCase):
         self.assertTrue(self.machine.modes.high_score.active)
 
         # another 2 secs and it should be done
-        self.advance_time_and_run(2)
+        self.advance_time_and_run(3)
         self.assertFalse(self.machine.modes.high_score.active)
 
         new_score_data = OrderedDict()
