@@ -15,6 +15,8 @@ class BaseMockFast(MockSerial):
 
     def read(self, length):
         del length
+        if not self.queue:
+            return
         msg = (self.queue.pop() + '\r').encode()
         return msg
 
