@@ -34,7 +34,7 @@ class BaseMockFast(MockSerial):
         cmd = cmd[:-1]
 
         # ignore init garbage
-        if cmd == (' ' * 256):
+        if cmd == (' ' * 256 * 4):
             return msg_len
 
         if cmd[:3] == "WD:":
@@ -67,7 +67,7 @@ class MockFastDmd(BaseMockFast):
 
     def write(self, msg):
         msg_len = len(msg)
-        if msg == (b' ' * 256) + b"\r":
+        if msg == (b' ' * 256 * 4) + b"\r":
             return msg_len
 
         cmd = msg
