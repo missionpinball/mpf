@@ -1,5 +1,15 @@
 """Test the bcp interface."""
+from unittest import mock
+
 from mpf.tests.MpfBcpTestCase import MpfBcpTestCase
+
+
+class CallHandler:
+    def __repr__(self):
+        return "handler"
+
+    def __call__(self, *args, **kwargs):
+        pass
 
 
 class TestBcpInterface(MpfBcpTestCase):
@@ -16,6 +26,37 @@ class TestBcpInterface(MpfBcpTestCase):
         self.advance_time_and_run()
 
         self.assertIn('test_event', self.machine.bcp.transport._handlers)
+
+    def _cb(self, **kwargs):
+        pass
+
+    def test_monitor_events(self):
+
+        handler = CallHandler()
+        with mock.patch("uuid.uuid4", return_value="abc"):
+            self.machine.events.add_handler("test2", handler)
+        self._bcp_client.send_queue.clear()
+        self._bcp_client.receive_queue.put_nowait(('monitor_events', {}))
+        self.advance_time_and_run()
+
+        self.machine.events.post("test1")
+        self.assertIn(
+            ('monitored_event', {'posted_event': "PostedEvent(event='test1', type=None, callback=None, kwargs={})",
+                                 'registered_handlers': []}),
+            self._bcp_client.send_queue)
+
+        self._bcp_client.send_queue.clear()
+        self.machine.events.post("test2")
+        self.assertIn(
+            ('monitored_event', {'posted_event': "PostedEvent(event='test2', type=None, callback=None, kwargs={})",
+                                 'registered_handlers': ["RegisteredHandler(callback=handler, priority=1, kwargs={}, key='abc', condition=None)"]}),
+            self._bcp_client.send_queue)
+
+        self._bcp_client.send_queue.clear()
+        self.machine.events.post("test3", callback=handler)
+        self.assertIn(
+            ('monitored_event', {'registered_handlers': [], 'posted_event': "PostedEvent(event='test3', type=None, callback=handler, kwargs={})"}),
+            self._bcp_client.send_queue)
 
     def test_switch_monitor(self):
         self.hit_switch_and_run("s_test", .1)
