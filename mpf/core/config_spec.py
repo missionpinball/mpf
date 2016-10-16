@@ -50,7 +50,7 @@ achievements:
     show_when_disabled: single|str|None
     show_when_selected: single|str|None
     show_tokens: dict|str:str|None
-    restart_on_next_ball_when_started: single|bool|True
+    restart_on_next_ball_when_started: single|bool|False
     enable_on_next_ball_when_enabled: single|bool|True
     restart_after_stop_possible: single|bool|True
     start_enabled: single|bool|False
