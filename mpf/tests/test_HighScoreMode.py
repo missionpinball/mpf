@@ -295,6 +295,7 @@ class TestHighScoreMode(MpfBcpTestCase):
                                    ('JK', 87890),
                                    ('QC', 87890),
                                    ('MPF', 1000)]
+        new_score_data['loops'] = []
 
         self.assertEqual(new_score_data,
                          self.machine.modes.high_score.high_scores)
