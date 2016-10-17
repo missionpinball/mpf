@@ -110,8 +110,11 @@ class BcpInterface(object):
         self.machine.bcp.transport.send_to_clients_with_handler(
             handler="_monitor_events",
             bcp_command="monitored_event",
-            posted_event=Util.convert_to_simply_type(posted_event),
-            registered_handlers=Util.convert_to_simply_type(
+            event_name=posted_event.event,
+            event_type=posted_event.type,
+            event_callback=posted_event.callback,
+            event_kwargs=posted_event.kwargs,
+            registered_handlers=(
                 self.machine.events.registered_handlers.get(posted_event.event, []))
         )
 

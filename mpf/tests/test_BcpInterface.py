@@ -3,6 +3,10 @@ from unittest import mock
 
 from mpf.tests.MpfBcpTestCase import MpfBcpTestCase
 
+from collections import namedtuple
+
+RegisteredHandler = namedtuple("RegisteredHandler", ["callback", "priority", "kwargs", "key", "condition"])
+
 
 class CallHandler:
     def __repr__(self):
@@ -41,21 +45,26 @@ class TestBcpInterface(MpfBcpTestCase):
 
         self.machine.events.post("test1")
         self.assertIn(
-            ('monitored_event', {'posted_event': "PostedEvent(event='test1', type=None, callback=None, kwargs={})",
-                                 'registered_handlers': []}),
+            ('monitored_event', dict(event_name='test1', event_type=None,
+                                     event_callback=None, event_kwargs={},
+                                     registered_handlers=[])),
             self._bcp_client.send_queue)
 
         self._bcp_client.send_queue.clear()
         self.machine.events.post("test2")
+
         self.assertIn(
-            ('monitored_event', {'posted_event': "PostedEvent(event='test2', type=None, callback=None, kwargs={})",
-                                 'registered_handlers': ["RegisteredHandler(callback=handler, priority=1, kwargs={}, key='abc', condition=None)"]}),
+            ('monitored_event', dict(event_name='test2', event_type=None,
+                                     event_callback=None, event_kwargs={},
+                                     registered_handlers=[RegisteredHandler(callback=handler, priority=1, kwargs={}, key='abc', condition=None)])),
             self._bcp_client.send_queue)
 
         self._bcp_client.send_queue.clear()
         self.machine.events.post("test3", callback=handler)
         self.assertIn(
-            ('monitored_event', {'registered_handlers': [], 'posted_event': "PostedEvent(event='test3', type=None, callback=handler, kwargs={})"}),
+            ('monitored_event', dict(registered_handlers=[], event_name='test3',
+                                     event_type=None, event_callback=handler,
+                                     event_kwargs={})),
             self._bcp_client.send_queue)
 
     def test_switch_monitor(self):
