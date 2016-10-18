@@ -475,7 +475,7 @@ class BallDevice(SystemWideDevice):
 
     # -------------------------- State: ball_left -----------------------------
     @asyncio.coroutine
-    def _ball_left(self):
+    def _ball_left(self, timeout_time):
         self._state = "ball_left"
         self.debug_log("Ball left device")
         self.machine.events.remove_handler(self._trigger_eject_by_event)
@@ -512,13 +512,12 @@ class BallDevice(SystemWideDevice):
 
         try:
             yield from asyncio.wait_for(self._eject_success_condition.wait(), loop=self.machine.clock.loop,
-                                        timeout=self.config['eject_timeouts'][self.eject_in_progress_target]/1000)
+                                        timeout=timeout_time - self.machine.clock.get_time())
         except asyncio.TimeoutError:
             yield from self._failed_confirm()
         else:
             self.eject_in_progress_target = None
             return
-
 
     # --------------------------- State: ejecting -----------------------------
     @asyncio.coroutine
@@ -1505,13 +1504,16 @@ class BallDevice(SystemWideDevice):
         num_attempts: How many eject attempts have been tried so far.
         '''
 
-        waiters = []
+        timeout = self.config['eject_timeouts'][self.eject_in_progress_target] / 1000
+        timeout_time = self.machine.clock.get_time() + timeout
+
+        switch_waiters = []
         if self.config['ball_switches']:
             # wait until one of the active switches turns off
             for switch in self.config['ball_switches']:
                 # only consider active switches
                 if self.machine.switch_controller.is_active(switch.name):
-                    waiters.append(self.machine.switch_controller.wait_for_switch(
+                    switch_waiters.append(self.machine.switch_controller.wait_for_switch(
                         switch_name=switch.name,
                         state=0))
 
@@ -1522,15 +1524,19 @@ class BallDevice(SystemWideDevice):
             else:
                 self.ejector.eject_one_ball()
 
+        # TODO: put some minimal wait here for cases without switches
+
         # only wait if we have switches to wait on
-        if waiters:
-            result = yield from Util.first(waiters, self.machine.clock.loop)
-            result.result()
+        if switch_waiters:
+            try:
+                yield from Util.first(switch_waiters, self.machine.clock.loop, timeout=timeout)
+            except asyncio.TimeoutError:
+                yield from self._failed_eject()
+                return
 
         # remove the ball from our count
         self.balls -= 1
-
-        yield from self._ball_left()
+        yield from self._ball_left(timeout_time)
 
     def hold(self, **kwargs):
         """Event handler for hold event."""

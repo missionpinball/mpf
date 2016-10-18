@@ -665,15 +665,22 @@ class Util(object):
             return 1.0
 
     @staticmethod
+    def cancel_futures(futures: [asyncio.Future]):
+        """Cancel futures."""
+        for future in futures:
+            if hasattr(future, "cancel"):
+                future.cancel()
+
+    @staticmethod
     @asyncio.coroutine
-    def first(futures: [asyncio.Future], loop, cancel_others=True):
+    def first(futures: [asyncio.Future], loop, timeout=None):
         """Return first future and cancel others."""
         # wait for first
-        done, pending = yield from asyncio.wait(iter(futures), loop=loop, return_when=asyncio.FIRST_COMPLETED)
-        if cancel_others:
-            # cancel all other futures
-            for future in pending:
-                future.cancel()
+        done, pending = yield from asyncio.wait(iter(futures), loop=loop, timeout=timeout,
+                                                return_when=asyncio.FIRST_COMPLETED)
+        # cancel all other futures
+        for future in pending:
+            future.cancel()
         return next(iter(done))
 
     @staticmethod
