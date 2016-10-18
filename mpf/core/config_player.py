@@ -193,6 +193,17 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
         """Clear the context."""
         pass
 
+    def _parse_event_priority(self, event, priority):
+        if 0 < event.find(".") and (event.find("{") < 0 or event.find(".") < event.find("{")):
+            new_event = event[:event.find(".")]
+            if event.find("{") > 0:
+                priority += int(event[event.find(".")+1:event.find("{")])
+                new_event += event[event.find("{"):]
+            else:
+                priority += int(event[event.find(".")+1:])
+            event = new_event
+        return event, priority
+
     def register_player_events(self, config, mode=None, priority=0):
         """Register events for standalone player."""
         # config is localized
@@ -200,9 +211,7 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
 
         if config:
             for event, settings in config.items():
-                if event.find(".") > 0:
-                    priority += int(event[event.find(".")+1:])
-                    event = event[0:event.find(".")]
+                event, priority = self._parse_event_priority(event, priority)
                 key_list.append(
                     self.machine.events.add_handler(
                         event=event,
