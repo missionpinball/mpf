@@ -425,6 +425,7 @@ class BallDevice(SystemWideDevice):
         # 1. ball counts can change (via _counted_balls)
         # 2. eject can be confirmed
         # 2. eject of source can fail
+        self.debug_log("Waiting for ball for mechanical eject")
         if len(self.eject_queue):
             self.eject_in_progress_target = self.eject_queue[0][0]
         else:
@@ -450,7 +451,7 @@ class BallDevice(SystemWideDevice):
 
             source_failure = self._source_eject_failure_condition.wait()
             source_failure_retry = self._source_eject_failure_retry_condition.wait()
-            futures = [source_failure, source_failure_retry, self._count_ball_switches()]
+            futures = [source_failure, source_failure_retry, self._wait_for_ball_changes()]
             event = yield from Util.first(futures, loop=self.machine.clock.loop)
             if event._coro == source_failure:
                 self._cancel_eject_confirmation()
@@ -570,11 +571,9 @@ class BallDevice(SystemWideDevice):
             yield from self._do_eject_attempt()
 
         if self.trigger_event:
-            raise AssertionError("TODO implement trigger")
+            # TODO: what if ball is lost?
             # wait for trigger event
-            self.machine.events.add_handler(
-                self.trigger_event,
-                self._trigger_eject_by_event)
+            yield from self.machine.events.wait_for_event("self.trigger_event")
 
         yield from self._wait_for_ball_left()
 
@@ -724,12 +723,6 @@ class BallDevice(SystemWideDevice):
         # Reset target
         self.eject_in_progress_target = None
 
-
-    # ------------------------ State: eject_confirmed -------------------------
-
-    def _state_eject_confirmed_start(self):
-        self.eject_in_progress_target = None
-        return self._switch_state("idle")
 
     def _source_device_balls_available(self, **kwargs):
         del kwargs
@@ -1403,10 +1396,8 @@ class BallDevice(SystemWideDevice):
         if len(path) > 0:
             next_hop.setup_eject_chain_next_hop(path, player_controlled)
 
-        self.debug_log("Wakeing up device start")
         self._eject_request_condition.set()
         self._eject_request_condition.clear()
-        self.debug_log("Wakeing up device end")
 
     def _wait_for_eject_condition(self):
         return self._eject_request_condition.wait()
