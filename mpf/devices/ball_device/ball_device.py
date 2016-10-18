@@ -217,6 +217,8 @@ class BallDevice(SystemWideDevice):
         yield from self._handle_ball_changes(balls)
 
         while True:
+            if self._state == "eject_broken":
+                return
             self._state = "idle"
             self.debug_log("Idle")
             balls = yield from self._count_balls()
@@ -609,9 +611,10 @@ class BallDevice(SystemWideDevice):
         return (yield from self._ejecting())    # TODO: refactor this to a for loop
 
     # -------------------------- State: eject_broken --------------------------
-
-    def _state_eject_broken_start(self):
+    @asyncio.coroutine
+    def _eject_broken(self):
         # The only way to get out of this state it to call reset on the device
+        self._state = "eject_broken"
         self.log.warning(
             "Ball device is unable to eject ball. Stopping device")
         self.machine.events.post('balldevice_' + self.name +
@@ -986,7 +989,10 @@ class BallDevice(SystemWideDevice):
 
         Will raise exceptions from within task.
         """
-        future.result()
+        try:
+            future.result()
+        except asyncio.CancelledError:
+            pass
 
     def get_status(self, request=None):  # pragma: no cover
         """Return a dictionary of current status of this ball device.

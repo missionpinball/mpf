@@ -271,7 +271,8 @@ class EventManager(object):
         return event_name.lower() in self.registered_handlers
 
     def _set_result(self, _future, **kwargs):
-        _future.set_result(kwargs)
+        if not _future.done():
+            _future.set_result(kwargs)
 
     def post_async(self, event, **kwargs):
         future = asyncio.Future(loop=self.machine.clock.loop)
