@@ -218,13 +218,23 @@ class BallDevice(SystemWideDevice):
 
         while True:
             self._state = "idle"
-            # wait for either ball changes or an eject request
+            self.debug_log("Idle")
+            balls = yield from self._count_balls()
+            if (yield from self._handle_ball_changes(balls)):
+                continue
+
+            # handler did nothing. wait for state changes
+            if self.eject_queue:
+                self.debug_log("Waiting for ball changes or target_ready")
+                wait_for_eject = self.machine.events.wait_for_event(
+                    'balldevice_{}_ok_to_receive'.format(self.eject_queue[0][0].name))
+            else:
+                self.debug_log("Waiting for ball changes or eject_request")
+                wait_for_eject = self._wait_for_eject_condition()
             wait_for_ball_changes = self._wait_for_ball_changes()
-            wait_for_eject = self._wait_for_eject_condition()
             event = yield from Util.first([wait_for_ball_changes, wait_for_eject], self.machine.clock.loop)
             event.result()
-            balls = yield from self._count_balls()
-            yield from self._handle_ball_changes(balls)
+            self.debug_log("Wait done")
 
     @asyncio.coroutine
     def _handle_ball_changes(self, balls):
@@ -235,7 +245,8 @@ class BallDevice(SystemWideDevice):
             # balls went missing. we are idle
             missing_balls = self.balls - balls
             self.balls = balls
-            return (yield from self._handle_missing_balls(balls=missing_balls))
+            yield from self._handle_missing_balls(balls=missing_balls)
+            return True
         elif self.balls < balls:
             # unexpected balls
             unexpected_balls = balls - self.balls
@@ -251,7 +262,8 @@ class BallDevice(SystemWideDevice):
             missing_balls += 1
         if missing_balls > 0:
             self.log.debug("Incoming ball expired!")
-            return (yield from self._handle_missing_balls(balls=missing_balls))
+            yield from self._handle_missing_balls(balls=missing_balls)
+            return True
 
         if self.get_additional_ball_capacity():
             # unblock blocked source_device_eject_attempts
@@ -260,9 +272,10 @@ class BallDevice(SystemWideDevice):
                     (queue, source) = self._blocked_eject_attempts.popleft()
                     del source
                     queue.clear()
-                    return (yield from self._waiting_for_ball())
+                    yield from self._waiting_for_ball()
+                    return True
 
-                self._ok_to_receive()
+                yield from self._ok_to_receive()
 
         # No new balls
         # In idle those things can happen:
@@ -326,39 +339,47 @@ class BallDevice(SystemWideDevice):
     @asyncio.coroutine
     def _handle_eject_queue(self):
         if self.eject_queue:
+            self.debug_log("Handling eject queue")
             self.num_eject_attempts = 0
             if self.balls > 0:
                 return (yield from self._check_eject_queue())
             else:
-                return (yield from self._waiting_for_ball())
+                yield from self._waiting_for_ball()
+                return True
+
+        return False
 
     @asyncio.coroutine
     def _check_eject_queue(self):
         if self.eject_queue:
             target = self.eject_queue[0][0]
             if target.get_additional_ball_capacity():
-                return (yield from self._ejecting())
+                yield from self._ejecting()
+                return True
+
+        return False
 
     # ------------------------ State: missing_balls ---------------------------
-
-    def _statstart(self, balls):
+    @asyncio.coroutine
+    def _handle_missing_balls(self, balls):
         if self.config['mechanical_eject']:
             # if the device supports mechanical eject we assume it was one
             self.mechanical_eject_in_progress = True
             # this is an unexpected eject. use default target
             self.eject_in_progress_target = self.config['eject_targets'][0]
             self.eject_in_progress_target.available_balls += 1
-            self._do_eject_attempt()
-            return self._switch_state("ball_left")
+            yield from self._do_eject_attempt()
+            return
 
         self._balls_missing(balls)
 
-        return self._switch_state("idle")
+        return
 
     # ---------------------- State: waiting_for_ball --------------------------
     @asyncio.coroutine
     def _waiting_for_ball(self):
         self._state = "waiting_for_ball"
+        self.debug_log("Waiting for ball to eject it")
         # This can happen
         # 1. ball counts can change (via _counted_balls)
         # 2. if mechanical_eject and the ball leaves source we go to
@@ -456,6 +477,7 @@ class BallDevice(SystemWideDevice):
     @asyncio.coroutine
     def _ball_left(self):
         self._state = "ball_left"
+        self.debug_log("Ball left device")
         self.machine.events.remove_handler(self._trigger_eject_by_event)
         # TODO: handle entry switch here -> definitely new ball
         self.machine.events.post('balldevice_' + self.name + '_ball_left',
@@ -502,6 +524,7 @@ class BallDevice(SystemWideDevice):
     @asyncio.coroutine
     def _ejecting(self):
         self._state = "ejecting"
+        self.debug_log("Ejecting ball")
         (self.eject_in_progress_target,
          self.mechanical_eject_in_progress,
          self.trigger_event) = (self.eject_queue.popleft())
@@ -573,17 +596,18 @@ class BallDevice(SystemWideDevice):
         yield from self._perform_eject(self.eject_in_progress_target)
 
     # --------------------------- State: failed_eject -------------------------
-
-    def _state_failed_eject_start(self):
+    @asyncio.coroutine
+    def _failed_eject(self):
+        self._state = "failed_eject"
         self.eject_failed()
         if self.config['max_eject_attempts'] != 0 and self.num_eject_attempts >= self.config['max_eject_attempts']:
             self._eject_permanently_failed()
             # What now? Ball is still in device or switch just broke. At least
             # we are unable to get rid of it
-            return self._switch_state("eject_broken")
+            return (yield from self._eject_broken())
 
         # ball did not leave. eject it again
-        return self._switch_state("ejecting")
+        return (yield from self._ejecting())    # TODO: refactor this to a for loop
 
     # -------------------------- State: eject_broken --------------------------
 
@@ -603,6 +627,7 @@ class BallDevice(SystemWideDevice):
     @asyncio.coroutine
     def _failed_confirm(self):
         self._state = "failed_confirm"
+        self.debug_log("Eject confirm failed")
         timeout = (self.config['ball_missing_timeouts']
                    [self.eject_in_progress_target])
 
@@ -623,7 +648,7 @@ class BallDevice(SystemWideDevice):
                     self._cancel_incoming_ball_at_target(
                         self.eject_in_progress_target)
                 self.balls += 1
-                return self._switch_state("failed_eject")
+                return (yield from self._failed_eject())
 
             if self.balls > balls:
                 # we lost even more balls? if they do not come back until timeout
@@ -638,7 +663,7 @@ class BallDevice(SystemWideDevice):
                     self._cancel_incoming_ball_at_target(
                         self.eject_in_progress_target)
                 self.balls += 1
-                return self._switch_state("failed_eject")
+                return (yield from self._failed_eject())
 
             done, pending = yield from asyncio.wait(iter([timeout_future, self._wait_for_ball_changes()]),
                                                     loop=self.machine.clock.loop,
@@ -1009,10 +1034,8 @@ class BallDevice(SystemWideDevice):
         self._ball_counter_condition.set()
         self._ball_counter_condition.clear()
 
-    @asyncio.coroutine
     def _wait_for_ball_changes(self):
-        yield from self._ball_counter_condition.wait()
-        return "ball_changes"
+        return self._ball_counter_condition.wait()
 
     @asyncio.coroutine
     def _count_balls(self, **kwargs):
@@ -1343,13 +1366,13 @@ class BallDevice(SystemWideDevice):
         if len(path) > 0:
             next_hop.setup_eject_chain_next_hop(path, player_controlled)
 
+        self.debug_log("Wakeing up device start")
         self._eject_request_condition.set()
         self._eject_request_condition.clear()
+        self.debug_log("Wakeing up device end")
 
-    @asyncio.coroutine
     def _wait_for_eject_condition(self):
-        yield from self._eject_request_condition.wait()
-        return "wait_for_eject"
+        return self._eject_request_condition.wait()
 
     def find_next_trough(self):
         """Find next trough after device."""
@@ -1494,13 +1517,13 @@ class BallDevice(SystemWideDevice):
             else:
                 self.ejector.eject_one_ball()
 
+        # only wait if we have switches to wait on
         if waiters:
             result = yield from Util.first(waiters, self.machine.clock.loop)
             result.result()
-        else:
-            # no ball_switches. we dont know when it actually leaves the device
-            # assume its instant
-            self.balls -= 1
+
+        # remove the ball from our count
+        self.balls -= 1
 
         yield from self._ball_left()
 
@@ -1815,10 +1838,11 @@ class BallDevice(SystemWideDevice):
             retries has been met, so it will not try to eject further.
         '''
 
+    @asyncio.coroutine
     def _ok_to_receive(self):
         # Post an event announcing that it's ok for this device to receive a
         # ball
-        self.machine.events.post(
+        yield from self.machine.events.post_async(
             'balldevice_{}_ok_to_receive'.format(self.name),
             balls=self.get_additional_ball_capacity())
         '''event: balldevice_(name)_ok_to_receive
