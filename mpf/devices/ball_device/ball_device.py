@@ -570,10 +570,13 @@ class BallDevice(SystemWideDevice):
             yield from self._do_eject_attempt()
 
         if self.trigger_event:
+            raise AssertionError("TODO implement trigger")
             # wait for trigger event
             self.machine.events.add_handler(
                 self.trigger_event,
                 self._trigger_eject_by_event)
+
+        yield from self._wait_for_ball_left()
 
     def _trigger_eject_by_event(self, **kwargs):
         del kwargs
@@ -583,6 +586,7 @@ class BallDevice(SystemWideDevice):
             self.mechanical_eject_in_progress = False
             self.ejector.eject_one_ball()
         else:
+            # TODO: refactor this. its an hack for when balls return and we have to retry
             self._do_eject_attempt()
 
     @asyncio.coroutine
@@ -1514,12 +1518,13 @@ class BallDevice(SystemWideDevice):
         del kwargs
         self._setup_eject_confirmation(target)
         self.log.debug("Ejecting ball to %s", target.name)
-        self.machine.events.post('balldevice_{}_ejecting_ball'.format(self.name),
-                                 balls=1,
-                                 target=self.eject_in_progress_target,
-                                 source=self,
-                                 mechanical_eject=self.mechanical_eject_in_progress,
-                                 num_attempts=self.num_eject_attempts)
+        yield from self.machine.events.post_async(
+            'balldevice_{}_ejecting_ball'.format(self.name),
+            balls=1,
+            target=self.eject_in_progress_target,
+            source=self,
+            mechanical_eject=self.mechanical_eject_in_progress,
+            num_attempts=self.num_eject_attempts)
         '''event: balldevice_(name)_ejecting_ball
 
         desc: The ball device called "name" is ejecting a ball right now.
@@ -1533,6 +1538,8 @@ class BallDevice(SystemWideDevice):
         num_attempts: How many eject attempts have been tried so far.
         '''
 
+    @asyncio.coroutine
+    def _wait_for_ball_left(self):
         timeout = self.config['eject_timeouts'][self.eject_in_progress_target] / 1000
         timeout_time = self.machine.clock.get_time() + timeout
 
