@@ -237,10 +237,12 @@ class BallDevice(SystemWideDevice):
                 wait_for_eject = self._wait_for_eject_condition()
             wait_for_ball_changes = self._wait_for_ball_changes()
             wait_for_incoming_ball = self._incoming_ball_condition.wait()
+            # TODO: wait for incoming balls timeout
             event = yield from Util.first([wait_for_ball_changes, wait_for_eject, wait_for_incoming_ball], self.machine.clock.loop)
-            if self.config['mechanical_eject'] and event._coro == wait_for_incoming_ball:
-                # ball may jump this device. we have no eject queue in that case. will use default target
-                yield from self._waiting_for_ball_mechanical()
+            if hasattr(event, "_coro") and event._coro == wait_for_incoming_ball:
+                # TODO: what happens when we support mechanical eject?
+                # we got incoming ball without eject queue
+                yield from self._waiting_for_ball()
 
             self.debug_log("Wait done")
 
@@ -406,9 +408,14 @@ class BallDevice(SystemWideDevice):
             ball_change = self._wait_for_ball_changes()
             futures = [ball_change, eject_failed]
             incoming_ball = None
+            incoming_ball_timeout = None
             if self.config['mechanical_eject']:
                 incoming_ball = self._incoming_ball_condition.wait()
                 futures.append(incoming_ball)
+            if self._incoming_balls:
+                incoming_ball_timeout = asyncio.sleep(self._incoming_balls[0][0] - self.machine.clock.get_time(),
+                                                      loop=self.machine.clock.loop)
+                futures.append(incoming_ball_timeout)
             done, pending = yield from asyncio.wait(futures,
                                                     loop=self.machine.clock.loop,
                                                     return_when=asyncio.FIRST_COMPLETED)
@@ -416,6 +423,10 @@ class BallDevice(SystemWideDevice):
             if event._coro == eject_failed:
                 self._cancel_eject()
                 pending.pop().cancel()
+                return
+
+            # incoming ball expired handle that in idle
+            if event._coro == incoming_ball_timeout:
                 return
 
             if self.config['mechanical_eject'] and event._coro == incoming_ball:
@@ -487,9 +498,6 @@ class BallDevice(SystemWideDevice):
         # An incoming ball has not arrives in the time expected
         if len(self._incoming_balls) and self._state == "idle":
             return self._count_balls()
-
-        if self._state == "waiting_for_ball":
-            return self._switch_state("idle")
 
     def remove_incoming_ball(self, source):
         """Remove a ball from the incoming balls queue."""
