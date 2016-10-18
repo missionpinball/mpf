@@ -632,6 +632,7 @@ class BallDevice(SystemWideDevice):
                    [self.eject_in_progress_target])
 
         timeout_future = asyncio.sleep(timeout/1000, loop=self.machine.clock.loop)
+        late_confirm_future = self._eject_success_condition.wait()
 
         while True:
             # count balls to see if the ball returns
@@ -665,11 +666,15 @@ class BallDevice(SystemWideDevice):
                 self.balls += 1
                 return (yield from self._failed_eject())
 
-            done, pending = yield from asyncio.wait(iter([timeout_future, self._wait_for_ball_changes()]),
+            done, pending = yield from asyncio.wait(iter([timeout_future, self._wait_for_ball_changes(),
+                                                          late_confirm_future]),
                                                     loop=self.machine.clock.loop,
                                                     return_when=asyncio.FIRST_COMPLETED)
 
-            if done.pop()._coro == timeout_future:
+            event = done.pop()
+            if event._coro == late_confirm_future:
+                return
+            elif event._coro == timeout_future:
                 pending.pop().cancel()
                 break
 
