@@ -155,9 +155,8 @@ class SwitchController(MpfController):
                     switch.state = switch_states[number] ^ switch.invert
                     switch.time = self.machine.clock.get_time()
                 except (IndexError, KeyError):
-                    self.log.warning("Received a status update from hardware "
-                                     "switch %s, but that switch is not in "
-                                     "your config. Just FYI.", number)
+                    raise AssertionError("Missing switch {} in update from hw.  Update from HW: {}, switches: {}".
+                                         format(number, switch_states, switches))
 
     def verify_switches(self) -> bool:
         """Verify that switches states match the hardware.
