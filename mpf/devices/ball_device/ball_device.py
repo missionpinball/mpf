@@ -236,8 +236,12 @@ class BallDevice(SystemWideDevice):
                 self.debug_log("Waiting for ball changes or eject_request")
                 wait_for_eject = self._wait_for_eject_condition()
             wait_for_ball_changes = self._wait_for_ball_changes()
-            event = yield from Util.first([wait_for_ball_changes, wait_for_eject], self.machine.clock.loop)
-            event.result()
+            wait_for_incoming_ball = self._incoming_ball_condition.wait()
+            event = yield from Util.first([wait_for_ball_changes, wait_for_eject, wait_for_incoming_ball], self.machine.clock.loop)
+            if self.config['mechanical_eject'] and event._coro == wait_for_incoming_ball:
+                # ball may jump this device. we have no eject queue in that case. will use default target
+                yield from self._waiting_for_ball_mechanical()
+
             self.debug_log("Wait done")
 
     @asyncio.coroutine
@@ -415,6 +419,7 @@ class BallDevice(SystemWideDevice):
                 return
 
             if self.config['mechanical_eject'] and event._coro == incoming_ball:
+                # TODO: this if can probably go
                 if (yield from (self._waiting_for_ball_mechanical())):
                     return
 
@@ -477,11 +482,6 @@ class BallDevice(SystemWideDevice):
 
         self._incoming_ball_condition.set()
         self._incoming_ball_condition.clear()
-
-        if self._state == "idle" and self.config['mechanical_eject']:
-            # we have no eject queue in that case. will use default target
-
-            return self._switch_state("waiting_for_ball_mechanical")
 
     def _timeout_incoming(self):
         # An incoming ball has not arrives in the time expected
