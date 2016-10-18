@@ -251,7 +251,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         num_nw = Util.hex_string_to_int(num_nw) - 1
 
         for offset, byte in enumerate(bytearray.fromhex(nw_states)):
-            for i in range(num_nw):
+            for i in range(8):
                 num = Util.int_to_hex_string((offset * 8) + i)
                 if byte & (2**i):
                     hw_states[(num, 1)] = 1
@@ -259,7 +259,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
                     hw_states[(num, 1)] = 0
 
         for offset, byte in enumerate(bytearray.fromhex(local_states)):
-            for i in range(num_local):
+            for i in range(8):
 
                 num = Util.int_to_hex_string((offset * 8) + i)
 
