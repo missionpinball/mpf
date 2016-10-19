@@ -1568,6 +1568,12 @@ class BallDevice(SystemWideDevice):
         self.balls -= 1
         if not self.config['ball_switches']:
             self._entrance_count -= 1
+
+        if self.mechanical_eject_in_progress:
+            # for mechanical eject the timeout starts when the ball has left
+            timeout = self.config['eject_timeouts'][self.eject_in_progress_target] / 1000
+            timeout_time = self.machine.clock.get_time() + timeout
+
         yield from self._ball_left(timeout_time)
 
     def hold(self, **kwargs):
