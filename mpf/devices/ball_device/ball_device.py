@@ -131,6 +131,7 @@ class BallDevice(SystemWideDevice):
         self._source_eject_failure_condition = asyncio.Event(loop=self.machine.clock.loop)
         self._source_eject_failure_retry_condition = asyncio.Event(loop=self.machine.clock.loop)
         self._incoming_ball_condition = asyncio.Event(loop=self.machine.clock.loop)
+        self._incoming_ball_lost_condition = asyncio.Event(loop=self.machine.clock.loop)
 
         self.machine.events.add_handler("shutdown", self.stop)
 
@@ -410,13 +411,16 @@ class BallDevice(SystemWideDevice):
             futures = [ball_change, eject_failed]
             incoming_ball = None
             incoming_ball_timeout = None
+            incoming_ball_lost = None
             if self.config['mechanical_eject']:
                 incoming_ball = self._incoming_ball_condition.wait()
                 futures.append(incoming_ball)
             if self._incoming_balls:
                 incoming_ball_timeout = asyncio.sleep(self._incoming_balls[0][0] - self.machine.clock.get_time(),
                                                       loop=self.machine.clock.loop)
+                incoming_ball_lost = self._incoming_ball_lost_condition.wait()
                 futures.append(incoming_ball_timeout)
+                futures.append(incoming_ball_lost)
             done, pending = yield from asyncio.wait(futures,
                                                     loop=self.machine.clock.loop,
                                                     return_when=asyncio.FIRST_COMPLETED)
@@ -427,7 +431,7 @@ class BallDevice(SystemWideDevice):
                 return
 
             # incoming ball expired handle that in idle
-            if event._coro == incoming_ball_timeout:
+            if event._coro == incoming_ball_timeout or event._coro == incoming_ball_lost:
                 return
 
             if self.config['mechanical_eject'] and event._coro == incoming_ball:
@@ -809,8 +813,8 @@ class BallDevice(SystemWideDevice):
 
         self._handle_lost_incoming_ball()
 
-        if self._state == "waiting_for_ball":
-            return self._switch_state("idle")
+        self._incoming_ball_lost_condition.set()
+        self._incoming_ball_lost_condition.clear()
 
     def _handle_lost_incoming_ball(self):
         if self.debug:
