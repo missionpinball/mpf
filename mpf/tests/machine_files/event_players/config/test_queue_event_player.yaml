@@ -1,0 +1,14 @@
+#config_version=4
+
+queue_event_player:
+    play:
+      queue_event: queue_event1
+      events_when_finished: queue_event1_finished
+
+queue_relay_player:
+    relay.1:
+      post: relay_start
+      wait_for: relay_done
+    relay:
+      post: relay2_start
+      wait_for: relay2_done

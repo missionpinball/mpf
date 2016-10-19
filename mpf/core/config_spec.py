@@ -14,6 +14,20 @@ accelerometers:
     level_y: single|int|0
     level_z: single|int|1
     number: single|str|
+achievement_groups:
+    __valid_in__: mode
+    achievements: list|machine(achievements)|
+    enable_events: dict|str:ms|None
+    disable_events: dict|str:ms|None
+    start_selected_events: dict|str:ms|None
+    select_random_achievement_events: dict|str:ms|None
+    rotate_right_events: dict|str:ms|None
+    rotate_left_events: dict|str:ms|None
+    events_when_all_complete: list|str|None
+    events_when_no_more_enabled: list|str|None
+    events_when_enabled: list|str|None
+    show_tokens: dict|str:str|None
+    show_when_enabled: single|str|None
 achievements:
     __valid_in__: mode
     enable_events: dict|str:ms|None
@@ -22,18 +36,21 @@ achievements:
     disable_events: dict|str:ms|None
     stop_events: dict|str:ms|None
     reset_events: dict|str:ms|None
+    select_events: dict|str:ms|None
     events_when_enabled: list|str|None
     events_when_started: list|str|None
     events_when_completed: list|str|None
     events_when_stopped: list|str|None
     events_when_disabled: list|str|None
+    events_when_selected: list|str|None
     show_when_enabled: single|str|None
     show_when_started: single|str|None
     show_when_completed: single|str|None
     show_when_stopped: single|str|None
     show_when_disabled: single|str|None
+    show_when_selected: single|str|None
     show_tokens: dict|str:str|None
-    restart_on_next_ball_when_started: single|bool|True
+    restart_on_next_ball_when_started: single|bool|False
     enable_on_next_ball_when_enabled: single|bool|True
     restart_after_stop_possible: single|bool|True
     start_enabled: single|bool|False
@@ -67,7 +84,7 @@ autofire_coils:
     switch: single|machine(switches)|
     reverse_switch: single|bool|False
     enable_events: dict|str:ms|ball_started
-    disable_events: dict|str:ms|ball_will_end
+    disable_events: dict|str:ms|ball_will_end, service_mode_entered
     coil_overwrite: dict|str:str|None
     switch_overwrite: dict|str:str|None
 
@@ -135,8 +152,9 @@ ball_locks:
     request_new_balls_to_pf: single|bool|True
     enable_events: dict|str:ms|None
     disable_events: dict|str:ms|None
-    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_will_end
+    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
     release_one_events: dict|str:ms|None
+    release_one_if_full_events: dict|str:ms|None
 ball_saves:
     __valid_in__: machine, mode
     source_playfield: single|machine(ball_devices)|playfield
@@ -148,7 +166,7 @@ ball_saves:
     auto_launch: single|bool|True
     balls_to_save: single|int|1
     enable_events: dict|str:ms|None
-    disable_events: dict|str:ms|ball_will_end
+    disable_events: dict|str:ms|ball_will_end, service_mode_entered
     timer_start_events: dict|str:ms|None
 bcp:
     __valid_in__: machine
@@ -285,6 +303,16 @@ drop_target_banks:
 event_player:
     __valid_in__: machine, mode, show
     __allow_others__:
+queue_event_player:
+    __valid_in__: machine, mode
+    args: dict|str:str|None
+    queue_event: single|str|
+    events_when_finished: single|str|None
+queue_relay_player:
+    __valid_in__: machine, mode
+    args: dict|str:str|None
+    post: single|str|
+    wait_for: single|str|
 extra_balls:
     __valid_in__: mode
     award_events: dict|str:ms|None
@@ -343,7 +371,7 @@ flippers:
     eos_switch: single|machine(switches)|None
     use_eos: single|bool|False
     enable_events: dict|str:ms|ball_started
-    disable_events: dict|str:ms|ball_will_end
+    disable_events: dict|str:ms|ball_will_end, service_mode_entered
     # enable_no_hold_events: dict|str:ms|None
     # invert_events: dict|str:ms|None
     main_coil_overwrite: dict|str:str|None
@@ -405,7 +433,7 @@ kivy_config:
 led_player:
     __valid_in__: machine, mode, show
     color: single|str|white
-    fade: single|ms|0
+    fade: single|ms|None
     __allow_others__:
 led_settings:
     __valid_in__: machine
@@ -500,6 +528,7 @@ mode:
     stop_events: list|str|None
     start_priority: single|int|0
     stop_priority: single|int|0
+    game_mode: single|bool|True
     use_wait_queue: single|bool|False
     code: single|str|None
     stop_on_ball_end: single|bool|True
@@ -527,6 +556,7 @@ mpf:
     allow_invalid_config_sections: single|bool|false
     save_machine_vars_to_disk: single|bool|true
     hz: single|float|30.0
+    default_show_sync_ms: single|int|0
 mpf-mc:
     __valid_in__: machine                           # todo add to validator
 multiballs:
@@ -623,7 +653,8 @@ playfields:
     ball_search_wait_after_iteration: single|ms|10s
 playfield_transfers:
     __valid_in__: machine
-    ball_switch: single|machine(switches)|
+    ball_switch: single|machine(switches)|None
+    transfer_events: list|str:ms|None
     eject_target: single|machine(ball_devices)|
     captures_from: single|machine(ball_devices)|
 playlists:
@@ -647,7 +678,11 @@ pololu_maestro:
     servo_max: single|int|9000
 random_event_player:
     __valid_in__: machine, mode, show
-    event_list: list|str|
+    events: list|str|
+    force_different: single|bool|true
+    force_all: single|bool|true
+    disable_random: single|bool|false
+    scope: single|enum(player,machine)|player
 score_reels:
     __valid_in__: machine
     coil_inc: single|machine(coils)|None
@@ -682,6 +717,9 @@ score_reel_groups:
     confirm: single|str|lazy
 scoring:
     __valid_in__: modes                             # todo add to validator
+    score: single|template_int|
+    block: single|bool|False
+    action: single|enum(add,set)|add
 scriptlets:
     __valid_in__: machine                           # todo add to validator
 servo_controller:
@@ -702,7 +740,7 @@ servos:
     ball_search_max: single|float|1.0
     ball_search_wait: single|ms|5s
     reset_position: single|float|0.5
-    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_will_end
+    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
     number: single|str|
     platform: single|str|None
 settings:
@@ -715,7 +753,7 @@ settings:
     machine_var: single|str|None
 shots:
     __valid_in__: machine, mode
-    profile: single|str|None
+    profile: single|str|default
     switch: list|machine(switches)|None
     switches: list|machine(switches)|None
     switch_sequence: list|machine(switches)|None
@@ -765,7 +803,7 @@ shot_profiles:
         speed: single|float|1
         start_step: single|int|1
         loops: single|int|-1
-        sync_ms: single|int|0
+        sync_ms: single|int|None
         manual_advance: single|bool|None
         show_tokens: dict|str:str|None
 show_player:
@@ -775,7 +813,7 @@ show_player:
     speed: single|float|1
     start_step: single|template_int|1
     loops: single|int|-1
-    sync_ms: single|int|0
+    sync_ms: single|int|None
     reset: single|bool|True
     manual_advance: single|bool|False
     key: single|str|None
@@ -800,6 +838,7 @@ slide_player:
     transition_out: ignore
     widgets: ignore
     expire: single|secs|None
+    slide: single|str|None
     action: single|enum(play,remove)|play
     persist: single|bool|False                      # todo
 slides:
@@ -819,7 +858,8 @@ snux:
 smartmatrix:
     __valid_in__: machine
     port: single|str|
-    use_separate_thread: single|bool|true
+    baud: single|int|
+    old_cookie: single|bool|False
 smart_virtual:
     __valid_in__: machine
     simulate_manual_plunger: single|bool|False

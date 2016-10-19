@@ -40,8 +40,7 @@ class TestModeTimer(MpfFakeGameTestCase):
         self.machine.events.add_handler("timer_timer_down_stopped", self._mode_timer_complete)
 
         # add a fake player
-        player = {}
-        self.machine.mode_controller._player_turn_start(player)
+        self.start_game()
 
         self.assertFalse(self.machine.modes.mode_with_timers.active)
 
@@ -136,8 +135,7 @@ class TestModeTimer(MpfFakeGameTestCase):
 
     def test_start_running(self):
         # add a fake player
-        player = {}
-        self.machine.mode_controller._player_turn_start(player)
+        self.start_game()
         self.mock_event("timer_timer_start_running_complete")
 
         # start mode
@@ -166,8 +164,7 @@ class TestModeTimer(MpfFakeGameTestCase):
 
     def test_restart_on_complete(self):
         # add a fake player
-        player = {}
-        self.machine.mode_controller._player_turn_start(player)
+        self.start_game()
 
         # start mode
         self.machine.events.post('start_mode_with_timers')
@@ -200,8 +197,7 @@ class TestModeTimer(MpfFakeGameTestCase):
 
     def test_mode_timer_events(self):
         # add a fake player
-        player = {}
-        self.machine.mode_controller._player_turn_start(player)
+        self.start_game()
 
         # start mode
         self.machine.events.post('start_mode_with_timers')
@@ -281,8 +277,7 @@ class TestModeTimer(MpfFakeGameTestCase):
         self.machine.events.add_handler("timer_timer_down_stopped", self._mode_timer_complete)
 
         # add a fake player
-        player = {}
-        self.machine.mode_controller._player_turn_start(player)
+        self.start_game()
 
         self.assertFalse(self.machine.modes.mode_with_timers.active)
 

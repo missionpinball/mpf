@@ -275,12 +275,27 @@ class MpfTestCase(unittest.TestCase):
                                         handler=self._mock_event_handler,
                                         event_name=event_name)
 
+    def assertPlayerVarEqual(self, value, player_var):
+        self.assertIsNotNone(self.machine.game, "There is no game.")
+        self.assertEqual(value, self.machine.game.player[player_var], "Value of player var {} is {} but should be {}".
+                         format(player_var, self.machine.game.player[player_var], value))
+
     def assertSwitchState(self, name, state):
         self.assertIn(name, self.machine.switch_controller.switches, "Switch {} does not exist.".format(name))
         self.assertEqual(state, self.machine.switch_controller.is_active(name))
 
     def assertLedColor(self, led_name, color):
         self.assertEqual(list(RGBColor(color).rgb), self.machine.leds[led_name].hw_driver.current_color)
+
+    def assertLedColors(self, led_name, color_list, secs, check_delta=.1):
+        colors = list()
+
+        for x in range(secs*10):
+            colors.append(RGBColor(self.machine.leds[led_name].hw_driver.current_color))
+            self.advance_time_and_run(check_delta)
+
+        for color in color_list:
+            self.assertIn(RGBColor(color), colors)
 
     def assertModeRunning(self, mode_name):
         if mode_name not in self.machine.modes:
@@ -319,21 +334,42 @@ class MpfTestCase(unittest.TestCase):
         self.assertEventCalled(event_name)
         self.assertEqual(kwargs, self._last_event_kwargs[event_name], "Args for {} differ.".format(event_name))
 
+    def assertShotShow(self, shot_name, show_name):
+        """Assert that the highest priority runnning show for a shot is a
+        certain show name."""
+        if shot_name not in self.machine.shots:
+            raise AssertionError("Shot {} is not a valid shot".format(shot_name))
+
+        if show_name:
+            self.assertIsNotNone(self.machine.shots[shot_name].profiles)
+            self.assertIsNotNone(self.machine.shots[shot_name].profiles[0]['running_show'])
+            self.assertEqual(show_name, self.machine.shots[shot_name].profiles[0]['running_show'].name)
+        else:
+            self.assertIsNone(self.machine.shots[shot_name].profiles[0]['running_show'])
+
+    def get_timer(self, timer):
+        for mode in self.machine.modes:
+            for t in mode.timers:
+                if t == timer:
+                    return mode.timers[t]
+
+        raise AssertionError("Timer {} not found".format(timer))
+
     def reset_mock_events(self):
         for event in self._events.keys():
             self._events[event] = 0
 
     def hit_switch_and_run(self, name, delta):
-        self.machine.switch_controller.process_switch(name, 1)
+        self.machine.switch_controller.process_switch(name, 1, True)
         self.advance_time_and_run(delta)
 
     def release_switch_and_run(self, name, delta):
-        self.machine.switch_controller.process_switch(name, 0)
+        self.machine.switch_controller.process_switch(name, 0, True)
         self.advance_time_and_run(delta)
 
     def hit_and_release_switch(self, name):
-        self.machine.switch_controller.process_switch(name, 1)
-        self.machine.switch_controller.process_switch(name, 0)
+        self.machine.switch_controller.process_switch(name, 1, True)
+        self.machine.switch_controller.process_switch(name, 0, True)
         self.machine_run()
 
     def tearDown(self):

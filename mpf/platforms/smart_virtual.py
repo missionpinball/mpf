@@ -134,6 +134,9 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
     def _perform_action(self):
         self.log.debug("Removing ball from device %s", self.device.name)
 
+        if not self.device.balls:
+            return
+
         for switch in self.ball_switches:
             if self.machine.switch_controller.is_active(switch.name):
                 self.machine.switch_controller.process_switch(switch.name, 0,

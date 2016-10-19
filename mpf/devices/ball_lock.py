@@ -34,6 +34,11 @@ class BallLock(SystemWideDevice, ModeDevice):
         del mode
         self.disable()
 
+    @property
+    def can_exist_outside_of_game(self):
+        """Return true if this device can exist outside of a game."""
+        return True
+
     @classmethod
     def prepare_config(cls, config, is_mode_config):
         """Add default events when outside mode."""
@@ -129,6 +134,12 @@ class BallLock(SystemWideDevice, ModeDevice):
         if self._released_balls > 0:
             queue.wait()
             self._release_lock = queue
+
+    def release_one_if_full(self, **kwargs):
+        """Release one ball if lock is full."""
+        del kwargs
+        if self.is_full():
+            self.release_one()
 
     def release_one(self, **kwargs):
         """Release one ball.

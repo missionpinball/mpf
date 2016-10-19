@@ -294,6 +294,7 @@ class ModeController(object):
         for mode in self.active_modes:
 
             if mode.auto_stop_on_ball_end:
+                self.log.debug("Adding mode '%s' to ball ending queue", mode.name)
                 self.mode_stop_count += 1
                 mode.stop(callback=self._mode_stopped_callback)
 
@@ -306,6 +307,7 @@ class ModeController(object):
 
     def _mode_stopped_callback(self):
         self.mode_stop_count -= 1
+        self.log.debug("Removing mode from ball ending queue")
 
         if not self.mode_stop_count:
             self.queue.clear()

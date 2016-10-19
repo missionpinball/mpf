@@ -851,9 +851,9 @@ class BallDevice(SystemWideDevice):
         self._validate_config()
 
         if self.config['eject_coil']:
-            self.ejector = PulseCoilEjector(self)
+            self.ejector = PulseCoilEjector(self)   # pylint: disable-msg=redefined-variable-type
         elif self.config['hold_coil']:
-            self.ejector = HoldCoilEjector(self)
+            self.ejector = HoldCoilEjector(self)    # pylint: disable-msg=redefined-variable-type
 
         # register switch and event handlers
         self._register_handlers()
@@ -1374,10 +1374,10 @@ class BallDevice(SystemWideDevice):
                                round(self.machine.clock.get_time() - self.eject_start_time,
                                      2))
 
-    def _ball_left_device(self, balls, **kwargs):
+    def _ball_left_device(self, **kwargs):
         del kwargs
-        assert balls == 1
-        assert self._state == "ejecting"
+        if self._state != "ejecting":
+            raise AssertionError("Device in wrong state {}. Should be in ejecting.".format(self._state))
         # remove handler
         for switch in self.config['ball_switches']:
             self.machine.switch_controller.remove_switch_handler(
@@ -1416,13 +1416,10 @@ class BallDevice(SystemWideDevice):
             # wait until one of the active switches turns off
             for switch in self.config['ball_switches']:
                 # only consider active switches
-                if self.machine.switch_controller.is_active(switch.name,
-                                                            ms=self.config[
-                                                                'entrance_count_delay']):
+                if self.machine.switch_controller.is_active(switch.name):
                     self.machine.switch_controller.add_switch_handler(
                         switch_name=switch.name,
                         callback=self._ball_left_device,
-                        callback_kwargs={'balls': 1},
                         state=0)
 
         if self.ejector:
@@ -1440,6 +1437,7 @@ class BallDevice(SystemWideDevice):
 
     def hold(self, **kwargs):
         """Event handler for hold event."""
+        del kwargs
         # TODO: remove when migrating config to ejectors
         self.ejector.hold()
 
@@ -1607,7 +1605,7 @@ class BallDevice(SystemWideDevice):
         del kwargs
 
         if self._state == "ejecting":
-            self.log.debug("Got an eject_success before the switch changed"
+            self.log.debug("Got an eject_success before the switch changed "
                            "state in the device. Ignoring!")
             return
 

@@ -1,4 +1,6 @@
 """Test event player."""
+from collections import namedtuple
+
 from mpf.tests.MpfTestCase import MpfTestCase
 
 
@@ -78,3 +80,19 @@ class TestEventPlayer(MpfTestCase):
         self.assertEqual(1, self._events['event1'])
         self.assertEqual(1, self._events['event2'])
         self.assertEqual(1, self._events['event3'])
+
+    def test_condition_and_priority(self):
+        self.mock_event("condition_ok")
+        self.mock_event("condition_ok2")
+        self.mock_event("priority_ok")
+        self.post_event("test_conditional")
+        self.assertEventNotCalled("condition_ok")
+        self.assertEventNotCalled("condition_ok2")
+        self.assertEventCalled("priority_ok")
+
+        arg_obj = namedtuple("Arg", ["abc"])
+        arg = arg_obj(1)
+
+        self.post_event_with_params("test_conditional", arg=arg)
+        self.assertEventCalled("condition_ok")
+        self.assertEventCalled("condition_ok2")

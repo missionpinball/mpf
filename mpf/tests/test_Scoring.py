@@ -47,6 +47,13 @@ class TestScoring(MpfTestCase):
         self.assertEqual(2, self.machine.game.player.vars['var_a'])
         self.assertEqual(3, self.machine.game.player.var_c)
 
+        self.post_event("test_set_100")
+        self.assertEqual(100, self.machine.game.player.test1)
+        self.post_event("test_set_200")
+        self.assertEqual(200, self.machine.game.player.test1)
+        self.post_event("test_set_100")
+        self.assertEqual(100, self.machine.game.player.test1)
+
         # start mode 2
         self.post_event('start_mode2')
         self.assertTrue(self.machine.mode_controller.is_active('mode2'))
@@ -94,6 +101,7 @@ class TestScoring(MpfTestCase):
         # mode2 should auto start
         self.assertFalse(self.machine.mode_controller.is_active('mode1'))
         self.assertTrue(self.machine.mode_controller.is_active('mode2'))
+        self.assertTrue(self.machine.modes.mode2.active)
 
         # same score as during last ball
         self.assertEqual(1200, self.machine.game.player.score)
@@ -105,3 +113,11 @@ class TestScoring(MpfTestCase):
         self.assertEqual(2200, self.machine.game.player.score)
         self.assertEqual(2, self.machine.game.player.vars['var_a'])
         self.assertEqual(2, self.machine.game.player.vars['var_b'])
+
+        # stop game and mode
+        self.machine.service.start_service()
+        self.advance_time_and_run()
+
+        # it should not crash
+        self.post_event("test_event1")
+        self.advance_time_and_run()

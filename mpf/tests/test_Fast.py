@@ -15,6 +15,8 @@ class BaseMockFast(MockSerial):
 
     def read(self, length):
         del length
+        if not self.queue:
+            return
         msg = (self.queue.pop() + '\r').encode()
         return msg
 
@@ -34,7 +36,7 @@ class BaseMockFast(MockSerial):
         cmd = cmd[:-1]
 
         # ignore init garbage
-        if cmd == (' ' * 256):
+        if cmd == (' ' * 256 * 4):
             return msg_len
 
         if cmd[:3] == "WD:":
@@ -67,7 +69,7 @@ class MockFastDmd(BaseMockFast):
 
     def write(self, msg):
         msg_len = len(msg)
-        if msg == (b' ' * 256) + b"\r":
+        if msg == (b' ' * 256 * 4) + b"\r":
             return msg_len
 
         cmd = msg
@@ -145,7 +147,7 @@ class TestFast(MpfTestCase):
             'NN:2': 'NN:02,FP-I/O-1616-2   ,01.00,10,10,04,06,00,00,00,00',     # 1616 board
             'NN:3': 'NN:03,FP-I/O-1616-2   ,01.00,10,10,04,06,00,00,00,00',     # 1616 board
             'NN:4': 'NN:04,,,,,,,,,,',     # no board
-            "SA:": "SA:01,00,05,05000000",
+            "SA:": "SA:01,00,09,050000000000000000",
             "SN:01,01,0A,0A": "SN:P",
             "SN:02,01,0A,0A": "SN:P",
             "SN:03,01,0A,0A": "SN:P",

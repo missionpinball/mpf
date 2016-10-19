@@ -97,6 +97,12 @@ class Command(object):
                             "when launching in a separate window so you can "
                             "see any errors before the window closes.")
 
+        parser.add_argument("-f",
+                            action="store_true", dest="force_assets_load", default=False,
+                            help="Load all assets upon startup.  Useful for "
+                            "ensuring all assets are set up properly "
+                            "during development.")
+
         args = parser.parse_args(args)
         args.configfile = Util.string_to_list(args.configfile)
 

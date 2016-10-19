@@ -103,7 +103,7 @@ class TestP3Roc(MpfTestCase):
                           'patterEnable': False,
                           'futureEnable': False})
 
-        self.pinproc.switch_get_states = MagicMock(return_value=[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+        self.pinproc.switch_get_states = MagicMock(return_value=[0, 1] + [0] * 100)
         self.pinproc.driver_update_group_config = MagicMock()
         super().setUp()
 

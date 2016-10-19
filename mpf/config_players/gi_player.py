@@ -10,7 +10,7 @@ class GiPlayer(DeviceConfigPlayer):
     config_file_section = 'gi_player'
     show_section = 'gis'
 
-    def play(self, settings, context, priority=0, **kwargs):
+    def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Enable GIs."""
         del kwargs
         instance_dict = self._get_instance_dict(context)

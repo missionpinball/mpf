@@ -2,6 +2,7 @@
 mode:
   start_events: test_mode_start
   stop_events: test_mode_end
+  game_mode: False
 
 event_player:
     test_event_player_mode1:
@@ -10,5 +11,5 @@ event_player:
 
 random_event_player:
     test_random_event_player_mode1:
-        test_random_event_player_mode2
-        test_random_event_player_mode3
+        - test_random_event_player_mode2
+        - test_random_event_player_mode3

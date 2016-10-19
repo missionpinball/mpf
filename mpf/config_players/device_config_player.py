@@ -62,7 +62,7 @@ class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
         return return_dict
 
     @abc.abstractmethod
-    def play(self, settings, context, priority=0, **kwargs):
+    def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Directly play player."""
         # **kwargs since this is an event callback
         raise NotImplementedError

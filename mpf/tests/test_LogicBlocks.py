@@ -253,9 +253,11 @@ class TestLogicBlocks(MpfFakeGameTestCase):
             self.post_event("counter2_count")
             self.assertEqual(i+1, self._events["counter2_hit"])
             self.assertEqual(0, self._events["counter2_complete"])
+            self.assertEventCalledWith("counter2_hit", count=i + 1, remaining=2 - i)
 
         self.post_event("counter2_count")
         self.assertEqual(1, self._events["counter2_complete"])
+        self.assertEventCalledWith("counter2_hit", count=3, remaining=0)
 
         # should run again
         for i in range(2):

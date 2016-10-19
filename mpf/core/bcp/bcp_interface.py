@@ -3,6 +3,7 @@ from copy import deepcopy
 
 import logging
 
+from mpf.core.events import PostedEvent
 from mpf.core.player import Player
 from mpf.core.utility_functions import Util
 
@@ -51,6 +52,7 @@ class BcpInterface(object):
             switch=self.bcp_receive_switch,
             trigger=self.bcp_receive_trigger,
             register_trigger=self.bcp_receive_register_trigger,
+            monitor_events=self._monitor_events,
             monitor_machine_vars=self._monitor_machine_vars,
             monitor_player_vars=self._monitor_player_vars,
             monitor_devices=self._monitor_devices)
@@ -97,6 +99,24 @@ class BcpInterface(object):
         # if not transports remain. remove handler
         if not self.machine.bcp.transport.get_transports_for_handler(event):
             self.machine.events.remove_handler_by_event(event=event, handler=self.bcp_trigger)
+
+    def _monitor_events(self, client):
+        """Monitor all events."""
+        self.machine.bcp.transport.add_handler_to_transport("_monitor_events", client)
+        self.machine.events.monitor_events = True
+
+    def monitor_posted_event(self, posted_event: PostedEvent):
+        """Send monitored posted event to bcp clients."""
+        self.machine.bcp.transport.send_to_clients_with_handler(
+            handler="_monitor_events",
+            bcp_command="monitored_event",
+            event_name=posted_event.event,
+            event_type=posted_event.type,
+            event_callback=posted_event.callback,
+            event_kwargs=posted_event.kwargs,
+            registered_handlers=(
+                self.machine.events.registered_handlers.get(posted_event.event, []))
+        )
 
     def _monitor_devices(self, client):
         """Register client to get notified of device changes."""

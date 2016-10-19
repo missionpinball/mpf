@@ -13,7 +13,7 @@ class LedPlayer(DeviceConfigPlayer):
     show_section = 'leds'
     machine_collection_name = "leds"
 
-    def play(self, settings, context, priority=0, **kwargs):
+    def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Set LED color based on config."""
         instance_dict = self._get_instance_dict(context)
         full_context = self._get_full_context(context)
@@ -65,7 +65,7 @@ class LedPlayer(DeviceConfigPlayer):
     def get_express_config(self, value):
         """Parse express config."""
         value = str(value).replace(' ', '').lower()
-        fade = 0
+        fade = None
         if '-f' in value:
             # Value contains both a color value and a fade value, parse it into
             # its individual components

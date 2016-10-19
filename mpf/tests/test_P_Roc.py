@@ -87,7 +87,7 @@ class TestPRoc(MpfTestCase):
         p_roc_common.pinproc.normalize_machine_type = self._normalize
         p_roc_common.pinproc.driver_state_pulse = MagicMock(
             return_value="driver_state_pulse")
-        self.pinproc.switch_get_states = MagicMock(return_value=[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+        self.pinproc.switch_get_states = MagicMock(return_value=[0, 1] + [0] * 100)
         super().setUp()
 
     def test_pulse_and_hold(self):

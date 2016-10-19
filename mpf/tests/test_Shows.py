@@ -585,9 +585,9 @@ class TestShows(MpfTestCase):
         self.assertIn(self.machine.leds.led_01, copied_show[0]['leds'])
         self.assertIn(self.machine.leds.led_02, copied_show[0]['leds'])
         self.assertEqual(copied_show[0]['leds'][self.machine.leds.led_01],
-                         dict(color='006400', fade_ms=0, priority=0))
+                         dict(color='006400', fade_ms=None, priority=0))
         self.assertEqual(copied_show[0]['leds'][self.machine.leds.led_02],
-                         dict(color='cccccc', fade_ms=0, priority=0))
+                         dict(color='cccccc', fade_ms=None, priority=0))
         self.assertEqual(copied_show[3]['leds'][self.machine.leds.led_01],
                          dict(color='midnightblue', fade_ms=500, priority=0))
 

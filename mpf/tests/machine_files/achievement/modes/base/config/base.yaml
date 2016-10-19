@@ -16,6 +16,7 @@ achievements:
     show_when_started: achievement1_started
     show_when_stopped: achievement1_stopped
     show_when_completed: achievement1_completed
+    restart_on_next_ball_when_started: True
 
   achievement2:
     start_events: achievement2_start
@@ -30,5 +31,4 @@ achievements:
     show_when_completed: achievement2_completed
     restart_after_stop_possible: False
     start_enabled: True
-    restart_on_next_ball_when_started: False
     enable_on_next_ball_when_enabled: False

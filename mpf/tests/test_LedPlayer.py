@@ -49,9 +49,9 @@ class TestLedPlayer(MpfTestCase):
         self.assertEqual(self.machine.config['led_player']['event3'][led3]['fade_ms'], 500)
 
         self.assertEqual(self.machine.config['led_player']['event4'][led1]['color'], '00ffff')
-        self.assertEqual(self.machine.config['led_player']['event4'][led1]['fade_ms'], 0)
+        self.assertEqual(self.machine.config['led_player']['event4'][led1]['fade_ms'], None)
         self.assertEqual(self.machine.config['led_player']['event4'][led2]['color'], '00ffff')
-        self.assertEqual(self.machine.config['led_player']['event4'][led2]['fade_ms'], 0)
+        self.assertEqual(self.machine.config['led_player']['event4'][led2]['fade_ms'], None)
 
     def test_led_player(self):
         # led_player just sets these colors and that's it.

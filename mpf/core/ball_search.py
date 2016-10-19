@@ -28,6 +28,12 @@ class BallSearch(object):
         self.machine.events.add_handler('request_to_start_game',
                                         self.request_to_start_game)
 
+        self.machine.events.add_handler('cancel_ball_search',
+                                        self.cancel_ball_search)
+        '''event: cancel_ball_search
+        desc: This event will cancel all running ball searches and mark the balls as lost. This is only a handler
+        so all you have to do is to post the event.'''
+
     def request_to_start_game(self, **kwargs):
         """Method registered for the *request_to_start_game* event.
 
@@ -100,6 +106,8 @@ class BallSearch(object):
 
     def start(self):
         """Actually start ball search."""
+        if not self.enabled or self.started or not self.callbacks:
+            return
         self.started = True
         self.iteration = 1
         self.phase = 1
@@ -143,6 +151,12 @@ class BallSearch(object):
                 self.delay.add(name='run', callback=self.run, ms=timeout)
                 return
 
+    def cancel_ball_search(self, **kwargs):
+        """Cancel the current ballsearch and mark the ball as missing."""
+        del kwargs
+        if self.started:
+            self.give_up()
+
     def give_up(self):
         """Give up the ball search.
 
@@ -162,6 +176,12 @@ class BallSearch(object):
         self.machine.ball_controller.num_balls_known -= lost_balls
         self.playfield.balls = 0
         self.playfield.available_balls = 0
+
+        self._compensate_lost_balls(lost_balls)
+
+    def _compensate_lost_balls(self, lost_balls):
+        if not self.machine.game:
+            return
 
         if self.playfield.config['ball_search_failed_action'] == "new_ball":
             if self.machine.ball_controller.num_balls_known > 0:

@@ -23,6 +23,7 @@ class EventManager(object):
         self.registered_handlers = {}   # type: {str: [RegisteredHandler]}
         self.event_queue = deque([])
         self.callback_queue = deque([])
+        self.monitor_events = False
 
         self.debug = True
 
@@ -407,13 +408,67 @@ class EventManager(object):
         if not self.event_queue and hasattr(self.machine.clock, "loop"):
             self.machine.clock.loop.call_soon(self.process_event_queue)
 
-        self.event_queue.append(PostedEvent(event, ev_type, callback, kwargs))
+        posted_event = PostedEvent(event, ev_type, callback, kwargs)
+
+        if self.monitor_events:
+            self.machine.bcp.interface.monitor_posted_event(posted_event)
+
+        self.event_queue.append(posted_event)
         if self.debug:
             self.log.debug("============== EVENTS QUEUE =============")
             for event in list(self.event_queue):
                 self.log.debug("%s, %s, %s, %s", event[0], event[1],
                                event[2], event[3])
             self.log.debug("=========================================")
+
+    @asyncio.coroutine
+    def _run_handlers_sequential(self, event, callback, kwargs):
+        """Run all handlers for an event."""
+        if self.debug:
+            self.log.debug("^^^^ Processing queue event '%s'. Callback: %s,"
+                           " Args: %s", event, callback, kwargs)
+
+        # all handlers may have been removed in the meantime
+        if event not in self.registered_handlers:
+            return
+
+        # Now let's call the handlers one-by-one, including any kwargs
+        for handler in self.registered_handlers[event][:]:
+            # use slice above so we don't process new handlers that came
+            # in while we were processing previous handlers
+
+            # merge the post's kwargs with the registered handler's kwargs
+            # in case of conflict, posts kwargs will win
+            merged_kwargs = dict(list(handler.kwargs.items()) + list(kwargs.items()))
+
+            # if condition exists and is not true skip
+            if handler.condition is not None and not handler.condition.evaluate(merged_kwargs):
+                continue
+
+            # log if debug is enabled and this event is not the timer tick
+            if self.debug:
+                try:
+                    self.log.debug("%s (priority: %s) responding to event '%s'"
+                                   " with args %s",
+                                   (str(handler.callback).split(' ')), handler.priority,
+                                   event, merged_kwargs)
+                except IndexError:
+                    pass
+
+            # call the handler and save the results
+            queue = QueuedEvent(self.debug)
+            handler.callback(queue=queue, **merged_kwargs)
+            if queue.waiter:
+                blocked = True
+                queue.event = asyncio.Event(loop=self.machine.clock.loop)
+                yield from queue.event.wait()
+
+        if self.debug:
+            self.log.debug("vvvv Finished queue event '%s'. Callback: %s. "
+                           "Args: %s", event, callback, kwargs)
+
+        if callback:
+            callback(**kwargs)
 
     def _run_handlers(self, event, ev_type, kwargs):
         """Run all handlers for an event."""
@@ -445,7 +500,7 @@ class EventManager(object):
 
             # If whatever handler we called returns False, we stop
             # processing the remaining handlers for boolean or queue events
-            if (ev_type == 'boolean' or ev_type == 'queue') and result is False:
+            if ev_type == 'boolean' and result is False:
                 # add a False result so our callback knows something failed
                 kwargs['ev_result'] = False
 
@@ -459,31 +514,31 @@ class EventManager(object):
 
         return result
 
+    def _process_queue_event(self, event, callback, **kwargs):
+        """Handle queue events."""
+        if event not in self.registered_handlers:
+            # fast path if there are not handlers
+            self.callback_queue.append((callback, kwargs))
+        else:
+            self.machine.clock.loop.create_task(self._run_handlers_sequential(event, callback, kwargs))
+
     def _process_event(self, event, ev_type, callback=None, **kwargs):
         # Internal method which actually handles the events. Don't call this.
 
         result = None
-        queue = None
         if self.debug:
             self.log.debug("^^^^ Processing event '%s'. Type: %s, Callback: %s,"
                            " Args: %s", event, ev_type, callback, kwargs)
 
         # Now let's call the handlers one-by-one, including any kwargs
         if event in self.registered_handlers:
-
-            if ev_type == 'queue' and callback:
-                queue = QueuedEvent(callback, **kwargs)
-                kwargs['queue'] = queue
-
             result = self._run_handlers(event, ev_type, kwargs)
 
         if self.debug:
             self.log.debug("vvvv Finished event '%s'. Type: %s. Callback: %s. "
                            "Args: %s", event, ev_type, callback, kwargs)
 
-        if ev_type == 'queue':
-            self._handle_queue(queue, callback, kwargs)
-        elif callback:
+        if callback:
             # For event types other than queue, we'll handle the callback here.
             # Queue events with active waits will do the callback when the
             # waits clear
@@ -494,25 +549,6 @@ class EventManager(object):
 
             self.callback_queue.append((callback, kwargs))
 
-    def _handle_queue(self, queue, callback, kwargs):
-        if callback and not queue:
-            # If this was a queue event but there were no registered handlers,
-            # then we need to do the callback now
-            self.callback_queue.append((callback, kwargs))
-
-        elif queue and queue.is_empty():
-            # If we had a queue event that had handlers and a queue was created
-            # we need to see if any the queue is empty now, and if so, do the
-            # callback
-
-            del kwargs['queue']  # ditch this since we don't need it now
-
-            if queue.callback:
-                # if there's still a callback, that means it wasn't called yet
-                self.callback_queue.append((queue.callback, kwargs))
-        elif queue and not queue.is_empty():
-            queue.event_finished()
-
     def process_event_queue(self):
         """Check if there are any other events that need to be processed, and then process them."""
         while len(self.event_queue) > 0 or len(self.callback_queue) > 0:
@@ -520,10 +556,15 @@ class EventManager(object):
             # process them in the same loop.
             while len(self.event_queue) > 0:
                 event = self.event_queue.popleft()
-                self._process_event(event=event[0],
-                                    ev_type=event[1],
-                                    callback=event[2],
-                                    **event[3])
+                if event.type == "queue":
+                    self._process_queue_event(event=event[0],
+                                              callback=event[2],
+                                              **event[3])
+                else:
+                    self._process_event(event=event[0],
+                                        ev_type=event[1],
+                                        callback=event[2],
+                                        **event[3])
 
             # when all events are processed run the _last_ callback. afterwards
             # continue with the loop and run all events. this makes sure all
@@ -537,65 +578,37 @@ class QueuedEvent(object):
 
     """Base class for an event queue which is created each time a queue event is called."""
 
-    def __init__(self, callback, **kwargs):
+    def __init__(self, debug):
         """Initialise QueueEvent."""
-        self.log = logging.getLogger("Queue")
-
-        self.debug = True
-
-        if self.debug:
-            self.log.debug("Creating an event queue. Callback: %s Args: %s",
-                           callback, kwargs)
-        self.callback = callback
-        self.kwargs = kwargs
-        self.num_waiting = 0
-        self._is_event_finished = False
+        if debug:
+            self.log = logging.getLogger("Queue")
+        self.waiter = False
+        self.event = None
+        self.debug = debug
 
     def __repr__(self):
         """Return str representation."""
-        return '<QueuedEvent for callback {}>'.format(self.callback)
-
-    def event_finished(self):
-        """Return true if event is finished."""
-        self._is_event_finished = True
+        return '<QueuedEvent>'
 
     def wait(self):
         """Register a wait for this QueueEvent."""
-        self.num_waiting += 1
+        if self.waiter:
+            raise AssertionError("Double lock")
+        self.waiter = True
         if self.debug:
-            self.log.debug("Registering a wait. Current count: %s",
-                           self.num_waiting)
+            self.log.debug("Registering a wait.")
 
     def clear(self):
-        """Clear a wait.
+        """Clear a wait."""
+        if not self.waiter:
+            raise AssertionError("Not locked")
 
-        If the number of waits drops to 0, the callbacks will be called.
-        """
-        self.num_waiting -= 1
-        if self.debug:
-            self.log.debug("Clearing a wait. Current count: %s",
-                           self.num_waiting)
-        if not self.num_waiting and self._is_event_finished:
-            if self.debug:
-                self.log.debug("Queue is empty. Calling %s", self.callback)
-            # del self.kwargs['queue']  # ditch this since we don't need it now
-            callback = self.callback
-            self.callback = None
-            callback(**self.kwargs)
+        self.waiter = False
 
-    def kill(self):
-        """Kill this QueuedEvent by removing all waits.
-
-        Does not process the callback.
-        """
-        self.num_waiting = 0
+        # in case this is async we release the lock
+        if self.event:
+            self.event.set()
 
     def is_empty(self):
-        """Check to see if this QueuedEvent has any waits.
-
-        Returns:
-            True is there are 1 or more waits, False if there are no more
-            waits.
-
-        """
-        return not self.num_waiting
+        """Return true if unlocked."""
+        return not self.waiter

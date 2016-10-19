@@ -1,7 +1,7 @@
 """A shot in MPF."""
 
 import uuid
-from copy import copy
+from copy import copy, deepcopy
 
 import mpf.core.delays
 from mpf.core.mode_device import ModeDevice
@@ -35,6 +35,7 @@ class Shot(ModeDevice, SystemWideDevice):
         self.active_delays = set()
         self.switch_handlers_active = False
         self.profiles = list()
+        self.mode_config = {}
         self.groups = set()  # shot_groups this shot belongs to
 
         # todo is this a hack??
@@ -42,6 +43,11 @@ class Shot(ModeDevice, SystemWideDevice):
 
         # todo remove this hack
         self._created_system_wide = False
+
+    @property
+    def can_exist_outside_of_game(self):
+        """Return true if this device can exist outside of a game."""
+        return True
 
     @property
     def enabled(self):
@@ -281,7 +287,7 @@ class Shot(ModeDevice, SystemWideDevice):
             if s['manual_advance'] is None:
                 s['manual_advance'] = True
 
-        s['show_tokens'] = self.config['show_tokens']
+        s['show_tokens'] = deepcopy(self.config['show_tokens'])
         s['priority'] += profile['priority']
         if start_step:
             s['start_step'] = start_step
@@ -289,6 +295,8 @@ class Shot(ModeDevice, SystemWideDevice):
         s.pop('show')
         s.pop('name')
         s.pop('action')
+
+        self.debug_log("Playing show: %s. %s", show_name, s)
 
         profile['running_show'] = self.machine.shows[show_name].play(**s)
 
@@ -311,9 +319,17 @@ class Shot(ModeDevice, SystemWideDevice):
         self.player = None
         self.remove_profile_by_mode(None)
 
+    def overload_config_in_mode(self, mode, config):
+        """Overload config in mode."""
+        self.mode_config[mode] = config
+
     def add_control_events_in_mode(self, mode):
         """Add control events in mode."""
-        enable = not mode.config['shots'][self.name]['enable_events']
+        try:
+            # in case this is an overload
+            enable = not self.mode_config[mode]['enable_events']
+        except KeyError:
+            enable = not self.config['enable_events']
         self.update_profile(enable=enable, mode=mode)
 
     def device_removed_from_mode(self, mode):
@@ -405,7 +421,7 @@ class Shot(ModeDevice, SystemWideDevice):
             '''event: (shot)_hit
             desc: The shot called (shot) was just hit.
 
-            Note that there are three events posted when a shot is hit, each
+            Note that there are four events posted when a shot is hit, each
             with variants of the shot name, profile, and current state,
             allowing you to key in on the specific granularity you need.
 
@@ -419,7 +435,7 @@ class Shot(ModeDevice, SystemWideDevice):
         desc: The shot called (shot) was just hit with the profile (profile)
         active.
 
-        Note that there are three events posted when a shot is hit, each
+        Note that there are four events posted when a shot is hit, each
         with variants of the shot name, profile, and current state,
         allowing you to key in on the specific granularity you need.
 
@@ -439,7 +455,25 @@ class Shot(ModeDevice, SystemWideDevice):
         desc: The shot called (shot) was just hit with the profile (profile)
         active in the state (state).
 
-        Note that there are three events posted when a shot is hit, each
+        Note that there are four events posted when a shot is hit, each
+        with variants of the shot name, profile, and current state,
+        allowing you to key in on the specific granularity you need.
+
+        Also remember that shots can have more than one active profile at a
+        time (typically each associated with a mode), so a single hit to this
+        shot might result in this event being posted multiple times with
+        different (profile) and (state) values.
+
+        args:
+        profile: The name of the profile that was active when hit.
+        state: The name of the state the profile was in when it was hit'''
+
+        self.machine.events.post('{}_{}_hit'.format(self.name, state),
+                                 profile=profile, state=state)
+        '''event: (shot)_(state)_hit
+        desc: The shot called (shot) was just hit while in the profile (state).
+
+        Note that there are four events posted when a shot is hit, each
         with variants of the shot name, profile, and current state,
         allowing you to key in on the specific granularity you need.
 
@@ -609,14 +643,20 @@ class Shot(ModeDevice, SystemWideDevice):
                 in the show)
 
         """
+        self.debug_log("Received jump request. Mode: %s, State: %s, Show step:"
+                       " %s, Force: %s", mode, state, show_step, force)
+
         if not (self.get_profile_by_key('mode', mode)['enable'] or force):
+            self.debug_log("Profile is disabled and force is False. Not "
+                           "jumping")
             return
 
         try:
             if state == self.player[self.get_profile_by_key('mode', mode)['settings']['player_variable']]:
-                # we're already at that state
+                self.debug_log("Shot is already in the jump destination state")
                 return
-        except KeyError:  # no profile for this mode
+        except KeyError:
+            self.debug_log("No shot profile for this mode")
             return
 
         self.debug_log("Jumping to profile state '%s'", state)
@@ -689,6 +729,9 @@ class Shot(ModeDevice, SystemWideDevice):
         """Update profile."""
         existing_profile = self.get_profile_by_key('mode', mode)
 
+        self.debug_log("Updating profile. Existing profile: %s",
+                       existing_profile)
+
         if not existing_profile:  # we're adding, not updating
             self._add_profile2(profile=profile, enable=enable, mode=mode)
             return
@@ -739,6 +782,8 @@ class Shot(ModeDevice, SystemWideDevice):
         if enable is None:
             enable = False
 
+        self.debug_log("Adding profile: %s", profile)
+
         try:
             profile_settings = (
                 self.machine.shot_profile_manager.profiles[profile].copy())
@@ -757,6 +802,8 @@ class Shot(ModeDevice, SystemWideDevice):
         this_entry['profile'] = profile
         this_entry['settings'] = profile_settings
         this_entry['enable'] = enable
+
+        self.debug_log('This profile settings: %s', this_entry)
 
         self.add_profile(this_entry)
 

@@ -12,7 +12,7 @@ class LightPlayer(DeviceConfigPlayer):
     show_section = 'lights'
     machine_collection_name = 'lights'
 
-    def play(self, settings, context, priority=0, **kwargs):
+    def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Set brightness based on config."""
         del kwargs
         instance_dict = self._get_instance_dict(context)

@@ -32,10 +32,12 @@ class PlayfieldTransfer(SystemWideDevice):
         del kwargs
         self.machine.switch_controller.add_switch_handler(
             switch_name=self.config['ball_switch'].name,
-            callback=self._ball_went_through,
+            callback=self.transfer,
             state=1, ms=0)
 
-    def _ball_went_through(self):
+    def transfer(self, **kwargs):
+        """Transfer a ball to the target playfield."""
+        del kwargs
         self.log.debug("Ball went from %s to %s", self.source.name,
                        self.target.name)
 
@@ -57,7 +59,7 @@ class PlayfieldTransfer(SystemWideDevice):
 
         # inform target playfield about incomming ball
         self.machine.events.post(
-            'balldevice_' + self.name + '_ball_eject_attempt',
+            'balldevice_' + self.name + '_ejecting_ball',
             balls=1,
             target=self.target,
             timeout=0,

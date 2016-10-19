@@ -31,10 +31,29 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         # todo remove this hack
         self._created_system_wide = False
 
+        # If debug is enabled for this shot group, enable debug
+        # for all the member shots too.
+        if self.debug:
+            for shot in self.config['shots']:
+                shot.debug = True
+
+        self.mode_config = {}
+
+    def _get_mode_config(self, mode):
+        try:
+            return self.mode_config[mode]
+        except KeyError:
+            return self.config
+
     @property
     def enabled(self):
         """Return true if enabled."""
         return self._enabled
+
+    @property
+    def can_exist_outside_of_game(self):
+        """Return true if this device can exist outside of a game."""
+        return True
 
     @classmethod
     def prepare_config(cls, config, is_mode_config):
@@ -56,6 +75,10 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
         self._created_system_wide = True
 
+    def overload_config_in_mode(self, mode, config):
+        """Overload config in mode."""
+        self.mode_config[mode.name] = config
+
     def device_added_to_mode(self, mode, player):
         """Add device in mode."""
         super().device_added_to_mode(mode, player)
@@ -63,9 +86,8 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         # If there are no enable_events configured, then we enable this shot
         # group when its created on mode start
 
-        if ((not mode.config['shot_groups'][self.name]['enable_events']) or
-                'mode_{}_started'.format(mode.name) in
-                mode.config['shot_groups'][self.name]['enable_events']):
+        config = self._get_mode_config(mode)
+        if not config['enable_events'] or 'mode_{}_started'.format(mode.name) in config['enable_events']:
             self.enable(mode)
         else:
             # manually call disable here so it disables the member shots
@@ -180,8 +202,9 @@ class ShotGroup(ModeDevice, SystemWideDevice):
     def _enable_from_mode(self, mode, profile=None):
         # If we weren't passed a profile, use the one from the mode config
 
-        if not profile and mode.config['shot_groups'][self.name]['profile']:
-            profile = mode.config['shot_groups'][self.name]['profile']
+        config = self._get_mode_config(mode)
+        if not profile and config['profile']:
+            profile = config['profile']
 
         for shot in self.config['shots']:
             if profile:

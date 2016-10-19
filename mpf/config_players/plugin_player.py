@@ -66,7 +66,7 @@ class PluginPlayer(DeviceConfigPlayer):
         for event in event_list:
             self.machine.bcp.interface.remove_registered_trigger_event_for_client(self.bcp_client, event)
 
-    def play(self, settings, context, priority=0, **kwargs):
+    def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Trigger remote player via BCP."""
         self.machine.bcp.interface.bcp_trigger(name='{}_play'.format(self.show_section),
                                                settings=settings, context=context,

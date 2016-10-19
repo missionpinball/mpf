@@ -34,6 +34,9 @@ class BaseSerialCommunicator(object):
             url=port, baudrate=baud, limit=0)
         self.reader, self.writer = yield from connector
 
+        # read everything which is sitting in the serial
+        self.writer.transport.serial.reset_input_buffer()
+
         yield from self._identify_connection()
 
         self.read_task = self.machine.clock.loop.create_task(self._socket_reader())

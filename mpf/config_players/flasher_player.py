@@ -10,7 +10,7 @@ class FlasherPlayer(DeviceConfigPlayer):
     config_file_section = 'flasher_player'
     show_section = 'flashers'
 
-    def play(self, settings, context, priority=0, **kwargs):
+    def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Flash flashers."""
         del kwargs
 

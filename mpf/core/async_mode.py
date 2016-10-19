@@ -22,13 +22,18 @@ class AsyncMode(Mode, metaclass=abc.ABCMeta):
         self._task = self.machine.clock.loop.create_task(self._run())
         self._task.add_done_callback(self._done)
 
-    @staticmethod
-    def _done(future):
+    def _done(self, future):
         """Evaluate result of task.
 
         Will raise exceptions from within task.
         """
-        future.result()
+        try:
+            future.result()
+        except asyncio.CancelledError:
+            pass
+
+        # stop mode
+        self.stop()
 
     def _stopped(self):
         """Cancel task."""

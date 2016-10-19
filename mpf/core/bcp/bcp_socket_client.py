@@ -7,6 +7,13 @@ import asyncio
 
 from mpf._version import __version__, __bcp_version__
 from mpf.core.bcp.bcp_client import BaseBcpClient
+from mpf.core.utility_functions import Util
+
+
+class MpfJSONEncoder(json.JSONEncoder):
+
+    def default(self, o):
+        return str(o)
 
 
 def decode_command_string(bcp_string):
@@ -97,6 +104,8 @@ def encode_command_string(bcp_command, **kwargs):
             value = 'float:{}'.format(value)
         elif v is None:
             value = 'NoneType:'
+        else:  # cast anything else as a string
+            value = str(value)
 
         kwarg_string += '{}={}&'.format(quote(k.lower(), ''),
                                         value)
@@ -104,7 +113,7 @@ def encode_command_string(bcp_command, **kwargs):
     kwarg_string = kwarg_string[:-1]
 
     if json_needed:
-        kwarg_string = 'json={}'.format(json.dumps(kwargs))
+        kwarg_string = 'json={}'.format(json.dumps(kwargs, cls=MpfJSONEncoder))
 
     return str(urlunparse(('', '', bcp_command.lower(), '', kwarg_string, '')))
 
@@ -195,7 +204,8 @@ class BCPClientSocket(BaseBcpClient):
         """
         bcp_string = encode_command_string(bcp_command, **bcp_command_args)
 
-        self.log.debug('Sending "%s"', bcp_string)
+        if self.debug_log:
+            self.log.debug('Sending "%s"', bcp_string)
         self._sender.write((bcp_string + '\n').encode())
 
     @asyncio.coroutine

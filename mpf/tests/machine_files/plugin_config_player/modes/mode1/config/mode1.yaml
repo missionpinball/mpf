@@ -2,6 +2,7 @@
 
 mode:
   priority: 400
+  game_mode: False
 
 test_player:
   event1: some_string

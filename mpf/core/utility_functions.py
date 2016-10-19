@@ -31,11 +31,11 @@ class Util(object):
     def convert_to_type(value, type_name):
         """Convert value to type."""
         if type_name == "int":
-            result_value = int(value)
+            result_value = int(value)   # pylint: disable-msg=redefined-variable-type
         elif type_name == "float":
-            result_value = float(value)
+            result_value = float(value)     # pylint: disable-msg=redefined-variable-type
         elif type_name == "str":
-            result_value = str(value)
+            result_value = str(value)   # pylint: disable-msg=redefined-variable-type
         else:
             raise AssertionError("Unknown type {}".format(type_name))
 
@@ -206,8 +206,13 @@ class Util(object):
                     del result[k]
             elif k in result and isinstance(result[k], dict):
                 result[k] = Util.dict_merge(result[k], v)
-            elif k in result and isinstance(result[k], list) and combine_lists:
-                result[k].extend(v)
+            elif k in result and isinstance(result[k], list):
+                if v[0] == dict(_overwrite=True):
+                    result[k] = v[1:]
+                elif combine_lists:
+                    result[k].extend(v)
+                else:
+                    result[k] = deepcopy(v)
             else:
                 result[k] = deepcopy(v)
         # log.info("Dict Merge result: %s", result)
