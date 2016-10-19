@@ -387,7 +387,7 @@ class BallDevice(SystemWideDevice):
             yield from self._ball_left(None)
             return
 
-        self._balls_missing(balls)
+        yield from self._balls_missing(balls)
 
         return
 
@@ -428,11 +428,12 @@ class BallDevice(SystemWideDevice):
                 futures.append(incoming_ball_lost)
             event = yield from Util.first(futures, loop=self.machine.clock.loop)
             if event._coro == eject_failed:
-                self._cancel_eject()
+                yield from self._cancel_eject()
                 return
 
             # incoming ball expired handle that in idle
             if event._coro == incoming_ball_timeout or event._coro == incoming_ball_lost:
+                yield from self._handle_lost_incoming_ball()
                 return
 
             if self.config['mechanical_eject'] and event._coro == incoming_ball:
@@ -485,7 +486,7 @@ class BallDevice(SystemWideDevice):
             elif event._coro == source_failure:
                 self._cancel_incoming_ball_at_target(self.eject_in_progress_target)
                 self._cancel_eject_confirmation()
-                self._cancel_eject()
+                yield from self._cancel_eject()
                 return True
             elif event._coro == source_failure_retry:
                 self._cancel_incoming_ball_at_target(self.eject_in_progress_target)
@@ -744,7 +745,7 @@ class BallDevice(SystemWideDevice):
                        "loss.", balls)
         yield from self.eject_failed(retry=False)
 
-        self._balls_missing(balls)
+        yield from self._balls_missing(balls)
 
         # Reset target
         self.eject_in_progress_target = None
@@ -771,12 +772,14 @@ class BallDevice(SystemWideDevice):
             queue.wait()
             return
 
+    @asyncio.coroutine
     def _cancel_eject(self):
         target = self.eject_queue[0][0]
         self.eject_queue.popleft()
         # ripple this to the next device/register handler
-        self.machine.events.post('balldevice_{}_ball_lost'.format(self.name),
-                                 target=target)
+        yield from self.machine.events.post_async(
+            'balldevice_{}_ball_lost'.format(self.name),
+            target=target)
         '''event: balldevice_(name)_ball_lost
 
         desc: A ball has been lost from the device (name), meaning the ball
@@ -808,11 +811,10 @@ class BallDevice(SystemWideDevice):
         if target != self:
             return
 
-        self._handle_lost_incoming_ball()
-
         self._incoming_ball_lost_condition.set()
         self._incoming_ball_lost_condition.clear()
 
+    @asyncio.coroutine
     def _handle_lost_incoming_ball(self):
         if self.debug:
             self.log.debug("Handling timeouts of incoming balls")
@@ -823,7 +825,7 @@ class BallDevice(SystemWideDevice):
         if not len(self.eject_queue):
             raise AssertionError("Should have eject_queue")
 
-        self._cancel_eject()
+        yield from self._cancel_eject()
 
     # ---------------------- End of state handling code -----------------------
 
@@ -1180,6 +1182,7 @@ class BallDevice(SystemWideDevice):
         for dummy_iterator in range(new_balls):
             self.machine.events.post_boolean('balldevice_balls_available')
 
+    @asyncio.coroutine
     def _balls_missing(self, balls):
         # Called when ball_count finds that balls are missing from this device
         if self.debug:
@@ -1187,8 +1190,7 @@ class BallDevice(SystemWideDevice):
                            " %s", abs(balls),
                            self.mechanical_eject_in_progress)
 
-        self.machine.events.post('balldevice_{}_ball_missing'.format(
-            abs(balls)))
+        yield from self.machine.events.post_async('balldevice_{}_ball_missing'.format(abs(balls)))
         '''event: balldevice_(balls)_ball_missing.
         desc: The number of (balls) is missing. Note this event is
         posted in addition to the generic *balldevice_ball_missing* event.
