@@ -585,7 +585,11 @@ class BallDevice(SystemWideDevice):
             # wait for trigger event
             self.debug_log("Waiting for trigger event %s", self.trigger_event)
             yield from self.machine.events.wait_for_event(self.trigger_event)
-            self.mechanical_eject_in_progress = False
+            if self.mechanical_eject_in_progress:
+                self.mechanical_eject_in_progress = False
+                # TODO: why is no pulse needed here?
+            else:
+                yield from self._do_eject_attempt()
             self.debug_log("Got trigger event")
 
         yield from self._wait_for_ball_left()
