@@ -109,9 +109,9 @@ class TestBallController(MpfTestCase):
 
         # eject one ball to launcher
         self.machine.ball_devices.test_trough.eject(target=self.machine.ball_devices.test_launcher)
-        self.advance_time_and_run(.05)
+        self.advance_time_and_run(.1)
         self.assertEqual("ball_left", self.machine.ball_devices.test_trough._state)
-        self.assertEqual("idle", self.machine.ball_devices.test_launcher._state)
+        self.assertEqual("waiting_for_ball", self.machine.ball_devices.test_launcher._state)
         self.assertEqual(3, self.machine.ball_devices.test_trough.available_balls)
         self.assertEqual(1, self.machine.ball_devices.test_launcher.available_balls)
 
