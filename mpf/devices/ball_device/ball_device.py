@@ -790,16 +790,6 @@ class BallDevice(SystemWideDevice):
             self._source_eject_failure_retry_condition.set()
             self._source_eject_failure_retry_condition.clear()
 
-        if self._state == "waiting_for_ball_mechanical":
-            self._cancel_incoming_ball_at_target(self.eject_in_progress_target)
-            self._cancel_eject_confirmation()
-            if not retry:
-                self._cancel_eject()
-                return self._switch_state("idle")
-            else:
-                return self._switch_state("waiting_for_ball")
-
-
     def _source_device_ball_lost(self, target, **kwargs):
         del kwargs
         if target != self:
@@ -1507,21 +1497,6 @@ class BallDevice(SystemWideDevice):
                                round(self.machine.clock.get_time() - self.eject_start_time,
                                      2))
 
-    def _ball_left_device(self, **kwargs):
-        del kwargs
-        if self._state != "ejecting":
-            raise AssertionError("Device in wrong state {}. Should be in ejecting.".format(self._state))
-        # remove handler
-        for switch in self.config['ball_switches']:
-            self.machine.switch_controller.remove_switch_handler(
-                switch_name=switch.name,
-                callback=self._ball_left_device,
-                state=0)
-        self.balls -= 1
-
-        self.log.debug("Ball left. New count %s", self.balls)
-        return self._switch_state("ball_left")
-
     @asyncio.coroutine
     def _perform_eject(self, target, **kwargs):
         del kwargs
@@ -1732,10 +1707,6 @@ class BallDevice(SystemWideDevice):
 
         # remove handler for ball left device
         for switch in self.config['ball_switches']:
-            self.machine.switch_controller.remove_switch_handler(
-                switch_name=switch.name,
-                callback=self._ball_left_device,
-                state=0)
             self.machine.switch_controller.remove_switch_handler(
                 switch_name=switch.name,
                 callback=self.eject_success,
