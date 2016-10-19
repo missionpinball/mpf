@@ -931,7 +931,7 @@ timers:
     bcp: single|bool|False
 track_player:
     __valid_in__: machine, mode, show
-    action: single|enum(play,stop,pause,resume,set_volume,stop_all_sounds)|
+    action: single|enum(play,stop,pause,set_volume,stop_all_sounds)|
     volume: single|gain|None
     fade: single|secs|0.1sec
 transitions:
