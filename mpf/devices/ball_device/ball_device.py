@@ -151,7 +151,6 @@ class BallDevice(SystemWideDevice):
     @asyncio.coroutine
     def _run(self):
         # state invalid
-        yield from self._initial_ball_count()
         yield from self._state_idle()
 
     def _switch_state(self, new_state, **kwargs):
@@ -1011,6 +1010,7 @@ class BallDevice(SystemWideDevice):
 
     def _initialize_phase_4(self, **kwargs):
         del kwargs
+        self.machine.clock.loop.run_until_complete(self._initial_ball_count())
         self.runner = self.machine.clock.loop.create_task(self._run())
         self.runner.add_done_callback(self._done)
 
