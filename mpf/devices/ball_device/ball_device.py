@@ -242,9 +242,11 @@ class BallDevice(SystemWideDevice):
             # TODO: wait for incoming balls timeout
             event = yield from Util.first([wait_for_ball_changes, wait_for_eject, wait_for_incoming_ball], self.machine.clock.loop)
             if hasattr(event, "_coro") and event._coro == wait_for_incoming_ball:
-                # TODO: what happens when we support mechanical eject?
                 # we got incoming ball without eject queue
-                yield from self._waiting_for_ball()
+                if self.config['mechanical_eject']:
+                    yield from self._waiting_for_ball_mechanical()
+                else:
+                    yield from self._waiting_for_ball()
 
             self.debug_log("Wait done")
 
@@ -400,6 +402,7 @@ class BallDevice(SystemWideDevice):
         #    waiting_for_ball_mechanical
         # 3. eject can fail at the source
         while True:
+            self._state = "waiting_for_ball"
             balls = yield from self._count_balls()
             if self.balls > balls:
                 # We dont have balls. How can that happen?
@@ -440,10 +443,12 @@ class BallDevice(SystemWideDevice):
     # ----------------- State: waiting_for_ball_mechanical --------------------
     @asyncio.coroutine
     def _waiting_for_ball_mechanical(self):
+        self._state = "waiting_for_ball_mechanical"
         # This can happen
         # 1. ball counts can change (via _counted_balls)
         # 2. eject can be confirmed
-        # 2. eject of source can fail
+        # 3. eject of source can fail
+        self._eject_success_condition.clear()
         self.debug_log("Waiting for ball for mechanical eject")
         if len(self.eject_queue):
             self.eject_in_progress_target = self.eject_queue[0][0]
@@ -456,6 +461,7 @@ class BallDevice(SystemWideDevice):
         yield from self._do_eject_attempt()
 
         while True:
+            self._state = "waiting_for_ball_mechanical"
             balls = yield from self._count_balls()
             if self.balls > balls:
                 # We dont have balls. How can that happen?
@@ -470,9 +476,13 @@ class BallDevice(SystemWideDevice):
 
             source_failure = self._source_eject_failure_condition.wait()
             source_failure_retry = self._source_eject_failure_retry_condition.wait()
-            futures = [source_failure, source_failure_retry, self._wait_for_ball_changes()]
+            eject_success = self._eject_success_condition.wait()
+            futures = [source_failure, source_failure_retry, self._wait_for_ball_changes(), eject_success]
             event = yield from Util.first(futures, loop=self.machine.clock.loop)
-            if event._coro == source_failure:
+
+            if event._coro == eject_success:
+                return True
+            elif event._coro == source_failure:
                 self._cancel_incoming_ball_at_target(self.eject_in_progress_target)
                 self._cancel_eject_confirmation()
                 self._cancel_eject()
@@ -512,7 +522,7 @@ class BallDevice(SystemWideDevice):
     def _ball_left(self, timeout_time):
         self._state = "ball_left"
         self.debug_log("Ball left device")
-        self.machine.events.remove_handler(self._trigger_eject_by_event)
+        self._eject_success_condition.clear()
         # TODO: handle entry switch here -> definitely new ball
         self.machine.events.post('balldevice_' + self.name + '_ball_left',
                                  balls=1,
@@ -551,6 +561,7 @@ class BallDevice(SystemWideDevice):
         except asyncio.TimeoutError:
             yield from self._failed_confirm()
         else:
+            #yield from self._handle_eject_success()
             self.eject_in_progress_target = None
             return
 
@@ -712,6 +723,7 @@ class BallDevice(SystemWideDevice):
             event = yield from Util.first([timeout_future, self._wait_for_ball_changes(), late_confirm_future],
                                           loop=self.machine.clock.loop)
             if event._coro == late_confirm_future:
+                #yield from self._handle_eject_success()
                 return
             elif event._coro == timeout_future:
                 break
@@ -1774,6 +1786,11 @@ class BallDevice(SystemWideDevice):
         if self.debug:
             self.log.debug("Confirmed successful eject")
 
+        self._eject_success_condition.set()
+
+        self._handle_eject_success()
+
+    def _handle_eject_success(self):
         # Create a temp attribute here so the real one is None when the
         # event is posted.
         eject_target = self.eject_in_progress_target
@@ -1782,9 +1799,6 @@ class BallDevice(SystemWideDevice):
         balls_ejected = 1
 
         self._cancel_eject_confirmation()
-
-        self._eject_success_condition.set()
-        self._eject_success_condition.clear()
 
         self.machine.events.post('balldevice_' + self.name +
                                  '_ball_eject_success',
