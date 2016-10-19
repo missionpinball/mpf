@@ -1076,10 +1076,11 @@ class BallDevice(SystemWideDevice):
     def _switch_changed(self, **kwargs):
         del kwargs
         self._ball_counter_condition.set()
-        self._ball_counter_condition.clear()
 
+    @asyncio.coroutine
     def _wait_for_ball_changes(self):
-        return self._ball_counter_condition.wait()
+        yield from self._ball_counter_condition.wait()
+        self._ball_counter_condition.clear()
 
     @asyncio.coroutine
     def _count_balls(self, **kwargs):
@@ -1094,7 +1095,7 @@ class BallDevice(SystemWideDevice):
             try:
                 return self._count_ball_switches()
             except ValueError:
-                yield from self._ball_counter_condition.wait()
+                yield from self._wait_for_ball_changes()
 
     def _count_ball_switches(self):
         # Count only. Do not change any state here!
@@ -1225,7 +1226,6 @@ class BallDevice(SystemWideDevice):
         new_balls = self.config['ball_capacity'] - self._entrance_count
         if new_balls > 0:
             self._ball_counter_condition.set()
-            self._ball_counter_condition.clear()
             self.log.debug("Ball is sitting on entrance_switch. Assuming "
                            "device is full. Adding %s balls and setting balls"
                            "to %s", new_balls, self.config['ball_capacity'])
@@ -1234,7 +1234,6 @@ class BallDevice(SystemWideDevice):
     def _entrance_switch_handler(self):
         # A ball has triggered this device's entrance switch
         self._ball_counter_condition.set()
-        self._ball_counter_condition.clear()
         self.debug_log("Entrance switch hit")
 
         if not self.config['ball_switches']:
@@ -1396,6 +1395,7 @@ class BallDevice(SystemWideDevice):
     def setup_eject_chain_next_hop(self, path, player_controlled):
         """Setup one hop of the eject chain."""
         next_hop = path.popleft()
+        self.debug_log("Adding eject chain")
 
         if next_hop not in self.config['eject_targets']:
             raise AssertionError("Broken path")
@@ -1413,10 +1413,12 @@ class BallDevice(SystemWideDevice):
             next_hop.setup_eject_chain_next_hop(path, player_controlled)
 
         self._eject_request_condition.set()
-        self._eject_request_condition.clear()
 
+    @asyncio.coroutine
     def _wait_for_eject_condition(self):
-        return self._eject_request_condition.wait()
+        yield from self._eject_request_condition.wait()
+        self._eject_request_condition.clear()
+        return
 
     def find_next_trough(self):
         """Find next trough after device."""
