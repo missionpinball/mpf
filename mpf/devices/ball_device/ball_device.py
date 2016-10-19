@@ -413,13 +413,10 @@ class BallDevice(SystemWideDevice):
 
             ball_change = self._wait_for_ball_changes()
             eject_failed = self._source_eject_failure_condition.wait()
-            futures = [ball_change, eject_failed]
-            incoming_ball = None
             incoming_ball_timeout = None
             incoming_ball_lost = None
-            if self.config['mechanical_eject']:
-                incoming_ball = self._incoming_ball_condition.wait()
-                futures.append(incoming_ball)
+            incoming_ball = self._incoming_ball_condition.wait()
+            futures = [ball_change, eject_failed, incoming_ball]
             if self._incoming_balls:
                 incoming_ball_timeout = asyncio.sleep(self._incoming_balls[0][0] - self.machine.clock.get_time(),
                                                       loop=self.machine.clock.loop)
@@ -502,6 +499,7 @@ class BallDevice(SystemWideDevice):
 
         """
         timeout = 60
+        self.debug_log("Adding incoming ball from %s", source)
         self._incoming_balls.append((self.machine.clock.get_time() + timeout, source))
         self.delay.add(ms=timeout * 1000, callback=self._timeout_incoming)
 
