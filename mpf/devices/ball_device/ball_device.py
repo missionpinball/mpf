@@ -5,6 +5,7 @@ from collections import deque
 
 import asyncio
 
+from mpf.devices.ball_device.entrance_switch_counter import EntranceSwitchCounter
 from mpf.devices.ball_device.hold_coil_ejector import HoldCoilEjector
 
 from mpf.core.delays import DelayManager
@@ -15,6 +16,7 @@ from mpf.core.utility_functions import Util
 
 # pylint: disable-msg=too-many-instance-attributes
 from mpf.devices.ball_device.pulse_coil_ejector import PulseCoilEjector
+from mpf.devices.ball_device.switch_counter import SwitchCounter
 
 
 @DeviceMonitor("_state", "balls", "available_balls", "num_eject_attempts", "eject_queue", "eject_in_progress_target",
@@ -604,6 +606,7 @@ class BallDevice(SystemWideDevice):
         if self.mechanical_eject_in_progress:
             self.mechanical_eject_in_progress = False
             self.ejector.eject_one_ball()
+            self.counter.ejecting_one_ball()
         else:
             # TODO: refactor this. its an hack for when balls return and we have to retry
             self._do_eject_attempt()
@@ -848,6 +851,7 @@ class BallDevice(SystemWideDevice):
         # End code to create timeouts list ------------------------------------
 
         if self.config['ball_capacity'] is None:
+            # TODO: if we got switches this is always equal to the number of switches
             self.config['ball_capacity'] = len(self.config['ball_switches'])
 
     def _validate_config(self):
@@ -913,18 +917,6 @@ class BallDevice(SystemWideDevice):
                 self.name, self._target_on_unexpected_ball.name))
 
     def _register_handlers(self):
-        # Register switch handlers with delays for entrance & exit counts
-        for switch in self.config['ball_switches']:
-            self.machine.switch_controller.add_switch_handler(
-                switch_name=switch.name, state=1,
-                ms=self.config['entrance_count_delay'],
-                callback=self._switch_changed)
-        for switch in self.config['ball_switches']:
-            self.machine.switch_controller.add_switch_handler(
-                switch_name=switch.name, state=0,
-                ms=self.config['exit_count_delay'],
-                callback=self._switch_changed)
-
         # Configure switch handlers for entrance switch activity
         if self.config['entrance_switch']:
             self.machine.switch_controller.add_switch_handler(
@@ -965,6 +957,11 @@ class BallDevice(SystemWideDevice):
             self.ejector = PulseCoilEjector(self)   # pylint: disable-msg=redefined-variable-type
         elif self.config['hold_coil']:
             self.ejector = HoldCoilEjector(self)    # pylint: disable-msg=redefined-variable-type
+
+        if self.config['ball_switches']:
+            self.counter = SwitchCounter(self)      # pylint: disable-msg=redefined-variable-type
+        else:
+            self.counter = EntranceSwitchCounter(self)  # pylint: disable-msg=redefined-variable-type
 
         # register switch and event handlers
         self._register_handlers()
@@ -1066,14 +1063,13 @@ class BallDevice(SystemWideDevice):
                 self.mechanical_eject_in_progress).ljust(42) + "|")
             self.log.debug("+-----------------------------------------+")
 
-    def _switch_changed(self, **kwargs):
-        del kwargs
-        self._ball_counter_condition.set()
-
     @asyncio.coroutine
     def _wait_for_ball_changes(self):
-        yield from self._ball_counter_condition.wait()
-        self._ball_counter_condition.clear()
+        if self.config['ball_switches']:
+            yield from self.counter.wait_for_ball_count_changes()
+        else:
+            yield from self._ball_counter_condition.wait()
+            self._ball_counter_condition.clear()
 
     @asyncio.coroutine
     def _count_balls(self, **kwargs):
@@ -1081,14 +1077,8 @@ class BallDevice(SystemWideDevice):
 
         if not self.config['ball_switches']:
             return self._entrance_count
-
-        while True:
-            if self.debug:
-                self.log.debug("Counting balls by checking switches")
-            try:
-                return self._count_ball_switches()
-            except ValueError:
-                yield from self._wait_for_ball_changes()
+        else:
+            return (yield from self.counter.count_balls())
 
     def _count_ball_switches(self):
         # Count only. Do not change any state here!
@@ -1535,13 +1525,7 @@ class BallDevice(SystemWideDevice):
 
         waiters = []
         if self.config['ball_switches']:
-            # wait until one of the active switches turns off
-            for switch in self.config['ball_switches']:
-                # only consider active switches
-                if self.machine.switch_controller.is_active(switch.name):
-                    waiters.append(self.machine.switch_controller.wait_for_switch(
-                        switch_name=switch.name,
-                        state=0))
+            waiters.append(self.counter.wait_for_ball_to_leave())
 
         if self.config['entrance_switch']:
             if self.machine.switch_controller.is_active(self.config['entrance_switch'].name):
@@ -1559,6 +1543,7 @@ class BallDevice(SystemWideDevice):
                     waiters.append(trigger)
             else:
                 self.ejector.eject_one_ball()
+                self.counter.ejecting_one_ball()
 
         # TODO: put some minimal wait here for cases without switches
 
@@ -1574,10 +1559,12 @@ class BallDevice(SystemWideDevice):
             if self.trigger_event and event == trigger:
                 self.debug_log("Received trigger event. Will perform eject now.")
                 self.ejector.eject_one_ball()
+                self.counter.ejecting_one_ball()
                 # TODO: this can loop
                 yield from self._wait_for_ball_left()
                 return
 
+        # TODO: move this to a better place
         # remove the ball from our count
         self.balls -= 1
         if not self.config['ball_switches']:
