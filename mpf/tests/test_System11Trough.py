@@ -166,7 +166,9 @@ class TestSystem11TroughStartup(MpfTestCase):
         self.assertEqual('idle', self.machine.ball_devices.trough._state)
         self.assertEqual('idle', self.machine.ball_devices.plunger._state)
         self.assertEqual(1, self.machine.ball_devices.outhole.balls)
+        self.assertEqual(0, self.machine.ball_devices.outhole.available_balls)
         self.assertEqual(3, self.machine.ball_devices.trough.balls)
+        self.assertEqual(4, self.machine.ball_devices.trough.available_balls)
         self.assertEqual(0, self.machine.ball_devices.plunger.balls)
         self.assertEqual(0, self.machine.ball_devices.playfield.balls)
 
