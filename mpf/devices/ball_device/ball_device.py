@@ -135,6 +135,8 @@ class BallDevice(SystemWideDevice):
 
         self.machine.events.add_handler("shutdown", self.stop)
 
+        self._entrance_count = 0
+
     def _initialize(self):
         """Initialize right away."""
         self._initialize_phase_2()
@@ -201,7 +203,7 @@ class BallDevice(SystemWideDevice):
                 self.config['entrance_switch_full_timeout'] and
                 self.machine.switch_controller.is_active(self.config['entrance_switch'].name,
                                                          ms=self.config['entrance_switch_full_timeout'])):
-            self.balls = self.config['ball_capacity']
+            self._entrance_count = self.config['ball_capacity']
 
         balls = yield from self._count_balls()
         self.balls = balls
@@ -401,7 +403,7 @@ class BallDevice(SystemWideDevice):
             balls = yield from self._count_balls()
             if self.balls > balls:
                 # We dont have balls. How can that happen?
-                raise AssertionError("We dont have balls but lose one!")
+                raise AssertionError("We did not have balls but lost one!")
             elif self.balls < balls:
                 # Return to idle state
                 return
@@ -421,13 +423,9 @@ class BallDevice(SystemWideDevice):
                 incoming_ball_lost = self._incoming_ball_lost_condition.wait()
                 futures.append(incoming_ball_timeout)
                 futures.append(incoming_ball_lost)
-            done, pending = yield from asyncio.wait(futures,
-                                                    loop=self.machine.clock.loop,
-                                                    return_when=asyncio.FIRST_COMPLETED)
-            event = done.pop()
+            event = yield from Util.first(futures, loop=self.machine.clock.loop)
             if event._coro == eject_failed:
                 self._cancel_eject()
-                pending.pop().cancel()
                 return
 
             # incoming ball expired handle that in idle
@@ -711,15 +709,11 @@ class BallDevice(SystemWideDevice):
 
             timeout_future = asyncio.sleep(timeout/1000, loop=self.machine.clock.loop)  # TODO: fix timeout
             late_confirm_future = self._eject_success_condition.wait()
-            done, pending = yield from asyncio.wait(iter([timeout_future, self._wait_for_ball_changes(),
-                                                          late_confirm_future]),
-                                                    loop=self.machine.clock.loop,
-                                                    return_when=asyncio.FIRST_COMPLETED)
-            event = done.pop()
+            event = yield from Util.first([timeout_future, self._wait_for_ball_changes(), late_confirm_future],
+                                          loop=self.machine.clock.loop)
             if event._coro == late_confirm_future:
                 return
             elif event._coro == timeout_future:
-                pending.pop().cancel()
                 break
 
         self._ball_missing_timout()
@@ -1092,7 +1086,7 @@ class BallDevice(SystemWideDevice):
         del kwargs
 
         if not self.config['ball_switches']:
-            return self.balls
+            return self._entrance_count
 
         while True:
             if self.debug:
@@ -1144,6 +1138,7 @@ class BallDevice(SystemWideDevice):
         # this device is tagged 'trough' in which case we let it keep them.
 
         self.available_balls += new_balls
+        self.machine.ball_controller.trigger_ball_count()
 
         if unclaimed_balls:
             if 'trough' in self.tags:
@@ -1227,17 +1222,20 @@ class BallDevice(SystemWideDevice):
 
     def _entrance_switch_full_handler(self):
         # a ball is sitting on the entrance_switch. assume the device is full
-        new_balls = self.config['ball_capacity'] - self.balls
+        new_balls = self.config['ball_capacity'] - self._entrance_count
         if new_balls > 0:
+            self._ball_counter_condition.set()
+            self._ball_counter_condition.clear()
             self.log.debug("Ball is sitting on entrance_switch. Assuming "
                            "device is full. Adding %s balls and setting balls"
                            "to %s", new_balls, self.config['ball_capacity'])
-            self.balls += new_balls
-            self._handle_new_balls(new_balls)
-            self.machine.ball_controller.trigger_ball_count()
+            self._entrance_count += new_balls
 
     def _entrance_switch_handler(self):
         # A ball has triggered this device's entrance switch
+        self._ball_counter_condition.set()
+        self._ball_counter_condition.clear()
+        self.debug_log("Entrance switch hit")
 
         if not self.config['ball_switches']:
             if self.is_full():
@@ -1246,9 +1244,7 @@ class BallDevice(SystemWideDevice):
                 # TODO: ball should be added to pf instead
                 return
 
-            self.balls += 1
-            self._handle_new_balls(1)
-            self.machine.ball_controller.trigger_ball_count()
+            self._entrance_count += 1
 
     @property
     def state(self):
@@ -1587,6 +1583,8 @@ class BallDevice(SystemWideDevice):
 
         # remove the ball from our count
         self.balls -= 1
+        if not self.config['ball_switches']:
+            self._entrance_count -= 1
         yield from self._ball_left(timeout_time)
 
     def hold(self, **kwargs):
