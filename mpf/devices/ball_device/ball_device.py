@@ -471,7 +471,7 @@ class BallDevice(SystemWideDevice):
                 self.eject_in_progress_target = None
                 self._cancel_incoming_ball_at_target(target)
                 self._cancel_eject_confirmation()
-                self._inform_target_about_failed_confirm(target, 1, True)
+                yield from self._inform_target_about_failed_confirm(target, 1, True)
                 return True
 
             source_failure = self._source_eject_failure_condition.wait()
@@ -653,7 +653,7 @@ class BallDevice(SystemWideDevice):
     @asyncio.coroutine
     def _failed_eject(self):
         self._state = "failed_eject"
-        self.eject_failed()
+        yield from self.eject_failed()
         if self.config['max_eject_attempts'] != 0 and self.num_eject_attempts >= self.config['max_eject_attempts']:
             self._eject_permanently_failed()
             # What now? Ball is still in device or switch just broke. At least
@@ -728,8 +728,9 @@ class BallDevice(SystemWideDevice):
             elif event._coro == timeout_future:
                 break
 
-        self._ball_missing_timout()
+        yield from self._ball_missing_timout()
 
+    @asyncio.coroutine
     def _ball_missing_timout(self):
         if self._state != "failed_confirm":
             raise AssertionError("Invalid state " + self._state)
@@ -741,7 +742,7 @@ class BallDevice(SystemWideDevice):
         # Handle lost ball
         self.log.debug("Lost %s balls during eject. Will ignore the "
                        "loss.", balls)
-        self.eject_failed(retry=False)
+        yield from self.eject_failed(retry=False)
 
         self._balls_missing(balls)
 
@@ -1867,15 +1868,16 @@ class BallDevice(SystemWideDevice):
 
         # cancel eject confirmations
         self._cancel_eject_confirmation()
-        self._inform_target_about_failed_confirm(target, balls, retry)
+        yield from self._inform_target_about_failed_confirm(target, balls, retry)
 
+    @asyncio.coroutine
     def _inform_target_about_failed_confirm(self, target, balls, retry):
-        self.machine.events.post('balldevice_' + self.name +
-                                 '_ball_eject_failed',
-                                 target=target,
-                                 balls=balls,
-                                 retry=retry,
-                                 num_attempts=self.num_eject_attempts)
+        yield from self.machine.events.post_async(
+            'balldevice_' + self.name + '_ball_eject_failed',
+            target=target,
+            balls=balls,
+            retry=retry,
+            num_attempts=self.num_eject_attempts)
         '''event: balldevice_(name)_ball_eject_failed
         desc: A ball (or balls) has failed to eject from the device (name).
         args:
