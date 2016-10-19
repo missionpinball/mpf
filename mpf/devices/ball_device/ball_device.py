@@ -583,7 +583,10 @@ class BallDevice(SystemWideDevice):
         if self.trigger_event:
             # TODO: what if ball is lost?
             # wait for trigger event
-            yield from self.machine.events.wait_for_event("self.trigger_event")
+            self.debug_log("Waiting for trigger event %s", self.trigger_event)
+            yield from self.machine.events.wait_for_event(self.trigger_event)
+            self.mechanical_eject_in_progress = False
+            self.debug_log("Got trigger event")
 
         yield from self._wait_for_ball_left()
 
