@@ -2,10 +2,7 @@
 from unittest import mock
 
 from mpf.tests.MpfBcpTestCase import MpfBcpTestCase
-
-from collections import namedtuple
-
-RegisteredHandler = namedtuple("RegisteredHandler", ["callback", "priority", "kwargs", "key", "condition"])
+from mpf.core.events import RegisteredHandler
 
 
 class CallHandler:
