@@ -525,10 +525,11 @@ class BallDevice(SystemWideDevice):
         self.debug_log("Ball left device")
         self._eject_success_condition.clear()
         # TODO: handle entry switch here -> definitely new ball
-        self.machine.events.post('balldevice_' + self.name + '_ball_left',
-                                 balls=1,
-                                 target=self.eject_in_progress_target,
-                                 num_attempts=self.num_eject_attempts)
+        yield from self.machine.events.post_async(
+            'balldevice_' + self.name + '_ball_left',
+            balls=1,
+            target=self.eject_in_progress_target,
+            num_attempts=self.num_eject_attempts)
         '''event: balldevice_(name)_ball_left
 
         desc: A ball (or balls) just left the device (name).
@@ -671,8 +672,7 @@ class BallDevice(SystemWideDevice):
         self._state = "eject_broken"
         self.log.warning(
             "Ball device is unable to eject ball. Stopping device")
-        self.machine.events.post('balldevice_' + self.name +
-                                 '_eject_broken', source=self)
+        yield from self.machine.events.post_async('balldevice_' + self.name + '_eject_broken', source=self)
         '''event: balldevice_(name)_eject_broken
 
         desc: The ball device called (name) is broken and cannot eject balls.
@@ -1195,8 +1195,7 @@ class BallDevice(SystemWideDevice):
         desc: The number of (balls) is missing. Note this event is
         posted in addition to the generic *balldevice_ball_missing* event.
         '''
-        self.machine.events.post('balldevice_ball_missing',
-                                 balls=abs(balls))
+        yield from self.machine.events.post_async('balldevice_ball_missing', balls=abs(balls))
         '''event: balldevice_ball_missing
         desc: A ball is missing from a device.
         args:
