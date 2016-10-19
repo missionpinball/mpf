@@ -372,6 +372,7 @@ class BallDevice(SystemWideDevice):
     # ------------------------ State: missing_balls ---------------------------
     @asyncio.coroutine
     def _handle_missing_balls(self, balls):
+        self._state = "missing_balls"
         if self.config['mechanical_eject']:
             # if the device supports mechanical eject we assume it was one
             self.mechanical_eject_in_progress = True
@@ -379,6 +380,7 @@ class BallDevice(SystemWideDevice):
             self.eject_in_progress_target = self.config['eject_targets'][0]
             self.eject_in_progress_target.available_balls += 1
             yield from self._do_eject_attempt()
+            yield from self._ball_left(None)
             return
 
         self._balls_missing(balls)
@@ -541,9 +543,10 @@ class BallDevice(SystemWideDevice):
                            ms=timeout,
                            callback=self.eject_success)
 
+        timeout = timeout_time - self.machine.clock.get_time() if timeout_time else None
         try:
             yield from asyncio.wait_for(self._eject_success_condition.wait(), loop=self.machine.clock.loop,
-                                        timeout=timeout_time - self.machine.clock.get_time())
+                                        timeout=timeout)
         except asyncio.TimeoutError:
             yield from self._failed_confirm()
         else:
@@ -1539,8 +1542,12 @@ class BallDevice(SystemWideDevice):
 
     @asyncio.coroutine
     def _wait_for_ball_left(self):
-        timeout = self.config['eject_timeouts'][self.eject_in_progress_target] / 1000
-        timeout_time = self.machine.clock.get_time() + timeout
+        if not self.mechanical_eject_in_progress:
+            timeout = self.config['eject_timeouts'][self.eject_in_progress_target] / 1000
+            timeout_time = self.machine.clock.get_time() + timeout
+        else:
+            timeout = None
+            timeout_time = None
 
         switch_waiters = []
         if self.config['ball_switches']:
