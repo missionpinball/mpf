@@ -24,7 +24,7 @@ class PulseCoilEjector(BallDeviceEjector):
             self.ball_device.config['eject_coil'].pulse()
 
         if self.ball_device.debug:
-            self.ball_device.log.debug("Firing eject coil. New balls: %s.", self.ball_device.balls)
+            self.ball_device.log.debug("Firing eject coil. Current balls: %s.", self.ball_device.balls)
 
     def eject_all_balls(self):
         """Cannot eject all balls."""

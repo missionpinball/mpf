@@ -1564,6 +1564,12 @@ class BallDevice(SystemWideDevice):
                         switch_name=switch.name,
                         state=0))
 
+        if self.config['entrance_switch']:
+            if self.machine.switch_controller.is_active(self.config['entrance_switch'].name):
+                    switch_waiters.append(self.machine.switch_controller.wait_for_switch(
+                        switch_name=self.config['entrance_switch'].name,
+                        state=0))
+
         if self.ejector:
             if self.mechanical_eject_in_progress:
                 self.log.debug("Will not fire eject coil because of mechanical"
