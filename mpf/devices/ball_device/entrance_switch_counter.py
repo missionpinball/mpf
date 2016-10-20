@@ -69,6 +69,7 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
                 switch_name=self.config['entrance_switch'].name,
                 state=0)
         else:
+            # TODO: put some minimal wait here
             done_future = asyncio.Future(loop=self.machine.clock.loop)
             done_future.set_result(True)
             return done_future

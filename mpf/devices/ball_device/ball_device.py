@@ -560,18 +560,6 @@ class BallDevice(SystemWideDevice):
 
         yield from self._wait_for_ball_left()
 
-    def _trigger_eject_by_event(self, **kwargs):
-        del kwargs
-        self.machine.events.remove_handler(self._trigger_eject_by_event)
-
-        if self.mechanical_eject_in_progress:
-            self.mechanical_eject_in_progress = False
-            self.ejector.eject_one_ball()
-            #self.counter.ejecting_one_ball()
-        else:
-            # TODO: refactor this. its an hack for when balls return and we have to retry
-            self._do_eject_attempt()
-
     @asyncio.coroutine
     def _do_eject_attempt(self):
         # Reachable from the following states:
@@ -1404,8 +1392,7 @@ class BallDevice(SystemWideDevice):
             timeout = None
             timeout_time = None
 
-        waiters = []
-        waiters.append(self.counter.wait_for_ball_to_leave())
+        waiters = [self.counter.wait_for_ball_to_leave()]
 
         trigger = None
         if self.ejector:
@@ -1417,32 +1404,25 @@ class BallDevice(SystemWideDevice):
                     waiters.append(trigger)
             else:
                 self.ejector.eject_one_ball()
-                #self.counter.ejecting_one_ball()
 
-        # TODO: put some minimal wait here for cases without switches
+        # wait for ball to leave or trigger to be pressed
+        try:
+            event = yield from Util.first(waiters, self.machine.clock.loop, timeout=timeout)
+        except asyncio.TimeoutError:
+            yield from self._failed_eject()
+            return
 
-        # only wait if we have switches to wait on
-        if waiters:
-            try:
-                event = yield from Util.first(waiters, self.machine.clock.loop, timeout=timeout)
-            except asyncio.TimeoutError:
-                yield from self._failed_eject()
-                return
+        # in case we have mechanical eject and a trigger_event
+        if self.trigger_event and event == trigger:
+            self.debug_log("Received trigger event. Will perform eject now.")
+            self.ejector.eject_one_ball()
+            # TODO: this can loop
+            yield from self._wait_for_ball_left()
+            return
 
-            # in case we have mechanical eject and a trigger_event
-            if self.trigger_event and event == trigger:
-                self.debug_log("Received trigger event. Will perform eject now.")
-                self.ejector.eject_one_ball()
-                #self.counter.ejecting_one_ball()
-                # TODO: this can loop
-                yield from self._wait_for_ball_left()
-                return
-
-        # TODO: move this to a better place
         # remove the ball from our count
         self.balls -= 1
-        if not self.config['ball_switches']:
-            self.counter.ejecting_one_ball()
+        self.counter.ejecting_one_ball()
 
         if self.mechanical_eject_in_progress:
             # for mechanical eject the timeout starts when the ball has left
@@ -1577,7 +1557,6 @@ class BallDevice(SystemWideDevice):
         # Remove any event watching for success
         self.machine.events.remove_handler(self.eject_success)
         self.machine.events.remove_handler(self._playfield_active)
-        self.machine.events.remove_handler(self._trigger_eject_by_event)
 
         self.mechanical_eject_in_progress = False
 
