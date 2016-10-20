@@ -158,35 +158,6 @@ class BallDevice(SystemWideDevice):
         # state invalid
         yield from self._state_idle()
 
-    def _switch_state(self, new_state, **kwargs):
-        # Changes this device to the new state (if the transition is valid)
-        raise AssertionError("bad call")
-        if new_state != 'invalid':
-
-            if new_state == self._state:  # pragma: no cover
-                self.log.debug("Tried to switch state. But already in state "
-                               "%s", new_state)
-                return
-
-            if new_state not in self._state_transitions[self._state]:
-                raise AssertionError("Cannot transition from state {} to {}"
-                                     .format(self._state, new_state))
-
-        self._state = new_state
-
-        self.log.debug("Switching to state %s", new_state)
-
-        if new_state not in self._state_transitions:
-            raise AssertionError("Went to invalid state %s", self._state)
-
-    def _counted_balls(self, balls, **kwargs):
-        # Called when the device counts its balls and then calls the current
-        # state's _counted_balls() method.
-        del kwargs
-        method_name = "_state_" + self._state + "_counted_balls"
-        method = getattr(self, method_name, lambda *args: None)
-        method(balls)
-
     def _target_ready(self, target, **kwargs):
         # Called whenever one of this device's target devices changes state to
         # be ready to receive balls
@@ -399,7 +370,7 @@ class BallDevice(SystemWideDevice):
         self._state = "waiting_for_ball"
         self.debug_log("Waiting for ball to eject it")
         # This can happen
-        # 1. ball counts can change (via _counted_balls)
+        # 1. ball counts can change
         # 2. if mechanical_eject and the ball leaves source we go to
         #    waiting_for_ball_mechanical
         # 3. eject can fail at the source
@@ -445,7 +416,7 @@ class BallDevice(SystemWideDevice):
     def _waiting_for_ball_mechanical(self):
         self._state = "waiting_for_ball_mechanical"
         # This can happen
-        # 1. ball counts can change (via _counted_balls)
+        # 1. ball counts can change
         # 2. eject can be confirmed
         # 3. eject of source can fail
         self._eject_success_condition.clear()
@@ -1672,11 +1643,6 @@ class BallDevice(SystemWideDevice):
             self._eject_status_logger = self.machine.clock.schedule_interval(self._eject_status, 1)
 
         timeout = self.config['eject_timeouts'][target]
-        # if timeout:
-        #     # set up the delay to check for the failed the eject
-        #     self.delay.add(name='target_eject_confirmation_timeout',
-        #                    ms=timeout,
-        #                    callback=self._eject_timeout)
 
         if target and target.is_playfield():
             self._setup_eject_confirmation_to_playfield(target, timeout)
@@ -1801,20 +1767,6 @@ class BallDevice(SystemWideDevice):
             target: The target device that has received (or will be receiving)
                 the ejected ball(s).
         '''
-
-    def _eject_timeout(self):
-        if self.debug:
-            self.log.debug("Got eject timeout")
-
-        if self._state == "ball_left":
-            return self._switch_state("failed_confirm")
-        elif self._state == "ejecting":
-            if not self.mechanical_eject_in_progress:
-                return self._switch_state("failed_eject")
-        elif self._state == "waiting_for_ball_mechanical":
-            return
-        else:
-            raise AssertionError("Invalid state " + self._state)
 
     def eject_failed(self, retry=True):
         """Mark the current eject in progress as 'failed'.
