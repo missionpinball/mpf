@@ -127,7 +127,6 @@ class BallDevice(SystemWideDevice):
         self.eject_start_time = None
         self.ejector = None
 
-        self._ball_counter_condition = asyncio.Event(loop=self.machine.clock.loop)
         self._eject_request_condition = asyncio.Event(loop=self.machine.clock.loop)
         self._eject_success_condition = asyncio.Event(loop=self.machine.clock.loop)
         self._source_eject_failure_condition = asyncio.Event(loop=self.machine.clock.loop)
@@ -136,8 +135,6 @@ class BallDevice(SystemWideDevice):
         self._incoming_ball_lost_condition = asyncio.Event(loop=self.machine.clock.loop)
 
         self.machine.events.add_handler("shutdown", self.stop)
-
-        self._entrance_count = 0
 
     def _initialize(self):
         """Initialize right away."""
@@ -170,14 +167,7 @@ class BallDevice(SystemWideDevice):
     # ---------------------------- State: invalid -----------------------------
     @asyncio.coroutine
     def _initial_ball_count(self):
-        # Handle initial ball count with entrance_switch. If there is a ball on the entrance_switch at boot
-        # assume that we are at max capacity.
-        if (self.config['entrance_switch'] and self.config['ball_capacity'] and
-                self.config['entrance_switch_full_timeout'] and
-                self.machine.switch_controller.is_active(self.config['entrance_switch'].name,
-                                                         ms=self.config['entrance_switch_full_timeout'])):
-            self._entrance_count = self.config['ball_capacity']
-
+        """Count balls without handling them as new."""
         balls = yield from self._count_balls()
         self.balls = balls
         self.available_balls = balls
@@ -577,7 +567,7 @@ class BallDevice(SystemWideDevice):
         if self.mechanical_eject_in_progress:
             self.mechanical_eject_in_progress = False
             self.ejector.eject_one_ball()
-            self.counter.ejecting_one_ball()
+            #self.counter.ejecting_one_ball()
         else:
             # TODO: refactor this. its an hack for when balls return and we have to retry
             self._do_eject_attempt()
@@ -888,19 +878,6 @@ class BallDevice(SystemWideDevice):
                 self.name, self._target_on_unexpected_ball.name))
 
     def _register_handlers(self):
-        # Configure switch handlers for entrance switch activity
-        if self.config['entrance_switch']:
-            self.machine.switch_controller.add_switch_handler(
-                switch_name=self.config['entrance_switch'].name, state=1,
-                ms=0,
-                callback=self._entrance_switch_handler)
-
-            if self.config['entrance_switch_full_timeout'] and self.config['ball_capacity']:
-                self.machine.switch_controller.add_switch_handler(
-                    switch_name=self.config['entrance_switch'].name, state=1,
-                    ms=self.config['entrance_switch_full_timeout'],
-                    callback=self._entrance_switch_full_handler)
-
         # Configure event handlers to watch for target device status changes
         for target in self.config['eject_targets']:
             # Target device is now able to receive a ball
@@ -928,11 +905,6 @@ class BallDevice(SystemWideDevice):
             self.ejector = PulseCoilEjector(self)   # pylint: disable-msg=redefined-variable-type
         elif self.config['hold_coil']:
             self.ejector = HoldCoilEjector(self)    # pylint: disable-msg=redefined-variable-type
-
-        if self.config['ball_switches']:
-            self.counter = SwitchCounter(self)      # pylint: disable-msg=redefined-variable-type
-        else:
-            self.counter = EntranceSwitchCounter(self)  # pylint: disable-msg=redefined-variable-type
 
         # register switch and event handlers
         self._register_handlers()
@@ -974,6 +946,11 @@ class BallDevice(SystemWideDevice):
 
     def _initialize_phase_4(self, **kwargs):
         del kwargs
+        if self.config['ball_switches']:
+            self.counter = SwitchCounter(self, self.config)     # pylint: disable-msg=redefined-variable-type
+        else:
+            self.counter = EntranceSwitchCounter(self, self.config)  # pylint: disable-msg=redefined-variable-type
+
         self.machine.clock.loop.run_until_complete(self._initial_ball_count())
         self.runner = self.machine.clock.loop.create_task(self._run())
         self.runner.add_done_callback(self._done)
@@ -1036,55 +1013,12 @@ class BallDevice(SystemWideDevice):
 
     @asyncio.coroutine
     def _wait_for_ball_changes(self):
-        if self.config['ball_switches']:
-            yield from self.counter.wait_for_ball_count_changes()
-        else:
-            yield from self._ball_counter_condition.wait()
-            self._ball_counter_condition.clear()
+        yield from self.counter.wait_for_ball_count_changes()
 
     @asyncio.coroutine
     def _count_balls(self, **kwargs):
         del kwargs
-
-        if not self.config['ball_switches']:
-            return self._entrance_count
-        else:
-            return (yield from self.counter.count_balls())
-
-    def _count_ball_switches(self):
-        # Count only. Do not change any state here!
-        ball_count = 0
-
-        for switch in self.config['ball_switches']:
-            valid = False
-            if self.machine.switch_controller.is_active(switch.name,
-                                                        ms=self.config[
-                                                            'entrance_count_delay']):
-                ball_count += 1
-                valid = True
-                if self.debug:
-                    self.log.debug("Confirmed active switch: %s", switch.name)
-            elif self.machine.switch_controller.is_inactive(switch.name,
-                                                            ms=self.config[
-                                                                'exit_count_delay']):
-                if self.debug:
-                    self.log.debug("Confirmed inactive switch: %s",
-                                   switch.name)
-                valid = True
-
-            if not valid:  # one of our switches wasn't valid long enough
-                # recount will happen automatically after the time passes
-                # via the switch handler for count
-                if self.debug:
-                    self.log.debug("Switch '%s' changed too recently. "
-                                   "Aborting count & returning previous "
-                                   "count value", switch.name)
-                raise ValueError('Count not stable yet. Run again!')
-
-        if self.debug:
-            self.log.debug("Counted %s balls", ball_count)
-
-        return ball_count
+        return (yield from self.counter.count_balls())
 
     def _balls_added_callback(self, new_balls, unclaimed_balls, **kwargs):
         del kwargs
@@ -1173,30 +1107,6 @@ class BallDevice(SystemWideDevice):
         """Event handler for entrance events."""
         del kwargs
         self._entrance_switch_handler()
-
-    def _entrance_switch_full_handler(self):
-        # a ball is sitting on the entrance_switch. assume the device is full
-        new_balls = self.config['ball_capacity'] - self._entrance_count
-        if new_balls > 0:
-            self._ball_counter_condition.set()
-            self.log.debug("Ball is sitting on entrance_switch. Assuming "
-                           "device is full. Adding %s balls and setting balls"
-                           "to %s", new_balls, self.config['ball_capacity'])
-            self._entrance_count += new_balls
-
-    def _entrance_switch_handler(self):
-        # A ball has triggered this device's entrance switch
-        self._ball_counter_condition.set()
-        self.debug_log("Entrance switch hit")
-
-        if not self.config['ball_switches']:
-            if self.is_full():
-                self.log.warning("Device received balls but is already full. "
-                                 "Ignoring!")
-                # TODO: ball should be added to pf instead
-                return
-
-            self._entrance_count += 1
 
     @property
     def state(self):
@@ -1495,14 +1405,7 @@ class BallDevice(SystemWideDevice):
             timeout_time = None
 
         waiters = []
-        if self.config['ball_switches']:
-            waiters.append(self.counter.wait_for_ball_to_leave())
-
-        if self.config['entrance_switch']:
-            if self.machine.switch_controller.is_active(self.config['entrance_switch'].name):
-                    waiters.append(self.machine.switch_controller.wait_for_switch(
-                        switch_name=self.config['entrance_switch'].name,
-                        state=0))
+        waiters.append(self.counter.wait_for_ball_to_leave())
 
         trigger = None
         if self.ejector:
@@ -1514,7 +1417,7 @@ class BallDevice(SystemWideDevice):
                     waiters.append(trigger)
             else:
                 self.ejector.eject_one_ball()
-                self.counter.ejecting_one_ball()
+                #self.counter.ejecting_one_ball()
 
         # TODO: put some minimal wait here for cases without switches
 
@@ -1530,7 +1433,7 @@ class BallDevice(SystemWideDevice):
             if self.trigger_event and event == trigger:
                 self.debug_log("Received trigger event. Will perform eject now.")
                 self.ejector.eject_one_ball()
-                self.counter.ejecting_one_ball()
+                #self.counter.ejecting_one_ball()
                 # TODO: this can loop
                 yield from self._wait_for_ball_left()
                 return
@@ -1539,7 +1442,7 @@ class BallDevice(SystemWideDevice):
         # remove the ball from our count
         self.balls -= 1
         if not self.config['ball_switches']:
-            self._entrance_count -= 1
+            self.counter.ejecting_one_ball()
 
         if self.mechanical_eject_in_progress:
             # for mechanical eject the timeout starts when the ball has left
@@ -1786,9 +1689,8 @@ class BallDevice(SystemWideDevice):
         # Put the current target back in the queue so we can try again
         # This sets up the timeout back to the default. Wonder if we should
         # add some intelligence to make this longer or shorter?
-
-        if self.debug:
-            self.log.debug("Eject failed")
+        self.debug_log("Eject failed")
+        self._state = "eject_failed"
 
         if retry:
             self.eject_queue.appendleft((self.eject_in_progress_target,

@@ -39,7 +39,7 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
         self._ball_entered_condition.set()
         self.debug_log("Entrance switch hit")
 
-        if self.config['ball_capacity'] == self._entrance_count:
+        if self.config['ball_capacity'] and self.config['ball_capacity'] == self._entrance_count:
             self.ball_device.log.warning("Device received balls but is already full. Ignoring!")
             # TODO: ball should be added to pf instead
             return
@@ -69,7 +69,9 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
                 switch_name=self.config['entrance_switch'].name,
                 state=0)
         else:
-            return
+            done_future = asyncio.Future(loop=self.machine.clock.loop)
+            done_future.set_result(True)
+            return done_future
 
     def wait_for_ball_count_changes(self):
         """Wait for ball count changes."""

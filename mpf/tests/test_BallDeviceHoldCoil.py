@@ -88,7 +88,7 @@ class TestBallDevicesHoldCoil(MpfTestCase):
     def test_holdcoil_which_keeps_ball_multiple_entries(self):
         # add one ball
         self.machine.ball_devices['test2'].balls = 1
-        self.machine.ball_devices['test2']._entrance_count = 1
+        self.machine.ball_devices['test2'].counter._entrance_count = 1
         self.machine.ball_devices['test2'].available_balls = 1
 
         # eject one ball

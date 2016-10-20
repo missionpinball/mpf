@@ -284,7 +284,7 @@ class TestGottliebTrough(MpfTestCase):
         # yet
 
         self.machine.ball_devices.trough.balls = 3
-        self.machine.ball_devices.trough._entrance_count = 3
+        self.machine.ball_devices.trough.counter._entrance_count = 3
         self.machine.ball_devices.trough.available_balls = 3
         self.machine.ball_controller.num_balls_known = 3
         self.advance_time_and_run(1)
