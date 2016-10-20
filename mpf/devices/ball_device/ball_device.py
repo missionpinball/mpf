@@ -308,8 +308,6 @@ class BallDevice(SystemWideDevice):
         unclaimed_balls: The number of balls that have not yet been claimed.
         device: A reference to the ball device object that is posting this
         event.
-
-
         '''
         self._balls_added_callback(result["new_balls"], result["unclaimed_balls"])
 
@@ -518,7 +516,6 @@ class BallDevice(SystemWideDevice):
         except asyncio.TimeoutError:
             yield from self._failed_confirm()
         else:
-            #yield from self._handle_eject_success()
             self.eject_in_progress_target = None
             return
 
@@ -664,7 +661,6 @@ class BallDevice(SystemWideDevice):
             event = yield from Util.first([timeout_future, self._wait_for_ball_changes(), late_confirm_future],
                                           loop=self.machine.clock.loop)
             if event._coro == late_confirm_future:
-                #yield from self._handle_eject_success()
                 return
             elif event._coro == timeout_future:
                 break
@@ -1625,9 +1621,6 @@ class BallDevice(SystemWideDevice):
 
         self._eject_success_condition.set()
 
-        self._handle_eject_success()
-
-    def _handle_eject_success(self):
         # Create a temp attribute here so the real one is None when the
         # event is posted.
         eject_target = self.eject_in_progress_target
