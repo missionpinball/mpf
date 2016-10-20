@@ -407,7 +407,6 @@ class BallDevice(SystemWideDevice):
         # 1. ball counts can change
         # 2. eject can be confirmed
         # 3. eject of source can fail
-        self._eject_success_condition.clear()
         self.debug_log("Waiting for ball for mechanical eject")
         if len(self.eject_queue):
             self.eject_in_progress_target = self.eject_queue[0][0]
@@ -418,6 +417,7 @@ class BallDevice(SystemWideDevice):
         self.num_eject_attempts += 1
         self._notify_target_of_incoming_ball(self.eject_in_progress_target)
         yield from self._do_eject_attempt()
+        self._setup_eject_confirmation(self.eject_in_progress_target)
 
         while True:
             self._state = "waiting_for_ball_mechanical"
@@ -476,7 +476,7 @@ class BallDevice(SystemWideDevice):
     def _ball_left(self, timeout_time):
         self._state = "ball_left"
         self.debug_log("Ball left device")
-        self._eject_success_condition.clear()
+        self._setup_eject_confirmation(self.eject_in_progress_target)
         # TODO: handle entry switch here -> definitely new ball
         yield from self.machine.events.post_async(
             'balldevice_' + self.name + '_ball_left',
@@ -516,7 +516,6 @@ class BallDevice(SystemWideDevice):
         except asyncio.TimeoutError:
             yield from self._failed_confirm()
         else:
-            self.eject_in_progress_target = None
             return
 
     # --------------------------- State: ejecting -----------------------------
@@ -628,6 +627,10 @@ class BallDevice(SystemWideDevice):
             # count balls to see if the ball returns
             balls = yield from self._count_balls()
 
+            # check eject success first
+            if self._eject_success_condition.is_set():
+                return
+
             if (self.config['jam_switch'] and
                     not self.jam_switch_state_during_eject and
                     self.machine.switch_controller.is_active(
@@ -660,7 +663,8 @@ class BallDevice(SystemWideDevice):
             late_confirm_future = self._eject_success_condition.wait()
             event = yield from Util.first([timeout_future, self._wait_for_ball_changes(), late_confirm_future],
                                           loop=self.machine.clock.loop)
-            if event._coro == late_confirm_future:
+            # check eject success first
+            if self._eject_success_condition.is_set():
                 return
             elif event._coro == timeout_future:
                 break
@@ -1357,7 +1361,6 @@ class BallDevice(SystemWideDevice):
     @asyncio.coroutine
     def _perform_eject(self, target, **kwargs):
         del kwargs
-        self._setup_eject_confirmation(target)
         self.log.debug("Ejecting ball to %s", target.name)
         yield from self.machine.events.post_async(
             'balldevice_{}_ejecting_ball'.format(self.name),
@@ -1514,10 +1517,11 @@ class BallDevice(SystemWideDevice):
         # and what target it's ejecting to
 
         # args are target device
+        self._eject_success_condition.clear()
 
+        self.eject_start_time = self.machine.clock.get_time()
         if self.debug:
             self.log.debug("Setting up eject confirmation")
-            self.eject_start_time = self.machine.clock.get_time()
             self.log.debug("Eject start time: %s", self.eject_start_time)
             self._eject_status_logger = self.machine.clock.schedule_interval(self._eject_status, 1)
 
@@ -1586,9 +1590,8 @@ class BallDevice(SystemWideDevice):
         """We got an eject success for this device."""
         del kwargs
 
-        if self._state == "ejecting":
-            self.log.debug("Got an eject_success before the switch changed "
-                           "state in the device. Ignoring!")
+        # prevent double confirm
+        if self._eject_success_condition.is_set():
             return
 
         if self._state == "waiting_for_ball_mechanical":
@@ -1601,23 +1604,13 @@ class BallDevice(SystemWideDevice):
                 # because the path was not set up. just add the ball
                 self.eject_in_progress_target.available_balls += 1
             self._incoming_balls.popleft()
-        elif self._state != "ball_left" and self._state != "failed_confirm":
-            raise AssertionError(
-                "Got an eject_success in wrong state " + self._state)
         elif self.config['confirm_eject_type'] != 'target':
             # notify if not in waiting_for_ball_mechanical
             self._notify_target_of_incoming_ball(self.eject_in_progress_target)
 
-        if self.debug:
-            self.log.debug("In eject_success(). Eject target: %s",
-                           self.eject_in_progress_target)
-
-        if self.debug:
-            self.log.debug("Eject duration: %ss",
-                           self.machine.clock.get_time() - self.eject_start_time)
-
-        if self.debug:
-            self.log.debug("Confirmed successful eject")
+        self.debug_log("In eject_success(). Eject target: %s", self.eject_in_progress_target)
+        self.debug_log("Eject duration: %ss", self.machine.clock.get_time() - self.eject_start_time)
+        self.debug_log("Confirmed successful eject")
 
         self._eject_success_condition.set()
 
