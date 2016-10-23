@@ -311,9 +311,9 @@ class BallController(object):
             return True
 
         for device in devices:
-            count += device.get_status('balls')
+            count += device.balls
             self.log.debug('Found %s ball(s) in %s. Found %s total',
-                           device.get_status('balls'), device.name, count)
+                           device.balls, device.name, count)
 
         if count == self.machine.ball_controller.num_balls_known:
             self.log.debug("Yes, all balls are collected")

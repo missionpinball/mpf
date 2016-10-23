@@ -68,7 +68,7 @@ community.''',
 
     zip_safe=False,
 
-    install_requires=['ruamel.yaml>=0.10, <0.11', 'pyserial'],
+    install_requires=['ruamel.yaml>=0.10, <0.11', 'pyserial', 'typing'],
 
     tests_require=[],
     test_suite="mpf.tests",

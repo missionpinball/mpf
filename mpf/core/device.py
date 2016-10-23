@@ -2,6 +2,9 @@
 import abc
 import logging
 
+import asyncio
+from functools import partial
+
 from mpf.core.machine import MachineController
 
 
@@ -131,3 +134,61 @@ class Device(object, metaclass=abc.ABCMeta):
     def _initialize(self):
         """Default initialize method."""
         pass
+
+
+class AsyncDevice(Device):
+
+    """A device using asyncio."""
+
+    def __init__(self, machine: MachineController, name: str):
+        """Schedule run task in init_phase_4."""
+        super().__init__(machine, name)
+        # schedule task
+        self.runner = None
+        self.machine.events.add_handler('init_phase_4', self._create_run_task)
+        # stop device on shutdown
+        self.machine.events.add_handler("shutdown", self.stop)
+
+    def _create_run_task(self, **kwargs):
+        """Create runner task."""
+        del kwargs
+        self.machine.clock.loop.run_until_complete(self._initialize_async())
+        self.runner = self.machine.clock.loop.create_task(self._run())
+        self.runner.add_done_callback(partial(self._done, self))
+
+    @asyncio.coroutine
+    def _initialize_async(self):
+        """Wait for those to finish."""
+        pass
+
+    @asyncio.coroutine
+    def _run(self):
+        """Main task."""
+        raise NotImplementedError()
+
+    @staticmethod
+    def _done(cls, future):
+        """Evaluate result of task.
+
+        Will raise exceptions from within task.
+        """
+        try:
+            future.result()
+        except asyncio.CancelledError:
+            pass
+        else:
+            cls.stop()
+
+    def ensure_future(self, coro_or_future):
+        """Wrap ensure_future."""
+        if asyncio.compat.PY35:
+            return asyncio.ensure_future(coro_or_future, loop=self.machine.clock.loop)
+        else:
+            # pylint: disable-msg=
+            return asyncio.async(coro_or_future, loop=self.machine.clock.loop)
+
+    def stop(self, **kwargs):
+        """Stop task."""
+        del kwargs
+        if self.runner:
+            self.runner.cancel()
