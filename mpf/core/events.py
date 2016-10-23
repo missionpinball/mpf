@@ -24,6 +24,7 @@ class EventManager(object):
         self.event_queue = deque([])
         self.callback_queue = deque([])
         self.monitor_events = False
+        self._queue_tasks = []
 
         self.debug = True
 
@@ -459,7 +460,6 @@ class EventManager(object):
             queue = QueuedEvent(self.debug)
             handler.callback(queue=queue, **merged_kwargs)
             if queue.waiter:
-                blocked = True
                 queue.event = asyncio.Event(loop=self.machine.clock.loop)
                 yield from queue.event.wait()
 
@@ -520,7 +520,14 @@ class EventManager(object):
             # fast path if there are not handlers
             self.callback_queue.append((callback, kwargs))
         else:
-            self.machine.clock.loop.create_task(self._run_handlers_sequential(event, callback, kwargs))
+            task = self.machine.clock.loop.create_task(self._run_handlers_sequential(event, callback, kwargs))
+            task.add_done_callback(self._done)
+            self._queue_tasks.append(task)
+
+    def _done(self, future):
+        """Remove queue task from list and evaluate result."""
+        future.result()
+        self._queue_tasks.remove(future)
 
     def _process_event(self, event, ev_type, callback=None, **kwargs):
         # Internal method which actually handles the events. Don't call this.

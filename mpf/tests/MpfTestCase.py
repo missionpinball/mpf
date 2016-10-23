@@ -152,8 +152,10 @@ class MpfTestCase(unittest.TestCase):
             self.loop.run_until_complete(asyncio.sleep(delay=delta, loop=self.loop))
             return
         except RuntimeError as e:
-            if self._exception:
+            if self._exception and "exception" in self._exception:
                 raise self._exception['exception']
+            elif self._exception:
+                raise Exception(self._exception, e)
             raise e
 
     def machine_run(self):
