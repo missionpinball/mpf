@@ -77,8 +77,12 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
     def wait_for_ball_count_changes(self):
         """Wait for ball count changes."""
         self._ball_entered_condition.clear()
-        return self._ball_entered_condition.wait()
+        return asyncio.ensure_future(self._ball_entered_condition.wait(), loop=self.machine.clock.loop)
 
     def ejecting_one_ball(self):
         """Remove one ball from count."""
         self._entrance_count -= 1
+        self.debug_log("Device ejected a ball. Reducing ball count by one.")
+        if self._entrance_count < 0:
+            self._entrance_count = 0
+            self.ball_device.log.warning("Ball count went negative. Resetting!")

@@ -681,6 +681,9 @@ class Util(object):
         # cancel all other futures
         for future in pending:
             future.cancel()
+
+        if not done:
+            raise asyncio.TimeoutError()
         return next(iter(done))
 
     @staticmethod
