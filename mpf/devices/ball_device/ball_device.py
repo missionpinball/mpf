@@ -175,7 +175,8 @@ class BallDevice(AsyncDevice, SystemWideDevice):
             wait_for_ball_changes = self.ensure_future(self.counter.wait_for_ball_count_changes())
             wait_for_incoming_ball = self.ensure_future(self._incoming_ball_condition.wait())
             # TODO: wait for incoming balls timeout
-            event = yield from Util.first([wait_for_ball_changes, wait_for_eject, wait_for_incoming_ball], self.machine.clock.loop)
+            event = yield from Util.first([wait_for_ball_changes, wait_for_eject, wait_for_incoming_ball],
+                                          self.machine.clock.loop)
             if event == wait_for_incoming_ball:
                 # we got incoming ball without eject queue
                 if self.config['mechanical_eject']:
@@ -344,6 +345,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
                 # Return to idle state
                 return
 
+            # TODO: this races with the count. use conditions?
             ball_change = self.ensure_future(self.counter.wait_for_ball_count_changes())
             eject_failed = self.ensure_future(self._source_eject_failure_condition.wait())
             incoming_ball_timeout = None

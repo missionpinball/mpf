@@ -19,6 +19,10 @@ class BallDeviceBallCounter:
         """Debug log."""
         self.ball_device.debug_log(*args, **kwargs)
 
+    def count_balls_sync(self):
+        """Return the number of current active switches or raises ValueError when count is not stable."""
+        raise NotImplementedError()
+
     @asyncio.coroutine
     def count_balls(self):
         """Return the number of current active switches."""

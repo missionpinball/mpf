@@ -3,7 +3,6 @@ import abc
 import logging
 
 import asyncio
-from functools import partial
 
 from mpf.core.machine import MachineController
 
@@ -154,7 +153,7 @@ class AsyncDevice(Device):
         del kwargs
         self.machine.clock.loop.run_until_complete(self._initialize_async())
         self.runner = self.machine.clock.loop.create_task(self._run())
-        self.runner.add_done_callback(partial(self._done, self))
+        self.runner.add_done_callback(self._done)
 
     @asyncio.coroutine
     def _initialize_async(self):
@@ -166,8 +165,7 @@ class AsyncDevice(Device):
         """Main task."""
         raise NotImplementedError()
 
-    @staticmethod
-    def _done(cls, future):
+    def _done(self, future):
         """Evaluate result of task.
 
         Will raise exceptions from within task.
@@ -177,11 +175,11 @@ class AsyncDevice(Device):
         except asyncio.CancelledError:
             pass
         else:
-            cls.stop()
+            self.stop()
 
     def ensure_future(self, coro_or_future):
         """Wrap ensure_future."""
-        if asyncio.compat.PY35:
+        if hasattr(asyncio, "compat") and asyncio.compat.PY35:
             return asyncio.ensure_future(coro_or_future, loop=self.machine.clock.loop)
         else:
             # pylint: disable-msg=

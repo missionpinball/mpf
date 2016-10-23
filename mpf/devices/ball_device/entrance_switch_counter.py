@@ -57,10 +57,16 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
                            "to %s", new_balls, self.config['ball_capacity'])
             self._entrance_count += new_balls
 
+    def count_balls_sync(self):
+        """Return the number of balls entered."""
+        # TODO: ValueError when entrance switches are not stable
+        return self._entrance_count
+
     @asyncio.coroutine
     def count_balls(self):
         """Return the number of balls entered."""
-        return self._entrance_count
+        # TODO: wait when entrance switch is not stable
+        return self.count_balls_sync()
 
     def wait_for_ball_to_leave(self):
         """Wait for a ball to leave."""
@@ -76,8 +82,9 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
 
     def wait_for_ball_count_changes(self):
         """Wait for ball count changes."""
+        # TODO: convert to individual futures
         self._ball_entered_condition.clear()
-        return asyncio.ensure_future(self._ball_entered_condition.wait(), loop=self.machine.clock.loop)
+        return self._ball_entered_condition.wait()
 
     def ejecting_one_ball(self):
         """Remove one ball from count."""

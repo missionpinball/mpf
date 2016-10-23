@@ -12,8 +12,6 @@ class SwitchCounter(BallDeviceBallCounter):
     def __init__(self, ball_device, config):
         """Initialise ball counter."""
         super().__init__(ball_device, config)
-        self._switch_change_condition = asyncio.Event(loop=self.machine.clock.loop)
-        
         # Register switch handlers with delays for entrance & exit counts
         for switch in self.config['ball_switches']:
             self.machine.switch_controller.add_switch_handler(
@@ -26,9 +24,14 @@ class SwitchCounter(BallDeviceBallCounter):
                 ms=self.config['exit_count_delay'],
                 callback=self._switch_changed)
 
+        self._futures = []
+
     def _switch_changed(self, **kwargs):
         del kwargs
-        self._switch_change_condition.set()
+        for future in self._futures:
+            if not future.done():
+                future.set_result(True)
+        self._futures = []
 
     @asyncio.coroutine
     def count_balls(self):
@@ -38,12 +41,12 @@ class SwitchCounter(BallDeviceBallCounter):
             # register the waiter before counting to prevent races
             waiter = self.wait_for_ball_count_changes()
             try:
-                balls = self._count_ball_switches()
+                balls = self.count_balls_sync()
                 return balls
             except ValueError:
                 yield from waiter
 
-    def _count_ball_switches(self):
+    def count_balls_sync(self):
         """Count currently active switches or raise ValueError if switches are unstable."""
         ball_count = 0
 
@@ -70,8 +73,9 @@ class SwitchCounter(BallDeviceBallCounter):
     def wait_for_ball_count_changes(self):
         """Wait for ball count changes."""
         # TODO: only return when ball_count actually changed
-        self._switch_change_condition.clear()
-        return self._switch_change_condition.wait()
+        future = asyncio.Future(loop=self.machine.clock.loop)
+        self._futures.append(future)
+        return future
 
     def wait_for_ball_to_leave(self):
         """Wait for any active switch to become inactive."""
