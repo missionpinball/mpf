@@ -88,6 +88,7 @@ class SwitchCounter(BallDeviceBallCounter):
                     state=0))
 
         if not waiters:
+            # TODO: raise exception and handle this in ball_device
             self.ball_device.log.warning("No switch is active. Cannot wait on empty list.")
             future = asyncio.Future(loop=self.machine.clock.loop)
             future.set_result(True)

@@ -107,10 +107,11 @@ class BallDevice(AsyncDevice, SystemWideDevice):
 
         self.trigger_event = None
 
-        self._idle_counted = None
+        self._idle_counted = False
 
         self.eject_start_time = None
         self.ejector = None
+        self.counter = None
 
         self._eject_request_condition = asyncio.Event(loop=self.machine.clock.loop)
         self._eject_success_condition = asyncio.Event(loop=self.machine.clock.loop)
@@ -122,8 +123,17 @@ class BallDevice(AsyncDevice, SystemWideDevice):
     def _initialize(self):
         """Initialize right away."""
         super()._initialize()
-        self._initialize_phase_2()
-        self._initialize_phase_3()
+        self._configure_targets()
+
+        # delay ball counters because we have to wait for switches to be ready
+        self.machine.events.add_handler('init_phase_2', self._create_ball_counters)
+
+    def _create_ball_counters(self, **kwargs):
+        del kwargs
+        if self.config['ball_switches']:
+            self.counter = SwitchCounter(self, self.config)     # pylint: disable-msg=redefined-variable-type
+        else:
+            self.counter = EntranceSwitchCounter(self, self.config)  # pylint: disable-msg=redefined-variable-type
 
     # Logic and dispatchers
     @asyncio.coroutine
@@ -135,11 +145,6 @@ class BallDevice(AsyncDevice, SystemWideDevice):
     @asyncio.coroutine
     def _initialize_async(self):
         """Count balls without handling them as new."""
-        if self.config['ball_switches']:
-            self.counter = SwitchCounter(self, self.config)     # pylint: disable-msg=redefined-variable-type
-        else:
-            self.counter = EntranceSwitchCounter(self, self.config)  # pylint: disable-msg=redefined-variable-type
-
         balls = yield from self.counter.count_balls()
         self.balls = balls
         self.available_balls = balls
@@ -149,9 +154,9 @@ class BallDevice(AsyncDevice, SystemWideDevice):
     def _state_idle(self):
         # Lets count the balls to see if we received ball in the meantime
         # before we start an eject with wrong initial count
-        self._idle_counted = False
+        self._idle_counted = False  # TODO: fix idle_counted
         balls = yield from self.counter.count_balls()
-        self._idle_counted = True
+        self._idle_counted = True   # TODO: fix idle_counted
 
         yield from self._handle_ball_changes(balls)
 
@@ -160,28 +165,38 @@ class BallDevice(AsyncDevice, SystemWideDevice):
                 return
             self._state = "idle"
             self.debug_log("Idle")
+            futures = [self.ensure_future(self.counter.wait_for_ball_count_changes()),
+                       self.ensure_future(self._wait_for_eject_condition())]
+
+            if self._incoming_balls:
+                futures.append(self.ensure_future(asyncio.sleep(
+                    self._incoming_balls[0][0] - self.machine.clock.get_time(),
+                    loop=self.machine.clock.loop)))
+
+            # Lets count the balls to see if we received ball in the meantime
             balls = yield from self.counter.count_balls()
             if (yield from self._handle_ball_changes(balls)):
+                Util.cancel_futures(futures)
                 continue
 
             # handler did nothing. wait for state changes
             if self.eject_queue:
                 self.debug_log("Waiting for ball changes or target_ready")
-                wait_for_eject = self.ensure_future(self.machine.events.wait_for_event(
-                    'balldevice_{}_ok_to_receive'.format(self.eject_queue[0][0].name)))
-            else:
-                self.debug_log("Waiting for ball changes or eject_request")
-                wait_for_eject = self.ensure_future(self._wait_for_eject_condition())
+                futures.append(self.ensure_future(self.machine.events.wait_for_event(
+                    'balldevice_{}_ok_to_receive'.format(self.eject_queue[0][0].name))))
+
             wait_for_ball_changes = self.ensure_future(self.counter.wait_for_ball_count_changes())
             wait_for_incoming_ball = self.ensure_future(self._incoming_ball_condition.wait())
+            futures.append(wait_for_incoming_ball)
             # TODO: wait for incoming balls timeout
-            event = yield from Util.first([wait_for_ball_changes, wait_for_eject, wait_for_incoming_ball],
-                                          self.machine.clock.loop)
+            # handler did nothing. wait for state changes
+            event = yield from Util.first(futures, self.machine.clock.loop)
             if event == wait_for_incoming_ball:
                 # we got incoming ball without eject queue
                 if self.config['mechanical_eject']:
                     yield from self._waiting_for_ball_mechanical()
                 else:
+                    # TODO: remove this
                     yield from self._waiting_for_ball()
 
             self.debug_log("Wait done")
@@ -684,6 +699,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
 
         if not self.is_ready_to_receive():
             # block the attempt until we are ready again
+            self.debug_log("Blocking eject attempt by %s because not ready to receive.", source)
             self._blocked_eject_attempts.append((queue, source))
             queue.wait()
             return
@@ -847,7 +863,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         # load targets and timeouts
         self._parse_config()
 
-    def _initialize_phase_2(self):
+    def _configure_targets(self):
         if self.config['target_on_unexpected_ball']:
             self._target_on_unexpected_ball = self.config['target_on_unexpected_ball']
         else:
@@ -861,7 +877,6 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         elif self.config['hold_coil']:
             self.ejector = HoldCoilEjector(self)    # pylint: disable-msg=redefined-variable-type
 
-    def _initialize_phase_3(self):
         if self.ejector:
             self.config['captures_from'].ball_search.register(
                 self.config['ball_search_order'], self.ejector.ball_search)
