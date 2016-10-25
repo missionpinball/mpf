@@ -165,7 +165,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
                 return
             self._state = "idle"
             self.debug_log("Idle")
-            futures = [self.ensure_future(self.counter.wait_for_ball_count_changes()),
+            futures = [self.ensure_future(self.counter.wait_for_ball_activity()),
                        self.ensure_future(self._wait_for_eject_condition())]
 
             if self._incoming_balls:
@@ -185,7 +185,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
                 futures.append(self.ensure_future(self.machine.events.wait_for_event(
                     'balldevice_{}_ok_to_receive'.format(self.eject_queue[0][0].name))))
 
-            wait_for_ball_changes = self.ensure_future(self.counter.wait_for_ball_count_changes())
+            wait_for_ball_changes = self.ensure_future(self.counter.wait_for_ball_activity())
             wait_for_incoming_ball = self.ensure_future(self._incoming_ball_condition.wait())
             futures.append(wait_for_incoming_ball)
             # TODO: wait for incoming balls timeout
@@ -227,7 +227,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
             missing_balls += 1
         if missing_balls > 0:
             self.debug_log("Incoming ball expired!")
-            yield from self._handle_missing_balls(balls=missing_balls)
+            yield from self._handle_missing_balls(balls=missing_balls)  # TODO: this does not make sense
             return True
 
         if self.get_additional_ball_capacity():
@@ -361,7 +361,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
                 return
 
             # TODO: this races with the count. use conditions?
-            ball_change = self.ensure_future(self.counter.wait_for_ball_count_changes())
+            ball_change = self.ensure_future(self.counter.wait_for_ball_activity())
             eject_failed = self.ensure_future(self._source_eject_failure_condition.wait())
             incoming_ball_timeout = None
             incoming_ball_lost = None
@@ -427,7 +427,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
             source_failure_retry = self.ensure_future(self._source_eject_failure_retry_condition.wait())
             eject_success = self.ensure_future(self._eject_success_condition.wait())
             futures = [source_failure, source_failure_retry,
-                       self.ensure_future(self.counter.wait_for_ball_count_changes()), eject_success]
+                       self.ensure_future(self.counter.wait_for_ball_activity()), eject_success]
             event = yield from Util.first(futures, loop=self.machine.clock.loop)
 
             if event == eject_success:
@@ -652,7 +652,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
             # TODO: fix timeout
             late_confirm_future = self.ensure_future(self._eject_success_condition.wait())
             event = yield from Util.first([timeout_future,
-                                           self.ensure_future(self.counter.wait_for_ball_count_changes()),
+                                           self.ensure_future(self.counter.wait_for_ball_activity()),
                                            late_confirm_future],
                                           loop=self.machine.clock.loop)
             # check eject success first

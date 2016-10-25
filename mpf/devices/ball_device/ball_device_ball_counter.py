@@ -32,9 +32,31 @@ class BallDeviceBallCounter:
         """Wait for a ball to leave."""
         raise NotImplementedError()
 
-    def wait_for_ball_count_changes(self):
-        """Wait for ball count changes."""
+    def wait_for_ball_activity(self):
+        """Wait for ball activity."""
         raise NotImplementedError()
+
+    @asyncio.coroutine
+    def wait_for_ball_entrance(self):
+        """Wait for a ball entrance.
+
+        Will only return if the counter is certain that this cannot be a returned ball from an eject.
+        """
+        raise NotImplementedError()
+
+    @asyncio.coroutine
+    def wait_for_ball_count_changes(self, old_count: int) -> int:
+        """Wait for ball count changes and return the new count.
+
+        Args:
+            old_count: Old ball count. Will return when the current count differs
+        """
+        while True:
+            current_count = yield from self.count_balls()
+            if current_count != old_count:
+                return current_count
+
+            yield from self.wait_for_ball_activity()
 
     def ejecting_one_ball(self):
         """Inform counter that one ball has been ejected."""

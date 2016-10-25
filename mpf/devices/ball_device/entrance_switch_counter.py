@@ -80,7 +80,7 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
             done_future.set_result(True)
             return done_future
 
-    def wait_for_ball_count_changes(self):
+    def wait_for_ball_activity(self):
         """Wait for ball count changes."""
         # TODO: convert to individual futures
         self._ball_entered_condition.clear()

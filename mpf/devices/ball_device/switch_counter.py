@@ -7,11 +7,17 @@ from mpf.devices.ball_device.ball_device_ball_counter import BallDeviceBallCount
 
 class SwitchCounter(BallDeviceBallCounter):
 
-    """Determine ball count by counting switches."""
+    """Determine ball count by counting switches.
+
+    This should be used for devices with multiple switches and/or a jam switch. Simple devices with only one switch
+    should use a simpler counter.
+    """
+    # TODO: write simpler counter
 
     def __init__(self, ball_device, config):
         """Initialise ball counter."""
         super().__init__(ball_device, config)
+        # TODO: use ball_switches and jam_switch!
         # Register switch handlers with delays for entrance & exit counts
         for switch in self.config['ball_switches']:
             self.machine.switch_controller.add_switch_handler(
@@ -39,7 +45,7 @@ class SwitchCounter(BallDeviceBallCounter):
         while True:
             self.debug_log("Counting balls by checking switches")
             # register the waiter before counting to prevent races
-            waiter = self.wait_for_ball_count_changes()
+            waiter = self.wait_for_ball_activity()
             try:
                 balls = self.count_balls_sync()
                 return balls
@@ -70,7 +76,7 @@ class SwitchCounter(BallDeviceBallCounter):
         self.debug_log("Counted %s balls", ball_count)
         return ball_count
 
-    def wait_for_ball_count_changes(self):
+    def wait_for_ball_activity(self):
         """Wait for ball count changes."""
         # TODO: only return when ball_count actually changed
         future = asyncio.Future(loop=self.machine.clock.loop)
@@ -84,7 +90,7 @@ class SwitchCounter(BallDeviceBallCounter):
             # only consider active switches
             if self.machine.switch_controller.is_active(switch.name):
                 waiters.append(self.machine.switch_controller.wait_for_switch(
-                    switch_name=switch.name,
+                    switch_name=switch.name,    # TODO: readd ms here.
                     state=0))
 
         if not waiters:
