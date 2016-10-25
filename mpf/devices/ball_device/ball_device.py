@@ -18,6 +18,7 @@ from mpf.core.utility_functions import Util
 
 
 # pylint: disable-msg=too-many-instance-attributes
+from mpf.devices.ball_device.incoming_balls_handler import BallCountHandler
 from mpf.devices.ball_device.pulse_coil_ejector import PulseCoilEjector
 from mpf.devices.ball_device.switch_counter import SwitchCounter
 
@@ -112,6 +113,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         self.eject_start_time = None
         self.ejector = None
         self.counter = None
+        self.ball_count_handler = None
 
         self._eject_request_condition = asyncio.Event(loop=self.machine.clock.loop)
         self._eject_success_condition = asyncio.Event(loop=self.machine.clock.loop)
@@ -145,6 +147,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
     @asyncio.coroutine
     def _initialize_async(self):
         """Count balls without handling them as new."""
+        #self.ball_count_handler = BallCountHandler(self)
         balls = yield from self.counter.count_balls()
         self.balls = balls
         self.available_balls = balls

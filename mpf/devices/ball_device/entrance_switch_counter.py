@@ -1,3 +1,4 @@
+"""Count balls using an entrance switch."""
 import asyncio
 
 from mpf.devices.ball_device.ball_device_ball_counter import BallDeviceBallCounter
@@ -31,12 +32,18 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
         else:
             self._entrance_count = 0
 
-        self._ball_entered_condition = asyncio.Event(loop=self.ball_device.machine.clock.loop)
+        self._futures = []
+
+    def _set_future_results(self):
+        for future in self._futures:
+            if not future.done():
+                future.set_result(True)
+        self._futures = []
 
     def _entrance_switch_handler(self):
         """Add a ball to the device since the entrance switch has been hit."""
         # TODO: maintain recycle_time somewhere
-        self._ball_entered_condition.set()
+        self._set_future_results()
         self.debug_log("Entrance switch hit")
 
         if self.config['ball_capacity'] and self.config['ball_capacity'] == self._entrance_count:
@@ -51,7 +58,7 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
         # a ball is sitting on the entrance_switch. assume the device is full
         new_balls = self.config['ball_capacity'] - self._entrance_count
         if new_balls > 0:
-            self._ball_entered_condition.set()
+            self._set_future_results()
             self.debug_log("Ball is sitting on entrance_switch. Assuming "
                            "device is full. Adding %s balls and setting balls"
                            "to %s", new_balls, self.config['ball_capacity'])
@@ -80,11 +87,15 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
             done_future.set_result(True)
             return done_future
 
+    def wait_for_ball_entrance(self):
+        """Wait for entrance switch."""
+        future = asyncio.Future(loop=self.machine.clock.loop)
+        self._futures.append(future)
+        return future
+
     def wait_for_ball_activity(self):
         """Wait for ball count changes."""
-        # TODO: convert to individual futures
-        self._ball_entered_condition.clear()
-        return self._ball_entered_condition.wait()
+        return self.wait_for_ball_entrance()
 
     def ejecting_one_ball(self):
         """Remove one ball from count."""

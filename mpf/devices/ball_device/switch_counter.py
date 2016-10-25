@@ -12,7 +12,7 @@ class SwitchCounter(BallDeviceBallCounter):
     This should be used for devices with multiple switches and/or a jam switch. Simple devices with only one switch
     should use a simpler counter.
     """
-    # TODO: write simpler counter
+    # TODO: write simpler counter for single switch devices
 
     def __init__(self, ball_device, config):
         """Initialise ball counter."""
@@ -78,10 +78,16 @@ class SwitchCounter(BallDeviceBallCounter):
 
     def wait_for_ball_activity(self):
         """Wait for ball count changes."""
-        # TODO: only return when ball_count actually changed
         future = asyncio.Future(loop=self.machine.clock.loop)
         self._futures.append(future)
         return future
+
+    def wait_for_ball_entrance(self):
+        """Wait for a ball entering.
+
+        This will only return if we are 100% sure that the ball entered and did not return from a failed eject.
+        """
+        raise AssertionError("implement")
 
     def wait_for_ball_to_leave(self):
         """Wait for any active switch to become inactive."""
