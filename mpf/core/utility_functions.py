@@ -673,14 +673,16 @@ class Util(object):
 
     @staticmethod
     @asyncio.coroutine
-    def first(futures: [asyncio.Future], loop, timeout=None):
+    def first(futures: [asyncio.Future], loop, timeout=None, cancel_others=True):
         """Return first future and cancel others."""
         # wait for first
         done, pending = yield from asyncio.wait(iter(futures), loop=loop, timeout=timeout,
                                                 return_when=asyncio.FIRST_COMPLETED)
-        # cancel all other futures
-        for future in pending:
-            future.cancel()
+
+        if cancel_others:
+            # cancel all other futures
+            for future in pending:
+                future.cancel()
 
         if not done:
             raise asyncio.TimeoutError()
