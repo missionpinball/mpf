@@ -82,12 +82,54 @@ class SwitchCounter(BallDeviceBallCounter):
         self._futures.append(future)
         return future
 
-    def wait_for_ball_entrance(self):
+    def wait_for_ball_entrance(self, eject_process):
         """Wait for a ball entering.
 
         This will only return if we are 100% sure that the ball entered and did not return from a failed eject.
         """
-        raise AssertionError("implement")
+        del eject_process
+        # TODO: add option to enable this for troughs. entrance can be detected by the outer switches there
+        return asyncio.Future(loop=self.machine.clock.loop)
+
+    def is_jammed(self):
+        """Return true if the jam switch is currently active."""
+        return self.config['jam_switch'] and self.machine.switch_controller.is_active(
+            self.config['jam_switch'].name, ms=self.config['entrance_count_delay'])
+
+    def ejecting_one_ball(self):
+        """Return eject_process dict."""
+        # count active switches
+        ball_count = 0
+        for switch in self.config['ball_switches']:
+            valid = False
+            if self.machine.switch_controller.is_active(
+                    switch.name, ms=self.config['entrance_count_delay']):
+                ball_count += 1
+
+        return {
+            'jam_active_before_eject': self.is_jammed(),
+            'active_switches': ball_count
+        }
+
+    @asyncio.coroutine
+    def wait_for_ball_to_return(self, eject_process):
+        """Wait for a ball to return.
+
+        Will only return if this the device is not certain that this is a new ball. It still may be a new ball in some
+        cases. In doubt we assume that the ball returned.
+        """
+        while True:
+            # check if jam is active but was not active before eject -> certainly a return
+            if eject_process['jam_active_before_eject'] and self.is_jammed():
+                return True
+
+            # if there is no jam -> check if any new switch activated
+            # TODO: ignore entrances
+            ball_count = self.count_balls()
+            if not self.config['jam_switch'] and eject_process['active_switches'] >= ball_count:
+                return True
+
+            yield from self.wait_for_ball_activity()
 
     def wait_for_ball_to_leave(self):
         """Wait for any active switch to become inactive."""

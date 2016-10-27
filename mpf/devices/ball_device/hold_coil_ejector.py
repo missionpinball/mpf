@@ -35,6 +35,7 @@ class HoldCoilEjector(BallDeviceEjector):
         self.ball_device.delay.add(name='hold_coil_release',
                                    ms=self.ball_device.config['hold_coil_release_time'],
                                    callback=self._hold_release_done)
+        # TODO: support ejecting a single ball by checking the ball_counter
 
     def _disable_hold_coil(self):
         self.ball_device.config['hold_coil'].disable()

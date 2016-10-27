@@ -37,10 +37,19 @@ class BallDeviceBallCounter:
         raise NotImplementedError()
 
     @asyncio.coroutine
-    def wait_for_ball_entrance(self):
+    def wait_for_ball_entrance(self, eject_process):
         """Wait for a ball entrance.
 
         Will only return if the counter is certain that this cannot be a returned ball from an eject.
+        """
+        raise NotImplementedError()
+
+    @asyncio.coroutine
+    def wait_for_ball_to_return(self, eject_process):
+        """Wait for a ball to return.
+
+        Will only return if this the device is not certain that this is a new ball. It still may be a new ball in some
+        cases. In doubt we assume that the ball returned.
         """
         raise NotImplementedError()
 
@@ -58,6 +67,10 @@ class BallDeviceBallCounter:
 
             yield from self.wait_for_ball_activity()
 
-    def ejecting_one_ball(self):
-        """Inform counter that one ball has been ejected."""
-        del self
+    def ejecting_one_ball(self) -> dict:
+        """Return eject_process dict."""
+        return {
+            'active_switches': [],
+            'balls': 0,
+            'entrances': 0
+        }

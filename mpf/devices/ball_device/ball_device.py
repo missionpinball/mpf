@@ -137,6 +137,8 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         else:
             self.counter = EntranceSwitchCounter(self, self.config)  # pylint: disable-msg=redefined-variable-type
 
+        self.ball_count_handler = BallCountHandler(self)
+
     # Logic and dispatchers
     @asyncio.coroutine
     def _run(self):
@@ -147,10 +149,10 @@ class BallDevice(AsyncDevice, SystemWideDevice):
     @asyncio.coroutine
     def _initialize_async(self):
         """Count balls without handling them as new."""
-        #self.ball_count_handler = BallCountHandler(self)
-        balls = yield from self.counter.count_balls()
-        self.balls = balls
-        self.available_balls = balls
+        yield from self.ball_count_handler.initialise()
+
+        # TODO: handle this in some handler
+        self.available_balls = self.balls
 
     # ----------------------------- State: idle -------------------------------
     @asyncio.coroutine

@@ -87,11 +87,20 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
             done_future.set_result(True)
             return done_future
 
-    def wait_for_ball_entrance(self):
+    def wait_for_ball_entrance(self, eject_process):
         """Wait for entrance switch."""
+        del eject_process
         future = asyncio.Future(loop=self.machine.clock.loop)
         self._futures.append(future)
         return future
+
+    def wait_for_ball_to_return(self, eject_process):
+        """Wait for a ball to return.
+
+        This never happens or at least we cannot tell. Return a future which will never complete.
+        """
+        del eject_process
+        return asyncio.Future(loop=self.machine.clock.loop)
 
     def wait_for_ball_activity(self):
         """Wait for ball count changes."""
@@ -104,3 +113,5 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
         if self._entrance_count < 0:
             self._entrance_count = 0
             self.ball_device.log.warning("Ball count went negative. Resetting!")
+
+        return {}
