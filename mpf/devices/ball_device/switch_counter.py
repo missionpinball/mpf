@@ -99,47 +99,51 @@ class SwitchCounter(BallDeviceBallCounter):
     def ejecting_one_ball(self):
         """Return eject_process dict."""
         # count active switches
-        ball_count = 0
+        active_switches = []
         for switch in self.config['ball_switches']:
             valid = False
             if self.machine.switch_controller.is_active(
                     switch.name, ms=self.config['entrance_count_delay']):
-                ball_count += 1
+                active_switches.append(switch.name)
 
         return {
             'jam_active_before_eject': self.is_jammed(),
-            'active_switches': ball_count
+            'active_switches': active_switches
         }
 
     @asyncio.coroutine
     def wait_for_ball_to_return(self, eject_process):
         """Wait for a ball to return.
 
-        Will only return if this the device is not certain that this is a new ball. It still may be a new ball in some
-        cases. In doubt we assume that the ball returned.
+        Will only return if this the device is certain that this is a returned ball.
         """
+        if not self.config['jam_switch']:
+            # if there is no jam switch we cannot know currently
+            future = asyncio.Future(loop=self.machine.clock.loop)
+            yield from future
+            return
+
         while True:
             # check if jam is active but was not active before eject -> certainly a return
-            if eject_process['jam_active_before_eject'] and self.is_jammed():
+            if not eject_process['jam_active_before_eject'] and self.is_jammed():
                 return True
 
             # if there is no jam -> check if any new switch activated
-            # TODO: ignore entrances
-            ball_count = self.count_balls()
-            if not self.config['jam_switch'] and eject_process['active_switches'] >= ball_count:
-                return True
+            # TODO: move this to ball_counter
+            # # TODO: ignore entrances
+            # ball_count = self.count_balls()
+            # if not self.config['jam_switch'] and eject_process['active_switches'] >= ball_count:
+            #     return True
 
             yield from self.wait_for_ball_activity()
 
-    def wait_for_ball_to_leave(self):
+    def wait_for_ball_to_leave(self, eject_process):
         """Wait for any active switch to become inactive."""
         waiters = []
-        for switch in self.config['ball_switches']:
-            # only consider active switches
-            if self.machine.switch_controller.is_active(switch.name):
-                waiters.append(self.machine.switch_controller.wait_for_switch(
-                    switch_name=switch.name,    # TODO: readd ms here.
-                    state=0))
+        for switch_name in eject_process['active_switches']:
+            waiters.append(self.machine.switch_controller.wait_for_switch(
+                switch_name=switch_name, ms=self.config['entrance_count_delay'],
+                state=0))
 
         if not waiters:
             # TODO: raise exception and handle this in ball_device

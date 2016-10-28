@@ -5,6 +5,7 @@ The duty of this device is to maintain the current ball count of the device.
 import asyncio
 
 
+# TODO: rename to hardware counter
 class BallDeviceBallCounter:
 
     """Ball counter for ball device."""
@@ -28,7 +29,7 @@ class BallDeviceBallCounter:
         """Return the number of current active switches."""
         raise NotImplementedError()
 
-    def wait_for_ball_to_leave(self):
+    def wait_for_ball_to_leave(self, eject_process):
         """Wait for a ball to leave."""
         raise NotImplementedError()
 
@@ -48,8 +49,7 @@ class BallDeviceBallCounter:
     def wait_for_ball_to_return(self, eject_process):
         """Wait for a ball to return.
 
-        Will only return if this the device is not certain that this is a new ball. It still may be a new ball in some
-        cases. In doubt we assume that the ball returned.
+        Will only return if this the device is certain that this is a returned ball.
         """
         raise NotImplementedError()
 
@@ -69,8 +69,4 @@ class BallDeviceBallCounter:
 
     def ejecting_one_ball(self) -> dict:
         """Return eject_process dict."""
-        return {
-            'active_switches': [],
-            'balls': 0,
-            'entrances': 0
-        }
+        return {}

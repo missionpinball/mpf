@@ -7,6 +7,7 @@ import asyncio
 from typing import Optional
 
 from mpf.core.device import AsyncDevice
+from mpf.devices.ball_device.ball_count_handler import BallCountHandler
 
 from mpf.devices.ball_device.entrance_switch_counter import EntranceSwitchCounter
 from mpf.devices.ball_device.hold_coil_ejector import HoldCoilEjector
@@ -18,7 +19,8 @@ from mpf.core.utility_functions import Util
 
 
 # pylint: disable-msg=too-many-instance-attributes
-from mpf.devices.ball_device.incoming_balls_handler import BallCountHandler
+from mpf.devices.ball_device.incoming_balls_handler import IncomingBallsHandler, IncomingBall
+from mpf.devices.ball_device.outgoing_balls_handler import OutgoingBallsHandler, EjectRequest
 from mpf.devices.ball_device.pulse_coil_ejector import PulseCoilEjector
 from mpf.devices.ball_device.switch_counter import SwitchCounter
 
@@ -46,8 +48,8 @@ class BallDevice(AsyncDevice, SystemWideDevice):
 
         self.delay = DelayManager(machine.delayRegistry)
 
-        self.balls = 0
-        """Number of balls currently contained (held) in this device."""
+        #self.balls = 0
+        #"""Number of balls currently contained (held) in this device."""
 
         self.available_balls = 0
         """Number of balls that are available to be ejected. This differes from
@@ -122,6 +124,11 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         self._incoming_ball_condition = asyncio.Event(loop=self.machine.clock.loop)
         self._incoming_ball_lost_condition = asyncio.Event(loop=self.machine.clock.loop)
 
+    @property
+    def balls(self):
+        """Return balls."""
+        return self.ball_count_handler.handled_balls
+
     def _initialize(self):
         """Initialize right away."""
         super()._initialize()
@@ -138,18 +145,23 @@ class BallDevice(AsyncDevice, SystemWideDevice):
             self.counter = EntranceSwitchCounter(self, self.config)  # pylint: disable-msg=redefined-variable-type
 
         self.ball_count_handler = BallCountHandler(self)
+        self.incoming_balls_handler = IncomingBallsHandler(self)
+        self.outgoing_balls_handler = OutgoingBallsHandler(self)
 
     # Logic and dispatchers
     @asyncio.coroutine
     def _run(self):
         # state invalid
-        yield from self._state_idle()
+        pass
+        #yield from self._state_idle()
 
     # ---------------------------- State: invalid -----------------------------
     @asyncio.coroutine
     def _initialize_async(self):
         """Count balls without handling them as new."""
         yield from self.ball_count_handler.initialise()
+        yield from self.incoming_balls_handler.initialise()
+        yield from self.outgoing_balls_handler.initialise()
 
         # TODO: handle this in some handler
         self.available_balls = self.balls
@@ -448,19 +460,14 @@ class BallDevice(AsyncDevice, SystemWideDevice):
                 # TODO: review why we do not cancel the eject here
                 return False
 
-    def add_incoming_ball(self, source):
+    def add_incoming_ball(self, incoming_ball: IncomingBall):
         """Notify this device that there is a ball heading its way.
 
         Args:
             source: The source device this ball is coming from
 
         """
-        timeout = 60
-        self.debug_log("Adding incoming ball from %s", source)
-        self._incoming_balls.append((self.machine.clock.get_time() + timeout, source))
-
-        self._incoming_ball_condition.set()
-        self._incoming_ball_condition.clear()
+        self.incoming_balls_handler.add_incoming_ball(incoming_ball)
 
     def remove_incoming_ball(self, source):
         """Remove a ball from the incoming balls queue."""
@@ -1151,6 +1158,15 @@ class BallDevice(AsyncDevice, SystemWideDevice):
 
         if next_hop not in self.config['eject_targets']:
             raise AssertionError("Broken path")
+
+        eject = EjectRequest(self.machine)
+        eject.eject_timeout = self.config['eject_timeouts'][next_hop]
+        eject.max_tries = self.config['max_eject_attempts']
+        eject.target = next_hop
+        # TODO: implement mechanical
+        #eject.mechanical =
+
+        self.outgoing_balls_handler.add_eject_to_queue(eject)
 
         # append to queue
         if player_controlled and (self.config['mechanical_eject'] or self.config['player_controlled_eject_event']):

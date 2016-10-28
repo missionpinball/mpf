@@ -22,7 +22,7 @@ class HoldCoilEjector(BallDeviceEjector):
                 ms=0,
                 callback=self.hold)
 
-    def eject_one_ball(self):
+    def eject_one_ball(self, is_jammed, eject_try):
         """Eject one ball by disabling hold coil."""
         # TODO: wait for some time to allow balls to settle for
         #       both entrance and after a release

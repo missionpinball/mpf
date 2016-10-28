@@ -6,18 +6,15 @@ class PulseCoilEjector(BallDeviceEjector):
 
     """Pulse a coil to eject one ball."""
 
-    def eject_one_ball(self):
+    def eject_one_ball(self, is_jammed, eject_try):
         """Pulse eject coil."""
-        if (self.ball_device.num_eject_attempts <= 2 and
+        if (eject_try <= 2 and
                 self.ball_device.config['eject_coil_jam_pulse'] and
-                self.ball_device.config['jam_switch'] and
-                self.ball_device.machine.switch_controller.is_active(
-                    self.ball_device.config['jam_switch'].name,
-                    ms=self.ball_device.config['entrance_count_delay'])):
+                is_jammed):
             self.ball_device.config['eject_coil'].pulse(
                 self.ball_device.config['eject_coil_jam_pulse'])
 
-        elif self.ball_device.num_eject_attempts >= 4 and self.ball_device.config['eject_coil_retry_pulse']:
+        elif eject_try >= 4 and self.ball_device.config['eject_coil_retry_pulse']:
             self.ball_device.config['eject_coil'].pulse(self.ball_device.config['eject_coil_retry_pulse'])
 
         else:

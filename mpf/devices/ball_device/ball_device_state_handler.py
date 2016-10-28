@@ -1,12 +1,35 @@
+import asyncio
+
+
 class BallDeviceStateHandler:
 
     """Base class for ball device handler."""
 
     def __init__(self, ball_device):
-        """Initialise handler."""
+        """Initialise handler.
+
+        Args:
+            ball_device(mpf.devices.ball_device.ball_device.BallDevice): parent ball device
+        """
         self.ball_device = ball_device
         self.machine = ball_device.machine
+        self._task = None
+
+    # TODO: implement stop method
 
     def debug_log(self, *args, **kwargs):
         """Debug log."""
         self.ball_device.debug_log(*args, **kwargs)
+
+    @asyncio.coroutine
+    def initialise(self):
+        """Initialise handler."""
+        self._task = self.machine.clock.loop.create_task(self._run())
+        self._task.add_done_callback(self._done)
+
+    def _done(self, future):
+        future.result()
+
+    @asyncio.coroutine
+    def _run(self):
+        raise NotImplementedError()

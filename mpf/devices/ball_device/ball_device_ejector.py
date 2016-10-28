@@ -13,7 +13,7 @@ class BallDeviceEjector:
         self.ball_device = ball_device
 
     # TODO: make this coroutine
-    def eject_one_ball(self):
+    def eject_one_ball(self, is_jammed, eject_try):
         """Eject one ball."""
         raise NotImplementedError()
 
