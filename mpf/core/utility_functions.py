@@ -676,8 +676,13 @@ class Util(object):
     def first(futures: [asyncio.Future], loop, timeout=None, cancel_others=True):
         """Return first future and cancel others."""
         # wait for first
-        done, pending = yield from asyncio.wait(iter(futures), loop=loop, timeout=timeout,
-                                                return_when=asyncio.FIRST_COMPLETED)
+        try:
+            done, pending = yield from asyncio.wait(iter(futures), loop=loop, timeout=timeout,
+                                                    return_when=asyncio.FIRST_COMPLETED)
+        except asyncio.CancelledError:
+            for future in futures:
+                future.cancel()
+            raise
 
         if cancel_others:
             # cancel all other futures

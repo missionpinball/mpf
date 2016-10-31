@@ -153,6 +153,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         self.ball_count_handler.stop()
         self.incoming_balls_handler.stop()
         self.outgoing_balls_handler.stop()
+        self.debug_log("Stopping ball device")
 
     # Logic and dispatchers
     @asyncio.coroutine

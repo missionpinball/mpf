@@ -80,6 +80,13 @@ class Playfield(SystemWideDevice):
 
         self.incoming_balls_handler = IncomingBallsHandler(self)
 
+        # stop device on shutdown
+        self.machine.events.add_handler("shutdown", self.stop)
+
+    def stop(self, **kwargs):
+        del kwargs
+        self.incoming_balls_handler.stop()
+
     def add_missing_balls(self, balls):
         """Notifie the playfield that it probably received a ball which went missing elsewhere."""
         self.available_balls += balls

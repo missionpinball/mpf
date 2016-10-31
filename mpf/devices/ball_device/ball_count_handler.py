@@ -93,6 +93,7 @@ class BallCountHandler(BallDeviceStateHandler):
                 # this will be false before the entry in eject_done is added so this should not race
                 eject_process = yield from eject_process
                 yield from self._handle_entrance_during_eject(eject_process)
+                self.debug_log("Counting in normal mode")
             elif event == ball_changes:
                 # if old_ball_count != self.ball_device.balls:
                 #     raise AssertionError("Ball count changed unexpectedly!")

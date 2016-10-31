@@ -104,7 +104,9 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
 
     def wait_for_ball_activity(self):
         """Wait for ball count changes."""
-        return self.wait_for_ball_entrance()
+        future = asyncio.Future(loop=self.machine.clock.loop)
+        self._futures.append(future)
+        return future
 
     def ejecting_one_ball(self):
         """Remove one ball from count."""
