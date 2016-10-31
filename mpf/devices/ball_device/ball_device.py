@@ -148,11 +148,17 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         self.incoming_balls_handler = IncomingBallsHandler(self)
         self.outgoing_balls_handler = OutgoingBallsHandler(self)
 
+    def stop(self, **kwargs):
+        super().stop(**kwargs)
+        self.ball_count_handler.stop()
+        self.incoming_balls_handler.stop()
+        self.outgoing_balls_handler.stop()
+
     # Logic and dispatchers
     @asyncio.coroutine
     def _run(self):
         # state invalid
-        pass
+        yield from asyncio.Future(loop=self.machine.clock.loop)
         #yield from self._state_idle()
 
     # ---------------------------- State: invalid -----------------------------
@@ -709,6 +715,8 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         if target != self:
             return
 
+        return
+        # TODO: fix this
         if not self.is_ready_to_receive():
             # block the attempt until we are ready again
             self.debug_log("Blocking eject attempt by %s because not ready to receive.", source)

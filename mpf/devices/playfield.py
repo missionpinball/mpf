@@ -3,6 +3,7 @@ from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.ball_search import BallSearch
 from mpf.core.delays import DelayManager
+from mpf.devices.ball_device.incoming_balls_handler import IncomingBallsHandler, IncomingBall
 
 
 @DeviceMonitor("available_balls", "unexpected_balls", "num_balls_requested", "balls")
@@ -76,6 +77,8 @@ class Playfield(SystemWideDevice):
                     event='balldevice_' + device.name +
                     '_ejecting_ball',
                     handler=self._source_device_ejecting_ball)
+
+        self.incoming_balls_handler = IncomingBallsHandler(self)
 
     def add_missing_balls(self, balls):
         """Notifie the playfield that it probably received a ball which went missing elsewhere."""
@@ -245,6 +248,7 @@ class Playfield(SystemWideDevice):
 
     def _mark_playfield_active(self):
         self.ball_search.reset_timer()
+        self.incoming_balls_handler.ball_arrived()
         self.machine.events.post_boolean(self.name + "_active")
         '''event: (playfield)_active
         desc: The playfield called "playfield" is now active, meaning there's
@@ -331,10 +335,11 @@ class Playfield(SystemWideDevice):
         """True since it is a playfield."""
         return True
 
-    def add_incoming_ball(self, source):
+    def add_incoming_ball(self, incoming_ball: IncomingBall):
         """Track an incoming ball."""
-        pass
+        self.incoming_balls_handler.add_incoming_ball(incoming_ball)
 
     def remove_incoming_ball(self, source):
         """Stop tracking an incoming ball."""
+        # TODO: implement
         pass

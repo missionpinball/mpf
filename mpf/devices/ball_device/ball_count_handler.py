@@ -63,9 +63,6 @@ class BallCountHandler(BallDeviceStateHandler):
             self._has_balls.set()
         yield from super().initialise()
 
-    def _done(self, future):
-        future.result()
-
     def wait_for_ball(self):
         """Wait until the device has a ball."""
         return self._has_balls.wait()
@@ -131,7 +128,7 @@ class BallCountHandler(BallDeviceStateHandler):
         while True:
             event = yield from Util.first(futures, loop=self.machine.clock.loop, cancel_others=False)
 
-            if ball_left.done():
+            if event == ball_left:
                 futures = [eject_done, ball_entrance]
                 # remove one ball
                 self._ball_count -= 1
@@ -151,3 +148,4 @@ class BallCountHandler(BallDeviceStateHandler):
         else:
             self.ball_device.log.warning("Received eject done but eject lost ball. Handling lost ball.")
             # TODO: handle lost balls via lost balls handler
+            raise AssertionError("handle this")

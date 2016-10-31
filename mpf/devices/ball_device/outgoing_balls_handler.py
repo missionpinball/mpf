@@ -56,7 +56,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             self.debug_log("Wait for ball")
             yield from self.ball_device.ball_count_handler.wait_for_ball()
             # inform targets about the eject (can delay the eject)
-            yield from self._prepare_eject(eject_request)
+            yield from self._prepare_eject(eject_request, eject_try)
             # check if we still have a ball
             ball_count = yield from self.ball_device.ball_count_handler.get_ball_count()
             if ball_count == 0:
@@ -69,6 +69,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             result = yield from self._eject_ball(eject_request, eject_try)
             if result:
                 # eject is done. return to main loop
+                yield from self._handle_eject_success(eject_request.target)
                 return
 
             yield from self._failed_eject(eject_request, eject_try)
@@ -81,8 +82,28 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                 return
 
     @asyncio.coroutine
-    def _prepare_eject(self, eject_request: EjectRequest):
-        pass
+    def _prepare_eject(self, eject_request: EjectRequest, eject_try):
+        yield from self.machine.events.post_queue_async(
+            'balldevice_{}_ball_eject_attempt'.format(self.ball_device.name),
+            balls=1,
+            target=eject_request.target,
+            source=self,
+            mechanical_eject=eject_request.mechanical,
+            num_attempts=eject_try)
+        '''event: balldevice_(name)_ball_eject_attempt
+
+        desc: The ball device called "name" is attempting to eject a ball (or
+        balls). This is a queue event. The eject will not actually be attempted
+        until the queue is cleared.
+
+        args:
+
+        balls: The number of balls that are to be ejected.
+        taget: The target ball device that will receive these balls.
+        source: The source device that will be ejecting the balls.
+        mechanical_eject: Boolean as to whether this is a mechanical eject.
+        num_attempts: How many eject attempts have been tried so far.
+        '''
 
     @asyncio.coroutine
     def _abort_eject(self, eject_request: EjectRequest):
@@ -95,6 +116,26 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
     @asyncio.coroutine
     def _eject_ball(self, eject_request: EjectRequest, eject_try) -> bool:
         # inform the counter that we are ejecting now
+        self.debug_log("Ejecting ball to %s", eject_request.target)
+        yield from self.machine.events.post_async(
+            'balldevice_{}_ejecting_ball'.format(self.ball_device.name),
+            balls=1,
+            target=eject_request.target,
+            source=self,
+            mechanical_eject=eject_request.mechanical,
+            num_attempts=eject_try)
+        '''event: balldevice_(name)_ejecting_ball
+
+        desc: The ball device called "name" is ejecting a ball right now.
+
+        args:
+
+        balls: The number of balls that are to be ejected.
+        taget: The target ball device that will receive these balls.
+        source: The source device that will be ejecting the balls.
+        mechanical_eject: Boolean as to whether this is a mechanical eject.
+        num_attempts: How many eject attempts have been tried so far.
+        '''
         ball_eject_process = self.ball_device.ball_count_handler.start_eject()
         self.debug_log("Wait for ball to leave device")
         # eject the ball
@@ -135,11 +176,6 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                                   loop=self.machine.clock.loop, cancel_others=False)
         except asyncio.TimeoutError:
             self.debug_log("Got timeout before confirm")
-            # ball did not get confirmed
-            if ball_eject_process.is_ball_returned():
-                # ball returned. eject failed
-                ball_eject_process.eject_failed()
-                return False
             return (yield from self._handle_late_confirm_or_missing(eject_request, ball_eject_process))
         else:
             # eject successful
@@ -172,3 +208,19 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                 return False
             else:
                 raise AssertionError("Invalid state")
+
+    @asyncio.coroutine
+    def _handle_eject_success(self, eject_target):
+        self.debug_log("Eject successful")
+        yield from self.machine.events.post_async('balldevice_' + self.ball_device.name +
+                                                  '_ball_eject_success',
+                                                  balls=1,
+                                                  target=eject_target)
+        '''event: balldevice_(name)_ball_eject_success
+        desc: One or more balls has successfully ejected from the device
+            (name).
+        args:
+            balls: The number of balls that have successfully ejected.
+            target: The target device that has received (or will be receiving)
+                the ejected ball(s).
+        '''

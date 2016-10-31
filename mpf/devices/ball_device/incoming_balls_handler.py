@@ -38,6 +38,7 @@ class IncomingBallsHandler(BallDeviceStateHandler):
                     timeouts.append(incoming_ball)
 
             for incoming_ball in timeouts:
+                self.debug_log("Incoming ball timeout")
                 self._incoming_balls.remove(incoming_ball)
                 self._handle_timeout(incoming_ball)
 

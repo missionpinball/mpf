@@ -15,7 +15,10 @@ class BallDeviceStateHandler:
         self.machine = ball_device.machine
         self._task = None
 
-    # TODO: implement stop method
+    def stop(self):
+        """Stop handler."""
+        if self._task:
+            self._task.cancel()
 
     def debug_log(self, *args, **kwargs):
         """Debug log."""
@@ -28,7 +31,10 @@ class BallDeviceStateHandler:
         self._task.add_done_callback(self._done)
 
     def _done(self, future):
-        future.result()
+        try:
+            future.result()
+        except asyncio.CancelledError:
+            pass
 
     @asyncio.coroutine
     def _run(self):
