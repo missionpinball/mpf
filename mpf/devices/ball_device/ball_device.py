@@ -1057,7 +1057,7 @@ class BallDevice(SystemWideDevice):
 
         self.machine.events.post('balldevice_{}_ball_missing'.format(
             abs(balls)))
-        '''event: balldevice_(balls)_ball_missing.
+        '''event: balldevice_(balls)_ball_missing
         desc: The number of (balls) is missing. Note this event is
         posted in addition to the generic *balldevice_ball_missing* event.
         '''
