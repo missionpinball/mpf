@@ -127,6 +127,7 @@ class AchievementGroup(ModeDevice):
             self._selected.enable()
         try:
             ach = choice(self._get_available_achievements())
+            # todo change this to use our Randomizer class
             self._selected = ach
             ach.select()
 
