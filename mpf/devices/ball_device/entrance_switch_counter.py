@@ -34,6 +34,9 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
 
         self._futures = []
 
+    def is_jammed(self):
+        return False
+
     def _set_future_results(self):
         for future in self._futures:
             if not future.done():
@@ -75,7 +78,7 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
         # TODO: wait when entrance switch is not stable
         return self.count_balls_sync()
 
-    def wait_for_ball_to_leave(self):
+    def wait_for_ball_to_leave(self, eject_process):
         """Wait for a ball to leave."""
         if self.machine.switch_controller.is_active(self.config['entrance_switch'].name):
             return self.machine.switch_controller.wait_for_switch(

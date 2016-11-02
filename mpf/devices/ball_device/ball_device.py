@@ -92,9 +92,6 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         # when this device wasn't ready for them
         # each tuple is (event wait queue from eject attempt event, source)
 
-        self._state = "invalid"
-        # Name of the state of this device
-
         self.jam_switch_state_during_eject = False
 
         self._eject_status_logger = None
@@ -125,6 +122,11 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         self._incoming_ball_lost_condition = asyncio.Event(loop=self.machine.clock.loop)
 
     @property
+    def _state(self):
+        """Return state."""
+        return False
+
+    @property
     def balls(self):
         """Return balls."""
         return self.ball_count_handler.handled_balls
@@ -133,6 +135,10 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         """Initialize right away."""
         super()._initialize()
         self._configure_targets()
+
+        self.ball_count_handler = BallCountHandler(self)
+        self.incoming_balls_handler = IncomingBallsHandler(self)
+        self.outgoing_balls_handler = OutgoingBallsHandler(self)
 
         # delay ball counters because we have to wait for switches to be ready
         self.machine.events.add_handler('init_phase_2', self._create_ball_counters)
@@ -144,16 +150,41 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         else:
             self.counter = EntranceSwitchCounter(self, self.config)  # pylint: disable-msg=redefined-variable-type
 
-        self.ball_count_handler = BallCountHandler(self)
-        self.incoming_balls_handler = IncomingBallsHandler(self)
-        self.outgoing_balls_handler = OutgoingBallsHandler(self)
-
     def stop(self, **kwargs):
         super().stop(**kwargs)
         self.ball_count_handler.stop()
         self.incoming_balls_handler.stop()
         self.outgoing_balls_handler.stop()
         self.debug_log("Stopping ball device")
+
+    @asyncio.coroutine
+    def expected_ball_received(self):
+        """Handle an expected ball."""
+        # TODO: do we need this?
+        #yield from self._handle_new_ball()
+        pass
+
+    @asyncio.coroutine
+    def unexpected_ball_received(self):
+        """Handle an unexpected ball."""
+        self.available_balls += 1
+        # capture from playfield
+        yield from self._handle_unexpected_ball()
+        # route this to the default target
+        yield from self._handle_new_ball()
+
+    @asyncio.coroutine
+    def lost_ejected_ball(self, target):
+        """Handle an outgoing lost ball."""
+        # follow path and check if we should request a new ball to the target or cancel the path
+        # TODO: only one eject and not distributed
+        #if target != self.config['ball_missing_target']:
+        #    target.cancel_path_if_target_is_not(self.config['ball_missing_target'])
+        # TODO: add incoming ball only and wait for confirm or timeout
+        yield from self._balls_missing(1)
+
+    def cancel_path_if_target_is_not(self, target):
+        self.outgoing_balls_handler.cancel_path_if_target_is_not(target)
 
     # Logic and dispatchers
     @asyncio.coroutine
@@ -276,11 +307,11 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         return (yield from self._handle_eject_queue())
 
     @asyncio.coroutine
-    def _handle_unexpected_balls(self, balls):
-        self.debug_log("Received %s unexpected balls", balls)
+    def _handle_unexpected_ball(self):
+        self.debug_log("Received unexpected ball")
         yield from self.machine.events.post_async('balldevice_captured_from_{}'.format(
             self.config['captures_from'].name),
-            balls=balls)
+            balls=1)
         '''event: balldevice_captured_from_(device)
 
         desc: A ball device has just captured a ball from the device called
@@ -292,19 +323,12 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         '''
 
     @asyncio.coroutine
-    def _handle_new_balls(self, balls):
-        while len(self._incoming_balls) > 0 and balls > 0:
-            balls -= 1
-            self._incoming_balls.popleft()
-
-        if balls > 0:
-            yield from self._handle_unexpected_balls(balls)
-
-        self.debug_log("Processing %s new balls", balls)
+    def _handle_new_ball(self):
+        self.debug_log("Processing new ball")
         result = yield from self.machine.events.post_relay_async('balldevice_{}_ball_enter'.format(
             self.name),
-            new_balls=balls,
-            unclaimed_balls=balls,
+            new_balls=1,
+            unclaimed_balls=1,
             device=self)
         '''event: balldevice_(name)_ball_enter
 
@@ -468,18 +492,15 @@ class BallDevice(AsyncDevice, SystemWideDevice):
                 return False
 
     def add_incoming_ball(self, incoming_ball: IncomingBall):
-        """Notify this device that there is a ball heading its way.
-
-        Args:
-            source: The source device this ball is coming from
-
-        """
+        """Notify this device that there is a ball heading its way."""
         self.incoming_balls_handler.add_incoming_ball(incoming_ball)
 
-    def remove_incoming_ball(self, source):
+    def remove_incoming_ball(self, incoming_ball: IncomingBall):
         """Remove a ball from the incoming balls queue."""
-        self.debug_log("Removing incoming ball from %s", source)
-        self._incoming_balls.popleft()
+        self.incoming_balls_handler.remove_incoming_ball(incoming_ball)
+
+    def wait_for_ready_to_receive(self):
+        return self.ball_count_handler.wait_for_ready_to_receive()
 
     # -------------------------- State: ball_left -----------------------------
     @asyncio.coroutine
@@ -1169,7 +1190,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
             raise AssertionError("Broken path")
 
         eject = EjectRequest(self.machine)
-        eject.eject_timeout = self.config['eject_timeouts'][next_hop]
+        eject.eject_timeout = self.config['eject_timeouts'][next_hop] / 1000
         eject.max_tries = self.config['max_eject_attempts']
         eject.target = next_hop
         # TODO: implement mechanical

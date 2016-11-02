@@ -3,6 +3,7 @@ import asyncio
 from mpf.core.utility_functions import Util
 from mpf.devices.ball_device.ball_device_state_handler import BallDeviceStateHandler
 
+
 class IncomingBall:
 
     def __init__(self):
@@ -13,7 +14,10 @@ class IncomingBall:
 
 class IncomingBallsHandler(BallDeviceStateHandler):
 
-    """Handles incoming balls and timeouts."""
+    """Handles incoming balls and timeouts.
+
+    This is used in ball devices and the playfield.
+    """
 
     def __init__(self, ball_device):
         """Initialise incoming balls handler."""
@@ -57,6 +61,7 @@ class IncomingBallsHandler(BallDeviceStateHandler):
         """Remove incoming ball."""
         self._incoming_balls.remove(incoming_ball)
 
+    @asyncio.coroutine
     def ball_arrived(self):
         """Handle one ball which arrived in the device."""
         if self._incoming_balls:
@@ -64,14 +69,13 @@ class IncomingBallsHandler(BallDeviceStateHandler):
             incoming_ball = self._incoming_balls.pop(0)     # TODO: sort by better metric
             self.debug_log("Received ball from %s", incoming_ball.source)
             incoming_ball.timeout_future.cancel()
+            # confirm eject
             incoming_ball.confirm_future.set_result(True)
 
-            # TODO: post enter event and confirm eject
+            # TODO: post enter event here?
+            yield from self.ball_device.expected_ball_received()
         else:
             # handle unexpected ball
-            # add an available_ball
             self.debug_log("Received unexpected ball")
-            self.ball_device.available_balls += 1
-
-            # TODO: route this to the default target
-
+            # let the ball device handle this ball
+            yield from self.ball_device.unexpected_ball_received()

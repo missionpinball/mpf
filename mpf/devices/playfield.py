@@ -1,4 +1,6 @@
 """Contains the Playfield device class which represents the actual playfield in a pinball machine."""
+import asyncio
+
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.ball_search import BallSearch
@@ -82,6 +84,22 @@ class Playfield(SystemWideDevice):
 
         # stop device on shutdown
         self.machine.events.add_handler("shutdown", self.stop)
+
+    @asyncio.coroutine
+    def expected_ball_received(self):
+        """Handle an expected ball."""
+        #self.balls += 1
+        pass
+
+    @asyncio.coroutine
+    def wait_for_ready_to_receive(self):
+        return True
+
+    @asyncio.coroutine
+    def unexpected_ball_received(self):
+        """Handle an unexpected ball."""
+        # We do nothing in that case
+        pass
 
     def stop(self, **kwargs):
         del kwargs
@@ -255,12 +273,16 @@ class Playfield(SystemWideDevice):
 
     def _mark_playfield_active(self):
         self.ball_search.reset_timer()
-        self.incoming_balls_handler.ball_arrived()
+        self.handle_ball = self.machine.clock.loop.create_task(self.incoming_balls_handler.ball_arrived())
+        #self.handle_ball.add_done_callback(self._done)
         self.machine.events.post_boolean(self.name + "_active")
         '''event: (playfield)_active
         desc: The playfield called "playfield" is now active, meaning there's
         at least one loose ball on it.
         '''
+
+    def _done(self, future):
+        future.result()
 
     def _playfield_switch_hit(self, **kwargs):
         """Playfield switch was hit.
