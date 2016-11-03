@@ -308,7 +308,6 @@ class BallDevice(AsyncDevice, SystemWideDevice):
 
     @asyncio.coroutine
     def _handle_unexpected_ball(self):
-        self.debug_log("Received unexpected ball")
         yield from self.machine.events.post_async('balldevice_captured_from_{}'.format(
             self.config['captures_from'].name),
             balls=1)

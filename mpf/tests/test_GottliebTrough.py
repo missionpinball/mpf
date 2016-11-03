@@ -283,10 +283,11 @@ class TestGottliebTrough(MpfTestCase):
         # to the plunger even though the ball hasn't made it into the trough
         # yet
 
-        self.machine.ball_devices.trough.balls = 3
         self.machine.ball_devices.trough.counter._entrance_count = 3
         self.machine.ball_devices.trough.available_balls = 3
         self.machine.ball_controller.num_balls_known = 3
+        self.machine.ball_devices.trough.ball_count_handler._ball_count = 3
+        self.loop.run_until_complete(self.machine.ball_devices.trough.ball_count_handler._updated_balls())
         self.advance_time_and_run(1)
 
         self.machine.coils.trough.pulse = MagicMock()
@@ -326,7 +327,7 @@ class TestGottliebTrough(MpfTestCase):
         self.advance_time_and_run(2)
         self.machine.switch_controller.process_switch("playfield", 1)
         self.machine.switch_controller.process_switch("playfield", 0)
-        self.advance_time_and_run(2)
+        self.advance_time_and_run(3)
 
         self.assertEqual(3, self.machine.coils.trough.pulse.call_count)
 
@@ -338,7 +339,7 @@ class TestGottliebTrough(MpfTestCase):
         self.advance_time_and_run(2)
         self.machine.switch_controller.process_switch("playfield", 1)
         self.machine.switch_controller.process_switch("playfield", 0)
-        self.advance_time_and_run(2)
+        self.advance_time_and_run(3)
 
         self.assertEqual(0, self.machine.ball_devices.outhole.balls)
         self.assertEqual(0, self.machine.ball_devices.trough.balls)

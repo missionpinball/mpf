@@ -150,7 +150,8 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         ball_eject_process = self.ball_device.ball_count_handler.start_eject()
         self.debug_log("Wait for ball to leave device")
         # eject the ball
-        self.ball_device.ejector.eject_one_ball(ball_eject_process.is_jammed(), eject_try)
+        if self.ball_device.ejector:
+            self.ball_device.ejector.eject_one_ball(ball_eject_process.is_jammed(), eject_try)
         # wait until the ball has left
         timeout = eject_request.eject_timeout
         try:
@@ -185,7 +186,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
     @asyncio.coroutine
     def _handle_confirm(self, eject_request: EjectRequest, ball_eject_process: EjectProcessCounter,
                         incoming_ball_at_target: IncomingBall) -> bool:
-        # TODO: check double eject
+        # TODO: check double eject (two balls left)
         timeout = eject_request.eject_timeout
         self.debug_log("Wait for confirm with timeout %s", timeout)
         try:

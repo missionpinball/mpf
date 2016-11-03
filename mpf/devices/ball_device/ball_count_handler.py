@@ -57,6 +57,9 @@ class BallCountHandler(BallDeviceStateHandler):
     @property
     def handled_balls(self):
         """Return balls which are already handled."""
+        if self.ball_device.outgoing_balls_handler.state in ["ball_left", "failed_confirm"]:
+            # TODO: remove this quirk for old tests
+            return self._ball_count - 1
         return self._ball_count
 
     @asyncio.coroutine
@@ -90,7 +93,6 @@ class BallCountHandler(BallDeviceStateHandler):
     def wait_for_ready_to_receive(self):
         while True:
             free_space = self.ball_device.config['ball_capacity'] - self._ball_count
-            # TODO: calc -1 if in eject or move change after ball left
             incoming_balls = len(self.ball_device.incoming_balls_handler._incoming_balls)
             if free_space > incoming_balls:
                 return True
@@ -147,24 +149,16 @@ class BallCountHandler(BallDeviceStateHandler):
         self.debug_log("Counting in eject mode")
         # if we are 100% certain that this ball entered and did not return
         ball_entrance = self.ball_device.ensure_future(eject_process.wait_for_ball_entrance())
-        ball_left = self.ball_device.ensure_future(eject_process.wait_for_ball_left())
         eject_done = self.ball_device.ensure_future(eject_process.wait_for_eject_done())
-        futures = [ball_left, eject_done, ball_entrance]
+        futures = [eject_done, ball_entrance]
         while True:
             yield from Util.first(futures, loop=self.machine.clock.loop, cancel_others=False)
 
-            if ball_left and ball_left.done():
-                ball_left = None
-                futures = [eject_done, ball_entrance]
-                # remove one ball
-                self._ball_count -= 1
-                yield from self._updated_balls()
             if eject_done.done():
                 ball_entrance.cancel()
                 result = yield from eject_done
-                if ball_left and result == "success":
-                    raise AssertionError("got eject succes without ball_left")
-                self._handle_eject_done(result)
+                self.debug_log("XXX Eject done. Result: %s", result)
+                yield from self._handle_eject_done(result)
                 return
 
             if ball_entrance.done():
@@ -175,12 +169,10 @@ class BallCountHandler(BallDeviceStateHandler):
         """Decrement count by one and handle failures."""
         if result == "success":
             self.debug_log("Received eject done.")
-            # TODO: move ball -= 1 here?
+            self._ball_count -= 1
+            yield from self._updated_balls()
         elif result == "returned":
             self.debug_log("Received eject failed. Ball returned.")
-            # readd ball
-            self._ball_count += 1
-            yield from self._updated_balls()
         elif result == "lost":
             self.ball_device.log.warning("Received eject failed. Eject lost ball.")
             # handle lost balls via lost balls handler
