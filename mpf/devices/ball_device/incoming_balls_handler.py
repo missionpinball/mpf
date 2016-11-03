@@ -14,10 +14,7 @@ class IncomingBall:
 
 class IncomingBallsHandler(BallDeviceStateHandler):
 
-    """Handles incoming balls and timeouts.
-
-    This is used in ball devices and the playfield.
-    """
+    """Handles incoming balls and timeouts."""
 
     def __init__(self, ball_device):
         """Initialise incoming balls handler."""

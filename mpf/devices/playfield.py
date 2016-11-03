@@ -5,7 +5,7 @@ from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.ball_search import BallSearch
 from mpf.core.delays import DelayManager
-from mpf.devices.ball_device.incoming_balls_handler import IncomingBallsHandler, IncomingBall
+from mpf.devices.ball_device.incoming_balls_handler import IncomingBall
 
 
 @DeviceMonitor("available_balls", "unexpected_balls", "num_balls_requested", "balls")
@@ -31,6 +31,8 @@ class Playfield(SystemWideDevice):
         self.available_balls = 0
         self.unexpected_balls = 0
         self.num_balls_requested = 0
+
+        self._incoming_balls = []
 
     def _initialize(self):
         if 'default' in self.config['tags']:
@@ -80,8 +82,6 @@ class Playfield(SystemWideDevice):
                     '_ejecting_ball',
                     handler=self._source_device_ejecting_ball)
 
-        self.incoming_balls_handler = IncomingBallsHandler(self)
-
         # stop device on shutdown
         self.machine.events.add_handler("shutdown", self.stop)
 
@@ -103,7 +103,8 @@ class Playfield(SystemWideDevice):
 
     def stop(self, **kwargs):
         del kwargs
-        self.incoming_balls_handler.stop()
+        # TODO: remove?
+        pass
 
     def add_missing_balls(self, balls):
         """Notifie the playfield that it probably received a ball which went missing elsewhere."""
@@ -271,18 +272,23 @@ class Playfield(SystemWideDevice):
 
         return True
 
+    def ball_arrived(self):
+        """Confirm first ball in queue."""
+        if self._incoming_balls:
+            incoming_ball = self._incoming_balls.pop(0)
+            self.debug_log("Received ball from %s", incoming_ball.source)
+            incoming_ball.timeout_future.cancel()
+            # confirm eject
+            incoming_ball.confirm_future.set_result(True)
+
     def _mark_playfield_active(self):
         self.ball_search.reset_timer()
-        self.handle_ball = self.machine.clock.loop.create_task(self.incoming_balls_handler.ball_arrived())
-        #self.handle_ball.add_done_callback(self._done)
+        self.ball_arrived()
         self.machine.events.post_boolean(self.name + "_active")
         '''event: (playfield)_active
         desc: The playfield called "playfield" is now active, meaning there's
         at least one loose ball on it.
         '''
-
-    def _done(self, future):
-        future.result()
 
     def _playfield_switch_hit(self, **kwargs):
         """Playfield switch was hit.
@@ -366,9 +372,8 @@ class Playfield(SystemWideDevice):
 
     def add_incoming_ball(self, incoming_ball: IncomingBall):
         """Track an incoming ball."""
-        self.incoming_balls_handler.add_incoming_ball(incoming_ball)
+        self._incoming_balls.append(incoming_ball)
 
-    def remove_incoming_ball(self, source):
+    def remove_incoming_ball(self, incoming_ball: IncomingBall):
         """Stop tracking an incoming ball."""
-        # TODO: implement
-        pass
+        self._incoming_balls.remove(incoming_ball)

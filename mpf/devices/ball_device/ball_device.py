@@ -124,7 +124,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
     @property
     def _state(self):
         """Return state."""
-        return False
+        return self.outgoing_balls_handler.state
 
     @property
     def balls(self):
