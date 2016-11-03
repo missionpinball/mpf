@@ -214,6 +214,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         if not ball_return_future.done() and not ball_return_future.cancelled() and eject_request.target.is_playfield():
             # if target is playfield mark eject as confirmed
             eject_request.confirm_future.set_result(True)
+            eject_request.target.remove_incoming_ball(incoming_ball_at_target)
 
         # TODO: timeout
         try:

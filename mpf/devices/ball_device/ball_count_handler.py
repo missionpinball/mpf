@@ -150,9 +150,9 @@ class BallCountHandler(BallDeviceStateHandler):
         # if we are 100% certain that this ball entered and did not return
         ball_entrance = self.ball_device.ensure_future(eject_process.wait_for_ball_entrance())
         eject_done = self.ball_device.ensure_future(eject_process.wait_for_eject_done())
-        futures = [eject_done, ball_entrance]
         while True:
-            yield from Util.first(futures, loop=self.machine.clock.loop, cancel_others=False)
+            futures = [eject_done, ball_entrance]
+            event = yield from Util.first(futures, loop=self.machine.clock.loop, cancel_others=False)
 
             if eject_done.done():
                 ball_entrance.cancel()
@@ -163,7 +163,7 @@ class BallCountHandler(BallDeviceStateHandler):
 
             if ball_entrance.done():
                 # TODO: handle new ball via incoming balls handler
-                ball_entrance = self.ball_device.ensure_future(self.ball_device.counter.wait_for_ball_entrance())
+                ball_entrance = self.ball_device.ensure_future(eject_process.wait_for_ball_entrance())
 
     def _handle_eject_done(self, result):
         """Decrement count by one and handle failures."""

@@ -167,7 +167,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
     @asyncio.coroutine
     def unexpected_ball_received(self):
         """Handle an unexpected ball."""
-        self.available_balls += 1
+        # available_balls are updated in _handle_new_ball
         # capture from playfield
         yield from self._handle_unexpected_ball()
         # route this to the default target
@@ -1524,6 +1524,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
     def eject_success(self, **kwargs):
         """We got an eject success for this device."""
         del kwargs
+        raise AssertionError("do not use")
 
         # prevent double confirm
         if self._eject_success_condition.is_set():

@@ -87,9 +87,10 @@ class TestBallDevicesHoldCoil(MpfTestCase):
 
     def test_holdcoil_which_keeps_ball_multiple_entries(self):
         # add one ball
-        self.machine.ball_devices['test2'].balls = 1
         self.machine.ball_devices['test2'].counter._entrance_count = 1
         self.machine.ball_devices['test2'].available_balls = 1
+        self.machine.ball_devices['test2'].ball_count_handler._ball_count = 1
+        self.loop.run_until_complete(self.machine.ball_devices['test2'].ball_count_handler._updated_balls())
 
         # eject one ball
         self.machine.coils['hold_coil2'].enable = MagicMock()
