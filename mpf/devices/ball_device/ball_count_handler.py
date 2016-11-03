@@ -175,6 +175,7 @@ class BallCountHandler(BallDeviceStateHandler):
             self.debug_log("Received eject failed. Ball returned.")
         elif result == "lost":
             self.ball_device.log.warning("Received eject failed. Eject lost ball.")
+            self._ball_count -= 1
             # handle lost balls via lost balls handler
         else:
             raise AssertionError("invalid result")

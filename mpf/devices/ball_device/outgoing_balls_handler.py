@@ -80,7 +80,6 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             result = yield from self._eject_ball(eject_request, eject_try)
             if result:
                 # eject is done. return to main loop
-                yield from self._handle_eject_success(eject_request.target)
                 return
 
             yield from self._failed_eject(eject_request, eject_try)
@@ -181,7 +180,6 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
     def _remove_incoming_ball_at_target(self, eject_request: EjectRequest, incoming_ball_at_target: IncomingBall):
         eject_request.target.remove_incoming_ball(incoming_ball_at_target)
         incoming_ball_at_target.timeout_future.cancel()
-        incoming_ball_at_target.confirm_future.cancel()
 
     @asyncio.coroutine
     def _handle_confirm(self, eject_request: EjectRequest, ball_eject_process: EjectProcessCounter,
@@ -198,9 +196,14 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             return (yield from self._handle_late_confirm_or_missing(eject_request, ball_eject_process,
                                                                     incoming_ball_at_target))
         else:
+            if not eject_request.confirm_future.done():
+                raise AssertionError("Future not done")
+            if eject_request.confirm_future.cancelled():
+                raise AssertionError("Eject failed but should not")
             # eject successful
             self.debug_log("Got eject confirm")
             ball_eject_process.eject_success()
+            yield from self._handle_eject_success(eject_request.target)
             return True
 
     @asyncio.coroutine
@@ -213,6 +216,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         # TODO: move this to a better location
         if not ball_return_future.done() and not ball_return_future.cancelled() and eject_request.target.is_playfield():
             # if target is playfield mark eject as confirmed
+            self.debug_log("Confirming eject because target is playfield and ball did not return.")
             eject_request.confirm_future.set_result(True)
             eject_request.target.remove_incoming_ball(incoming_ball_at_target)
 
@@ -231,6 +235,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             if event == eject_success_future:
                 # we eventually got eject success
                 ball_eject_process.eject_success()
+                yield from self._handle_eject_success(eject_request.target)
                 return True
             elif event == ball_return_future:
                 # ball returned. eject failed
