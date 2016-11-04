@@ -1188,12 +1188,11 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         if next_hop not in self.config['eject_targets']:
             raise AssertionError("Broken path")
 
-        eject = EjectRequest(self.machine)
+        eject = EjectRequest()
         eject.eject_timeout = self.config['eject_timeouts'][next_hop] / 1000
         eject.max_tries = self.config['max_eject_attempts']
         eject.target = next_hop
-        # TODO: implement mechanical
-        #eject.mechanical =
+        eject.mechanical = player_controlled
 
         self.outgoing_balls_handler.add_eject_to_queue(eject)
 

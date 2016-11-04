@@ -11,16 +11,11 @@ class EjectRequest:
 
     """One eject request."""
 
-    def __init__(self, machine):
+    def __init__(self):
         self.max_tries = None
         self.eject_timeout = None
         self.target = None
         self.mechanical = None
-        self.confirm_future = asyncio.Future(loop=machine.clock.loop)
-
-    def wait_for_eject_confirm(self):
-        """Wait for eject confirmation."""
-        return self.confirm_future
 
 
 class OutgoingBallsHandler(BallDeviceStateHandler):
@@ -173,7 +168,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         # there is no timeout
         incoming_ball_at_target.timeout_future = asyncio.Future(loop=self.machine.clock.loop)
         # we will wait on this future
-        incoming_ball_at_target.confirm_future = eject_request.confirm_future
+        incoming_ball_at_target.confirm_future = asyncio.Future(loop=self.machine.clock.loop)
         eject_request.target.add_incoming_ball(incoming_ball_at_target)
         return incoming_ball_at_target
 
@@ -188,7 +183,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         timeout = eject_request.eject_timeout
         self.debug_log("Wait for confirm with timeout %s", timeout)
         try:
-            yield from Util.first([eject_request.wait_for_eject_confirm()], timeout=timeout,
+            yield from Util.first([incoming_ball_at_target.confirm_future], timeout=timeout,
                                   loop=self.machine.clock.loop, cancel_others=False)
         except asyncio.TimeoutError:
             self._state = "failed_confirm"
@@ -196,28 +191,27 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             return (yield from self._handle_late_confirm_or_missing(eject_request, ball_eject_process,
                                                                     incoming_ball_at_target))
         else:
-            if not eject_request.confirm_future.done():
+            if not incoming_ball_at_target.confirm_future.done():
                 raise AssertionError("Future not done")
-            if eject_request.confirm_future.cancelled():
+            if incoming_ball_at_target.confirm_future.cancelled():
                 raise AssertionError("Eject failed but should not")
             # eject successful
             self.debug_log("Got eject confirm")
-            ball_eject_process.eject_success()
-            yield from self._handle_eject_success(eject_request.target)
+            yield from self._handle_eject_success(ball_eject_process, eject_request)
             return True
 
     @asyncio.coroutine
     def _handle_late_confirm_or_missing(self, eject_request: EjectRequest, ball_eject_process: EjectProcessCounter,
                                         incoming_ball_at_target: IncomingBall) -> bool:
         ball_return_future = self.ball_device.ensure_future(ball_eject_process.wait_for_ball_return())
-        eject_success_future = eject_request.wait_for_eject_confirm()
+        eject_success_future = incoming_ball_at_target.confirm_future
         timeout = 60    # TODO: make this dynamic
 
         # TODO: move this to a better location
         if not ball_return_future.done() and not ball_return_future.cancelled() and eject_request.target.is_playfield():
             # if target is playfield mark eject as confirmed
             self.debug_log("Confirming eject because target is playfield and ball did not return.")
-            eject_request.confirm_future.set_result(True)
+            incoming_ball_at_target.confirm_future.set_result(True)
             eject_request.target.remove_incoming_ball(incoming_ball_at_target)
 
         # TODO: timeout
@@ -234,8 +228,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         else:
             if event == eject_success_future:
                 # we eventually got eject success
-                ball_eject_process.eject_success()
-                yield from self._handle_eject_success(eject_request.target)
+                yield from self._handle_eject_success(ball_eject_process, eject_request)
                 return True
             elif event == ball_return_future:
                 # ball returned. eject failed
@@ -245,12 +238,13 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                 raise AssertionError("Invalid state")
 
     @asyncio.coroutine
-    def _handle_eject_success(self, eject_target):
+    def _handle_eject_success(self, ball_eject_process: EjectProcessCounter, eject_request: EjectRequest):
         self.debug_log("Eject successful")
+        ball_eject_process.eject_success()
         yield from self.machine.events.post_async('balldevice_' + self.ball_device.name +
                                                   '_ball_eject_success',
                                                   balls=1,
-                                                  target=eject_target)
+                                                  target=eject_request.target)
         '''event: balldevice_(name)_ball_eject_success
         desc: One or more balls has successfully ejected from the device
             (name).
