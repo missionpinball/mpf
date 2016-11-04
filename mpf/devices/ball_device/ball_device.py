@@ -20,7 +20,7 @@ from mpf.core.utility_functions import Util
 
 # pylint: disable-msg=too-many-instance-attributes
 from mpf.devices.ball_device.incoming_balls_handler import IncomingBallsHandler, IncomingBall
-from mpf.devices.ball_device.outgoing_balls_handler import OutgoingBallsHandler, EjectRequest
+from mpf.devices.ball_device.outgoing_balls_handler import OutgoingBallsHandler, OutgoingBall
 from mpf.devices.ball_device.pulse_coil_ejector import PulseCoilEjector
 from mpf.devices.ball_device.switch_counter import SwitchCounter
 
@@ -1188,7 +1188,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         if next_hop not in self.config['eject_targets']:
             raise AssertionError("Broken path")
 
-        eject = EjectRequest()
+        eject = OutgoingBall()
         eject.eject_timeout = self.config['eject_timeouts'][next_hop] / 1000
         eject.max_tries = self.config['max_eject_attempts']
         eject.target = next_hop
