@@ -49,7 +49,7 @@ class TestBallDeviceRouting(MpfTestCase):
         self.assertEqual(1, len(trough2.eject_queue))
         self.assertEqual(0, len(target1.eject_queue))
         self.assertEqual("ejecting", launcher._state)
-        self.assertEqual(trough2, launcher.eject_in_progress_target)
+        self.assertEqual(trough2, launcher.outgoing_balls_handler._current_target)
 
         self.machine.switch_controller.process_switch("s_launcher", 0)
         self.advance_time_and_run(1)
@@ -79,7 +79,7 @@ class TestBallDeviceRouting(MpfTestCase):
 
         self.assertEqual(0, len(trough2.eject_queue))
         self.assertEqual("ejecting", drain1._state)
-        self.assertEqual(trough2, drain1.eject_in_progress_target)
+        self.assertEqual(trough2, drain1.outgoing_balls_handler._current_target)
 
         self.machine.switch_controller.process_switch("s_drain1", 0)
         self.advance_time_and_run(1)
