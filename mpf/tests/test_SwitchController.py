@@ -245,3 +245,24 @@ class TestSwitchController(MpfTestCase):
         self.advance_time_and_run()
         self.assertEqual(1, self.called1)
         self.assertEqual(0, self.called2)
+
+    def _cb3(self, **kwargs):
+        del kwargs
+        self.called3 = 1
+
+    def test_active_and_inactive_times(self):
+        # Regression test for switch_controller bug in _cancel_timed_handlers
+        self.machine.switch_controller.add_switch_handler("s_test", self._cb2, ms=5000, state=1)
+        self.machine.switch_controller.add_switch_handler("s_test_events", self._cb2, ms=5000, state=1)
+
+        self.called2 = 0
+        self.machine.switch_controller.process_switch("s_test", 1)
+        self.machine.switch_controller.process_switch("s_test_events", 1)
+
+        self.advance_time_and_run(2)
+        self.called2 = 0
+        self.machine.switch_controller.process_switch("s_test", 0)
+        self.machine.switch_controller.process_switch("s_test_events", 1)
+
+        self.advance_time_and_run(5)
+        self.assertEqual(1, self.called2)
