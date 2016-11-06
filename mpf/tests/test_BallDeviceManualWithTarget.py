@@ -236,7 +236,7 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         assert not coil2.pulse.called
 
         # it retries after a timeout
-        self.advance_time_and_run(1)
+        self.advance_time_and_run(2)
         self.assertEqual(1, device1.balls)
         coil1.pulse.assert_called_once_with()
         assert not coil2.pulse.called
@@ -495,11 +495,9 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         self.assertEqual(0, device1.balls)
 
         self.assertEqual(1, len(target.eject_queue))
-        self.assertEqual(1, len(target._incoming_balls))
         self.advance_time_and_run(10)
 
         self.assertEqual(1, len(target.eject_queue))
-        self.assertEqual(1, len(target._incoming_balls))
 
         # it does not hit any playfield switches and goes missing
         self.advance_time_and_run(100)
@@ -561,7 +559,7 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         self.assertEqual(1, device1.balls)
 
         # wait until timeout reached
-        self.advance_time_and_run(1)
+        self.advance_time_and_run(2)
         self.assertEqual(2, device1.balls)
 
         # trough ejects again
@@ -1060,7 +1058,6 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         self.assertEqual(0, playfield.balls)
         self.assertEqual(1, launcher_manual.balls)
         self.assertEqual("ejecting", launcher_manual._state)
-        self.assertEqual(True, launcher_manual.mechanical_eject_in_progress)
         assert not coil4.pulse.called
 
         # player has time
@@ -1068,7 +1065,6 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         self.assertEqual(0, playfield.balls)
         self.assertEqual(1, launcher_manual.balls)
         self.assertEqual("ejecting", launcher_manual._state)
-        self.assertEqual(True, launcher_manual.mechanical_eject_in_progress)
         assert not coil4.pulse.called
 
         # but finally he ejects the ball
@@ -1140,7 +1136,6 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         self.assertEqual(0, playfield.balls)
         self.assertEqual(1, launcher.balls)
         self.assertEqual("ejecting", launcher._state)
-        self.assertEqual(True, launcher.mechanical_eject_in_progress)
         assert not coil2.pulse.called
 
         # player has time
@@ -1148,7 +1143,6 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         self.assertEqual(0, playfield.balls)
         self.assertEqual(1, launcher.balls)
         self.assertEqual("ejecting", launcher._state)
-        self.assertEqual(True, launcher.mechanical_eject_in_progress)
         assert not coil2.pulse.called
 
         # but finally he ejects the ball

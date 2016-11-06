@@ -86,7 +86,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             self._cancel_future.set_result(True)
             return True
 
-        if not self._current_target.is_playfield() and self._current_target.cancel_path_if_target_is_not(target):
+        if not self._current_target.is_playfield() and self._current_target.cancel_path_if_target_is(target):
             # our successors are ejecting to target. cancel eject
             self.debug_log("Cancel path if target is not %s successful at successors.", target.name)
             self._cancel_future.set_result(True)
@@ -215,6 +215,9 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             if eject_request.mechanical and self.ball_device.config['player_controlled_eject_event']:
                 trigger = self.machine.events.wait_for_event(self.ball_device.config['player_controlled_eject_event'])
                 waiters.append(trigger)
+            elif eject_request.mechanical and self.ball_device.config['mechanical_eject']:
+                # do nothing
+                pass
             else:
                 self.ball_device.ejector.eject_one_ball(ball_eject_process.is_jammed(), eject_try)
 
