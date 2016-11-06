@@ -1356,7 +1356,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
             timeout = None
             timeout_time = None
 
-        waiters = [self.counter.wait_for_ball_to_leave()]
+        waiters = [self.counter._wait_for_ball_to_leave()]
 
         trigger = None
         if self.ejector:

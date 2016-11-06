@@ -80,7 +80,7 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
         # TODO: wait when entrance switch is not stable
         return self.count_balls_sync()
 
-    def wait_for_ball_to_leave(self):
+    def _wait_for_ball_to_leave(self):
         """Wait for a ball to leave."""
         if self.machine.switch_controller.is_active(self.config['entrance_switch'].name):
             return self.machine.switch_controller.wait_for_switch(
@@ -92,21 +92,6 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
             done_future.set_result(True)
             return done_future
 
-    def wait_for_ball_entrance(self, eject_process):
-        """Wait for entrance switch."""
-        del eject_process
-        future = asyncio.Future(loop=self.machine.clock.loop)
-        self._futures.append(future)
-        return future
-
-    def wait_for_ball_to_return(self, eject_process):
-        """Wait for a ball to return.
-
-        This never happens or at least we cannot tell. Return a future which will never complete.
-        """
-        del eject_process
-        return asyncio.Future(loop=self.machine.clock.loop)
-
     def wait_for_ball_activity(self):
         """Wait for ball count changes."""
         future = asyncio.Future(loop=self.machine.clock.loop)
@@ -116,7 +101,7 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
     @asyncio.coroutine
     def track_eject(self, eject_tracker: EjectTracker, already_left):
         """Remove one ball from count."""
-        ball_left = self.wait_for_ball_to_leave() if not already_left else None
+        ball_left = self._wait_for_ball_to_leave() if not already_left else None
         ball_activity = self.wait_for_ball_activity()
         # we are stable from here on
         eject_tracker.set_ready()

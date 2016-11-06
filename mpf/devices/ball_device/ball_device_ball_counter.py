@@ -32,28 +32,8 @@ class BallDeviceBallCounter:
         """Return the number of current active switches."""
         raise NotImplementedError()
 
-    def wait_for_ball_to_leave(self):
-        """Wait for a ball to leave."""
-        raise NotImplementedError()
-
     def wait_for_ball_activity(self):
         """Wait for ball activity."""
-        raise NotImplementedError()
-
-    @asyncio.coroutine
-    def wait_for_ball_entrance(self, eject_process):
-        """Wait for a ball entrance.
-
-        Will only return if the counter is certain that this cannot be a returned ball from an eject.
-        """
-        raise NotImplementedError()
-
-    @asyncio.coroutine
-    def wait_for_ball_to_return(self, eject_process):
-        """Wait for a ball to return.
-
-        Will only return if this the device is certain that this is a returned ball.
-        """
         raise NotImplementedError()
 
     @asyncio.coroutine

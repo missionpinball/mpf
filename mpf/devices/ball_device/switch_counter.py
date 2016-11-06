@@ -87,15 +87,6 @@ class SwitchCounter(BallDeviceBallCounter):
         self._futures.append(future)
         return future
 
-    def wait_for_ball_entrance(self, eject_process):
-        """Wait for a ball entering.
-
-        This will only return if we are 100% sure that the ball entered and did not return from a failed eject.
-        """
-        del eject_process
-        # TODO: add option to enable this for troughs. entrance can be detected by the outer switches there
-        return asyncio.Future(loop=self.machine.clock.loop)
-
     def is_jammed(self):
         """Return true if the jam switch is currently active."""
         return self.config['jam_switch'] and self.machine.switch_controller.is_active(
@@ -116,7 +107,7 @@ class SwitchCounter(BallDeviceBallCounter):
                 yield from waiter
 
         ball_left_future = eject_tracker._ball_count_handler.ball_device.ensure_future(
-            self.wait_for_ball_to_leave(active_switches)) if not already_left else None
+            self._wait_for_ball_to_leave(active_switches)) if not already_left else None
 
         # all switches are stable. we are ready now
         eject_tracker.set_ready()
@@ -152,26 +143,7 @@ class SwitchCounter(BallDeviceBallCounter):
                     eject_tracker.track_unknown_balls(new_count - count)
                 count = new_count
 
-    @asyncio.coroutine
-    def wait_for_ball_to_return(self, eject_process):
-        """Wait for a ball to return.
-
-        Will only return if this the device is certain that this is a returned ball.
-        """
-        if not self.config['jam_switch'] or eject_process['jam_active_before_eject']:
-            # if there is no jam switch we cannot know currently
-            future = asyncio.Future(loop=self.machine.clock.loop)
-            yield from future
-            return
-
-        while True:
-            # check if jam is active but was not active before eject -> certainly a return
-            if self.is_jammed():
-                return True
-
-            yield from self.wait_for_ball_activity()
-
-    def wait_for_ball_to_leave(self, active_switches):
+    def _wait_for_ball_to_leave(self, active_switches):
         """Wait for any active switch to become inactive."""
         waiters = []
         for switch_name in active_switches:
