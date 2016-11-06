@@ -526,8 +526,8 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         """Remove a ball from the incoming balls queue."""
         self.incoming_balls_handler.remove_incoming_ball(incoming_ball)
 
-    def wait_for_ready_to_receive(self):
-        return self.ball_count_handler.wait_for_ready_to_receive()
+    def wait_for_ready_to_receive(self, source):
+        return self.ball_count_handler.wait_for_ready_to_receive(source)
 
     # -------------------------- State: ball_left -----------------------------
     @asyncio.coroutine

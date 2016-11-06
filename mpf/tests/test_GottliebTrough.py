@@ -286,8 +286,7 @@ class TestGottliebTrough(MpfTestCase):
         self.machine.ball_devices.trough.counter._entrance_count = 3
         self.machine.ball_devices.trough.available_balls = 3
         self.machine.ball_controller.num_balls_known = 3
-        self.machine.ball_devices.trough.ball_count_handler._ball_count = 3
-        self.loop.run_until_complete(self.machine.ball_devices.trough.ball_count_handler._updated_balls())
+        self.machine.ball_devices.trough.ball_count_handler._set_ball_count(3)
         self.advance_time_and_run(1)
 
         self.machine.coils.trough.pulse = MagicMock()

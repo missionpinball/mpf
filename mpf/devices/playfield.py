@@ -92,7 +92,7 @@ class Playfield(SystemWideDevice):
         pass
 
     @asyncio.coroutine
-    def wait_for_ready_to_receive(self):
+    def wait_for_ready_to_receive(self, source):
         return True
 
     @asyncio.coroutine

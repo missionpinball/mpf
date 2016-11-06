@@ -162,7 +162,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.machine.switch_controller.process_switch('s_trough_3', 0)
         self.machine.switch_controller.process_switch('s_trough_4', 0)
         self.machine.switch_controller.process_switch('s_trough_jam', 1)
-        self.advance_time_and_run(10)
+        self.advance_time_and_run(11)
 
         # soft pulse to eject only the jammed ball
         self.trough_coil.pulse.assert_called_once_with(5)
