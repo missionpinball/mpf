@@ -145,25 +145,40 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         ball_eject_process = yield from self.ball_device.ball_count_handler.start_eject()
         self.debug_log("Wait for ball to leave device")
         # eject the ball
+
+        ball_left = ball_eject_process.wait_for_ball_left()
+        waiters = [ball_left]
+        trigger = None
         if self.ball_device.ejector:
             # wait for trigger event
             if eject_request.mechanical and self.ball_device.config['player_controlled_eject_event']:
-                yield from self.machine.events.wait_for_event(self.ball_device.config['player_controlled_eject_event'])
-            self.ball_device.ejector.eject_one_ball(ball_eject_process.is_jammed(), eject_try)
+                trigger = self.machine.events.wait_for_event(self.ball_device.config['player_controlled_eject_event'])
+                waiters.append(trigger)
+            else:
+                self.ball_device.ejector.eject_one_ball(ball_eject_process.is_jammed(), eject_try)
+
         # wait until the ball has left
-        timeout = eject_request.eject_timeout
+        if (self.ball_device.config['mechanical_eject'] or self.ball_device.config['player_controlled_eject_event']) and \
+                eject_request.mechanical:
+            timeout = None
+        else:
+            timeout = eject_request.eject_timeout
         try:
-            yield from Util.first([ball_eject_process.wait_for_ball_left()], timeout=timeout,
-                                  loop=self.machine.clock.loop)
+            yield from Util.any(waiters, timeout=timeout, loop=self.machine.clock.loop)
         except asyncio.TimeoutError:
             # timeout. ball did not leave. failed
             ball_eject_process.ball_returned()
             return False
-        else:
-            self._state = "ball_left"
-            self.debug_log("Ball left")
-            incoming_ball_at_target = self._add_incoming_ball_to_target(eject_request)
-            return (yield from self._handle_confirm(eject_request, ball_eject_process, incoming_ball_at_target))
+
+        if trigger and trigger.done():
+            self.ball_device.ejector.eject_one_ball(ball_eject_process.is_jammed(), eject_try)
+            # TODO: add timeout here
+            yield from ball_left
+
+        self._state = "ball_left"
+        self.debug_log("Ball left")
+        incoming_ball_at_target = self._add_incoming_ball_to_target(eject_request)
+        return (yield from self._handle_confirm(eject_request, ball_eject_process, incoming_ball_at_target))
 
     def _add_incoming_ball_to_target(self, eject_request: OutgoingBall) -> IncomingBall:
         incoming_ball_at_target = IncomingBall()
@@ -244,6 +259,8 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                 return False
             elif event == unknown_balls_future:
                 # TODO: this may be variable
+                self.debug_log("Got unknown balls. Assuming a ball returned.")
+                self._remove_incoming_ball_at_target(eject_request, incoming_ball_at_target)
                 ball_eject_process.ball_returned()
             else:
                 raise AssertionError("Invalid state")

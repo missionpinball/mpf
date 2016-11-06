@@ -162,7 +162,7 @@ class TestBallDevice(MpfTestCase):
         coil2.pulse.assert_called_once_with()
 
         # retry after timeout
-        self.advance_time_and_run(4)
+        self.advance_time_and_run(5)
         # coil2.pulse.assert_called_twice_with()
         self.assertEqual(2, coil2.pulse.call_count)
 
@@ -1463,6 +1463,7 @@ class TestBallDevice(MpfTestCase):
 
         self.machine.switch_controller.process_switch("s_ball_switch_launcher",
                                                       0)
+        self.advance_time_and_run(1)
 
         # target1 receives and ejects ball
         self.machine.switch_controller.process_switch("s_ball_switch_target1",
