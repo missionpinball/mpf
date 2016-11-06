@@ -1,6 +1,8 @@
 """Count balls using an entrance switch."""
 import asyncio
 
+from mpf.core.utility_functions import Util
+from mpf.devices.ball_device.ball_count_handler import EjectTracker
 from mpf.devices.ball_device.ball_device_ball_counter import BallDeviceBallCounter
 
 
@@ -78,7 +80,7 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
         # TODO: wait when entrance switch is not stable
         return self.count_balls_sync()
 
-    def wait_for_ball_to_leave(self, eject_process):
+    def wait_for_ball_to_leave(self):
         """Wait for a ball to leave."""
         if self.machine.switch_controller.is_active(self.config['entrance_switch'].name):
             return self.machine.switch_controller.wait_for_switch(
@@ -111,12 +113,33 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
         self._futures.append(future)
         return future
 
-    def ejecting_one_ball(self):
+    @asyncio.coroutine
+    def track_eject(self, eject_tracker: EjectTracker):
         """Remove one ball from count."""
-        self._entrance_count -= 1
-        self.debug_log("Device ejected a ball. Reducing ball count by one.")
-        if self._entrance_count < 0:
-            self._entrance_count = 0
-            self.ball_device.log.warning("Ball count went negative. Resetting!")
+        ball_left = self.wait_for_ball_to_leave()
+        ball_activity = self.wait_for_ball_activity()
+        count = self._entrance_count
+        while True:
+            if ball_left:
+                futures = [ball_activity, ball_left]
+            else:
+                futures = [ball_activity]
 
-        return {}
+            yield from Util.any(futures, loop=self.machine.clock.loop)
+
+            if ball_left and ball_left.done():
+                ball_left = False
+                eject_tracker.track_ball_left()
+                self.debug_log("Device ejected a ball. Reducing ball count by one.")
+                self._entrance_count -= 1
+                count -= 1
+                if self._entrance_count < 0:
+                    self._entrance_count = 0
+                    self.ball_device.log.warning("Entrance count went below 0")
+
+            if ball_activity.done() and self._entrance_count > count:
+                for i in range(self._entrance_count - count):
+                    eject_tracker.track_ball_entrance()
+
+                count = self._entrance_count
+                ball_activity = self.wait_for_ball_activity()

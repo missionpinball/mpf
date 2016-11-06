@@ -2,6 +2,7 @@
 import asyncio
 
 from mpf.core.utility_functions import Util
+from mpf.devices.ball_device.ball_count_handler import EjectTracker
 from mpf.devices.ball_device.ball_device_ball_counter import BallDeviceBallCounter
 
 
@@ -96,20 +97,48 @@ class SwitchCounter(BallDeviceBallCounter):
         return self.config['jam_switch'] and self.machine.switch_controller.is_active(
             self.config['jam_switch'].name, ms=self.config['entrance_count_delay'])
 
-    def ejecting_one_ball(self):
+    @asyncio.coroutine
+    def track_eject(self, eject_tracker: EjectTracker):
         """Return eject_process dict."""
         # count active switches
         active_switches = []
         for switch in self.config['ball_switches']:
-            valid = False
             if self.machine.switch_controller.is_active(
                     switch.name, ms=self.config['entrance_count_delay']):
                 active_switches.append(switch.name)
 
-        return {
-            'jam_active_before_eject': self.is_jammed(),
-            'active_switches': active_switches
-        }
+        ball_left_future = eject_tracker._ball_count_handler.ball_device.ensure_future(self.wait_for_ball_to_leave(active_switches))
+
+        jam_active_before_eject = self.is_jammed()
+        jam_active_after_eject = False
+        active_switches = active_switches
+        count = len(active_switches)
+        while True:
+            ball_count_change = eject_tracker._ball_count_handler.ball_device.ensure_future(self.wait_for_ball_count_changes(count))
+            if ball_left_future:
+                futures = [ball_count_change, ball_left_future]
+            else:
+                futures = [ball_count_change]
+            yield from Util.any(futures, loop=self.machine.clock.loop)
+
+            if ball_left_future and ball_left_future.done():
+                ball_left_future = None
+                eject_tracker.track_ball_left()
+                count -= 1
+                ball_count_change.cancel()
+            elif ball_count_change.done():
+                new_count = ball_count_change.result()
+                # check jam first
+                if new_count > count and not jam_active_after_eject and jam_active_before_eject and self.is_jammed():
+                    eject_tracker.track_ball_returned()
+                    jam_active_after_eject = True
+                    count += 1
+                if new_count > count:
+                    # TODO: add some magic to detect entrances
+                    pass
+                if new_count > count:
+                    eject_tracker.track_unknown_balls(new_count - count)
+                count = new_count
 
     @asyncio.coroutine
     def wait_for_ball_to_return(self, eject_process):
@@ -117,7 +146,7 @@ class SwitchCounter(BallDeviceBallCounter):
 
         Will only return if this the device is certain that this is a returned ball.
         """
-        if not self.config['jam_switch']:
+        if not self.config['jam_switch'] or eject_process['jam_active_before_eject']:
             # if there is no jam switch we cannot know currently
             future = asyncio.Future(loop=self.machine.clock.loop)
             yield from future
@@ -125,22 +154,15 @@ class SwitchCounter(BallDeviceBallCounter):
 
         while True:
             # check if jam is active but was not active before eject -> certainly a return
-            if not eject_process['jam_active_before_eject'] and self.is_jammed():
+            if self.is_jammed():
                 return True
-
-            # if there is no jam -> check if any new switch activated
-            # TODO: move this to ball_counter
-            # # TODO: ignore entrances
-            # ball_count = self.count_balls()
-            # if not self.config['jam_switch'] and eject_process['active_switches'] >= ball_count:
-            #     return True
 
             yield from self.wait_for_ball_activity()
 
-    def wait_for_ball_to_leave(self, eject_process):
+    def wait_for_ball_to_leave(self, active_switches):
         """Wait for any active switch to become inactive."""
         waiters = []
-        for switch_name in eject_process['active_switches']:
+        for switch_name in active_switches:
             waiters.append(self.machine.switch_controller.wait_for_switch(
                 switch_name=switch_name, ms=self.config['entrance_count_delay'],
                 state=0))

@@ -672,6 +672,11 @@ class Util(object):
                 future.cancel()
 
     @staticmethod
+    def any(futures: [asyncio.Future], loop, timeout=None):
+        """Return first future."""
+        return Util.first(futures, loop, timeout, False)
+
+    @staticmethod
     @asyncio.coroutine
     def first(futures: [asyncio.Future], loop, timeout=None, cancel_others=True):
         """Return first future and cancel others."""

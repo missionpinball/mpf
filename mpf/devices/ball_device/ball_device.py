@@ -129,7 +129,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
     @property
     def balls(self):
         """Return balls."""
-        return self.ball_count_handler.handled_balls
+        return self.ball_count_handler.legacy_handled_balls
 
     def _initialize(self):
         """Initialize right away."""
@@ -1361,7 +1361,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
 
         # remove the ball from our count
         self.balls -= 1
-        self.counter.ejecting_one_ball()
+        self.counter.track_eject()
 
         if self.mechanical_eject_in_progress:
             # for mechanical eject the timeout starts when the ball has left

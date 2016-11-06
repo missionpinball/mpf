@@ -6,6 +6,9 @@ import asyncio
 
 
 # TODO: rename to hardware counter
+from mpf.devices.ball_device.ball_count_handler import EjectTracker
+
+
 class BallDeviceBallCounter:
 
     """Ball counter for ball device."""
@@ -29,7 +32,7 @@ class BallDeviceBallCounter:
         """Return the number of current active switches."""
         raise NotImplementedError()
 
-    def wait_for_ball_to_leave(self, eject_process):
+    def wait_for_ball_to_leave(self):
         """Wait for a ball to leave."""
         raise NotImplementedError()
 
@@ -54,7 +57,7 @@ class BallDeviceBallCounter:
         raise NotImplementedError()
 
     @asyncio.coroutine
-    def wait_for_ball_count_changes(self, old_count: int) -> int:
+    def wait_for_ball_count_changes(self, old_count: int):
         """Wait for ball count changes and return the new count.
 
         Args:
@@ -67,6 +70,7 @@ class BallDeviceBallCounter:
 
             yield from self.wait_for_ball_activity()
 
-    def ejecting_one_ball(self) -> dict:
+    @asyncio.coroutine
+    def track_eject(self, eject_tracker: EjectTracker):
         """Return eject_process dict."""
-        return {}
+        raise NotImplementedError()

@@ -279,7 +279,8 @@ class Playfield(SystemWideDevice):
             self.debug_log("Received ball from %s", incoming_ball.source)
             incoming_ball.timeout_future.cancel()
             # confirm eject
-            incoming_ball.confirm_future.set_result(True)
+            if not incoming_ball.confirm_future.done():
+                incoming_ball.confirm_future.set_result(True)
 
     def _mark_playfield_active(self):
         self.ball_search.reset_timer()

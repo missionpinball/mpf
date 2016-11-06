@@ -11,6 +11,12 @@ class IncomingBall:
         self.confirm_future = None
         self.source = None
 
+    # TODO: states:
+    # 1. ejecting (for space calculation
+    # 2. left (can be confirmed)
+    # 3. arrived
+    # 4. timeouted
+
 
 class IncomingBallsHandler(BallDeviceStateHandler):
 
@@ -51,11 +57,14 @@ class IncomingBallsHandler(BallDeviceStateHandler):
 
     def add_incoming_ball(self, incoming_ball: IncomingBall):
         """Add incoming balls."""
+        self.debug_log("Adding incoming ball from %s", incoming_ball.source)
         self._incoming_balls.append(incoming_ball)
+        # TODO: set a callback here
         self._has_incoming_balls.set()
 
     def remove_incoming_ball(self, incoming_ball: IncomingBall):
         """Remove incoming ball."""
+        self.debug_log("Removing incoming ball from %s", incoming_ball.source)
         self._incoming_balls.remove(incoming_ball)
 
     @asyncio.coroutine
