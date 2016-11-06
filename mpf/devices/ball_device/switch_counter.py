@@ -49,24 +49,22 @@ class SwitchCounter(BallDeviceBallCounter):
             waiter = self.wait_for_ball_activity()
             try:
                 balls = self.count_balls_sync()
+                waiter.cancel()
                 return balls
             except ValueError:
                 yield from waiter
 
-    def count_balls_sync(self):
-        """Count currently active switches or raise ValueError if switches are unstable."""
-        ball_count = 0
-
+    def _count_switches_sync(self):
+        """Return active switches or raise ValueError if switches are unstable."""
+        switches = []
         for switch in self.config['ball_switches']:
             valid = False
             if self.machine.switch_controller.is_active(
                     switch.name, ms=self.config['entrance_count_delay']):
-                ball_count += 1
+                switches.append(switch.name)
                 valid = True
-                self.debug_log("Confirmed active switch: %s", switch.name)
             elif self.machine.switch_controller.is_inactive(
                     switch.name, ms=self.config['exit_count_delay']):
-                self.debug_log("Confirmed inactive switch: %s", switch.name)
                 valid = True
 
             if not valid:
@@ -74,7 +72,14 @@ class SwitchCounter(BallDeviceBallCounter):
                 self.debug_log("Switch '%s' changed too recently. Aborting count!", switch.name)
                 raise ValueError('Count not stable yet. Run again!')
 
-        self.debug_log("Counted %s balls", ball_count)
+        return switches
+
+    def count_balls_sync(self):
+        """Count currently active switches or raise ValueError if switches are unstable."""
+        switches = self._count_switches_sync()
+        ball_count = len(switches)
+
+        self.debug_log("Counted %s balls. Active switches: %s", ball_count, switches)
         return ball_count
 
     def wait_for_ball_activity(self):
@@ -102,12 +107,20 @@ class SwitchCounter(BallDeviceBallCounter):
         """Return eject_process dict."""
         # count active switches
         active_switches = []
-        for switch in self.config['ball_switches']:
-            if self.machine.switch_controller.is_active(
-                    switch.name, ms=self.config['entrance_count_delay']):
-                active_switches.append(switch.name)
+        while True:
+            waiter = self.wait_for_ball_activity()
+            try:
+                active_switches = self._count_switches_sync()
+                waiter.cancel()
+                break
+            except ValueError:
+                yield from waiter
 
-        ball_left_future = eject_tracker._ball_count_handler.ball_device.ensure_future(self.wait_for_ball_to_leave(active_switches))
+        ball_left_future = eject_tracker._ball_count_handler.ball_device.ensure_future(
+            self.wait_for_ball_to_leave(active_switches))
+
+        # all switches are stable. we are ready now
+        eject_tracker.set_ready()
 
         jam_active_before_eject = self.is_jammed()
         jam_active_after_eject = False

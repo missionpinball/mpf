@@ -118,6 +118,8 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
         """Remove one ball from count."""
         ball_left = self.wait_for_ball_to_leave()
         ball_activity = self.wait_for_ball_activity()
+        # we are stable from here on
+        eject_tracker.set_ready()
         count = self._entrance_count
         while True:
             if ball_left:

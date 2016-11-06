@@ -112,6 +112,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
 
     @asyncio.coroutine
     def _abort_eject(self, eject_request: OutgoingBall, eject_try):
+        self.debug_log("Aborting eject. Lost ball while waiting for target to become ready.")
         pass
 
     @asyncio.coroutine
@@ -141,7 +142,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         mechanical_eject: Boolean as to whether this is a mechanical eject.
         num_attempts: How many eject attempts have been tried so far.
         '''
-        ball_eject_process = self.ball_device.ball_count_handler.start_eject()
+        ball_eject_process = yield from self.ball_device.ball_count_handler.start_eject()
         self.debug_log("Wait for ball to leave device")
         # eject the ball
         if self.ball_device.ejector:
