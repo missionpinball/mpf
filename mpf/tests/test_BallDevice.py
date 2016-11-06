@@ -1061,8 +1061,6 @@ class TestBallDevice(MpfTestCase):
         target3 = self.machine.ball_devices['test_target3']
         playfield = self.machine.ball_devices['playfield']
 
-        device4.get_additional_ball_capacity = lambda *args: 10
-
         self.machine.events.add_handler('balldevice_captured_from_playfield',
                                         self._captured_from_pf)
         self.machine.events.add_handler('balldevice_1_ball_missing',
@@ -1107,12 +1105,14 @@ class TestBallDevice(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEqual(1, device1.balls)
 
-        # in the meantime device4 receives a (drained) ball
+        # in the meantime target2 receives two (drained) balls
         self.machine.switch_controller.process_switch(
             "s_ball_switch_target2_1", 1)
+        self.machine.switch_controller.process_switch(
+            "s_ball_switch_target2_2", 1)
         self.advance_time_and_run(1)
-        self.assertEqual(1, device4.balls)
-        self.assertEqual(1, self._captured)
+        self.assertEqual(2, device4.balls)
+        self.assertEqual(2, self._captured)
         self._captured = 0
 
         # launcher receives but cannot ejects ball yet
@@ -1134,7 +1134,7 @@ class TestBallDevice(MpfTestCase):
         self.machine.switch_controller.process_switch(
             "s_ball_switch_target2_1", 0)
         self.advance_time_and_run(1)
-        self.assertEqual(0, device4.balls)
+        self.assertEqual(1, device4.balls)
 
         # still no eject of launcher
         coil1.pulse.assert_called_once_with()
@@ -1147,7 +1147,7 @@ class TestBallDevice(MpfTestCase):
         self.machine.switch_controller.process_switch("s_ball_switch_target3",
                                                       1)
         self.advance_time_and_run(1)
-        self.assertEqual(0, device4.balls)
+        self.assertEqual(1, device4.balls)
 
         # launcher should eject
         coil1.pulse.assert_called_once_with()
