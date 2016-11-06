@@ -428,12 +428,11 @@ class SwitchController(MpfController):
         for k, v, in list(self.active_timed_switches.items()):
             # using items() instead of iteritems() since we might want to
             # delete while iterating
-
-            for item in v:
+            for k2, item in enumerate(v):
                 if item['switch_action'] == str(name) + '-' + str(state ^ 1):
                     # ^1 in above line invertes the state
-                    if self.active_timed_switches[k]:
-                        del self.active_timed_switches[k]
+                    if self.active_timed_switches[k] and self.active_timed_switches[k][k2]:
+                        del self.active_timed_switches[k][k2]
 
     def _add_timed_switch_handler(self, key, value):
         self.active_timed_switches[key].append(value)
