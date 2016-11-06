@@ -128,7 +128,6 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                 # try again
                 continue
             self._state = "ejecting"
-            self.debug_log("Ejecting ball")
             result = yield from self._eject_ball(eject_request, eject_try)
             if result:
                 # eject is done. return to main loop

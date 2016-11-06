@@ -1068,7 +1068,8 @@ class BallDevice(AsyncDevice, SystemWideDevice):
 
     def is_ball_count_stable(self):
         """Return if ball count is stable."""
-        return self._state == "idle" and self._idle_counted and not len(self._incoming_balls)
+        # TODO: refactor this to a better synchronisation primitive
+        return self._state == "idle"
 
     def is_ready_to_receive(self):
         """Return if device is ready to receive a ball."""

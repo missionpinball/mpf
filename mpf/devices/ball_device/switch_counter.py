@@ -44,7 +44,6 @@ class SwitchCounter(BallDeviceBallCounter):
     def count_balls(self):
         """Return the current ball count."""
         while True:
-            self.debug_log("Counting balls by checking switches")
             # register the waiter before counting to prevent races
             waiter = self.wait_for_ball_activity()
             try:
