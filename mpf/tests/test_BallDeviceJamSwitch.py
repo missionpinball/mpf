@@ -276,7 +276,23 @@ class TestBallDeviceJamSwitch(MpfTestCase):
 
         self.assertEqual(self.machine.ball_devices.plunger.balls, 0)
 
-        # trough should pulse normally (no args to pulse)
+        # trough should pulse softly again
+        self.trough_coil.pulse.assert_called_once_with(5)
+        self.trough_coil.pulse = MagicMock()
+
+        # ball leaves and comes back again
+        self.machine.switch_controller.process_switch('s_trough_jam', 0)
+        self.advance_time_and_run(1)
+        self.machine.switch_controller.process_switch('s_trough_jam', 1)
+
+        # wait for timeout
+        self.advance_time_and_run(10)
+        self.assertEqual(self.machine.ball_devices.trough.balls, 4)
+        assert not self.plunger_coil.pulse.called
+
+        self.assertEqual(self.machine.ball_devices.plunger.balls, 0)
+
+        # trough should pulse normally
         self.trough_coil.pulse.assert_called_once_with()
         self.trough_coil.pulse = MagicMock()
 

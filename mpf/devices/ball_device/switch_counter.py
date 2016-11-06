@@ -132,7 +132,7 @@ class SwitchCounter(BallDeviceBallCounter):
             elif ball_count_change.done():
                 new_count = ball_count_change.result()
                 # check jam first
-                if new_count > count and not jam_active_after_eject and jam_active_before_eject and self.is_jammed():
+                if not jam_active_after_eject and not jam_active_before_eject and self.is_jammed():
                     eject_tracker.track_ball_returned()
                     jam_active_after_eject = True
                     count += 1

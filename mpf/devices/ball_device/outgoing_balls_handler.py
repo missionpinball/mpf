@@ -320,6 +320,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             elif event == ball_return_future:
                 # ball returned. eject failed
                 eject_request.already_left = False
+                self._remove_incoming_ball_at_target(eject_request, incoming_ball_at_target)
                 ball_eject_process.ball_returned()
                 return False
             elif event == unknown_balls_future:

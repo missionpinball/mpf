@@ -201,7 +201,8 @@ class BallDevice(AsyncDevice, SystemWideDevice):
             self.config['ball_missing_target'].add_missing_balls(1)
         elif not target.is_playfield() and target.cancel_path_if_target_is(self.config['ball_missing_target']):
             # add ball to default target
-            self.log.warning("Path to %s canceled. Assuming the ball jumped there.", target)
+            self.log.warning("Path to %s canceled. Assuming the ball jumped to %s.", target,
+                             self.config['ball_missing_target'])
             self.config['ball_missing_target'].add_missing_balls(1)
         else:
             self.log.warning("Path is not going to ball_missing_target %s. Restoring path by requesting new ball to"
