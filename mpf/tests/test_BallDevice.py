@@ -982,9 +982,11 @@ class TestBallDevice(MpfTestCase):
         # in the meantime device4 receives a (drained) ball
         self.machine.switch_controller.process_switch(
             "s_ball_switch_target2_1", 1)
+        self.machine.switch_controller.process_switch(
+            "s_ball_switch_target2_2", 1)
         self.advance_time_and_run(1)
-        self.assertEqual(1, device4.balls)
-        self.assertEqual(1, self._captured)
+        self.assertEqual(2, device4.balls)
+        self.assertEqual(2, self._captured)
         self._captured = 0
 
         # launcher receives but cannot ejects ball yet
@@ -1003,7 +1005,7 @@ class TestBallDevice(MpfTestCase):
         self.machine.switch_controller.process_switch(
             "s_ball_switch_target2_1", 0)
         self.advance_time_and_run(1)
-        self.assertEqual(0, device4.balls)
+        self.assertEqual(1, device4.balls)
 
         # still no eject of launcher
         coil1.pulse.assert_called_once_with()
@@ -1016,7 +1018,7 @@ class TestBallDevice(MpfTestCase):
         self.machine.switch_controller.process_switch("s_ball_switch_target3",
                                                       1)
         self.advance_time_and_run(1)
-        self.assertEqual(0, device4.balls)
+        self.assertEqual(1, device4.balls)
 
         # launcher should eject
         coil1.pulse.assert_called_once_with()

@@ -40,7 +40,8 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
 
             self.debug_log("Got eject request")
 
-            yield from self._ejecting(eject_request)
+            if not (yield from self._ejecting(eject_request)):
+                return
             self._state = "idle"
 
     @property
@@ -75,16 +76,17 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             result = yield from self._eject_ball(eject_request, eject_try)
             if result:
                 # eject is done. return to main loop
-                return
+                return True
 
             yield from self._failed_eject(eject_request, eject_try)
             eject_try += 1
 
-            if eject_request.max_tries and eject_try > eject_request.max_tries:
+            if eject_request.max_tries and eject_try >= eject_request.max_tries:
                 # stop device
+                self._state = "eject_broken"
                 self.ball_device.stop()
                 # TODO: inform machine about broken device
-                return
+                return False
 
     @asyncio.coroutine
     def _prepare_eject(self, eject_request: OutgoingBall, eject_try):
