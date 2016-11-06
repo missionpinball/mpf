@@ -103,7 +103,7 @@ class SwitchCounter(BallDeviceBallCounter):
             self.config['jam_switch'].name, ms=self.config['entrance_count_delay'])
 
     @asyncio.coroutine
-    def track_eject(self, eject_tracker: EjectTracker):
+    def track_eject(self, eject_tracker: EjectTracker, already_left):
         """Return eject_process dict."""
         # count active switches
         active_switches = []
@@ -117,7 +117,7 @@ class SwitchCounter(BallDeviceBallCounter):
                 yield from waiter
 
         ball_left_future = eject_tracker._ball_count_handler.ball_device.ensure_future(
-            self.wait_for_ball_to_leave(active_switches))
+            self.wait_for_ball_to_leave(active_switches)) if not already_left else None
 
         # all switches are stable. we are ready now
         eject_tracker.set_ready()

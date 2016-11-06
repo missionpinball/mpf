@@ -22,9 +22,10 @@ class EjectTracker:
         self._unknown_balls = asyncio.Future(loop=self._ball_count_handler.machine.clock.loop)
         self._num_unknown_balls = 0
 
-    def start(self):
+    def start(self, already_left):
         """Start processs."""
-        self._task = self.machine.clock.loop.create_task(self._ball_count_handler.ball_device.counter.track_eject(self))
+        self._task = self.machine.clock.loop.create_task(
+            self._ball_count_handler.ball_device.counter.track_eject(self, already_left))
         self._task.add_done_callback(self._done)
 
     def _done(self, future):
@@ -169,10 +170,12 @@ class BallCountHandler(BallDeviceStateHandler):
             yield from self.ball_count_changed.wait()
             self.ball_count_changed.release()
 
-    def start_eject(self) -> EjectTracker:
+    def start_eject(self, already_left=False) -> EjectTracker:
         """Start an eject."""
         eject_process = EjectTracker(self)
-        eject_process.start()
+        eject_process.start(already_left=already_left)
+        if already_left:
+            self._ball_count += 1
         yield from eject_process.wait_for_ready()
         self._in_eject.put_nowait(eject_process)  # TODO: use lock here
         return eject_process
@@ -208,9 +211,8 @@ class BallCountHandler(BallDeviceStateHandler):
                         yield from self.ball_device.incoming_balls_handler.ball_arrived()
                 else:
                     self.debug_log("BCH: Lost %s balls", old_ball_count - new_balls)
-                    # TODO: handle lost balls via outgoing balls handler (if mechanical eject)
-                    # TODO: handle lost balls via lost balls handler (if really lost)
-                    pass
+                    for _ in range(old_ball_count - new_balls):
+                        yield from self.ball_device.lost_idle_ball()
 
     @asyncio.coroutine
     def _handle_entrance_during_eject(self, eject_process: EjectTracker):

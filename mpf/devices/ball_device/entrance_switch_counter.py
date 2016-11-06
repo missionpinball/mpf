@@ -114,9 +114,9 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
         return future
 
     @asyncio.coroutine
-    def track_eject(self, eject_tracker: EjectTracker):
+    def track_eject(self, eject_tracker: EjectTracker, already_left):
         """Remove one ball from count."""
-        ball_left = self.wait_for_ball_to_leave()
+        ball_left = self.wait_for_ball_to_leave() if not already_left else None
         ball_activity = self.wait_for_ball_activity()
         # we are stable from here on
         eject_tracker.set_ready()

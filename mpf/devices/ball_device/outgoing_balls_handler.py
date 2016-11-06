@@ -16,6 +16,7 @@ class OutgoingBall:
         self.eject_timeout = None
         self.target = None
         self.mechanical = None
+        self.already_left = False
 
 
 class OutgoingBallsHandler(BallDeviceStateHandler):
@@ -41,6 +42,15 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             eject_request = yield from eject_queue_future
 
             self.debug_log("Got eject request")
+
+            if eject_request.already_left:
+                ball_eject_process = yield from self.ball_device.ball_count_handler.start_eject(already_left=True)
+                # no prepare eject because this cannot be blocked
+                yield from self._post_ejecting_event(eject_request, 1)
+                incoming_ball_at_target = self._add_incoming_ball_to_target(eject_request)
+                result = yield from self._handle_confirm(eject_request, ball_eject_process, incoming_ball_at_target)
+                if result:
+                    continue
 
             if not (yield from self._ejecting(eject_request)):
                 return
@@ -107,6 +117,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             # inform targets about the eject (can delay the eject)
             yield from self._prepare_eject(eject_request, eject_try)
             # wait for target to be ready
+            # TODO: block one spot in target device to prevent double eject
             yield from eject_request.target.wait_for_ready_to_receive()
             # check if we still have a ball
             ball_count = yield from self.ball_device.ball_count_handler.get_ball_count()
@@ -167,9 +178,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         pass
 
     @asyncio.coroutine
-    def _eject_ball(self, eject_request: OutgoingBall, eject_try) -> bool:
-        # inform the counter that we are ejecting now
-        self.debug_log("Ejecting ball to %s", eject_request.target)
+    def _post_ejecting_event(self, eject_request: OutgoingBall, eject_try):
         yield from self.machine.events.post_async(
             'balldevice_{}_ejecting_ball'.format(self.ball_device.name),
             balls=1,
@@ -189,6 +198,12 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         mechanical_eject: Boolean as to whether this is a mechanical eject.
         num_attempts: How many eject attempts have been tried so far.
         '''
+
+    @asyncio.coroutine
+    def _eject_ball(self, eject_request: OutgoingBall, eject_try) -> bool:
+        # inform the counter that we are ejecting now
+        self.debug_log("Ejecting ball to %s", eject_request.target)
+        yield from self._post_ejecting_event(eject_request, eject_try)
         ball_eject_process = yield from self.ball_device.ball_count_handler.start_eject()
         self.debug_log("Wait for ball to leave device")
         # eject the ball
@@ -302,6 +317,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                 return True
             elif event == ball_return_future:
                 # ball returned. eject failed
+                eject_request.already_left = False
                 ball_eject_process.ball_returned()
                 return False
             elif event == unknown_balls_future:

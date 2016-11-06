@@ -174,6 +174,24 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         yield from self._handle_new_ball()
 
     @asyncio.coroutine
+    def lost_idle_ball(self):
+        if self.config['mechanical_eject']:
+            #raise AssertionError("asd")
+            # handle lost balls via outgoing balls handler (if mechanical eject)
+            self.config['eject_targets'][0].available_balls += 1
+            eject = OutgoingBall()
+            eject.target = self.config['eject_targets'][0]
+            eject.eject_timeout = self.config['eject_timeouts'][eject.target] / 1000
+            eject.max_tries = self.config['max_eject_attempts']
+            eject.mechanical = True
+            eject.already_left = True
+            self.outgoing_balls_handler.add_eject_to_queue(eject)
+        else:
+            # TODO: handle lost balls via lost balls handler (if really lost)
+            self.config['ball_missing_target'].add_missing_balls(1)
+            yield from self._balls_missing(1)
+
+    @asyncio.coroutine
     def lost_ejected_ball(self, target):
         """Handle an outgoing lost ball."""
         # follow path and check if we should request a new ball to the target or cancel the path
