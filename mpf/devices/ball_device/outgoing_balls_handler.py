@@ -26,6 +26,8 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         super().__init__(ball_device)
         self._eject_queue = asyncio.Queue(loop=self.machine.clock.loop)
         self._state = "idle"
+        self._current_target = None
+        self._cancel_future = None
 
     def add_eject_to_queue(self, eject: OutgoingBall):
         """Add an eject request to queue."""
@@ -49,16 +51,59 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         """Return the current state for legacy reasons."""
         return self._state
 
+    def cancel_path_if_target_is(self, target) -> bool:
+        """Check if the ball is going to a certain target and cancel the path in that case.
+
+        Args:
+            target: Target to check
+
+        Returns: True if found and deleted.
+        """
+        # TODO: check queue entries
+        if not self._cancel_future or self._cancel_future.done():
+            # we cannot cancel anyway so do not even check further
+            self.debug_log("Cancel path if target is not %s failed. Cannot cancel eject.", target.name)
+            return False
+
+        if not self._current_target:
+            # no current target -> success we are not ejecting to the target
+            self.debug_log("Cancel path if target is not %s failed. No current target.", target.name)
+            return False
+
+        if self._current_target == target:
+            self.debug_log("Cancel path if target is not %s successful.", target.name)
+            target.available_balls -= 1
+            self._cancel_future.set_result(True)
+            return True
+
+        if not self._current_target.is_playfield() and self._current_target.cancel_path_if_target_is_not(target):
+            # our successors are ejecting to target. cancel eject
+            self.debug_log("Cancel path if target is not %s successful at successors.", target.name)
+            self._cancel_future.set_result(True)
+            return True
+
+        # default false
+        self.debug_log("Cancel path if target is not %s failed. We got another target.", target.name)
+        return False
+
     @asyncio.coroutine
     def _ejecting(self, eject_request: OutgoingBall):
         """Perform main eject loop."""
         # TODO: handle unexpected mechanical eject
         eject_try = 0
         while True:
+            self._current_target = eject_request.target
+            self._cancel_future = asyncio.Future(loop=self.machine.clock.loop)
             # wait until we have a ball (might be instant)
             self._state = "waiting_for_ball"
             self.debug_log("Waiting for ball")
-            yield from self.ball_device.ball_count_handler.wait_for_ball()
+            yield from Util.first([self._cancel_future, self.ball_device.ball_count_handler.wait_for_ball()],
+                                  loop=self.machine.clock.loop)
+            if self._cancel_future.done() and not self._cancel_future.cancelled():
+                # eject cancelled
+                return True
+            self._cancel_future = None
+
             # inform targets about the eject (can delay the eject)
             yield from self._prepare_eject(eject_request, eject_try)
             # wait for target to be ready

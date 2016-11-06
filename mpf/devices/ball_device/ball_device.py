@@ -177,14 +177,23 @@ class BallDevice(AsyncDevice, SystemWideDevice):
     def lost_ejected_ball(self, target):
         """Handle an outgoing lost ball."""
         # follow path and check if we should request a new ball to the target or cancel the path
-        # TODO: only one eject and not distributed
-        #if target != self.config['ball_missing_target']:
-        #    target.cancel_path_if_target_is_not(self.config['ball_missing_target'])
-        # TODO: add incoming ball only and wait for confirm or timeout
+        if target == self.config['ball_missing_target']:
+            self.log.warning("Target %s and ball_missing_target %s are the same. Pretending the ball arrived.",
+                             self.config['ball_missing_target'], target)
+            self.config['ball_missing_target'].add_missing_balls(1)
+        elif not target.is_playfield() and target.cancel_path_if_target_is(self.config['ball_missing_target']):
+            # add ball to default target
+            self.log.warning("Path to %s canceled. Assuming the ball jumped there.", target)
+            self.config['ball_missing_target'].add_missing_balls(1)
+        else:
+            self.log.warning("Path is not going to ball_missing_target %s. Restoring path by requesting new ball to"
+                             "target %s.", self.config['ball_missing_target'], target)
+            self.eject(target=target)
+
         yield from self._balls_missing(1)
 
-    def cancel_path_if_target_is_not(self, target):
-        self.outgoing_balls_handler.cancel_path_if_target_is_not(target)
+    def cancel_path_if_target_is(self, target):
+        return self.outgoing_balls_handler.cancel_path_if_target_is(target)
 
     # Logic and dispatchers
     @asyncio.coroutine
@@ -1013,9 +1022,6 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         args:
             balls: The number of balls that are missing
         '''
-
-        # add ball to default target
-        self.config['ball_missing_target'].add_missing_balls(balls)
 
     def is_full(self):
         """Check to see if this device is full.

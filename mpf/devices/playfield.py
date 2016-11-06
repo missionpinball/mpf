@@ -108,6 +108,7 @@ class Playfield(SystemWideDevice):
 
     def add_missing_balls(self, balls):
         """Notifie the playfield that it probably received a ball which went missing elsewhere."""
+        # TODO: add incoming ball only and wait for confirm or timeout
         self.available_balls += balls
         # if we catched an unexpected balls before do not add a ball
         if self.unexpected_balls:
