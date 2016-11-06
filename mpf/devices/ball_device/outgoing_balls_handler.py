@@ -225,7 +225,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         ball_return_future = self.ball_device.ensure_future(ball_eject_process.wait_for_ball_return())
         unknown_balls_future = self.ball_device.ensure_future(ball_eject_process.wait_for_ball_unknown_ball())
         eject_success_future = incoming_ball_at_target.confirm_future
-        timeout = 60    # TODO: make this dynamic
+        timeout = 30    # TODO: make this dynamic
 
         # TODO: remove hack when moving code below
         yield from asyncio.sleep(0.1, loop=self.machine.clock.loop)
@@ -258,7 +258,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                 ball_eject_process.ball_returned()
                 return False
             elif event == unknown_balls_future:
-                # TODO: this may be variable
+                # TODO: this may be an option
                 self.debug_log("Got unknown balls. Assuming a ball returned.")
                 self._remove_incoming_ball_at_target(eject_request, incoming_ball_at_target)
                 ball_eject_process.ball_returned()
