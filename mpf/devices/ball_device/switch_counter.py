@@ -148,8 +148,7 @@ class SwitchCounter(BallDeviceBallCounter):
         waiters = []
         for switch_name in active_switches:
             waiters.append(self.machine.switch_controller.wait_for_switch(
-                switch_name=switch_name, ms=self.config['entrance_count_delay'],
-                state=0))
+                switch_name=switch_name, state=0))
 
         if not waiters:
             # TODO: raise exception and handle this in ball_device
