@@ -1,3 +1,4 @@
+"""Handles incoming balls."""
 import asyncio
 
 from mpf.core.utility_functions import Util
@@ -6,10 +7,65 @@ from mpf.devices.ball_device.ball_device_state_handler import BallDeviceStateHan
 
 class IncomingBall:
 
-    def __init__(self):
-        self.timeout_future = None
-        self.confirm_future = None
-        self.source = None
+    """One incoming ball."""
+
+    def __init__(self, source, target):
+        """Initialise incoming ball."""
+        self._timeout_future = asyncio.Future(loop=source.machine.clock.loop)
+        self._confirm_future = asyncio.Future(loop=source.machine.clock.loop)
+        self._source = source
+        self._target = target
+        self._left_device = True
+        self._external_confirm_future = None
+
+    @property
+    def can_arrive(self):
+        """Return true if ball can arrive."""
+        return self._left_device and (not self._external_confirm_future or self._external_confirm_future.done())
+
+    def add_external_confirm_switch(self, switch_name):
+        """Add external confirm switch."""
+        if self._external_confirm_future:
+            raise AssertionError("Can only add external confirm once.")
+
+        self._external_confirm_future = self._source.machine.switch_controller.wait_for_switch(switch_name)
+        self._external_confirm_future.add_done_callback(self._external_confirm)
+
+    def add_external_confirm_event(self, event):
+        """Add external confirm event."""
+        if self._external_confirm_future:
+            raise AssertionError("Can only add external confirm once.")
+
+        self._external_confirm_future = self._source.machine.events.wait_for_event(event)
+        self._external_confirm_future.add_done_callback(self._external_confirm)
+
+    def _external_confirm(self, future):
+        del future
+        self._timeout_future.cancel()
+        timeout = 10    # TODO: make this configurable
+        self._timeout_future = self._source.ensure_future(asyncio.sleep(timeout, loop=self._source.machine.clock.loop))
+        self._confirm_future.set_result(True)
+
+    @property
+    def source(self):
+        """Return source."""
+        return self._source
+
+    def did_not_arrive(self):
+        """Ball did not arrive."""
+        # self._confirm_future.cancel()
+        self._timeout_future.cancel()
+        self._target.remove_incoming_ball(self)
+
+    def ball_arrived(self):
+        """Ball did arrive."""
+        if not self._external_confirm_future:
+            self._confirm_future.set_result(True)
+        self._timeout_future.cancel()
+
+    def wait_for_confirm(self):
+        """Wait for confirm."""
+        return asyncio.shield(self._confirm_future, loop=self._source.machine.clock.loop)
 
     # TODO: states:
     # 1. ejecting (for space calculation
@@ -36,12 +92,12 @@ class IncomingBallsHandler(BallDeviceStateHandler):
             # sleep until we have incoming balls
             yield from self._has_incoming_balls.wait()
 
-            futures = [incoming_ball.timeout_future for incoming_ball in self._incoming_balls]
+            futures = [incoming_ball._timeout_future for incoming_ball in self._incoming_balls]
             yield from Util.first(futures, cancel_others=False, loop=self.machine.clock.loop)
 
             timeouts = []
             for incoming_ball in self._incoming_balls:
-                if incoming_ball.timeout_future.done() and not incoming_ball.timeout_future.canceled():
+                if incoming_ball._timeout_future.done() and not incoming_ball._timeout_future.cancelled():
                     timeouts.append(incoming_ball)
 
             for incoming_ball in timeouts:
@@ -53,18 +109,21 @@ class IncomingBallsHandler(BallDeviceStateHandler):
                 self._has_incoming_balls.clear()
 
     def _handle_timeout(self, incoming_ball: IncomingBall):
-        raise AssertionError("Ball Timeout")
+        """Handle ball timeout."""
+        del self
+        del incoming_ball
+        #raise NotImplemented("Ball Timeout")
 
     def add_incoming_ball(self, incoming_ball: IncomingBall):
         """Add incoming balls."""
-        self.debug_log("Adding incoming ball from %s", incoming_ball.source)
+        self.debug_log("Adding incoming ball from %s", incoming_ball._source)
         self._incoming_balls.append(incoming_ball)
         # TODO: set a callback here
         self._has_incoming_balls.set()
 
     def remove_incoming_ball(self, incoming_ball: IncomingBall):
         """Remove incoming ball."""
-        self.debug_log("Removing incoming ball from %s", incoming_ball.source)
+        self.debug_log("Removing incoming ball from %s", incoming_ball._source)
         self._incoming_balls.remove(incoming_ball)
 
     @asyncio.coroutine
@@ -74,9 +133,8 @@ class IncomingBallsHandler(BallDeviceStateHandler):
             # handle incoming ball
             incoming_ball = self._incoming_balls.pop(0)     # TODO: sort by better metric
             self.debug_log("Received ball from %s", incoming_ball.source)
-            incoming_ball.timeout_future.cancel()
             # confirm eject
-            incoming_ball.confirm_future.set_result(True)
+            incoming_ball.ball_arrived()
 
             # TODO: post enter event here?
             yield from self.ball_device.expected_ball_received()

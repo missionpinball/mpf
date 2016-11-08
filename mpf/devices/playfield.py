@@ -275,13 +275,16 @@ class Playfield(SystemWideDevice):
 
     def ball_arrived(self):
         """Confirm first ball in queue."""
-        if self._incoming_balls:
-            incoming_ball = self._incoming_balls.pop(0)
+        for incoming_ball in self._incoming_balls:
+            # skip balls which cannot have possibly arrived
+            if not incoming_ball.can_arrive:
+                continue
+
             self.debug_log("Received ball from %s", incoming_ball.source)
-            incoming_ball.timeout_future.cancel()
             # confirm eject
-            if not incoming_ball.confirm_future.done():
-                incoming_ball.confirm_future.set_result(True)
+            incoming_ball.ball_arrived()
+            self._incoming_balls.remove(incoming_ball)
+            break
 
     def _mark_playfield_active(self):
         self.ball_search.reset_timer()

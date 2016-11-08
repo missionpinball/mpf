@@ -36,7 +36,8 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
 
         self._futures = []
 
-    def is_jammed(self):
+    def is_jammed(self) -> bool:
+        """This device cannot know if it is jammed so always return False."""
         return False
 
     def _set_future_results(self):
@@ -126,7 +127,7 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
 
             if ball_activity.done() and self._entrance_count > count:
                 for i in range(self._entrance_count - count):
-                    eject_tracker.track_ball_entrance()
+                    yield from eject_tracker.track_ball_entrance()
 
                 count = self._entrance_count
                 ball_activity = self.wait_for_ball_activity()

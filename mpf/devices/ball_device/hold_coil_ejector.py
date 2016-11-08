@@ -39,9 +39,8 @@ class HoldCoilEjector(BallDeviceEjector):
 
     def _disable_hold_coil(self):
         self.ball_device.config['hold_coil'].disable()
-        if self.ball_device.debug:
-            self.ball_device.log.debug("Disabling hold coil. New "
-                                       "balls: %s.", self.ball_device.balls)
+        self.ball_device.debug_log("Disabling hold coil. New "
+                                   "balls: %s.", self.ball_device.balls)
 
     def hold(self, **kwargs):
         """Event handler for hold event."""
@@ -60,6 +59,7 @@ class HoldCoilEjector(BallDeviceEjector):
 
     def _hold_release_done(self):
         self.hold_release_in_progress = False
+        self.ball_device.log.debug("No more balls. Hold coil will stay disabled.")
 
         # reenable hold coil if there are balls left
         if self.ball_device.balls > 0:

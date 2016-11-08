@@ -1,3 +1,4 @@
+"""Base class for ball device handlers."""
 import asyncio
 
 
@@ -30,7 +31,8 @@ class BallDeviceStateHandler:
         self._task = self.machine.clock.loop.create_task(self._run())
         self._task.add_done_callback(self._done)
 
-    def _done(self, future):
+    @staticmethod
+    def _done(future):
         try:
             future.result()
         except asyncio.CancelledError:

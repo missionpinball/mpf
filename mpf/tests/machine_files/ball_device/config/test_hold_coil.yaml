@@ -43,7 +43,7 @@ ball_devices:
         hold_switches: s_entrance_and_hold3
         tags: trough, home
         debug: true
-        confirm_eject_type: fake
+        eject_timeouts: 2s
         ball_capacity: 2
     test4:
         hold_coil: hold_coil4

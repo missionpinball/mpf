@@ -141,6 +141,8 @@ class SwitchCounter(BallDeviceBallCounter):
                     pass
                 if new_count > count:
                     eject_tracker.track_unknown_balls(new_count - count)
+                elif count > new_count:
+                    eject_tracker.track_lost_balls(count - new_count)
                 count = new_count
 
     def _wait_for_ball_to_leave(self, active_switches):

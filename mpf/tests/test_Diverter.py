@@ -203,7 +203,7 @@ class TestDiverter(MpfTestCase):
         self.advance_time_and_run(5)
 
         self.assertEqual("ball_left", trough1._state)
-        self.assertEqual("ejecting", trough2._state)
+        self.assertEqual("waiting_for_ball", trough2._state)
 
         self.assertTrue(diverter.enabled)
         self.assertTrue(diverter.active)
@@ -239,7 +239,7 @@ class TestDiverter(MpfTestCase):
 
         self.advance_time_and_run(0.05)
 
-        self.assertEqual("ejecting", trough1._state)
+        self.assertEqual("waiting_for_ball", trough1._state)
         self.assertEqual("ball_left", trough2._state)
 
         self.assertFalse(diverter.enabled)

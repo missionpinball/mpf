@@ -179,8 +179,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
             #raise AssertionError("asd")
             # handle lost balls via outgoing balls handler (if mechanical eject)
             self.config['eject_targets'][0].available_balls += 1
-            eject = OutgoingBall()
-            eject.target = self.config['eject_targets'][0]
+            eject = OutgoingBall(self.config['eject_targets'][0])
             eject.eject_timeout = self.config['eject_timeouts'][eject.target] / 1000
             eject.max_tries = self.config['max_eject_attempts']
             eject.mechanical = True
@@ -205,7 +204,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
                              self.config['ball_missing_target'])
             self.config['ball_missing_target'].add_missing_balls(1)
         else:
-            self.log.warning("Path is not going to ball_missing_target %s. Restoring path by requesting new ball to"
+            self.log.warning("Path is not going to ball_missing_target %s. Restoring path by requesting new ball to "
                              "target %s.", self.config['ball_missing_target'], target)
             self.eject(target=target)
 
@@ -984,7 +983,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         # If we still have unclaimed_balls here, that means that no one claimed
         # them, so essentially they're "stuck." So we just eject them unless
         # this device is tagged 'trough' in which case we let it keep them.
-
+        self.debug_log("Adding ball")
         self.available_balls += new_balls
         self.machine.ball_controller.trigger_ball_count()
 
@@ -1214,21 +1213,12 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         if next_hop not in self.config['eject_targets']:
             raise AssertionError("Broken path")
 
-        eject = OutgoingBall()
+        eject = OutgoingBall(next_hop)
         eject.eject_timeout = self.config['eject_timeouts'][next_hop] / 1000
         eject.max_tries = self.config['max_eject_attempts']
-        eject.target = next_hop
         eject.mechanical = player_controlled
 
         self.outgoing_balls_handler.add_eject_to_queue(eject)
-
-        # append to queue
-        if player_controlled and (self.config['mechanical_eject'] or self.config['player_controlled_eject_event']):
-            self.eject_queue.append((next_hop, self.config['mechanical_eject'],
-                                     self.config[
-                                         'player_controlled_eject_event']))
-        else:
-            self.eject_queue.append((next_hop, False, None))
 
         # check if we traversed the whole path
         if len(path) > 0:
@@ -1291,7 +1281,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         for dummy_iterator in range(balls):
             self._setup_or_queue_eject_to_target(target)
 
-        self.debug_log('Queue %s.', self.eject_queue)
+        self.debug_log('Queue %s.', self.outgoing_balls_handler._eject_queue._queue)
 
     def eject_all(self, target=None, **kwargs):
         """Eject all the balls from this device.

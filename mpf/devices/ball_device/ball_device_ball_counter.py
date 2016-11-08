@@ -27,6 +27,10 @@ class BallDeviceBallCounter:
         """Return the number of current active switches or raises ValueError when count is not stable."""
         raise NotImplementedError()
 
+    def is_jammed(self) -> bool:
+        """Return true if device is jammed."""
+        raise NotImplementedError()
+
     @asyncio.coroutine
     def count_balls(self):
         """Return the number of current active switches."""
