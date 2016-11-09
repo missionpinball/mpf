@@ -36,6 +36,9 @@ class BallController(object):
         self.machine.events.add_handler('init_phase_4',
                                         self._init4, priority=100)
 
+        self.machine.events.add_handler('shutdown',
+                                        self._stop)
+
         self._add_new_balls_task = None
         self._captured_balls = asyncio.Queue(loop=self.machine.clock.loop)
 
@@ -54,6 +57,11 @@ class BallController(object):
 
         self._add_new_balls_task = self.machine.clock.loop.create_task(self._add_new_balls_to_playfield())
         self._add_new_balls_task.add_done_callback(self._done)
+
+    def _stop(self, **kwargs):
+        del kwargs
+        if self._add_new_balls_task:
+            self._add_new_balls_task.cancel()
 
     @staticmethod
     def _done(future):
