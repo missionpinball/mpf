@@ -1,10 +1,8 @@
-# pylint: disable-msg=too-many-lines
 """Contains the base class for ball devices."""
 
 from collections import deque
 
 import asyncio
-from typing import Optional
 
 from mpf.core.device import AsyncDevice
 from mpf.devices.ball_device.ball_count_handler import BallCountHandler
@@ -18,15 +16,13 @@ from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.utility_functions import Util
 
 
-# pylint: disable-msg=too-many-instance-attributes
 from mpf.devices.ball_device.incoming_balls_handler import IncomingBallsHandler, IncomingBall
 from mpf.devices.ball_device.outgoing_balls_handler import OutgoingBallsHandler, OutgoingBall
 from mpf.devices.ball_device.pulse_coil_ejector import PulseCoilEjector
 from mpf.devices.ball_device.switch_counter import SwitchCounter
 
 
-@DeviceMonitor("_state", "balls", "available_balls", "num_eject_attempts", "eject_queue", "eject_in_progress_target",
-               "mechanical_eject_in_progress", "_incoming_balls", "ball_requests", "trigger_event")
+@DeviceMonitor("_state", "balls", "available_balls")
 class BallDevice(AsyncDevice, SystemWideDevice):
 
     """
@@ -48,53 +44,16 @@ class BallDevice(AsyncDevice, SystemWideDevice):
 
         self.delay = DelayManager(machine.delayRegistry)
 
-        #self.balls = 0
-        #"""Number of balls currently contained (held) in this device."""
-
         self.available_balls = 0
         """Number of balls that are available to be ejected. This differes from
         `balls` since it's possible that this device could have balls that are
         being used for some other eject, and thus not available."""
-
-        self.eject_queue = deque()
-        """ Queue of three-item tuples that represent ejects this device needs
-        to do.
-
-        Tuple structure:
-        [0] = the eject target device
-        [1] = boolean as to whether this is a mechanical eject
-        [2] = trigger event which will trigger the actual eject attempts
-        """
-
-        self.num_eject_attempts = 0
-        """ Counter of how many attempts to eject the this device has tried.
-         Eventually it will give up.
-        """
-
-        self.eject_in_progress_target = None
-        """The device this device is currently trying to eject to.
-        @type: BallDevice
-        """
-
-        self.mechanical_eject_in_progress = False
-        """How many balls are waiting for a mechanical (e.g. non coil fired /
-        spring plunger) eject.
-        """
 
         self._target_on_unexpected_ball = None
         # Device will eject to this target when it captures an unexpected ball
 
         self._source_devices = list()
         # Ball devices that have this device listed among their eject targets
-
-        self._blocked_eject_attempts = deque()
-        # deque of tuples that holds ejects that source devices wanted to do
-        # when this device wasn't ready for them
-        # each tuple is (event wait queue from eject attempt event, source)
-
-        self.jam_switch_state_during_eject = False
-
-        self._eject_status_logger = None
 
         self._incoming_balls = deque()
         # deque of tuples that tracks incoming balls this device should expect
@@ -105,21 +64,9 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         # that this device could fulfil
         # each tuple is (target device, boolean player_controlled flag)
 
-        self.trigger_event = None
-
-        self._idle_counted = False
-
-        self.eject_start_time = None
         self.ejector = None
         self.counter = None
         self.ball_count_handler = None
-
-        self._eject_request_condition = asyncio.Event(loop=self.machine.clock.loop)
-        self._eject_success_condition = asyncio.Event(loop=self.machine.clock.loop)
-        self._source_eject_failure_condition = asyncio.Event(loop=self.machine.clock.loop)
-        self._source_eject_failure_retry_condition = asyncio.Event(loop=self.machine.clock.loop)
-        self._incoming_ball_condition = asyncio.Event(loop=self.machine.clock.loop)
-        self._incoming_ball_lost_condition = asyncio.Event(loop=self.machine.clock.loop)
 
     @property
     def _state(self):
@@ -306,37 +253,6 @@ class BallDevice(AsyncDevice, SystemWideDevice):
             if self._setup_or_queue_eject_to_target(target, player_controlled):
                 return False
 
-    def _source_device_eject_attempt(self, balls, target, source, queue,
-                                     **kwargs):
-        del balls
-        del kwargs
-
-        if target != self:
-            return
-
-        return
-        # TODO: fix this
-        if not self.is_ready_to_receive():
-            # block the attempt until we are ready again
-            self.debug_log("Blocking eject attempt by %s because not ready to receive.", source)
-            self._blocked_eject_attempts.append((queue, source))
-            queue.wait()
-            return
-
-    def _source_device_eject_failed(self, balls, target, retry, **kwargs):
-        del balls
-        del kwargs
-
-        if target != self:
-            return
-
-        if not retry:
-            self._source_eject_failure_condition.set()
-            self._source_eject_failure_condition.clear()
-        else:
-            self._source_eject_failure_retry_condition.set()
-            self._source_eject_failure_retry_condition.clear()
-
     # ---------------------- End of state handling code -----------------------
 
     def _parse_config(self):
@@ -470,16 +386,6 @@ class BallDevice(AsyncDevice, SystemWideDevice):
                     self.debug_log("EVENT: %s to %s", device.name, target.name)
 
                     self.machine.events.add_handler(
-                        'balldevice_{}_ball_eject_failed'.format(
-                            device.name),
-                        self._source_device_eject_failed)
-
-                    self.machine.events.add_handler(
-                        'balldevice_{}_ball_eject_attempt'.format(
-                            device.name),
-                        self._source_device_eject_attempt)
-
-                    self.machine.events.add_handler(
                         'balldevice_balls_available',
                         self._source_device_balls_available)
 
@@ -533,8 +439,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
     def _balls_missing(self, balls):
         # Called when ball_count finds that balls are missing from this device
         self.debug_log("%s ball(s) missing from device. Mechanical eject?"
-                       " %s", abs(balls),
-                       self.mechanical_eject_in_progress)
+                       " %s", abs(balls))
 
         yield from self.machine.events.post_async('balldevice_{}_ball_missing'.format(abs(balls)))
         '''event: balldevice_(balls)_ball_missing.
@@ -689,8 +594,6 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         # check if we traversed the whole path
         if len(path) > 0:
             next_hop.setup_eject_chain_next_hop(path, player_controlled)
-
-        self._eject_request_condition.set()
 
     def find_next_trough(self):
         """Find next trough after device."""
