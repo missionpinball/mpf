@@ -261,48 +261,6 @@ class BallCountHandler(BallDeviceStateHandler):
             self._is_counting.release()
 
     @asyncio.coroutine
-    def _handle_entrance_during_eject(self, eject_process: EjectTracker):
-        """Wait until the eject is done and handle limited ball entrance."""
-        self.debug_log("Counting in eject mode")
-        # if we are 100% certain that this ball entered and did not return
-        ball_entrance = self.ball_device.ensure_future(eject_process.wait_for_ball_entrance())
-        eject_done = self.ball_device.ensure_future(eject_process.wait_for_eject_done())
-        ball_changes = self.ball_device.ensure_future(self.ball_device.counter.wait_for_ball_activity())
-        while True:
-            futures = [eject_done, ball_entrance, ball_changes]
-            event = yield from Util.first(futures, loop=self.machine.clock.loop, cancel_others=False)
-
-            if eject_done.done():
-                ball_entrance.cancel()
-                ball_changes.cancel()
-                result = yield from eject_done
-                self.debug_log("XXX Eject done. Result: %s", result)
-                yield from self._handle_eject_done(result)
-                return
-
-            if ball_changes.done():
-                ball_changes = self.ball_device.ensure_future(self.ball_device.counter.wait_for_ball_activity())
-                # yield from self._updated_balls(True)
-
-            if ball_entrance.done():
-                # TODO: handle new ball via incoming balls handler
-                ball_entrance = self.ball_device.ensure_future(eject_process.wait_for_ball_entrance())
-
-    def _handle_eject_done(self, result):
-        """Decrement count by one and handle failures."""
-        if result == "success":
-            self.debug_log("Received eject done.")
-            self._set_ball_count(self._ball_count - 1)
-        elif result == "returned":
-            self.debug_log("Received eject failed. Ball returned.")
-        elif result == "lost":
-            self.ball_device.log.warning("Received eject failed. Eject lost ball.")
-            self._set_ball_count(self._ball_count - 1)
-            # handle lost balls via lost balls handler
-        else:
-            raise AssertionError("invalid result %s", result)
-
-    @asyncio.coroutine
     def entrance_during_eject(self):
         yield from self.ball_device.incoming_balls_handler.ball_arrived()
         self._set_ball_count(self._ball_count + 1)
