@@ -127,10 +127,8 @@ class TestHead2Head(MpfTestCase):
 
         self.assertEqual(1, pf1.balls)
         self.assertEqual(1, pf1.available_balls)
-        self.assertEqual(0, pf1.unexpected_balls)
         self.assertEqual(1, pf2.balls)
         self.assertEqual(1, pf2.available_balls)
-        self.assertEqual(0, pf2.unexpected_balls)
 
         # game should not start. there are balls on pf
         self.assertFalse(self.machine.ball_controller.request_to_start_game())
@@ -140,20 +138,16 @@ class TestHead2Head(MpfTestCase):
 
         self.assertEqual(0, pf1.balls)
         self.assertEqual(0, pf1.available_balls)
-        self.assertEqual(0, pf1.unexpected_balls)
         self.assertEqual(2, pf2.balls)
         self.assertEqual(2, pf2.available_balls)
-        self.assertEqual(0, pf2.unexpected_balls)
 
         self.machine.switch_controller.process_switch("s_transfer_front_back", 1)
         self.advance_time_and_run(2)
 
         self.assertEqual(0, pf1.balls)
         self.assertEqual(0, pf1.available_balls)
-        self.assertEqual(0, pf1.unexpected_balls)
         self.assertEqual(2, pf2.balls)
         self.assertEqual(2, pf2.available_balls)
-        self.assertEqual(0, pf2.unexpected_balls)
 
         # ball drains in front
         self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_trough_front)
@@ -196,19 +190,15 @@ class TestHead2Head(MpfTestCase):
 
         self.assertEqual(1, pf1.balls)
         self.assertEqual(1, pf1.available_balls)
-        self.assertEqual(0, pf1.unexpected_balls)
         self.assertEqual(0, pf2.balls)
         self.assertEqual(0, pf2.available_balls)
-        self.assertEqual(0, pf2.unexpected_balls)
 
         # balls jumps to back pf and falls into a device
         self.hit_switch_and_run("s_feeder_back", 5)
 
         self.assertEqual(0, pf1.balls)
         self.assertEqual(0, pf1.available_balls)
-        self.assertEqual(0, pf1.unexpected_balls)
         self.assertEqual(1, pf2.balls)
         self.assertEqual(1, pf2.available_balls)
-        self.assertEqual(1, pf2.unexpected_balls)
 
         self.assertEventCalledWith("playfield_jump", source=pf1, target=pf2)

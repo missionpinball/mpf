@@ -176,7 +176,6 @@ class BallDevice(AsyncDevice, SystemWideDevice):
     @asyncio.coroutine
     def lost_idle_ball(self):
         if self.config['mechanical_eject']:
-            #raise AssertionError("asd")
             # handle lost balls via outgoing balls handler (if mechanical eject)
             self.config['eject_targets'][0].available_balls += 1
             eject = OutgoingBall(self.config['eject_targets'][0])
@@ -197,17 +196,30 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         if target == self.config['ball_missing_target']:
             self.log.warning("Target %s and ball_missing_target %s are the same. Pretending the ball arrived.",
                              self.config['ball_missing_target'], target)
-            self.config['ball_missing_target'].add_missing_balls(1)
         elif not target.is_playfield() and target.cancel_path_if_target_is(self.config['ball_missing_target']):
             # add ball to default target
             self.log.warning("Path to %s canceled. Assuming the ball jumped to %s.", target,
                              self.config['ball_missing_target'])
-            self.config['ball_missing_target'].add_missing_balls(1)
         else:
             self.log.warning("Path is not going to ball_missing_target %s. Restoring path by requesting new ball to "
                              "target %s.", self.config['ball_missing_target'], target)
             self.eject(target=target)
 
+        self.config['ball_missing_target'].add_missing_balls(1)
+        yield from self._balls_missing(1)
+
+    @asyncio.coroutine
+    def lost_incoming_ball(self, source):
+        """Handle lost ball which was confirmed to have left source."""
+        if self.cancel_path_if_target_is(self.config['ball_missing_target']):
+            # add ball to default target
+            self.log.warning("Path to canceled. Assuming the ball jumped to %s.", self.config['ball_missing_target'])
+        else:
+            self.log.warning("Path is not going to ball_missing_target %s. Restoring path by requesting a new ball.",
+                             self.config['ball_missing_target'])
+            self.request_ball()
+
+        self.config['ball_missing_target'].add_missing_balls(1)
         yield from self._balls_missing(1)
 
     def cancel_path_if_target_is(self, target):
@@ -985,7 +997,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         # this device is tagged 'trough' in which case we let it keep them.
         self.debug_log("Adding ball")
         self.available_balls += new_balls
-        self.machine.ball_controller.trigger_ball_count()
+        #self.machine.ball_controller.trigger_ball_count()
 
         if unclaimed_balls:
             if 'trough' in self.tags:

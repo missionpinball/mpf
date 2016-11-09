@@ -487,17 +487,17 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         coil1.pulse.assert_called_once_with()
         assert not coil2.pulse.called
 
-        self.assertEqual(1, len(target.eject_queue))
+        self.assertEqual(playfield, target.outgoing_balls_handler._current_target)
         self.assertEqual(0, len(target._incoming_balls))
 
         self.machine.switch_controller.process_switch("s_ball_switch1", 0)
         self.advance_time_and_run(1)
         self.assertEqual(0, device1.balls)
 
-        self.assertEqual(1, len(target.eject_queue))
+        self.assertEqual(playfield, target.outgoing_balls_handler._current_target)
         self.advance_time_and_run(10)
 
-        self.assertEqual(1, len(target.eject_queue))
+        self.assertEqual(playfield, target.outgoing_balls_handler._current_target)
 
         # it does not hit any playfield switches and goes missing
         self.advance_time_and_run(100)

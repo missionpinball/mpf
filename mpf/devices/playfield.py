@@ -8,7 +8,7 @@ from mpf.core.delays import DelayManager
 from mpf.devices.ball_device.incoming_balls_handler import IncomingBall
 
 
-@DeviceMonitor("available_balls", "unexpected_balls", "num_balls_requested", "balls")
+@DeviceMonitor("available_balls", "num_balls_requested", "balls")
 class Playfield(SystemWideDevice):
 
     """One playfield in a pinball machine."""
@@ -29,7 +29,6 @@ class Playfield(SystemWideDevice):
         # Attributes
         self._balls = 0
         self.available_balls = 0
-        self.unexpected_balls = 0
         self.num_balls_requested = 0
 
         self._incoming_balls = []
@@ -107,14 +106,9 @@ class Playfield(SystemWideDevice):
         pass
 
     def add_missing_balls(self, balls):
-        """Notifie the playfield that it probably received a ball which went missing elsewhere."""
+        """Notify the playfield that it probably received a ball which went missing elsewhere."""
         # TODO: add incoming ball only and wait for confirm or timeout
         self.available_balls += balls
-        # if we catched an unexpected balls before do not add a ball
-        if self.unexpected_balls:
-            self.unexpected_balls -= 1
-            balls -= 1
-
         self.balls += balls
 
     @property
@@ -132,13 +126,14 @@ class Playfield(SystemWideDevice):
             self.log.debug("Ball count change. Prior: %s, Current: %s, Change:"
                            " %s", prior_balls, balls, ball_change)
 
-        if balls >= 0:
-            self._balls = balls
-        else:
-            self._balls = 0
-            self.unexpected_balls += -balls
-            self.log.warning("Playfield balls went to %s. Resetting to 0, but "
-                             "FYI that something's weird. Unexpected balls: %s", balls, self.unexpected_balls)
+        self._balls = balls
+        # if balls >= 0:
+        #     self._balls = balls
+        # else:
+        #     self._balls = 0
+        #     self.unexpected_balls += -balls
+        #     self.log.warning("Playfield balls went to %s. Resetting to 0, but "
+        #                      "FYI that something's weird. Unexpected balls: %s", balls, self.unexpected_balls)
 
         self.log.debug("New Ball Count: %s. (Prior count: %s)",
                        self._balls, prior_balls)
@@ -331,6 +326,8 @@ class Playfield(SystemWideDevice):
         self.log.debug("%s ball(s) removed from the playfield", balls)
         self.balls -= balls
         self.available_balls -= balls
+        for i in range(balls):
+            self.machine.ball_controller.add_captured_ball(self)
 
     def _source_device_ball_lost(self, target, **kwargs):
         del kwargs

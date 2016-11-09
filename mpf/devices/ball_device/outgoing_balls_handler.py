@@ -49,7 +49,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                 ball_eject_process = yield from self.ball_device.ball_count_handler.track_eject(already_left=True)
                 # no prepare eject because this cannot be blocked
                 yield from self._post_ejecting_event(eject_request, 1)
-                incoming_ball_at_target = self._add_incoming_ball_to_target(eject_request)
+                incoming_ball_at_target = self._add_incoming_ball_to_target(eject_request.target)
                 result = yield from self._handle_confirm(eject_request, ball_eject_process, incoming_ball_at_target)
                 if result:
                     continue
@@ -248,18 +248,18 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
 
         self._state = "ball_left"
         self.debug_log("Ball left")
-        incoming_ball_at_target = self._add_incoming_ball_to_target(eject_request)
+        incoming_ball_at_target = self._add_incoming_ball_to_target(eject_request.target)
         return (yield from self._handle_confirm(eject_request, ball_eject_process, incoming_ball_at_target))
 
-    def _add_incoming_ball_to_target(self, eject_request: OutgoingBall) -> IncomingBall:
+    def _add_incoming_ball_to_target(self, target) -> IncomingBall:
         # we are the source of this ball
-        incoming_ball_at_target = IncomingBall(self.ball_device, eject_request.target)
+        incoming_ball_at_target = IncomingBall(self.ball_device, target)
         if self.ball_device.config['confirm_eject_type'] == "switch":
             incoming_ball_at_target.add_external_confirm_switch(self.ball_device.config['confirm_eject_switch'].name)
         elif self.ball_device.config['confirm_eject_type'] == "event":
             incoming_ball_at_target.add_external_confirm_event(self.ball_device.config['confirm_eject_event'])
 
-        eject_request.target.add_incoming_ball(incoming_ball_at_target)
+        target.add_incoming_ball(incoming_ball_at_target)
         return incoming_ball_at_target
 
     @asyncio.coroutine
@@ -293,7 +293,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         ball_return_future = self.ball_device.ensure_future(ball_eject_process.wait_for_ball_return())
         unknown_balls_future = self.ball_device.ensure_future(ball_eject_process.wait_for_ball_unknown_ball())
         eject_success_future = incoming_ball_at_target.wait_for_confirm()
-        timeout = 30    # TODO: make this dynamic
+        timeout = self.ball_device.config['ball_missing_timeouts'][eject_request.target] / 1000
 
         # TODO: remove hack when moving code below
         yield from asyncio.sleep(0.1, loop=self.machine.clock.loop)

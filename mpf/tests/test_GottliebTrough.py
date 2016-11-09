@@ -151,7 +151,6 @@ class TestGottliebTrough(MpfTestCase):
         self.assertEqual(1, self.machine.ball_devices.playfield.balls)
 
     def test_boot_and_start_game_with_ball_in_plunger(self):
-        self.machine.ball_controller.num_balls_known = 0
         self.machine.coils.outhole.pulse = MagicMock()
         self.machine.coils.trough.pulse = MagicMock()
 

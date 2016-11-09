@@ -24,7 +24,6 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEqual(4, self.machine.ball_devices.trough.balls)
         self.assertEqual(4, self._captured)
-        self.assertEqual(0, self.machine.playfield.unexpected_balls)
         self._captured = 0
 
         self.trough_coil = self.machine.coils.trough_eject
@@ -354,7 +353,6 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         # ball goes into plunger
         self.machine.switch_controller.process_switch('s_plunger', 1)
         self.advance_time_and_run(1)
-        self.assertEqual(0, self.machine.playfield.unexpected_balls)
 
         self.assertEqual(self.machine.ball_devices.trough.balls, 3)
         self.assertEqual(self.machine.ball_devices.plunger.balls, 1)
@@ -379,7 +377,6 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.assertEqual(0, self.machine.ball_devices.plunger.balls)
         self.assertEqual(1, self.machine.ball_devices.playfield.balls)
         self.assertEqual(1, self.machine.playfield.balls)
-        self.assertEqual(0, self.machine.playfield.unexpected_balls)
         self.assertEqual("idle", self.machine.ball_devices.trough._state)
         self.assertEqual("idle", self.machine.ball_devices.plunger._state)
 
@@ -420,7 +417,6 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.assertEqual(1, self.machine.ball_devices.plunger.balls)
         self.assertEqual(3, self.machine.ball_devices.trough.balls)
         self.assertEqual(0, self.machine.playfield.balls)
-        self.assertEqual(0, self.machine.playfield.unexpected_balls)
         self.assertEqual(1, self._captured)
 
     def test_eject_while_second_ball_enter(self):

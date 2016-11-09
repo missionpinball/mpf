@@ -42,7 +42,7 @@ class IncomingBall:
     def _external_confirm(self, future):
         del future
         self._timeout_future.cancel()
-        timeout = 10    # TODO: make this configurable
+        timeout = self._source.config['ball_missing_timeouts'][self._target] / 1000
         self._timeout_future = self._source.ensure_future(asyncio.sleep(timeout, loop=self._source.machine.clock.loop))
         self._confirm_future.set_result(True)
 
@@ -50,6 +50,11 @@ class IncomingBall:
     def source(self):
         """Return source."""
         return self._source
+
+    @property
+    def target(self):
+        """Return target."""
+        return self._target
 
     def did_not_arrive(self):
         """Ball did not arrive."""
@@ -103,41 +108,41 @@ class IncomingBallsHandler(BallDeviceStateHandler):
             for incoming_ball in timeouts:
                 self.debug_log("Incoming ball timeout")
                 self._incoming_balls.remove(incoming_ball)
-                self._handle_timeout(incoming_ball)
 
             if not self._incoming_balls:
                 self._has_incoming_balls.clear()
 
-    def _handle_timeout(self, incoming_ball: IncomingBall):
-        """Handle ball timeout."""
-        del self
-        del incoming_ball
-        #raise NotImplemented("Ball Timeout")
+            for incoming_ball in timeouts:
+                yield from self.ball_device.lost_incoming_ball(source=incoming_ball.source)
 
     def add_incoming_ball(self, incoming_ball: IncomingBall):
         """Add incoming balls."""
-        self.debug_log("Adding incoming ball from %s", incoming_ball._source)
+        self.debug_log("Adding incoming ball from %s", incoming_ball.source)
         self._incoming_balls.append(incoming_ball)
         # TODO: set a callback here
         self._has_incoming_balls.set()
 
     def remove_incoming_ball(self, incoming_ball: IncomingBall):
         """Remove incoming ball."""
-        self.debug_log("Removing incoming ball from %s", incoming_ball._source)
+        self.debug_log("Removing incoming ball from %s", incoming_ball.source)
         self._incoming_balls.remove(incoming_ball)
 
     @asyncio.coroutine
     def ball_arrived(self):
         """Handle one ball which arrived in the device."""
-        if self._incoming_balls:
+        for incoming_ball in self._incoming_balls:
+            if not incoming_ball.can_arrive:
+                continue
+
             # handle incoming ball
-            incoming_ball = self._incoming_balls.pop(0)     # TODO: sort by better metric
             self.debug_log("Received ball from %s", incoming_ball.source)
             # confirm eject
             incoming_ball.ball_arrived()
+            self._incoming_balls.remove(incoming_ball)
 
             # TODO: post enter event here?
             yield from self.ball_device.expected_ball_received()
+            break
         else:
             # handle unexpected ball
             self.debug_log("Received unexpected ball")
