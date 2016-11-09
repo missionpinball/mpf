@@ -297,7 +297,7 @@ class Playfield(SystemWideDevice):
         indicating that there is at least one ball on the playfield.
 
         """
-        if not self.balls or (kwargs.get('balls') and self.balls - kwargs['balls'] < 0):
+        if self.balls <= 0 or (kwargs.get('balls') and self.balls - kwargs['balls'] < 0):
             self._mark_playfield_active()
 
             if not self.num_balls_requested:
