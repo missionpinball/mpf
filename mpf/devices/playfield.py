@@ -261,8 +261,8 @@ class Playfield(SystemWideDevice):
                        source_device.name, player_controlled)
 
         if player_controlled:
-            source_device.setup_player_controlled_eject(balls=balls,
-                                                        target=self)
+            for i in range(balls):
+                source_device.setup_player_controlled_eject(target=self)
         else:
             source_device.eject(balls=balls, target=self, get_ball=True)
 

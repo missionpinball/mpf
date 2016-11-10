@@ -535,14 +535,12 @@ class BallDevice(AsyncDevice, SystemWideDevice):
 
         return True
 
-    def setup_player_controlled_eject(self, balls=1, target=None):
+    def setup_player_controlled_eject(self, target=None):
         """Setup a player controlled eject."""
         self.debug_log("Setting up player-controlled eject. Balls: %s, "
                        "Target: %s, player_controlled_eject_event: %s",
-                       balls, target,
+                       1, target,
                        self.config['player_controlled_eject_event'])
-
-        assert balls == 1
 
         if self.config['mechanical_eject'] or (
                 self.config['player_controlled_eject_event'] and self.ejector):
@@ -550,7 +548,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
             self._setup_or_queue_eject_to_target(target, True)
 
         else:
-            self.eject(balls, target=target)
+            self.eject(1, target=target)
 
     def setup_eject_chain(self, path, player_controlled=False):
         """Setup an eject chain."""
