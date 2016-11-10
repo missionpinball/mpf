@@ -145,17 +145,20 @@ class BallDevice(AsyncDevice, SystemWideDevice):
     def lost_ejected_ball(self, target):
         """Handle an outgoing lost ball."""
         # follow path and check if we should request a new ball to the target or cancel the path
-        if target == self.config['ball_missing_target']:
-            self.log.warning("Target %s and ball_missing_target %s are the same. Pretending the ball arrived.",
-                             self.config['ball_missing_target'], target)
-        elif not target.is_playfield() and target.cancel_path_if_target_is(self.config['ball_missing_target']):
-            # add ball to default target
+        if target.is_playfield():
+            raise AssertionError("Lost a ball to playfield {}. This should not happen".format(target))
+        elif target.cancel_path_if_target_is(self.config['ball_missing_target']):
+            # add ball to default target because it would have gone there anyway
             self.log.warning("Path to %s canceled. Assuming the ball jumped to %s.", target,
                              self.config['ball_missing_target'])
-        else:
+        elif target.find_available_ball_in_path():
             self.log.warning("Path is not going to ball_missing_target %s. Restoring path by requesting new ball to "
                              "target %s.", self.config['ball_missing_target'], target)
+            # remove one ball first because it will get a new one with the eject
+            target.available_balls -= 1
             self.eject(target=target)
+        else:
+            self.log.warning("Failed to restore the path. If you can reproduce this please report in the forum!")
 
         self.config['ball_missing_target'].add_missing_balls(1)
         yield from self._balls_missing(1)
@@ -166,16 +169,22 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         if self.cancel_path_if_target_is(self.config['ball_missing_target']):
             # add ball to default target
             self.log.warning("Path to canceled. Assuming the ball jumped to %s.", self.config['ball_missing_target'])
-        else:
+        elif self.find_available_ball_in_path():
             self.log.warning("Path is not going to ball_missing_target %s. Restoring path by requesting a new ball.",
                              self.config['ball_missing_target'])
+            self.available_balls -= 1
             self.request_ball()
+        else:
+            self.log.warning("Failed to restore the path. If you can reproduce this please report in the forum!")
 
         self.config['ball_missing_target'].add_missing_balls(1)
         yield from self._balls_missing(1)
 
     def cancel_path_if_target_is(self, target):
         return self.outgoing_balls_handler.cancel_path_if_target_is(target)
+
+    def find_available_ball_in_path(self):
+        return self.outgoing_balls_handler.find_available_ball_in_path()
 
     # Logic and dispatchers
     @asyncio.coroutine

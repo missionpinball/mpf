@@ -124,6 +124,22 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         """Return the current state for legacy reasons."""
         return self._state
 
+    def find_available_ball_in_path(self) -> bool:
+        """Try to remove available ball at the end of the path."""
+        if not self._current_target and self.ball_device.available_balls > 0:
+            self.debug_log("We do not have an eject but an available ball.")
+            return True
+
+        if self._current_target.is_playfield():
+            self.debug_log("End of path is playfield %s", self._current_target)
+            return True
+
+        if self._current_target:
+            return self._current_target.find_available_ball_in_path()
+
+        self.ball_device.log.warning("No eject and no available_balls. Path went nowhere.")
+        return False
+
     def cancel_path_if_target_is(self, target) -> bool:
         """Check if the ball is going to a certain target and cancel the path in that case.
 
