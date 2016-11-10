@@ -26,9 +26,9 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self._requesting += balls
 
     def _ball_enter(self, new_balls, unclaimed_balls, **kwargs):
-        del unclaimed_balls
+        del new_balls
         del kwargs
-        self._enter += new_balls
+        self._enter += unclaimed_balls
 
     def _captured_from_pf(self, balls, **kwargs):
         del kwargs

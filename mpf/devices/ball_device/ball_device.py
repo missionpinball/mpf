@@ -112,21 +112,22 @@ class BallDevice(AsyncDevice, SystemWideDevice):
     @asyncio.coroutine
     def expected_ball_received(self):
         """Handle an expected ball."""
-        # TODO: do we need this?
-        #yield from self._handle_new_ball()
-        pass
+        # post enter event
+        yield from self._post_enter_event(unclaimed_balls=0)
 
     @asyncio.coroutine
     def unexpected_ball_received(self):
         """Handle an unexpected ball."""
-        # available_balls are updated in _handle_new_ball
         # capture from playfield
-        yield from self._handle_unexpected_ball()
-        # route this to the default target
-        yield from self._handle_new_ball()
+        yield from self._post_capture_from_playfield_event()
+        # post enter event
+        unclaimed_balls = yield from self._post_enter_event(unclaimed_balls=1)
+        # add available_balls and route unclaimed ball to the default target
+        self._balls_added_callback(1, unclaimed_balls)
 
     @asyncio.coroutine
     def lost_idle_ball(self):
+        """Lost an ball while the device was idle."""
         if self.config['mechanical_eject']:
             # handle lost balls via outgoing balls handler (if mechanical eject)
             self.config['eject_targets'][0].available_balls += 1
@@ -205,7 +206,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         self.available_balls = self.balls
 
     @asyncio.coroutine
-    def _handle_unexpected_ball(self):
+    def _post_capture_from_playfield_event(self):
         yield from self.machine.events.post_async('balldevice_captured_from_{}'.format(
             self.config['captures_from'].name),
             balls=1)
@@ -220,12 +221,12 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         '''
 
     @asyncio.coroutine
-    def _handle_new_ball(self):
+    def _post_enter_event(self, unclaimed_balls):
         self.debug_log("Processing new ball")
         result = yield from self.machine.events.post_relay_async('balldevice_{}_ball_enter'.format(
             self.name),
             new_balls=1,
-            unclaimed_balls=1,
+            unclaimed_balls=unclaimed_balls,
             device=self)
         '''event: balldevice_(name)_ball_enter
 
@@ -242,7 +243,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         device: A reference to the ball device object that is posting this
         event.
         '''
-        self._balls_added_callback(result["new_balls"], result["unclaimed_balls"])
+        return result['unclaimed_balls']
 
     def add_incoming_ball(self, incoming_ball: IncomingBall):
         """Notify this device that there is a ball heading its way."""
@@ -400,8 +401,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
 
                     break
 
-    def _balls_added_callback(self, new_balls, unclaimed_balls, **kwargs):
-        del kwargs
+    def _balls_added_callback(self, new_balls, unclaimed_balls):
         # If we still have unclaimed_balls here, that means that no one claimed
         # them, so essentially they're "stuck." So we just eject them unless
         # this device is tagged 'trough' in which case we let it keep them.

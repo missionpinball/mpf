@@ -347,12 +347,12 @@ class TestBallDevice(MpfTestCase):
         self.assertEqual(1, playfield.balls)
 
     def _ball_enter(self, new_balls, unclaimed_balls, **kwargs):
-        del unclaimed_balls
         del kwargs
-        if new_balls < 0:
+        del new_balls
+        if unclaimed_balls < 0:
             raise Exception("Balls went negative")
 
-        self._enter += new_balls
+        self._enter += unclaimed_balls
 
     def _captured_from_pf(self, balls, **kwargs):
         del kwargs
