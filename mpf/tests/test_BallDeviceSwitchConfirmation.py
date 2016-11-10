@@ -228,6 +228,12 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self.assertEqual(0, playfield.available_balls)
         self.assertEqual(1, self._missing)
 
+        # there should be exactly 2 available_balls in the machine
+        self.assertEqual(0, device1.available_balls)
+        self.assertEqual(0, device2.available_balls)
+        self.assertEqual(2, device4.available_balls)
+        self.assertEqual(0, playfield.available_balls)
+
     def test_eject_successful_but_ball_never_arrives(self):
         # TODO: improve this situation
         coil1 = self.machine.coils['eject_coil1']
@@ -257,6 +263,7 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self._captured = 0
 
         self.assertEqual(0, playfield.balls)
+        self.assertEqual(2, self.machine.ball_controller.num_balls_known)
 
         # it should keep the ball
         coil1.pulse = MagicMock()
@@ -347,6 +354,13 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         assert not coil3.pulse.called
         assert not coil4.pulse.called
 
+        # there should be exactly 2 available_balls in the machine
+        self.assertEqual(0, device1.available_balls)
+        self.assertEqual(0, device2.available_balls)
+        self.assertEqual(1, device4.available_balls)
+        self.assertEqual(1, playfield.available_balls)
+
+        self.assertEqual(2, self.machine.ball_controller.num_balls_known)
         self.assertEqual(1, playfield.balls)
         self.assertEqual(1, self._missing)
 
@@ -370,8 +384,9 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
 
         # add an initial ball to trough
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
+        self.machine.switch_controller.process_switch("s_ball_switch2", 1)
         self.advance_time_and_run(1)
-        self.assertEqual(1, self._captured)
+        self.assertEqual(2, self._captured)
         self._captured = 0
 
         self.assertEqual(0, playfield.balls)
@@ -381,7 +396,7 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         coil2.pulse = MagicMock()
         coil3.pulse = MagicMock()
         coil4.pulse = MagicMock()
-        self.assertEqual(1, device1.balls)
+        self.assertEqual(2, device1.balls)
         assert not coil1.pulse.called
         assert not coil2.pulse.called
         assert not coil3.pulse.called
@@ -405,8 +420,8 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
 
         self.machine.switch_controller.process_switch("s_ball_switch1", 0)
         self.advance_time_and_run(1)
-        self.assertEqual(0, device1.balls)
-        self.assertEqual(1, self.machine.ball_controller.num_balls_known)
+        self.assertEqual(1, device1.balls)
+        self.assertEqual(2, self.machine.ball_controller.num_balls_known)
 
         # launcher receives and ejects ball
         self.machine.switch_controller.process_switch("s_ball_switch_launcher",
@@ -445,7 +460,7 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         # ball drains
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
         self.advance_time_and_run(1)
-        self.assertEqual(1, device1.balls)
+        self.assertEqual(2, device1.balls)
         self.assertEqual(None, self.machine.game)
 
         # ball should not be at playfield by now
@@ -465,10 +480,17 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self.assertEqual("idle", device3._state)
         self.assertEqual("idle", device4._state)
 
+        # there should be exactly 2 available_balls in the machine
+        self.assertEqual(2, device1.available_balls)
+        self.assertEqual(0, device2.available_balls)
+        self.assertEqual(0, device3.available_balls)
+        self.assertEqual(0, device4.available_balls)
+        self.assertEqual(0, playfield.available_balls)
+
         self.assertEqual(0, playfield.balls)
         self.assertEqual(1, self._missing)
 
-        self.assertEqual(1, self.machine.ball_controller.num_balls_known)
+        self.assertEqual(2, self.machine.ball_controller.num_balls_known)
 
     def test_eject_successful_but_ball_never_arrives_and_stays_on_pf(self):
         coil1 = self.machine.coils['eject_coil1']
@@ -578,6 +600,13 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self.assertEqual("idle", device2._state)
         self.assertEqual("idle", device3._state)
         self.assertEqual("idle", device4._state)
+
+        # there should be exactly 1 available_ball in the machine
+        self.assertEqual(0, device1.available_balls)
+        self.assertEqual(0, device2.available_balls)
+        self.assertEqual(0, device3.available_balls)
+        self.assertEqual(0, device4.available_balls)
+        self.assertEqual(1, playfield.available_balls)
 
         self.assertEqual(1, playfield.balls)
         self.assertEqual(1, self._missing)
