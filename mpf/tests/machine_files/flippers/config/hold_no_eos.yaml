@@ -1,0 +1,37 @@
+#config_version=4
+
+hardware:
+  platform: fast
+  driverboards: fast
+
+switches:
+    s_left_flipper:
+        number: 0-0
+    s_right_flipper:
+        number: 0-1
+
+coils:
+    c_flipper_left_main:
+        number: 0-0
+        pulse_ms: 30
+    c_flipper_left_hold:
+        number: 0-1
+        allow_enable: true
+    c_flipper_right_main:
+        number: 0-2
+        pulse_ms: 30
+    c_flipper_right_hold:
+        number: 0-3
+        allow_enable: true
+
+flippers:
+    left_flipper:
+        main_coil: c_flipper_left_main
+        hold_coil: c_flipper_left_hold
+        activation_switch: s_left_flipper
+        enable_events: machine_reset_phase_3
+    right_flipper:
+        main_coil: c_flipper_right_main
+        hold_coil: c_flipper_right_hold
+        activation_switch: s_right_flipper
+        enable_events: machine_reset_phase_3
