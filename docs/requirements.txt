@@ -1,0 +1,5 @@
+# Requirements file for pip packages needed to build the docs.
+# These packages are not required to build or run MPF itself.
+
+sphinxcontrib-napoleon
+autoapi

@@ -163,6 +163,11 @@ class Diverter(SystemWideDevice):
         self.active = True
 
         self.machine.events.post('diverter_' + self.name + '_activating')
+        '''event: diverter_(name)_activating
+        desc: The diverter called (name) is activating itself, which means
+            it's physically pulsing or holding the coil to move.
+
+        '''
         if self.config['type'] == 'pulse':
             self.config['activation_coil'].pulse()
         elif self.config['type'] == 'hold':

@@ -30,6 +30,12 @@ achievement_groups:
     show_when_enabled: single|str|None
 achievements:
     __valid_in__: mode
+    show_tokens: dict|str:str|None
+    restart_after_stop_possible: single|bool|True
+    restart_on_next_ball_when_started: single|bool|False
+    enable_on_next_ball_when_enabled: single|bool|True
+    start_enabled: single|bool|False
+
     enable_events: dict|str:ms|None
     start_events: dict|str:ms|None
     complete_events: dict|str:ms|None
@@ -37,23 +43,21 @@ achievements:
     stop_events: dict|str:ms|None
     reset_events: dict|str:ms|None
     select_events: dict|str:ms|None
+
     events_when_enabled: list|str|None
     events_when_started: list|str|None
     events_when_completed: list|str|None
     events_when_stopped: list|str|None
     events_when_disabled: list|str|None
     events_when_selected: list|str|None
+
     show_when_enabled: single|str|None
     show_when_started: single|str|None
     show_when_completed: single|str|None
     show_when_stopped: single|str|None
     show_when_disabled: single|str|None
     show_when_selected: single|str|None
-    show_tokens: dict|str:str|None
-    restart_on_next_ball_when_started: single|bool|False
-    enable_on_next_ball_when_enabled: single|bool|True
-    restart_after_stop_possible: single|bool|True
-    start_enabled: single|bool|False
+
 animations:
     __valid_in__: machine, mode                 # todo add to validator
 assets:
@@ -654,7 +658,7 @@ playfields:
 playfield_transfers:
     __valid_in__: machine
     ball_switch: single|machine(switches)|None
-    transfer_events: list|str:ms|None
+    transfer_events: dict|str:ms|None
     eject_target: single|machine(ball_devices)|
     captures_from: single|machine(ball_devices)|
 plugins:

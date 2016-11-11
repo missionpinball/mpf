@@ -71,7 +71,7 @@ class BallSave(SystemWideDevice, ModeDevice):
             self.timer_start()
 
         self.machine.events.post('ball_save_{}_enabled'.format(self.name))
-        '''event: ball_save_(name)_enabled:
+        '''event: ball_save_(name)_enabled
         desc: The ball save called (name) has just been enabled.
         '''
 
@@ -90,7 +90,7 @@ class BallSave(SystemWideDevice, ModeDevice):
         self.delay.remove('grace_period')
 
         self.machine.events.post('ball_save_{}_disabled'.format(self.name))
-        '''event: ball_save_(name)_disabled:
+        '''event: ball_save_(name)_disabled
         desc: The ball save called (name) has just been disabled.
         '''
 
@@ -106,7 +106,7 @@ class BallSave(SystemWideDevice, ModeDevice):
         self.timer_started = True
 
         self.machine.events.post('ball_save_{}_timer_start'.format(self.name))
-        '''event: ball_save_(name)_timer_start:
+        '''event: ball_save_(name)_timer_start
         desc: The ball save called (name) has just start its countdown timer.
         '''
 
@@ -132,7 +132,7 @@ class BallSave(SystemWideDevice, ModeDevice):
             self.log.debug("Starting Hurry Up")
 
         self.machine.events.post('ball_save_{}_hurry_up'.format(self.name))
-        '''event: ball_save_(name)_hurry_up:
+        '''event: ball_save_(name)_hurry_up
         desc: The ball save called (name) has just entered its hurry up mode.
         '''
 
@@ -141,7 +141,7 @@ class BallSave(SystemWideDevice, ModeDevice):
             self.log.debug("Starting Grace Period")
 
         self.machine.events.post('ball_save_{}_grace_period'.format(self.name))
-        '''event: ball_save_(name)_grace_period:
+        '''event: ball_save_(name)_grace_period
         desc: The ball save called (name) has just entered its grace period
             time.
         '''
@@ -181,7 +181,7 @@ class BallSave(SystemWideDevice, ModeDevice):
 
         self.machine.events.post('ball_save_{}_saving_ball'.format(self.name),
                                  balls=balls_to_save)
-        '''event: ball_save_(name)_saving_ball:
+        '''event: ball_save_(name)_saving_ball
         desc: The ball save called (name) has just saved one (or more) balls.
 
         args:

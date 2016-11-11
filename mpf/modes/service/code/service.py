@@ -50,9 +50,17 @@ down_events: list|str|sw_service_down_active
             elif key == "UP":
                 # post event for mc to increase volume
                 self.machine.events.post("master_volume_increase")
+                '''event: master_volume_increase
+
+                desc: Increase the master volume of the audio system.
+                '''
             elif key == "DOWN":
                 # post event for mc to decrease volume
                 self.machine.events.post("master_volume_decrease")
+                '''event: master_volume_decrease
+
+                desc: Decrease the master volume of the audio system.
+                '''
 
     @asyncio.coroutine
     def _start_main_menu(self):
