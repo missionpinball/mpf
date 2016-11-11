@@ -658,7 +658,7 @@ playfields:
 playfield_transfers:
     __valid_in__: machine
     ball_switch: single|machine(switches)|None
-    transfer_events: list|str:ms|None
+    transfer_events: dict|str:ms|None
     eject_target: single|machine(ball_devices)|
     captures_from: single|machine(ball_devices)|
 plugins:

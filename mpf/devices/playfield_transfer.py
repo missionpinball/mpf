@@ -21,8 +21,9 @@ class PlayfieldTransfer(SystemWideDevice):
         super().__init__(machine, name)
 
     def _initialize(self):
-        self.machine.events.add_handler('init_phase_3',
-                                        self._configure_switch)
+        if self.config['ball_switch']:
+            self.machine.events.add_handler('init_phase_3',
+                                            self._configure_switch)
 
         # load target playfield
         self.target = self.config['eject_target']
@@ -45,12 +46,23 @@ class PlayfieldTransfer(SystemWideDevice):
         # we will continue using a callback to keep the ball count sane
         # (otherwise it may go to -1 during the next event)
         self.machine.events.post('sw_' + self.source.name + '_active',
-                                 callback=self._ball_went_through2)
+                                 callback=self._ball_went_through2, balls=1)
         # event docstring in playfield module.
-        # todo should we add ball kwarg to post so it matched the other one?
+
+        self.machine.events.post('playfield_transfer_{}_ball_transferred'.format(self.name),
+                                 source=self.source, target=self.target)
+        '''event: playfield_transfer_(playfield_transfer)_ball_transferred
+        desc: The playfield_transfer called (playfield_transfer) transferred a ball from playfield (source) to
+        playfield (target).
+
+        args:
+        source: The source playfield.
+        target: The target playfield.
+        '''
 
     # used as callback in _ball_went_through
-    def _ball_went_through2(self):
+    def _ball_went_through2(self, **kwargs):
+        del kwargs
         # trigger remove ball from source playfield
         self.machine.events.post(
             'balldevice_captured_from_' + self.source.name,

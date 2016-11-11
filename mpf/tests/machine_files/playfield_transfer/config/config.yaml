@@ -10,6 +10,11 @@ playfield_transfers:
         captures_from: playfield1
         eject_target: playfield2
 
+    transfer2:
+        transfer_events: transfer_ball
+        captures_from: playfield1
+        eject_target: playfield2
+
 playfields:
     playfield1:
         label: Playfield 1
