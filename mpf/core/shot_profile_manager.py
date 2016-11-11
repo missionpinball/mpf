@@ -86,6 +86,9 @@ class ShotProfileManager(object):
         if not config['player_variable']:
             config['player_variable'] = '%_' + profile_name
 
+        if not config['states']:
+            raise AssertionError("Shot profile {} has to contain at least one state.".format(profile_name))
+
         if self.debug:
             self.log.debug("Processed '%s' profile configuration: %s",
                            profile_name, config)
