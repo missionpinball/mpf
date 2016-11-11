@@ -15,13 +15,14 @@ class IncomingBall:
         self._confirm_future = asyncio.Future(loop=source.machine.clock.loop)
         self._source = source
         self._target = target
-        self._left_device = True
         self._external_confirm_future = None
+        self._state = "left_device"
 
     @property
     def can_arrive(self):
         """Return true if ball can arrive."""
-        return self._left_device and (not self._external_confirm_future or self._external_confirm_future.done())
+        return self._state == "left_device" and \
+               (not self._external_confirm_future or self._external_confirm_future.done())
 
     def add_external_confirm_switch(self, switch_name):
         """Add external confirm switch."""
@@ -58,12 +59,19 @@ class IncomingBall:
 
     def did_not_arrive(self):
         """Ball did not arrive."""
-        # self._confirm_future.cancel()
+        if not self._state == "left_device":
+            return
+        self._state = "lost"
+
         self._timeout_future.cancel()
         self._target.remove_incoming_ball(self)
 
     def ball_arrived(self):
         """Ball did arrive."""
+        if not self._state == "left_device":
+            return
+        self._state = "arrived"
+
         if not self._external_confirm_future:
             self._confirm_future.set_result(True)
         self._target.remove_incoming_ball(self)
