@@ -677,6 +677,15 @@ class Util(object):
         return Util.first(futures, loop, timeout, False)
 
     @staticmethod
+    def ensure_future(coro_or_future, loop):
+        """Wrap ensure_future."""
+        if hasattr(asyncio, "compat") and asyncio.compat.PY35:
+            return asyncio.ensure_future(coro_or_future, loop=loop)
+        else:
+            # pylint: disable-msg=
+            return asyncio.async(coro_or_future, loop=loop)
+
+    @staticmethod
     @asyncio.coroutine
     def first(futures: [asyncio.Future], loop, timeout=None, cancel_others=True):
         """Return first future and cancel others."""
@@ -685,8 +694,7 @@ class Util(object):
             done, pending = yield from asyncio.wait(iter(futures), loop=loop, timeout=timeout,
                                                     return_when=asyncio.FIRST_COMPLETED)
         except asyncio.CancelledError:
-            for future in futures:
-                future.cancel()
+            Util.cancel_futures(futures)
             raise
 
         if cancel_others:
