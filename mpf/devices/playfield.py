@@ -278,7 +278,6 @@ class Playfield(SystemWideDevice):
             self.debug_log("Received ball from %s", incoming_ball.source)
             # confirm eject
             incoming_ball.ball_arrived()
-            self._incoming_balls.remove(incoming_ball)
             break
 
     def _mark_playfield_active(self):

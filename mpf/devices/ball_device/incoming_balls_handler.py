@@ -66,6 +66,7 @@ class IncomingBall:
         """Ball did arrive."""
         if not self._external_confirm_future:
             self._confirm_future.set_result(True)
+        self._target.remove_incoming_ball(self)
         self._timeout_future.cancel()
 
     def wait_for_confirm(self):
@@ -145,7 +146,6 @@ class IncomingBallsHandler(BallDeviceStateHandler):
             self.debug_log("Received ball from %s", incoming_ball.source)
             # confirm eject
             incoming_ball.ball_arrived()
-            self._incoming_balls.remove(incoming_ball)
 
             # TODO: post enter event here?
             yield from self.ball_device.expected_ball_received()

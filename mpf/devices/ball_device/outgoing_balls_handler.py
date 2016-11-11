@@ -106,7 +106,6 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             self.debug_log("Got confirm for skipping ball.")
             yield from self._handle_eject_success(None, eject_request)
             self._incoming_ball_which_may_skip_obj.ball_arrived()
-            self.ball_device.remove_incoming_ball(self._incoming_ball_which_may_skip_obj)
             self._incoming_ball_which_may_skip.clear()
             self._incoming_ball_which_may_skip_obj = None
             self._no_incoming_ball_which_may_skip.set()
@@ -124,8 +123,12 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         """Return the current state for legacy reasons."""
         return self._state
 
-    def find_available_ball_in_path(self) -> bool:
+    def find_available_ball_in_path(self, start) -> bool:
         """Try to remove available ball at the end of the path."""
+        if self._current_target == start:
+            self.debug_log("Loop detected. Path will not go anywhere.")
+            return False
+
         if not self._current_target and self.ball_device.available_balls > 0:
             self.debug_log("We do not have an eject but an available ball.")
             return True
@@ -135,12 +138,12 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             return True
 
         if self._current_target:
-            return self._current_target.find_available_ball_in_path()
+            return self._current_target.find_available_ball_in_path(start)
 
         self.ball_device.log.warning("No eject and no available_balls. Path went nowhere.")
         return False
 
-    def cancel_path_if_target_is(self, target) -> bool:
+    def cancel_path_if_target_is(self, start, target) -> bool:
         """Check if the ball is going to a certain target and cancel the path in that case.
 
         Args:
@@ -148,6 +151,10 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
 
         Returns: True if found and deleted.
         """
+        if self._current_target == start:
+            self.debug_log("Loop detected. Path will not go anywhere.")
+            return False
+
         # TODO: check queue entries
         if not self._cancel_future or self._cancel_future.done():
             # we cannot cancel anyway so do not even check further
@@ -165,7 +172,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             self._cancel_future.set_result(True)
             return True
 
-        if not self._current_target.is_playfield() and self._current_target.cancel_path_if_target_is(target):
+        if not self._current_target.is_playfield() and self._current_target.cancel_path_if_target_is(start, target):
             # our successors are ejecting to target. cancel eject
             self.debug_log("Cancel path if target is not %s successful at successors.", target.name)
             self._cancel_future.set_result(True)
@@ -398,7 +405,6 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             # if target is playfield mark eject as confirmed
             self.debug_log("Confirming eject because target is playfield and ball did not return.")
             incoming_ball_at_target.ball_arrived()
-            eject_request.target.remove_incoming_ball(incoming_ball_at_target)
 
         # TODO: timeout
         try:
