@@ -93,8 +93,9 @@ class Playfield(SystemWideDevice):
         # We do nothing in that case
         pass
 
+    @staticmethod
     @asyncio.coroutine
-    def wait_for_ready_to_receive(self, source):
+    def wait_for_ready_to_receive(source):
         """Playfield is always ready to receive."""
         del source
         return True
@@ -255,7 +256,7 @@ class Playfield(SystemWideDevice):
                        source_device.name, player_controlled)
 
         if player_controlled:
-            for i in range(balls):
+            for _ in range(balls):
                 source_device.setup_player_controlled_eject(target=self)
         else:
             source_device.eject(balls=balls, target=self, get_ball=True)
@@ -319,7 +320,7 @@ class Playfield(SystemWideDevice):
         self.log.debug("%s ball(s) removed from the playfield", balls)
         self.balls -= balls
         self.available_balls -= balls
-        for i in range(balls):
+        for _ in range(balls):
             self.machine.ball_controller.add_captured_ball(self)
 
     def _source_device_ball_lost(self, target, **kwargs):

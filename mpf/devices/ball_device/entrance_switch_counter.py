@@ -52,7 +52,6 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
 
     def _entrance_switch_handler(self):
         """Add a ball to the device since the entrance switch has been hit."""
-        # TODO: maintain recycle_time somewhere
         self._set_future_results()
         self.debug_log("Entrance switch hit")
 
@@ -92,10 +91,9 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
                 switch_name=self.config['entrance_switch'].name,
                 state=0)
         else:
-            # TODO: put some minimal wait here
-            done_future = asyncio.Future(loop=self.machine.clock.loop)
-            done_future.set_result(True)
-            return done_future
+            # wait 10ms
+            done_future = asyncio.sleep(0.01, loop=self.machine.clock.loop)
+            return Util.ensure_future(done_future, loop=self.machine.clock.loop)
 
     def wait_for_ball_activity(self):
         """Wait for ball count changes."""
@@ -130,7 +128,7 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
                     self.ball_device.log.warning("Entrance count went below 0")
 
             if ball_activity.done() and self._entrance_count > count:
-                for i in range(self._entrance_count - count):
+                for _ in range(self._entrance_count - count):
                     yield from eject_tracker.track_ball_entrance()
 
                 count = self._entrance_count

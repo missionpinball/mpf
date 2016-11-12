@@ -14,10 +14,8 @@ class EjectTracker:
         self.machine = ball_counter_handler.machine
         self._already_left = already_left
         self._ball_count_handler = ball_counter_handler
-        self._hardware_counter_state = None
         self._task = None
         self._event_queue = asyncio.Queue(loop=self._ball_count_handler.machine.clock.loop)
-        self._eject_done = asyncio.Future(loop=self._ball_count_handler.machine.clock.loop)
         self._ball_left = asyncio.Future(loop=self._ball_count_handler.machine.clock.loop)
         self._ball_returned = asyncio.Future(loop=self._ball_count_handler.machine.clock.loop)
         self._ready = asyncio.Future(loop=self._ball_count_handler.machine.clock.loop)
@@ -87,10 +85,6 @@ class EjectTracker:
     def wait_for_ready(self):
         """Wait until the device is ready."""
         return asyncio.shield(self._ready, loop=self.machine.clock.loop)
-
-    def wait_for_eject_done(self):
-        """Wait until the eject is done."""
-        return asyncio.shield(self._eject_done, loop=self.machine.clock.loop)
 
     def set_ready(self):
         """Set device ready."""
@@ -192,10 +186,6 @@ class BallCountHandler(BallDeviceStateHandler):
             self._set_ball_count(new_balls)
 
         self.debug_log("A ball arrived. Progressing.")
-
-    def get_ball_count(self):
-        """Return a ball count future."""
-        return self.ball_device.counter.count_balls()
 
     @asyncio.coroutine
     def wait_for_ready_to_receive(self, source):

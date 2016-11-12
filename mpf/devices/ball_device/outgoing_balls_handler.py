@@ -221,14 +221,6 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             # wait for target to be ready
             # TODO: block one spot in target device to prevent double eject
             yield from eject_request.target.wait_for_ready_to_receive(self.ball_device)
-            # check if we still have a ball
-            # ball_count = yield from self.ball_device.ball_count_handler.get_ball_count()
-            # if ball_count == 0 and not self.ball_device.config['mechanical_eject']:
-            #     # abort the eject because ball was lost in the meantime
-            #     # TODO: might be mechanical eject
-            #     yield from self._abort_eject(eject_request, eject_try)
-            #     # try again
-            #     continue
             self._state = "ejecting"
             result = yield from self._eject_ball(eject_request, eject_try)
             if result:

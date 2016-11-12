@@ -682,7 +682,7 @@ class Util(object):
         if hasattr(asyncio, "compat") and asyncio.compat.PY35:
             return asyncio.ensure_future(coro_or_future, loop=loop)
         else:
-            # pylint: disable-msg=
+            # pylint: disable-msg=deprecated-method
             return asyncio.async(coro_or_future, loop=loop)
 
     @staticmethod

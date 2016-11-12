@@ -82,6 +82,15 @@ class IncomingBall:
         """Wait for confirm."""
         return asyncio.shield(self._confirm_future, loop=self._source.machine.clock.loop)
 
+    def wait_for_timeout(self):
+        """Wait for timeout."""
+        return asyncio.shield(self._timeout_future, loop=self._source.machine.clock.loop)
+
+    @property
+    def is_timeouted(self):
+        """Return true if timeouted."""
+        return self._timeout_future.done() and not self._timeout_future.cancelled()
+
     # TODO: states:
     # 1. ejecting (for space calculation
     # 2. left (can be confirmed)
@@ -111,12 +120,12 @@ class IncomingBallsHandler(BallDeviceStateHandler):
             # sleep until we have incoming balls
             yield from self._has_incoming_balls.wait()
 
-            futures = [incoming_ball._timeout_future for incoming_ball in self._incoming_balls]
-            yield from Util.first(futures, cancel_others=False, loop=self.machine.clock.loop)
+            futures = [incoming_ball.wait_for_timeout() for incoming_ball in self._incoming_balls]
+            yield from Util.first(futures, loop=self.machine.clock.loop)
 
             timeouts = []
             for incoming_ball in self._incoming_balls:
-                if incoming_ball._timeout_future.done() and not incoming_ball._timeout_future.cancelled():
+                if incoming_ball.is_timeouted:
                     timeouts.append(incoming_ball)
 
             for incoming_ball in timeouts:

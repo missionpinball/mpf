@@ -62,6 +62,8 @@ class BallDevice(SystemWideDevice):
         self.ejector = None
         self.counter = None
         self.ball_count_handler = None
+        self.incoming_balls_handler = None
+        self.outgoing_balls_handler = None
 
         # stop device on shutdown
         self.machine.events.add_handler("shutdown", self.stop)
@@ -139,7 +141,7 @@ class BallDevice(SystemWideDevice):
             eject.already_left = True
             self.outgoing_balls_handler.add_eject_to_queue(eject)
         else:
-            # TODO: handle lost balls via lost balls handler (if really lost)
+            # handle lost balls
             self.config['ball_missing_target'].add_missing_balls(1)
             yield from self._balls_missing(1)
 
@@ -191,12 +193,6 @@ class BallDevice(SystemWideDevice):
         """Try to remove available ball at the end of the path."""
         return self.outgoing_balls_handler.find_available_ball_in_path(start)
 
-    # Logic and dispatchers
-    @asyncio.coroutine
-    def _run(self):
-        # state invalid
-        yield from asyncio.Future(loop=self.machine.clock.loop)
-
     @asyncio.coroutine
     def _initialize_async(self):
         """Count balls without handling them as new."""
@@ -204,7 +200,6 @@ class BallDevice(SystemWideDevice):
         yield from self.incoming_balls_handler.initialise()
         yield from self.outgoing_balls_handler.initialise()
 
-        # TODO: handle this in some handler
         self.available_balls = self.ball_count_handler.handled_balls
 
     @asyncio.coroutine
@@ -298,8 +293,12 @@ class BallDevice(SystemWideDevice):
                 Util.string_to_ms(timeouts_list[i]))
         # End code to create timeouts list ------------------------------------
 
-        if self.config['ball_capacity'] is None:
-            # TODO: if we got switches this is always equal to the number of switches
+        # cannot have ball switches and capacity
+        if self.config['ball_switches'] and self.config['ball_capacity']:
+            raise AssertionError("Cannot use capacity and ball switches.")
+        elif not self.config['ball_capacity'] and not self.config['ball_switches']:
+            raise AssertionError("Need ball capcity if there are no switches.")
+        elif self.config['ball_switches']:
             self.config['ball_capacity'] = len(self.config['ball_switches'])
 
     def _validate_config(self):
@@ -463,21 +462,6 @@ class BallDevice(SystemWideDevice):
         args:
             balls: The number of balls that are missing
         '''
-
-    def is_full(self):
-        """Check to see if this device is full.
-
-        Full meaning it is holding either the max number of balls it can hold, or it's holding all the known
-        balls in the machine.
-
-        Returns: True or False
-        """
-        if self.config['ball_capacity'] and self.balls >= self.config['ball_capacity']:
-            return True
-        elif self.balls >= self.machine.ball_controller.num_balls_known:
-            return True
-        else:
-            return False
 
     @property
     def state(self):
@@ -652,8 +636,6 @@ class BallDevice(SystemWideDevice):
         # add request to queue
         for dummy_iterator in range(balls):
             self._setup_or_queue_eject_to_target(target)
-
-        self.debug_log('Queue %s.', self.outgoing_balls_handler._eject_queue._queue)
 
     def eject_all(self, target=None, **kwargs):
         """Eject all the balls from this device.

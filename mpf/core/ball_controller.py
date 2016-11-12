@@ -67,8 +67,8 @@ class BallController(object):
     def _done(future):
         try:
             future.result()
-        except Exception as e:
-            print(e)
+        except asyncio.CancelledError:
+            pass
 
     def _get_total_balls_in_devices(self):
         balls = 0

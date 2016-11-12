@@ -276,7 +276,6 @@ class TestBallDevicesHoldCoil(MpfTestCase):
         self.machine.coils['hold_coil3'].enable.assert_called_once_with()
         assert not self.machine.coils['hold_coil3'].disable.called
         self.assertEqual(1, self.machine.ball_devices['test3'].balls)
-        self.assertFalse(self.machine.ball_devices['test3'].is_full())
 
         # add a second ball
         self.machine.coils['hold_coil3'].enable = MagicMock()
@@ -288,7 +287,6 @@ class TestBallDevicesHoldCoil(MpfTestCase):
         self.machine.coils['hold_coil3'].enable.assert_called_once_with()
         assert not self.machine.coils['hold_coil3'].disable.called
         self.assertEqual(2, self.machine.ball_devices['test3'].balls)
-        self.assertTrue(self.machine.ball_devices['test3'].is_full())
 
         # add a third ball
         self.machine.coils['hold_coil3'].enable = MagicMock()
@@ -300,4 +298,3 @@ class TestBallDevicesHoldCoil(MpfTestCase):
         self.machine.coils['hold_coil3'].enable.assert_called_once_with()
         assert not self.machine.coils['hold_coil3'].disable.called
         self.assertEqual(2, self.machine.ball_devices['test3'].balls)
-        self.assertTrue(self.machine.ball_devices['test3'].is_full())
