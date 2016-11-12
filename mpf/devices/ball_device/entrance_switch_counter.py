@@ -46,6 +46,10 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
                 future.set_result(True)
         self._futures = []
 
+    def received_entrance_event(self):
+        """Handle entrance event."""
+        self._entrance_switch_handler()
+
     def _entrance_switch_handler(self):
         """Add a ball to the device since the entrance switch has been hit."""
         # TODO: maintain recycle_time somewhere

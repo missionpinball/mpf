@@ -1,3 +1,4 @@
+"""Maintains the ball count for a ball device."""
 import asyncio
 
 from mpf.core.utility_functions import Util
@@ -31,7 +32,8 @@ class EjectTracker:
         self._task.add_done_callback(self._done)
         yield from self.wait_for_ready()
 
-    def _done(self, future):
+    @staticmethod
+    def _done(future):
         try:
             future.result()
         except asyncio.CancelledError:
@@ -42,29 +44,35 @@ class EjectTracker:
         return self._ball_count_handler.ball_device.counter.is_jammed()
 
     def track_ball_left(self):
+        """Track ball left."""
         self._ball_count_handler.ball_device.debug_log("Got ball left during eject")
         self._ball_left.set_result(True)
 
     def track_ball_returned(self):
+        """Track ball returned."""
         self._ball_count_handler.ball_device.debug_log("Got ball return during eject")
         self._ball_returned.set_result(True)
 
     @asyncio.coroutine
     def track_ball_entrance(self):
+        """Track ball entrance."""
         self._ball_count_handler.ball_device.debug_log("Got ball entrance during eject")
         yield from self._ball_count_handler.entrance_during_eject()
 
     def track_unknown_balls(self, balls):
+        """Track unknown ball."""
         self._ball_count_handler.ball_device.debug_log("Got %s unknown ball during eject", balls)
         self._num_unknown_balls += balls
         self._unknown_balls.set_result(True)
 
     def track_lost_balls(self, balls):
+        """Track lost ball."""
         self._num_lost_balls += balls
         if self._num_lost_balls >= self._num_unknown_balls and self._unknown_balls.done():
             self._unknown_balls = asyncio.Future(loop=self._ball_count_handler.machine.clock.loop)
 
     def wait_for_ball_return(self):
+        """Wait until a ball returned."""
         return asyncio.shield(self._ball_returned, loop=self.machine.clock.loop)
 
     def wait_for_ball_unknown_ball(self):
@@ -72,26 +80,33 @@ class EjectTracker:
         return asyncio.shield(self._unknown_balls, loop=self.machine.clock.loop)
 
     def wait_for_ball_left(self):
+        """Wait until a ball left."""
         return asyncio.shield(self._ball_left, loop=self.machine.clock.loop)
 
     def wait_for_ready(self):
+        """Wait until the device is ready."""
         return asyncio.shield(self._ready, loop=self.machine.clock.loop)
 
     def wait_for_eject_done(self):
+        """Wait until the eject is done."""
         return asyncio.shield(self._eject_done, loop=self.machine.clock.loop)
 
     def set_ready(self):
+        """Set device ready."""
         self._ready.set_result("ready")
 
     def eject_success(self):
+        """Mark eject successful."""
         self._task.cancel()
         self._ball_count_handler.eject_success()
 
     def ball_lost(self):
+        """Mark eject failed and ball lost."""
         self._task.cancel()
         self._ball_count_handler.ball_lost()
 
     def ball_returned(self):
+        """Mark eject failed and ball returned."""
         self._task.cancel()
         self._ball_count_handler.ball_returned()
 
@@ -192,7 +207,7 @@ class BallCountHandler(BallDeviceStateHandler):
         """Wait until this device is ready to receive a ball."""
         while True:
             free_space = self.ball_device.config['ball_capacity'] - self._ball_count
-            incoming_balls = len(self.ball_device.incoming_balls_handler._incoming_balls)
+            incoming_balls = self.ball_device.incoming_balls_handler.get_num_incoming_balls()
             if free_space > incoming_balls:
                 self.debug_log("Ready to receive from %s. Free space %s (Capacity: %s, Balls: %s), incoming_balls: %s",
                                source, free_space, self.ball_device.config['ball_capacity'], self._ball_count,
@@ -207,12 +222,14 @@ class BallCountHandler(BallDeviceStateHandler):
 
     @asyncio.coroutine
     def start_eject(self):
+        """Start eject."""
         yield from self._is_counting.acquire()
         self._eject_started.set()
         self.debug_log("Entered eject mode.")
 
     @asyncio.coroutine
     def end_eject(self):
+        """End eject."""
         self.debug_log("Exited eject mode.")
         self._eject_started.clear()
         self._is_counting.release()
@@ -264,16 +281,20 @@ class BallCountHandler(BallDeviceStateHandler):
 
     @asyncio.coroutine
     def entrance_during_eject(self):
+        """Received an entrance during eject."""
         yield from self.ball_device.incoming_balls_handler.ball_arrived()
         self._set_ball_count(self._ball_count + 1)
 
     def eject_success(self):
+        """Eject successful."""
         self.debug_log("Received eject success.")
         self._set_ball_count(self._ball_count - 1)
 
     def ball_lost(self):
+        """Eject failed. Lost ball."""
         self.ball_device.log.warning("Received eject failed. Eject lost ball.")
         self._set_ball_count(self._ball_count - 1)
 
     def ball_returned(self):
+        """Eject failed. Ball returned."""
         self.debug_log("Received eject failed. Ball returned.")

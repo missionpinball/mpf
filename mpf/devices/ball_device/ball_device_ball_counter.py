@@ -40,6 +40,10 @@ class BallDeviceBallCounter:
         """Wait for ball activity."""
         raise NotImplementedError()
 
+    def received_entrance_event(self):
+        """Handle entrance event."""
+        pass
+
     @asyncio.coroutine
     def wait_for_ball_count_changes(self, old_count: int):
         """Wait for ball count changes and return the new count.

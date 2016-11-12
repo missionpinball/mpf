@@ -100,6 +100,10 @@ class IncomingBallsHandler(BallDeviceStateHandler):
         self._incoming_balls = []
         self._has_incoming_balls = asyncio.Event(loop=self.machine.clock.loop)
 
+    def get_num_incoming_balls(self):
+        """Return number of incoming ball."""
+        return len(self._incoming_balls)
+
     @asyncio.coroutine
     def _run(self):
         """Handle timeouts."""

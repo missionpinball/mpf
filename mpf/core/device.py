@@ -2,7 +2,6 @@
 import abc
 import logging
 
-import asyncio
 
 from mpf.core.machine import MachineController
 

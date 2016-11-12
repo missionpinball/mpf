@@ -79,7 +79,7 @@ class BallDevice(SystemWideDevice):
     def entrance(self, **kwargs):
         """Event handler for entrance events."""
         del kwargs
-        self.counter._entrance_switch_handler()
+        self.counter.received_entrance_event()
 
     def _initialize(self):
         """Initialize right away."""
