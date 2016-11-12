@@ -81,18 +81,11 @@ class Playfield(SystemWideDevice):
                     '_ejecting_ball',
                     handler=self._source_device_ejecting_ball)
 
-        # stop device on shutdown
-        self.machine.events.add_handler("shutdown", self.stop)
-
     @asyncio.coroutine
     def expected_ball_received(self):
         """Handle an expected ball."""
-        #self.balls += 1
+        # We do nothing in that case
         pass
-
-    @asyncio.coroutine
-    def wait_for_ready_to_receive(self, source):
-        return True
 
     @asyncio.coroutine
     def unexpected_ball_received(self):
@@ -100,10 +93,11 @@ class Playfield(SystemWideDevice):
         # We do nothing in that case
         pass
 
-    def stop(self, **kwargs):
-        del kwargs
-        # TODO: remove?
-        pass
+    @asyncio.coroutine
+    def wait_for_ready_to_receive(self, source):
+        """Playfield is always ready to receive."""
+        del source
+        return True
 
     def add_missing_balls(self, balls):
         """Notify the playfield that it probably received a ball which went missing elsewhere."""

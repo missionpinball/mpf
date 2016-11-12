@@ -10,6 +10,7 @@ class EjectTracker:
     """Tracks ball changes during an eject."""
 
     def __init__(self, ball_counter_handler, already_left):
+        """Initialise eject tracker."""
         self.machine = ball_counter_handler.machine
         self._already_left = already_left
         self._ball_count_handler = ball_counter_handler

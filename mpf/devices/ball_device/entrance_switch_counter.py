@@ -37,7 +37,7 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
         self._futures = []
 
     def is_jammed(self) -> bool:
-        """This device cannot know if it is jammed so always return False."""
+        """Return False because this device can not know if it is jammed."""
         return False
 
     def _set_future_results(self):

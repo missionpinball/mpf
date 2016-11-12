@@ -13,6 +13,7 @@ class OutgoingBall:
     """One outgoing ball."""
 
     def __init__(self, target):
+        """Initialise outgoing ball."""
         self.max_tries = None
         self.eject_timeout = None
         self.target = target
@@ -25,6 +26,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
     """Handles all outgoing balls."""
 
     def __init__(self, ball_device):
+        """Initialise outgoing balls handler."""
         super().__init__(ball_device)
         self._eject_queue = asyncio.Queue(loop=self.machine.clock.loop)
         self._state = "idle"
