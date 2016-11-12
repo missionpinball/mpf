@@ -74,7 +74,7 @@ class BallDevice(SystemWideDevice):
     @property
     def balls(self):
         """Return balls."""
-        return self.ball_count_handler.legacy_handled_balls
+        return self.ball_count_handler.expected_balls
 
     def entrance(self, **kwargs):
         """Event handler for entrance events."""
@@ -205,7 +205,7 @@ class BallDevice(SystemWideDevice):
         yield from self.outgoing_balls_handler.initialise()
 
         # TODO: handle this in some handler
-        self.available_balls = self.balls
+        self.available_balls = self.ball_count_handler.handled_balls
 
     @asyncio.coroutine
     def _post_capture_from_playfield_event(self):

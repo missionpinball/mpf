@@ -139,15 +139,9 @@ class BallCountHandler(BallDeviceStateHandler):
         return self._ball_count
 
     @property
-    def unhandled_balls(self):
-        """Return balls which are already handled."""
-        return self._ball_count
-
-    @property
-    def legacy_handled_balls(self):
-        """Return balls which are already handled."""
+    def expected_balls(self):
+        """Return the number of balls we expect in the future."""
         if self.ball_device.outgoing_balls_handler.state in ["ball_left", "failed_confirm"]:
-            # TODO: remove this quirk for old tests
             return self._ball_count - 1
         return self._ball_count
 
@@ -201,7 +195,7 @@ class BallCountHandler(BallDeviceStateHandler):
 
     def get_ball_count(self):
         """Return a ball count future."""
-        return self.ball_device.counter.count_balls()   # TODO: internalise counter
+        return self.ball_device.counter.count_balls()
 
     @asyncio.coroutine
     def wait_for_ready_to_receive(self, source):
