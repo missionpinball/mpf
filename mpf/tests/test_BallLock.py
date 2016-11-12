@@ -510,7 +510,7 @@ class TestBallLock(MpfTestCase):
         self.advance_time_and_run(10)
 
         # theoretically it would eject another ball but there is no ball in the trough
-        self.assertEqual(1, len(launcher.ball_requests))
+        self.assertEqual(1, len(launcher._ball_requests))
 
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
 

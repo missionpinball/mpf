@@ -1390,7 +1390,7 @@ class TestBallDevice(MpfTestCase):
         playfield.add_ball()
         self.advance_time_and_run(1)
 
-        self.assertEqual(1, len(target1.ball_requests))
+        self.assertEqual(1, len(target1._ball_requests))
         # should not crash
 
         assert not coil1.pulse.called
@@ -1406,7 +1406,7 @@ class TestBallDevice(MpfTestCase):
         self.assertEqual(1, self._captured)
         self._captured = 0
 
-        self.assertEqual(0, len(target1.ball_requests))
+        self.assertEqual(0, len(target1._ball_requests))
 
         # trough2 eject
         assert not coil1.pulse.called

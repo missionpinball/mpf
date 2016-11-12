@@ -54,7 +54,7 @@ class BallDevice(SystemWideDevice):
         self._source_devices = list()
         # Ball devices that have this device listed among their eject targets
 
-        self.ball_requests = deque()
+        self._ball_requests = deque()
         # deque of tuples that holds requests from target devices for balls
         # that this device could fulfil
         # each tuple is (target device, boolean player_controlled flag)
@@ -261,8 +261,8 @@ class BallDevice(SystemWideDevice):
 
     def _source_device_balls_available(self, **kwargs):
         del kwargs
-        if len(self.ball_requests):
-            (target, player_controlled) = self.ball_requests.popleft()
+        if len(self._ball_requests):
+            (target, player_controlled) = self._ball_requests.popleft()
             if self._setup_or_queue_eject_to_target(target, player_controlled):
                 return False
 
@@ -439,7 +439,7 @@ class BallDevice(SystemWideDevice):
                     self.setup_eject_chain(path, not self.config['auto_fire_on_unexpected_ball'])
 
         # we might have ball requests locally. serve them first
-        if self.ball_requests:
+        if self._ball_requests:
             self._source_device_balls_available()
 
         # tell targets that we have balls available
@@ -531,7 +531,7 @@ class BallDevice(SystemWideDevice):
             path = self.find_one_available_ball()
             if not path:
                 # put into queue here
-                self.ball_requests.append((target, player_controlled))
+                self._ball_requests.append((target, player_controlled))
                 return False
 
             if target != self:
