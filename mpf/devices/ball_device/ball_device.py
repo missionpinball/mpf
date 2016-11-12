@@ -54,10 +54,6 @@ class BallDevice(SystemWideDevice):
         self._source_devices = list()
         # Ball devices that have this device listed among their eject targets
 
-        self._incoming_balls = deque()
-        # deque of tuples that tracks incoming balls this device should expect
-        # each tuple is (self.machine.clock.get_time() formatted timeout, source device)
-
         self.ball_requests = deque()
         # deque of tuples that holds requests from target devices for balls
         # that this device could fulfil

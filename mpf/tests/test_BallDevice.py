@@ -1760,7 +1760,7 @@ class TestBallDevice(MpfTestCase):
         self.advance_time_and_run(40)
         self.advance_time_and_run(40)
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(0, len(target._incoming_balls))
+        self.assertEqual(0, len(target.incoming_balls_handler._incoming_balls))
 
         # ball drains
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)

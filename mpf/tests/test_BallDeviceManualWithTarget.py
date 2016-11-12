@@ -488,7 +488,7 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         assert not coil2.pulse.called
 
         self.assertEqual(playfield, target.outgoing_balls_handler._current_target)
-        self.assertEqual(0, len(target._incoming_balls))
+        self.assertEqual(0, len(target.incoming_balls_handler._incoming_balls))
 
         self.machine.switch_controller.process_switch("s_ball_switch1", 0)
         self.advance_time_and_run(1)
