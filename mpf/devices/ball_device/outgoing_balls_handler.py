@@ -53,7 +53,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         while True:
             self._state = "idle"
             self.debug_log("Waiting for eject request.")
-            eject_queue_future = self.ball_device.ensure_future(self._eject_queue.get())
+            eject_queue_future = Util.ensure_future(self._eject_queue.get(), loop=self.machine.clock.loop)
             incoming_ball_which_may_skip = self._incoming_ball_which_may_skip.wait()
             event = yield from Util.first([eject_queue_future, incoming_ball_which_may_skip],
                                           loop=self.machine.clock.loop)
@@ -191,7 +191,8 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             self._current_target = eject_request.target
             self._cancel_future = asyncio.Future(loop=self.machine.clock.loop)
             ball_future = self.ball_device.ball_count_handler.wait_for_ball()
-            skipping_ball_future = self.ball_device.ensure_future(self._incoming_ball_which_may_skip.wait())
+            skipping_ball_future = Util.ensure_future(self._incoming_ball_which_may_skip.wait(),
+                                                      loop=self.machine.clock.loop)
             # wait until we have a ball (might be instant)
             self._state = "waiting_for_ball"
             yield from Util.first([self._cancel_future, ball_future, skipping_ball_future],
@@ -392,8 +393,9 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
     @asyncio.coroutine
     def _handle_late_confirm_or_missing(self, eject_request: OutgoingBall, ball_eject_process: EjectTracker,
                                         incoming_ball_at_target: IncomingBall) -> bool:
-        ball_return_future = self.ball_device.ensure_future(ball_eject_process.wait_for_ball_return())
-        unknown_balls_future = self.ball_device.ensure_future(ball_eject_process.wait_for_ball_unknown_ball())
+        ball_return_future = Util.ensure_future(ball_eject_process.wait_for_ball_return(), loop=self.machine.clock.loop)
+        unknown_balls_future = Util.ensure_future(ball_eject_process.wait_for_ball_unknown_ball(),
+                                                  loop=self.machine.clock.loop)
         eject_success_future = incoming_ball_at_target.wait_for_confirm()
         timeout = self.ball_device.config['ball_missing_timeouts'][eject_request.target] / 1000
 

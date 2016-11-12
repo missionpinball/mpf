@@ -4,7 +4,6 @@ from collections import deque
 
 import asyncio
 
-from mpf.core.device import AsyncDevice
 from mpf.devices.ball_device.ball_count_handler import BallCountHandler
 
 from mpf.devices.ball_device.entrance_switch_counter import EntranceSwitchCounter
@@ -23,7 +22,7 @@ from mpf.devices.ball_device.switch_counter import SwitchCounter
 
 
 @DeviceMonitor("_state", "balls", "available_balls")
-class BallDevice(AsyncDevice, SystemWideDevice):
+class BallDevice(SystemWideDevice):
 
     """
     Base class for a 'Ball Device' in a pinball machine.
@@ -68,6 +67,9 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         self.counter = None
         self.ball_count_handler = None
 
+        # stop device on shutdown
+        self.machine.events.add_handler("shutdown", self.stop)
+
     @property
     def _state(self):
         """Return state."""
@@ -102,8 +104,11 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         else:
             self.counter = EntranceSwitchCounter(self, self.config)  # pylint: disable-msg=redefined-variable-type
 
+        self.machine.clock.loop.run_until_complete(self._initialize_async())
+
     def stop(self, **kwargs):
-        super().stop(**kwargs)
+        """Stop device."""
+        del kwargs
         self.ball_count_handler.stop()
         self.incoming_balls_handler.stop()
         self.outgoing_balls_handler.stop()
@@ -167,6 +172,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
     @asyncio.coroutine
     def lost_incoming_ball(self, source):
         """Handle lost ball which was confirmed to have left source."""
+        del source
         if self.cancel_path_if_target_is(self, self.config['ball_missing_target']):
             # add ball to default target
             self.log.warning("Path to canceled. Assuming the ball jumped to %s.", self.config['ball_missing_target'])
@@ -182,9 +188,11 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         yield from self._balls_missing(1)
 
     def cancel_path_if_target_is(self, start, target):
+        """Check if the ball is going to a certain target and cancel the path in that case."""
         return self.outgoing_balls_handler.cancel_path_if_target_is(start, target)
 
     def find_available_ball_in_path(self, start):
+        """Try to remove available ball at the end of the path."""
         return self.outgoing_balls_handler.find_available_ball_in_path(start)
 
     # Logic and dispatchers
@@ -192,9 +200,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
     def _run(self):
         # state invalid
         yield from asyncio.Future(loop=self.machine.clock.loop)
-        #yield from self._state_idle()
 
-    # ---------------------------- State: invalid -----------------------------
     @asyncio.coroutine
     def _initialize_async(self):
         """Count balls without handling them as new."""
@@ -254,6 +260,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         self.incoming_balls_handler.remove_incoming_ball(incoming_ball)
 
     def wait_for_ready_to_receive(self, source):
+        """Wait until this device is ready to receive a ball."""
         return self.ball_count_handler.wait_for_ready_to_receive(source)
 
     def _source_device_balls_available(self, **kwargs):
@@ -407,7 +414,6 @@ class BallDevice(AsyncDevice, SystemWideDevice):
         # this device is tagged 'trough' in which case we let it keep them.
         self.debug_log("Adding ball")
         self.available_balls += new_balls
-        #self.machine.ball_controller.trigger_ball_count()
 
         if unclaimed_balls:
             if 'trough' in self.tags:
@@ -557,7 +563,7 @@ class BallDevice(AsyncDevice, SystemWideDevice):
             self._setup_or_queue_eject_to_target(target, True)
 
         else:
-            self.eject(1, target=target)
+            self.eject(target=target)
 
     def setup_eject_chain(self, path, player_controlled=False):
         """Setup an eject chain."""

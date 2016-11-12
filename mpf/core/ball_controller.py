@@ -124,7 +124,8 @@ class BallController(object):
             futures = []
             for device in self.machine.ball_devices:
                 if not device.is_playfield():
-                    futures.append(device.ensure_future(device.counter.wait_for_ball_activity()))
+                    futures.append(Util.ensure_future(device.counter.wait_for_ball_activity(),
+                                                      loop=self.machine.clock.loop))
 
             try:
                 return self._get_total_balls_in_devices()

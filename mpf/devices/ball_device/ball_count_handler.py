@@ -167,7 +167,8 @@ class BallCountHandler(BallDeviceStateHandler):
         self.debug_log("No ball found. Waiting for balls.")
 
         # wait until we have more than 0 balls
-        ball_changes = self.ball_device.ensure_future(self.ball_device.counter.wait_for_ball_count_changes(0))
+        ball_changes = Util.ensure_future(self.ball_device.counter.wait_for_ball_count_changes(0),
+                                          loop=self.machine.clock.loop)
         new_balls = yield from ball_changes
 
         # update count
@@ -188,6 +189,7 @@ class BallCountHandler(BallDeviceStateHandler):
 
     @asyncio.coroutine
     def wait_for_ready_to_receive(self, source):
+        """Wait until this device is ready to receive a ball."""
         while True:
             free_space = self.ball_device.config['ball_capacity'] - self._ball_count
             incoming_balls = len(self.ball_device.incoming_balls_handler._incoming_balls)
@@ -228,8 +230,8 @@ class BallCountHandler(BallDeviceStateHandler):
     def _run(self):
         while True:
             # wait for ball changes
-            ball_changes = self.ball_device.ensure_future(
-                self.ball_device.counter.wait_for_ball_count_changes(self._ball_count))
+            ball_changes = Util.ensure_future(self.ball_device.counter.wait_for_ball_count_changes(self._ball_count),
+                                              loop=self.machine.clock.loop)
             event = yield from Util.first([ball_changes, self._eject_started.wait()], loop=self.machine.clock.loop)
 
             # get lock and update count

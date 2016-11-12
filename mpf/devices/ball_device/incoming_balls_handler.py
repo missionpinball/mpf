@@ -22,7 +22,7 @@ class IncomingBall:
     def can_arrive(self):
         """Return true if ball can arrive."""
         return self._state == "left_device" and \
-               (not self._external_confirm_future or self._external_confirm_future.done())
+            (not self._external_confirm_future or self._external_confirm_future.done())
 
     def add_external_confirm_switch(self, switch_name):
         """Add external confirm switch."""
@@ -44,7 +44,8 @@ class IncomingBall:
         del future
         self._timeout_future.cancel()
         timeout = self._source.config['ball_missing_timeouts'][self._target] / 1000
-        self._timeout_future = self._source.ensure_future(asyncio.sleep(timeout, loop=self._source.machine.clock.loop))
+        self._timeout_future = Util.ensure_future(asyncio.sleep(timeout, loop=self._source.machine.clock.loop),
+                                                  loop=self._source.machine.clock.loop)
         self._confirm_future.set_result(True)
 
     @property

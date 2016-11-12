@@ -106,8 +106,8 @@ class SwitchCounter(BallDeviceBallCounter):
             except ValueError:
                 yield from waiter
 
-        ball_left_future = eject_tracker._ball_count_handler.ball_device.ensure_future(
-            self._wait_for_ball_to_leave(active_switches)) if not already_left else None
+        ball_left_future = Util.ensure_future(self._wait_for_ball_to_leave(active_switches),
+                                              loop=self.machine.clock.loop) if not already_left else None
 
         # all switches are stable. we are ready now
         eject_tracker.set_ready()
@@ -117,7 +117,8 @@ class SwitchCounter(BallDeviceBallCounter):
         active_switches = active_switches
         count = len(active_switches)
         while True:
-            ball_count_change = eject_tracker._ball_count_handler.ball_device.ensure_future(self.wait_for_ball_count_changes(count))
+            ball_count_change = Util.ensure_future(self.wait_for_ball_count_changes(count),
+                                                   loop=self.machine.clock.loop)
             if ball_left_future:
                 futures = [ball_count_change, ball_left_future]
             else:
