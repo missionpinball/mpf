@@ -91,8 +91,20 @@ class TestFlippers(MpfTestCase):
 
         self.machine.coils.c_flipper_main.enable = MagicMock()
         self.machine.coils.c_flipper_main.disable = MagicMock()
-        self.machine.flippers.f_test_hold_eos.sw_flip()
+        self.machine.flippers.f_test_single.sw_flip()
         self.machine.coils.c_flipper_main.enable.assert_called_once_with()
+
+        self.machine.flippers.f_test_single.sw_release()
+        self.machine.coils.c_flipper_main.disable.assert_called_once_with()
+
+        self.machine.coils.c_flipper_main.pulse = MagicMock()
+        self.machine.coils.c_flipper_main.disable = MagicMock()
+        self.machine.coils.c_flipper_hold.enable = MagicMock()
+        self.machine.coils.c_flipper_hold.disable = MagicMock()
+        self.machine.flippers.f_test_hold_eos.sw_flip()
+        self.machine.coils.c_flipper_main.pulse.assert_called_once_with()
+        self.machine.coils.c_flipper_hold.enable.assert_called_once_with()
 
         self.machine.flippers.f_test_hold_eos.sw_release()
         self.machine.coils.c_flipper_main.disable.assert_called_once_with()
+        self.machine.coils.c_flipper_hold.disable.assert_called_once_with()
