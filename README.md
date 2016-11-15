@@ -35,10 +35,10 @@ Dev (next release):
 
 Installation, Documentation, and Examples
 -----------------------------------------
-* Getting started tutorial : http://docs.missionpinball.org/en/stable/tutorial/
-* Installation : http://docs.missionpinball.org/en/stable/install/
+* Getting started tutorial : http://docs.missionpinball.org/en/latest/tutorial/
+* Installation : http://docs.missionpinball.org/en/latest/install/
 * User documentation : http://docs.missionpinball.org
-* API / developer documentation : http://docs.missionpinball.org/en/stable/api/
+* API / developer documentation : http://docs.missionpinball.org/en/latest/api/
 
 Support
 -------
@@ -48,7 +48,7 @@ Authors & Contributing
 ----------------------
 MPF is a labor of love awesome pinball-loving people. There's a list of authors in the AUTHORS file. We'd love for you
 to join us! Even if you don't know Python well, you can help improve the documentation or write how to guides. Drop us a
-line in the forum, or make a change and submit a pull request! More info [here](http://docs.missionpinball.org/en/stable/contribute/).
+line in the forum, or make a change and submit a pull request! More info [here](http://docs.missionpinball.org/en/latest/contribute/).
 
 License
 -------
