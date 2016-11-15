@@ -8,5 +8,4 @@ drop_target_banks:
    left_bank_2:
      drop_targets: left4, left5, left6
      reset_coils: coil2
-     reset_events:
-       left_bank_2_down: 1s
+     reset_on_complete: 1s
