@@ -639,6 +639,9 @@ class ScoreReelGroup(SystemWideDevice):
         # Watch for these reels going out of sync so we can turn off the lights
         # while they're resyncing
 
+        if self.unlight_on_resync_key:
+            self.machine.events.remove_handler_by_key(self.unlight_on_resync_key)
+
         self.unlight_on_resync_key = self.machine.events.add_handler(
             'scorereelgroup_' + self.name + '_resync',
             self.unlight,
@@ -656,6 +659,8 @@ class ScoreReelGroup(SystemWideDevice):
             light.off()
 
         if relight_on_valid:
+            if self.light_on_valid_key:
+                self.machine.events.remove_handler_by_key(self.light_on_valid_key)
             self.light_on_valid_key = self.machine.events.add_handler(
                 'scorereelgroup_' + self.name + '_valid',
                 self.light,
