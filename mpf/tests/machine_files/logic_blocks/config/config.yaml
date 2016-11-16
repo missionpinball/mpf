@@ -70,6 +70,15 @@ logic_blocks:
             restart_events: counter3_restart
             reset_events: counter3_reset
             multiple_hit_window: 1s
+        counter4:
+            count_events: counter4_count
+            starting_count: current_player.start
+            count_complete_value: current_player.hits
+            direction: up
+            enable_events: counter4_enable
+            disable_events: counter4_disable
+            restart_events: counter4_restart
+            reset_events: counter4_reset
     sequences:
         sequence1:
             events:

@@ -438,6 +438,40 @@ class TestLogicBlocks(MpfFakeGameTestCase):
         self.assertEqual(1, self._events["logicblock_counter3_complete"])
         self.assertEqual(5, self._events["counter_counter3_hit"])
 
+    def test_counter_template(self):
+        self.start_game()
+        self.mock_event("logicblock_counter4_complete")
+        self.mock_event("counter_counter4_hit")
+
+        self.machine.game.player.start = 0
+        self.machine.game.player.hits = 2
+
+        self.post_event("counter4_enable")
+        for i in range(2):
+            self.assertEqual(0, self._events["logicblock_counter4_complete"])
+            self.post_event("counter4_count")
+
+        # inside same window. only one hit
+        self.assertEqual(2, self._events["counter_counter4_hit"])
+        self.assertEqual(1, self._events["logicblock_counter4_complete"])
+        self.advance_time_and_run(1)
+
+        self.machine.game.player.start = 1
+        self.machine.game.player.hits = 5
+        self.mock_event("logicblock_counter4_complete")
+        self.mock_event("counter_counter4_hit")
+
+        self.post_event("counter4_reset")
+        self.post_event("counter4_enable")
+        for i in range(4):
+            self.assertEqual(0, self._events["logicblock_counter4_complete"])
+            self.post_event("counter4_count")
+
+        # inside same window. only one hit
+        self.assertEqual(4, self._events["counter_counter4_hit"])
+        self.assertEqual(1, self._events["logicblock_counter4_complete"])
+        self.advance_time_and_run(1)
+
     def test_counter_persist(self):
         self.mock_event("logicblock_counter_persist_complete")
         self.mock_event("counter_counter_persist_hit")
