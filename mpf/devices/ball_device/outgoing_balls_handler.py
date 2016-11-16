@@ -1,6 +1,5 @@
 """Handles outgoing balls."""
 import asyncio
-from typing import Optional
 
 from mpf.core.utility_functions import Util
 from mpf.devices.ball_device.ball_count_handler import EjectTracker
@@ -436,7 +435,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                 raise AssertionError("Invalid state")
 
     @asyncio.coroutine
-    def _handle_eject_success(self, ball_eject_process: Optional[EjectTracker], eject_request: OutgoingBall):
+    def _handle_eject_success(self, ball_eject_process: EjectTracker, eject_request: OutgoingBall):
         self.debug_log("Eject successful")
         if ball_eject_process:
             ball_eject_process.eject_success()

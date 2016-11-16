@@ -17,6 +17,10 @@ class IncomingBall:
         self._target = target
         self._external_confirm_future = None
         self._state = "left_device"
+        # 1. ejecting (for space calculation) - not implemented yet
+        # 2. left_device (can be confirmed)
+        # 3. arrived
+        # 4. lost (timeouted)
 
     @property
     def can_arrive(self):
@@ -91,12 +95,6 @@ class IncomingBall:
         """Return true if timeouted."""
         return self._timeout_future.done() and not self._timeout_future.cancelled()
 
-    # TODO: states:
-    # 1. ejecting (for space calculation
-    # 2. left (can be confirmed)
-    # 3. arrived
-    # 4. timeouted
-
 
 class IncomingBallsHandler(BallDeviceStateHandler):
 
@@ -129,7 +127,7 @@ class IncomingBallsHandler(BallDeviceStateHandler):
                     timeouts.append(incoming_ball)
 
             for incoming_ball in timeouts:
-                self.debug_log("Incoming ball timeout")
+                self.ball_device.log.warning("Incoming ball from %s timeouted.", incoming_ball.source)
                 self._incoming_balls.remove(incoming_ball)
 
             if not self._incoming_balls:
@@ -142,7 +140,6 @@ class IncomingBallsHandler(BallDeviceStateHandler):
         """Add incoming balls."""
         self.debug_log("Adding incoming ball from %s", incoming_ball.source)
         self._incoming_balls.append(incoming_ball)
-        # TODO: set a callback here
         self._has_incoming_balls.set()
 
         if self.ball_device.config['mechanical_eject']:
@@ -169,7 +166,6 @@ class IncomingBallsHandler(BallDeviceStateHandler):
             # confirm eject
             incoming_ball.ball_arrived()
 
-            # TODO: post enter event here?
             yield from self.ball_device.expected_ball_received()
             break
         else:
