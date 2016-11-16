@@ -195,7 +195,8 @@ class LogicBlock(object):
 
     def post_update_event(self):
         """Post an event to notify about changes."""
-        self.machine.events.post("logicblock_{}_updated".format(self.name))
+        value = self.player[self.config['player_variable']]
+        self.machine.events.post("logicblock_{}_updated".format(self.name), value=value)
         '''event: logicblock_(name)_updated
 
         desc: The logic block called "name" has just been completed.
@@ -408,7 +409,7 @@ class Counter(LogicBlock):
             self.hit_value *= -1
 
         if not self.config['persist_state'] or not self.player.is_player_var(self.config['player_variable']):
-            self.player[self.config['player_variable']] = self.config['starting_count']
+            self.player[self.config['player_variable']] = self.config['starting_count'].evaluate([])
 
     def add_event_handlers(self):
         """Add handlers."""
@@ -421,8 +422,7 @@ class Counter(LogicBlock):
     def reset(self, **kwargs):
         """Reset the hit progress towards completion."""
         super().reset(**kwargs)
-        self.player[self.config['player_variable']] = (
-            self.config['starting_count'])
+        self.player[self.config['player_variable']] = self.config['starting_count'].evaluate([])
 
     def hit(self, **kwargs):
         """Increase the hit progress towards completion.
@@ -435,6 +435,9 @@ class Counter(LogicBlock):
         if not self.enabled:
             return
 
+        count_complete_value = self.config['count_complete_value'].evaluate([]) if self.config['count_complete_value']\
+                                                                                   is not None else None
+
         if not self.ignore_hits:
             self.player[self.config['player_variable']] += self.hit_value
             self.log.debug("Processing Count change. Total: %s",
@@ -443,19 +446,19 @@ class Counter(LogicBlock):
             args = {
                 "count": self.player[self.config['player_variable']]
             }
-            if self.config['count_complete_value'] is not None:
-                args['remaining'] = self.config['count_complete_value'] - self.player[self.config['player_variable']]
+            if count_complete_value is not None:
+                args['remaining'] = count_complete_value - self.player[self.config['player_variable']]
 
             self._post_hit_events(**args)
 
-            if self.config['count_complete_value'] is not None:
+            if count_complete_value is not None:
 
                 if (self.config['direction'] == 'up' and
-                        self.player[self.config['player_variable']] >= self.config['count_complete_value']):
+                        self.player[self.config['player_variable']] >= count_complete_value):
                     self.complete()
 
                 elif (self.config['direction'] == 'down' and
-                        self.player[self.config['player_variable']] <= self.config['count_complete_value']):
+                        self.player[self.config['player_variable']] <= count_complete_value):
                     self.complete()
 
             if self.config['multiple_hit_window']:

@@ -301,6 +301,7 @@ drop_targets:
 drop_target_banks:
     __valid_in__: machine, mode
     drop_targets: list|machine(drop_targets)|
+    reset_on_complete: single|ms|None
     reset_coil: single|machine(coils)|None
     reset_coils: list|machine(coils)|None
     reset_events: dict|str:ms|machine_reset_phase_3, ball_starting
@@ -501,11 +502,11 @@ logic_blocks:                                       # todo add validation
         events: list|str|
     counter:
         count_events: list|str|
-        count_complete_value: single|int|None
+        count_complete_value: single|template_int|None
         multiple_hit_window: single|ms|0
         count_interval: single|int|1
         direction: single|str|up
-        starting_count: single|int|0
+        starting_count: single|template_int|0
     sequence:
         events: list|str|
 machine:

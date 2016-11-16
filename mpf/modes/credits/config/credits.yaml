@@ -7,7 +7,7 @@ mode:
   stop_on_ball_end: False
 
 # Instructions on how to use this mode:
-# http://docs.missionpinball.org/en/stable/game_logic/credits.html
+# http://docs.missionpinball.org/en/latest/game_logic/credits
 
 # You can copy the sections below to your own machine config as a starting point
 

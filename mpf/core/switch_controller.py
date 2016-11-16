@@ -26,7 +26,7 @@ class SwitchController(MpfController):
     all switch activity in the machine and converting them into events.
 
     More info:
-    http://docs.missionpinball.org/en/stable/core/switch_controller.html
+    http://docs.missionpinball.org/en/latest/core/switch_controller.html
 
     """
 
