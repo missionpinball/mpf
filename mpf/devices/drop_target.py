@@ -215,6 +215,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         self.complete = False
         self.down = 0
         self.up = 0
+        self.delay = DelayManager(machine.delayRegistry)
 
     @property
     def can_exist_outside_of_game(self):
@@ -301,6 +302,10 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         self.complete = True
         if self.debug:
             self.log.debug('All targets are down')
+
+        if self.config['reset_on_complete']:
+            self.debug_log("Reset on complete after %s", self.config['reset_on_complete'])
+            self.delay.add(self.config['reset_on_complete'], self.reset)
 
         self.machine.events.post('drop_target_bank_' + self.name + '_down')
         '''event: drop_target_bank_(name)_down

@@ -301,6 +301,7 @@ drop_targets:
 drop_target_banks:
     __valid_in__: machine, mode
     drop_targets: list|machine(drop_targets)|
+    reset_on_complete: single|ms|None
     reset_coil: single|machine(coils)|None
     reset_coils: list|machine(coils)|None
     reset_events: dict|str:ms|machine_reset_phase_3, ball_starting
