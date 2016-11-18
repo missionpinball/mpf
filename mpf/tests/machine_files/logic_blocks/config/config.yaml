@@ -72,7 +72,7 @@ logic_blocks:
             multiple_hit_window: 1s
         counter4:
             count_events: counter4_count
-            starting_count: current_player.start
+            starting_count: machine.start if machine.start else 0
             count_complete_value: current_player.hits
             direction: up
             enable_events: counter4_enable
