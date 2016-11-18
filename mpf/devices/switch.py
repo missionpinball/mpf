@@ -2,6 +2,7 @@
 import copy
 
 from mpf.core.device_monitor import DeviceMonitor
+from mpf.core.machine import MachineController
 from mpf.core.system_wide_device import SystemWideDevice
 
 
@@ -14,7 +15,7 @@ class Switch(SystemWideDevice):
     collection = 'switches'
     class_label = 'switch'
 
-    def __init__(self, machine, name):
+    def __init__(self, machine: MachineController, name):
         """Initialise switch."""
         self.hw_switch = None
         super().__init__(machine, name)
@@ -39,6 +40,22 @@ class Switch(SystemWideDevice):
 
         # register switch so other devices can add handlers to it
         self.machine.switch_controller.register_switch(name)
+
+    @classmethod
+    def device_class_init(cls, machine: MachineController):
+        """Register handler for duplicate switch number checks."""
+        machine.events.add_handler("init_phase_4", cls._check_duplicate_switch_numbers, machine=machine)
+
+    @staticmethod
+    def _check_duplicate_switch_numbers(machine, **kwargs):
+        del kwargs
+        check_set = set()
+        for switch in machine.switches:
+            key = (switch.platform, switch.hw_switch.number)
+            if key in check_set:
+                raise AssertionError("Duplicate switch number {} for switch {}".format(switch.hw_switch.number, switch))
+
+            check_set.add(key)
 
     def validate_and_parse_config(self, config, is_mode_config):
         """Validate switch config."""
@@ -85,7 +102,7 @@ class ConfiguredHwSwitch:
         return id((self.hw_switch, self.config))
 
 
-class ReconfiguredSwitch():
+class ReconfiguredSwitch:
 
     """Reconfigured switch.
 

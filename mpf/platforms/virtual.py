@@ -1,7 +1,6 @@
 """Contains code for a virtual hardware platform."""
 
 import logging
-import random
 
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
@@ -34,6 +33,8 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
         self.hw_switches = dict()
         self.initial_states_sent = False
         self.features['tickless'] = True
+        self._next_driver = 1000
+        self._next_switch = 1000
 
     def __repr__(self):
         """Return string representation."""
@@ -57,9 +58,10 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
 
     def configure_driver(self, config):
         """Configure driver."""
-        # generate random number if None
+        # generate number if None
         if config['number'] is None:
-            config['number'] = random.randint(100, 10000)
+            config['number'] = self._next_driver
+            self._next_driver += 1
 
         driver = VirtualDriver(config)
 
@@ -77,7 +79,8 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
 
         # switch needs a number to be distingishable from other switches
         if config['number'] is None:
-            config['number'] = random.randint(100, 10000)
+            config['number'] = self._next_switch
+            self._next_switch += 1
 
         self.hw_switches[config['number']] = state
 
