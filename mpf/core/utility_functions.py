@@ -547,7 +547,8 @@ class Util(object):
 
     @staticmethod
     def string_to_class(class_string):
-        """Convert a string like mpf.core.events.EventManager into a Python class.
+        """Convert a string like mpf.core.events.EventManager into a Python
+        class.
 
         Args:
             class_string(str): The input string
@@ -556,11 +557,10 @@ class Util(object):
             A reference to the python class object
 
         This function came from here:
-        http://stackoverflow.com/questions/452969/
-        does-python-have-an-equivalent-to-java-class-forname
+        http://stackoverflow.com/questions/452969/does-python-have-an-equivalent-to-java-class-forname
 
         """
-        # todo I think thre's a better way to do this in Python 3
+        # todo I think there's a better way to do this in Python 3
         parts = class_string.split('.')
         module = ".".join(parts[:-1])
         m = __import__(module)
