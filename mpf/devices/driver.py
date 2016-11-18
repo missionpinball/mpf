@@ -1,6 +1,7 @@
 """Contains the Driver parent class."""
 import copy
 
+from mpf.core.machine import MachineController
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.devices.switch import Switch
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
@@ -25,7 +26,7 @@ class Driver(SystemWideDevice):
     collection = 'coils'
     class_label = 'coil'
 
-    def __init__(self, machine, name):
+    def __init__(self, machine: MachineController, name: str):
         """Initialise driver."""
         self.hw_driver = None
         super().__init__(machine, name)
@@ -33,6 +34,25 @@ class Driver(SystemWideDevice):
         self.time_last_changed = -1
         self.time_when_done = -1
         self._configured_driver = None
+
+    @classmethod
+    def device_class_init(cls, machine: MachineController):
+        """Register handler for duplicate coil number checks."""
+        machine.events.add_handler("init_phase_4", cls._check_duplicate_coil_numbers, machine=machine)
+
+    @staticmethod
+    def _check_duplicate_coil_numbers(machine, **kwargs):
+        del kwargs
+        check_set = set()
+        for coil in machine.coils:
+            if not hasattr(coil, "hw_driver"):
+                # skip dual wound and other special devices
+                continue
+            key = (coil.platform, coil.hw_driver.number)
+            if key in check_set:
+                raise AssertionError("Duplicate coil number {} for coil {}".format(coil.hw_driver.number, coil))
+
+            check_set.add(key)
 
     def validate_and_parse_config(self, config: dict, is_mode_config: bool) -> dict:
         """Return the parsed and validated config.

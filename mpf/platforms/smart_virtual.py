@@ -231,8 +231,10 @@ class HardwarePlatform(VirtualPlatform):
 
     def configure_driver(self, config):
         """Configure driver."""
-        # todo should probably throw out the number that we get since it could
-        # be a weird string and just return an incremental int?
+        # generate number if None
+        if config['number'] is None:
+            config['number'] = self._next_driver
+            self._next_driver += 1
 
         driver = SmartVirtualDriver(config)
 
