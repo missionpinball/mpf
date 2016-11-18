@@ -432,7 +432,6 @@ class TestLogicBlocks(MpfFakeGameTestCase):
             self.assertEqual(2+i, self._events["counter_counter3_hit"])
             self.advance_time_and_run(1)
 
-
         # it should complete
         self.post_event("counter3_count")
         self.assertEqual(1, self._events["logicblock_counter3_complete"])
@@ -443,7 +442,6 @@ class TestLogicBlocks(MpfFakeGameTestCase):
         self.mock_event("logicblock_counter4_complete")
         self.mock_event("counter_counter4_hit")
 
-        self.machine.game.player.start = 0
         self.machine.game.player.hits = 2
 
         self.post_event("counter4_enable")
@@ -451,12 +449,11 @@ class TestLogicBlocks(MpfFakeGameTestCase):
             self.assertEqual(0, self._events["logicblock_counter4_complete"])
             self.post_event("counter4_count")
 
-        # inside same window. only one hit
         self.assertEqual(2, self._events["counter_counter4_hit"])
         self.assertEqual(1, self._events["logicblock_counter4_complete"])
         self.advance_time_and_run(1)
 
-        self.machine.game.player.start = 1
+        self.machine.create_machine_var("start", 1)
         self.machine.game.player.hits = 5
         self.mock_event("logicblock_counter4_complete")
         self.mock_event("counter_counter4_hit")
