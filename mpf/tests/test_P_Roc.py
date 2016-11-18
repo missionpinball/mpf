@@ -131,7 +131,7 @@ class TestPRoc(MpfTestCase):
     def test_initial_switches(self):
         self.assertFalse(self.machine.switch_controller.is_active("s_test"))
         self.assertFalse(self.machine.switch_controller.is_active("s_test_000"))
-        self.assertTrue(self.machine.switch_controller.is_active("s_test_001"))
+        self.assertTrue(self.machine.switch_controller.is_active("s_direct"))
 
     def test_switches(self):
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
