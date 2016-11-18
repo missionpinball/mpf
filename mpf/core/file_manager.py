@@ -152,7 +152,9 @@ class FileManager(object):
                 return dict()
 
         if not file and halt_on_error:
-            raise IOError("Could not find file {}".format(filename))
+            raise IOError(
+                "Could not find file '{}'. Resolved abs path to {}".format(
+                    filename, os.path.abspath(filename)))
 
         ext = os.path.splitext(file)[1]
 
