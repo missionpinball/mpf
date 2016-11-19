@@ -61,14 +61,14 @@ community.''',
 
     include_package_data=True,
 
-    package_data={'': ['*.yaml', '*.png', '*.so', '*.pyd', '*.ogg', '*.wav', 'mpf/pyserial_asyncio/*']},
+    package_data={'': ['*.yaml', '*.png', '*.so', '*.pyd', '*.ogg', '*.wav']},
 
     # MANIFEST.in picks up the rest
     packages=['mpf'],
 
     zip_safe=False,
 
-    install_requires=['ruamel.yaml>=0.10, <0.11', 'pyserial'],
+    install_requires=['ruamel.yaml>=0.10, <0.11', 'pyserial>=3.2.0', 'pyserial-asyncio>=0.2'],
 
     tests_require=[],
     test_suite="mpf.tests",
