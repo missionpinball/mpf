@@ -543,6 +543,20 @@ mode_settings:
     __allow_others__:
 modes:
     __valid_in__: machine                           # todo add to validator
+magnets:
+    __valid_in__: machine
+    magnet_coil: single|machine(coils)|
+    grab_switch: single|machine(switches)|None
+    grab_time: single|ms|1.5s
+    release_time: single|ms|500ms
+    fling_drop_time: single|ms|250ms
+    fling_regrab_time: single|ms|50ms
+    enable_events: dict|str:ms|None
+    disable_events: dict|str:ms|None
+    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting
+    grab_events: dict|str:ms|None
+    release_ball_events: dict|str:ms|None
+    fling_ball_events: dict|str:ms|None
 motors:
     __valid_in__: machine
     position_switches: dict|str:machine(switches)|
