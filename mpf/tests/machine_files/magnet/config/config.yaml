@@ -1,0 +1,20 @@
+#config_version=4
+
+coils:
+  magnet_coil1:
+    number:
+    pulse_ms: 100
+    hold_power: 3
+
+switches:
+  grab_switch1:
+    number:
+
+magnets:
+  magnet1:
+    magnet_coil: magnet_coil1
+    grab_switch: grab_switch1
+    enable_events: magnet1_enable
+    disable_events: magnet1_disable
+    release_ball_events: magnet1_release
+    fling_ball_events: magnet1_fling
