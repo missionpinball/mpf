@@ -554,7 +554,7 @@ magnets:
     enable_events: dict|str:ms|None
     disable_events: dict|str:ms|None
     reset_events: dict|str:ms|machine_reset_phase_3, ball_starting
-    grab_events: dict|str:ms|None
+    grab_ball_events: dict|str:ms|None
     release_ball_events: dict|str:ms|None
     fling_ball_events: dict|str:ms|None
 motors:

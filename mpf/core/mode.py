@@ -531,11 +531,7 @@ class Mode(object):
 
     def _remove_mode_switch_handlers(self):
         for handler in self.switch_handlers:
-            self.machine.switch_controller.remove_switch_handler(
-                switch_name=handler['switch_name'],
-                callback=handler['callback'],
-                state=handler['state'],
-                ms=handler['ms'])
+            self.machine.switch_controller.remove_switch_handler_by_key(handler)
         self.switch_handlers = list()
 
     def _setup_timers(self):

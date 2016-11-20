@@ -416,7 +416,7 @@ class SwitchController(MpfController):
     def _future_done(self, handlers, future):
         del future
         for handler in handlers:
-            self.remove_switch_handler(**handler)
+            self.remove_switch_handler_by_key(handler)
 
     @staticmethod
     def _wait_handler(_future: asyncio.Future, **kwargs):
