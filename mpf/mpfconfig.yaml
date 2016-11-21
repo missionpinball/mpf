@@ -69,6 +69,7 @@ mpf:
         - mpf.devices.physical_rgb_dmd.PhysicalRgbDmd
         - mpf.devices.led_group.LedStrip
         - mpf.devices.led_group.LedRing
+        - mpf.devices.magnet.Magnet
 
     plugins:
         mpf.plugins.auditor.Auditor

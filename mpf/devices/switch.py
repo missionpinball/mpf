@@ -79,6 +79,15 @@ class Switch(SystemWideDevice):
             self._configured_switch = ConfiguredHwSwitch(self.hw_switch, {}, self.invert)
         return self._configured_switch
 
+    def add_handler(self, callback, state=1, ms=0, return_info=False, callback_kwargs=None):
+        """Add switch handler for this switch."""
+        return self.machine.switch_controller.add_switch_handler(self.name, callback, state, ms, return_info,
+                                                              callback_kwargs)
+
+    def remove_handler(self, callback, state=1, ms=0):
+        """Remove switch handler for this switch."""
+        return self.machine.switch_controller.remove_switch_handler(self.name, callback, state, ms)
+
 
 class ConfiguredHwSwitch:
 
