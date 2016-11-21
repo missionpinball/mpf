@@ -433,6 +433,15 @@ images:
     load: single|str|None
 keyboard:
     __valid_in__: machine                           # todo add to validator
+kickbacks:
+    __valid_in__: machine
+    coil: single|machine(coils)|
+    switch: single|machine(switches)|
+    reverse_switch: single|bool|False
+    enable_events: dict|str:ms|None
+    disable_events: dict|str:ms|ball_will_end, service_mode_entered
+    coil_overwrite: dict|str:str|None
+    switch_overwrite: dict|str:str|None
 kivy_config:
     __valid_in__: machine                           # todo add to validator
 led_player:
