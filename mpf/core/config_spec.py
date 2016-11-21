@@ -827,6 +827,7 @@ show_player:
     action: single|enum(play,stop,pause,resume,advance,step_back,update)|play
     priority: single|int|0
     speed: single|float|1
+    block_queue: single|bool|False
     start_step: single|template_int|1
     loops: single|int|-1
     sync_ms: single|int|None
