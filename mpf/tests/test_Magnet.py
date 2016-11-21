@@ -1,9 +1,7 @@
-from unittest.mock import MagicMock
-
-from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
+from mpf.tests.MpfTestCase import MpfTestCase
 
 
-class TestMagnet(MpfFakeGameTestCase):
+class TestMagnet(MpfTestCase):
 
     def getConfigFile(self):
         return 'config.yaml'
@@ -91,3 +89,33 @@ class TestMagnet(MpfFakeGameTestCase):
         self.assertEqual("disabled", self.machine.coils.magnet_coil1.hw_driver.state)
         self.assertEventCalled("magnet_magnet1_flinging_ball")
         self.assertEventCalled("magnet_magnet1_flinged_ball")
+
+    def test_magnet_ball_save(self):
+        # enable magnet ball save
+        self.post_event("magnet_ball_save_enable")
+        self.assertFalse(self.machine.ball_saves.magnet_save.enabled)
+        # ball passes flipper fingers and wants to drain
+        self.hit_and_release_switch("grab_switch2")
+        self.advance_time_and_run(.01)
+        # but the magnet enables and saves it
+        self.assertEqual("enabled", self.machine.coils.magnet_coil2.hw_driver.state)
+        self.assertTrue(self.machine.ball_saves.magnet_save.enabled)
+        # after 1.5s the magnet flings the ball up
+        self.advance_time_and_run(1.5)
+        self.assertEqual("disabled", self.machine.coils.magnet_coil2.hw_driver.state)
+
+        # coil reenables
+        self.advance_time_and_run(.25)
+        self.assertEqual("enabled", self.machine.coils.magnet_coil2.hw_driver.state)
+
+        # and disables again
+        self.advance_time_and_run(.1)
+        self.assertEqual("disabled", self.machine.coils.magnet_coil2.hw_driver.state)
+
+        # ball save stays enabled for a short moment in case the magnet missed it
+        self.advance_time_and_run(3)
+        self.assertTrue(self.machine.ball_saves.magnet_save.enabled)
+
+        # game continues and ball save times out
+        self.advance_time_and_run(5)
+        self.assertFalse(self.machine.ball_saves.magnet_save.enabled)
