@@ -40,7 +40,10 @@ class EventManager(object):
             event: String name of the event you're adding a handler for. Since
                 events are text strings, they don't have to be pre-defined.
                 Note that all event strings will be converted to lowercase.
-            handler: The method that will be called when the event is fired.
+            handler: The callable method that will be called when the event is
+                fired. Since it's possible for events to have kwargs attached
+                to them, the handler method must include **kwargs in its
+                signature.
             priority: An arbitrary integer value that defines what order the
                 handlers will be called in. The default is 1, so if you have a
                 handler that you want to be called first, add it here with a
@@ -48,21 +51,21 @@ class EventManager(object):
                 They're called from highest to lowest. (i.e. priority 100 is
                 called before priority 1.)
             **kwargs: Any any additional keyword/argument pairs entered here
-                will be attached to the handler and called whenever that handler
-                is called. Note these are in addition to kwargs that could be
-                passed as part of the event post. If there's a conflict, the
-                event-level ones will win.
+                will be attached to the handler and called whenever that
+                handler is called. Note these are in addition to kwargs that
+                could be passed as part of the event post. If there's a
+                conflict, the event-level ones will win.
 
         Returns:
             A GUID reference to the handler which you can use to later remove
             the handler via ``remove_handler_by_key``.
 
         For example:
-        ``handler_list.append(events.add_handler('ev', self.test))``
+        ``my_handler = self.machine.events.add_handler('ev', self.test))``
 
         Then later to remove all the handlers that a module added, you could:
         for handler in handler_list:
-        ``events.remove_handler(handler)``
+        ``events.remove_handler(my_handler)``
         """
         if not callable(handler):
             raise ValueError('Cannot add handler "{}" for event "{}". Did you '
@@ -298,7 +301,8 @@ class EventManager(object):
         self._post(event, ev_type=None, callback=callback, **kwargs)
 
     def post_boolean(self, event, callback=None, **kwargs):
-        """Post an boolean event which causes all the registered handlers to be called one-by-one.
+        """Post an boolean event which causes all the registered handlers to be
+        called one-by-one.
 
         Boolean events differ from regular events in that
         if any handler returns False, the remaining handlers will not be
@@ -324,9 +328,7 @@ class EventManager(object):
                 callback will still be called, but a new kwarg ev_result=False
                 will be passed to it.
             **kwargs: One or more options keyword/value pairs that will be
-                passed to each handler. (Just make sure your handlers are
-                expecting them. You can add **kwargs to your handler methods if
-                certain ones don't need them.)
+                passed to each handler.
         """
         self._post(event, ev_type='boolean', callback=callback, **kwargs)
 
