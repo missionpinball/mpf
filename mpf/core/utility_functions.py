@@ -31,6 +31,10 @@ class Util(object):
 
             return new_dict
 
+        elif isinstance(value, tuple):
+            # pylint: disable-msg=protected-access
+            return value
+
         # otherwise just cast to string
         return str(value)
 
