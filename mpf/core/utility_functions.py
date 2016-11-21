@@ -24,6 +24,13 @@ class Util(object):
         elif isinstance(value, list):
             return [Util.convert_to_simply_type(x) for x in value]
 
+        elif isinstance(value, dict):
+            new_dict = dict()
+            for key, value in value.items():
+                new_dict[Util.convert_to_simply_type(key)] = Util.convert_to_simply_type(value)
+
+            return new_dict
+
         # otherwise just cast to string
         return str(value)
 
