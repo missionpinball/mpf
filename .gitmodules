@@ -1,5 +1,1 @@
-[submodule "mpf/pyserial_asyncio"]
-	path = mpf/pyserial_asyncio
-#	url = https://github.com/pyserial/pyserial-asyncio.git
-	url = https://github.com/jabdoa2/pyserial-asyncio.git
-	branch = improve_windows_support
+
