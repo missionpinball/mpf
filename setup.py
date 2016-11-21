@@ -38,7 +38,7 @@ developing it and checking in several commits a week. It's MIT licensed,
 actively developed by fun people, and supported by a vibrant, pinball-loving
 community.''',
 
-    url='https://missionpinball.org',
+    url='http://missionpinball.org',
     author='The Mission Pinball Framework Team',
     author_email='brian@missionpinball.org',
     license='MIT',
@@ -61,14 +61,14 @@ community.''',
 
     include_package_data=True,
 
-    package_data={'': ['*.yaml', '*.png', '*.so', '*.pyd', '*.ogg', '*.wav', 'mpf/pyserial_asyncio/*']},
+    package_data={'': ['*.yaml', '*.png', '*.so', '*.pyd', '*.ogg', '*.wav']},
 
     # MANIFEST.in picks up the rest
     packages=['mpf'],
 
     zip_safe=False,
 
-    install_requires=['ruamel.yaml>=0.10, <0.11', 'pyserial'],
+    install_requires=['ruamel.yaml>=0.10, <0.11', 'pyserial>=3.2.0', 'pyserial-asyncio>=0.2'],
 
     tests_require=[],
     test_suite="mpf.tests",

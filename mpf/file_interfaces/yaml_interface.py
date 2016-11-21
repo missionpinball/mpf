@@ -312,7 +312,7 @@ class YamlInterface(FileInterface):
                       "migrate your config file to the latest version.")
             log.error("Migration tool: https://missionpinball.com/docs/tools/config-file-migrator/")
             log.error("More info on config version %s: "
-                      "https://missionpinball.com/docs/configuration-file"
+                      "http://docs.missionpinball.org/docs/configuration-file"
                       "-reference/important-config-file-concepts/config_version/config-version-%s/",
                       __config_version__, __config_version__)
             return False
