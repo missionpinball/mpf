@@ -113,8 +113,8 @@ class BcpInterface(object):
             event_name=posted_event.event,
             event_type=posted_event.type,
             event_callback=posted_event.callback,
-            event_kwargs=posted_event.kwargs,
-            registered_handlers=(
+            event_kwargs=Util.convert_to_simply_type(posted_event.kwargs),
+            registered_handlers=Util.convert_to_simply_type(
                 self.machine.events.registered_handlers.get(posted_event.event, []))
         )
 
