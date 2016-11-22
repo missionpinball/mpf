@@ -10,6 +10,7 @@ class ShowPlayer(DeviceConfigPlayer):
     show_section = 'shows'
     device_collection = None
 
+    # pylint: disable-msg=too-many-arguments
     def play(self, settings, context, calling_context, priority=0, queue=None, **kwargs):
         """Play, start, stop, pause, resume or advance show based on config."""
         for show, show_settings in settings.items():
@@ -25,6 +26,7 @@ class ShowPlayer(DeviceConfigPlayer):
 
             self._update_show(show, show_settings, context, queue)
 
+    # pylint: disable-msg=too-many-arguments
     def _play(self, key, instance_dict, show, show_settings, queue):
         callback = None
         if show_settings['block_queue']:

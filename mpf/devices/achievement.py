@@ -25,6 +25,7 @@ class Achievement(ModeDevice):
 
     @property
     def state(self):
+        """Return current state."""
         return self._state
 
     @property
@@ -36,7 +37,7 @@ class Achievement(ModeDevice):
         self._player.achievements[self.name] = value
 
     def validate_and_parse_config(self, config: dict, is_mode_config: bool) -> dict:
-
+        """Validate and parse config."""
         config = super().validate_and_parse_config(config, is_mode_config)
 
         states = ['disabled', 'enabled', 'started', 'stopped', 'selected',
@@ -63,8 +64,8 @@ class Achievement(ModeDevice):
         """Start achievement."""
         del kwargs
         if self._state in ("enabled", "selected") or (
-                    self.config['restart_after_stop_possible'] and
-                    self._state == "stopped"):
+            self.config['restart_after_stop_possible'] and
+                self._state == "stopped"):
             self._state = "started"
             self._run_state()
 
@@ -86,8 +87,8 @@ class Achievement(ModeDevice):
         """Disable achievement."""
         del kwargs
         if self._state in ("enabled", "selected") or (
-                    self.config['restart_after_stop_possible'] and
-                    self._state == "stopped"):
+            self.config['restart_after_stop_possible'] and
+                self._state == "stopped"):
             self._state = "disabled"
             self._run_state()
 
@@ -106,7 +107,7 @@ class Achievement(ModeDevice):
         self._run_state()
 
     def select(self, **kwargs):
-        """Highlight (select) this achievement"""
+        """Highlight (select) this achievement."""
         del kwargs
 
         if not self._player:
@@ -119,7 +120,6 @@ class Achievement(ModeDevice):
 
     def _run_state(self, restore=False):
         """Run shows and post events for current step."""
-
         for event in self.config['events_when_{}'.format(self._state)]:
             self.machine.events.post(event, restore=restore)
             '''event: achievement_(name)_state_(state)

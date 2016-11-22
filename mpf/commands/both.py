@@ -1,9 +1,5 @@
 """Runs mc and game."""
-import os
-import platform
-import subprocess
 from importlib import import_module
-import sys
 
 import multiprocessing
 
@@ -12,11 +8,13 @@ class Command(object):
 
     """Command which runs game and mc."""
 
-    def _start_mpf(self, mpf_path, machine_path, args):
+    @staticmethod
+    def _start_mpf(mpf_path, machine_path, args):
         module = import_module('mpf.commands.game')
         module.Command(mpf_path, machine_path, args)
 
-    def _start_mc(self, mpf_path, machine_path, args):
+    @staticmethod
+    def _start_mc(mpf_path, machine_path, args):
         module = import_module('mpfmc.commands.mc')
         module.Command(mpf_path, machine_path, args)
 

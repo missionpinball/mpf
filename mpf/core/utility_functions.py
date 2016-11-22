@@ -558,8 +558,7 @@ class Util(object):
 
     @staticmethod
     def string_to_class(class_string):
-        """Convert a string like mpf.core.events.EventManager into a Python
-        class.
+        """Convert a string like mpf.core.events.EventManager into a Python class.
 
         Args:
             class_string(str): The input string

@@ -176,8 +176,7 @@ class Game(Mode):
         self.log.debug("***************************************************")
 
         self.machine.events.post_queue('ball_starting',
-                                       balls_remaining=self.machine.config['game'][
-                                                           'balls_per_game'] - self.player.ball,
+                                       balls_remaining=self.machine.config['game']['balls_per_game'] - self.player.ball,
                                        is_extra_ball=is_extra_ball,
                                        callback=self.ball_started)
         '''event: ball_starting

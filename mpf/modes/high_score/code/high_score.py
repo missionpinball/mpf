@@ -106,6 +106,7 @@ class HighScore(AsyncMode):
         return
 
     @asyncio.coroutine
+    # pylint: disable-msg=too-many-arguments
     def _ask_player_for_initials(self, player, config_cat_name, index, award_label, value):
 
         self.log.debug("New high score. Player: %s, award_label: %s"

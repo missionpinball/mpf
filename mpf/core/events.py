@@ -301,8 +301,7 @@ class EventManager(object):
         self._post(event, ev_type=None, callback=callback, **kwargs)
 
     def post_boolean(self, event, callback=None, **kwargs):
-        """Post an boolean event which causes all the registered handlers to be
-        called one-by-one.
+        """Post an boolean event which causes all the registered handlers to be called one-by-one.
 
         Boolean events differ from regular events in that
         if any handler returns False, the remaining handlers will not be

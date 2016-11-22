@@ -193,14 +193,15 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
         """Clear the context."""
         pass
 
-    def _parse_event_priority(self, event, priority):
+    @staticmethod
+    def _parse_event_priority(event, priority):
         if 0 < event.find(".") and (event.find("{") < 0 or event.find(".") < event.find("{")):
             new_event = event[:event.find(".")]
             if event.find("{") > 0:
-                priority += int(event[event.find(".")+1:event.find("{")])
+                priority += int(event[event.find(".") + 1:event.find("{")])
                 new_event += event[event.find("{"):]
             else:
-                priority += int(event[event.find(".")+1:])
+                priority += int(event[event.find(".") + 1:])
             event = new_event
         return event, priority
 
