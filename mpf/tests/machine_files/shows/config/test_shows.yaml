@@ -109,6 +109,16 @@ shows:
     - duration: -1
       leds:
         (leds): blue
+  event_show:
+    - duration: 1
+      events:
+        - step1
+    - duration: 1
+      events:
+        - step2
+    - duration: 1
+      events:
+        - step3
 
 show_player:
   play_on_led1:
@@ -197,3 +207,8 @@ show_player:
     manual_advance: advance
   advance_manual_step_back:
     manual_advance: step_back
+  queue_play:
+    event_show:
+      block_queue: True
+      action: play
+      loops: 0

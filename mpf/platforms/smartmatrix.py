@@ -62,6 +62,7 @@ class SmartMatrix(RgbDmdPlatform):
         self.reader, self.writer = yield from connector
 
     def update(self, data):
+        """Update DMD data."""
         if self.writer:
             if self.config['old_cookie']:
                 self.writer.write(bytearray([0x01]))

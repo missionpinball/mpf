@@ -433,6 +433,15 @@ images:
     load: single|str|None
 keyboard:
     __valid_in__: machine                           # todo add to validator
+kickbacks:
+    __valid_in__: machine
+    coil: single|machine(coils)|
+    switch: single|machine(switches)|
+    reverse_switch: single|bool|False
+    enable_events: dict|str:ms|None
+    disable_events: dict|str:ms|ball_will_end, service_mode_entered
+    coil_overwrite: dict|str:str|None
+    switch_overwrite: dict|str:str|None
 kivy_config:
     __valid_in__: machine                           # todo add to validator
 led_player:
@@ -543,6 +552,20 @@ mode_settings:
     __allow_others__:
 modes:
     __valid_in__: machine                           # todo add to validator
+magnets:
+    __valid_in__: machine
+    magnet_coil: single|machine(coils)|
+    grab_switch: single|machine(switches)|None
+    grab_time: single|ms|1.5s
+    release_time: single|ms|500ms
+    fling_drop_time: single|ms|250ms
+    fling_regrab_time: single|ms|50ms
+    enable_events: dict|str:ms|None
+    disable_events: dict|str:ms|None
+    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting
+    grab_ball_events: dict|str:ms|None
+    release_ball_events: dict|str:ms|None
+    fling_ball_events: dict|str:ms|None
 motors:
     __valid_in__: machine
     position_switches: dict|str:machine(switches)|
@@ -804,6 +827,7 @@ show_player:
     action: single|enum(play,stop,pause,resume,advance,step_back,update)|play
     priority: single|int|0
     speed: single|float|1
+    block_queue: single|bool|False
     start_step: single|template_int|1
     loops: single|int|-1
     sync_ms: single|int|None

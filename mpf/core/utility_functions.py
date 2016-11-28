@@ -24,6 +24,17 @@ class Util(object):
         elif isinstance(value, list):
             return [Util.convert_to_simply_type(x) for x in value]
 
+        elif isinstance(value, dict):
+            new_dict = dict()
+            for key, value in value.items():
+                new_dict[Util.convert_to_simply_type(key)] = Util.convert_to_simply_type(value)
+
+            return new_dict
+
+        elif isinstance(value, tuple):
+            # pylint: disable-msg=protected-access
+            return value
+
         # otherwise just cast to string
         return str(value)
 
@@ -556,11 +567,10 @@ class Util(object):
             A reference to the python class object
 
         This function came from here:
-        http://stackoverflow.com/questions/452969/
-        does-python-have-an-equivalent-to-java-class-forname
+        http://stackoverflow.com/questions/452969/does-python-have-an-equivalent-to-java-class-forname
 
         """
-        # todo I think thre's a better way to do this in Python 3
+        # todo I think there's a better way to do this in Python 3
         parts = class_string.split('.')
         module = ".".join(parts[:-1])
         m = __import__(module)

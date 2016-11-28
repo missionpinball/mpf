@@ -1,8 +1,5 @@
 """Scoring Config Player."""
-import copy
-
 from mpf.core.config_player import ConfigPlayer
-from mpf.core.utility_functions import Util
 
 
 class ScorePlayer(ConfigPlayer):
@@ -14,6 +11,7 @@ class ScorePlayer(ConfigPlayer):
     device_collection = None
 
     def __init__(self, machine):
+        """Initialise score player."""
         super().__init__(machine)
         self.blocks = {}
 
@@ -45,6 +43,7 @@ class ScorePlayer(ConfigPlayer):
             raise AssertionError("Invalid value {}".format(entry['action']))
 
     def clear_context(self, context):
+        """Clear context."""
         for var in self.blocks:
             for entry, s in enumerate(self.blocks[var]):
                 if s[1] == context:

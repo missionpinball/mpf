@@ -1,6 +1,4 @@
 """Queue Relay Config Player."""
-from functools import partial
-
 from mpf.core.config_player import ConfigPlayer
 
 
@@ -53,6 +51,7 @@ class QueueRelayPlayer(ConfigPlayer):
         queue.clear()
 
     def get_express_config(self, value):
+        """No express config."""
         raise AssertionError("Not supported")
 
 

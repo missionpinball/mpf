@@ -1,0 +1,23 @@
+#config_version=4
+
+coils:
+  kickback_coil:
+    number:
+    pulse_ms: 100
+
+switches:
+  s_kickback:
+    number:
+
+kickbacks:
+  kickback_test:
+    coil: kickback_coil
+    switch: s_kickback
+    enable_events: kickback_enable
+    disable_events: kickback_kickback_test_fired
+
+ball_saves:
+  kickback_save:
+    balls_to_save: 1
+    active_time: 5s
+    enable_events: kickback_kickback_test_fired

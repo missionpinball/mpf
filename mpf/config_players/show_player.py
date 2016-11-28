@@ -10,7 +10,8 @@ class ShowPlayer(DeviceConfigPlayer):
     show_section = 'shows'
     device_collection = None
 
-    def play(self, settings, context, calling_context, priority=0, **kwargs):
+    # pylint: disable-msg=too-many-arguments
+    def play(self, settings, context, calling_context, priority=0, queue=None, **kwargs):
         """Play, start, stop, pause, resume or advance show based on config."""
         for show, show_settings in settings.items():
             show_settings = dict(show_settings)
@@ -23,9 +24,17 @@ class ShowPlayer(DeviceConfigPlayer):
 
             # todo need to add this key back to the config player
 
-            self._update_show(show, show_settings, context)
+            self._update_show(show, show_settings, context, queue)
 
-    def _play(self, key, instance_dict, show, show_settings):
+    # pylint: disable-msg=too-many-arguments
+    def _play(self, key, instance_dict, show, show_settings, queue):
+        callback = None
+        if show_settings['block_queue']:
+            if not queue:
+                raise AssertionError("block_queue can only be used with a queue event.")
+            queue.wait()
+            callback = queue.clear
+
         if key in instance_dict:
             instance_dict[key].stop()
         try:
@@ -37,6 +46,7 @@ class ShowPlayer(DeviceConfigPlayer):
                 loops=show_settings['loops'],
                 sync_ms=show_settings['sync_ms'],
                 manual_advance=show_settings['manual_advance'],
+                callback=callback
             )
             instance_dict[key] = show_instance
         except KeyError:
@@ -44,50 +54,56 @@ class ShowPlayer(DeviceConfigPlayer):
                            "name.".format(show))
 
     @staticmethod
-    def _stop(key, instance_dict, show, show_settings):
+    def _stop(key, instance_dict, show, show_settings, queue):
         del show
         del show_settings
+        del queue
         if key in instance_dict:
             instance_dict[key].stop()
             del instance_dict[key]
 
     @staticmethod
-    def _pause(key, instance_dict, show, show_settings):
+    def _pause(key, instance_dict, show, show_settings, queue):
         del show
         del show_settings
+        del queue
         if key in instance_dict:
             instance_dict[key].pause()
 
     @staticmethod
-    def _resume(key, instance_dict, show, show_settings):
+    def _resume(key, instance_dict, show, show_settings, queue):
         del show
         del show_settings
+        del queue
         if key in instance_dict:
             instance_dict[key].resume()
 
     @staticmethod
-    def _advance(key, instance_dict, show, show_settings):
+    def _advance(key, instance_dict, show, show_settings, queue):
         del show
         del show_settings
+        del queue
         if key in instance_dict:
             instance_dict[key].advance()
 
     @staticmethod
-    def _step_back(key, instance_dict, show, show_settings):
+    def _step_back(key, instance_dict, show, show_settings, queue):
         del show
         del show_settings
+        del queue
         if key in instance_dict:
             instance_dict[key].step_back()
 
     @staticmethod
-    def _update(key, instance_dict, show, show_settings):
+    def _update(key, instance_dict, show, show_settings, queue):
         del show
+        del queue
         if key in instance_dict:
             instance_dict[key].update(
                 show_tokens=show_settings['show_tokens'],
                 priority=show_settings['priority'])
 
-    def _update_show(self, show, show_settings, context):
+    def _update_show(self, show, show_settings, context, queue):
         instance_dict = self._get_instance_dict(context)
         if 'key' in show_settings and show_settings['key']:
             key = show_settings['key']
@@ -109,7 +125,7 @@ class ShowPlayer(DeviceConfigPlayer):
         if not callable(action):
             raise AssertionError("Invalid action {} in show_player {}".format(show_settings['action'], key))
 
-        action(key, instance_dict, show, show_settings)
+        action(key, instance_dict, show, show_settings, queue)
 
     def clear_context(self, context):
         """Stop running shows from context."""

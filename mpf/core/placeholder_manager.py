@@ -76,6 +76,23 @@ class IntTemplate(BaseTemplate):
         return int(result)
 
 
+class MachinePlaceholder:
+
+    """Wraps the machine."""
+
+    def __init__(self, machine):
+        """Initialise placeholder."""
+        self._machine = machine
+
+    def __getitem__(self, item):
+        """Array access."""
+        return self._machine.get_machine_var(item)
+
+    def __getattr__(self, item):
+        """Attribute access."""
+        return self._machine.get_machine_var(item)
+
+
 class PlaceholderManager(MpfController):
 
     """Manages templates and placeholders for MPF."""
@@ -93,7 +110,8 @@ class PlaceholderManager(MpfController):
             ast.BoolOp: self._eval_bool_op,
             ast.Attribute: self._eval_attribute,
             ast.Subscript: self._eval_subscript,
-            ast.Name: self._eval_name
+            ast.Name: self._eval_name,
+            ast.IfExp: self._eval_if
         }
 
     @staticmethod
@@ -124,6 +142,12 @@ class PlaceholderManager(MpfController):
     def _eval_name_constant(node, variables):
         del variables
         return node.value
+
+    def _eval_if(self, node, variables):
+        if self._eval(node.test, variables):
+            return self._eval(node.body, variables)
+        else:
+            return self._eval(node.orelse, variables)
 
     def _eval_bin_op(self, node, variables):
         return operators[type(node.op)](self._eval(node.left, variables), self._eval(node.right, variables))
@@ -191,6 +215,8 @@ class PlaceholderManager(MpfController):
                 return self.machine.game.player_list
             elif name == "game":
                 return self.machine.game
+            elif name == "machine":
+                return MachinePlaceholder(self.machine)
         return False
 
     def evaluate_template(self, template, parameters):

@@ -447,7 +447,7 @@ class TestP3Roc(MpfTestCase):
     def test_initial_switches(self):
         self.assertFalse(self.machine.switch_controller.is_active("s_test"))
         self.assertFalse(self.machine.switch_controller.is_active("s_test_000"))
-        self.assertTrue(self.machine.switch_controller.is_active("s_test_001"))
+        self.assertTrue(self.machine.switch_controller.is_active("s_flipper"))
 
     def test_switches(self):
         self.assertFalse(self.machine.switch_controller.is_active("s_test"))

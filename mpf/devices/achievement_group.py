@@ -1,6 +1,4 @@
 """An achievement group which manages and groups achievements."""
-from collections import deque
-
 from random import choice
 
 from mpf.core.mode import Mode
@@ -31,6 +29,7 @@ class AchievementGroup(ModeDevice):
         self._selected = None
 
     def enable(self, **kwargs):
+        """Enable achievement group."""
         del kwargs
         if self._enabled and self._selected and self._show:
             # todo hack - how does it get here with no selecter and/or no show?
@@ -55,6 +54,7 @@ class AchievementGroup(ModeDevice):
         self._get_current().select()
 
     def disable(self, **kwargs):
+        """Disable achievement group."""
         del kwargs
         if not self._enabled:
             return
@@ -81,6 +81,7 @@ class AchievementGroup(ModeDevice):
         return self._selected
 
     def start_selected(self, **kwargs):
+        """Start the currently selected achievement."""
         del kwargs
         if not self._enabled:
             return
@@ -88,6 +89,7 @@ class AchievementGroup(ModeDevice):
         self.disable()
 
     def rotate_right(self, reverse=False, **kwargs):
+        """Rotate to the right."""
         del kwargs
         if not self._enabled:
             return
@@ -106,18 +108,23 @@ class AchievementGroup(ModeDevice):
         self._selected.select()
 
     def rotate_left(self, **kwargs):
+        """Rotate to the left."""
+        del kwargs
         self.rotate_right(reverse=True)
 
     def no_more_enabled(self):
+        """Post event when no more enabled achievements are available."""
         for e in self.config['events_when_no_more_enabled']:
             self.machine.events.post(e)
 
     def all_complete(self):
+        """Poste event when all achievements have been completed."""
         for e in self.config['events_when_all_complete']:
             self.machine.events.post(e)
         self.disable()
 
     def select_random_achievement(self, **kwargs):
+        """Select a random achievement."""
         del kwargs
         # TODO: do we need this?
         if not self._enabled:
@@ -167,8 +174,8 @@ class AchievementGroup(ModeDevice):
             for state in states:
                 mode.add_mode_event_handler(
                     ach.config['events_when_{}'.format(state)][0],
-                                            self._member_state_changed,
-                                            achievement=ach)
+                    self._member_state_changed,
+                    achievement=ach)
 
     def device_removed_from_mode(self, mode: Mode):
         """Mode ended.

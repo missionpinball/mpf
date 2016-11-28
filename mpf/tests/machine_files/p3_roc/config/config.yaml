@@ -9,7 +9,7 @@ switches:
     s_test_000:
         number: A0-B0-0
     s_test_001:
-        number: 0/0/1
+        number: 0/0/3
     s_test:
         number: A1-B0-7
     s_test_no_debounce:

@@ -436,7 +436,7 @@ class Counter(LogicBlock):
             return
 
         count_complete_value = self.config['count_complete_value'].evaluate([]) if self.config['count_complete_value']\
-                                                                                   is not None else None
+            is not None else None
 
         if not self.ignore_hits:
             self.player[self.config['player_variable']] += self.hit_value

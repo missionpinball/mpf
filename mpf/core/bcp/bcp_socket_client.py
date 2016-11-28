@@ -7,12 +7,14 @@ import asyncio
 
 from mpf._version import __version__, __bcp_version__
 from mpf.core.bcp.bcp_client import BaseBcpClient
-from mpf.core.utility_functions import Util
 
 
 class MpfJSONEncoder(json.JSONEncoder):
 
+    """Encoder which by default encodes to string."""
+
     def default(self, o):
+        """Encode to string."""
         return str(o)
 
 

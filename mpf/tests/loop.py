@@ -9,8 +9,7 @@ from asyncio.selector_events import _SelectorSocketTransport
 import asyncio
 
 from mpf.core.clock import ClockBase
-
-from mpf.pyserial_asyncio.serial_asyncio import SerialTransport
+from serial_asyncio import SerialTransport
 
 
 class NextTimers:

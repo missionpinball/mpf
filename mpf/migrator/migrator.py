@@ -311,7 +311,7 @@ class VersionMigrator(object):
             self.log.debug("Current config version is %s", version_num)
             return version_num
 
-        except TypeError:  # No version
+        except (TypeError, IndexError):  # No version
             pass
 
     def _do_deprecations(self):

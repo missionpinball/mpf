@@ -10,7 +10,7 @@ PyPI.
 
 """
 
-__version__ = '0.32.0-dev10'
+__version__ = '0.32.0-dev11'
 __short_version__ = '0.32'
 __bcp_version__ = '1.0'
 __config_version__ = '4'

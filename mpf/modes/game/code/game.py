@@ -176,8 +176,7 @@ class Game(Mode):
         self.log.debug("***************************************************")
 
         self.machine.events.post_queue('ball_starting',
-                                       balls_remaining=self.machine.config['game'][
-                                                           'balls_per_game'] - self.player.ball,
+                                       balls_remaining=self.machine.config['game']['balls_per_game'] - self.player.ball,
                                        is_extra_ball=is_extra_ball,
                                        callback=self.ball_started)
         '''event: ball_starting
@@ -267,12 +266,17 @@ class Game(Mode):
 
         self.log.debug("Entering Game.ball_ending()")
         self.machine.events.post('ball_will_end')
+        '''event: ball_will_end
+        desc: The ball is about to end. This event is posted just before
+        :doc:`ball_ending`.'''
 
         self.machine.events.post_queue('ball_ending',
                                        callback=self._ball_ending_done)
         '''event: ball_ending
         desc: The ball is ending. This is a queue event and the ball won't
-        actually end until the queue is cleared.'''
+        actually end until the queue is cleared.
+
+        This event is posted just after :doc:`ball_will_end`'''
 
     def _ball_ending_done(self, **kwargs):
         # Callback for when the ball_ending queue is clear. All this does is
@@ -281,7 +285,11 @@ class Game(Mode):
         del kwargs
         self.machine.events.post('ball_ended')
         '''event: ball_ended
-        desc: The ball has ended.'''
+        desc: The ball has ended.
+
+        Note that this does not necessarily mean that the next player's turn
+        will start, as this player may have an extra ball which means they'll
+        shoot again.'''
 
     def ball_ended(self, ev_result=True, **kwargs):
         """Called when the ball has successfully ended.

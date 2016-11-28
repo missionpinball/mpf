@@ -16,6 +16,7 @@ from mpf.core.utility_functions import Util
 from mpf.devices.switch import Switch
 
 MonitoredSwitchChange = namedtuple("MonitoredSwitchChange", ["name", "label", "platform", "num", "state"])
+SwitchHandler = namedtuple("SwitchHandler", ["switch_name", "callback", "state", "ms"])
 
 
 class SwitchController(MpfController):
@@ -415,7 +416,7 @@ class SwitchController(MpfController):
     def _future_done(self, handlers, future):
         del future
         for handler in handlers:
-            self.remove_switch_handler(**handler)
+            self.remove_switch_handler_by_key(handler)
 
     @staticmethod
     def _wait_handler(_future: asyncio.Future, **kwargs):
@@ -496,7 +497,7 @@ class SwitchController(MpfController):
 
     # pylint: disable-msg=too-many-arguments
     def add_switch_handler(self, switch_name, callback, state=1, ms=0,
-                           return_info=False, callback_kwargs=None):
+                           return_info=False, callback_kwargs=None) -> SwitchHandler:
         """Register a handler to take action on a switch event.
 
         Args:
@@ -575,10 +576,12 @@ class SwitchController(MpfController):
                     self._add_timed_switch_handler(key, value)
 
         # Return the args we used to setup this handler for easy removal later
-        return {'switch_name': switch_name,
-                'callback': callback,
-                'state': state,
-                'ms': ms}
+        return SwitchHandler(switch_name, callback, state, ms)
+
+    def remove_switch_handler_by_key(self, switch_handler: SwitchHandler):
+        """Remove switch hander by key returned from add_switch_handler."""
+        self.remove_switch_handler(switch_handler.switch_name, switch_handler.callback, switch_handler.state,
+                                   switch_handler.ms)
 
     def remove_switch_handler(self, switch_name, callback, state=1, ms=0):
         """Remove a registered switch handler.

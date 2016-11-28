@@ -1,0 +1,39 @@
+#config_version=4
+
+coils:
+  magnet_coil1:
+    number:
+    pulse_ms: 100
+    hold_power: 3
+  magnet_coil2:
+    number:
+    pulse_ms: 100
+    hold_power: 3
+
+switches:
+  grab_switch1:
+    number:
+  grab_switch2:
+    number:
+
+magnets:
+  magnet1:
+    magnet_coil: magnet_coil1
+    grab_switch: grab_switch1
+    enable_events: magnet1_enable
+    disable_events: magnet1_disable
+    release_ball_events: magnet1_release
+    fling_ball_events: magnet1_fling
+
+  magnet_ball_save:
+    magnet_coil: magnet_coil2
+    grab_switch: grab_switch2
+    enable_events: magnet_ball_save_enable
+    disable_events: magnet_magnet_ball_save_grabbed_ball
+    fling_ball_events: magnet_magnet_ball_save_grabbed_ball
+
+ball_saves:
+  magnet_save:
+    balls_to_save: 1
+    active_time: 5s
+    enable_events: magnet_magnet_ball_save_grabbing_ball
