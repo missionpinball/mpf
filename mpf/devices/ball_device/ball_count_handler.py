@@ -62,7 +62,8 @@ class EjectTracker:
         """Track unknown ball."""
         self._ball_count_handler.ball_device.debug_log("Got %s unknown ball during eject", balls)
         self._num_unknown_balls += balls
-        self._unknown_balls.set_result(True)
+        if not self._unknown_balls.done():
+            self._unknown_balls.set_result(True)
 
     def track_lost_balls(self, balls):
         """Track lost ball."""
