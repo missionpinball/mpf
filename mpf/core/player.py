@@ -74,7 +74,22 @@ class Player(object):
         # get notification of the new player before they start seeing variable
         # changes for it.
         self.vars['index'] = index
+        '''player_var: index
+
+        desc: The index of this player, starting with 0. For example, Player
+        1 has an index of 0, Player 2 has an index of 1, etc.
+
+        If you want to get the player number, use the "number" player variable
+        instead.
+        '''
+
         self.vars['number'] = number
+        '''player_var: number
+
+        desc: The number of the player, beginning with 1. (e.g. Player 1 has
+        a number of "1", Player 2 is "2", etc.
+        '''
+
 
         self.machine.events.post('player_add_success', player=self, num=number,
                                  callback=self._player_add_done)

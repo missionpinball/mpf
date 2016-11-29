@@ -30,6 +30,13 @@ class ModeTimer(object):
 
         self.tick_var = self.mode.name + '_' + self.name + '_tick'
         self.mode.player[self.tick_var] = 0
+        '''player_var: (mode)_(timer)_tick
+
+        desc: Stores the current tick value for the mode timer from the mode
+        (mode) with the time name (timer). For example, a timer called
+        "my_timer" which is in the config for "mode1" will store its tick
+        value in the player variable ``mode1_my_timer_tick``.
+        '''
 
         self.running = False
         self.start_value = self.config['start_value']

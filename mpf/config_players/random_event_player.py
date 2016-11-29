@@ -22,6 +22,13 @@ class RandomEventPlayer(ConfigPlayer):
         if settings['scope'] == "player":
             if not self.machine.game.player[key]:
                 self.machine.game.player[key] = Randomizer(settings['events'])
+                '''player_var: random_(x).(y)
+
+                desc: Holds references to Randomizer settings that need to be
+                tracked on a player basis. There is nothing you need to know
+                or do with this, rather this is just FYI on what the player
+                variables that start with "random\_" are.
+                '''
 
             if settings['force_all']:
                 self.machine.game.player[key].force_all = True

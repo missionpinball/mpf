@@ -47,6 +47,12 @@ class LogicBlocks(object):
         """
         del kwargs
         player.logic_blocks = set()
+        '''player_var: logic_blocks
+
+        desc: A set which contains references to all the logic blocks which
+        exist for this player. There's nothing useful in here for you, we just
+        include it so you know what this player variable does.
+        '''
 
         if 'logic_blocks' in self.machine.config:
             self._create_logic_blocks(
@@ -149,6 +155,21 @@ class LogicBlock(object):
             base_spec='logic_blocks:common')
 
         self.player_state_variable = "{}_state".format(self.name)
+        '''player_var: (logic_block)_state
+
+        desc: A dictionary that stores the internal state of the logic block
+        with the name (logic_block). (In other words, a logic block called
+        *mode1_hit_counter* will store its state in a player variable called
+        ``mode1_hit_counter_state``).
+
+        The state that's stored in this variable include whether the logic
+        block is enabled and whether it's complete.
+
+        The actual value of the logic block is stored in another player
+        variable whose name you can specify via the ``player_variable:``
+        setting in the individual logic block config.
+        '''
+
         if not player.is_player_var(self.player_state_variable) or not self.config['persist_state']:
             player[self.player_state_variable] = {
                 "enabled": False,
@@ -400,6 +421,16 @@ class Counter(LogicBlock):
 
         if not self.config['player_variable']:
             self.config['player_variable'] = self.name + '_count'
+        '''player_var: (logic_block)_count
+
+        desc: The default player variable name that's used to store the count
+        value for a counter player variable. Note that the (logic_block) part of the
+        player variable name is replaced with the actual logic block's name.
+
+        Also note that it's possible to override the player variable name
+        that's used by default and to specify your own name. You do this in the
+        ``player_variable:`` part of the logic block config.
+        '''
 
         self.hit_value = self.config['count_interval']
 
@@ -503,6 +534,18 @@ class Accrual(LogicBlock):
         if not self.config['player_variable']:
             self.config['player_variable'] = self.name + '_status'
 
+        '''player_var: (logic_block)_status
+
+        desc: The default player variable name that's used to store the
+        accrual state for an accrual player variable. Note that the (logic_block)
+        part of the player variable name is replaced with the actual logic
+        block's name.
+
+        Also note that it's possible to override the player variable name
+        that's used by default and to specify your own name. You do this in the
+        ``player_variable:`` part of the logic block config.
+        '''
+
         if not self.config['persist_state'] or not self.player[self.config['player_variable']]:
             self.player[self.config['player_variable']] = (
                 [False] * len(self.config['events']))
@@ -576,6 +619,16 @@ class Sequence(LogicBlock):
 
         if not self.config['player_variable']:
             self.config['player_variable'] = self.name + '_step'
+        '''player_var: (logic_block)_step
+
+        desc: The default player variable name that's used to store the
+        current step for a sequence player variable. Note that the (logic_block) part of the
+        player variable name is replaced with the actual logic block's name.
+
+        Also note that it's possible to override the player variable name
+        that's used by default and to specify your own name. You do this in the
+        ``player_variable:`` part of the logic block config.
+        '''
 
         if not self.config['persist_state']:
             self.player[self.config['player_variable']] = 0

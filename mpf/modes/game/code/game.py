@@ -505,6 +505,12 @@ class Game(Mode):
     def _player_turn_started(self, **kwargs):
         del kwargs
         self.player.ball += 1
+        '''player_var: ball
+
+        desc: The ball number for this player. If a player gets an extra ball,
+        this number won't change when they start the extra ball.
+        '''
+
         self.ball_starting()
 
     def player_rotate(self):
