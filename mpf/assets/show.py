@@ -1,4 +1,6 @@
 """Contains show related classes."""
+from functools import partial
+
 from mpf.core.assets import Asset, AssetPool
 from mpf.core.file_manager import FileManager
 from mpf.core.utility_functions import Util
@@ -260,8 +262,14 @@ class Show(Asset):
             self.token_values[token].append(path)
 
     # pylint: disable-msg=too-many-arguments
+    # pylint: disable-msg=too-many-locals
     def play(self, priority=0, speed=1.0, start_step=1, callback=None,
-             loops=-1, sync_ms=None, manual_advance=False, show_tokens=None):
+             loops=-1, sync_ms=None, manual_advance=False, show_tokens=None,
+             events_when_played=None, events_when_stopped=None,
+             events_when_looped=None, events_when_paused=None,
+             events_when_resumed=None, events_when_advanced=None,
+             events_when_stepped_back=None, events_when_updated=None,
+             events_when_completed=None):
         """Play a Show.
 
         There are many parameters you can use here which
@@ -324,7 +332,7 @@ class Show(Asset):
         if not show_tokens:
             show_tokens = dict()
 
-        # todo if we want to enfore that show_tokens match the tokens in the
+        # todo if we want to enforce that show_tokens match the tokens in the
         # show exactly, uncomment below and remove the following if.
         # however we don't do this today because of the default 'off' show
         # that's used since it has lights and leds, so we'll have to think
@@ -355,7 +363,16 @@ class Show(Asset):
                                    loops=int(loops),
                                    sync_ms=sync_ms,
                                    manual_advance=manual_advance,
-                                   show_tokens=show_tokens)
+                                   show_tokens=show_tokens,
+                                   events_when_played=events_when_played,
+                                   events_when_stopped=events_when_stopped,
+                                   events_when_looped=events_when_looped,
+                                   events_when_paused=events_when_paused,
+                                   events_when_resumed=events_when_resumed,
+                                   events_when_advanced=events_when_advanced,
+                                   events_when_stepped_back=events_when_stepped_back,
+                                   events_when_updated=events_when_updated,
+                                   events_when_completed=events_when_completed)
 
         if not self.loaded:
             self.load(callback=running_show.show_loaded, priority=priority)
@@ -385,7 +402,11 @@ class RunningShow(object):
     # pylint: disable-msg=too-many-locals
     def __init__(self, machine, show, show_steps, priority,
                  speed, start_step, callback, loops,
-                 sync_ms, manual_advance, show_tokens):
+                 sync_ms, manual_advance, show_tokens, events_when_played,
+                 events_when_stopped, events_when_looped,
+                 events_when_paused, events_when_resumed,
+                 events_when_advanced, events_when_stepped_back,
+                 events_when_updated, events_when_completed):
         """Initialise an instance of a show."""
         self.machine = machine
         self.show = show
@@ -396,8 +417,18 @@ class RunningShow(object):
         self.loops = loops
         self.start_step = start_step
         self.sync_ms = sync_ms
-        # self.mode = mode
         self.show_tokens = show_tokens
+
+        self._events = dict(play=events_when_played,
+                            stop=events_when_stopped,
+                            loop=events_when_looped,
+                            pause=events_when_paused,
+                            resume=events_when_resumed,
+                            advance=events_when_advanced,
+                            step_back=events_when_stepped_back,
+                            update=events_when_updated,
+                            complete=events_when_completed)
+
         self._delay_handler = None
         self.next_step_index = None
         self.current_step_index = None
@@ -461,10 +492,15 @@ class RunningShow(object):
         if self.sync_ms:
             delay_secs = (self.sync_ms / 1000.0) - (self.next_step_time % (self.sync_ms / 1000.0))
             self.next_step_time += delay_secs
-            self._delay_handler = self.machine.clock.schedule_once(self._run_next_step,
-                                                                   delay_secs)
+            self._delay_handler = self.machine.clock.schedule_once(
+                partial(self._run_next_step, post_events='play'), delay_secs)
         else:  # run now
-            self._run_next_step()
+            self._run_next_step(post_events='play')
+
+    def _post_events(self, action):
+        if self._events[action]:  # Should make sure this is a list? todo
+            for event in self._events[action]:
+                self.machine.events.post(event)
 
     def __repr__(self):
         """Return str representation."""
@@ -528,6 +564,8 @@ class RunningShow(object):
         if self.callback and callable(self.callback):
             self.callback()
 
+        self._post_events('stop')
+
     def _remove_delay_handler(self):
         if self._delay_handler:
             self.machine.clock.unschedule(self._delay_handler)
@@ -536,13 +574,14 @@ class RunningShow(object):
     def pause(self):
         """Pause show."""
         self._remove_delay_handler()
+        self._post_events('pause')
 
     def resume(self):
         """Resume paused show."""
         if not self._show_loaded:
             return
         self.next_step_time = self.machine.clock.get_time()
-        self._run_next_step()
+        self._run_next_step(post_events='resume')
 
     def update(self, **kwargs):
         """Update show.
@@ -552,6 +591,9 @@ class RunningShow(object):
         # todo
         raise NotImplementedError("Show update is not implemented yet. It's "
                                   "coming though...")
+
+        # don't forget this when we implement this feature
+        # self._post_events('update')
 
     def advance(self, steps=1, show_step=None):
         """Manually advance this show to the next step."""
@@ -566,7 +608,7 @@ class RunningShow(object):
             self.next_step_index = show_step - 1
 
         if self._show_loaded:
-            self._run_next_step()
+            self._run_next_step(post_events='advance')
 
     def step_back(self, steps=1):
         """Manually step back this show to a previous step."""
@@ -575,10 +617,13 @@ class RunningShow(object):
         self.next_step_index -= steps + 1
 
         if self._show_loaded:
-            self._run_next_step()
+            self._run_next_step(post_events='step_back')
 
-    def _run_next_step(self, dt=None):
+    def _run_next_step(self, dt=None, post_events=None):
         del dt
+
+        if post_events:
+            self._post_events(post_events)
 
         if self.next_step_index < 0:
             self.next_step_index %= self._total_steps
@@ -589,10 +634,13 @@ class RunningShow(object):
             if self.loops > 0:
                 self.loops -= 1
                 self.next_step_index = 0
+                self._post_events('loop')
             elif self.loops < 0:
                 self.next_step_index = 0
+                self._post_events('loop')
             else:
                 self.stop()
+                self._post_events('complete')
                 return False
 
         self.current_step_index = self.next_step_index

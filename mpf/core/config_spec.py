@@ -835,6 +835,15 @@ show_player:
     manual_advance: single|bool|False
     key: single|str|None
     show_tokens: dict|str:str|None
+    events_when_played: list|str|None
+    events_when_stopped: list|str|None
+    events_when_looped: list|str|None
+    events_when_paused: list|str|None
+    events_when_resumed: list|str|None
+    events_when_advanced: list|str|None
+    events_when_stepped_back: list|str|None
+    events_when_updated: list|str|None
+    events_when_completed: list|str|None
     __allow_others__:
 show_pools:
     __valid_in__: machine, mode                      # todo add to validator

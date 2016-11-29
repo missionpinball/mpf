@@ -212,3 +212,28 @@ show_player:
       block_queue: True
       action: play
       loops: 0
+  play_with_emitted_events:
+    test_show1:
+      events_when_played: test_show1_played, test_show1_played2
+      events_when_stopped: test_show1_stopped
+      events_when_looped: test_show1_looped
+      events_when_paused: test_show1_paused
+      events_when_resumed: test_show1_resumed
+      events_when_advanced: test_show1_advanced
+      events_when_stepped_back: test_show1_stepped_back
+      events_when_completed: test_show1_completed
+  stop_emitted_events_show:
+    test_show1: stop
+  pause_emitted_events_show:
+    test_show1: pause
+  resume_emitted_events_show:
+    test_show1: resume
+  advance_emitted_events_show:
+    test_show1: advance
+  step_back_emitted_events_show:
+    test_show1: step_back
+  play_with_completed_event:
+    test_show1:
+      events_when_completed: test_show1_completed
+      events_when_stopped: test_show1_stopped
+      loops: 0

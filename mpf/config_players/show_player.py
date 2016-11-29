@@ -46,7 +46,17 @@ class ShowPlayer(DeviceConfigPlayer):
                 loops=show_settings['loops'],
                 sync_ms=show_settings['sync_ms'],
                 manual_advance=show_settings['manual_advance'],
-                callback=callback
+                callback=callback,
+                events_when_played=show_settings['events_when_played'],
+                events_when_stopped=show_settings['events_when_stopped'],
+                events_when_looped=show_settings['events_when_looped'],
+                events_when_paused=show_settings['events_when_paused'],
+                events_when_resumed=show_settings['events_when_resumed'],
+                events_when_advanced=show_settings['events_when_advanced'],
+                events_when_stepped_back=show_settings[
+                    'events_when_stepped_back'],
+                events_when_updated=show_settings['events_when_updated'],
+                events_when_completed=show_settings['events_when_completed']
             )
             instance_dict[key] = show_instance
         except KeyError:

@@ -99,7 +99,6 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
         attached to MPF.
         '''
 
-
         self.machine.create_machine_var("p_roc_revision", self.revision, persist=False, silent=True)
         '''machine_var: p_roc_revision
 

@@ -90,7 +90,6 @@ class Player(object):
         a number of "1", Player 2 is "2", etc.
         '''
 
-
         self.machine.events.post('player_add_success', player=self, num=number,
                                  callback=self._player_add_done)
         '''event: player_add_success
