@@ -121,6 +121,11 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                                self.remote_processor, self.remote_model,
                                self.remote_firmware)
 
+        self.machine.create_machine_var("fast_{}_firmware".format(self.remote_processor.lower()), self.remote_firmware,
+                                        persist=False, silent=True)
+        self.machine.create_machine_var("fast_{}_model".format(self.remote_processor.lower()), self.remote_model,
+                                        persist=False, silent=True)
+
         if self.remote_processor == 'DMD':
             min_version = DMD_MIN_FW
             # latest_version = DMD_LATEST_FW
