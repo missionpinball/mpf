@@ -262,6 +262,7 @@ class Show(Asset):
             self.token_values[token].append(path)
 
     # pylint: disable-msg=too-many-arguments
+    # pylint: disable-msg=too-many-locals
     def play(self, priority=0, speed=1.0, start_step=1, callback=None,
              loops=-1, sync_ms=None, manual_advance=False, show_tokens=None,
              events_when_played=None, events_when_stopped=None,
@@ -590,7 +591,9 @@ class RunningShow(object):
         # todo
         raise NotImplementedError("Show update is not implemented yet. It's "
                                   "coming though...")
-        self._post_events('update')
+
+        # don't forget this when we implement this feature
+        # self._post_events('update')
 
     def advance(self, steps=1, show_step=None):
         """Manually advance this show to the next step."""
