@@ -139,11 +139,49 @@ class Credits(Mode):
             self.machine.create_machine_var(name='credit_units',
                                             value=credit_units)
 
+        '''machine_var: credit_units
+
+        desc: How many credit units are on the machine. Note that credit units
+        are not useful for display purposes since they represent the number of
+        credits in a ration related to the lowest common denominator of the
+        partial credit fraction. See the related *credits_string* and
+        *credits_value* machine variables for more useful formats.
+        '''
+
         self.machine.create_machine_var('credits_string', ' ')
+        # doc string is in machine.py for credits_string
+
         self.machine.create_machine_var('credits_value', '0')
+        '''machine_var: credits_value
+
+        desc: The human readable string form which shows the number value of
+        how many credits are on the machine, including whole and fractional
+        credits, for example "1" or "2 1/2" or "3 3/4".
+
+        If you want the full string with the word "CREDITS" in it, use the
+        "credits_string" machine variable.
+        '''
+
         self.machine.create_machine_var('credits_whole_num', 0)
+        '''machine_var: credits_whole_num
+
+        desc: The whole number portion of the total credits on the machine.
+        For example, if the machine has 3 1/2 credits, this value is "3".
+        '''
+
         self.machine.create_machine_var('credits_numerator', 0)
+        '''machine_var: credits_numerator
+
+        desc: The numerator portion of the total credits on the machine.
+        For example, if the machine has 4 1/2 credits, this value is "1".
+        '''
         self.machine.create_machine_var('credits_denominator', 0)
+        '''machine_var: credits_whole_num
+
+        desc: The denominator portion of the total credits on the machine.
+        For example, if the machine has 4 1/2 credits, this value is "2".
+        '''
+
         self._update_credit_strings()
 
         self._enable_credit_switch_handlers()

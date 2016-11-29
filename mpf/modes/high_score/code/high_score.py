@@ -47,12 +47,38 @@ class HighScore(AsyncMode):
                         self.machine.create_machine_var(
                             name=entries + str(position + 1) + '_label',
                             value=label)
+
+                        '''machine_var: (high_score_category)(position)_label
+
+                        desc: The "label" of the high score for that specific
+                        score category and position. For example,
+                        ``score1_label`` holds the label for the #1 position
+                        of the "score" player variable (which might be "GRAND
+                        CHAMPION").
+
+                        '''
+
                         self.machine.create_machine_var(
                             name=entries + str(position + 1) + '_name',
                             value=name)
+
+                        '''machine_var: (high_score_category)(position)_name
+
+                        desc: Holds the player's name (or initials) for the
+                        high score for that category and position.
+
+                        '''
+
                         self.machine.create_machine_var(
                             name=entries + str(position + 1) + '_value',
                             value=value)
+
+                        '''machine_var: (high_score_category)(position)_value
+
+                        desc: Holds the numeric value for the high score
+                        for that category and position.
+
+                        '''
 
                 except KeyError:
                     self.high_scores[entries] = list()

@@ -123,8 +123,22 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
         self.machine.create_machine_var("fast_{}_firmware".format(self.remote_processor.lower()), self.remote_firmware,
                                         persist=False, silent=True)
+        '''machine_var: fast_(x)_firmware
+
+        desc: Holds the version number of the firmware for the processor on
+        the FAST Pinball controller that's connected. The "x" is replaced with
+        either "dmd", "net", or "rgb", one for each processor that's attached.
+        '''
+
         self.machine.create_machine_var("fast_{}_model".format(self.remote_processor.lower()), self.remote_model,
                                         persist=False, silent=True)
+
+        '''machine_var: fast_(x)_model
+
+        desc: Holds the model number of the board for the processor on
+        the FAST Pinball controller that's connected. The "x" is replaced with
+        either "dmd", "net", or "rgb", one for each processor that's attached.
+        '''
 
         if self.remote_processor == 'DMD':
             min_version = DMD_MIN_FW
