@@ -88,6 +88,7 @@ class TestPRoc(MpfTestCase):
         p_roc_common.pinproc.driver_state_pulse = MagicMock(
             return_value="driver_state_pulse")
         self.pinproc.switch_get_states = MagicMock(return_value=[0, 1] + [0] * 100)
+        self.pinproc.read_data = MagicMock(return_value=0x12345678)
         super().setUp()
 
     def test_pulse_and_hold(self):
@@ -129,6 +130,9 @@ class TestPRoc(MpfTestCase):
             ["driver_state_pulse"], False)
 
     def test_initial_switches(self):
+        self.assertEqual(0x1234, self.machine.default_platform.version)
+        self.assertEqual(0x5678, self.machine.default_platform.revision)
+
         self.assertFalse(self.machine.switch_controller.is_active("s_test"))
         self.assertFalse(self.machine.switch_controller.is_active("s_test_000"))
         self.assertTrue(self.machine.switch_controller.is_active("s_direct"))
