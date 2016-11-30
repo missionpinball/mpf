@@ -222,16 +222,36 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
             '''event: (combo_switch)_(state)
             desc: Combo switch (name) changed to state (state).
 
-            Valid states are: inactive, both, one
-
-            * both - A switch from group 1 and group 2 are both active at the
-              same time, having been pressed within the ``max_offset_time:`` and
-              being active for at least the ``hold_time:``.
-            * one - Either switch 1 or switch 2 has been released, but the
-              other switch is still active.
-            * inactive - Both switches are inactive.
-
             Note that these events can be overridden in a combo switch's
             config.
 
+            Valid states are: *inactive*, *both*, or *one*.
+
+            ..rubric:: both
+
+            A switch from group 1 and group 2 are both active at the
+            same time, having been pressed within the ``max_offset_time:`` and
+            being active for at least the ``hold_time:``.
+
+            ..rubric:: one
+
+            Either switch 1 or switch 2 has been released for at
+            least the ``release_time:`` but the other switch is still active.
+
+            ..rubric:: inactive
+
+            Both switches are inactive.
+
+            '''
+
+            '''event: flipper_cancel
+
+            desc: Posted when both flipper buttons are hit at the same time,
+            useful as a "cancel" event for shows, the bonus mode, etc.
+
+            Note that in order for this event to work, you have to add
+            ``left_flipper`` as a tag to the switch for your left flipper,
+            and ``right_flipper`` to your right flipper.
+
+            See :doc:`/config/combo_switches` for details.
             '''
