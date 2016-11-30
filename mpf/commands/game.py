@@ -21,6 +21,21 @@ class Command(object):
         parser = argparse.ArgumentParser(
             description='Starts the MPF game engine')
 
+        parser.add_argument("-a",
+                            action="store_true", dest="no_load_cache",
+                            help="Forces the config to be loaded from files "
+                                 "and not cache")
+
+        parser.add_argument("-A",
+                            action="store_false", dest="create_config_cache",
+                            help="Does not create the cache config files")
+
+        parser.add_argument("-b",
+                            action="store_false", dest="bcp", default=True,
+                            help="Runs MPF without making a connection "
+                                 "attempt to a "
+                                 "BCP Server")
+
         parser.add_argument("-c",
                             action="store", dest="configfile",
                             default="config", metavar='config_file',
@@ -29,6 +44,35 @@ class Command(object):
                                  "config.yaml. Multiple files can be used "
                                  "via a comma-"
                                  "separated list (no spaces between)")
+
+        parser.add_argument("-C",
+                            action="store", dest="mpfconfigfile",
+                            default=os.path.join(mpf_path,
+                                                 "mpfconfig.yaml"),
+                            metavar='config_file',
+                            help="The MPF framework default config file. "
+                                 "Default is "
+                                 "mpf/mpfconfig.yaml")
+
+        parser.add_argument("-f",
+                            action="store_true", dest="force_assets_load", default=False,
+                            help="Load all assets upon startup.  Useful for "
+                            "ensuring all assets are set up properly "
+                            "during development.")
+
+        parser.add_argument("-l",
+                            action="store", dest="logfile",
+                            metavar='file_name',
+                            default=os.path.join("logs",
+                                datetime.now().strftime(
+                                "%Y-%m-%d-%H-%M-%S-mpf-" + socket.gethostname() + ".log")),
+                            help="The name (and path) of the log file")
+
+        parser.add_argument("-p",
+                            action="store_true", dest="pause", default=False,
+                            help="Pause the terminal window on exit. Useful "
+                            "when launching in a separate window so you can "
+                            "see any errors before the window closes.")
 
         parser.add_argument("-v",
                             action="store_const", dest="loglevel",
@@ -51,57 +95,12 @@ class Command(object):
                             help="Forces the virtual platform to be "
                                  "used for all devices")
 
-        parser.add_argument("-a",
-                            action="store_true", dest="no_load_cache",
-                            help="Forces the config to be loaded from files "
-                                 "and not "
-                                 "cache")
-
-        parser.add_argument("-A",
-                            action="store_false", dest="create_config_cache",
-                            help="Does not create the cache config files")
-
         parser.add_argument("-X",
                             action="store_const", dest="force_platform",
                             const='smart_virtual',
                             help="Forces the smart virtual platform to be "
                                  "used for all"
                                  " devices")
-
-        parser.add_argument("-b",
-                            action="store_false", dest="bcp", default=True,
-                            help="Runs MPF without making a connection "
-                                 "attempt to a "
-                                 "BCP Server")
-
-        parser.add_argument("-l",
-                            action="store", dest="logfile",
-                            metavar='file_name',
-                            default=os.path.join("logs",
-                                                 datetime.now().strftime(
-                                                     "%Y-%m-%d-%H-%M-%S-mpf-" + socket.gethostname() + ".log")),
-                            help="The name (and path) of the log file")
-
-        parser.add_argument("-C",
-                            action="store", dest="mpfconfigfile",
-                            default=os.path.join(mpf_path,
-                                                 "mpfconfig.yaml"),
-                            metavar='config_file',
-                            help="The MPF framework default config file. "
-                                 "Default is "
-                                 "mpf/mpfconfig.yaml")
-
-        parser.add_argument("-p",
-                            action="store_true", dest="pause", default=False,
-                            help="Pause the terminal window on exit. Useful "
-                            "when launching in a separate window so you can "
-                            "see any errors before the window closes.")
-
-        parser.add_argument("-f",
-                            action="store_true", dest="force_assets_load", default=False,
-                            help="Load all assets upon startup.  Useful for "
-                            "ensuring all assets are set up properly "
-                            "during development.")
 
         args = parser.parse_args(args)
         args.configfile = Util.string_to_list(args.configfile)
