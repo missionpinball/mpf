@@ -84,6 +84,30 @@ class DelayManager(object):
             except KeyError:
                 pass
 
+    def add_if_doesnt_exist(self, ms, callback, name, **kwargs):
+        """Adds a delay only if a delay with that name doesn't exist already.
+
+        Args:
+            ms: Int of the number of milliseconds you want this delay to be for.
+                Note that the resolution of this time is based on your
+                machine's tick rate. The callback will be called on the
+                first machine tick *after* the delay time has expired. For
+                example, if you have a machine tick rate of 30Hz, that's 33.33ms
+                per tick. So if you set a delay for 40ms, the actual delay will
+                be 66.66ms since that's the next tick time after the delay ends.
+            callback: The method that is called when this delay ends.
+            name: String name of this delay. This name is arbitrary and only
+                used to identify the delay later if you want to remove or change
+                it.
+            **kwargs: Any other (optional) kwarg pairs you pass will be
+                passed along as kwargs to the callback method.
+
+        Returns:
+            String name of the delay which you can use to remove it later.
+        """
+        if not self.check(name):
+            return self.add(ms, callback, name, **kwargs)
+
     def check(self, delay):
         """Check to see if a delay exists.
 
@@ -95,7 +119,7 @@ class DelayManager(object):
         if delay in self.delays:
             return delay
 
-    def reset(self, name, ms, callback, **kwargs):
+    def reset(self, ms, callback, name, **kwargs):
         """Reset a delay, first deleting the old one (if it exists) and then adding new delay with the new settings.
 
         Args:
@@ -104,7 +128,7 @@ class DelayManager(object):
         if name in self.delays:
             self.remove(name)
 
-        self.add(ms, callback, name, **kwargs)
+        return self.add(ms, callback, name, **kwargs)
 
     def clear(self):
         """Remove (clear) all the delays associated with this DelayManager."""
