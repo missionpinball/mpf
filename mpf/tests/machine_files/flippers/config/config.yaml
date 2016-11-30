@@ -15,6 +15,7 @@ coils:
 switches:
     s_flipper:
         number: 1
+        tags: left_flipper
     s_flipper_eos:
         number: 2
 

@@ -7,8 +7,10 @@ hardware:
 switches:
     s_left_flipper:
         number: 0-0
+        tags: left_flipper
     s_right_flipper:
         number: 0-1
+        tags: right_flipper
 
 coils:
     c_flipper_left_main:
