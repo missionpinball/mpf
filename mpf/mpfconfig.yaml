@@ -71,6 +71,7 @@ mpf:
         - mpf.devices.led_group.LedRing
         - mpf.devices.magnet.Magnet
         - mpf.devices.kickback.Kickback
+        - mpf.devices.combo_switch.ComboSwitch
 
     plugins:
         mpf.plugins.auditor.Auditor
@@ -166,6 +167,7 @@ mpf:
       - timers
       - achievements
       - achievement_groups
+      - combo_switches
 
 # Default settings for machines. All can be overridden
 
@@ -376,3 +378,9 @@ hardware:
   accelerometers: default
   servo_controllers: default
   i2c: default
+
+combo_switches:
+  both_flippers:
+    tag_1: left_flipper
+    tag_2: right_flipper
+    events_when_both: flipper_cancel

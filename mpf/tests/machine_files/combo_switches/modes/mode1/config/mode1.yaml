@@ -1,0 +1,10 @@
+#config_version=4
+
+mode:
+  priority: 100
+  game_mode: no
+
+combo_switches:
+  mode1_combo:
+    switches_1: switch1
+    switches_2: switch2

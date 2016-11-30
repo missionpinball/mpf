@@ -234,6 +234,18 @@ color_correction_profile:
     whitepoint: list|float|1.0, 1.0, 1.0
     linear_slope: single|float|1.0
     linear_cutoff: single|float|0.0
+combo_switches:
+    __valid_in__: machine, mode
+    tag_1: list|str|None
+    tag_2: list|str|None
+    switches_1: set|machine(switches)|None
+    switches_2: set|machine(switches)|None
+    max_offset_time: single|secs|-1
+    hold_time: single|ms|0
+    release_time: single|ms|0
+    events_when_both: list|str|None
+    events_when_inactive: list|str|None
+    events_when_one: list|str|None
 config:
     __valid_in__: machine, mode                           # todo add to validator
 config_player_common:

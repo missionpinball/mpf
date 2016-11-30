@@ -1,0 +1,68 @@
+#config_version=4
+
+modes:
+  - mode1
+
+switches:
+  switch1:
+    number:
+  switch2:
+    number:
+  switch3:
+    number:
+  switch4:
+    number:
+  switch5:
+    number:
+    tags: tag1
+  switch6:
+    number:
+    tags: tag1
+  switch7:
+    number:
+    tags: tag2
+  switch8:
+    number:
+    tags: tag2
+  switch9:
+    number:
+    tags: left_flipper
+  switch10:
+    number:
+    tags: right_flipper
+
+combo_switches:
+  tag_combo:
+    tag_1: tag1
+    tag_2: tag2
+  switch_combo:
+    switches_1: switch1
+    switches_2: switch2
+  multiple_switch_combo:
+    switches_1: switch1, switch2
+    switches_2: switch3, switch4
+  custom_offset:
+    switches_1: switch1
+    switches_2: switch2
+    max_offset_time: 1s
+  custom_hold:
+    switches_1: switch1
+    switches_2: switch2
+    hold_time: 1s
+  custom_release:
+    switches_1: switch1
+    switches_2: switch2
+    release_time: 1s
+  custom_times_multiple_switches:
+    tag_1: tag1
+    tag_2: tag2
+    max_offset_time: 1s
+    hold_time: 1s
+    release_time: 1s
+    debug: true
+  custom_events:
+    switches_1: switch1
+    switches_2: switch2
+    events_when_both: active_event, active_event2
+    events_when_inactive: inactive_event
+    events_when_one: one_event
