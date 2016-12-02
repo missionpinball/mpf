@@ -660,7 +660,8 @@ playfield_transfers:
 playlists:
     __valid_in__: machine, mode
     track: single|str|None
-    random: single|bool|False
+    type: single|enum(sequence,random,random_force_next,random_force_all)|sequence
+    scope: single|enum(player,machine)|player
     crossfade_time: single|secs|0
     fade_in_first_sound: single|bool|False
     fade_out_last_sound: single|bool|False
@@ -668,7 +669,6 @@ playlists:
     events_when_stopped: list|str|None
     mode_end_action: single|enum(stop,finish_sound)|finish_sound
     sounds: list|str|
-
 plugins:
     __valid_in__: machine                      # todo add to validator
 pololu_maestro:
