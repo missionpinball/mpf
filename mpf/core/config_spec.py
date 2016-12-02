@@ -657,18 +657,6 @@ playfield_transfers:
     transfer_events: list|str:ms|None
     eject_target: single|machine(ball_devices)|
     captures_from: single|machine(ball_devices)|
-playlists:
-    __valid_in__: machine, mode
-    track: single|str|None
-    type: single|enum(sequence,random,random_force_next,random_force_all)|sequence
-    scope: single|enum(player,machine)|player
-    crossfade_time: single|secs|0
-    fade_in_first_sound: single|bool|False
-    fade_out_last_sound: single|bool|False
-    events_when_played: list|str|None
-    events_when_stopped: list|str|None
-    mode_end_action: single|enum(stop,finish_sound)|finish_sound
-    sounds: list|str|
 plugins:
     __valid_in__: machine                      # todo add to validator
 pololu_maestro:
@@ -888,7 +876,7 @@ sound_system:
     channels: single|int|1
     master_volume: single|gain|0.5
     tracks:
-        type: single|enum(standard|playlist|live_loop)|standard
+        type: single|enum(standard)|standard
         volume: single|gain|0.5
         simultaneous_sounds: single|int|8
         events_when_played: list|str|None
