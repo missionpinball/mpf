@@ -169,6 +169,7 @@ class MockSerial(MockFd):
     def read(self, length):
         raise AssertionError("Not implemented")
 
+
 class TestSelector(selectors.BaseSelector):
     def __init__(self):
         self.keys = {}

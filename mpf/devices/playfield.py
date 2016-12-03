@@ -1,11 +1,14 @@
 """Contains the Playfield device class which represents the actual playfield in a pinball machine."""
+import asyncio
+
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.ball_search import BallSearch
 from mpf.core.delays import DelayManager
+from mpf.devices.ball_device.incoming_balls_handler import IncomingBall
 
 
-@DeviceMonitor("available_balls", "unexpected_balls", "num_balls_requested", "balls")
+@DeviceMonitor("available_balls", "num_balls_requested", "balls")
 class Playfield(SystemWideDevice):
 
     """One playfield in a pinball machine."""
@@ -26,8 +29,9 @@ class Playfield(SystemWideDevice):
         # Attributes
         self._balls = 0
         self.available_balls = 0
-        self.unexpected_balls = 0
         self.num_balls_requested = 0
+
+        self._incoming_balls = []
 
     def _initialize(self):
         if 'default' in self.config['tags']:
@@ -77,14 +81,29 @@ class Playfield(SystemWideDevice):
                     '_ejecting_ball',
                     handler=self._source_device_ejecting_ball)
 
-    def add_missing_balls(self, balls):
-        """Notifie the playfield that it probably received a ball which went missing elsewhere."""
-        self.available_balls += balls
-        # if we catched an unexpected balls before do not add a ball
-        if self.unexpected_balls:
-            self.unexpected_balls -= 1
-            balls -= 1
+    @asyncio.coroutine
+    def expected_ball_received(self):
+        """Handle an expected ball."""
+        # We do nothing in that case
+        pass
 
+    @asyncio.coroutine
+    def unexpected_ball_received(self):
+        """Handle an unexpected ball."""
+        # We do nothing in that case
+        pass
+
+    @staticmethod
+    @asyncio.coroutine
+    def wait_for_ready_to_receive(source):
+        """Playfield is always ready to receive."""
+        del source
+        return True
+
+    def add_missing_balls(self, balls):
+        """Notify the playfield that it probably received a ball which went missing elsewhere."""
+        # TODO: add incoming ball only and wait for confirm or timeout
+        self.available_balls += balls
         self.balls += balls
 
     @property
@@ -102,13 +121,14 @@ class Playfield(SystemWideDevice):
             self.log.debug("Ball count change. Prior: %s, Current: %s, Change:"
                            " %s", prior_balls, balls, ball_change)
 
-        if balls >= 0:
-            self._balls = balls
-        else:
-            self._balls = 0
-            self.unexpected_balls += -balls
-            self.log.warning("Playfield balls went to %s. Resetting to 0, but "
-                             "FYI that something's weird. Unexpected balls: %s", balls, self.unexpected_balls)
+        self._balls = balls
+        # if balls >= 0:
+        #     self._balls = balls
+        # else:
+        #     self._balls = 0
+        #     self.unexpected_balls += -balls
+        #     self.log.warning("Playfield balls went to %s. Resetting to 0, but "
+        #                      "FYI that something's weird. Unexpected balls: %s", balls, self.unexpected_balls)
 
         self.log.debug("New Ball Count: %s. (Prior count: %s)",
                        self._balls, prior_balls)
@@ -236,15 +256,28 @@ class Playfield(SystemWideDevice):
                        source_device.name, player_controlled)
 
         if player_controlled:
-            source_device.setup_player_controlled_eject(balls=balls,
-                                                        target=self)
+            for _ in range(balls):
+                source_device.setup_player_controlled_eject(target=self)
         else:
             source_device.eject(balls=balls, target=self, get_ball=True)
 
         return True
 
+    def ball_arrived(self):
+        """Confirm first ball in queue."""
+        for incoming_ball in self._incoming_balls:
+            # skip balls which cannot have possibly arrived
+            if not incoming_ball.can_arrive:
+                continue
+
+            self.debug_log("Received ball from %s", incoming_ball.source)
+            # confirm eject
+            incoming_ball.ball_arrived()
+            break
+
     def _mark_playfield_active(self):
         self.ball_search.reset_timer()
+        self.ball_arrived()
         self.machine.events.post_boolean(self.name + "_active")
         '''event: (playfield)_active
         desc: The playfield called "playfield" is now active, meaning there's
@@ -258,7 +291,7 @@ class Playfield(SystemWideDevice):
         indicating that there is at least one ball on the playfield.
 
         """
-        if not self.balls or (kwargs.get('balls') and self.balls - kwargs['balls'] < 0):
+        if self.balls <= 0 or (kwargs.get('balls') and self.balls - kwargs['balls'] < 0):
             self._mark_playfield_active()
 
             if not self.num_balls_requested:
@@ -287,6 +320,8 @@ class Playfield(SystemWideDevice):
         self.log.debug("%s ball(s) removed from the playfield", balls)
         self.balls -= balls
         self.available_balls -= balls
+        for _ in range(balls):
+            self.machine.ball_controller.add_captured_ball(self)
 
     def _source_device_ball_lost(self, target, **kwargs):
         del kwargs
@@ -331,10 +366,10 @@ class Playfield(SystemWideDevice):
         """True since it is a playfield."""
         return True
 
-    def add_incoming_ball(self, source):
+    def add_incoming_ball(self, incoming_ball: IncomingBall):
         """Track an incoming ball."""
-        pass
+        self._incoming_balls.append(incoming_ball)
 
-    def remove_incoming_ball(self, source):
+    def remove_incoming_ball(self, incoming_ball: IncomingBall):
         """Stop tracking an incoming ball."""
-        pass
+        self._incoming_balls.remove(incoming_ball)

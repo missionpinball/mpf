@@ -261,7 +261,6 @@ class TestBallLock(MpfTestCase):
         self.advance_time_and_run(1)
         assert not coil3.pulse.called
         self.assertFalse(lock_logic.is_full())
-        self.assertFalse(lock.is_full())
         self.assertEqual(1, trough.available_balls)
         self.assertEqual(1, lock.available_balls)
 
@@ -270,7 +269,6 @@ class TestBallLock(MpfTestCase):
         self.advance_time_and_run(1)
         assert not coil3.pulse.called
         self.assertTrue(lock_logic.is_full())
-        self.assertFalse(lock.is_full())
         self.assertEqual(0, trough.available_balls)
         self.assertEqual(2, lock.available_balls)
 
@@ -282,13 +280,11 @@ class TestBallLock(MpfTestCase):
         coil3.pulse.assert_called_once_with()
         coil3.pulse = MagicMock()
         self.assertTrue(lock_logic.is_full())
-        self.assertTrue(lock.is_full())
         self.advance_time_and_run(1)
 
         self.machine.switch_controller.process_switch("s_ball_switch_lock3", 0)
         self.advance_time_and_run(11)
         self.assertTrue(lock_logic.is_full())
-        self.assertFalse(lock.is_full())
         self.assertEqual(2, lock.available_balls)
 
         lock_logic.release_all_balls()
@@ -300,7 +296,6 @@ class TestBallLock(MpfTestCase):
         self.machine.switch_controller.process_switch("s_ball_switch_lock2", 0)
         self.advance_time_and_run(1)
         self.assertFalse(lock_logic.is_full())
-        self.assertFalse(lock.is_full())
 
         self.advance_time_and_run(11)
         coil3.pulse.assert_called_once_with()
@@ -510,7 +505,7 @@ class TestBallLock(MpfTestCase):
         self.advance_time_and_run(10)
 
         # theoretically it would eject another ball but there is no ball in the trough
-        self.assertEqual(1, len(launcher.ball_requests))
+        self.assertEqual(1, len(launcher._ball_requests))
 
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
 

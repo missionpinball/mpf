@@ -28,12 +28,14 @@ ball_devices:
         hold_coil: hold_coil
         entrance_switch: s_entrance
         hold_events: test_hold_event
+        ball_capacity: 3
         debug: true
         confirm_eject_type: fake
     test2:
         hold_coil: hold_coil2
         entrance_switch: s_entrance2
         hold_events: test_hold_event2
+        ball_capacity: 3
         tags: trough, home
         debug: true
         confirm_eject_type: fake
@@ -43,7 +45,7 @@ ball_devices:
         hold_switches: s_entrance_and_hold3
         tags: trough, home
         debug: true
-        confirm_eject_type: fake
+        eject_timeouts: 2s
         ball_capacity: 2
     test4:
         hold_coil: hold_coil4

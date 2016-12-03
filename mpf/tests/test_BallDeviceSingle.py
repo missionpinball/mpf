@@ -32,6 +32,6 @@ class TestBallDeviceSingle(MpfGameTestCase):
 
         self.assertPlayerNumber(1)
         self.assertBallNumber(2)
-        self.advance_time_and_run(10)
+        self.advance_time_and_run(10.5)
         self.assertEqual(1, self.machine.playfield.available_balls)
         self.assertEqual(1, self.machine.playfield.balls)

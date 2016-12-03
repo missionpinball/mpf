@@ -273,6 +273,29 @@ class EventManager(object):
         """
         return event_name.lower() in self.registered_handlers
 
+    @staticmethod
+    def _set_result(_future, **kwargs):
+        if not _future.done():
+            _future.set_result(kwargs)
+
+    def post_async(self, event, **kwargs):
+        """Post event and wait until all handlers are done."""
+        future = asyncio.Future(loop=self.machine.clock.loop)
+        self.post(event, partial(self._set_result, _future=future), **kwargs)
+        return future
+
+    def post_relay_async(self, event, **kwargs):
+        """Post relay event, wait until all handlers are done and return result."""
+        future = asyncio.Future(loop=self.machine.clock.loop)
+        self.post_relay(event, partial(self._set_result, _future=future), **kwargs)
+        return future
+
+    def post_queue_async(self, event, **kwargs):
+        """Post queue event, wait until all handlers are done and locks are released."""
+        future = asyncio.Future(loop=self.machine.clock.loop)
+        self.post_queue(event, partial(self._set_result, _future=future), **kwargs)
+        return future
+
     def post(self, event, callback=None, **kwargs):
         """Post an event which causes all the registered handlers to be called.
 

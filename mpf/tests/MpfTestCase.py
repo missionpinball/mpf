@@ -277,6 +277,12 @@ class MpfTestCase(unittest.TestCase):
                                         handler=self._mock_event_handler,
                                         event_name=event_name)
 
+    def assertBallsOnPlayfield(self, balls, playfield="playfield"):
+        self.assertEqual(balls, self.machine.playfields[playfield].balls)
+
+    def assertAvailableBallsOnPlayfield(self, balls, playfield="playfield"):
+        self.assertEqual(balls, self.machine.playfields[playfield].available_balls)
+
     def assertPlayerVarEqual(self, value, player_var):
         self.assertIsNotNone(self.machine.game, "There is no game.")
         self.assertEqual(value, self.machine.game.player[player_var], "Value of player var {} is {} but should be {}".

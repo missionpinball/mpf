@@ -675,14 +675,45 @@ class Util(object):
             return 1.0
 
     @staticmethod
+    def cancel_futures(futures: [asyncio.Future]):
+        """Cancel futures."""
+        for future in futures:
+            if hasattr(future, "cancel"):
+                future.cancel()
+
+    @staticmethod
+    def any(futures: [asyncio.Future], loop, timeout=None):
+        """Return first future."""
+        return Util.first(futures, loop, timeout, False)
+
+    @staticmethod
+    def ensure_future(coro_or_future, loop):
+        """Wrap ensure_future."""
+        if hasattr(asyncio, "compat") and asyncio.compat.PY35:
+            return asyncio.ensure_future(coro_or_future, loop=loop)
+        else:
+            # pylint: disable-msg=deprecated-method
+            return asyncio.async(coro_or_future, loop=loop)
+
+    @staticmethod
     @asyncio.coroutine
-    def first(futures: [asyncio.Future], loop):
+    def first(futures: [asyncio.Future], loop, timeout=None, cancel_others=True):
         """Return first future and cancel others."""
         # wait for first
-        done, pending = yield from asyncio.wait(iter(futures), loop=loop, return_when=asyncio.FIRST_COMPLETED)
-        # cancel all other futures
-        for future in pending:
-            future.cancel()
+        try:
+            done, pending = yield from asyncio.wait(iter(futures), loop=loop, timeout=timeout,
+                                                    return_when=asyncio.FIRST_COMPLETED)
+        except asyncio.CancelledError:
+            Util.cancel_futures(futures)
+            raise
+
+        if cancel_others:
+            # cancel all other futures
+            for future in pending:
+                future.cancel()
+
+        if not done:
+            raise asyncio.TimeoutError()
         return next(iter(done))
 
     @staticmethod

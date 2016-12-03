@@ -2,6 +2,8 @@
 
 import logging
 
+import asyncio
+
 from mpf.core.delays import DelayManager
 from mpf.core.utility_functions import Util
 
@@ -24,49 +26,112 @@ class BallController(object):
         self.log.debug("Loading the BallController")
         self.delay = DelayManager(self.machine.delayRegistry)
 
-        self.num_balls_known = -999
+        self.num_balls_known = 0
 
         # register for events
         self.machine.events.add_handler('request_to_start_game',
                                         self.request_to_start_game)
         self.machine.events.add_handler('machine_reset_phase_2',
                                         self._initialize)
-        self.machine.events.add_handler('init_phase_2',
-                                        self._init2)
+        self.machine.events.add_handler('init_phase_4',
+                                        self._init4, priority=100)
 
-    def _init2(self, **kwargs):
+        self.machine.events.add_handler('shutdown',
+                                        self._stop)
+
+        self._add_new_balls_task = None
+        self._captured_balls = asyncio.Queue(loop=self.machine.clock.loop)
+
+    def _init4(self, **kwargs):
         del kwargs
-        # register a handler for all switches
+
+        # see if there are non-playfield devices
         for device in self.machine.ball_devices:
-            if 'ball_switches' not in device.config:
+            if device.is_playfield():
                 continue
-            for switch in device.config['ball_switches']:
-                self.machine.switch_controller.add_switch_handler(switch.name,
-                                                                  self._update_num_balls_known,
-                                                                  ms=device.config['entrance_count_delay'],
-                                                                  state=1)
-                self.machine.switch_controller.add_switch_handler(switch.name,
-                                                                  self._update_num_balls_known,
-                                                                  ms=device.config['exit_count_delay'],
-                                                                  state=0)
-                self.machine.switch_controller.add_switch_handler(switch.name,
-                                                                  self._correct_playfield_count,
-                                                                  ms=device.config['entrance_count_delay'],
-                                                                  state=1)
-                self.machine.switch_controller.add_switch_handler(switch.name,
-                                                                  self._correct_playfield_count,
-                                                                  ms=device.config['exit_count_delay'],
-                                                                  state=0)
+            # found a device
+            break
+        else:
+            # there is no non-playfield device. end this.
+            return
 
-        for playfield in self.machine.playfields:
-            self.machine.events.add_handler('{}_ball_count_change'.format(playfield.name),
-                                            self._correct_playfield_count)
+        self._add_new_balls_task = self.machine.clock.loop.create_task(self._add_new_balls_to_playfield())
+        self._add_new_balls_task.add_done_callback(self._done)
 
-        # run initial count
-        self._update_num_balls_known()
+    def _stop(self, **kwargs):
+        del kwargs
+        if self._add_new_balls_task:
+            self._add_new_balls_task.cancel()
 
-    def _get_loose_balls(self):
-        return self.num_balls_known - self._count_stable_balls()
+    @staticmethod
+    def _done(future):
+        try:
+            future.result()
+        except asyncio.CancelledError:
+            pass
+
+    def _get_total_balls_in_devices(self):
+        balls = 0
+        # get count for all ball devices
+        for device in self.machine.ball_devices:
+            if device.is_playfield():
+                continue
+
+            balls += device.counter.count_balls_sync()
+        return balls
+
+    def add_captured_ball(self, source):
+        """Inform ball controller about a capured ball (which might be new)."""
+        self._captured_balls.put_nowait(source)
+
+    @asyncio.coroutine
+    def _add_new_balls_to_playfield(self):
+        # initial count
+        self.num_balls_known = yield from self._count_all_balls_in_devices()
+
+        while True:
+            capture = yield from self._captured_balls.get()
+            balls = yield from self._count_all_balls_in_devices()
+            if balls > self.num_balls_known:
+                self.num_balls_known += 1
+                capture.balls += 1
+                capture.available_balls += 1
+                self.log.info("Found a new ball which was captured from %s. Known balls: %s", capture.name,
+                              self.num_balls_known)
+
+            self._balance_playfields()
+
+    def _balance_playfields(self):
+        # find negative counts
+        for playfield_target in self.machine.playfields:
+            if playfield_target.balls < 0:
+                for playfield_source in self.machine.playfields:
+                    if playfield_source.balls > 0:
+                        playfield_source.balls -= 1
+                        playfield_source.available_balls -= 1
+                        playfield_target.balls += 1
+                        playfield_target.available_balls += 1
+                        # post event
+                        self.machine.events.post("playfield_jump", source=playfield_source, target=playfield_target)
+                        break
+
+    @asyncio.coroutine
+    def _count_all_balls_in_devices(self):
+        """Count balls in all devices."""
+        while True:
+            # wait until all devices are stable
+            # prepare futures in case we have to wait to prevent race between count and building futures
+            futures = []
+            for device in self.machine.ball_devices:
+                if not device.is_playfield():
+                    futures.append(Util.ensure_future(device.counter.wait_for_ball_activity(),
+                                                      loop=self.machine.clock.loop))
+
+            try:
+                return self._get_total_balls_in_devices()
+            except ValueError:
+                yield from Util.first(futures, self.machine.clock.loop)
+                continue
 
     def _count_stable_balls(self):
         self.log.debug("Counting Balls")
@@ -97,112 +162,6 @@ class BallController(object):
                         raise ValueError("switches not stable")
 
         return balls
-
-    def _correct_playfield_count(self, **kwargs):
-        del kwargs
-        self.delay.reset(ms=1, callback=self._correct_playfield_count2, name="correct_playfield")
-
-    def _correct_playfield_count2(self):
-        try:
-            loose_balls = self._get_loose_balls()
-        except ValueError:
-            self.delay.reset(ms=10000, callback=self._correct_playfield_count2, name="correct_playfield")
-            return
-
-        balls_on_pfs = 0
-
-        for playfield in self.machine.playfields:
-            balls_on_pfs += playfield.balls
-
-        jump_sources = []
-        jump_targets = []
-
-        # fix too much balls and prefer playfields where balls and available_balls have the same value
-        if balls_on_pfs > loose_balls:
-            balls_on_pfs -= self._fix_jumped_balls(balls_on_pfs - loose_balls, jump_sources)
-
-        # fix too much balls and take the remaining playfields
-        if balls_on_pfs > loose_balls:
-            balls_on_pfs -= self._remove_balls_from_playfield_randomly(balls_on_pfs - loose_balls, jump_sources)
-
-        if balls_on_pfs > loose_balls:
-            self.log.warning("Failed to remove enough balls from playfields. This is a bug!")
-
-        for playfield in self.machine.playfields:
-            if playfield.balls != playfield.available_balls:
-                self.log.warning("Correcting available_balls %s to %s on "
-                                 "playfield %s",
-                                 playfield.available_balls, playfield.balls, playfield.name)
-                if playfield.balls > playfield.available_balls:
-                    jump_targets.append(playfield)
-                playfield.available_balls = playfield.balls
-
-        for _ in range(min(len(jump_sources), len(jump_targets))):
-            source = jump_sources.pop()
-            target = jump_targets.pop()
-            self.log.warning("Suspecting that ball jumped from %s to %s", str(source), str(target))
-            self.machine.events.post("playfield_jump", source=source, target=target)
-
-    def _fix_jumped_balls(self, balls_to_remove, jump_sources):
-        balls_removed = 0
-        for dummy_i in range(balls_to_remove):
-            for playfield in self.machine.playfields:
-                self.log.warning("Correcting balls on pf from %s to %s on "
-                                 "playfield %s (preferred)",
-                                 playfield.balls, playfield.balls - 1, playfield.name)
-                if playfield.available_balls == playfield.balls and playfield.balls > 0:
-                    jump_sources.append(playfield)
-                    if playfield.unexpected_balls > 0:
-                        playfield.unexpected_balls -= 1
-                    playfield.balls -= 1
-                    playfield.available_balls -= 1
-                    balls_removed += 1
-                    break
-        return balls_removed
-
-    def _remove_balls_from_playfield_randomly(self, balls_to_remove, jump_sources):
-        balls_removed = 0
-        for dummy_i in range(balls_to_remove):
-            for playfield in self.machine.playfields:
-                self.log.warning("Correcting balls on pf from %s to %s on "
-                                 "playfield %s",
-                                 playfield.balls, playfield.balls - 1, playfield.name)
-                if playfield.balls > 0:
-                    jump_sources.append(playfield)
-                    if playfield.unexpected_balls > 0:
-                        playfield.unexpected_balls -= 1
-                    playfield.balls -= 1
-                    playfield.available_balls -= 1
-                    balls_removed += 1
-                    break
-        return balls_removed
-
-    def trigger_ball_count(self):
-        """Count the balls now if possible."""
-        self._update_num_balls_known()
-        self._correct_playfield_count()
-
-    def _update_num_balls_known(self):
-        try:
-            balls = self._count_balls()
-        except ValueError:
-            self.delay.reset(ms=100, callback=self._update_num_balls_known, name="update_num_balls_known")
-            return
-
-        if self.num_balls_known < 0:
-            self.num_balls_known = 0
-        if balls > self.num_balls_known:
-            self.log.debug("Found new balls. Setting known balls to %s", balls)
-            self.delay.add(1, self._handle_new_balls, new_balls=balls - self.num_balls_known)
-            self.num_balls_known = balls
-
-    def _handle_new_balls(self, new_balls):
-        for dummy_i in range(new_balls):
-            for playfield in self.machine.playfields:
-                if playfield.unexpected_balls > 0:
-                    playfield.unexpected_balls -= 1
-                    playfield.available_balls += 1
-                    break
 
     def _count_balls(self):
         self.log.debug("Counting Balls")
@@ -311,9 +270,9 @@ class BallController(object):
             return True
 
         for device in devices:
-            count += device.get_status('balls')
+            count += device.balls
             self.log.debug('Found %s ball(s) in %s. Found %s total',
-                           device.get_status('balls'), device.name, count)
+                           device.balls, device.name, count)
 
         if count == self.machine.ball_controller.num_balls_known:
             self.log.debug("Yes, all balls are collected")

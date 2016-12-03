@@ -19,6 +19,14 @@ class MpfGameTestCase(MpfTestCase):
         self.start_game()
         self.add_player()
 
+    def fill_troughs(self):
+        """Fill all troughs."""
+        for trough in self.machine.ball_devices.items_tagged("trough"):
+            for switch in trough.config['ball_switches']:
+                self.hit_switch_and_run(switch.name, 0)
+
+        self.advance_time_and_run()
+
     def start_game(self):
         # game start should work
         self.assertGameIsNotRunning()
