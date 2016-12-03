@@ -22,6 +22,8 @@ event_player:
     test_conditional{arg.abc==1}: condition_ok
     test_conditional.2{arg.abc==1}: condition_ok2
     test_conditional.3: priority_ok
+    test_time_delay1: td1|1500ms
+    test_time_delay2: td2|1.5s
 
 shows:
   test_event_show:

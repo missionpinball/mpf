@@ -96,3 +96,19 @@ class TestEventPlayer(MpfTestCase):
         self.post_event_with_params("test_conditional", arg=arg)
         self.assertEventCalled("condition_ok")
         self.assertEventCalled("condition_ok2")
+
+    def test_event_time_delays(self):
+        self.mock_event('td1')
+        self.mock_event('td2')
+
+        self.post_event('test_time_delay1')
+        self.advance_time_and_run(1)
+        self.assertEventNotCalled('td1')
+        self.advance_time_and_run(1)
+        self.assertEventCalled('td1')
+
+        self.post_event('test_time_delay2')
+        self.advance_time_and_run(1)
+        self.assertEventNotCalled('td2')
+        self.advance_time_and_run(1)
+        self.assertEventCalled('td2')
