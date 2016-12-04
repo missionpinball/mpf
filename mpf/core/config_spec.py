@@ -606,11 +606,13 @@ multiballs:
     source_playfield: single|machine(ball_devices)|playfield
     shoot_again: single|ms|10s
     ball_locks: list|machine(ball_locks)|None
-    enable_events:  dict|str:ms|None
-    disable_events:  dict|str:ms|None
-    reset_events:  dict|str:ms|machine_reset_phase_3, ball_starting
-    start_events:  dict|str:ms|None
-    stop_events:  dict|str:ms|None
+    enable_events: dict|str:ms|None
+    disable_events: dict|str:ms|None
+    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting
+    start_events: dict|str:ms|None
+    stop_events: dict|str:ms|None
+    add_a_ball_events: dict|str:ms|None
+    start_or_add_a_ball_events: dict|str:ms|None
 opp:
     __valid_in__: machine
     ports: list|str|
