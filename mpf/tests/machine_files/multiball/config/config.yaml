@@ -98,6 +98,10 @@ multiballs:
         shoot_again: 20s
         start_events: mb11_start
         ball_locks: lock_mb6
+    mb_add_a_ball:
+        ball_count: 2
+        start_or_add_a_ball_events: start_or_add
+        add_a_ball_events: add_ball
 
 ball_locks:
     lock_mb6:
