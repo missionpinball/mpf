@@ -355,6 +355,14 @@ class MpfTestCase(unittest.TestCase):
         else:
             self.assertIsNone(self.machine.shots[shot_name].profiles[0]['running_show'])
 
+    # def assertShowRunning(self, show_name):
+    #     if not self.machine.show_controller.get_running_shows(show_name):
+    #         raise AssertionError("Show {} is not running".format(show_name))
+    #
+    # def assertShowNotRunning(self, show_name):
+    #     if self.machine.show_controller.get_running_shows(show_name):
+    #         raise AssertionError("Show {} is running".format(show_name))
+
     def get_timer(self, timer):
         for mode in self.machine.modes:
             for t in mode.timers:
