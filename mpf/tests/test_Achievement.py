@@ -1,9 +1,8 @@
 """Test achievements."""
 from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
-from mpf.tests.MpfShowTestCase import MpfShowTestCase
 
 
-class TestAchievement(MpfFakeGameTestCase, MpfShowTestCase):
+class TestAchievement(MpfFakeGameTestCase):
     def getConfigFile(self):
         return 'config.yaml'
 

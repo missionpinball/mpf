@@ -355,13 +355,28 @@ class MpfTestCase(unittest.TestCase):
         else:
             self.assertIsNone(self.machine.shots[shot_name].profiles[0]['running_show'])
 
-    # def assertShowRunning(self, show_name):
-    #     if not self.machine.show_controller.get_running_shows(show_name):
-    #         raise AssertionError("Show {} is not running".format(show_name))
-    #
-    # def assertShowNotRunning(self, show_name):
-    #     if self.machine.show_controller.get_running_shows(show_name):
-    #         raise AssertionError("Show {} is running".format(show_name))
+    def assertShowRunning(self, show_name):
+        for running_show in self.machine.show_controller.running_shows:
+            if self.machine.shows[show_name] == running_show.show:
+                return
+
+        self.fail("Show {} not running".format(show_name))
+
+    def assertShowNotRunning(self, show_name):
+        for running_show in self.machine.show_controller.running_shows:
+            if self.machine.shows[show_name] == running_show.show:
+                self.fail("Show {} should not be running".format(show_name))
+
+    def assertColorAlmostEqual(self, color1, color2, delta=6):
+        if isinstance(color1, RGBColor) and isinstance(color2, RGBColor):
+            difference = abs(color1.red - color2.red) +\
+                abs(color1.blue - color2.blue) +\
+                abs(color1.green - color2.green)
+        else:
+            difference = abs(color1[0] - color2[0]) +\
+                abs(color1[1] - color2[1]) +\
+                abs(color1[2] - color2[2])
+        self.assertLessEqual(difference, delta, "Colors do not match: " + str(color1) + " " + str(color2))
 
     def get_timer(self, timer):
         for mode in self.machine.modes:

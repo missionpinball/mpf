@@ -20,17 +20,6 @@ class TestShows(MpfTestCase):
     def event_handler(self, **kwargs):
         pass
 
-    def assertColorAlmostEqual(self, color1, color2, delta=6):
-        if isinstance(color1, RGBColor) and isinstance(color2, RGBColor):
-            difference = abs(color1.red - color2.red) +\
-                abs(color1.blue - color2.blue) +\
-                abs(color1.green - color2.green)
-        else:
-            difference = abs(color1[0] - color2[0]) +\
-                abs(color1[1] - color2[1]) +\
-                abs(color1[2] - color2[2])
-        self.assertLessEqual(difference, delta, "Colors do not match: " + str(color1) + " " + str(color2))
-
     def test_default_shows(self):
         # test off
         show_on = self.machine.shows['off'].play(show_tokens=dict(leds='led_01', lights='light_01'))
