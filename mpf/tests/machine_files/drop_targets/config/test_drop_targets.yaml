@@ -13,6 +13,8 @@ switches:
     number:
   switch6:
     number:
+  switch7:
+    number:
 
 coils:
   coil1:
@@ -21,6 +23,9 @@ coils:
     number:
   coil3:
     number:
+  coil4:
+    number:
+    hold_power: 2
 
 modes:
   - mode1
@@ -48,6 +53,12 @@ drop_targets:
      knockdown_coil: coil3
      knockdown_events: knock_knock
      reset_events: reset_target
+   drop_target_lock:
+     debug: True
+     reset_coil: coil4
+     switch: switch7
+     enable_keep_up_events: keep_up
+     disable_keep_up_events: no_more_keep_up
 
 drop_target_banks:
    left_bank:

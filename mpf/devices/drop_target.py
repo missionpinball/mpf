@@ -125,6 +125,19 @@ class DropTarget(SystemWideDevice):
             self.config['switch'].name,
             self._update_state_from_switch, 1)
 
+    def enable_keep_up(self, **kwargs):
+        """Keep the target up by enabling the coil."""
+        del kwargs
+        if self.reset_coil:
+            self.reset_coil.enable()
+
+    def disable_keep_up(self, **kwargs):
+        """No longer keep up the target up."""
+        del kwargs
+        if self.reset_coil:
+            self.reset_coil.disable()
+
+
     def knockdown(self, **kwargs):
         """Pulse the knockdown coil to knock down this drop target."""
         del kwargs

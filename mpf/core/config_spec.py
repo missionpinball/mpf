@@ -308,6 +308,8 @@ drop_targets:
     knockdown_coil: single|machine(coils)|None
     reset_events: dict|str:ms|ball_starting, machine_reset_phase_3
     knockdown_events: dict|str:ms|None
+    enable_keep_up_events: dict|str:ms|None
+    disable_keep_up_events: dict|str:ms|None
     ball_search_order: single|int|100
     playfield: single|machine(playfields)|playfield
 drop_target_banks:
