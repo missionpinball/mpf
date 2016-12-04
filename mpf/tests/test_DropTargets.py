@@ -170,3 +170,44 @@ class TestDropTargets(MpfTestCase):
         self.advance_time_and_run()
         assert not self.machine.coils.coil2.pulse.called
         assert not self.machine.coils.coil3.pulse.called
+
+    def test_drop_target_reset(self):
+        target = self.machine.drop_targets.left6
+        self.machine.coils.coil2.pulse = MagicMock()
+        self.machine.coils.coil3.pulse = MagicMock()
+        self.assertFalse(self.machine.switch_controller.is_active("switch6"))
+
+        # target up. it should not reset
+        target.reset()
+        self.advance_time_and_run()
+
+        assert not self.machine.coils.coil2.pulse.called
+        assert not self.machine.coils.coil3.pulse.called
+
+        # hit target down
+        self.hit_switch_and_run("switch6", 1)
+        self.assertTrue(target.complete)
+
+        # it should reset
+        target.reset()
+        self.advance_time_and_run()
+
+        self.machine.coils.coil2.pulse.assert_called_once_with()
+        self.machine.coils.coil2.pulse.reset_mock()
+        assert not self.machine.coils.coil3.pulse.called
+        self.release_switch_and_run("switch6", 1)
+
+        # knock down should work
+        target.knockdown()
+        self.advance_time_and_run()
+
+        self.machine.coils.coil3.pulse.assert_called_once_with()
+        self.machine.coils.coil3.pulse.reset_mock()
+        assert not self.machine.coils.coil2.pulse.called
+        self.hit_switch_and_run("switch6", 1)
+
+        # but not when its down already
+        target.knockdown()
+        self.advance_time_and_run()
+        assert not self.machine.coils.coil2.pulse.called
+        assert not self.machine.coils.coil3.pulse.called
