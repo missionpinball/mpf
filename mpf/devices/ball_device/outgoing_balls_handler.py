@@ -309,46 +309,50 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         self.debug_log("Ejecting ball to %s", eject_request.target)
         yield from self._post_ejecting_event(eject_request, eject_try)
         ball_eject_process = yield from self.ball_device.ball_count_handler.track_eject()
-        yield from ball_eject_process.will_eject()
-        self.debug_log("Wait for ball to leave device")
-        # eject the ball
-
-        ball_left = ball_eject_process.wait_for_ball_left()
-        waiters = [ball_left]
-        trigger = None
-        if self.ball_device.ejector:
-            # wait for trigger event
-            if eject_request.mechanical and self.ball_device.config['player_controlled_eject_event']:
-                trigger = self.machine.events.wait_for_event(self.ball_device.config['player_controlled_eject_event'])
-                waiters.append(trigger)
-            elif eject_request.mechanical and self.ball_device.config['mechanical_eject']:
-                # do nothing
-                pass
-            else:
-                self.ball_device.ejector.eject_one_ball(ball_eject_process.is_jammed(), eject_try)
-
-        # wait until the ball has left
-        if (self.ball_device.config['mechanical_eject'] or
-                self.ball_device.config['player_controlled_eject_event']) and eject_request.mechanical:
-            timeout = None
-        else:
-            timeout = eject_request.eject_timeout
         try:
-            yield from Util.any(waiters, timeout=timeout, loop=self.machine.clock.loop)
-        except asyncio.TimeoutError:
-            # timeout. ball did not leave. failed
-            ball_eject_process.ball_returned()
-            return False
+            yield from ball_eject_process.will_eject()
+            self.debug_log("Wait for ball to leave device")
+            # eject the ball
 
-        if trigger and trigger.done():
-            self.ball_device.ejector.eject_one_ball(ball_eject_process.is_jammed(), eject_try)
-            # TODO: add timeout here
-            yield from ball_left
+            ball_left = ball_eject_process.wait_for_ball_left()
+            waiters = [ball_left]
+            trigger = None
+            if self.ball_device.ejector:
+                # wait for trigger event
+                if eject_request.mechanical and self.ball_device.config['player_controlled_eject_event']:
+                    trigger = self.machine.events.wait_for_event(self.ball_device.config['player_controlled_eject_event'])
+                    waiters.append(trigger)
+                elif eject_request.mechanical and self.ball_device.config['mechanical_eject']:
+                    # do nothing
+                    pass
+                else:
+                    self.ball_device.ejector.eject_one_ball(ball_eject_process.is_jammed(), eject_try)
 
-        self._state = "ball_left"
-        self.debug_log("Ball left")
-        incoming_ball_at_target = self._add_incoming_ball_to_target(eject_request.target)
-        return (yield from self._handle_confirm(eject_request, ball_eject_process, incoming_ball_at_target))
+            # wait until the ball has left
+            if (self.ball_device.config['mechanical_eject'] or
+                    self.ball_device.config['player_controlled_eject_event']) and eject_request.mechanical:
+                timeout = None
+            else:
+                timeout = eject_request.eject_timeout
+            try:
+                yield from Util.any(waiters, timeout=timeout, loop=self.machine.clock.loop)
+            except asyncio.TimeoutError:
+                # timeout. ball did not leave. failed
+                ball_eject_process.ball_returned()
+                return False
+
+            if trigger and trigger.done():
+                self.ball_device.ejector.eject_one_ball(ball_eject_process.is_jammed(), eject_try)
+                # TODO: add timeout here
+                yield from ball_left
+
+            self._state = "ball_left"
+            self.debug_log("Ball left")
+            incoming_ball_at_target = self._add_incoming_ball_to_target(eject_request.target)
+            return (yield from self._handle_confirm(eject_request, ball_eject_process, incoming_ball_at_target))
+        except asyncio.CancelledError:
+            ball_eject_process.cancel()
+            raise
 
     def _add_incoming_ball_to_target(self, target) -> IncomingBall:
         # we are the source of this ball
