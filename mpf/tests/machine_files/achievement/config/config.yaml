@@ -4,23 +4,50 @@ switches:
     test:
         number:
 
+leds:
+  led1:
+    number:
+  led2:
+    number:
+  led4:
+    number:
+  led5:
+    number:
+  led6:
+    number:
+
 modes:
   - base
 
 shows:
-  achievement1_disabled:
-    - time: 1
   achievement1_enabled:
     - time: 1
   achievement1_started:
     - time: 1
-  achievement1_stopped:
-    - time: 1
   achievement1_completed:
     - time: 1
+  achievement1_disabled:
+    - time: 1
+  achievement1_stopped:
+    - time: 1
+
+  achievement2_disabled:
+    - time: 1
+      leds:
+        (led): off
   achievement2_enabled:
     - time: 1
+      leds:
+        (led): yellow
   achievement2_started:
     - time: 1
+      leds:
+        (led): green
+  achievement2_stopped:
+    - time: 1
+      leds:
+        (led): red
   achievement2_completed:
     - time: 1
+      leds:
+        (led): blue

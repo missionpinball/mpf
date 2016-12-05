@@ -26,20 +26,25 @@ class AchievementGroup(ModeDevice):
         self._show = None
 
         self._enabled = False
-        self._selected = None
+        self._selected_member = None
+
+    @property
+    def enabled(self):
+        """Return enabled state."""
+        return self._enabled
 
     def enable(self, **kwargs):
         """Enable achievement group."""
         del kwargs
-        if self._enabled and self._selected and self._show:
-            # todo hack - how does it get here with no selecter and/or no show?
+
+        if self._enabled:
             return
 
         self._enabled = True
 
-        show = self.config['show_when_enabled']
-
         self._stop_show()
+
+        show = self.config['show_when_enabled']
 
         if show:
             self._show = self.machine.shows[show].play(
@@ -50,8 +55,7 @@ class AchievementGroup(ModeDevice):
         for e in self.config['events_when_enabled']:
             self.machine.events.post(e)
 
-        self._selected = None
-        self._get_current().select()
+        self._process_current_member_state()
 
     def disable(self, **kwargs):
         """Disable achievement group."""
@@ -60,7 +64,7 @@ class AchievementGroup(ModeDevice):
             return
         self._stop_show()
         self._enabled = False
-        self._selected = None
+        self._selected_member = None
 
     def _stop_show(self):
         if self._show:
@@ -75,53 +79,68 @@ class AchievementGroup(ModeDevice):
                 x.config['restart_after_stop_possible'])]
 
     def _get_current(self):
-        if not self._selected:
-            self._selected = choice(self._get_available_achievements())
+        if not self._selected_member:
+            try:
+                self._selected_member = choice(self._get_available_achievements())
+            except IndexError:
+                pass
 
-        return self._selected
+        return self._selected_member
 
     def start_selected(self, **kwargs):
         """Start the currently selected achievement."""
         del kwargs
         if not self._enabled:
             return
-        self._get_current().start()
-        self.disable()
+
+        try:
+            self._get_current().start()
+        except AttributeError:
+            # don't have a current one
+            pass
 
     def rotate_right(self, reverse=False, **kwargs):
         """Rotate to the right."""
         del kwargs
         if not self._enabled:
             return
-        if self._selected and self._selected.state == "selected":
-            self._selected.enable()
+
+        if not self._selected_member and not self.config['auto_select']:
+            return
+
+        # if there's already one selected, set it back to enabled
+        if self._selected_member and self._selected_member.state == "selected":
+            self._selected_member.enable()
+
         achievements = self._get_available_achievements()
+
         try:
             current_index = achievements.index(self._get_current())
         except ValueError:
-            self._selected = self._get_current()
+            self._selected_member = self._get_current()
         else:
             if reverse:
-                self._selected = achievements[(current_index - 1) % len(achievements)]
+                self._selected_member = achievements[(current_index - 1) % len(achievements)]
             else:
-                self._selected = achievements[(current_index + 1) % len(achievements)]
-        self._selected.select()
+                self._selected_member = achievements[(current_index + 1) % len(achievements)]
+
+        self._selected_member.select()
 
     def rotate_left(self, **kwargs):
         """Rotate to the left."""
         del kwargs
         self.rotate_right(reverse=True)
 
-    def no_more_enabled(self):
+    def _no_more_enabled(self):
         """Post event when no more enabled achievements are available."""
         for e in self.config['events_when_no_more_enabled']:
             self.machine.events.post(e)
 
-    def all_complete(self):
-        """Poste event when all achievements have been completed."""
-        for e in self.config['events_when_all_complete']:
+    def _all_complete(self):
+        self.disable()  # disable before event post so event can reenable
+
+        for e in self.config['events_when_all_completed']:
             self.machine.events.post(e)
-        self.disable()
 
     def select_random_achievement(self, **kwargs):
         """Select a random achievement."""
@@ -130,30 +149,74 @@ class AchievementGroup(ModeDevice):
         if not self._enabled:
             return
 
-        if self._selected and self._selected.state == "selected":
-            self._selected.enable()
+        if self._selected_member and self._selected_member.state == "selected":
+            self._selected_member.enable()
         try:
             ach = choice(self._get_available_achievements())
             # todo change this to use our Randomizer class
-            self._selected = ach
+            self._selected_member = ach
             ach.select()
 
         except IndexError:
-            self.no_more_enabled()
+            self._no_more_enabled()
 
-    def _member_state_changed(self, achievement, **kwargs):
-        del kwargs
-        del achievement
+    def member_state_changed(self):
+        self._check_for_auto_start_stop()
+        self._process_current_member_state()
+
+    def _process_current_member_state(self):
+        if not self._enabled:
+            return
 
         self._check_for_all_complete()
+        self._check_for_no_more_enabled()
+        self._update_selected()
 
-        if self._enabled and self._selected and self._selected.state != "selected":
-            self._selected = None
-            self._get_current().select()
+        if not self._selected_member and self.config['auto_select']:
+            try:
+                self._get_current().select()
+            except AttributeError:
+                pass
+
+    def _update_selected(self):
+        for ach in self.config['achievements']:
+            if ach.state == 'selected':
+                self._selected_member = ach
+                return True
+        return False
 
     def _check_for_all_complete(self):
-        if not [x for x in self.config['achievements'] if x.state != "complete"]:
-            self.all_complete()
+        if not self._enabled:
+            return
+
+        if not [x for x in self.config['achievements'] if x.state != "completed"]:
+            self._all_complete()
+            return True
+        return False
+
+    def _check_for_no_more_enabled(self):
+        if not self._enabled:
+            return
+
+        if not [x for x in self.config['achievements'] if x.state == "enabled"]:
+            self._no_more_enabled()
+            return True
+        return False
+
+    def _check_for_auto_start_stop(self):
+        if self._is_member_started():
+            if self.config['disable_while_achievement_started']:
+                self.disable()
+
+        elif self.config['enable_while_no_achievement_started']:
+            self.enable()
+
+    def _is_member_started(self):
+        for ach in self.config['achievements']:
+            if ach.state == 'started':
+                return True
+
+        return False
 
     def device_added_to_mode(self, mode: Mode, player: Player):
         """Load device on mode start and restore state.
@@ -166,16 +229,15 @@ class AchievementGroup(ModeDevice):
 
         self._mode = mode
 
-        states = ['disabled', 'enabled', 'started', 'stopped', 'selected',
-                  'completed']
-
         for ach in self.config['achievements']:
+            ach.add_to_group(self)
 
-            for state in states:
-                mode.add_mode_event_handler(
-                    ach.config['events_when_{}'.format(state)][0],
-                    self._member_state_changed,
-                    achievement=ach)
+        self.member_state_changed()
+
+        if (not self._enabled and
+                not self.config['enable_events'] and
+                not self.config['disable_while_achievement_started']):
+            self.enable()
 
     def device_removed_from_mode(self, mode: Mode):
         """Mode ended.
@@ -185,5 +247,9 @@ class AchievementGroup(ModeDevice):
         """
         del mode
         self._mode = None
+
+        for ach in self.config['achievements']:
+            ach.remove_from_group(self)
+
         if self._show:
             self._show.stop()
