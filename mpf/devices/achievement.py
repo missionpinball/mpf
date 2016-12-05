@@ -2,6 +2,7 @@
 from mpf.core.mode import Mode
 from mpf.core.mode_device import ModeDevice
 from mpf.core.player import Player
+from mpf.devices.achievement_group import AchievementGroup
 
 
 class Achievement(ModeDevice):
@@ -22,6 +23,7 @@ class Achievement(ModeDevice):
         self._player = None
         self._mode = None
         self._show = None
+        self._group_memberships = set()
 
     @property
     def state(self):
@@ -34,6 +36,7 @@ class Achievement(ModeDevice):
 
     @_state.setter
     def _state(self, value):
+        self.debug_log('New state: %s', value)
         self._player.achievements[self.name] = value
 
     def validate_and_parse_config(self, config: dict, is_mode_config: bool) -> dict:
@@ -134,15 +137,32 @@ class Achievement(ModeDevice):
 
             '''
 
-        show = self.config['show_when_' + self._state]
         if self._show:
+            self.debug_log('Stopping show: %s', self._show)
             self._show.stop()
             self._show = None
+
+        show = self.config['show_when_' + self._state]
+
         if show:
+            if show not in self.machine.shows:
+                # don't want a "try:" here since it would swallow any errors
+                # in show.play()
+                raise KeyError("[achievements: {}: {}: {}] is not a valid show"
+                               .format(self.name, 'show_when_' + self._state,
+                                       show))
+
+            self.debug_log('Playing show: %s. Priority: %s. Loops: -1. '
+                           'Show tokens: %s', show, self._mode.priority,
+                           self.config['show_tokens'])
+
             self._show = self.machine.shows[show].play(
                 priority=self._mode.priority,
                 loops=-1,
                 show_tokens=self.config['show_tokens'])
+
+        for group in self._group_memberships:
+            group.member_state_changed()
 
     def device_added_to_mode(self, mode: Mode, player: Player):
         """Load device on mode start and restore state.
@@ -183,3 +203,11 @@ class Achievement(ModeDevice):
         self._mode = None
         if self._show:
             self._show.stop()
+
+    def add_to_group(self, group):
+        assert isinstance(group, AchievementGroup)
+        self._group_memberships.add(group)
+
+    def remove_from_group(self, group):
+        assert isinstance(group, AchievementGroup)
+        self._group_memberships.discard(group)

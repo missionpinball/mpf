@@ -110,9 +110,9 @@ class MpfTestCase(unittest.TestCase):
     def get_abs_path(self, path):
         return os.path.join(os.path.abspath(os.curdir), path)
 
-    def post_event(self, event_name):
+    def post_event(self, event_name, run_time=0):
         self.machine.events.post(event_name)
-        self.machine_run()
+        self.advance_time_and_run(run_time)
 
     def post_event_with_params(self, event_name, **params):
         self.machine.events.post(event_name, **params)

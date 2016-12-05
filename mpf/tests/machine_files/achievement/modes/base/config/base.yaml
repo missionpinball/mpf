@@ -32,3 +32,136 @@ achievements:
     restart_after_stop_possible: False
     start_enabled: True
     enable_on_next_ball_when_enabled: False
+    show_tokens:
+      led: led1
+
+  achievement3:
+    start_events: achievement3_start
+    stop_events: achievement3_stop
+    enable_events: achievement3_enable
+    disable_events: achievement3_disable
+    complete_events: achievement3_complete
+    reset_events: achievement3_reset
+    events_when_started: test_event, test_event3
+    show_when_disabled: achievement_disabled
+    show_when_enabled: achievement_enabled
+    show_when_started: achievement_started
+    show_when_stopped: achievement_stopped
+    show_when_completed: achievement_completed
+    restart_after_stop_possible: False
+    start_enabled: True
+
+  achievement4:
+    start_events: achievement4_start
+    stop_events: achievement4_stop
+    enable_events: achievement4_enable
+    disable_events: achievement4_disable
+    complete_events: achievement4_complete
+    reset_events: achievement4_reset
+    show_when_disabled: achievement_disabled
+    show_when_enabled: achievement_enabled
+    show_when_started: achievement_started
+    show_when_stopped: achievement_stopped
+    show_when_completed: achievement_completed
+    show_when_selected: achievement_selected
+    show_tokens:
+          led: led4
+
+  achievement5:
+    start_events: achievement5_start
+    stop_events: achievement5_stop
+    enable_events: achievement5_enable
+    disable_events: achievement5_disable
+    complete_events: achievement5_complete
+    reset_events: achievement5_reset
+    events_when_started: test_event, test_event5
+    show_when_disabled: achievement_disabled
+    show_when_enabled: achievement_enabled
+    show_when_started: achievement_started
+    show_when_stopped: achievement_stopped
+    show_when_completed: achievement_completed
+    show_when_selected: achievement_selected
+    show_tokens:
+          led: led5
+
+  achievement6:
+    start_events: achievement6_start
+    stop_events: achievement6_stop
+    enable_events: achievement6_enable
+    disable_events: achievement6_disable
+    complete_events: achievement6_complete
+    reset_events: achievement6_reset
+    events_when_started: test_event, test_event6
+    show_when_disabled: achievement_disabled
+    show_when_enabled: achievement_enabled
+    show_when_started: achievement_started
+    show_when_stopped: achievement_stopped
+    show_when_completed: achievement_completed
+    show_when_selected: achievement_selected
+    show_tokens:
+          led: led6
+
+  achievement7:
+    reset_events: dummy
+  achievement8:
+    reset_events: dummy
+  achievement9:
+    reset_events: dummy
+
+achievement_groups:
+    group1:
+        achievements: achievement7, achievement8, achievement9
+        auto_select: true
+
+    group2:
+        achievements: achievement4, achievement5, achievement6
+        enable_events: group2_enable
+        disable_events: group2_disable
+        start_selected_events: group2_start
+        select_random_achievement_events: group2_random
+        rotate_right_events: group2_rotate_right
+        rotate_left_events: group2_rotate_left
+
+        disable_while_achievement_started: False
+        enable_while_no_achievement_started: False
+
+        events_when_all_completed: group2_complete
+        events_when_no_more_enabled: group2_no_more
+        events_when_enabled: group2_enabled
+
+        show_when_enabled: group2_show
+        show_tokens:
+          led: led2
+
+shows:
+  group2_show:
+    - duration: .1
+      leds:
+        (led): red
+    - duration: .1
+      leds:
+        (led): blue
+  achievement_enabled:
+    - duration: 1
+      leds:
+        (led): yellow
+  achievement_disabled:
+    - duration: 1
+      leds:
+        (led): off
+  achievement_completed:
+    - duration: 1
+      leds:
+        (led): blue
+  achievement_started:
+    - duration: 1
+      leds:
+        (led): green
+  achievement_stopped:
+    - duration: 1
+      leds:
+        (led): red
+  achievement_selected:
+    - duration: 1
+      leds:
+        (led): orange

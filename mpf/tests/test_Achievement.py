@@ -196,6 +196,7 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertShowNotRunning("achievement2_enabled")
         self.assertShowNotRunning("achievement2_started")
         self.assertShowNotRunning("achievement2_completed")
+        self.assertLedColor('led1', 'off')
 
         self.start_game()
 
@@ -206,6 +207,7 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertShowNotRunning("achievement2_started")
         self.assertShowNotRunning("achievement2_completed")
         self.assertEqual("enabled", achievement._state)
+        self.assertLedColor('led1', 'yellow')
 
         self.drain_ball()
         self.assertPlayerNumber(1)
@@ -215,18 +217,21 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertShowNotRunning("achievement2_started")
         self.assertShowNotRunning("achievement2_completed")
         self.assertEqual("disabled", achievement._state)
+        self.assertLedColor('led1', 'off')
 
-        self.post_event("achievement2_enable")
+        self.post_event("achievement2_enable", 2)
         self.assertEqual("enabled", achievement._state)
+        self.assertLedColor('led1', 'yellow')
 
         self.assertEqual(0, self._events['test_event'])
         self.assertEqual(0, self._events['test_event2'])
 
-        self.post_event("achievement2_start")
+        self.post_event("achievement2_start", 2)
         self.assertShowNotRunning("achievement2_enabled")
         self.assertShowRunning("achievement2_started")
         self.assertShowNotRunning("achievement2_completed")
         self.assertEqual("started", achievement._state)
+        self.assertLedColor('led1', 'green')
 
         self.assertEqual(1, self._events['test_event'])
         self.assertEqual(1, self._events['test_event2'])
@@ -238,6 +243,325 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertShowNotRunning("achievement2_enabled")
         self.assertShowNotRunning("achievement2_started")
         self.assertShowNotRunning("achievement2_completed")
+        self.assertLedColor('led1', 'off')  # no show when stopped
 
-        self.post_event("achievement2_start")
+        # restart after stop is False
+        self.post_event("achievement2_start", 2)
         self.assertEqual("stopped", achievement._state)
+        self.assertLedColor('led1', 'off')
+
+    def test_group_select(self):
+
+        a4 = self.machine.achievements['achievement4']
+        a5 = self.machine.achievements['achievement5']
+        a6 = self.machine.achievements['achievement6']
+        g2 = self.machine.achievement_groups.group2
+
+        self.start_game()
+
+        self.assertFalse(g2.enabled)
+        self.assertEqual("disabled", a4._state)
+        self.assertEqual("disabled", a5._state)
+        self.assertEqual("disabled", a6._state)
+        self.assertLedColor('led4', 'off')
+        self.assertLedColor('led5', 'off')
+        self.assertLedColor('led6', 'off')
+
+        # achievements are disabled, should select none
+
+        self.post_event('group2_random', 2)
+
+        enabled_achievements = [x for x in (a4, a5, a6) if x._state == 'enabled']
+        self.assertEqual(len(enabled_achievements), 0)
+
+        # enable the achievements and try again, but group is disabled
+
+        a4.enable()
+        a5.enable()
+        a6.enable()
+
+        self.assertEqual("enabled", a4._state)
+        self.assertEqual("enabled", a5._state)
+        self.assertEqual("enabled", a6._state)
+        self.advance_time_and_run(1)
+        self.assertLedColor('led4', 'yellow')
+        self.assertLedColor('led5', 'yellow')
+        self.assertLedColor('led6', 'yellow')
+
+        self.post_event('group2_random', 2)
+
+        selected_achievements = [x for x in (a4, a5, a6) if x._state == 'selected']
+        self.assertEqual(len(selected_achievements), 0)
+
+        # now enable the group and it should work
+
+        self.post_event('group2_enable', 2)
+        self.assertTrue(g2._enabled)
+        self.assertLedColors('led2', ['red', 'blue'], 1, .09)  # group led
+
+        self.post_event('group2_random', 2)
+        selected_achievements = [x for x in (a4, a5, a6) if x._state == 'selected']
+        self.assertEqual(len(selected_achievements), 1)
+
+        # group enabled, but individual members disabled, should not work
+
+        a4.disable()
+        a5.disable()
+        a6.disable()
+        self.advance_time_and_run(1)
+
+        self.assertEqual("disabled", a4._state)
+        self.assertEqual("disabled", a5._state)
+        self.assertEqual("disabled", a6._state)
+        self.assertLedColor('led4', 'off')
+        self.assertLedColor('led5', 'off')
+        self.assertLedColor('led6', 'off')
+
+        self.post_event('group2_random', 2)
+        selected_achievements = [x for x in (a4, a5, a6) if x._state == 'selected']
+        self.assertEqual(len(selected_achievements), 0)
+
+    def test_rotation(self):
+
+        a4 = self.machine.achievements['achievement4']
+        a5 = self.machine.achievements['achievement5']
+        a6 = self.machine.achievements['achievement6']
+        g2 = self.machine.achievement_groups['group2']
+
+        self.start_game()
+
+        a4.enable()
+        a4.select()
+        a5.enable()
+        a6.enable()
+
+        self.advance_time_and_run(1)
+        self.assertEqual("selected", a4._state)
+        self.assertEqual("enabled", a5._state)
+        self.assertEqual("enabled", a6._state)
+        self.assertLedColor('led4', 'orange')
+        self.assertLedColor('led5', 'yellow')
+        self.assertLedColor('led6', 'yellow')
+
+        # don't rotate if group is not enabled
+        self.assertEqual(g2.enabled, False)
+        self.post_event('group2_rotate_right', 1)
+        self.assertEqual("selected", a4._state)
+        self.assertEqual("enabled", a5._state)
+        self.assertEqual("enabled", a6._state)
+        self.assertLedColor('led4', 'orange')
+        self.assertLedColor('led5', 'yellow')
+        self.assertLedColor('led6', 'yellow')
+
+        # enable the group and test
+        self.post_event('group2_enable', 1)
+        self.assertEqual(g2.enabled, True)
+        self.post_event('group2_rotate_right', 1)
+        self.assertEqual("enabled", a4._state)
+        self.assertEqual("selected", a5._state)
+        self.assertEqual("enabled", a6._state)
+        self.assertLedColor('led4', 'yellow')
+        self.assertLedColor('led5', 'orange')
+        self.assertLedColor('led6', 'yellow')
+
+        # rotate 2 more times to make sure
+        self.post_event('group2_rotate_right', 1)
+        self.assertEqual("enabled", a4._state)
+        self.assertEqual("enabled", a5._state)
+        self.assertEqual("selected", a6._state)
+        self.assertLedColor('led4', 'yellow')
+        self.assertLedColor('led5', 'yellow')
+        self.assertLedColor('led6', 'orange')
+
+        self.post_event('group2_rotate_right', 1)
+        self.assertEqual("selected", a4._state)
+        self.assertEqual("enabled", a5._state)
+        self.assertEqual("enabled", a6._state)
+        self.assertLedColor('led4', 'orange')
+        self.assertLedColor('led5', 'yellow')
+        self.assertLedColor('led6', 'yellow')
+
+        # test rotate left
+        self.post_event('group2_rotate_left', 1)
+        self.assertEqual("enabled", a4._state)
+        self.assertEqual("enabled", a5._state)
+        self.assertEqual("selected", a6._state)
+        self.assertLedColor('led4', 'yellow')
+        self.assertLedColor('led5', 'yellow')
+        self.assertLedColor('led6', 'orange')
+
+        # don't rotate between disabled ones
+        self.post_event('achievement4_disable', 1)
+        self.assertEqual("disabled", a4._state)
+        self.assertEqual("enabled", a5._state)
+        self.assertEqual("selected", a6._state)
+        self.assertLedColor('led4', 'off')
+        self.assertLedColor('led5', 'yellow')
+        self.assertLedColor('led6', 'orange')
+
+        self.post_event('group2_rotate_right', 1)
+        self.assertEqual("disabled", a4._state)
+        self.assertEqual("selected", a5._state)
+        self.assertEqual("enabled", a6._state)
+        self.assertLedColor('led4', 'off')
+        self.assertLedColor('led5', 'orange')
+        self.assertLedColor('led6', 'yellow')
+
+        # complete the event, auto_select is not enabled
+
+        self.post_event('achievement5_start', 1)
+        self.post_event('achievement5_complete', 1)
+
+        self.assertEqual("disabled", a4._state)
+        self.assertEqual("completed", a5._state)
+        self.assertEqual("enabled", a6._state)
+        self.assertLedColor('led4', 'off')
+        self.assertLedColor('led5', 'blue')
+        self.assertLedColor('led6', 'yellow')
+
+        # rotate should not touch the complete or disabled ones
+
+        self.post_event('group2_rotate_right', 1)
+        self.assertEqual("disabled", a4._state)
+        self.assertEqual("completed", a5._state)
+        self.assertEqual("enabled", a6._state)
+        self.assertLedColor('led4', 'off')
+        self.assertLedColor('led5', 'blue')
+        self.assertLedColor('led6', 'yellow')
+
+        # enable a4, select one, rotate shouldn't touch the disabled one
+
+        self.post_event('achievement4_enable', 1)
+        self.post_event('group2_random', 1)
+        self.post_event('group2_rotate_right', 1)
+
+        self.assertEqual("completed", a5._state)
+        self.assertLedColor('led5', 'blue')
+
+        if a4.state == 'selected':
+            old_selected = a4
+            old_enabled = a6
+            self.assertLedColor('led4', 'orange')
+            self.assertLedColor('led6', 'yellow')
+            self.assertEqual("enabled", a6._state)
+        else:
+            old_selected = a6
+            old_enabled = a4
+            self.assertLedColor('led4', 'yellow')
+            self.assertLedColor('led6', 'orange')
+            self.assertEqual("enabled", a4._state)
+
+        self.post_event('group2_rotate_right', 1)
+        self.assertLedColor(old_selected.config['show_tokens']['led'], 'yellow')
+        self.assertLedColor(old_enabled.config['show_tokens']['led'], 'orange')
+        self.assertEqual(old_selected.state, 'enabled')
+        self.assertEqual(old_enabled.state, 'selected')
+
+        self.post_event('group2_rotate_right', 1)
+        self.assertLedColor(old_selected.config['show_tokens']['led'], 'orange')
+        self.assertLedColor(old_enabled.config['show_tokens']['led'], 'yellow')
+        self.assertEqual(old_selected.state, 'selected')
+        self.assertEqual(old_enabled.state, 'enabled')
+
+    def test_group_completion_via_methods(self):
+        a4 = self.machine.achievements['achievement4']
+        a5 = self.machine.achievements['achievement5']
+        a6 = self.machine.achievements['achievement6']
+        g2 = self.machine.achievement_groups['group2']
+
+        self.mock_event('group2_complete')
+        self.mock_event('group2_no_more')
+
+        self.start_game()
+
+        # test via methods
+        a4.enable()
+        a5.enable()
+        a6.enable()
+        g2.enable()
+
+        self.assertEqual("enabled", a4._state)
+        self.assertEqual("enabled", a5._state)
+        self.assertEqual("enabled", a6._state)
+
+        a4.select()
+        self.assertEqual("selected", a4._state)
+        a4.start()
+        self.assertEqual("started", a4._state)
+        a4.stop()
+        self.assertEqual("stopped", a4._state)
+        a4.start()
+        self.assertEqual("started", a4._state)
+        a4.complete()
+        self.assertEqual("completed", a4._state)
+
+        a5.start()
+        a5.complete()
+        self.advance_time_and_run()
+        self.assertEventNotCalled('group2_no_more')
+
+        a6.start()
+        self.advance_time_and_run()
+        self.assertEventCalled('group2_no_more')
+        self.assertEventNotCalled('group2_complete')
+
+        a6.complete()
+        self.advance_time_and_run()
+        self.assertEventCalled('group2_complete')
+
+        # re-enable & select random, should not select any
+
+        g2.enable()
+        g2.select_random_achievement()
+        self.assertEqual("completed", a4._state)
+        self.assertEqual("completed", a5._state)
+        self.assertEqual("completed", a6._state)
+
+    def test_group_auto_select_and_group_auto_enable(self):
+        a7 = self.machine.achievements['achievement7']
+        a8 = self.machine.achievements['achievement8']
+        a9 = self.machine.achievements['achievement9']
+        g1 = self.machine.achievement_groups['group1']
+
+        self.start_game()
+
+        self.assertTrue(self.machine.achievement_groups.group1.enabled)
+        selected = g1._selected_member
+        self.assertTrue(selected)
+
+        # group should auto disable
+        selected.start()
+        self.assertFalse(g1.enabled)
+
+        # group should auto enable
+        selected.stop()
+        self.assertTrue(g1.enabled)
+
+        selected.start()
+        self.assertFalse(g1.enabled)
+        selected.complete()
+
+        # group should auto enable and select another
+        self.assertTrue(g1.enabled)
+        selected2 = g1._selected_member
+        self.assertIsNot(selected, selected2)
+
+        selected2.start()
+        selected2.complete()
+
+        # group should auto enable and select another
+        self.assertTrue(g1.enabled)
+        selected3 = g1._selected_member
+        self.assertIsNot(selected2, selected3)
+
+        selected3.start()
+        selected3.complete()
+
+        # should not re-enable since all members are complete
+        self.assertFalse(g1.enabled)
+
+    def test_auto_enable_with_no_enable_events(self):
+        self.start_game()
+
+        self.assertTrue(self.machine.achievement_groups.group1.enabled)
+        self.assertFalse(self.machine.achievement_groups.group2.enabled)

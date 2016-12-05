@@ -21,9 +21,12 @@ achievement_groups:
     disable_events: dict|str:ms|None
     start_selected_events: dict|str:ms|None
     select_random_achievement_events: dict|str:ms|None
+    auto_select: single|bool|False
+    disable_while_achievement_started: single|bool|True
+    enable_while_no_achievement_started: single|bool|True
     rotate_right_events: dict|str:ms|None
     rotate_left_events: dict|str:ms|None
-    events_when_all_complete: list|str|None
+    events_when_all_completed: list|str|None
     events_when_no_more_enabled: list|str|None
     events_when_enabled: list|str|None
     show_tokens: dict|str:str|None
