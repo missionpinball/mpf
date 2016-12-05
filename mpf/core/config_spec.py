@@ -600,8 +600,8 @@ mpf:
     switch_tag_event: single|str|sw_%
     allow_invalid_config_sections: single|bool|false
     save_machine_vars_to_disk: single|bool|true
-    hz: single|float|30.0
     default_show_sync_ms: single|int|0
+    default_platform_hz: single|float|1000
 mpf-mc:
     __valid_in__: machine                           # todo add to validator
 multiballs:
