@@ -153,7 +153,7 @@ ball_devices:
     target_on_unexpected_ball: single|machine(ball_devices)|None
 ball_holds:
     __valid_in__: machine, mode
-    balls_to_hold: single|int|-1
+    balls_to_hold: single|int|None
     hold_devices: list|machine(ball_devices)|
     source_playfield: single|machine(ball_devices)|playfield
     enable_events: dict|str:ms|None

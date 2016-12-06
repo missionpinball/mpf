@@ -520,6 +520,8 @@ class TestBallHold(MpfTestCase):
 
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
 
+    def test_auto_capacity(self):
+        self.assertEqual(self.machine.ball_holds.hold_test3.config['balls_to_hold'], 2)
 
 class TestBallHoldSmart(MpfTestCase):
 

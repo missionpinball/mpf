@@ -13,6 +13,8 @@ coils:
         number:
     eject_coil3:
         number:
+    eject_coil4:
+        number:
 
 switches:
     s_start:
@@ -29,6 +31,10 @@ switches:
     s_ball_switch_hold2:
         number:
     s_ball_switch_hold3:
+        number:
+    s_ball_switch_hold4:
+        number:
+    s_ball_switch_hold5:
         number:
     s_playfield_active:
         tags: playfield_active
@@ -54,10 +60,17 @@ ball_devices:
         ball_switches: s_ball_switch_hold1, s_ball_switch_hold2, s_ball_switch_hold3
         confirm_eject_type: target
         debug: true
+    test_hold2:
+        eject_coil: eject_coil4
+        ball_switches: s_ball_switch_hold4, s_ball_switch_hold5
+        confirm_eject_type: target
+        debug: true
 
 ball_holds:
     hold_test:
         hold_devices: test_hold
         balls_to_hold: 2
         release_one_events: release_test
+    hold_test3:
+        hold_devices: test_hold2
 

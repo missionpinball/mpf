@@ -54,6 +54,12 @@ class BallHold(SystemWideDevice, ModeDevice):
         for device in self.config['hold_devices']:
             self.hold_devices.append(device)
 
+        if not self.config['balls_to_hold']:
+            self.config['balls_to_hold'] = 0
+
+            for device in self.config['hold_devices']:
+                self.config['balls_to_hold'] += device.config['ball_capacity']
+
         self.source_playfield = self.config['source_playfield']
 
     def enable(self, **kwargs):
