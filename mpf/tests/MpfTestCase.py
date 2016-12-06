@@ -297,12 +297,23 @@ class MpfTestCase(unittest.TestCase):
         self.assertEqual(state, self.machine.switch_controller.is_active(name))
 
     def assertLedColor(self, led_name, color):
+        if isinstance(color, str) and color.lower() == 'on':
+            color = self.machine.leds[led_name].config['default_color']
+
         self.assertEqual(list(RGBColor(color).rgb), self.machine.leds[led_name].hw_driver.current_color)
 
-    def assertLedColors(self, led_name, color_list, secs, check_delta=.1):
+    def assertLedColors(self, led_name, color_list, secs=1, check_delta=.1):
         colors = list()
 
-        for x in range(secs*10):
+        # have to do it this weird way because `if 'on' in color_list:` doesn't
+        # work since it tries to convert it to a color
+        for color in color_list[:]:
+            if isinstance(color, str) and color.lower() == 'on':
+                color_list.remove('on')
+                color_list.append(self.machine.leds[led_name].config['default_color'])
+                break
+
+        for x in range(int(secs / check_delta)):
             colors.append(RGBColor(self.machine.leds[led_name].hw_driver.current_color))
             self.advance_time_and_run(check_delta)
 
