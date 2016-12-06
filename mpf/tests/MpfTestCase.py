@@ -358,7 +358,7 @@ class MpfTestCase(unittest.TestCase):
         self.assertEqual(kwargs, self._last_event_kwargs[event_name], "Args for {} differ.".format(event_name))
 
     def assertShotShow(self, shot_name, show_name):
-        """Assert that the highest priority runnning show for a shot is a
+        """Assert that the highest priority running show for a shot is a
         certain show name."""
         if shot_name not in self.machine.shots:
             raise AssertionError("Shot {} is not a valid shot".format(shot_name))
@@ -369,6 +369,38 @@ class MpfTestCase(unittest.TestCase):
             self.assertEqual(show_name, self.machine.shots[shot_name].profiles[0]['running_show'].name)
         else:
             self.assertIsNone(self.machine.shots[shot_name].profiles[0]['running_show'])
+
+    def assertShotProfile(self, shot_name, profile_name):
+        """Assert that the highest priority profile for a shot is a
+        certain profile name."""
+        if shot_name not in self.machine.shots:
+            raise AssertionError("Shot {} is not a valid shot".format(shot_name))
+
+        if profile_name:
+            self.assertIsNotNone(self.machine.shots[shot_name].profiles)
+            self.assertIsNotNone(self.machine.shots[shot_name].profiles[0]['profile'])
+            self.assertEqual(profile_name, self.machine.shots[shot_name].profiles[0]['profile'])
+        else:
+            self.assertIsNone(self.machine.shots[shot_name].profiles[0]['profile'])
+
+    def assertShotProfileState(self, shot_name, state_name):
+        """Assert that the highest priority profile for a shot is in a certain
+        state."""
+        if shot_name not in self.machine.shots:
+            raise AssertionError("Shot {} is not a valid shot".format(shot_name))
+
+        if state_name:
+            self.assertIsNotNone(self.machine.shots[shot_name].profiles)
+            self.assertIsNotNone(self.machine.shots[shot_name].profiles[0]['current_state_name'])
+            self.assertEqual(state_name, self.machine.shots[shot_name].profiles[0]['current_state_name'])
+        else:
+            self.assertIsNone(self.machine.shots[shot_name].profiles[0]['current_state_name'])
+
+    def assertShotEnabled(self, shot_name):
+        if shot_name not in self.machine.shots:
+            raise AssertionError("Shot {} is not a valid shot".format(shot_name))
+
+        self.assertTrue(self.machine.shots[shot_name].profiles[0]['enable'])
 
     def assertShowRunning(self, show_name):
         for running_show in self.machine.show_controller.running_shows:
