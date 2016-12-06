@@ -72,6 +72,7 @@ mpf:
         - mpf.devices.magnet.Magnet
         - mpf.devices.kickback.Kickback
         - mpf.devices.combo_switch.ComboSwitch
+        - mpf.devices.ball_hold.BallHold
 
     plugins:
         mpf.plugins.auditor.Auditor
@@ -143,6 +144,7 @@ mpf:
       - autofire_coils
       - ball_devices
       - ball_saves
+      - ball_holds
       - ball_locks
       - coils
       - diverters

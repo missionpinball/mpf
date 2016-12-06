@@ -151,6 +151,17 @@ ball_devices:
     ball_search_order: single|int|100
     auto_fire_on_unexpected_ball: single|bool|True
     target_on_unexpected_ball: single|machine(ball_devices)|None
+ball_holds:
+    __valid_in__: machine, mode
+    balls_to_hold: single|int|-1
+    hold_devices: list|machine(ball_devices)|
+    source_playfield: single|machine(ball_devices)|playfield
+    enable_events: dict|str:ms|None
+    disable_events: dict|str:ms|None
+    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
+    release_one_events: dict|str:ms|None
+    release_all_events: dict|str:ms|None
+    release_one_if_full_events: dict|str:ms|None
 ball_locks:
     __valid_in__: machine, mode
     balls_to_lock: single|int|

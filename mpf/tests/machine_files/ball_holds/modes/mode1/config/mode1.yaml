@@ -1,0 +1,13 @@
+#config_version=4
+mode:
+  start_events: start_mode1
+  stop_events: stop_mode1
+  game_mode: False
+
+ball_holds:
+    hold_test2:
+        hold_devices: test_hold
+        balls_to_hold: 2
+        release_one_events: release_test
+        tags:
+        label:
