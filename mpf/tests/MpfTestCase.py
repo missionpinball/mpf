@@ -203,7 +203,11 @@ class MpfTestCase(unittest.TestCase):
         pass
 
     def _exception_handler(self, loop, context):
-        loop.stop()
+        try:
+            loop.stop()
+        except RuntimeError:
+            pass
+
         self._exception = context
 
     def setUp(self):
