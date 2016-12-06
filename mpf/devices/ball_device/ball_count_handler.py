@@ -31,6 +31,11 @@ class EjectTracker:
         self._task.add_done_callback(self._done)
         yield from self.wait_for_ready()
 
+    def cancel(self):
+        """Cancel eject tracker."""
+        if self._task:
+            self._task.cancel()
+
     @staticmethod
     def _done(future):
         try:
