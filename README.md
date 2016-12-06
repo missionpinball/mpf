@@ -8,7 +8,7 @@ Let's build a pinball machine!
 The Mission Pinball Framework (MPF) is an open source, cross-platform, software framework for powering real pinball
 machines.
 
-MPF is written in Python 3. It can run on Windows, OS X, and Linux using the same code and configurations.
+MPF is written in Python 3. It can run on Windows, Mac, and Linux using the same code and configurations.
 
 MPF interacts with real, physical pinball machines via modern pinball controller hardware such as the Multimorphic
 P-ROC or P3-ROC, FAST Pinball controllers, or Open Pinball Project (OPP) open source hardware. You can use it to power
@@ -22,12 +22,6 @@ week. It's MIT licensed, actively developed by fun people, and supported by a vi
 
 The MPF project homepage is here : http://missionpinball.org
 
-0.31 (current release):
-[![Coverage Status](https://coveralls.io/repos/missionpinball/mpf/badge.svg?branch=0.31&service=github)](https://coveralls.io/github/missionpinball/mpf?branch=0.31)
-[![Build Status](https://travis-ci.org/missionpinball/mpf.svg?branch=0.31)](https://travis-ci.org/missionpinball/mpf)
-[![Code Health](https://landscape.io/github/missionpinball/mpf/0.31/landscape.svg?style=flat)](https://landscape.io/github/missionpinball/mpf/0.31)
-
-Dev (next release):
 [![Coverage Status](https://coveralls.io/repos/missionpinball/mpf/badge.svg?branch=dev&service=github)](https://coveralls.io/github/missionpinball/mpf?branch=dev)
 [![Build Status](https://travis-ci.org/missionpinball/mpf.svg?branch=dev)](https://travis-ci.org/missionpinball/mpf)
 [![Code Health](https://landscape.io/github/missionpinball/mpf/dev/landscape.svg?style=flat)](https://landscape.io/github/missionpinball/mpf/dev)
