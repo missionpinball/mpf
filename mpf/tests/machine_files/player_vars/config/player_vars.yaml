@@ -1,0 +1,52 @@
+#config_version=4
+
+player_vars:
+  some_var:
+    initial_value: 4
+  some_float:
+    initial_value: 4
+    value_type: float
+  some_string:
+    initial_value: 4
+    value_type: str
+  some_other_string:
+    initial_value: hello
+    value_type: str  # required for non-ints
+
+# below is the min config we need to be able to start a game
+
+game:
+    balls_per_game: 3
+
+coils:
+    eject_coil1:
+        number:
+    eject_coil2:
+        number:
+
+switches:
+    s_start:
+        number:
+        tags: start
+    s_ball_switch1:
+        number:
+    s_ball_switch2:
+        number:
+    s_ball_switch_launcher:
+        number:
+
+ball_devices:
+    bd_trough:
+        eject_coil: eject_coil1
+        ball_switches: s_ball_switch1, s_ball_switch2
+        debug: true
+        confirm_eject_type: target
+        eject_targets: bd_launcher
+        tags: trough, drain, home
+    bd_launcher:
+        eject_coil: eject_coil2
+        ball_switches: s_ball_switch_launcher
+        debug: true
+        confirm_eject_type: target
+        eject_timeouts: 2s
+        tags: ball_add_live
