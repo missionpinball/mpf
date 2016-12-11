@@ -60,7 +60,8 @@ class Randomizer(object):
 
             self.data['items_sent'] = set()
 
-            if self.force_different:
+            # force different only works with more than 1 elements
+            if self.force_different and len(self.items) > 1:
                 potential_nexts = [x for x in self.items if x[0] is not (
                     self.data['current_item'])]
             else:
