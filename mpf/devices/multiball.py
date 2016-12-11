@@ -155,7 +155,7 @@ class Multiball(SystemWideDevice, ModeDevice):
         desc: The multiball called (name) has lost a ball after ball save expired.
         '''
 
-        if self.machine.game.balls_in_play - balls < 1:
+        if not self.machine.game or self.machine.game.balls_in_play - balls < 1:
             self.balls_added_live = 0
             self.balls_live_target = 0
             self.machine.events.remove_handler(self._ball_drain_count_balls)
