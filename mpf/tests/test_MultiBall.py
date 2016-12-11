@@ -607,6 +607,15 @@ class TestMultiBall(MpfTestCase):
         self.assertEqual(3, self.machine.playfield.balls)
         self.assertEqual(0, self.machine.ball_devices.bd_lock.balls)
 
+        # game ends (because of slam tilt)
+        self.machine.game.stop()
+        self.advance_time_and_run()
+
+        # this should not crash
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_trough)
+        self.advance_time_and_run()
+
+
     def test_total_ball_count(self):
         # prepare game
         self.machine.ball_controller.num_balls_known = 0
