@@ -501,3 +501,11 @@ class TestLogicBlocks(MpfFakeGameTestCase):
             self.assertEqual(i + 4, self._events["counter_counter_persist_hit"])
 
         self.assertEqual(1, self._events["logicblock_counter_persist_complete"])
+
+    def test_count_without_end(self):
+        self.start_game()
+        self.post_event("counter5_count")
+        self.post_event("counter5_count")
+        self.post_event("counter5_count")
+
+        self.assertPlayerVarEqual(3, "counter5_count")
