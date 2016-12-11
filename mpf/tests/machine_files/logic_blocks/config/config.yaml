@@ -79,6 +79,8 @@ logic_blocks:
             disable_events: counter4_disable
             restart_events: counter4_restart
             reset_events: counter4_reset
+        counter5:
+            count_events: counter5_count
     sequences:
         sequence1:
             events:
