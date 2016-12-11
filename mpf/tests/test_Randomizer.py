@@ -11,6 +11,17 @@ class TestRandomizer(MpfTestCase):
     def getMachinePath(self):
         return 'tests/machine_files/randomizer/'
 
+    def test_one_element_with_force_different(self):
+        items = ['1']
+
+        r = Randomizer(items)
+        self.assertTrue(r.force_different)
+
+        # it has one element and should thereby always return it
+        self.assertEqual('1', next(r))
+        self.assertEqual('1', next(r))
+        self.assertEqual('1', next(r))
+
     def test_machine_randomizer(self):
 
         items = [
