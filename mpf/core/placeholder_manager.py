@@ -181,7 +181,7 @@ class PlaceholderManager(MpfController):
         elif node.id in variables:
             return variables[node.id]
         else:
-            raise ValueError("Mising variable {}".format(node.id))
+            raise ValueError("Missing variable {}".format(node.id))
 
     def _eval(self, node, variables):
         if node is None:
