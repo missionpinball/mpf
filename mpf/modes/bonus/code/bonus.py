@@ -20,6 +20,12 @@ class Bonus(Mode):
 
     def mode_start(self, **kwargs):
         """Start the bonus mode."""
+
+        if not self.bonus_entries:
+            self.log.warning(
+                "Bonus mode started, but `bonus_entries` is not configured.")
+            self.stop()
+
         # no bonus when machine is tilted
         if self.machine.game.tilted:
             # reset all scores because they should be voided
