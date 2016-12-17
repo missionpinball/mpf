@@ -39,3 +39,5 @@ multiball_locks:
     lock_mb6:
         lock_devices: bd_lock
         balls_to_lock: 2
+        reset_count_for_current_player_events: mb6_start
+        disable_events: mb6_start

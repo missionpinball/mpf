@@ -636,8 +636,8 @@ multiball_locks:
     source_playfield: single|machine(ball_devices)|playfield
     enable_events: dict|str:ms|None
     disable_events: dict|str:ms|None
-    reset_all_counts: dict|str:ms|None
-    reset_count_for_current_player: dict|str:ms|None
+    reset_all_counts_events: dict|str:ms|None
+    reset_count_for_current_player_events: dict|str:ms|None
 opp:
     __valid_in__: machine
     ports: list|str|
