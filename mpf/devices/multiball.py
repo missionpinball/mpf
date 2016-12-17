@@ -56,15 +56,17 @@ class Multiball(SystemWideDevice, ModeDevice):
         return super().prepare_config(config, is_mode_config)
 
     def _handle_balls_in_play_and_balls_live(self):
+        ball_count = self.config['ball_count'].evaluate([])
+
         if self.config['ball_count_type'] == "total":
             # policy: total balls
-            if self.config['ball_count'] > self.machine.game.balls_in_play:
-                self.balls_added_live = self.config['ball_count'] - self.machine.game.balls_in_play
-                self.machine.game.balls_in_play = self.config['ball_count']
-            self.balls_live_target = self.config['ball_count']
+            if ball_count > self.machine.game.balls_in_play:
+                self.balls_added_live = ball_count - self.machine.game.balls_in_play
+                self.machine.game.balls_in_play = ball_count
+            self.balls_live_target = ball_count
         else:
             # policy: add balls
-            self.balls_added_live = self.config['ball_count']
+            self.balls_added_live = ball_count
             self.machine.game.balls_in_play += self.balls_added_live
             self.balls_live_target = self.machine.game.balls_in_play
 
