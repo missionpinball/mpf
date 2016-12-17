@@ -1,10 +1,7 @@
 """Contains the BallLock device class."""
 
-from collections import deque
-
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.mode_device import ModeDevice
-from mpf.core.system_wide_device import SystemWideDevice
 
 
 @DeviceMonitor("enabled")
@@ -18,15 +15,18 @@ class MultiballLock(ModeDevice):
 
     def __init__(self, machine, name):
         """Initialise ball lock."""
-        self.lock_devices = None
+        self.lock_devices = []
         self.source_playfield = None
 
         # initialise variables
         self.enabled = False
+        self.initialised = False    # remove when #715 is fixed
         self._released_balls = 0
         self._release_lock = None
 
         super().__init__(machine, name)
+
+        self.machine.events.add_handler("player_turn_starting", self._player_turn_starting)
 
     def _add_balls_in_play(self, number):
         self.machine.game.balls_in_play += number
@@ -45,11 +45,16 @@ class MultiballLock(ModeDevice):
         # load lock_devices
         super()._initialize()
 
+        # we only need to initialise once
+        if self.initialised:
+            return
+
         self.lock_devices = []
         for device in self.config['lock_devices']:
             self.lock_devices.append(device)
 
         self.source_playfield = self.config['source_playfield']
+        self.initialised = True
 
     def enable(self, **kwargs):
         """Enable the lock.
@@ -64,6 +69,33 @@ class MultiballLock(ModeDevice):
         if not self.enabled:
             self._register_handlers()
         self.enabled = True
+
+    def _player_turn_starting(self, queue, **kwargs):
+        del kwargs
+        if not self.initialised:
+            return
+
+        # check if the lock is physically full and not virtually full and release balls in that case
+        if self._physically_remaining_space <= 0 and not self.is_virtually_full:
+            self.log.info("Will release a ball because the lock is phyiscally full but not virtually for the current " +
+                          "player.")
+            # TODO: eject to next playfield
+            self.lock_devices[0].eject()
+            queue.wait()
+            self.machine.events.add_handler("ball_drain", self._wait_for_drain, queue=queue)
+
+    def _wait_for_drain(self, queue, balls, **kwargs):
+        del kwargs
+        if balls <= 0:
+            return {'balls': balls}
+
+        self.log.debug("Ball of lock drained.")
+
+        queue.clear()
+
+        self.machine.events.remove_handler_by_event('ball_drain', self._wait_for_drain)
+
+        return {'balls': balls - 1}
 
     def disable(self, **kwargs):
         """Disable the lock.
@@ -151,9 +183,8 @@ class MultiballLock(ModeDevice):
 
         return balls
 
-    def _lock_ball(self, device, new_balls, unclaimed_balls, **kwargs):
+    def _lock_ball(self, unclaimed_balls, **kwargs):
         """Callback for _ball_enter event of lock_devices."""
-        del new_balls
         del kwargs
         # if full do not take any balls
         if self.is_virtually_full:

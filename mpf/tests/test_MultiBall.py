@@ -700,6 +700,8 @@ class TestMultiBall(MpfGameTestCase):
         self.assertBallsOnPlayfield(1)
 
     def testMultiballLockFullMultiplayer(self):
+        self.machine.config['game']['balls_per_game'] = 2
+        self.mock_event("multiball_lock_lock_mb6_full")
         self.fill_troughs()
         self.start_two_player_game()
         self.assertPlayerNumber(1)
@@ -737,7 +739,9 @@ class TestMultiBall(MpfGameTestCase):
         self.assertEqual(4, self.machine.ball_devices.bd_trough.balls)
         self.assertBallsOnPlayfield(1)
         self.assertBallsInPlay(1)
+        self.assertEventNotCalled("multiball_lock_lock_mb6_full")
 
+        # lock another ball. lock should keep it
         self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_lock)
         self.advance_time_and_run(5)
         self.assertEqual(1, self.machine.game.player_list[0]["lock_mb6_locked_balls"])
@@ -746,3 +750,71 @@ class TestMultiBall(MpfGameTestCase):
         self.assertEqual(3, self.machine.ball_devices.bd_trough.balls)
         self.assertBallsOnPlayfield(1)
         self.assertBallsInPlay(1)
+        self.assertEventCalled("multiball_lock_lock_mb6_full")
+
+        # drain ball. lock should release a ball because player1 need to be able to complete it
+        self.drain_ball()
+        self.advance_time_and_run(5)
+        self.assertEqual(1, self.machine.game.player_list[0]["lock_mb6_locked_balls"])
+        self.assertEqual(2, self.machine.game.player_list[1]["lock_mb6_locked_balls"])
+        self.assertEqual(1, self.machine.ball_devices.bd_lock.balls)
+        self.assertEqual(4, self.machine.ball_devices.bd_trough.balls)
+        self.assertBallsOnPlayfield(1)
+        self.assertBallsInPlay(0)
+
+        # ball from lock drains
+        self.drain_ball()
+        self.advance_time_and_run(5)
+        self.assertPlayerNumber(1)
+        self.assertBallNumber(2)
+        self.assertEqual(1, self.machine.ball_devices.bd_lock.balls)
+        self.assertEqual(4, self.machine.ball_devices.bd_trough.balls)
+        self.assertBallsOnPlayfield(1)
+        self.assertBallsInPlay(1)
+
+        self.post_event("start_mode1")
+
+        # lock another ball. lock should keep it
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_lock)
+        self.advance_time_and_run(5)
+        self.assertEqual(2, self.machine.game.player_list[0]["lock_mb6_locked_balls"])
+        self.assertEqual(2, self.machine.game.player_list[1]["lock_mb6_locked_balls"])
+        self.assertEqual(2, self.machine.ball_devices.bd_lock.balls)
+        self.assertEqual(3, self.machine.ball_devices.bd_trough.balls)
+        self.assertBallsOnPlayfield(1)
+        self.assertBallsInPlay(1)
+
+        # drain ball
+        self.drain_ball()
+        self.advance_time_and_run(5)
+        self.assertPlayerNumber(2)
+        self.assertBallNumber(2)
+
+        # drain again. game should end
+        self.drain_ball()
+
+        # lock should eject all balls
+        self.advance_time_and_run(5)
+        self.assertGameIsNotRunning()
+        self.assertEqual(0, self.machine.ball_devices.bd_lock.balls)
+        self.assertEqual(4, self.machine.ball_devices.bd_trough.balls)
+        self.assertBallsOnPlayfield(2)
+
+        # game should not start yet
+        self.assertGameIsNotRunning()
+        self.hit_and_release_switch("s_start")
+        self.advance_time_and_run()
+        self.assertGameIsNotRunning()
+        
+        # ball from lock drain
+        self.drain_ball()
+        self.drain_ball()
+        self.advance_time_and_run()
+
+        # start new game
+        self.start_game()
+        self.post_event("start_mode1")
+
+        self.drain_ball()
+        self.advance_time_and_run()
+

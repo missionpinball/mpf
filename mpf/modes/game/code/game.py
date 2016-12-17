@@ -460,8 +460,23 @@ class Game(Mode):
 
         self.machine.events.post('player_turn_start', player=self.player,
                                  number=self.player.number,
-                                 callback=self._player_turn_started)
+                                 callback=self._player_turn_starting)
         '''event: player_turn_start
+        desc: A new player's turn will start. This event is only posted before the
+        start of a new player's turn. If that player gets an extra ball and
+        shoots again, this event is not posted a second time.
+
+        args:
+        player: The player object whose turn is starting.
+        number: The player number
+        '''
+
+    def _player_turn_starting(self, **kwargs):
+        del kwargs
+        self.machine.events.post_queue('player_turn_starting', player=self.player,
+                                       number=self.player.number,
+                                       callback=self._player_turn_started)
+        '''event: player_turn_starting
         desc: A new player's turn is starting. This event is only posted at the
         start of a new player's turn. If that player gets an extra ball and
         shoots again, this event is not posted a second time.
@@ -509,6 +524,18 @@ class Game(Mode):
 
         desc: The ball number for this player. If a player gets an extra ball,
         this number won't change when they start the extra ball.
+        '''
+
+        self.machine.events.post('player_turn_started', player=self.player,
+                                 number=self.player.number)
+        '''event: player_turn_started
+        desc: A new player's turn started. This event is only posted after the
+        start of a new player's turn. If that player gets an extra ball and
+        shoots again, this event is not posted a second time.
+
+        args:
+        player: The player object whose turn is starting.
+        number: The player number
         '''
 
         self.ball_starting()
