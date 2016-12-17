@@ -89,15 +89,11 @@ class Multiball(SystemWideDevice, ModeDevice):
 
         balls_added = 0
 
-        # always eject all locks
+        # eject balls from locks
         for device in self.ball_locks:
-            balls_added += device.release_all_balls()
-
-        # increase balls_in_play if necessary
-        if balls_added > self.balls_added_live:
-            self.log.info("Added %s excess balls found in locks.", balls_added - self.balls_added_live)
-            self.machine.game.balls_in_play += balls_added - self.balls_added_live
-            self.balls_added_live = balls_added
+            balls_to_release = max(min(device.available_balls, self.balls_added_live - balls_added), 0)
+            device.eject(balls_to_release)
+            balls_added += balls_to_release
 
         # request remaining balls
         if self.balls_added_live - balls_added > 0:

@@ -617,11 +617,11 @@ mpf-mc:
     __valid_in__: machine                           # todo add to validator
 multiballs:
     __valid_in__: machine, mode
-    ball_count: single|int|
+    ball_count: single|template_int|
     ball_count_type: single|enum(add,total)|total
     source_playfield: single|machine(ball_devices)|playfield
     shoot_again: single|ms|10s
-    ball_locks: list|machine(ball_locks)|None
+    ball_locks: list|machine(ball_devices)|None
     enable_events: dict|str:ms|None
     disable_events: dict|str:ms|None
     reset_events: dict|str:ms|machine_reset_phase_3, ball_starting
@@ -629,6 +629,15 @@ multiballs:
     stop_events: dict|str:ms|None
     add_a_ball_events: dict|str:ms|None
     start_or_add_a_ball_events: dict|str:ms|None
+multiball_locks:
+    __valid_in__: mode
+    balls_to_lock: single|int|
+    lock_devices: list|machine(ball_devices)|
+    source_playfield: single|machine(ball_devices)|playfield
+    enable_events: dict|str:ms|None
+    disable_events: dict|str:ms|None
+    reset_all_counts: dict|str:ms|None
+    reset_count_for_current_player: dict|str:ms|None
 opp:
     __valid_in__: machine
     ports: list|str|

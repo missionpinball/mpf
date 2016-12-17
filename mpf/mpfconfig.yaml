@@ -73,6 +73,7 @@ mpf:
         - mpf.devices.kickback.Kickback
         - mpf.devices.combo_switch.ComboSwitch
         - mpf.devices.ball_hold.BallHold
+        - mpf.devices.multiball_lock.MultiballLock
 
     plugins:
         mpf.plugins.auditor.Auditor
@@ -169,6 +170,7 @@ mpf:
       - achievements
       - achievement_groups
       - combo_switches
+      - multiball_locks
 
 # Default settings for machines. All can be overridden
 
