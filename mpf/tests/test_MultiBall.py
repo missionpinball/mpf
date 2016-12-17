@@ -1,7 +1,8 @@
-from mpf.tests.MpfTestCase import MpfTestCase
+"""Test multiballs and multiball_locks."""
+from mpf.tests.MpfGameTestCase import MpfGameTestCase
 
 
-class TestMultiBall(MpfTestCase):
+class TestMultiBall(MpfGameTestCase):
 
     def getConfigFile(self):
         return 'config.yaml'
@@ -17,24 +18,11 @@ class TestMultiBall(MpfTestCase):
         self.mock_event("multiball_mb1_ball_lost")
 
         # prepare game
-        self.machine.ball_controller.num_balls_known = 0
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch3', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch4', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch5', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch6', 1)
-
-        self.advance_time_and_run(10)
-        self.assertEqual(6, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(6, self.machine.ball_devices.bd_trough.balls)
-
+        self.fill_troughs()
         self.assertFalse(self.machine.multiballs.mb1.enabled)
 
         # start game
-        self.machine.switch_controller.process_switch('s_start', 1)
-        self.machine.switch_controller.process_switch('s_start', 0)
-        self.machine_run()
+        self.start_game()
 
         # mb1 should not start because its not enabled
         self.post_event("mb1_start")
@@ -53,16 +41,14 @@ class TestMultiBall(MpfTestCase):
         self.assertEqual(1, self.machine.playfield.balls)
 
         # ball drains right away
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.drain_ball()
         self.advance_time_and_run(1)
 
         # multiball not started. game should end
         self.assertEqual(None, self.machine.game)
 
         # start game again
-        self.machine.switch_controller.process_switch('s_start', 1)
-        self.machine.switch_controller.process_switch('s_start', 0)
-        self.machine_run()
+        self.start_game()
         self.post_event("mb1_enable")
 
         # multiball should be enabled
@@ -88,7 +74,7 @@ class TestMultiBall(MpfTestCase):
         self.assertEqual(2, self.machine.playfield.balls)
 
         # ball drains
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.drain_ball()
         self.advance_time_and_run(1)
 
         # game should not end
@@ -100,9 +86,8 @@ class TestMultiBall(MpfTestCase):
         self.assertEqual(2, self.machine.playfield.balls)
 
         # two balls drain
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
-        self.advance_time_and_run(1)
+        self.drain_ball()
+        self.drain_ball()
         self.assertEqual(0, self._events['multiball_mb1_ended'])
 
         # they should be readded because of shoot again
@@ -114,7 +99,7 @@ class TestMultiBall(MpfTestCase):
         self.advance_time_and_run(10)
 
         # ball drains
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.drain_ball()
         self.advance_time_and_run(1)
         self.assertEventCalled("multiball_mb1_ball_lost", 1)
 
@@ -122,7 +107,7 @@ class TestMultiBall(MpfTestCase):
         self.assertEqual(1, self._events['multiball_mb1_ended'])
 
         # the other ball also drains
-        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+        self.drain_ball()
 
         # game should end
         self.advance_time_and_run(1)
@@ -132,24 +117,11 @@ class TestMultiBall(MpfTestCase):
         self.mock_event("multiball_mb1_ended")
 
         # prepare game
-        self.machine.ball_controller.num_balls_known = 0
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch3', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch4', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch5', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch6', 1)
-
-        self.advance_time_and_run(10)
-        self.assertEqual(6, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(6, self.machine.ball_devices.bd_trough.balls)
-
+        self.fill_troughs()
         self.assertFalse(self.machine.multiballs.mb1.enabled)
 
         # start game
-        self.machine.switch_controller.process_switch('s_start', 1)
-        self.machine.switch_controller.process_switch('s_start', 0)
-        self.machine_run()
+        self.start_game()
         self.post_event("mb1_enable")
 
         # multiball should be enabled
@@ -169,7 +141,7 @@ class TestMultiBall(MpfTestCase):
         self.assertEqual(2, self.machine.playfield.balls)
 
         # ball drains
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.drain_ball()
         self.advance_time_and_run(1)
 
         # game should not end
@@ -196,7 +168,7 @@ class TestMultiBall(MpfTestCase):
         self.assertEqual(0, self._events['multiball_mb1_ended'])
 
         # ball drains
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.drain_ball()
         self.advance_time_and_run(1)
 
         # mb ends
@@ -214,8 +186,8 @@ class TestMultiBall(MpfTestCase):
         self.assertEqual(2, self.machine.playfield.balls)
 
         # two balls drains
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+        self.drain_ball()
+        self.drain_ball()
 
         # game should end
         self.advance_time_and_run(1)
@@ -226,22 +198,10 @@ class TestMultiBall(MpfTestCase):
         self.mock_event("multiball_mb2_ended")
 
         # prepare game
-        self.machine.ball_controller.num_balls_known = 0
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch3', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch4', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch5', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch6', 1)
-
-        self.advance_time_and_run(10)
-        self.assertEqual(6, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(6, self.machine.ball_devices.bd_trough.balls)
+        self.fill_troughs()
 
         # start game
-        self.machine.switch_controller.process_switch('s_start', 1)
-        self.machine.switch_controller.process_switch('s_start', 0)
-        self.machine_run()
+        self.start_game()
 
         self.post_event("mb2_enable")
 
@@ -262,7 +222,7 @@ class TestMultiBall(MpfTestCase):
         self.assertEqual(3, self.machine.playfield.balls)
 
         # ball drains
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.drain_ball()
         self.advance_time_and_run(1)
 
         # game should not end
@@ -274,8 +234,8 @@ class TestMultiBall(MpfTestCase):
         self.assertEqual(3, self.machine.playfield.balls)
 
         # two balls drain
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+        self.drain_ball()
+        self.drain_ball()
         self.advance_time_and_run(1)
         self.assertEqual(0, self._events['multiball_mb2_ended'])
 
@@ -287,9 +247,9 @@ class TestMultiBall(MpfTestCase):
         self.advance_time_and_run(100)
 
         # three balls drain
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch3', 1)
+        self.drain_ball()
+        self.drain_ball()
+        self.drain_ball()
         self.advance_time_and_run(1)
         self.assertEqual(0, self.machine.playfield.balls)
 
@@ -301,21 +261,21 @@ class TestMultiBall(MpfTestCase):
         self.post_event("mb2_stop")
 
         # ball drains
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.drain_ball()
         self.advance_time_and_run(1)
 
         # mb does not end yet
         self.assertEqual(0, self._events['multiball_mb2_ended'])
 
         # ball drains
-        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+        self.drain_ball()
         self.advance_time_and_run(1)
 
         # mb ends
         self.assertEqual(1, self._events['multiball_mb2_ended'])
 
         # the other ball also drains
-        self.machine.switch_controller.process_switch('s_ball_switch3', 1)
+        self.drain_ball()
 
         # game should end
         self.advance_time_and_run(1)
@@ -326,22 +286,10 @@ class TestMultiBall(MpfTestCase):
         self.mock_event("multiball_mb3_ended")
 
         # prepare game
-        self.machine.ball_controller.num_balls_known = 0
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch3', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch4', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch5', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch6', 1)
-
-        self.advance_time_and_run(10)
-        self.assertEqual(6, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(6, self.machine.ball_devices.bd_trough.balls)
+        self.fill_troughs()
 
         # start game
-        self.machine.switch_controller.process_switch('s_start', 1)
-        self.machine.switch_controller.process_switch('s_start', 0)
-        self.machine_run()
+        self.start_game()
 
         self.post_event("mb2_enable")
         self.post_event("mb3_enable")
@@ -378,7 +326,7 @@ class TestMultiBall(MpfTestCase):
         self.assertFalse(self.machine.multiballs.mb2.shoot_again)
 
         # ball drains
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.drain_ball()
         self.advance_time_and_run(1)
 
         # game should not end
@@ -388,7 +336,7 @@ class TestMultiBall(MpfTestCase):
         self.assertEqual(0, self._events['multiball_mb3_ended'])
 
         # ball drains
-        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+        self.drain_ball()
         self.advance_time_and_run(1)
 
         self.assertNotEqual(None, self.machine.game)
@@ -397,7 +345,7 @@ class TestMultiBall(MpfTestCase):
         self.assertEqual(0, self._events['multiball_mb3_ended'])
 
         # ball drains
-        self.machine.switch_controller.process_switch('s_ball_switch3', 1)
+        self.drain_ball()
         self.advance_time_and_run(1)
 
         self.assertNotEqual(None, self.machine.game)
@@ -406,7 +354,7 @@ class TestMultiBall(MpfTestCase):
         self.assertEqual(1, self._events['multiball_mb3_ended'])
 
         # last ball drains
-        self.machine.switch_controller.process_switch('s_ball_switch4', 1)
+        self.drain_ball()
 
         # game should end
         self.advance_time_and_run(1)
@@ -416,22 +364,10 @@ class TestMultiBall(MpfTestCase):
         self.mock_event("multiball_mb4_ended")
 
         # prepare game
-        self.machine.ball_controller.num_balls_known = 0
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch3', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch4', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch5', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch6', 1)
-
-        self.advance_time_and_run(10)
-        self.assertEqual(6, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(6, self.machine.ball_devices.bd_trough.balls)
+        self.fill_troughs()
 
         # start game
-        self.machine.switch_controller.process_switch('s_start', 1)
-        self.machine.switch_controller.process_switch('s_start', 0)
-        self.machine_run()
+        self.start_game()
 
         # takes roughly 4s to get ball confirmed
         self.advance_time_and_run(4)
@@ -460,7 +396,7 @@ class TestMultiBall(MpfTestCase):
         self.advance_time_and_run(10)
         self.assertEqual(2, self.machine.playfield.balls)
 
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.drain_ball()
         self.advance_time_and_run(1)
 
         # it should come back
@@ -476,13 +412,13 @@ class TestMultiBall(MpfTestCase):
         self.assertEqual(0, self._events['multiball_mb4_ended'])
 
         # next drain should end mb
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.drain_ball()
         self.advance_time_and_run(1)
         self.assertEqual(1, self.machine.playfield.available_balls)
         self.assertEqual(1, self._events['multiball_mb4_ended'])
 
         # ball drains
-        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+        self.drain_ball()
         self.advance_time_and_run(1)
 
         # game should end
@@ -493,22 +429,10 @@ class TestMultiBall(MpfTestCase):
         self.mock_event("multiball_mb5_ended")
 
         # prepare game
-        self.machine.ball_controller.num_balls_known = 0
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch3', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch4', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch5', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch6', 1)
-
-        self.advance_time_and_run(10)
-        self.assertEqual(6, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(6, self.machine.ball_devices.bd_trough.balls)
+        self.fill_troughs()
 
         # start game
-        self.machine.switch_controller.process_switch('s_start', 1)
-        self.machine.switch_controller.process_switch('s_start', 0)
-        self.machine_run()
+        self.start_game()
 
         # takes roughly 4s to get ball confirmed
         self.advance_time_and_run(4)
@@ -533,7 +457,7 @@ class TestMultiBall(MpfTestCase):
         self.assertEqual(2, self.machine.playfield.available_balls)
 
         # drain a ball
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.drain_ball()
         self.advance_time_and_run(1)
 
         # it should come back
@@ -549,13 +473,13 @@ class TestMultiBall(MpfTestCase):
         self.assertEqual(0, self._events['multiball_mb5_ended'])
 
         # next drain should end mb
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.drain_ball()
         self.advance_time_and_run(1)
         self.assertEqual(1, self.machine.playfield.available_balls)
         self.assertEqual(1, self._events['multiball_mb5_ended'])
 
         # ball drains
-        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+        self.drain_ball()
         self.advance_time_and_run(1)
 
         # game should end
@@ -564,29 +488,19 @@ class TestMultiBall(MpfTestCase):
 
     def testMultiballWithLock(self):
         # prepare game
-        self.machine.ball_controller.num_balls_known = 0
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch3', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch4', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch5', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch6', 1)
-
-        self.advance_time_and_run(10)
-        self.assertEqual(6, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(6, self.machine.ball_devices.bd_trough.balls)
-
+        self.fill_troughs()
         self.assertFalse(self.machine.multiballs.mb6.enabled)
 
         # start game
-        self.machine.switch_controller.process_switch('s_start', 1)
-        self.machine.switch_controller.process_switch('s_start', 0)
-        self.machine_run()
+        self.start_game()
+
+        # start mode
+        self.post_event("start_mode1")
 
         # multiball should be enabled
         self.assertTrue(self.machine.multiballs.mb6.enabled)
         # lock should be enabled
-        self.assertTrue(self.machine.ball_locks.lock_mb6.enabled)
+        self.assertTrue(self.machine.multiball_locks.lock_mb6.enabled)
 
         # takes roughly 4s to get ball confirmed
         self.advance_time_and_run(4)
@@ -608,35 +522,24 @@ class TestMultiBall(MpfTestCase):
         self.assertEqual(0, self.machine.ball_devices.bd_lock.balls)
 
         # game ends (because of slam tilt)
-        self.machine.game.stop()
+        self.machine.game.ball_ending()
         self.advance_time_and_run()
 
         # this should not crash
         self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_trough)
         self.advance_time_and_run()
 
-
     def test_total_ball_count(self):
         # prepare game
-        self.machine.ball_controller.num_balls_known = 0
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch3', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch4', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch5', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch6', 1)
-
-        self.advance_time_and_run(10)
-        self.assertEqual(6, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(6, self.machine.ball_devices.bd_trough.balls)
-
+        self.fill_troughs()
         self.assertFalse(self.machine.multiballs.mb10.enabled)
         self.assertFalse(self.machine.multiballs.mb11.enabled)
 
         # start game
-        self.machine.switch_controller.process_switch('s_start', 1)
-        self.machine.switch_controller.process_switch('s_start', 0)
-        self.machine_run()
+        self.start_game()
+
+        # start mode
+        self.post_event("start_mode1")
 
         # multiball should be enabled
         self.assertTrue(self.machine.multiballs.mb10.enabled)
@@ -658,7 +561,7 @@ class TestMultiBall(MpfTestCase):
         self.assertEqual(3, self.machine.playfield.balls)
 
         # drain one. should come back
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.drain_ball()
         self.advance_time_and_run(5)
         self.assertEqual(3, self.machine.playfield.balls)
         self.assertEqual(2, self.machine.multiballs.mb10.balls_added_live)
@@ -679,14 +582,14 @@ class TestMultiBall(MpfTestCase):
         self.assertTrue(self.machine.multiballs.mb11.shoot_again)
 
         # drain one. should not come back
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.drain_ball()
         self.advance_time_and_run(4)
         self.assertEqual(2, self.machine.playfield.balls)
         self.assertEqual(2, self.machine.game.balls_in_play)
         self.assertTrue(self.machine.multiballs.mb11.shoot_again)
 
         # but the second one should come back
-        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+        self.drain_ball()
         self.advance_time_and_run(4)
         self.assertEqual(2, self.machine.playfield.balls)
         self.assertEqual(2, self.machine.game.balls_in_play)
@@ -701,7 +604,7 @@ class TestMultiBall(MpfTestCase):
         self.assertEqual(2, self.machine.game.balls_in_play)
 
         # drain one balls
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.drain_ball()
         self.advance_time_and_run()
         self.assertEqual(1, self.machine.game.balls_in_play)
 
@@ -711,31 +614,21 @@ class TestMultiBall(MpfTestCase):
 
     def test_total_ball_count_with_lock(self):
         # prepare game
-        self.machine.ball_controller.num_balls_known = 0
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch3', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch4', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch5', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch6', 1)
-
-        self.advance_time_and_run(10)
-        self.assertEqual(6, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(6, self.machine.ball_devices.bd_trough.balls)
-
+        self.fill_troughs()
         self.assertFalse(self.machine.multiballs.mb10.enabled)
         self.assertFalse(self.machine.multiballs.mb11.enabled)
 
         # start game
-        self.machine.switch_controller.process_switch('s_start', 1)
-        self.machine.switch_controller.process_switch('s_start', 0)
-        self.machine_run()
+        self.start_game()
+
+        # start mode
+        self.post_event("start_mode1")
 
         # multiball should be enabled
         self.assertTrue(self.machine.multiballs.mb10.enabled)
         self.assertTrue(self.machine.multiballs.mb11.enabled)
         # lock should be enabled
-        self.assertTrue(self.machine.ball_locks.lock_mb6.enabled)
+        self.assertTrue(self.machine.multiball_locks.lock_mb6.enabled)
 
         # takes roughly 4s to get ball confirmed
         self.advance_time_and_run(4)
@@ -757,35 +650,23 @@ class TestMultiBall(MpfTestCase):
         self.assertEqual(3, self.machine.playfield.balls)
         self.assertEqual(1, self.machine.ball_devices.bd_lock.balls)
 
-        # start mb11. eject lock
-        self.post_event("mb11_start")
-        self.assertEqual(1, self.machine.multiballs.mb11.balls_added_live)
-        self.assertEqual(2, self.machine.multiballs.mb11.balls_live_target)
+        # start mb12. eject lock
+        self.post_event("mb12_start")
+        self.assertEqual(1, self.machine.multiballs.mb12.balls_added_live)
+        self.assertEqual(4, self.machine.multiballs.mb12.balls_live_target)
         self.advance_time_and_run(5)
         self.assertEqual(4, self.machine.playfield.balls)
         self.assertEqual(4, self.machine.game.balls_in_play)
-        self.assertTrue(self.machine.multiballs.mb11.shoot_again)
+        self.assertTrue(self.machine.multiballs.mb12.shoot_again)
 
     def testAddABall(self):
         self.mock_event("multiball_mb_add_a_ball_ended")
 
         # prepare game
-        self.machine.ball_controller.num_balls_known = 0
-        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch3', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch4', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch5', 1)
-        self.machine.switch_controller.process_switch('s_ball_switch6', 1)
-
-        self.advance_time_and_run(10)
-        self.assertEqual(6, self.machine.ball_controller.num_balls_known)
-        self.assertEqual(6, self.machine.ball_devices.bd_trough.balls)
+        self.fill_troughs()
 
         # start game
-        self.machine.switch_controller.process_switch('s_start', 1)
-        self.machine.switch_controller.process_switch('s_start', 0)
-        self.machine_run()
+        self.start_game()
 
         self.post_event("start_or_add")
         self.advance_time_and_run(10)
@@ -795,7 +676,7 @@ class TestMultiBall(MpfTestCase):
         self.advance_time_and_run(5)
         self.assertBallsOnPlayfield(3)
 
-        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_trough)
+        self.drain_ball()
         self.advance_time_and_run(5)
         self.assertBallsOnPlayfield(2)
         self.assertEventNotCalled("multiball_mb_add_a_ball_ended")
@@ -804,12 +685,12 @@ class TestMultiBall(MpfTestCase):
         self.advance_time_and_run(5)
         self.assertBallsOnPlayfield(3)
 
-        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_trough)
+        self.drain_ball()
         self.advance_time_and_run(5)
         self.assertBallsOnPlayfield(2)
         self.assertEventNotCalled("multiball_mb_add_a_ball_ended")
 
-        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_trough)
+        self.drain_ball()
         self.advance_time_and_run(5)
         self.assertBallsOnPlayfield(1)
         self.assertEventCalled("multiball_mb_add_a_ball_ended")
@@ -817,3 +698,51 @@ class TestMultiBall(MpfTestCase):
         self.post_event("add_ball")
         self.advance_time_and_run(5)
         self.assertBallsOnPlayfield(1)
+
+    def testMultiballLockFullMultiplayer(self):
+        self.fill_troughs()
+        self.start_two_player_game()
+        self.assertPlayerNumber(1)
+        self.assertBallNumber(1)
+
+        self.post_event("start_mode1")
+
+        # lock ball
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_lock)
+        self.advance_time_and_run(5)
+
+        # machine should request a new ball and the lock keeps one
+        self.assertEqual(1, self.machine.game.player_list[0]["lock_mb6_locked_balls"])
+        self.assertEqual(0, self.machine.game.player_list[1]["lock_mb6_locked_balls"])
+        self.assertEqual(1, self.machine.ball_devices.bd_lock.balls)
+        self.assertEqual(4, self.machine.ball_devices.bd_trough.balls)
+        self.assertBallsOnPlayfield(1)
+        self.assertBallsInPlay(1)
+
+        # drain ball. player 2 should be up
+        self.drain_ball()
+        self.advance_time_and_run(5)
+        self.post_event("start_mode1")
+        self.assertPlayerNumber(2)
+        self.assertBallNumber(1)
+
+        # also lock a ball
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_lock)
+        self.advance_time_and_run(5)
+
+        # lock should not keep the ball but count it for the player
+        self.assertEqual(1, self.machine.game.player_list[0]["lock_mb6_locked_balls"])
+        self.assertEqual(1, self.machine.game.player_list[1]["lock_mb6_locked_balls"])
+        self.assertEqual(1, self.machine.ball_devices.bd_lock.balls)
+        self.assertEqual(4, self.machine.ball_devices.bd_trough.balls)
+        self.assertBallsOnPlayfield(1)
+        self.assertBallsInPlay(1)
+
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_lock)
+        self.advance_time_and_run(5)
+        self.assertEqual(1, self.machine.game.player_list[0]["lock_mb6_locked_balls"])
+        self.assertEqual(2, self.machine.game.player_list[1]["lock_mb6_locked_balls"])
+        self.assertEqual(2, self.machine.ball_devices.bd_lock.balls)
+        self.assertEqual(3, self.machine.ball_devices.bd_trough.balls)
+        self.assertBallsOnPlayfield(1)
+        self.assertBallsInPlay(1)
