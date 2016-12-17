@@ -64,6 +64,7 @@ class TestGame(MpfGameTestCase):
 
         # Drain the first ball
         self.drain_ball()
+        self.advance_time_and_run()
         self.assertPlayerNumber(1)
         self.assertBallNumber(2)
 
@@ -82,6 +83,7 @@ class TestGame(MpfGameTestCase):
 
         # Drain the second ball
         self.drain_ball()
+        self.advance_time_and_run()
         self.assertPlayerNumber(1)
         self.assertBallNumber(3)
 
@@ -100,6 +102,7 @@ class TestGame(MpfGameTestCase):
 
         # Drain the third (and last) ball
         self.drain_ball()
+        self.advance_time_and_run()
         self.assertGameIsNotRunning()
 
         # Assert ball drain, game ending sequence
@@ -169,6 +172,7 @@ class TestGame(MpfGameTestCase):
 
         # Drain the first ball (player 1)
         self.drain_ball()
+        self.advance_time_and_run()
         self.assertPlayerNumber(2)
         self.assertBallNumber(1)
 
@@ -187,6 +191,7 @@ class TestGame(MpfGameTestCase):
 
         # Drain the first ball (player 2)
         self.drain_ball()
+        self.advance_time_and_run()
         self.assertPlayerNumber(1)
         self.assertBallNumber(2)
 
@@ -205,6 +210,7 @@ class TestGame(MpfGameTestCase):
 
         # Drain the second ball (player 1)
         self.drain_ball()
+        self.advance_time_and_run()
         self.assertPlayerNumber(2)
         self.assertBallNumber(2)
 
@@ -227,6 +233,7 @@ class TestGame(MpfGameTestCase):
         # Drain the ball (player 2 has earned an extra ball so it should still be
         # player 2's turn)
         self.drain_ball()
+        self.advance_time_and_run()
         self.assertPlayerNumber(2)
         self.assertBallNumber(2)
 
@@ -243,6 +250,7 @@ class TestGame(MpfGameTestCase):
 
         # Drain the second ball (player 2)
         self.drain_ball()
+        self.advance_time_and_run()
         self.assertPlayerNumber(1)
         self.assertBallNumber(3)
 
@@ -261,6 +269,7 @@ class TestGame(MpfGameTestCase):
 
         # Drain the third ball (player 1)
         self.drain_ball()
+        self.advance_time_and_run()
         self.assertPlayerNumber(2)
         self.assertBallNumber(3)
 
@@ -279,6 +288,7 @@ class TestGame(MpfGameTestCase):
 
         # Drain the third (and last) ball for player 2
         self.drain_ball()
+        self.advance_time_and_run()
         self.assertGameIsNotRunning()
 
         # Assert ball drain, game ending sequence

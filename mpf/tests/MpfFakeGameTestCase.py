@@ -19,3 +19,7 @@ class MpfFakeGameTestCase(MpfGameTestCase):
         self.machine.playfield.add_ball = MagicMock()
         self.machine.ball_controller.num_balls_known = 3
         super().start_game()
+
+    def drain_ball(self):
+        self.machine.game.balls_in_play = 0
+        self.advance_time_and_run()
