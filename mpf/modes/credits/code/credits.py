@@ -287,7 +287,7 @@ class Credits(Mode):
                              "to 0.")
             new_credit_units = 0
 
-        self.machine.set_machine_var('credit_units', new_credit_units)
+        self.machine.create_machine_var('credit_units', new_credit_units)
         self._update_credit_strings()
 
     def _enable_credit_switch_handlers(self):
@@ -351,11 +351,11 @@ class Credits(Mode):
             '''event: max_credits_reached
             desc: Credits have just been added to the machine, but the
             configured maximum number of credits has been reached.'''
-            self.machine.set_machine_var('credit_units', max_credit_units)
+            self.machine.create_machine_var('credit_units', max_credit_units)
 
         if max_credit_units > previous_credit_units:
             self.log.debug("Credit units added")
-            self.machine.set_machine_var('credit_units', total_credit_units)
+            self.machine.create_machine_var('credit_units', total_credit_units)
             self._update_credit_strings()
             self.machine.events.post('credits_added')
             '''event: credits_added
@@ -410,11 +410,11 @@ class Credits(Mode):
         else:
             display_string = '{} {}'.format(
                 self.credits_config['credits_string'], display_fraction)
-        self.machine.set_machine_var('credits_string', display_string)
-        self.machine.set_machine_var('credits_value', display_fraction)
-        self.machine.set_machine_var('credits_whole_num', whole_num)
-        self.machine.set_machine_var('credits_numerator', numerator)
-        self.machine.set_machine_var('credits_denominator', denominator)
+        self.machine.create_machine_var('credits_string', display_string)
+        self.machine.create_machine_var('credits_value', display_fraction)
+        self.machine.create_machine_var('credits_whole_num', whole_num)
+        self.machine.create_machine_var('credits_numerator', numerator)
+        self.machine.create_machine_var('credits_denominator', denominator)
 
     def _audit(self, value, audit_class):
         if audit_class not in self.earnings:
@@ -460,12 +460,12 @@ class Credits(Mode):
         credit_units = self._get_credit_units()
         credit_units -= credit_units % self.credit_units_per_game
 
-        self.machine.set_machine_var('credit_units', credit_units)
+        self.machine.create_machine_var('credit_units', credit_units)
         self._update_credit_strings()
 
     def clear_all_credits(self, **kwargs):
         """Clear all credits."""
         del kwargs
         self.log.debug("Clearing all credits")
-        self.machine.set_machine_var('credit_units', 0)
+        self.machine.create_machine_var('credit_units', 0)
         self._update_credit_strings()
