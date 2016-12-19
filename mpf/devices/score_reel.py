@@ -221,9 +221,10 @@ class ScoreReel(SystemWideDevice):
             self.hw_sync = True
             # only change this if we know where we are or can confirm that
             # we're not in the right position
-            if value != -999 and self.assumed_value != value:
-                self.log.info("Setting value to %s because that switch is active.".format(value))
-                self.assumed_value = value
+            if value != -999:
+                if value != self.assumed_value:
+                    self.log.info("Setting value to %s because that switch is active.".format(value))
+                    self.assumed_value = value
 
             # if value is -999, but we have a switch for the assumed value,
             # then we're in the wrong position because our hw_value should be
