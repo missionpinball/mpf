@@ -195,6 +195,10 @@ bcp:
         type: single|str|
         required: single|bool|True
         exit_on_close: single|bool|True
+    servers:
+        ip: single|str|None
+        port: single|int|5050
+        type: single|str|
 coils:
     __valid_in__: machine
     number: single|str|
