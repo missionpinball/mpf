@@ -104,7 +104,6 @@ class BcpInterface(object):
     def _set_machine_var(self, client, name, value):
         """Set machine var via bcp."""
         del client
-        print("Setting", name, value)
         self.machine.create_machine_var(name, value)
 
     def _monitor_events(self, client):
