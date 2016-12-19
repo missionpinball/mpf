@@ -1,6 +1,8 @@
 """Test score reels."""
 from unittest.mock import MagicMock
 
+from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
+
 from mpf.tests.MpfTestCase import MpfTestCase
 
 
@@ -279,3 +281,46 @@ class TestScoreReels(MpfTestCase):
         self.assertEqual(10, player1_100.pulse.call_count)
         self.assertEqual(10, player1_10.pulse.call_count)
         self.assertEqual(2, player2_10.pulse.call_count)
+
+
+class TestScoreReelsVirtual(MpfFakeGameTestCase):
+
+    def getConfigFile(self):
+        return 'config.yaml'
+
+    def get_platform(self):
+        return "smart_virtual"
+
+    def getMachinePath(self):
+        return 'tests/machine_files/score_reels/'
+
+    def testScoringVirtual(self):
+        self.start_game()
+        self.assertSwitchState("score_1p_10_0", 1)
+        self.assertSwitchState("score_1p_100_0", 1)
+        self.assertSwitchState("score_1p_10_9", 0)
+        self.assertSwitchState("score_1p_100_9", 0)
+
+        self.machine.game.player.score += 110
+        self.advance_time_and_run(10)
+
+        self.assertSwitchState("score_1p_10_0", 0)
+        self.assertSwitchState("score_1p_100_0", 0)
+        self.assertSwitchState("score_1p_10_9", 0)
+        self.assertSwitchState("score_1p_100_9", 0)
+
+        self.machine.game.player.score = 990
+        self.advance_time_and_run(10)
+
+        self.assertSwitchState("score_1p_10_0", 0)
+        self.assertSwitchState("score_1p_100_0", 0)
+        self.assertSwitchState("score_1p_10_9", 1)
+        self.assertSwitchState("score_1p_100_9", 1)
+
+        self.machine.game.player.score = 1900
+        self.advance_time_and_run(10)
+
+        self.assertSwitchState("score_1p_10_0", 1)
+        self.assertSwitchState("score_1p_100_0", 0)
+        self.assertSwitchState("score_1p_10_9", 0)
+        self.assertSwitchState("score_1p_100_9", 1)
