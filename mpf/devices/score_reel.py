@@ -222,12 +222,15 @@ class ScoreReel(SystemWideDevice):
             # only change this if we know where we are or can confirm that
             # we're not in the right position
             if value != -999:
-                self.assumed_value = value
+                if value != self.assumed_value:
+                    self.log.info("Setting value to %s because that switch is active.", value)
+                    self.assumed_value = value
 
             # if value is -999, but we have a switch for the assumed value,
             # then we're in the wrong position because our hw_value should be
             # at the assumed value
             elif self.assumed_value != -999 and self.value_switches[self.assumed_value]:
+                self.log.warning("Assumed value %s but the switch for that value is not active", self.assumed_value)
                 self.assumed_value = -999
 
             if not no_event:
