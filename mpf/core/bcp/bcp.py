@@ -19,11 +19,9 @@ class Bcp(MpfController):
         self.transport = BcpTransportManager(machine)
         self.servers = []
 
-        if not self.machine.options['bcp']:
-            return
-
-        self.machine.events.add_handler('init_phase_2',
-                                        self._setup_bcp_connections)
+        if self.machine.options['bcp']:
+            self.machine.events.add_handler('init_phase_2',
+                                            self._setup_bcp_connections)
 
         self.machine.events.add_handler('init_phase_4',
                                         self._setup_bcp_servers)
