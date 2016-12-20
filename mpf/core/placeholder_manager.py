@@ -93,9 +93,9 @@ class MachinePlaceholder:
         return self._machine.get_machine_var(item)
 
 
-class PlaceholderManager(MpfController):
+class BasePlaceholderManager(MpfController):
 
-    """Manages templates and placeholders for MPF."""
+    """Manages templates and placeholders for MPF and MC."""
 
     def __init__(self, machine):
         """Initialise."""
@@ -206,8 +206,23 @@ class PlaceholderManager(MpfController):
 
     def get_global_parameters(self, name):
         """Return global params."""
+        raise NotImplementedError()
+
+    def evaluate_template(self, template, parameters):
+        """Evaluate template."""
+        return self._eval(template, parameters)
+
+
+class PlaceholderManager(BasePlaceholderManager):
+
+    """Manages templates and placeholders for MPF."""
+
+    def get_global_parameters(self, name):
+        """Return global params."""
         if name == "settings":
             return self.machine.settings
+        elif name == "machine":
+            return MachinePlaceholder(self.machine)
         elif self.machine.game:
             if name == "current_player":
                 return self.machine.game.player
@@ -215,10 +230,4 @@ class PlaceholderManager(MpfController):
                 return self.machine.game.player_list
             elif name == "game":
                 return self.machine.game
-            elif name == "machine":
-                return MachinePlaceholder(self.machine)
         return False
-
-    def evaluate_template(self, template, parameters):
-        """Evaluate template."""
-        return self._eval(template, parameters)
