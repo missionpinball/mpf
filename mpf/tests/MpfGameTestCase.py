@@ -46,9 +46,12 @@ class MpfGameTestCase(MpfTestCase):
     def assertBallNumber(self, number):
         self.assertEqual(number, self.machine.game.player.ball)
 
+    def assertBallsInPlay(self, balls):
+        self.assertEqual(balls, self.machine.game.balls_in_play)
+
     def drain_ball(self):
-        self.machine.game.balls_in_play = 0
-        self.advance_time_and_run()
+        drain = self.machine.ball_devices.items_tagged("drain")[0]
+        self.machine.default_platform.add_ball_to_device(drain)
 
     def assertPlayerNumber(self, number):
         self.assertEqual(number, self.machine.game.player.index + 1)

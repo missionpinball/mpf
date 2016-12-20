@@ -55,10 +55,8 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
         self._set_future_results()
         self.debug_log("Entrance switch hit")
 
-        if self.config['ball_capacity'] and self.config['ball_capacity'] == self._entrance_count:
-            self.ball_device.log.warning("Device received balls but is already full. Ignoring!")
-            # TODO: ball should be added to pf instead
-            return
+        if self.config['ball_capacity'] and self.config['ball_capacity'] <= self._entrance_count:
+            self.ball_device.log.warning("Device received balls but is already full!")
 
         # increase count
         self._entrance_count += 1

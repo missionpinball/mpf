@@ -81,29 +81,12 @@ multiballs:
         disable_events: mb3_disable
         start_events: mb3_start
         stop_events: mb3_stop
-    mb6:
-        ball_count: 2
-        ball_count_type: add
-        shoot_again: 0
-        start_events: mb6_start
-        ball_locks: lock_mb6
     mb10:
         ball_count: 3
         ball_count_type: total
         shoot_again: 20s
         start_events: mb10_start
-    mb11:
-        ball_count: 2
-        ball_count_type: total
-        shoot_again: 20s
-        start_events: mb11_start
-        ball_locks: lock_mb6
     mb_add_a_ball:
         ball_count: 2
         start_or_add_a_ball_events: start_or_add
         add_a_ball_events: add_ball
-
-ball_locks:
-    lock_mb6:
-        lock_devices: bd_lock
-        balls_to_lock: 2

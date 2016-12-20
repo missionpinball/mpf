@@ -453,8 +453,6 @@ class Mode(object):
 
         self.log.debug("Scanning mode-based config for device control_events")
 
-        device_list = set()
-
         for event, method, delay, device in (
                 self.machine.device_manager.get_device_control_events(
                 self.config)):
@@ -471,7 +469,13 @@ class Mode(object):
                 callback=method,
                 ms_delay=delay)
 
-            device_list.add(device)
+        # get all devices in the mode
+        device_list = set()
+        for collection in self.machine.device_manager.collections:
+            if self.machine.device_manager.collections[collection].config_section in self.config:
+                for device, _ in \
+                        iter(self.config[self.machine.device_manager.collections[collection].config_section].items()):
+                    device_list.add(self.machine.device_manager.collections[collection][device])
 
         for device in device_list:
             device.add_control_events_in_mode(self)

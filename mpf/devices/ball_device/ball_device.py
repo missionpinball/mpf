@@ -301,6 +301,11 @@ class BallDevice(SystemWideDevice):
         elif self.config['ball_switches']:
             self.config['ball_capacity'] = len(self.config['ball_switches'])
 
+    @property
+    def capacity(self):
+        """Return the ball capacity."""
+        return self.config['ball_capacity']
+
     def _validate_config(self):
         # perform logical validation
         # a device cannot have hold_coil and eject_coil
