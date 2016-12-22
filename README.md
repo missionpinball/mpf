@@ -24,6 +24,7 @@ The MPF project homepage is here : http://missionpinball.org
 
 [![Coverage Status](https://coveralls.io/repos/missionpinball/mpf/badge.svg?branch=dev&service=github)](https://coveralls.io/github/missionpinball/mpf?branch=dev)
 [![Build Status](https://travis-ci.org/missionpinball/mpf.svg?branch=dev)](https://travis-ci.org/missionpinball/mpf)
+[![Build status](https://ci.appveyor.com/api/projects/status/ir15w3bo3kq19na1?svg=true)](https://ci.appveyor.com/project/toomanybrians/mpf)
 [![Code Health](https://landscape.io/github/missionpinball/mpf/dev/landscape.svg?style=flat)](https://landscape.io/github/missionpinball/mpf/dev)
 
 
@@ -32,7 +33,7 @@ Installation, Documentation, and Examples
 * Getting started tutorial : http://docs.missionpinball.org/en/latest/tutorial/
 * Installation : http://docs.missionpinball.org/en/latest/install/
 * User documentation : http://docs.missionpinball.org
-* API / developer documentation : http://docs.missionpinball.org/en/latest/api/
+* API / developer documentation : http://docs.missionpinball.org/en/latest/developer/
 
 Support
 -------
