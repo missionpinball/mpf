@@ -1149,7 +1149,7 @@ widgets:
         shades: single|int|0
         bg_color: single|kivycolor|191919ff
         blur: single|float|0.1
-        pixel_size: single|float|0.5
+        pixel_size: single|float|0.7
         dot_filter: single|bool|True
     dmd:
         width: single|num|
@@ -1162,7 +1162,7 @@ widgets:
         shades: single|int|16
         bg_color: single|kivycolor|191919ff
         blur: single|float|0.1
-        pixel_size: single|float|0.5
+        pixel_size: single|float|0.7
         dot_filter: single|bool|True
     ellipse:
         width: single|num|
