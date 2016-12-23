@@ -204,7 +204,11 @@ class BCPClientSocket(BaseBcpClient):
             bcp_command: command to send
             bcp_command_args: parameters to command
         """
-        bcp_string = encode_command_string(bcp_command, **bcp_command_args)
+        try:
+            bcp_string = encode_command_string(bcp_command, **bcp_command_args)
+        except Exception as e:
+            self.log.warn("Failed to encode bcp_command %s with args %s. %s", bcp_command, bcp_command_args, e)
+            return
 
         if self.debug_log:
             self.log.debug('Sending "%s"', bcp_string)
