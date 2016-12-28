@@ -166,8 +166,8 @@ class BcpInterface(object):
         self.machine.bcp.transport.add_handler_to_transport("_machine_vars", client)
 
     def _send_machine_vars(self, client):
-        self.machine.bcp.transport.send_to_client(client, bcp_command='settings',
-                                                  settings=self.machine.settings.get_settings())
+        self.machine.bcp.transport.send_to_client(
+            client, bcp_command='settings', settings=Util.convert_to_simply_type(self.machine.settings.get_settings()))
         for var_name, settings in self.machine.machine_vars.items():
             self.machine.bcp.transport.send_to_client(client, bcp_command='machine_variable',
                                                       name=var_name,

@@ -33,7 +33,7 @@ class Util(object):
 
         elif isinstance(value, tuple):
             # pylint: disable-msg=protected-access
-            return value
+            return [Util.convert_to_simply_type(x) for x in value]
 
         # otherwise just cast to string
         return str(value)
