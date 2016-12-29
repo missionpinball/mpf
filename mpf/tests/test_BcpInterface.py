@@ -1,8 +1,8 @@
 """Test the bcp interface."""
 from unittest import mock
 
-from mpf.tests.MpfBcpTestCase import MpfBcpTestCase
 from mpf.core.events import RegisteredHandler
+from mpf.tests.MpfBcpTestCase import MpfBcpTestCase
 
 
 class CallHandler:
@@ -53,7 +53,7 @@ class TestBcpInterface(MpfBcpTestCase):
         self.assertIn(
             ('monitored_event', dict(event_name='test2', event_type=None,
                                      event_callback=None, event_kwargs={},
-                                     registered_handlers=[RegisteredHandler(callback=handler, priority=1, kwargs={}, key='abc', condition=None)])),
+                                     registered_handlers=[RegisteredHandler(callback='handler', priority=1, kwargs={}, key='abc', condition=None)])),
             self._bcp_client.send_queue)
 
         self._bcp_client.send_queue.clear()

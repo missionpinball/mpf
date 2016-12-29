@@ -17,7 +17,9 @@ class Util(object):
     def convert_to_simply_type(value):
         """Convert value to a simple type."""
         # keep simple types
-        if isinstance(value, (int, str, float)):
+        if value is None:
+            return None
+        elif isinstance(value, (int, str, float)):
             return value
 
         # for list repeat per entry
@@ -33,7 +35,7 @@ class Util(object):
 
         elif isinstance(value, tuple):
             # pylint: disable-msg=protected-access
-            return [Util.convert_to_simply_type(x) for x in value]
+            return tuple(Util.convert_to_simply_type(x) for x in value)
 
         # otherwise just cast to string
         return str(value)
