@@ -75,10 +75,16 @@ class Credits(Mode):
             min_currency_value = min(x['value'] for x in
                                      self.credits_config['switches'])
         else:
-            min_currency_value = (
-                self.credits_config['pricing_tiers'][0]['price'])
+            try:
+                min_currency_value = (
+                    self.credits_config['pricing_tiers'][0]['price'])
+            except IndexError:
+                min_currency_value = 1
 
-        price_per_game = self.credits_config['pricing_tiers'][0]['price']
+        try:
+            price_per_game = self.credits_config['pricing_tiers'][0]['price']
+        except IndexError:
+            price_per_game = 1
 
         if min_currency_value == price_per_game:
             self.credit_unit = min_currency_value
@@ -97,9 +103,7 @@ class Credits(Mode):
                        "currency value of %s and a price per game of %s",
                        self.credit_unit, min_currency_value, price_per_game)
 
-        self.credit_units_per_game = (
-            int(self.credits_config['pricing_tiers'][0]['price'] /
-                self.credit_unit))
+        self.credit_units_per_game = int(price_per_game / self.credit_unit)
 
         self.log.debug("Credit units per game: %s", self.credit_units_per_game)
 
@@ -353,7 +357,7 @@ class Credits(Mode):
             configured maximum number of credits has been reached.'''
             self.machine.create_machine_var('credit_units', max_credit_units)
 
-        if max_credit_units > previous_credit_units:
+        if max_credit_units <= 0 or max_credit_units > previous_credit_units:
             self.log.debug("Credit units added")
             self.machine.create_machine_var('credit_units', total_credit_units)
             self._update_credit_strings()
