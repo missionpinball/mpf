@@ -270,6 +270,21 @@ class TestModeTimer(MpfFakeGameTestCase):
         self.post_event('add_timer_up')
         self.assertEqual(15, self.machine.modes.mode_with_timers.player[timer.tick_var])
 
+        self.post_event('restart_timer_up')
+        self.post_event("reset_tick_interval")
+        self.advance_time_and_run()
+        self.assertEqual(1, self.machine.modes.mode_with_timers.player[timer.tick_var])
+        self.advance_time_and_run(1)
+        self.assertEqual(2, self.machine.modes.mode_with_timers.player[timer.tick_var])
+        self.advance_time_and_run(1)
+        self.assertEqual(3, self.machine.modes.mode_with_timers.player[timer.tick_var])
+        self.post_event("change_tick_interval_timer_up")
+        self.advance_time_and_run(4)
+        self.assertEqual(4, self.machine.modes.mode_with_timers.player[timer.tick_var])
+        self.post_event("reset_tick_interval")
+        self.advance_time_and_run()
+        self.assertEqual(5, self.machine.modes.mode_with_timers.player[timer.tick_var])
+
     def test_interrupt_timer_by_mode_stop_with_player(self):
         self.machine.events.add_handler("timer_timer_down_tick", self._mode_timer_tick)
         self.machine.events.add_handler("timer_timer_down_started", self._mode_timer_start)

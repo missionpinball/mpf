@@ -73,3 +73,5 @@ timers:
             - event: set_tick_interval_timer_up
               action: set_tick_interval
               value: 2
+            - event: reset_tick_interval
+              action: reset_tick_interval
