@@ -1037,6 +1037,7 @@ timers:
     start_running: single|bool|False
     control_events: list|subconfig(control_events)|None
     restart_on_complete: single|bool|False
+    reset_on_mode_start: single|bool|True
     bcp: single|bool|False
 track_player:
     __valid_in__: machine, mode, show
