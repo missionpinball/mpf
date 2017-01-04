@@ -128,6 +128,7 @@ class BallHold(SystemWideDevice, ModeDevice):
         if self._released_balls <= 0:
             if self._release_hold:
                 self._release_hold.clear()
+                self._release_hold = None
             self.debug_log("All released balls of ball_hold drained.")
             self.machine.events.remove_handler_by_event('ball_ending', self._wait_for_drain)
             self.machine.events.remove_handler_by_event('ball_drain', self._block_during_drain)
