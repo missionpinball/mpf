@@ -4,6 +4,11 @@ modes:
     - attract
     - game
     - service
+    - credits
+
+credits:
+  free_play: no
+  service_credits_switch: s_service_esc
 
 coils:
     c_test:
