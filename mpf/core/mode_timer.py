@@ -116,6 +116,11 @@ class ModeTimer(object):
             elif entry['action'] == 'change_tick_interval':
                 handler = self.change_tick_interval
                 kwargs = {'change': entry['value']}
+
+            elif entry['action'] == 'reset_tick_interval':
+                handler = self.set_tick_interval
+                kwargs = {'timer_value': self.config['tick_interval'] / 1000.0}
+
             else:
                 raise AssertionError("Invalid control_event action {} in mode".
                                      format(entry['action']), self.name)
