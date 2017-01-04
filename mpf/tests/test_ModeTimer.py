@@ -313,3 +313,31 @@ class TestModeTimer(MpfFakeGameTestCase):
         self.advance_time_and_run(20)
         self.assertEqual(2, self.tick)
         self.assertFalse(self.started)
+
+    def test_mode_timer_reset_on_mode_start_false(self):
+        self.mock_event("timer_timer_down_complete")
+
+        self.start_game()
+
+        # start timer
+        self.machine.events.post('start_mode_with_timers')
+        self.advance_time_and_run()
+        self.machine.events.post('start_timer_down')
+
+        # run 3 out of 7.5s
+        self.advance_time_and_run(3)
+
+        # drain ball. mode should end
+        self.drain_ball()
+
+        # restart mode
+        self.machine.events.post('start_mode_with_timers')
+        self.advance_time_and_run()
+
+        self.assertEventNotCalled("timer_timer_down_complete")
+
+        # continue timer (remaining 4.5 of 7.5s)
+        self.machine.events.post('start_timer_down')
+        self.advance_time_and_run(4.5)
+
+        self.assertEventCalled("timer_timer_down_complete")

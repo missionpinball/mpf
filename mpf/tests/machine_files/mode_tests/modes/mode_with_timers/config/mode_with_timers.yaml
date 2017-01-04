@@ -11,6 +11,7 @@ timers:
         direction: down
         tick_interval: 1.5s
         start_running: no
+        reset_on_mode_start: False
         control_events:
             - event: start_timer_down
               action: start
