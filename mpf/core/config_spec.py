@@ -269,11 +269,6 @@ config:
 config_player_common:
     __valid_in__: None
     priority: single|int|0
-control_events:  # subconfig for mode timers
-    __valid_in__: None
-    action: single|enum(add,subtract,jump,start,stop,reset,restart,pause,set_tick_interval,change_tick_interval)|
-    event: single|str|
-    value: single|int|None
 credits:
     __valid_in__: machine
     max_credits: single|int|0
@@ -1035,9 +1030,14 @@ timers:
     max_value: single|ms|None
     tick_interval: single|ms|1s
     start_running: single|bool|False
-    control_events: list|subconfig(control_events)|None
+    control_events: list|subconfig(timer_control_events)|None
     restart_on_complete: single|bool|False
     bcp: single|bool|False
+timer_control_events:  # subconfig for mode timers
+    __valid_in__: None
+    action: single|enum(add,subtract,jump,start,stop,reset,restart,pause,set_tick_interval,change_tick_interval,reset_tick_interval)|
+    event: single|str|
+    value: single|int|None
 track_player:
     __valid_in__: machine, mode, show
     action: single|enum(play,stop,pause,set_volume,stop_all_sounds)|
