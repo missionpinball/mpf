@@ -358,9 +358,14 @@ class BaseAssetManager(MpfController):
         root_path = os.path.join(path, asset_class['path_string'])
         self.log.debug("Processing assets from base folder: %s", root_path)
 
+        # ignore temporary files
+        ignore_prefixes = (".", "~")
+        # do not get fooled by windows or mac garbage
+        ignore_files = ("desktop.ini", "Thumbs.db")
+
         for path, _, files in os.walk(root_path, followlinks=True):
             valid_files = [f for f in files if f.endswith(
-                           asset_class['extensions'])]
+                           asset_class['extensions']) and not f.startswith(ignore_prefixes) and f != ignore_files]
             for file_name in valid_files:
                 folder = os.path.basename(path)
                 name = os.path.splitext(file_name)[0].lower()

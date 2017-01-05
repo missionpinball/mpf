@@ -283,8 +283,10 @@ class YamlInterface(FileInterface):
     def get_show_file_version(filename):
         """Return show file version."""
         with open(filename) as f:
-            file_version = f.readline().split('show_version=')[-1:][0]
-
+            try:
+                file_version = f.readline().split('show_version=')[-1:][0]
+            except ValueError:
+                return 0
         try:
             return int(file_version)
         except ValueError:
