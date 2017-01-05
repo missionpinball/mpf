@@ -161,7 +161,7 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
         if driver and driver.action:
             driver.action.target_device = target
 
-        if mechanical_eject and self.machine.config['smart_virtual']['simulate_manual_plunger']:
+        if "delay" in self.actions and self.machine.config['smart_virtual']['simulate_manual_plunger']:
             # simulate mechanical eject
             self.delay.add(ms=self.machine.config['smart_virtual']['simulate_manual_plunger_timeout'],
                            callback=self._perform_action)
@@ -285,9 +285,12 @@ class HardwarePlatform(VirtualPlatform):
             elif device.config['hold_coil']:
                 action = device.config['hold_coil'].hw_driver.action = AddBallToTargetAction(
                     ["disable"], self.machine, self, device)
+            elif device.config['mechanical_eject']:
+                action = AddBallToTargetAction(["delay"], self.machine, self, device)
+
             if action:
                 # we assume that the device always reaches its target. diverters are ignored
-                self.machine.events.add_handler('balldevice_{}_ball_eject_attempt'.format(device.name),
+                self.machine.events.add_handler('balldevice_{}_ejecting_ball'.format(device.name),
                                                 action.set_target)
 
     def configure_driver(self, config):

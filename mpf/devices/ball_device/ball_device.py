@@ -454,7 +454,7 @@ class BallDevice(SystemWideDevice):
     def _balls_missing(self, balls):
         # Called when ball_count finds that balls are missing from this device
         self.debug_log("%s ball(s) missing from device. Mechanical eject?"
-                       " %s", abs(balls))
+                       " %s", abs(balls), self.config['mechanical_eject'])
 
         yield from self.machine.events.post_async('balldevice_{}_ball_missing'.format(abs(balls)))
         '''event: balldevice_(balls)_ball_missing.

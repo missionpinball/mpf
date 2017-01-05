@@ -287,7 +287,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             'balldevice_{}_ejecting_ball'.format(self.ball_device.name),
             balls=1,
             target=eject_request.target,
-            source=self,
+            source=self.ball_device,
             mechanical_eject=eject_request.mechanical,
             num_attempts=eject_try)
         '''event: balldevice_(name)_ejecting_ball

@@ -16,6 +16,8 @@ coils:
     trough:
         number: C10
         pulse_ms: 20
+    trough2:
+        number:
     plunger:
         number: 1
     device1:
@@ -68,6 +70,14 @@ switches:
       number: 12
     device4_s:
       number: 13
+    trough2_1:
+      number:
+    trough2_2:
+      number:
+    trough2_3:
+      number:
+    plunger2:
+      number:
 
 drop_targets:
    left1:
@@ -132,4 +142,17 @@ ball_devices:
         ball_capacity: 3
         entrance_switch_full_timeout: 500ms
         auto_fire_on_unexpected_ball: False
+        debug: true
+
+    trough2:
+        tags: drain, trough, home
+        ball_switches: trough2_1, trough2_2, trough2_3
+        eject_coil: trough2
+        eject_targets: plunger2
+        confirm_eject_type: target
+        debug: true
+    plunger2:
+        tags: ball_add_live
+        ball_switches: plunger2
+        mechanical_eject: True
         debug: true
