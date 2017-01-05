@@ -195,19 +195,22 @@ class ModeController(object):
                                    self._machine_mode_folders[mode_string] + '.code.' +
                                    config['mode']['code'].split('.')[0])
 
-            except (KeyError, ImportError):     # code is in the mpf folder
-                i = importlib.import_module(
-                    'mpf.' + self.machine.config['mpf']['paths']['modes'] + '.' +
-                    self._mpf_mode_folders[mode_string] + '.code.' +
-                    config['mode']['code'].split('.')[0])
+            except (KeyError, ImportError):     # load path
+                try:
+                    mode_class = Util.string_to_class(config['mode']['code'])
+                except ImportError: # code is in the mpf folder. legacy
+                    i = importlib.import_module(
+                        'mpf.' + self.machine.config['mpf']['paths']['modes'] + '.' +
+                        self._mpf_mode_folders[mode_string] + '.code.' +
+                        config['mode']['code'].split('.')[0])
 
-                mode_class = getattr(i, config['mode']['code'].split('.')[1])
+                    mode_class = getattr(i, config['mode']['code'].split('.')[1])
 
-                if self.debug:
-                    self.log.debug("Loaded code from %s",
-                                   'mpf.' + self.machine.config['mpf']['paths']['modes'] +
-                                   '.' + self._mpf_mode_folders[mode_string] + '.code.' +
-                                   config['mode']['code'].split('.')[0])
+                    if self.debug:
+                        self.log.debug("Loaded code from %s",
+                                       'mpf.' + self.machine.config['mpf']['paths']['modes'] +
+                                       '.' + self._mpf_mode_folders[mode_string] + '.code.' +
+                                       config['mode']['code'].split('.')[0])
 
         else:  # no code specified, so using the default Mode class
             mode_class = Mode
