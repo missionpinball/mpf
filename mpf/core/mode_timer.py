@@ -29,14 +29,6 @@ class ModeTimer(object):
             raise AssertionError("Cannot use ModeTimer in mode without player.")
 
         self.tick_var = self.mode.name + '_' + self.name + '_tick'
-        self.mode.player[self.tick_var] = 0
-        '''player_var: (mode)_(timer)_tick
-
-        desc: Stores the current tick value for the mode timer from the mode
-        (mode) with the time name (timer). For example, a timer called
-        "my_timer" which is in the config for "mode1" will store its tick
-        value in the player variable ``mode1_my_timer_tick``.
-        '''
 
         self.running = False
         self.start_value = self.config['start_value']
@@ -57,7 +49,15 @@ class ModeTimer(object):
         if self.direction == 'down' and not self.end_value:
             self.end_value = 0  # need it to be 0 not None
 
-        self.mode.player[self.tick_var] = self.start_value
+        if self.config["reset_on_mode_start"] or not self.mode.player.is_player_var(self.tick_var):
+            self.mode.player[self.tick_var] = self.start_value
+            '''player_var: (mode)_(timer)_tick
+
+            desc: Stores the current tick value for the mode timer from the mode
+            (mode) with the time name (timer). For example, a timer called
+            "my_timer" which is in the config for "mode1" will store its tick
+            value in the player variable ``mode1_my_timer_tick``.
+            '''
 
         if self.debug:
             self.log.debug("----------- Initial Values -----------")

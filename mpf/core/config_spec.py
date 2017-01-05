@@ -1032,6 +1032,7 @@ timers:
     start_running: single|bool|False
     control_events: list|subconfig(timer_control_events)|None
     restart_on_complete: single|bool|False
+    reset_on_mode_start: single|bool|True
     bcp: single|bool|False
 timer_control_events:  # subconfig for mode timers
     __valid_in__: None
