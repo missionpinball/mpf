@@ -21,8 +21,6 @@ class MultiballLock(ModeDevice):
         # initialise variables
         self.enabled = False
         self.initialised = False    # remove when #715 is fixed
-        self._released_balls = 0
-        self._release_lock = None
 
         super().__init__(machine, name)
 

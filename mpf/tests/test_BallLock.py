@@ -1,5 +1,3 @@
-from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
-
 from mpf.tests.MpfTestCase import MpfTestCase
 from unittest.mock import MagicMock
 
