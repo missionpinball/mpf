@@ -2,6 +2,7 @@
 
 modes:
     - carousel
+    - second_carousel
 
 machine:
     min_balls: 0
