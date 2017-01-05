@@ -450,6 +450,7 @@ high_score:
     __valid_in__: mode
     award_slide_display_time: single|ms|4s
     categories: list|str:list|
+    defaults: list|str:dict|None
 info_lights:
     __valid_in__: machine                            # todo add to validator
 image_pools:

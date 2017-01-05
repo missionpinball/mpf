@@ -17,6 +17,13 @@ high_score:
       - HIGH SCORE 2
       - HIGH SCORE 3
       - HIGH SCORE 4
+  defaults:
+    score:
+      - BRI: 4242
+      - GHK: 2323
+      - JK: 1337
+      - QC: 42
+      - MPF: 23
 
 slide_player:
   high_score_enter_initials: high_score_enter_initials
