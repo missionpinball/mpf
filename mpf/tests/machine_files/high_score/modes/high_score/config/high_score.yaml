@@ -10,3 +10,12 @@ high_score:
       - HIGH SCORE 4
   - loops:
       - LOOP CHAMP
+  defaults:
+    score:
+      - BRI: 4242
+      - GHK: 2323
+      - JK: 1337
+      - QC: 42
+      - MPF: 23
+    loops:
+      - JK: 42
