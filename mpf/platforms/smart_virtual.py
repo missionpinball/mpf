@@ -146,8 +146,11 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
 
     def confirm_eject_via_switch(self, switch):
         """Simulate eject via switch."""
-        self.machine.switch_controller.process_switch(switch.name, 1)
-        self.machine.switch_controller.process_switch(switch.name, 0)
+        self.machine.switch_controller.process_switch(switch.name, 1, logical=True)
+        self.delay.add(ms=10, callback=self._release_confirm_switch, switch=switch)
+
+    def _release_confirm_switch(self, switch):
+        self.machine.switch_controller.process_switch(switch.name, 0, logical=True)
 
     def set_target(self, source, target, mechanical_eject, **kwargs):
         """Set target for action."""
@@ -306,7 +309,7 @@ class HardwarePlatform(VirtualPlatform):
 
     def add_ball_to_device(self, device):
         """Add ball to device."""
-        if device.balls + 1 > device.config['ball_capacity']:
+        if device.balls  >= device.config['ball_capacity']:
             raise AssertionError("KABOOM! We just added a ball to {} which has a capacity "
                                  "of {} but already had {} ball(s)".format(device.name,
                                                                            device.config['ball_capacity'],
