@@ -673,6 +673,10 @@ p3_roc:
     watchdog_time: single|ms|1s
     use_watchdog: single|bool|True
     debug: single|bool|False
+psus:
+    __valid_in__: machine
+    voltage: single|int|None
+    max_amps: single|int|None
 physical_dmd:
     __valid_in__: machine
     shades: single|pow2|16

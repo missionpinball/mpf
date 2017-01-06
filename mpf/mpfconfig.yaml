@@ -74,6 +74,7 @@ mpf:
         - mpf.devices.combo_switch.ComboSwitch
         - mpf.devices.ball_hold.BallHold
         - mpf.devices.multiball_lock.MultiballLock
+        - mpf.devices.power_supply_unit.PowerSupplyUnit
 
     plugins:
         mpf.plugins.auditor.Auditor
