@@ -28,7 +28,6 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         """Initialise outgoing balls handler."""
         super().__init__(ball_device)
         self._eject_queue = asyncio.Queue(loop=self.machine.clock.loop)
-        self._state = "idle"
         self._current_target = None
         self._cancel_future = None
         self._incoming_ball_which_may_skip = asyncio.Event(loop=self.machine.clock.loop)
@@ -55,7 +54,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
     def _run(self):
         """Wait for eject queue."""
         while True:
-            self._state = "idle"
+            self.ball_device.set_eject_state("idle")
             self.debug_log("Waiting for eject request.")
             eject_queue_future = Util.ensure_future(self._eject_queue.get(), loop=self.machine.clock.loop)
             incoming_ball_which_may_skip = self._incoming_ball_which_may_skip.wait()
@@ -121,11 +120,6 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             yield from self._failed_eject(eject_request, 1, True)
 
         self.debug_log("No longer expecting incoming ball which may skip the device.")
-
-    @property
-    def state(self):
-        """Return the current state for legacy reasons."""
-        return self._state
 
     def find_available_ball_in_path(self, start) -> bool:
         """Try to remove available ball at the end of the path."""
@@ -198,7 +192,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             skipping_ball_future = Util.ensure_future(self._incoming_ball_which_may_skip.wait(),
                                                       loop=self.machine.clock.loop)
             # wait until we have a ball (might be instant)
-            self._state = "waiting_for_ball"
+            self.ball_device.set_eject_state("waiting_for_ball")
             yield from Util.first([self._cancel_future, ball_future, skipping_ball_future],
                                   loop=self.machine.clock.loop)
 
@@ -220,7 +214,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             # wait for target to be ready
             # TODO: block one spot in target device to prevent double eject
             yield from eject_request.target.wait_for_ready_to_receive(self.ball_device)
-            self._state = "ejecting"
+            self.ball_device.set_eject_state("ejecting")
             result = yield from self._eject_ball(eject_request, eject_try)
             if result:
                 # eject is done. return to main loop
@@ -230,7 +224,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
 
             if eject_request.max_tries and eject_try >= eject_request.max_tries:
                 # stop device
-                self._state = "eject_broken"
+                self.ball_device.set_eject_state("eject_broken")
                 yield from self._failed_eject(eject_request, eject_try, False)
                 self.ball_device.stop()
                 # TODO: inform machine about broken device
@@ -346,7 +340,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                 # TODO: add timeout here
                 yield from ball_left
 
-            self._state = "ball_left"
+            self.ball_device.set_eject_state("ball_left")
             self.debug_log("Ball left")
             incoming_ball_at_target = self._add_incoming_ball_to_target(eject_request.target)
             return (yield from self._handle_confirm(eject_request, ball_eject_process, incoming_ball_at_target))
@@ -376,7 +370,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             yield from Util.first([confirm_future], timeout=timeout,
                                   loop=self.machine.clock.loop, cancel_others=False)
         except asyncio.TimeoutError:
-            self._state = "failed_confirm"
+            self.ball_device.set_eject_state("failed_confirm")
             self.debug_log("Got timeout before confirm")
             return (yield from self._handle_late_confirm_or_missing(eject_request, ball_eject_process,
                                                                     incoming_ball_at_target))

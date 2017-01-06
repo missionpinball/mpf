@@ -138,15 +138,10 @@ class BallCountHandler(BallDeviceStateHandler):
         """Return balls which are already handled."""
         return self._ball_count
 
-    @property
-    def expected_balls(self):
-        """Return the number of balls we expect in the future."""
-        if self.ball_device.outgoing_balls_handler.state in ["ball_left", "failed_confirm"]:
-            return self._ball_count - 1
-        return self._ball_count
-
     def _set_ball_count(self, count):
         self._ball_count = count
+        # mirror variable at ball device for monitor
+        self.ball_device.counted_balls = count
         if self._ball_count > 0:
             self._has_balls.set()
         else:
@@ -165,6 +160,7 @@ class BallCountHandler(BallDeviceStateHandler):
         self._ball_count = yield from self.ball_device.counter.count_balls()
         if self._ball_count > 0:
             self._has_balls.set()
+        self.ball_device.counted_balls = self._ball_count
         yield from super().initialise()
 
     @asyncio.coroutine

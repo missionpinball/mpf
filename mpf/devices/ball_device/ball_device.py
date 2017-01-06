@@ -21,7 +21,7 @@ from mpf.devices.ball_device.pulse_coil_ejector import PulseCoilEjector
 from mpf.devices.ball_device.switch_counter import SwitchCounter
 
 
-@DeviceMonitor("_state", "balls", "available_balls")
+@DeviceMonitor("available_balls", "_state", counted_balls="balls")
 class BallDevice(SystemWideDevice):
 
     """
@@ -68,15 +68,20 @@ class BallDevice(SystemWideDevice):
         # stop device on shutdown
         self.machine.events.add_handler("shutdown", self.stop)
 
-    @property
-    def _state(self):
-        """Return state."""
-        return self.outgoing_balls_handler.state
+        # mirrored from ball_count_handler to make it obserable by the monitor
+        self.counted_balls = 0
+        self._state = "idle"
+
+    def set_eject_state(self, state):
+        """Set the current device state."""
+        self._state = state
 
     @property
     def balls(self):
-        """Return balls."""
-        return self.ball_count_handler.expected_balls
+        """Return the number of balls we expect in the near future."""
+        if self._state in ["ball_left", "failed_confirm"]:
+            return self.counted_balls - 1
+        return self.counted_balls
 
     def entrance(self, **kwargs):
         """Event handler for entrance events."""
