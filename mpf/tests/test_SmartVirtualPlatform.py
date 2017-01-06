@@ -53,7 +53,7 @@ class TestSmartVirtualPlatform(MpfTestCase):
         self.assertFalse(self.machine.switch_controller.is_active('trough2_3'))
         self.assertFalse(self.machine.switch_controller.is_active('plunger2'))
 
-        plunger.setup_player_controlled_eject(target=self.machine.playfield)
+        self.machine.playfield.add_ball(1, plunger)
         self.advance_time_and_run(1)
 
         self.assertEqual(1, trough.balls)
@@ -77,6 +77,10 @@ class TestSmartVirtualPlatform(MpfTestCase):
         self.assertEqual(1, trough.balls)
         self.assertEqual(0, plunger.balls)
         self.assertBallsOnPlayfield(1)
+        self.assertFalse(self.machine.switch_controller.is_active('trough2_1'))
+        self.assertTrue(self.machine.switch_controller.is_active('trough2_2'))
+        self.assertFalse(self.machine.switch_controller.is_active('trough2_3'))
+        self.assertFalse(self.machine.switch_controller.is_active('plunger2'))
 
     def _ball_swallower(self, unclaimed_balls, **kwargs):
         return {'unclaimed_balls': 0}
