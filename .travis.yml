@@ -9,19 +9,41 @@ matrix:
      os: linux
    - language: generic
      os: osx
+
 install:
 - if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
       curl -sS https://www.python.org/ftp/python/3.5.2/python-3.5.2-macosx10.6.pkg > python-3.5.2-macosx10.6.pkg;
       sudo installer -pkg python-3.5.2-macosx10.6.pkg -target /;
   fi;
-- pip3 install coveralls coverage
+
+- if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
+      pip3 install coveralls coverage;
+  fi;
+
 - python3 setup.py install
 - git clone --branch $TRAVIS_BRANCH https://github.com/missionpinball/mpf-examples.git || git clone --branch `python3 get_version.py` https://github.com/missionpinball/mpf-examples.git || git clone --branch dev https://github.com/missionpinball/mpf-examples.git
 - git clone --branch $TRAVIS_BRANCH https://github.com/missionpinball/mpf-mc.git || git clone --branch `python3 get_version.py` https://github.com/missionpinball/mpf-mc.git || git clone --branch dev https://github.com/missionpinball/mpf-mc.git
+
 before_script:
 - export PYTHONPATH=$PYTHONPATH:$(pwd)/mpf-mc; 
+
 script:
-- python3 -m coverage run -m unittest discover mpf/tests
+
+- if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
+      coverage run -m unittest discover mpf/tests
+  fi;
+
+- if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
+      python3 -m unittest discover mpf/tests
+  fi;
+
 #- cd mpf-examples/demo_man/ && python3 -m unittest discover -s tests/ && cd ../../
-after_success: coveralls
+
+after_success:
+
+- if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
+      coveralls
+  fi;
+
+
 
