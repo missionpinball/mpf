@@ -21,7 +21,7 @@ install:
 before_script:
 - export PYTHONPATH=$PYTHONPATH:$(pwd)/mpf-mc; 
 script:
-- coverage run -m unittest discover mpf/tests
+- python3 -m coverage run -m unittest discover mpf/tests
 #- cd mpf-examples/demo_man/ && python3 -m unittest discover -s tests/ && cd ../../
 after_success: coveralls
 
