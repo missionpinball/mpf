@@ -14,7 +14,7 @@ install:
       curl -sS https://www.python.org/ftp/python/3.5.2/python-3.5.2-macosx10.6.pkg > python-3.5.2-macosx10.6.pkg;
       sudo installer -pkg python-3.5.2-macosx10.6.pkg -target /;
   fi;
-- pip3 install coveralls
+- pip3 install coveralls coverage
 - python3 setup.py install
 - git clone --branch $TRAVIS_BRANCH https://github.com/missionpinball/mpf-examples.git || git clone --branch `python3 get_version.py` https://github.com/missionpinball/mpf-examples.git || git clone --branch dev https://github.com/missionpinball/mpf-examples.git
 - git clone --branch $TRAVIS_BRANCH https://github.com/missionpinball/mpf-mc.git || git clone --branch `python3 get_version.py` https://github.com/missionpinball/mpf-mc.git || git clone --branch dev https://github.com/missionpinball/mpf-mc.git
