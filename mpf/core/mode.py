@@ -172,7 +172,7 @@ class Mode(object):
         self.log.debug("Received request to start")
 
         if self.config['mode']['game_mode'] and not self.machine.game:
-            self.log.warning("Can only start mode %s during a game. Aborting start", self.name)
+            self.log.warning("Can only start mode %s during a game. Aborting start.", self.name)
             return
 
         if self._active:
