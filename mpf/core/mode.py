@@ -172,10 +172,11 @@ class Mode(object):
         self.log.debug("Received request to start")
 
         if self.config['mode']['game_mode'] and not self.machine.game:
-            raise AssertionError("Can only start mode {} during a game.".format(self.name))
+            self.log.warning("Can only start mode %s during a game. Aborting start", self.name)
+            return
 
         if self._active:
-            self.log.debug("Mode is already active. Aborting start")
+            self.log.debug("Mode is already active. Aborting start.")
             return
         if self.config['mode']['use_wait_queue'] and 'queue' in kwargs:
 
