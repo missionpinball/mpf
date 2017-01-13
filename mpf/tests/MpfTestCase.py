@@ -324,6 +324,25 @@ class MpfTestCase(unittest.TestCase):
         for color in color_list:
             self.assertIn(RGBColor(color), colors)
 
+    def assertLightOn(self, light_name):
+        self.assertEqual(255,
+                         self.machine.lights[
+                             light_name].hw_driver.current_brightness)
+
+    def assertLightOff(self, light_name):
+        self.assertEqual(0, self.machine.lights[light_name].hw_driver.current_brightness)
+
+    def assertLightFlashing(self, light_name, secs=1, check_delta=.1):
+        brightness_values = list()
+
+        for _ in range(int(secs / check_delta)):
+            brightness_values.append(
+                self.machine.lights[light_name].hw_driver.current_brightness)
+            self.advance_time_and_run(check_delta)
+
+        self.assertIn(0, brightness_values)
+        self.assertIn(255, brightness_values)
+
     def assertModeRunning(self, mode_name):
         if mode_name not in self.machine.modes:
             raise AssertionError("Mode {} not known.".format(mode_name))
