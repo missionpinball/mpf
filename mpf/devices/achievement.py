@@ -102,10 +102,10 @@ class Achievement(ModeDevice):
         if not self._player:
             return
 
-        if self.config['start_enabled']:
-            self._state = "enabled"
-        else:
+        if self.config['enable_events']:
             self._state = "disabled"
+        else:
+            self._state = "enabled"
 
         self._run_state()
 

@@ -30,7 +30,6 @@ achievements:
     show_when_started: achievement2_started
     show_when_completed: achievement2_completed
     restart_after_stop_possible: False
-    start_enabled: True
     enable_on_next_ball_when_enabled: False
     show_tokens:
       led: led1
@@ -49,7 +48,6 @@ achievements:
     show_when_stopped: achievement_stopped
     show_when_completed: achievement_completed
     restart_after_stop_possible: False
-    start_enabled: True
 
   achievement4:
     start_events: achievement4_start

@@ -37,7 +37,6 @@ achievements:
     restart_after_stop_possible: single|bool|True
     restart_on_next_ball_when_started: single|bool|False
     enable_on_next_ball_when_enabled: single|bool|True
-    start_enabled: single|bool|False
 
     enable_events: dict|str:ms|None
     start_events: dict|str:ms|None

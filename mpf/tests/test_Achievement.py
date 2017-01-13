@@ -202,7 +202,9 @@ class TestAchievement(MpfFakeGameTestCase):
 
         achievement = self.machine.achievements['achievement2']
 
-        # start enabled
+        # enable
+        self.post_event('achievement2_enable', 1)
+
         self.assertShowRunning("achievement2_enabled")
         self.assertShowNotRunning("achievement2_started")
         self.assertShowNotRunning("achievement2_completed")
