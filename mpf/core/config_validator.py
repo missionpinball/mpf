@@ -368,6 +368,7 @@ class ConfigValidator(object):
         return self.machine.placeholder_manager.build_float_template(item)
 
     def _validate_type_template_int(self, item, validation_failure_info):
+        del validation_failure_info
         if item is None:
             return None
         return self.machine.placeholder_manager.build_int_template(str(item))

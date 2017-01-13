@@ -156,6 +156,7 @@ class AchievementGroup(ModeDevice):
             ach.select()
         except IndexError:
             self._no_more_enabled()
+
     def _is_ok_to_change_selection(self):
         if (not self._enabled and
                 not self.config['allow_selection_change_while_disabled']):
@@ -163,6 +164,8 @@ class AchievementGroup(ModeDevice):
         return True
 
     def member_state_changed(self):
+        """Notifies the group that one of its member achievements has changed
+        state."""
         self._check_for_auto_start_stop()
         self._process_current_member_state()
 

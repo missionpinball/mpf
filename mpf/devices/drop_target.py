@@ -137,7 +137,6 @@ class DropTarget(SystemWideDevice):
         if self.reset_coil:
             self.reset_coil.disable()
 
-
     def knockdown(self, **kwargs):
         """Pulse the knockdown coil to knock down this drop target."""
         del kwargs
