@@ -29,6 +29,11 @@ class HighScore(AsyncMode):
             source=self._get_merged_settings('high_score'),
             section_name='high_score')
 
+        # Load defaults if no high_scores are stored
+        if not self.high_scores:
+            self.high_scores = {k: [(next(iter(a.keys())), next(iter(a.values()))) for a in v] for (k, v) in
+                                self.config['high_score']['defaults'].items()}
+
         self._create_machine_vars()
         self.pending_award = None
 

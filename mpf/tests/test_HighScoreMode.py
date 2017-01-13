@@ -26,6 +26,17 @@ class TestHighScoreMode(MpfBcpTestCase):
             self.machine.game.request_player_add()
             self.advance_time_and_run()
 
+    def test_default_high_scores(self):
+        new_score_data = OrderedDict()
+        new_score_data['score'] = [('BRI', 4242),
+                                   ('GHK', 2323),
+                                   ('JK', 1337),
+                                   ('QC', 42),
+                                   ('MPF', 23)]
+        new_score_data['loops'] = [('JK', 42)]
+
+        self.assertEqual(new_score_data, self.machine.modes.high_score.high_scores)
+
     def test_no_high_scores(self):
         self.machine.modes.high_score.high_scores = OrderedDict(
             score=[('BRI', 7050550),
