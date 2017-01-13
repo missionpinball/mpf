@@ -80,7 +80,7 @@ class DeviceManager(object):
         # create the devices
         for device_name in config:
 
-            if not config[device_name]:
+            if not config[device_name] and not cls.allow_empty_configs:
                 raise AssertionError("Device '{}' has an empty config."
                                      .format(device_name))
 

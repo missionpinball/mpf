@@ -13,6 +13,7 @@ class Device(object, metaclass=abc.ABCMeta):
     config_section = None  # String of the config section name
     collection = None  # String name of the collection
     class_label = None  # String of the friendly name of the device class
+    allow_empty_configs = False  # Can a config for this device be empty?
 
     def __init__(self, machine: MachineController, name: str):
         """Set up default attributes of every device.
