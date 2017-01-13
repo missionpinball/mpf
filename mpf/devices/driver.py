@@ -1,6 +1,7 @@
 """Contains the Driver parent class."""
 import copy
 
+from mpf.core.delays import DelayManager
 from mpf.core.machine import MachineController
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.devices.switch import Switch
@@ -30,6 +31,7 @@ class Driver(SystemWideDevice):
         """Initialise driver."""
         self.hw_driver = None
         super().__init__(machine, name)
+        self.delay = DelayManager(self.machine.delayRegistry)
 
         self.time_last_changed = -1
         self.time_when_done = -1
@@ -71,7 +73,10 @@ class Driver(SystemWideDevice):
     def _initialize(self):
         self.load_platform_section('coils')
 
-        self.hw_driver = self.platform.configure_driver(self.config)
+        config = dict(self.config)
+        if 'psu' in config:
+            del config['psu']
+        self.hw_driver = self.platform.configure_driver(config)
 
     def enable(self, **kwargs):
         """Enable a driver by holding it 'on'.
@@ -108,7 +113,7 @@ class Driver(SystemWideDevice):
             self._configured_driver = ConfiguredHwDriver(self.hw_driver, {})
         return self._configured_driver
 
-    def pulse(self, milliseconds: int=None, power: float=None, **kwargs):
+    def pulse(self, milliseconds: int=None, power: float=None, max_wait_ms=None, **kwargs) -> int:
         """Pulse this driver.
 
         Args:
@@ -132,23 +137,36 @@ class Driver(SystemWideDevice):
         else:
             power = 1.0
 
-        if 0 < milliseconds <= self.platform.features['max_pulse']:
-            self.log.debug("Pulsing Driver. %sms (%s power)", milliseconds, power)
-            ms_actual = self.hw_driver.pulse(self.get_configured_driver(), milliseconds)
+        if max_wait_ms is None:
+            wait_ms = 0
+            self.config['psu'].notify_about_instant_pulse(pulse_ms=milliseconds)
         else:
+            wait_ms = self.config['psu'].get_wait_time_for_pulse(pulse_ms=milliseconds, max_wait_ms=max_wait_ms)
+
+        if 0 < milliseconds <= self.platform.features['max_pulse']:
+            if wait_ms > 0:
+                self.delay.add(wait_ms, self._pulse, milliseconds=milliseconds, power=power)
+                self.log.debug("Delaying pulse by %sms", wait_ms)
+            else:
+                self._pulse(milliseconds=milliseconds, power=power)
+
+        else:
+            # TODO: refactor this. see #237
             self.log.debug("Enabling Driver for %sms (%s power)", milliseconds, power)
             self.machine.delay.reset(name='{}_timed_enable'.format(self.name),
                                      ms=milliseconds,
                                      callback=self.disable)
             self.enable()
-            self.time_when_done = self.time_last_changed + (
-                milliseconds / 1000.0)
-            ms_actual = milliseconds
 
-        if ms_actual != -1:
-            self.time_when_done = self.time_last_changed + (ms_actual / 1000.0)
-        else:
-            self.time_when_done = -1
+        self.time_last_changed = self.machine.clock.get_time()
+        self.time_when_done = self.time_last_changed + (milliseconds / 1000.0)
+
+        return wait_ms
+
+    def _pulse(self, milliseconds, power):
+        """Pulse the coil."""
+        self.log.debug("Pulsing Driver. %sms (%s power)", milliseconds, power)
+        self.hw_driver.pulse(self.get_configured_driver(), milliseconds)
 
     def _check_platform(self, switch: Switch):
         # TODO: handle stuff in software if platforms differ
@@ -268,7 +286,7 @@ class ReconfiguredDriver(Driver):
     @property
     def config(self) -> dict:
         """Return the merged config."""
-        config = copy.deepcopy(self._driver.config)
+        config = dict(self._driver.config)
         for name, item in self._config_overwrite.items():
             if item is not None:
                 config[name] = item
