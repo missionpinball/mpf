@@ -21,6 +21,7 @@ achievement_groups:
     disable_events: dict|str:ms|None
     start_selected_events: dict|str:ms|None
     select_random_achievement_events: dict|str:ms|None
+    allow_selection_change_while_disabled: single|bool|False
     auto_select: single|bool|False
     disable_while_achievement_started: single|bool|True
     enable_while_no_achievement_started: single|bool|True

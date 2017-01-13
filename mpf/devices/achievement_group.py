@@ -102,7 +102,7 @@ class AchievementGroup(ModeDevice):
     def rotate_right(self, reverse=False, **kwargs):
         """Rotate to the right."""
         del kwargs
-        if not self._enabled:
+        if not self._is_ok_to_change_selection():
             return
 
         if not self._selected_member and not self.config['auto_select']:
@@ -145,8 +145,8 @@ class AchievementGroup(ModeDevice):
     def select_random_achievement(self, **kwargs):
         """Select a random achievement."""
         del kwargs
-        # TODO: do we need this?
-        if not self._enabled:
+
+        if not self._is_ok_to_change_selection():
             return
 
         if self._selected_member and self._selected_member.state == "selected":
@@ -159,6 +159,11 @@ class AchievementGroup(ModeDevice):
 
         except IndexError:
             self._no_more_enabled()
+    def _is_ok_to_change_selection(self):
+        if (not self._enabled and
+                not self.config['allow_selection_change_while_disabled']):
+            return False
+        return True
 
     def member_state_changed(self):
         self._check_for_auto_start_stop()
