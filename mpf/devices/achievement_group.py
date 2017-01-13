@@ -80,10 +80,7 @@ class AchievementGroup(ModeDevice):
 
     def _get_current(self):
         if not self._selected_member:
-            try:
-                self._selected_member = choice(self._get_available_achievements())
-            except IndexError:
-                pass
+            self.select_random_achievement()
 
         return self._selected_member
 
@@ -151,12 +148,12 @@ class AchievementGroup(ModeDevice):
 
         if self._selected_member and self._selected_member.state == "selected":
             self._selected_member.enable()
+
         try:
             ach = choice(self._get_available_achievements())
             # todo change this to use our Randomizer class
             self._selected_member = ach
             ach.select()
-
         except IndexError:
             self._no_more_enabled()
     def _is_ok_to_change_selection(self):
@@ -178,16 +175,17 @@ class AchievementGroup(ModeDevice):
         self._update_selected()
 
         if not self._selected_member and self.config['auto_select']:
-            try:
-                self._get_current().select()
-            except AttributeError:
-                pass
+            self.select_random_achievement()
 
     def _update_selected(self):
         for ach in self.config['achievements']:
             if ach.state == 'selected':
                 self._selected_member = ach
                 return True
+
+        if self.config['auto_select']:
+            self.select_random_achievement()
+
         return False
 
     def _check_for_all_complete(self):

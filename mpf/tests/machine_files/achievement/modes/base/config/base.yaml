@@ -105,6 +105,15 @@ achievements:
 
   achievement9: {}
 
+  achievement10: {}
+
+  achievement11: {}
+
+  achievement12:
+    enable_events: enable_achievements
+
+  achievement13:
+    enable_events: enable_achievements
 
 achievement_groups:
     group1:
@@ -130,6 +139,14 @@ achievement_groups:
         show_when_enabled: group2_show
         show_tokens:
           led: led2
+
+    group3:
+        achievements:
+          achievement10
+          achievement11
+          achievement12
+          achievement13
+        auto_select: yes
 
 shows:
   group2_show:

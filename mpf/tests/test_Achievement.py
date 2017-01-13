@@ -22,7 +22,7 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertShowNotRunning("achievement1_completed")
 
         self.start_two_player_game()
-        self.assertIn(self.machine.modes['base'], self.machine.mode_controller.active_modes)
+        self.assertModeRunning('base')
 
         achievement = self.machine.achievements['achievement1']
 
@@ -567,3 +567,27 @@ class TestAchievement(MpfFakeGameTestCase):
 
         self.assertTrue(self.machine.achievement_groups.group1.enabled)
         self.assertFalse(self.machine.achievement_groups.group2.enabled)
+
+    def test_auto_select_with_no_enable_events(self):
+        # a10 and 11 do not have enable events, so they should be enabled on
+        # start. a12 and 13 have enable events, so they should not be enabled.
+        # initial selection should pick either 10 or 11
+
+        a10 = self.machine.achievements['achievement10']
+        a11 = self.machine.achievements['achievement11']
+        a12 = self.machine.achievements['achievement12']
+        a13 = self.machine.achievements['achievement13']
+        g3 = self.machine.achievement_groups['group3']
+
+        self.start_game()
+
+        if a10.state == 'selected':
+            self.assertEqual(a11.state, 'enabled')
+        elif a11.state == 'selected':
+            self.assertEqual(a10.state, 'enabled')
+        else:
+            raise AssertionError("Neither a10 nor a11 is selected")
+
+        self.assertEqual(a12.state, 'disabled')
+        self.assertEqual(a13.state, 'disabled')
+
