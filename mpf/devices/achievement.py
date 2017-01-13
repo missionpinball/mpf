@@ -16,6 +16,7 @@ class Achievement(ModeDevice):
     config_section = 'achievements'
     collection = 'achievements'
     class_label = 'achievement'
+    allow_empty_configs = True
 
     def __init__(self, machine, name):
         """Initialise achievement."""

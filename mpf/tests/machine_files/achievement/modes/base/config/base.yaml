@@ -99,12 +99,12 @@ achievements:
     show_tokens:
           led: led6
 
-  achievement7:
-    reset_events: dummy
-  achievement8:
-    reset_events: dummy
-  achievement9:
-    reset_events: dummy
+  achievement7: {}
+
+  achievement8: {}
+
+  achievement9: {}
+
 
 achievement_groups:
     group1:
