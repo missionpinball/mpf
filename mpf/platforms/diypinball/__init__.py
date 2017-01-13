@@ -1,0 +1,1 @@
+from .diypinball import HardwarePlatform
