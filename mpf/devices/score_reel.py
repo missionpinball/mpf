@@ -1,4 +1,5 @@
 """Contains the base classes for mechanical EM-style score reels."""
+import asyncio
 
 from mpf.core.delays import DelayManager
 from mpf.core.system_wide_device import SystemWideDevice
@@ -79,10 +80,12 @@ class ScoreReel(SystemWideDevice):
 
         # todo add some kind of status for broken?
 
+        self._runner = None
+
+        self._busy = asyncio.Event(loop=self.machine.clock.loop)
+
     def _initialize(self):
         self.log.debug("Configuring score reel with: %s", self.config)
-
-        self.assumed_value = self.check_hw_switches()
 
         # figure out how many values we have
         # Add 1 so range is inclusive of the lower limit
@@ -92,6 +95,16 @@ class ScoreReel(SystemWideDevice):
 
         for value in range(self.num_values):
             self.value_switches.append(self.config.get('switch_' + str(value)))
+
+        self._runner = self.machine.clock.loop.create_task(self._run())
+        self._runner.add_done_callback(self._done)
+
+    @staticmethod
+    def _done(future):
+        try:
+            future.result()
+        except asyncio.CancelledError:
+            pass
 
     def set_rollover_reel(self, reel):
         """Set this reels' rollover_reel to the object of the next higher reel."""
@@ -143,7 +156,7 @@ class ScoreReel(SystemWideDevice):
             self.hw_sync = False
 
             # fire the coil
-            self.config['coil_inc'].pulse()
+            self.config['coil_inc'].pulse(250)
 
             # set delay to notify when this reel can be fired again
             self.delay.add(name='ready_to_fire',
@@ -177,7 +190,7 @@ class ScoreReel(SystemWideDevice):
         '''event: reel_(name)_ready
         desc: The score real (name) is ready to be pulsed again.'''
 
-    def check_hw_switches(self, no_event=False):
+    def check_hw_switches(self):
         """Check all the value switches for this score reel.
 
         This check only happens if `self.ready` is `True`. If the reel is not
@@ -196,57 +209,51 @@ class ScoreReel(SystemWideDevice):
 
         TODO: What happens if there are multiple active switches? Currently it
         will return the highest one. Is that ok?
-
-        Args:
-            no_event: A boolean switch that allows you to suppress the event
-                posting from this call if you just want to update the values.
-
-        Returns: The hardware value of the switch, either the position or -999.
-            If the reel is not ready, it returns `False`.
         """
         # check to make sure the 'hw_confirm_time' time has passed. If not then
         # we cannot trust any value we read from the switches
-        if (self.config['coil_inc'].time_last_changed +
-                (self.config['hw_confirm_time'] / 1000.0) <= self.machine.clock.get_time()):
-            self.log.debug("Checking hw switches to determine reel value")
-            value = -999
-            for i in range(len(self.value_switches)):
-                if self.value_switches[i]:  # not all values have a switch
-                    if self.machine.switch_controller.is_active(
-                            self.value_switches[i].name):
-                        value = i
 
-            self.log.debug("+++Setting hw value to: %s", value)
-            self.physical_value = value
-            self.hw_sync = True
-            # only change this if we know where we are or can confirm that
-            # we're not in the right position
-            if value != -999:
-                if value != self.assumed_value:
-                    self.log.info("Setting value to %s because that switch is active.", value)
-                    self.assumed_value = value
+        self.log.debug("Checking hw switches to determine reel value")
+        for i in range(len(self.value_switches)):
+            if self.value_switches[i]:  # not all values have a switch
+                if self.machine.switch_controller.is_active(self.value_switches[i].name):
+                    if self.assumed_value != i:
+                        self.log.info("Setting value to %s because that switch is active.", i)
+                        self.assumed_value = i
+                    self.hw_sync = True
+                    return
 
-            # if value is -999, but we have a switch for the assumed value,
-            # then we're in the wrong position because our hw_value should be
-            # at the assumed value
-            elif self.assumed_value != -999 and self.value_switches[self.assumed_value]:
-                self.log.warning("Assumed value %s but the switch for that value is not active", self.assumed_value)
-                self.assumed_value = -999
+        # check if there is a switch for the current assumed_value
+        if (self.assumed_value in self.value_switches and self.value_switches[self.assumed_value] and
+                not self.machine.switch_controller.is_active(self.value_switches[self.assumed_value].name)):
+            self.log.info("Resetting value because the switch for %s is not active.", self.assumed_value)
+            self.assumed_value = -999
+            self.hw_sync = False
 
-            if not no_event:
-                self.machine.events.post('reel_' + self.name + "_hw_value",
-                                         value=value)
-                '''event: reel_(name)_hw_value
-                desc: The score reel (name) has checked its hardware switches.
-                args:
-                value: The physical confirmed value of the real. (Will be -999
-                if the reel is not at a position with a switch.'''
-            return value
+    @asyncio.coroutine
+    def _run(self):
+        self.check_hw_switches()
+        while True:
+            yield from self._busy.wait()
 
-        else:
-            return False
+            yield from self._advance_reel()
 
-    def set_destination_value(self):
+    @asyncio.coroutine
+    def _advance_reel(self):
+        self.log.debug("Advancing reel to index %s, current index %s", self._destination_index, self.assumed_value + 1)
+        while self._destination_index != self.assumed_value + 1:
+            wait_ms  = self.config['coil_inc'].pulse(max_wait_ms=500)
+
+            yield from asyncio.sleep((wait_ms + self.config['repeat_pulse_time']) / 1000, loop=self.machine.clock.loop)
+            self.assumed_value += 1
+            self.assumed_value %= len(self.value_switches)
+
+            self.check_hw_switches()
+
+        self._busy.clear()
+        self.log.debug("Advancing to %s successful.", self._destination_index)
+
+    def set_destination_value(self, value):
         """Return the integer value of the destination this reel is moving to.
 
         Args:
@@ -256,20 +263,11 @@ class ScoreReel(SystemWideDevice):
             since it doesn't know where the reel is and therefore doesn't know
             what the destination value would be.
         """
-        # We can only know if we have a destination if we know where we are
-        self.log.debug("@@@ set_destination_value")
-        self.log.debug("@@@ old destination_index: %s",
-                       self._destination_index)
-        if self.assumed_value != -999:
-            self._destination_index = self.assumed_value + 1
-            if self._destination_index > (self.num_values - 1):
-                self._destination_index = 0
-            if self._destination_index == 1:
-                self.rollover_reel_advanced = False
-            self.log.debug("@@@ new destination_index: %s",
-                           self._destination_index)
-            return self._destination_index
-        else:
-            self.log.debug("@@@ new destination_index: -999")
-            self._destination_index = -999
-            return -999
+        if self._destination_index != value + 1:
+            self.log.debug("Setting new score_reel value. Old destination_index: %s, New destination_index: %s",
+                           self._destination_index, value + 1)
+
+            self._destination_index = value + 1
+
+            self._busy.set()
+

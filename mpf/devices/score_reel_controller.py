@@ -118,7 +118,7 @@ class ScoreReelController(object):
 
         self.player_to_scorereel_map.append(self.player_to_scorereel_map[0])
 
-    def score_change(self, value, change, **kwargs):
+    def score_change(self, value, **kwargs):
         """Called whenever the score changes and adds the score increase to the current active ScoreReelGroup.
 
         This method is the handler for the score change event, so it's called
@@ -127,10 +127,9 @@ class ScoreReelController(object):
         Args:
             score: Integer value of the new score. This parameter is ignored,
                 and included only because the score change event passes it.
-            change: Interget value of the change to the score.
         """
         del kwargs
-        self.active_scorereelgroup.add_value(value=change, target=value)
+        self.active_scorereelgroup.set_value(value=value)
 
     def game_starting(self, queue, game, **kwargs):
         """Reset the score reels when a new game starts.
@@ -147,7 +146,7 @@ class ScoreReelController(object):
         del kwargs
         self.queue = queue
         # tell the game_starting event queue that we have stuff to do
-        self.queue.wait()
+        #self.queue.wait()
 
         # populate the reset queue
         self.reset_queue = []
@@ -172,7 +171,7 @@ class ScoreReelController(object):
 
         else:  # no more to reset
             # clear the event queue
-            self.queue.clear()
+            #self.queue.clear()
             self.queue = None
             # remove all these handlers watching for 0
             self.machine.events.remove_handler(self._reset_next_group)

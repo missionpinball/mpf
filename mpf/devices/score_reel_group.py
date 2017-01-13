@@ -317,7 +317,7 @@ class ScoreReelGroup(SystemWideDevice):
             self.desired_value_list = self.int_to_reel_list(target)
             self._step_advance_add_steps(value)
 
-    def set_value(self, value=None, value_list=None):
+    def set_value(self, value):
         """Reset the score reel group to display the value passed.
 
         This method will "jump" the score reel group to display the value
@@ -337,28 +337,27 @@ class ScoreReelGroup(SystemWideDevice):
             value: An integer value of what the new displayed value (i.e. score)
                 should be. This is the default option if you only pass a single
                 positional argument, e.g. `set_value(2100)`.
-            value_list: A list of the value you'd like the reel group to
-                display.
         """
-        if value is None and value_list is None:
-            return  # we can't do anything here if we don't get a new value
-
-        if value_list is None:
-            value_list = self.int_to_reel_list(value)
+        value_list = self.int_to_reel_list(value)
 
         self.log.debug("Jumping to %s.", value_list)
 
         # set the new desired value which we'll use to verify the reels land
         # where we want them to.
         self.desired_value_list = value_list
-        self.log.debug("set_value() just set DVL to: %s",
-                       self.desired_value_list)
 
-        self._jump_advance_step()
+        # loop through the reels one by one
+        for i in range(len(self.reels)):
+            if not self.reels[i]:
+                continue
+
+            self.reels[i].set_destination_value(self.desired_value_list[i])
 
     def _jump_advance_step(self):
         # Checks the assumed values of the reels in the group, and if they're
         # off will automatically correct them.
+
+        return
 
         self.jump_in_progress = True
         self.valid = False
