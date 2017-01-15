@@ -60,27 +60,20 @@ class ScoreReelGroup(SystemWideDevice):
         self.reels = self.config['reels']
         self.reels.reverse()  # We want our smallest digit in the 0th element
 
-        # ---- temp chimes code. todo move this --------------------
         self.config['chimes'].reverse()
 
         for i in range(len(self.config['chimes'])):
 
             if self.config['chimes'][i]:
-                self.machine.events.add_handler(event='reel_' +
-                                                      self.reels[
-                                                          i].name + '_advance',
+                self.machine.events.add_handler(event='reel_' + self.reels[i].name + '_advance',
                                                 handler=self.chime,
                                                 chime=self.config['chimes'][i])
-        # ---- temp chimes code end --------------------------------
 
-    # ----- temp method for chime ------------------------------------
     @classmethod
     def chime(cls, chime, **kwargs):
         """Pulse chime."""
         del kwargs
         chime.pulse()
-
-    # ---- temp chimes code end --------------------------------------
 
     def set_value(self, value):
         """Reset the score reel group to display the value passed.
@@ -155,10 +148,6 @@ class ScoreReelGroup(SystemWideDevice):
             with the lowest reel digit position in list position 0.
 
         """
-        if value == -999:
-            value = 0
-            # todo hack
-
         output_list = []
 
         # convert our number to a string

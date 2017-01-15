@@ -58,6 +58,9 @@ class ScoreReel(SystemWideDevice):
         self._ready = asyncio.Event(loop=self.machine.clock.loop)
         # will be set when this real is ready and shows the destination value
 
+        # stop device on shutdown
+        self.machine.events.add_handler("shutdown", self.stop)
+
     def _initialize(self):
         self.log.debug("Configuring score reel with: %s", self.config)
 
@@ -72,6 +75,11 @@ class ScoreReel(SystemWideDevice):
 
         self._runner = self.machine.clock.loop.create_task(self._run())
         self._runner.add_done_callback(self._done)
+
+    def stop(self, **kwargs):
+        """Stop device."""
+        del kwargs
+        self._runner.cancel()
 
     @staticmethod
     def _done(future):
@@ -140,12 +148,16 @@ class ScoreReel(SystemWideDevice):
         self.log.debug("Advancing reel to value %s, current value %s", self._destination_value, self.assumed_value)
         while self._destination_value != self.assumed_value:
             wait_ms = self.config['coil_inc'].pulse(max_wait_ms=500)
+            previous_value = self.assumed_value
 
             yield from asyncio.sleep((wait_ms + self.config['repeat_pulse_time']) / 1000, loop=self.machine.clock.loop)
             self.assumed_value += 1
             self.assumed_value %= len(self.value_switches)
 
             self.check_hw_switches()
+
+            if previous_value != self.assumed_value and self.assumed_value > 0:
+                self.machine.events.post('reel_' + self.name + "_advance")
             self.log.debug("Assumed value: %s", self.assumed_value)
 
         self._busy.clear()
