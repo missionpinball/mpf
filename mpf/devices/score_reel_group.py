@@ -180,7 +180,7 @@ class ScoreReelGroup(SystemWideDevice):
 
         return output_list
 
-    def light(self, relight_on_valid=False, **kwargs):
+    def light(self, **kwargs):
         """Light up this ScoreReelGroup based on the 'light_tag' in its config."""
         del kwargs
         self.log.debug("Turning on Lights")
@@ -188,35 +188,10 @@ class ScoreReelGroup(SystemWideDevice):
                 self.config['lights_tag']):
             light.on()
 
-        # Watch for these reels going out of sync so we can turn off the lights
-        # while they're resyncing
-
-        if self.unlight_on_resync_key:
-            self.machine.events.remove_handler_by_key(self.unlight_on_resync_key)
-
-        self.unlight_on_resync_key = self.machine.events.add_handler(
-            'scorereelgroup_' + self.name + '_resync',
-            self.unlight,
-            relight_on_valid=True)
-
-        if relight_on_valid:
-            self.machine.events.remove_handler_by_key(self.light_on_valid_key)
-
-    def unlight(self, relight_on_valid=False, **kwargs):
+    def unlight(self, **kwargs):
         """Turn off the lights for this ScoreReelGroup based on the 'light_tag' in its config."""
         del kwargs
         self.log.debug("Turning off Lights")
         for light in self.machine.lights.items_tagged(
                 self.config['lights_tag']):
             light.off()
-
-        if relight_on_valid:
-            if self.light_on_valid_key:
-                self.machine.events.remove_handler_by_key(self.light_on_valid_key)
-            self.light_on_valid_key = self.machine.events.add_handler(
-                'scorereelgroup_' + self.name + '_valid',
-                self.light,
-                relight_on_valid=True)
-        elif self.unlight_on_resync_key:
-            self.machine.events.remove_handler_by_key(
-                self.unlight_on_resync_key)

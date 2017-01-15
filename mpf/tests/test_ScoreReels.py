@@ -41,10 +41,12 @@ class TestScoreReels(MpfTestCase):
         player1_1k = self.machine.coils.player1_1k.hw_driver
         player1_100 = self.machine.coils.player1_100.hw_driver
         player1_10 = self.machine.coils.player1_10.hw_driver
+        chime1 = self.machine.coils.chime1.hw_driver
         player1_10k.pulse = MagicMock(return_value=10)
         player1_1k.pulse = MagicMock(return_value=10)
         player1_100.pulse = MagicMock(return_value=10)
         player1_10.pulse = MagicMock(return_value=10)
+        chime1.pulse = MagicMock(return_value=10)
         self.start_game()
 
         self._synchronise_to_reel()
@@ -65,6 +67,7 @@ class TestScoreReels(MpfTestCase):
         self.assertEqual(0, player1_1k.pulse.call_count)
         self.assertEqual(1, player1_100.pulse.call_count)
         self.assertEqual(1, player1_10.pulse.call_count)
+        self.assertEqual(0, chime1.pulse.call_count)
         player1_10k.pulse = MagicMock(return_value=10)
         player1_1k.pulse = MagicMock(return_value=10)
         player1_100.pulse = MagicMock(return_value=10)
@@ -104,6 +107,7 @@ class TestScoreReels(MpfTestCase):
         self.assertEqual(1, player1_100.pulse.call_count)
 
         self.advance_time_and_run(.2)
+        self.assertEqual(1, chime1.pulse.call_count)
         self.assertEqual(3, player1_10.pulse.call_count)
 
         self.advance_time_and_run(.2)
@@ -124,12 +128,16 @@ class TestScoreReels(MpfTestCase):
         self.assertEqual(1, player1_100.pulse.call_count)
         self.assertEqual(8, player1_10.pulse.call_count)
 
+        # it was stuck somewhere before 9
+        self.advance_time_and_run(.2)
+        self.assertEqual(1, player1_100.pulse.call_count)
+        self.assertEqual(9, player1_10.pulse.call_count)
+
         self.advance_time_and_run(.1)
         self.hit_switch_and_run("score_1p_10_9", 0)
         self.advance_time_and_run(.1)
-
         self.assertEqual(1, player1_100.pulse.call_count)
-        self.assertEqual(9, player1_10.pulse.call_count)
+        self.assertEqual(10, player1_10.pulse.call_count)
 
         self.advance_time_and_run(.1)
         self.release_switch_and_run("score_1p_10_9", 0)
@@ -141,7 +149,8 @@ class TestScoreReels(MpfTestCase):
         self.assertEqual(1, player1_10k.pulse.call_count)
         self.assertEqual(1, player1_1k.pulse.call_count)
         self.assertEqual(1, player1_100.pulse.call_count)
-        self.assertEqual(9, player1_10.pulse.call_count)
+        self.assertEqual(10, player1_10.pulse.call_count)
+        self.assertEqual(1, chime1.pulse.call_count)
 
     def testAdvanceingFailure(self):
         player1_10k = self.machine.coils.player1_10k.hw_driver
