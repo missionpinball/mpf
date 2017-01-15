@@ -89,11 +89,7 @@ class ScoreReelController(object):
         # Make sure this score reel group is showing the right score
         self.log.debug("Current player's score: %s",
                        self.machine.game.player.score)
-        self.log.debug("Score displayed on reels: %s",
-                       self.active_scorereelgroup.assumed_value_int)
-        if (self.active_scorereelgroup.assumed_value_int !=
-                self.machine.game.player.score):
-            self.active_scorereelgroup.set_value(self.machine.game.player.score)
+        self.active_scorereelgroup.set_value(self.machine.game.player.score)
 
         # light up this group
         for group in self.machine.score_reel_groups:
