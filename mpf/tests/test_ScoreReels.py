@@ -15,10 +15,11 @@ class TestScoreReels(MpfTestCase):
         return 'tests/machine_files/score_reels/'
 
     def _synchronise_to_reel(self):
-        ts =  self.machine.score_reel_groups.player1._tick_task.get_next_call_time()
-        self.assertTrue(ts)
-        self.advance_time_and_run(ts - self.machine.clock.get_time())
-        self.advance_time_and_run(.01)
+        #ts =  self.machine.score_reel_groups.player1._tick_task.get_next_call_time()
+        #self.assertTrue(ts)
+        #self.advance_time_and_run(ts - self.machine.clock.get_time())
+        #self.advance_time_and_run(.01)
+        pass
 
     def start_game(self):
         # shots only work in games so we have to do this a lot
@@ -122,13 +123,18 @@ class TestScoreReels(MpfTestCase):
         self.assertEqual(1, player1_1k.pulse.call_count)
         self.assertEqual(1, player1_100.pulse.call_count)
         self.assertEqual(8, player1_10.pulse.call_count)
-        self.hit_switch_and_run("score_1p_10_9", 0)
 
-        self.advance_time_and_run(.2)
+        self.advance_time_and_run(.1)
+        self.hit_switch_and_run("score_1p_10_9", 0)
+        self.advance_time_and_run(.1)
+
         self.assertEqual(1, player1_100.pulse.call_count)
         self.assertEqual(9, player1_10.pulse.call_count)
 
+        self.advance_time_and_run(.1)
+        self.release_switch_and_run("score_1p_10_9", 0)
         self.hit_switch_and_run("score_1p_10_0", 0)
+        self.advance_time_and_run(.1)
 
         # no more changes
         self.advance_time_and_run(10)
