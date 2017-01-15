@@ -52,7 +52,11 @@ class ScoreReel(SystemWideDevice):
         # asyncio task which advances the reel
 
         self._busy = asyncio.Event(loop=self.machine.clock.loop)
+        self._busy.set()
         # will be cleared when the runner is done. set to trigger the runner
+
+        self._ready = asyncio.Event(loop=self.machine.clock.loop)
+        # will be set when this real is ready and shows the destination value
 
     def _initialize(self):
         self.log.debug("Configuring score reel with: %s", self.config)
@@ -145,7 +149,12 @@ class ScoreReel(SystemWideDevice):
             self.log.debug("Assumed value: %s", self.assumed_value)
 
         self._busy.clear()
+        self._ready.set()
         self.log.debug("Advancing to %s successful.", self._destination_value)
+
+    def wait_for_ready(self):
+        """Return a future for ready."""
+        return self._ready.wait()
 
     def set_destination_value(self, value):
         """Return the integer value of the destination this reel is moving to.

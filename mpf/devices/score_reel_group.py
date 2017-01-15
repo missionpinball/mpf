@@ -1,5 +1,8 @@
 """A group of score reels."""
 from collections import deque
+
+import asyncio
+
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.devices.score_reel_controller import ScoreReelController
 
@@ -70,9 +73,6 @@ class ScoreReelGroup(SystemWideDevice):
                                                 chime=self.config['chimes'][i])
         # ---- temp chimes code end --------------------------------
 
-        # Need to hook this in case reels aren't done when ball ends
-        self.machine.events.add_handler('ball_ending', self._ball_ending, 900)
-
     # ----- temp method for chime ------------------------------------
     @classmethod
     def chime(cls, chime, **kwargs):
@@ -117,6 +117,15 @@ class ScoreReelGroup(SystemWideDevice):
                 continue
 
             self.reels[i].set_destination_value(self.desired_value_list[i])
+
+    def wait_for_ready(self):
+        """Return a future which will be done when all reels reached their destination."""
+        futures = []
+        for reel in self.reels:
+            if reel:
+                futures.append(reel.wait_for_ready())
+
+        return asyncio.wait(iter(futures), loop=self.machine.clock.loop, return_when=asyncio.ALL_COMPLETED)
 
     def int_to_reel_list(self, value):
         """Convert an integer to a list of integers that represent each positional digit in this ScoreReelGroup.
@@ -222,19 +231,3 @@ class ScoreReelGroup(SystemWideDevice):
         elif self.unlight_on_resync_key:
             self.machine.events.remove_handler_by_key(
                 self.unlight_on_resync_key)
-
-    def _ball_ending(self, queue=None, **kwargs):
-        del kwargs
-        # We need to hook the ball_ending event in case the ball ends while the
-        # score reel is still catching up.
-
-        # only do this if this is the active group
-        if self.machine.score_reel_controller.active_scorereelgroup != self:
-            return
-
-        if not self.valid:
-            self.log.debug("Score reel group is not valid. Setting a queue")
-            self.wait_for_valid_queue = queue
-            self.wait_for_valid_queue.wait()
-        else:
-            self.log.debug("Score reel group is valid. No queue needed.")

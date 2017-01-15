@@ -226,7 +226,7 @@ class TestScoreReels(MpfTestCase):
 
         # drain ball
         self.machine.game.balls_in_play = 0
-        self.machine_run()
+        self.advance_time_and_run(.1)
         self.assertEqual(2, self.machine.game.player.number)
 
         self.machine.game.player.score += 20
