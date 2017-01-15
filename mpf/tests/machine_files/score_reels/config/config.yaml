@@ -61,8 +61,6 @@ score_reels:
         rollover: True
         limit_hi: 9
         limit_lo: 0
-        repeat_pulse_time: 200ms
-        hw_confirm_time: 300ms
     score_1p_1k:
         coil_inc: player1_1k
         switch_0: score_1p_1k_0
@@ -70,8 +68,6 @@ score_reels:
         rollover: True
         limit_hi: 9
         limit_lo: 0
-        repeat_pulse_time: 200ms
-        hw_confirm_time: 300ms
     score_1p_100:
         coil_inc: player1_100
         switch_0: score_1p_100_0
@@ -79,8 +75,6 @@ score_reels:
         rollover: True
         limit_hi: 9
         limit_lo: 0
-        repeat_pulse_time: 200ms
-        hw_confirm_time: 300ms
     score_1p_10:
         coil_inc: player1_10
         switch_0: score_1p_10_0
@@ -88,8 +82,6 @@ score_reels:
         rollover: True
         limit_hi: 9
         limit_lo: 0
-        repeat_pulse_time: 200ms
-        hw_confirm_time: 300ms
     score_2p_10:
         coil_inc: player2_10
         switch_0: score_2p_10_0
@@ -97,8 +89,6 @@ score_reels:
         rollover: True
         limit_hi: 9
         limit_lo: 0
-        repeat_pulse_time: 200ms
-        hw_confirm_time: 300ms
 
 score_reel_groups:
     player1:
@@ -106,14 +96,12 @@ score_reel_groups:
         tags: player1
         max_simultaneous_coils: 2
         chimes: None, chime1, chime2, chime3, None
-        confirm: lazy
         lights_tag: player1
     player2:
         reels: score_2p_10, None
         tags: player2
         max_simultaneous_coils: 2
         chimes: chime3, None
-        confirm: lazy
         lights_tag: player2
 
 matrix_lights:
