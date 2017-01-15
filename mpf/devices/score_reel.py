@@ -40,17 +40,6 @@ class ScoreReel(SystemWideDevice):
         # wheel with 10 values will have this value set to 9. (This actually
         # makes sense since most (all?) score reels also have a zero value.)
 
-        self.physical_value = -999
-        # The physical confirmed value of this reel. This will always be the
-        # value of whichever switch is active or -999. This differs from
-        # `self.assumed_value` in that assumed value will make assumptions about
-        # where the reel is as it pulses through values with no swithces,
-        # whereas this physical value will always be -999 if there is no switch
-        # telling it otherwise.
-
-        # Note this value will be initialized via self.check_hw_switches()
-        # below.
-
         self.hw_sync = False
         # Specifies whether this reel has verified it's positions via the
         # switches since it was last advanced."""
@@ -111,85 +100,6 @@ class ScoreReel(SystemWideDevice):
         self.log.debug("Setting rollover reel: %s", reel.name)
         self.rollover_reel = reel
 
-    def advance(self):
-        """Perform the coil firing to advance this reel one position (up or down).
-
-        This method also schedules delays to post the following events:
-
-        `reel_<name>_ready`: When the config['repeat_pulse_time'] time is up
-        `reel_<name>_hw_value`: When the config['hw_confirm_time'] time is up
-
-        Args:
-
-        Returns: If this method is unable to advance the reel (either because
-            it's not ready, because it's at its maximum value and does not have
-            rollover capabilities, or because you're trying to advance it in a
-            direction but it doesn't have a coil for that direction), it will
-            return `False`. If it's able to pulse the advance coil, it returns
-            `True`.
-        """
-        self.log.debug("Received command advance Reel")
-
-        self.set_destination_value()
-        # above line also sets self._destination_index
-
-        if self.next_pulse_time > self.machine.clock.get_time():
-            # This reel is not ready to pulse again
-            # Note we don't allow this to be overridden. Figure the
-            # recycle time is there for a reason and we don't want to
-            # potentially break an old delicate mechanism
-            self.log.debug("Received advance request but this reel is not "
-                           "ready")
-            return False  # since we didn't advance...in case anyone cares?
-
-        # Ensure we're not at the limit of a reel that can't roll over
-        if not ((self.physical_value == self.config['limit_hi']) and not self.config['rollover']):
-            self.log.debug("Ok to advance")
-
-            # Since we're firing, assume we're going to make it
-            self.assumed_value = self._destination_index
-            self.log.debug("+++Setting assumed value to: %s",
-                           self.assumed_value)
-
-            # Reset our statuses (stati?) :)
-            self.ready = False
-            self.hw_sync = False
-
-            # fire the coil
-            self.config['coil_inc'].pulse(250)
-
-            # set delay to notify when this reel can be fired again
-            self.delay.add(name='ready_to_fire',
-                           ms=self.config['repeat_pulse_time'],
-                           callback=self._ready_to_fire)
-
-            self.next_pulse_time = (self.machine.clock.get_time() +
-                                    (self.config['repeat_pulse_time'] /
-                                     1000.0))
-            self.log.debug("@@@ New Next pulse ready time: %s",
-                           self.next_pulse_time)
-
-            # set delay to check the hw switches
-            self.delay.add(name='hw_switch_check',
-                           ms=self.config['hw_confirm_time'],
-                           callback=self.check_hw_switches)
-
-            return True
-
-        else:
-            self.log.warning("Received command to increment reel, but "
-                             "we're at the max limit and this reel "
-                             "cannot roll over")
-            return False
-
-    def _ready_to_fire(self):
-        # automatically called (via a delay) after the reel fires to post an
-        # event that the reel is ready to fire again
-        self.ready = True
-        self.machine.events.post('reel_' + self.name + "_ready")
-        '''event: reel_(name)_ready
-        desc: The score real (name) is ready to be pulsed again.'''
-
     def check_hw_switches(self):
         """Check all the value switches for this score reel.
 
@@ -246,7 +156,7 @@ class ScoreReel(SystemWideDevice):
 
             yield from asyncio.sleep((wait_ms + self.config['repeat_pulse_time']) / 1000, loop=self.machine.clock.loop)
             self.assumed_value += 1
-            self.assumed_value %= len(self.value_switches)
+            self.assumed_value %= self.config['limit_hi']
 
             self.check_hw_switches()
 
