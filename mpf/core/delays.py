@@ -85,7 +85,7 @@ class DelayManager(object):
                 pass
 
     def add_if_doesnt_exist(self, ms, callback, name, **kwargs):
-        """Adds a delay only if a delay with that name doesn't exist already.
+        """Add a delay only if a delay with that name doesn't exist already.
 
         Args:
             ms: Int of the number of milliseconds you want this delay to be for.

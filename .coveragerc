@@ -11,7 +11,7 @@ omit =
     *__init__.py
     mpf/tests/*
     mpf/__main__.py
-    mpf/migrator/config_version_3.py
+    mpf/migrator/*
 
 [run]
 source = mpf

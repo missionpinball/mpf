@@ -5,6 +5,7 @@ from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
 
+
 @DeviceMonitor("state")
 class ComboSwitch(SystemWideDevice, ModeDevice):
 

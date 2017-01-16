@@ -206,7 +206,7 @@ class Achievement(ModeDevice):
             self._show.stop()
 
     def add_to_group(self, group):
-        """Adds this achievement to an achievement group.
+        """Add this achievement to an achievement group.
 
         Args:
             group: The achievement group to add this achievement to.
@@ -216,7 +216,7 @@ class Achievement(ModeDevice):
         self._group_memberships.add(group)
 
     def remove_from_group(self, group):
-        """Removes this achievement from an achievement group.
+        """Remove this achievement from an achievement group.
 
         Args:
             group: The achievement group to remove this achievement from.

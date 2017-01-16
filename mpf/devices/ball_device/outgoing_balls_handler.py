@@ -314,7 +314,8 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             if self.ball_device.ejector:
                 # wait for trigger event
                 if eject_request.mechanical and self.ball_device.config['player_controlled_eject_event']:
-                    trigger = self.machine.events.wait_for_event(self.ball_device.config['player_controlled_eject_event'])
+                    trigger = self.machine.events.wait_for_event(
+                        self.ball_device.config['player_controlled_eject_event'])
                     waiters.append(trigger)
                 elif eject_request.mechanical and self.ball_device.config['mechanical_eject']:
                     # do nothing

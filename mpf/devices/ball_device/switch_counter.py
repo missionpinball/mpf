@@ -13,7 +13,6 @@ class SwitchCounter(BallDeviceBallCounter):
     This should be used for devices with multiple switches and/or a jam switch. Simple devices with only one switch
     should use a simpler counter.
     """
-    # TODO: write simpler counter for single switch devices
 
     def __init__(self, ball_device, config):
         """Initialise ball counter."""

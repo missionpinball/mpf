@@ -164,8 +164,7 @@ class AchievementGroup(ModeDevice):
         return True
 
     def member_state_changed(self):
-        """Notifies the group that one of its member achievements has changed
-        state."""
+        """Notify the group that one of its member achievements has changed state."""
         self._check_for_auto_start_stop()
         self._process_current_member_state()
 

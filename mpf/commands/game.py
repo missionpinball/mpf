@@ -64,8 +64,8 @@ class Command(object):
                             action="store", dest="logfile",
                             metavar='file_name',
                             default=os.path.join("logs",
-                                datetime.now().strftime(
-                                "%Y-%m-%d-%H-%M-%S-mpf-" + socket.gethostname() + ".log")),
+                                                 datetime.now().strftime(
+                                                     "%Y-%m-%d-%H-%M-%S-mpf-" + socket.gethostname() + ".log")),
                             help="The name (and path) of the log file")
 
         parser.add_argument("-p",

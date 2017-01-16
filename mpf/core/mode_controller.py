@@ -198,7 +198,7 @@ class ModeController(object):
             except (KeyError, ImportError):     # load path
                 try:
                     mode_class = Util.string_to_class(config['mode']['code'])
-                except ImportError: # code is in the mpf folder. legacy
+                except ImportError:     # code is in the mpf folder. legacy
                     i = importlib.import_module(
                         'mpf.' + self.machine.config['mpf']['paths']['modes'] + '.' +
                         self._mpf_mode_folders[mode_string] + '.code.' +

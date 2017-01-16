@@ -310,7 +310,7 @@ class HardwarePlatform(VirtualPlatform):
 
     def add_ball_to_device(self, device):
         """Add ball to device."""
-        if device.balls  >= device.config['ball_capacity']:
+        if device.balls >= device.config['ball_capacity']:
             raise AssertionError("KABOOM! We just added a ball to {} which has a capacity "
                                  "of {} but already had {} ball(s)".format(device.name,
                                                                            device.config['ball_capacity'],
