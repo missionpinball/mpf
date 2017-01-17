@@ -66,7 +66,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'MPF API'
-copyright = '2013-2016, The Mission Pinball Framework Team'
+copyright = '2013-2017, The Mission Pinball Framework Team'
 author = 'The Mission Pinball Framework Team'
 
 # The version info for the project you're documenting, acts as replacement for
