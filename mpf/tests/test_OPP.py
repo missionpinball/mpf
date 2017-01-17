@@ -105,10 +105,15 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
                 self._crc_message(board_version, False) + self._crc_message(board_version, False) +
                 self._crc_message(board_version),   # get version
             self._crc_message(b'\x20\x14\x00\x02\x17\x00'): False,   # configure coil 0
+            self._crc_message(b'\x20\x17\x00\x80'): False,           # configure coil 0 - remove inputs
             self._crc_message(b'\x20\x14\x01\x04\x17\x0f'): False,   # configure coil 1
+            self._crc_message(b'\x20\x17\x01\x81'): False,           # configure coil 1 - remove inputs
             self._crc_message(b'\x20\x14\x02\x04\x0a\x0f'): False,   # configure coil 2
-            self._crc_message(b'\x20\x14\x03\x00\x0a\x06'): False,    # configure coil 3
-            self._crc_message(b'\x21\x14\x0c\x00\x0a\x01'): False,    # configure coil 1-12
+            self._crc_message(b'\x20\x17\x02\x82'): False,           # configure coil 2 - remove inputs
+            self._crc_message(b'\x20\x14\x03\x00\x0a\x06'): False,   # configure coil 3
+            self._crc_message(b'\x20\x17\x03\x83'): False,           # configure coil 3 - remove inputs
+            self._crc_message(b'\x21\x14\x0c\x00\x0a\x01'): False,   # configure coil 1-12
+            self._crc_message(b'\x21\x17\x18\x8c'): False,           # configure coil 1-12 - remove inputs
         }
         self.serialMock.permanent_commands = {
             b'\xff': b'\xff',
@@ -124,12 +129,16 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
     def testDualWoundCoils(self):
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x02\x05\x0a\x0f')] = False
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x03\x0a\x00')] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x17\x03\x03')] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x17\x03\x02')] = False
         self.machine.flippers.f_test_hold.enable()
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x02\x04\x0a\x0f')] = False
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x02\x0a\x00')] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x17\x03\x83')] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x17\x03\x82')] = False
         self.machine.flippers.f_test_hold.disable()
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)

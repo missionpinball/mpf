@@ -538,6 +538,12 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         hold = self.get_hold_value(opp_sol)
         self.reconfigure_driver(ConfiguredHwDriver(opp_sol, {}), hold != 0)
 
+        _, _, coil_num = number.split("-")
+        coil_num = int(coil_num)
+        # calculate the default input and remove it by default
+        switch_num = int(coil_num - (coil_num % 4)) * 2 + (coil_num % 4)
+        self._remove_switch_coil_mapping(switch_num, opp_sol)
+
         return opp_sol
 
     def configure_switch(self, config: dict):
@@ -737,7 +743,47 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                        driver_obj.hw_driver.number, driver_obj.config)
 
         driver_obj.hw_driver.use_switch = True
+        driver_obj.hw_driver.switches.append(switch_obj.hw_switch.number)
+        _, _, switch_num = switch_obj.hw_switch.number.split("-")
+        switch_num = int(switch_num)
+        self._add_switch_coil_mapping(switch_num, driver_obj.hw_driver)
+
         self.reconfigure_driver(driver_obj, use_hold)
+
+    def _remove_switch_coil_mapping(self, switch_num, driver):
+        """Remove mapping between switch and coil."""
+        if self.minVersion < 0x00020000:
+            return
+
+        _, coil_num = driver.config['number'].split('-')
+        msg = bytearray()
+        msg.append(driver.solCard.addr)
+        msg.extend(OppRs232Intf.SET_SOL_INP_CMD)
+        msg.append(int(switch_num))
+        msg.append(int(coil_num) + ord(OppRs232Intf.CFG_SOL_INP_REMOVE))
+        msg.extend(OppRs232Intf.calc_crc8_whole_msg(msg))
+        msg.extend(OppRs232Intf.EOM_CMD)
+        final_cmd = bytes(msg)
+
+        self.log.debug("Unmapping input %s and coil %s", switch_num, coil_num)
+        self.send_to_processor(driver.solCard.chain_serial, final_cmd)
+
+    def _add_switch_coil_mapping(self, switch_num, driver):
+        """Add mapping between switch and coil."""
+        if self.minVersion < 0x00020000:
+            return
+        _, coil_num = driver.config['number'].split('-')
+        msg = bytearray()
+        msg.append(driver.solCard.addr)
+        msg.extend(OppRs232Intf.SET_SOL_INP_CMD)
+        msg.append(int(switch_num))
+        msg.append(int(coil_num))
+        msg.extend(OppRs232Intf.calc_crc8_whole_msg(msg))
+        msg.extend(OppRs232Intf.EOM_CMD)
+        final_cmd = bytes(msg)
+
+        self.log.debug("Mapping input %s and coil %s", switch_num, coil_num)
+        self.send_to_processor(driver.solCard.chain_serial, final_cmd)
 
     def clear_hw_rule(self, switch, coil):
         """Clear a hardware rule.
@@ -749,11 +795,18 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         as the *sw_num*.
 
         """
-        self.log.debug("Clearing HW Rule for switch: %s, coils: %s", switch.hw_switch.number,
-                       coil.hw_driver.number)
+        if switch.hw_switch.number in coil.hw_driver.switches:
+            self.log.debug("Clearing HW Rule for switch: %s, coils: %s", switch.hw_switch.number,
+                           coil.hw_driver.number)
+            coil.hw_driver.switches.remove(switch.hw_switch.number)
+            _, _, switch_num = switch.hw_switch.number.split("-")
+            switch_num = int(switch_num)
+            self._remove_switch_coil_mapping(switch_num, coil.hw_driver)
 
-        coil.hw_driver.use_switch = False
-        self.reconfigure_driver(coil, not coil.hw_driver.can_be_pulsed)
+        # disable rule if there are no more switches
+        if not coil.hw_driver.switches:
+            coil.hw_driver.use_switch = False
+            self.reconfigure_driver(coil, not coil.hw_driver.can_be_pulsed)
 
 
 class OPPSerialCommunicator(BaseSerialCommunicator):

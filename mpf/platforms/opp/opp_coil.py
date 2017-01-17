@@ -18,6 +18,7 @@ class OPPSolenoid(DriverPlatformInterface):
         self.log = sol_card.log
         self.can_be_pulsed = False
         self.use_switch = False
+        self.switches = []
 
     def get_board_name(self):
         """Return OPP chain and addr."""

@@ -27,6 +27,7 @@ class OppRs232Intf:
     CFG_IND_SOL_CMD = b'\x14'
     CFG_IND_INP_CMD = b'\x15'
     SET_IND_NEO_CMD = b'\x16'
+    SET_SOL_INP_CMD = b'\x17'
 
     INV_CMD = b'\xf0'
     ILLEGAL_CMD = b'\xfe'
@@ -54,6 +55,8 @@ class OppRs232Intf:
     CFG_SOL_USE_SWITCH = b'\x01'
     CFG_SOL_AUTO_CLR = b'\x02'
     CFG_SOL_ON_OFF = b'\x04'
+
+    CFG_SOL_INP_REMOVE = b'\x80'
 
     NUM_COLOR_TBL = 32
     NEO_CMD_ON = 0x80
