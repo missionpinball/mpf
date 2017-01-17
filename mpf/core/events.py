@@ -304,8 +304,8 @@ class EventManager(object):
         added to a queue and processed after the current event is done.
 
         You can control the order the handlers will be called by optionally
-        specifying a priority when the handlers were registed. (Higher priority
-        values will be processed first.)
+        specifying a priority when the handlers were registered. (Higher
+        priority values will be processed first.)
 
         Args:
             event: A string name of the event you're posting. Note that you can
@@ -324,19 +324,19 @@ class EventManager(object):
         self._post(event, ev_type=None, callback=callback, **kwargs)
 
     def post_boolean(self, event, callback=None, **kwargs):
-        """Post an boolean event which causes all the registered handlers to be called one-by-one.
+        """Post an boolean event which causes all the registered handlers to be
+         called one-by-one.
 
-        Boolean events differ from regular events in that
-        if any handler returns False, the remaining handlers will not be
-        called.
+        Boolean events differ from regular events in that if any handler
+        returns False, the remaining handlers will not be called.
 
         Events are processed serially (e.g. one at a time), so if the event
         core is in the process of handling another event, this event is
         added to a queue and processed after the current event is done.
 
         You can control the order the handlers will be called by optionally
-        specifying a priority when the handlers were registed. (Higher priority
-        values will be processed first.)
+        specifying a priority when the handlers were registered. (Higher
+        priority values will be processed first.)
 
         Args:
             event: A string name of the event you're posting. Note that you can
@@ -355,7 +355,8 @@ class EventManager(object):
         self._post(event, ev_type='boolean', callback=callback, **kwargs)
 
     def post_queue(self, event, callback, **kwargs):
-        """Post a queue event which causes all the registered handlers to be called.
+        """Post a queue event which causes all the registered handlers to be
+        called.
 
         Queue events differ from standard events in that individual handlers
         are given the option to register a "wait", and the callback will not be
@@ -388,7 +389,8 @@ class EventManager(object):
         self._post(event, ev_type='queue', callback=callback, **kwargs)
 
     def post_relay(self, event, callback=None, **kwargs):
-        """Post a relay event which causes all the registered handlers to be called.
+        """Post a relay event which causes all the registered handlers to be
+        called.
 
         A dictionary can be passed from handler-to-handler and modified
         as needed.
@@ -411,12 +413,12 @@ class EventManager(object):
         added to a queue and processed after the current event is done.
 
         You can control the order the handlers will be called by optionally
-        specifying a priority when the handlers were registed. (Higher priority
-        values will be processed first.)
+        specifying a priority when the handlers were registered. (Higher
+        priority values will be processed first.)
 
         Relay events differ from standard events in that the resulting kwargs
         from one handler are passed to the next handler. (In other words,
-        stanard events mean that all the handlers get the same initial kwargs,
+        standard events mean that all the handlers get the same initial kwargs,
         whereas relay events "relay" the resulting kwargs from one handler to
         the next.)
         """
