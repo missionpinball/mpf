@@ -1,6 +1,0 @@
-#config_version=4
-
-config: config.yaml
-
-hardware:
-  driverboards: wpc

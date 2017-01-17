@@ -78,7 +78,6 @@ mpf:
     plugins:
         mpf.plugins.auditor.Auditor
         mpf.plugins.info_lights.InfoLights
-        mpf.plugins.osc.OSC
         mpf.plugins.switch_player.SwitchPlayer
 
     platforms:

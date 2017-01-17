@@ -644,14 +644,6 @@ opp:
     baud: single|int|115200
     debug: single|bool|False
     chains: dict|str:str|None
-osc:
-    __valid_in__: machine
-    client_port: single|int|8000
-    debug_messages: single|bool|false
-    machine_ip: single|str|auto
-    machine_port: single|int|9000
-    approved_client_ips: ignore
-    client_updates: list|str|None
 open_pixel_control:
     __valid_in__: machine
     connection_required: single|bool|False
