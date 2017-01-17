@@ -563,6 +563,8 @@ matrix_lights:
     x: single|int|None
     y: single|int|None
     z: single|int|None
+mc_scriptlets:
+    __valid_in__: machine  # used by the MC, ignored by MPF
 mode:
     __valid_in__: mode
     priority: single|int|100
