@@ -864,7 +864,6 @@ show_player:
     start_step: single|template_int|1
     loops: single|int|-1
     sync_ms: single|int|None
-    reset: single|bool|True
     manual_advance: single|bool|False
     key: single|str|None
     show_tokens: dict|str:str|None
