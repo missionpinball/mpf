@@ -898,11 +898,9 @@ slide_player:
     expire: single|secs|None
     slide: single|str|None
     action: single|enum(play,remove)|play
-    persist: single|bool|False                      # todo
 slides:
     __valid_in__: machine, mode
     debug: single|bool|False
-    tags: list|str|None
     expire: single|secs|None
     background_color: single|kivycolor|000000ff
     opacity: single|float|1.0
