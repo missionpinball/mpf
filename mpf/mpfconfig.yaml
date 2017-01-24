@@ -93,6 +93,7 @@ mpf:
         smartmatrix: mpf.platforms.smartmatrix.SmartMatrix
         snux: mpf.platforms.snux.HardwarePlatform
         virtual: mpf.platforms.virtual.HardwarePlatform
+        spike: mpf.platforms.spike.spike.SpikePlatform
 
     paths:
         scriptlets: scriptlets
