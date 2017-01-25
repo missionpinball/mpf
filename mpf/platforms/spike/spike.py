@@ -3,38 +3,55 @@ import asyncio
 
 import logging
 
+from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
+
+from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 from mpf.platforms.spike.spike_defines import SpikeNodebus
-from mpf.core.platform import SwitchPlatform, DriverPlatform
+from mpf.core.platform import SwitchPlatform, MatrixLightsPlatform
 
 
-class SpikePlatform(SwitchPlatform, DriverPlatform):
+class SpikeSwitch(SwitchPlatformInterface):
 
-    "Stern Spike Platform."
+    """A switch on a Stern Spike node board."""
+
+    def __init__(self, config, platform):
+        """Initialise switch."""
+        super().__init__(config, config['number'])
+        self.platform = platform
 
 
-    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
-        pass
+class SpikeLight(MatrixLightPlatformInterface):
 
-    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
-        pass
+    def __init__(self, node, number, platform):
+        """Initialise switch."""
+        self.node = node
+        self.number = number
+        self.platform = platform
 
-    def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
-        pass
+    def on(self, brightness=255):
+        """Set brightness of channel."""
+        fade_time = 30
+        data = bytearray([self.number, fade_time, brightness])
+        self.platform.send_cmd(self.node, SpikeNodebus.SetLed, data)
 
-    def set_pulse_on_hit_rule(self, enable_switch, coil):
-        pass
 
-    def clear_hw_rule(self, switch, coil):
-        pass
+class SpikePlatform(SwitchPlatform, MatrixLightsPlatform):
 
-    def configure_driver(self, config):
-        pass
-        self._send_cmd(10, SpikeNodebus.CoilTrigger, bytearray([0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]))
+    """Stern Spike Platform."""
+
+    def configure_matrixlight(self, config):
+        node, number = config['number'].split("-")
+        return SpikeLight(int(node), int(number), self)
+
+    def _disable_driver(self):
+        self.send_cmd(10, SpikeNodebus.CoilTrigger, bytearray([0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]))
 
     def configure_switch(self, config):
-        pass
+        """Configure switch on Stern Spike."""
+        return SpikeSwitch(config, self)
 
     def get_hw_switch_states(self):
+        """Return current switch states."""
         hw_states = dict()
         for node in self._nodes:
             curr_bit = 1
@@ -51,18 +68,23 @@ class SpikePlatform(SwitchPlatform, DriverPlatform):
         self._writer = None
         self._reader = None
         self._inputs = {}
+        self.config = None
+        self._poll_task = None
 
         # TODO: where do we get those from? maybe just iterate all of them?
         self._nodes = [1, 8, 9, 10, 11]
 
     def initialize(self):
-        # TODO: read from config
-        port = "/dev/ttyUSB0"
-        baud = 115200
+        """Initialise platform."""
+        self.config = self.machine.config_validator.validate_config("spike", self.machine.config['spike'])
+
+        port = self.config['port']
+        baud = self.config['baud']
+        self.debug = self.config['debug']
 
         self.machine.clock.loop.run_until_complete(self._connect_to_hardware(port, baud))
 
-        self._poll_task = self.machine.clock.loop.create_task(self._poll_task())
+        self._poll_task = self.machine.clock.loop.create_task(self._poll())
         self._poll_task.add_done_callback(self._done)
 
     @asyncio.coroutine
@@ -79,12 +101,16 @@ class SpikePlatform(SwitchPlatform, DriverPlatform):
         yield from self._initialize()
 
     def _update_switches(self, node):
-        new_inputs = self._read_inputs(node)
-        if not new_inputs:
+        new_inputs_str = yield from self._read_inputs(node)
+        if not new_inputs_str:
             self.log.info("Node: %s did not return any inputs.", node)
             return
+
+        new_inputs = self._input_to_int(new_inputs_str)
+
         if self.debug:
-            self.log.debug("Inputs node: %s State: %s", node, "".join(bin(b) + " " for b in new_inputs[0:8]))
+            self.log.debug("Inputs node: %s State: %s Old: %s New: %s",
+                           node, "".join(bin(b) + " " for b in new_inputs_str[0:8]), self._inputs[node], new_inputs)
 
         changes = self._inputs[node] ^ new_inputs
         if changes != 0:
@@ -93,22 +119,24 @@ class SpikePlatform(SwitchPlatform, DriverPlatform):
                 if (curr_bit & changes) != 0:
                     self.machine.switch_controller.process_switch_by_num(
                         state=(curr_bit & new_inputs) == 0,
-                        num=str(node) + str(index),
+                        num=str(node) + "-" + str(index),
                         platform=self)
                 curr_bit <<= 1
+        elif self.debug:
+            self.log.debug("Got input activity but inputs did not change.")
 
         self._inputs[node] = new_inputs
 
-
     @asyncio.coroutine
-    def _poll_task(self):
+    def _poll(self):
         while True:
             self._send_raw(bytearray([0]))
 
-            ready_node = ord((yield from self._reader.read(1))[0])
+            result = yield from self._read_raw(1)
+            ready_node = result[0]
 
             if ready_node > 0:
-                self._update_switches(ready_node)
+                yield from self._update_switches(ready_node)
 
             yield from asyncio.sleep(.001, loop=self.machine.clock.loop)
 
@@ -140,14 +168,14 @@ class SpikePlatform(SwitchPlatform, DriverPlatform):
         # 00 brightness brigness 2
 
     @asyncio.coroutine
-    def _read_raw(self, len):
-        if not len:
+    def _read_raw(self, msg_len):
+        if not msg_len:
             raise AssertionError("Cannot read 0 length")
 
         if self.debug:
-            self.log.debug("Reading %s bytes", len)
+            self.log.debug("Reading %s bytes", msg_len)
 
-        data = yield from self._reader.readexactly(len * 3)
+        data = yield from self._reader.readexactly(msg_len * 3)
         # if we got a space
         if data[0] == ' ':
             data = data[1:]
@@ -156,19 +184,21 @@ class SpikePlatform(SwitchPlatform, DriverPlatform):
         result = bytearray()
         if self.debug:
             self.log.debug("Data: %s", data)
-        for i in range(len):
-            result.append(int(data[i*3:(i*3) + 2], 16))
+        for i in range(msg_len):
+            result.append(int(data[i * 3:(i * 3) + 2], 16))
 
         return result
 
-    def _checksum(self, cmd_str):
+    @staticmethod
+    def _checksum(cmd_str):
         checksum = 0
         for i in cmd_str:
             checksum += i
         return (256 - (checksum % 256)) % 256
 
     @asyncio.coroutine
-    def _send_cmd_and_wait_for_response(self, node, cmd, data, response_len = 0):
+    def send_cmd_and_wait_for_response(self, node, cmd, data, response_len):
+        """Send cmd and wait for response."""
         cmd_str = bytearray()
         cmd_str.append((8 << 4) + node)
         cmd_str.append(len(data) + 2)
@@ -187,7 +217,8 @@ class SpikePlatform(SwitchPlatform, DriverPlatform):
 
         return False
 
-    def _send_cmd(self, node, cmd, data):
+    def send_cmd(self, node, cmd, data):
+        """Send cmd which does not require a response."""
         cmd_str = bytearray()
         cmd_str.append((8 << 4) + node)
         cmd_str.append(len(data) + 2)
@@ -198,40 +229,47 @@ class SpikePlatform(SwitchPlatform, DriverPlatform):
         self._send_raw(cmd_str)
 
     def _read_inputs(self, node):
-        return self._send_cmd_and_wait_for_response(node, SpikeNodebus.GetInputState, bytearray(), 10)
+        return self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetInputState, bytearray(), 10)
+
+    @staticmethod
+    def _input_to_int(state):
+        result = 0
+        for i in range(len(state)):
+            result += pow(256, i) * int(state[i])
+
+        return result
 
     @asyncio.coroutine
     def _initialize(self):
-        self._send_cmd(0, SpikeNodebus.Reset, bytearray())
-        self._send_cmd(0, SpikeNodebus.SetTraffic, bytearray([34]))
-        self._send_cmd(0, SpikeNodebus.SetTraffic, bytearray([17]))
+        self.send_cmd(0, SpikeNodebus.Reset, bytearray())
+        self.send_cmd(0, SpikeNodebus.SetTraffic, bytearray([34]))
+        self.send_cmd(0, SpikeNodebus.SetTraffic, bytearray([17]))
 
         for node in self._nodes:
-            self._send_cmd(node, SpikeNodebus.SetTraffic, bytearray([16]))
-            self._send_cmd(node, SpikeNodebus.SetTraffic, bytearray([32]))
+            self.send_cmd(node, SpikeNodebus.SetTraffic, bytearray([16]))
+            self.send_cmd(node, SpikeNodebus.SetTraffic, bytearray([32]))
 
-        self._send_cmd(0, SpikeNodebus.SetTraffic, bytearray([34]))
+        self.send_cmd(0, SpikeNodebus.SetTraffic, bytearray([34]))
 
         yield from asyncio.sleep(.5, loop=self.machine.clock.loop)
 
         for node in self._nodes:
             # TODO: why does spike do this 6 times?
-            fw_version = yield from self._send_cmd_and_wait_for_response(node, SpikeNodebus.GetVersion, bytearray(), 12)
+            fw_version = yield from self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetVersion, bytearray(), 12)
             if fw_version:
                 self.log.debug("Node: %s Version: %s", node, "".join("0x%02x " % b for b in fw_version))
-            yield from self._send_cmd_and_wait_for_response(node, SpikeNodebus.INIT_BOARD, bytearray(), 4)
+            yield from self.send_cmd_and_wait_for_response(node, SpikeNodebus.INIT_BOARD, bytearray(), 4)
 
         for node in self._nodes:
-            self._inputs[node] = yield from self._read_inputs(node)
+            initial_inputs = yield from self._read_inputs(node)
+            self._inputs[node] = self._input_to_int(initial_inputs)
 
         for node in self._nodes:
-            yield from self._send_cmd_and_wait_for_response(node, SpikeNodebus.GetStatus, bytearray(), 10)
-            yield from self._send_cmd_and_wait_for_response(node, SpikeNodebus.GetCoilCurrent, bytearray([0]), 12)
+            yield from self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetStatus, bytearray(), 10)
+            yield from self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetCoilCurrent, bytearray([0]), 12)
 
-        self._send_cmd(0, SpikeNodebus.SetTraffic, bytearray([17]))
+        self.send_cmd(0, SpikeNodebus.SetTraffic, bytearray([17]))
         yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
 
         for node in self._nodes:
-            yield from self._send_cmd_and_wait_for_response(node, SpikeNodebus.GetStatus, bytearray(), 10)
-
-
+            yield from self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetStatus, bytearray(), 10)

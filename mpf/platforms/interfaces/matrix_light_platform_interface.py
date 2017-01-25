@@ -24,11 +24,10 @@ class MatrixLightPlatformInterface(metaclass=abc.ABCMeta):
         """
         raise NotImplementedError('on method must be defined to use this base class')
 
-    @abc.abstractmethod
     def off(self):
         """Turn off the matrix light instantly.
 
         Returns:
             None
         """
-        raise NotImplementedError('off method must be defined to use this base class')
+        self.on(0)
