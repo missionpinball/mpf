@@ -259,6 +259,7 @@ class SwitchController(MpfController):
                 self.process_switch_obj(obj=switch, state=state, logical=logical)
                 return
 
+        self.log.debug("Unknown switch %s change to state %s on platform %s", num, state, platform)
         # if the switch is not configured still trigger the monitor
         for monitor in self.monitors:
             monitor(MonitoredSwitchChange(name=str(num), label="{}-{}".format(str(platform), str(num)),
