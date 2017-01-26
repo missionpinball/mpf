@@ -3,11 +3,13 @@ import asyncio
 
 import logging
 
+from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
+
 from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
 
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 from mpf.platforms.spike.spike_defines import SpikeNodebus
-from mpf.core.platform import SwitchPlatform, MatrixLightsPlatform
+from mpf.core.platform import SwitchPlatform, MatrixLightsPlatform, DriverPlatform
 
 
 class SpikeSwitch(SwitchPlatformInterface):
@@ -34,10 +36,83 @@ class SpikeLight(MatrixLightPlatformInterface):
         data = bytearray([fade_time, brightness])
         self.platform.send_cmd(self.node, SpikeNodebus.SetLed + self.number, data)
 
+class SpikeDriver(DriverPlatformInterface):
 
-class SpikePlatform(SwitchPlatform, MatrixLightsPlatform):
+    def __init__(self, config, number, platform):
+        super().__init__(config, number)
+        self.platform = platform
+        self.node, self.index = number.split("-")
+
+    def enable(self, coil):
+        """Enable coil."""
+        # TODO: repeat command
+        power1 = power2 = 0xFF
+        duration1 = duration2 = 0x46
+        continue_flag1 = continue_flag2 = 0x01
+        msg = bytearray([
+            self.index,
+            power1,
+            duration1,
+            continue_flag1,
+            power2,
+            duration2,
+            continue_flag2,
+            0,
+            0
+        ])
+        self.platform.send_cmd(self.node, SpikeNodebus.CoilTrigger, msg)
+
+    def pulse(self, coil, milliseconds):
+        """Pulse coil for a certain time."""
+        power1 = 0xFF
+        if power1 > 0xFF:
+            raise AssertionError("Pulse ms too long.")
+        power2 = 0
+        duration1 = int(milliseconds * 1.28)
+        duration2 = 0
+        continue_flag1 = continue_flag2 = 0
+        msg = bytearray([
+            self.index,
+            power1,
+            duration1,
+            continue_flag1,
+            power2,
+            duration2,
+            continue_flag2,
+            0,
+            0
+        ])
+        self.platform.send_cmd(self.node, SpikeNodebus.CoilTrigger, msg)
+
+    def disable(self, coil):
+        """Disable coil."""
+        self.platform.send_cmd(self.node, SpikeNodebus.CoilTrigger, bytearray([self.index, 0, 0, 0, 0, 0, 0, 0, 0]))
+
+    def get_board_name(self):
+        return "Spike Node {}".format(self.node)
+
+
+class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
 
     """Stern Spike Platform."""
+
+    def set_pulse_on_hit_rule(self, enable_switch, coil):
+        pass
+
+    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
+        pass
+
+    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
+        pass
+
+    def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
+        pass
+
+    def clear_hw_rule(self, switch, coil):
+        pass
+
+    def configure_driver(self, config):
+        pass
 
     def configure_matrixlight(self, config):
         node, number = config['number'].split("-")
@@ -136,9 +211,12 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform):
             ready_node = result[0]
 
             if ready_node > 0:
+                # virtual cpu node returns 0xF0 instead of 0 to make it distinguishable
+                if ready_node == 0xF0:
+                    ready_node = 0
                 yield from self._update_switches(ready_node)
 
-            yield from asyncio.sleep(.5, loop=self.machine.clock.loop)
+            yield from asyncio.sleep(.001, loop=self.machine.clock.loop)
 
     def stop(self):
         """Stop hardware and close connections."""
