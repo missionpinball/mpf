@@ -213,6 +213,22 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
         if config:
             for event, settings in config.items():
                 event, priority = self._parse_event_priority(event, priority)
+
+                if mode and event in mode.config['mode']['start_events']:
+                    self.machine.log.error(
+                        "{0} mode's {1}: section contains a \"{2}:\" event "
+                        "which is also in the start_events: for the {0} mode. "
+                        "Change the {1}: {2}: event name to "
+                        "\"mode_{0}_started:\"".format(
+                            mode.name, self.config_file_section, event))
+
+                    raise ValueError(
+                        "{0} mode's {1}: section contains a \"{2}:\" event "
+                        "which is also in the start_events: for the {0} mode. "
+                        "Change the {1}: {2}: event name to "
+                        "\"mode_{0}_started:\"".format(
+                            mode.name, self.config_file_section, event))
+
                 key_list.append(
                     self.machine.events.add_handler(
                         event=event,
