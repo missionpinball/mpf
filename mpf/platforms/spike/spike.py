@@ -31,8 +31,8 @@ class SpikeLight(MatrixLightPlatformInterface):
     def on(self, brightness=255):
         """Set brightness of channel."""
         fade_time = 30
-        data = bytearray([self.number, fade_time, brightness])
-        self.platform.send_cmd(self.node, SpikeNodebus.SetLed, data)
+        data = bytearray([fade_time, brightness])
+        self.platform.send_cmd(self.node, SpikeNodebus.SetLed + self.number, data)
 
 
 class SpikePlatform(SwitchPlatform, MatrixLightsPlatform):
@@ -72,7 +72,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform):
         self._poll_task = None
 
         # TODO: where do we get those from? maybe just iterate all of them?
-        self._nodes = [1, 8, 9, 10, 11]
+        self._nodes = [0, 1, 8, 9, 10, 11]
 
     def initialize(self):
         """Initialise platform."""
@@ -138,7 +138,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform):
             if ready_node > 0:
                 yield from self._update_switches(ready_node)
 
-            yield from asyncio.sleep(.001, loop=self.machine.clock.loop)
+            yield from asyncio.sleep(.5, loop=self.machine.clock.loop)
 
     def stop(self):
         """Stop hardware and close connections."""
@@ -208,9 +208,13 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform):
         cmd_str.append(response_len)
         self._send_raw(cmd_str)
         if response_len:
+            # TODO: timeout
             response = yield from self._read_raw(response_len)
             if self._checksum(response) != 0:
-                self.log.info("Checksum mismatch for response: %s", response)
+                self.log.info("Checksum mismatch for response: %s", "".join("%02x " % b for b in response))
+                # we resync by flushing the input
+                # TODO: look for resync header
+                self._writer.transport.serial.reset_input_buffer()
                 return False
 
             return response
@@ -234,7 +238,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform):
     @staticmethod
     def _input_to_int(state):
         result = 0
-        for i in range(len(state)):
+        for i in range(8):
             result += pow(256, i) * int(state[i])
 
         return result
@@ -246,6 +250,8 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform):
         self.send_cmd(0, SpikeNodebus.SetTraffic, bytearray([17]))
 
         for node in self._nodes:
+            if node == 0:
+                continue
             self.send_cmd(node, SpikeNodebus.SetTraffic, bytearray([16]))
             self.send_cmd(node, SpikeNodebus.SetTraffic, bytearray([32]))
 
@@ -265,6 +271,8 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform):
             self._inputs[node] = self._input_to_int(initial_inputs)
 
         for node in self._nodes:
+            if node == 0:
+                continue
             yield from self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetStatus, bytearray(), 10)
             yield from self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetCoilCurrent, bytearray([0]), 12)
 
@@ -272,4 +280,6 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform):
         yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
 
         for node in self._nodes:
+            if node == 0:
+                continue
             yield from self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetStatus, bytearray(), 10)
