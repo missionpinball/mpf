@@ -21,7 +21,7 @@ class PluginPlayer(DeviceConfigPlayer):
     def get_express_config(self, value):
         """Not supported."""
         del value
-        raise AssertionError("Plugin Player does not support express config")
+        raise AssertionError("{} does not support express config".format(self))
 
     def _get_bcp_client(self, config):
         client_name = config.get('bcp_connection', "local_display")
