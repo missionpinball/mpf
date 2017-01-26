@@ -9,6 +9,7 @@ test_player:
     some: dict
     with: arbitrary
     values: '.'
+  event5{foo==0}: some_string
 
 test2_player:
   event2: slide1

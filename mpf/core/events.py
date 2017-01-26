@@ -28,6 +28,30 @@ class EventManager(object):
 
         self.debug = True
 
+    def get_event_and_condition_from_string(self, event_string):
+        """Parse an event string to divide the event name from a possible
+        placeholder / conditional in braces.
+
+        Args:
+            event_string: String to parse
+
+        Returns:
+            2-item tuple:
+                First item is the event name, cleaned up a by converting it
+                to lowercase.
+
+                Second item is the condition (A BoolTemplate instance) if it
+                exists, or None if it doesn't.
+
+        """
+        if event_string.find("{") > 0 and event_string[-1:] == "}":
+            return (event_string[0:event_string.find("{")].lower(),
+                    self.machine.placeholder_manager.build_bool_template(
+                        event_string[event_string.find("{") + 1:-1]))
+
+        else:
+            return event_string.lower(), None
+
     def add_handler(self, event, handler, priority=1, **kwargs):
         """Register an event handler to respond to an event.
 
@@ -81,13 +105,7 @@ class EventManager(object):
             raise AssertionError("Handler {} for event '{}' param kwargs is missing '**'. Actual signature: {}".format(
                 handler, event, sig))
 
-        if event.find("{") > 0 and event[-1:] == "}":
-            condition = self.machine.placeholder_manager.build_bool_template(event[event.find("{") + 1:-1])
-            event = event[0:event.find("{")]
-        else:
-            condition = None
-
-        event = event.lower()
+        event, condition = self.get_event_and_condition_from_string(event)
 
         # Add an entry for this event if it's not there already
         if event not in self.registered_handlers:

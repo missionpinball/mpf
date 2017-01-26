@@ -133,8 +133,8 @@ class TestPluginConfigPlayer(MpfBcpTestCase):
         self._bcp_client.send.assert_called_once_with('trigger', {'name': 'event3'})
         self._bcp_client.send.reset_mock()
 
-        # event4 isn't used in any player. Check that it's not sent
-        self.machine.events.post('event4')
+        # fake_event isn't used in any player. Check that it's not sent
+        self.machine.events.post('fake_event')
         self.advance_time_and_run()
         assert not self._bcp_client.send.called
 
@@ -183,7 +183,6 @@ class TestPluginConfigPlayer(MpfBcpTestCase):
         self._bcp_client.send.assert_called_once_with('trigger', {'name': 'event2'})
         self._bcp_client.send.reset_mock()
 
-
         # event3
         self.machine.events.post('event3')
         self.advance_time_and_run()
@@ -193,3 +192,9 @@ class TestPluginConfigPlayer(MpfBcpTestCase):
     def test_plugin_from_show(self):
         self.machine.shows['show1'].play()
         self.advance_time_and_run()
+
+    def test_conditional_events(self):
+        self.machine.events.post('event5')
+        self.advance_time_and_run()
+        self._bcp_client.send.assert_called_once_with('trigger', {'name': 'event5'})
+        self._bcp_client.send.reset_mock()

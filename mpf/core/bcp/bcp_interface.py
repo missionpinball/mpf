@@ -85,6 +85,14 @@ class BcpInterface(object):
     def add_registered_trigger_event_for_client(self, client, event):
         """Add trigger for event."""
         # register handler if first transport
+
+        # Note here we're registering the trigger for the event name, not the
+        # full event with condition. This means that this event will be
+        # always sent regardless of condition, and the MC will have to process
+        # the condition.
+
+        event, _ = self.machine.events.get_event_and_condition_from_string(event)
+
         if not self.machine.bcp.transport.get_transports_for_handler(event):
             self.machine.events.add_handler(event=event,
                                             handler=self.bcp_trigger,
@@ -94,6 +102,9 @@ class BcpInterface(object):
 
     def remove_registered_trigger_event_for_client(self, client, event):
         """Remove trigger for event."""
+
+        event, _ = self.machine.events.get_event_and_condition_from_string(event)
+
         # unregister transport
         self.machine.bcp.transport.remove_transport_from_handle(event, client)
 
