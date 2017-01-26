@@ -142,6 +142,8 @@ class Command(object):
         except Exception as e:
             logging.exception(e)
 
+        logging.shutdown()
+
         if args.pause:
             input('Press ENTER to continue...')
         sys.exit()
