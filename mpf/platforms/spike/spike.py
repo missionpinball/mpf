@@ -50,52 +50,80 @@ class SpikeDriver(DriverPlatformInterface):
         self.node = int(self.node)
         self.index = int(self.index)
 
-    def enable(self, coil):
-        """Enable coil."""
-        # TODO: repeat command
-        power1 = power2 = 0xFF
-        duration1 = duration2 = 0x46
-        continue_flag1 = continue_flag2 = 0x01
+    def _get_pulse_power(self):
+        # TODO: implement pulse_power
+        return 0xFF
+
+    def _get_hold_power(self):
+        # TODO: implement hold_power
+        return 0xFF
+
+    def _get_initial_pulse_ms(self):
+        # TODO: implement this
+        return 10
+
+    def _trigger(self, power1, duration1, power2, duration2):
         msg = bytearray([
             self.index,
             power1,
-            duration1,
-            continue_flag1,
+            duration1 & 0xFF,
+            1 if duration1 & 0x100 else 0,
             power2,
-            duration2,
-            continue_flag2,
+            duration2 & 0xFF,
+            1 if duration2 & 0x100 else 0,
             0,
             0
         ])
         self.platform.send_cmd(self.node, SpikeNodebus.CoilTrigger, msg)
 
+    def enable(self, coil):
+        """Pulse and enable coil."""
+        # initial pulse
+        power1 = self._get_pulse_power()
+        duration1 = self._get_initial_pulse_ms() * 1.28
+
+        if duration1 > 0x1FF:
+            raise AssertionError("Initial pulse too long.")
+
+        # then enable hold
+        power2 = self._get_hold_power()
+        duration2 = 0x1FF
+
+        self._trigger(power1, duration1, power2, duration2)
+
+        self._enable_task = self.platform.machine.clock.loop.create_task(self._enable())
+        self._enable_task.add_done_callback(self._done)
+
+    @asyncio.coroutine
+    def _enable(self, power):
+        while True:
+            yield from asyncio.sleep(.25, loop=self.platform.machine.clock.loop)
+            self._trigger(power, 0x1FF, power, 0x1FF)
+
+    def _done(self, future):
+        future.result()
+
     def pulse(self, coil, milliseconds):
         """Pulse coil for a certain time."""
-        power1 = 0xFF
-        if power1 > 0xFF:
-            raise AssertionError("Pulse ms too long.")
-        power2 = 0
+        power1 = power2 = self._get_pulse_power()
         duration1 = int(milliseconds * 1.28)
-        duration2 = 0
-        continue_flag1 = continue_flag2 = 0
-        msg = bytearray([
-            self.index,
-            power1,
-            duration1,
-            continue_flag1,
-            power2,
-            duration2,
-            continue_flag2,
-            0,
-            0
-        ])
-        self.platform.send_cmd(self.node, SpikeNodebus.CoilTrigger, msg)
+        duration2 = duration1 - 0xFF if duration1 > 0x1FF else 0
+        if duration2 > 0x1FF:
+            raise AssertionError("Pulse ms too long.")
+
+        self._trigger(power1, duration1, power2, duration2)
 
         return milliseconds
 
     def disable(self, coil):
         """Disable coil."""
-        self.platform.send_cmd(self.node, SpikeNodebus.CoilTrigger, bytearray([self.index, 0, 0, 0, 0, 0, 0, 0, 0]))
+        # cancel enable task
+        if self._enable_task:
+            self._enable_task.cancel()
+            self._enable_task = None
+
+        # disable coil
+        self._trigger(0, 0, 0, 0)
 
     def get_board_name(self):
         """Return name for service mode."""
