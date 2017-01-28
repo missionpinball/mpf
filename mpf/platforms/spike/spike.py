@@ -24,6 +24,8 @@ class SpikeSwitch(SwitchPlatformInterface):
 
 class SpikeLight(MatrixLightPlatformInterface):
 
+    """A light on a Stern Spike node board."""
+
     def __init__(self, node, number, platform):
         """Initialise switch."""
         self.node = node
@@ -36,12 +38,17 @@ class SpikeLight(MatrixLightPlatformInterface):
         data = bytearray([fade_time, brightness])
         self.platform.send_cmd(self.node, SpikeNodebus.SetLed + self.number, data)
 
+
 class SpikeDriver(DriverPlatformInterface):
+
+    """A driver on a Stern Spike node board."""
 
     def __init__(self, config, number, platform):
         super().__init__(config, number)
         self.platform = platform
         self.node, self.index = number.split("-")
+        self.node = int(self.node)
+        self.index = int(self.index)
 
     def enable(self, coil):
         """Enable coil."""
@@ -84,11 +91,14 @@ class SpikeDriver(DriverPlatformInterface):
         ])
         self.platform.send_cmd(self.node, SpikeNodebus.CoilTrigger, msg)
 
+        return milliseconds
+
     def disable(self, coil):
         """Disable coil."""
         self.platform.send_cmd(self.node, SpikeNodebus.CoilTrigger, bytearray([self.index, 0, 0, 0, 0, 0, 0, 0, 0]))
 
     def get_board_name(self):
+        """Return name for service mode."""
         return "Spike Node {}".format(self.node)
 
 
@@ -112,7 +122,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
         pass
 
     def configure_driver(self, config):
-        pass
+        return SpikeDriver(config, config['number'], self)
 
     def configure_matrixlight(self, config):
         node, number = config['number'].split("-")
@@ -216,7 +226,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
                     ready_node = 0
                 yield from self._update_switches(ready_node)
 
-            yield from asyncio.sleep(.001, loop=self.machine.clock.loop)
+            yield from asyncio.sleep(.5, loop=self.machine.clock.loop)
 
     def stop(self):
         """Stop hardware and close connections."""
@@ -315,6 +325,9 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
 
     @staticmethod
     def _input_to_int(state):
+        if state is False:
+            return 0
+
         result = 0
         for i in range(8):
             result += pow(256, i) * int(state[i])
@@ -335,7 +348,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
 
         self.send_cmd(0, SpikeNodebus.SetTraffic, bytearray([34]))
 
-        yield from asyncio.sleep(.5, loop=self.machine.clock.loop)
+        yield from asyncio.sleep(.01, loop=self.machine.clock.loop)
 
         for node in self._nodes:
             # TODO: why does spike do this 6 times?

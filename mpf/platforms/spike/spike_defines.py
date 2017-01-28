@@ -9,7 +9,7 @@ class SpikeNodebus:
     GetCoilReflexInfo = 0x10    # unused
     GetInputState = 0x11
     GetInputMask = 0x12         # unused
-    CoilUnknown = 0x18          # unused; maybe rules
+    SetCoilReflex = 0x18        # unused; Used in CoilConfig/CoilReflex/CoilReflexHold
     SSPWrite = 0x20             # unused
     SSPRead = 0x21              # unused
     StepperStatus = 0x30        # unused
