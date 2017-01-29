@@ -379,7 +379,8 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
         yield from asyncio.sleep(.01, loop=self.machine.clock.loop)
 
         for node in self._nodes:
-            # TODO: why does spike do this 6 times?
+            if node == 0:
+                continue
             fw_version = yield from self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetVersion, bytearray(), 12)
             if fw_version:
                 self.log.debug("Node: %s Version: %s", node, "".join("0x%02x " % b for b in fw_version))

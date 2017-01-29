@@ -1,0 +1,76 @@
+#config_version=4
+
+hardware:
+  platform: spike
+
+spike:
+   port: /dev/ttyUSB0
+   baud: 115200
+   debug: True
+
+
+coils:
+  c_shaker:
+    number: 1-0
+    pulse_ms: 100
+    allow_enable: True
+    pulse_events: key1
+    enable_events: key2
+    disable_events: key3
+
+matrix_lights:
+  backlight:
+    number: 0-0
+    on_events: key8
+    off_events: key9
+
+  l_2:
+    number: 1-3
+    on_events: key6
+    off_events: key7
+  l_40:
+    number: 8-40
+    on_events: key4
+    off_events: key5
+  l_35:
+    number: 8-35
+    on_events: key4
+    off_events: key5
+
+switches:
+  s_trough_jam:
+    number: 9-23
+  s_trough1:
+    number: 9-22
+  s_trough2:
+    number: 9-21
+  s_trough3:
+    number: 9-20
+  s_trough4:
+    number: 9-19
+  s_trough5:
+    number: 9-18
+  s_trough6:
+    number: 9-17
+  s_start:
+    number: 1-11
+
+keyboard:
+  1:
+    event: key1
+  2:
+    event: key2
+  3:
+    event: key3
+  4:
+    event: key4
+  5:
+    event: key5
+  6:
+    event: key6
+  7:
+    event: key7
+  8:
+    event: key8
+  9:
+    event: key9
