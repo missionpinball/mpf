@@ -49,6 +49,7 @@ class SpikeDriver(DriverPlatformInterface):
         self.node, self.index = number.split("-")
         self.node = int(self.node)
         self.index = int(self.index)
+        self._enable_task = None
 
     def _get_pulse_power(self):
         # TODO: implement pulse_power
@@ -74,13 +75,16 @@ class SpikeDriver(DriverPlatformInterface):
             0,
             0
         ])
-        self.platform.send_cmd(self.node, SpikeNodebus.CoilTrigger, msg)
+        self.platform.send_cmd(self.node, SpikeNodebus.CoilFireRelease, msg)
 
     def enable(self, coil):
         """Pulse and enable coil."""
+        if self._enable_task:
+            return
+
         # initial pulse
         power1 = self._get_pulse_power()
-        duration1 = self._get_initial_pulse_ms() * 1.28
+        duration1 = int(self._get_initial_pulse_ms() * 1.28)
 
         if duration1 > 0x1FF:
             raise AssertionError("Initial pulse too long.")
@@ -91,7 +95,7 @@ class SpikeDriver(DriverPlatformInterface):
 
         self._trigger(power1, duration1, power2, duration2)
 
-        self._enable_task = self.platform.machine.clock.loop.create_task(self._enable())
+        self._enable_task = self.platform.machine.clock.loop.create_task(self._enable(power2))
         self._enable_task.add_done_callback(self._done)
 
     @asyncio.coroutine
@@ -100,8 +104,12 @@ class SpikeDriver(DriverPlatformInterface):
             yield from asyncio.sleep(.25, loop=self.platform.machine.clock.loop)
             self._trigger(power, 0x1FF, power, 0x1FF)
 
-    def _done(self, future):
-        future.result()
+    @staticmethod
+    def _done(future):
+        try:
+            future.result()
+        except asyncio.CancelledError:
+            pass
 
     def pulse(self, coil, milliseconds):
         """Pulse coil for a certain time."""
@@ -156,9 +164,6 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
         node, number = config['number'].split("-")
         return SpikeLight(int(node), int(number), self)
 
-    def _disable_driver(self):
-        self.send_cmd(10, SpikeNodebus.CoilTrigger, bytearray([0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]))
-
     def configure_switch(self, config):
         """Configure switch on Stern Spike."""
         return SpikeSwitch(config, self)
@@ -209,11 +214,15 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
         self._reader, self._writer = yield from connector
 
         # read everything which is sitting in the serial
-        self._writer.transport.serial.reset_input_buffer()
+        self._reader._buffer = bytearray()
 
         yield from self._initialize()
 
     def _update_switches(self, node):
+        if node not in self._nodes:
+            self.log.warning("Cannot read node {} because it is not configured.", node)
+            return
+
         new_inputs_str = yield from self._read_inputs(node)
         if not new_inputs_str:
             self.log.info("Node: %s did not return any inputs.", node)
@@ -248,13 +257,16 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
             result = yield from self._read_raw(1)
             ready_node = result[0]
 
-            if ready_node > 0:
+            if 0 < ready_node <= 0x0F or ready_node == 0xF0:
                 # virtual cpu node returns 0xF0 instead of 0 to make it distinguishable
                 if ready_node == 0xF0:
                     ready_node = 0
                 yield from self._update_switches(ready_node)
+            elif ready_node > 0:
+                self._reader._buffer = bytearray()
+                self.log.error("Spike desynced.")
 
-            yield from asyncio.sleep(.5, loop=self.machine.clock.loop)
+            yield from asyncio.sleep(.001, loop=self.machine.clock.loop)
 
     def stop(self):
         """Stop hardware and close connections."""
@@ -269,7 +281,10 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
 
         Will raise exceptions from within task.
         """
-        future.result()
+        try:
+            future.result()
+        except asyncio.CancelledError:
+            pass
 
     def _send_raw(self, data):
         if self.debug:
@@ -315,6 +330,8 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
     @asyncio.coroutine
     def send_cmd_and_wait_for_response(self, node, cmd, data, response_len):
         """Send cmd and wait for response."""
+        if node > 15:
+            raise AssertionError("Node must be 0-15.")
         cmd_str = bytearray()
         cmd_str.append((8 << 4) + node)
         cmd_str.append(len(data) + 2)
@@ -331,6 +348,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
                 # we resync by flushing the input
                 # TODO: look for resync header
                 self._writer.transport.serial.reset_input_buffer()
+                self._reader._buffer = bytearray()
                 return False
 
             return response
@@ -339,6 +357,8 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
 
     def send_cmd(self, node, cmd, data):
         """Send cmd which does not require a response."""
+        if node > 15:
+            raise AssertionError("Node must be 0-15.")
         cmd_str = bytearray()
         cmd_str.append((8 << 4) + node)
         cmd_str.append(len(data) + 2)
@@ -376,7 +396,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
 
         self.send_cmd(0, SpikeNodebus.SetTraffic, bytearray([34]))
 
-        yield from asyncio.sleep(.01, loop=self.machine.clock.loop)
+        yield from asyncio.sleep(.2, loop=self.machine.clock.loop)
 
         for node in self._nodes:
             if node == 0:
