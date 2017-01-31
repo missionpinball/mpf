@@ -663,6 +663,9 @@ class RunningShow(object):
                 if item_type not in self._players:
                     self._players.append(item_type)
 
+            else:
+                raise ValueError("Invalid entry in show: {}".format(item_type))
+
         self.next_step_index += 1
 
         time_to_next_step = self.show_steps[self.current_step_index]['duration'] / self.speed
