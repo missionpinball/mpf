@@ -14,3 +14,4 @@ test2_player:
 
 show_player:
   start_show2: show2
+  start_show3: show3

@@ -1,7 +1,6 @@
 from unittest.mock import MagicMock, call
 
 from mpf.config_players.plugin_player import PluginPlayer
-from mpf.core.config_player import ConfigPlayer
 from mpf.tests.MpfBcpTestCase import MpfBcpTestCase
 from mpf.tests.MpfTestCase import TestMachineController
 
@@ -10,6 +9,7 @@ from mpf.tests.MpfTestCase import TestMachineController
 def _register_plugin_config_players(self):
     TestConfigPlayer.register_with_mpf(self)
     TestConfigPlayer2.register_with_mpf(self)
+    TestConfigPlayer3.register_with_mpf(self)
 
 TestMachineController._register_plugin_config_players = _register_plugin_config_players
 
@@ -40,7 +40,6 @@ class TestConfigPlayer(PluginPlayer):
         if not isinstance(device_settings, dict):
             device_settings = self.get_express_config(device_settings)
 
-
         devices = [device]
 
         return_dict = dict()
@@ -49,6 +48,7 @@ class TestConfigPlayer(PluginPlayer):
 
         return return_dict
 
+    @staticmethod
     def register_with_mpf(machine):
         return 'test', TestConfigPlayer(machine)
 
@@ -86,8 +86,47 @@ class TestConfigPlayer2(PluginPlayer):
 
         return return_dict
 
+    @staticmethod
     def register_with_mpf(machine):
         return 'test2', TestConfigPlayer2(machine)
+
+
+class TestConfigPlayer3(PluginPlayer):
+    config_file_section = 'test3_player'
+    show_section = 'test3s'
+
+    def get_express_config(self, value):
+        return dict(some=value)
+
+    def validate_config(self, config):
+        validated_config = dict()
+
+        for event, settings in config.items():
+            validated_config[event] = dict()
+            validated_config[event][self.show_section] = dict()
+            if not isinstance(settings, dict):
+                settings = {settings: dict()}
+
+        return validated_config
+
+    def _validate_config_item(self, device, device_settings):
+        if device_settings is None:
+            device_settings = device
+
+        if not isinstance(device_settings, dict):
+            device_settings = self.get_express_config(device_settings)
+
+        devices = [device]
+
+        return_dict = dict()
+        for device in devices:
+            return_dict[device] = device_settings
+
+        return return_dict
+
+    @staticmethod
+    def register_with_mpf(machine):
+        return 'test3', TestConfigPlayer3(machine)
 
 
 class TestPluginConfigPlayer(MpfBcpTestCase):
@@ -158,7 +197,7 @@ class TestPluginConfigPlayer(MpfBcpTestCase):
         self._bcp_client.send.assert_has_calls([
             call('mode_stop', {'name': 'mode1'}),
             call('trigger', {'context': 'mode1', 'name': 'tests_clear'}),
-            call('trigger', {'context': 'mode1', 'name':'test2s_clear'})]
+            call('trigger', {'context': 'mode1', 'name': 'test2s_clear'})]
         )
         self._bcp_client.send.reset_mock()
 
@@ -190,11 +229,41 @@ class TestPluginConfigPlayer(MpfBcpTestCase):
         self._bcp_client.send.reset_mock()
 
     def test_plugin_from_show(self):
+        t1_player = self.machine.show_controller.show_players['tests']
+        t1_player.play = MagicMock()
+
         self.machine.shows['show1'].play()
         self.advance_time_and_run()
+
+        self.assertTrue(t1_player.play.called)
+
+        self.assertIn('tests_play', self.machine.bcp.transport._handlers)
+        self.assertIn('tests_clear', self.machine.bcp.transport._handlers)
+        self.assertIn('test2s_play', self.machine.bcp.transport._handlers)
+        self.assertIn('test2s_clear', self.machine.bcp.transport._handlers)
 
     def test_conditional_events(self):
         self.machine.events.post('event5')
         self.advance_time_and_run()
         self._bcp_client.send.assert_called_once_with('trigger', {'name': 'event5'})
         self._bcp_client.send.reset_mock()
+
+    def test_plugin_in_show_but_not_standalone(self):
+        # tests a plugin player that has an entry in a show, but that does
+        # not have a config player entry section in any other config file
+
+        # e.g. a "slides" section in a show, but now "slide_player:"
+        # section anywhere
+
+        t3_player = self.machine.show_controller.show_players['test3s']
+        t3_player.play = MagicMock()
+
+        self.assertIn('test3s_play', self.machine.bcp.transport._handlers)
+        self.assertIn('test3s_clear', self.machine.bcp.transport._handlers)
+
+        self.machine.modes['mode1'].start()
+        self.advance_time_and_run()
+
+        self.post_event('start_show3')
+
+        self.assertTrue(t3_player.play.called)

@@ -18,6 +18,14 @@ class PluginPlayer(DeviceConfigPlayer):
         """Return str representation."""
         return 'PluginPlayer.{}'.format(self.show_section)
 
+    def _initialise_system_wide(self, **kwargs):
+        super()._initialise_system_wide(**kwargs)
+
+        self.machine.bcp.interface.add_registered_trigger_event_for_client(
+            self.bcp_client, '{}_play'.format(self.show_section))
+        self.machine.bcp.interface.add_registered_trigger_event_for_client(
+            self.bcp_client, '{}_clear'.format(self.show_section))
+
     def get_express_config(self, value):
         """Not supported."""
         del value
@@ -54,11 +62,6 @@ class PluginPlayer(DeviceConfigPlayer):
             event_name, _ = self.machine.events.get_event_and_condition_from_string(event)
             self.machine.bcp.interface.add_registered_trigger_event_for_client(self.bcp_client, event_name)
             event_list.append(event_name)
-
-        self.machine.bcp.interface.add_registered_trigger_event_for_client(
-            self.bcp_client, '{}_play'.format(self.show_section))
-        self.machine.bcp.interface.add_registered_trigger_event_for_client(
-            self.bcp_client, '{}_clear'.format(self.show_section))
 
         return event_list
 
