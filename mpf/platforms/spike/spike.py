@@ -19,6 +19,9 @@ class SpikeSwitch(SwitchPlatformInterface):
     def __init__(self, config, platform):
         """Initialise switch."""
         super().__init__(config, config['number'])
+        self.node, self.index = self.number.split("-")
+        self.node = int(self.node)
+        self.index = int(self.index)
         self.platform = platform
 
 
@@ -34,7 +37,7 @@ class SpikeLight(MatrixLightPlatformInterface):
 
     def on(self, brightness=255):
         """Set brightness of channel."""
-        fade_time = 30
+        fade_time = 12  # 10ms fade time by default
         data = bytearray([fade_time, brightness])
         self.platform.send_cmd(self.node, SpikeNodebus.SetLed + self.number, data)
 
@@ -51,17 +54,37 @@ class SpikeDriver(DriverPlatformInterface):
         self.index = int(self.index)
         self._enable_task = None
 
-    def _get_pulse_power(self):
-        # TODO: implement pulse_power
-        return 0xFF
+    def get_pulse_power(self):
+        """Return pulse power."""
+        if not self.config['pulse_power']:
+            return 0xFF
 
-    def _get_hold_power(self):
-        # TODO: implement hold_power
-        return 0xFF
+        if 0 > self.config['pulse_power'] > 8:
+            raise AssertionError("Pulse power has to be beween 0 and 8")
 
-    def _get_initial_pulse_ms(self):
-        # TODO: implement this
-        return 10
+        return int(self.config['pulse_power'] * 32) - 1
+
+    def get_hold_power(self):
+        """Return hold power."""
+        if self.config['hold_power'] and 0 >= self.config['hold_power'] > 8:
+            raise AssertionError("Hold power has to be beween 0 and 7")
+
+        if self.config['allow_enable'] and not self.config['hold_power']:
+            return 0xFF
+
+        if not self.config['hold_power']:
+            raise AssertionError("Need hold_power or allow_enable.")
+
+        if self.config['hold_power'] > 7 and not self.config['allow_enable']:
+            raise AssertionError("hold_power 8 is invalid with allow_enable false")
+
+        return int(self.config['hold_power'] * 32) - 1
+
+    def get_pulse_ms(self):
+        """Return initial pulse_ms."""
+        if not self.config['pulse_ms']:
+            return self.platform.machine.config['mpf']['default_pulse_ms']
+        return self.config['pulse_ms']
 
     def _trigger(self, power1, duration1, power2, duration2):
         msg = bytearray([
@@ -83,14 +106,14 @@ class SpikeDriver(DriverPlatformInterface):
             return
 
         # initial pulse
-        power1 = self._get_pulse_power()
-        duration1 = int(self._get_initial_pulse_ms() * 1.28)
+        power1 = self.get_pulse_power()
+        duration1 = int(self.get_pulse_ms() * 1.28)
 
         if duration1 > 0x1FF:
             raise AssertionError("Initial pulse too long.")
 
         # then enable hold
-        power2 = self._get_hold_power()
+        power2 = self.get_hold_power()
         duration2 = 0x1FF
 
         self._trigger(power1, duration1, power2, duration2)
@@ -113,7 +136,7 @@ class SpikeDriver(DriverPlatformInterface):
 
     def pulse(self, coil, milliseconds):
         """Pulse coil for a certain time."""
-        power1 = power2 = self._get_pulse_power()
+        power1 = power2 = self.get_pulse_power()
         duration1 = int(milliseconds * 1.28)
         duration2 = duration1 - 0xFF if duration1 > 0x1FF else 0
         if duration2 > 0x1FF:
@@ -142,25 +165,69 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
 
     """Stern Spike Platform."""
 
+    def _write_rule(self, node, enable_switch_index, disable_switch_index, coil_index, pulse_power, pulse_ms,
+                    hold_power, can_cancel_pulse):
+        """Write a hardware rule to Stern Spike."""
+        pulse_value = int(pulse_ms * 1.28)
+        second_coil_action = 6 if disable_switch_index else 0
+
+        self.send_cmd(node, SpikeNodebus.CoilSetReflex, bytearray(
+            [coil_index,
+             pulse_power, pulse_value & 0xFF, (pulse_value & 0xFF00) >> 8,
+             hold_power, 0x00, 0x00, 0x00, 0x00,
+             0, 0, 0, 0, 0, 0, 0, 0,
+             0x40 + enable_switch_index, 0x40 + disable_switch_index if disable_switch_index is not None else 0, 0,
+             2, second_coil_action, 1 if can_cancel_pulse else 0]))
+
+    @staticmethod
+    def _check_coil_switch_combination(switch, coil):
+        if switch.hw_switch.node != coil.hw_driver.node:
+            raise AssertionError("Coil {} and Switch {} need to be on the same node to write a rule".format(
+                coil, switch
+            ))
+
     def set_pulse_on_hit_rule(self, enable_switch, coil):
-        pass
+        """Set pulse on hit rule on driver."""
+        self._check_coil_switch_combination(enable_switch, coil)
+        self._write_rule(coil.hw_driver.node, enable_switch.hw_switch.index, None, coil.hw_driver.index,
+                         coil.hw_driver.get_pulse_power(), coil.hw_driver.get_pulse_ms(), 0, False)
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
-        pass
+        """Set pulse on hit and enable and relase rule on driver."""
+        self._check_coil_switch_combination(enable_switch, coil)
+        self._write_rule(coil.hw_driver.node, enable_switch.hw_switch.index, None, coil.hw_driver.index,
+                         coil.hw_driver.get_pulse_power(), coil.hw_driver.get_pulse_ms(),
+                         coil.hw_driver.get_hold_power(), True)
 
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
-        pass
+        """Set pulse on hit and release rule to driver."""
+        self._check_coil_switch_combination(enable_switch, coil)
+        self._check_coil_switch_combination(disable_switch, coil)
+        self._write_rule(coil.hw_driver.node, enable_switch.hw_switch.index, disable_switch.hw_switch.index,
+                         coil.hw_driver.index, coil.hw_driver.get_pulse_power(), coil.hw_driver.get_pulse_ms(),
+                         coil.hw_driver.get_hold_power(), True)
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
-        pass
+        """Set pulse on hit and release rule to driver."""
+        self._check_coil_switch_combination(enable_switch, coil)
+        self._write_rule(coil.hw_driver.node, enable_switch.hw_switch.index, None, coil.hw_driver.index,
+                         coil.hw_driver.get_pulse_power(), coil.hw_driver.get_pulse_ms(), 0, True)
 
     def clear_hw_rule(self, switch, coil):
-        pass
+        """Disable hardware rule for this coil."""
+        del switch
+        self.send_cmd(coil.hw_driver.node, SpikeNodebus.CoilSetReflex, bytearray(
+            [coil.hw_driver.index, 0, 0, 0, 0, 0x00, 0x00, 0x00, 0x00,
+             0, 0, 0, 0, 0, 0, 0, 0,
+             0, 0, 0,
+             0, 0, 0]))
 
     def configure_driver(self, config):
+        """Configure a driver on Stern Spike."""
         return SpikeDriver(config, config['number'], self)
 
     def configure_matrixlight(self, config):
+        """Configure a light on Stern Spike."""
         node, number = config['number'].split("-")
         return SpikeLight(int(node), int(number), self)
 
@@ -189,8 +256,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
         self.config = None
         self._poll_task = None
 
-        # TODO: where do we get those from? maybe just iterate all of them?
-        self._nodes = [0, 1, 8, 9, 10, 11]
+        self._nodes = None
 
     def initialize(self):
         """Initialise platform."""
@@ -199,6 +265,10 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
         port = self.config['port']
         baud = self.config['baud']
         self.debug = self.config['debug']
+        self._nodes = self.config['nodes']
+
+        if 0 not in self._nodes:
+            raise AssertionError("Please include CPU node 0 in nodes for Spike.")
 
         self.machine.clock.loop.run_until_complete(self._connect_to_hardware(port, baud))
 
@@ -251,25 +321,71 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
 
     @asyncio.coroutine
     def _poll(self):
+        #yield from self.test_rule()
         while True:
             self._send_raw(bytearray([0]))
 
-            result = yield from self._read_raw(1)
+            try:
+                result = yield from asyncio.wait_for(self._read_raw(1), 0.1, loop=self.machine.clock.loop)
+            except asyncio.TimeoutError:
+                self.log.warning("Spike watchdog expired.")
+                continue
+
             ready_node = result[0]
 
             if 0 < ready_node <= 0x0F or ready_node == 0xF0:
-                # virtual cpu node returns 0xF0 instead of 0 to make it distinguishable
+                # valid node ids
                 if ready_node == 0xF0:
+                    # virtual cpu node returns 0xF0 instead of 0 to make it distinguishable
                     ready_node = 0
                 yield from self._update_switches(ready_node)
             elif ready_node > 0:
+                # invalid node ids
+                self.log.warning("Spike desynced.")
+                # give it a break of 50ms
+                yield from asyncio.sleep(.05, loop=self.machine.clock.loop)
+                # clear buffer
                 self._reader._buffer = bytearray()
-                self.log.error("Spike desynced.")
+            else:
+                # sleep only if spike is idle
+                yield from asyncio.sleep(1 / self.config['poll_hz'], loop=self.machine.clock.loop)
 
-            yield from asyncio.sleep(.001, loop=self.machine.clock.loop)
+    @asyncio.coroutine
+    def test_rule(self):
+        pass
+        # flipper rule
+#        self.send_cmd(1, SpikeNodebus.CoilSetReflex, [0x00, 0xFF, 0x33, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+#                                                      0, 0, 0, 0, 0, 0, 0, 0,
+#                                                      0x4B, 0x4C, 0, 2, 6])
+
+        # pulse complete. no hold
+#        self.send_cmd(1, SpikeNodebus.CoilSetReflex, bytearray([0x00, 0xFF, 0xFF, 0x10, 0x10, 0x00, 0x00, 0x00, 0x00,
+#                                                      0, 0, 0, 0, 0, 0, 0, 0,
+#                                                      0x4B, 0, 0, 0, 0, 0]))
+
+        # pulse can cancel. hold
+        self.send_cmd(1, SpikeNodebus.CoilSetReflex, bytearray([0x00, 0xFF, 0xFF, 0x10, 0x10, 0x00, 0x00, 0x00, 0x00,
+                                                      0, 0, 0, 0, 0, 0, 0, 0,
+                                                      0x4B, 0x4C, 0, 2, 6, 1]))
+
+        yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
+
+        # flipper hold
+#        self.send_cmd(1, SpikeNodebus.CoilSetReflex, [0x00, 0xFF, 0x46, 0x01, 0xFF, 0x00, 0x00, 0x00, 0x00,
+#                                                      0, 0, 0, 0, 0, 0, 0, 0,
+#                                                      0x4B, 0x4C, 0, 0, 1])
+
+        # popbumper/slings
+#        self.send_cmd(1, SpikeNodebus.CoilSetReflex, [0x00, 0xA6, 0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+#                                                      0, 0, 0, 0, 0, 0, 0, 0,
+#                                                      0x4B, 0x00, 0, 0, 0])
 
     def stop(self):
         """Stop hardware and close connections."""
+        if self._writer:
+            # send ctrl+c to stop the mpf-spike-bridge
+            self._writer.write(b'\x03')
+
         if self._poll_task:
             self._poll_task.cancel()
 
@@ -291,12 +407,6 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
             self.log.debug("Sending: %s", "".join("0x%02x " % b for b in data))
         self._writer.write(("".join("%02x " % b for b in data).encode()))
         self._writer.write("\n\r".encode())
-
-    def _set_backbox_light(self, brightness):
-        pass
-        # TODO: understand NODEBUS_SetBackboxLight, NODEBUS_VAPower, NODEBUS_SetPower
-        # all message 0 with some parameters
-        # 00 brightness brigness 2
 
     @asyncio.coroutine
     def _read_raw(self, msg_len):
@@ -341,12 +451,15 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
         cmd_str.append(response_len)
         self._send_raw(cmd_str)
         if response_len:
-            # TODO: timeout
-            response = yield from self._read_raw(response_len)
+            try:
+                response = yield from asyncio.wait_for(self._read_raw(response_len), 0.2, loop=self.machine.clock.loop)
+            except asyncio.TimeoutError:
+                self.log.warning("Failed to read %s bytes from Spike", response_len)
+                return False
+
             if self._checksum(response) != 0:
-                self.log.info("Checksum mismatch for response: %s", "".join("%02x " % b for b in response))
+                self.log.warning("Checksum mismatch for response: %s", "".join("%02x " % b for b in response))
                 # we resync by flushing the input
-                # TODO: look for resync header
                 self._writer.transport.serial.reset_input_buffer()
                 self._reader._buffer = bytearray()
                 return False
@@ -384,6 +497,19 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
 
     @asyncio.coroutine
     def _initialize(self):
+        # send ctrl+c to stop whatever is running
+        self._writer.write(b'\x03')
+        # flush input
+        self._writer.transport.serial.reset_input_buffer()
+        self._reader._buffer = bytearray()
+        # start mpf-spike-bridge
+        self._writer.write("/bin/bridge\r\n".encode())
+        welcome_str = b'MPF Spike Bridge!\r\n'
+        yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
+        data = yield from self._reader.read(100)
+        if data[-len(welcome_str):] != welcome_str:
+            raise AssertionError("Expected '{}' got '{}'".format(welcome_str, data[:len(welcome_str)]))
+
         self.send_cmd(0, SpikeNodebus.Reset, bytearray())
         self.send_cmd(0, SpikeNodebus.SetTraffic, bytearray([34]))
         self.send_cmd(0, SpikeNodebus.SetTraffic, bytearray([17]))

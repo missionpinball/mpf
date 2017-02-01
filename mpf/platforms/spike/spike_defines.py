@@ -16,7 +16,7 @@ class SpikeNodebus:
     StepperHome = 0x34          # unused
     StepperInfo = 0x38          # unused
     CoilFireRelease = 0x40
-    CoilSetReflex = 0x41        # unused; len: 0x18, Used in CoilConfig/CoilReflex/CoilReflexHold
+    CoilSetReflex = 0x41
     CoilGetPWMFreq = 0x42       # unused; len: 1?
     CoilSetPriority = 0x43      # unused
     CoilGetPriority = 0x43      # unused; dunno if this is right
