@@ -23,6 +23,7 @@ coils:
     allow_enable: True
   c_pop:
     number: 8-10
+    pulse_power: 4
 
 matrix_lights:
   backlight:

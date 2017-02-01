@@ -1,3 +1,4 @@
+"""Test Stern Spike Platform."""
 import time
 
 from mpf.platforms.spike.spike import SpikePlatform
@@ -8,7 +9,10 @@ from mpf.tests.loop import MockSerial
 
 class MockSpikeSocket(MockSerial):
 
+    """Serial mock."""
+
     def read(self, length):
+        """Read from serial."""
         del length
         if not self.queue:
             return b''
@@ -17,12 +21,15 @@ class MockSpikeSocket(MockSerial):
         return msg
 
     def read_ready(self):
+        """True if ready to read."""
         return bool(self.queue)
 
     def write_ready(self):
+        """True if ready to write."""
         return True
 
     def write(self, encoded_msg):
+        """Write message."""
         # currently needed for the bridge
         if encoded_msg == '\n\r'.encode() or encoded_msg == b'\x03':
             return len(encoded_msg)
@@ -120,36 +127,57 @@ class SpikePlatformTest(MpfTestCase):
             self._checksummed_cmd(b'\x8a\x03\xf0\x20'): b'',
             self._checksummed_cmd(b'\x8b\x03\xf0\x10'): b'',
             self._checksummed_cmd(b'\x8b\x03\xf0\x20'): b'',
-            self._checksummed_cmd(b'\x81\x02\xfe', 12): b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',    # TODO: fix response
+            self._checksummed_cmd(b'\x81\x02\xfe', 12):
+                b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',
             self._checksummed_cmd(b'\x81\x02\xf5', 4): b'\x00\x00\x00\x00',
-            self._checksummed_cmd(b'\x88\x02\xfe', 12): b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',    # TODO: fix response
+            self._checksummed_cmd(b'\x88\x02\xfe', 12):
+                b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',
             self._checksummed_cmd(b'\x88\x02\xf5', 4): b'\x00\x00\x00\x00',
-            self._checksummed_cmd(b'\x89\x02\xfe', 12): b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',    # TODO: fix response
+            self._checksummed_cmd(b'\x89\x02\xfe', 12):
+                b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',
             self._checksummed_cmd(b'\x89\x02\xf5', 4): b'\x00\x00\x00\x00',
-            self._checksummed_cmd(b'\x8a\x02\xfe', 12): b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',    # TODO: fix response
+            self._checksummed_cmd(b'\x8a\x02\xfe', 12):
+                b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',
             self._checksummed_cmd(b'\x8a\x02\xf5', 4): b'\x00\x00\x00\x00',
-            self._checksummed_cmd(b'\x8b\x02\xfe', 12): b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',    # TODO: fix response
+            self._checksummed_cmd(b'\x8b\x02\xfe', 12):
+                b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00',
             self._checksummed_cmd(b'\x8b\x02\xf5', 4): b'\x00\x00\x00\x00',
         }
         self.serialMock.permanent_commands = {
             self._checksummed_cmd(b'\x80\x03\xf0\x22'): b'',    # send twice during init
             self._checksummed_cmd(b'\x80\x03\xf0\x11'): b'',    # send twice during init
-            self._checksummed_cmd(b'\x80\x02\x11', 10): self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\x00'),    # read inputs
-            self._checksummed_cmd(b'\x81\x02\x11', 10): self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\x00'),    # read inputs
-            self._checksummed_cmd(b'\x88\x02\x11', 10): self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\x00'),    # read inputs
-            self._checksummed_cmd(b'\x89\x02\x11', 10): self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\x00'),    # read inputs
-            self._checksummed_cmd(b'\x8a\x02\x11', 10): self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\x00'),    # read inputs
-            self._checksummed_cmd(b'\x8b\x02\x11', 10): self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\x00'),    # read inputs
-            self._checksummed_cmd(b'\x81\x02\xff', 10): b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff',
-            self._checksummed_cmd(b'\x81\x03\xfa\x00', 12): b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff',
-            self._checksummed_cmd(b'\x88\x02\xff', 10): b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff',
-            self._checksummed_cmd(b'\x88\x03\xfa\x00', 12): b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff',
-            self._checksummed_cmd(b'\x89\x02\xff', 10): b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff',
-            self._checksummed_cmd(b'\x89\x03\xfa\x00', 12): b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff',
-            self._checksummed_cmd(b'\x8a\x02\xff', 10): b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff',
-            self._checksummed_cmd(b'\x8a\x03\xfa\x00', 12): b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff',
-            self._checksummed_cmd(b'\x8b\x02\xff', 10): b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff',
-            self._checksummed_cmd(b'\x8b\x03\xfa\x00', 12): b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff',
+            self._checksummed_cmd(b'\x80\x02\x11', 10):
+                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\x00'),    # read inputs
+            self._checksummed_cmd(b'\x81\x02\x11', 10):
+                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\x00'),    # read inputs
+            self._checksummed_cmd(b'\x88\x02\x11', 10):
+                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\x00'),    # read inputs
+            self._checksummed_cmd(b'\x89\x02\x11', 10):
+                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\x00'),    # read inputs
+            self._checksummed_cmd(b'\x8a\x02\x11', 10):
+                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\x00'),    # read inputs
+            self._checksummed_cmd(b'\x8b\x02\x11', 10):
+                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\x00'),    # read inputs
+            self._checksummed_cmd(b'\x81\x02\xff', 10):
+                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\xff'),
+            self._checksummed_cmd(b'\x81\x03\xfa\x00', 12):
+                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff'),
+            self._checksummed_cmd(b'\x88\x02\xff', 10):
+                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\xff'),
+            self._checksummed_cmd(b'\x88\x03\xfa\x00', 12):
+                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff'),
+            self._checksummed_cmd(b'\x89\x02\xff', 10):
+                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\xff'),
+            self._checksummed_cmd(b'\x89\x03\xfa\x00', 12):
+                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff'),
+            self._checksummed_cmd(b'\x8a\x02\xff', 10):
+                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\xff'),
+            self._checksummed_cmd(b'\x8a\x03\xfa\x00', 12):
+                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff'),
+            self._checksummed_cmd(b'\x8b\x02\xff', 10):
+                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\xff'),
+            self._checksummed_cmd(b'\x8b\x03\xfa\x00', 12):
+                self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff'),
             b'\x00': b'\00',
 
         }
@@ -206,7 +234,7 @@ class SpikePlatformTest(MpfTestCase):
     def _testCoilRules(self):
         # pop bumbers
         self.serialMock.expected_commands = {
-            self._checksummed_cmd(b'\x88\x19\x41\x0a\xff\x0c\x00\x00\x00\x00\x00\x00\x00'
+            self._checksummed_cmd(b'\x88\x19\x41\x0a\x7f\x0c\x00\x00\x00\x00\x00\x00\x00'
                                   b'\x00\x00\x00\x00\x00\x00\x00\x44\x00\x00\x02\x00\x00'): b''
         }
         self.machine.autofires.ac_pops.enable()
