@@ -11,13 +11,10 @@ class MockSpikeSocket(MockSerial):
     def read(self, length):
         del length
         if not self.queue:
-            raise AssertionError("Read when no data is available!")
+            return b''
         msg = self.queue.pop()
 
-        # currently needed for the bridge
-        encoded_msg = "".join("%02x " % b for b in msg).encode()
-
-        return encoded_msg
+        return msg
 
     def read_ready(self):
         return bool(self.queue)
@@ -27,16 +24,21 @@ class MockSpikeSocket(MockSerial):
 
     def write(self, encoded_msg):
         # currently needed for the bridge
-        if encoded_msg == '\n\r'.encode():
+        if encoded_msg == '\n\r'.encode() or encoded_msg == b'\x03':
             return len(encoded_msg)
+
+        if encoded_msg == "/bin/bridge\r\n".encode():
+            self.queue.append(b'MPF Spike Bridge!\r\n')
+            return len(encoded_msg)
+
         msg = bytearray()
         for i in range(int(len(encoded_msg) / 3)):
             msg.append(int(encoded_msg[i * 3:(i * 3) + 2], 16))
 
         msg = bytes(msg)
 
-        if msg in self.permanent_commands:
-            self.queue.append(self.permanent_commands[msg])
+        if msg in self.permanent_commands and msg not in self.expected_commands:
+            self.queue.append("".join("%02x " % b for b in self.permanent_commands[msg]).encode())
             return len(encoded_msg)
 
         # print("Serial received: " + "".join("\\x%02x" % b for b in msg) + " len: " + str(len(msg)))
@@ -46,12 +48,15 @@ class MockSpikeSocket(MockSerial):
             raise AssertionError("Unexpected command: " + "".join("\\x%02x" % b for b in msg) +
                                  " len: " + str(len(msg)))
 
-        if len(self.expected_commands[msg]) != msg[-1]:
+        if len(msg) > 1 and len(self.expected_commands[msg]) != msg[-1]:
             print("Readback did not match")
-            raise AssertionError("Readback did not match")
+            raise AssertionError("Readback did not match for msg {} and resp: {} {}".format(
+                "".join("\\x%02x" % b for b in msg),
+                len(self.expected_commands[msg]), self.expected_commands[msg]
+            ))
 
         if len(self.expected_commands[msg]) > 0:
-            self.queue.append(self.expected_commands[msg])
+            self.queue.append("".join("%02x " % b for b in self.expected_commands[msg]).encode())
 
         del self.expected_commands[msg]
         return len(encoded_msg)
@@ -65,12 +70,17 @@ class MockSpikeSocket(MockSerial):
         self.crashed = False
 
 
-class OPPCommon(MpfTestCase):
+class SpikePlatformTest(MpfTestCase):
 
     def _checksummed_cmd(self, msg, read_back=0):
         checksum = SpikePlatform._checksum(msg)
         msg += bytes([checksum])
         msg += bytes([read_back])
+        return msg
+
+    def _checksummed_response(self, msg):
+        checksum = SpikePlatform._checksum(msg)
+        msg += bytes([checksum])
         return msg
 
     def getConfigFile(self):
@@ -124,12 +134,12 @@ class OPPCommon(MpfTestCase):
         self.serialMock.permanent_commands = {
             self._checksummed_cmd(b'\x80\x03\xf0\x22'): b'',    # send twice during init
             self._checksummed_cmd(b'\x80\x03\xf0\x11'): b'',    # send twice during init
-            self._checksummed_cmd(b'\x80\x02\x11', 10): b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff',    # read inputs
-            self._checksummed_cmd(b'\x81\x02\x11', 10): b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff',  # read inputs
-            self._checksummed_cmd(b'\x88\x02\x11', 10): b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff',  # read inputs
-            self._checksummed_cmd(b'\x89\x02\x11', 10): b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff',  # read inputs
-            self._checksummed_cmd(b'\x8a\x02\x11', 10): b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff',  # read inputs
-            self._checksummed_cmd(b'\x8b\x02\x11', 10): b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff',  # read inputs
+            self._checksummed_cmd(b'\x80\x02\x11', 10): self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\x00'),    # read inputs
+            self._checksummed_cmd(b'\x81\x02\x11', 10): self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\x00'),    # read inputs
+            self._checksummed_cmd(b'\x88\x02\x11', 10): self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\x00'),    # read inputs
+            self._checksummed_cmd(b'\x89\x02\x11', 10): self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\x00'),    # read inputs
+            self._checksummed_cmd(b'\x8a\x02\x11', 10): self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\x00'),    # read inputs
+            self._checksummed_cmd(b'\x8b\x02\x11', 10): self._checksummed_response(b'\xff\xff\xff\xff\xff\xff\xff\xff\x00'),    # read inputs
             self._checksummed_cmd(b'\x81\x02\xff', 10): b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff',
             self._checksummed_cmd(b'\x81\x03\xfa\x00', 12): b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff',
             self._checksummed_cmd(b'\x88\x02\xff', 10): b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff',
@@ -151,5 +161,129 @@ class OPPCommon(MpfTestCase):
         del self.serialMock.permanent_commands[self._checksummed_cmd(b'\x80\x03\xf0\x22')]
         del self.serialMock.permanent_commands[self._checksummed_cmd(b'\x80\x03\xf0\x11')]
 
-    def testSetup(self):
-        pass
+    def testPlatform(self):
+        self._testCoils()
+        self._testCoilRules()
+        self._testLeds()
+        self._testSwitches()
+
+    def _testCoils(self):
+        # test pulse
+        self.serialMock.expected_commands = {
+            self._checksummed_cmd(b'\x81\x0b\x40\x00\xff\x80\x00\xff\x00\x00\x00\x00'): b''
+        }
+        self.machine.coils.c_test.pulse()
+        self.advance_time_and_run(.001)
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # test enable
+        self.serialMock.expected_commands = {
+            self._checksummed_cmd(b'\x81\x0b\x40\x00\xff\x80\x00\x9f\xff\x01\x00\x00'): b''
+        }
+        self.machine.coils.c_test.enable()
+        self.advance_time_and_run(.001)
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # should repeat command after 250ms
+        self.advance_time_and_run(.240)
+        self.serialMock.expected_commands = {
+            self._checksummed_cmd(b'\x81\x0b\x40\x00\x9f\xff\x01\x9f\xff\x01\x00\x00'): b''
+        }
+        self.advance_time_and_run(.020)
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # disable coil
+        self.serialMock.expected_commands = {
+            self._checksummed_cmd(b'\x81\x0b\x40\x00\x00\x00\x00\x00\x00\x00\x00\x00'): b''
+        }
+        self.machine.coils.c_test.disable()
+        self.advance_time_and_run(.001)
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # no more enables
+        self.advance_time_and_run(.250)
+
+    def _testCoilRules(self):
+        # pop bumbers
+        self.serialMock.expected_commands = {
+            self._checksummed_cmd(b'\x88\x19\x41\x0a\xff\x0c\x00\x00\x00\x00\x00\x00\x00'
+                                  b'\x00\x00\x00\x00\x00\x00\x00\x44\x00\x00\x02\x00\x00'): b''
+        }
+        self.machine.autofires.ac_pops.enable()
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.serialMock.expected_commands)
+
+        self.serialMock.expected_commands = {
+            self._checksummed_cmd(b'\x88\x19\x41\x0a\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+                                  b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'): b''
+        }
+        self.machine.autofires.ac_pops.disable()
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # single-wound flippers
+        self.serialMock.expected_commands = {
+            self._checksummed_cmd(b'\x88\x19\x41\x01\xff\x0c\x00\x9f\x00\x00\x00\x00\x00'
+                                  b'\x00\x00\x00\x00\x00\x00\x00\x4d\x00\x00\x02\x00\x01'): b''
+        }
+        self.machine.flippers.f_test_single.enable()
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.serialMock.expected_commands)
+
+        self.serialMock.expected_commands = {
+            self._checksummed_cmd(b'\x88\x19\x41\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+                                  b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'): b''
+        }
+        self.machine.flippers.f_test_single.disable()
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # dual-wound flippers
+        self.serialMock.expected_commands = {
+            self._checksummed_cmd(b'\x88\x19\x41\x01\xff\x0c\x00\x00\x00\x00\x00\x00\x00'
+                                  b'\x00\x00\x00\x00\x00\x00\x00\x4d\x00\x00\x02\x00\x01'): b'',
+            self._checksummed_cmd(b'\x88\x19\x41\x03\xff\x0c\x00\xff\x00\x00\x00\x00\x00'
+                                  b'\x00\x00\x00\x00\x00\x00\x00\x4d\x00\x00\x02\x00\x01'): b''
+        }
+        self.machine.flippers.f_test_hold.enable()
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.serialMock.expected_commands)
+
+        self.serialMock.expected_commands = {
+            self._checksummed_cmd(b'\x88\x19\x41\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+                                  b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'): b'',
+            self._checksummed_cmd(b'\x88\x19\x41\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+                                  b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'): b''
+        }
+        self.machine.flippers.f_test_hold.disable()
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.serialMock.expected_commands)
+
+    def _testSwitches(self):
+        self.assertSwitchState("s_start", False)
+        # board 1 has a change
+        self.serialMock.expected_commands = {
+            b'\x00': b'\x01',
+            self._checksummed_cmd(b'\x81\x02\x11', 10):
+                self._checksummed_response(b'\xff\xf7\xff\xff\xff\xff\xff\xff\x00'),    # read inputs
+        }
+
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.serialMock.expected_commands)
+
+        self.assertSwitchState("s_start", True)
+
+    def _testLeds(self):
+        self.serialMock.expected_commands = {
+            self._checksummed_cmd(b'\x80\x04\x80\x0c\xff'): b''
+        }
+        self.machine.lights.backlight.on()
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.serialMock.expected_commands)
+
+        self.serialMock.expected_commands = {
+            self._checksummed_cmd(b'\x80\x04\x80\x0c\x64'): b''
+        }
+        self.machine.lights.backlight.on(100)
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.serialMock.expected_commands)
