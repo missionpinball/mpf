@@ -296,7 +296,7 @@ class SpikePlatformTest(MpfTestCase):
                 self._checksummed_response(b'\xff\xf7\xff\xff\xff\xff\xff\xff\x00'),    # read inputs
         }
 
-        self.advance_time_and_run(.1)
+        self.advance_time_and_run(.2)
         self.assertFalse(self.serialMock.expected_commands)
 
         self.assertSwitchState("s_start", True)

@@ -47,6 +47,7 @@ class SpikeDriver(DriverPlatformInterface):
     """A driver on a Stern Spike node board."""
 
     def __init__(self, config, number, platform):
+        """Initialise driver on Stern Spike."""
         super().__init__(config, number)
         self.platform = platform
         self.node, self.index = number.split("-")
@@ -283,14 +284,11 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
             url=port, baudrate=baud, limit=0)
         self._reader, self._writer = yield from connector
 
-        # read everything which is sitting in the serial
-        self._reader._buffer = bytearray()
-
         yield from self._initialize()
 
     def _update_switches(self, node):
         if node not in self._nodes:
-            self.log.warning("Cannot read node {} because it is not configured.", node)
+            self.log.warning("Cannot read node {} because it is not configured.".format(node))
             return
 
         new_inputs_str = yield from self._read_inputs(node)
@@ -321,7 +319,6 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
 
     @asyncio.coroutine
     def _poll(self):
-        #yield from self.test_rule()
         while True:
             self._send_raw(bytearray([0]))
 
@@ -345,40 +342,11 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
                 # give it a break of 50ms
                 yield from asyncio.sleep(.05, loop=self.machine.clock.loop)
                 # clear buffer
+                # pylint: disable-msg=protected-access
                 self._reader._buffer = bytearray()
             else:
                 # sleep only if spike is idle
                 yield from asyncio.sleep(1 / self.config['poll_hz'], loop=self.machine.clock.loop)
-
-    @asyncio.coroutine
-    def test_rule(self):
-        pass
-        # flipper rule
-#        self.send_cmd(1, SpikeNodebus.CoilSetReflex, [0x00, 0xFF, 0x33, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-#                                                      0, 0, 0, 0, 0, 0, 0, 0,
-#                                                      0x4B, 0x4C, 0, 2, 6])
-
-        # pulse complete. no hold
-#        self.send_cmd(1, SpikeNodebus.CoilSetReflex, bytearray([0x00, 0xFF, 0xFF, 0x10, 0x10, 0x00, 0x00, 0x00, 0x00,
-#                                                      0, 0, 0, 0, 0, 0, 0, 0,
-#                                                      0x4B, 0, 0, 0, 0, 0]))
-
-        # pulse can cancel. hold
-        self.send_cmd(1, SpikeNodebus.CoilSetReflex, bytearray([0x00, 0xFF, 0xFF, 0x10, 0x10, 0x00, 0x00, 0x00, 0x00,
-                                                      0, 0, 0, 0, 0, 0, 0, 0,
-                                                      0x4B, 0x4C, 0, 2, 6, 1]))
-
-        yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
-
-        # flipper hold
-#        self.send_cmd(1, SpikeNodebus.CoilSetReflex, [0x00, 0xFF, 0x46, 0x01, 0xFF, 0x00, 0x00, 0x00, 0x00,
-#                                                      0, 0, 0, 0, 0, 0, 0, 0,
-#                                                      0x4B, 0x4C, 0, 0, 1])
-
-        # popbumper/slings
-#        self.send_cmd(1, SpikeNodebus.CoilSetReflex, [0x00, 0xA6, 0x28, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-#                                                      0, 0, 0, 0, 0, 0, 0, 0,
-#                                                      0x4B, 0x00, 0, 0, 0])
 
     def stop(self):
         """Stop hardware and close connections."""
@@ -461,6 +429,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
                 self.log.warning("Checksum mismatch for response: %s", "".join("%02x " % b for b in response))
                 # we resync by flushing the input
                 self._writer.transport.serial.reset_input_buffer()
+                # pylint: disable-msg=protected-access
                 self._reader._buffer = bytearray()
                 return False
 
@@ -501,6 +470,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
         self._writer.write(b'\x03')
         # flush input
         self._writer.transport.serial.reset_input_buffer()
+        # pylint: disable-msg=protected-access
         self._reader._buffer = bytearray()
         # start mpf-spike-bridge
         self._writer.write("/bin/bridge\r\n".encode())
