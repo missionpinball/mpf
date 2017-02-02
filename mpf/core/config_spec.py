@@ -977,6 +977,14 @@ sounds:
         attenuation: single|gain|1.0
         release_point: single|secs|0
         release: single|secs|10ms
+spike:
+    __valid_in__: machine
+    debug: single|bool|False
+    port: single|str|
+    baud: single|int|
+    nodes: list|int|
+    poll_hz: single|int|1000
+    connection: single|enum(shell)|shell
 switch_player:
     __valid_in__: machine
     start_event: single|str|machine_reset_phase_3

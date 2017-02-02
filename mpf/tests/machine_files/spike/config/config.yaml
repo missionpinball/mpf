@@ -1,0 +1,63 @@
+#config_version=4
+
+hardware:
+  platform: spike
+
+spike:
+   port: /dev/ttyUSB0
+   baud: 115200
+   debug: True
+   nodes: 0, 1, 8, 9, 10, 11
+   poll_hz: 10
+
+coils:
+  c_test:
+    number: 1-0
+    pulse_ms: 100
+    hold_power: 5
+  c_flipper_main:
+    number: 8-1
+    hold_power: 5
+  c_flipper_hold:
+    number: 8-3
+    allow_enable: True
+  c_pop:
+    number: 8-10
+    pulse_power: 4
+
+matrix_lights:
+  backlight:
+    number: 0-0
+  l_1_3:
+    number: 1-3
+  l_8_30:
+    number: 8-40
+
+switches:
+  s_service:
+    number: 0-13
+  s_start:
+    number: 1-11
+  s_8_3:
+    number: 8-3
+  s_flipper:
+    number: 8-13
+  s_flipper_eos:
+    number: 8-15
+  s_pop:
+    number: 8-4
+
+autofire_coils:
+  ac_pops:
+    coil: c_pop
+    switch: s_pop
+
+flippers:
+    f_test_single:
+        main_coil: c_flipper_main
+        activation_switch: s_flipper
+
+    f_test_hold:
+        main_coil: c_flipper_main
+        hold_coil: c_flipper_hold
+        activation_switch: s_flipper

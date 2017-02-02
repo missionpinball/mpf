@@ -691,7 +691,7 @@ class Util(object):
     @staticmethod
     def ensure_future(coro_or_future, loop):
         """Wrap ensure_future."""
-        if hasattr(asyncio, "compat") and asyncio.compat.PY35:
+        if hasattr(asyncio, "ensure_future"):
             return asyncio.ensure_future(coro_or_future, loop=loop)
         else:
             # pylint: disable-msg=deprecated-method
