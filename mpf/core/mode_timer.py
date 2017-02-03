@@ -81,37 +81,12 @@ class ModeTimer(object):
 
         kwargs = None
         for entry in event_list:
-            if entry['action'] == 'add':
-                handler = self.add_time
+            if entry['action'] in ('add', 'subtract', 'jump', 'pause', 'set_tick_interval'):
+                handler = getattr(self, entry['action'])
                 kwargs = {'timer_value': entry['value']}
 
-            elif entry['action'] == 'subtract':
-                handler = self.subtract_time
-                kwargs = {'timer_value': entry['value']}
-
-            elif entry['action'] == 'jump':
-                handler = self.set_current_time
-                kwargs = {'timer_value': entry['value']}
-
-            elif entry['action'] == 'start':
-                handler = self.start
-
-            elif entry['action'] == 'stop':
-                handler = self.stop
-
-            elif entry['action'] == 'reset':
-                handler = self.reset
-
-            elif entry['action'] == 'restart':
-                handler = self.restart
-
-            elif entry['action'] == 'pause':
-                handler = self.pause
-                kwargs = {'timer_value': entry['value']}
-
-            elif entry['action'] == 'set_tick_interval':
-                handler = self.set_tick_interval
-                kwargs = {'timer_value': entry['value']}
+            elif entry['action'] in ('start', 'stop', 'reset', 'restart'):
+                handler = getattr(self, entry['action'])
 
             elif entry['action'] == 'change_tick_interval':
                 handler = self.change_tick_interval
@@ -154,12 +129,12 @@ class ModeTimer(object):
         if self.debug:
             self.log.debug("Resetting timer. New value: %s", self.start_value)
 
-        self.set_current_time(self.start_value)
+        self.jump(self.start_value)
 
     def start(self, **kwargs):
         """Start this timer based on the starting value that's already been configured.
 
-        Use set_current_time() if you want to set the starting time value.
+        Use jump() if you want to set the starting time value.
 
         Args:
             **kwargs: Not used in this method. Only exists since this method is
@@ -381,7 +356,7 @@ class ModeTimer(object):
                                       ticks=self.mode.player[self.tick_var],
                                       ticks_remaining=self.ticks_remaining)
 
-    def add_time(self, timer_value, **kwargs):
+    def add(self, timer_value, **kwargs):
         """Add ticks to this timer.
 
         Args:
@@ -425,7 +400,7 @@ class ModeTimer(object):
 
         self._check_for_done()
 
-    def subtract_time(self, timer_value, **kwargs):
+    def subtract(self, timer_value, **kwargs):
         """Subtract ticks from this timer.
 
         Args:
@@ -539,7 +514,7 @@ class ModeTimer(object):
         self.tick_secs = abs(timer_value)
         self._create_system_timer()
 
-    def set_current_time(self, timer_value, **kwargs):
+    def jump(self, timer_value, **kwargs):
         """Set the current amount of time of this timer.
 
         This value is expressed in "ticks" since the interval per tick can be something other than 1 second).

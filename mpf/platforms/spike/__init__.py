@@ -1,0 +1,1 @@
+"""Stern SPIKE platform."""

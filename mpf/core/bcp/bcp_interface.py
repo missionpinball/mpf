@@ -102,7 +102,6 @@ class BcpInterface(object):
 
     def remove_registered_trigger_event_for_client(self, client, event):
         """Remove trigger for event."""
-
         event, _ = self.machine.events.get_event_and_condition_from_string(event)
 
         # unregister transport

@@ -13,6 +13,7 @@ class MpfJSONEncoder(json.JSONEncoder):
 
     """Encoder which by default encodes to string."""
 
+    # pylint: disable-msg=method-hidden
     def default(self, o):
         """Encode to string."""
         return str(o)
@@ -206,8 +207,9 @@ class BCPClientSocket(BaseBcpClient):
         """
         try:
             bcp_string = encode_command_string(bcp_command, **bcp_command_args)
+        # pylint: disable-msg=broad-except
         except Exception as e:
-            self.log.warn("Failed to encode bcp_command %s with args %s. %s", bcp_command, bcp_command_args, e)
+            self.log.warning("Failed to encode bcp_command %s with args %s. %s", bcp_command, bcp_command_args, e)
             return
 
         if self.debug_log:

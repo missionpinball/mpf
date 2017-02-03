@@ -29,8 +29,7 @@ class EventManager(object):
         self.debug = True
 
     def get_event_and_condition_from_string(self, event_string):
-        """Parse an event string to divide the event name from a possible
-        placeholder / conditional in braces.
+        """Parse an event string to divide the event name from a possible placeholder / conditional in braces.
 
         Args:
             event_string: String to parse
@@ -342,8 +341,7 @@ class EventManager(object):
         self._post(event, ev_type=None, callback=callback, **kwargs)
 
     def post_boolean(self, event, callback=None, **kwargs):
-        """Post an boolean event which causes all the registered handlers to be
-         called one-by-one.
+        """Post an boolean event which causes all the registered handlers to be called one-by-one.
 
         Boolean events differ from regular events in that if any handler
         returns False, the remaining handlers will not be called.
@@ -373,8 +371,7 @@ class EventManager(object):
         self._post(event, ev_type='boolean', callback=callback, **kwargs)
 
     def post_queue(self, event, callback, **kwargs):
-        """Post a queue event which causes all the registered handlers to be
-        called.
+        """Post a queue event which causes all the registered handlers to be called.
 
         Queue events differ from standard events in that individual handlers
         are given the option to register a "wait", and the callback will not be
@@ -407,8 +404,7 @@ class EventManager(object):
         self._post(event, ev_type='queue', callback=callback, **kwargs)
 
     def post_relay(self, event, callback=None, **kwargs):
-        """Post a relay event which causes all the registered handlers to be
-        called.
+        """Post a relay event which causes all the registered handlers to be called.
 
         A dictionary can be passed from handler-to-handler and modified
         as needed.

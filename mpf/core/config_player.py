@@ -199,7 +199,7 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
         # todo should we move this to EventManager so we can use the dot
         # priority shift notation for all event handlers?
 
-        if 0 < event.find(".") and (event.find("{") < 0 or event.find(".") < event.find("{")):
+        if event.find(".") > 0 and (event.find("{") < 0 or event.find(".") < event.find("{")):
             new_event = event[:event.find(".")]
             if event.find("{") > 0:
                 priority += int(event[event.find(".") + 1:event.find("{")])

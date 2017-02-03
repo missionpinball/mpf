@@ -99,6 +99,7 @@ class ScoreReelAdvanceAction(BaseSmartVirtualCoilAction):
 
     """Virtual score reel."""
 
+    # pylint: disable-msg=too-many-arguments
     def __init__(self, actions, machine, switch_map, limit_lo, limit_hi, name):
         """Initialise virtual score reel."""
         super().__init__(actions, machine)
