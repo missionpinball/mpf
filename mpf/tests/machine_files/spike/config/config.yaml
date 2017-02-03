@@ -61,3 +61,10 @@ flippers:
         main_coil: c_flipper_main
         hold_coil: c_flipper_hold
         activation_switch: s_flipper
+
+    f_test_hold_eos:    # not generally recommended but spike can do it
+        main_coil: c_flipper_main
+        hold_coil: c_flipper_hold
+        activation_switch: s_flipper
+        use_eos: True
+        eos_switch: s_flipper_eos

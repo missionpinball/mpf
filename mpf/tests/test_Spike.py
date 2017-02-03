@@ -212,6 +212,11 @@ class SpikePlatformTest(MpfTestCase):
         self.advance_time_and_run(.001)
         self.assertFalse(self.serialMock.expected_commands)
 
+        # second enable should do nothing
+        self.machine.coils.c_test.enable()
+        self.advance_time_and_run(.001)
+        self.assertFalse(self.serialMock.expected_commands)
+
         # should repeat command after 250ms
         self.advance_time_and_run(.240)
         self.serialMock.expected_commands = {
@@ -286,6 +291,37 @@ class SpikePlatformTest(MpfTestCase):
         self.machine.flippers.f_test_hold.disable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.serialMock.expected_commands)
+
+        # dual-wound flippers with eos
+        # TODO: this is not exactly how stern would do it
+        self.serialMock.expected_commands = {
+            self._checksummed_cmd(b'\x88\x19\x41\x01\xff\x0c\x00\x9f\x00\x00\x00\x00\x00'
+                                  b'\x00\x00\x00\x00\x00\x00\x00\x4d\x4f\x00\x02\x06\x01'): b'',
+            self._checksummed_cmd(b'\x88\x19\x41\x03\xff\x0c\x00\xff\x00\x00\x00\x00\x00'
+                                  b'\x00\x00\x00\x00\x00\x00\x00\x4d\x00\x00\x02\x00\x01'): b''
+        }
+        self.machine.flippers.f_test_hold_eos.enable()
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # this is send twice due to MPF internals. will fix in the future
+        self.serialMock.permanent_commands[self._checksummed_cmd(
+            b'\x88\x19\x41\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')] = b''
+
+        self.serialMock.expected_commands = {
+            self._checksummed_cmd(b'\x88\x19\x41\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+                                  b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'): b'',
+            self._checksummed_cmd(b'\x88\x19\x41\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+                                  b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'): b''
+        }
+        self.machine.flippers.f_test_hold_eos.disable()
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.serialMock.expected_commands)
+
+        del self.serialMock.permanent_commands[self._checksummed_cmd(
+            b'\x88\x19\x41\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+            b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')]
 
     def _testSwitches(self):
         self.assertSwitchState("s_start", False)

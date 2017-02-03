@@ -154,7 +154,7 @@ class Flipper(SystemWideDevice):
         del kwargs
         self.log.debug("Disabling")
         self.main_coil.clear_hw_rule(self.switch)
-        if self.eos_switch:
+        if self.eos_switch and self.config['use_eos']:
             self.main_coil.clear_hw_rule(self.eos_switch)
 
         if self.hold_coil:

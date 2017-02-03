@@ -166,6 +166,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
 
     """Stern Spike Platform."""
 
+    # pylint: disable-msg=too-many-arguments
     def _write_rule(self, node, enable_switch_index, disable_switch_index, coil_index, pulse_power, pulse_ms,
                     hold_power, can_cancel_pulse):
         """Write a hardware rule to Stern Spike."""
@@ -288,7 +289,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
 
     def _update_switches(self, node):
         if node not in self._nodes:
-            self.log.warning("Cannot read node {} because it is not configured.".format(node))
+            self.log.warning("Cannot read node %s because it is not configured.", node)
             return
 
         new_inputs_str = yield from self._read_inputs(node)
