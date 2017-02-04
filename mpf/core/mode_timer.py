@@ -31,10 +31,10 @@ class ModeTimer(object):
         self.tick_var = self.mode.name + '_' + self.name + '_tick'
 
         self.running = False
-        self.start_value = self.config['start_value']
+        self.start_value = self.config['start_value'].evaluate([])
         self.restart_on_complete = self.config['restart_on_complete']
         self._ticks = 0
-        self.end_value = self.config['end_value']
+        self.end_value = self.config['end_value'].evaluate([])
         self.ticks_remaining = 0
         self.max_value = self.config['max_value']
         self.direction = self.config['direction'].lower()
