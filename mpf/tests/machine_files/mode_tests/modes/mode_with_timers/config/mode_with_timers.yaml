@@ -76,3 +76,11 @@ timers:
               value: 2
             - event: reset_tick_interval
               action: reset_tick_interval
+    timer_player_var:
+        debug: True
+        start_value: current_player.start
+        end_value: current_player.end
+        direction: up
+        tick_interval: 1s
+        start_running: yes
+        reset_on_mode_start: True

@@ -1024,8 +1024,8 @@ tilt:
 timers:
     __valid_in__: mode
     debug: single|bool|False
-    start_value: single|int|0
-    end_value: single|int|None
+    start_value: single|template_int|0
+    end_value: single|template_int|None
     direction: single|str|up
     max_value: single|ms|None
     tick_interval: single|ms|1s
