@@ -28,7 +28,7 @@ leds:
     type: w+-
     debug: True
   led_lights:
-    number: light_r,light_g,light_b
+    number: light_r, light_g, light_b
     platform: lights
   led_corrected:
     number:
