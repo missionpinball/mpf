@@ -163,7 +163,7 @@ class Led(SystemWideDevice):
             self.hw_driver = []
             lights_names = self.config['number'].split(",")
             for light_name in lights_names:
-                self.hw_driver.append(self.machine.lights[light_name])
+                self.hw_driver.append(self.machine.lights[light_name.strip()])
         else:
             self.load_platform_section('leds')
             self.hw_driver = self.platform.configure_led(self.config, len(self.config['type']))
