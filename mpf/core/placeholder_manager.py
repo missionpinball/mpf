@@ -76,6 +76,47 @@ class IntTemplate(BaseTemplate):
         return int(result)
 
 
+class DeviceClassPlaceholder:
+
+    """Wrap a monitorable device."""
+
+    def __init__(self, devices):
+        """Initialise placeholder."""
+        self._devices = devices
+
+    def __getitem__(self, item):
+        """Array access."""
+        return self.__getattr__(item)
+
+    def __getattr__(self, item):
+        """Attribute access."""
+        device = self._devices.get(item)
+        if not device:
+            raise AssertionError("Device {} does not exist in placeholders.".format(item))
+
+        return device.get_monitorable_state()
+
+
+class DevicesPlaceholder:
+
+    """Device monitor placeholder."""
+
+    def __init__(self, machine):
+        """Initialise placeholder."""
+        self._machine = machine
+
+    def __getitem__(self, item):
+        """Array access."""
+        return self.__getattr__(item)
+
+    def __getattr__(self, item):
+        """Attribute access."""
+        device = self._machine.device_manager.get_monitorable_devices().get(item)
+        if not device:
+            raise AssertionError("Device Collection {} not usable in placeholders.".format(item))
+        return DeviceClassPlaceholder(device)
+
+
 class MachinePlaceholder:
 
     """Wraps the machine."""
@@ -223,6 +264,8 @@ class PlaceholderManager(BasePlaceholderManager):
             return self.machine.settings
         elif name == "machine":
             return MachinePlaceholder(self.machine)
+        elif name == "device":
+            return DevicesPlaceholder(self.machine)
         elif self.machine.game:
             if name == "current_player":
                 return self.machine.game.player
