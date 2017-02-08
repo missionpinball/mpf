@@ -258,12 +258,12 @@ class TestPluginConfigPlayer(MpfBcpTestCase):
         t3_player = self.machine.show_controller.show_players['test3s']
         t3_player.play = MagicMock()
 
-        self.assertIn('test3s_play', self.machine.bcp.transport._handlers)
-        self.assertIn('test3s_clear', self.machine.bcp.transport._handlers)
-
         self.machine.modes['mode1'].start()
         self.advance_time_and_run()
 
         self.post_event('start_show3')
+
+        self.assertIn('test3s_play', self.machine.bcp.transport._handlers)
+        self.assertIn('test3s_clear', self.machine.bcp.transport._handlers)
 
         self.assertTrue(t3_player.play.called)

@@ -21,6 +21,9 @@ class BcpTransportManager:
         if handler not in self._handlers:
             self._handlers[handler] = []
 
+        if transport is None:
+            raise AssertionError("Cannot register None transport.")
+
         self._handlers[handler].append(transport)
 
     def remove_transport_from_handle(self, handler, transport: BaseBcpClient):
