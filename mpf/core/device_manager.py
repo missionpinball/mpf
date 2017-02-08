@@ -16,6 +16,8 @@ class DeviceManager(object):
         self.machine = machine
         self.log = logging.getLogger("DeviceManager")
 
+        self._monitorable_devices = {}
+
         self.collections = OrderedDict()
         self.device_classes = OrderedDict()  # collection_name: device_class
 
@@ -27,6 +29,20 @@ class DeviceManager(object):
 
         self.machine.events.add_handler('init_phase_2',
                                         self.create_collection_control_events)
+
+    def get_monitorable_devices(self):
+        """Return all devices which are registered as monitorable."""
+        return self._monitorable_devices
+
+    def register_monitorable_device(self, device):
+        """Register a monitorable device."""
+        if device.collection not in self._monitorable_devices:
+            self._monitorable_devices[device.collection] = {}
+        self._monitorable_devices[device.collection][device.name] = device
+
+    def notify_device_changes(self, device, notify, old, value):
+        """Notify subscribers about changes in a registered device."""
+        self.machine.bcp.interface.notify_device_changes(device, notify, old, value)
 
     def _load_device_modules(self, **kwargs):
         del kwargs

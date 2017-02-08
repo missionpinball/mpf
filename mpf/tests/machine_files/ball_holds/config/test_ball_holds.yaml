@@ -74,3 +74,8 @@ ball_holds:
     hold_test3:
         hold_devices: test_hold2
 
+event_player:
+    test_conditional_event{device.ball_holds.hold_test["balls_held"] > 0}:
+        - "yes"
+    test_conditional_event{device.ball_holds.hold_test["balls_held"] == 0}:
+        - "no"
