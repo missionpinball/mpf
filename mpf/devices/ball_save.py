@@ -25,6 +25,7 @@ class BallSave(SystemWideDevice, ModeDevice):
         self.enabled = False
         self.timer_started = False
         self.saves_remaining = 0
+        self.early_saved = 0
 
     def _initialize(self):
         self.unlimited_saves = self.config['balls_to_save'] == -1
@@ -56,6 +57,7 @@ class BallSave(SystemWideDevice, ModeDevice):
             return
 
         self.saves_remaining = self.config['balls_to_save']
+        self.early_saved = 0
         self.enabled = True
         self.log.debug("Enabling. Auto launch: %s, Balls to save: %s",
                        self.config['auto_launch'],
@@ -146,11 +148,7 @@ class BallSave(SystemWideDevice, ModeDevice):
             time.
         '''
 
-    def _ball_drain_while_active(self, balls, **kwargs):
-        del kwargs
-        if balls <= 0:
-            return
-
+    def _get_number_of_balls_to_save(self, available_balls):
         no_balls_in_play = False
 
         try:
@@ -159,16 +157,19 @@ class BallSave(SystemWideDevice, ModeDevice):
 
             if self.config['only_last_ball'] and self.machine.game.balls_in_play > 1:
                 self.log.debug("Will only save last ball but %s are in play.", self.machine.game.balls_in_play)
-                return
+                return 0
         except AttributeError:
             no_balls_in_play = True
 
         if no_balls_in_play:
             self.log.debug("Received request to save ball, but no balls are in"
                            " play. Discarding request.")
-            return
+            return 0
 
-        balls_to_save = balls
+        balls_to_save = available_balls
+
+        if self.config['only_last_ball'] and balls_to_save > 1:
+            balls_to_save = 1
 
         if balls_to_save > self.machine.game.balls_in_play:
             balls_to_save = self.machine.game.balls_in_play
@@ -176,20 +177,9 @@ class BallSave(SystemWideDevice, ModeDevice):
         if balls_to_save > self.saves_remaining and not self.unlimited_saves:
             balls_to_save = self.saves_remaining
 
-        self.log.debug("Ball(s) drained while active. Requesting new one(s). "
-                       "Autolaunch: %s", self.config['auto_launch'])
+        return balls_to_save
 
-        self.machine.events.post('ball_save_{}_saving_ball'.format(self.name),
-                                 balls=balls_to_save)
-        '''event: ball_save_(name)_saving_ball
-        desc: The ball save called (name) has just saved one (or more) balls.
-
-        args:
-            balls: The number of balls this ball saver is saving.
-        '''
-
-        self._schedule_balls(balls_to_save)
-
+    def _reduce_remaining_saves_and_disable_if_zero(self, balls_to_save):
         if not self.unlimited_saves:
             self.saves_remaining -= balls_to_save
             if self.debug:
@@ -202,7 +192,66 @@ class BallSave(SystemWideDevice, ModeDevice):
                 self.log.debug("Disabling since there are no saves remaining")
             self.disable()
 
+    def _ball_drain_while_active(self, balls, **kwargs):
+        del kwargs
+        if balls <= 0:
+            return
+
+        balls_to_save = self._get_number_of_balls_to_save(balls)
+
+        self.log.debug("Ball(s) drained while active. Requesting new one(s). "
+                       "Autolaunch: %s", self.config['auto_launch'])
+
+        self.machine.events.post('ball_save_{}_saving_ball'.format(self.name),
+                                 balls=balls_to_save, early_save=False)
+        '''event: ball_save_(name)_saving_ball
+        desc: The ball save called (name) has just saved one (or more) balls.
+
+        args:
+            balls: The number of balls this ball saver is saving.
+            early_save: True if this is an early ball save.
+        '''
+
+        self._schedule_balls(balls_to_save)
+
+        self._reduce_remaining_saves_and_disable_if_zero(balls_to_save)
+
         return {'balls': balls - balls_to_save}
+
+    def early_ball_save(self, **kwargs):
+        """Perform early ball save if enabled."""
+        del kwargs
+        if not self.enabled:
+            return
+
+        if not self._get_number_of_balls_to_save(1):
+            return
+
+        if self.early_saved > 0:
+            self.log.debug("Already performed an early ball save. Ball needs to drain first.")
+            return
+
+        self.machine.events.post('ball_save_{}_saving_ball'.format(self.name),
+                                 balls=1, early_save=True)
+        # doc block above
+
+        self.log.debug("Performing early ball save.")
+        self.early_saved += 1
+        self._schedule_balls(1)
+        self.machine.events.add_handler('ball_drain',
+                                        self._early_ball_save_drain_handler,
+                                        priority=1001)
+
+        self._reduce_remaining_saves_and_disable_if_zero(1)
+
+    def _early_ball_save_drain_handler(self, balls, **kwargs):
+        del kwargs
+        if self.early_saved and balls > 0:
+            balls -= 1
+            self.early_saved -= 1
+            self.log.debug("Early saved ball drained.")
+            self.machine.events.remove_handler(self._early_ball_save_drain_handler)
+            return {'balls': balls}
 
     def _schedule_balls(self, balls_to_save):
         if self.config['eject_delay']:
