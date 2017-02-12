@@ -2,6 +2,7 @@
 import abc
 
 from mpf.devices.switch import Switch
+from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
 
 class BasePlatform(metaclass=abc.ABCMeta):
@@ -233,6 +234,32 @@ class GiPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
         Args:
             config (dict): Config of GI.
+
+        """
+        raise NotImplementedError
+
+
+class LightsPlatform(BasePlatform, metaclass=abc.ABCMeta):
+
+    """Baseclass for platforms with any kind of lights in MPF.
+
+    This includes LEDs, GIs, Matrix Lights and any other lights.
+    """
+
+    def __init__(self, machine):
+        """Add led feature."""
+        super().__init__(machine)
+        self.features['has_lights'] = True
+
+    @abc.abstractmethod
+    def configure_light(self, number, platform_settings) -> LightPlatformInterface:
+        """Subclass this method in a platform module to configure a light.
+
+        This method should return a reference to the light
+        object which will be called to access the hardware.
+
+        Args:
+            config (dict): Config of light.
 
         """
         raise NotImplementedError

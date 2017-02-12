@@ -517,6 +517,26 @@ led_rings:
     radius: single|float|None
     count: single|int|
     led_template: single|subconfig(leds,device)|
+lights:
+    __valid_in__: machine
+    color_correction_profile: single|str|None
+    default_fade_ms: single|ms|None
+    default_on_color: single|color|ffffff
+    red_channel: single|str|None
+    red_channel_platform: single|str|None
+    red_channel_platform_settings: dict|str:str|None
+    green_channel: single|str|None
+    green_channel_platform: single|str|None
+    green_channel_platform_settings: dict|str:str|None
+    blue_channel: single|str|None
+    blue_channel_platform: single|str|None
+    blue_channel_platform_settings: dict|str:str|None
+    white_channel: single|str|None
+    white_channel_platform: single|str|None
+    white_channel_platform_settings: dict|str:str|None
+    x: single|int|None
+    y: single|int|None
+    z: single|int|None
 light_player:
     __valid_in__: machine, mode, show
     brightness: single|int_from_hex|ff

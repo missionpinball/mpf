@@ -3,13 +3,13 @@ import asyncio
 
 import logging
 
-from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
+from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
-from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
+from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
 
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 from mpf.platforms.spike.spike_defines import SpikeNodebus
-from mpf.core.platform import SwitchPlatform, MatrixLightsPlatform, DriverPlatform
+from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform
 
 
 class SpikeSwitch(SwitchPlatformInterface):
@@ -25,19 +25,24 @@ class SpikeSwitch(SwitchPlatformInterface):
         self.platform = platform
 
 
-class SpikeLight(MatrixLightPlatformInterface):
+class SpikeLight(LightPlatformInterface):
 
     """A light on a Stern Spike node board."""
 
     def __init__(self, node, number, platform):
-        """Initialise switch."""
+        """Initialise light."""
         self.node = node
         self.number = number
         self.platform = platform
 
-    def on(self, brightness=255):
+    def set_brightness(self, brightness: float, fade_ms: int):
         """Set brightness of channel."""
-        fade_time = 12  # 10ms fade time by default
+        fade_time = int(fade_ms * 1.28)
+        brightness = int(brightness * 255)
+        if 0 > brightness > 255:
+            raise AssertionError("Brightness out of bound.")
+        if 0 > fade_time > 255:
+            raise AssertionError("Fade time out of bound.")
         data = bytearray([fade_time, brightness])
         self.platform.send_cmd(self.node, SpikeNodebus.SetLed + self.number, data)
 
@@ -162,7 +167,7 @@ class SpikeDriver(DriverPlatformInterface):
         return "Spike Node {}".format(self.node)
 
 
-class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
+class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
 
     """Stern Spike Platform."""
 
@@ -228,9 +233,10 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
         """Configure a driver on Stern Spike."""
         return SpikeDriver(config, config['number'], self)
 
-    def configure_matrixlight(self, config):
+    def configure_light(self, number, platform_settings) -> SpikeLight:
         """Configure a light on Stern Spike."""
-        node, number = config['number'].split("-")
+        del platform_settings
+        node, number = number.split("-")
         return SpikeLight(int(node), int(number), self)
 
     def configure_switch(self, config):
