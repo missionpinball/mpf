@@ -119,3 +119,5 @@ gis:
 leds:
   test_led:
     number: 2-23
+  test_led2:
+    number: 2-25

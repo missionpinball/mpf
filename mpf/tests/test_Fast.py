@@ -100,7 +100,14 @@ class MockFastRgb(BaseMockFast):
 
     def _parse(self, cmd):
         if cmd[:3] == "RS:":
-            self.leds[cmd[3:5]] = cmd[5:]
+            remaining = cmd[3:]
+            while True:
+                self.leds[remaining[0:2]] = remaining[2:8]
+                remaining = remaining[9:]
+
+                if not remaining:
+                    break
+
             self.queue.append("RX:P")
             return True
 
@@ -666,17 +673,23 @@ class TestFast(MpfTestCase):
     def _test_rdb_led(self):
         self.advance_time_and_run()
         device = self.machine.leds.test_led
+        device2 = self.machine.leds.test_led2
         self.assertEqual("000000", self.rgb_cpu.leds['97'])
+        self.assertEqual("000000", self.rgb_cpu.leds['99'])
         self.rgb_cpu.leds = {}
         # test led on
         device.on()
         self.advance_time_and_run(1)
         self.assertEqual("ffffff", self.rgb_cpu.leds['97'])
+        self.assertEqual("000000", self.rgb_cpu.leds['99'])
+
+        device2.color("001122")
 
         # test led off
         device.off()
         self.advance_time_and_run(1)
         self.assertEqual("000000", self.rgb_cpu.leds['97'])
+        self.assertEqual("001122", self.rgb_cpu.leds['99'])
 
         # test led color
         device.color(RGBColor((2, 23, 42)))

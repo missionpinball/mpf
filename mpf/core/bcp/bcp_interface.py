@@ -62,8 +62,6 @@ class BcpInterface(object):
 
         self._setup_machine_var_monitor()
 
-        self._monitorable_devices = []
-
         self.machine.events.add_handler('player_add_success',
                                         self.bcp_player_added)
         self.machine.events.add_handler('machine_reset_phase_1',
@@ -139,21 +137,15 @@ class BcpInterface(object):
         self.machine.bcp.transport.add_handler_to_transport("_devices", client)
 
         # initially send all states
-        for device in self._monitorable_devices:
-            self.machine.bcp.transport.send_to_client(
-                client=client,
-                bcp_command='device',
-                type=device.class_label,
-                name=device.name,
-                changes=False,
-                state=device.get_monitorable_state())
-
-    def register_monitorable_device(self, device):
-        """Register monitorable device to BCP."""
-        if not self.configured:
-            return
-
-        self._monitorable_devices.append(device)
+        for collection in self.machine.device_manager.get_monitorable_devices().values():
+            for device in collection.values():
+                self.machine.bcp.transport.send_to_client(
+                    client=client,
+                    bcp_command='device',
+                    type=device.class_label,
+                    name=device.name,
+                    changes=False,
+                    state=device.get_monitorable_state())
 
     def notify_device_changes(self, device, attribute_name, old_value, new_value):
         """Notify all listeners about device change."""
