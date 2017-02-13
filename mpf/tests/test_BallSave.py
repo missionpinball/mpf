@@ -25,6 +25,107 @@ class TestBallSave(MpfGameTestCase):
         # mode stopped. mode_ball_save should be disabled
         self.assertFalse(self.machine.ball_saves.mode_ball_save.enabled)
 
+    def test_early_ball_save_once(self):
+        # prepare game
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+        self.advance_time_and_run(10)
+        self.assertEqual(2, self.machine.ball_controller.num_balls_known)
+        self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
+
+        # start game
+        self.machine.switch_controller.process_switch('s_start', 1)
+        self.machine.switch_controller.process_switch('s_start', 0)
+        self.machine_run()
+        self.post_event("enable1")
+
+        # ball save should be enabled now
+        self.assertTrue(self.machine.ball_saves.default.enabled)
+
+        # takes roughly 4s to get ball confirmed
+        self.advance_time_and_run(4)
+        self.assertNotEqual(None, self.machine.game)
+        self.assertBallsOnPlayfield(1)
+        self.assertBallsInPlay(1)
+        self.assertTrue(self.machine.ball_saves.default.enabled)
+
+        # early ball save
+        self.hit_and_release_switch("s_left_outlane")
+
+        # should eject a second ball
+        self.advance_time_and_run(4)
+        self.assertNotEqual(None, self.machine.game)
+        self.assertBallsOnPlayfield(2)
+        self.assertFalse(self.machine.ball_saves.default.enabled)
+        self.assertBallsInPlay(1)
+
+        # second ball drains
+        self.hit_switch_and_run("s_ball_switch1", 1)
+        self.assertBallsOnPlayfield(1)
+        self.assertBallsInPlay(1)
+
+        # game should not end and ball should not come back
+        self.assertNotEqual(None, self.machine.game)
+
+        self.advance_time_and_run(10)
+        self.assertBallsOnPlayfield(1)
+
+        # second ball draining should end the game
+        self.hit_switch_and_run("s_ball_switch2", 1)
+        self.assertEqual(None, self.machine.game)
+
+    def test_early_ball_save_unlimited(self):
+        # prepare game
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+        self.advance_time_and_run(10)
+        self.assertEqual(2, self.machine.ball_controller.num_balls_known)
+        self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
+
+        # start game
+        self.machine.switch_controller.process_switch('s_start', 1)
+        self.machine.switch_controller.process_switch('s_start', 0)
+        self.machine_run()
+        self.post_event("enable2")
+
+        # ball save should be enabled now
+        self.assertTrue(self.machine.ball_saves.unlimited.enabled)
+
+        # takes roughly 4s to get ball confirmed
+        self.advance_time_and_run(4)
+        self.assertNotEqual(None, self.machine.game)
+        self.assertBallsOnPlayfield(1)
+        self.assertBallsInPlay(1)
+        self.assertTrue(self.machine.ball_saves.unlimited.enabled)
+
+        # early ball save
+        self.hit_and_release_switch("s_left_outlane")
+
+        # should eject a second ball
+        self.advance_time_and_run(4)
+        self.assertNotEqual(None, self.machine.game)
+        self.assertBallsOnPlayfield(2)
+        self.assertTrue(self.machine.ball_saves.unlimited.enabled)
+        self.assertBallsInPlay(1)
+
+        # second ball drains
+        self.hit_switch_and_run("s_ball_switch1", 1)
+        self.assertBallsOnPlayfield(1)
+        self.assertBallsInPlay(1)
+
+        # game should not end and ball should not come back
+        self.assertNotEqual(None, self.machine.game)
+
+        self.advance_time_and_run(10)
+        self.assertBallsOnPlayfield(1)
+
+        # second ball draining should be saved
+        self.hit_switch_and_run("s_ball_switch2", 1)
+        self.assertNotEqual(None, self.machine.game)
+        self.assertBallsOnPlayfield(0)
+
+        self.advance_time_and_run(5)
+        self.assertBallsOnPlayfield(1)
 
     def testBallSaveShootAgain(self):
         # prepare game
