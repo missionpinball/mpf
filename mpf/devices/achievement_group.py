@@ -4,8 +4,10 @@ from random import choice
 from mpf.core.mode import Mode
 from mpf.core.mode_device import ModeDevice
 from mpf.core.player import Player
+from mpf.core.device_monitor import DeviceMonitor
 
 
+@DeviceMonitor(_enabled="enabled", _selected_member="selected_member")
 class AchievementGroup(ModeDevice):
 
     """An achievement group in a pinball machine.

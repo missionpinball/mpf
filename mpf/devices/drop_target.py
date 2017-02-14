@@ -209,6 +209,7 @@ class DropTarget(SystemWideDevice):
             self.reset_coil.pulse()
 
 
+@DeviceMonitor("complete", "down", "up")
 class DropTargetBank(SystemWideDevice, ModeDevice):
 
     """A bank of drop targets in a pinball machine by grouping together multiple `DropTarget` class devices."""
