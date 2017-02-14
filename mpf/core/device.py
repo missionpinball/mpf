@@ -45,7 +45,7 @@ class Device(object, metaclass=abc.ABCMeta):
         self.platform = self.machine.get_platform_sections(platform_section, self.config['platform'])
 
         if self.debug:
-            self.log.debug('Platform Driver: %s', self.platform)
+            self.log.info('Platform Driver: %s', self.platform)
 
     def debug_log(self, msg: str, *args, **kwargs):
         """Log to debug if debug is enabled for the device.
@@ -56,7 +56,7 @@ class Device(object, metaclass=abc.ABCMeta):
             **kwargs: kwargs for debug
         """
         if self.debug:
-            self.log.debug(msg, *args, **kwargs)
+            self.log.info(msg, *args, **kwargs)
 
     @classmethod
     def prepare_config(cls, config: dict, is_mode_config: bool) -> dict:
