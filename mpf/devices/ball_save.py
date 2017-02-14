@@ -6,7 +6,7 @@ from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
 
 
-@DeviceMonitor("saves_remaining", "enabled", "timer_started")
+@DeviceMonitor("saves_remaining", "enabled", "timer_started", "state")
 class BallSave(SystemWideDevice, ModeDevice):
 
     """Ball save device which will give back the ball within a certain time."""
@@ -26,6 +26,7 @@ class BallSave(SystemWideDevice, ModeDevice):
         self.timer_started = False
         self.saves_remaining = 0
         self.early_saved = 0
+        self.state = 'disabled'
 
     def _initialize(self):
         self.unlimited_saves = self.config['balls_to_save'] == -1
@@ -59,6 +60,7 @@ class BallSave(SystemWideDevice, ModeDevice):
         self.saves_remaining = self.config['balls_to_save']
         self.early_saved = 0
         self.enabled = True
+        self.state = 'enabled'
         self.log.debug("Enabling. Auto launch: %s, Balls to save: %s",
                        self.config['auto_launch'],
                        self.config['balls_to_save'])
@@ -84,6 +86,7 @@ class BallSave(SystemWideDevice, ModeDevice):
             return
 
         self.enabled = False
+        self.state = 'disabled'
         self.timer_started = False
         self.log.debug("Disabling...")
         self.machine.events.remove_handler(self._ball_drain_while_active)
@@ -133,6 +136,8 @@ class BallSave(SystemWideDevice, ModeDevice):
         if self.debug:
             self.log.debug("Starting Hurry Up")
 
+        self.state = 'hurry_up'
+
         self.machine.events.post('ball_save_{}_hurry_up'.format(self.name))
         '''event: ball_save_(name)_hurry_up
         desc: The ball save called (name) has just entered its hurry up mode.
@@ -141,6 +146,8 @@ class BallSave(SystemWideDevice, ModeDevice):
     def _grace_period(self):
         if self.debug:
             self.log.debug("Starting Grace Period")
+
+        self.state = 'grace_period'
 
         self.machine.events.post('ball_save_{}_grace_period'.format(self.name))
         '''event: ball_save_(name)_grace_period
