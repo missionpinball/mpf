@@ -34,7 +34,12 @@ class ModeTimer(object):
         self.start_value = self.config['start_value'].evaluate([])
         self.restart_on_complete = self.config['restart_on_complete']
         self._ticks = 0
-        self.end_value = self.config['end_value'].evaluate([])
+
+        try:
+            self.end_value = self.config['end_value'].evaluate([])
+        except AttributeError:
+            self.end_value = None
+
         self.ticks_remaining = 0
         self.max_value = self.config['max_value']
         self.direction = self.config['direction'].lower()
