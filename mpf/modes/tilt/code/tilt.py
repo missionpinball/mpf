@@ -107,14 +107,15 @@ class Tilt(Mode):
 
         warnings = self.player[self.tilt_config['tilt_warnings_player_var']]
 
-        if warnings >= self.tilt_config['warnings_to_tilt']:
+        if warnings >= self.tilt_config['warnings_to_tilt'].evaluate([]):
             self.tilt()
         else:
             self.machine.events.post(
                 'tilt_warning',
                 warnings=warnings,
-                warnings_remaining=(self.tilt_config['warnings_to_tilt'] -
-                                    warnings))
+                warnings_remaining=(
+                    self.tilt_config['warnings_to_tilt'].evaluate([]) -
+                    warnings))
             '''event: tilt_warning
             desc: A tilt warning just happened.
             args:

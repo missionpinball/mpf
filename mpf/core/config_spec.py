@@ -1017,7 +1017,7 @@ tilt:
     tilt_warning_switch_tag: single|str|tilt_warning
     tilt_switch_tag: single|str|tilt
     slam_tilt_switch_tag: single|str|slam_tilt
-    warnings_to_tilt: single|int|3
+    warnings_to_tilt: single|template_int|3
     reset_warnings_events: list|str|ball_will_end
     multiple_hit_window: single|ms|300ms
     settle_time: single|ms|5s
