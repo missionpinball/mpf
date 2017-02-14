@@ -532,6 +532,8 @@ class ModeTimer(object):
         if self.max_value and self.mode.player[self.tick_var] > self.max_value:
             self.mode.player[self.tick_var] = self.max_value
 
+        self._check_for_done()
+
     def kill(self):
         """Stop this timer and also removes all the control events."""
         self.stop()
