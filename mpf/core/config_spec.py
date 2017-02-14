@@ -1028,7 +1028,7 @@ timers:
     start_value: single|template_int|0
     end_value: single|template_int|None
     direction: single|str|up
-    max_value: single|ms|None
+    max_value: single|int|None
     tick_interval: single|ms|1s
     start_running: single|bool|False
     control_events: list|subconfig(timer_control_events)|None
