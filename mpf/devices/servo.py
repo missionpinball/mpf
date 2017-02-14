@@ -5,7 +5,7 @@ from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.system_wide_device import SystemWideDevice
 
 
-@DeviceMonitor("_position")
+@DeviceMonitor(_position="position")
 class Servo(SystemWideDevice):
 
     """Represents a servo in a pinball machine.

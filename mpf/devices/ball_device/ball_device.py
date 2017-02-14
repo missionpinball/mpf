@@ -21,7 +21,7 @@ from mpf.devices.ball_device.pulse_coil_ejector import PulseCoilEjector
 from mpf.devices.ball_device.switch_counter import SwitchCounter
 
 
-@DeviceMonitor("available_balls", "_state", counted_balls="balls")
+@DeviceMonitor("available_balls", _state="state", counted_balls="balls")
 class BallDevice(SystemWideDevice):
 
     """
@@ -44,7 +44,7 @@ class BallDevice(SystemWideDevice):
         self.delay = DelayManager(machine.delayRegistry)
 
         self.available_balls = 0
-        """Number of balls that are available to be ejected. This differes from
+        """Number of balls that are available to be ejected. This differs from
         `balls` since it's possible that this device could have balls that are
         being used for some other eject, and thus not available."""
 

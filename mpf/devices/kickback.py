@@ -3,7 +3,7 @@ from mpf.core.device_monitor import DeviceMonitor
 from mpf.devices.autofire import AutofireCoil
 
 
-@DeviceMonitor("_enabled")
+@DeviceMonitor(_enabled="enabled")
 class Kickback(AutofireCoil):
 
     """A kickback device which will fire a ball back into the playfield."""

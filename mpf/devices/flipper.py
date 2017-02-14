@@ -9,7 +9,7 @@ from mpf.core.system_wide_device import SystemWideDevice
 from mpf.devices.switch import ReconfiguredSwitch
 
 
-@DeviceMonitor("_enabled")
+@DeviceMonitor(_enabled="enabled")
 class Flipper(SystemWideDevice):
 
     """Represents a flipper in a pinball machine. Subclass of Device.

@@ -9,7 +9,8 @@ from mpf.core.settings_controller import SettingEntry
 from mpf.core.system_wide_device import SystemWideDevice
 
 
-@DeviceMonitor("_brightness", "_corrected_brightness")
+@DeviceMonitor(_brightness="brightness",
+               _corrected_brightness="corrected_brightness")
 class MatrixLight(SystemWideDevice):
 
     """Represents a light connected to a traditional lamp matrix in a pinball machine.

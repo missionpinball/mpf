@@ -5,7 +5,8 @@ from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.system_wide_device import SystemWideDevice
 
 
-@DeviceMonitor("_enabled", "_active", "_release_in_progress")
+@DeviceMonitor(_enabled="enabled", _active="active",
+               _release_in_progress="release_in_progress")
 class Magnet(SystemWideDevice):
 
     """Controls a playfield magnet in a pinball machine."""

@@ -10,7 +10,7 @@ from mpf.core.settings_controller import SettingEntry
 from mpf.core.system_wide_device import SystemWideDevice
 
 
-@DeviceMonitor("_color", "_corrected_color")
+@DeviceMonitor(_color="color", _corrected_color="corrected_color")
 class Led(SystemWideDevice):
 
     """An RGB LED in a pinball machine."""

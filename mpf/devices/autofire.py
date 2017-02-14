@@ -6,7 +6,7 @@ from mpf.devices.switch import ReconfiguredSwitch
 from mpf.core.system_wide_device import SystemWideDevice
 
 
-@DeviceMonitor("_enabled")
+@DeviceMonitor(_enabled="enabled")
 class AutofireCoil(SystemWideDevice):
 
     """Coils in the pinball machine which should fire automatically based on switch hits using hardware switch rules.
