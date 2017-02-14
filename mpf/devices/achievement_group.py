@@ -29,6 +29,7 @@ class AchievementGroup(ModeDevice):
 
         self._enabled = False
         self._selected_member = None
+        self._rotation_in_progress = False
 
     @property
     def enabled(self):
@@ -124,6 +125,8 @@ class AchievementGroup(ModeDevice):
         if not self._selected_member and not self.config['auto_select']:
             return
 
+        self._rotation_in_progress = True
+
         # if there's already one selected, set it back to enabled
         if self._selected_member and self._selected_member.state == "selected":
             self._selected_member.enable()
@@ -141,6 +144,8 @@ class AchievementGroup(ModeDevice):
                 self._selected_member = achievements[(current_index + 1) % len(achievements)]
 
         self._selected_member.select()
+
+        self._rotation_in_progress = False
 
     def rotate_left(self, **kwargs):
         """Rotate to the left."""
@@ -200,6 +205,10 @@ class AchievementGroup(ModeDevice):
 
     def _process_current_member_state(self):
         self.debug_log("Processing current member state")
+
+        if self._rotation_in_progress:
+            self.debug_log("Rotation in progress. Aborting")
+            return
 
         if not self._enabled:
             self.debug_log("Not enabled. Aborting")
