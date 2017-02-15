@@ -102,6 +102,14 @@ class Command(object):
                                  "used for all"
                                  " devices")
 
+        # The following are just included for full compatibility with mc
+        # which is needed when using "mpf both".
+
+        parser.add_argument("-L",
+                            action="store", dest="mc_file_name",
+                            metavar='mc_file_name',
+                            default=None, help=argparse.SUPPRESS)
+
         args = parser.parse_args(args)
         args.configfile = Util.string_to_list(args.configfile)
 
@@ -114,6 +122,13 @@ class Command(object):
         except OSError as exception:
             if exception.errno != errno.EEXIST:
                 raise
+
+        full_logfile_path = os.path.join(machine_path, args.logfile)
+
+        try:
+            os.remove(full_logfile_path)
+        except OSError:
+            pass
 
         logging.basicConfig(level=args.loglevel,
                             format='%(asctime)s : %(levelname)s : %(name)s : '
