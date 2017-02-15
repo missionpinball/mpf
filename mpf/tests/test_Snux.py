@@ -64,7 +64,7 @@ class TestSnux(MpfTestCase):
         self.machine.coils.c_side_a1.pulse(50)
         self.machine.coils.c_side_c1.pulse(50)
         self.advance_time_and_run(0.001)
-        c_side_a1.pulse.assert_called_with(self.machine.coils.c_side_a1, 50)
+        c_side_a1.pulse.assert_called_with(self.machine.coils.c_side_a1.get_configured_driver(), 50)
         c_side_a1.pulse = MagicMock()
         assert not c_side_c1.pulse.called
         assert not c_ac_relay.enable.called
@@ -79,7 +79,7 @@ class TestSnux(MpfTestCase):
         # after the relay switches. pulse the other coil
         self.advance_time_and_run(0.075)
         assert not c_side_a1.pulse.called
-        c_side_c1.pulse.assert_called_with(self.machine.coils.c_side_c1, 50)
+        c_side_c1.pulse.assert_called_with(self.machine.coils.c_side_c1.get_configured_driver(), 50)
 
         # it should switch back to a side when idle
         self.advance_time_and_run(0.052)

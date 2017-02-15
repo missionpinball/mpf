@@ -46,9 +46,12 @@ class TestFlippers(MpfTestCase):
         self.machine.flippers.f_test_hold_eos.disable()
 
         self.machine.default_platform.clear_hw_rule.assert_has_calls(
-            [call(self.machine.flippers.f_test_hold_eos.switch, self.machine.flippers.f_test_hold_eos.main_coil),
-             call(self.machine.flippers.f_test_hold_eos.eos_switch, self.machine.flippers.f_test_hold_eos.main_coil),
-             call(self.machine.flippers.f_test_hold_eos.switch, self.machine.flippers.f_test_hold_eos.hold_coil)]
+            [call(self.machine.flippers.f_test_hold_eos.switch.get_configured_switch(),
+                  self.machine.flippers.f_test_hold_eos.main_coil.get_configured_driver()),
+             call(self.machine.flippers.f_test_hold_eos.eos_switch.get_configured_switch(),
+                  self.machine.flippers.f_test_hold_eos.main_coil.get_configured_driver()),
+             call(self.machine.flippers.f_test_hold_eos.switch.get_configured_switch(),
+                  self.machine.flippers.f_test_hold_eos.hold_coil.get_configured_driver())]
         )
 
     def test_flipper_with_settings(self):

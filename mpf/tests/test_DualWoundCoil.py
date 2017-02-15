@@ -23,26 +23,26 @@ class TestDualWoundCoil(MpfTestCase):
 
         # test enable
         self.machine.coils.c_test.enable()
-        c_power.pulse.assert_called_with(self.machine.coils.c_power, 20)
+        c_power.pulse.assert_called_with(self.machine.coils.c_power.get_configured_driver(), 20)
         c_power.pulse = MagicMock()
         assert not c_power.enable.called
-        c_hold.enable.assert_called_with(self.machine.coils.c_hold)
+        c_hold.enable.assert_called_with(self.machine.coils.c_hold.get_configured_driver())
         c_hold.enable = MagicMock()
         assert not c_hold.pulse.called
 
         # test disable
         self.machine.coils.c_test.disable()
-        c_power.disable.assert_called_with(self.machine.coils.c_power)
+        c_power.disable.assert_called_with(self.machine.coils.c_power.get_configured_driver())
         c_power.disable = MagicMock()
-        c_hold.disable.assert_called_with(self.machine.coils.c_hold)
+        c_hold.disable.assert_called_with(self.machine.coils.c_hold.get_configured_driver())
         c_hold.disable = MagicMock()
 
         # test pulse
         self.machine.coils.c_test.pulse(17)
-        c_power.pulse.assert_called_with(self.machine.coils.c_power, 17)
-        c_hold.pulse.assert_called_with(self.machine.coils.c_hold, 17)
+        c_power.pulse.assert_called_with(self.machine.coils.c_power.get_configured_driver(), 17)
+        c_hold.pulse.assert_called_with(self.machine.coils.c_hold.get_configured_driver(), 17)
 
         # test default pulse
         self.machine.coils.c_test.pulse()
-        c_power.pulse.assert_called_with(self.machine.coils.c_power, 20)
-        c_hold.pulse.assert_called_with(self.machine.coils.c_hold, 10)
+        c_power.pulse.assert_called_with(self.machine.coils.c_power.get_configured_driver(), 20)
+        c_hold.pulse.assert_called_with(self.machine.coils.c_hold.get_configured_driver(), 10)

@@ -74,6 +74,7 @@ mpf:
         - mpf.devices.combo_switch.ComboSwitch
         - mpf.devices.ball_hold.BallHold
         - mpf.devices.multiball_lock.MultiballLock
+        - mpf.devices.power_supply_unit.PowerSupplyUnit
 
     plugins:
         mpf.plugins.auditor.Auditor
@@ -387,3 +388,7 @@ combo_switches:
     tag_1: left_flipper
     tag_2: right_flipper
     events_when_both: flipper_cancel
+
+psus:
+  default:
+    voltage: 48

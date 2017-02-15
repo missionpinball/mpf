@@ -211,6 +211,7 @@ coils:
     enable_events: dict|str:ms|None
     disable_events: dict|str:ms|None
     pulse_events: dict|str:ms|None
+    psu: single|machine(psus)|default
     platform: single|str|None
 dual_wound_coils:
     __valid_in__: machine
@@ -669,6 +670,10 @@ p3_roc:
     watchdog_time: single|ms|1s
     use_watchdog: single|bool|True
     debug: single|bool|False
+psus:
+    __valid_in__: machine
+    voltage: single|int|None
+    max_amps: single|int|None
 physical_dmd:
     __valid_in__: machine
     shades: single|pow2|16
@@ -740,7 +745,7 @@ score_reels:
     limit_lo: single|int|0
     limit_hi: single|int|9
     repeat_pulse_time: single|ms|200
-    hw_confirm_time: single|ms|300
+    hw_confirm_time: single|ms|20
     confirm: single|str|strict
     switch_0: single|machine(switches)|None
     switch_1: single|machine(switches)|None
@@ -760,11 +765,7 @@ score_reel_groups:
     max_simultaneous_coils: single|int|2
     reels: list|machine(score_reels)|
     chimes: list|machine(coils)|None
-    repeat_pulse_time: single|ms|200
-    hw_confirm_time: single|ms|300
-    config: single|str|lazy
     lights_tag: single|str|None
-    confirm: single|str|lazy
 scoring:
     __valid_in__: modes                             # todo add to validator
     score: single|template_int|
