@@ -118,8 +118,8 @@ class Command(object):
         logging.basicConfig(level=args.loglevel,
                             format='%(asctime)s : %(levelname)s : %(name)s : '
                                    '%(message)s',
-                            filename=os.path.join(machine_path, args.logfile),
-                            filemode='w')
+                            filename=full_logfile_path,
+                            filemode='a')
 
         # define a Handler which writes INFO messages or higher to the
         # sys.stderr
