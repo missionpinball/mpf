@@ -219,7 +219,7 @@ class MultiballLock(ModeDevice):
         if self._max_balls_locked_by_any_player <= self._physically_locked_balls:
             balls_to_lock_physically = 0
 
-        # do not lock if the lock would be phyiscally full but not virtually
+        # do not lock if the lock would be physically full but not virtually
         if not self.is_virtually_full and self._physically_remaining_space <= 1:
             balls_to_lock_physically = 0
 
