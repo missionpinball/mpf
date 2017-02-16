@@ -6,7 +6,16 @@ class LogMixin:
     def configure_logging(self, logger, console_level='basic',
                           file_level='basic'):
 
-        # print("LOGGING CONFIG:", logger, console_level, file_level)
+        """Configure the logging for the module this class is mixed into.
+
+        Args:
+            logger: The string name of the logger to use
+            console_level: The level of logging for the console. Valid options
+                are "none", "basic", or "full".
+            file_level: The level of logging for the console. Valid options
+                are "none", "basic", or "full".
+
+        """
 
         self.log = logging.getLogger(logger)
 
@@ -32,6 +41,10 @@ class LogMixin:
             pass
 
     def debug_log(self, msg, *args, **kwargs):
+        """Log a message at the debug level. Note that whether this message
+        shows up in the console or log file is controlled by the settings
+        used with configure_logging().
+        """
 
         if not hasattr(self, 'log'):
             self._logging_not_configured()
@@ -42,6 +55,10 @@ class LogMixin:
             self.log.log(11, msg, *args, **kwargs)
 
     def info_log(self, msg, *args, **kwargs):
+        """Log a message at the info level. Note that whether this message
+        shows up in the console or log file is controlled by the settings
+        used with configure_logging().
+        """
 
         if not self.log:
             self._logging_not_configured()
@@ -52,6 +69,9 @@ class LogMixin:
             self.log.log(11, msg, *args, **kwargs)
 
     def warning_log(self, msg, *args, **kwargs):
+        """Log a message at the warning level. These messages will always be
+        shown in the console and the log file.
+        """
 
         if not self.log:
             self._logging_not_configured()
@@ -59,6 +79,9 @@ class LogMixin:
         self.log.log(30, 'WARNING: {}'.format(msg), *args, **kwargs)
 
     def error_log(self, msg, *args, **kwargs):
+        """Log a message at the error level. These messages will always be
+        shown in the console and the log file.
+        """
 
         if not self.log:
             self._logging_not_configured()
@@ -68,5 +91,5 @@ class LogMixin:
     def _logging_not_configured(self):
         raise RuntimeError(
             "Logging has not been configured for the {} module. You must call "
-            "configure_logging() before you can post a log message".format(
-            self))
+            "configure_logging() before you can post a log message".
+            format(self))

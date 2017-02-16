@@ -175,7 +175,7 @@ mpf:
 
 logging:
     console:
-      asset_manager: none  # todo subclasses
+      asset_manager: none
       ball_controller: none
       ball_search: basic
       bcp: basic

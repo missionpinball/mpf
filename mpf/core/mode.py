@@ -1,6 +1,5 @@
 """Contains the Mode base class."""
 import copy
-import logging
 
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.delays import DelayManager

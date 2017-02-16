@@ -1,6 +1,5 @@
 """BCP socket client."""
 import json
-import logging
 from urllib.parse import urlsplit, parse_qs, quote, unquote, urlunparse
 
 import asyncio
@@ -135,10 +134,9 @@ class BCPClientSocket(BaseBcpClient):
 
     def __init__(self, machine, name, bcp):
         """Initialise BCP client socket."""
-        
-        self.module_name = 'BCPClientSocket.'.format(name)
+        self.module_name = 'BCPClientSocket.{}'.format(name)
         self.config_name = 'bcp_client'
-        
+
         super().__init__(machine, name, bcp)
 
         self._sender = None

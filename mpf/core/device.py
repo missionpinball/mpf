@@ -74,8 +74,8 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
 
     def _configure_device_logging(self, config):
         self.configure_logging(self.class_label + '.' + self.name,
-                       config['console_log'],
-                       config['file_log'])
+                               config['console_log'],
+                               config['file_log'])
 
         self.debug_log('Platform Driver: %s', self.platform)
         self.debug_log("Configuring device with settings: '%s'", config)

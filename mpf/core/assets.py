@@ -1,6 +1,5 @@
 """Contains AssetManager, AssetLoader, and Asset parent classes."""
 import copy
-import logging
 import os
 import random
 import threading

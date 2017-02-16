@@ -5,6 +5,7 @@ import asyncio
 
 from mpf.core.mpf_controller import MpfController
 
+
 class BaseBcpClient(MpfController, metaclass=abc.ABCMeta):
 
     """Base class for bcp clients."""

@@ -1,6 +1,5 @@
 """Classes for the EventManager and QueuedEvents."""
 import inspect
-import logging
 from collections import deque, namedtuple
 import uuid
 
@@ -20,9 +19,9 @@ class EventManager(MpfController):
 
     def __init__(self, machine):
         """Initialise EventManager."""
-        
+
         super().__init__(machine)
-        
+
         self.registered_handlers = {}   # type: {str: [RegisteredHandler]}
         self.event_queue = deque([])
         self.callback_queue = deque([])

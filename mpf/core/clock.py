@@ -52,7 +52,8 @@ class ClockBase(LogMixin):
 
         # needed since the test clock is setup before the machine
         if machine:
-            self.configure_logging('Clock',
+            self.configure_logging(
+                'Clock',
                 self.machine.config['logging']['console']['clock'],
                 self.machine.config['logging']['file']['clock'])
         else:

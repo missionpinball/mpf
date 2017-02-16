@@ -1,6 +1,5 @@
 """Contains the ModeController class for MPF."""
 import importlib
-import logging
 import os
 from collections import namedtuple
 from mpf.core.mode import Mode

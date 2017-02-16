@@ -1,6 +1,5 @@
 """Manages delays within a context."""
 
-import logging
 import uuid
 from functools import partial
 

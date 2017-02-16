@@ -1,7 +1,6 @@
 """Contains the DataManager base class."""
 
 import copy
-import logging
 import os
 import errno
 import _thread
