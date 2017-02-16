@@ -1,6 +1,5 @@
 """Handles outgoing balls."""
 import asyncio
-from collections import deque
 
 from mpf.core.utility_functions import Util
 from mpf.devices.ball_device.ball_count_handler import EjectTracker

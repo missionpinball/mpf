@@ -162,9 +162,6 @@ class IncomingBallsHandler(BallDeviceStateHandler):
             # handle incoming ball
             self.debug_log("Received ball from %s", incoming_ball.source)
 
-            #if self.ball_device.config['mechanical_eject']:
-            #    self.ball_device.outgoing_balls_handler.remove_incoming_ball_which_may_skip(incoming_ball)
-
             # confirm eject
             incoming_ball.ball_arrived()
 
