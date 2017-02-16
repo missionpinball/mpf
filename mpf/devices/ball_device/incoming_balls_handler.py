@@ -150,19 +150,21 @@ class IncomingBallsHandler(BallDeviceStateHandler):
         self.debug_log("Removing incoming ball from %s", incoming_ball.source)
         self._incoming_balls.remove(incoming_ball)
         if self.ball_device.config['mechanical_eject']:
-            self.ball_device.outgoing_balls_handler.remove_incoming_ball_which_may_skip()
+            self.ball_device.outgoing_balls_handler.remove_incoming_ball_which_may_skip(incoming_ball)
 
     @asyncio.coroutine
     def ball_arrived(self):
         """Handle one ball which arrived in the device."""
-        if self.ball_device.config['mechanical_eject']:
-            self.ball_device.outgoing_balls_handler.remove_incoming_ball_which_may_skip()
         for incoming_ball in self._incoming_balls:
             if not incoming_ball.can_arrive:
                 continue
 
             # handle incoming ball
             self.debug_log("Received ball from %s", incoming_ball.source)
+
+            #if self.ball_device.config['mechanical_eject']:
+            #    self.ball_device.outgoing_balls_handler.remove_incoming_ball_which_may_skip(incoming_ball)
+
             # confirm eject
             incoming_ball.ball_arrived()
 
