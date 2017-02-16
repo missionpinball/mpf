@@ -82,7 +82,7 @@ class TestGottliebTrough(MpfTestCase):
         self.assertEqual(1, self.machine.coils.outhole.pulse.call_count)
         self.assertEqual(1, self.machine.coils.trough.pulse.call_count)
 
-        self.hit_switch_and_run("trough_entry", 2)
+        self.hit_switch_and_run("trough_entry", 3)
 
         self.assertEqual(0, self.machine.ball_devices.outhole.balls)
         self.assertEqual(3, self.machine.ball_devices.trough.balls)
@@ -93,11 +93,14 @@ class TestGottliebTrough(MpfTestCase):
         self.assertEqual(2, self.machine.coils.trough.pulse.call_count)
 
         self.machine.log.warning("TEST: DRAIN")
-        self.release_switch_and_run("trough_entry", 5)
+
+        # we usually see the ball in the plunger first
+        self.hit_switch_and_run("plunger", 1)
         self.assertEqual(1, self.machine.coils.outhole.pulse.call_count)
         self.assertEqual(2, self.machine.coils.trough.pulse.call_count)
 
-        self.hit_switch_and_run("plunger", 1)
+        # about a second later the trough switch deactives
+        self.release_switch_and_run("trough_entry", 1)
         self.assertEqual(2, self.machine.coils.outhole.pulse.call_count)
         self.assertEqual(2, self.machine.coils.trough.pulse.call_count)
 
@@ -107,6 +110,11 @@ class TestGottliebTrough(MpfTestCase):
         self.release_switch_and_run("plunger", 10)
         self.assertEqual(2, self.machine.coils.outhole.pulse.call_count)
         self.assertEqual(2, self.machine.coils.trough.pulse.call_count)
+
+        self.assertEqual(0, self.machine.ball_devices.outhole.balls)
+        self.assertEqual(3, self.machine.ball_devices.trough.balls)
+        self.assertEqual(4, self.machine.ball_controller.num_balls_known)
+
 
     def test_add_ball_to_pf(self):
         self.machine.coils.outhole.pulse = MagicMock()
