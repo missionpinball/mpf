@@ -200,6 +200,19 @@ bcp:
         ip: single|str|None
         port: single|int|5050
         type: single|str|
+bonus_mode_settings:
+    display_delay_ms: single|ms|2000
+    hurry_up_delay_ms: single|ms|500
+    hurry_up_event: single|str|flipper_cancel
+    end_bonus_event: single|str|None
+    keep_multiplier: single|bool|False
+    bonus_entries: list|subconfig(bonus_entries)|
+bonus_entries:
+    event: single|str|
+    score: single|template_int|
+    reset_player_score_entry: single|bool|False
+    player_score_entry: single|str|None
+    skip_if_zero: single|bool|True
 coils:
     __valid_in__: machine
     number: single|str|
