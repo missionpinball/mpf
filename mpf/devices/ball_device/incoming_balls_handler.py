@@ -115,6 +115,9 @@ class IncomingBallsHandler(BallDeviceStateHandler):
     def _run(self):
         """Handle timeouts."""
         while True:
+            if not self._incoming_balls:
+                self._has_incoming_balls.clear()
+
             # sleep until we have incoming balls
             yield from self._has_incoming_balls.wait()
 
@@ -129,9 +132,6 @@ class IncomingBallsHandler(BallDeviceStateHandler):
             for incoming_ball in timeouts:
                 self.ball_device.log.warning("Incoming ball from %s timeouted.", incoming_ball.source)
                 self._incoming_balls.remove(incoming_ball)
-
-            if not self._incoming_balls:
-                self._has_incoming_balls.clear()
 
             for incoming_ball in timeouts:
                 yield from self.ball_device.lost_incoming_ball(source=incoming_ball.source)
