@@ -9,8 +9,7 @@ class BallSearch(MpfController):
     """Ball search controller."""
 
     def __init__(self, machine, playfield):
-        """Initialise ball search."""
-
+        """Initialize ball search."""
         self.module_name = 'BallSearch.' + playfield.name
         self.config_name = 'ball_search'
 

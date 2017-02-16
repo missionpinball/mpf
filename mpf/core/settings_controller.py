@@ -82,7 +82,6 @@ class SettingsController(MpfController):
 
     def set_setting_value(self, setting_name, value):
         """Set the value of a setting."""
-
         self.debug_log("New value: {}={}".format(setting_name, value))
 
         if setting_name not in self._settings:

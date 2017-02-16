@@ -49,8 +49,6 @@ class Mode(LogMixin):
         self.player = None
         '''Reference to the current player object.'''
 
-
-
         self._validate_mode_config()
 
         self.configure_logging('Mode.' + name,

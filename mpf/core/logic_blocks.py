@@ -17,10 +17,9 @@ class LogicBlocks(MpfController):
     """LogicBlock Manager."""
 
     def __init__(self, machine: MachineController):
-        """Initialise LogicBlock manager."""
-        
+        """Initialize LogicBlock manager."""
         super().__init__(machine)
-        
+
         # Tell the mode controller that it should look for LogicBlock items in
         # modes.
         self.machine.mode_controller.register_start_method(
@@ -140,8 +139,7 @@ class LogicBlock(LogMixin):
     """Parent class for each of the logic block classes."""
 
     def __init__(self, machine: MachineController, name: str, player: Player, config: dict):
-        """Initialise logic block."""
-
+        """Initialize logic block."""
         self.machine = machine
         self.name = name
         self.player = player

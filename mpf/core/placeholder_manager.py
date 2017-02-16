@@ -262,6 +262,7 @@ class PlaceholderManager(BasePlaceholderManager):
 
     """Manages templates and placeholders for MPF."""
 
+    # pylint: disable-msg=too-many-return-statements
     def get_global_parameters(self, name):
         """Return global params."""
         if name == "settings":

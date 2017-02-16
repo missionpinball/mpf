@@ -30,7 +30,8 @@ class MpfController(LogMixin, metaclass=abc.ABCMeta):
             x = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', self.module_name)
             self.config_name = re.sub('([a-z0-9])([A-Z])', r'\1_\2', x).lower()
 
-        self.configure_logging(self.module_name,
+        self.configure_logging(
+            self.module_name,
             self.machine.machine_config['logging']['console'][self.config_name],
             self.machine.machine_config['logging']['file'][self.config_name])
 

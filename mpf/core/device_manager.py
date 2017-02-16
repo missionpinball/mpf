@@ -11,8 +11,7 @@ class DeviceManager(MpfController):
     """Manages devices in a MPF machine."""
 
     def __init__(self, machine):
-        """Initialise device manager."""
-
+        """Initialize device manager."""
         super().__init__(machine)
 
         self._monitorable_devices = {}

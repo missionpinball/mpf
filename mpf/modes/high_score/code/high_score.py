@@ -141,7 +141,7 @@ class HighScore(AsyncMode):
     def _ask_player_for_initials(self, player, config_cat_name, index, award_label, value):
 
         self.info_log("New high score. Player: %s, award_label: %s"
-                       ", Value: %s", player, award_label, value)
+                      ", Value: %s", player, award_label, value)
 
         self.machine.events.post('high_score_enter_initials',
                                  award=award_label,

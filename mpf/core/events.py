@@ -18,8 +18,7 @@ class EventManager(MpfController):
     """Handles all the events and manages the handlers in MPF."""
 
     def __init__(self, machine):
-        """Initialise EventManager."""
-
+        """Initialize EventManager."""
         super().__init__(machine)
 
         self.registered_handlers = {}   # type: {str: [RegisteredHandler]}
@@ -615,8 +614,7 @@ class QueuedEvent(object):
     """Base class for an event queue which is created each time a queue event is called."""
 
     def __init__(self, debug_log):
-        """Initialise QueueEvent."""
-
+        """Initialize QueueEvent."""
         self.debug_log = debug_log
         self.waiter = False
         self.event = None

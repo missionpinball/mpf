@@ -24,6 +24,7 @@ from mpf.core.device_manager import DeviceCollection
 from mpf.core.utility_functions import Util
 from mpf.core.logging import LogMixin
 
+
 # pylint: disable-msg=too-many-instance-attributes
 class MachineController(LogMixin):
 
@@ -51,8 +52,7 @@ class MachineController(LogMixin):
     """
 
     def __init__(self, mpf_path: str, machine_path: str, options: dict):
-        """Initialise machine controller."""
-
+        """Initialize machine controller."""
         self.log = logging.getLogger("Machine")
         self.log.info("Mission Pinball Framework Core Engine v%s", __version__)
 
@@ -95,7 +95,8 @@ class MachineController(LogMixin):
 
         self._load_config()
         self.machine_config = self.config
-        self.configure_logging('Machine',
+        self.configure_logging(
+            'Machine',
             self.config['logging']['console']['machine_controller'],
             self.config['logging']['file']['machine_controller'])
 

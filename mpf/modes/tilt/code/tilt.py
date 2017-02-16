@@ -149,7 +149,7 @@ class Tilt(Mode):
                 self._balls_to_collect += device.available_balls
 
         self.info_log("Processing Tilt. Balls to collect: %s",
-                       self._balls_to_collect)
+                      self._balls_to_collect)
 
         self.machine.game.tilted = True
         self.machine.events.post('tilt')
