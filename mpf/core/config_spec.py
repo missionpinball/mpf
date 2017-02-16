@@ -1175,6 +1175,10 @@ widgets:
         joint_precision: single|int|10
         close: single|bool|False
         precision: single|int|180
+    camera:
+        width: single|num|
+        height: single|num|
+        camera_index: single|int|-1
     color_dmd:
         width: single|num|
         height: single|num|
