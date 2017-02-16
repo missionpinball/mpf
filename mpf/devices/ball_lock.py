@@ -67,7 +67,7 @@ class BallLock(SystemWideDevice, ModeDevice):
             **kwargs: unused
         """
         del kwargs
-        self.log.debug("Enabling...")
+        self.debug_log("Enabling...")
         if not self.enabled:
             self._register_handlers()
         self.enabled = True
@@ -81,7 +81,7 @@ class BallLock(SystemWideDevice, ModeDevice):
             **kwargs: unused
         """
         del kwargs
-        self.log.debug("Disabling...")
+        self.debug_log("Disabling...")
         self._unregister_handlers()
         self.enabled = False
 
@@ -118,13 +118,13 @@ class BallLock(SystemWideDevice, ModeDevice):
             ball_to_reduce = balls
 
         self._released_balls -= ball_to_reduce
-        self.log.debug("%s ball of lock drained.", ball_to_reduce)
+        self.debug_log("%s ball of lock drained.", ball_to_reduce)
 
         if self._released_balls <= 0:
             if self._release_lock:
                 self._release_lock.clear()
                 self._release_lock = None
-            self.log.debug("All released balls of lock drained.")
+            self.debug_log("All released balls of lock drained.")
             self.machine.events.remove_handler_by_event('ball_ending', self._wait_for_drain)
             self.machine.events.remove_handler_by_event('ball_drain', self._block_during_drain)
 
@@ -166,7 +166,7 @@ class BallLock(SystemWideDevice, ModeDevice):
 
         remaining_balls_to_release = balls_to_release
 
-        self.log.debug("Releasing up to %s balls from lock", balls_to_release)
+        self.debug_log("Releasing up to %s balls from lock", balls_to_release)
         balls_released = 0
         while len(self.lock_queue) > 0:
             device, balls_locked = self.lock_queue.pop()
@@ -229,7 +229,7 @@ class BallLock(SystemWideDevice, ModeDevice):
         del kwargs
         # if full do not take any balls
         if self.is_full():
-            self.log.debug("Cannot lock balls. Lock is full.")
+            self.debug_log("Cannot lock balls. Lock is full.")
             return {'unclaimed_balls': unclaimed_balls}
 
         # if there are no balls do not claim anything
@@ -244,7 +244,7 @@ class BallLock(SystemWideDevice, ModeDevice):
             balls_to_lock = unclaimed_balls
 
         self.balls_locked += balls_to_lock
-        self.log.debug("Locked %s balls", balls_to_lock)
+        self.debug_log("Locked %s balls", balls_to_lock)
 
         # post event for ball capture
         self.machine.events.post('ball_lock_' + self.name + '_locked_ball',

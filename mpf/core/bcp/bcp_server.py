@@ -1,18 +1,17 @@
 """Bcp server for clients which connect and disconnect randomly."""
 import asyncio
-import logging
 
 from mpf.core.utility_functions import Util
+from mpf.core.mpf_controller import MpfController
 
 
-class BcpServer():
+class BcpServer(MpfController):
 
     """Server socket which listens for incoming BCP clients."""
 
     def __init__(self, machine, ip, port, server_type):
         """Initialise BCP server."""
-        self.machine = machine
-        self.log = logging.getLogger('BCPServer')
+        super().__init__(machine)
         self._server = None
         self._ip = ip
         self._port = port
@@ -34,7 +33,7 @@ class BcpServer():
     @asyncio.coroutine
     def _accept_client(self, client_reader, client_writer):
         """Accept an connection and create client."""
-        self.log.info("New client connected.")
+        self.info_log("New client connected.")
         client = Util.string_to_class(self._type)(self.machine, None, self.machine.bcp)
         client.accept_connection(client_reader, client_writer)
         client.exit_on_close = False

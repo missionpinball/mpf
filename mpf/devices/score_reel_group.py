@@ -193,7 +193,7 @@ class ScoreReelGroup(SystemWideDevice):
         """
         del value
 
-        self.log.debug("Checking to see if score reels are valid.")
+        self.debug_log("Checking to see if score reels are valid.")
 
         # Can't validate until the reels are done moving. This shouldn't happen
         # but we look for it just in case.
@@ -207,12 +207,12 @@ class ScoreReelGroup(SystemWideDevice):
             if reel and (reel.config['confirm'] == 'lazy' or reel.config['confirm'] == 'strict') and not reel.hw_sync:
                 return False  # need hw_sync to proceed
 
-        self.log.debug("Desired list: %s", self.desired_value_list)
-        self.log.debug("Assumed list: %s", self.assumed_value_list)
-        self.log.debug("Assumed integer: %s", self.assumed_value_int)
+        self.debug_log("Desired list: %s", self.desired_value_list)
+        self.debug_log("Assumed list: %s", self.assumed_value_list)
+        self.debug_log("Assumed integer: %s", self.assumed_value_int)
 
         try:
-            self.log.debug("Player's Score: %s", self.machine.game.player.score)
+            self.debug_log("Player's Score: %s", self.machine.game.player.score)
         except AttributeError:
             pass
 
@@ -240,7 +240,7 @@ class ScoreReelGroup(SystemWideDevice):
         '''
 
         if self.wait_for_valid_queue:
-            self.log.debug("Found a wait queue. Clearing now.")
+            self.debug_log("Found a wait queue. Clearing now.")
             self.wait_for_valid_queue.clear()
             self.wait_for_valid_queue = None
 
@@ -274,7 +274,7 @@ class ScoreReelGroup(SystemWideDevice):
                 reel is jumping or moving, so it's best to specify the target if
                 you can.
         """
-        self.log.debug("Adding '%s' to the displayed value. Jump=%s", value,
+        self.debug_log("Adding '%s' to the displayed value. Jump=%s", value,
                        jump)
 
         # As a starting point, we'll base our assumed current value of the reels
@@ -283,7 +283,7 @@ class ScoreReelGroup(SystemWideDevice):
         current_reel_value = self.assumed_value_int
 
         if self.jump_in_progress:
-            self.log.debug("There's a jump in progress, so we'll just change "
+            self.debug_log("There's a jump in progress, so we'll just change "
                            "the target of the jump to include our values.")
             # We'll base our desired value off whatever the reel is advancing
             # plus our value, because since there's a jump in progress we have
@@ -292,7 +292,7 @@ class ScoreReelGroup(SystemWideDevice):
             jump = True
 
         if current_reel_value == - 999:
-            self.log.debug("Current displayed value is unkown, "
+            self.debug_log("Current displayed value is unkown, "
                            "so we're jumping to the new value.")
             current_reel_value = 0
             jump = True
@@ -304,7 +304,7 @@ class ScoreReelGroup(SystemWideDevice):
             target = current_reel_value + value
 
         elif value < 0:
-            self.log.debug("add_value is negative, so we're subtracting this "
+            self.debug_log("add_value is negative, so we're subtracting this "
                            "value. We will do this via a jump.")
             jump = True
 
@@ -346,12 +346,12 @@ class ScoreReelGroup(SystemWideDevice):
         if value_list is None:
             value_list = self.int_to_reel_list(value)
 
-        self.log.debug("Jumping to %s.", value_list)
+        self.debug_log("Jumping to %s.", value_list)
 
         # set the new desired value which we'll use to verify the reels land
         # where we want them to.
         self.desired_value_list = value_list
-        self.log.debug("set_value() just set DVL to: %s",
+        self.debug_log("set_value() just set DVL to: %s",
                        self.desired_value_list)
 
         self._jump_advance_step()
@@ -364,7 +364,7 @@ class ScoreReelGroup(SystemWideDevice):
         self.valid = False
 
         if self.is_desired_valid():
-            self.log.debug("They match! Jump is done.")
+            self.debug_log("They match! Jump is done.")
             self._jump_advance_complete()
             return
 
@@ -413,9 +413,9 @@ class ScoreReelGroup(SystemWideDevice):
         # Called when a jump advance routine is complete and the score reel
         # group has been validated.
 
-        self.log.debug("Jump complete")
-        self.log.debug("Assumed values: %s", self.assumed_value_list)
-        self.log.debug("Desired values: %s", self.desired_value_list)
+        self.debug_log("Jump complete")
+        self.debug_log("Assumed values: %s", self.assumed_value_list)
+        self.debug_log("Desired values: %s", self.desired_value_list)
 
         self.jump_in_progress = False
 
@@ -427,7 +427,7 @@ class ScoreReelGroup(SystemWideDevice):
 
         value_list = self.int_to_reel_list(value)
 
-        self.log.debug("Will add '%s' to this reel group", value)
+        self.debug_log("Will add '%s' to this reel group", value)
 
         for position, value in enumerate(value_list):
             if value:
@@ -467,7 +467,7 @@ class ScoreReelGroup(SystemWideDevice):
             return
 
         # is this real going to need a buddy pulse?
-        self.log.debug("Reel: %s, Limit: %s, Current assumed value: %s",
+        self.debug_log("Reel: %s, Limit: %s, Current assumed value: %s",
                        reel.name, reel.config['limit_hi'], reel.assumed_value)
         if (reel.config['limit_hi'] == reel.assumed_value and
                 not reel.rollover_reel_advanced):
@@ -475,7 +475,7 @@ class ScoreReelGroup(SystemWideDevice):
             # track that we've already ordered the buddy pulse so it doesn't
             # happen twice if this reel can't fire now for some reason
             reel.rollover_reel_advanced = True
-            self.log.debug("Setting buddy pulse")
+            self.debug_log("Setting buddy pulse")
         else:
             buddy_pulse = False
 
@@ -488,10 +488,10 @@ class ScoreReelGroup(SystemWideDevice):
         # try to advance the reel, We use `if` here so this code block only runs
         # if the reel accepted our advance request
         if reel.advance():
-            self.log.debug("Reel '%s' accepted advance", reel.name)
-            self.log.debug("Reels (assumed): %s", self.assumed_value_int)
+            self.debug_log("Reel '%s' accepted advance", reel.name)
+            self.debug_log("Reels (assumed): %s", self.assumed_value_int)
             try:
-                self.log.debug("Score: %s",
+                self.debug_log("Score: %s",
                                self.machine.game.player.score)
             except AttributeError:
                 pass
@@ -521,7 +521,7 @@ class ScoreReelGroup(SystemWideDevice):
 
         else:  # the reel did not accept the advance. Put it back in the queue
             self.advance_queue.appendleft(reel)
-            self.log.debug("Reel '%s' rejected advance. We'll try again.",
+            self.debug_log("Reel '%s' rejected advance. We'll try again.",
                            reel.name)
 
     def int_to_reel_list(self, value):
@@ -631,7 +631,7 @@ class ScoreReelGroup(SystemWideDevice):
     def light(self, relight_on_valid=False, **kwargs):
         """Light up this ScoreReelGroup based on the 'light_tag' in its config."""
         del kwargs
-        self.log.debug("Turning on Lights")
+        self.debug_log("Turning on Lights")
         for light in self.machine.lights.items_tagged(
                 self.config['lights_tag']):
             light.on()
@@ -653,7 +653,7 @@ class ScoreReelGroup(SystemWideDevice):
     def unlight(self, relight_on_valid=False, **kwargs):
         """Turn off the lights for this ScoreReelGroup based on the 'light_tag' in its config."""
         del kwargs
-        self.log.debug("Turning off Lights")
+        self.debug_log("Turning off Lights")
         for light in self.machine.lights.items_tagged(
                 self.config['lights_tag']):
             light.off()
@@ -679,8 +679,8 @@ class ScoreReelGroup(SystemWideDevice):
             return
 
         if not self.valid:
-            self.log.debug("Score reel group is not valid. Setting a queue")
+            self.debug_log("Score reel group is not valid. Setting a queue")
             self.wait_for_valid_queue = queue
             self.wait_for_valid_queue.wait()
         else:
-            self.log.debug("Score reel group is valid. No queue needed.")
+            self.debug_log("Score reel group is valid. No queue needed.")

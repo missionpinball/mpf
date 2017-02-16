@@ -120,7 +120,6 @@ mpf:
     default_ball_search: False
     default_show_sync_ms: 0
 
-
     device_collection_control_events:
         autofires:
             - enable
@@ -173,6 +172,67 @@ mpf:
       - multiball_locks
 
 # Default settings for machines. All can be overridden
+
+logging:
+    console:
+      asset_manager: none  # todo subclasses
+      ball_controller: none
+      ball_search: basic
+      bcp: basic
+      bcp_client: basic
+      bcp_interface: basic
+      bcp_server: basic
+      clock: none
+      config_players: none  # todo
+      data_manager: none  # todo subclasses
+      delay_manager: none
+      device_manager: none
+      event_manager: none
+      file_manager: none  # todo
+      logic_blocks: none
+      machine_controller: basic
+      mode_controller: basic
+      placeholder_manager: none
+      platforms: none  # todo
+      players: basic  # todo
+      plugins: none  # todo
+      score_reel_controller: none
+      scriptlets: none  # todo
+      service_controller: basic
+      settings_controller: none
+      show_controller: none
+      switch_controller: basic
+      timers: none
+
+    file:
+      asset_manager: basic
+      ball_controller: basic
+      ball_search: basic
+      bcp: basic
+      bcp_client: basic
+      bcp_interface: basic
+      bcp_server: basic
+      clock: none
+      config_players: basic
+      data_manager: basic
+      delay_manager: none
+      device_manager: basic
+      event_manager: basic
+      file_manager: basic
+      logic_blocks: basic
+      machine_controller: basic
+      mode_controller: basic
+      placeholder_manager: basic
+      platforms: basic
+      players: full
+      plugins: basic
+      score_reel_controller: basic
+      scriptlets: basic
+      service_controller: basic
+      settings_controller: basic
+      show_controller: basic
+      switch_controller: full
+      timers: none
 
 p_roc:
     lamp_matrix_strobe_time: 100ms

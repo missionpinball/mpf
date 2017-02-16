@@ -100,7 +100,7 @@ class Tilt(Mode):
         if not self.player:
             return
 
-        self.log.debug("Tilt Warning")
+        self.info_log("Tilt Warning")
 
         self._last_warning = self.machine.clock.get_time()
         self.player[self.tilt_config['tilt_warnings_player_var']] += 1
@@ -148,7 +148,7 @@ class Tilt(Mode):
             if device.is_playfield():
                 self._balls_to_collect += device.available_balls
 
-        self.log.debug("Processing Tilt. Balls to collect: %s",
+        self.info_log("Processing Tilt. Balls to collect: %s",
                        self._balls_to_collect)
 
         self.machine.game.tilted = True
@@ -186,7 +186,7 @@ class Tilt(Mode):
 
         self._balls_to_collect -= unclaimed_balls
 
-        self.log.debug("Tilted ball drain. Balls to collect: %s",
+        self.debug_log("Tilted ball drain. Balls to collect: %s",
                        self._balls_to_collect)
 
         if self._balls_to_collect <= 0:

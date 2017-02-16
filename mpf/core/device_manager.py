@@ -1,20 +1,19 @@
 """Contains the DeviceManager base class."""
-
-import logging
 from collections import OrderedDict
 
 from mpf.core.utility_functions import Util
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
+from mpf.core.mpf_controller import MpfController
 
 
-class DeviceManager(object):
+class DeviceManager(MpfController):
 
     """Manages devices in a MPF machine."""
 
     def __init__(self, machine):
         """Initialise device manager."""
-        self.machine = machine
-        self.log = logging.getLogger("DeviceManager")
+
+        super().__init__(machine)
 
         self._monitorable_devices = {}
 
@@ -46,7 +45,7 @@ class DeviceManager(object):
 
     def _load_device_modules(self, **kwargs):
         del kwargs
-        self.log.debug("Loading devices...")
+        self.debug_log("Loading devices...")
         for device_type in self.machine.config['mpf']['device_modules']:
             device_cls = Util.string_to_class(device_type)
 
@@ -236,7 +235,7 @@ class DeviceManager(object):
                                mode=None, **kwargs):
         del kwargs
 
-        self.log.debug("_control_event_handler: mode: %s, callback: %s,", mode,
+        self.debug_log("_control_event_handler: mode: %s, callback: %s,", mode,
                        callback)
 
         if ms_delay:

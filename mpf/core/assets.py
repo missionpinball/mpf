@@ -11,9 +11,10 @@ import asyncio
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.mpf_controller import MpfController
 from mpf.core.utility_functions import Util
+from mpf.core.logging import LogMixin
 
 
-class BaseAssetManager(MpfController):
+class BaseAssetManager(MpfController, LogMixin):
 
     """Base class for the Asset Manager.
 
@@ -21,11 +22,13 @@ class BaseAssetManager(MpfController):
         machine: The machine controller
     """
 
+    # needed here so the auto-detection of child classes works
+    module_name = 'AssetManager'
+    config_name = 'asset_manager'
+
     def __init__(self, machine):
         """Initialise asset manager."""
         super().__init__(machine)
-        self.log = logging.getLogger('AssetManager')
-        self.log.debug("Initializing...")
 
         self.machine.register_boot_hold('assets')
 
@@ -356,7 +359,7 @@ class BaseAssetManager(MpfController):
             config = dict()
 
         root_path = os.path.join(path, asset_class['path_string'])
-        self.log.debug("Processing assets from base folder: %s", root_path)
+        self.debug_log("Processing assets from base folder: %s", root_path)
 
         # ignore temporary files
         ignore_prefixes = (".", "~")
@@ -410,9 +413,9 @@ class BaseAssetManager(MpfController):
                 # Update the config for that asset
                 config[name] = built_up_config
 
-                self.log.debug("Registering Asset: %s, File: %s, Default "
-                               "Group: %s, Final Config: %s", name, file_name,
-                               default_string, built_up_config)
+                self.info_log("Registering Asset: %s, File: %s, Default "
+                              "Group: %s, Final Config: %s", name, file_name,
+                              default_string, built_up_config)
         return config
 
     def _create_asset_groups(self, config, mode=None):
@@ -533,9 +536,9 @@ class BaseAssetManager(MpfController):
             MPF-based assets.
             '''
 
-        self.log.debug('Loading assets: %s/%s (%s%%)',
-                       self.num_assets_loaded + self.num_bcp_assets_loaded,
-                       total, self.loading_percent)
+        self.info_log('Loading assets: %s/%s (%s%%)',
+                      self.num_assets_loaded + self.num_bcp_assets_loaded,
+                      total, self.loading_percent)
 
         if not remaining and not self.machine.is_init_done:
             self.machine.clear_boot_hold('assets')

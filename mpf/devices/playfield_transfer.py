@@ -39,7 +39,7 @@ class PlayfieldTransfer(SystemWideDevice):
     def transfer(self, **kwargs):
         """Transfer a ball to the target playfield."""
         del kwargs
-        self.log.debug("Ball went from %s to %s", self.source.name,
+        self.debug_log("Ball went from %s to %s", self.source.name,
                        self.target.name)
 
         # source playfield is obviously active

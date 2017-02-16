@@ -119,7 +119,7 @@ class Playfield(SystemWideDevice):
         ball_change = balls - prior_balls
 
         if ball_change:
-            self.log.debug("Ball count change. Prior: %s, Current: %s, Change:"
+            self.debug_log("Ball count change. Prior: %s, Current: %s, Change:"
                            " %s", prior_balls, balls, ball_change)
 
         self._balls = balls
@@ -131,7 +131,7 @@ class Playfield(SystemWideDevice):
         #     self.log.warning("Playfield balls went to %s. Resetting to 0, but "
         #                      "FYI that something's weird. Unexpected balls: %s", balls, self.unexpected_balls)
 
-        self.log.debug("New Ball Count: %s. (Prior count: %s)",
+        self.debug_log("New Ball Count: %s. (Prior count: %s)",
                        self._balls, prior_balls)
 
         if ball_change > 0:
@@ -252,7 +252,7 @@ class Playfield(SystemWideDevice):
                                  "devices are tagged with 'ball_add_live'. Cannot"
                                  " add a ball.")
 
-        self.log.debug("Received request to add %s ball(s). Source device: %s."
+        self.debug_log("Received request to add %s ball(s). Source device: %s."
                        " Player-controlled: %s", balls,
                        source_device.name, player_controlled)
 
@@ -296,7 +296,7 @@ class Playfield(SystemWideDevice):
             self._mark_playfield_active()
 
             if not self.num_balls_requested:
-                self.log.debug("Playfield was activated with no balls expected.")
+                self.debug_log("Playfield was activated with no balls expected.")
                 self.machine.events.post('unexpected_ball_on_' + self.name)
                 '''event: unexpected_ball_on_(playfield)
                 desc: The playfield namaed "playfield" just had a switch hit,
@@ -318,7 +318,7 @@ class Playfield(SystemWideDevice):
         '''
 
     def _ball_removed_handler2(self, balls):
-        self.log.debug("%s ball(s) removed from the playfield", balls)
+        self.debug_log("%s ball(s) removed from the playfield", balls)
         self.balls -= balls
         self.available_balls -= balls
         for _ in range(balls):
@@ -334,7 +334,7 @@ class Playfield(SystemWideDevice):
         # headed to the playfield.
         del kwargs
         if target == self:
-            self.log.debug("A source device is attempting to eject %s ball(s)"
+            self.debug_log("A source device is attempting to eject %s ball(s)"
                            " to the playfield.", balls)
             self.num_balls_requested += balls
 
@@ -343,7 +343,7 @@ class Playfield(SystemWideDevice):
         # headed to the playfield.
         del kwargs
         if target == self:
-            self.log.debug("A source device has failed to eject %s ball(s)"
+            self.debug_log("A source device has failed to eject %s ball(s)"
                            " to the playfield.", balls)
             self.num_balls_requested -= balls
 
@@ -354,7 +354,7 @@ class Playfield(SystemWideDevice):
         # (Playfield switch hit, count of its ball switches, etc.)
 
         if target == self:
-            self.log.debug("A source device has confirmed it's ejected %s "
+            self.debug_log("A source device has confirmed it's ejected %s "
                            "ball(s) to the playfield.", balls)
             self.balls += balls
             self.num_balls_requested -= balls

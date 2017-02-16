@@ -76,8 +76,8 @@ class Command(object):
 
         parser.add_argument("-v",
                             action="store_const", dest="loglevel",
-                            const=logging.DEBUG,
-                            default=logging.INFO,
+                            const=10,
+                            default=11,
                             help="Enables verbose logging to the"
                                  " log file")
 
@@ -131,8 +131,7 @@ class Command(object):
             pass
 
         logging.basicConfig(level=args.loglevel,
-                            format='%(asctime)s : %(levelname)s : %(name)s : '
-                                   '%(message)s',
+                            format='%(asctime)s : %(name)s : %(message)s',
                             filename=full_logfile_path,
                             filemode='a')
 
@@ -142,7 +141,7 @@ class Command(object):
         console.setLevel(args.consoleloglevel)
 
         # set a format which is simpler for console use
-        formatter = logging.Formatter('%(levelname)s : %(name)s : %(message)s')
+        formatter = logging.Formatter('%(name)s : %(message)s')
 
         # tell the handler to use this format
         console.setFormatter(formatter)

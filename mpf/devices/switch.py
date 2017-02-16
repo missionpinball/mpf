@@ -61,6 +61,7 @@ class Switch(SystemWideDevice):
         """Validate switch config."""
         platform = self.machine.get_platform_sections('switches', getattr(config, "platform", None))
         platform.validate_switch_section(self, config)
+        self._configure_device_logging(config)
         return config
 
     def _initialize(self):

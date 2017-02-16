@@ -93,7 +93,7 @@ class Accelerometer(SystemWideDevice):
 
         for max_deviation in self.config['level_limits']:
             if deviation_xyz / math.pi * 180 > max_deviation:
-                self.log.debug("Deviation x: %s, y: %s, total: %s",
+                self.debug_log("Deviation x: %s, y: %s, total: %s",
                                deviation_xz / math.pi * 180,
                                deviation_yz / math.pi * 180,
                                deviation_xyz / math.pi * 180)
@@ -107,7 +107,7 @@ class Accelerometer(SystemWideDevice):
         acceleration = self._calculate_vector_length(dx, dy, dz)
         for min_acceleration in self.config['hit_limits']:
             if acceleration > min_acceleration:
-                self.log.debug("Received hit of %s > %s. Posting %s",
+                self.debug_log("Received hit of %s > %s. Posting %s",
                                acceleration,
                                min_acceleration,
                                self.config['hit_limits'][min_acceleration]

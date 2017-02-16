@@ -1,19 +1,23 @@
 """Implements the ball search procedure."""
 
-import logging
-
 from mpf.core.delays import DelayManager
+from mpf.core.mpf_controller import MpfController
 
 
-class BallSearch(object):
+class BallSearch(MpfController):
 
     """Ball search controller."""
 
     def __init__(self, machine, playfield):
         """Initialise ball search."""
-        self.machine = machine
+
+        self.module_name = 'BallSearch.' + playfield.name
+        self.config_name = 'ball_search'
+
+        super().__init__(machine)
+
         self.playfield = playfield
-        self.log = logging.getLogger("BallSearch " + playfield.name)
+
         self.delay = DelayManager(self.machine.delayRegistry)
 
         self.started = False
@@ -71,7 +75,7 @@ class BallSearch(object):
         if not self.callbacks:
             raise AssertionError("No callbacks registered")
 
-        self.log.debug("Enabling Ball Search")
+        self.debug_log("Enabling Ball Search")
 
         self.enabled = True
         self.reset_timer()
@@ -90,6 +94,8 @@ class BallSearch(object):
             or gave up. (If the ball search failed to find the ball, it will
             also post the *ball_search_failed* event.)
         '''
+
+        self.debug_log("Disabling Ball Search")
 
         self.started = False
         self.enabled = False
@@ -112,7 +118,7 @@ class BallSearch(object):
         self.iteration = 1
         self.phase = 1
         self.iterator = iter(self.callbacks)
-        self.log.debug("Starting ball search")
+        self.info_log("Starting ball search")
         self.machine.events.post('ball_search_started')
         '''event: ball_search_started
 
@@ -140,7 +146,7 @@ class BallSearch(object):
                         self.give_up()
                         return
 
-                self.log.debug("Ball Search Phase %s Iteratio %s", self.phase, self.iteration)
+                self.debug_log("Ball Search Phase %s Iteration %s", self.phase, self.iteration)
                 self.iterator = iter(self.callbacks)
                 element = next(self.iterator)
                 timeout = self.playfield.config['ball_search_wait_after_iteration']
@@ -162,7 +168,7 @@ class BallSearch(object):
 
         Did not find the missing ball. Execute the failed action which either adds a replacement ball or ends the game.
         """
-        self.log.warning("Ball Search failed to find ball. Giving up!")
+        self.info_log("Ball Search failed to find ball. Giving up!")
         self.disable()
         self.machine.events.post('ball_search_failed')
         '''event: ball_search_failed
@@ -186,18 +192,18 @@ class BallSearch(object):
         if self.playfield.config['ball_search_failed_action'] == "new_ball":
             if self.machine.ball_controller.num_balls_known > 0:
                 # we have at least one ball remaining
-                self.log.debug("Adding %s replacement ball", lost_balls)
+                self.info_log("Adding %s replacement ball", lost_balls)
                 for dummy_iterator in range(lost_balls):
                     self.playfield.add_ball()
             else:
-                self.log.debug("No more balls left. Ending game!")
+                self.info_log("No more balls left. Ending game!")
                 self.machine.game.game_ending()
 
         elif self.playfield.config['ball_search_failed_action'] == "end_game":
             if self.machine.game:
-                self.log.debug("Ending the game")
+                self.info_log("Ending the game")
                 self.machine.game.game_ending()
             else:
-                self.log.warning("There is no game. Doing nothing!")
+                self.warning_log("There is no game. Doing nothing!")
         else:
             raise AssertionError("Unknown action " + self.playfield.config['ball_search_failed_action'])

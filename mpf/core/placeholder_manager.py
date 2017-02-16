@@ -138,6 +138,10 @@ class BasePlaceholderManager(MpfController):
 
     """Manages templates and placeholders for MPF and MC."""
 
+    # needed here so the auto-detection of child classes works
+    module_name = 'PlaceholderManager'
+    config_name = 'placeholder_manager'
+
     def __init__(self, machine):
         """Initialise."""
         super().__init__(machine)

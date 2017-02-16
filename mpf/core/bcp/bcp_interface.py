@@ -1,14 +1,13 @@
 """RPC Interface for BCP clients."""
 from copy import deepcopy
 
-import logging
-
 from mpf.core.events import PostedEvent
 from mpf.core.player import Player
 from mpf.core.utility_functions import Util
+from mpf.core.mpf_controller import MpfController
 
 
-class BcpInterface(object):
+class BcpInterface(MpfController):
 
     """Implements the BCP interface which can be used by all clients.
 
@@ -33,8 +32,7 @@ class BcpInterface(object):
 
     def __init__(self, machine):
         """Initialise BCP."""
-        self.log = logging.getLogger('BCP')
-        self.machine = machine
+        super().__init__(machine)
 
         if 'bcp' not in machine.config or not machine.config['bcp']:
             self.configured = False
@@ -44,8 +42,6 @@ class BcpInterface(object):
 
         self.config = machine.config['bcp']
         self.bcp_events = dict()
-
-        self.debug_log = self.config['debug']
 
         self.bcp_receive_commands = dict(
             error=self.bcp_receive_error,
@@ -210,15 +206,15 @@ class BcpInterface(object):
             cmd:
             kwargs:
         """
-        if self.debug_log:
+        if self._debug_to_console or self._debug_to_file:
             if 'rawbytes' in kwargs:
                 debug_kwargs = deepcopy(kwargs)
                 debug_kwargs['rawbytes'] = '<{} bytes>'.format(
                     len(debug_kwargs.pop('rawbytes')))
 
-                self.log.debug("Processing command: %s %s", cmd, debug_kwargs)
+                self.debug_log("Processing command: %s %s", cmd, debug_kwargs)
             else:
-                self.log.debug("Processing command: %s %s", cmd, kwargs)
+                self.debug_log("Processing command: %s %s", cmd, kwargs)
 
         if cmd in self.bcp_receive_commands:
             try:
@@ -227,7 +223,7 @@ class BcpInterface(object):
                 self.machine.bcp.transport.send_to_client(client, "error", cmd=cmd, error=str(e), kwargs=kwargs)
 
         else:
-            self.log.warning("Received invalid BCP command: %s from client: %s", cmd, client.name)
+            self.warning_log("Received invalid BCP command: %s from client: %s", cmd, client.name)
 
     def bcp_receive_error(self, client, **kwargs):
         """A remote BCP host has sent a BCP error message, indicating that a command from MPF was not recognized.
@@ -235,7 +231,7 @@ class BcpInterface(object):
         This method only posts a warning to the log. It doesn't do anything else
         at this point.
         """
-        self.log.warning('Received Error command from host with parameters: %s, from client %s',
+        self.warning_log('Received Error command from host with parameters: %s, from client %s',
                          kwargs, str(client))
 
     def bcp_mode_start(self, config, priority, mode, **kwargs):
@@ -273,7 +269,7 @@ class BcpInterface(object):
         state = int(state)
 
         if name not in self.machine.switches:
-            self.log.warning("Received BCP switch message with invalid switch"
+            self.warning_log("Received BCP switch message with invalid switch"
                              "name: '%s'", name)
             return
 

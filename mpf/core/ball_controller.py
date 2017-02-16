@@ -1,14 +1,13 @@
 """Contains the BallController class which manages and tracks all the balls in a pinball machine."""
 
-import logging
-
 import asyncio
 
 from mpf.core.delays import DelayManager
 from mpf.core.utility_functions import Util
+from mpf.core.mpf_controller import MpfController
 
 
-class BallController(object):
+class BallController(MpfController):
 
     """Base class for the Ball Controller which is used to keep track of all the balls in a pinball machine.
 
@@ -21,9 +20,8 @@ class BallController(object):
 
     def __init__(self, machine):
         """Initialise ball controller."""
-        self.machine = machine
-        self.log = logging.getLogger("BallController")
-        self.log.debug("Loading the BallController")
+        super().__init__(machine)
+
         self.delay = DelayManager(self.machine.delayRegistry)
 
         self.num_balls_known = 0
@@ -96,7 +94,7 @@ class BallController(object):
                 self.num_balls_known += 1
                 capture.balls += 1
                 capture.available_balls += 1
-                self.log.info("Found a new ball which was captured from %s. Known balls: %s", capture.name,
+                self.info_log("Found a new ball which was captured from %s. Known balls: %s", capture.name,
                               self.num_balls_known)
 
             self._balance_playfields()
@@ -134,7 +132,7 @@ class BallController(object):
                 continue
 
     def _count_stable_balls(self):
-        self.log.debug("Counting Balls")
+        self.debug_log("Counting Balls")
         balls = 0
 
         for device in self.machine.ball_devices:
@@ -164,7 +162,7 @@ class BallController(object):
         return balls
 
     def _count_balls(self):
-        self.log.debug("Counting Balls")
+        self.debug_log("Counting Balls")
         balls = 0
 
         for device in self.machine.ball_devices:
@@ -204,7 +202,7 @@ class BallController(object):
     def dump_ball_counts(self):
         """Dump ball count of all devices."""
         for device in self.machine.ball_devices:
-            self.log.info("%s contains %s balls. Tags %s", device.name, device.balls, device.tags)
+            self.info_log("%s contains %s balls. Tags %s", device.name, device.balls, device.tags)
 
     def request_to_start_game(self, **kwargs):
         """Method registered for the *request_to_start_game* event.
@@ -218,10 +216,10 @@ class BallController(object):
             balls = self._count_balls()
         except ValueError:
             balls = -1
-        self.log.debug("Received request to start game.")
+        self.debug_log("Received request to start game.")
         if balls < self.machine.config['machine']['min_balls']:
             self.dump_ball_counts()
-            self.log.warning("BallController denies game start. Not enough "
+            self.warning_log("BallController denies game start. Not enough "
                              "balls. %s found. %s required", balls, self.machine.config['machine']['min_balls'])
             return False
 
@@ -236,7 +234,7 @@ class BallController(object):
         elif not self.are_balls_collected(allowed_positions):
             self.collect_balls('home')
             self.dump_ball_counts()
-            self.log.warning("BallController denies game start. Balls are not "
+            self.warning_log("BallController denies game start. Balls are not "
                              "in their home positions.")
             return False
 
@@ -252,7 +250,7 @@ class BallController(object):
                 collect the balls to. Default of None will be replaced with
                 'home' and 'trough'.
         """
-        self.log.debug("Checking to see if all the balls are in devices tagged"
+        self.debug_log("Checking to see if all the balls are in devices tagged"
                        " with '%s'", target)
 
         if isinstance(target, str):
@@ -271,14 +269,14 @@ class BallController(object):
 
         for device in devices:
             count += device.balls
-            self.log.debug('Found %s ball(s) in %s. Found %s total',
+            self.debug_log('Found %s ball(s) in %s. Found %s total',
                            device.balls, device.name, count)
 
         if count == self.machine.ball_controller.num_balls_known:
-            self.log.debug("Yes, all balls are collected")
+            self.debug_log("Yes, all balls are collected")
             return True
         else:
-            self.log.debug("No, all balls are not collected. Balls Counted: %s. "
+            self.debug_log("No, all balls are not collected. Balls Counted: %s. "
                            "Total balls known: %s", count,
                            self.machine.ball_controller.num_balls_known)
             return False
@@ -298,7 +296,7 @@ class BallController(object):
         """
         tag_list = Util.string_to_list(target)
 
-        self.log.debug("Collecting all balls to devices with tags '%s'",
+        self.debug_log("Collecting all balls to devices with tags '%s'",
                        tag_list)
 
         target_devices = set()
@@ -315,7 +313,7 @@ class BallController(object):
                     source_devices.add(device)
                     balls_to_collect = True
 
-        self.log.debug("Ejecting all balls from: %s", source_devices)
+        self.debug_log("Ejecting all balls from: %s", source_devices)
 
         if balls_to_collect:
             self.machine.events.post('collecting_balls')
@@ -339,7 +337,7 @@ class BallController(object):
                     else:
                         device.eject_all()
         else:
-            self.log.debug("All balls are collected")
+            self.debug_log("All balls are collected")
             self._collecting_balls_complete()
 
     def _collecting_balls_entered_callback(self, target, new_balls, unclaimed_balls, **kwargs):

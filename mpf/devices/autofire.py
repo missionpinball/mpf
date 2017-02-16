@@ -51,7 +51,7 @@ class AutofireCoil(SystemWideDevice):
             return
         self._enabled = True
 
-        self.log.debug("Enabling")
+        self.debug_log("Enabling")
 
         self.coil.set_pulse_on_hit_rule(self.switch)
 
@@ -63,5 +63,5 @@ class AutofireCoil(SystemWideDevice):
             return
         self._enabled = False
 
-        self.log.debug("Disabling")
+        self.debug_log("Disabling")
         self.coil.clear_hw_rule(self.switch)

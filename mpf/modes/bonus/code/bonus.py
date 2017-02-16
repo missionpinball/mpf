@@ -21,7 +21,7 @@ class Bonus(Mode):
     def mode_start(self, **kwargs):
         """Start the bonus mode."""
         if not self.bonus_entries:
-            self.log.warning(
+            self.warning_log(
                 "Bonus mode started, but `bonus_entries` is not configured.")
             self.stop()
 

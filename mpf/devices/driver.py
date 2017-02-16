@@ -66,6 +66,7 @@ class Driver(SystemWideDevice):
         del is_mode_config
         platform = self.machine.get_platform_sections('coils', getattr(config, "platform", None))
         platform.validate_coil_section(self, config)
+        self._configure_device_logging(config)
         return config
 
     def _initialize(self):
@@ -90,13 +91,13 @@ class Driver(SystemWideDevice):
 
         self.time_when_done = -1
         self.time_last_changed = self.machine.clock.get_time()
-        self.log.debug("Enabling Driver")
+        self.debug_log("Enabling Driver")
         self.hw_driver.enable(self.get_configured_driver())
 
     def disable(self, **kwargs):
         """Disable this driver."""
         del kwargs
-        self.log.debug("Disabling Driver")
+        self.debug_log("Disabling Driver")
         self.time_last_changed = self.machine.clock.get_time()
         self.time_when_done = self.time_last_changed
         self.machine.delay.remove(name='{}_timed_enable'.format(self.name))
@@ -133,10 +134,10 @@ class Driver(SystemWideDevice):
             power = 1.0
 
         if 0 < milliseconds <= self.platform.features['max_pulse']:
-            self.log.debug("Pulsing Driver. %sms (%s power)", milliseconds, power)
+            self.debug_log("Pulsing Driver. %sms (%s power)", milliseconds, power)
             ms_actual = self.hw_driver.pulse(self.get_configured_driver(), milliseconds)
         else:
-            self.log.debug("Enabling Driver for %sms (%s power)", milliseconds, power)
+            self.debug_log("Enabling Driver for %sms (%s power)", milliseconds, power)
             self.machine.delay.reset(name='{}_timed_enable'.format(self.name),
                                      ms=milliseconds,
                                      callback=self.disable)

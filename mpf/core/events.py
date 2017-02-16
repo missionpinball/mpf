@@ -7,26 +7,27 @@ import uuid
 import asyncio
 from functools import partial
 
+from mpf.core.mpf_controller import MpfController
+
 EventHandlerKey = namedtuple("EventHandlerKey", ["key", "event"])
 RegisteredHandler = namedtuple("RegisteredHandler", ["callback", "priority", "kwargs", "key", "condition"])
 PostedEvent = namedtuple("PostedEvent", ["event", "type", "callback", "kwargs"])
 
 
-class EventManager(object):
+class EventManager(MpfController):
 
     """Handles all the events and manages the handlers in MPF."""
 
     def __init__(self, machine):
         """Initialise EventManager."""
-        self.log = logging.getLogger("Events")
-        self.machine = machine
+        
+        super().__init__(machine)
+        
         self.registered_handlers = {}   # type: {str: [RegisteredHandler]}
         self.event_queue = deque([])
         self.callback_queue = deque([])
         self.monitor_events = False
         self._queue_tasks = []
-
-        self.debug = True
 
     def get_event_and_condition_from_string(self, event_string):
         """Parse an event string to divide the event name from a possible placeholder / conditional in braces.
@@ -116,13 +117,13 @@ class EventManager(object):
         # the handler method, priority, dict of kwargs, & uuid key
 
         self.registered_handlers[event].append(RegisteredHandler(handler, priority, kwargs, key, condition))
-        if self.debug:
-            try:
-                self.log.debug("Registered %s as a handler for '%s', priority: %s, "
-                               "kwargs: %s",
-                               (str(handler).split(' '))[2], event, priority, kwargs)
-            except IndexError:
-                pass
+
+        try:
+            self.debug_log("Registered %s as a handler for '%s', priority: %s, "
+                           "kwargs: %s",
+                           (str(handler).split(' '))[2], event, priority, kwargs)
+        except IndexError:
+            pass
 
         # Sort the handlers for this event based on priority. We do it now
         # so the list is pre-sorted so we don't have to do that with each
@@ -181,8 +182,7 @@ class EventManager(object):
             for handler_tup in handler_list[:]:  # copy via slice
                 if handler_tup[0] == method:
                     handler_list.remove(handler_tup)
-                    if self.debug:
-                        self.log.debug("Removing method %s from event %s", (str(method).split(' '))[2], event)
+                    self.debug_log("Removing method %s from event %s", (str(method).split(' '))[2], event)
                     events_to_delete_if_empty.append(event)
 
         for event in events_to_delete_if_empty:
@@ -208,8 +208,7 @@ class EventManager(object):
             for handler_tup in self.registered_handlers[event][:]:
                 if handler_tup[0] == handler:
                     self.registered_handlers[event].remove(handler_tup)
-                    if self.debug:
-                        self.log.debug("Removing method %s from event %s", (str(handler).split(' '))[2], event)
+                    self.debug_log("Removing method %s from event %s", (str(handler).split(' '))[2], event)
                     events_to_delete_if_empty.append(event)
 
         for event in events_to_delete_if_empty:
@@ -227,8 +226,7 @@ class EventManager(object):
         for handler_tup in self.registered_handlers[key.event][:]:  # copy via slice
             if handler_tup.key == key.key:
                 self.registered_handlers[key.event].remove(handler_tup)
-                if self.debug:
-                    self.log.debug("Removing method %s from event %s", (str(handler_tup[0]).split(' '))[2], key.event)
+                self.debug_log("Removing method %s from event %s", (str(handler_tup[0]).split(' '))[2], key.event)
                 events_to_delete_if_empty.append(key.event)
         for event in events_to_delete_if_empty:
             self._remove_event_if_empty(event)
@@ -251,9 +249,8 @@ class EventManager(object):
 
         if not self.registered_handlers[event]:  # if value is empty list
             del self.registered_handlers[event]
-            if self.debug:
-                self.log.debug("Removing event %s since there are no more"
-                               " handlers registered for it", event)
+            self.debug_log("Removing event %s since there are no more"
+                           " handlers registered for it", event)
 
     def wait_for_event(self, event_name: str):
         """Wait for event."""
@@ -442,9 +439,11 @@ class EventManager(object):
 
         event = event.lower()
 
-        if self.debug:
-            self.log.debug("^^^^ Posted event '%s'. Type: %s, Callback: %s, "
+        if self._debug_to_console or self._debug_to_file:
+            self.debug_log("Event: ===='%s'==== Type: %s, Callback: %s, "
                            "Args: %s", event, ev_type, callback, kwargs)
+        else:
+            self.info_log("Event: ======'%s'====== Args=%s", event, kwargs)
 
         if not self.event_queue and hasattr(self.machine.clock, "loop"):
             self.machine.clock.loop.call_soon(self.process_event_queue)
@@ -455,19 +454,17 @@ class EventManager(object):
             self.machine.bcp.interface.monitor_posted_event(posted_event)
 
         self.event_queue.append(posted_event)
-        if self.debug:
-            self.log.debug("============== EVENTS QUEUE =============")
-            for event in list(self.event_queue):
-                self.log.debug("%s, %s, %s, %s", event[0], event[1],
-                               event[2], event[3])
-            self.log.debug("=========================================")
+        self.debug_log("+============= EVENTS QUEUE =============")
+        for event in list(self.event_queue):
+            self.debug_log("| %s, %s, %s, %s", event[0], event[1],
+                           event[2], event[3])
+        self.debug_log("+========================================")
 
     @asyncio.coroutine
     def _run_handlers_sequential(self, event, callback, kwargs):
         """Run all handlers for an event."""
-        if self.debug:
-            self.log.debug("^^^^ Processing queue event '%s'. Callback: %s,"
-                           " Args: %s", event, callback, kwargs)
+        self.debug_log("^^^^ Processing queue event '%s'. Callback: %s,"
+                       " Args: %s", event, callback, kwargs)
 
         # all handlers may have been removed in the meantime
         if event not in self.registered_handlers:
@@ -487,25 +484,23 @@ class EventManager(object):
                 continue
 
             # log if debug is enabled and this event is not the timer tick
-            if self.debug:
-                try:
-                    self.log.debug("%s (priority: %s) responding to event '%s'"
-                                   " with args %s",
-                                   (str(handler.callback).split(' ')), handler.priority,
-                                   event, merged_kwargs)
-                except IndexError:
-                    pass
+            try:
+                self.debug_log("%s (priority: %s) responding to event '%s'"
+                               " with args %s",
+                               (str(handler.callback).split(' ')), handler.priority,
+                               event, merged_kwargs)
+            except IndexError:
+                pass
 
             # call the handler and save the results
-            queue = QueuedEvent(self.debug)
+            queue = QueuedEvent(self.debug_log)
             handler.callback(queue=queue, **merged_kwargs)
             if queue.waiter:
                 queue.event = asyncio.Event(loop=self.machine.clock.loop)
                 yield from queue.event.wait()
 
-        if self.debug:
-            self.log.debug("vvvv Finished queue event '%s'. Callback: %s. "
-                           "Args: %s", event, callback, kwargs)
+        self.debug_log("vvvv Finished queue event '%s'. Callback: %s. "
+                       "Args: %s", event, callback, kwargs)
 
         if callback:
             callback(**kwargs)
@@ -525,15 +520,13 @@ class EventManager(object):
             if handler.condition is not None and not handler.condition.evaluate(merged_kwargs):
                 continue
 
-            # log if debug is enabled and this event is not the timer tick
-            if self.debug:
-                try:
-                    self.log.debug("%s (priority: %s) responding to event '%s'"
-                                   " with args %s",
-                                   (str(handler.callback).split(' ')), handler.priority,
-                                   event, merged_kwargs)
-                except IndexError:
-                    pass
+            try:
+                self.debug_log("%s (priority: %s) responding to event '%s'"
+                               " with args %s",
+                               (str(handler.callback).split(' ')), handler.priority,
+                               event, merged_kwargs)
+            except IndexError:
+                pass
 
             # call the handler and save the results
             result = handler.callback(**merged_kwargs)
@@ -544,8 +537,7 @@ class EventManager(object):
                 # add a False result so our callback knows something failed
                 kwargs['ev_result'] = False
 
-                if self.debug:
-                    self.log.debug("Aborting future event processing")
+                self.debug_log("Aborting future event processing")
 
                 break
 
@@ -573,17 +565,15 @@ class EventManager(object):
         # Internal method which actually handles the events. Don't call this.
 
         result = None
-        if self.debug:
-            self.log.debug("^^^^ Processing event '%s'. Type: %s, Callback: %s,"
-                           " Args: %s", event, ev_type, callback, kwargs)
+        self.debug_log("^^^^ Processing event '%s'. Type: %s, Callback: %s,"
+                       " Args: %s", event, ev_type, callback, kwargs)
 
         # Now let's call the handlers one-by-one, including any kwargs
         if event in self.registered_handlers:
             result = self._run_handlers(event, ev_type, kwargs)
 
-        if self.debug:
-            self.log.debug("vvvv Finished event '%s'. Type: %s. Callback: %s. "
-                           "Args: %s", event, ev_type, callback, kwargs)
+        self.debug_log("vvvv Finished event '%s'. Type: %s. Callback: %s. "
+                       "Args: %s", event, ev_type, callback, kwargs)
 
         if callback:
             # For event types other than queue, we'll handle the callback here.
@@ -625,13 +615,12 @@ class QueuedEvent(object):
 
     """Base class for an event queue which is created each time a queue event is called."""
 
-    def __init__(self, debug):
+    def __init__(self, debug_log):
         """Initialise QueueEvent."""
-        if debug:
-            self.log = logging.getLogger("Queue")
+
+        self.debug_log = debug_log
         self.waiter = False
         self.event = None
-        self.debug = debug
 
     def __repr__(self):
         """Return str representation."""
@@ -642,8 +631,7 @@ class QueuedEvent(object):
         if self.waiter:
             raise AssertionError("Double lock")
         self.waiter = True
-        if self.debug:
-            self.log.debug("Registering a wait.")
+        self.debug_log("QueuedEvent: Registering a wait.")
 
     def clear(self):
         """Clear a wait."""

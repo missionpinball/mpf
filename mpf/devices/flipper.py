@@ -53,7 +53,7 @@ class Flipper(SystemWideDevice):
             self.eos_switch = ReconfiguredSwitch(self.config['eos_switch'], self.config['eos_switch_overwrite'], False)
 
         if self.debug:
-            self.log.debug('Platform Driver: %s', self.platform)
+            self.debug_log('Platform Driver: %s', self.platform)
 
         if self.config['power_setting_name']:
             self.machine.events.add_handler("machine_var_{}".format(self.config['power_setting_name']),
@@ -71,7 +71,7 @@ class Flipper(SystemWideDevice):
                 "pulse_ms", overwrite_config.get("pulse_ms", self.machine.config['mpf']['default_pulse_ms']))
             settings_factor = self.machine.settings.get_setting_value(self.config['power_setting_name'])
             overwrite_config['pulse_ms'] = int(pulse_ms * settings_factor)
-            self.log.info("Configuring driver %s with a pulse time of %s ms for flipper",
+            self.info_log("Configuring driver %s with a pulse time of %s ms for flipper",
                           driver.name, overwrite_config['pulse_ms'])
         return ReconfiguredDriver(driver, overwrite_config)
 
@@ -127,7 +127,7 @@ class Flipper(SystemWideDevice):
 
         self._enabled = True
 
-        self.log.debug('Enabling flipper with config: %s', self.config)
+        self.debug_log('Enabling flipper with config: %s', self.config)
 
         # Apply the proper hardware rules for our config
 
@@ -152,7 +152,7 @@ class Flipper(SystemWideDevice):
         tilted.
         """
         del kwargs
-        self.log.debug("Disabling")
+        self.debug_log("Disabling")
         self.main_coil.clear_hw_rule(self.switch)
         if self.eos_switch and self.config['use_eos']:
             self.main_coil.clear_hw_rule(self.eos_switch)
@@ -163,24 +163,24 @@ class Flipper(SystemWideDevice):
         self._enabled = False
 
     def _enable_single_coil_rule(self):
-        self.log.debug('Enabling single coil rule')
+        self.debug_log('Enabling single coil rule')
 
         self.main_coil.set_pulse_on_hit_and_enable_and_release_rule(self.switch)
 
     def _enable_main_coil_pulse_rule(self):
-        self.log.debug('Enabling main coil pulse rule')
+        self.debug_log('Enabling main coil pulse rule')
 
         self.main_coil.set_pulse_on_hit_and_release_rule(self.switch)
 
     def _enable_hold_coil_rule(self):
-        self.log.debug('Enabling hold coil rule')
+        self.debug_log('Enabling hold coil rule')
 
         # TODO: why are we pulsing the hold coil?
 
         self.hold_coil.set_pulse_on_hit_and_enable_and_release_rule(self.switch)
 
     def _enable_main_coil_eos_cutoff_rule(self):
-        self.log.debug('Enabling main coil EOS cutoff rule')
+        self.debug_log('Enabling main coil EOS cutoff rule')
 
         self.main_coil.set_pulse_on_hit_and_enable_and_release_and_disable_rule(
             self.switch, self.eos_switch)

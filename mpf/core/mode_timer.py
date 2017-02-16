@@ -1,11 +1,10 @@
 """Mode timers."""
-import logging
-
 from mpf.core.delays import DelayManager
+from mpf.core.logging import LogMixin
 
 
 # pylint: disable-msg=too-many-instance-attributes
-class ModeTimer(object):
+class ModeTimer(LogMixin):
 
     """Parent class for a mode timer.
 
@@ -48,8 +47,14 @@ class ModeTimer(object):
         self.bcp = self.config['bcp']
         self.event_keys = set()
         self.delay = DelayManager(self.machine.delayRegistry)
-        self.log = logging.getLogger('ModeTimer.' + name)
-        self.debug = self.config['debug']
+
+        if self.config['debug']:
+            self.configure_logging('ModeTimer.' + name,
+                                   'basic', 'full')
+        else:
+            self.configure_logging('ModeTimer.' + name,
+                                   self.config['console_log'],
+                                   self.config['file_log'])
 
         if self.direction == 'down' and not self.end_value:
             self.end_value = 0  # need it to be 0 not None
@@ -64,25 +69,23 @@ class ModeTimer(object):
             value in the player variable ``mode1_my_timer_tick``.
             '''
 
-        if self.debug:
-            self.log.debug("----------- Initial Values -----------")
-            self.log.debug("running: %s", self.running)
-            self.log.debug("start_value: %s", self.start_value)
-            self.log.debug("restart_on_complete: %s", self.restart_on_complete)
-            self.log.debug("_ticks: %s", self._ticks)
-            self.log.debug("end_value: %s", self.end_value)
-            self.log.debug("ticks_remaining: %s", self.ticks_remaining)
-            self.log.debug("max_value: %s", self.max_value)
-            self.log.debug("direction: %s", self.direction)
-            self.log.debug("tick_secs: %s", self.tick_secs)
-            self.log.debug("--------------------------------------")
+        self.debug_log("----------- Initial Values -----------")
+        self.debug_log("running: %s", self.running)
+        self.debug_log("start_value: %s", self.start_value)
+        self.debug_log("restart_on_complete: %s", self.restart_on_complete)
+        self.debug_log("_ticks: %s", self._ticks)
+        self.debug_log("end_value: %s", self.end_value)
+        self.debug_log("ticks_remaining: %s", self.ticks_remaining)
+        self.debug_log("max_value: %s", self.max_value)
+        self.debug_log("direction: %s", self.direction)
+        self.debug_log("tick_secs: %s", self.tick_secs)
+        self.debug_log("--------------------------------------")
 
         if self.config['control_events']:
             self._setup_control_events(self.config['control_events'])
 
     def _setup_control_events(self, event_list):
-        if self.debug:
-            self.log.debug("Setting up control events")
+        self.debug_log("Setting up control events")
 
         kwargs = None
         for entry in event_list:
@@ -113,8 +116,7 @@ class ModeTimer(object):
                                     entry['event'], handler))
 
     def _remove_control_events(self):
-        if self.debug:
-            self.log.debug("Removing control events")
+        self.debug_log("Removing control events")
 
         for key in self.event_keys:
             self.machine.events.remove_handler_by_key(key)
@@ -131,8 +133,7 @@ class ModeTimer(object):
         """
         del kwargs
 
-        if self.debug:
-            self.log.debug("Resetting timer. New value: %s", self.start_value)
+        self.debug_log("Resetting timer. New value: %s", self.start_value)
 
         self.jump(self.start_value)
 
@@ -152,8 +153,7 @@ class ModeTimer(object):
         if self.running:
             return
 
-        if self.debug:
-            self.log.debug("Starting Timer.")
+        self.info_log("Starting Timer.")
 
         if self._check_for_done():
             return()
@@ -204,8 +204,7 @@ class ModeTimer(object):
         """
         del kwargs
 
-        if self.debug:
-            self.log.debug("Stopping Timer")
+        self.info_log("Stopping Timer")
 
         self.delay.remove('pause')
 
@@ -245,8 +244,7 @@ class ModeTimer(object):
         """
         del kwargs
 
-        if self.debug:
-            self.log.debug("Pausing Timer for %s secs", timer_value)
+        self.info_log("Pausing Timer for %s secs", timer_value)
 
         self.running = False
 
@@ -284,8 +282,7 @@ class ModeTimer(object):
         """
         del kwargs
 
-        if self.debug:
-            self.log.debug("Timer Complete")
+        self.info_log("Timer Complete")
 
         self.stop()
 
@@ -311,8 +308,7 @@ class ModeTimer(object):
 
         if self.restart_on_complete:
 
-            if self.debug:
-                self.log.debug("Restart on complete: True")
+            self.debug_log("Restart on complete: True")
 
             self.reset()
             self.start()
@@ -321,12 +317,10 @@ class ModeTimer(object):
         # Automatically called by the core clock each tick
         del dt
 
-        if self.debug:
-            self.log.debug("Timer Tick")
+        self.debug_log("Timer Tick")
 
         if not self.running:
-            if self.debug:
-                self.log.debug("Timer is not running. Will remove.")
+            self.debug_log("Timer is not running. Will remove.")
 
             self._remove_system_timer()
             return
@@ -351,10 +345,9 @@ class ModeTimer(object):
                     remaining.
             '''
 
-            if self.debug:
-                self.log.debug("Ticks: %s, Remaining: %s",
-                               self.mode.player[self.tick_var],
-                               self.ticks_remaining)
+            self.debug_log("Ticks: %s, Remaining: %s",
+                           self.mode.player[self.tick_var],
+                           self.ticks_remaining)
 
             if self.bcp:
                 self.machine.bcp.send('timer', name=self.name, action='tick',
@@ -450,11 +443,10 @@ class ModeTimer(object):
         # Checks to see if this timer is done. Automatically called anytime the
         # timer's value changes.
 
-        if self.debug:
-            self.log.debug("Checking to see if timer is done. Ticks: %s, End "
-                           "Value: %s, Direction: %s",
-                           self.mode.player[self.tick_var], self.end_value,
-                           self.direction)
+        self.debug_log("Checking to see if timer is done. Ticks: %s, End "
+                       "Value: %s, Direction: %s",
+                       self.mode.player[self.tick_var], self.end_value,
+                       self.direction)
 
         if (self.direction == 'up' and self.end_value is not None and
                 self.mode.player[self.tick_var] >= self.end_value):
@@ -469,8 +461,7 @@ class ModeTimer(object):
             self.ticks_remaining = abs(self.end_value -
                                        self.mode.player[self.tick_var])
 
-        if self.debug:
-            self.log.debug("Timer is not done")
+        self.debug_log("Timer is not done")
 
         return False
 

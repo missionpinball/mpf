@@ -49,7 +49,7 @@ class Motor(SystemWideDevice):
     def _reached_position(self, position, **kwargs):
         """Called when motor reached a certain position."""
         del kwargs
-        self.log.info("Motor is in position %s", position)
+        self.debug_log("Motor is in position %s", position)
 
         self.machine.events.post("motor_{}_reached_{}".format(self.name, position))
         '''event: motor_(name)_reached_(position)

@@ -292,6 +292,8 @@ device:     # base for all devices
     label: single|str|%
     tags: list|str|None
     debug: single|bool|False
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
 displays:
     __valid_in__: machine
     width: single|int|800
@@ -358,6 +360,8 @@ fadecandy:
     linear_cutoff: single|float|0.0
     keyframe_interpolation: single|bool|True
     dithering: single|bool|True
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
 fast:
     __valid_in__: machine
     ports: list|str|
@@ -373,6 +377,8 @@ fast:
     net_buffer: single|int|10
     rgb_buffer: single|int|3
     dmd_buffer: single|int|3
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
 file_shows:
     __valid_in__: machine, mode                      # todo add to validator
 flasher_player:
@@ -536,6 +542,8 @@ logic_blocks:                                       # todo add validation
         events_when_complete: list|str|None
         events_when_hit: list|str|None
         player_variable: single|str|None
+        console_log: single|enum(none,basic,full)|none
+        file_log: single|enum(none,basic,full)|basic
     accrual:
         events: list|str|
     counter:
@@ -547,6 +555,9 @@ logic_blocks:                                       # todo add validation
         starting_count: single|template_int|0
     sequence:
         events: list|str|
+logging:
+    __valid_in__: machine
+    __allow_others__: true
 machine:
     __valid_in__: machine
     balls_installed: single|int|1
@@ -578,6 +589,8 @@ mode:
     code: single|str|None
     stop_on_ball_end: single|bool|True
     restart_on_next_ball: single|bool|False
+    console_log: single|enum(none,basic,full)|basic
+    file_log: single|enum(none,basic,full)|basic
 mode_settings:
     __valid_in__: mode
     __allow_others__:
@@ -647,6 +660,8 @@ opp:
     baud: single|int|115200
     debug: single|bool|False
     chains: dict|str:str|None
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
 open_pixel_control:
     __valid_in__: machine
     connection_required: single|bool|False
@@ -655,6 +670,8 @@ open_pixel_control:
     connection_attempts: single|int|-1
     number_format: single|enum(int,hex)|int
     debug: single|bool|False
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
 p_roc:
     __valid_in__: machine
     lamp_matrix_strobe_time: single|ms|100ms
@@ -663,12 +680,16 @@ p_roc:
     dmd_timing_cycles: list|int|None
     dmd_update_interval: single|ms|33ms
     debug: single|bool|False
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
 p3_roc:
     __valid_in__: machine
     lamp_matrix_strobe_time: single|ms|100ms
     watchdog_time: single|ms|1s
     use_watchdog: single|bool|True
     debug: single|bool|False
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
 physical_dmd:
     __valid_in__: machine
     shades: single|pow2|16
@@ -726,6 +747,8 @@ pololu_maestro:
     port: single|str|
     servo_min: single|int|3000
     servo_max: single|int|9000
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
 random_event_player:
     __valid_in__: machine, mode, show
     events: list|str|
@@ -912,15 +935,21 @@ snux:
     flipper_enable_driver: single|machine(coils)|
     diag_led_driver: single|machine(coils)|
     platform: single|str|None
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
 smartmatrix:
     __valid_in__: machine
     port: single|str|
     baud: single|int|
     old_cookie: single|bool|False
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
 smart_virtual:
     __valid_in__: machine
     simulate_manual_plunger: single|bool|False
     simulate_manual_plunger_timeout: single|ms|10s
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
 sound_player:
     __valid_in__: machine, mode, show
     action: single|enum(play,stop,stop_looping,load,unload)|play
@@ -986,6 +1015,8 @@ spike:
     nodes: list|int|
     poll_hz: single|int|1000
     connection: single|enum(shell)|shell
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
 switch_player:
     __valid_in__: machine
     start_event: single|str|machine_reset_phase_3
@@ -1035,6 +1066,8 @@ timers:
     restart_on_complete: single|bool|False
     reset_on_mode_start: single|bool|True
     bcp: single|bool|False
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
 timer_control_events:  # subconfig for mode timers
     __valid_in__: None
     action: single|enum(add,subtract,jump,start,stop,reset,restart,pause,set_tick_interval,change_tick_interval,\
@@ -1240,6 +1273,8 @@ widgets:
         force_complete_event: single|str|None
         bold: single|bool|False
         italic: single|bool|False
+        number_grouping: single|bool|False
+        min_digits: single|int|0
         max_chars: single|int|3
         char_list: single|str|"ABCDEFGHIJKLMNOPQRSTUVWXYZ_- "
         keep_selected_char: single|bool|True

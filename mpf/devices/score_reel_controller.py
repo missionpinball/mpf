@@ -1,8 +1,8 @@
 """Score reel controller."""
-import logging
+from mpf.core.mpf_controller import MpfController
 
 
-class ScoreReelController(object):
+class ScoreReelController(MpfController):
 
     """The overall controller that is in charge of and manages the score reels in a pinball machine.
 
@@ -26,9 +26,7 @@ class ScoreReelController(object):
 
     def __init__(self, machine):
         """Initialise score reel controller."""
-        self.machine = machine
-        self.log = logging.getLogger("ScoreReelController")
-        self.log.debug("Loading the ScoreReelController")
+        super().__init__(machine)
 
         self.active_scorereelgroup = None
         """Pointer to the active ScoreReelGroup for the current player.
@@ -82,14 +80,14 @@ class ScoreReelController(object):
         self.active_scorereelgroup = self.player_to_scorereel_map[
             self.machine.game.player.index]
 
-        self.log.debug("Mapping Player %s to ScoreReelGroup '%s'",
+        self.debug_log("Mapping Player %s to ScoreReelGroup '%s'",
                        self.machine.game.player.number,
                        self.active_scorereelgroup.name)
 
         # Make sure this score reel group is showing the right score
-        self.log.debug("Current player's score: %s",
+        self.debug_log("Current player's score: %s",
                        self.machine.game.player.score)
-        self.log.debug("Score displayed on reels: %s",
+        self.debug_log("Score displayed on reels: %s",
                        self.active_scorereelgroup.assumed_value_int)
         if (self.active_scorereelgroup.assumed_value_int !=
                 self.machine.game.player.score):
@@ -107,7 +105,7 @@ class ScoreReelController(object):
         for reel_group in self.machine.score_reel_groups.items_tagged(
                 "player" + str(self.machine.game.player.number)):
             self.player_to_scorereel_map.append(reel_group)
-            self.log.debug("Found a mapping to add: %s", reel_group.name)
+            self.debug_log("Found a mapping to add: %s", reel_group.name)
             return
 
         # if we didn't find one, then we'll just use the first player's group
@@ -163,7 +161,7 @@ class ScoreReelController(object):
         # param `value` since that's what validate passes. Dunno if we need it.
         if self.reset_queue:  # there's still more to reset
             next_group = self.reset_queue.pop(0)
-            self.log.debug("Resetting ScoreReelGroup %s", next_group.name)
+            self.debug_log("Resetting ScoreReelGroup %s", next_group.name)
             # add the handler to know when this group is reset
             self.machine.events.add_handler('scorereelgroup_' +
                                             next_group.name +

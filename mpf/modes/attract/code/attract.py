@@ -89,9 +89,9 @@ class Attract(Mode):
                 want the game to start, this will be False. Otherwise it's True.
         """
         if ev_result is False:
-            self.log.debug("Game start was denied")
+            self.debug_log("Game start was denied")
         else:  # else because we want to start on True *or* None
-            self.log.debug("Let's start a game!!")
+            self.debug_log("Let's start a game!!")
             self.machine.events.post('game_start',
                                      buttons=self.start_buttons_held,
                                      hold_time=self.start_hold_time)

@@ -63,7 +63,7 @@ class MultiballLock(ModeDevice):
             **kwargs: unused
         """
         del kwargs
-        self.log.debug("Enabling...")
+        self.debug_log("Enabling...")
         if not self.enabled:
             self._register_handlers()
         self.enabled = True
@@ -87,7 +87,7 @@ class MultiballLock(ModeDevice):
         if balls <= 0:
             return {'balls': balls}
 
-        self.log.debug("Ball of lock drained.")
+        self.debug_log("Ball of lock drained.")
 
         queue.clear()
 
@@ -104,7 +104,7 @@ class MultiballLock(ModeDevice):
             **kwargs: unused
         """
         del kwargs
-        self.log.debug("Disabling...")
+        self.debug_log("Disabling...")
         self._unregister_handlers()
         self.enabled = False
 
@@ -186,7 +186,7 @@ class MultiballLock(ModeDevice):
         del kwargs
         # if full do not take any balls
         if self.is_virtually_full:
-            self.log.debug("Cannot lock balls. Lock is full.")
+            self.debug_log("Cannot lock balls. Lock is full.")
             return {'unclaimed_balls': unclaimed_balls}
 
         # if there are no balls do not claim anything
@@ -236,7 +236,7 @@ class MultiballLock(ModeDevice):
         # schedule eject of new balls for all physically locked balls
         self._request_new_balls(balls_to_lock_physically)
 
-        self.log.debug("Locked %s balls virtually and %s balls physically", balls_to_lock, balls_to_lock_physically)
+        self.debug_log("Locked %s balls virtually and %s balls physically", balls_to_lock, balls_to_lock_physically)
 
         return {'unclaimed_balls': unclaimed_balls - balls_to_lock_physically}
 

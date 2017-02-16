@@ -1,11 +1,10 @@
 """Contains the ShowController base class."""
 
-import logging
-
 from mpf.assets.show import Show
+from mpf.core.mpf_controller import MpfController
 
 
-class ShowController(object):
+class ShowController(MpfController):
 
     """Manages all the shows in a pinball machine.
 
@@ -19,8 +18,7 @@ class ShowController(object):
 
     def __init__(self, machine):
         """Initialise show controller."""
-        self.log = logging.getLogger("ShowController")
-        self.machine = machine
+        super().__init__(machine)
 
         self.show_players = {}
         self.running_shows = list()
@@ -73,6 +71,7 @@ class ShowController(object):
                              "there's already a show with that name. Shows are"
                              " shared machine-wide".format(name))
         else:
+            self.debug_log("Registering show: {}".format(name))
             self.machine.shows[name] = Show(self.machine,
                                             name=name,
                                             data=settings,

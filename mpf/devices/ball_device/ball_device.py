@@ -158,16 +158,16 @@ class BallDevice(SystemWideDevice):
             raise AssertionError("Lost a ball to playfield {}. This should not happen".format(target))
         elif target.cancel_path_if_target_is(self, self.config['ball_missing_target']):
             # add ball to default target because it would have gone there anyway
-            self.log.warning("Path to %s canceled. Assuming the ball jumped to %s.", target,
+            self.warning_log("Path to %s canceled. Assuming the ball jumped to %s.", target,
                              self.config['ball_missing_target'])
         elif target.find_available_ball_in_path(self):
-            self.log.warning("Path is not going to ball_missing_target %s. Restoring path by requesting new ball to "
+            self.warning_log("Path is not going to ball_missing_target %s. Restoring path by requesting new ball to "
                              "target %s.", self.config['ball_missing_target'], target)
             # remove one ball first because it will get a new one with the eject
             target.available_balls -= 1
             self.eject(target=target)
         else:
-            self.log.warning("Failed to restore the path. If you can reproduce this please report in the forum!")
+            self.warning_log("Failed to restore the path. If you can reproduce this please report in the forum!")
 
         self.config['ball_missing_target'].add_missing_balls(1)
         yield from self._balls_missing(1)
@@ -178,14 +178,14 @@ class BallDevice(SystemWideDevice):
         del source
         if self.cancel_path_if_target_is(self, self.config['ball_missing_target']):
             # add ball to default target
-            self.log.warning("Path to canceled. Assuming the ball jumped to %s.", self.config['ball_missing_target'])
+            self.warning_log("Path to canceled. Assuming the ball jumped to %s.", self.config['ball_missing_target'])
         elif self.find_available_ball_in_path(self):
-            self.log.warning("Path is not going to ball_missing_target %s. Restoring path by requesting a new ball.",
+            self.warning_log("Path is not going to ball_missing_target %s. Restoring path by requesting a new ball.",
                              self.config['ball_missing_target'])
             self.available_balls -= 1
             self.request_ball()
         else:
-            self.log.warning("Failed to restore the path. If you can reproduce this please report in the forum!")
+            self.warning_log("Failed to restore the path. If you can reproduce this please report in the forum!")
 
         self.config['ball_missing_target'].add_missing_balls(1)
         yield from self._balls_missing(1)

@@ -7,10 +7,11 @@ from mpf.core.delays import DelayManager
 
 from mpf.core.mode_timer import ModeTimer
 from mpf.core.utility_functions import Util
+from mpf.core.logging import LogMixin
 
 
 # pylint: disable-msg=too-many-instance-attributes
-class Mode(object):
+class Mode(LogMixin):
 
     """Parent class for in-game mode code."""
 
@@ -30,11 +31,6 @@ class Mode(object):
         self.config = config
         self.name = name.lower()
         self.path = path
-
-        self.log = logging.getLogger('Mode.' + name)
-
-        self.delay = DelayManager(self.machine.delayRegistry)
-
         self.priority = 0
         self._active = False
         self._mode_start_wait_queue = None
@@ -49,12 +45,20 @@ class Mode(object):
         self.start_event_kwargs = None
         self.stopping = False
 
+        self.delay = DelayManager(self.machine.delayRegistry)
+
         self.player = None
         '''Reference to the current player object.'''
 
-        self._create_mode_devices()
+
 
         self._validate_mode_config()
+
+        self.configure_logging('Mode.' + name,
+                               self.config['mode']['console_log'],
+                               self.config['mode']['file_log'])
+
+        self._create_mode_devices()
 
         self._initialise_mode_devices()
 
@@ -169,18 +173,18 @@ class Mode(object):
         put whatever code you want to run when this mode starts in the
         mode_start method which will be called automatically.
         """
-        self.log.debug("Received request to start")
+        self.debug_log("Received request to start")
 
         if self.config['mode']['game_mode'] and not self.machine.game:
-            self.log.warning("Can only start mode %s during a game. Aborting start.", self.name)
+            self.warning_log("Can only start mode %s during a game. Aborting start.", self.name)
             return
 
         if self._active:
-            self.log.debug("Mode is already active. Aborting start.")
+            self.debug_log("Mode is already active. Aborting start.")
             return
         if self.config['mode']['use_wait_queue'] and 'queue' in kwargs:
 
-            self.log.debug("Registering a mode start wait queue")
+            self.debug_log("Registering a mode start wait queue")
 
             self._mode_start_wait_queue = kwargs['queue']
             self._mode_start_wait_queue.wait()
@@ -192,11 +196,9 @@ class Mode(object):
 
         self.start_event_kwargs = kwargs
 
-        self.log.info('Mode Starting. Priority: %s', self.priority)
-
         self._add_mode_devices()
 
-        self.log.debug("Registering mode_stop handlers")
+        self.debug_log("Registering mode_stop handlers")
 
         # register mode stop events
         if 'stop_events' in self.config['mode']:
@@ -211,7 +213,7 @@ class Mode(object):
 
         self.start_callback = callback
 
-        self.log.debug("Calling mode_start handlers")
+        self.debug_log("Calling mode_start handlers")
 
         for item in self.machine.mode_controller.start_methods:
             if item.config_section in self.config or not item.config_section:
@@ -236,7 +238,7 @@ class Mode(object):
 
     def _started(self):
         """Called after the mode_<name>_starting queue event has finished."""
-        self.log.debug('Mode Started. Priority: %s', self.priority)
+        self.info_log('Started. Priority: %s', self.priority)
 
         self.active = True
 
@@ -266,7 +268,7 @@ class Mode(object):
         if self.start_callback:
             self.start_callback()
 
-        self.log.debug('Mode Start process complete.')
+        self.debug_log('Mode Start process complete.')
 
     def stop(self, callback=None, **kwargs):
         """Stop this mode.
@@ -286,7 +288,7 @@ class Mode(object):
 
         self.mode_stop_kwargs = kwargs
 
-        self.log.debug('Mode Stopping.')
+        self.debug_log('Mode Stopping.')
 
         self._remove_mode_switch_handlers()
 
@@ -309,7 +311,7 @@ class Mode(object):
         '''
 
     def _stopped(self):
-        self.log.debug('Mode Stopped.')
+        self.info_log('Stopped.')
 
         self.priority = 0
         self.active = False
@@ -344,7 +346,7 @@ class Mode(object):
 
         if self._mode_start_wait_queue:
 
-            self.log.debug("Clearing wait queue")
+            self.debug_log("Clearing wait queue")
 
             self._mode_start_wait_queue.clear()
             self._mode_start_wait_queue = None
@@ -391,7 +393,7 @@ class Mode(object):
 
     def _create_mode_devices(self):
         """Create new devices that are specified in a mode config that haven't been created in the machine-wide."""
-        self.log.debug("Scanning config for mode-based devices")
+        self.debug_log("Scanning config for mode-based devices")
 
         for collection_name, device_class in iter(self.machine.device_manager.device_classes.items()):
 
@@ -411,7 +413,7 @@ class Mode(object):
 
                 if device not in collection:  # no existing device, create
 
-                    self.log.debug("Creating mode-based device: %s",
+                    self.debug_log("Creating mode-based device: %s",
                                    device)
 
                     self.machine.device_manager.create_devices(
@@ -433,12 +435,12 @@ class Mode(object):
                 settings = device.validate_and_parse_config(settings, True)
 
                 if device.config:
-                    self.log.debug("Overwrite mode-based device: %s", device)
+                    self.debug_log("Overwrite mode-based device: %s", device)
                     # overload
                     device.overload_config_in_mode(self, settings)
 
                 else:
-                    self.log.debug("Initialising mode-based device: %s", device)
+                    self.debug_log("Initializing mode-based device: %s", device)
                     # load config
                     device.load_config(settings)
 
@@ -452,7 +454,7 @@ class Mode(object):
         # registers mode handlers for control events for all devices specified
         # in this mode's config (not just newly-created devices)
 
-        self.log.debug("Scanning mode-based config for device control_events")
+        self.debug_log("Scanning mode-based config for device control_events")
 
         for event, method, delay, device in (
                 self.machine.device_manager.get_device_control_events(
@@ -483,7 +485,7 @@ class Mode(object):
 
     def _control_event_handler(self, callback, ms_delay=0, **kwargs):
         del kwargs
-        self.log.debug("_control_event_handler: callback: %s,", callback)
+        self.debug_log("_control_event_handler: callback: %s,", callback)
 
         if ms_delay:
             self.delay.add(name=callback, ms=ms_delay, callback=callback,
