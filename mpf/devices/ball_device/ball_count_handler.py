@@ -199,6 +199,8 @@ class BallCountHandler(BallDeviceStateHandler):
                 self.debug_log("Ready to receive from %s. Free space %s (Capacity: %s, Balls: %s), incoming_balls: %s",
                                source, free_space, self.ball_device.config['ball_capacity'], self._ball_count,
                                incoming_balls)
+                # wait for the counter to be ready
+                yield from self.ball_device.counter.wait_for_ready_to_receive()
                 return True
 
             self.debug_log("Not ready to receive from %s. Free space %s (Capacity: %s, Balls: %s), incoming_balls: %s",

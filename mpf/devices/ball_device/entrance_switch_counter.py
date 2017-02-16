@@ -84,14 +84,15 @@ class EntranceSwitchCounter(BallDeviceBallCounter):
 
     def _wait_for_ball_to_leave(self):
         """Wait for a ball to leave."""
-        if self.machine.switch_controller.is_active(self.config['entrance_switch'].name):
-            return self.machine.switch_controller.wait_for_switch(
-                switch_name=self.config['entrance_switch'].name,
-                state=0)
-        else:
-            # wait 10ms
-            done_future = asyncio.sleep(0.01, loop=self.machine.clock.loop)
-            return Util.ensure_future(done_future, loop=self.machine.clock.loop)
+        # wait 10ms
+        done_future = asyncio.sleep(0.01, loop=self.machine.clock.loop)
+        return Util.ensure_future(done_future, loop=self.machine.clock.loop)
+
+    def wait_for_ready_to_receive(self):
+        """Wait until the entrance switch is inactive."""
+        return self.machine.switch_controller.wait_for_switch(
+            switch_name=self.config['entrance_switch'].name,
+            state=0, only_on_change=False)
 
     def wait_for_ball_activity(self):
         """Wait for ball count changes."""
