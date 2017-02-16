@@ -138,6 +138,25 @@ class DelayManager(MpfController):
 
         self.delays = {}
 
+    def run_now(self, name):
+        """Run a delay callback now instead of waiting until its time comes.
+
+        This will cancel the future running of the delay callback.
+
+        Args:
+            name: Name of the delay to run. If this name is not an active
+                delay, that's fine. Nothing happens."""
+        if name in self.delays:
+            try:
+                # have to save the callback ref first, since if the callback
+                # schedules a new delay with the same name, then the removal
+                # will remove it
+                cb = self.delays[name]._callback
+                self.remove(name)
+                cb()
+            except KeyError:
+                pass
+
     def _process_delay_callback(self, name, callback, dt, **kwargs):
         del dt
         self.debug_log("---Processing delay: %s", name)

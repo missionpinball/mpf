@@ -107,3 +107,17 @@ class TestDelay(MpfTestCase):
         self.callback.assert_not_called()
         self.advance_time_and_run(.5)
         self.callback.assert_any_call()
+
+    def test_run_now(self):
+        self.callback = MagicMock()
+        self.machine.delay.add(1000, self.callback, "delay_test")
+        self.advance_time_and_run(.1)
+        self.callback.assert_not_called()
+
+        self.machine.delay.run_now("delay_test")
+        self.advance_time_and_run(.1)
+        self.callback.assert_any_call()
+
+        self.callback = MagicMock()
+        self.advance_time_and_run(1)
+        self.callback.assert_not_called()
