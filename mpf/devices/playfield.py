@@ -291,7 +291,7 @@ class Playfield(SystemWideDevice):
                 self.debug_log("Playfield was activated with no balls expected.")
                 self.machine.events.post('unexpected_ball_on_' + self.name)
                 '''event: unexpected_ball_on_(playfield)
-                desc: The playfield namaed "playfield" just had a switch hit,
+                desc: The playfield named "playfield" just had a switch hit,
                 meaning a ball is on it, but that ball was not expected.
                 '''
 
