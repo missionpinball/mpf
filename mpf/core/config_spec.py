@@ -751,7 +751,7 @@ playfields:
     __valid_in__: machine
     enable_ball_search: single|bool|None
     ball_search_timeout: single|ms|15s
-    ball_search_interval: single|ms|250ms
+    ball_search_interval: single|ms|150ms
     ball_search_phase_1_searches: single|int|3
     ball_search_phase_2_searches: single|int|3
     ball_search_phase_3_searches: single|int|4
