@@ -180,6 +180,9 @@ class TestBallSearch(MpfTestCase):
                 self.machine.coils['drop_target_reset4'].pulse = MagicMock()
                 self.machine.coils['drop_target_knockdown2'].pulse = MagicMock()
                 self.machine.coils['drop_target_knockdown4'].pulse = MagicMock()
+                self.machine.coils['flipper_coil'].enable = MagicMock()
+                self.machine.coils['diverter_coil'].enable = MagicMock()
+                self.machine.autofires.autofire1.coil.pulse = MagicMock()
                 self.advance_time_and_run(10)
                 if i <= 3:
                     self.assertEqual(1, self.machine.ball_devices['playfield'].ball_search.phase)
@@ -187,6 +190,7 @@ class TestBallSearch(MpfTestCase):
                     self.assertEqual(2, self.machine.ball_devices['playfield'].ball_search.phase)
                 else:
                     self.assertEqual(3, self.machine.ball_devices['playfield'].ball_search.phase)
+
                 self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)
 
                 assert not self.machine.coils['eject_coil1'].pulse.called
@@ -199,6 +203,15 @@ class TestBallSearch(MpfTestCase):
                 assert not self.machine.coils['drop_target_reset1'].pulse.called
                 assert not self.machine.coils['drop_target_reset2'].pulse.called
                 assert not self.machine.coils['drop_target_knockdown2'].pulse.called
+
+                if i == 1:
+                    assert not self.machine.coils['flipper_coil'].enable.called
+                    assert not self.machine.coils['diverter_coil'].enable.called
+                    self.machine.autofires.autofire1.coil.pulse.called
+                else:
+                    assert self.machine.coils['flipper_coil'].enable.called
+                    assert self.machine.coils['diverter_coil'].enable.called
+                    self.machine.autofires.autofire1.coil.pulse.called
 
                 self.advance_time_and_run(.25)
 
@@ -386,3 +399,50 @@ class TestBallSearch(MpfTestCase):
         self.hit_and_release_switch("s_start")
         self.advance_time_and_run(1)
         self.assertNotEqual(None, self.machine.game)
+
+    def test_ball_search_cancel_running(self):
+        self.machine.ball_controller.num_balls_known = 0
+        self.machine.switch_controller.process_switch("s_ball_switch1", 1)
+        self.advance_time_and_run(1)
+        self.assertEqual(1, self.machine.ball_controller.num_balls_known)
+
+        self.assertEqual(None, self.machine.game)
+        self.machine.switch_controller.process_switch("s_start", 1)
+        self.machine.switch_controller.process_switch("s_start", 0)
+        self.advance_time_and_run(1)
+        self.assertNotEqual(None, self.machine.game)
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.enabled)
+
+        self.advance_time_and_run(10)
+        self.assertEqual(1, self.machine.ball_devices['playfield'].balls)
+        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.enabled)
+        self.advance_time_and_run(21)
+        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)
+
+        self.post_event('flipper_cradle', 1)
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
+
+    def test_prevent_ball_search_with_flipper_cradle(self):
+        self.machine.ball_controller.num_balls_known = 0
+        self.machine.switch_controller.process_switch("s_ball_switch1", 1)
+        self.advance_time_and_run(1)
+        self.assertEqual(1, self.machine.ball_controller.num_balls_known)
+
+        self.assertEqual(None, self.machine.game)
+        self.machine.switch_controller.process_switch("s_start", 1)
+        self.machine.switch_controller.process_switch("s_start", 0)
+        self.advance_time_and_run(1)
+        self.assertNotEqual(None, self.machine.game)
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.enabled)
+
+        self.post_event('flipper_cradle', 1)
+        self.advance_time_and_run(21)
+        self.assertEqual(1, self.machine.ball_devices['playfield'].balls)
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.enabled)
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
+
+        self.post_event('flipper_cradle_release', 1)
+        self.advance_time_and_run(21)
+        self.assertEqual(1, self.machine.ball_devices['playfield'].balls)
+        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.enabled)
+        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)

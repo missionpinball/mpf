@@ -374,3 +374,40 @@ class Playfield(SystemWideDevice):
     def remove_incoming_ball(self, incoming_ball: IncomingBall):
         """Stop tracking an incoming ball."""
         self._incoming_balls.remove(incoming_ball)
+
+    def ball_search_disable(self, **kwargs):
+        """Disable ball search for this playfield.
+
+        If the ball search timer is running, it will stop and disable it. If
+        an actual ball search process is running, it will stop.
+        """
+        del kwargs
+        self.ball_search.disable()
+
+    def ball_search_enable(self, **kwargs):
+        """Enable ball search for this playfield.
+
+        Note this does not start the ball search process, rather, it starts the
+        timer running.
+        """
+        del kwargs
+        self.ball_search.enable()
+
+    def ball_search_block(self, **kwargs):
+        """Block ball search for this playfield.
+
+        Blocking will disable ball search if it's enabled or running, and will
+        prevent ball search from enabling if it's disabled until
+        ball_search_resume() is called.
+        """
+        del kwargs
+        self.ball_search.block()
+
+    def ball_search_unblock(self, **kwargs):
+        """Unblock ball search for this playfield.
+
+        This will check to see if there are balls on the playfield, and if so,
+        enable ball search.
+        """
+        del kwargs
+        self.ball_search.unblock()

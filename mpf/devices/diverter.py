@@ -61,6 +61,10 @@ class Diverter(SystemWideDevice):
 
         self.platform = self.config['activation_coil'].platform
 
+        if self.config['ball_search_order']:
+            self.config['playfield'].ball_search.register(
+                self.config['ball_search_order'], self._ball_search)
+
     def _register_switches(self, **kwargs):
         del kwargs
         # register for deactivation switches
@@ -309,3 +313,11 @@ class Diverter(SystemWideDevice):
             self.debug_log("Enabling diverter since eject target is on the "
                            "inactive target list")
             self.disable()
+
+    def _ball_search(self, phase, iteration):
+        del phase
+        del iteration
+        self.activate()
+        self.machine.delay.add(self.config['ball_search_hold_time'],
+                               self.deactivate,
+                               'diverter_{}_ball_search'.format(self.name))

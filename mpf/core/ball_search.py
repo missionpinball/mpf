@@ -21,11 +21,14 @@ class BallSearch(MpfController):
 
         self.started = False
         self.enabled = False
+        self.blocked = False
         self.callbacks = []
 
         self.iteration = False
         self.iterator = False
         self.phase = False
+
+        self.ball_search_control_handlers = list()
 
         # register for events
         self.machine.events.add_handler('request_to_start_game',
@@ -34,14 +37,19 @@ class BallSearch(MpfController):
         self.machine.events.add_handler('cancel_ball_search',
                                         self.cancel_ball_search)
         '''event: cancel_ball_search
-        desc: This event will cancel all running ball searches and mark the balls as lost. This is only a handler
-        so all you have to do is to post the event.'''
+        desc: This event will cancel all running ball searches and mark the
+        balls as lost. This is only a handler so all you have to do is to post
+        the event.'''
 
     def request_to_start_game(self, **kwargs):
         """Method registered for the *request_to_start_game* event.
 
-        Returns false if the ball search is running.
+        Prevents the game from starting while ball search is running.
+
         """
+
+        # todo we should enable ball search if a ball is missing on game start
+
         del kwargs
         if self.started:
             return False
@@ -49,26 +57,33 @@ class BallSearch(MpfController):
             return
 
     def register(self, priority, callback):
-        """Register a callback for sequential ballsearch.
+        """Register a callback for sequential ball search.
 
-        Callbacks are called by priority. Ball search only waits if the callback returns true.
+        Callbacks are called by priority. Ball search only waits if the
+        callback returns true.
 
         Args:
             priority: priority of this callback in the ball search procedure
-            callback: callback to call. ball search will wait before the next callback, if it returns true
+            callback: callback to call. ball search will wait before the next
+                callback, if it returns true
         """
         self.callbacks.append((priority, callback))
         # sort by priority
         self.callbacks = sorted(self.callbacks, key=lambda entry: entry[0])
 
-    def enable(self):
+    def enable(self, **kwargs):
         """Enable but do not start ball search.
 
         Ball search is started by a timeout. Enable also resets that timer.
         """
+
+        if self.blocked:
+            return
+
+        del kwargs
         if self.playfield.config['enable_ball_search'] is False or (
-            not self.playfield.config['enable_ball_search'] and not self.machine.config['mpf']['default_ball_search']
-        ):
+            not self.playfield.config['enable_ball_search'] and
+                not self.machine.config['mpf']['default_ball_search']):
             return
 
         if not self.callbacks:
@@ -77,13 +92,15 @@ class BallSearch(MpfController):
         self.debug_log("Enabling Ball Search")
 
         self.enabled = True
+
         self.reset_timer()
 
-    def disable(self):
+    def disable(self, **kwargs):
         """Disable ball search.
 
         Will stop the ball search if it is running.
         """
+        del kwargs
         if self.started:
             self.machine.events.post('ball_search_stopped')
         '''event: ball_search_stopped
@@ -98,8 +115,25 @@ class BallSearch(MpfController):
 
         self.started = False
         self.enabled = False
+
         self.delay.remove('start')
         self.delay.remove('run')
+
+    def block(self, **kwargs):
+        """Block ball search for this playfield.
+
+        Blocking will disable ball search if it's enabled or running, and will
+        prevent ball search from enabling if it's disabled until
+        ball_search_unblock() is called.
+        """
+        self.disable()
+        self.blocked = True
+
+    def unblock(self, **kwargs):
+        self.blocked = False
+
+        if self.playfield.balls:
+            self.enable()
 
     def reset_timer(self):
         """Reset the start timer.
@@ -107,7 +141,8 @@ class BallSearch(MpfController):
         Called by playfield.
         """
         if self.enabled and not self.started:
-            self.delay.reset(name='start', callback=self.start, ms=self.playfield.config['ball_search_timeout'])
+            self.delay.reset(name='start', callback=self.start,
+                             ms=self.playfield.config['ball_search_timeout'])
 
     def start(self):
         """Actually start ball search."""
@@ -138,17 +173,21 @@ class BallSearch(MpfController):
             except StopIteration:
                 self.iteration += 1
                 # give up at some point
-                if self.iteration > self.playfield.config['ball_search_phase_' + str(self.phase) + '_searches']:
+                if self.iteration > self.playfield.config[
+                                    'ball_search_phase_' + str(self.phase) +
+                                    '_searches']:
                     self.phase += 1
                     self.iteration = 1
                     if self.phase > 3:
                         self.give_up()
                         return
 
-                self.debug_log("Ball Search Phase %s Iteration %s", self.phase, self.iteration)
+                self.debug_log("Ball Search Phase %s Iteration %s", self.phase,
+                               self.iteration)
                 self.iterator = iter(self.callbacks)
                 element = next(self.iterator)
-                timeout = self.playfield.config['ball_search_wait_after_iteration']
+                timeout = self.playfield.config[
+                    'ball_search_wait_after_iteration']
 
             (dummy_priority, callback) = element
             # if a callback returns True we wait for the next one
@@ -157,7 +196,7 @@ class BallSearch(MpfController):
                 return
 
     def cancel_ball_search(self, **kwargs):
-        """Cancel the current ballsearch and mark the ball as missing."""
+        """Cancel the current ball search and mark the ball as missing."""
         del kwargs
         if self.started:
             self.give_up()
@@ -165,7 +204,8 @@ class BallSearch(MpfController):
     def give_up(self):
         """Give up the ball search.
 
-        Did not find the missing ball. Execute the failed action which either adds a replacement ball or ends the game.
+        Did not find the missing ball. Execute the failed action which either
+        adds a replacement ball or ends the game.
         """
         self.info_log("Ball Search failed to find ball. Giving up!")
         self.disable()
@@ -205,4 +245,5 @@ class BallSearch(MpfController):
             else:
                 self.warning_log("There is no game. Doing nothing!")
         else:
-            raise AssertionError("Unknown action " + self.playfield.config['ball_search_failed_action'])
+            raise AssertionError("Unknown action " + self.playfield.config[
+                'ball_search_failed_action'])

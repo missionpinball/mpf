@@ -94,7 +94,8 @@ autofire_coils:
     disable_events: dict|str:ms|ball_will_end, service_mode_entered
     coil_overwrite: dict|str:str|None
     switch_overwrite: dict|str:str|None
-
+    ball_search_order: single|int|0
+    playfield: single|machine(playfields)|playfield
 switch_overwrites:
     __valid_in__: machine
     debounce: single|enum(quick,normal,None)|None
@@ -330,6 +331,9 @@ diverters:
     targets_when_active: list|machine(ball_devices)|playfield
     targets_when_inactive: list|machine(ball_devices)|playfield
     type: single|enum(hold,pulse)|hold
+    ball_search_order: single|int|0
+    ball_search_hold_time: single|ms|1s
+    playfield: single|machine(playfields)|playfield
 drop_targets:
     __valid_in__: machine
     switch: single|machine(switches)|
@@ -431,6 +435,9 @@ flippers:
     switch_overwrite: dict|str:str|None
     eos_switch_overwrite: dict|str:str|None
     power_setting_name: single|str|None
+    ball_search_order: single|int|0
+    ball_search_hold_time: single|ms|1s
+    playfield: single|machine(playfields)|playfield
 game:
     __valid_in__: machine
     balls_per_game: single|int|3
@@ -490,6 +497,8 @@ kickbacks:
     disable_events: dict|str:ms|ball_will_end, service_mode_entered
     coil_overwrite: dict|str:str|None
     switch_overwrite: dict|str:str|None
+    ball_search_order: single|int|0
+    playfield: single|machine(playfields)|playfield
 kivy_config:
     __valid_in__: machine                           # todo add to validator
 led_player:
@@ -747,6 +756,10 @@ playfields:
     ball_search_phase_3_searches: single|int|4
     ball_search_failed_action: single|str|new_ball
     ball_search_wait_after_iteration: single|ms|10s
+    ball_search_block_events: dict|str:ms|flipper_cradle
+    ball_search_unblock_events: dict|str:ms|flipper_cradle_release
+    ball_search_enable_events: dict|str:ms|None
+    ball_search_disable_events: dict|str:ms|None
 playfield_transfers:
     __valid_in__: machine
     ball_switch: single|machine(switches)|None
@@ -825,6 +838,7 @@ servos:
     ball_search_min: single|float|0.0
     ball_search_max: single|float|1.0
     ball_search_wait: single|ms|5s
+    include_in_ball_search: single|bool|True
     reset_position: single|float|0.5
     reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
     number: single|str|

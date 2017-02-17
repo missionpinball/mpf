@@ -10,7 +10,7 @@ class TestAssets(MpfTestCase):
     def getConfigFile(self):
         return 'test_asset_loading.yaml'
 
-    def test_assert_loading(self):
+    def test_asset_loading(self):
         self.expected_duration = 1.0
         self._test_machine_wide_asset_loading()
         self._test_random_asset_group()

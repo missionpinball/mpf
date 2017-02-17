@@ -394,7 +394,7 @@ class BallDevice(SystemWideDevice):
         elif self.config['hold_coil']:
             self.ejector = HoldCoilEjector(self)    # pylint: disable-msg=redefined-variable-type
 
-        if self.ejector:
+        if self.ejector and self.config['ball_search_order']:
             self.config['captures_from'].ball_search.register(
                 self.config['ball_search_order'], self.ejector.ball_search)
 

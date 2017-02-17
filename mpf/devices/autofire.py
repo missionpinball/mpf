@@ -43,6 +43,10 @@ class AutofireCoil(SystemWideDevice):
 
         self.debug_log('Platform Driver: %s', self.platform)
 
+        if self.config['ball_search_order']:
+            self.config['playfield'].ball_search.register(
+                self.config['ball_search_order'], self._ball_search)
+
     def enable(self, **kwargs):
         """Enable the autofire coil rule."""
         del kwargs
@@ -65,3 +69,8 @@ class AutofireCoil(SystemWideDevice):
 
         self.debug_log("Disabling")
         self.coil.clear_hw_rule(self.switch)
+
+    def _ball_search(self, phase, iteration):
+        del phase
+        del iteration
+        self.coil.pulse()

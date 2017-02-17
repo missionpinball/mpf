@@ -47,10 +47,14 @@ class Flipper(SystemWideDevice):
 
         self.platform = self.config['main_coil'].platform
 
-        self.switch = ReconfiguredSwitch(self.config['activation_switch'], self.config['switch_overwrite'], False)
+        self.switch = ReconfiguredSwitch(self.config['activation_switch'],
+                                         self.config['switch_overwrite'],
+                                         False)
         self._reconfigure_drivers()
         if self.config['eos_switch']:
-            self.eos_switch = ReconfiguredSwitch(self.config['eos_switch'], self.config['eos_switch_overwrite'], False)
+            self.eos_switch = ReconfiguredSwitch(self.config['eos_switch'],
+                                                 self.config['eos_switch_overwrite'],
+                                                 False)
 
         if self.debug:
             self.debug_log('Platform Driver: %s', self.platform)
@@ -58,6 +62,12 @@ class Flipper(SystemWideDevice):
         if self.config['power_setting_name']:
             self.machine.events.add_handler("machine_var_{}".format(self.config['power_setting_name']),
                                             self._power_changed)
+
+        self.debug_log('Platform Driver: %s', self.platform)
+
+        if self.config['ball_search_order']:
+            self.config['playfield'].ball_search.register(
+                self.config['ball_search_order'], self._ball_search)
 
     def _reconfigure_drivers(self):
         self.main_coil = self._reconfigure_driver(self.config['main_coil'], self.config['main_coil_overwrite'])
@@ -223,3 +233,11 @@ class Flipper(SystemWideDevice):
 
         if self.config['hold_coil']:
             self.config['hold_coil'].disable()
+
+    def _ball_search(self, phase, iteration):
+        del phase
+        del iteration
+        self.sw_flip()
+        self.machine.delay.add(self.config['ball_search_hold_time'],
+                               self.sw_release,
+                               'flipper_{}_ball_search'.format(self.name))

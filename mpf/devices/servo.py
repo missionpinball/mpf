@@ -36,8 +36,9 @@ class Servo(SystemWideDevice):
         self.hw_servo = self.platform.configure_servo(self.config)
         self._position = self.config['reset_position']
 
-        self.machine.events.add_handler("ball_search_started", self._ball_search_start)
-        self.machine.events.add_handler("ball_search_stopped", self._ball_search_stop)
+        if self.config['include_in_ball_search']:
+            self.machine.events.add_handler("ball_search_started", self._ball_search_start)
+            self.machine.events.add_handler("ball_search_stopped", self._ball_search_stop)
 
     def reset(self, **kwargs):
         """Go to reset position."""
