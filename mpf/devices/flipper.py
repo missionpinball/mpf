@@ -65,7 +65,7 @@ class Flipper(SystemWideDevice):
 
         self.debug_log('Platform Driver: %s', self.platform)
 
-        if self.config['ball_search_order']:
+        if self.config['include_in_ball_search']:
             self.config['playfield'].ball_search.register(
                 self.config['ball_search_order'], self._ball_search, self.name)
 

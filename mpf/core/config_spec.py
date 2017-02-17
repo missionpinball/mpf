@@ -436,6 +436,7 @@ flippers:
     eos_switch_overwrite: dict|str:str|None
     power_setting_name: single|str|None
     ball_search_order: single|int|0
+    include_in_ball_search: single|bool|False
     ball_search_hold_time: single|ms|1s
     playfield: single|machine(playfields)|playfield
 game:
