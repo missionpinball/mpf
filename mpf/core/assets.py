@@ -390,6 +390,7 @@ class BaseAssetManager(MpfController, LogMixin):
 
                 # scan through the existing config to see if this file is used
                 # as the file setting for any entry.
+                found_in_config = False
                 for k, v in config.items():
                     if ('file' in v and v['file'] == file_name) or name == k:
                         # if it's found, set the asset entry's name to whatever
@@ -398,6 +399,7 @@ class BaseAssetManager(MpfController, LogMixin):
                         # merge in the config settings for this asset, updating
                         #  the defaults
                         built_up_config.update(config[k])
+                        found_in_config = True
                         break
 
                 # need to send the full file path to the Asset that will
@@ -411,7 +413,7 @@ class BaseAssetManager(MpfController, LogMixin):
 
                 # Update the config for that asset
 
-                if name in config:
+                if name in config and not found_in_config:
                     raise RuntimeError(
                         "Duplicate Asset name found: {}".format(name))
 
