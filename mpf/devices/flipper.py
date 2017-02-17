@@ -195,7 +195,7 @@ class Flipper(SystemWideDevice):
         self.main_coil.set_pulse_on_hit_and_enable_and_release_and_disable_rule(
             self.switch, self.eos_switch)
 
-    def sw_flip(self):
+    def sw_flip(self, include_switch=False):
         """Activate the flipper via software as if the flipper button was pushed.
 
         This is needed because the real flipper activations are handled in
@@ -205,11 +205,12 @@ class Flipper(SystemWideDevice):
         Note this method will keep this flipper enabled until you call
         sw_release().
         """
-        # Send the activation switch press to the switch controller
-        self.machine.switch_controller.process_switch(
-            name=self.config['activation_switch'].name,
-            state=1,
-            logical=True)
+
+        if include_switch:
+            self.machine.switch_controller.process_switch(
+                name=self.config['activation_switch'].name,
+                state=1,
+                logical=True)
 
         if self.config['hold_coil']:
             self.config['main_coil'].pulse()
@@ -217,16 +218,16 @@ class Flipper(SystemWideDevice):
         else:
             self.config['main_coil'].enable()
 
-    def sw_release(self):
+    def sw_release(self, include_switch=False):
         """Deactive the flipper via software as if the flipper button was released.
 
         See the documentation for sw_flip() for details.
         """
-        # Send the activation switch release to the switch controller
-        self.machine.switch_controller.process_switch(
-            name=self.config['activation_switch'].name,
-            state=0,
-            logical=True)
+        if include_switch:
+            self.machine.switch_controller.process_switch(
+                name=self.config['activation_switch'].name,
+                state=0,
+                logical=True)
 
         # disable the flipper coil(s)
         self.config['main_coil'].disable()
