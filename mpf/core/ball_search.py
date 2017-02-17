@@ -56,7 +56,7 @@ class BallSearch(MpfController):
         else:
             return
 
-    def register(self, priority, callback):
+    def register(self, priority, callback, name):
         """Register a callback for sequential ball search.
 
         Callbacks are called by priority. Ball search only waits if the
@@ -66,8 +66,11 @@ class BallSearch(MpfController):
             priority: priority of this callback in the ball search procedure
             callback: callback to call. ball search will wait before the next
                 callback, if it returns true
+            name: string name which is used for debugging & the logs
         """
-        self.callbacks.append((priority, callback))
+        self.debug_log("Registering callback: {} (priority: {})".format(
+            name, priority))
+        self.callbacks.append((priority, callback, name))
         # sort by priority
         self.callbacks = sorted(self.callbacks, key=lambda entry: entry[0])
 
@@ -189,8 +192,10 @@ class BallSearch(MpfController):
                 timeout = self.playfield.config[
                     'ball_search_wait_after_iteration']
 
-            (dummy_priority, callback) = element
+            (dummy_priority, callback, name) = element
             # if a callback returns True we wait for the next one
+            self.debug_log("Ball search: {} (phase: {}  iteration: {})".format(
+                           name, self.phase, self.iteration))
             if callback(self.phase, self.iteration):
                 self.delay.add(name='run', callback=self.run, ms=timeout)
                 return

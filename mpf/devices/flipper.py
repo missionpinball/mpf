@@ -67,7 +67,7 @@ class Flipper(SystemWideDevice):
 
         if self.config['ball_search_order']:
             self.config['playfield'].ball_search.register(
-                self.config['ball_search_order'], self._ball_search)
+                self.config['ball_search_order'], self._ball_search, self.name)
 
     def _reconfigure_drivers(self):
         self.main_coil = self._reconfigure_driver(self.config['main_coil'], self.config['main_coil_overwrite'])

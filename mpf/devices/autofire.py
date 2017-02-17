@@ -45,7 +45,7 @@ class AutofireCoil(SystemWideDevice):
 
         if self.config['ball_search_order']:
             self.config['playfield'].ball_search.register(
-                self.config['ball_search_order'], self._ball_search)
+                self.config['ball_search_order'], self._ball_search, self.name)
 
     def enable(self, **kwargs):
         """Enable the autofire coil rule."""

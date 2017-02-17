@@ -396,7 +396,8 @@ class BallDevice(SystemWideDevice):
 
         if self.ejector and self.config['ball_search_order']:
             self.config['captures_from'].ball_search.register(
-                self.config['ball_search_order'], self.ejector.ball_search)
+                self.config['ball_search_order'], self.ejector.ball_search,
+                self.name)
 
         # Register events to watch for ejects targeted at this device
         for device in self.machine.ball_devices:

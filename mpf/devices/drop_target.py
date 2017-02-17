@@ -42,7 +42,7 @@ class DropTarget(SystemWideDevice):
 
         if self.config['ball_search_order']:
             self.config['playfield'].ball_search.register(
-                self.config['ball_search_order'], self._ball_search)
+                self.config['ball_search_order'], self._ball_search, self.name)
 
     def _ball_search_phase1(self):
         if not self.complete and self.reset_coil:
