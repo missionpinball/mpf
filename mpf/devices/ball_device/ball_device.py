@@ -100,6 +100,31 @@ class BallDevice(SystemWideDevice):
         # delay ball counters because we have to wait for switches to be ready
         self.machine.events.add_handler('init_phase_2', self._create_ball_counters)
 
+        # check to make sure no switches from this device are tagged with
+        # playfield_active, because ball devices have their own logic for
+        # working with the playfield and this will break things. Plus, a ball
+        # in a ball device is not technically on the playfield.
+
+        switch_set = set()
+
+        for section in ('hold_switches', 'ball_switches'):
+            for switch in self.config[section]:
+                switch_set.add(switch)
+
+        if self.config['entrance_switch']:
+            switch_set.add(self.config['jam_switch'])
+
+        if self.config['entrance_switch']:
+            switch_set.add(self.config['jam_switch'])
+
+        for switch in switch_set:
+            if switch and 'playfield_active' in switch.tags:
+                raise ValueError(
+                    "Ball device '{}' uses switch '{}' which has a "
+                    "'playfield_active' tag. This is not valid. Remove the "
+                    "'playfield_active' tag from that switch.".format(
+                        self.name, switch.name))
+
     def _create_ball_counters(self, **kwargs):
         del kwargs
         if self.config['ball_switches']:
