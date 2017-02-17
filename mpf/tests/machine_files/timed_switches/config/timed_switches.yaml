@@ -1,0 +1,26 @@
+#config_version=4
+
+switches:
+  switch1:
+    number:
+  switch2:
+    number:
+  switch3:
+    number:
+  switch4:
+    number:
+    tags: left_flipper
+  switch5:
+    number:
+    tags: right_flipper
+
+timed_switches:
+  group1:
+    switches: switch1, switch2
+    time: 2s
+  another_one:
+    switches: switch3
+    time: 2000ms
+    state: inactive
+    events_when_active: active_event
+    events_when_released: release_event

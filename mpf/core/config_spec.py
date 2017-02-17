@@ -1066,6 +1066,14 @@ tilt:
     multiple_hit_window: single|ms|300ms
     settle_time: single|ms|5s
     tilt_warnings_player_var: single|str|tilt_warnings
+timed_switches:
+    __valid_in__: machine, mode
+    switches: list|machine(switches)|None
+    switch_tags: list|str|None
+    time: single|ms|
+    state: single|enum(active,inactive)|active
+    events_when_active: list|str|None
+    events_when_released: list|str|None
 timers:
     __valid_in__: mode
     debug: single|bool|False
