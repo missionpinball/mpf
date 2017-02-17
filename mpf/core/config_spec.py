@@ -94,7 +94,7 @@ autofire_coils:
     disable_events: dict|str:ms|ball_will_end, service_mode_entered
     coil_overwrite: dict|str:str|None
     switch_overwrite: dict|str:str|None
-    ball_search_order: single|int|0
+    ball_search_order: single|int|100
     playfield: single|machine(playfields)|playfield
 switch_overwrites:
     __valid_in__: machine
@@ -149,7 +149,7 @@ ball_devices:
     eject_all_events: dict|str:ms|None
     mechanical_eject: single|bool|False
     player_controlled_eject_event: single|str|None
-    ball_search_order: single|int|100
+    ball_search_order: single|int|200
     auto_fire_on_unexpected_ball: single|bool|True
     target_on_unexpected_ball: single|machine(ball_devices)|None
 ball_holds:
@@ -331,7 +331,7 @@ diverters:
     targets_when_active: list|machine(ball_devices)|playfield
     targets_when_inactive: list|machine(ball_devices)|playfield
     type: single|enum(hold,pulse)|hold
-    ball_search_order: single|int|0
+    ball_search_order: single|int|100
     ball_search_hold_time: single|ms|1s
     playfield: single|machine(playfields)|playfield
 drop_targets:
@@ -435,8 +435,8 @@ flippers:
     switch_overwrite: dict|str:str|None
     eos_switch_overwrite: dict|str:str|None
     power_setting_name: single|str|None
-    ball_search_order: single|int|0
     include_in_ball_search: single|bool|False
+    ball_search_order: single|int|100
     ball_search_hold_time: single|ms|1s
     playfield: single|machine(playfields)|playfield
 game:
@@ -498,7 +498,7 @@ kickbacks:
     disable_events: dict|str:ms|ball_will_end, service_mode_entered
     coil_overwrite: dict|str:str|None
     switch_overwrite: dict|str:str|None
-    ball_search_order: single|int|0
+    ball_search_order: single|int|100
     playfield: single|machine(playfields)|playfield
 kivy_config:
     __valid_in__: machine                           # todo add to validator
