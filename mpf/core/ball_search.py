@@ -79,7 +79,6 @@ class BallSearch(MpfController):
 
         Ball search is started by a timeout. Enable also resets that timer.
         """
-
         if self.blocked:
             return
 
@@ -169,6 +168,7 @@ class BallSearch(MpfController):
         Will schedule itself for the next run.
         """
         timeout = self.playfield.config['ball_search_interval']
+
         # iterate until we are done with all callbacks
         while True:
             try:
