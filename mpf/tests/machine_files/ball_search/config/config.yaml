@@ -38,6 +38,7 @@ playfields:
     playfield:
         enable_ball_search: True
         ball_search_timeout: 20s
+        ball_search_wait_after_iteration: 10s
 
 servos:
     servo1:
@@ -137,6 +138,7 @@ flippers:
         main_coil: flipper_coil
         activation_switch: s_flipper
         ball_search_order: 15
+        include_in_ball_search: True
 
 autofire_coils:
     autofire1:

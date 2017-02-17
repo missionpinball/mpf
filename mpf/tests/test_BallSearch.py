@@ -204,15 +204,6 @@ class TestBallSearch(MpfTestCase):
                 assert not self.machine.coils['drop_target_reset2'].pulse.called
                 assert not self.machine.coils['drop_target_knockdown2'].pulse.called
 
-                if i == 1:
-                    assert not self.machine.coils['flipper_coil'].enable.called
-                    assert not self.machine.coils['diverter_coil'].enable.called
-                    self.machine.autofires.autofire1.coil.pulse.called
-                else:
-                    assert self.machine.coils['flipper_coil'].enable.called
-                    assert self.machine.coils['diverter_coil'].enable.called
-                    self.machine.autofires.autofire1.coil.pulse.called
-
                 self.advance_time_and_run(.25)
 
                 assert not self.machine.coils['eject_coil1'].pulse.called
@@ -264,6 +255,18 @@ class TestBallSearch(MpfTestCase):
                     self.machine.coils['drop_target_knockdown4'].pulse.assert_called_with()
 
                 assert not self.machine.ball_devices['playfield'].add_ball.called
+
+                self.advance_time_and_run(.25)
+                assert self.machine.coils['diverter_coil'].enable.called
+                assert not self.machine.coils['flipper_coil'].enable.called
+                assert not self.machine.autofires.autofire1.coil.pulse.called
+
+                self.advance_time_and_run(.25)
+                assert self.machine.coils['flipper_coil'].enable.called
+                assert not self.machine.autofires.autofire1.coil.pulse.called
+
+                self.advance_time_and_run(.25)
+                assert self.machine.autofires.autofire1.coil.pulse.called
 
         self.advance_time_and_run(10)
 
