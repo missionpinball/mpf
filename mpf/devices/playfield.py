@@ -270,7 +270,6 @@ class Playfield(SystemWideDevice):
             break
 
     def _mark_playfield_active(self):
-        self.ball_search.reset_timer()
         self.ball_arrived()
         self.machine.events.post_boolean(self.name + "_active")
         '''event: (playfield)_active
@@ -295,6 +294,8 @@ class Playfield(SystemWideDevice):
                 desc: The playfield namaed "playfield" just had a switch hit,
                 meaning a ball is on it, but that ball was not expected.
                 '''
+
+        self.ball_search.reset_timer()
 
     def _ball_removed_handler(self, balls, **kwargs):
         del kwargs

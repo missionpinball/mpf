@@ -103,23 +103,11 @@ class BallSearch(MpfController):
         Will stop the ball search if it is running.
         """
         del kwargs
-        if self.started:
-            self.machine.events.post('ball_search_stopped')
-        '''event: ball_search_stopped
-
-        desc: The ball search process has been disabled. This event is posted
-            any time ball search stops, regardless of whether it found a ball
-            or gave up. (If the ball search failed to find the ball, it will
-            also post the *ball_search_failed* event.)
-        '''
+        self.stop()
 
         self.debug_log("Disabling Ball Search")
-
-        self.started = False
         self.enabled = False
-
         self.delay.remove('start')
-        self.delay.remove('run')
 
     def block(self, **kwargs):
         """Block ball search for this playfield.
@@ -145,11 +133,17 @@ class BallSearch(MpfController):
             self.enable()
 
     def reset_timer(self):
-        """Reset the start timer.
+        """Reset the timer to start ball search.
 
-        Called by playfield.
+        This also cancels an active running ball search.
+
+        This is called by the playfield anytime a playfield switch is hit.
+
         """
-        if self.enabled and not self.started:
+        if self.started:
+            self.stop()
+
+        if self.enabled:
             self.debug_log("Resetting ball search timer")
             self.delay.reset(name='start', callback=self.start,
                              ms=self.playfield.config['ball_search_timeout'])
@@ -168,13 +162,32 @@ class BallSearch(MpfController):
 
         desc: The ball search process has been begun.
         '''
-        self.run()
+        self._run()
 
-    def run(self):
-        """Run one iteration of the ball search.
+    def stop(self):
+        """Stop an active running ball search"""
 
-        Will schedule itself for the next run.
-        """
+        if not self.started:
+            return
+
+        self.debug_log("Stopping ball search")
+
+        self.started = False
+        self.delay.remove('run')
+
+        self.machine.events.post('ball_search_stopped')
+        '''event: ball_search_stopped
+
+        desc: The ball search process has been disabled. This event is posted
+            any time ball search stops, regardless of whether it found a ball
+            or gave up. (If the ball search failed to find the ball, it will
+            also post the *ball_search_failed* event.)
+        '''
+
+    def _run(self):
+        # Runs one iteration of the ball search.
+        # Will schedule itself for the next run.
+
         timeout = self.playfield.config['ball_search_interval']
 
         # iterate until we are done with all callbacks
@@ -203,7 +216,7 @@ class BallSearch(MpfController):
             self.debug_log("Ball search: {} (phase: {}  iteration: {})".format(
                            name, self.phase, self.iteration))
             if callback(self.phase, self.iteration):
-                self.delay.add(name='run', callback=self.run, ms=timeout)
+                self.delay.add(name='run', callback=self._run, ms=timeout)
                 return
 
     def cancel_ball_search(self, **kwargs):

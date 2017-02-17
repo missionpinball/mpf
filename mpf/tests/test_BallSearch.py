@@ -104,25 +104,51 @@ class TestBallSearch(MpfTestCase):
         self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
         self.assertEqual(1, self.machine.ball_devices['playfield'].balls)
 
-        # vuk should reset the timer
+        # ball entering and being ejected from vuk should reset search timer
+        self.advance_time_and_run(15)
         self.machine.switch_controller.process_switch("s_vuk", 1)
-        self.advance_time_and_run(1)
-
-        self.machine.switch_controller.process_switch("s_playfield", 1)
-        self.machine.switch_controller.process_switch("s_playfield", 0)
-        self.advance_time_and_run(1)
-
-        self.machine.servos.servo1.go_to_position(0.7)
+        self.advance_time_and_run(15)
 
         self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.enabled)
         self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
 
+        # pf switch should reset the timer
+        self.machine.switch_controller.process_switch("s_playfield", 1)
+        self.machine.switch_controller.process_switch("s_playfield", 0)
         self.advance_time_and_run(15)
+        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.enabled)
         self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
-        self.advance_time_and_run(5)
+
+        self.machine.switch_controller.process_switch("s_playfield", 1)
+        self.machine.switch_controller.process_switch("s_playfield", 0)
+        self.advance_time_and_run(15)
+        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.enabled)
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
+
+        # advance past 20s since last hit and search should be running
+        self.advance_time_and_run(6)
         self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)
 
-        # test servo
+        # hit a pf switch and the ball search should stop
+        self.hit_switch_and_run('s_playfield', 1)
+        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.enabled)
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
+
+        # advance 20s and search should be running again
+        self.advance_time_and_run(20)
+        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.enabled)
+        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)
+
+        # ball entering vuk should stop the search
+        self.hit_switch_and_run('s_vuk', 2)
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.enabled)
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
+
+        # test servo reset during ball search
+        self.machine.servos.servo1.go_to_position(0.7)
+        self.advance_time_and_run(21)
+        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)
+
         self.assertEqual(0.0, self.machine.servos.servo1.hw_servo.current_position)
         self.advance_time_and_run(5)
         self.assertEqual(1.0, self.machine.servos.servo1.hw_servo.current_position)
