@@ -128,10 +128,17 @@ class BallSearch(MpfController):
         prevent ball search from enabling if it's disabled until
         ball_search_unblock() is called.
         """
+        self.debug_log("Blocking ball search")
         self.disable()
         self.blocked = True
 
     def unblock(self, **kwargs):
+        """Unblock ball search for this playfield.
+
+        This will check to see if there are balls on the playfield, and if so,
+        enable ball search.
+        """
+        self.debug_log("Unblocking ball search")
         self.blocked = False
 
         if self.playfield.balls:
@@ -143,6 +150,7 @@ class BallSearch(MpfController):
         Called by playfield.
         """
         if self.enabled and not self.started:
+            self.debug_log("Resetting ball search timer")
             self.delay.reset(name='start', callback=self.start,
                              ms=self.playfield.config['ball_search_timeout'])
 
@@ -185,8 +193,6 @@ class BallSearch(MpfController):
                         self.give_up()
                         return
 
-                self.debug_log("Ball Search Phase %s Iteration %s", self.phase,
-                               self.iteration)
                 self.iterator = iter(self.callbacks)
                 element = next(self.iterator)
                 timeout = self.playfield.config[
