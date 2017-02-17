@@ -750,13 +750,13 @@ player_vars:
 playfields:
     __valid_in__: machine
     enable_ball_search: single|bool|None
-    ball_search_timeout: single|ms|20s
+    ball_search_timeout: single|ms|15s
     ball_search_interval: single|ms|250ms
     ball_search_phase_1_searches: single|int|3
     ball_search_phase_2_searches: single|int|3
     ball_search_phase_3_searches: single|int|4
     ball_search_failed_action: single|str|new_ball
-    ball_search_wait_after_iteration: single|ms|10s
+    ball_search_wait_after_iteration: single|ms|5s
     ball_search_block_events: dict|str:ms|flipper_cradle
     ball_search_unblock_events: dict|str:ms|flipper_cradle_release
     ball_search_enable_events: dict|str:ms|None
