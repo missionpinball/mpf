@@ -164,7 +164,8 @@ class DeviceManager(MpfController):
     def get_device_control_events(self, config):
         """Scan a config dictionary for control_events.
 
-         Yields events, methods, delays, and devices for all the devices and control_events in that config.
+         Yields events, methods, delays, and devices for all the devices and
+         control_events in that config.
 
         Args:
             config: An MPF config dictionary (either machine-wide or mode-
