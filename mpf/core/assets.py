@@ -410,6 +410,11 @@ class BaseAssetManager(MpfController, LogMixin):
                     built_up_config['load'] = '{}_start'.format(mode_name)
 
                 # Update the config for that asset
+
+                if name in config:
+                    raise RuntimeError(
+                        "Duplicate Asset name found: {}".format(name))
+
                 config[name] = built_up_config
 
                 self.info_log("Registering Asset: %s, File: %s, Default "
