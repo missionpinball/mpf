@@ -74,3 +74,4 @@ class AutofireCoil(SystemWideDevice):
         del phase
         del iteration
         self.coil.pulse()
+        return True

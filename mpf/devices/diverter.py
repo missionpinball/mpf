@@ -321,3 +321,4 @@ class Diverter(SystemWideDevice):
         self.machine.delay.add(self.config['ball_search_hold_time'],
                                self.deactivate,
                                'diverter_{}_ball_search'.format(self.name))
+        return True
