@@ -816,10 +816,11 @@ score_reel_groups:
     lights_tag: single|str|None
     confirm: single|str|lazy
 scoring:
-    __valid_in__: modes                             # todo add to validator
-    score: single|template_int|
+    __valid_in__: modes
+    score: single|template_int|0
     block: single|bool|False
     action: single|enum(add,set)|add
+    string: single|str|None
 scriptlets:
     __valid_in__: machine                           # todo add to validator
 servo_controller:
