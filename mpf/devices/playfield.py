@@ -277,6 +277,10 @@ class Playfield(SystemWideDevice):
         at least one loose ball on it.
         '''
 
+    def mark_playfield_active_from_device_action(self):
+        """Mark playfield active because a device on the playfield detected activity."""
+        self._playfield_switch_hit()
+
     def _playfield_switch_hit(self, **kwargs):
         """Playfield switch was hit.
 

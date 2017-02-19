@@ -29,6 +29,8 @@ class DropTarget(SystemWideDevice):
         self.complete = False
         self.delay = DelayManager(machine.delayRegistry)
 
+        self._ignore_switch_hits = False
+
     def _initialize(self):
         self.reset_coil = self.config['reset_coil']
         self.knockdown_coil = self.config['knockdown_coil']
@@ -43,6 +45,14 @@ class DropTarget(SystemWideDevice):
         if self.config['ball_search_order']:
             self.config['playfield'].ball_search.register(
                 self.config['ball_search_order'], self._ball_search, self.name)
+
+    def _ignore_switch_hits_for(self, ms):
+        """Ignore switch hits for ms."""
+        self._ignore_switch_hits = True
+        self.delay.reset(name="ignore_switch", callback=self._restore_switch_hits, ms=ms)
+
+    def _restore_switch_hits(self):
+        self._ignore_switch_hits = False
 
     def _ball_search_phase1(self):
         if not self.complete and self.reset_coil:
@@ -143,11 +153,15 @@ class DropTarget(SystemWideDevice):
         del kwargs
         if self.knockdown_coil and not self.machine.switch_controller.is_active(self.config['switch'].name):
             self.knockdown_coil.pulse()
+            self._ignore_switch_hits_for(ms=self.config['ignore_switch_ms'])
 
     def _update_state_from_switch(self, **kwargs):
         del kwargs
         if self._in_ball_search:
             return
+
+        if not self._ignore_switch_hits:
+            self.config['playfield'].mark_playfield_active_from_device_action()
 
         if self.machine.switch_controller.is_active(
                 self.config['switch'].name):
@@ -208,6 +222,7 @@ class DropTarget(SystemWideDevice):
 
         if self.reset_coil and self.machine.switch_controller.is_active(self.config['switch'].name):
             self.reset_coil.pulse()
+            self._ignore_switch_hits_for(ms=self.config['ignore_switch_ms'])
 
 
 @DeviceMonitor("complete", "down", "up")

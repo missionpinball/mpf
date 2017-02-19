@@ -56,6 +56,7 @@ class TestDropTargets(MpfTestCase):
         self.assertFalse(self.machine.drop_target_banks.left_bank.complete)
 
     def test_knockdown_and_reset(self):
+        self.mock_event("unexpected_ball_on_playfield")
         self.machine.coils.coil2.pulse = MagicMock()
         self.machine.coils.coil3.pulse = MagicMock()
 
@@ -76,6 +77,8 @@ class TestDropTargets(MpfTestCase):
         self.advance_time_and_run(.3)
         self.machine.coils.coil2.pulse.assert_called_once_with()
         assert not self.machine.coils.coil3.pulse.called
+
+        self.assertEventNotCalled("unexpected_ball_on_playfield")
 
         self.release_switch_and_run("switch6", 1)
         self.assertFalse(self.machine.drop_targets.left6.complete)
