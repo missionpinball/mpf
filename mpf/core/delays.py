@@ -145,12 +145,14 @@ class DelayManager(MpfController):
 
         Args:
             name: Name of the delay to run. If this name is not an active
-                delay, that's fine. Nothing happens."""
+                delay, that's fine. Nothing happens.
+        """
         if name in self.delays:
             try:
                 # have to save the callback ref first, since if the callback
                 # schedules a new delay with the same name, then the removal
                 # will remove it
+                # pylint: disable-msg=protected-access
                 cb = self.delays[name]._callback
                 self.remove(name)
                 cb()

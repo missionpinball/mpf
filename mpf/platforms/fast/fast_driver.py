@@ -205,10 +205,10 @@ class FASTDriver(DriverPlatformInterface):
             cmd = '{}{},01'.format(self.get_trigger_cmd(), self.number)
 
             if milliseconds:
-                self.log.debug("Received command to pulse driver for {}ms, but"
+                self.log.debug("Received command to pulse driver for %sms, but"
                                " this driver is configured with an autofire "
-                               "rule, so that pulse value will be used.".
-                               format(milliseconds))
+                               "rule, so that pulse value will be used.",
+                               milliseconds)
         else:
             cmd = '{}{},89,00,10,{},{},00,00,{}'.format(
                 self.get_config_cmd(),

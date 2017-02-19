@@ -47,7 +47,6 @@ class BallSearch(MpfController):
         Prevents the game from starting while ball search is running.
 
         """
-
         # todo we should enable ball search if a ball is missing on game start
 
         del kwargs
@@ -116,6 +115,7 @@ class BallSearch(MpfController):
         prevent ball search from enabling if it's disabled until
         ball_search_unblock() is called.
         """
+        del kwargs
         self.debug_log("Blocking ball search")
         self.disable()
         self.blocked = True
@@ -126,6 +126,7 @@ class BallSearch(MpfController):
         This will check to see if there are balls on the playfield, and if so,
         enable ball search.
         """
+        del kwargs
         self.debug_log("Unblocking ball search")
         self.blocked = False
 
@@ -165,8 +166,7 @@ class BallSearch(MpfController):
         self._run()
 
     def stop(self):
-        """Stop an active running ball search"""
-
+        """Stop an active running ball search."""
         if not self.started:
             return
 
@@ -198,8 +198,7 @@ class BallSearch(MpfController):
                 self.iteration += 1
                 # give up at some point
                 if self.iteration > self.playfield.config[
-                                    'ball_search_phase_' + str(self.phase) +
-                                    '_searches']:
+                        'ball_search_phase_{}_searches'.format(self.phase)]:
                     self.phase += 1
                     self.iteration = 1
                     if self.phase > 3:

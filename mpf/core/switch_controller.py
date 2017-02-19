@@ -44,14 +44,14 @@ class SwitchController(MpfController):
 
         self.active_timed_switches = defaultdict(list)
         # Dictionary of switches that are currently in a state counting ms
-        # waiting to notify their handlers. In other words, this is the dict that
-        # tracks current switches for things like "do foo() if switch bar is
-        # active for 100ms."
+        # waiting to notify their handlers. In other words, this is the dict
+        # that tracks current switches for things like "do foo() if switch bar
+        # is active for 100ms."
 
         self.switches = CaseInsensitiveDict()
         # Dictionary which holds the master list of switches as well as their
-        # current states. State here does factor in whether a switch is NO or NC,
-        # so 1 = active and 0 = inactive.
+        # current states. State here does factor in whether a switch is NO or
+        # NC so 1 = active and 0 = inactive.
 
         self.switch_event_active = (
             self.machine.config['mpf']['switch_event_active'])

@@ -70,9 +70,9 @@ class TimedSwitch(SystemWideDevice, ModeDevice):
     def _remove_switch_handlers(self):
         for switch in self.config['switches']:
             switch.remove_handler(self._activate,
-                               state=1 if self.config['state'] else 0)
+                                  state=1 if self.config['state'] else 0)
             switch.remove_handler(self._deactivate,
-                               state=0 if self.config['state'] else 1)
+                                  state=0 if self.config['state'] else 1)
 
     def _activate(self):
         if not self.activation_count:

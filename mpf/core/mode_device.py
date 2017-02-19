@@ -38,8 +38,7 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
         raise AssertionError("Device {} cannot be overloaded.".format(self))
 
     def add_control_events_in_mode(self, mode):
-        """Called on mode start if this device has any control events in that
-        mode.
+        """Called on mode start if this device has any mode control events.
 
         Args:
             mode: Mode which loaded the device
