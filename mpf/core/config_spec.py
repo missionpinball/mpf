@@ -344,6 +344,7 @@ drop_targets:
     enable_keep_up_events: dict|str:ms|None
     disable_keep_up_events: dict|str:ms|None
     ball_search_order: single|int|100
+    ignore_switch_ms: single|ms|500ms
     playfield: single|machine(playfields)|playfield
 drop_target_banks:
     __valid_in__: machine, mode
