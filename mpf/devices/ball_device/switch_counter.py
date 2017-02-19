@@ -96,12 +96,10 @@ class SwitchCounter(BallDeviceBallCounter):
         # future returns when ball_count != number of switches
         return self.wait_for_ball_count_changes(len(self.config['ball_switches']))
 
-
     @asyncio.coroutine
     def track_eject(self, eject_tracker: EjectTracker, already_left):
         """Return eject_process dict."""
         # count active switches
-        active_switches = []
         while True:
             waiter = self.wait_for_ball_activity()
             try:
