@@ -38,6 +38,13 @@ class Bonus(Mode):
         self.bonus_iterator = iter(self.bonus_entries)
 
         self.machine.events.post('bonus_start')
+        '''event: bonus_start
+
+        desc: The end-of-ball bonus is starting. You can use this event in
+        your slide player to trigger the bonus intro slide. If the game has
+        tilted, this event will not be posted.
+
+        '''
         self.delay.add(name='bonus', ms=self.display_delay,
                        callback=self._bonus_next_item)
 
@@ -108,6 +115,20 @@ class Bonus(Mode):
         else:
             self.debug_log("Bonus subtotal: {}", self.bonus_score)
             self.machine.events.post('bonus_subtotal', score=self.bonus_score)
+            '''event: bonus_subtotal
+
+            desc: Posted by the bonus mode after all the individual bonus
+            entries have been posted and processed.
+
+            This event is typically posted just before the bonus multiplier
+            screen, so if the bonus multiplier is 1, then this event will
+            be skipped.
+
+            args:
+
+            score: The score of the bonus (so far)
+
+            '''
             self.delay.add(name='bonus', ms=self.display_delay,
                            callback=self._do_multiplier)
 
@@ -115,6 +136,17 @@ class Bonus(Mode):
         multiplier = self.player.vars.get("bonus_multiplier", 1)
         self.debug_log("Bonus multiplier: {}".format(multiplier))
         self.machine.events.post('bonus_multiplier', multiplier=multiplier)
+        '''event: bonus_multiplier
+
+        desc: Posted after "bonus_subtotal" and used to trigger the bonus
+        multiplier screen. If the bonus multiplier is 1, then this event is
+        skipped.
+
+        args:
+
+        multiplier: The numeric value of the bonus multiplier.
+
+        '''
         self.bonus_score *= multiplier
         self.delay.add(name='bonus', ms=self.display_delay,
                        callback=self._total_bonus)
