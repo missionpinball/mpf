@@ -10,7 +10,7 @@ from mpf.core.utility_functions import Util
 
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 
-log = logging.getLogger('ConfigProcessor')
+# log = logging.getLogger('ConfigValidator')
 
 
 class ConfigValidator(object):
@@ -22,7 +22,7 @@ class ConfigValidator(object):
     def __init__(self, machine):
         """Initialise validator."""
         self.machine = machine
-        self.log = logging.getLogger('ConfigProcessor')
+        self.log = logging.getLogger('ConfigValidator')
 
         self.validator_list = {
             "str": self._validate_type_str,

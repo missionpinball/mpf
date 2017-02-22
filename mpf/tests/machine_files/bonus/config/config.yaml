@@ -7,6 +7,9 @@ modes:
 machine:
     min_balls: 0
 
+game:
+  balls_per_game: 10  # we have a lot of bonus tests to run :)
+
 switches:
     s_start:
         number:

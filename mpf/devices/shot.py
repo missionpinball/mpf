@@ -503,7 +503,7 @@ class Shot(ModeDevice, SystemWideDevice):
                            mode)
 
         for group in [x for x in self.groups]:
-            self.log.debug("Notifying shot_group %s of new hit", group)
+            self.debug_log("Notifying shot_group %s of new hit", group)
             group.hit(mode, profile, state)
 
         self._notify_monitors(profile, state)

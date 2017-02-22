@@ -1,6 +1,5 @@
 """BCP socket client."""
 import json
-import logging
 from urllib.parse import urlsplit, parse_qs, quote, unquote, urlunparse
 
 import asyncio
@@ -135,8 +134,8 @@ class BCPClientSocket(BaseBcpClient):
 
     def __init__(self, machine, name, bcp):
         """Initialise BCP client socket."""
-        self.log = logging.getLogger('BCPClientSocket.' + str(name))
-        self.log.debug('Setting up BCP Client...')
+        self.module_name = 'BCPClientSocket.{}'.format(name)
+        self.config_name = 'bcp_client'
 
         super().__init__(machine, name, bcp)
 
@@ -159,7 +158,7 @@ class BCPClientSocket(BaseBcpClient):
     @asyncio.coroutine
     def _setup_client_socket(self, client_host, client_port, required=True):
         """Set up the client socket."""
-        self.log.info("Connecting BCP to '%s' at %s:%s...",
+        self.info_log("Connecting BCP to '%s' at %s:%s...",
                       self.name, client_host, client_port)
 
         while True:
@@ -171,13 +170,13 @@ class BCPClientSocket(BaseBcpClient):
                     yield from asyncio.sleep(.1)
                     continue
                 else:
-                    self.log.info("No BCP connection made to '%s' %s:%s",
+                    self.info_log("No BCP connection made to '%s' %s:%s",
                                   self.name, client_host, client_port)
                     return False
 
             break
 
-        self.log.info("Connected BCP to '%s' %s:%s", self.name, client_host, client_port)
+        self.info_log("Connected BCP to '%s' %s:%s", self.name, client_host, client_port)
 
         self.send_hello()
         return True
@@ -191,7 +190,7 @@ class BCPClientSocket(BaseBcpClient):
 
     def stop(self):
         """Stop and shut down the socket client."""
-        self.log.debug("Stopping socket client")
+        self.debug_log("Stopping socket client")
 
         if self._send_goodbye:
             self.send_goodbye()
@@ -209,11 +208,11 @@ class BCPClientSocket(BaseBcpClient):
             bcp_string = encode_command_string(bcp_command, **bcp_command_args)
         # pylint: disable-msg=broad-except
         except Exception as e:
-            self.log.warning("Failed to encode bcp_command %s with args %s. %s", bcp_command, bcp_command_args, e)
+            self.warning_log("Failed to encode bcp_command %s with args %s. %s", bcp_command, bcp_command_args, e)
             return
 
         if self.debug_log:
-            self.log.debug('Sending "%s"', bcp_string)
+            self.debug_log('Sending "%s"', bcp_string)
         self._sender.write((bcp_string + '\n').encode())
 
     @asyncio.coroutine
@@ -245,7 +244,7 @@ class BCPClientSocket(BaseBcpClient):
 
     def _process_command(self, message, rawbytes=None):
         if self.debug_log:
-            self.log.debug('Received "%s"', message)
+            self.debug_log('Received "%s"', message)
 
         cmd, kwargs = decode_command_string(message.decode())
         if rawbytes:
@@ -258,7 +257,7 @@ class BCPClientSocket(BaseBcpClient):
 
     def _receive_hello(self, **kwargs):
         """Process incoming BCP 'hello' command."""
-        self.log.debug('Received BCP Hello from host with kwargs: %s', kwargs)
+        self.debug_log('Received BCP Hello from host with kwargs: %s', kwargs)
 
     def _receive_goodbye(self):
         """Process incoming BCP 'goodbye' command."""

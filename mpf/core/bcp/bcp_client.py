@@ -3,18 +3,19 @@ import abc
 
 import asyncio
 
+from mpf.core.mpf_controller import MpfController
 
-class BaseBcpClient(metaclass=abc.ABCMeta):
+
+class BaseBcpClient(MpfController, metaclass=abc.ABCMeta):
 
     """Base class for bcp clients."""
 
     def __init__(self, machine, name, bcp):
         """Initialise client."""
+        super().__init__(machine)
         self.name = name
-        self.machine = machine
         self.bcp = bcp
         self.exit_on_close = False
-        self.debug_log = self.machine.config['bcp']['debug']
 
     def connect(self, config):
         """Actively connect client."""

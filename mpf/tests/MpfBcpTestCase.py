@@ -6,6 +6,10 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 class MockBcpClient(BaseBcpClient):
     def __init__(self, machine, name, bcp):
+
+        self.module_name = "BCPClient"
+        self.config_name = "bcp_client"
+
         super().__init__(machine, name, bcp)
         self.name = name
         self.receive_queue = asyncio.Queue(loop=self.machine.clock.loop)

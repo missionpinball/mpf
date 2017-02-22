@@ -61,6 +61,10 @@ class Diverter(SystemWideDevice):
 
         self.platform = self.config['activation_coil'].platform
 
+        if self.config['ball_search_order']:
+            self.config['playfield'].ball_search.register(
+                self.config['ball_search_order'], self._ball_search, self.name)
+
     def _register_switches(self, **kwargs):
         del kwargs
         # register for deactivation switches
@@ -148,7 +152,7 @@ class Diverter(SystemWideDevice):
                 location(s).
         '''
 
-        self.log.debug("Disabling Diverter")
+        self.debug_log("Disabling Diverter")
         if self.config['activation_switches']:
             self._disable_switches()
         # if there is no deactivation way
@@ -159,7 +163,7 @@ class Diverter(SystemWideDevice):
     def activate(self, **kwargs):
         """Physically activate this diverter's coil."""
         del kwargs
-        self.log.debug("Activating Diverter")
+        self.debug_log("Activating Diverter")
         self.active = True
 
         self.machine.events.post('diverter_' + self.name + '_activating')
@@ -181,7 +185,7 @@ class Diverter(SystemWideDevice):
         configured with a deactivation coil, it will pulse it.
         """
         del kwargs
-        self.log.debug("Deactivating Diverter")
+        self.debug_log("Deactivating Diverter")
         self.active = False
 
         if self.config['activation_time']:
@@ -205,7 +209,7 @@ class Diverter(SystemWideDevice):
 
     def _enable_switches(self):
         """Register switch handler on activation switches."""
-        self.log.debug("Enabling Diverter sw switches: %s",
+        self.debug_log("Enabling Diverter sw switches: %s",
                        self.config['activation_switches'])
 
         for switch in self.config['activation_switches']:
@@ -214,7 +218,7 @@ class Diverter(SystemWideDevice):
 
     def _disable_switches(self):
         """Deregister switch handlers for activation switches."""
-        self.log.debug("Disabling Diverter sw switches: %s",
+        self.debug_log("Disabling Diverter sw switches: %s",
                        self.config['activation_switches'])
 
         for switch in self.config['activation_switches']:
@@ -232,13 +236,13 @@ class Diverter(SystemWideDevice):
             if len(self.eject_attempt_queue) > 0:
                 if not self.eject_state:
                     self.eject_state = True
-                    self.log.debug(
+                    self.debug_log(
                         "Enabling diverter since eject target is on the "
                         "active target list")
                     self.enable()
                 elif self.eject_state:
                     self.eject_state = False
-                    self.log.debug(
+                    self.debug_log(
                         "Enabling diverter since eject target is on the "
                         "inactive target list")
                     self.disable()
@@ -269,17 +273,17 @@ class Diverter(SystemWideDevice):
         # Since the 'target' kwarg is going to be an object, not a name, we need
         # to figure out if this object is one of the targets of this diverter.
         del kwargs
-        self.log.debug("Feeder device eject attempt for target: %s", target)
+        self.debug_log("Feeder device eject attempt for target: %s", target)
 
         desired_state = self._get_desired_state(target)
 
         if desired_state is None:
-            self.log.debug("Feeder device ejects to an unknown target: %s. "
+            self.debug_log("Feeder device ejects to an unknown target: %s. "
                            "Ignoring!", target.name)
             return
 
         if self.diverting_ejects_count > 0 and self.eject_state != desired_state:
-            self.log.debug("Feeder devices tries to eject to a target which "
+            self.debug_log("Feeder devices tries to eject to a target which "
                            "would require a state change. Postponing that "
                            "because we have an eject to the other side")
             queue.wait()
@@ -292,20 +296,29 @@ class Diverter(SystemWideDevice):
     def _feeder_ejecting(self, target, **kwargs):
         """Enable or disable diverter on eject."""
         del kwargs
-        self.log.debug("Feeder device is ejecting for target: %s", target)
+        self.debug_log("Feeder device is ejecting for target: %s", target)
 
         desired_state = self._get_desired_state(target)
 
         if desired_state is None:
-            self.log.debug("Feeder device ejects to an unknown target: %s. "
+            self.debug_log("Feeder device ejects to an unknown target: %s. "
                            "Ignoring!", target.name)
             return
 
         if desired_state:
-            self.log.debug("Enabling diverter since eject target is on the "
+            self.debug_log("Enabling diverter since eject target is on the "
                            "active target list")
             self.enable()
         elif not desired_state:
-            self.log.debug("Enabling diverter since eject target is on the "
+            self.debug_log("Enabling diverter since eject target is on the "
                            "inactive target list")
             self.disable()
+
+    def _ball_search(self, phase, iteration):
+        del phase
+        del iteration
+        self.activate()
+        self.machine.delay.add(self.config['ball_search_hold_time'],
+                               self.deactivate,
+                               'diverter_{}_ball_search'.format(self.name))
+        return True

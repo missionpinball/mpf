@@ -35,7 +35,6 @@ class Carousel(Mode):
     def mode_start(self, **kwargs):
         """Start mode and let the player select."""
         super().mode_start(**kwargs)
-        self.log.info("Carousel Mode Starting")
 
         self._register_handlers(self._next_item_events, self._next_item)
         self._register_handlers(self._previous_item_events, self._previous_item)
@@ -51,7 +50,6 @@ class Carousel(Mode):
     def mode_stop(self, **kwargs):
         """Stop mode."""
         super().mode_stop(**kwargs)
-        self.log.info("Carousel Mode Stopping")
 
     def _register_handlers(self, events, handler):
         for event in events:
@@ -61,7 +59,7 @@ class Carousel(Mode):
         return self._get_available_items()[self._highlighted_item_index]
 
     def _update_highlighted_item(self):
-        self.log.info("Highlighted item: " + self._get_highlighted_item())
+        self.debug_log("Highlighted item: " + self._get_highlighted_item())
 
         self.machine.events.post("{}_{}_highlighted".format(self.name, self._get_highlighted_item()))
         '''event (carousel_name)_(item)_highlighted
@@ -89,7 +87,7 @@ class Carousel(Mode):
 
     def _select_item(self, **kwargs):
         del kwargs
-        self.log.info("Selected mode: " + str(self._get_highlighted_item()))
+        self.debug_log("Selected mode: " + str(self._get_highlighted_item()))
 
         self.machine.events.post("{}_{}_selected".format(self.name, self._get_highlighted_item()))
         '''event (carousel_name)_(item)_selected

@@ -3,7 +3,7 @@ from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.system_wide_device import SystemWideDevice
 
 
-@DeviceMonitor("_brightness")
+@DeviceMonitor(_brightness="brightness")
 class Gi(SystemWideDevice):
 
     """Represents a light connected to a traditional lamp matrix in a pinball machine.

@@ -44,14 +44,14 @@ class SwitchController(MpfController):
 
         self.active_timed_switches = defaultdict(list)
         # Dictionary of switches that are currently in a state counting ms
-        # waiting to notify their handlers. In other words, this is the dict that
-        # tracks current switches for things like "do foo() if switch bar is
-        # active for 100ms."
+        # waiting to notify their handlers. In other words, this is the dict
+        # that tracks current switches for things like "do foo() if switch bar
+        # is active for 100ms."
 
         self.switches = CaseInsensitiveDict()
         # Dictionary which holds the master list of switches as well as their
-        # current states. State here does factor in whether a switch is NO or NC,
-        # so 1 = active and 0 = inactive.
+        # current states. State here does factor in whether a switch is NO or
+        # NC so 1 = active and 0 = inactive.
 
         self.switch_event_active = (
             self.machine.config['mpf']['switch_event_active'])
@@ -182,7 +182,7 @@ class SwitchController(MpfController):
         for switch in self.machine.switches:
             if switch.state != current_states[switch]:  # pragma: no cover
                 ok = False
-                self.log.warning("Switch State Error! Switch: %s, HW State: "
+                self.warning_log("Switch State Error! Switch: %s, HW State: "
                                  "%s, MPF State: %s", switch.name,
                                  current_states[switch],
                                  switch.state)
@@ -259,7 +259,7 @@ class SwitchController(MpfController):
                 self.process_switch_obj(obj=switch, state=state, logical=logical)
                 return
 
-        self.log.debug("Unknown switch %s change to state %s on platform %s", num, state, platform)
+        self.debug_log("Unknown switch %s change to state %s on platform %s", num, state, platform)
         # if the switch is not configured still trigger the monitor
         for monitor in self.monitors:
             monitor(MonitoredSwitchChange(name=str(num), label="{}-{}".format(str(platform), str(num)),
@@ -291,7 +291,7 @@ class SwitchController(MpfController):
         handles NC versus NO switches and translates them to 'active' versus
         'inactive'.)
         """
-        self.log.debug("Processing switch. Name: %s, state: %s, logical: %s,", name, state, logical)
+        self.debug_log("Processing switch. Name: %s, state: %s, logical: %s,", name, state, logical)
 
         try:
             obj = self.machine.switches[name]
@@ -364,14 +364,17 @@ class SwitchController(MpfController):
         if self.switches[obj.name]['state'] == state:
 
             if not obj.recycle_secs:
-                self.log.info("Received duplicate switch state, which means "
-                              "this switch had some non-debounced state changes. This "
-                              "could be nothing, but if it happens a lot it could "
-                              "indicate noise or interference on the line. Switch: %s",
-                              obj.name)
+                self.warning_log(
+                    "Received duplicate switch state, which means this switch "
+                    "had some non-debounced state changes. This could be "
+                    "nothing, but if it happens a lot it could indicate noise "
+                    "or interference on the line. Switch: %s", obj.name)
             return
 
-        self.log.info("<<<<< switch: %s, State:%s >>>>>", obj.name, state)
+        if state:
+            self.info_log("<<<<<<< '{}' active >>>>>>>".format(obj.name))
+        else:
+            self.info_log("<<<<<<< '{}' inactive >>>>>>>".format(obj.name))
 
         # Update the switch controller's logical state for this switch
         self.set_state(obj.name, state)
@@ -471,7 +474,7 @@ class SwitchController(MpfController):
                              'return_info': entry['return_info'],
                              'callback_kwargs': entry['callback_kwargs']}
                     self._add_timed_switch_handler(key, value)
-                    self.log.debug(
+                    self.debug_log(
                         "Found timed switch handler for k/v %s / %s",
                         key, value)
                 else:
@@ -525,7 +528,7 @@ class SwitchController(MpfController):
         if not callback_kwargs:
             callback_kwargs = dict()
 
-        self.log.debug("Registering switch handler: %s, %s, state: %s, ms: %s"
+        self.debug_log("Registering switch handler: %s, %s, state: %s, ms: %s"
                        ", info: %s, cb_kwargs: %s", switch_name, callback,
                        state, ms,
                        return_info, callback_kwargs)
@@ -591,7 +594,7 @@ class SwitchController(MpfController):
         it up. (Except for return_info, which doesn't matter if true or false, it
         will remove either / both.
         """
-        self.log.debug(
+        self.debug_log(
             "Removing switch handler. Switch: %s, State: %s, ms: %s",
             switch_name, state, ms)
 
@@ -620,7 +623,7 @@ class SwitchController(MpfController):
         del kwargs
         for k, v in self.switches.items():
             if v['state']:
-                self.log.info("Active Switch|%s", k)
+                self.info_log("Found active switch: %s", k)
 
     def _check_recycle_time(self, switch, state):
         # checks to see when a switch is ok to be activated again after it's
@@ -692,7 +695,7 @@ class SwitchController(MpfController):
                 for entry in self.active_timed_switches[k]:
                     if entry['removed']:
                         continue
-                    self.log.debug(
+                    self.debug_log(
                         "Processing timed switch handler. Switch: %s "
                         " State: %s, ms: %s", entry['switch_name'],
                         entry['state'], entry['ms'])

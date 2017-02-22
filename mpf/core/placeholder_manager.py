@@ -138,6 +138,10 @@ class BasePlaceholderManager(MpfController):
 
     """Manages templates and placeholders for MPF and MC."""
 
+    # needed here so the auto-detection of child classes works
+    module_name = 'PlaceholderManager'
+    config_name = 'placeholder_manager'
+
     def __init__(self, machine):
         """Initialise."""
         super().__init__(machine)
@@ -258,6 +262,7 @@ class PlaceholderManager(BasePlaceholderManager):
 
     """Manages templates and placeholders for MPF."""
 
+    # pylint: disable-msg=too-many-return-statements
     def get_global_parameters(self, name):
         """Return global params."""
         if name == "settings":

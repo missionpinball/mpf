@@ -6,7 +6,7 @@ from mpf.devices.switch import ReconfiguredSwitch
 from mpf.core.system_wide_device import SystemWideDevice
 
 
-@DeviceMonitor("_enabled")
+@DeviceMonitor(_enabled="enabled")
 class AutofireCoil(SystemWideDevice):
 
     """Coils in the pinball machine which should fire automatically based on switch hits using hardware switch rules.
@@ -43,6 +43,10 @@ class AutofireCoil(SystemWideDevice):
 
         self.debug_log('Platform Driver: %s', self.platform)
 
+        if self.config['ball_search_order']:
+            self.config['playfield'].ball_search.register(
+                self.config['ball_search_order'], self._ball_search, self.name)
+
     def enable(self, **kwargs):
         """Enable the autofire coil rule."""
         del kwargs
@@ -51,7 +55,7 @@ class AutofireCoil(SystemWideDevice):
             return
         self._enabled = True
 
-        self.log.debug("Enabling")
+        self.debug_log("Enabling")
 
         self.coil.set_pulse_on_hit_rule(self.switch)
 
@@ -63,5 +67,11 @@ class AutofireCoil(SystemWideDevice):
             return
         self._enabled = False
 
-        self.log.debug("Disabling")
+        self.debug_log("Disabling")
         self.coil.clear_hw_rule(self.switch)
+
+    def _ball_search(self, phase, iteration):
+        del phase
+        del iteration
+        self.coil.pulse()
+        return True

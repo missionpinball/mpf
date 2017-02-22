@@ -31,7 +31,7 @@ class ServiceController(MpfController):
             raise AssertionError("Already in service mode!")
         self._enabled = True
 
-        self.log.info("Entered service mode. Resetting game if running. Resetting hardware interface now.")
+        self.info_log("Entered service mode. Resetting game if running. Resetting hardware interface now.")
         # this will stop attact and game mode
         for mode in self.machine.modes.values():
             if not mode.active or mode.name in ["service", "game"]:

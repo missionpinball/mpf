@@ -1,11 +1,11 @@
 """Contains the ModeController class for MPF."""
 import importlib
-import logging
 import os
 from collections import namedtuple
 from mpf.core.mode import Mode
 from mpf.core.config_processor import ConfigProcessor
 from mpf.core.utility_functions import Util
+from mpf.core.mpf_controller import MpfController
 
 RemoteMethod = namedtuple('RemoteMethod',
                           'method config_section kwargs priority',
@@ -20,7 +20,7 @@ be called on mode_start or mode_stop.
 # to do this? TODO
 
 
-class ModeController(object):
+class ModeController(MpfController):
 
     """Parent class for the Mode Controller.
 
@@ -33,10 +33,7 @@ class ModeController(object):
 
     def __init__(self, machine):
         """Initialise mode controller."""
-        self.machine = machine
-        self.log = logging.getLogger('Mode Controller')
-
-        self.debug = True
+        super().__init__(machine)
 
         self.queue = None  # ball ending event queue
 
@@ -122,8 +119,7 @@ class ModeController(object):
                 config = ConfigProcessor.load_config_file(mpf_mode_config,
                                                           config_type='mode')
 
-                if self.debug:
-                    self.log.debug("Loading config from %s", mpf_mode_config)
+            self.debug_log("Loading config from %s", mpf_mode_config)
 
         except KeyError:
             pass
@@ -143,8 +139,7 @@ class ModeController(object):
                                          ConfigProcessor.load_config_file(
                                              mode_config_file, 'mode'))
 
-                if self.debug:
-                    self.log.debug("Loading config from %s", mode_config_file)
+            self.debug_log("Loading config from %s", mode_config_file)
 
         except KeyError:
             pass
@@ -167,8 +162,7 @@ class ModeController(object):
         """
         mode_string = mode_string.lower()
 
-        if self.debug:
-            self.log.debug('Processing mode: %s', mode_string)
+        self.debug_log('Processing mode: %s', mode_string)
 
         # Find the folder for this mode. First check the machine list, and if
         # it's not there, see if there's a built-in mpf mode
@@ -189,11 +183,10 @@ class ModeController(object):
 
                 mode_class = getattr(i, config['mode']['code'].split('.')[1])
 
-                if self.debug:
-                    self.log.debug("Loaded code from %s",
-                                   self.machine.config['mpf']['paths']['modes'] + '.' +
-                                   self._machine_mode_folders[mode_string] + '.code.' +
-                                   config['mode']['code'].split('.')[0])
+                self.debug_log("Loaded code from %s",
+                               self.machine.config['mpf']['paths']['modes'] + '.' +
+                               self._machine_mode_folders[mode_string] + '.code.' +
+                               config['mode']['code'].split('.')[0])
 
             except (KeyError, ImportError):     # load path
                 try:
@@ -206,16 +199,14 @@ class ModeController(object):
 
                     mode_class = getattr(i, config['mode']['code'].split('.')[1])
 
-                    if self.debug:
-                        self.log.debug("Loaded code from %s",
-                                       'mpf.' + self.machine.config['mpf']['paths']['modes'] +
-                                       '.' + self._mpf_mode_folders[mode_string] + '.code.' +
-                                       config['mode']['code'].split('.')[0])
+                    self.debug_log("Loaded code from %s",
+                                   'mpf.' + self.machine.config['mpf']['paths']['modes'] +
+                                   '.' + self._mpf_mode_folders[mode_string] + '.code.' +
+                                   config['mode']['code'].split('.')[0])
 
         else:  # no code specified, so using the default Mode class
             mode_class = Mode
-            if self.debug:
-                self.log.debug("Loaded default Mode() class code.")
+            self.debug_log("Loaded default Mode() class code.")
 
         self._load_mode_config_spec(mode_string, mode_class)
 
@@ -227,11 +218,11 @@ class ModeController(object):
     def _build_mode_folder_dicts(self):
         self._mpf_mode_folders = (
             self._get_mode_folder(self.machine.mpf_path))
-        self.log.debug("Found MPF Mode folders: %s", self._mpf_mode_folders)
+        self.debug_log("Found MPF Mode folders: %s", self._mpf_mode_folders)
 
         self._machine_mode_folders = (
             self._get_mode_folder(self.machine.machine_path))
-        self.log.debug("Found Machine-specific Mode folders: %s",
+        self.debug_log("Found Machine-specific Mode folders: %s",
                        self._machine_mode_folders)
 
     def _get_mode_folder(self, base_folder):
@@ -282,7 +273,7 @@ class ModeController(object):
         del kwargs
         del queue
         for mode in self.machine.game.player.restart_modes_on_next_ball:
-            self.log.debug("Restarting mode %s based on 'restart_on_next_ball"
+            self.debug_log("Restarting mode %s based on 'restart_on_next_ball"
                            "' setting", mode)
 
             mode.start()
@@ -303,12 +294,12 @@ class ModeController(object):
         for mode in self.active_modes:
 
             if mode.auto_stop_on_ball_end:
-                self.log.debug("Adding mode '%s' to ball ending queue", mode.name)
+                self.debug_log("Adding mode '%s' to ball ending queue", mode.name)
                 self.mode_stop_count += 1
                 mode.stop(callback=self._mode_stopped_callback)
 
             if mode.restart_on_next_ball:
-                self.log.debug("Will Restart mode %s on next ball, mode")
+                self.debug_log("Will Restart mode %s on next ball, mode")
                 self.machine.game.player.restart_modes_on_next_ball.append(mode)
 
         if not self.mode_stop_count:
@@ -316,7 +307,7 @@ class ModeController(object):
 
     def _mode_stopped_callback(self):
         self.mode_stop_count -= 1
-        self.log.debug("Removing mode from ball ending queue")
+        self.debug_log("Removing mode from ball ending queue")
 
         if not self.mode_stop_count:
             self.queue.clear()
@@ -378,10 +369,9 @@ class ModeController(object):
             raise ValueError("Cannot add start method '{}' as it is not"
                              "callable".format(start_method))
 
-        if self.debug:
-            self.log.debug('Registering %s as a mode start method. Config '
-                           'section: %s, priority: %s, kwargs: %s',
-                           start_method, config_section_name, priority, kwargs)
+        self.debug_log('Registering %s as a mode start method. Config '
+                       'section: %s, priority: %s, kwargs: %s',
+                       start_method, config_section_name, priority, kwargs)
 
         self.start_methods.append(RemoteMethod(method=start_method,
                                                config_section=config_section_name, priority=priority,
@@ -417,14 +407,14 @@ class ModeController(object):
 
     def dump(self):
         """Dump the current status of the running modes to the log file."""
-        self.log.debug('+=========== ACTIVE MODES ============+')
+        self.debug_log('+=========== ACTIVE MODES ============+')
 
         for mode in self.active_modes:
             if mode.active:
-                self.log.debug('| {} : {}'.format(
+                self.debug_log('| {} : {}'.format(
                     mode.name, mode.priority).ljust(38) + '|')
 
-        self.log.debug('+-------------------------------------+')
+        self.debug_log('+-------------------------------------+')
 
     def is_active(self, mode_name):
         """Return true if the mode is active.

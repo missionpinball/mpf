@@ -9,7 +9,7 @@ from mpf.core.system_wide_device import SystemWideDevice
 from mpf.devices.switch import ReconfiguredSwitch
 
 
-@DeviceMonitor("_enabled")
+@DeviceMonitor(_enabled="enabled")
 class Flipper(SystemWideDevice):
 
     """Represents a flipper in a pinball machine. Subclass of Device.
@@ -47,17 +47,27 @@ class Flipper(SystemWideDevice):
 
         self.platform = self.config['main_coil'].platform
 
-        self.switch = ReconfiguredSwitch(self.config['activation_switch'], self.config['switch_overwrite'], False)
+        self.switch = ReconfiguredSwitch(self.config['activation_switch'],
+                                         self.config['switch_overwrite'],
+                                         False)
         self._reconfigure_drivers()
         if self.config['eos_switch']:
-            self.eos_switch = ReconfiguredSwitch(self.config['eos_switch'], self.config['eos_switch_overwrite'], False)
+            self.eos_switch = ReconfiguredSwitch(self.config['eos_switch'],
+                                                 self.config['eos_switch_overwrite'],
+                                                 False)
 
         if self.debug:
-            self.log.debug('Platform Driver: %s', self.platform)
+            self.debug_log('Platform Driver: %s', self.platform)
 
         if self.config['power_setting_name']:
             self.machine.events.add_handler("machine_var_{}".format(self.config['power_setting_name']),
                                             self._power_changed)
+
+        self.debug_log('Platform Driver: %s', self.platform)
+
+        if self.config['include_in_ball_search']:
+            self.config['playfield'].ball_search.register(
+                self.config['ball_search_order'], self._ball_search, self.name)
 
     def _reconfigure_drivers(self):
         self.main_coil = self._reconfigure_driver(self.config['main_coil'], self.config['main_coil_overwrite'])
@@ -71,7 +81,7 @@ class Flipper(SystemWideDevice):
                 "pulse_ms", overwrite_config.get("pulse_ms", self.machine.config['mpf']['default_pulse_ms']))
             settings_factor = self.machine.settings.get_setting_value(self.config['power_setting_name'])
             overwrite_config['pulse_ms'] = int(pulse_ms * settings_factor)
-            self.log.info("Configuring driver %s with a pulse time of %s ms for flipper",
+            self.info_log("Configuring driver %s with a pulse time of %s ms for flipper",
                           driver.name, overwrite_config['pulse_ms'])
         return ReconfiguredDriver(driver, overwrite_config)
 
@@ -127,7 +137,7 @@ class Flipper(SystemWideDevice):
 
         self._enabled = True
 
-        self.log.debug('Enabling flipper with config: %s', self.config)
+        self.debug_log('Enabling flipper with config: %s', self.config)
 
         # Apply the proper hardware rules for our config
 
@@ -152,7 +162,7 @@ class Flipper(SystemWideDevice):
         tilted.
         """
         del kwargs
-        self.log.debug("Disabling")
+        self.debug_log("Disabling")
         self.main_coil.clear_hw_rule(self.switch)
         if self.eos_switch and self.config['use_eos']:
             self.main_coil.clear_hw_rule(self.eos_switch)
@@ -163,29 +173,29 @@ class Flipper(SystemWideDevice):
         self._enabled = False
 
     def _enable_single_coil_rule(self):
-        self.log.debug('Enabling single coil rule')
+        self.debug_log('Enabling single coil rule')
 
         self.main_coil.set_pulse_on_hit_and_enable_and_release_rule(self.switch)
 
     def _enable_main_coil_pulse_rule(self):
-        self.log.debug('Enabling main coil pulse rule')
+        self.debug_log('Enabling main coil pulse rule')
 
         self.main_coil.set_pulse_on_hit_and_release_rule(self.switch)
 
     def _enable_hold_coil_rule(self):
-        self.log.debug('Enabling hold coil rule')
+        self.debug_log('Enabling hold coil rule')
 
         # TODO: why are we pulsing the hold coil?
 
         self.hold_coil.set_pulse_on_hit_and_enable_and_release_rule(self.switch)
 
     def _enable_main_coil_eos_cutoff_rule(self):
-        self.log.debug('Enabling main coil EOS cutoff rule')
+        self.debug_log('Enabling main coil EOS cutoff rule')
 
         self.main_coil.set_pulse_on_hit_and_enable_and_release_and_disable_rule(
             self.switch, self.eos_switch)
 
-    def sw_flip(self):
+    def sw_flip(self, include_switch=False):
         """Activate the flipper via software as if the flipper button was pushed.
 
         This is needed because the real flipper activations are handled in
@@ -195,11 +205,12 @@ class Flipper(SystemWideDevice):
         Note this method will keep this flipper enabled until you call
         sw_release().
         """
-        # Send the activation switch press to the switch controller
-        self.machine.switch_controller.process_switch(
-            name=self.config['activation_switch'].name,
-            state=1,
-            logical=True)
+
+        if include_switch:
+            self.machine.switch_controller.process_switch(
+                name=self.config['activation_switch'].name,
+                state=1,
+                logical=True)
 
         if self.config['hold_coil']:
             self.config['main_coil'].pulse()
@@ -207,19 +218,28 @@ class Flipper(SystemWideDevice):
         else:
             self.config['main_coil'].enable()
 
-    def sw_release(self):
+    def sw_release(self, include_switch=False):
         """Deactive the flipper via software as if the flipper button was released.
 
         See the documentation for sw_flip() for details.
         """
-        # Send the activation switch release to the switch controller
-        self.machine.switch_controller.process_switch(
-            name=self.config['activation_switch'].name,
-            state=0,
-            logical=True)
+        if include_switch:
+            self.machine.switch_controller.process_switch(
+                name=self.config['activation_switch'].name,
+                state=0,
+                logical=True)
 
         # disable the flipper coil(s)
         self.config['main_coil'].disable()
 
         if self.config['hold_coil']:
             self.config['hold_coil'].disable()
+
+    def _ball_search(self, phase, iteration):
+        del phase
+        del iteration
+        self.sw_flip()
+        self.machine.delay.add(self.config['ball_search_hold_time'],
+                               self.sw_release,
+                               'flipper_{}_ball_search'.format(self.name))
+        return True

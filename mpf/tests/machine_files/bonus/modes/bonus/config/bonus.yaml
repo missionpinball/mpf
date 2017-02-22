@@ -7,6 +7,7 @@ mode_settings:
         score: 1000
         player_score_entry: ramps
         reset_player_score_entry: True
+        skip_if_zero: false
       - event: bonus_modes
         score: 5000
         player_score_entry: modes

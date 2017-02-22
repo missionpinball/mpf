@@ -59,8 +59,9 @@ class TestBonusMode(MpfTestCase):
         # drain a ball
         self.machine.game.balls_in_play = 0
         self.advance_time_and_run(1)
+
         # check that bonus mode is loaded
-        self.assertTrue(self.machine.mode_controller.is_active('bonus'))
+        self.assertModeRunning('bonus')
         self.advance_time_and_run(29)
         self.assertEqual(3000, self._last_event_kwargs["bonus_ramps"]["score"])
         self.assertEqual(3, self._last_event_kwargs["bonus_ramps"]["hits"])
@@ -76,11 +77,13 @@ class TestBonusMode(MpfTestCase):
         self.assertEqual(2, self.machine.game.player.modes)
         self.assertEqual(5, self.machine.game.player.bonus_multiplier)
 
+        # make some changes for the next test
         self.machine.modes.bonus.config['mode_settings']['keep_multiplier'] = False
 
         # drain a ball
         self.machine.game.balls_in_play = 0
         self.advance_time_and_run(30)
+
         self.assertEqual(0, self._last_event_kwargs["bonus_ramps"]["score"])
         self.assertEqual(0, self._last_event_kwargs["bonus_ramps"]["hits"])
         self.assertEqual(10000, self._last_event_kwargs["bonus_modes"]["score"])
@@ -94,6 +97,90 @@ class TestBonusMode(MpfTestCase):
         self.assertEqual(0, self.machine.game.player.ramps)
         self.assertEqual(2, self.machine.game.player.modes)
         self.assertEqual(1, self.machine.game.player.bonus_multiplier)
+
+        # make some changes for the next test
+        self.machine.modes.bonus.bonus_entries[0]['skip_if_zero'] = True
+        self._last_event_kwargs = dict()
+
+        # drain a ball
+        self.machine.game.balls_in_play = 0
+        self.advance_time_and_run(30)
+
+        # this entry event should be skipped since player.ramps == 0
+        self.assertNotIn('bonus_ramps', self._last_event_kwargs)
+
+        # make some changes for the next test
+        self.machine.game.player.ramps = 1
+        self.machine.game.player.bonus_multiplier = 2
+
+        # test the hurry up
+        self.mock_event("bonus_start")
+        self.mock_event("bonus_ramps")
+        self.mock_event("bonus_modes")
+        self.mock_event("bonus_subtotal")
+        self.mock_event("bonus_multiplier")
+        self.mock_event("bonus_total")
+
+        # drain a ball
+        self.machine.game.balls_in_play = 0
+        self.advance_time_and_run(1)
+
+        self.assertEventCalled('bonus_start')
+        self.assertEventNotCalled('bonus_ramps')
+        self.assertEventNotCalled('bonus_modes')
+        self.assertEventNotCalled('bonus_subtotal')
+        self.assertEventNotCalled('bonus_multiplier')
+        self.assertEventNotCalled('bonus_total')
+
+        self.advance_time_and_run(2)
+
+        self.assertEventCalled('bonus_ramps')
+        self.assertEventNotCalled('bonus_modes')
+        self.assertEventNotCalled('bonus_subtotal')
+        self.assertEventNotCalled('bonus_multiplier')
+        self.assertEventNotCalled('bonus_total')
+
+        self.post_event('flipper_cancel', .1)
+        self.assertEventCalled('bonus_modes')
+        self.assertEventNotCalled('bonus_subtotal')
+        self.assertEventNotCalled('bonus_multiplier')
+        self.assertEventNotCalled('bonus_total')
+
+        self.advance_time_and_run(.5)
+        self.assertEventCalled('bonus_subtotal')
+        self.assertEventNotCalled('bonus_multiplier')
+        self.assertEventNotCalled('bonus_total')
+
+        self.advance_time_and_run(.5)
+        self.assertEventCalled('bonus_multiplier')
+        self.assertEventNotCalled('bonus_total')
+
+        self.advance_time_and_run(.5)
+        self.assertEventCalled('bonus_total')
+
+        # test multiplier screens are skipped if multiplier is 1
+        self.advance_time_and_run(30)
+        self.machine.game.player.bonus_multiplier = 1
+        self.machine.game.player.ramps = 1
+
+        # test the hurry up
+        self.mock_event("bonus_start")
+        self.mock_event("bonus_ramps")
+        self.mock_event("bonus_modes")
+        self.mock_event("bonus_subtotal")
+        self.mock_event("bonus_multiplier")
+        self.mock_event("bonus_total")
+
+        # drain a ball
+        self.machine.game.balls_in_play = 0
+        self.advance_time_and_run(30)
+
+        self.assertEventCalled('bonus_start')
+        self.assertEventCalled('bonus_ramps')
+        self.assertEventCalled('bonus_modes')
+        self.assertEventNotCalled('bonus_subtotal')
+        self.assertEventNotCalled('bonus_multiplier')
+        self.assertEventCalled('bonus_total')
 
     def testBonusTilted(self):
         self.mock_event("bonus_ramps")

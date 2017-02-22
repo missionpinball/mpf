@@ -76,8 +76,8 @@ class Command(object):
 
         parser.add_argument("-v",
                             action="store_const", dest="loglevel",
-                            const=logging.DEBUG,
-                            default=logging.INFO,
+                            const=10,
+                            default=11,
                             help="Enables verbose logging to the"
                                  " log file")
 
@@ -102,6 +102,14 @@ class Command(object):
                                  "used for all"
                                  " devices")
 
+        # The following are just included for full compatibility with mc
+        # which is needed when using "mpf both".
+
+        parser.add_argument("-L",
+                            action="store", dest="mc_file_name",
+                            metavar='mc_file_name',
+                            default=None, help=argparse.SUPPRESS)
+
         args = parser.parse_args(args)
         args.configfile = Util.string_to_list(args.configfile)
 
@@ -115,11 +123,17 @@ class Command(object):
             if exception.errno != errno.EEXIST:
                 raise
 
+        full_logfile_path = os.path.join(machine_path, args.logfile)
+
+        try:
+            os.remove(full_logfile_path)
+        except OSError:
+            pass
+
         logging.basicConfig(level=args.loglevel,
-                            format='%(asctime)s : %(levelname)s : %(name)s : '
-                                   '%(message)s',
-                            filename=os.path.join(machine_path, args.logfile),
-                            filemode='w')
+                            format='%(asctime)s : %(name)s : %(message)s',
+                            filename=full_logfile_path,
+                            filemode='a')
 
         # define a Handler which writes INFO messages or higher to the
         # sys.stderr
@@ -127,7 +141,7 @@ class Command(object):
         console.setLevel(args.consoleloglevel)
 
         # set a format which is simpler for console use
-        formatter = logging.Formatter('%(levelname)s : %(name)s : %(message)s')
+        formatter = logging.Formatter('%(name)s : %(message)s')
 
         # tell the handler to use this format
         console.setFormatter(formatter)

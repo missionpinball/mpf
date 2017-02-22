@@ -22,6 +22,8 @@ switches:
         number:
     s_ball_switch_launcher:
         number:
+    s_left_outlane:
+        number:
 
 ball_devices:
     bd_trough:
@@ -46,6 +48,7 @@ ball_saves:
         grace_period: 2s
         enable_events: enable1
         timer_start_events: balldevice_bd_launcher_ball_eject_success
+        early_ball_save_events: s_left_outlane_active
         auto_launch: yes
         balls_to_save: 1
         debug: yes
@@ -54,6 +57,7 @@ ball_saves:
         hurry_up_time: 2s
         grace_period: 2s
         enable_events: enable2
+        early_ball_save_events: s_left_outlane_active
         auto_launch: yes
         balls_to_save: -1
         debug: yes

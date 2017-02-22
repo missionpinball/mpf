@@ -94,7 +94,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
             self.disable(mode)
 
     def _enable_related_device_debugging(self):
-        self.log.debug(
+        self.debug_log(
             "Enabling debugging for this shot groups's member shots")
 
         for shot in self.config['shots']:
@@ -364,7 +364,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
                 (shot.player[shot.get_profile_by_key('mode', mode)['settings']['player_variable']], current_show_step))
 
         if self.debug:
-            self.log.debug('Rotating. Mode: %s, Direction: %s, Include states:'
+            self.debug_log('Rotating. Mode: %s, Direction: %s, Include states:'
                            ' %s, Exclude states: %s, Shots to be rotated: %s',
                            mode, direction, states,
                            exclude_states, [x.name for x in shot_list])

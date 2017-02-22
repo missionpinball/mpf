@@ -104,25 +104,51 @@ class TestBallSearch(MpfTestCase):
         self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
         self.assertEqual(1, self.machine.ball_devices['playfield'].balls)
 
-        # vuk should reset the timer
+        # ball entering and being ejected from vuk should reset search timer
+        self.advance_time_and_run(15)
         self.machine.switch_controller.process_switch("s_vuk", 1)
-        self.advance_time_and_run(1)
-
-        self.machine.switch_controller.process_switch("s_playfield", 1)
-        self.machine.switch_controller.process_switch("s_playfield", 0)
-        self.advance_time_and_run(1)
-
-        self.machine.servos.servo1.go_to_position(0.7)
+        self.advance_time_and_run(15)
 
         self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.enabled)
         self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
 
+        # pf switch should reset the timer
+        self.machine.switch_controller.process_switch("s_playfield", 1)
+        self.machine.switch_controller.process_switch("s_playfield", 0)
         self.advance_time_and_run(15)
+        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.enabled)
         self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
-        self.advance_time_and_run(5)
+
+        self.machine.switch_controller.process_switch("s_playfield", 1)
+        self.machine.switch_controller.process_switch("s_playfield", 0)
+        self.advance_time_and_run(15)
+        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.enabled)
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
+
+        # advance past 20s since last hit and search should be running
+        self.advance_time_and_run(6)
         self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)
 
-        # test servo
+        # hit a pf switch and the ball search should stop
+        self.hit_switch_and_run('s_playfield', 1)
+        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.enabled)
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
+
+        # advance 20s and search should be running again
+        self.advance_time_and_run(20)
+        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.enabled)
+        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)
+
+        # ball entering vuk should stop the search
+        self.hit_switch_and_run('s_vuk', 2)
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.enabled)
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
+
+        # test servo reset during ball search
+        self.machine.servos.servo1.go_to_position(0.7)
+        self.advance_time_and_run(21)
+        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)
+
         self.assertEqual(0.0, self.machine.servos.servo1.hw_servo.current_position)
         self.advance_time_and_run(5)
         self.assertEqual(1.0, self.machine.servos.servo1.hw_servo.current_position)
@@ -180,6 +206,9 @@ class TestBallSearch(MpfTestCase):
                 self.machine.coils['drop_target_reset4'].pulse = MagicMock()
                 self.machine.coils['drop_target_knockdown2'].pulse = MagicMock()
                 self.machine.coils['drop_target_knockdown4'].pulse = MagicMock()
+                self.machine.coils['flipper_coil'].enable = MagicMock()
+                self.machine.coils['diverter_coil'].enable = MagicMock()
+                self.machine.autofires.autofire1.coil.pulse = MagicMock()
                 self.advance_time_and_run(10)
                 if i <= 3:
                     self.assertEqual(1, self.machine.ball_devices['playfield'].ball_search.phase)
@@ -187,6 +216,7 @@ class TestBallSearch(MpfTestCase):
                     self.assertEqual(2, self.machine.ball_devices['playfield'].ball_search.phase)
                 else:
                     self.assertEqual(3, self.machine.ball_devices['playfield'].ball_search.phase)
+
                 self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)
 
                 assert not self.machine.coils['eject_coil1'].pulse.called
@@ -251,6 +281,18 @@ class TestBallSearch(MpfTestCase):
                     self.machine.coils['drop_target_knockdown4'].pulse.assert_called_with()
 
                 assert not self.machine.ball_devices['playfield'].add_ball.called
+
+                self.advance_time_and_run(.25)
+                assert self.machine.coils['diverter_coil'].enable.called
+                assert not self.machine.coils['flipper_coil'].enable.called
+                assert not self.machine.autofires.autofire1.coil.pulse.called
+
+                self.advance_time_and_run(.25)
+                assert self.machine.coils['flipper_coil'].enable.called
+                assert not self.machine.autofires.autofire1.coil.pulse.called
+
+                self.advance_time_and_run(.25)
+                assert self.machine.autofires.autofire1.coil.pulse.called
 
         self.advance_time_and_run(10)
 
@@ -386,3 +428,50 @@ class TestBallSearch(MpfTestCase):
         self.hit_and_release_switch("s_start")
         self.advance_time_and_run(1)
         self.assertNotEqual(None, self.machine.game)
+
+    def test_ball_search_cancel_running(self):
+        self.machine.ball_controller.num_balls_known = 0
+        self.machine.switch_controller.process_switch("s_ball_switch1", 1)
+        self.advance_time_and_run(1)
+        self.assertEqual(1, self.machine.ball_controller.num_balls_known)
+
+        self.assertEqual(None, self.machine.game)
+        self.machine.switch_controller.process_switch("s_start", 1)
+        self.machine.switch_controller.process_switch("s_start", 0)
+        self.advance_time_and_run(1)
+        self.assertNotEqual(None, self.machine.game)
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.enabled)
+
+        self.advance_time_and_run(10)
+        self.assertEqual(1, self.machine.ball_devices['playfield'].balls)
+        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.enabled)
+        self.advance_time_and_run(21)
+        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)
+
+        self.post_event('flipper_cradle', 1)
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
+
+    def test_prevent_ball_search_with_flipper_cradle(self):
+        self.machine.ball_controller.num_balls_known = 0
+        self.machine.switch_controller.process_switch("s_ball_switch1", 1)
+        self.advance_time_and_run(1)
+        self.assertEqual(1, self.machine.ball_controller.num_balls_known)
+
+        self.assertEqual(None, self.machine.game)
+        self.machine.switch_controller.process_switch("s_start", 1)
+        self.machine.switch_controller.process_switch("s_start", 0)
+        self.advance_time_and_run(1)
+        self.assertNotEqual(None, self.machine.game)
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.enabled)
+
+        self.post_event('flipper_cradle', 1)
+        self.advance_time_and_run(21)
+        self.assertEqual(1, self.machine.ball_devices['playfield'].balls)
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.enabled)
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
+
+        self.post_event('flipper_cradle_release', 1)
+        self.advance_time_and_run(21)
+        self.assertEqual(1, self.machine.ball_devices['playfield'].balls)
+        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.enabled)
+        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)

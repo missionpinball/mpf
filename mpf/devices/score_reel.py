@@ -80,7 +80,7 @@ class ScoreReel(SystemWideDevice):
         # todo add some kind of status for broken?
 
     def _initialize(self):
-        self.log.debug("Configuring score reel with: %s", self.config)
+        self.debug_log("Configuring score reel with: %s", self.config)
 
         self.assumed_value = self.check_hw_switches()
 
@@ -88,14 +88,14 @@ class ScoreReel(SystemWideDevice):
         # Add 1 so range is inclusive of the lower limit
         self.num_values = self.config['limit_hi'] - self.config['limit_lo'] + 1
 
-        self.log.debug("Total reel values: %s", self.num_values)
+        self.debug_log("Total reel values: %s", self.num_values)
 
         for value in range(self.num_values):
             self.value_switches.append(self.config.get('switch_' + str(value)))
 
     def set_rollover_reel(self, reel):
         """Set this reels' rollover_reel to the object of the next higher reel."""
-        self.log.debug("Setting rollover reel: %s", reel.name)
+        self.debug_log("Setting rollover reel: %s", reel.name)
         self.rollover_reel = reel
 
     def advance(self):
@@ -115,7 +115,7 @@ class ScoreReel(SystemWideDevice):
             return `False`. If it's able to pulse the advance coil, it returns
             `True`.
         """
-        self.log.debug("Received command advance Reel")
+        self.debug_log("Received command advance Reel")
 
         self.set_destination_value()
         # above line also sets self._destination_index
@@ -125,17 +125,17 @@ class ScoreReel(SystemWideDevice):
             # Note we don't allow this to be overridden. Figure the
             # recycle time is there for a reason and we don't want to
             # potentially break an old delicate mechanism
-            self.log.debug("Received advance request but this reel is not "
+            self.debug_log("Received advance request but this reel is not "
                            "ready")
             return False  # since we didn't advance...in case anyone cares?
 
         # Ensure we're not at the limit of a reel that can't roll over
         if not ((self.physical_value == self.config['limit_hi']) and not self.config['rollover']):
-            self.log.debug("Ok to advance")
+            self.debug_log("Ok to advance")
 
             # Since we're firing, assume we're going to make it
             self.assumed_value = self._destination_index
-            self.log.debug("+++Setting assumed value to: %s",
+            self.debug_log("+++Setting assumed value to: %s",
                            self.assumed_value)
 
             # Reset our statuses (stati?) :)
@@ -153,7 +153,7 @@ class ScoreReel(SystemWideDevice):
             self.next_pulse_time = (self.machine.clock.get_time() +
                                     (self.config['repeat_pulse_time'] /
                                      1000.0))
-            self.log.debug("@@@ New Next pulse ready time: %s",
+            self.debug_log("@@@ New Next pulse ready time: %s",
                            self.next_pulse_time)
 
             # set delay to check the hw switches
@@ -208,7 +208,7 @@ class ScoreReel(SystemWideDevice):
         # we cannot trust any value we read from the switches
         if (self.config['coil_inc'].time_last_changed +
                 (self.config['hw_confirm_time'] / 1000.0) <= self.machine.clock.get_time()):
-            self.log.debug("Checking hw switches to determine reel value")
+            self.debug_log("Checking hw switches to determine reel value")
             value = -999
             for i in range(len(self.value_switches)):
                 if self.value_switches[i]:  # not all values have a switch
@@ -216,7 +216,7 @@ class ScoreReel(SystemWideDevice):
                             self.value_switches[i].name):
                         value = i
 
-            self.log.debug("+++Setting hw value to: %s", value)
+            self.debug_log("+++Setting hw value to: %s", value)
             self.physical_value = value
             self.hw_sync = True
             # only change this if we know where we are or can confirm that
@@ -257,8 +257,8 @@ class ScoreReel(SystemWideDevice):
             what the destination value would be.
         """
         # We can only know if we have a destination if we know where we are
-        self.log.debug("@@@ set_destination_value")
-        self.log.debug("@@@ old destination_index: %s",
+        self.debug_log("@@@ set_destination_value")
+        self.debug_log("@@@ old destination_index: %s",
                        self._destination_index)
         if self.assumed_value != -999:
             self._destination_index = self.assumed_value + 1
@@ -266,10 +266,10 @@ class ScoreReel(SystemWideDevice):
                 self._destination_index = 0
             if self._destination_index == 1:
                 self.rollover_reel_advanced = False
-            self.log.debug("@@@ new destination_index: %s",
+            self.debug_log("@@@ new destination_index: %s",
                            self._destination_index)
             return self._destination_index
         else:
-            self.log.debug("@@@ new destination_index: -999")
+            self.debug_log("@@@ new destination_index: -999")
             self._destination_index = -999
             return -999

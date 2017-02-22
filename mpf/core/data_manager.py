@@ -1,16 +1,16 @@
 """Contains the DataManager base class."""
 
 import copy
-import logging
 import os
 import errno
 import _thread
 import threading
 
 from mpf.core.file_manager import FileManager
+from mpf.core.mpf_controller import MpfController
 
 
-class DataManager(object):
+class DataManager(MpfController):
 
     """Handles key value data loading and saving for the machine."""
 
@@ -27,12 +27,10 @@ class DataManager(object):
                 in the machine config in the mpf:paths:<name> location. That's
                 how you specify the file name this DataManager will use.
         """
-        self.machine = machine
+        super().__init__(machine)
         self.name = name
         self.filename = os.path.join(self.machine.machine_path,
                                      self.machine.config['mpf']['paths'][name])
-
-        self.log = logging.getLogger('DataInterface')
 
         self.data = dict()
         self._dirty = threading.Event()
@@ -55,12 +53,12 @@ class DataManager(object):
                 raise
 
     def _load(self):
-        self.log.debug("Loading %s from %s", self.name, self.filename)
+        self.debug_log("Loading %s from %s", self.name, self.filename)
         if os.path.isfile(self.filename):
             self.data = FileManager.load(self.filename, halt_on_error=False)
 
         else:
-            self.log.debug("Didn't find the %s file. No prob. We'll create "
+            self.debug_log("Didn't find the %s file. No prob. We'll create "
                            "it when we save.", self.name)
 
     def get_data(self, section=None):
@@ -97,7 +95,7 @@ class DataManager(object):
                 occur when MPF is busy, so you can delay them by a few seconds
                 so they don't slow down MPF. Default is 0.
         """
-        self.log.debug("Will write %s to disk in %s sec(s)", self.name,
+        self.debug_log("Will write %s to disk in %s sec(s)", self.name,
                        delay_secs)
 
         if data:
@@ -124,7 +122,7 @@ class DataManager(object):
         try:
             self.data[key] = value
         except TypeError:
-            self.log.warning('In-memory copy of %s is invalid. Re-creating', self.filename)
+            self.debug_log.warning('In-memory copy of %s is invalid. Re-creating', self.filename)
             # todo should we reload from disk here?
             self.data = dict()
             self.data[key] = value
@@ -146,6 +144,6 @@ class DataManager(object):
             self._dirty.clear()
 
             data = copy.deepcopy(self.data)
-            self.log.debug("Writing %s to: %s", self.name, self.filename)
+            self.debug_log("Writing %s to: %s", self.name, self.filename)
             # save data
             FileManager.save(self.filename, data)

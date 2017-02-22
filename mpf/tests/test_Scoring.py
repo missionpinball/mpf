@@ -35,6 +35,10 @@ class TestScoring(MpfTestCase):
         self.post_event('start_mode1')
         self.assertTrue(self.machine.mode_controller.is_active('mode1'))
 
+        # test setting string
+        self.post_event('test_set_string')
+        self.assertEqual('HELLO', self.machine.game.player.string_test)
+
         # event should score 100 now
         self.post_event("test_event1")
         self.assertEqual(100, self.machine.game.player.score)

@@ -1,10 +1,14 @@
 """An achievement which can be reached in a pinball machine."""
+
+from mpf.core.device_monitor import DeviceMonitor
+
 from mpf.core.mode import Mode
 from mpf.core.mode_device import ModeDevice
 from mpf.core.player import Player
 from mpf.devices.achievement_group import AchievementGroup
 
 
+@DeviceMonitor(_state="state")
 class Achievement(ModeDevice):
 
     """An achievement in a pinball machine.
@@ -33,7 +37,10 @@ class Achievement(ModeDevice):
 
     @property
     def _state(self):
-        return self._player.achievements[self.name]
+        try:
+            return self._player.achievements[self.name]
+        except (AttributeError, KeyError):
+            return ''
 
     @_state.setter
     def _state(self, value):

@@ -27,11 +27,19 @@ coils:
         number:
     drop_target_knockdown4:
         number:
+    flipper_coil:
+        number:
+    diverter_coil:
+        number:
+    autofire_coil:
+        number:
 
 playfields:
     playfield:
         enable_ball_search: True
         ball_search_timeout: 20s
+        ball_search_wait_after_iteration: 10s
+        ball_search_interval: 250ms
 
 servos:
     servo1:
@@ -66,6 +74,10 @@ switches:
     s_drop_target3:
         number:
     s_drop_target4:
+        number:
+    s_autofire:
+        number:
+    s_flipper:
         number:
 
 drop_targets:
@@ -116,3 +128,21 @@ ball_devices:
         eject_timeouts: 2s
         debug: true
         ball_search_order: 4
+
+diverters:
+    diverter1:
+        activation_coil: diverter_coil
+        ball_search_order: 14
+
+flippers:
+    flipper1:
+        main_coil: flipper_coil
+        activation_switch: s_flipper
+        ball_search_order: 15
+        include_in_ball_search: True
+
+autofire_coils:
+    autofire1:
+        coil: autofire_coil
+        switch: s_autofire
+        ball_search_order: 16

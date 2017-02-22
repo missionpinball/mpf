@@ -8,7 +8,8 @@ from mpf.core.delays import DelayManager
 from mpf.devices.ball_device.incoming_balls_handler import IncomingBall
 
 
-@DeviceMonitor("available_balls", "num_balls_requested", "balls")
+@DeviceMonitor("available_balls", "balls",
+               num_balls_requested="balls_requested")
 class Playfield(SystemWideDevice):
 
     """One playfield in a pinball machine."""
@@ -118,19 +119,12 @@ class Playfield(SystemWideDevice):
         ball_change = balls - prior_balls
 
         if ball_change:
-            self.log.debug("Ball count change. Prior: %s, Current: %s, Change:"
+            self.debug_log("Ball count change. Prior: %s, Current: %s, Change:"
                            " %s", prior_balls, balls, ball_change)
 
         self._balls = balls
-        # if balls >= 0:
-        #     self._balls = balls
-        # else:
-        #     self._balls = 0
-        #     self.unexpected_balls += -balls
-        #     self.log.warning("Playfield balls went to %s. Resetting to 0, but "
-        #                      "FYI that something's weird. Unexpected balls: %s", balls, self.unexpected_balls)
 
-        self.log.debug("New Ball Count: %s. (Prior count: %s)",
+        self.debug_log("New Ball Count: %s. (Prior count: %s)",
                        self._balls, prior_balls)
 
         if ball_change > 0:
@@ -251,7 +245,7 @@ class Playfield(SystemWideDevice):
                                  "devices are tagged with 'ball_add_live'. Cannot"
                                  " add a ball.")
 
-        self.log.debug("Received request to add %s ball(s). Source device: %s."
+        self.debug_log("Received request to add %s ball(s). Source device: %s."
                        " Player-controlled: %s", balls,
                        source_device.name, player_controlled)
 
@@ -276,13 +270,16 @@ class Playfield(SystemWideDevice):
             break
 
     def _mark_playfield_active(self):
-        self.ball_search.reset_timer()
         self.ball_arrived()
         self.machine.events.post_boolean(self.name + "_active")
         '''event: (playfield)_active
         desc: The playfield called "playfield" is now active, meaning there's
         at least one loose ball on it.
         '''
+
+    def mark_playfield_active_from_device_action(self):
+        """Mark playfield active because a device on the playfield detected activity."""
+        self._playfield_switch_hit()
 
     def _playfield_switch_hit(self, **kwargs):
         """Playfield switch was hit.
@@ -295,12 +292,14 @@ class Playfield(SystemWideDevice):
             self._mark_playfield_active()
 
             if not self.num_balls_requested:
-                self.log.debug("Playfield was activated with no balls expected.")
+                self.debug_log("Playfield was activated with no balls expected.")
                 self.machine.events.post('unexpected_ball_on_' + self.name)
                 '''event: unexpected_ball_on_(playfield)
-                desc: The playfield namaed "playfield" just had a switch hit,
+                desc: The playfield named "playfield" just had a switch hit,
                 meaning a ball is on it, but that ball was not expected.
                 '''
+
+        self.ball_search.reset_timer()
 
     def _ball_removed_handler(self, balls, **kwargs):
         del kwargs
@@ -317,7 +316,7 @@ class Playfield(SystemWideDevice):
         '''
 
     def _ball_removed_handler2(self, balls):
-        self.log.debug("%s ball(s) removed from the playfield", balls)
+        self.debug_log("%s ball(s) removed from the playfield", balls)
         self.balls -= balls
         self.available_balls -= balls
         for _ in range(balls):
@@ -333,7 +332,7 @@ class Playfield(SystemWideDevice):
         # headed to the playfield.
         del kwargs
         if target == self:
-            self.log.debug("A source device is attempting to eject %s ball(s)"
+            self.debug_log("A source device is attempting to eject %s ball(s)"
                            " to the playfield.", balls)
             self.num_balls_requested += balls
 
@@ -342,7 +341,7 @@ class Playfield(SystemWideDevice):
         # headed to the playfield.
         del kwargs
         if target == self:
-            self.log.debug("A source device has failed to eject %s ball(s)"
+            self.debug_log("A source device has failed to eject %s ball(s)"
                            " to the playfield.", balls)
             self.num_balls_requested -= balls
 
@@ -353,7 +352,7 @@ class Playfield(SystemWideDevice):
         # (Playfield switch hit, count of its ball switches, etc.)
 
         if target == self:
-            self.log.debug("A source device has confirmed it's ejected %s "
+            self.debug_log("A source device has confirmed it's ejected %s "
                            "ball(s) to the playfield.", balls)
             self.balls += balls
             self.num_balls_requested -= balls
@@ -373,3 +372,40 @@ class Playfield(SystemWideDevice):
     def remove_incoming_ball(self, incoming_ball: IncomingBall):
         """Stop tracking an incoming ball."""
         self._incoming_balls.remove(incoming_ball)
+
+    def ball_search_disable(self, **kwargs):
+        """Disable ball search for this playfield.
+
+        If the ball search timer is running, it will stop and disable it. If
+        an actual ball search process is running, it will stop.
+        """
+        del kwargs
+        self.ball_search.disable()
+
+    def ball_search_enable(self, **kwargs):
+        """Enable ball search for this playfield.
+
+        Note this does not start the ball search process, rather, it starts the
+        timer running.
+        """
+        del kwargs
+        self.ball_search.enable()
+
+    def ball_search_block(self, **kwargs):
+        """Block ball search for this playfield.
+
+        Blocking will disable ball search if it's enabled or running, and will
+        prevent ball search from enabling if it's disabled until
+        ball_search_resume() is called.
+        """
+        del kwargs
+        self.ball_search.block()
+
+    def ball_search_unblock(self, **kwargs):
+        """Unblock ball search for this playfield.
+
+        This will check to see if there are balls on the playfield, and if so,
+        enable ball search.
+        """
+        del kwargs
+        self.ball_search.unblock()

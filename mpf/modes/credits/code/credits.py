@@ -100,13 +100,13 @@ class Credits(Mode):
             if self.credit_unit > price_per_game:
                 self.credit_unit = price_per_game
 
-        self.log.debug("Calculated the credit unit to be %s based on a minimum"
+        self.debug_log("Calculated the credit unit to be %s based on a minimum"
                        "currency value of %s and a price per game of %s",
                        self.credit_unit, min_currency_value, price_per_game)
 
         self.credit_units_per_game = int(price_per_game / self.credit_unit)
 
-        self.log.debug("Credit units per game: %s", self.credit_units_per_game)
+        self.debug_log("Credit units per game: %s", self.credit_units_per_game)
 
     def _calculate_pricing_tiers(self):
         # pricing tiers are calculated with a set of tuples which indicate the
@@ -118,7 +118,7 @@ class Credits(Mode):
             actual_credit_units = self.credit_units_per_game * pricing_tier['credits']
             bonus = actual_credit_units - credit_units
 
-            self.log.debug("Pricing Tier Bonus. Price: %s, Credits: %s. "
+            self.debug_log("Pricing Tier Bonus. Price: %s, Credits: %s. "
                            "Credit units for this tier: %s, Credit units this "
                            "tier buys: %s, Bonus bump needed: %s",
                            pricing_tier['price'], pricing_tier['credits'],
@@ -256,11 +256,11 @@ class Credits(Mode):
         del kwargs
         if (self._get_credit_units() >=
                 self.credit_units_per_game):
-            self.log.debug("Received request to add player. Request Approved")
+            self.debug_log("Received request to add player. Request Approved")
             return True
 
         else:
-            self.log.debug("Received request to add player. Request Denied")
+            self.debug_log("Received request to add player. Request Denied")
             self.machine.events.post("not_enough_credits")
             '''event: not_enough_credits
             desc: A player has pushed the start button, but the game is not set
@@ -273,11 +273,11 @@ class Credits(Mode):
         del kwargs
         if (self._get_credit_units() >=
                 self.credit_units_per_game):
-            self.log.debug("Received request to start game. Request Approved")
+            self.debug_log("Received request to start game. Request Approved")
             return True
 
         else:
-            self.log.debug("Received request to start game. Request Denied")
+            self.debug_log("Received request to start game. Request Denied")
             self.machine.events.post("not_enough_credits")
             # event docstring covered in _player_add_request() method
             return False
@@ -325,12 +325,12 @@ class Credits(Mode):
         self._reset_timeouts()
 
     def _service_credit_callback(self):
-        self.log.debug("Service Credit Added")
+        self.debug_log("Service Credit Added")
         self.add_credit(price_tiering=False)
         self._audit(1, 'service_credit')
 
     def _add_credit_units(self, credit_units, price_tiering=True):
-        self.log.debug("Adding %s credit_units. Price tiering: %s",
+        self.debug_log("Adding %s credit_units. Price tiering: %s",
                        credit_units, price_tiering)
 
         previous_credit_units = self._get_credit_units()
@@ -350,7 +350,7 @@ class Credits(Mode):
                             self.credit_units_per_game)
 
         if max_credit_units and total_credit_units > max_credit_units:
-            self.log.debug("Max credits reached")
+            self.debug_log("Max credits reached")
             self._update_credit_strings()
             self.machine.events.post('max_credits_reached')
             '''event: max_credits_reached
@@ -359,7 +359,7 @@ class Credits(Mode):
             self.machine.create_machine_var('credit_units', max_credit_units)
 
         if max_credit_units <= 0 or max_credit_units > previous_credit_units:
-            self.log.debug("Credit units added")
+            self.debug_log("Credit units added")
             self.machine.create_machine_var('credit_units', total_credit_units)
             self._update_credit_strings()
             self.machine.events.post('credits_added')
@@ -379,7 +379,7 @@ class Credits(Mode):
 
     def _reset_pricing_tier_credits(self):
         if not self.reset_pricing_tier_count_this_game:
-            self.log.debug("Resetting pricing tier credit count")
+            self.debug_log("Resetting pricing tier credit count")
             self.credit_units_for_pricing_tiers = 0
             self.reset_pricing_tier_count_this_game = True
 
@@ -438,20 +438,20 @@ class Credits(Mode):
 
     def _game_started(self, **kwargs):
         del kwargs
-        self.log.debug("Removing credit clearing delays")
+        self.debug_log("Removing credit clearing delays")
         self.delay.remove('clear_fractional_credits')
         self.delay.remove('clear_all_credits')
 
     def _reset_timeouts(self):
         if self.credits_config['fractional_credit_expiration_time']:
-            self.log.debug("Adding delay to clear fractional credits")
+            self.debug_log("Adding delay to clear fractional credits")
             self.delay.reset(
                 ms=self.credits_config['fractional_credit_expiration_time'],
                 callback=self._clear_fractional_credits,
                 name='clear_fractional_credits')
 
         if self.credits_config['credit_expiration_time']:
-            self.log.debug("Adding delay to clear credits")
+            self.debug_log("Adding delay to clear credits")
             self.delay.reset(
                 ms=self.credits_config['credit_expiration_time'],
                 callback=self.clear_all_credits,
@@ -464,7 +464,7 @@ class Credits(Mode):
         self.reset_pricing_tier_count_this_game = False
 
     def _clear_fractional_credits(self):
-        self.log.debug("Clearing fractional credits")
+        self.debug_log("Clearing fractional credits")
 
         credit_units = self._get_credit_units()
         credit_units -= credit_units % self.credit_units_per_game
@@ -475,6 +475,6 @@ class Credits(Mode):
     def clear_all_credits(self, **kwargs):
         """Clear all credits."""
         del kwargs
-        self.log.debug("Clearing all credits")
+        self.debug_log("Clearing all credits")
         self.machine.create_machine_var('credit_units', 0)
         self._update_credit_strings()

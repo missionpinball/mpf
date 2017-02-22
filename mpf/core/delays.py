@@ -1,8 +1,9 @@
 """Manages delays within a context."""
 
-import logging
 import uuid
 from functools import partial
+
+from mpf.core.mpf_controller import MpfController
 
 
 class DelayManagerRegistry(object):
@@ -19,15 +20,14 @@ class DelayManagerRegistry(object):
         self.delay_managers.add(delay_manager)
 
 
-class DelayManager(object):
+class DelayManager(MpfController):
 
     """Handles delays for one object."""
 
     def __init__(self, registry):
         """Initialise delay manager."""
-        self.log = logging.getLogger("DelayManager")
         self.delays = {}
-        self.machine = registry.machine
+        super().__init__(registry.machine)
         self.registry = registry
         self.registry.add_delay_manager(self)
 
@@ -54,7 +54,7 @@ class DelayManager(object):
         """
         if not name:
             name = uuid.uuid4()
-        self.log.debug("Adding delay. Name: '%s' ms: %s, callback: %s, "
+        self.debug_log("Adding delay. Name: '%s' ms: %s, callback: %s, "
                        "kwargs: %s", name, ms, callback, kwargs)
 
         if name in self.delays:
@@ -76,7 +76,7 @@ class DelayManager(object):
             name: String name of the delay you want to remove. If there is no
                 delay with this name, that's ok. Nothing happens.
         """
-        self.log.debug("Removing delay: '%s'", name)
+        self.debug_log("Removing delay: '%s'", name)
         if name in self.delays:
             self.machine.clock.unschedule(self.delays[name])
             try:
@@ -138,9 +138,30 @@ class DelayManager(object):
 
         self.delays = {}
 
+    def run_now(self, name):
+        """Run a delay callback now instead of waiting until its time comes.
+
+        This will cancel the future running of the delay callback.
+
+        Args:
+            name: Name of the delay to run. If this name is not an active
+                delay, that's fine. Nothing happens.
+        """
+        if name in self.delays:
+            try:
+                # have to save the callback ref first, since if the callback
+                # schedules a new delay with the same name, then the removal
+                # will remove it
+                # pylint: disable-msg=protected-access
+                cb = self.delays[name]._callback
+                self.remove(name)
+                cb()
+            except KeyError:
+                pass
+
     def _process_delay_callback(self, name, callback, dt, **kwargs):
         del dt
-        self.log.debug("---Processing delay: %s", name)
+        self.debug_log("---Processing delay: %s", name)
         try:
             del self.delays[name]
         except KeyError:

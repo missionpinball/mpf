@@ -17,3 +17,6 @@ scoring:
         test1:
           score: 200
           action: set
+    test_set_string:
+        string_test:
+          string: HELLO

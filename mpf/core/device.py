@@ -1,12 +1,11 @@
 """Contains the Device base class."""
 import abc
-import logging
-
 
 from mpf.core.machine import MachineController
+from mpf.core.logging import LogMixin
 
 
-class Device(object, metaclass=abc.ABCMeta):
+class Device(LogMixin, metaclass=abc.ABCMeta):
 
     """Generic parent class of for every hardware device in a pinball machine."""
 
@@ -24,7 +23,6 @@ class Device(object, metaclass=abc.ABCMeta):
         """
         self.machine = machine
         self.name = name.lower()
-        self.log = logging.getLogger(self.class_label + '.' + self.name)
         self.tags = []
         self.label = None
         self.debug = False
@@ -43,20 +41,6 @@ class Device(object, metaclass=abc.ABCMeta):
             platform_section: Name of the platform section.
         """
         self.platform = self.machine.get_platform_sections(platform_section, self.config['platform'])
-
-        if self.debug:
-            self.log.debug('Platform Driver: %s', self.platform)
-
-    def debug_log(self, msg: str, *args, **kwargs):
-        """Log to debug if debug is enabled for the device.
-
-        Args:
-            msg: Message to log
-            *args: args for debug
-            **kwargs: kwargs for debug
-        """
-        if self.debug:
-            self.log.debug(msg, *args, **kwargs)
 
     @classmethod
     def prepare_config(cls, config: dict, is_mode_config: bool) -> dict:
@@ -83,7 +67,18 @@ class Device(object, metaclass=abc.ABCMeta):
         del is_mode_config
         self.machine.config_validator.validate_config(
             self.config_section, config, self.name, "device")
+
+        self._configure_device_logging(config)
+
         return config
+
+    def _configure_device_logging(self, config):
+        self.configure_logging(self.class_label + '.' + self.name,
+                               config['console_log'],
+                               config['file_log'])
+
+        self.debug_log('Platform Driver: %s', self.platform)
+        self.debug_log("Configuring device with settings: '%s'", config)
 
     def load_config(self, config: dict):
         """Load config.
@@ -96,31 +91,27 @@ class Device(object, metaclass=abc.ABCMeta):
         self.tags = self.config['tags']
         self.label = self.config['label']
 
-        if self.config['debug']:
-            self.enable_debugging()
-            self.log.debug("Configuring device with settings: '%s'", config)
-
     def __repr__(self):
         """Return string representation."""
         return '<{self.class_label}.{self.name}>'.format(self=self)
 
-    def enable_debugging(self):
-        """Enable debug logging."""
-        self.log.debug("Enabling debug logging")
-        self.debug = True
-        self._enable_related_device_debugging()
-
-    def disable_debugging(self):
-        """Disable debug logging."""
-        self.log.debug("Disabling debug logging")
-        self.debug = False
-        self._disable_related_device_debugging()
-
-    def _enable_related_device_debugging(self):
-        pass
-
-    def _disable_related_device_debugging(self):
-        pass
+    # def enable_debugging(self):
+    #     """Enable debug logging."""
+    #     self.debug_log("Enabling debug logging")
+    #     self.debug = True
+    #     self._enable_related_device_debugging()
+    #
+    # def disable_debugging(self):
+    #     """Disable debug logging."""
+    #     self.debug_log("Disabling debug logging")
+    #     self.debug = False
+    #     self._disable_related_device_debugging()
+    #
+    # def _enable_related_device_debugging(self):
+    #     pass
+    #
+    # def _disable_related_device_debugging(self):
+    #     pass
 
     @classmethod
     def get_config_info(cls):

@@ -5,7 +5,7 @@ from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.system_wide_device import SystemWideDevice
 
 
-@DeviceMonitor("_position")
+@DeviceMonitor(_position="position")
 class Servo(SystemWideDevice):
 
     """Represents a servo in a pinball machine.
@@ -36,8 +36,11 @@ class Servo(SystemWideDevice):
         self.hw_servo = self.platform.configure_servo(self.config)
         self._position = self.config['reset_position']
 
-        self.machine.events.add_handler("ball_search_started", self._ball_search_start)
-        self.machine.events.add_handler("ball_search_stopped", self._ball_search_stop)
+        if self.config['include_in_ball_search']:
+            self.machine.events.add_handler("ball_search_started",
+                                            self._ball_search_start)
+            self.machine.events.add_handler("ball_search_stopped",
+                                            self._ball_search_stop)
 
     def reset(self, **kwargs):
         """Go to reset position."""
@@ -65,7 +68,8 @@ class Servo(SystemWideDevice):
 
     def _ball_search_start(self, **kwargs):
         del kwargs
-        # we do not touch self._position during ball search so we can reset to it later
+        # we do not touch self._position during ball search so we can reset to
+        # it later
         self._ball_search_started = True
         self._ball_search_go_to_min()
 

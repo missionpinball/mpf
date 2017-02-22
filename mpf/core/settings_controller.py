@@ -16,6 +16,10 @@ class SettingsController(MpfController):
         _settings(dict[str, SettingEntry]): Available settings
     """
 
+    # needed here so the auto-detection of child classes works
+    module_name = 'SettingsController'
+    config_name = 'settings_controller'
+
     def __init__(self, machine):
         """Initialise settings controller."""
         super().__init__(machine)
@@ -68,12 +72,18 @@ class SettingsController(MpfController):
             raise AssertionError("Invalid setting {}".format(setting_name))
 
         if not self.machine.is_machine_var(self._settings[setting_name].machine_var):
-            return self._settings[setting_name].default
+            value = self._settings[setting_name].default
+        else:
+            value = self.machine.get_machine_var(self._settings[setting_name].machine_var)
 
-        return self.machine.get_machine_var(self._settings[setting_name].machine_var)
+        self.debug_log("Retrieving value: {}={}".format(setting_name, value))
+
+        return value
 
     def set_setting_value(self, setting_name, value):
         """Set the value of a setting."""
+        self.debug_log("New value: {}={}".format(setting_name, value))
+
         if setting_name not in self._settings:
             raise AssertionError("Invalid setting {}".format(setting_name))
 

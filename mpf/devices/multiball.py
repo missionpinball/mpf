@@ -77,12 +77,12 @@ class Multiball(SystemWideDevice, ModeDevice):
             return
 
         if self.balls_live_target > 0:
-            self.log.debug("Cannot start MB because %s are still in play",
+            self.debug_log("Cannot start MB because %s are still in play",
                            self.balls_added_live)
             return
 
         self.shoot_again = True
-        self.log.debug("Starting multiball with %s balls",
+        self.debug_log("Starting multiball with %s balls",
                        self.config['ball_count'])
 
         self._handle_balls_in_play_and_balls_live()
@@ -142,7 +142,7 @@ class Multiball(SystemWideDevice, ModeDevice):
             balls: The number of balls that are being saved.
         '''
 
-        self.log.debug("Ball drained during MB. Requesting a new one")
+        self.debug_log("Ball drained during MB. Requesting a new one")
         self.source_playfield.add_ball(balls=balls_to_safe)
         return {'balls': balls - balls_to_safe}
 
@@ -161,12 +161,12 @@ class Multiball(SystemWideDevice, ModeDevice):
             '''event: multiball_(name)_ended
             desc: The multiball called (name) has just ended.
             '''
-            self.log.debug("Ball drained. MB ended.")
+            self.debug_log("Ball drained. MB ended.")
 
     def stop(self, **kwargs):
         """Stop shoot again."""
         del kwargs
-        self.log.debug("Stopping shoot again of multiball")
+        self.debug_log("Stopping shoot again of multiball")
         self.shoot_again = False
 
         # disable shoot again
@@ -207,7 +207,7 @@ class Multiball(SystemWideDevice, ModeDevice):
             **kwargs: unused
         """
         del kwargs
-        self.log.debug("Enabling...")
+        self.debug_log("Enabling...")
         self.enabled = True
 
     def disable(self, **kwargs):
@@ -219,7 +219,7 @@ class Multiball(SystemWideDevice, ModeDevice):
             **kwargs: unused
         """
         del kwargs
-        self.log.debug("Disabling...")
+        self.debug_log("Disabling...")
         self.enabled = False
 
     def reset(self, **kwargs):

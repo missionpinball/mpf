@@ -47,7 +47,7 @@ class Game(Mode):
         else:
             self._balls_in_play = value
 
-        self.log.debug("Balls in Play change. New value: %s, (Previous: %s)",
+        self.debug_log("Balls in Play change. New value: %s, (Previous: %s)",
                        self._balls_in_play, prev_balls_in_play)
 
         if self._balls_in_play > 0:
@@ -143,7 +143,7 @@ class Game(Mode):
         """
         del player
         del kwargs
-        self.log.info("Player added successfully. Total players: %s",
+        self.info_log("Player added successfully. Total players: %s",
                       self.num_players)
 
         if self.num_players == 2:
@@ -165,15 +165,15 @@ class Game(Mode):
         opportunity to do things before the ball actually starts. Once that
         event is clear, this method calls :meth:`ball_started`.
         """
-        self.log.debug("***************************************************")
-        self.log.debug("****************** BALL STARTING ******************")
-        self.log.debug("**                                               **")
-        self.log.debug("**    Player: {}    Ball: {}   Score: {}".format(
+        self.debug_log("***************************************************")
+        self.debug_log("****************** BALL STARTING ******************")
+        self.debug_log("**                                               **")
+        self.debug_log("**    Player: {}    Ball: {}   Score: {}".format(
                        self.player.number, self.player.ball,
                        self.player.score).ljust(49) + '**')
-        self.log.debug("**                                               **")
-        self.log.debug("***************************************************")
-        self.log.debug("***************************************************")
+        self.debug_log("**                                               **")
+        self.debug_log("***************************************************")
+        self.debug_log("***************************************************")
 
         self.machine.events.post_queue('ball_starting',
                                        balls_remaining=self.machine.config['game']['balls_per_game'] - self.player.ball,
@@ -186,7 +186,7 @@ class Game(Mode):
     def ball_started(self, ev_result=True, **kwargs):
         """Ball started."""
         del kwargs
-        self.log.debug("Game Machine Mode ball_started()")
+        self.debug_log("Game Machine Mode ball_started()")
         """Called when the other modules have approved a ball start.
 
         Mainly used to enable the AutoFire coil rules, like enabling the
@@ -197,7 +197,7 @@ class Game(Mode):
             # todo what happens if this fails? I mean it shouldn't, but if
             # any ball_starting handler returns False, it will fail and we'll
             # be in limbo?
-        self.log.debug("ball_started for Ball %s", self.player.ball)
+        self.debug_log("ball_started for Ball %s", self.player.ball)
 
         # register handlers to watch for ball drain and live ball removed
 
@@ -232,10 +232,10 @@ class Game(Mode):
     def ball_drained(self, balls=0, **kwargs):
         """Ball drained."""
         del kwargs
-        self.log.debug("Entering Game.ball_drained()")
+        self.debug_log("Entering Game.ball_drained()")
 
         if balls:
-            self.log.debug("Processing %s newly-drained ball(s)", balls)
+            self.debug_log("Processing %s newly-drained ball(s)", balls)
             self.balls_in_play -= balls
 
         return {'balls': balls}
@@ -264,7 +264,7 @@ class Game(Mode):
 
         # todo everything below is hard coded temporary
 
-        self.log.debug("Entering Game.ball_ending()")
+        self.debug_log("Entering Game.ball_ending()")
         self.machine.events.post('ball_will_end')
         '''event: ball_will_end
         desc: The ball is about to end. This event is posted just before
@@ -305,7 +305,7 @@ class Game(Mode):
 
         """
         del kwargs
-        self.log.debug("Entering Game.ball_ended()")
+        self.debug_log("Entering Game.ball_ended()")
         if ev_result is False:
             return
 
@@ -334,7 +334,7 @@ class Game(Mode):
         this method calls :meth:`game_end`.
 
         """
-        self.log.debug("Entering Game.game_ending()")
+        self.debug_log("Entering Game.game_ending()")
         self.machine.events.post_queue('game_ending',
                                        callback=self._game_ending_done)
         '''event: game_ending
@@ -360,11 +360,11 @@ class Game(Mode):
 
         """
         del kwargs
-        self.log.debug("Entering Game.game_ended()")
+        self.debug_log("Entering Game.game_ended()")
 
     def award_extra_ball(self):
         """Called when the same player should shoot again."""
-        self.log.debug("Awarded extra ball to Player %s. Shoot Again", self.player.index + 1)
+        self.debug_log("Awarded extra ball to Player %s. Shoot Again", self.player.index + 1)
         self.player.extra_balls -= 1
         self.ball_starting(is_extra_ball=True)
 
@@ -386,18 +386,18 @@ class Game(Mode):
 
         """
         del kwargs
-        self.log.debug("Received request to add player.")
+        self.debug_log("Received request to add player.")
 
         # There area few things we have to check first. If this all passes,
         # then we'll raise the event to ask other modules if it's ok to add a
         # player
 
         if len(self.player_list) >= self.machine.config['game']['max_players']:
-            self.log.debug("Game is at max players. Cannot add another.")
+            self.debug_log("Game is at max players. Cannot add another.")
             return False
 
         if self.player and self.player.ball > 1:  # todo config setting
-            self.log.debug("Current ball is after Ball 1. Cannot add player.")
+            self.debug_log("Current ball is after Ball 1. Cannot add player.")
             return False
 
         result = self.machine.events.post_boolean('player_add_request',
@@ -414,7 +414,7 @@ class Game(Mode):
         # Don't call it directly.
 
         if ev_result is False:
-            self.log.debug("Request to add player has been denied.")
+            self.debug_log("Request to add player has been denied.")
             return False
         else:
             player = Player(self.machine, len(self.player_list))
@@ -558,7 +558,7 @@ class Game(Mode):
         else:  # no current player, grab the first one
             self.player = self.player_list[0]
 
-        self.log.debug("Player rotate: Now up is Player %s",
+        self.debug_log("Player rotate: Now up is Player %s",
                        self.player.number)
 
 # todo player events should come next, including tracking inc/dec, other values

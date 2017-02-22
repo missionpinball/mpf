@@ -1,9 +1,10 @@
 """MPF clock and main loop."""
-import logging
 import asyncio
 from functools import partial
 
 from serial_asyncio import create_serial_connection
+
+from mpf.core.logging import LogMixin
 
 
 class PeriodicTask:
@@ -41,14 +42,24 @@ class PeriodicTask:
         self._canceled = True
 
 
-class ClockBase:
+class ClockBase(LogMixin):
 
     """A clock object with event support."""
 
-    def __init__(self):
+    def __init__(self, machine=None):
         """Initialise clock."""
-        self._log = logging.getLogger("Clock")
-        self._log.debug("Starting tickless clock")
+        self.machine = machine
+
+        # needed since the test clock is setup before the machine
+        if machine:
+            self.configure_logging(
+                'Clock',
+                self.machine.config['logging']['console']['clock'],
+                self.machine.config['logging']['file']['clock'])
+        else:
+            self.configure_logging('Clock', None, None)
+
+        self.debug_log("Starting tickless clock")
         self.loop = self._create_event_loop()
 
     # pylint: disable-msg=no-self-use
@@ -141,8 +152,8 @@ class ClockBase:
         new_callback = partial(callback, None)
         event = self.loop.call_later(delay=timeout, callback=new_callback)
 
-        self._log.debug("Scheduled a one-time clock callback (callback=%s, timeout=%s)",
-                        str(callback), timeout)
+        self.debug_log("Scheduled a one-time clock callback (callback=%s, timeout=%s)",
+                       str(callback), timeout)
 
         return event
 
@@ -161,8 +172,8 @@ class ClockBase:
 
         periodic_task = PeriodicTask(timeout, self.loop, callback)
 
-        self._log.debug("Scheduled a recurring clock callback (callback=%s, timeout=%s)",
-                        str(callback), timeout)
+        self.debug_log("Scheduled a recurring clock callback (callback=%s, timeout=%s)",
+                       str(callback), timeout)
 
         return periodic_task
 

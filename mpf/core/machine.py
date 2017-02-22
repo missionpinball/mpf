@@ -22,10 +22,11 @@ from mpf.core.data_manager import DataManager
 from mpf.core.delays import DelayManager, DelayManagerRegistry
 from mpf.core.device_manager import DeviceCollection
 from mpf.core.utility_functions import Util
+from mpf.core.logging import LogMixin
 
 
 # pylint: disable-msg=too-many-instance-attributes
-class MachineController(object):
+class MachineController(LogMixin):
 
     """Base class for the Machine Controller object.
 
@@ -51,20 +52,19 @@ class MachineController(object):
     """
 
     def __init__(self, mpf_path: str, machine_path: str, options: dict):
-        """Initialise machine controller."""
+        """Initialize machine controller."""
         self.log = logging.getLogger("Machine")
         self.log.info("Mission Pinball Framework Core Engine v%s", __version__)
 
-        self.log.debug("Command line arguments: %s", options)
+        self.log.info("Command line arguments: %s", options)
         self.options = options
 
-        self.log.debug("MPF path: %s", mpf_path)
+        self.log.info("MPF path: %s", mpf_path)
         self.mpf_path = mpf_path
 
         self.log.info("Machine path: %s", machine_path)
         self.machine_path = machine_path
 
-        self.log.debug("Command line arguments: %s", self.options)
         self.verify_system_info()
         self._exception = None
 
@@ -84,19 +84,24 @@ class MachineController(object):
         self.machine_var_data_manager = None
         self.thread_stopper = threading.Event()
 
-        self.delayRegistry = DelayManagerRegistry(self)
-        self.delay = DelayManager(self.delayRegistry)
-
         self.crash_queue = queue.Queue()
 
         self.config = None
         self.events = None
-        self.machine_config = None
+
         self._set_machine_path()
 
         self.config_validator = ConfigValidator(self)
 
         self._load_config()
+        self.machine_config = self.config
+        self.configure_logging(
+            'Machine',
+            self.config['logging']['console']['machine_controller'],
+            self.config['logging']['file']['machine_controller'])
+
+        self.delayRegistry = DelayManagerRegistry(self)
+        self.delay = DelayManager(self.delayRegistry)
 
         self.clock = self._load_clock()
         self._crash_queue_checker = self.clock.schedule_interval(self._check_crash_queue, 1)
@@ -140,7 +145,7 @@ class MachineController(object):
 
     # pylint: disable-msg=no-self-use
     def _load_clock(self):  # pragma: no cover
-        clock = ClockBase()
+        clock = ClockBase(self)
         clock.loop.set_exception_handler(self._exception_handler)
         return clock
 
@@ -239,10 +244,10 @@ class MachineController(object):
 
     def _register_plugin_config_players(self):
 
-        self.log.debug("Registering Plugin Config Players")
+        self.debug_log("Registering Plugin Config Players")
         for entry_point in iter_entry_points(group='mpf.config_player',
                                              name=None):
-            self.log.debug("Registering %s", entry_point)
+            self.debug_log("Registering %s", entry_point)
             entry_point.load()(self)
 
     def create_data_manager(self, config_name):     # pragma: no cover
@@ -283,8 +288,6 @@ class MachineController(object):
             self.stop()
 
     def _set_machine_path(self):
-        self.log.debug("Machine path: %s", self.machine_path)
-
         # Add the machine folder to sys.path so we can import modules from it
         sys.path.insert(0, self.machine_path)
 
@@ -337,7 +340,6 @@ class MachineController(object):
                                           ConfigProcessor.load_config_file(
                                               config_file,
                                               config_type='machine'))
-            self.machine_config = self.config
 
         if self.options['create_config_cache']:
             self._cache_config()
@@ -353,7 +355,6 @@ class MachineController(object):
 
             try:
                 self.config = pickle.load(f)
-                self.machine_config = self.config
 
             # unfortunately pickle can raise all kinds of exceptions and we dont want to crash on corrupted cache
             # pylint: disable-msg=broad-except
@@ -406,16 +407,20 @@ class MachineController(object):
                                  .format(python_version[0], python_version[1],
                                          python_version[2]))
 
-        self.log.debug("Python version: %s.%s.%s", python_version[0],
-                       python_version[1], python_version[2])
-        self.log.debug("Platform: %s", sys.platform)
-        self.log.debug("Python executable location: %s", sys.executable)
-        self.log.debug("32-bit Python? %s", sys.maxsize < 2**32)
+        self.log.info("Platform: %s", sys.platform)
+        self.log.info("Python executable location: %s", sys.executable)
+
+        if sys.maxsize < 2**32:
+            self.log.info("Python version: %s.%s.%s (32-bit)", python_version[0],
+                          python_version[1], python_version[2])
+        else:
+            self.log.info("Python version: %s.%s.%s (64-bit)", python_version[0],
+                          python_version[1], python_version[2])
 
     def _load_core_modules(self):
-        self.log.debug("Loading core modules...")
+        self.debug_log("Loading core modules...")
         for name, module in self.config['mpf']['core_modules'].items():
-            self.log.debug("Loading '%s' core module", module)
+            self.debug_log("Loading '%s' core module", module)
             m = Util.string_to_class(module)(self)
             setattr(self, name, m)
 
@@ -431,7 +436,7 @@ class MachineController(object):
             self.set_default_platform(self.options['force_platform'])
 
     def _load_plugins(self):
-        self.log.debug("Loading plugins...")
+        self.debug_log("Loading plugins...")
 
         # TODO: This should be cleaned up. Create a Plugins base class and
         # classmethods to determine if the plugins should be used.
@@ -439,7 +444,7 @@ class MachineController(object):
         for plugin in Util.string_to_list(
                 self.config['mpf']['plugins']):
 
-            self.log.debug("Loading '%s' plugin", plugin)
+            self.debug_log("Loading '%s' plugin", plugin)
 
             plugin_obj = Util.string_to_class(plugin)(self)
             self.plugins.append(plugin_obj)
@@ -448,11 +453,11 @@ class MachineController(object):
         if 'scriptlets' in self.config:
             self.config['scriptlets'] = self.config['scriptlets'].split(' ')
 
-            self.log.debug("Loading scriptlets...")
+            self.debug_log("Loading scriptlets...")
 
             for scriptlet in self.config['scriptlets']:
 
-                self.log.debug("Loading '%s' scriptlet", scriptlet)
+                self.debug_log("Loading '%s' scriptlet", scriptlet)
 
                 scriptlet_obj = Util.string_to_class(self.config['mpf']['paths']['scriptlets'] + "." + scriptlet)(
                     machine=self,
@@ -469,7 +474,7 @@ class MachineController(object):
 
         Note: This method is not yet implemented.
         """
-        self.log.debug('Resetting...')
+        self.debug_log('Resetting...')
         self.events.process_event_queue()
         self.events.post('machine_reset_phase_1')
         '''Event: machine_reset_phase_1
@@ -504,7 +509,7 @@ class MachineController(object):
 
         '''
         self.events.process_event_queue()
-        self.log.debug('Reset Complete')
+        self.debug_log('Reset Complete')
         self._reset_complete()
 
     def add_platform(self, name):
@@ -536,7 +541,7 @@ class MachineController(object):
         """
         try:
             self.default_platform = self.hardware_platforms[name]
-            self.log.debug("Setting default platform to '%s'", name)
+            self.debug_log("Setting default platform to '%s'", name)
         except KeyError:
             raise AssertionError("Cannot set default platform to '{}', as that's not"
                                  " a currently active platform".format(name))
@@ -569,7 +574,7 @@ class MachineController(object):
 
     def run(self):
         """Start the main machine run loop."""
-        self.log.debug("Starting the main run loop.")
+        self.info_log("Starting the main run loop.")
 
         self._run_loop()
 
@@ -629,7 +634,7 @@ class MachineController(object):
         pass
 
     def _reset_complete(self):
-        self.log.debug('Reset Complete')
+        self.debug_log('Reset Complete')
         self.events.post('reset_complete')
         '''event: reset_complete
 
@@ -672,7 +677,7 @@ class MachineController(object):
 
                 self.machine_var_data_manager.save_key(name, disk_var)
 
-            self.log.debug("Setting machine_var '%s' to: %s, (prior: %s, "
+            self.debug_log("Setting machine_var '%s' to: %s, (prior: %s, "
                            "change: %s)", name, value, prev_value,
                            change)
             self.events.post('machine_var_' + name,
@@ -807,7 +812,7 @@ class MachineController(object):
         if self.is_init_done:
             raise AssertionError("Clearing hold after init_done")
         self._boot_holds.remove(hold)
-        self.log.debug('Clearing boot hold %s. Holds remaining: %s', hold, self._boot_holds)
+        self.debug_log('Clearing boot hold %s. Holds remaining: %s', hold, self._boot_holds)
         if not self._boot_holds:
             self.init_done()
 

@@ -6,7 +6,7 @@ from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
 
 
-@DeviceMonitor("saves_remaining", "enabled", "timer_started")
+@DeviceMonitor("saves_remaining", "enabled", "timer_started", "state")
 class BallSave(SystemWideDevice, ModeDevice):
 
     """Ball save device which will give back the ball within a certain time."""
@@ -25,6 +25,8 @@ class BallSave(SystemWideDevice, ModeDevice):
         self.enabled = False
         self.timer_started = False
         self.saves_remaining = 0
+        self.early_saved = 0
+        self.state = 'disabled'
 
     def _initialize(self):
         self.unlimited_saves = self.config['balls_to_save'] == -1
@@ -56,8 +58,10 @@ class BallSave(SystemWideDevice, ModeDevice):
             return
 
         self.saves_remaining = self.config['balls_to_save']
+        self.early_saved = 0
         self.enabled = True
-        self.log.debug("Enabling. Auto launch: %s, Balls to save: %s",
+        self.state = 'enabled'
+        self.debug_log("Enabling. Auto launch: %s, Balls to save: %s",
                        self.config['auto_launch'],
                        self.config['balls_to_save'])
 
@@ -82,8 +86,9 @@ class BallSave(SystemWideDevice, ModeDevice):
             return
 
         self.enabled = False
+        self.state = 'disabled'
         self.timer_started = False
-        self.log.debug("Disabling...")
+        self.debug_log("Disabling...")
         self.machine.events.remove_handler(self._ball_drain_while_active)
         self.delay.remove('disable')
         self.delay.remove('hurry_up')
@@ -112,7 +117,7 @@ class BallSave(SystemWideDevice, ModeDevice):
 
         if self.config['active_time'] > 0:
             if self.debug:
-                self.log.debug('Starting ball save timer: %ss',
+                self.debug_log('Starting ball save timer: %ss',
                                self.config['active_time'] / 1000.0)
 
             self.delay.add(name='disable',
@@ -129,7 +134,9 @@ class BallSave(SystemWideDevice, ModeDevice):
 
     def _hurry_up(self):
         if self.debug:
-            self.log.debug("Starting Hurry Up")
+            self.debug_log("Starting Hurry Up")
+
+        self.state = 'hurry_up'
 
         self.machine.events.post('ball_save_{}_hurry_up'.format(self.name))
         '''event: ball_save_(name)_hurry_up
@@ -138,7 +145,9 @@ class BallSave(SystemWideDevice, ModeDevice):
 
     def _grace_period(self):
         if self.debug:
-            self.log.debug("Starting Grace Period")
+            self.debug_log("Starting Grace Period")
+
+        self.state = 'grace_period'
 
         self.machine.events.post('ball_save_{}_grace_period'.format(self.name))
         '''event: ball_save_(name)_grace_period
@@ -146,11 +155,7 @@ class BallSave(SystemWideDevice, ModeDevice):
             time.
         '''
 
-    def _ball_drain_while_active(self, balls, **kwargs):
-        del kwargs
-        if balls <= 0:
-            return
-
+    def _get_number_of_balls_to_save(self, available_balls):
         no_balls_in_play = False
 
         try:
@@ -158,17 +163,20 @@ class BallSave(SystemWideDevice, ModeDevice):
                 no_balls_in_play = True
 
             if self.config['only_last_ball'] and self.machine.game.balls_in_play > 1:
-                self.log.debug("Will only save last ball but %s are in play.", self.machine.game.balls_in_play)
-                return
+                self.debug_log("Will only save last ball but %s are in play.", self.machine.game.balls_in_play)
+                return 0
         except AttributeError:
             no_balls_in_play = True
 
         if no_balls_in_play:
-            self.log.debug("Received request to save ball, but no balls are in"
+            self.debug_log("Received request to save ball, but no balls are in"
                            " play. Discarding request.")
-            return
+            return 0
 
-        balls_to_save = balls
+        balls_to_save = available_balls
+
+        if self.config['only_last_ball'] and balls_to_save > 1:
+            balls_to_save = 1
 
         if balls_to_save > self.machine.game.balls_in_play:
             balls_to_save = self.machine.game.balls_in_play
@@ -176,33 +184,81 @@ class BallSave(SystemWideDevice, ModeDevice):
         if balls_to_save > self.saves_remaining and not self.unlimited_saves:
             balls_to_save = self.saves_remaining
 
-        self.log.debug("Ball(s) drained while active. Requesting new one(s). "
+        return balls_to_save
+
+    def _reduce_remaining_saves_and_disable_if_zero(self, balls_to_save):
+        if not self.unlimited_saves:
+            self.saves_remaining -= balls_to_save
+            if self.debug:
+                self.debug_log("Saves remaining: %s", self.saves_remaining)
+        elif self.debug:
+            self.debug_log("Unlimited saves remaining")
+
+        if self.saves_remaining <= 0 and not self.unlimited_saves:
+            if self.debug:
+                self.debug_log("Disabling since there are no saves remaining")
+            self.disable()
+
+    def _ball_drain_while_active(self, balls, **kwargs):
+        del kwargs
+        if balls <= 0:
+            return
+
+        balls_to_save = self._get_number_of_balls_to_save(balls)
+
+        self.debug_log("Ball(s) drained while active. Requesting new one(s). "
                        "Autolaunch: %s", self.config['auto_launch'])
 
         self.machine.events.post('ball_save_{}_saving_ball'.format(self.name),
-                                 balls=balls_to_save)
+                                 balls=balls_to_save, early_save=False)
         '''event: ball_save_(name)_saving_ball
         desc: The ball save called (name) has just saved one (or more) balls.
 
         args:
             balls: The number of balls this ball saver is saving.
+            early_save: True if this is an early ball save.
         '''
 
         self._schedule_balls(balls_to_save)
 
-        if not self.unlimited_saves:
-            self.saves_remaining -= balls_to_save
-            if self.debug:
-                self.log.debug("Saves remaining: %s", self.saves_remaining)
-        elif self.debug:
-            self.log.debug("Unlimited saves remaining")
-
-        if self.saves_remaining <= 0 and not self.unlimited_saves:
-            if self.debug:
-                self.log.debug("Disabling since there are no saves remaining")
-            self.disable()
+        self._reduce_remaining_saves_and_disable_if_zero(balls_to_save)
 
         return {'balls': balls - balls_to_save}
+
+    def early_ball_save(self, **kwargs):
+        """Perform early ball save if enabled."""
+        del kwargs
+        if not self.enabled:
+            return
+
+        if not self._get_number_of_balls_to_save(1):
+            return
+
+        if self.early_saved > 0:
+            self.debug_log("Already performed an early ball save. Ball needs to drain first.")
+            return
+
+        self.machine.events.post('ball_save_{}_saving_ball'.format(self.name),
+                                 balls=1, early_save=True)
+        # doc block above
+
+        self.debug_log("Performing early ball save.")
+        self.early_saved += 1
+        self._schedule_balls(1)
+        self.machine.events.add_handler('ball_drain',
+                                        self._early_ball_save_drain_handler,
+                                        priority=1001)
+
+        self._reduce_remaining_saves_and_disable_if_zero(1)
+
+    def _early_ball_save_drain_handler(self, balls, **kwargs):
+        del kwargs
+        if self.early_saved and balls > 0:
+            balls -= 1
+            self.early_saved -= 1
+            self.debug_log("Early saved ball drained.")
+            self.machine.events.remove_handler(self._early_ball_save_drain_handler)
+            return {'balls': balls}
 
     def _schedule_balls(self, balls_to_save):
         if self.config['eject_delay']:
@@ -219,6 +275,6 @@ class BallSave(SystemWideDevice, ModeDevice):
         """Disable ball save when mode ends."""
         del mode
         if self.debug:
-            self.log.debug("Removing...")
+            self.debug_log("Removing...")
 
         self.disable()
