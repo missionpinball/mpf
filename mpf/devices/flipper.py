@@ -56,8 +56,7 @@ class Flipper(SystemWideDevice):
                                                  self.config['eos_switch_overwrite'],
                                                  False)
 
-        if self.debug:
-            self.debug_log('Platform Driver: %s', self.platform)
+        self.debug_log('Platform Driver: %s', self.platform)
 
         if self.config['power_setting_name']:
             self.machine.events.add_handler("machine_var_{}".format(self.config['power_setting_name']),

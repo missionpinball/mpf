@@ -68,7 +68,7 @@ class LedGroup(SystemWideDevice):
         else:
             led_config['number'] = index
         led_config['tags'].append(self.name)
-        led_config['debug'] = self.debug
+        # led_config['debug'] = self.debug
         led_config['x'] = x
         led_config['y'] = y
         led_config = led.validate_and_parse_config(led_config, False)

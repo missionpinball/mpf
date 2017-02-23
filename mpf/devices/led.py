@@ -194,11 +194,10 @@ class Led(SystemWideDevice):
             self.default_fade_ms = (self.machine.config['led_settings']
                                     ['default_led_fade_ms'])
 
-        if self.debug:
-            self.debug_log("Initializing LED. Platform: %s, CC Profile: %s, "
-                           "Default fade: %sms", self.platform,
-                           self._color_correction_profile,
-                           self.default_fade_ms)
+        self.debug_log("Initializing LED. Platform: %s, CC Profile: %s, "
+                       "Default fade: %sms", self.platform,
+                       self._color_correction_profile,
+                       self.default_fade_ms)
 
     def set_color_correction_profile(self, profile):
         """Apply a color correction profile to this LED.
@@ -233,10 +232,9 @@ class Led(SystemWideDevice):
                 color. When a mode ends, entries from the stack with that mode
                 will automatically be removed.
         """
-        if self.debug:
-            self.debug_log("Received color() command. color: %s, fade_ms: %s"
-                           "priority: %s, key: %s", color, fade_ms, priority,
-                           key)
+        self.debug_log("Received color() command. color: %s, fade_ms: %s"
+                       "priority: %s, key: %s", color, fade_ms, priority,
+                       key)
 
         if not isinstance(color, RGBColor):
             color = RGBColor(color)
@@ -245,10 +243,9 @@ class Led(SystemWideDevice):
             fade_ms = self.default_fade_ms
 
         if priority < self._get_priority_from_key(key):
-            if self.debug:
-                self.debug_log("Incoming priority is lower than an existing "
-                               "stack item with the same key. Not adding to "
-                               "stack.")
+            self.debug_log("Incoming priority is lower than an existing "
+                           "stack item with the same key. Not adding to "
+                           "stack.")
 
             return
 
@@ -278,15 +275,14 @@ class Led(SystemWideDevice):
 
         self.stack.sort(key=itemgetter('priority', 'start_time'), reverse=True)
 
-        if self.debug:
-            self.debug_log("+-------------- Adding to stack ----------------+")
-            self.debug_log("priority: %s", priority)
-            self.debug_log("start_time: %s", self.machine.clock.get_time())
-            self.debug_log("start_color: %s", curr_color)
-            self.debug_log("dest_time: %s", dest_time)
-            self.debug_log("dest_color: %s", color)
-            self.debug_log("color: %s", new_color)
-            self.debug_log("key: %s", key)
+        self.debug_log("+-------------- Adding to stack ----------------+")
+        self.debug_log("priority: %s", priority)
+        self.debug_log("start_time: %s", self.machine.clock.get_time())
+        self.debug_log("start_color: %s", curr_color)
+        self.debug_log("dest_time: %s", dest_time)
+        self.debug_log("dest_color: %s", color)
+        self.debug_log("color: %s", new_color)
+        self.debug_log("key: %s", key)
 
         Led.leds_to_update.add(self)
 
@@ -294,8 +290,7 @@ class Led(SystemWideDevice):
         """Remove all entries from the stack and resets this LED to 'off'."""
         self.stack[:] = []
 
-        if self.debug:
-            self.debug_log("Clearing Stack")
+        self.debug_log("Clearing Stack")
 
         Led.leds_to_update.add(self)
 
@@ -310,8 +305,7 @@ class Led(SystemWideDevice):
         were removed, the LED will be updated with whatever's below it. If no
         settings remain after these are removed, the LED will turn off.
         """
-        if self.debug:
-            self.debug_log("Removing key '%s' from stack", key)
+        self.debug_log("Removing key '%s' from stack", key)
 
         self.stack[:] = [x for x in self.stack if x['key'] != key]
         Led.leds_to_update.add(self)
@@ -326,8 +320,7 @@ class Led(SystemWideDevice):
         were removed, the LED will be updated with whatever's below it. If no
         settings remain after these are removed, the LED will turn off.
         """
-        if self.debug:
-            self.debug_log("Removing mode '%s' from stack", mode)
+        self.debug_log("Removing mode '%s' from stack", mode)
 
         self.stack[:] = [x for x in self.stack if x['mode'] != mode]
         Led.leds_to_update.add(self)
@@ -388,8 +381,7 @@ class Led(SystemWideDevice):
 
             self._color = list(self.stack[0]['color'])
             self._corrected_color = corrected_color
-            if self.debug:
-                self.debug_log("Writing color to hw driver: %s", corrected_color)
+            self.debug_log("Writing color to hw driver: %s", corrected_color)
 
             reordered_color = self._get_color_channels_for_hw(corrected_color)
 
@@ -455,11 +447,10 @@ class Led(SystemWideDevice):
             return color
         else:
 
-            if self.debug:
-                self.debug_log("Applying color correction: %s (applied "
-                               "'%s' color correction profile)",
-                               self._color_correction_profile.apply(color),
-                               self._color_correction_profile.name)
+            self.debug_log("Applying color correction: %s (applied "
+                           "'%s' color correction profile)",
+                           self._color_correction_profile.apply(color),
+                           self._color_correction_profile.name)
 
             return self._color_correction_profile.apply(color)
 
@@ -490,8 +481,7 @@ class Led(SystemWideDevice):
     def _setup_fade(self):
         self.fade_in_progress = True
 
-        if self.debug:
-            self.debug_log("Setting up the fade task")
+        self.debug_log("Setting up the fade task")
 
         Led.leds_to_fade.add(self)
 
@@ -522,8 +512,7 @@ class Led(SystemWideDevice):
         except ZeroDivisionError:
             ratio = 1.0
 
-        if self.debug:
-            self.debug_log("Fade task, ratio: %s", ratio)
+        self.debug_log("Fade task, ratio: %s", ratio)
 
         if ratio >= 1.0:  # fade is done
             self._end_fade()
@@ -546,5 +535,4 @@ class Led(SystemWideDevice):
         self.fade_in_progress = False
         Led.leds_to_fade.remove(self)
 
-        if self.debug:
-            self.debug_log("Stopping fade task")
+        self.debug_log("Stopping fade task")

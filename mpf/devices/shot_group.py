@@ -31,12 +31,6 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         # todo remove this hack
         self._created_system_wide = False
 
-        # If debug is enabled for this shot group, enable debug
-        # for all the member shots too.
-        if self.debug:
-            for shot in self.config['shots']:
-                shot.debug = True
-
         self.mode_config = {}
 
     def _get_mode_config(self, mode):
@@ -363,15 +357,14 @@ class ShotGroup(ModeDevice, SystemWideDevice):
             shot_state_list.append(
                 (shot.player[shot.get_profile_by_key('mode', mode)['settings']['player_variable']], current_show_step))
 
-        if self.debug:
-            self.debug_log('Rotating. Mode: %s, Direction: %s, Include states:'
-                           ' %s, Exclude states: %s, Shots to be rotated: %s',
-                           mode, direction, states,
-                           exclude_states, [x.name for x in shot_list])
+        self.debug_log('Rotating. Mode: %s, Direction: %s, Include states:'
+                       ' %s, Exclude states: %s, Shots to be rotated: %s',
+                       mode, direction, states,
+                        exclude_states, [x.name for x in shot_list])
 
-            for shot in shot_list:
-                shot.log.debug("This shot is part of a rotation event. Current"
-                               " state: %s", shot.get_profile_by_key('mode', mode)['current_state_name'])
+        for shot in shot_list:
+            shot.debug_log("This shot is part of a rotation event. Current"
+                           " state: %s", shot.get_profile_by_key('mode', mode)['current_state_name'])
 
         # figure out which direction we're going to rotate
         if not direction:

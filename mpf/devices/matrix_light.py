@@ -180,19 +180,17 @@ class MatrixLight(SystemWideDevice):
         """
         del kwargs
 
-        if self.debug:
-            self.debug_log("Received on() command. brightness: %s, fade_ms: %s"
-                           "priority: %s, key: %s", brightness, fade_ms,
-                           priority, key)
+        self.debug_log("Received on() command. brightness: %s, fade_ms: %s"
+                       "priority: %s, key: %s", brightness, fade_ms,
+                       priority, key)
 
         if fade_ms is None:
             fade_ms = self.default_fade_ms
 
         if priority < self._get_priority_from_key(key):
-            if self.debug:
-                self.debug_log("Incoming priority is lower than an existing "
-                               "stack item with the same key. Not adding to "
-                               "stack.")
+            self.debug_log("Incoming priority is lower than an existing "
+                           "stack item with the same key. Not adding to "
+                           "stack.")
 
             return
 
@@ -222,15 +220,14 @@ class MatrixLight(SystemWideDevice):
 
         self.stack.sort(key=itemgetter('priority', 'start_time'), reverse=True)
 
-        if self.debug:
-            self.debug_log("+-------------- Adding to stack ----------------+")
-            self.debug_log("priority: %s", priority)
-            self.debug_log("start_time: %s", self.machine.clock.get_time())
-            self.debug_log("start_brightness: %s", curr_brightness)
-            self.debug_log("dest_time: %s", dest_time)
-            self.debug_log("dest_brightness: %s", brightness)
-            self.debug_log("brightness: %s", new_brightness)
-            self.debug_log("key: %s", key)
+        self.debug_log("+-------------- Adding to stack ----------------+")
+        self.debug_log("priority: %s", priority)
+        self.debug_log("start_time: %s", self.machine.clock.get_time())
+        self.debug_log("start_brightness: %s", curr_brightness)
+        self.debug_log("dest_time: %s", dest_time)
+        self.debug_log("dest_brightness: %s", brightness)
+        self.debug_log("brightness: %s", new_brightness)
+        self.debug_log("key: %s", key)
 
         MatrixLight.lights_to_update.add(self)
 
@@ -238,8 +235,7 @@ class MatrixLight(SystemWideDevice):
         """Remove all entries from the stack and resets this light to 'off'."""
         self.stack[:] = []
 
-        if self.debug:
-            self.debug_log("Clearing Stack")
+        self.debug_log("Clearing Stack")
 
         MatrixLight.lights_to_update.add(self)
 
@@ -254,8 +250,7 @@ class MatrixLight(SystemWideDevice):
         were removed, the light will be updated with whatever's below it. If no
         settings remain after these are removed, the light will turn off.
         """
-        if self.debug:
-            self.debug_log("Removing key '%s' from stack", key)
+        self.debug_log("Removing key '%s' from stack", key)
 
         self.stack[:] = [x for x in self.stack if x['key'] != key]
         MatrixLight.lights_to_update.add(self)
@@ -270,8 +265,7 @@ class MatrixLight(SystemWideDevice):
         were removed, the light will be updated with whatever's below it. If no
         settings remain after these are removed, the light will turn off.
         """
-        if self.debug:
-            self.debug_log("Removing mode '%s' from stack", mode)
+        self.debug_log("Removing mode '%s' from stack", mode)
 
         self.stack[:] = [x for x in self.stack if x['mode'] != mode]
         MatrixLight.lights_to_update.add(self)
@@ -393,8 +387,7 @@ class MatrixLight(SystemWideDevice):
 
         self.fade_in_progress = True
 
-        if self.debug:
-            self.debug_log("Setting up the fade task")
+        self.debug_log("Setting up the fade task")
 
         MatrixLight.lights_to_fade.add(self)
 
@@ -431,8 +424,7 @@ class MatrixLight(SystemWideDevice):
         except ZeroDivisionError:
             ratio = 1.0
 
-        if self.debug:
-            self.debug_log("Fade task, ratio: %s", ratio)
+        self.debug_log("Fade task, ratio: %s", ratio)
 
         if ratio >= 1.0:  # fade is done
             self._end_fade()
@@ -456,5 +448,4 @@ class MatrixLight(SystemWideDevice):
         self.fade_in_progress = False
         MatrixLight.lights_to_fade.remove(self)
 
-        if self.debug:
-            self.debug_log("Stopping fade task")
+        self.debug_log("Stopping fade task")

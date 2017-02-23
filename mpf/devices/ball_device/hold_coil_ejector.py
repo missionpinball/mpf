@@ -53,9 +53,8 @@ class HoldCoilEjector(BallDeviceEjector):
 
     def _enable_hold_coil(self):
         self.ball_device.config['hold_coil'].enable()
-        if self.ball_device.debug:
-            self.ball_device.log.debug("Enabling hold coil. New "
-                                       "balls: %s.", self.ball_device.balls)
+        self.ball_device.debug_log("Enabling hold coil. New "
+                                   "balls: %s.", self.ball_device.balls)
 
     def _hold_release_done(self):
         self.hold_release_in_progress = False
