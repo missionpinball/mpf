@@ -3,11 +3,12 @@
 import logging
 
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
+from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 
 from mpf.core.platform import ServoPlatform, MatrixLightsPlatform, GiPlatform, LedPlatform, \
-    SwitchPlatform, DriverPlatform, AccelerometerPlatform, I2cPlatform, DmdPlatform, RgbDmdPlatform
+    SwitchPlatform, DriverPlatform, AccelerometerPlatform, I2cPlatform, DmdPlatform, RgbDmdPlatform, LightsPlatform
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
@@ -16,8 +17,8 @@ from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInt
 from mpf.core.rgb_color import RGBColor
 
 
-class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, MatrixLightsPlatform, GiPlatform,
-                       LedPlatform, SwitchPlatform, DriverPlatform, DmdPlatform, RgbDmdPlatform):
+class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, LightsPlatform, SwitchPlatform,
+                       DriverPlatform, DmdPlatform, RgbDmdPlatform):
 
     """Base class for the virtual hardware platform."""
 
@@ -35,6 +36,7 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
         self.features['tickless'] = True
         self._next_driver = 1000
         self._next_switch = 1000
+        self._next_light = 1000
 
     def __repr__(self):
         """Return string representation."""
@@ -166,17 +168,35 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
         """Configure accelerometer."""
         pass
 
-    def configure_matrixlight(self, config):
-        """Configure matrix light."""
-        return VirtualMatrixLight(config['number'])
+    def configure_light(self, number, platform_settings):
+        return VirtualLight(number, platform_settings)
 
-    def configure_led(self, config, channels):
-        """Configure led."""
-        return VirtualLED(config['number'])
+    def parse_light_number_to_channels(self, number: str, subtype: str):
+        """Parse channel str to a list of channels."""
+        if number is None:
+            number = self._next_light
+            self._next_light += 1
+        if subtype in ("gi", "matrix"):
 
-    def configure_gi(self, config):
-        """Configure GI."""
-        return VirtualGI(config['number'])
+            return {
+                "white": {
+                    "number": str(number)
+                }
+            }
+        elif subtype == "led" or not subtype:
+            return {
+                "red": {
+                    "number": str(number) + "-r",
+                },
+                "green": {
+                    "number": str(number) + "-g",
+                },
+                "blue": {
+                    "number": str(number) + "-b",
+                }
+            }
+        else:
+            raise AssertionError("Unknown subtype {}".format(subtype))
 
     def clear_hw_rule(self, switch, coil):
         """Clear hw rule."""
@@ -269,19 +289,19 @@ class VirtualMatrixLight(MatrixLightPlatformInterface):
         self.current_brightness = 0
 
 
-class VirtualLED(RGBLEDPlatformInterface):
+class VirtualLight(LightPlatformInterface):
 
-    """Virtual LED."""
+    """Virtual Light."""
 
-    def __init__(self, number):
+    def __init__(self, number, settings):
         """Initialise LED."""
-        self.log = logging.getLogger('VirtualLED')
+        self.settings = settings
         self.number = number
-        self.current_color = list(RGBColor().rgb)
+        self.current_brightness = 0
 
-    def color(self, color):
-        """Set color."""
-        self.current_color = color
+    def set_brightness(self, brightness: float, fade_ms: int):
+        """Set brightness."""
+        self.current_brightness = brightness
 
 
 class VirtualGI(GIPlatformInterface):

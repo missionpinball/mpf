@@ -300,13 +300,19 @@ class MpfTestCase(unittest.TestCase):
         self.assertIn(name, self.machine.switch_controller.switches, "Switch {} does not exist.".format(name))
         self.assertEqual(state, self.machine.switch_controller.is_active(name))
 
-    def assertLedColor(self, led_name, color):
+    def assertLightChannel(self, light_name, brightness, channel="white"):
+        self.assertEqual(brightness, self.machine.lights[light_name].hw_drivers[channel].
+                         current_brightness)
+
+    def assertLightColor(self, light_name, color):
         if isinstance(color, str) and color.lower() == 'on':
-            color = self.machine.leds[led_name].config['default_color']
+            color = self.machine.lights[light_name].config['default_on_color']
 
-        self.assertEqual(list(RGBColor(color).rgb), self.machine.leds[led_name].hw_driver.current_color)
+        self.assertEqual(RGBColor(color).red, self.machine.lights[light_name].hw_drivers["red"].current_brightness)
+        self.assertEqual(RGBColor(color).green, self.machine.lights[light_name].hw_drivers["green"].current_brightness)
+        self.assertEqual(RGBColor(color).blue, self.machine.lights[light_name].hw_drivers["blue"].current_brightness)
 
-    def assertLedColors(self, led_name, color_list, secs=1, check_delta=.1):
+    def assertLightColors(self, light_name, color_list, secs=1, check_delta=.1):
         colors = list()
 
         # have to do it this weird way because `if 'on' in color_list:` doesn't
@@ -314,11 +320,15 @@ class MpfTestCase(unittest.TestCase):
         for color in color_list[:]:
             if isinstance(color, str) and color.lower() == 'on':
                 color_list.remove('on')
-                color_list.append(self.machine.leds[led_name].config['default_color'])
+                color_list.append(self.machine.lights[light_name].config['default_on_color'])
                 break
 
         for x in range(int(secs / check_delta)):
-            colors.append(RGBColor(self.machine.leds[led_name].hw_driver.current_color))
+            color = RGBColor()
+            color.red = self.machine.leds[light_name].hw_drivers["red"].current_brightness
+            color.green = self.machine.leds[light_name].hw_drivers["green"].current_brightness
+            color.blue = self.machine.leds[light_name].hw_drivers["blue"].current_brightness
+            colors.append(color)
             self.advance_time_and_run(check_delta)
 
         for color in color_list:

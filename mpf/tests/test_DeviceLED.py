@@ -1,7 +1,6 @@
 """Test the LED device."""
-from mpf.devices.led import Led
-
 from mpf.core.rgb_color import RGBColor
+from mpf.devices.light import Light
 from mpf.tests.MpfTestCase import MpfTestCase
 
 
@@ -14,13 +13,13 @@ class TestLed(MpfTestCase):
         return 'tests/machine_files/led/'
 
     def _synchronise_led_update(self):
-        ts = Led._updater_task.get_next_call_time()
+        ts = Light._updater_task.get_next_call_time()
         self.assertTrue(ts)
         self.advance_time_and_run(ts - self.machine.clock.get_time())
         self.advance_time_and_run(.01)
 
     def test_color_and_stack(self):
-        led1 = self.machine.leds.led1
+        led1 = self.machine.lights.led1
 
         self._synchronise_led_update()
 
@@ -30,8 +29,7 @@ class TestLed(MpfTestCase):
         # need to advance time since LEDs are updated once per frame via a
         # clock.schedule_interval
         self.advance_time_and_run()
-        self.assertEqual(list(RGBColor('red').rgb),
-                         self.machine.leds.led1.hw_driver.current_color)
+        self.assertLightColor("led1", "red")
 
         color_setting = led1.stack[0]
         self.assertEqual(color_setting['priority'], 0)
@@ -47,8 +45,7 @@ class TestLed(MpfTestCase):
         # set to blue & test
         led1.color('blue')
         self.advance_time_and_run()
-        self.assertEqual(list(RGBColor('blue').rgb),
-                         self.machine.leds.led1.hw_driver.current_color)
+        self.assertLightColor("led1", "blue")
         color_setting = led1.stack[0]
         self.assertEqual(color_setting['priority'], 0)
         self.assertEqual(color_setting['start_color'], RGBColor('red'))
@@ -64,8 +61,7 @@ class TestLed(MpfTestCase):
         led1.color('green', priority=100)
 
         self.advance_time_and_run()
-        self.assertEqual(list(RGBColor('green').rgb),
-                         self.machine.leds.led1.hw_driver.current_color)
+        self.assertLightColor("led1", "green")
         self.assertEqual(len(led1.stack), 1)
         color_setting = led1.stack[0]
         self.assertEqual(color_setting['priority'], 100)
@@ -80,8 +76,7 @@ class TestLed(MpfTestCase):
         led1.color('orange', key='test')
 
         self.advance_time_and_run()
-        self.assertEqual(list(RGBColor('green').rgb),
-                         self.machine.leds.led1.hw_driver.current_color)
+        self.assertLightColor("led1", "green")
         self.assertEqual(len(led1.stack), 2)
         color_setting = led1.stack[0]
         self.assertEqual(color_setting['priority'], 100)
@@ -102,23 +97,19 @@ class TestLed(MpfTestCase):
         # test the stack ordering with different priorities & keys
         led1.color('red', priority=200, key='red')
         self.advance_time_and_run()
-        self.assertEqual(list(RGBColor('red').rgb),
-                         self.machine.leds.led1.hw_driver.current_color)
+        self.assertLightColor("led1", "red")
 
         led1.color('blue', priority=300, key='blue')
         self.advance_time_and_run()
-        self.assertEqual(list(RGBColor('blue').rgb),
-                         self.machine.leds.led1.hw_driver.current_color)
+        self.assertLightColor("led1", "blue")
 
         led1.color('green', priority=200, key='green')
         self.advance_time_and_run()
-        self.assertEqual(list(RGBColor('blue').rgb),
-                         self.machine.leds.led1.hw_driver.current_color)
+        self.assertLightColor("led1", "blue")
 
         led1.color('orange', priority=100, key='orange')
         self.advance_time_and_run()
-        self.assertEqual(list(RGBColor('blue').rgb),
-                         self.machine.leds.led1.hw_driver.current_color)
+        self.assertLightColor("led1", "blue")
 
         # verify the stack is right
         # order should be priority, then insertion order (recent is higher), so
@@ -131,15 +122,14 @@ class TestLed(MpfTestCase):
         # test that a replacement key slots in properly
         led1.color('red', priority=300, key='red')
         self.advance_time_and_run()
-        self.assertEqual(list(RGBColor('red').rgb),
-                         self.machine.leds.led1.hw_driver.current_color)
+        self.assertLightColor("led1", "red")
         self.assertEqual(RGBColor('red'), led1.stack[0]['color'])
         self.assertEqual(RGBColor('blue'), led1.stack[1]['color'])
         self.assertEqual(RGBColor('green'), led1.stack[2]['color'])
         self.assertEqual(RGBColor('orange'), led1.stack[3]['color'])
 
     def test_fades(self):
-        led1 = self.machine.leds.led1
+        led1 = self.machine.lights.led1
 
         self._synchronise_led_update()
         led1.color('red', fade_ms=2000)
@@ -166,7 +156,7 @@ class TestLed(MpfTestCase):
         self.assertEqual(color_setting['dest_color'], RGBColor('red'))
         self.assertEqual(color_setting['color'], RGBColor((128, 0, 0)))
         self.assertIsNone(color_setting['key'])
-        self.assertEqual([128, 0, 0], self.machine.leds.led1.hw_driver.current_color)
+        self.assertLightColor("led1", [128, 0, 0])
 
         # advance to after the fade is done
         self.advance_time_and_run(2)
@@ -178,21 +168,20 @@ class TestLed(MpfTestCase):
         self.assertEqual(color_setting['dest_color'], RGBColor('red'))
         self.assertEqual(color_setting['color'], RGBColor('red'))
         self.assertIsNone(color_setting['key'])
-        self.assertEqual(list(RGBColor('red').rgb),
-                         self.machine.leds.led1.hw_driver.current_color)
+        self.assertLightColor("led1", "red")
 
-        led = self.machine.leds.led4
+        led = self.machine.lights.led4
         self.assertEqual(1000, led.default_fade_ms)
         self._synchronise_led_update()
         led.color('white')
         self.advance_time_and_run(.02)
         self.advance_time_and_run(.5)
-        self.assertEqual([130, 130, 130], led.hw_driver.current_color)
+        self.assertLightColor("led4", [130, 130, 130])
         self.advance_time_and_run(.5)
-        self.assertEqual([255, 255, 255], led.hw_driver.current_color)
+        self.assertLightColor("led4", [255, 255, 255])
 
     def test_interrupted_fade(self):
-        led1 = self.machine.leds.led1
+        led1 = self.machine.lights.led1
 
         self._synchronise_led_update()
         led1.color('red', fade_ms=2000)
@@ -219,7 +208,7 @@ class TestLed(MpfTestCase):
         self.assertEqual(color_setting['dest_color'], RGBColor('red'))
         self.assertEqual(color_setting['color'], RGBColor((128, 0, 0)))
         self.assertIsNone(color_setting['key'])
-        self.assertEqual([128, 0, 0], self.machine.leds.led1.hw_driver.current_color)
+        self.assertLightColor("led1", [128, 0, 0])
 
         # kill the fade
         led1._end_fade()
@@ -236,10 +225,10 @@ class TestLed(MpfTestCase):
         self.assertEqual(color_setting['dest_color'], RGBColor('red'))
         self.assertEqual(color_setting['color'], RGBColor((128, 0, 0)))
         self.assertIsNone(color_setting['key'])
-        self.assertEqual([128, 0, 0], self.machine.leds.led1.hw_driver.current_color)
+        self.assertLightColor("led1", [128, 0, 0])
 
     def test_restore_to_fade_in_progress(self):
-        led1 = self.machine.leds.led1
+        led1 = self.machine.lights.led1
 
         self._synchronise_led_update()
         led1.color('red', fade_ms=4000)
@@ -247,34 +236,32 @@ class TestLed(MpfTestCase):
         self.advance_time_and_run(1)
 
         # fade is 25% complete
-        self.assertEqual([64, 0, 0], self.machine.leds.led1.hw_driver.current_color)
+        self.assertLightColor("led1", [64, 0, 0])
 
         # higher priority color which goes on top of fade (higher priority
         # becuase it was added after the first, even though the priorities are
         # the same)
         led1.color('blue', key='test')
         self.advance_time_and_run(1)
-        self.assertEqual(list(RGBColor('blue').rgb),
-                         self.machine.leds.led1.hw_driver.current_color)
+        self.assertLightColor("led1", 'blue')
         self.assertFalse(led1.fade_in_progress)
 
         led1.remove_from_stack_by_key('test')
         # should go back to the fade in progress, which is now 75% complete
         self.advance_time_and_run(1)
-        self.assertEqual([191, 0, 0], self.machine.leds.led1.hw_driver.current_color)
+        self.assertLightColor("led1", [191, 0, 0])
         self.assertTrue(led1.fade_in_progress)
 
         # go to 1 sec after fade and make sure it finished
         self.advance_time_and_run(2)
-        self.assertEqual(list(RGBColor('red').rgb),
-                         self.machine.leds.led1.hw_driver.current_color)
+        self.assertLightColor("led1", 'red')
         self.assertFalse(led1.fade_in_progress)
 
     def test_multiple_concurrent_fades(self):
         # start one fade, and while that's in progress, start a second fade.
         # the second fade should start from the wherever the current fade was.
 
-        led1 = self.machine.leds.led1
+        led1 = self.machine.lights.led1
 
         self._synchronise_led_update()
         led1.color('red', fade_ms=4000)
@@ -282,8 +269,7 @@ class TestLed(MpfTestCase):
         self.advance_time_and_run(1)
 
         # fade is 25% complete
-        self.assertEqual([64, 0, 0],
-                         self.machine.leds.led1.hw_driver.current_color)
+        self.assertLightColor("led1", [64, 0, 0])
 
         # start a blue 2s fade
         led1.color('blue', key='test', fade_ms=2000)
@@ -294,79 +280,59 @@ class TestLed(MpfTestCase):
         # faded to blue, but meh, we'll handle that with alpha channels in the
         # future
         self.advance_time_and_run(1)
-        self.assertEqual([33, 0, 126], self.machine.leds.led1.hw_driver.current_color)
+
+        self.assertLightColor("led1", [33, 0, 126])
 
         # advance past the end
         self.advance_time_and_run(2)
-        self.assertEqual(list(RGBColor('blue').rgb),
-                         self.machine.leds.led1.hw_driver.current_color)
+        self.assertLightColor("led1", 'blue')
         self.assertFalse(led1.fade_in_progress)
 
     def test_color_correction(self):
-        led = self.machine.leds.led_corrected
+        led = self.machine.lights.led_corrected
         led.color(RGBColor("white"))
         self.advance_time_and_run()
-        self.assertEqual([210, 184, 159], led.hw_driver.current_color)
+        self.assertLightColor("led_corrected", [210, 184, 159])
 
         led.color(RGBColor([128, 128, 128]))
         self.advance_time_and_run()
-        self.assertEqual([96, 83, 70], led.hw_driver.current_color)
+        self.assertLightColor("led_corrected", [96, 83, 70])
 
         led.color(RGBColor("black"))
         self.advance_time_and_run()
-        self.assertEqual([0, 0, 0], led.hw_driver.current_color)
+        self.assertLightColor("led_corrected", [0, 0, 0])
 
     def test_non_rgb_leds(self):
         # test bgr
-        led = self.machine.leds.led2
+        led = self.machine.lights.led2
 
         led.color(RGBColor((11, 23, 42)))
         self.advance_time_and_run(1)
-
-        self.assertEqual([42, 23, 11], led.hw_driver.current_color)
+        self.assertEqual(42, led.hw_drivers["blue"].current_brightness)
+        self.assertEqual('2', led.hw_drivers["blue"].number)
+        self.assertEqual(23, led.hw_drivers["green"].current_brightness)
+        self.assertEqual('3', led.hw_drivers["green"].number)
+        self.assertEqual(11, led.hw_drivers["red"].current_brightness)
+        self.assertEqual('4', led.hw_drivers["red"].number)
 
         # test rgbw
-        led = self.machine.leds.led3
+        led = self.machine.lights.led3
 
         led.color(RGBColor((11, 23, 42)))
         self.advance_time_and_run(1)
-
-        self.assertEqual([11, 23, 42, 11], led.hw_driver.current_color)
-
-        # test w+-
-        led = self.machine.leds.led5
-
-        led.color(RGBColor((100, 100, 100)))
-        self.advance_time_and_run(1)
-
-        self.assertEqual([100, 255, 0], led.hw_driver.current_color)
-
-    def test_leds_on_matrix_lights(self):
-        led = self.machine.leds.led_lights
-
-        led.color(RGBColor((11, 23, 42)))
-        self.advance_time_and_run(1)
-        self.assertEqual(11, self.machine.lights.light_r.hw_driver.current_brightness)
-        self.assertEqual(23, self.machine.lights.light_g.hw_driver.current_brightness)
-        self.assertEqual(42, self.machine.lights.light_b.hw_driver.current_brightness)
-
-        self.machine.create_machine_var("brightness", 0.8)
-        led.color(RGBColor((100, 200, 10)))
-        self.advance_time_and_run(1)
-        self.assertEqual(80, self.machine.lights.light_r.hw_driver.current_brightness)
-        self.assertEqual(160, self.machine.lights.light_g.hw_driver.current_brightness)
-        self.assertEqual(8, self.machine.lights.light_b.hw_driver.current_brightness)
+        self.assertLightColor("led2", [11, 23, 42])
+        self.assertEqual(11, led.hw_drivers["white"].current_brightness)
+        self.assertEqual('10', led.hw_drivers["white"].number)
 
     def test_brightness_correction(self):
-        led = self.machine.leds.led1
+        led = self.machine.lights.led1
 
         led.color(RGBColor((100, 100, 100)))
         self.advance_time_and_run(1)
-        self.assertEqual([100, 100, 100], self.machine.leds.led1.hw_driver.current_color)
+        self.assertLightColor("led1", [100, 100, 100])
 
         self.machine.create_machine_var("brightness", 0.8)
         led.color(RGBColor((100, 100, 100)))
         self.advance_time_and_run(1)
 
-        self.assertEqual([80, 80, 80], self.machine.leds.led1.hw_driver.current_color)
-
+        self.assertLightColor("led1", [80, 80, 80])

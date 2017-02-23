@@ -1012,72 +1012,72 @@ class TestShots(MpfTestCase):
     def test_show_restore_in_mode(self):
         self.start_game()
 
-        self.assertLedColor("led_27", "black")
+        self.assertLightColor("led_27", "black")
 
         self.machine.modes.mode2.start()
         self.advance_time_and_run()
 
         # step1 red
-        self.assertLedColor("led_27", "red")
+        self.assertLightColor("led_27", "red")
 
         self.hit_and_release_switch("switch_27")
         self.advance_time_and_run()
 
         # step2 orange
-        self.assertLedColor("led_27", "orange")
+        self.assertLightColor("led_27", "orange")
 
         self.machine.modes.mode2.stop()
         self.advance_time_and_run()
 
         # mode stopped. led off
-        self.assertLedColor("led_27", "black")
+        self.assertLightColor("led_27", "black")
 
 
         self.machine.modes.mode2.start()
         self.advance_time_and_run()
 
         # back to step2. orange
-        self.assertLedColor("led_27", "orange")
+        self.assertLightColor("led_27", "orange")
 
         self.hit_and_release_switch("switch_27")
         self.advance_time_and_run()
 
         # step3
-        self.assertLedColor("led_27", "yellow")
+        self.assertLightColor("led_27", "yellow")
 
     def test_show_restore_in_mode_start_step(self):
         # same as previous test but with a profile with start steps
         self.start_game()
 
-        self.assertLedColor("led_28", "black")
+        self.assertLightColor("led_28", "black")
 
         self.machine.modes.mode2.start()
         self.advance_time_and_run()
 
         # step1 red
-        self.assertLedColor("led_28", "red")
+        self.assertLightColor("led_28", "red")
 
         self.hit_and_release_switch("switch_28")
         self.advance_time_and_run()
 
         # step2 orange
-        self.assertLedColor("led_28", "orange")
+        self.assertLightColor("led_28", "orange")
 
         self.machine.modes.mode2.stop()
         self.advance_time_and_run()
 
         # mode stopped. led off
-        self.assertLedColor("led_28", "black")
+        self.assertLightColor("led_28", "black")
 
 
         self.machine.modes.mode2.start()
         self.advance_time_and_run()
 
         # back to step2. orange
-        self.assertLedColor("led_28", "orange")
+        self.assertLightColor("led_28", "orange")
 
         self.hit_and_release_switch("switch_28")
         self.advance_time_and_run()
 
         # step3
-        self.assertLedColor("led_28", "yellow")
+        self.assertLightColor("led_28", "yellow")

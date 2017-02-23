@@ -29,7 +29,7 @@ mpf:
         queue_relay: mpf.config_players.queue_relay_player
         flasher: mpf.config_players.flasher_player
         gi: mpf.config_players.gi_player
-        led: mpf.config_players.led_player
+#        led: mpf.config_players.led_player
         light: mpf.config_players.light_player
         random_event: mpf.config_players.random_event_player
         show: mpf.config_players.show_player
@@ -40,9 +40,10 @@ mpf:
         - mpf.devices.driver.Driver
         - mpf.devices.dual_wound_coil.DualWoundCoil
         - mpf.devices.switch.Switch
-        - mpf.devices.matrix_light.MatrixLight
-        - mpf.devices.led.Led
-        - mpf.devices.gi.Gi
+#        - mpf.devices.matrix_light.MatrixLight
+#        - mpf.devices.led.Led
+        - mpf.devices.light.Light
+#        - mpf.devices.gi.Gi
         - mpf.devices.autofire.AutofireCoil
         - mpf.devices.ball_device.ball_device.BallDevice
         - mpf.devices.playfield.Playfield
@@ -55,7 +56,7 @@ mpf:
         - mpf.devices.diverter.Diverter
         - mpf.devices.score_reel.ScoreReel
         - mpf.devices.score_reel_group.ScoreReelGroup
-        - mpf.devices.flasher.Flasher
+#        - mpf.devices.flasher.Flasher
         - mpf.devices.playfield_transfer.PlayfieldTransfer
         - mpf.devices.ball_lock.BallLock
         - mpf.devices.multiball.Multiball
@@ -67,8 +68,8 @@ mpf:
         - mpf.devices.achievement_group.AchievementGroup
         - mpf.devices.physical_dmd.PhysicalDmd
         - mpf.devices.physical_rgb_dmd.PhysicalRgbDmd
-        - mpf.devices.led_group.LedStrip
-        - mpf.devices.led_group.LedRing
+#        - mpf.devices.led_group.LedStrip
+#        - mpf.devices.led_group.LedRing
         - mpf.devices.magnet.Magnet
         - mpf.devices.kickback.Kickback
         - mpf.devices.combo_switch.ComboSwitch
@@ -115,8 +116,8 @@ mpf:
     switch_tag_event: sw_%
     allow_invalid_config_sections: false
     save_machine_vars_to_disk: true
-    default_led_hw_update_hz: 50
-    default_matrix_light_hw_update_hz: 50
+    default_light_hw_update_hz: 50
+#    default_matrix_light_hw_update_hz: 50
     default_platform_hz: 1000
     default_ball_search: False
     default_show_sync_ms: 0
@@ -133,8 +134,6 @@ mpf:
         flippers:
             - enable
             - disable
-        leds:
-            - "off"
         lights:
             - "off"
         gi:
@@ -155,7 +154,7 @@ mpf:
       - flashers
       - flippers
       - gis
-      - leds
+#      - leds
       - matrix_lights
       - multiballs
       - playfields
@@ -361,10 +360,9 @@ shows:
         - time: 0
           lights:
             (light):
-              brightness: ff
+              color: on
             (lights):
-              brightness: ff
-          leds:
+              color: on
             (led):
               color: on
             (leds):
@@ -372,24 +370,22 @@ shows:
         - time: 1
           lights:
             (light):
-              brightness: 0
+              color: off
             (lights):
-              brightness: 0
-          leds:
+              color: off
             (led):
-              color: black
+              color: off
             (leds):
-              color: black
+              color: off
         - time: 2
     on:
         - time: 0
           duration: -1
           lights:
             (light):
-              brightness: ff
+              color: on
             (lights):
-              brightness: ff
-          leds:
+              color: on
             (led):
               color: on
             (leds):
@@ -399,18 +395,17 @@ shows:
           duration: -1
           lights:
             (light):
-              brightness: 0
+              color: off
             (lights):
-              brightness: 0
-          leds:
+              color: off
             (led):
-              color: black
+              color: off
             (leds):
-              color: black
+              color: off
     led_color:
         - time: 0
           duration: -1
-          leds:
+          lights:
             (led): (color)
             (leds): (color)
 

@@ -508,11 +508,11 @@ led_player:
     color: single|str|white
     fade: single|ms|None
     __allow_others__:
-led_settings:
+light_settings:
     __valid_in__: machine
     color_correction_profiles: single|dict|None
     default_color_correction_profile: single|str|None
-    default_led_fade_ms: single|int|0
+    default_fade_ms: single|int|0
 leds:
     __valid_in__: machine
     number: single|str|
@@ -550,28 +550,28 @@ led_rings:
     led_template: single|subconfig(leds,device)|
 lights:
     __valid_in__: machine
+    number: single|str|None
+    type: single|str|None
+    subtype: single|str|None
+    platform: single|str|None
+    platform_settings: single|dict|None
+    fade_ms: single|ms|None
     color_correction_profile: single|str|None
     default_fade_ms: single|ms|None
     default_on_color: single|color|ffffff
-    red_channel: single|str|None
-    red_channel_platform: single|str|None
-    red_channel_platform_settings: dict|str:str|None
-    green_channel: single|str|None
-    green_channel_platform: single|str|None
-    green_channel_platform_settings: dict|str:str|None
-    blue_channel: single|str|None
-    blue_channel_platform: single|str|None
-    blue_channel_platform_settings: dict|str:str|None
-    white_channel: single|str|None
-    white_channel_platform: single|str|None
-    white_channel_platform_settings: dict|str:str|None
+    channels: single|dict|None
     x: single|int|None
     y: single|int|None
     z: single|int|None
+light_channels:
+    number: single|str|
+    subtype: single|str|None
+    platform: single|str|None
+    platform_settings: single|str|None
 light_player:
     __valid_in__: machine, mode, show
-    brightness: single|int_from_hex|ff
-    fade: single|ms|0
+    color: single|str|white
+    fade: single|ms|None
     __allow_others__:
 logic_blocks:                                       # todo add validation
     __valid_in__: machine, mode

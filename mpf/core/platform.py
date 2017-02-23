@@ -252,6 +252,11 @@ class LightsPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['has_lights'] = True
 
     @abc.abstractmethod
+    def parse_light_number_to_channels(self, number: str, subtype: str):
+        """Parse light number to a list of channels."""
+        raise NotImplementedError
+
+    @abc.abstractmethod
     def configure_light(self, number, platform_settings) -> LightPlatformInterface:
         """Subclass this method in a platform module to configure a light.
 

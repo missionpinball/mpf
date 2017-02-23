@@ -22,54 +22,54 @@ class TestShows(MpfTestCase):
 
     def test_default_shows(self):
         # test off
-        show_on = self.machine.shows['off'].play(show_tokens=dict(leds='led_01', lights='light_01'))
+        show_off = self.machine.shows['off'].play(show_tokens=dict(leds='led_01', lights='light_01'))
         self.advance_time_and_run(.1)
-        self.assertEqual([0, 0, 0], self.machine.leds.led_01.hw_driver.current_color)
-        self.assertEqual(0, self.machine.lights.light_01.hw_driver.current_brightness)
-        show_on.stop()
-        self.advance_time_and_run(.1)
-        self.assertEqual([0, 0, 0], self.machine.leds.led_01.hw_driver.current_color)
-        self.assertEqual(0, self.machine.lights.light_01.hw_driver.current_brightness)
-
-        # test on
-        show_off = self.machine.shows['on'].play(show_tokens=dict(leds='led_01', lights='light_01'))
-        self.advance_time_and_run(.1)
-        self.assertEqual([255, 255, 255], self.machine.leds.led_01.hw_driver.current_color)
-        self.assertEqual(255, self.machine.lights.light_01.hw_driver.current_brightness)
+        self.assertLightColor("led_01", [0, 0, 0])
+        self.assertLightChannel("light_01", 0)
         show_off.stop()
         self.advance_time_and_run(.1)
-        self.assertEqual([0, 0, 0], self.machine.leds.led_01.hw_driver.current_color)
-        self.assertEqual(0, self.machine.lights.light_01.hw_driver.current_brightness)
+        self.assertLightColor("led_01", [0, 0, 0])
+        self.assertLightChannel("light_01", 0)
+
+        # test on
+        show_on = self.machine.shows['on'].play(show_tokens=dict(leds='led_01', lights='light_01'))
+        self.advance_time_and_run(.1)
+        self.assertLightColor("led_01", [255, 255, 255])
+        self.assertLightChannel("light_01", 255)
+        show_on.stop()
+        self.advance_time_and_run(.1)
+        self.assertLightColor("led_01", [0, 0, 0])
+        self.assertLightChannel("light_01", 0)
 
         # test flash
         # initially on
         show_flash = self.machine.shows['flash'].play(show_tokens=dict(leds='led_01', lights='light_01'))
         self.advance_time_and_run(.1)
-        self.assertEqual([255, 255, 255], self.machine.leds.led_01.hw_driver.current_color)
-        self.assertEqual(255, self.machine.lights.light_01.hw_driver.current_brightness)
+        self.assertLightColor("led_01", [255, 255, 255])
+        self.assertLightChannel("light_01", 255)
 
         # after 1s off
         self.advance_time_and_run(1)
-        self.assertEqual([0, 0, 0], self.machine.leds.led_01.hw_driver.current_color)
-        self.assertEqual(0, self.machine.lights.light_01.hw_driver.current_brightness)
+        self.assertLightColor("led_01", [0, 0, 0])
+        self.assertLightChannel("light_01", 0)
 
         # on after another 1s
         self.advance_time_and_run(1)
-        self.assertEqual([255, 255, 255], self.machine.leds.led_01.hw_driver.current_color)
-        self.assertEqual(255, self.machine.lights.light_01.hw_driver.current_brightness)
+        self.assertLightColor("led_01", [255, 255, 255])
+        self.assertLightChannel("light_01", 255)
 
         show_flash.stop()
         self.advance_time_and_run(.1)
-        self.assertEqual([0, 0, 0], self.machine.leds.led_01.hw_driver.current_color)
-        self.assertEqual(0, self.machine.lights.light_01.hw_driver.current_brightness)
+        self.assertLightColor("led_01", [0, 0, 0])
+        self.assertLightChannel("light_01", 0)
 
         # test led_color
         show_led_color = self.machine.shows['led_color'].play(show_tokens=dict(leds='led_01', color="red"))
         self.advance_time_and_run(.1)
-        self.assertEqual([255, 0, 0], self.machine.leds.led_01.hw_driver.current_color)
+        self.assertLightColor("led_01", [255, 0, 0])
         show_led_color.stop()
         self.advance_time_and_run(.1)
-        self.assertEqual([0, 0, 0], self.machine.leds.led_01.hw_driver.current_color)
+        self.assertLightColor("led_01", [0, 0, 0])
 
     def test_shows(self):
         # Make sure required modes have been loaded
