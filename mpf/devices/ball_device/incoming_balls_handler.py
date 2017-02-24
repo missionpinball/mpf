@@ -1,5 +1,6 @@
 """Handles incoming balls."""
 import asyncio
+from functools import partial
 
 from mpf.core.utility_functions import Util
 from mpf.devices.ball_device.ball_device_state_handler import BallDeviceStateHandler
@@ -13,6 +14,7 @@ class IncomingBall:
         """Initialise incoming ball."""
         self._timeout_future = asyncio.Future(loop=source.machine.clock.loop)
         self._confirm_future = asyncio.Future(loop=source.machine.clock.loop)
+        self._can_skip_future = asyncio.Future(loop=source.machine.clock.loop)
         self._source = source
         self._target = target
         self._external_confirm_future = None
@@ -21,6 +23,14 @@ class IncomingBall:
         # 2. left_device (can be confirmed)
         # 3. arrived
         # 4. lost (timeouted)
+
+    def set_can_skip(self):
+        """Tell other devices that this ball may have """
+        self._can_skip_future.set_result(True)
+
+    def wait_for_can_skip(self):
+        """Wait until this future can skip."""
+        return asyncio.shield(self._can_skip_future, loop=self._source.machine.clock.loop)
 
     @property
     def can_arrive(self):
@@ -115,6 +125,9 @@ class IncomingBallsHandler(BallDeviceStateHandler):
     def _run(self):
         """Handle timeouts."""
         while True:
+            if not self._incoming_balls:
+                self._has_incoming_balls.clear()
+
             # sleep until we have incoming balls
             yield from self._has_incoming_balls.wait()
 
@@ -130,9 +143,6 @@ class IncomingBallsHandler(BallDeviceStateHandler):
                 self.ball_device.log.warning("Incoming ball from %s timeouted.", incoming_ball.source)
                 self._incoming_balls.remove(incoming_ball)
 
-            if not self._incoming_balls:
-                self._has_incoming_balls.clear()
-
             for incoming_ball in timeouts:
                 yield from self.ball_device.lost_incoming_ball(source=incoming_ball.source)
 
@@ -143,26 +153,30 @@ class IncomingBallsHandler(BallDeviceStateHandler):
         self._has_incoming_balls.set()
 
         if self.ball_device.config['mechanical_eject']:
+            incoming_ball.wait_for_can_skip().add_done_callback(
+                partial(self._add_incoming_ball_which_may_skip_cb, incoming_ball))
+
+    def _add_incoming_ball_which_may_skip_cb(self, incoming_ball, future):
+        if not future.cancelled():
             self.ball_device.outgoing_balls_handler.add_incoming_ball_which_may_skip(incoming_ball)
 
     def remove_incoming_ball(self, incoming_ball: IncomingBall):
         """Remove incoming ball."""
         self.debug_log("Removing incoming ball from %s", incoming_ball.source)
         self._incoming_balls.remove(incoming_ball)
-        if self.ball_device.config['mechanical_eject']:
-            self.ball_device.outgoing_balls_handler.remove_incoming_ball_which_may_skip()
+        if self.ball_device.config['mechanical_eject'] and incoming_ball.wait_for_can_skip().done():
+            self.ball_device.outgoing_balls_handler.remove_incoming_ball_which_may_skip(incoming_ball)
 
     @asyncio.coroutine
     def ball_arrived(self):
         """Handle one ball which arrived in the device."""
-        if self.ball_device.config['mechanical_eject']:
-            self.ball_device.outgoing_balls_handler.remove_incoming_ball_which_may_skip()
         for incoming_ball in self._incoming_balls:
             if not incoming_ball.can_arrive:
                 continue
 
             # handle incoming ball
             self.debug_log("Received ball from %s", incoming_ball.source)
+
             # confirm eject
             incoming_ball.ball_arrived()
 

@@ -91,11 +91,15 @@ class SwitchCounter(BallDeviceBallCounter):
         return self.config['jam_switch'] and self.machine.switch_controller.is_active(
             self.config['jam_switch'].name, ms=self.config['entrance_count_delay'])
 
+    def wait_for_ready_to_receive(self):
+        """Wait until there is at least on inactive switch."""
+        # future returns when ball_count != number of switches
+        return self.wait_for_ball_count_changes(len(self.config['ball_switches']))
+
     @asyncio.coroutine
     def track_eject(self, eject_tracker: EjectTracker, already_left):
         """Return eject_process dict."""
         # count active switches
-        active_switches = []
         while True:
             waiter = self.wait_for_ball_activity()
             try:

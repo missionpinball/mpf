@@ -313,9 +313,9 @@ class BallController(MpfController):
                     source_devices.add(device)
                     balls_to_collect = True
 
-        self.debug_log("Ejecting all balls from: %s", source_devices)
-
         if balls_to_collect:
+            self.debug_log("Ejecting all balls from: %s", source_devices)
+
             self.machine.events.post('collecting_balls')
             '''event: collecting_balls
 
