@@ -8,6 +8,7 @@ from mpf.core.rgb_color import RGBColor
 from mpf.core.rgb_color import RGBColorCorrectionProfile
 from mpf.core.settings_controller import SettingEntry
 from mpf.core.system_wide_device import SystemWideDevice
+from mpf.devices.driver import ReconfiguredDriver
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
 
@@ -17,8 +18,12 @@ class DriverLight(LightPlatformInterface):
         self.driver = driver
 
     def set_brightness(self, brightness: float, fade_ms: int):
-        raise AssertionError("fix driver interface")
-        self.driver.enable()
+        # TODO: fix driver interface
+        if brightness <= 0:
+            self.driver.disable()
+        else:
+            driver = ReconfiguredDriver(self.driver, {"hold_power": 8 * brightness})
+            driver.enable()
 
 
 @DeviceMonitor(_color="color", _corrected_color="corrected_color")
@@ -170,7 +175,14 @@ class Light(SystemWideDevice):
 
     def _load_hw_drivers(self):
         """Load hw drivers."""
-        if not self.config['channels']:
+        if self.config['platform'] == "drivers":
+            channels = {
+                "white": {
+                    "number": self.config['number'],
+                    "platform": "drivers"
+                }
+            }
+        elif not self.config['channels']:
             # get channels from number + platform
             platform = self.machine.get_platform_sections('lights', self.config['platform'])
             channels = platform.parse_light_number_to_channels(self.config['number'], self.config['subtype'])
@@ -196,7 +208,7 @@ class Light(SystemWideDevice):
     def _load_hw_driver(self, channel):
         """Load one channel."""
         if channel['platform'] == "drivers":
-            return DriverLight(self.machine.drivers[channel['number'].strip()])
+            return DriverLight(self.machine.coils[channel['number'].strip()])
         else:
             platform = self.machine.get_platform_sections('lights', channel['platform'])
             return platform.configure_light(channel['number'], channel['platform_settings'])
@@ -421,10 +433,10 @@ class Light(SystemWideDevice):
                 # TODO: implement fade_ms here
                 fade_ms = 0
                 if color in ["red", "blue", "green"]:
-                    hw_driver.set_brightness(getattr(corrected_color, color), fade_ms)
+                    hw_driver.set_brightness(getattr(corrected_color, color) / 255.0, fade_ms)
                 elif color == "white":
-                    hw_driver.set_brightness(min(corrected_color.red, corrected_color.green, corrected_color.blue),
-                                             fade_ms)
+                    hw_driver.set_brightness(
+                        min(corrected_color.red, corrected_color.green, corrected_color.blue) / 255.0, fade_ms)
                 else:
                     raise AssertionError("Invalid color {} in light {}".format(color, self.name))
 

@@ -21,11 +21,11 @@ show_player:
 shows:
   counter_show:
     - duration: -1
-      leds:
+      lights:
         led1: on
     - duration: -1
-      leds:
+      lights:
         led2: on
     - duration: -1
-      leds:
+      lights:
         led3: on

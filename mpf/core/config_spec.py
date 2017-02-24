@@ -402,7 +402,7 @@ file_shows:
 flasher_player:
     __valid_in__: machine, mode, show
     __allow_others__:
-    ms: single|int|None
+    ms: single|ms|100ms
 flashers:   # TODO: this should be a coil + x. actually extend coil config
     __valid_in__: machine
     number: single|str|

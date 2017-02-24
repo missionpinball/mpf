@@ -177,7 +177,6 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Lights
             number = self._next_light
             self._next_light += 1
         if subtype in ("gi", "matrix"):
-
             return {
                 "white": {
                     "number": str(number)

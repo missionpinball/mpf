@@ -58,17 +58,18 @@ switches:
   switch_28:
     number:
 
-matrix_lights:
+lights:
   light_1:
     number:
     tags: tag1
+    subtype: matrix
   light_2:
     number:
     tags: tag2
+    subtype: matrix
   light_3:
     number:
-
-leds:
+    subtype: matrix
   led_1:
     number:
   led_2:
@@ -356,47 +357,47 @@ shot_profiles:
 
 shows:
     rainbow:
-      - leds:
+      - lights:
           (leds): red
-      - leds:
+      - lights:
           (leds): orange
-      - leds:
+      - lights:
           (leds): yellow
-      - leds:
+      - lights:
           (leds): green
-      - leds:
+      - lights:
           (leds): blue
-      - leds:
+      - lights:
           (leds): purple
     rainbow_stay_on:
-      - leds:
+      - lights:
           (leds): red
-      - leds:
+      - lights:
           (leds): orange
-      - leds:
+      - lights:
           (leds): yellow
-      - leds:
+      - lights:
           (leds): green
-      - leds:
+      - lights:
           (leds): blue
-      - leds:
+      - lights:
           (leds): purple
         duration: -1
     rainbow2:
-      - leds:
+      - lights:
           (leds): aliceblue
-      - leds:
+      - lights:
           (leds): antiquewhite
-      - leds:
+      - lights:
           (leds): aquamarine
-      - leds:
+      - lights:
           (leds): azure
     rainbow3:
-      - leds:
+      - lights:
           (leds): beige
-      - leds:
+      - lights:
           (leds): blueviolet
-      - leds:
+      - lights:
           (leds): brown
-      - leds:
+      - lights:
           (leds): burlywood

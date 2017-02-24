@@ -233,7 +233,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
         """Configure a driver on Stern Spike."""
         return SpikeDriver(config, config['number'], self)
 
-    def parse_light_number_to_channels(self, number: str):
+    def parse_light_number_to_channels(self, number: str, subtype: str):
         """Return a white light."""
         return {
             "white": {

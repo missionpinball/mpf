@@ -4,22 +4,21 @@ mpf:
   default_matrix_light_hw_update_hz: 1
   default_led_hw_update_hz: 1
 
-leds:
+lights:
     led_01:
         number: 0
     led_02:
         number: 1
-
-matrix_lights:
     light_01:
         number: 0
+        subtype: matrix
         label: Test 0
     light_02:
         number: 1
+        subtype: matrix
         label: Test 1
-
-gis:
     gi_01:
+        subtype: gi
         number: 0
 
 coils:

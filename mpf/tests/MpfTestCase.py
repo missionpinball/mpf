@@ -301,16 +301,32 @@ class MpfTestCase(unittest.TestCase):
         self.assertEqual(state, self.machine.switch_controller.is_active(name))
 
     def assertLightChannel(self, light_name, brightness, channel="white"):
-        self.assertEqual(brightness, self.machine.lights[light_name].hw_drivers[channel].
-                         current_brightness)
+        self.assertAlmostEqual(brightness / 255.0, self.machine.lights[light_name].hw_drivers[channel].
+                               current_brightness)
+
+    def assertNotLightChannel(self, light_name, brightness, channel="white"):
+        self.assertNotEqual(brightness, self.machine.lights[light_name].hw_drivers[channel].
+                            current_brightness)
 
     def assertLightColor(self, light_name, color):
         if isinstance(color, str) and color.lower() == 'on':
             color = self.machine.lights[light_name].config['default_on_color']
 
-        self.assertEqual(RGBColor(color).red, self.machine.lights[light_name].hw_drivers["red"].current_brightness)
-        self.assertEqual(RGBColor(color).green, self.machine.lights[light_name].hw_drivers["green"].current_brightness)
-        self.assertEqual(RGBColor(color).blue, self.machine.lights[light_name].hw_drivers["blue"].current_brightness)
+        self.assertAlmostEqual(RGBColor(color).red / 255.0,
+                               self.machine.lights[light_name].hw_drivers["red"].current_brightness)
+        self.assertAlmostEqual(RGBColor(color).green / 255.0,
+                               self.machine.lights[light_name].hw_drivers["green"].current_brightness)
+        self.assertAlmostEqual(RGBColor(color).blue / 255.0,
+                               self.machine.lights[light_name].hw_drivers["blue"].current_brightness)
+
+    def assertNotLightColor(self, light_name, color):
+        if isinstance(color, str) and color.lower() == 'on':
+            color = self.machine.lights[light_name].config['default_on_color']
+
+        self.assertFalse(
+            RGBColor(color).red / 255.0 == self.machine.lights[light_name].hw_drivers["red"].current_brightness and
+            RGBColor(color).green / 255.0 == self.machine.lights[light_name].hw_drivers["green"].current_brightness and
+            RGBColor(color).blue / 255.0 == self.machine.lights[light_name].hw_drivers["blue"].current_brightness)
 
     def assertLightColors(self, light_name, color_list, secs=1, check_delta=.1):
         colors = list()
@@ -325,9 +341,9 @@ class MpfTestCase(unittest.TestCase):
 
         for x in range(int(secs / check_delta)):
             color = RGBColor()
-            color.red = self.machine.leds[light_name].hw_drivers["red"].current_brightness
-            color.green = self.machine.leds[light_name].hw_drivers["green"].current_brightness
-            color.blue = self.machine.leds[light_name].hw_drivers["blue"].current_brightness
+            color.red = int(self.machine.lights[light_name].hw_drivers["red"].current_brightness * 255)
+            color.green = int(self.machine.lights[light_name].hw_drivers["green"].current_brightness * 255)
+            color.blue = int(self.machine.lights[light_name].hw_drivers["blue"].current_brightness * 255)
             colors.append(color)
             self.advance_time_and_run(check_delta)
 

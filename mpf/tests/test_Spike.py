@@ -339,15 +339,15 @@ class SpikePlatformTest(MpfTestCase):
 
     def _testLeds(self):
         self.serialMock.expected_commands = {
-            self._checksummed_cmd(b'\x80\x04\x80\x0c\xff'): b''
+            self._checksummed_cmd(b'\x80\x04\x80\x00\xff'): b''
         }
-        self.machine.lights.backlight.on()
+        self.machine.lights.backlight.color([255, 255, 255])
         self.advance_time_and_run(.1)
         self.assertFalse(self.serialMock.expected_commands)
 
         self.serialMock.expected_commands = {
-            self._checksummed_cmd(b'\x80\x04\x80\x0c\x64'): b''
+            self._checksummed_cmd(b'\x80\x04\x80\x00\x64'): b''
         }
-        self.machine.lights.backlight.on(100)
+        self.machine.lights.backlight.color([100, 100, 100])
         self.advance_time_and_run(.1)
         self.assertFalse(self.serialMock.expected_commands)

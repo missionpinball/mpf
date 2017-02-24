@@ -37,17 +37,18 @@ lights:
     gi_01:
         number: 0
         subtype: gi
+    flasher_01:
+        platform: drivers
+        number: flasher_01
 
 coils:
     coil_01:
         number: 1
         pulse_ms: 30
-
-flashers:
     flasher_01:
-        number: 1
+        number: 2
         label: Test flasher
-        flash_ms: 40
+        pulse_ms: 40
 
 shows:
   leds_name_token:
@@ -201,7 +202,7 @@ show_player:
   play_manual_advance:
     manual_advance:
       show_tokens:
-        lights: led_01
+        leds: led_01
   advance_manual_advance:
     manual_advance: advance
   advance_manual_step_back:
