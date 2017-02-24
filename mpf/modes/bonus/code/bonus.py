@@ -36,7 +36,7 @@ class Bonus(Mode):
 
         self.bonus_score = 0
         self.bonus_iterator = iter(self.bonus_entries)
-
+        self.display_delay = self.settings["display_delay_ms"]
         self.machine.events.post('bonus_start')
         '''event: bonus_start
 
