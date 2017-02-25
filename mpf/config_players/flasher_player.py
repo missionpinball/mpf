@@ -35,6 +35,6 @@ class FlasherPlayer(DeviceConfigPlayer):
 
     def get_express_config(self, value):
         """Parse express config."""
-        return dict(ms=None)
+        return dict(ms=value)
 
 player_cls = FlasherPlayer

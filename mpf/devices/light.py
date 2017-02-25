@@ -173,24 +173,67 @@ class Light(SystemWideDevice):
             entries when a mode ends.
         """
 
+    def _map_channels_to_colors(self, channel_list) -> dict:
+        if self.config['type']:
+            color_channels = self.config['type']
+        else:
+            if len(channel_list) == 1:
+                # for one channel default to a white channel
+                color_channels = "w"
+            elif len(channel_list) == 3:
+                # for three channels default to RGB
+                color_channels = "rgb"
+            else:
+                raise AssertionError("Please provide a type for light {}. No default for channels {}.".
+                                     format(self.name, channel_list))
+
+        if len(channel_list) != len(color_channels):
+            raise AssertionError("Type {} does not match channels {} for light {}".format(
+                color_channels, channel_list, self.name
+            ))
+
+        channels = {}
+        for color_name in color_channels:
+            # red channel
+            if color_name == 'r':
+                channels["red"] = channel_list.pop(0)
+            # green channel
+            elif color_name == 'g':
+                channels["green"] = channel_list.pop(0)
+            # blue channel
+            elif color_name == 'b':
+                channels["blue"] = channel_list.pop(0)
+            # simple white channel
+            elif color_name == 'w':
+                channels["white"] = channel_list.pop(0)
+            else:
+                raise AssertionError("Invalid element {} in type {} of light {}".format(
+                    color_name, self.config['type'], self.name))
+
+        return channels
+
     def _load_hw_drivers(self):
         """Load hw drivers."""
         if self.config['platform'] == "drivers":
-            channels = {
-                "white": {
+            channel_list = [
+                {
                     "number": self.config['number'],
                     "platform": "drivers"
                 }
-            }
+            ]
+            # map channel to color
+            channels = self._map_channels_to_colors(channel_list)
         elif not self.config['channels']:
             # get channels from number + platform
             platform = self.machine.get_platform_sections('lights', self.config['platform'])
-            channels = platform.parse_light_number_to_channels(self.config['number'], self.config['subtype'])
+            channel_list = platform.parse_light_number_to_channels(self.config['number'], self.config['subtype'])
             # copy platform and platform_settings to all channels
-            for channel in channels:
-                channels[channel]['subtype'] = self.config['subtype']
-                channels[channel]['platform'] = self.config['platform']
-                channels[channel]['platform_settings'] = self.config['platform_settings']
+            for channel, settings in enumerate(channel_list):
+                channel_list[channel]['subtype'] = self.config['subtype']
+                channel_list[channel]['platform'] = self.config['platform']
+                channel_list[channel]['platform_settings'] = self.config['platform_settings']
+            # map channels to colors
+            channels = self._map_channels_to_colors(channel_list)
         else:
             if self.config['number'] or self.config['platform'] or self.config['platform_settings']:
                 raise AssertionError("Light {} cannot contain platform/platform_settings/number and channels".
@@ -201,9 +244,9 @@ class Light(SystemWideDevice):
         if not channels:
             raise AssertionError("Light {} has no channels.".format(self.name))
 
-        for color, channel in channels.items():
+        for num, channel in channels.items():
             channel = self.machine.config_validator.validate_config("light_channels", channel)
-            self.hw_drivers[color] = self._load_hw_driver(channel)
+            self.hw_drivers[num] = self._load_hw_driver(channel)
 
     def _load_hw_driver(self, channel):
         """Load one channel."""
@@ -439,33 +482,6 @@ class Light(SystemWideDevice):
                         min(corrected_color.red, corrected_color.green, corrected_color.blue) / 255.0, fade_ms)
                 else:
                     raise AssertionError("Invalid color {} in light {}".format(color, self.name))
-
-    def _get_color_channels_for_hw(self, color):
-        color_channels = []
-        for color_name in self.config['type']:
-            # red channel
-            if color_name == 'r':
-                color_channels.append(color.red)
-            # green channel
-            elif color_name == 'g':
-                color_channels.append(color.green)
-            # blue channel
-            elif color_name == 'b':
-                color_channels.append(color.blue)
-            # simple white channel
-            elif color_name == 'w':
-                color_channels.append(min(color.red, color.green, color.blue))
-            # always off
-            elif color_name == '-':
-                color_channels.append(0)
-            # always on
-            elif color_name == '+':
-                color_channels.append(255)
-            else:
-                raise AssertionError("Invalid element {} in type {} of light {}".format(
-                    color_name, self.config['type'], self.name))
-
-        return color_channels
 
     def gamma_correct(self, color):
         """Apply max brightness correction to color.

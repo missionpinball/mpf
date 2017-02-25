@@ -21,6 +21,10 @@ lights:
       blue:
         number: 2
     debug: True
+  led_bgr_2:
+    type: bgr
+    number: 42
+    debug: True
   led3:
     channels:
       red:
@@ -35,16 +39,6 @@ lights:
   led4:
     number: 11
     fade_ms: 1s
-#  led_lights:
-#    number: light_r, light_g, light_b
-#    platform: lights
   led_corrected:
     number:
     color_correction_profile: correction_profile_1
-
-#  light_r:
-#    number: 2
-#  light_g:
-#    number: 3
-#  light_b:
-#    number: 4

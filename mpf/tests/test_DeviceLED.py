@@ -308,12 +308,22 @@ class TestLed(MpfTestCase):
 
         led.color(RGBColor((11, 23, 42)))
         self.advance_time_and_run(1)
-        self.assertEqual(42, led.hw_drivers["blue"].current_brightness)
+        self.assertEqual(42 / 255, led.hw_drivers["blue"].current_brightness)
         self.assertEqual('2', led.hw_drivers["blue"].number)
-        self.assertEqual(23, led.hw_drivers["green"].current_brightness)
+        self.assertEqual(23 / 255, led.hw_drivers["green"].current_brightness)
         self.assertEqual('3', led.hw_drivers["green"].number)
-        self.assertEqual(11, led.hw_drivers["red"].current_brightness)
+        self.assertEqual(11 / 255, led.hw_drivers["red"].current_brightness)
         self.assertEqual('4', led.hw_drivers["red"].number)
+
+        led = self.machine.lights.led_bgr_2
+        led.color(RGBColor((11, 23, 42)))
+        self.advance_time_and_run(1)
+        self.assertEqual(42 / 255, led.hw_drivers["blue"].current_brightness)
+        self.assertEqual('42-r', led.hw_drivers["blue"].number)
+        self.assertEqual(23 / 255, led.hw_drivers["green"].current_brightness)
+        self.assertEqual('42-g', led.hw_drivers["green"].number)
+        self.assertEqual(11 / 255, led.hw_drivers["red"].current_brightness)
+        self.assertEqual('42-b', led.hw_drivers["red"].number)
 
         # test rgbw
         led = self.machine.lights.led3
@@ -321,7 +331,7 @@ class TestLed(MpfTestCase):
         led.color(RGBColor((11, 23, 42)))
         self.advance_time_and_run(1)
         self.assertLightColor("led2", [11, 23, 42])
-        self.assertEqual(11, led.hw_drivers["white"].current_brightness)
+        self.assertEqual(11 / 255, led.hw_drivers["white"].current_brightness)
         self.assertEqual('10', led.hw_drivers["white"].number)
 
     def test_brightness_correction(self):

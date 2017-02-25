@@ -177,23 +177,23 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Lights
             number = self._next_light
             self._next_light += 1
         if subtype in ("gi", "matrix"):
-            return {
-                "white": {
+            return [
+                {
                     "number": str(number)
                 }
-            }
+            ]
         elif subtype == "led" or not subtype:
-            return {
-                "red": {
+            return [
+                {
                     "number": str(number) + "-r",
                 },
-                "green": {
+                {
                     "number": str(number) + "-g",
                 },
-                "blue": {
+                {
                     "number": str(number) + "-b",
                 }
-            }
+            ]
         else:
             raise AssertionError("Unknown subtype {}".format(subtype))
 
