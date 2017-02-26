@@ -5,7 +5,8 @@ import platform
 import sys
 import time
 
-from mpf.platforms.p_roc_devices import PROCSwitch
+from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
+from mpf.platforms.p_roc_devices import PROCSwitch, PROCMatrixLight
 
 try:    # pragma: no cover
     import pinproc
@@ -27,13 +28,12 @@ except ImportError:     # pragma: no cover
         pinproc = None
 
 from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
-from mpf.core.platform import MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlatform, DriverPlatform
+from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform
 
 
 # pylint does not understand that this class is abstract
 # pylint: disable-msg=abstract-method
-class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlatform, DriverPlatform,
-                       metaclass=abc.ABCMeta):
+class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass=abc.ABCMeta):
 
     """Platform class for the P-Roc and P3-ROC hardware controller.
 
@@ -253,6 +253,56 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
 
         return bool(coil_number)
 
+    def parse_light_number_to_channels(self, number: str, subtype: str):
+        """Parse light number to a list of channels."""
+        # TODO: implement default subtype
+        if subtype == "matrix":
+            return [
+                {
+                    "number": number
+                }
+            ]
+        elif subtype == "led":
+            # split the number (which comes in as a string like w-x-y-z) into parts
+            number_parts = str(number).split('-')
+
+            if len(number_parts) != 4:
+                raise AssertionError("Invalid address for LED {}".format(number))
+
+            return [
+                {
+                    "number": number_parts[0] + "-" + number_parts[1]
+                },
+                {
+                    "number": number_parts[0] + "-" + number_parts[2]
+                },
+                {
+                    "number": number_parts[0] + "-" + number_parts[3]
+                },
+            ]
+        else:
+            raise AssertionError("Unknown subtype {}".format(subtype))
+
+    def configure_light(self, number, subtype, platform_settings) -> LightPlatformInterface:
+        if subtype == "matrix":
+            if self.machine_type == self.pinproc.MachineTypePDB:
+                proc_num = self.pdbconfig.get_proc_light_number(str(number))
+                if proc_num == -1:
+                    raise AssertionError("Matrixlight {} cannot be controlled by the P-ROC. ".format(
+                        str(number)))
+
+            else:
+                proc_num = self.pinproc.decode(self.machine_type, str(number))
+
+            return PROCMatrixLight(proc_num, self.proc)
+        elif subtype == "led":
+            board, index = number.split("-")
+            polarity = platform_settings and platform_settings.get("polarity", False)
+            return PDBLED(int(board), int(index), polarity, self.proc)
+        else:
+            raise AssertionError("unknown subtype {}".format(subtype))
+
+
     def configure_led(self, config, channels):
         """Configure a P/P3-ROC RGB LED controlled via a PD-LED."""
         if channels > 3:
@@ -334,6 +384,7 @@ class PDBConfig(object):
         self.log.debug("Processing PDB Driver Board configuration")
 
         self.proc = proc
+        self.pdbconfig = None
 
         # Set config defaults
         self.lamp_matrix_strobe_time = config['p_roc']['lamp_matrix_strobe_time']
@@ -468,9 +519,11 @@ class PDBConfig(object):
 
         # Make a list of unique lamp source banks.  The P-ROC/P3-ROC only supports 2.
         # TODO: What should be done if 2 is exceeded?
-        if 'matrix_lights' in config:
-            for name in config['matrix_lights']:
-                item_dict = config['matrix_lights'][name]
+        if 'lights' in config:
+            for name in config['lights']:
+                item_dict = config['lights'][name]
+                if "subtype" not in item_dict or item_dict["subtype"] != "matrix":
+                    continue
                 lamp = PDBLight(self, str(item_dict['number']))
 
                 # Catalog PDB banks
@@ -618,7 +671,7 @@ class PDBConfig(object):
                                'sink_bank': lamp.sink_bank(),
                                'source_output': lamp.source_output()}
         if lamp_dict_for_index not in self.indexes:
-            return -1
+            raise AssertionError("Light not in lamp dict")
         index = self.indexes.index(lamp_dict_for_index)
         num = index * 8 + lamp.sink_output()
         return num
@@ -811,7 +864,7 @@ class PDBLight(object):
         return True
 
 
-class PDBLED(RGBLEDPlatformInterface):
+class PDBLED(LightPlatformInterface):
 
     """Represents an RGB LED connected to a PD-LED board."""
 
@@ -823,13 +876,8 @@ class PDBLED(RGBLEDPlatformInterface):
         self.proc = proc_driver
         self.polarity = polarity
 
-        # make sure self.address is a 3-element list
-        if len(self.address) != 3:
-            raise AssertionError("Invalid address for LED {}".format(str(self.address)))
-
         self.log.debug("Creating PD-LED item: board: %s, "
-                       "RGB outputs: %s", self.board,
-                       self.address)
+                       "RGB output: %s", self.board, self.address)
 
     def _normalise_color(self, value):
         if self.polarity:
@@ -837,18 +885,13 @@ class PDBLED(RGBLEDPlatformInterface):
         else:
             return value
 
-    def color(self, color):
+    def set_brightness(self, brightness: float, fade_ms: int):
         """Instantly set this LED to the color passed.
 
         Args:
-            color: an RGBColor object
+            brightness: brightness of this channel
         """
-        # self.log.debug("Setting Color. Board: %s, Address: %s, Color: %s",
-        #               self.board, self.address, color)
-
-        self.proc.led_color(self.board, self.address[0], self._normalise_color(color[0]))
-        self.proc.led_color(self.board, self.address[1], self._normalise_color(color[1]))
-        self.proc.led_color(self.board, self.address[2], self._normalise_color(color[2]))
+        self.proc.led_color(self.board, self.address, self._normalise_color(int(brightness * 255)))
 
 
 def is_pdb_address(addr):

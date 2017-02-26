@@ -403,23 +403,6 @@ flasher_player:
     __valid_in__: machine, mode, show
     __allow_others__:
     ms: single|ms|100ms
-flashers:   # TODO: this should be a coil + x. actually extend coil config
-    __valid_in__: machine
-    number: single|str|
-    flash_ms: single|ms|None
-    flash_events: dict|str:ms|None
-    platform: single|str|None
-    # driver settings
-    pulse_ms: single|int|None
-    pwm_on_ms: single|int|None
-    pwm_off_ms: single|int|None
-    pulse_power: single|int|None
-    hold_power: single|int|None
-    pulse_power32: single|int|None
-    hold_power32: single|int|None
-    pulse_pwm_mask: single|int|None
-    hold_pwm_mask: single|int|None
-    recycle: single|ms|None
 flippers:
     __valid_in__: machine
     main_coil: single|machine(coils)|
@@ -448,29 +431,14 @@ game:
     add_player_switch_tag: single|str|start
     allow_start_with_loose_balls: single|bool|False
     allow_start_with_ball_in_drain: single|bool|False
-gi_player:
-    __valid_in__: machine, mode, show
-    brightness: single|int_from_hex|ff
-    __allow_others__:
-gis:
-    __valid_in__: machine
-    number: single|str|
-    dimmable: single|bool|False
-    enable_events: dict|str:ms|machine_reset_phase_3
-    disable_events: dict|str:ms|None
-    platform: single|str|None
-    __allow_others__:
 hardware:
     __valid_in__: machine
     platform: single|str|virtual
     coils: single|str|default
     switches: single|str|default
-    matrix_lights: single|str|default
-    leds: single|str|default
+    lights: single|str|default
     dmd: single|str|default
     rgb_dmd: single|str|default
-    gis: single|str|default
-    flashers: single|str|default
     driverboards: single|str|
     servo_controllers: single|str|
     accelerometers: single|str|
@@ -513,21 +481,6 @@ light_settings:
     color_correction_profiles: single|dict|None
     default_color_correction_profile: single|str|None
     default_fade_ms: single|int|0
-leds:
-    __valid_in__: machine
-    number: single|str|
-    polarity: single|bool|False
-    default_color: single|color|ffffff
-    color_correction_profile: single|str|None
-    fade_ms: single|ms|None
-    type: single|lstr|rgb
-    on_events:  dict|str:ms|None
-    off_events:  dict|str:ms|None
-    platform: single|str|None
-    x: single|int|None
-    y: single|int|None
-    z: single|int|None
-    # color_channel_map: single|str|rgb     # not implemented
 led_stripes:
     __valid_in__: machine
     number_start: single|int|
@@ -567,7 +520,7 @@ light_channels:
     number: single|str|
     subtype: single|str|None
     platform: single|str|None
-    platform_settings: single|str|None
+    platform_settings: single|dict|None
 light_player:
     __valid_in__: machine, mode, show
     color: single|str|white
@@ -606,19 +559,6 @@ machine:
     __valid_in__: machine
     balls_installed: single|int|1
     min_balls: single|int|1
-matrix_light_settings:
-    __valid_in__: machine
-    default_light_fade_ms: single|int|0
-matrix_lights:
-    __valid_in__: machine
-    number: single|str|
-    fade_ms: single|ms|None
-    on_events:  dict|str:ms|None
-    off_events:  dict|str:ms|None
-    platform: single|str|None
-    x: single|int|None
-    y: single|int|None
-    z: single|int|None
 mc_scriptlets:
     __valid_in__: machine  # used by the MC, ignored by MPF
 mode:

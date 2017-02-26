@@ -254,7 +254,7 @@ class Light(SystemWideDevice):
             return DriverLight(self.machine.coils[channel['number'].strip()])
         else:
             platform = self.machine.get_platform_sections('lights', channel['platform'])
-            return platform.configure_light(channel['number'], channel['platform_settings'])
+            return platform.configure_light(channel['number'], channel['subtype'], channel['platform_settings'])
 
     def _initialize(self):
         self._load_hw_drivers()

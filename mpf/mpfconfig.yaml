@@ -151,11 +151,11 @@ mpf:
       - drop_targets
       - drop_target_banks
       - extra_balls
-      - flashers
+#      - flashers
       - flippers
-      - gis
+#      - gis
 #      - leds
-      - matrix_lights
+#      - matrix_lights
       - multiballs
       - playfields
       - playfield_transfers
@@ -428,11 +428,8 @@ hardware:
   platform: smart_virtual
   coils: default
   switches: default
-  matrix_lights: default
-  leds: default
+  lights: default
   dmd: default
-  gis: default
-  flashers: default
   driverboards: virtual
   accelerometers: default
   servo_controllers: default

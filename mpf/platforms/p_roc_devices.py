@@ -1,6 +1,7 @@
 """P-Roc hardware platform devices."""
 import logging
 
+from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
 from mpf.platforms.interfaces.gi_platform_interface import GIPlatformInterface
@@ -80,7 +81,7 @@ class PROCDriver(DriverPlatformInterface):
 
     def get_pulse_ms(self, coil):
         """Find out the pulse_ms for this driver."""
-        if coil.config['pulse_ms']:
+        if coil.config['pulse_ms'] is not None:
             return int(coil.config['pulse_ms'])
         else:
             return self.machine.config['mpf']['default_pulse_ms']
@@ -165,7 +166,7 @@ class PROCGiString(GIPlatformInterface):
         self.proc.driver_disable(self.number)
 
 
-class PROCMatrixLight(MatrixLightPlatformInterface):
+class PROCMatrixLight(LightPlatformInterface):
 
     """A P-ROC matrix light device."""
 
@@ -175,30 +176,10 @@ class PROCMatrixLight(MatrixLightPlatformInterface):
         self.number = number
         self.proc = proc_driver
 
-    def off(self):
-        """Disable (turns off) this driver."""
-        self.proc.driver_disable(self.number)
-
-    def on(self, brightness=255):
+    def set_brightness(self, brightness: float, fade_ms: int):
         """Enable (turns on) this driver."""
-        if brightness >= 255:
+        if brightness >= 1.0:
             self.proc.driver_schedule(number=self.number, schedule=0xffffffff,
                                       cycle_seconds=0, now=True)
-        elif brightness == 0:
-            self.off()
         else:
-            pass
-            # patter rates of 10/1 through 2/9
-
-        """
-        Koen's fade code he posted to pinballcontrollers:
-        def mode_tick(self):
-            if self.fade_counter % 10 == 0:
-                for lamp in self.game.lamps:
-                    if lamp.name.find("gi0") == -1:
-                        var = 4.0*math.sin(0.02*float(self.fade_counter)) + 5.0
-                        on_time = 11-round(var)
-                        off_time = round(var)
-                        lamp.patter(on_time, off_time)
-                self.fade_counter += 1
-        """     # pylint: disable=W0105
+            self.proc.driver_disable(self.number)

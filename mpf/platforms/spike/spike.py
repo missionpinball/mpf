@@ -241,9 +241,9 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
             }
         ]
 
-    def configure_light(self, number, platform_settings) -> SpikeLight:
+    def configure_light(self, number, subtype, platform_settings) -> SpikeLight:
         """Configure a light on Stern Spike."""
-        del platform_settings
+        del platform_settings, subtype
         node, number = number.split("-")
         return SpikeLight(int(node), int(number), self)
 

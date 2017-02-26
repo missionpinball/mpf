@@ -168,7 +168,9 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Lights
         """Configure accelerometer."""
         pass
 
-    def configure_light(self, number, platform_settings):
+    def configure_light(self, number, subtype, platform_settings):
+        """Configure light channel."""
+        del subtype
         return VirtualLight(number, platform_settings)
 
     def parse_light_number_to_channels(self, number: str, subtype: str):
