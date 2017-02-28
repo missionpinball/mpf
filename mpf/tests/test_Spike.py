@@ -196,6 +196,9 @@ class SpikePlatformTest(MpfTestCase):
         self._testSwitches()
 
     def _testCoils(self):
+        # test board string
+        self.assertEqual("Spike Node 1", self.machine.coils.c_test.hw_driver.get_board_name())
+
         # test pulse
         self.serialMock.expected_commands = {
             self._checksummed_cmd(b'\x81\x0b\x40\x00\xff\x80\x00\xff\x00\x00\x00\x00'): b''

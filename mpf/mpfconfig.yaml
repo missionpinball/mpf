@@ -38,10 +38,7 @@ mpf:
         - mpf.devices.driver.Driver
         - mpf.devices.dual_wound_coil.DualWoundCoil
         - mpf.devices.switch.Switch
-#        - mpf.devices.matrix_light.MatrixLight
-#        - mpf.devices.led.Led
         - mpf.devices.light.Light
-#        - mpf.devices.gi.Gi
         - mpf.devices.autofire.AutofireCoil
         - mpf.devices.ball_device.ball_device.BallDevice
         - mpf.devices.playfield.Playfield
@@ -54,7 +51,6 @@ mpf:
         - mpf.devices.diverter.Diverter
         - mpf.devices.score_reel.ScoreReel
         - mpf.devices.score_reel_group.ScoreReelGroup
-#        - mpf.devices.flasher.Flasher
         - mpf.devices.playfield_transfer.PlayfieldTransfer
         - mpf.devices.ball_lock.BallLock
         - mpf.devices.multiball.Multiball
@@ -115,7 +111,6 @@ mpf:
     allow_invalid_config_sections: false
     save_machine_vars_to_disk: true
     default_light_hw_update_hz: 50
-#    default_matrix_light_hw_update_hz: 50
     default_platform_hz: 1000
     default_ball_search: False
     default_show_sync_ms: 0

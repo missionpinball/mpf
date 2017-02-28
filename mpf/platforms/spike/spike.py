@@ -302,12 +302,12 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
         yield from self._initialize()
 
     def _update_switches(self, node):
-        if node not in self._nodes:
+        if node not in self._nodes:     # pragma: no cover
             self.log.warning("Cannot read node %s because it is not configured.", node)
             return
 
         new_inputs_str = yield from self._read_inputs(node)
-        if not new_inputs_str:
+        if not new_inputs_str:      # pragma: no cover
             self.log.info("Node: %s did not return any inputs.", node)
             return
 
@@ -327,7 +327,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
                         num=str(node) + "-" + str(index),
                         platform=self)
                 curr_bit <<= 1
-        elif self.debug:
+        elif self.debug:    # pragma: no cover
             self.log.debug("Got input activity but inputs did not change.")
 
         self._inputs[node] = new_inputs
@@ -339,7 +339,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
 
             try:
                 result = yield from asyncio.wait_for(self._read_raw(1), 0.1, loop=self.machine.clock.loop)
-            except asyncio.TimeoutError:
+            except asyncio.TimeoutError:    # pragma: no cover
                 self.log.warning("Spike watchdog expired.")
                 continue
 
@@ -351,7 +351,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
                     # virtual cpu node returns 0xF0 instead of 0 to make it distinguishable
                     ready_node = 0
                 yield from self._update_switches(ready_node)
-            elif ready_node > 0:
+            elif ready_node > 0:    # pragma: no cover
                 # invalid node ids
                 self.log.warning("Spike desynced.")
                 # give it a break of 50ms
@@ -371,11 +371,15 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
 
         if self._poll_task:
             self._poll_task.cancel()
+            try:
+                self.machine.clock.loop.run_until_complete(self._poll_task)
+            except asyncio.CancelledError:
+                pass
 
         self._writer.close()
 
     @staticmethod
-    def _done(future):
+    def _done(future):  # pragma: no cover
         """Evaluate result of task.
 
         Will raise exceptions from within task.
@@ -436,11 +440,11 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
         if response_len:
             try:
                 response = yield from asyncio.wait_for(self._read_raw(response_len), 0.2, loop=self.machine.clock.loop)
-            except asyncio.TimeoutError:
+            except asyncio.TimeoutError:    # pragma: no cover
                 self.log.warning("Failed to read %s bytes from Spike", response_len)
                 return False
 
-            if self._checksum(response) != 0:
+            if self._checksum(response) != 0:   # pragma: no cover
                 self.log.warning("Checksum mismatch for response: %s", "".join("%02x " % b for b in response))
                 # we resync by flushing the input
                 self._writer.transport.serial.reset_input_buffer()

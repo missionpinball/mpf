@@ -4,6 +4,7 @@ import logging
 import platform
 import sys
 import time
+from typing import Union, List
 
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.p_roc_devices import PROCSwitch, PROCMatrixLight
@@ -54,6 +55,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
                                  'run MPF in software-only "virtual" mode by using '
                                  'the -x command like option for now instead.')
 
+        self.pdbconfig = None
         self.pinproc = pinproc
         self.proc = None
         self.log = None
@@ -365,7 +367,6 @@ class PDBConfig(object):
         self.log.debug("Processing PDB Driver Board configuration")
 
         self.proc = proc
-        self.pdbconfig = None
 
         # Set config defaults
         self.lamp_matrix_strobe_time = config['p_roc']['lamp_matrix_strobe_time']
@@ -380,14 +381,13 @@ class PDBConfig(object):
         # list. The index of the bank is used to calculate the P-ROC/P3-ROC driver
         # number for each driver.
         num_proc_banks = driver_count // 8
-        self.indexes = [99] * num_proc_banks
+        self.indexes = [{}] * num_proc_banks    # type: List[Union(int,dict)]
 
         self._initialize_drivers(proc)
 
         # Set up dedicated driver groups (groups 0-3).
         for group_ctr in range(0, 4):
-            # TODO: Fix this.  PDB Banks 0-3 are also interpreted as dedicated
-            # bank here.
+            # PDB Banks 0-3 are interpreted as dedicated bank here. Therefore, we do not use them.
             enable = group_ctr in coil_bank_list
             self.log.debug("Driver group %02d (dedicated): Enable=%s",
                            group_ctr, enable)
@@ -490,8 +490,8 @@ class PDBConfig(object):
 
         # Now set up globals.  First disable them to allow the P-ROC/P3-ROC to set up
         # the polarities on the Drivers.  Then enable them.
-        self._configure_globals(proc, lamp_source_bank_list, False)
-        self._configure_globals(proc, lamp_source_bank_list, True)
+        self._configure_lamp_banks(proc, lamp_source_bank_list, False)
+        self._configure_lamp_banks(proc, lamp_source_bank_list, True)
 
     def _load_lamp_lists_from_config(self, config):
         lamp_source_bank_list = []
@@ -499,7 +499,7 @@ class PDBConfig(object):
         lamp_list_for_index = []
 
         # Make a list of unique lamp source banks.  The P-ROC/P3-ROC only supports 2.
-        # TODO: What should be done if 2 is exceeded?
+        # If this is exceeded we will error out later.
         if 'lights' in config:
             for name in config['lights']:
                 item_dict = config['lights'][name]
@@ -550,14 +550,6 @@ class PDBConfig(object):
                 if coil.bank() not in coil_bank_list:
                     coil_bank_list.append(coil.bank())
 
-        # gis are also coils
-        if 'gis' in config:
-            for name in config['gis']:
-                item_dict = config['gis'][name]
-                coil = PDBCoil(self, str(item_dict['number']))
-                if coil.bank() not in coil_bank_list:
-                    coil_bank_list.append(coil.bank())
-
         return coil_bank_list
 
     @classmethod
@@ -577,41 +569,26 @@ class PDBConfig(object):
 
             proc.driver_update_state(state)
 
-    def _configure_globals(self, proc, lamp_source_bank_list, enable=True):
+    def _configure_lamp_banks(self, proc, lamp_source_bank_list, enable=True):
+        proc.driver_update_global_config(enable,
+                                         True,  # Polarity
+                                         False,  # N/A
+                                         False,  # N/A
+                                         1,  # N/A
+                                         lamp_source_bank_list[0],
+                                         lamp_source_bank_list[1],
+                                         False,  # Active low rows? No
+                                         False,  # N/A
+                                         False,  # Stern? No
+                                         False,  # Reset watchdog trigger
+                                         self.use_watchdog,  # Enable watchdog
+                                         self.watchdog_time)
 
         if enable:
             self.log.debug("Configuring PDB Driver Globals:  polarity = %s  "
                            "matrix column index 0 = %d  matrix column index "
                            "1 = %d", True, lamp_source_bank_list[0],
                            lamp_source_bank_list[1])
-        proc.driver_update_global_config(enable,  # Don't enable outputs yet
-                                         True,  # Polarity
-                                         False,  # N/A
-                                         False,  # N/A
-                                         1,  # N/A
-                                         lamp_source_bank_list[0],
-                                         lamp_source_bank_list[1],
-                                         False,  # Active low rows? No
-                                         False,  # N/A
-                                         False,  # Stern? No
-                                         False,  # Reset watchdog trigger
-                                         self.use_watchdog,  # Enable watchdog
-                                         self.watchdog_time)
-
-        # Now set up globals
-        proc.driver_update_global_config(True,  # Don't enable outputs yet
-                                         True,  # Polarity
-                                         False,  # N/A
-                                         False,  # N/A
-                                         1,  # N/A
-                                         lamp_source_bank_list[0],
-                                         lamp_source_bank_list[1],
-                                         False,  # Active low rows? No
-                                         False,  # N/A
-                                         False,  # Stern? No
-                                         False,  # Reset watchdog trigger
-                                         self.use_watchdog,  # Enable watchdog
-                                         self.watchdog_time)
 
     def get_coil_bank(self, number_str):
         """Return the bank of a coil.
@@ -688,7 +665,7 @@ class PDBSwitch(object):
             except ValueError:
                 try:
                     self.sw_number = int(number_str)
-                except:
+                except ValueError:  # pragma: no cover
                     raise AssertionError('Switch {} is invalid. Use either PDB '
                                          'format or an int'.format(str(number_str)))
 
@@ -724,7 +701,7 @@ class PDBCoil(object):
         else:
             self.coil_type = 'unknown'
 
-    def bank(self):
+    def bank(self) -> int:
         """Return the bank number."""
         if self.coil_type == 'dedicated':
             return self.banknum
@@ -777,10 +754,6 @@ class PDBLight(object):
     def source_board(self):
         """Return source board."""
         return self.source_boardnum
-
-    def sink_board(self):
-        """Return sink board."""
-        return self.sink_boardnum
 
     def source_bank(self):
         """Return source bank."""

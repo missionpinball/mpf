@@ -616,7 +616,7 @@ class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             raise AssertionError("Unknown subtype {}".format(subtype))
 
     @staticmethod
-    def _done(future):
+    def _done(future):  # pragma: no cover
         """Evaluate result of task.
 
         Will raise exceptions from within task.
@@ -934,7 +934,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
         self.writer.write(cmd)
 
     @classmethod
-    def _create_vers_str(cls, version_int):
+    def _create_vers_str(cls, version_int):     # pragma: no cover
         return ("%02d.%02d.%02d.%02d" % (((version_int >> 24) & 0xff),
                                          ((version_int >> 16) & 0xff), ((version_int >> 8) & 0xff),
                                          (version_int & 0xff)))

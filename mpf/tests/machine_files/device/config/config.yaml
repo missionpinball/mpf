@@ -5,25 +5,32 @@ lights:
         number: 0
         label: Test 0
         subtype: matrix
+        debug: True
     light_02:
         number: 1
         label: Test 1
         subtype: matrix
+        debug: True
     gi_01:
         number: 1
         subtype: gi
+        debug: True
     gi_02:
         number: 2
         subtype: gi
+        debug: True
     flasher_01:
         number: flasher_01
         platform: drivers
+        debug: True
     flasher_02:
         number: flasher_02
         platform: drivers
+        debug: True
     flasher_03:
         number: flasher_03
         platform: drivers
+        debug: True
 
 coils:
     coil_01:
