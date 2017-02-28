@@ -4,8 +4,6 @@ import logging
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
-from mpf.platforms.interfaces.gi_platform_interface import GIPlatformInterface
-from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
 from mpf.core.utility_functions import Util
 
 
@@ -132,38 +130,6 @@ class PROCDriver(DriverPlatformInterface):
     def state(self):
         """Return a dictionary representing this driver's current configuration state."""
         return self.proc.driver_get_state(self.number)
-
-
-class PROCGiString(GIPlatformInterface):
-
-    """A P-ROc GI hardware device."""
-
-    def __init__(self, number, proc_driver, config):
-        """Initialise GI."""
-        self.log = logging.getLogger('PROCGiString')
-        self.number = number
-        self.proc = proc_driver
-        self.config = config
-
-    def on(self, brightness=255):
-        """Turn on GI to `brightness`.
-
-        A brightness of 0 will turn it off. For values between 0 and 255 hardware pulse patter is used.
-        """
-        if brightness > 255:
-            brightness = 255
-
-        # run the GIs at 50Hz
-        duty_on = int(brightness / 12.75)
-        duty_off = 20 - duty_on
-        self.proc.driver_patter(self.number,
-                                int(duty_on),
-                                int(duty_off),
-                                0, True)
-
-    def off(self):
-        """Turn off a GI."""
-        self.proc.driver_disable(self.number)
 
 
 class PROCMatrixLight(LightPlatformInterface):

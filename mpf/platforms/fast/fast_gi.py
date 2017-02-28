@@ -19,11 +19,6 @@ class FASTGIString(LightPlatformInterface):
         self.number = number
         self.send = sender
 
-    def off(self):
-        """Turn off GI string."""
-        self.log.debug("Turning Off GI String")
-        self.send('GI:' + self.number + ',00')
-
     def set_brightness(self, brightness: float, fade_ms: int):
         """Turn on GI string."""
         del fade_ms

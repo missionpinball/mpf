@@ -27,7 +27,6 @@ except ImportError:     # pragma: no cover
         pinproc_imported = False
         pinproc = None
 
-from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform
 
 
@@ -284,6 +283,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
             raise AssertionError("Unknown subtype {}".format(subtype))
 
     def configure_light(self, number, subtype, platform_settings) -> LightPlatformInterface:
+        """Configure a light channel."""
         if subtype == "matrix":
             if self.machine_type == self.pinproc.MachineTypePDB:
                 proc_num = self.pdbconfig.get_proc_light_number(str(number))
@@ -301,25 +301,6 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
             return PDBLED(int(board), int(index), polarity, self.proc)
         else:
             raise AssertionError("unknown subtype {}".format(subtype))
-
-
-    def configure_led(self, config, channels):
-        """Configure a P/P3-ROC RGB LED controlled via a PD-LED."""
-        if channels > 3:
-            raise AssertionError("More than 3 channels not yet implemented")
-
-        # split the number (which comes in as a string like w-x-y-z) into parts
-        number_parts = str(config['number']).split('-')
-
-        if len(number_parts) != 4:
-            raise AssertionError("Invalid address for LED {}".format(config['number']))
-
-        return PDBLED(board=int(number_parts[0]),
-                      address=[int(number_parts[1]),
-                               int(number_parts[2]),
-                               int(number_parts[3])],
-                      polarity=config['polarity'],
-                      proc_driver=self.proc)
 
     def _configure_switch(self, config, proc_num):
         """Configure a P3-ROC switch.

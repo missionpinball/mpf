@@ -193,52 +193,6 @@ class ServoPlatform(BasePlatform, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
 
-class MatrixLightsPlatform(BasePlatform, metaclass=abc.ABCMeta):
-
-    """Baseclass for platforms with matrix lights in MPF."""
-
-    def __init__(self, machine):
-        """Add matrix_lights feature."""
-        super().__init__(machine)
-        self.features['has_matrix_lights'] = True
-
-    @abc.abstractmethod
-    def configure_matrixlight(self, config):
-        """Subclass this method in a platform module to configure a matrix light.
-
-        This method should return a reference to the matrix lights's platform
-        interface object which will be called to access the hardware.
-
-        Args:
-            config (dict): Configuration of device.
-
-        """
-        raise NotImplementedError
-
-
-class GiPlatform(BasePlatform, metaclass=abc.ABCMeta):
-
-    """Baseclass for platforms with GIs."""
-
-    def __init__(self, machine):
-        """Add GI feature."""
-        super().__init__(machine)
-        self.features['has_gis'] = True
-
-    @abc.abstractmethod
-    def configure_gi(self, config):
-        """Subclass this method in a platform module to configure a GI string.
-
-        This method should return a reference to the GI string's platform
-        interface object which will be called to access the hardware.
-
-        Args:
-            config (dict): Config of GI.
-
-        """
-        raise NotImplementedError
-
-
 class LightsPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     """Baseclass for platforms with any kind of lights in MPF.
@@ -265,30 +219,6 @@ class LightsPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
         Args:
             config (dict): Config of light.
-
-        """
-        raise NotImplementedError
-
-
-class LedPlatform(BasePlatform, metaclass=abc.ABCMeta):
-
-    """Baseclass for platforms with LEDs in MPF."""
-
-    def __init__(self, machine):
-        """Add led feature."""
-        super().__init__(machine)
-        self.features['has_leds'] = True
-
-    @abc.abstractmethod
-    def configure_led(self, config, channels):
-        """Subclass this method in a platform module to configure an LED.
-
-        This method should return a reference to the LED's platform interface
-        object which will be called to access the hardware.
-
-        Args:
-            channels (int): Number of channels (typically 3 for RGB).
-            config (dict): Config of LED.
 
         """
         raise NotImplementedError

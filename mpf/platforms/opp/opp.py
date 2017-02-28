@@ -67,7 +67,6 @@ class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             self.machine.config['hardware']['driverboards'].lower())
 
         if self.machine_type == 'gen1':
-            self.log.debug("Configuring the original OPP boards")
             raise AssertionError("Original OPP boards not currently supported.")
         elif self.machine_type == 'gen2':
             self.log.debug("Configuring the OPP Gen2 boards")
@@ -615,55 +614,6 @@ class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             return self.incandDict[number]
         else:
             raise AssertionError("Unknown subtype {}".format(subtype))
-
-    def configure_led(self, config: dict, channels: int):
-        """Configure LED.
-
-        Args:
-            config: Config dict.
-            channels: Number of channels. OPP supports up to three.
-        """
-        if channels > 3:
-            raise AssertionError("OPP only supports RGB LEDs")
-        if not self.opp_connection:
-            raise AssertionError("A request was made to configure an OPP LED, "
-                                 "but no OPP connection is available")
-
-        number = self._get_dict_index(config['number'])
-
-        chain_serial, card, pixel_num = number.split('-')
-        index = chain_serial + '-' + card
-        if index not in self.neoCardDict:
-            raise AssertionError("A request was made to configure an OPP neopixel "
-                                 "with card number %s which doesn't exist", card)
-
-        neo = self.neoCardDict[index]
-        pixel = neo.add_neopixel(int(pixel_num), self.neoDict)
-
-        return pixel
-
-    def configure_matrixlight(self, config):
-        """Configure a direct incandescent bulb.
-
-        Args:
-            config: Config dict.
-        """
-        if not self.opp_connection:
-            raise AssertionError("A request was made to configure an OPP matrix "
-                                 "light (incand board), but no OPP connection "
-                                 "is available")
-
-        number = self._get_dict_index(config['number'])
-
-        if number not in self.incandDict:
-            raise AssertionError("A request was made to configure a OPP matrix "
-                                 "light (incand board), with number %s "
-                                 "which doesn't exist", number)
-
-        if not self._light_update_task:
-            self._light_update_task = self.machine.clock.loop.create_task(self._update_lights())
-            self._light_update_task.add_done_callback(self._done)
-        return self.incandDict[number]
 
     @staticmethod
     def _done(future):

@@ -6,9 +6,8 @@ https://github.com/zestyping/openpixelcontrol/blob/master/python_clients/opc.py
 
 import logging
 
-from mpf.core.platform import LedPlatform, LightsPlatform
+from mpf.core.platform import LightsPlatform
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
-from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 
 
 class HardwarePlatform(LightsPlatform):

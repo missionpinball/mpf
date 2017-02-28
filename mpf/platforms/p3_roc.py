@@ -14,7 +14,7 @@ import logging
 
 from mpf.core.platform import I2cPlatform, AccelerometerPlatform
 from mpf.platforms.p_roc_common import PDBConfig, PROCBasePlatform
-from mpf.platforms.p_roc_devices import PROCDriver, PROCGiString, PROCMatrixLight
+from mpf.platforms.p_roc_devices import PROCDriver
 
 
 class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
@@ -140,30 +140,6 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
             raise AssertionError("Driver {} cannot be controlled by the P3-ROC. ".format(str(config['number'])))
 
         proc_driver_object = PROCDriver(proc_num, config, self)
-
-        return proc_driver_object
-
-    def configure_gi(self, config):
-        """Configure a GI driver on the P3-Roc.
-
-        GIs are coils in P3-Roc
-        """
-        proc_num = self.pdbconfig.get_proc_coil_number(str(config['number']))
-        if proc_num == -1:
-            raise AssertionError("Gi Driver {} cannot be controlled by the P3-ROC. ".format(str(config['number'])))
-
-        proc_driver_object = PROCGiString(proc_num, self.proc, config)
-
-        return proc_driver_object
-
-    def configure_matrixlight(self, config):
-        """Configure a matrix light in P3-Roc."""
-        proc_num = self.pdbconfig.get_proc_light_number(str(config['number']))
-
-        if proc_num == -1:
-            raise AssertionError("Matrixlight {} cannot be controlled by the P3-ROC. ".format(str(config['number'])))
-
-        proc_driver_object = PROCMatrixLight(proc_num, self.proc)
 
         return proc_driver_object
 

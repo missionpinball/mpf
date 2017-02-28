@@ -2,7 +2,6 @@
 import logging
 
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
-from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 
