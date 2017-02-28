@@ -1,7 +1,7 @@
 """Support for incandescent wings in OPP."""
 import logging
 
-from mpf.platforms.interfaces.gi_platform_interface import GIPlatformInterface
+from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 
@@ -28,7 +28,7 @@ class OPPIncandCard(object):
                 incand_dict[chain_serial + '-' + number] = OPPIncand(self, number)
 
 
-class OPPIncand(GIPlatformInterface):
+class OPPIncand(LightPlatformInterface):
 
     """A driver of an incandescent wing card."""
 
@@ -37,18 +37,13 @@ class OPPIncand(GIPlatformInterface):
         self.incandCard = incand_card
         self.number = number
 
-    def off(self):
-        """Disable (turns off) this light."""
-        _, incand = self.number.split("-")
-        curr_bit = (1 << int(incand))
-        self.incandCard.newState &= ~curr_bit
-
-    def on(self, brightness: int=255):
+    def set_brightness(self, brightness: float, fade_ms: int):
         """Enable (turns on) this driver.
 
         Args:
             brightness: brightness 0 (off) to 255 (on) for this incandescent light. OPP only supports on (>0) or off.
         """
+        del fade_ms
         _, incand = self.number.split("-")
         curr_bit = (1 << int(incand))
         if brightness == 0:

@@ -28,8 +28,6 @@ mpf:
         queue_event: mpf.config_players.queue_event_player
         queue_relay: mpf.config_players.queue_relay_player
         flasher: mpf.config_players.flasher_player
-#        gi: mpf.config_players.gi_player
-#        led: mpf.config_players.led_player
         light: mpf.config_players.light_player
         random_event: mpf.config_players.random_event_player
         show: mpf.config_players.show_player
@@ -68,8 +66,8 @@ mpf:
         - mpf.devices.achievement_group.AchievementGroup
         - mpf.devices.physical_dmd.PhysicalDmd
         - mpf.devices.physical_rgb_dmd.PhysicalRgbDmd
-#        - mpf.devices.led_group.LedStrip
-#        - mpf.devices.led_group.LedRing
+        - mpf.devices.light_group.LightStrip
+        - mpf.devices.light_group.LightRing
         - mpf.devices.magnet.Magnet
         - mpf.devices.kickback.Kickback
         - mpf.devices.combo_switch.ComboSwitch
@@ -151,11 +149,7 @@ mpf:
       - drop_targets
       - drop_target_banks
       - extra_balls
-#      - flashers
       - flippers
-#      - gis
-#      - leds
-#      - matrix_lights
       - multiballs
       - playfields
       - playfield_transfers
@@ -345,7 +339,6 @@ open_pixel_control:
     port: 7890
     connection_required: no
     connection_attempts: -1
-    number_format: int
 
 shot_profiles:
     default:

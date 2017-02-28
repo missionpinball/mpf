@@ -2,10 +2,10 @@
 import logging
 
 from mpf.core.utility_functions import Util
-from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
+from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
 
-class FASTMatrixLight(MatrixLightPlatformInterface):
+class FASTMatrixLight(LightPlatformInterface):
 
     """A direct light on a fast controller."""
 
@@ -15,18 +15,8 @@ class FASTMatrixLight(MatrixLightPlatformInterface):
         self.number = number
         self.send = sender
 
-    def off(self):
-        """Disable (turn off) this matrix light."""
-        # self.send('L1:' + self.number + ',00')
-        self.send('L1:{},00'.format(self.number))
-
-    def on(self, brightness=255):
+    def set_brightness(self, brightness: float, fade_ms: int):
         """Enable (turn on) this driver."""
-        if brightness == 0:
-            self.off()
-            return
-
-        if brightness >= 255:
-            brightness = 255
-
-        self.send('L1:{},{}'.format(self.number, Util.int_to_hex_string(brightness)))
+        # FAST gi does not support fades
+        del fade_ms
+        self.send('L1:{},{}'.format(self.number, Util.int_to_hex_string(int(brightness * 255))))

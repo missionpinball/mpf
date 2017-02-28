@@ -15,7 +15,7 @@ from mpf.platforms.opp.opp_neopixel import OPPNeopixelCard
 from mpf.platforms.opp.opp_switch import OPPInputCard
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 from mpf.devices.driver import ConfiguredHwDriver
-from mpf.core.platform import MatrixLightsPlatform, LedPlatform, SwitchPlatform, DriverPlatform
+from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform
 
 # Minimum firmware versions needed for this module
 MIN_FW = 0x00000100
@@ -23,7 +23,7 @@ BAD_FW_VERSION = 0x01020304
 
 
 # pylint: disable-msg=too-many-instance-attributes
-class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, DriverPlatform):
+class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
     """Platform class for the OPP hardware.
 
@@ -564,6 +564,57 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                                  "with number %s which doesn't exist", number)
 
         return self.inpDict[number]
+
+    def parse_light_number_to_channels(self, number: str, subtype: str):
+        """Parse number and subtype to channel."""
+        if subtype == "matrix":
+            return [
+                {
+                    "number": self._get_dict_index(number)
+                }
+            ]
+        elif not subtype or subtype == "led":
+            return [
+                {
+                    "number": self._get_dict_index(number) + "-0"
+                },
+                {
+                    "number": self._get_dict_index(number) + "-1"
+                },
+                {
+                    "number": self._get_dict_index(number) + "-2"
+                },
+            ]
+        else:
+            raise AssertionError("Unknown subtype {}".format(subtype))
+
+    def configure_light(self, number, subtype, platform_settings):
+        """Configure a led or matrix light."""
+        if not self.opp_connection:
+            raise AssertionError("A request was made to configure an OPP light, "
+                                 "but no OPP connection is available")
+        if not subtype or subtype == "led":
+            chain_serial, card, pixel_num, index_str = number.split('-')
+            index = chain_serial + '-' + card
+            if index not in self.neoCardDict:
+                raise AssertionError("A request was made to configure an OPP neopixel "
+                                     "with card number %s which doesn't exist", card)
+
+            neo = self.neoCardDict[index]
+            channel = neo.add_channel(int(pixel_num), self.neoDict, index_str)
+            return channel
+        elif subtype == "matrix":
+            if number not in self.incandDict:
+                raise AssertionError("A request was made to configure a OPP matrix "
+                                     "light (incand board), with number %s "
+                                     "which doesn't exist", number)
+
+            if not self._light_update_task:
+                self._light_update_task = self.machine.clock.loop.create_task(self._update_lights())
+                self._light_update_task.add_done_callback(self._done)
+            return self.incandDict[number]
+        else:
+            raise AssertionError("Unknown subtype {}".format(subtype))
 
     def configure_led(self, config: dict, channels: int):
         """Configure LED.

@@ -2,10 +2,10 @@
 import logging
 
 from mpf.core.utility_functions import Util
-from mpf.platforms.interfaces.gi_platform_interface import GIPlatformInterface
+from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
 
-class FASTGIString(GIPlatformInterface):
+class FASTGIString(LightPlatformInterface):
 
     """A FAST GI string in a WPC machine."""
 
@@ -24,8 +24,10 @@ class FASTGIString(GIPlatformInterface):
         self.log.debug("Turning Off GI String")
         self.send('GI:' + self.number + ',00')
 
-    def on(self, brightness=255):
+    def set_brightness(self, brightness: float, fade_ms: int):
         """Turn on GI string."""
+        del fade_ms
+        brightness = int(brightness * 255)
         if brightness >= 255:
             brightness = 255
 

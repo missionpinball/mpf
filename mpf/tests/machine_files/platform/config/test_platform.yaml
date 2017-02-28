@@ -3,9 +3,9 @@
 #hardware:
 #  leds: fadecandy
 
-leds:
-  led1:
+switches:
+  switch1:
     number: 1
-  led2:
+  switch2:
     number: 2
-    platform: fadecandy
+    platform: virtual

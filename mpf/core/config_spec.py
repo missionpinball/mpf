@@ -481,7 +481,7 @@ light_settings:
     color_correction_profiles: single|dict|None
     default_color_correction_profile: single|str|None
     default_fade_ms: single|int|0
-led_stripes:
+light_stripes:
     __valid_in__: machine
     number_start: single|int|
     number_template: single|str|None
@@ -490,8 +490,8 @@ led_stripes:
     direction: single|float|None
     distance: single|float|None
     count: single|int|
-    led_template: single|subconfig(leds,device)|
-led_rings:
+    light_template: single|subconfig(lights,device)|
+light_rings:
     __valid_in__: machine
     number_start: single|int|
     number_template: single|str|None
@@ -500,7 +500,7 @@ led_rings:
     start_angle: single|float|0
     radius: single|float|None
     count: single|int|
-    led_template: single|subconfig(leds,device)|
+    light_template: single|subconfig(lights,device)|
 lights:
     __valid_in__: machine
     number: single|str|None
@@ -652,7 +652,6 @@ open_pixel_control:
     host: single|str|localhost
     port: single|int|7890
     connection_attempts: single|int|-1
-    number_format: single|enum(int,hex)|int
     debug: single|bool|False
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic

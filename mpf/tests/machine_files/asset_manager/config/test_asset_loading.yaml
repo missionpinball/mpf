@@ -20,17 +20,18 @@ lights:
     gi_01:
         subtype: gi
         number: 0
+    flasher_01:
+        platform: coils
+        number: flasher_01
 
 coils:
     coil_01:
         number: 1
         pulse_ms: 30
-
-flashers:
     flasher_01:
-        number: 1
+        number: 2
         label: Test flasher
-        flash_ms: 40
+        pulse_ms: 40
 
 modes:
   - mode1

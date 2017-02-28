@@ -1,6 +1,7 @@
 """OPP WS2812 wing."""
 import logging
 
+from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
 
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
@@ -24,6 +25,13 @@ class OPPNeopixelCard(object):
 
         self.log.debug("Creating OPP Neopixel card at hardware address: 0x%02x", addr)
 
+    def add_channel(self, pixel_number, neo_dict, index):
+        """Add a channel."""
+        if self.card + '-' + str(pixel_number) not in neo_dict:
+            self.add_neopixel(pixel_number, neo_dict)
+
+        return OPPLightChannel(neo_dict[self.card + '-' + str(pixel_number)], int(index))
+
     def add_neopixel(self, number, neo_dict):
         """Add a LED channel."""
         if number > self.numPixels:
@@ -34,7 +42,21 @@ class OPPNeopixelCard(object):
         return pixel
 
 
-class OPPNeopixel(RGBLEDPlatformInterface):
+class OPPLightChannel(LightPlatformInterface):
+
+    """A channel of a WS2812 LED."""
+
+    def __init__(self, led, index):
+        """Initialise led channel."""
+        self.led = led
+        self.index = index
+
+    def set_brightness(self, brightness: float, fade_ms: int):
+        """Set brightness."""
+        self.led.set_channel(self.index, int(brightness * 255))
+
+
+class OPPNeopixel:
 
     """One WS2812 LED."""
 
@@ -46,8 +68,18 @@ class OPPNeopixel(RGBLEDPlatformInterface):
         self.neoCard = neo_card
         _, index = number.split('-')
         self.index_char = chr(int(index))
+        self._color = [None, None, None]
 
         self.log.debug("Creating OPP Neopixel: %s", number)
+
+    def set_channel(self, index, brightness):
+        """Set one channel."""
+        self._color[index] = brightness
+
+        # this is to prevent intermediate color table entries. not ideal
+        if self._color[0] is not None and self._color[1] is not None and self._color[2] is not None:
+            self.color(self._color)
+            self._color = [None, None, None]
 
     def color(self, color):
         """Instantly set this LED to the color passed.

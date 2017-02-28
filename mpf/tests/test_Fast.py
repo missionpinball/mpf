@@ -170,7 +170,7 @@ class TestFast(MpfTestCase):
             "DN:12,00,00,00": "DN:P",
             "DN:20,00,00,00": "DN:P",
             "DN:21,00,00,00": "DN:P",
-            "GI:2A,FF": "GI:P",
+#            "GI:2A,FF": "GI:P",
             "XO:03,7F": "XO:P"
         }
 
@@ -633,25 +633,25 @@ class TestFast(MpfTestCase):
 
     def _test_pdb_gi_light(self):
         # test gi on
-        device = self.machine.gis.test_gi
+        device = self.machine.lights.test_gi
         self.net_cpu.expected_commands = {
             "GI:2A,FF": "GI:P",
         }
-        device.enable()
+        device.on()
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         self.net_cpu.expected_commands = {
             "GI:2A,80": "GI:P",
         }
-        device.enable(brightness=128)
+        device.on(brightness=128)
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         self.net_cpu.expected_commands = {
             "GI:2A,F5": "GI:P",
         }
-        device.enable(brightness=245)
+        device.on(brightness=245)
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
@@ -659,21 +659,21 @@ class TestFast(MpfTestCase):
         self.net_cpu.expected_commands = {
             "GI:2A,00": "GI:P",
         }
-        device.disable()
+        device.off()
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         self.net_cpu.expected_commands = {
             "GI:2A,00": "GI:P",
         }
-        device.enable(brightness=0)
+        device.on(brightness=0)
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
     def _test_rdb_led(self):
         self.advance_time_and_run()
-        device = self.machine.leds.test_led
-        device2 = self.machine.leds.test_led2
+        device = self.machine.lights.test_led
+        device2 = self.machine.lights.test_led2
         self.assertEqual("000000", self.rgb_cpu.leds['97'])
         self.assertEqual("000000", self.rgb_cpu.leds['99'])
         self.rgb_cpu.leds = {}

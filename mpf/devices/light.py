@@ -523,7 +523,7 @@ class Light(SystemWideDevice):
 
             return self._color_correction_profile.apply(color)
 
-    def on(self, fade_ms=None, priority=0, key=None, **kwargs):
+    def on(self, fade_ms=None, brightness=None, priority=0, key=None, **kwargs):
         """Turn light on.
 
         Args:
@@ -532,7 +532,11 @@ class Light(SystemWideDevice):
             fade_ms: duration of fade
         """
         del kwargs
-        self.color(color=self.config['default_on_color'], fade_ms=fade_ms,
+        if brightness is not None:
+            color = (brightness, brightness, brightness)
+        else:
+            color = self.config['default_on_color']
+        self.color(color=color, fade_ms=fade_ms,
                    priority=priority, key=key)
 
     def off(self, fade_ms=None, priority=0, key=None, **kwargs):
