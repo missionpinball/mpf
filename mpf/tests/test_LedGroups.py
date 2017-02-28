@@ -1,10 +1,6 @@
 """Test led groups."""
-from mpf.devices.led import Led
-
 from mpf.core.rgb_color import RGBColor
 from mpf.tests.MpfTestCase import MpfTestCase
-
-from mpf.core.config_player import ConfigPlayer
 
 
 class TestLedPlayer(MpfTestCase):
