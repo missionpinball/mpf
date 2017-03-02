@@ -116,9 +116,8 @@ class BallSave(SystemWideDevice, ModeDevice):
         '''
 
         if self.config['active_time'] > 0:
-            if self.debug:
-                self.debug_log('Starting ball save timer: %ss',
-                               self.config['active_time'] / 1000.0)
+            self.debug_log('Starting ball save timer: %ss',
+                           self.config['active_time'] / 1000.0)
 
             self.delay.add(name='disable',
                            ms=(self.config['active_time'] +
@@ -133,8 +132,7 @@ class BallSave(SystemWideDevice, ModeDevice):
                            callback=self._hurry_up)
 
     def _hurry_up(self):
-        if self.debug:
-            self.debug_log("Starting Hurry Up")
+        self.debug_log("Starting Hurry Up")
 
         self.state = 'hurry_up'
 
@@ -144,8 +142,7 @@ class BallSave(SystemWideDevice, ModeDevice):
         '''
 
     def _grace_period(self):
-        if self.debug:
-            self.debug_log("Starting Grace Period")
+        self.debug_log("Starting Grace Period")
 
         self.state = 'grace_period'
 
@@ -189,14 +186,12 @@ class BallSave(SystemWideDevice, ModeDevice):
     def _reduce_remaining_saves_and_disable_if_zero(self, balls_to_save):
         if not self.unlimited_saves:
             self.saves_remaining -= balls_to_save
-            if self.debug:
-                self.debug_log("Saves remaining: %s", self.saves_remaining)
-        elif self.debug:
+            self.debug_log("Saves remaining: %s", self.saves_remaining)
+        else:
             self.debug_log("Unlimited saves remaining")
 
         if self.saves_remaining <= 0 and not self.unlimited_saves:
-            if self.debug:
-                self.debug_log("Disabling since there are no saves remaining")
+            self.debug_log("Disabling since there are no saves remaining")
             self.disable()
 
     def _ball_drain_while_active(self, balls, **kwargs):
@@ -274,7 +269,6 @@ class BallSave(SystemWideDevice, ModeDevice):
     def device_removed_from_mode(self, mode):
         """Disable ball save when mode ends."""
         del mode
-        if self.debug:
-            self.debug_log("Removing...")
+        self.debug_log("Removing...")
 
         self.disable()

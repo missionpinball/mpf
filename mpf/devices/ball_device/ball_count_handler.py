@@ -163,10 +163,15 @@ class BallCountHandler(BallDeviceStateHandler):
         self.ball_device.counted_balls = self._ball_count
         yield from super().initialise()
 
+    @property
+    def has_ball(self):
+        """Return true if the device has at least one ball."""
+        return self._ball_count > 0
+
     @asyncio.coroutine
     def wait_for_ball(self):
         """Wait until the device has a ball."""
-        if self._ball_count > 0:
+        if self.has_ball:
             self.debug_log("We have %s balls.", self._ball_count)
             return
 
@@ -199,6 +204,8 @@ class BallCountHandler(BallDeviceStateHandler):
                 self.debug_log("Ready to receive from %s. Free space %s (Capacity: %s, Balls: %s), incoming_balls: %s",
                                source, free_space, self.ball_device.config['ball_capacity'], self._ball_count,
                                incoming_balls)
+                # wait for the counter to be ready
+                yield from self.ball_device.counter.wait_for_ready_to_receive()
                 return True
 
             self.debug_log("Not ready to receive from %s. Free space %s (Capacity: %s, Balls: %s), incoming_balls: %s",

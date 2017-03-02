@@ -338,20 +338,21 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEqual(1, device1.balls)
 
-        # launcher does not see the ball. player ejects it right away
-        self.advance_time_and_run(1)
-
         coil1.pulse.assert_called_once_with()
         assert not coil2.pulse.called
 
         coil1.pulse = MagicMock()
         coil2.pulse = MagicMock()
 
-        # ball hits the playfield
-        self.machine.switch_controller.process_switch("s_playfield", 1)
-        self.advance_time_and_run(0.1)
-        self.machine.switch_controller.process_switch("s_playfield", 0)
-        self.advance_time_and_run(1)
+        # playfield but count is not increased because eject_timeout of trough did not expire yet
+        self.hit_and_release_switch("s_playfield")
+        self.assertEqual(0, playfield.balls)
+
+        # launcher does not see the ball. player ejects it right away. timeout expires
+        self.advance_time_and_run(3)
+
+        # ball hits the playfield (again)
+        self.hit_and_release_switch("s_playfield")
         self.advance_time_and_run(1)
 
         self.assertEqual(1, playfield.balls)
@@ -929,7 +930,7 @@ class TestBallDeviceManualWithTarget(MpfTestCase):
         self.assertEqual(1, device1.balls)
 
         # it skips launcher and goes to pf
-        self.advance_time_and_run(1)
+        self.advance_time_and_run(3)
 
         self.machine.switch_controller.process_switch("s_playfield", 1)
         self.advance_time_and_run(0.1)

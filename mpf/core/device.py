@@ -25,7 +25,6 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         self.name = name.lower()
         self.tags = []
         self.label = None
-        self.debug = False
         self.platform = None
         self.config = dict()
 
@@ -73,6 +72,11 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         return config
 
     def _configure_device_logging(self, config):
+
+        if config['debug']:
+            config['console_log'] = 'full'
+            config['file_log'] = 'full'
+
         self.configure_logging(self.class_label + '.' + self.name,
                                config['console_log'],
                                config['file_log'])

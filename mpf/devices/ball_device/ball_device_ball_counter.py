@@ -40,6 +40,10 @@ class BallDeviceBallCounter:
         """Wait for ball activity."""
         raise NotImplementedError()
 
+    def wait_for_ready_to_receive(self):
+        """Wait until the counter is ready to count an incoming ball."""
+        raise NotImplementedError()
+
     def received_entrance_event(self):
         """Handle entrance event."""
         pass

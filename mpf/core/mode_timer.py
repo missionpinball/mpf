@@ -50,7 +50,7 @@ class ModeTimer(LogMixin):
 
         if self.config['debug']:
             self.configure_logging('ModeTimer.' + name,
-                                   'basic', 'full')
+                                   'full', 'full')
         else:
             self.configure_logging('ModeTimer.' + name,
                                    self.config['console_log'],

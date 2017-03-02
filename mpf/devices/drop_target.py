@@ -261,8 +261,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
 
         self.member_target_change()
 
-        if self.debug:
-            self.debug_log('Drop Targets: %s', self.drop_targets)
+        self.debug_log('Drop Targets: %s', self.drop_targets)
 
     def reset(self, **kwargs):
         """Reset this bank of drop targets.
@@ -275,8 +274,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         coil, even if each drop target is configured with its own coil.)
         """
         del kwargs
-        if self.debug:
-            self.debug_log('Resetting')
+        self.debug_log('Resetting')
 
         # figure out all the coils we need to pulse
         coils = set()
@@ -294,8 +292,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         # now pulse them
         for coil in coils:
 
-            if self.debug:
-                self.debug_log('Pulsing reset coils: %s', coils)
+            self.debug_log('Pulsing reset coils: %s', coils)
 
             coil.pulse()
 
@@ -314,11 +311,10 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
             else:
                 self.up += 1
 
-        if self.debug:
-            self.debug_log(
-                'Member drop target status change: Up: %s, Down: %s,'
-                ' Total: %s', self.up, self.down,
-                len(self.drop_targets))
+        self.debug_log(
+            'Member drop target status change: Up: %s, Down: %s,'
+            ' Total: %s', self.up, self.down,
+            len(self.drop_targets))
 
         if self.down == len(self.drop_targets):
             self._bank_down()
@@ -329,8 +325,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
 
     def _bank_down(self):
         self.complete = True
-        if self.debug:
-            self.debug_log('All targets are down')
+        self.debug_log('All targets are down')
 
         if self.config['reset_on_complete']:
             self.debug_log("Reset on complete after %s", self.config['reset_on_complete'])
@@ -344,8 +339,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
 
     def _bank_up(self):
         self.complete = False
-        if self.debug:
-            self.debug_log('All targets are up')
+        self.debug_log('All targets are up')
         self.machine.events.post('drop_target_bank_' + self.name + '_up')
         '''event: drop_target_bank_(name)_up
         desc: Every drop target in the drop target bank called
