@@ -68,7 +68,6 @@ class LightGroup(SystemWideDevice):
         else:
             light_config['number'] = index
         light_config['tags'].append(self.name)
-        light_config['debug'] = self.debug
         light_config['x'] = x
         light_config['y'] = y
         light_config = light.validate_and_parse_config(light_config, False)
