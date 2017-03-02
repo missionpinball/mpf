@@ -2,6 +2,7 @@
 
 from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
+from mpf.core.events import event_handler
 from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
 
@@ -70,6 +71,7 @@ class Multiball(SystemWideDevice, ModeDevice):
             self.machine.game.balls_in_play += self.balls_added_live
             self.balls_live_target = self.machine.game.balls_in_play
 
+    @event_handler(10)
     def start(self, **kwargs):
         """Start multiball."""
         del kwargs
@@ -82,10 +84,9 @@ class Multiball(SystemWideDevice, ModeDevice):
             return
 
         self.shoot_again = True
-        self.debug_log("Starting multiball with %s balls",
-                       self.config['ball_count'])
 
         self._handle_balls_in_play_and_balls_live()
+        self.debug_log("Starting multiball with %s balls (added %s)", self.balls_live_target, self.balls_added_live)
 
         balls_added = 0
 
@@ -114,7 +115,7 @@ class Multiball(SystemWideDevice, ModeDevice):
                                callback=self.stop)
 
         self.machine.events.post("multiball_" + self.name + "_started",
-                                 balls=self.config['ball_count'])
+                                 balls=self.balls_live_target)
         '''event: multiball_(name)_started
         desc: The multiball called (name) has just started.
         args:
@@ -163,6 +164,7 @@ class Multiball(SystemWideDevice, ModeDevice):
             '''
             self.debug_log("Ball drained. MB ended.")
 
+    @event_handler(5)
     def stop(self, **kwargs):
         """Stop shoot again."""
         del kwargs
@@ -180,6 +182,7 @@ class Multiball(SystemWideDevice, ModeDevice):
         # add handler for ball_drain until self.balls_ejected are drained
         self.machine.events.add_handler('ball_drain', self._ball_drain_count_balls)
 
+    @event_handler(8)
     def add_a_ball(self, **kwargs):
         """Add a ball if multiball has started."""
         del kwargs
@@ -190,6 +193,7 @@ class Multiball(SystemWideDevice, ModeDevice):
             self.machine.game.balls_in_play += 1
             self.source_playfield.add_ball(balls=1)
 
+    @event_handler(9)
     def start_or_add_a_ball(self, **kwargs):
         """Start multiball or add a ball if multiball has started."""
         del kwargs
@@ -198,6 +202,7 @@ class Multiball(SystemWideDevice, ModeDevice):
         else:
             self.start()
 
+    @event_handler(20)
     def enable(self, **kwargs):
         """Enable the multiball.
 
@@ -210,6 +215,7 @@ class Multiball(SystemWideDevice, ModeDevice):
         self.debug_log("Enabling...")
         self.enabled = True
 
+    @event_handler(1)
     def disable(self, **kwargs):
         """Disable the multiball.
 
@@ -222,6 +228,7 @@ class Multiball(SystemWideDevice, ModeDevice):
         self.debug_log("Disabling...")
         self.enabled = False
 
+    @event_handler(2)
     def reset(self, **kwargs):
         """Reset the multiball and disable it.
 

@@ -5,6 +5,7 @@ import uuid
 
 import asyncio
 from functools import partial
+from unittest.mock import MagicMock
 
 from mpf.core.mpf_controller import MpfController
 
@@ -113,6 +114,8 @@ class EventManager(MpfController):
 
         # An event 'handler' in our case is a tuple with 4 elements:
         # the handler method, priority, dict of kwargs, & uuid key
+        if hasattr(handler, "relative_priority") and not isinstance(handler, MagicMock):
+            priority += handler.relative_priority
 
         self.registered_handlers[event].append(RegisteredHandler(handler, priority, kwargs, key, condition))
 
@@ -644,3 +647,15 @@ class QueuedEvent(object):
     def is_empty(self):
         """Return true if unlocked."""
         return not self.waiter
+
+
+def event_handler(relative_priority):
+
+    """Decorator for event handlers."""
+
+    def decorator(func):
+        """Decorate a function with relative priority."""
+        func.relative_priority = relative_priority
+        return func
+
+    return decorator

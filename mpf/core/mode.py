@@ -205,8 +205,7 @@ class Mode(LogMixin):
                 # start and stop on the same event, the one will stop before
                 # the other starts
                 self.add_mode_event_handler(event=event, handler=self.stop,
-                                            priority=self.priority + 1 +
-                                            self.config['mode']['stop_priority'])
+                                            priority=self.config['mode']['stop_priority'] + 1)
 
         self.start_callback = callback
 
@@ -293,10 +292,6 @@ class Mode(LogMixin):
 
         self._kill_timers()
         self.delay.clear()
-
-        # self.machine.events.remove_handler(self.stop)
-        # todo is this ok here? Or should we only remove ones that we know this
-        # mode added?
 
         self.machine.events.post_queue(event='mode_' + self.name + '_stopping',
                                        callback=self._stopped)
@@ -465,7 +460,7 @@ class Mode(LogMixin):
             self.add_mode_event_handler(
                 event=event,
                 handler=self._control_event_handler,
-                priority=self.priority + 2 + int(priority),
+                priority=int(priority) + 2,
                 callback=method,
                 ms_delay=delay)
 
@@ -490,7 +485,7 @@ class Mode(LogMixin):
         else:
             callback(mode=self)
 
-    def add_mode_event_handler(self, event, handler, priority=1, **kwargs):
+    def add_mode_event_handler(self, event, handler, priority=0, **kwargs):
         """Register an event handler which is automatically removed when this mode stops.
 
         This method is similar to the Event Manager's add_handler() method,
@@ -522,7 +517,7 @@ class Mode(LogMixin):
         Note that if you do add a handler via this method and then remove it
         manually, that's ok too.
         """
-        key = self.machine.events.add_handler(event, handler, priority, mode=self, **kwargs)
+        key = self.machine.events.add_handler(event, handler, self.priority + priority, mode=self, **kwargs)
 
         self.event_handlers.add(key)
 
