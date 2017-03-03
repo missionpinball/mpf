@@ -1,4 +1,5 @@
 import selectors
+import socket
 from asyncio import base_events, coroutine, events
 import collections
 import heapq
@@ -82,6 +83,13 @@ class MockFd:
 
 
 class MockSocket(MockFd):
+    def __init__(self):
+        super().__init__()
+        self.family = socket.AF_INET
+
+    def setsockopt(self, *args, **kwargs):
+        pass
+
     def getsockname(self):
         return ""
 
