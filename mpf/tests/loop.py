@@ -87,6 +87,7 @@ class MockSocket(MockFd):
         super().__init__()
         self.family = socket.AF_INET
         self.type = socket.SOCK_STREAM
+        self.proto = socket.IPPROTO_TCP
 
     def setsockopt(self, *args, **kwargs):
         pass
