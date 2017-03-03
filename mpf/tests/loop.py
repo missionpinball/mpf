@@ -214,6 +214,7 @@ class TimeTravelLoop(base_events.BaseEventLoop):
         self._clock_resolution = 1e-9
         self._timers = NextTimers()
         self._selector = TestSelector()
+        self._transports = {}   # needed for newer asyncio on windows
         self.reset_counters()
 
     def time(self):
