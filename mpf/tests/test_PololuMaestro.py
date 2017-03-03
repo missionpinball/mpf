@@ -11,8 +11,10 @@ class TestPololuMaestro(MpfTestCase):
     def getMachinePath(self):
         return 'tests/machine_files/pololu_maestro/'
 
-    def get_platform(self):
-        return 'pololu_maestro'
+    def getOptions(self):
+        options = super().getOptions()
+        options['force_platform'] = False
+        return options
 
     def setUp(self):
         self.serial = MagicMock()
