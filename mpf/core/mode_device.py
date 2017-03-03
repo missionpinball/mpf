@@ -45,7 +45,7 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
         """
         if "enable_events" in self.config and not self.config['enable_events']:
             mode.add_mode_event_handler("mode_{}_started".format(mode.name),
-                                        self.enable)
+                                        self.enable, priority=100)
 
     def remove_control_events_in_mode(self):
         """Remove control events."""

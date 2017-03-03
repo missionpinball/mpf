@@ -1,0 +1,9 @@
+#config_version=4
+mode:
+  start_events: start_mode3
+  stop_events: stop_mode3
+
+multiballs:
+    mb_autostart:
+        ball_count: 2
+        start_events: mode_mode3_started
