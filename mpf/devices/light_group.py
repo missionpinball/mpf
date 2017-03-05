@@ -79,11 +79,10 @@ class LightGroup(SystemWideDevice):
     def _create_lights(self):
         raise NotImplementedError("Implement")
 
-    # pylint: disable-msg=too-many-arguments
-    def color(self, color, fade_ms=None, priority=0, key=None, mode=None):
+    def color(self, color, fade_ms=None, priority=0, key=None):
         """Call color on all lights in this group."""
         for light in self.lights:
-            light.color(color, fade_ms, priority, key, mode)
+            light.color(color, fade_ms, priority, key)
 
 
 class LightStrip(LightGroup):

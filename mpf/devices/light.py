@@ -3,7 +3,6 @@ from operator import itemgetter
 
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.machine import MachineController
-from mpf.core.mode import Mode
 from mpf.core.rgb_color import RGBColor
 from mpf.core.rgb_color import RGBColorCorrectionProfile
 from mpf.core.settings_controller import SettingEntry
@@ -89,8 +88,6 @@ class Light(SystemWideDevice):
         cls._updater_task = machine.clock.schedule_interval(
             cls.update_lights, 1 / machine.config['mpf']['default_light_hw_update_hz'])
 
-        machine.mode_controller.register_stop_method(cls.mode_stop)
-
         machine.settings.add_setting(SettingEntry("brightness", "Brightness", 100, "brightness", 1.0,
                                                   {0.25: "25%", 0.5: "50%", 0.75: "75%", 1.0: "100% (default)"}))
 
@@ -114,16 +111,6 @@ class Light(SystemWideDevice):
                 if light.fade_in_progress:
                     new_lights_to_update.add(light)
             cls.lights_to_update = new_lights_to_update
-
-    @classmethod
-    def mode_stop(cls, mode: Mode):
-        """Remove all entries from mode.
-
-        Args:
-            mode: Mode which was removed
-        """
-        for light in cls.machine.lights:
-            light.remove_from_stack_by_mode(mode)
 
     def __init__(self, machine, name):
         """Initialise light."""
@@ -167,8 +154,6 @@ class Light(SystemWideDevice):
             replaced by the new entry. The key is also used to remove entries
             from the stack (e.g. when shows or modes end and they want to
             remove their commands from the light).
-        mode: Optional mode where the brightness was set. Used to remove
-            entries when a mode ends.
         """
 
     def _map_channels_to_colors(self, channel_list) -> dict:
@@ -294,7 +279,7 @@ class Light(SystemWideDevice):
         self._color_correction_profile = profile
 
     # pylint: disable-msg=too-many-arguments
-    def color(self, color, fade_ms=None, priority=0, key=None, mode=None):
+    def color(self, color, fade_ms=None, priority=0, key=None):
         """Add or update a color entry in this light's stack, which is how you tell this light what color you want it to be.
 
         Args:
@@ -313,9 +298,6 @@ class Light(SystemWideDevice):
                 used to identify these settings for later removal. If any
                 settings in the stack already have this key, those settings
                 will be replaced with these new settings.
-            mode: Optional mode instance of the mode that is setting this
-                color. When a mode ends, entries from the stack with that mode
-                will automatically be removed.
         """
         self.debug_log("Received color() command. color: %s, fade_ms: %s"
                        "priority: %s, key: %s", color, fade_ms, priority,
@@ -334,10 +316,9 @@ class Light(SystemWideDevice):
 
             return
 
-        self._add_to_stack(color, fade_ms, priority, key, mode)
+        self._add_to_stack(color, fade_ms, priority, key)
 
-    # pylint: disable-msg=too-many-arguments
-    def _add_to_stack(self, color, fade_ms, priority, key, mode):
+    def _add_to_stack(self, color, fade_ms, priority, key):
         curr_color = self.get_color()
 
         self.remove_from_stack_by_key(key)
@@ -355,8 +336,7 @@ class Light(SystemWideDevice):
                                dest_time=dest_time,
                                dest_color=color,
                                color=new_color,
-                               key=key,
-                               mode=mode))
+                               key=key))
 
         self.stack.sort(key=itemgetter('priority', 'start_time'), reverse=True)
 
@@ -397,22 +377,6 @@ class Light(SystemWideDevice):
         self.debug_log("Removing key '%s' from stack", key)
 
         self.stack[:] = [x for x in self.stack if x['key'] != key]
-
-        self._schedule_update()
-
-    def remove_from_stack_by_mode(self, mode: Mode):
-        """Remove a group of color settings from the stack.
-
-        Args:
-            mode: Mode which was removed
-
-        This method triggers a light update, so if the highest priority settings
-        were removed, the light will be updated with whatever's below it. If no
-        settings remain after these are removed, the light will turn off.
-        """
-        self.debug_log("Removing mode '%s' from stack", mode)
-
-        self.stack[:] = [x for x in self.stack if x['mode'] != mode]
 
         self._schedule_update()
 
