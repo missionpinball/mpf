@@ -1,4 +1,5 @@
 import selectors
+import socket
 from asyncio import base_events, coroutine, events
 import collections
 import heapq
@@ -82,6 +83,15 @@ class MockFd:
 
 
 class MockSocket(MockFd):
+    def __init__(self):
+        super().__init__()
+        self.family = socket.AF_INET
+        self.type = socket.SOCK_STREAM
+        self.proto = socket.IPPROTO_TCP
+
+    def setsockopt(self, *args, **kwargs):
+        pass
+
     def getsockname(self):
         return ""
 
@@ -214,6 +224,7 @@ class TimeTravelLoop(base_events.BaseEventLoop):
         self._clock_resolution = 1e-9
         self._timers = NextTimers()
         self._selector = TestSelector()
+        self._transports = {}   # needed for newer asyncio on windows
         self.reset_counters()
 
     def time(self):
@@ -227,6 +238,9 @@ class TimeTravelLoop(base_events.BaseEventLoop):
         """Move test time forward."""
         if advance:
             self._time += advance
+
+    def _add_reader(self, *args, **kwargs):
+        return self.add_reader(*args, **kwargs)
 
     def add_reader(self, fd, callback, *args):
         """Add a reader callback."""
@@ -243,6 +257,9 @@ class TimeTravelLoop(base_events.BaseEventLoop):
                                   (handle, writer))
             if reader is not None:
                 reader.cancel()
+
+    def _remove_reader(self, fd):
+        return self.remove_reader(fd)
 
     def remove_reader(self, fd):
         """Remove a reader callback."""
@@ -266,6 +283,9 @@ class TimeTravelLoop(base_events.BaseEventLoop):
             else:
                 return False
 
+    def _add_writer(self, *args, **kwargs):
+        return self.add_writer(*args, **kwargs)
+
     def add_writer(self, fd, callback, *args):
         """Add a writer callback.."""
         self._check_closed()
@@ -281,6 +301,9 @@ class TimeTravelLoop(base_events.BaseEventLoop):
                                   (reader, handle))
             if writer is not None:
                 writer.cancel()
+
+    def _remove_writer(self, fd):
+        return self.remove_writer(fd)
 
     def remove_writer(self, fd):
         """Remove a writer callback."""

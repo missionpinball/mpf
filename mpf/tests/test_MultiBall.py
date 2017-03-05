@@ -899,3 +899,15 @@ class TestMultiBall(MpfGameTestCase):
         self.drain_ball()
         self.advance_time_and_run()
 
+    def testModeWithMultiballAutostart(self):
+        # prepare game
+        self.fill_troughs()
+
+        # start game
+        self.start_game()
+        self.post_event("start_mode3")
+        self.advance_time_and_run(1)
+
+        # multiball should be enabled now but not started
+        self.assertTrue(self.machine.multiballs.mb_autostart.enabled)
+        self.assertEqual(1, self.machine.multiballs.mb_autostart.balls_added_live)

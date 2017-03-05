@@ -1,0 +1,8 @@
+#config_version=4
+mode:
+  game_mode: False
+
+queue_relay_player:
+    relay3:
+      post: relay3_start
+      wait_for: relay3_done

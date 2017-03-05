@@ -34,14 +34,8 @@ class HardwarePlatform(ServoPlatform):
 
         # validate our config (has to be in intialize since config_processor
         # is not read in __init__)
-        self.machine.config_validator.validate_config("pololu_maestro",
-                                                      self.config)
-
-        # load platform
-        self.platform = self.machine.get_platform_sections("pololu_maestro",
-                                                           None)
-
-        self.serial = serial.Serial(self.platform.config['port'])
+        self.config = self.machine.config_validator.validate_config("pololu_maestro", self.config)
+        self.serial = serial.Serial(self.config['port'])
 
     def stop(self):
         """Close serial."""
