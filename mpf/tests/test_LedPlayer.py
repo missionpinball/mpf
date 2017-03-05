@@ -1,6 +1,5 @@
 """Test led player."""
 from mpf.core.rgb_color import RGBColor
-from mpf.devices.light import Light
 from mpf.tests.MpfTestCase import MpfTestCase
 
 
@@ -13,7 +12,7 @@ class TestLedPlayer(MpfTestCase):
         return 'tests/machine_files/led_player/'
 
     def _synchronise_led_update(self):
-        ts = Light._updater_task.get_next_call_time()
+        ts = self.machine.light_controller._updater_task.get_next_call_time()
         self.assertTrue(ts)
         self.advance_time_and_run(ts - self.machine.clock.get_time())
         self.advance_time_and_run(.01)

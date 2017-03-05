@@ -21,6 +21,7 @@ mpf:
         - service: mpf.core.service_controller.ServiceController
         - settings: mpf.core.settings_controller.SettingsController
         - placeholder_manager: mpf.core.placeholder_manager.PlaceholderManager
+        - light_controller: mpf.core.light_controller.LightController
 
     config_players:
         coil: mpf.config_players.coil_player
@@ -178,6 +179,7 @@ logging:
       device_manager: none
       event_manager: none
       file_manager: none  # todo
+      light_controller: none
       logic_blocks: none
       machine_controller: basic
       mode_controller: basic
@@ -208,6 +210,7 @@ logging:
       device_manager: basic
       event_manager: basic
       file_manager: basic
+      light_controller: basic
       logic_blocks: basic
       machine_controller: basic
       mode_controller: basic

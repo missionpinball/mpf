@@ -6,6 +6,10 @@ class LightPlatformInterface(metaclass=abc.ABCMeta):
 
     """Interface for a light in hardware platforms."""
 
+    def get_max_fade_ms(self):
+        """Return maximum fade_ms for this light."""
+        return 0
+
     @abc.abstractmethod
     def set_brightness(self, brightness: float, fade_ms: int):
         """Set the light to the specified brightness.

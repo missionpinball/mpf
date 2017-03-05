@@ -37,80 +37,6 @@ class Light(SystemWideDevice):
     config_section = 'lights'
     collection = 'lights'
     class_label = 'light'
-    machine = None
-
-    lights_to_update = set()
-    _updater_task = None
-
-    @classmethod
-    def device_class_init(cls, machine: MachineController):
-        """Initialise all lights.
-
-        Args:
-            machine: MachineController which is used
-        """
-        cls.machine = machine
-        cls.lights_to_update = set()
-
-        machine.validate_machine_config_section('light_settings')
-
-        if machine.config['light_settings']['color_correction_profiles'] is None:
-            machine.config['light_settings']['color_correction_profiles'] = (
-                dict())
-
-        # Generate and add color correction profiles to the machine
-        cls.light_color_correction_profiles = dict()
-
-        # Create the default color correction profile and add it to the machine
-        default_profile = RGBColorCorrectionProfile.default()
-        cls.light_color_correction_profiles['default'] = default_profile
-
-        # Add any user-defined profiles specified in the machine config file
-        for profile_name, profile_parameters in (
-                machine.config['light_settings']
-                ['color_correction_profiles'].items()):
-
-            machine.config_validator.validate_config(
-                'color_correction_profile',
-                machine.config['light_settings']['color_correction_profiles']
-                [profile_name], profile_parameters)
-
-            profile = RGBColorCorrectionProfile(profile_name)
-            profile.generate_from_parameters(
-                gamma=profile_parameters['gamma'],
-                whitepoint=profile_parameters['whitepoint'],
-                linear_slope=profile_parameters['linear_slope'],
-                linear_cutoff=profile_parameters['linear_cutoff'])
-            cls.light_color_correction_profiles[profile_name] = profile
-
-        # schedule the single machine-wide update to write the current light of
-        # each light to the hardware
-        cls._updater_task = machine.clock.schedule_interval(
-            cls.update_lights, 1 / machine.config['mpf']['default_light_hw_update_hz'])
-
-        machine.settings.add_setting(SettingEntry("brightness", "Brightness", 100, "brightness", 1.0,
-                                                  {0.25: "25%", 0.5: "50%", 0.75: "75%", 1.0: "100% (default)"}))
-
-    @classmethod
-    def update_lights(cls, dt):
-        """Write lights to hardware platform.
-
-        Called periodically (default at the end of every frame) to write the
-        new light colors to the hardware for the lights that changed during that
-        frame.
-
-        Args:
-            dt: time since last call
-        """
-        del dt
-
-        new_lights_to_update = set()
-        if cls.lights_to_update:
-            for light in cls.lights_to_update:
-                light.write_color_to_hw_driver()
-                if light.fade_in_progress:
-                    new_lights_to_update.add(light)
-            cls.lights_to_update = new_lights_to_update
 
     def __init__(self, machine, name):
         """Initialise light."""
@@ -118,9 +44,11 @@ class Light(SystemWideDevice):
         self._color = [0, 0, 0]
         self._corrected_color = [0, 0, 0]
         super().__init__(machine, name)
+        self.machine.light_controller.initialise_light_subsystem()
 
         self.fade_in_progress = False
         self.default_fade_ms = None
+        self._max_fade_ms = 0
 
         self._color_correction_profile = None
 
@@ -227,9 +155,13 @@ class Light(SystemWideDevice):
         if not channels:
             raise AssertionError("Light {} has no channels.".format(self.name))
 
+        max_fade_ms = []
         for num, channel in channels.items():
             channel = self.machine.config_validator.validate_config("light_channels", channel)
             self.hw_drivers[num] = self._load_hw_driver(channel)
+            max_fade_ms.append(self.hw_drivers[num].get_max_fade_ms())
+
+        self._max_fade_ms = min(max_fade_ms)
 
     def _load_hw_driver(self, channel):
         """Load one channel."""
@@ -246,12 +178,12 @@ class Light(SystemWideDevice):
 
         if self.config['color_correction_profile'] is not None:
             if self.config['color_correction_profile'] in (
-                    self.light_color_correction_profiles):
-                profile = self.light_color_correction_profiles[
+                    self.machine.light_controller.light_color_correction_profiles):
+                profile = self.machine.light_controller.light_color_correction_profiles[
                     self.config['color_correction_profile']]
 
                 if profile is not None:
-                    self.set_color_correction_profile(profile)
+                    self._set_color_correction_profile(profile)
             else:   # pragma: no cover
                 error = "Color correction profile '{}' was specified for light '{}'"\
                         " but the color correction profile does not exist."\
@@ -269,7 +201,7 @@ class Light(SystemWideDevice):
                        "Default fade: %sms", self._color_correction_profile,
                        self.default_fade_ms)
 
-    def set_color_correction_profile(self, profile):
+    def _set_color_correction_profile(self, profile):
         """Apply a color correction profile to this light.
 
         Args:
@@ -278,7 +210,6 @@ class Light(SystemWideDevice):
         """
         self._color_correction_profile = profile
 
-    # pylint: disable-msg=too-many-arguments
     def color(self, color, fade_ms=None, priority=0, key=None):
         """Add or update a color entry in this light's stack, which is how you tell this light what color you want it to be.
 
@@ -318,6 +249,34 @@ class Light(SystemWideDevice):
 
         self._add_to_stack(color, fade_ms, priority, key)
 
+    def on(self, fade_ms=None, brightness=None, priority=0, key=None, **kwargs):
+        """Turn light on.
+
+        Args:
+            key: key for removal later on
+            priority: priority on stack
+            fade_ms: duration of fade
+        """
+        del kwargs
+        if brightness is not None:
+            color = (brightness, brightness, brightness)
+        else:
+            color = self.config['default_on_color']
+        self.color(color=color, fade_ms=fade_ms,
+                   priority=priority, key=key)
+
+    def off(self, fade_ms=None, priority=0, key=None, **kwargs):
+        """Turn light off.
+
+        Args:
+            key: key for removal later on
+            priority: priority on stack
+            fade_ms: duration of fade
+        """
+        del kwargs
+        self.color(color=RGBColor(), fade_ms=fade_ms, priority=priority,
+                   key=key)
+
     def _add_to_stack(self, color, fade_ms, priority, key):
         curr_color = self.get_color()
 
@@ -351,18 +310,6 @@ class Light(SystemWideDevice):
 
         self._schedule_update()
 
-    def _schedule_update(self):
-        self.fade_in_progress = self.stack and self.stack[0]['dest_time']
-        self.__class__.lights_to_update.add(self)
-
-    def clear_stack(self):
-        """Remove all entries from the stack and resets this light to 'off'."""
-        self.stack[:] = []
-
-        self.debug_log("Clearing Stack")
-
-        self._schedule_update()
-
     def remove_from_stack_by_key(self, key):
         """Remove a group of color settings from the stack.
 
@@ -380,39 +327,23 @@ class Light(SystemWideDevice):
 
         self._schedule_update()
 
+    def _schedule_update(self):
+        self.fade_in_progress = self.stack and self.stack[0]['dest_time']
+        self.machine.light_controller.lights_to_update.add(self)
+
+    def clear_stack(self):
+        """Remove all entries from the stack and resets this light to 'off'."""
+        self.stack[:] = []
+
+        self.debug_log("Clearing Stack")
+
+        self._schedule_update()
+
     def _get_priority_from_key(self, key):
         try:
             return [x for x in self.stack if x['key'] == key][0]['priority']
         except IndexError:
             return 0
-
-    def write_color_to_hw_driver(self):
-        """Set color to hardware platform.
-
-        Physically update the light hardware object based on the 'color'
-        setting of the highest priority setting from the stack.
-
-        This method is automatically called whenever a color change has been
-        made (including when fades are active).
-        """
-        color = self.get_color()
-        corrected_color = self.gamma_correct(color)
-        corrected_color = self.color_correct(corrected_color)
-
-        self._color = list(color)
-        self._corrected_color = corrected_color
-        self.debug_log("Writing color to hw driver: %s", corrected_color)
-
-        for color, hw_driver in self.hw_drivers.items():
-            # TODO: implement fade_ms here
-            fade_ms = 0
-            if color in ["red", "blue", "green"]:
-                hw_driver.set_brightness(getattr(corrected_color, color) / 255.0, fade_ms)
-            elif color == "white":
-                hw_driver.set_brightness(
-                    min(corrected_color.red, corrected_color.green, corrected_color.blue) / 255.0, fade_ms)
-            else:
-                raise AssertionError("Invalid color {} in light {}".format(color, self.name))
 
     def gamma_correct(self, color):
         """Apply max brightness correction to color.
@@ -453,34 +384,6 @@ class Light(SystemWideDevice):
 
             return self._color_correction_profile.apply(color)
 
-    def on(self, fade_ms=None, brightness=None, priority=0, key=None, **kwargs):
-        """Turn light on.
-
-        Args:
-            key: key for removal later on
-            priority: priority on stack
-            fade_ms: duration of fade
-        """
-        del kwargs
-        if brightness is not None:
-            color = (brightness, brightness, brightness)
-        else:
-            color = self.config['default_on_color']
-        self.color(color=color, fade_ms=fade_ms,
-                   priority=priority, key=key)
-
-    def off(self, fade_ms=None, priority=0, key=None, **kwargs):
-        """Turn light off.
-
-        Args:
-            key: key for removal later on
-            priority: priority on stack
-            fade_ms: duration of fade
-        """
-        del kwargs
-        self.color(color=RGBColor(), fade_ms=fade_ms, priority=priority,
-                   key=key)
-
     def get_color(self):
         """Return an RGBColor() instance of the 'color' setting of the highest color setting in the stack.
 
@@ -516,3 +419,31 @@ class Light(SystemWideDevice):
             return color_settings['dest_color']
         else:
             return RGBColor.blend(color_settings['start_color'], color_settings['dest_color'], ratio)
+
+    def write_color_to_hw_driver(self):
+        """Set color to hardware platform.
+
+        Physically update the light hardware object based on the 'color'
+        setting of the highest priority setting from the stack.
+
+        This method is automatically called whenever a color change has been
+        made (including when fades are active).
+        """
+        color = self.get_color()
+        corrected_color = self.gamma_correct(color)
+        corrected_color = self.color_correct(corrected_color)
+
+        self._color = list(color)
+        self._corrected_color = corrected_color
+        self.debug_log("Writing color to hw driver: %s", corrected_color)
+
+        for color, hw_driver in self.hw_drivers.items():
+            # TODO: implement fade_ms here
+            fade_ms = 0
+            if color in ["red", "blue", "green"]:
+                hw_driver.set_brightness(getattr(corrected_color, color) / 255.0, fade_ms)
+            elif color == "white":
+                hw_driver.set_brightness(
+                    min(corrected_color.red, corrected_color.green, corrected_color.blue) / 255.0, fade_ms)
+            else:
+                raise AssertionError("Invalid color {} in light {}".format(color, self.name))

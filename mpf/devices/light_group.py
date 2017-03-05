@@ -14,15 +14,6 @@ class LightGroup(SystemWideDevice):
 
     """An abstract group of lights."""
 
-    @classmethod
-    def device_class_init(cls, machine: MachineController):
-        """Make sure lights are initialised.
-
-        Args:
-            machine: the machine coontroller
-        """
-        Light.device_class_init(machine)
-
     def __init__(self, machine: MachineController, name):
         """Initialise light group."""
         super().__init__(machine, name)
