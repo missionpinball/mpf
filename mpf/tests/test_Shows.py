@@ -233,13 +233,13 @@ class TestShows(MpfTestCase):
         # states from before the show started
 
         self.assertLightColor("led_01", "off")
-        self.assertEqual(0, self.machine.lights.led_01.stack[0]['priority'])
+        self.assertFalse(self.machine.lights.led_01.stack)
         self.assertLightColor("led_01", "off")
-        self.assertEqual(0, self.machine.lights.led_02.stack[0]['priority'])
+        self.assertFalse(self.machine.lights.led_02.stack)
         self.assertLightChannel("light_01", 0)
-        self.assertEqual(0, self.machine.lights.light_01.stack[0]['priority'])
+        self.assertFalse(self.machine.lights.light_01.stack)
         self.assertLightChannel("light_02", 0)
-        self.assertEqual(0, self.machine.lights.light_02.stack[0]['priority'])
+        self.assertFalse(self.machine.lights.light_02.stack)
         self.assertLightChannel("gi_01", 0)
 
         # --------------------------------------------------------

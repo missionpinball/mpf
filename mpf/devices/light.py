@@ -41,7 +41,6 @@ class Light(SystemWideDevice):
     machine = None
 
     lights_to_update = set()
-    lights_to_fade = set()
     _updater_task = None
 
     @classmethod
@@ -52,7 +51,6 @@ class Light(SystemWideDevice):
             machine: MachineController which is used
         """
         cls.machine = machine
-        cls.lights_to_fade = set()
         cls.lights_to_update = set()
 
         machine.validate_machine_config_section('light_settings')
@@ -107,19 +105,15 @@ class Light(SystemWideDevice):
         Args:
             dt: time since last call
         """
-        for light in list(cls.lights_to_fade):
-            if light.fade_in_progress:
-                light.fade_task(dt)
+        del dt
 
-        # todo we could make a change here (or an option) so that it writes
-        # every light, every frame. That way they'd fix themselves if something
-        # got weird due to interference? Or is that a platform thing?
-
+        new_lights_to_update = set()
         if cls.lights_to_update:
             for light in cls.lights_to_update:
                 light.write_color_to_hw_driver()
-
-            cls.lights_to_update = set()
+                if light.fade_in_progress:
+                    new_lights_to_update.add(light)
+            cls.lights_to_update = new_lights_to_update
 
     @classmethod
     def mode_stop(cls, mode: Mode):
@@ -375,6 +369,10 @@ class Light(SystemWideDevice):
         self.debug_log("color: %s", new_color)
         self.debug_log("key: %s", key)
 
+        self._schedule_update()
+
+    def _schedule_update(self):
+        self.fade_in_progress = self.stack and self.stack[0]['dest_time']
         self.__class__.lights_to_update.add(self)
 
     def clear_stack(self):
@@ -383,7 +381,7 @@ class Light(SystemWideDevice):
 
         self.debug_log("Clearing Stack")
 
-        self.__class__.lights_to_update.add(self)
+        self._schedule_update()
 
     def remove_from_stack_by_key(self, key):
         """Remove a group of color settings from the stack.
@@ -399,7 +397,8 @@ class Light(SystemWideDevice):
         self.debug_log("Removing key '%s' from stack", key)
 
         self.stack[:] = [x for x in self.stack if x['key'] != key]
-        self.__class__.lights_to_update.add(self)
+
+        self._schedule_update()
 
     def remove_from_stack_by_mode(self, mode: Mode):
         """Remove a group of color settings from the stack.
@@ -414,22 +413,8 @@ class Light(SystemWideDevice):
         self.debug_log("Removing mode '%s' from stack", mode)
 
         self.stack[:] = [x for x in self.stack if x['mode'] != mode]
-        self.__class__.lights_to_update.add(self)
 
-    def get_color(self):
-        """Return an RGBColor() instance of the 'color' setting of the highest color setting in the stack.
-
-        This is usually the same color as the
-        physical light, but not always (since physical lights are updated once per
-        frame, this value could vary.
-
-        Also note the color returned is the "raw" color that does has not had
-        the color correction profile applied.
-        """
-        try:
-            return self.stack[0]['color']
-        except IndexError:
-            return RGBColor('off')
+        self._schedule_update()
 
     def _get_priority_from_key(self, key):
         try:
@@ -446,38 +431,24 @@ class Light(SystemWideDevice):
         This method is automatically called whenever a color change has been
         made (including when fades are active).
         """
-        # TODO: untangle fade and setting values. remove delay?
-        if not self.stack:
-            self.color('off')
+        color = self.get_color()
+        corrected_color = self.gamma_correct(color)
+        corrected_color = self.color_correct(corrected_color)
 
-        # if there's a current fade, but the new command doesn't have one
-        if not self.stack[0]['dest_time'] and self.fade_in_progress:
-            self._stop_fade_task()
+        self._color = list(color)
+        self._corrected_color = corrected_color
+        self.debug_log("Writing color to hw driver: %s", corrected_color)
 
-        # If the new command has a fade, but the fade task isn't running
-        if self.stack[0]['dest_time'] and not self.fade_in_progress:
-            self._setup_fade()
-
-        # If there's no current fade and no new fade, or a current fade and new
-        # fade
-        else:
-            corrected_color = self.gamma_correct(self.stack[0]['color'])
-            corrected_color = self.color_correct(corrected_color)
-
-            self._color = list(self.stack[0]['color'])
-            self._corrected_color = corrected_color
-            self.debug_log("Writing color to hw driver: %s", corrected_color)
-
-            for color, hw_driver in self.hw_drivers.items():
-                # TODO: implement fade_ms here
-                fade_ms = 0
-                if color in ["red", "blue", "green"]:
-                    hw_driver.set_brightness(getattr(corrected_color, color) / 255.0, fade_ms)
-                elif color == "white":
-                    hw_driver.set_brightness(
-                        min(corrected_color.red, corrected_color.green, corrected_color.blue) / 255.0, fade_ms)
-                else:
-                    raise AssertionError("Invalid color {} in light {}".format(color, self.name))
+        for color, hw_driver in self.hw_drivers.items():
+            # TODO: implement fade_ms here
+            fade_ms = 0
+            if color in ["red", "blue", "green"]:
+                hw_driver.set_brightness(getattr(corrected_color, color) / 255.0, fade_ms)
+            elif color == "white":
+                hw_driver.set_brightness(
+                    min(corrected_color.red, corrected_color.green, corrected_color.blue) / 255.0, fade_ms)
+            else:
+                raise AssertionError("Invalid color {} in light {}".format(color, self.name))
 
     def gamma_correct(self, color):
         """Apply max brightness correction to color.
@@ -546,30 +517,23 @@ class Light(SystemWideDevice):
         self.color(color=RGBColor(), fade_ms=fade_ms, priority=priority,
                    key=key)
 
-    def _setup_fade(self):
-        self.fade_in_progress = True
+    def get_color(self):
+        """Return an RGBColor() instance of the 'color' setting of the highest color setting in the stack.
 
-        self.debug_log("Setting up the fade task")
+        This is usually the same color as the physical light, but not always (since physical lights are updated once per
+        frame, this value could vary.
 
-        self.__class__.lights_to_fade.add(self)
-
-    def fade_task(self, dt):
-        """Perform a fade depending on the current time.
-
-        Args:
-            dt: time since last call
+        Also note the color returned is the "raw" color that does has not had the color correction profile applied.
         """
-        del dt
-
         try:
             color_settings = self.stack[0]
         except IndexError:
-            self._stop_fade_task()
-            return
+            # no stack
+            return RGBColor('off')
 
-        # todo
+        # no fade
         if not color_settings['dest_time']:
-            return
+            return color_settings['dest_color']
 
         # figure out the ratio of how far along we are
         try:
@@ -580,27 +544,11 @@ class Light(SystemWideDevice):
         except ZeroDivisionError:
             ratio = 1.0
 
-        self.debug_log("Fade task, ratio: %s", ratio)
+        self.debug_log("Fade, ratio: %s", ratio)
 
         if ratio >= 1.0:  # fade is done
-            self._end_fade()
-            color_settings['color'] = color_settings['dest_color']
+            self.fade_in_progress = False
+            color_settings['dest_time'] = 0
+            return color_settings['dest_color']
         else:
-            color_settings['color'] = (
-                RGBColor.blend(color_settings['start_color'],
-                               color_settings['dest_color'],
-                               ratio))
-
-        self.__class__.lights_to_update.add(self)
-
-    def _end_fade(self):
-        # stops the fade and instantly sets the light to its destination color
-        self._stop_fade_task()
-        self.stack[0]['dest_time'] = 0
-
-    def _stop_fade_task(self):
-        # stops the fade task. Light is left in whatever state it was in
-        self.fade_in_progress = False
-        self.__class__.lights_to_fade.remove(self)
-
-        self.debug_log("Stopping fade task")
+            return RGBColor.blend(color_settings['start_color'], color_settings['dest_color'], ratio)

@@ -99,13 +99,13 @@ class TestLedPlayer(MpfTestCase):
         self.advance_time_and_run()
 
         self.assertLightColor("led1", 'off')
-        self.assertEqual(0, self.machine.lights.led1.stack[0]['priority'])
+        self.assertFalse(self.machine.lights.led1.stack)
 
         self.assertLightColor("led2", 'off')
-        self.assertEqual(0, self.machine.lights.led2.stack[0]['priority'])
+        self.assertFalse(self.machine.lights.led2.stack)
 
         self.assertLightColor("led3", 'off')
-        self.assertEqual(0, self.machine.lights.led3.stack[0]['priority'])
+        self.assertFalse(self.machine.lights.led3.stack)
 
         # test fades via express config with a few different options
         self._synchronise_led_update()
@@ -180,9 +180,8 @@ class TestLedPlayer(MpfTestCase):
         self.advance_time_and_run()
 
         # led should be off when show ends
-        self.assertEqual(RGBColor('off'),
-                         self.machine.lights.led1.stack[0]['color'])
-        self.assertEqual(0, self.machine.lights.led1.stack[0]['priority'])
+        self.assertLightColor("led1", 'off')
+        self.assertFalse(self.machine.lights.led1.stack)
 
     def test_show_same_priority(self):
         # start show2, leds are red
