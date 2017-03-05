@@ -2,6 +2,8 @@
 import copy
 import logging
 
+from mpf.core.case_insensitive_dict import CaseInsensitiveDict
+
 from mpf.core.utility_functions import Util
 
 
@@ -64,7 +66,7 @@ class Player(object):
         # use self.__dict__ below since __setattr__ would make these player vars
         self.__dict__['log'] = logging.getLogger("Player")
         self.__dict__['machine'] = machine
-        self.__dict__['vars'] = dict()
+        self.__dict__['vars'] = CaseInsensitiveDict()
 
         number = index + 1
 
