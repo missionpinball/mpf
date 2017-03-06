@@ -163,7 +163,6 @@ class TestLed(MpfTestCase):
         self.assertFalse(led1.fade_in_progress)
         self.assertEqual(color_setting['priority'], 0)
         self.assertEqual(color_setting['start_color'], RGBColor('off'))
-        self.assertEqual(color_setting['dest_time'], 0)
         self.assertEqual(color_setting['dest_color'], RGBColor('red'))
         self.assertEqual(led1.get_color(), RGBColor('red'))
         self.assertIsNone(color_setting['key'])

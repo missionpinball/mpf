@@ -2,10 +2,7 @@
 from operator import itemgetter
 
 from mpf.core.device_monitor import DeviceMonitor
-from mpf.core.machine import MachineController
 from mpf.core.rgb_color import RGBColor
-from mpf.core.rgb_color import RGBColorCorrectionProfile
-from mpf.core.settings_controller import SettingEntry
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.devices.driver import ReconfiguredDriver
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
@@ -414,8 +411,6 @@ class Light(SystemWideDevice):
         self.debug_log("Fade, ratio: %s", ratio)
 
         if ratio >= 1.0:  # fade is done
-            self.fade_in_progress = False
-            color_settings['dest_time'] = 0
             return color_settings['dest_color']
         else:
             return RGBColor.blend(color_settings['start_color'], color_settings['dest_color'], ratio)
@@ -429,6 +424,9 @@ class Light(SystemWideDevice):
         This method is automatically called whenever a color change has been
         made (including when fades are active).
         """
+        if self.fade_in_progress and self.stack and self.stack[0]['dest_time'] < self.machine.clock.get_time():
+            self.fade_in_progress = False
+
         color = self.get_color()
         corrected_color = self.gamma_correct(color)
         corrected_color = self.color_correct(corrected_color)

@@ -14,8 +14,12 @@ class LightController(MpfController):
         """Initialise lights controller."""
         super().__init__(machine)
 
+        # Generate and add color correction profiles to the machine
+        self.light_color_correction_profiles = dict()
+
         self.lights_to_update = set()
         self._initialised = False
+        self._updater_task = None
 
     def initialise_light_subsystem(self):
         """Initialise the light subsystem."""
@@ -27,9 +31,6 @@ class LightController(MpfController):
         if self.machine.config['light_settings']['color_correction_profiles'] is None:
             self.machine.config['light_settings']['color_correction_profiles'] = (
                 dict())
-
-        # Generate and add color correction profiles to the machine
-        self.light_color_correction_profiles = dict()
 
         # Create the default color correction profile and add it to the machine
         default_profile = RGBColorCorrectionProfile.default()

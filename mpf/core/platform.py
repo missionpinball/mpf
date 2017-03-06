@@ -1,6 +1,8 @@
 """Contains the parent class for all platforms."""
 import abc
 
+from typing import Optional
+
 from mpf.devices.switch import Switch
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
@@ -214,10 +216,6 @@ class LightsPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
         This method should return a reference to the light
         object which will be called to access the hardware.
-
-        Args:
-            config (dict): Config of light.
-
         """
         raise NotImplementedError
 
@@ -245,7 +243,7 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @classmethod
-    def get_switch_config_section(cls):
+    def get_switch_config_section(cls) -> Optional[str]:
         """Return config section for additional switch config items."""
         return None
 
@@ -340,7 +338,7 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @classmethod
-    def get_coil_config_section(cls):
+    def get_coil_config_section(cls) -> Optional[str]:
         """Return addition config section for coils."""
         return None
 
