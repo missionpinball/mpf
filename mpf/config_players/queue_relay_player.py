@@ -14,7 +14,7 @@ class QueueRelayPlayer(ConfigPlayer):
         """Block queue event."""
         try:
             queue = kwargs['queue']
-        except IndexError:
+        except KeyError:
             raise AssertionError("Can only use queue relay player with queue event.")
 
         instance_dict = self._get_instance_dict(context)
