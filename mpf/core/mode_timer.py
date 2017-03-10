@@ -249,6 +249,9 @@ class ModeTimer(LogMixin):
         """
         del kwargs
 
+        if not timer_value:
+            timer_value = 0  # make sure it's not None, etc.
+
         self.info_log("Pausing Timer for %s secs", timer_value)
 
         self.running = False
