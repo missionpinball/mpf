@@ -80,39 +80,39 @@ class TestModeTimer(MpfFakeGameTestCase):
         self.assertTrue(timer.running)
 
         self.assertTrue(self.started)
-        self.assertEqual(0, self.tick)
+        self.assertEqual(1, self.tick)
         self.assertEqual(5, self.machine.modes.mode_with_timers.player[timer.tick_var])
         self.advance_time_and_run(.6)
         self.assertTrue(self.started)
-        self.assertEqual(1, self.tick)
+        self.assertEqual(2, self.tick)
         self.assertEqual(4, self.machine.modes.mode_with_timers.player[timer.tick_var])
         self.post_event("add_timer_down")
         self.assertEqual(6, self.machine.modes.mode_with_timers.player[timer.tick_var])
         self.post_event("subtract_timer_down")
         self.assertEqual(4, self.machine.modes.mode_with_timers.player[timer.tick_var])
         self.advance_time_and_run(1.5)
-        self.assertEqual(2, self.tick)
+        self.assertEqual(3, self.tick)
         self.assertEqual(3, self.machine.modes.mode_with_timers.player[timer.tick_var])
         self.post_event("pause_timer_down")
         self.advance_time_and_run(1)
         self.assertEqual(3, self.machine.modes.mode_with_timers.player[timer.tick_var])
         self.advance_time_and_run(1)
-        self.assertEqual(3, self.tick)
+        self.assertEqual(5, self.tick)
         self.assertEqual(2, self.machine.modes.mode_with_timers.player[timer.tick_var])
         self.advance_time_and_run(1.5)
-        self.assertEqual(4, self.tick)
+        self.assertEqual(6, self.tick)
         self.assertEqual(1, self.machine.modes.mode_with_timers.player[timer.tick_var])
         self.advance_time_and_run(1.5)
-        self.assertEqual(4, self.tick)
+        self.assertEqual(6, self.tick)
         self.assertEqual(0, self.machine.modes.mode_with_timers.player[timer.tick_var])
         self.advance_time_and_run(1.5)
-        self.assertEqual(4, self.tick)
+        self.assertEqual(6, self.tick)
         # and complete at some point
         self.assertFalse(self.started)
 
         # stay off
         self.advance_time_and_run(20)
-        self.assertEqual(4, self.tick)
+        self.assertEqual(6, self.tick)
         self.assertFalse(self.started)
 
         # cannot be start without reset
@@ -311,12 +311,12 @@ class TestModeTimer(MpfFakeGameTestCase):
         self.advance_time_and_run(1)
 
         self.assertTrue(self.started)
-        self.assertEqual(0, self.tick)
+        self.assertEqual(1, self.tick)
         self.advance_time_and_run(.6)
         self.assertTrue(self.started)
-        self.assertEqual(1, self.tick)
-        self.advance_time_and_run(1.5)
         self.assertEqual(2, self.tick)
+        self.advance_time_and_run(1.5)
+        self.assertEqual(3, self.tick)
 
         # stop mode. timer should stop
         self.machine.events.post('stop_mode_with_timers')
@@ -326,7 +326,7 @@ class TestModeTimer(MpfFakeGameTestCase):
 
         # and stay off
         self.advance_time_and_run(20)
-        self.assertEqual(2, self.tick)
+        self.assertEqual(3, self.tick)
         self.assertFalse(self.started)
 
     def test_mode_timer_reset_on_mode_start_false(self):
