@@ -1,6 +1,7 @@
 """Contains code for a virtual hardware platform."""
 
 import logging
+from typing import Callable, Tuple
 
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
@@ -275,11 +276,23 @@ class VirtualLight(LightPlatformInterface):
         """Initialise LED."""
         self.settings = settings
         self.number = number
-        self.current_brightness = 0
+        self.color_and_fade_callback = None
+
+    @property
+    def current_brightness(self, max_fade=0) -> float:
+        if self.color_and_fade_callback:
+            return self.color_and_fade_callback(max_fade)[0]
+        else:
+            return 0
+
+    def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
+        """Store CB function."""
+        self.color_and_fade_callback = color_and_fade_callback
 
     def set_brightness(self, brightness: float, fade_ms: int):
         """Set brightness."""
-        self.current_brightness = brightness
+        pass
+        #self.current_brightness = brightness
 
 
 class VirtualServo(ServoPlatformInterface):

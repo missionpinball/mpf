@@ -312,21 +312,15 @@ class MpfTestCase(unittest.TestCase):
         if isinstance(color, str) and color.lower() == 'on':
             color = self.machine.lights[light_name].config['default_on_color']
 
-        self.assertAlmostEqual(RGBColor(color).red / 255.0,
-                               self.machine.lights[light_name].hw_drivers["red"].current_brightness)
-        self.assertAlmostEqual(RGBColor(color).green / 255.0,
-                               self.machine.lights[light_name].hw_drivers["green"].current_brightness)
-        self.assertAlmostEqual(RGBColor(color).blue / 255.0,
-                               self.machine.lights[light_name].hw_drivers["blue"].current_brightness)
+        self.assertEqual(RGBColor(color), self.machine.lights[light_name].get_color(),
+                         "{} != {}".format(RGBColor(color).name, self.machine.lights[light_name].get_color().name))
 
     def assertNotLightColor(self, light_name, color):
         if isinstance(color, str) and color.lower() == 'on':
             color = self.machine.lights[light_name].config['default_on_color']
 
-        self.assertFalse(
-            RGBColor(color).red / 255.0 == self.machine.lights[light_name].hw_drivers["red"].current_brightness and
-            RGBColor(color).green / 255.0 == self.machine.lights[light_name].hw_drivers["green"].current_brightness and
-            RGBColor(color).blue / 255.0 == self.machine.lights[light_name].hw_drivers["blue"].current_brightness)
+        self.assertNotEqual(RGBColor(color), self.machine.lights[light_name].get_color(),
+                            "{} == {}".format(RGBColor(color).name, self.machine.lights[light_name].get_color().name))
 
     def assertLightColors(self, light_name, color_list, secs=1, check_delta=.1):
         colors = list()
@@ -340,10 +334,7 @@ class MpfTestCase(unittest.TestCase):
                 break
 
         for x in range(int(secs / check_delta)):
-            color = RGBColor()
-            color.red = int(self.machine.lights[light_name].hw_drivers["red"].current_brightness * 255)
-            color.green = int(self.machine.lights[light_name].hw_drivers["green"].current_brightness * 255)
-            color.blue = int(self.machine.lights[light_name].hw_drivers["blue"].current_brightness * 255)
+            color = self.machine.lights[light_name].get_color()
             colors.append(color)
             self.advance_time_and_run(check_delta)
 

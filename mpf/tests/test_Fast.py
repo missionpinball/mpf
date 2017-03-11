@@ -596,7 +596,7 @@ class TestFast(MpfTestCase):
     def test_lights_and_leds(self):
         self._test_matrix_light()
         self._test_pdb_gi_light()
-        self._test_rdb_led()
+        self._test_pdb_led()
 
     def _test_matrix_light(self):
         # test enable of matrix light
@@ -627,8 +627,50 @@ class TestFast(MpfTestCase):
         self.net_cpu.expected_commands = {
             "L1:23,00": "L1:P",
         }
-        self.machine.lights.test_pdb_light.on(brightness=0)
-        self.advance_time_and_run(.1)
+        self.machine.lights.test_pdb_light.on(brightness=255, fade_ms=100)
+        self.advance_time_and_run(.01)
+        self.assertFalse(self.net_cpu.expected_commands)
+
+        # step 1
+        self.net_cpu.expected_commands = {
+            "L1:23,32": "L1:P",
+        }
+        self.advance_time_and_run(.02)
+        self.assertFalse(self.net_cpu.expected_commands)
+
+        # step 2
+        self.net_cpu.expected_commands = {
+            "L1:23,65": "L1:P",
+        }
+        self.advance_time_and_run(.02)
+        self.assertFalse(self.net_cpu.expected_commands)
+
+        # step 3
+        self.net_cpu.expected_commands = {
+            "L1:23,98": "L1:P",
+        }
+        self.advance_time_and_run(.02)
+        self.assertFalse(self.net_cpu.expected_commands)
+
+        # step 4
+        self.net_cpu.expected_commands = {
+            "L1:23,CB": "L1:P",
+        }
+        self.advance_time_and_run(.02)
+        self.assertFalse(self.net_cpu.expected_commands)
+
+        # step 5
+        self.net_cpu.expected_commands = {
+            "L1:23,FE": "L1:P",
+        }
+        self.advance_time_and_run(.02)
+        self.assertFalse(self.net_cpu.expected_commands)
+
+        # step 6
+        self.net_cpu.expected_commands = {
+            "L1:23,FF": "L1:P",
+        }
+        self.advance_time_and_run(.02)
         self.assertFalse(self.net_cpu.expected_commands)
 
     def _test_pdb_gi_light(self):
@@ -670,13 +712,12 @@ class TestFast(MpfTestCase):
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
-    def _test_rdb_led(self):
+    def _test_pdb_led(self):
         self.advance_time_and_run()
         device = self.machine.lights.test_led
         device2 = self.machine.lights.test_led2
         self.assertEqual("000000", self.rgb_cpu.leds['97'])
         self.assertEqual("000000", self.rgb_cpu.leds['99'])
-        self.rgb_cpu.leds = {}
         # test led on
         device.on()
         self.advance_time_and_run(1)

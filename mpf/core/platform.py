@@ -1,7 +1,7 @@
 """Contains the parent class for all platforms."""
 import abc
 
-from typing import Optional
+from typing import Optional, Callable, Tuple
 
 from mpf.devices.switch import Switch
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface

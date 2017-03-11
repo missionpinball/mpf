@@ -268,7 +268,7 @@ class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                 has_neo = True
             wing_index += 1
         if incand_mask != 0:
-            self.opp_incands.append(OPPIncandCard(chain_serial, msg[0], incand_mask, self.incandDict))
+            self.opp_incands.append(OPPIncandCard(chain_serial, msg[0], incand_mask, self.incandDict, self.machine))
         if sol_mask != 0:
             self.opp_solenoid.append(
                 OPPSolenoidCard(chain_serial, msg[0], sol_mask, self.solDict, self))

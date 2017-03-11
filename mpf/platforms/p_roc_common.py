@@ -4,7 +4,7 @@ import logging
 import platform
 import sys
 import time
-from typing import Union, List
+from typing import Union, List, Callable, Tuple
 
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.p_roc_devices import PROCSwitch, PROCMatrixLight
@@ -296,7 +296,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
             else:
                 proc_num = self.pinproc.decode(self.machine_type, str(number))
 
-            return PROCMatrixLight(proc_num, self.proc)
+            return PROCMatrixLight(proc_num, self.proc, self.machine)
         elif subtype == "led":
             board, index = number.split("-")
             polarity = platform_settings and platform_settings.get("polarity", False)
@@ -839,13 +839,21 @@ class PDBLED(LightPlatformInterface):
         else:
             return value
 
-    def set_brightness(self, brightness: float, fade_ms: int):
-        """Instantly set this LED to the color passed.
+    def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
+        """Set or fade this LED to the color passed.
+
+        Can fade for up to 100 days so do not bother about too long fades.
 
         Args:
             brightness: brightness of this channel
         """
-        self.proc.led_color(self.board, self.address, self._normalise_color(int(brightness * 255)))
+        brightness, fade_ms = color_and_fade_callback(int(pow(2, 31) * 4))
+        if fade_ms <= 0:
+            # just set color
+            self.proc.led_color(self.board, self.address, self._normalise_color(int(brightness * 255)))
+        else:
+            # fade to color
+            self.proc.led_fade(self.board, self.address, self._normalise_color(int(brightness * 255)), int(fade_ms / 4))
 
 
 def is_pdb_address(addr):

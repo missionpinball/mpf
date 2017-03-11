@@ -686,13 +686,14 @@ class TestShots(MpfTestCase):
 
         # disable the shot
         shot19.disable()
+        self.advance_time_and_run(.1)
 
         # color should not change
-        self.assertLightColor("led_19", 'antiquewhite')
+        self.assertLightColor("led_19", 'aliceblue')
 
         # and show should still be running
-        self.advance_time_and_run()
-        self.assertLightColor("led_19", 'aliceblue')
+        self.advance_time_and_run(1)
+        self.assertLightColor("led_19", 'antiquewhite')
 
     def test_no_show_when_disabled(self):
         shot20 = self.machine.shots.shot_20

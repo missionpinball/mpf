@@ -17,9 +17,8 @@ class LightController(MpfController):
         # Generate and add color correction profiles to the machine
         self.light_color_correction_profiles = dict()
 
-        self.lights_to_update = set()
+        # will only get initialised if there are lights
         self._initialised = False
-        self._updater_task = None
 
     def initialise_light_subsystem(self):
         """Initialise the light subsystem."""
@@ -53,30 +52,6 @@ class LightController(MpfController):
                 linear_cutoff=profile_parameters['linear_cutoff'])
             self.light_color_correction_profiles[profile_name] = profile
 
-        # schedule the single machine-wide update to write the current light of
-        # each light to the hardware
-        self._updater_task = self.machine.clock.schedule_interval(
-            self._update_lights, 1 / self.machine.config['mpf']['default_light_hw_update_hz'])
-
+        # add setting for brightness
         self.machine.settings.add_setting(SettingEntry("brightness", "Brightness", 100, "brightness", 1.0,
                                                        {0.25: "25%", 0.5: "50%", 0.75: "75%", 1.0: "100% (default)"}))
-
-    def _update_lights(self, dt):
-        """Write lights to hardware platform.
-
-        Called periodically (default at the end of every frame) to write the
-        new light colors to the hardware for the lights that changed during that
-        frame.
-
-        Args:
-            dt: time since last call
-        """
-        del dt
-
-        new_lights_to_update = set()
-        if self.lights_to_update:
-            for light in self.lights_to_update:
-                light.write_color_to_hw_driver()
-                if light.fade_in_progress:
-                    new_lights_to_update.add(light)
-            self.lights_to_update = new_lights_to_update

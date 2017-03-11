@@ -188,9 +188,11 @@ class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatfor
             dt: time since last call
         """
         del dt
-        msg = 'RS:' + ','.join(["%s%s" % (led.number, led.current_color)
-                                for led in self.fast_leds.values()])
-        self.rgb_connection.send(msg)
+        dirty_leds = [led for led in self.fast_leds.values() if led.dirty]
+
+        if dirty_leds:
+            msg = 'RS:' + ','.join(["%s%s" % (led.number, led.current_color) for led in dirty_leds])
+            self.rgb_connection.send(msg)
 
     def get_hw_switch_states(self):
         """Return hardware states."""
@@ -477,9 +479,11 @@ class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatfor
                                  'but no connection to a NET processor is '
                                  'available')
         if subtype == "gi":
-            return FASTGIString(number, self.net_connection.send)
+            return FASTGIString(number, self.net_connection.send, self.machine,
+                                int(1 / self.machine.config['mpf']['default_light_hw_update_hz'] * 1000))
         elif subtype == "matrix":
-            return FASTMatrixLight(number, self.net_connection.send)
+            return FASTMatrixLight(number, self.net_connection.send, self.machine,
+                                   int(1 / self.machine.config['mpf']['default_light_hw_update_hz'] * 1000))
         elif not subtype or subtype == "led":
             if not self.flag_led_tick_registered:
                 # Update leds every frame
@@ -489,7 +493,8 @@ class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatfor
 
             number_str, channel = number.split("-")
             if number_str not in self.fast_leds:
-                self.fast_leds[number_str] = FASTDirectLED(number_str)
+                self.fast_leds[number_str] = FASTDirectLED(
+                    number_str, int(self.config['hardware_led_fade_time']))
             fast_led_channel = FASTDirectLEDChannel(self.fast_leds[number_str], channel)
 
             return fast_led_channel

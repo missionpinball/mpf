@@ -11,12 +11,6 @@ class TestLedPlayer(MpfTestCase):
     def getMachinePath(self):
         return 'tests/machine_files/led_player/'
 
-    def _synchronise_led_update(self):
-        ts = self.machine.light_controller._updater_task.get_next_call_time()
-        self.assertTrue(ts)
-        self.advance_time_and_run(ts - self.machine.clock.get_time())
-        self.advance_time_and_run(.01)
-
     def test_config_player_config_processing(self):
         led1 = self.machine.lights.led1
         led2 = self.machine.lights.led2
@@ -75,7 +69,6 @@ class TestLedPlayer(MpfTestCase):
         # post event2, which is a tag with led1 and led2, but at priority 100
         # led1 should remain unchanged since it was set at priority 200,
         # led2 should fade to blue since it was red before at priority 0
-        self._synchronise_led_update()
         self.machine.events.post('event2')
         self.advance_time_and_run(.1)
 
@@ -83,7 +76,7 @@ class TestLedPlayer(MpfTestCase):
         self.assertEqual(200, self.machine.lights.led1.stack[0]['priority'])
 
         # fade is half way from red to blue
-        self.assertLightColor("led2", [141, 0, 114])
+        self.assertLightColor("led2", [128, 0, 127])
         self.assertEqual(100, self.machine.lights.led2.stack[0]['priority'])
 
         self.advance_time_and_run()
@@ -107,14 +100,13 @@ class TestLedPlayer(MpfTestCase):
         self.assertFalse(self.machine.lights.led3.stack)
 
         # test fades via express config with a few different options
-        self._synchronise_led_update()
         self.machine.events.post('event3')
 
         # fades are 500ms, so advance 250 and check
         self.advance_time_and_run(.26)
-        self.assertLightColor("led1", [0, 127, 0])
-        self.assertLightColor("led2", [0, 127, 0])
-        self.assertLightColor("led3", [0, 127, 0])
+        self.assertLightColor("led1", [0, 132, 0])
+        self.assertLightColor("led2", [0, 132, 0])
+        self.assertLightColor("led3", [0, 132, 0])
 
         # finish the fade
         self.advance_time_and_run()

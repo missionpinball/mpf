@@ -1,7 +1,7 @@
 """OPP WS2812 wing."""
 import logging
 
-from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
+from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade
 
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 
@@ -26,10 +26,12 @@ class OPPNeopixelCard(object):
 
     def add_channel(self, pixel_number, neo_dict, index):
         """Add a channel."""
+        hardware_fade_ms = int(1 / self.platform.machine.config['mpf']['default_light_hw_update_hz'] * 1000)
         if self.card + '-' + str(pixel_number) not in neo_dict:
             self.add_neopixel(pixel_number, neo_dict)
 
-        return OPPLightChannel(neo_dict[self.card + '-' + str(pixel_number)], int(index))
+        return OPPLightChannel(neo_dict[self.card + '-' + str(pixel_number)], int(index), hardware_fade_ms,
+                               self.platform.machine.clock.loop)
 
     def add_neopixel(self, number, neo_dict):
         """Add a LED channel."""
@@ -41,16 +43,17 @@ class OPPNeopixelCard(object):
         return pixel
 
 
-class OPPLightChannel(LightPlatformInterface):
+class OPPLightChannel(LightPlatformSoftwareFade):
 
     """A channel of a WS2812 LED."""
 
-    def __init__(self, led, index):
+    def __init__(self, led, index, hardware_fade_ms, loop):
         """Initialise led channel."""
+        super().__init__(loop, hardware_fade_ms)
         self.led = led
         self.index = index
 
-    def set_brightness(self, brightness: float, fade_ms: int):
+    def set_brightness(self, brightness: float):
         """Set brightness."""
         self.led.set_channel(self.index, int(brightness * 255))
 

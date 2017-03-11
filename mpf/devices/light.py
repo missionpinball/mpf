@@ -1,22 +1,25 @@
 """Contains the Light class."""
+from functools import partial
 from operator import itemgetter
+from typing import Tuple
 
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.rgb_color import RGBColor
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.devices.driver import ReconfiguredDriver
-from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
+from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade
 
 
-class DriverLight(LightPlatformInterface):
+class DriverLight(LightPlatformSoftwareFade):
 
     """A coil which is used to drive a light."""
 
-    def __init__(self, driver):
+    def __init__(self, driver, loop, software_fade_ms):
         """Initialise coil as light."""
+        super().__init__(loop, software_fade_ms)
         self.driver = driver
 
-    def set_brightness(self, brightness: float, fade_ms: int):
+    def set_brightness(self, brightness: float):
         """Set pwm to coil."""
         # TODO: fix driver interface
         if brightness <= 0:
@@ -43,9 +46,7 @@ class Light(SystemWideDevice):
         super().__init__(machine, name)
         self.machine.light_controller.initialise_light_subsystem()
 
-        self.fade_in_progress = False
         self.default_fade_ms = None
-        self._max_fade_ms = 0
 
         self._color_correction_profile = None
 
@@ -152,18 +153,15 @@ class Light(SystemWideDevice):
         if not channels:
             raise AssertionError("Light {} has no channels.".format(self.name))
 
-        max_fade_ms = []
-        for num, channel in channels.items():
+        for color, channel in channels.items():
             channel = self.machine.config_validator.validate_config("light_channels", channel)
-            self.hw_drivers[num] = self._load_hw_driver(channel)
-            max_fade_ms.append(self.hw_drivers[num].get_max_fade_ms())
+            self.hw_drivers[color] = self._load_hw_driver(channel, color)
 
-        self._max_fade_ms = min(max_fade_ms)
-
-    def _load_hw_driver(self, channel):
+    def _load_hw_driver(self, channel, color):
         """Load one channel."""
         if channel['platform'] == "drivers":
-            return DriverLight(self.machine.coils[channel['number'].strip()])
+            return DriverLight(self.machine.coils[channel['number'].strip()], self.machine.clock.loop,
+                               int(1 / self.machine.config['mpf']['default_light_hw_update_hz'] * 1000))
         else:
             platform = self.machine.get_platform_sections('lights', channel['platform'])
             return platform.configure_light(channel['number'], channel['subtype'], channel['platform_settings'])
@@ -277,7 +275,7 @@ class Light(SystemWideDevice):
     def _add_to_stack(self, color, fade_ms, priority, key):
         curr_color = self.get_color()
 
-        self.remove_from_stack_by_key(key)
+        self._remove_from_stack_by_key(key)
 
         if fade_ms:
             new_color = curr_color
@@ -318,15 +316,16 @@ class Light(SystemWideDevice):
         were removed, the light will be updated with whatever's below it. If no
         settings remain after these are removed, the light will turn off.
         """
-        self.debug_log("Removing key '%s' from stack", key)
-
-        self.stack[:] = [x for x in self.stack if x['key'] != key]
-
+        self._remove_from_stack_by_key(key)
         self._schedule_update()
 
+    def _remove_from_stack_by_key(self, key):
+        self.debug_log("Removing key '%s' from stack", key)
+        self.stack[:] = [x for x in self.stack if x['key'] != key]
+
     def _schedule_update(self):
-        self.fade_in_progress = self.stack and self.stack[0]['dest_time']
-        self.machine.light_controller.lights_to_update.add(self)
+        for color, hw_driver in self.hw_drivers.items():
+            hw_driver.set_fade(partial(self._get_brightness_and_fade, color=color))
 
     def clear_stack(self):
         """Remove all entries from the stack and resets this light to 'off'."""
@@ -381,6 +380,50 @@ class Light(SystemWideDevice):
 
             return self._color_correction_profile.apply(color)
 
+    def _get_color_and_fade(self, max_fade_ms: int) -> Tuple[RGBColor, int]:
+        try:
+            color_settings = self.stack[0]
+        except IndexError:
+            # no stack
+            return RGBColor('off'), -1
+
+        # no fade
+        if not color_settings['dest_time']:
+            return color_settings['dest_color'], -1
+
+        current_time = self.machine.clock.get_time()
+
+        # fade is done
+        if current_time >= color_settings['dest_time']:
+            return color_settings['dest_color'], -1
+
+        target_time = current_time + (max_fade_ms / 1000.0)
+        # check if fade will be done before max_fade_ms
+        if target_time > color_settings['dest_time']:
+            return color_settings['dest_time'], int(color_settings['dest_time'] - current_time) / 1000
+
+        # figure out the ratio of how far along we are
+        try:
+            ratio = ((target_time - color_settings['start_time']) /
+                     (color_settings['dest_time'] - color_settings['start_time']))
+        except ZeroDivisionError:
+            ratio = 1.0
+
+        return RGBColor.blend(color_settings['start_color'], color_settings['dest_color'], ratio), max_fade_ms
+
+    def _get_brightness_and_fade(self, max_fade_ms: int, color: str) -> Tuple[float, int]:
+        uncorrected_color, fade_ms = self._get_color_and_fade(max_fade_ms)
+        corrected_color = self.gamma_correct(uncorrected_color)
+        corrected_color = self.color_correct(corrected_color)
+
+        if color in ["red", "blue", "green"]:
+            brightness = getattr(corrected_color, color) / 255.0
+        elif color == "white":
+            brightness = min(corrected_color.red, corrected_color.green, corrected_color.blue) / 255.0
+        else:
+            raise AssertionError("Invalid color {}".format(color))
+        return brightness, fade_ms
+
     def get_color(self):
         """Return an RGBColor() instance of the 'color' setting of the highest color setting in the stack.
 
@@ -389,31 +432,12 @@ class Light(SystemWideDevice):
 
         Also note the color returned is the "raw" color that does has not had the color correction profile applied.
         """
-        try:
-            color_settings = self.stack[0]
-        except IndexError:
-            # no stack
-            return RGBColor('off')
+        return self._get_color_and_fade(0)[0]
 
-        # no fade
-        if not color_settings['dest_time']:
-            return color_settings['dest_color']
-
-        # figure out the ratio of how far along we are
-        try:
-            ratio = ((self.machine.clock.get_time() -
-                      color_settings['start_time']) /
-                     (color_settings['dest_time'] -
-                      color_settings['start_time']))
-        except ZeroDivisionError:
-            ratio = 1.0
-
-        self.debug_log("Fade, ratio: %s", ratio)
-
-        if ratio >= 1.0:  # fade is done
-            return color_settings['dest_color']
-        else:
-            return RGBColor.blend(color_settings['start_color'], color_settings['dest_color'], ratio)
+    @property
+    def fade_in_progress(self) -> bool:
+        """Return true if a fade is in progress."""
+        return bool(self.stack and self.stack[0]['dest_time'] > self.machine.clock.get_time())
 
     def write_color_to_hw_driver(self):
         """Set color to hardware platform.

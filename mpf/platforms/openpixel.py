@@ -6,6 +6,9 @@ https://github.com/zestyping/openpixelcontrol/blob/master/python_clients/opc.py
 
 import logging
 
+from typing import Callable
+from typing import Tuple
+
 from mpf.core.platform import LightsPlatform
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
@@ -93,10 +96,14 @@ class OpenPixelLED(LightPlatformInterface):
         self.channel_number = int(channel_number)
         self.opc_client.add_pixel(self.opc_channel, self.channel_number)
 
+    def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
+        self.opc_client.set_pixel_color(self.opc_channel, self.channel_number, color_and_fade_callback)
+
     def set_brightness(self, brightness: float, fade_ms: int):
         """Set brightness of the led."""
         # fadecandy does not support fade per led
         del fade_ms
+        return
         if self.debug:
             self.log.debug("Setting brightness: %s", brightness)
         self.opc_client.set_pixel_color(self.opc_channel, self.channel_number, int(brightness * 255))
@@ -152,15 +159,15 @@ class OpenPixelClient(object):
 
             self.channels[channel] += [0 for _ in range(leds_to_add)]
 
-    def set_pixel_color(self, channel, pixel, brightness):
+    def set_pixel_color(self, channel, pixel, callback: Callable[[int], Tuple[float, int]]):
         """Set an invidual pixel color.
 
         Args:
             channel: Int of the OPC channel for this pixel.
             pixel: Int of the number for this pixel on that channel.
-            brightness: brightness value as an integer between 0-255.
+            callback: callback to get brightness
         """
-        self.channels[channel][pixel] = brightness
+        self.channels[channel][pixel] = callback
         self.dirty = True
 
     def tick(self, dt):
@@ -197,11 +204,14 @@ class OpenPixelClient(object):
         """
         # Build the OPC message
         msg = bytearray()
+        max_fade_ms = int(1 / self.machine.config['mpf']['default_light_hw_update_hz'])
         len_hi_byte = int(len(pixels) / 256)
         len_lo_byte = (len(pixels)) % 256
         header = bytes([channel, 0, len_hi_byte, len_lo_byte])
         msg.extend(header)
         for brightness in pixels:
+            if callable(brightness):
+                brightness = brightness(max_fade_ms)[0] * 255
             brightness = min(255, max(0, int(brightness)))
             msg.append(brightness)
         self.send(bytes(msg))

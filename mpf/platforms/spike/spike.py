@@ -3,7 +3,7 @@ import asyncio
 
 import logging
 
-from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
+from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface, LightPlatformDirectFade
 
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
 
@@ -25,17 +25,22 @@ class SpikeSwitch(SwitchPlatformInterface):
         self.platform = platform
 
 
-class SpikeLight(LightPlatformInterface):
+class SpikeLight(LightPlatformDirectFade):
 
     """A light on a Stern Spike node board."""
 
     def __init__(self, node, number, platform):
         """Initialise light."""
+        super().__init__(platform.machine.clock.loop)
         self.node = node
         self.number = number
         self.platform = platform
 
-    def set_brightness(self, brightness: float, fade_ms: int):
+    def get_max_fade_ms(self):
+        """Return max fade ms."""
+        return 199  # int(199 * 1.28) = 255
+
+    def set_brightness_and_fade(self, brightness: float, fade_ms: int):
         """Set brightness of channel."""
         fade_time = int(fade_ms * 1.28)
         brightness = int(brightness * 255)

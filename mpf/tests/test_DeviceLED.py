@@ -11,16 +11,8 @@ class TestLed(MpfTestCase):
     def getMachinePath(self):
         return 'tests/machine_files/led/'
 
-    def _synchronise_led_update(self):
-        ts = self.machine.light_controller._updater_task.get_next_call_time()
-        self.assertTrue(ts)
-        self.advance_time_and_run(ts - self.machine.clock.get_time())
-        self.advance_time_and_run(.01)
-
     def test_color_and_stack(self):
         led1 = self.machine.lights.led1
-
-        self._synchronise_led_update()
 
         # set led1 to red and check the color and stack
         led1.color('red')
@@ -130,7 +122,6 @@ class TestLed(MpfTestCase):
     def test_fades(self):
         led1 = self.machine.lights.led1
 
-        self._synchronise_led_update()
         led1.color('red', fade_ms=2000)
         self.machine_run()
 
@@ -155,7 +146,7 @@ class TestLed(MpfTestCase):
         self.assertEqual(color_setting['dest_color'], RGBColor('red'))
         self.assertEqual(led1.get_color(), RGBColor((127, 0, 0)))
         self.assertIsNone(color_setting['key'])
-        self.assertLightColor("led1", [126, 0, 0])
+        self.assertLightColor("led1", [127, 0, 0])
 
         # advance to after the fade is done
         self.advance_time_and_run(2)
@@ -170,24 +161,22 @@ class TestLed(MpfTestCase):
 
         led = self.machine.lights.led4
         self.assertEqual(1000, led.default_fade_ms)
-        self._synchronise_led_update()
         led.color('white')
         self.advance_time_and_run(.02)
         self.advance_time_and_run(.5)
-        self.assertLightColor("led4", [130, 130, 130])
+        self.assertLightColor("led4", [132, 132, 132])
         self.advance_time_and_run(.5)
         self.assertLightColor("led4", [255, 255, 255])
 
     def test_restore_to_fade_in_progress(self):
         led1 = self.machine.lights.led1
 
-        self._synchronise_led_update()
         led1.color('red', fade_ms=4000)
         self.advance_time_and_run(0.02)
         self.advance_time_and_run(1)
 
         # fade is 25% complete
-        self.assertLightColor("led1", [64, 0, 0])
+        self.assertLightColor("led1", [65, 0, 0])
 
         # higher priority color which goes on top of fade (higher priority
         # becuase it was added after the first, even though the priorities are
@@ -200,7 +189,7 @@ class TestLed(MpfTestCase):
         led1.remove_from_stack_by_key('test')
         # should go back to the fade in progress, which is now 75% complete
         self.advance_time_and_run(1)
-        self.assertLightColor("led1", [191, 0, 0])
+        self.assertLightColor("led1", [192, 0, 0])
         self.assertTrue(led1.fade_in_progress)
 
         # go to 1 sec after fade and make sure it finished
@@ -214,13 +203,12 @@ class TestLed(MpfTestCase):
 
         led1 = self.machine.lights.led1
 
-        self._synchronise_led_update()
         led1.color('red', fade_ms=4000)
         self.advance_time_and_run(0.02)
         self.advance_time_and_run(1)
 
         # fade is 25% complete
-        self.assertLightColor("led1", [64, 0, 0])
+        self.assertLightColor("led1", [65, 0, 0])
 
         # start a blue 2s fade
         led1.color('blue', key='test', fade_ms=2000)
@@ -232,7 +220,7 @@ class TestLed(MpfTestCase):
         # future
         self.advance_time_and_run(1)
 
-        self.assertLightColor("led1", [33, 0, 126])
+        self.assertLightColor("led1", [33, 0, 127])
 
         # advance past the end
         self.advance_time_and_run(2)
@@ -243,15 +231,30 @@ class TestLed(MpfTestCase):
         led = self.machine.lights.led_corrected
         led.color(RGBColor("white"))
         self.advance_time_and_run()
-        self.assertLightColor("led_corrected", [210, 184, 159])
+        # color is uncorrected
+        self.assertLightColor("led_corrected", RGBColor("white"))
+        # corrected color
+        self.assertEqual(RGBColor([210, 184, 159]), led.color_correct(led.get_color()))
+        # check hardware
+        self.assertEqual(210 / 255.0, led.hw_drivers["red"].current_brightness)
+        self.assertEqual(184 / 255.0, led.hw_drivers["green"].current_brightness)
+        self.assertEqual(159 / 255.0, led.hw_drivers["blue"].current_brightness)
 
         led.color(RGBColor([128, 128, 128]))
         self.advance_time_and_run()
-        self.assertLightColor("led_corrected", [96, 83, 70])
+        self.assertLightColor("led_corrected", [128, 128, 128])
+        self.assertEqual(RGBColor([96, 83, 70]), led.color_correct(led.get_color()))
+        self.assertEqual(96 / 255.0, led.hw_drivers["red"].current_brightness)
+        self.assertEqual(83 / 255.0, led.hw_drivers["green"].current_brightness)
+        self.assertEqual(70 / 255.0, led.hw_drivers["blue"].current_brightness)
 
         led.color(RGBColor("black"))
         self.advance_time_and_run()
         self.assertLightColor("led_corrected", [0, 0, 0])
+        self.assertEqual(RGBColor([0, 0, 0]), led.color_correct(led.get_color()))
+        self.assertEqual(0 / 255.0, led.hw_drivers["red"].current_brightness)
+        self.assertEqual(0 / 255.0, led.hw_drivers["green"].current_brightness)
+        self.assertEqual(0 / 255.0, led.hw_drivers["blue"].current_brightness)
 
     def test_non_rgb_leds(self):
         # test bgr
@@ -291,9 +294,15 @@ class TestLed(MpfTestCase):
         led.color(RGBColor((100, 100, 100)))
         self.advance_time_and_run(1)
         self.assertLightColor("led1", [100, 100, 100])
+        self.assertEqual(100 / 255.0, led.hw_drivers["red"].current_brightness)
+        self.assertEqual(100 / 255.0, led.hw_drivers["green"].current_brightness)
+        self.assertEqual(100 / 255.0, led.hw_drivers["blue"].current_brightness)
 
         self.machine.create_machine_var("brightness", 0.8)
         led.color(RGBColor((100, 100, 100)))
         self.advance_time_and_run(1)
 
-        self.assertLightColor("led1", [80, 80, 80])
+        self.assertLightColor("led1", [100, 100, 100])
+        self.assertEqual(80 / 255.0, led.hw_drivers["red"].current_brightness)
+        self.assertEqual(80 / 255.0, led.hw_drivers["green"].current_brightness)
+        self.assertEqual(80 / 255.0, led.hw_drivers["blue"].current_brightness)

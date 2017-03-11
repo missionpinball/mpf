@@ -1,6 +1,8 @@
 """WS2812 LED on the FAST controller."""
 import logging
 
+from typing import Callable, Tuple
+
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
 
@@ -8,9 +10,11 @@ class FASTDirectLED:
 
     """FAST RGB LED."""
 
-    def __init__(self, number):
+    def __init__(self, number: str, hardware_fade_ms: int):
         """Initialise FAST LED."""
         self.number = number
+        self.dirty = True
+        self.hardware_fade_ms = hardware_fade_ms
         self.colors = [0, 0, 0]
         self.log = logging.getLogger('FASTLED')
         # All FAST LEDs are 3 element RGB and are set using hex strings
@@ -19,9 +23,18 @@ class FASTDirectLED:
     @property
     def current_color(self):
         """Return current color."""
-        return "{0}{1}{2}".format(hex(int(self.colors[0]))[2:].zfill(2),
-                                  hex(int(self.colors[1]))[2:].zfill(2),
-                                  hex(int(self.colors[2]))[2:].zfill(2))
+        result = ""
+        self.dirty = False
+        for color in self.colors:
+            if callable(color):
+                brightness, fade_ms = color(self.hardware_fade_ms)
+                result += hex(int(brightness * 255))[2:].zfill(2)
+                if fade_ms >= self.hardware_fade_ms:
+                    self.dirty = True
+            else:
+                result += "00"
+
+        return result
 
 
 class FASTDirectLEDChannel(LightPlatformInterface):
@@ -33,8 +46,7 @@ class FASTDirectLEDChannel(LightPlatformInterface):
         self.led = led
         self.channel = int(channel)
 
-    def set_brightness(self, brightness: float, fade_ms: int):
-        """Instantly set this LED channel to the brightness passed."""
-        # FAST does not support fade per light/channel
-        del fade_ms
-        self.led.colors[self.channel] = int(brightness * 255)
+    def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
+        """Set brightness via callback."""
+        self.led.dirty = True
+        self.led.colors[self.channel] = color_and_fade_callback
