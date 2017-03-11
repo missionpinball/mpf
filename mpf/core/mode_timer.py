@@ -180,6 +180,11 @@ class ModeTimer(LogMixin):
                                   ticks=self.mode.player[self.tick_var],
                                   ticks_remaining=self.ticks_remaining)
 
+        self._post_tick_events()
+        # since lots of slides and stuff are tied to the timer tick, we want
+        # to post an initial tick event also that represents the starting
+        # timer value.
+
     def restart(self, **kwargs):
         """Restart the timer by resetting it and then starting it.
 
@@ -243,6 +248,9 @@ class ModeTimer(LogMixin):
                 additional keyword arguments.
         """
         del kwargs
+
+        if not timer_value:
+            timer_value = 0  # make sure it's not None, etc.
 
         self.info_log("Pausing Timer for %s secs", timer_value)
 
@@ -329,6 +337,10 @@ class ModeTimer(LogMixin):
             self.mode.player[self.tick_var] -= 1
         else:
             self.mode.player[self.tick_var] += 1
+
+        self._post_tick_events()
+
+    def _post_tick_events(self):
 
         if not self._check_for_done():
             self.machine.events.post('timer_' + self.name + '_tick',

@@ -125,6 +125,7 @@ ball_devices:
     eject_coil: single|machine(coils)|None
     eject_coil_jam_pulse: single|ms|None
     eject_coil_retry_pulse: single|ms|None
+    retries_before_increasing_pulse: single|int|4
     hold_coil: single|machine(coils)|None
     hold_coil_release_time: single|ms|1s
     hold_events: dict|str:ms|None
@@ -353,6 +354,7 @@ drop_target_banks:
     reset_coil: single|machine(coils)|None
     reset_coils: list|machine(coils)|None
     reset_events: dict|str:ms|machine_reset_phase_3, ball_starting
+    ignore_switch_ms: single|ms|500ms
 event_player:
     __valid_in__: machine, mode, show
     __allow_others__:
@@ -366,10 +368,20 @@ queue_relay_player:
     args: dict|str:str|None
     post: single|str|
     wait_for: single|str|
+global_extra_ball_settings:
+    __valid_in__: machine
+    max_per_game: single|int|None
+    max_per_ball: single|int|None
+    max_lit: single|int|None
+    lit_memory: single|bool|True
+    enabled: single|bool|True
+    events_only: single|bool|False
 extra_balls:
     __valid_in__: mode
     award_events: dict|str:ms|None
+    light_events: dict|str:ms|None
     reset_events: dict|str:ms|None
+    max_per_game: single|int|1
 fadecandy:
     __valid_in__: machine
     gamma: single|float|2.5

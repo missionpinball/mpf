@@ -20,16 +20,25 @@ class ExtraBall(ModeDevice):
     def award(self, **kwargs):
         """Award extra ball to player if enabled."""
         del kwargs
-        # if there is no player active or the ball was already awarded to the player
-        if not self.player or self.player.extra_balls_awarded[self.name]:
+
+        if not self.player:
             return
 
-        # mark as awarded
-        self.player.extra_balls_awarded[self.name] = True
+        if (self.config['max_per_game'] and
+                self.player.extra_balls_awarded[self.name] <
+                self.config['max_per_game']):
 
-        self.debug_log("Awarding additional ball to player %s", self.player.number)
+            self.player.extra_balls_awarded[self.name] += 1
 
-        self.player.extra_balls += 1
+            self.machine.extra_ball_controller.award()
+
+    def light(self, **kwargs):
+        del kwargs
+
+        if not self.player:
+            return
+
+        self.machine.extra_ball_controller.light()
 
     def reset(self, **kwargs):
         """Reset extra ball.
@@ -38,12 +47,11 @@ class ExtraBall(ModeDevice):
         extra ball to the player.
         """
         del kwargs
-        # if there is no player active
+
         if not self.player:
             return
 
-        # reset flag
-        self.player.extra_balls_awarded[self.name] = False
+        self.player.extra_balls_awarded[self.name] = 0
 
     def device_added_to_mode(self, mode: Mode, player: Player):
         """Load extra ball in mode and initialise player.
@@ -54,11 +62,9 @@ class ExtraBall(ModeDevice):
         """
         super().device_added_to_mode(mode, player)
         self.player = player
-        if not self.player.extra_balls:
-            self.player.extra_balls_awarded = dict()
 
         if self.name not in self.player.extra_balls_awarded:
-            self.player.extra_balls_awarded[self.name] = False
+            self.player.extra_balls_awarded[self.name] = 0
 
     def device_removed_from_mode(self, mode: Mode):
         """Unload extra ball.

@@ -1,9 +1,9 @@
 """Contains the parent class for Scriptlets."""
-import logging
 from mpf.core.delays import DelayManager
+from mpf.core.logging import LogMixin
 
 
-class Scriptlet(object):
+class Scriptlet(LogMixin):
 
     """Baseclass for scriptlet which are simple scripts in a machine."""
 
@@ -11,8 +11,8 @@ class Scriptlet(object):
         """Initialise scriptlet."""
         self.machine = machine
         self.name = name
-        self.log = logging.getLogger('Scriptlet.' + name)
-        self.log.debug("Loading Scriptlet: %s", name)
+
+        self.configure_logging('Scriptlet.' + name, 'basic', 'full')
         self.delay = DelayManager(self.machine.delayRegistry)
         self.on_load()
 
@@ -23,6 +23,7 @@ class Scriptlet(object):
     def on_load(self):
         """Automatically called when this Scriptlet loads.
 
-        It's the intention that the Scriptlet writer will overwrite this method in the Scriptlet.
+        It's the intention that the Scriptlet writer will overwrite this method
+        in the Scriptlet.
         """
         pass

@@ -71,10 +71,15 @@ class BallHold(SystemWideDevice, ModeDevice):
             **kwargs: unused
         """
         del kwargs
-        self.debug_log("Enabling...")
+
         if not self.enabled:
+            self.debug_log("Enabling...")
             self._register_handlers()
-        self.enabled = True
+            self.enabled = True
+        else:
+            self.debug_log(
+                "Received request to enable, but this device is already "
+                "enabled")
 
     def disable(self, **kwargs):
         """Disable the hold.

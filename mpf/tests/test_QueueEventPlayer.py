@@ -70,6 +70,9 @@ class TestQueueEventPlayer(MpfTestCase):
         self.advance_time_and_run()
         self.assertTrue(self._done)
 
+        with self.assertRaises(AssertionError):
+            self.post_event("relay")
+
     def test_queue_relay_player_in_mode(self):
         self._done = False
         self.mock_event("relay3_start")
