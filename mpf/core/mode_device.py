@@ -61,4 +61,4 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
         """
         del mode
         raise NotImplementedError(
-            '{} does not have a device_removed_from_mode() method'.format(self.name))
+            '{} does not have a device_removed_from_mode() method'.format(self))
