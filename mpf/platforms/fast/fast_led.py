@@ -25,7 +25,9 @@ class FASTDirectLED:
         """Return current color."""
         result = ""
         self.dirty = False
-        for color in self.colors:
+        # send this as grb because the hardware will twist it again
+        for index in [1, 0, 2]:
+            color = self.colors[index]
             if callable(color):
                 brightness, fade_ms = color(self.hardware_fade_ms)
                 result += hex(int(brightness * 255))[2:].zfill(2)

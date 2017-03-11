@@ -183,6 +183,12 @@ class OpenPixelClient(object):
 
             self.dirty = False
 
+    def _add_pixel(self, msg, max_fade_ms, brightness):
+        if callable(brightness):
+            brightness = brightness(max_fade_ms)[0] * 255
+        brightness = min(255, max(0, int(brightness)))
+        msg.append(brightness)
+
     def update_pixels(self, pixels, channel=0):
         """Send the list of pixel colors to the OPC server.
 
@@ -209,11 +215,14 @@ class OpenPixelClient(object):
         len_lo_byte = (len(pixels)) % 256
         header = bytes([channel, 0, len_hi_byte, len_lo_byte])
         msg.extend(header)
-        for brightness in pixels:
-            if callable(brightness):
-                brightness = brightness(max_fade_ms)[0] * 255
-            brightness = min(255, max(0, int(brightness)))
-            msg.append(brightness)
+        for i in range(int(len(pixels) / 3)):
+            # send GRB because that is the default color order for WS2812
+
+            self._add_pixel(msg, max_fade_ms, pixels[i * 3 + 1])
+            self._add_pixel(msg, max_fade_ms, pixels[i * 3])
+            self._add_pixel(msg, max_fade_ms, pixels[i * 3 + 2])
+
+
         self.send(bytes(msg))
 
     def send(self, message):

@@ -117,5 +117,7 @@ lights:
     subtype: gi
   test_led:
     number: 2-23
+    type: grb
   test_led2:
     number: 2-25
+    type: grb
