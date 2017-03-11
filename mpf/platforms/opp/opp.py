@@ -6,6 +6,10 @@ boards.
 """
 import logging
 import asyncio
+from typing import Dict
+from typing import List
+
+from mpf.platforms.opp.opp_neopixel import OPPNeopixel
 
 from mpf.platforms.base_serial_communicator import BaseSerialCommunicator
 
@@ -48,15 +52,14 @@ class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         self.inpDict = dict()
         self.inpAddrDict = dict()
         self.read_input_msg = {}
-        self.opp_neopixels = []
+        self.opp_neopixels = []     # type: List[OPPNeopixelCard]
         self.neoCardDict = dict()
-        self.neoDict = dict()
+        self.neoDict = dict()   # type: Dict[str, OPPNeopixel]
         self.numGen2Brd = 0
         self.gen2AddrArr = {}
         self.badCRC = 0
         self.minVersion = 0xffffffff
         self._poll_task = None
-        self._light_update_task = None
 
         self.features['tickless'] = True
 
@@ -93,9 +96,6 @@ class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Stop hardware and close connections."""
         if self._poll_task:
             self._poll_task.cancel()
-
-        if self._light_update_task:
-            self._light_update_task.cancel()
 
         for connections in self.serial_connections:
             connections.stop()
@@ -608,12 +608,19 @@ class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                                      "light (incand board), with number %s "
                                      "which doesn't exist", number)
 
-            if not self._light_update_task:
-                self._light_update_task = self.machine.clock.loop.create_task(self._update_lights())
-                self._light_update_task.add_done_callback(self._done)
             return self.incandDict[number]
         else:
             raise AssertionError("Unknown subtype {}".format(subtype))
+
+    def light_sync(self):
+        """Update lights."""
+        # first neo pixels
+        for light in self.neoDict.values():
+            if light.dirty:
+                light.update_color()
+
+        # then incandescents
+        self.update_incand()
 
     @staticmethod
     def _done(future):  # pragma: no cover

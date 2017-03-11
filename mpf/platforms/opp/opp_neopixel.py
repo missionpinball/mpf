@@ -70,18 +70,20 @@ class OPPNeopixel:
         self.neoCard = neo_card
         _, index = number.split('-')
         self.index_char = chr(int(index))
-        self._color = [None, None, None]
+        self._color = [0, 0, 0]
+        self.dirty = False
 
         self.log.debug("Creating OPP Neopixel: %s", number)
 
     def set_channel(self, index, brightness):
         """Set one channel."""
         self._color[index] = brightness
+        self.dirty = True
 
-        # this is to prevent intermediate color table entries. not ideal
-        if self._color[0] is not None and self._color[1] is not None and self._color[2] is not None:
-            self.color(self._color)
-            self._color = [None, None, None]
+    def update_color(self):
+        """Update neopixel."""
+        self.color(self._color)
+        self.dirty = False
 
     def color(self, color):
         """Instantly set this LED to the color passed.

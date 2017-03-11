@@ -210,6 +210,13 @@ class LightsPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """Parse light number to a list of channels."""
         raise NotImplementedError
 
+    def light_sync(self):
+        """Called after channels of a light were updated.
+
+        Can be used if multiple channels need to be flushed at once.
+        """
+        pass
+
     @abc.abstractmethod
     def configure_light(self, number, subtype, platform_settings) -> LightPlatformInterface:
         """Subclass this method in a platform module to configure a light.

@@ -41,6 +41,7 @@ class Light(SystemWideDevice):
     def __init__(self, machine, name):
         """Initialise light."""
         self.hw_drivers = {}
+        self.platforms = set()
         self._color = [0, 0, 0]
         self._corrected_color = [0, 0, 0]
         super().__init__(machine, name)
@@ -155,15 +156,16 @@ class Light(SystemWideDevice):
 
         for color, channel in channels.items():
             channel = self.machine.config_validator.validate_config("light_channels", channel)
-            self.hw_drivers[color] = self._load_hw_driver(channel, color)
+            self.hw_drivers[color] = self._load_hw_driver(channel)
 
-    def _load_hw_driver(self, channel, color):
+    def _load_hw_driver(self, channel):
         """Load one channel."""
         if channel['platform'] == "drivers":
             return DriverLight(self.machine.coils[channel['number'].strip()], self.machine.clock.loop,
                                int(1 / self.machine.config['mpf']['default_light_hw_update_hz'] * 1000))
         else:
             platform = self.machine.get_platform_sections('lights', channel['platform'])
+            self.platforms.add(platform)
             return platform.configure_light(channel['number'], channel['subtype'], channel['platform_settings'])
 
     def _initialize(self):
@@ -327,6 +329,9 @@ class Light(SystemWideDevice):
         for color, hw_driver in self.hw_drivers.items():
             hw_driver.set_fade(partial(self._get_brightness_and_fade, color=color))
 
+        for platform in self.platforms:
+            platform.light_sync()
+
     def clear_stack(self):
         """Remove all entries from the stack and resets this light to 'off'."""
         self.stack[:] = []
@@ -438,34 +443,3 @@ class Light(SystemWideDevice):
     def fade_in_progress(self) -> bool:
         """Return true if a fade is in progress."""
         return bool(self.stack and self.stack[0]['dest_time'] > self.machine.clock.get_time())
-
-    def write_color_to_hw_driver(self):
-        """Set color to hardware platform.
-
-        Physically update the light hardware object based on the 'color'
-        setting of the highest priority setting from the stack.
-
-        This method is automatically called whenever a color change has been
-        made (including when fades are active).
-        """
-        if self.fade_in_progress and self.stack and self.stack[0]['dest_time'] < self.machine.clock.get_time():
-            self.fade_in_progress = False
-
-        color = self.get_color()
-        corrected_color = self.gamma_correct(color)
-        corrected_color = self.color_correct(corrected_color)
-
-        self._color = list(color)
-        self._corrected_color = corrected_color
-        self.debug_log("Writing color to hw driver: %s", corrected_color)
-
-        for color, hw_driver in self.hw_drivers.items():
-            # TODO: implement fade_ms here
-            fade_ms = 0
-            if color in ["red", "blue", "green"]:
-                hw_driver.set_brightness(getattr(corrected_color, color) / 255.0, fade_ms)
-            elif color == "white":
-                hw_driver.set_brightness(
-                    min(corrected_color.red, corrected_color.green, corrected_color.blue) / 255.0, fade_ms)
-            else:
-                raise AssertionError("Invalid color {} in light {}".format(color, self.name))
