@@ -21,6 +21,7 @@ mpf:
         - service: mpf.core.service_controller.ServiceController
         - settings: mpf.core.settings_controller.SettingsController
         - placeholder_manager: mpf.core.placeholder_manager.PlaceholderManager
+        - extra_balls: mpf.core.extra_balls.ExtraBallController
 
     config_players:
         coil: mpf.config_players.coil_player
@@ -189,6 +190,7 @@ logging:
       delay_manager: none
       device_manager: none
       event_manager: none
+      extra_balls: none
       file_manager: none  # todo
       logic_blocks: none
       machine_controller: basic
@@ -219,6 +221,7 @@ logging:
       delay_manager: none
       device_manager: basic
       event_manager: basic
+      extra_balls: basic
       file_manager: basic
       logic_blocks: basic
       machine_controller: basic
@@ -455,3 +458,6 @@ timed_switches:
     time: 3s
     events_when_active: flipper_cradle
     events_when_released: flipper_cradle_release
+
+global_extra_ball_settings:
+  enabled: true
