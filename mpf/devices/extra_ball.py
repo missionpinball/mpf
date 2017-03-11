@@ -30,7 +30,7 @@ class ExtraBall(ModeDevice):
 
             self.player.extra_balls_awarded[self.name] += 1
 
-            self.machine.extra_balls.award()
+            self.machine.extra_ball_controller.award()
 
     def light(self, **kwargs):
         del kwargs
@@ -38,7 +38,7 @@ class ExtraBall(ModeDevice):
         if not self.player:
             return
 
-        self.machine.extra_balls.light()
+        self.machine.extra_ball_controller.light()
 
     def reset(self, **kwargs):
         """Reset extra ball.
@@ -53,6 +53,19 @@ class ExtraBall(ModeDevice):
 
         self.player.extra_balls_awarded[self.name] = 0
 
+    def device_added_to_mode(self, mode: Mode, player: Player):
+        """Load extra ball in mode and initialise player.
+
+        Args:
+            mode: Mode which is loaded
+            player: Current player
+        """
+        super().device_added_to_mode(mode, player)
+        self.player = player
+
+        if self.name not in self.player.extra_balls_awarded:
+            self.player.extra_balls_awarded[self.name] = 0
+
     def device_removed_from_mode(self, mode: Mode):
         """Unload extra ball.
 
@@ -60,3 +73,4 @@ class ExtraBall(ModeDevice):
             mode: Mode which is unloaded
         """
         del mode
+        self.player = None

@@ -21,7 +21,7 @@ mpf:
         - service: mpf.core.service_controller.ServiceController
         - settings: mpf.core.settings_controller.SettingsController
         - placeholder_manager: mpf.core.placeholder_manager.PlaceholderManager
-        - extra_balls: mpf.core.extra_balls.ExtraBallController
+        - extra_ball_controller: mpf.core.extra_balls.ExtraBallController
 
     config_players:
         coil: mpf.config_players.coil_player
