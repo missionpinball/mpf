@@ -354,6 +354,7 @@ drop_target_banks:
     reset_coil: single|machine(coils)|None
     reset_coils: list|machine(coils)|None
     reset_events: dict|str:ms|machine_reset_phase_3, ball_starting
+    ignore_switch_ms: single|ms|500ms
 event_player:
     __valid_in__: machine, mode, show
     __allow_others__:

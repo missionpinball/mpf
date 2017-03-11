@@ -187,8 +187,8 @@ class TestSmartVirtualPlatform(MpfTestCase):
         self.assertTrue(self.machine.drop_targets['left2'].complete)
         self.assertTrue(self.machine.drop_target_banks['left_bank'].complete)
 
-        # it should reset after 1s
-        self.advance_time_and_run()
+        # it should reset after 1.5s
+        self.advance_time_and_run(1.5)
         self.assertFalse(self.machine.switch_controller.is_active('switch1'))
         self.assertFalse(self.machine.switch_controller.is_active('switch2'))
         self.assertFalse(self.machine.drop_targets['left1'].complete)

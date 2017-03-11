@@ -245,6 +245,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         self.down = 0
         self.up = 0
         self.delay = DelayManager(machine.delayRegistry)
+        self._ignore_switch_hits = False
 
     @property
     def can_exist_outside_of_game(self):
@@ -289,12 +290,22 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         if self.reset_coil:
             coils.add(self.reset_coil)
 
+        if self.config['ignore_switch_ms']:
+            self.machine.events.post('ignore')
+            self._ignore_switch_hits = True
+            self.delay.add(ms=self.config['ignore_switch_ms'],
+                           callback=self._restore_switch_hits,
+                           name='ignore_hits')
+
         # now pulse them
         for coil in coils:
-
             self.debug_log('Pulsing reset coils: %s', coils)
-
             coil.pulse()
+
+    def _restore_switch_hits(self):
+        self.machine.events.post('restore')
+        self._ignore_switch_hits = False
+        self.member_target_change()
 
     def member_target_change(self):
         """A member drop target has changed state.
@@ -302,6 +313,10 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         This method causes this group to update its down and up counts and
         complete status.
         """
+
+        if self._ignore_switch_hits:
+            return
+
         self.down = 0
         self.up = 0
 
@@ -358,5 +373,8 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
 
     def device_removed_from_mode(self, mode):
         """Remove targets which were added in this mode."""
+
+        self.delay.remove('ignore_hits')
+
         for target in self.drop_targets:
             target.remove_from_bank(self)
