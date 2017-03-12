@@ -291,7 +291,6 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
             coils.add(self.reset_coil)
 
         if self.config['ignore_switch_ms']:
-            self.machine.events.post('ignore')
             self._ignore_switch_hits = True
             self.delay.add(ms=self.config['ignore_switch_ms'],
                            callback=self._restore_switch_hits,
