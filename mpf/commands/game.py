@@ -7,6 +7,8 @@ import os
 import socket
 import sys
 from datetime import datetime
+from logging.handlers import QueueHandler
+from queue import Queue
 
 from mpf.core.machine import MachineController
 from mpf.core.utility_functions import Util
@@ -146,8 +148,13 @@ class Command(object):
         # tell the handler to use this format
         console.setFormatter(formatter)
 
-        # add the handler to the root logger
-        logging.getLogger('').addHandler(console)
+        # add async queue handler to the root logger
+        log_queue = Queue()
+        queue_handler = QueueHandler(log_queue)
+        queue_listener = logging.handlers.QueueListener(log_queue, console)
+        queue_listener.start()
+
+        logging.getLogger('').addHandler(queue_handler)
 
         try:
             MachineController(mpf_path, machine_path, vars(args)).run()
