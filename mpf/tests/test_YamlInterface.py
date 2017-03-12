@@ -99,7 +99,7 @@ str_1: +1
 str_2: 032
 str_3: on
 str_4: off
-# str_5: 123e45
+str_5: 123e45
 bool_1: yes
 bool_2: no
 bool_3: true
