@@ -1,6 +1,5 @@
 import unittest
 import ruamel.yaml as yaml
-from ruamel.yaml.loader import RoundTripLoader
 from mpf.file_interfaces.yaml_interface import YamlInterface, MpfLoader
 
 
@@ -90,4 +89,30 @@ a: 3
         with self.assertRaises(KeyError):
             yaml.load(yaml_str, Loader=MpfLoader)
 
+    def test_yaml_patches(self):
 
+        # tests our patches to the yaml processor
+
+        config = """
+
+str_1: +1
+str_2: 032
+str_3: on
+str_4: off
+# str_5: 123e45
+bool_1: yes
+bool_2: no
+bool_3: true
+bool_4: false
+str_6: hi
+int_1: 123
+float_1: 1.0
+
+        """
+
+        parsed_config = YamlInterface.process(config, True)
+
+        for k, v in parsed_config.items():
+            if not type(v) is eval(k.split('_')[0]):
+                raise AssertionError('YAML value "{}" is {}, not {}'.format(v,
+                    type(v), eval(k.split('_')[0])))
