@@ -58,6 +58,13 @@ class TestRGBColor(unittest.TestCase):
         self.assertTrue(color1 != color2)
         self.assertFalse(color1 == color2)
 
+        color_brightness = RGBColor("red%50")
+        self.assertEqual((127, 0, 0), color_brightness.rgb)
+        color_brightness = RGBColor("AABBCC%50")
+        self.assertEqual((85, 93, 102), color_brightness.rgb)
+        color_red = RGBColor("red")
+        self.assertEqual((127, 0, 0), (color_red * 0.5).rgb)
+
     def test_color_blend(self):
         color1 = RGBColor((128, 64, 0))
         color2 = RGBColor((0, 32, 64))

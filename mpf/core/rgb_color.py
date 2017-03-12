@@ -222,6 +222,21 @@ class RGBColor(object):
                          max(g1 - g2, channel_min_val),
                          max(b1 - b2, channel_min_val)))
 
+    def __mul__(self, other):
+        """Multiple color by scalar."""
+        if not isinstance(other, (float, int)):
+            raise TypeError(
+                "Unsupported operand type(s) for *: '{0}' and '{1}'".format(
+                    type(self), type(other)))
+
+        if other < 0:
+            raise TypeError("Operand needs to be positive")
+
+        r1, g1, b1 = self.rgb
+        return RGBColor((min(int(r1 * other), channel_max_val),
+                         min(int(g1 * other), channel_max_val),
+                         min(int(b1 * other), channel_max_val)))
+
     def __iter__(self):
         """Return iterator."""
         return iter(self._color)
@@ -404,13 +419,22 @@ class RGBColor(object):
         if not value:
             return default
 
-        rgb = named_rgb_colors.get(value)
-        if rgb is not None:
-            return rgb
+        brightness = None
+        if '%' in value:
+            value, brightness = value.split("%")
 
-        rgb = RGBColor.hex_to_rgb(value)
+        rgb = named_rgb_colors.get(value)
         if rgb is None:
-            raise AssertionError("Invalid RGB string: {}".format(value))
+            rgb = RGBColor.hex_to_rgb(value)
+            if rgb is None:
+                raise AssertionError("Invalid RGB string: {}".format(value))
+
+        # apply brightness
+        if brightness:
+            factor = float(int(brightness) / 100)
+            rgb = (min(int(rgb[0] * factor), channel_max_val),
+                   min(int(rgb[1] * factor), channel_max_val),
+                   min(int(rgb[2] * factor), channel_max_val))
 
         return rgb
 
