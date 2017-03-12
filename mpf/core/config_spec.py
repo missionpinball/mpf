@@ -742,6 +742,7 @@ physical_dmds:
     source_display: single|str|dmd
     luminosity: list|float|.299, .587, .114
     brightness: single|float|0.5
+    gamma: single|float|1.0
     only_send_changes: single|bool|False
 physical_rgb_dmd:
     __valid_in__: machine
@@ -756,6 +757,7 @@ physical_rgb_dmds:
     source_display: single|str|dmd
     only_send_changes: single|bool|False
     brightness: single|float|1.0
+    gamma: single|float|1.0
 player_vars:
     __valid_in__: machine
     initial_value: single|str|
