@@ -60,9 +60,7 @@ MpfResolver.add_implicit_resolver(
     re.compile(u'''^(?:
      [-+]?(?:[0-9][0-9_]*)\\.[0-9_]*
     |\\.[0-9_]+
-    |[-+]?[0-9][0-9_]*(?::[0-5]?[0-9])+\\.[0-9_]*
-    |[-+]?\\.(?:inf|Inf|INF)
-    |\\.(?:nan|NaN|NAN))$''', re.X),
+    |[-+]?[0-9][0-9_]*(?::[0-5]?[0-9])+\\.[0-9_]*)$''', re.X),
     list(u'-+0123456789.'))
 
 MpfResolver.add_implicit_resolver(
