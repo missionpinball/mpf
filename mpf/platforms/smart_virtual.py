@@ -54,7 +54,7 @@ class BaseSmartVirtualCoilAction:
 
 class ResetDropTargetAction(BaseSmartVirtualCoilAction):
 
-    """Disable switches when coil is pulsed."""
+    """Set switches inactive when coil is pulsed."""
 
     def __init__(self, actions, machine, drop_target_bank):
         """Initialise switch enable action."""
@@ -62,7 +62,12 @@ class ResetDropTargetAction(BaseSmartVirtualCoilAction):
         self.drop_target_bank = drop_target_bank
 
     def _hit_switches(self):
-        for target in self.drop_target_bank.drop_targets:
+        # need to pull the drop targets from the config, not the drop_targets
+        # attribute, because if the bank is defined in a mode then the
+        # attr won't be populated yet, but if there's a bank in a mode with a
+        # single reset coil we assume that coil will reset all the drop targets
+        # anytime it's called.
+        for target in self.drop_target_bank.config['drop_targets']:
             self.machine.switch_controller.process_switch(target.config['switch'].name, 0, logical=True)
 
     def _perform_action(self):
