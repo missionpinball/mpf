@@ -757,7 +757,7 @@ physical_rgb_dmds:
     source_display: single|str|dmd
     only_send_changes: single|bool|False
     brightness: single|float|1.0
-    gamma: single|float|1.0
+    gamma: single|float|2.2
 player_vars:
     __valid_in__: machine
     initial_value: single|str|
