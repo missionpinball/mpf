@@ -53,6 +53,7 @@ class DropTarget(SystemWideDevice):
 
     def _restore_switch_hits(self):
         self._ignore_switch_hits = False
+        self._update_state_from_switch(reconcile=True)
 
     def _ball_search_phase1(self):
         if not self.complete and self.reset_coil:
@@ -152,24 +153,30 @@ class DropTarget(SystemWideDevice):
         """Pulse the knockdown coil to knock down this drop target."""
         del kwargs
         if self.knockdown_coil and not self.machine.switch_controller.is_active(self.config['switch'].name):
-            self.knockdown_coil.pulse()
             self._ignore_switch_hits_for(ms=self.config['ignore_switch_ms'])
+            self.knockdown_coil.pulse()
 
-    def _update_state_from_switch(self, **kwargs):
+    def _update_state_from_switch(self, reconcile=False, **kwargs):
         del kwargs
-        if self._in_ball_search:
+
+        is_complete = self.machine.switch_controller.is_active(
+            self.config['switch'].name)
+
+        if (self._in_ball_search or self._ignore_switch_hits or
+                is_complete == self.complete):
             return
 
-        if not self._ignore_switch_hits:
+        if not reconcile:
             self.config['playfield'].mark_playfield_active_from_device_action()
 
-        if self.machine.switch_controller.is_active(
-                self.config['switch'].name):
-            self._down()
-        else:
-            self._up()
+        if is_complete != self.complete:
 
-        self._update_banks()
+            if is_complete:
+                self._down()
+            else:
+                self._up()
+
+            self._update_banks()
 
     def _down(self):
         self.complete = True
@@ -221,8 +228,8 @@ class DropTarget(SystemWideDevice):
         del kwargs
 
         if self.reset_coil and self.machine.switch_controller.is_active(self.config['switch'].name):
-            self.reset_coil.pulse()
             self._ignore_switch_hits_for(ms=self.config['ignore_switch_ms'])
+            self.reset_coil.pulse()
 
 
 @DeviceMonitor("complete", "down", "up")

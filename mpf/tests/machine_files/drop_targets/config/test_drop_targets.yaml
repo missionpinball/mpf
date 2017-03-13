@@ -15,6 +15,14 @@ switches:
     number:
   switch7:
     number:
+  switch8:
+    number:
+  switch9:
+    number:
+  switch10:
+    number:
+  switch11:
+    number:
 
 coils:
   coil1:
@@ -26,6 +34,12 @@ coils:
   coil4:
     number:
     hold_power: 2
+  coil5:
+    number:
+  coil6:
+    number:
+  coil7:
+    number:
 
 modes:
   - mode1
@@ -59,6 +73,17 @@ drop_targets:
      switch: switch7
      enable_keep_up_events: keep_up
      disable_keep_up_events: no_more_keep_up
+   right1:
+    switch: switch8
+   right2:
+    switch: switch9
+   center1:
+    switch: switch10
+    ignore_switch_ms: 1000
+    reset_events: reset_center1
+    reset_coil: coil6
+    knockdown_coil: coil7
+    knockdown_events: knockdown_center1
 
 drop_target_banks:
    left_bank:
@@ -67,3 +92,8 @@ drop_target_banks:
      reset_coils: coil1
      reset_events:
        drop_target_bank_left_bank_down: 1s
+   right_bank:
+     drop_targets: right1, right2
+     reset_coils: coil5
+     ignore_switch_ms: 1000
+     reset_events: reset_right_bank

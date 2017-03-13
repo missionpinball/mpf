@@ -11,6 +11,9 @@ class TestDropTargets(MpfTestCase):
     def getMachinePath(self):
         return 'tests/machine_files/drop_targets/'
 
+    def get_platform(self):
+        return 'smart_virtual'
+
     def test_drop_target_bank(self):
         self.assertIn('left1', self.machine.drop_targets)
         self.assertIn('left2', self.machine.drop_targets)
@@ -57,8 +60,8 @@ class TestDropTargets(MpfTestCase):
 
     def test_knockdown_and_reset(self):
         self.mock_event("unexpected_ball_on_playfield")
-        self.machine.coils.coil2.pulse = MagicMock()
-        self.machine.coils.coil3.pulse = MagicMock()
+        self.machine.coils.coil2.pulse = MagicMock(wraps=self.machine.coils.coil2.pulse)
+        self.machine.coils.coil3.pulse = MagicMock(wraps=self.machine.coils.coil3.pulse)
 
         self.assertFalse(self.machine.drop_targets.left6.complete)
 
@@ -67,21 +70,30 @@ class TestDropTargets(MpfTestCase):
         self.advance_time_and_run(.3)
         assert not self.machine.coils.coil2.pulse.called
         self.machine.coils.coil3.pulse.assert_called_once_with()
-        self.machine.coils.coil3.pulse = MagicMock()
 
-        self.hit_switch_and_run("switch6", 1)
+        # ignore ms means the state is not updated yet
+        self.assertFalse(self.machine.drop_targets.left6.complete)
+        self.advance_time_and_run(.3)
+
+        # and now it is
         self.assertTrue(self.machine.drop_targets.left6.complete)
 
-        # reset again
+        # reset it
+        self.machine.coils.coil3.pulse.reset_mock()
+
         self.post_event("reset_target")
         self.advance_time_and_run(.3)
-        self.machine.coils.coil2.pulse.assert_called_once_with()
         assert not self.machine.coils.coil3.pulse.called
+        self.machine.coils.coil2.pulse.assert_called_once_with()
+
+        # ignore ms means the state is not updated yet
+        self.assertTrue(self.machine.drop_targets.left6.complete)
+        self.advance_time_and_run(6)
+
+        # and now it is
+        self.assertFalse(self.machine.drop_targets.left6.complete)
 
         self.assertEventNotCalled("unexpected_ball_on_playfield")
-
-        self.release_switch_and_run("switch6", 1)
-        self.assertFalse(self.machine.drop_targets.left6.complete)
 
     def test_drop_targets_in_mode(self):
         self.machine.modes['mode1'].start()
@@ -119,12 +131,13 @@ class TestDropTargets(MpfTestCase):
         self.assertFalse(self.machine.drop_target_banks.left_bank_2.complete)
 
         self.post_event("reset_target")
-        self.release_switch_and_run("switch6", .1)
 
         self.machine.modes['mode1'].start()
         self.advance_time_and_run()
 
         # mode is running again. should complete
+        self.hit_switch_and_run("switch4", .1)
+        self.hit_switch_and_run("switch5", .1)
         self.hit_switch_and_run("switch6", .1)
 
         self.assertTrue(self.machine.drop_targets.left4.complete)
@@ -174,43 +187,68 @@ class TestDropTargets(MpfTestCase):
         assert not self.machine.coils.coil2.pulse.called
         assert not self.machine.coils.coil3.pulse.called
 
-    def test_drop_target_reset(self):
-        target = self.machine.drop_targets.left6
-        self.machine.coils.coil2.pulse = MagicMock()
-        self.machine.coils.coil3.pulse = MagicMock()
-        self.assertFalse(self.machine.switch_controller.is_active("switch6"))
+    def test_drop_target_ignore_ms(self):
 
-        # target up. it should not reset
-        target.reset()
-        self.advance_time_and_run()
+        self.mock_event('drop_target_center1_down')
+        self.mock_event('drop_target_center1_up')
 
-        assert not self.machine.coils.coil2.pulse.called
-        assert not self.machine.coils.coil3.pulse.called
+        self.hit_switch_and_run('switch10', 1)
+        self.assertSwitchState('switch10', True)  # ###############
 
-        # hit target down
-        self.hit_switch_and_run("switch6", 1)
-        self.assertTrue(target.complete)
+        self.assertEventNotCalled('drop_target_center1_up')
+        self.assertEventCalled('drop_target_center1_down')
 
-        # it should reset
-        target.reset()
-        self.advance_time_and_run()
+        self.post_event('reset_center1', .05)
+        self.release_switch_and_run('switch10', .1)
+        self.hit_switch_and_run('switch10', .1)
+        self.release_switch_and_run('switch10', .1)
+        self.assertSwitchState('switch10', False)
 
-        self.machine.coils.coil2.pulse.assert_called_once_with()
-        self.machine.coils.coil2.pulse.reset_mock()
-        assert not self.machine.coils.coil3.pulse.called
-        self.release_switch_and_run("switch6", 1)
+        self.advance_time_and_run(.5)
 
-        # knock down should work
-        target.knockdown()
-        self.advance_time_and_run()
+        # reset happened in the ignore window so this event should not be
+        # called
+        self.assertEventNotCalled('drop_target_center1_up')
+        self.advance_time_and_run(1)
 
-        self.machine.coils.coil3.pulse.assert_called_once_with()
-        self.machine.coils.coil3.pulse.reset_mock()
-        assert not self.machine.coils.coil2.pulse.called
-        self.hit_switch_and_run("switch6", 1)
+        # now do the same test for knockdown
 
-        # but not when its down already
-        target.knockdown()
-        self.advance_time_and_run()
-        assert not self.machine.coils.coil2.pulse.called
-        assert not self.machine.coils.coil3.pulse.called
+        self.mock_event('drop_target_center1_down')
+
+        self.post_event('knockdown_center1', .2)
+        self.hit_switch_and_run('switch10', .1)
+        self.assertEventNotCalled('drop_target_center1_down')
+
+        self.advance_time_and_run(1)
+        self.assertEventCalled('drop_target_center1_down')
+
+    def test_drop_target_bank_ignore_ms(self):
+        self.mock_event('drop_target_bank_right_bank_down')
+        self.mock_event('drop_target_bank_right_bank_mixed')
+
+        self.hit_switch_and_run('switch8', 1)
+        self.hit_switch_and_run('switch9', 1)
+
+        self.assertEventCalled('drop_target_bank_right_bank_mixed', 1)
+        self.assertEventCalled('drop_target_bank_right_bank_down', 1)
+
+        self.mock_event('drop_target_bank_right_bank_down')
+        self.mock_event('drop_target_bank_right_bank_mixed')
+        self.mock_event('drop_target_bank_right_bank_up')
+
+        self.post_event('reset_right_bank', .5)
+
+        # these events should not be called since we're in the ignore window
+        self.assertEventNotCalled('drop_target_bank_right_bank_mixed')
+        self.assertEventNotCalled('drop_target_bank_right_bank_up')
+
+        self.advance_time_and_run(1)
+
+        # after 1s, the ignore is cleared and the bank updates its state.
+
+        # mixed should not have been called since it happened during the
+        # ignore window
+        self.assertEventNotCalled('drop_target_bank_right_bank_mixed')
+
+        # up should have been called by now
+        self.assertEventCalled('drop_target_bank_right_bank_up')
