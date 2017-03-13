@@ -2,6 +2,7 @@
 mode:
     start_events: start_mode_with_timers
     stop_events: stop_mode_with_timers
+    game_mode: false
 timers:
     timer_down:
         debug: True
@@ -11,7 +12,6 @@ timers:
         direction: down
         tick_interval: 1.5s
         start_running: no
-        reset_on_mode_start: False
         control_events:
             - event: start_timer_down
               action: start
@@ -83,4 +83,3 @@ timers:
         direction: up
         tick_interval: 1s
         start_running: yes
-        reset_on_mode_start: True

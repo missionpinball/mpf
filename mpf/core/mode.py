@@ -4,7 +4,7 @@ import copy
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.delays import DelayManager
 
-from mpf.core.mode_timer import ModeTimer
+from mpf.core.timer import Timer
 from mpf.core.utility_functions import Util
 from mpf.core.logging import LogMixin
 
@@ -538,7 +538,7 @@ class Mode(LogMixin):
 
         for timer, settings in self.config['timers'].items():
 
-            self.timers[timer] = ModeTimer(machine=self.machine, mode=self,
+            self.timers[timer] = Timer(machine=self.machine, mode=self,
                                            name=timer, config=settings)
 
         return self._kill_timers

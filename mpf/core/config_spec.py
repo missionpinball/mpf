@@ -1116,7 +1116,6 @@ timers:
     start_running: single|bool|False
     control_events: list|subconfig(timer_control_events)|None
     restart_on_complete: single|bool|False
-    reset_on_mode_start: single|bool|True
     bcp: single|bool|False
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic

@@ -4,7 +4,7 @@ from mpf.core.logging import LogMixin
 
 
 # pylint: disable-msg=too-many-instance-attributes
-class ModeTimer(LogMixin):
+class Timer(LogMixin):
 
     """Parent class for a mode timer.
 
@@ -24,15 +24,10 @@ class ModeTimer(LogMixin):
         self.name = name
         self.config = config
 
-        if mode.player is None:
-            raise AssertionError("Cannot use ModeTimer in mode without player.")
-
-        self.tick_var = self.mode.name + '_' + self.name + '_tick'
-
         self.running = False
         self.start_value = self.config['start_value'].evaluate([])
         self.restart_on_complete = self.config['restart_on_complete']
-        self._ticks = 0
+        self.ticks = 0
 
         try:
             self.end_value = self.config['end_value'].evaluate([])
@@ -49,31 +44,23 @@ class ModeTimer(LogMixin):
         self.delay = DelayManager(self.machine.delayRegistry)
 
         if self.config['debug']:
-            self.configure_logging('ModeTimer.' + name,
+            self.configure_logging('Timer.' + name,
                                    'full', 'full')
         else:
-            self.configure_logging('ModeTimer.' + name,
+            self.configure_logging('Timer.' + name,
                                    self.config['console_log'],
                                    self.config['file_log'])
 
         if self.direction == 'down' and not self.end_value:
             self.end_value = 0  # need it to be 0 not None
 
-        if self.config["reset_on_mode_start"] or not self.mode.player.is_player_var(self.tick_var):
-            self.mode.player[self.tick_var] = self.start_value
-            '''player_var: (mode)_(timer)_tick
-
-            desc: Stores the current tick value for the mode timer from the mode
-            (mode) with the time name (timer). For example, a timer called
-            "my_timer" which is in the config for "mode1" will store its tick
-            value in the player variable ``mode1_my_timer_tick``.
-            '''
+        self.ticks = self.start_value
 
         self.debug_log("----------- Initial Values -----------")
         self.debug_log("running: %s", self.running)
         self.debug_log("start_value: %s", self.start_value)
         self.debug_log("restart_on_complete: %s", self.restart_on_complete)
-        self.debug_log("_ticks: %s", self._ticks)
+        self.debug_log("_ticks: %s", self.ticks)
         self.debug_log("end_value: %s", self.end_value)
         self.debug_log("ticks_remaining: %s", self.ticks_remaining)
         self.debug_log("max_value: %s", self.max_value)
@@ -164,7 +151,7 @@ class ModeTimer(LogMixin):
         self._create_system_timer()
 
         self.machine.events.post('timer_' + self.name + '_started',
-                                 ticks=self.mode.player[self.tick_var],
+                                 ticks=self.ticks,
                                  ticks_remaining=self.ticks_remaining)
         '''event: timer_(name)_started
 
@@ -177,7 +164,7 @@ class ModeTimer(LogMixin):
 
         if self.bcp:
             self.machine.bcp.send('timer', name=self.name, action='started',
-                                  ticks=self.mode.player[self.tick_var],
+                                  ticks=self.ticks,
                                   ticks_remaining=self.ticks_remaining)
 
         self._post_tick_events()
@@ -217,7 +204,7 @@ class ModeTimer(LogMixin):
         self._remove_system_timer()
 
         self.machine.events.post('timer_' + self.name + '_stopped',
-                                 ticks=self.mode.player[self.tick_var],
+                                 ticks=self.ticks,
                                  ticks_remaining=self.ticks_remaining)
         '''event: timer_(name)_stopped
 
@@ -233,7 +220,7 @@ class ModeTimer(LogMixin):
 
         if self.bcp:
             self.machine.bcp.send('timer', name=self.name, action='stopped',
-                                  ticks=self.mode.player[self.tick_var],
+                                  ticks=self.ticks,
                                   ticks_remaining=self.ticks_remaining)
 
     def pause(self, timer_value=0, **kwargs):
@@ -260,7 +247,7 @@ class ModeTimer(LogMixin):
 
         self._remove_system_timer()
         self.machine.events.post('timer_' + self.name + '_paused',
-                                 ticks=self.mode.player[self.tick_var],
+                                 ticks=self.ticks,
                                  ticks_remaining=self.ticks_remaining)
         '''event: timer_(name)_paused
 
@@ -272,7 +259,7 @@ class ModeTimer(LogMixin):
         '''
         if self.bcp:
             self.machine.bcp.send('timer', name=self.name, action='paused',
-                                  ticks=self.mode.player[self.tick_var],
+                                  ticks=self.ticks,
                                   ticks_remaining=self.ticks_remaining)
 
         if pause_secs > 0:
@@ -281,7 +268,8 @@ class ModeTimer(LogMixin):
     def timer_complete(self, **kwargs):
         """Automatically called when this timer completes.
 
-        Posts the 'timer_<name>_complete' event. Can be manually called to mark this timer as complete.
+        Posts the 'timer_<name>_complete' event. Can be manually called to mark
+        this timer as complete.
 
         Args:
             **kwargs: Not used in this method. Only exists since this method is
@@ -296,11 +284,11 @@ class ModeTimer(LogMixin):
 
         if self.bcp:  # must be before the event post in case it stops the mode
             self.machine.bcp.send('timer', name=self.name, action='complete',
-                                  ticks=self.mode.player[self.tick_var],
+                                  ticks=self.ticks,
                                   ticks_remaining=self.ticks_remaining)
 
         self.machine.events.post('timer_' + self.name + '_complete',
-                                 ticks=self.mode.player[self.tick_var],
+                                 ticks=self.ticks,
                                  ticks_remaining=self.ticks_remaining)
         '''event: timer_(name)_complete
 
@@ -334,9 +322,9 @@ class ModeTimer(LogMixin):
             return
 
         if self.direction == 'down':
-            self.mode.player[self.tick_var] -= 1
+            self.ticks -= 1
         else:
-            self.mode.player[self.tick_var] += 1
+            self.ticks += 1
 
         self._post_tick_events()
 
@@ -344,7 +332,7 @@ class ModeTimer(LogMixin):
 
         if not self._check_for_done():
             self.machine.events.post('timer_' + self.name + '_tick',
-                                     ticks=self.mode.player[self.tick_var],
+                                     ticks=self.ticks,
                                      ticks_remaining=self.ticks_remaining)
             '''event: timer_(name)_tick
 
@@ -358,12 +346,12 @@ class ModeTimer(LogMixin):
             '''
 
             self.debug_log("Ticks: %s, Remaining: %s",
-                           self.mode.player[self.tick_var],
+                           self.ticks,
                            self.ticks_remaining)
 
             if self.bcp:
                 self.machine.bcp.send('timer', name=self.name, action='tick',
-                                      ticks=self.mode.player[self.tick_var],
+                                      ticks=self.ticks,
                                       ticks_remaining=self.ticks_remaining)
 
     def add(self, timer_value, **kwargs):
@@ -380,16 +368,16 @@ class ModeTimer(LogMixin):
 
         ticks_added = timer_value
 
-        new_value = self.mode.player[self.tick_var] + ticks_added
+        new_value = self.ticks + ticks_added
 
         if self.max_value and new_value > self.max_value:
             new_value = self.max_value
 
-        self.mode.player[self.tick_var] = new_value
+        self.ticks = new_value
         ticks_added = new_value - timer_value
 
         self.machine.events.post('timer_' + self.name + '_time_added',
-                                 ticks=self.mode.player[self.tick_var],
+                                 ticks=self.ticks,
                                  ticks_added=ticks_added,
                                  ticks_remaining=self.ticks_remaining)
         '''event: timer_(name)_time_added
@@ -404,7 +392,7 @@ class ModeTimer(LogMixin):
 
         if self.bcp:
             self.machine.bcp.send('timer', name=self.name, action='time_added',
-                                  ticks=self.mode.player[self.tick_var],
+                                  ticks=self.ticks,
                                   ticks_added=ticks_added,
                                   ticks_remaining=self.ticks_remaining)
 
@@ -424,10 +412,10 @@ class ModeTimer(LogMixin):
 
         ticks_subtracted = timer_value
 
-        self.mode.player[self.tick_var] -= ticks_subtracted
+        self.ticks -= ticks_subtracted
 
         self.machine.events.post('timer_' + self.name + '_time_subtracted',
-                                 ticks=self.mode.player[self.tick_var],
+                                 ticks=self.ticks,
                                  ticks_subtracted=ticks_subtracted,
                                  ticks_remaining=self.ticks_remaining)
         '''event: timer_(name)_time_subtracted
@@ -445,7 +433,7 @@ class ModeTimer(LogMixin):
         if self.bcp:
             self.machine.bcp.send('timer', name=self.name,
                                   action='time_subtracted',
-                                  ticks=self.mode.player[self.tick_var],
+                                  ticks=self.ticks,
                                   ticks_subtracted=ticks_subtracted,
                                   ticks_remaining=self.ticks_remaining)
 
@@ -457,21 +445,21 @@ class ModeTimer(LogMixin):
 
         self.debug_log("Checking to see if timer is done. Ticks: %s, End "
                        "Value: %s, Direction: %s",
-                       self.mode.player[self.tick_var], self.end_value,
+                       self.ticks, self.end_value,
                        self.direction)
 
         if (self.direction == 'up' and self.end_value is not None and
-                self.mode.player[self.tick_var] >= self.end_value):
+                self.ticks >= self.end_value):
             self.timer_complete()
             return True
         elif (self.direction == 'down' and
-                self.mode.player[self.tick_var] <= self.end_value):
+                self.ticks <= self.end_value):
             self.timer_complete()
             return True
 
         if self.end_value is not None:
             self.ticks_remaining = abs(self.end_value -
-                                       self.mode.player[self.tick_var])
+                                       self.ticks)
 
         self.debug_log("Timer is not done")
 
@@ -480,7 +468,8 @@ class ModeTimer(LogMixin):
     def _create_system_timer(self):
         # Creates the clock event which drives this mode timer's tick method.
         self._remove_system_timer()
-        self.timer = self.machine.clock.schedule_interval(self._timer_tick, self.tick_secs)
+        self.timer = self.machine.clock.schedule_interval(self._timer_tick,
+                                                          self.tick_secs)
 
     def _remove_system_timer(self):
         # Removes the clock event associated with this mode timer.
@@ -508,7 +497,8 @@ class ModeTimer(LogMixin):
     def set_tick_interval(self, timer_value, **kwargs):
         """Set the number of seconds between ticks for this timer.
 
-        This is an absolute setting. To apply a change to the current value, use the change_tick_interval() method.
+        This is an absolute setting. To apply a change to the current value,
+        use the change_tick_interval() method.
 
         Args:
             timer_value: The new number of seconds between each tick of this
@@ -525,7 +515,8 @@ class ModeTimer(LogMixin):
     def jump(self, timer_value, **kwargs):
         """Set the current amount of time of this timer.
 
-        This value is expressed in "ticks" since the interval per tick can be something other than 1 second).
+        This value is expressed in "ticks" since the interval per tick can be
+        something other than 1 second).
 
         Args:
             timer_value: Integer of the current value you want this timer to be.
@@ -535,10 +526,10 @@ class ModeTimer(LogMixin):
         """
         del kwargs
 
-        self.mode.player[self.tick_var] = int(timer_value)
+        self.ticks = int(timer_value)
 
-        if self.max_value and self.mode.player[self.tick_var] > self.max_value:
-            self.mode.player[self.tick_var] = self.max_value
+        if self.max_value and self.ticks > self.max_value:
+            self.ticks = self.max_value
 
         self._check_for_done()
 
