@@ -59,7 +59,8 @@ class BcpInterface(MpfController):
         self._setup_machine_var_monitor()
 
         self.machine.events.add_handler('player_add_success',
-                                        self.bcp_player_added)
+                                        self.bcp_player_added,
+                                        priority=10)
         self.machine.events.add_handler('machine_reset_phase_1',
                                         self.bcp_reset)
 

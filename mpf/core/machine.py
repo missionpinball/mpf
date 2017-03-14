@@ -53,6 +53,7 @@ class MachineController(LogMixin):
 
     def __init__(self, mpf_path: str, machine_path: str, options: dict):
         """Initialize machine controller."""
+        super().__init__()
         self.log = logging.getLogger("Machine")
         self.log.info("Mission Pinball Framework Core Engine v%s", __version__)
 

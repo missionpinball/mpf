@@ -140,6 +140,7 @@ class LogicBlock(LogMixin):
 
     def __init__(self, machine: MachineController, name: str, player: Player, config: dict):
         """Initialize logic block."""
+        super().__init__()
         self.machine = machine
         self.name = name
         self.player = player

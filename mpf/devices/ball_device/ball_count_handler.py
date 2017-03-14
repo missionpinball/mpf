@@ -1,6 +1,8 @@
 """Maintains the ball count for a ball device."""
 import asyncio
 
+from typing import Generator
+
 from mpf.core.utility_functions import Util
 from mpf.devices.ball_device.ball_device_state_handler import BallDeviceStateHandler
 
@@ -229,7 +231,7 @@ class BallCountHandler(BallDeviceStateHandler):
         self._is_counting.release()
 
     @asyncio.coroutine
-    def track_eject(self, already_left=False) -> EjectTracker:
+    def track_eject(self, already_left=False) -> Generator[int, None, EjectTracker]:
         """Start an eject."""
         eject_process = EjectTracker(self, already_left)
         if already_left:

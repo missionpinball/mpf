@@ -7,9 +7,9 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
 
     """Base class for players which play things based on config."""
 
-    config_file_section = None
-    show_section = None
-    machine_collection_name = None
+    config_file_section = None          # type: str
+    show_section = None                 # type: str
+    machine_collection_name = None      # type: str
 
     def __init__(self, machine):
         """Initialise config player."""
@@ -30,8 +30,8 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
         self._show_keys = {}
 
     def _add_handlers(self):
-        self.machine.events.add_handler('init_phase_1', self._initialize_in_mode)
-        self.machine.events.add_handler('init_phase_1', self._initialise_system_wide)
+        self.machine.events.add_handler('init_phase_1', self._initialize_in_mode, priority=2)
+        self.machine.events.add_handler('init_phase_1', self._initialise_system_wide, priority=1)
 
     def __repr__(self):
         """Return string representation."""
@@ -218,7 +218,7 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
 
         if config:
             for event, settings in config.items():
-                event, priority = self._parse_event_priority(event, priority)
+                event, actual_priority = self._parse_event_priority(event, priority)
 
                 if mode and event in mode.config['mode']['start_events']:
                     self.machine.log.error(
@@ -240,7 +240,7 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
                         event=event,
                         handler=self.config_play_callback,
                         calling_context=event,
-                        priority=priority,
+                        priority=actual_priority,
                         mode=mode,
                         settings=settings))
 

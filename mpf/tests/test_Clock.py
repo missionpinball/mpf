@@ -26,6 +26,9 @@ class ClockTestCase(unittest.TestCase):
     def setUp(self):
         global counter
         counter = 0
+        if not asyncio.get_event_loop:
+            self.skipTest("Clock broken")
+            return
         self.clock = ClockBase()
         self.callback_order = []
 

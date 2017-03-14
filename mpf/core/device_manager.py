@@ -1,5 +1,6 @@
 """Contains the DeviceManager base class."""
 from collections import OrderedDict
+from unittest.mock import MagicMock
 
 from mpf.core.utility_functions import Util
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
@@ -23,10 +24,12 @@ class DeviceManager(MpfController):
                                         self._load_device_modules)
 
         self.machine.events.add_handler('init_phase_2',
-                                        self.create_machinewide_device_control_events)
+                                        self.create_machinewide_device_control_events,
+                                        priority=2)
 
         self.machine.events.add_handler('init_phase_2',
-                                        self.create_collection_control_events)
+                                        self.create_collection_control_events,
+                                        priority=1)
 
     def get_monitorable_devices(self):
         """Return all devices which are registered as monitorable."""
@@ -206,13 +209,20 @@ class DeviceManager(MpfController):
                 event, priority = event.split('|')
             except ValueError:
                 priority = 0
-            self.machine.events.add_handler(
-                event=event,
-                handler=self._control_event_handler,
-                priority=int(priority),
-                callback=method,
-                ms_delay=delay,
-                delay_mgr=self.machine.delay)
+
+            if delay:
+                self.machine.events.add_handler(
+                    event=event,
+                    handler=self._control_event_handler,
+                    priority=int(priority),
+                    callback=method,
+                    ms_delay=delay,
+                    delay_mgr=self.machine.delay)
+            else:
+                self.machine.events.add_handler(
+                    event=event,
+                    handler=method,
+                    priority=int(priority))
 
     def create_collection_control_events(self, **kwargs):
         """Create control events for collection."""
@@ -231,17 +241,11 @@ class DeviceManager(MpfController):
         for device in self.collections[collection]:
             getattr(device, method)()
 
-    def _control_event_handler(self, callback, ms_delay=0, delay_mgr=None,
-                               mode=None, **kwargs):
+    def _control_event_handler(self, callback, ms_delay, delay_mgr=None, **kwargs):
         del kwargs
 
-        self.debug_log("_control_event_handler: mode: %s, callback: %s,", mode,
-                       callback)
-
-        if ms_delay:
-            delay_mgr.add(ms=ms_delay, callback=callback, mode=mode)
-        else:
-            callback(mode=mode)
+        self.debug_log("_control_event_handler: callback: %s,", callback)
+        delay_mgr.add(ms=ms_delay, callback=callback)
 
     def _create_default_control_events(self, device_list):
         for device in device_list:

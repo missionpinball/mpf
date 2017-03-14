@@ -2,6 +2,7 @@
 
 from collections import deque
 
+from mpf.core.events import event_handler
 from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.utility_functions import Util
@@ -98,6 +99,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         for shot in self.config['shots']:
             shot.disable_debugging()
 
+    @event_handler(6)
     def hit(self, mode, profile, state, **kwargs):
         """One of the member shots in this shot group was hit.
 
@@ -175,6 +177,8 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         args:
         profile: The name of the profile that was active when hit.
         state: The name of the state the profile was in when it was hit'''
+
+    @event_handler(10)
     def enable(self, mode=None, profile=None, **kwargs):
         """Enable this shot group.
 
@@ -219,6 +223,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
             shot.enable(profile=profile)
             shot.register_group(self)
 
+    @event_handler(0)
     def disable(self, mode=None, **kwargs):
         """Disable this shot group.
 
@@ -232,6 +237,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
             shot.disable(mode)
             shot.deregister_group(self)
 
+    @event_handler(9)
     def enable_rotation(self, **kwargs):
         """Enable shot rotation.
 
@@ -241,6 +247,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         self.debug_log('Enabling rotation')
         self.rotation_enabled = True
 
+    @event_handler(2)
     def disable_rotation(self, **kwargs):
         """Disable shot rotation.
 
@@ -250,6 +257,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         self.debug_log('Disabling rotation')
         self.rotation_enabled = False
 
+    @event_handler(1)
     def reset(self, mode=None, **kwargs):
         """Reset each of the shots in this group back to the initial state in whatever shot profile they have applied.
 
@@ -260,6 +268,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         for shot in self.config['shots']:
             shot.reset(mode)
 
+    @event_handler(3)
     def remove_active_profile(self, mode, **kwargs):
         """Remove the current active profile from every shot in the group."""
         del kwargs
@@ -267,6 +276,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         for shot in self.config['shots']:
             shot.remove_active_profile(mode)
 
+    @event_handler(5)
     def advance(self, steps=1, mode=None, force=False, **kwargs):
         """Advance the current active profile from every shot in the group one step forward."""
         del kwargs
@@ -278,6 +288,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         for shot in self.config['shots']:
             shot.advance(steps=steps, mode=mode, force=force)
 
+    @event_handler(4)
     def rotate(self, direction=None, states=None,
                exclude_states=None, mode=None, **kwargs):
         """Rotate (or "shift") the state of all the shots in this group.
@@ -387,6 +398,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
             shot.jump(mode=mode, state=shot_state_list[i][0],
                       show_step=shot_state_list[i][1], force=True)
 
+    @event_handler(8)
     def rotate_right(self, mode=None, **kwargs):
         """Rotate the state of the shots to the right.
 
@@ -399,6 +411,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         del kwargs
         self.rotate(direction='right', mode=mode)
 
+    @event_handler(7)
     def rotate_left(self, mode=None, **kwargs):
         """Rotate the state of the shots to the left.
 

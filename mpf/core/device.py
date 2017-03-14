@@ -21,6 +21,7 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
             machine: The machine controller.
             name: Name of the device in config.
         """
+        super().__init__()
         self.machine = machine
         self.name = name.lower()
         self.tags = []

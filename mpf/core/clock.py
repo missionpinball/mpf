@@ -2,6 +2,8 @@
 import asyncio
 from functools import partial
 
+from typing import Tuple, Generator
+
 from serial_asyncio import create_serial_connection
 
 from mpf.core.logging import LogMixin
@@ -48,6 +50,7 @@ class ClockBase(LogMixin):
 
     def __init__(self, machine=None):
         """Initialise clock."""
+        super().__init__()
         self.machine = machine
 
         # needed since the test clock is setup before the machine
@@ -104,7 +107,8 @@ class ClockBase(LogMixin):
         return asyncio.open_connection(host=host, port=port, loop=self.loop, limit=limit, **kwds)
 
     @asyncio.coroutine
-    def open_serial_connection(self, limit=None, **kwargs):
+    def open_serial_connection(self, limit=None, **kwargs) ->\
+            Generator[int, None, Tuple[asyncio.StreamReader, asyncio.StreamWriter]]:
         """A wrapper for create_serial_connection() returning a (reader, writer) pair.
 
         The reader returned is a StreamReader instance; the writer is a StreamWriter instance.

@@ -197,7 +197,7 @@ class BallController(MpfController):
             if 'drain' in device.tags:  # device is used to drain balls from pf
                 self.machine.events.add_handler('balldevice_' + device.name +
                                                 '_ball_enter',
-                                                self._ball_drained_handler)
+                                                self._ball_drained_handler, priority=20)
 
     def dump_ball_counts(self):
         """Dump ball count of all devices."""
@@ -325,10 +325,11 @@ class BallController(MpfController):
             '''
 
             for device in target_devices:
-                self.machine.events.replace_handler(
+                self.machine.events.remove_handler(self._collecting_balls_entered_callback)
+                self.machine.events.add_handler(
                     'balldevice_{}_ball_enter'.format(device.name),
                     self._collecting_balls_entered_callback,
-                    target=target)
+                    target=target, priority=10)
 
             for device in source_devices:
                 if not device.is_playfield():
@@ -349,7 +350,7 @@ class BallController(MpfController):
         return {'unclaimed_balls': unclaimed_balls}
 
     def _collecting_balls_complete(self):
-        self.machine.events.remove_handler(self._collecting_balls_complete)
+        self.machine.events.remove_handler(self._collecting_balls_entered_callback)
         self.machine.events.post('collecting_balls_complete')
         '''event: collecting_balls_complete
 

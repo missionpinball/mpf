@@ -138,7 +138,7 @@ class Tilt(Mode):
     def tilt(self, **kwargs):
         """Cause the ball to tilt."""
         del kwargs
-        if not self.machine.game:
+        if not self.machine.game or self.machine.game.tilted:
             return
 
         self.machine.game.tilted = True
@@ -151,7 +151,6 @@ class Tilt(Mode):
         self.info_log("Processing Tilt. Balls to collect: %s",
                       self._balls_to_collect)
 
-        self.machine.game.tilted = True
         self.machine.events.post('tilt')
         '''event: tilt
         desc: The player has tilted.'''
@@ -259,5 +258,4 @@ class Tilt(Mode):
             return
 
         self.machine.game.slam_tilted = True
-        self.machine.game.tilted = True
         self.tilt()

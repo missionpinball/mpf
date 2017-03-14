@@ -7,6 +7,8 @@ boards.
 import logging
 import asyncio
 
+from typing import Dict
+
 from mpf.platforms.base_serial_communicator import BaseSerialCommunicator
 
 from mpf.platforms.opp.opp_coil import OPPSolenoidCard
@@ -38,7 +40,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self.log = logging.getLogger('OPP')
         self.log.info("Configuring OPP hardware.")
 
-        self.opp_connection = {}    # type: {OPPSerialCommunicator}
+        self.opp_connection = {}    # type: Dict[str, OPPSerialCommunicator]
         self.serial_connections = set()
         self.opp_incands = []
         self.incandDict = dict()

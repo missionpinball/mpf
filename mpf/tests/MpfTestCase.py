@@ -12,6 +12,8 @@ from unittest.mock import *
 import asyncio
 from asyncio import events
 import ruamel.yaml as yaml
+
+from mpf.core.logging import LogMixin
 from mpf.core.rgb_color import RGBColor
 
 from mpf.tests.TestDataManager import TestDataManager
@@ -73,6 +75,8 @@ class MpfTestCase(unittest.TestCase):
     def __init__(self, methodName='runTest'):
         self._get_event_loop = None
         self._get_event_loop2 = None
+
+        LogMixin.unit_test = True
 
         super().__init__(methodName)
         self.machine = None     # type: TestMachineController

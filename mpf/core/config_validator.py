@@ -5,6 +5,7 @@ from copy import deepcopy
 
 from mpf.core.config_spec import mpf_config_spec
 from mpf.core.rgb_color import named_rgb_colors, RGBColor
+from mpf.exceptions.ConfigFileError import ConfigFileError
 from mpf.file_interfaces.yaml_interface import YamlInterface
 from mpf.core.utility_functions import Util
 
@@ -233,9 +234,9 @@ class ConfigValidator(object):
                 return item_dict
 
         else:
-            raise AssertionError("Invalid Type '{}' in config spec {}:{}".format(item_type,
-                                 validation_failure_info[0][0],
-                                 validation_failure_info[1]))
+            raise ConfigFileError("Invalid Type '{}' in config spec {}:{}".format(item_type,
+                                  validation_failure_info[0][0],
+                                  validation_failure_info[1]))
 
     def check_for_invalid_sections(self, spec, config,
                                    validation_failure_info):
@@ -268,12 +269,12 @@ class ConfigValidator(object):
                                            'setting "%s", but this is not a valid '
                                            'setting name.', path_string)
 
-                            raise AssertionError('Your config contains a value for the '
-                                                 'setting "' + path_string + '", but this is not a valid '
-                                                                             'setting name.')
+                            raise ConfigFileError('Your config contains a value for the '
+                                                  'setting "' + path_string + '", but this is not a valid '
+                                                                              'setting name.')
 
         except TypeError:
-            raise AssertionError(
+            raise ConfigFileError(
                 'Error in config. Your "{}:" section contains a value that is '
                 'not a parent with sub-settings'.format(
                     validation_failure_info[0]))
@@ -551,15 +552,15 @@ class ConfigValidator(object):
             return self.validator_list[validator](item, validation_failure_info=validation_failure_info)
 
         else:
-            raise AssertionError("Invalid Validator '{}' in config spec {}:{}".format(
-                                 validator,
-                                 validation_failure_info[0][0],
-                                 validation_failure_info[1]))
+            raise ConfigFileError("Invalid Validator '{}' in config spec {}:{}".format(
+                                  validator,
+                                  validation_failure_info[0][0],
+                                  validation_failure_info[1]))
 
     @classmethod
     def validation_error(cls, item, validation_failure_info, msg=""):
         """Raise a validation error with all relevant infos."""
-        raise AssertionError("Config validation error: Entry {}:{}:{}:{} is not valid. {}".format(
+        raise ConfigFileError("Config validation error: Entry {}:{}:{}:{} is not valid. {}".format(
             validation_failure_info[0][0],
             validation_failure_info[0][1],
             validation_failure_info[1],

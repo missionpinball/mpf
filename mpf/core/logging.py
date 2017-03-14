@@ -6,6 +6,16 @@ class LogMixin:
 
     """Mixin class to add smart logging functionality to modules."""
 
+    unit_test = False
+
+    def __init__(self):
+        """Initialise Log Mixin."""
+        self.log = None
+        self._info_to_console = False
+        self._debug_to_console = False
+        self._info_to_file = False
+        self._debug_to_file = False
+
     def configure_logging(self, logger, console_level='basic',
                           file_level='basic'):
         """Configure the logging for the module this class is mixed into.
@@ -18,11 +28,6 @@ class LogMixin:
                 are "none", "basic", or "full".
         """
         self.log = logging.getLogger(logger)
-
-        self._info_to_console = False
-        self._debug_to_console = False
-        self._info_to_file = False
-        self._debug_to_file = False
 
         try:
             if console_level.lower() == 'basic':
@@ -39,6 +44,10 @@ class LogMixin:
                 self._debug_to_file = True
         except AttributeError:
             pass
+
+        # in unit tests always log info. debug will depend on the actual settings.
+        if self.unit_test:
+            self._info_to_console = True
 
     def debug_log(self, msg, *args, **kwargs):
         """Log a message at the debug level.
@@ -87,6 +96,16 @@ class LogMixin:
             self._logging_not_configured()
 
         self.log.log(40, 'ERROR: {}'.format(msg), *args, **kwargs)
+
+    def ignorable_runtime_exception(self, msg):
+        """Handle ignorable runtime exception.
+
+        During development or tests raise an exception for easier debugging. Log an error during production.
+        """
+        if self._debug_to_console:
+            raise RuntimeError(msg)
+        else:
+            self.error_log(msg)
 
     def _logging_not_configured(self):
         raise RuntimeError(

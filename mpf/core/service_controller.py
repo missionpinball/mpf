@@ -6,6 +6,8 @@ the service mode or other components.
 import logging
 from collections import namedtuple
 
+from typing import List
+
 from mpf.core.mpf_controller import MpfController
 
 CoilMap = namedtuple("CoilMap", ["board", "coil"])
@@ -61,7 +63,7 @@ class ServiceController(MpfController):
         if not self.is_in_service():
             raise AssertionError("Not in service mode!")
 
-    def get_coil_map(self) -> [CoilMap]:
+    def get_coil_map(self) -> List[CoilMap]:
         """Return a map of all coils in the machine."""
         if not self.is_in_service():
             raise AssertionError("Not in service mode!")

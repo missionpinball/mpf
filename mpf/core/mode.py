@@ -1,8 +1,18 @@
 """Contains the Mode base class."""
 import copy
 
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import List
+from typing import Tuple
+
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.delays import DelayManager
+from mpf.core.device import Device
+from mpf.core.events import EventHandlerKey
+from mpf.core.events import QueuedEvent
+from mpf.core.switch_controller import SwitchHandler
 
 from mpf.core.timer import Timer
 from mpf.core.utility_functions import Util
@@ -14,7 +24,7 @@ class Mode(LogMixin):
 
     """Parent class for in-game mode code."""
 
-    def __init__(self, machine, config: dict, name: str, path):
+    def __init__(self, machine, config: dict, name: str, path) -> None:
         """Initialise mode.
 
         Args:
@@ -26,21 +36,22 @@ class Mode(LogMixin):
         Returns:
 
         """
+        super().__init__()
         self.machine = machine
         self.config = config
         self.name = name.lower()
         self.path = path
         self.priority = 0
         self._active = False
-        self._mode_start_wait_queue = None
-        self.stop_methods = list()
-        self.timers = dict()
-        self.start_callback = None
-        self.stop_callback = None
-        self.event_handlers = set()
-        self.switch_handlers = list()
-        self.mode_stop_kwargs = dict()
-        self.mode_devices = set()
+        self._mode_start_wait_queue = None      # type: QueuedEvent
+        self.stop_methods = list()              # type: List[Tuple[Callable, Any]]
+        self.timers = dict()                    # type: Dict[str, Timer]
+        self.start_callback = None              # type: Callable
+        self.stop_callback = None               # type: Callable
+        self.event_handlers = set()             # type: List[EventHandlerKey]
+        self.switch_handlers = list()           # type: List[SwitchHandler]
+        self.mode_stop_kwargs = dict()          # type: Dict[str, Any]
+        self.mode_devices = set()               # type: List[Device]
         self.start_event_kwargs = None
         self.stopping = False
 
@@ -457,12 +468,18 @@ class Mode(LogMixin):
             except ValueError:
                 priority = 0
 
-            self.add_mode_event_handler(
-                event=event,
-                handler=self._control_event_handler,
-                priority=int(priority) + 2,
-                callback=method,
-                ms_delay=delay)
+            if not delay:
+                self.add_mode_event_handler(
+                    event=event,
+                    handler=method,
+                    priority=int(priority) + 2)
+            else:
+                self.add_mode_event_handler(
+                    event=event,
+                    handler=self._control_event_handler,
+                    priority=int(priority) + 2,
+                    callback=method,
+                    ms_delay=delay)
 
         # get all devices in the mode
         device_list = set()
@@ -479,11 +496,7 @@ class Mode(LogMixin):
         del kwargs
         self.debug_log("_control_event_handler: callback: %s,", callback)
 
-        if ms_delay:
-            self.delay.add(name=callback, ms=ms_delay, callback=callback,
-                           mode=self)
-        else:
-            callback(mode=self)
+        self.delay.add(name=callback, ms=ms_delay, callback=callback, mode=self)
 
     def add_mode_event_handler(self, event, handler, priority=0, **kwargs):
         """Register an event handler which is automatically removed when this mode stops.
