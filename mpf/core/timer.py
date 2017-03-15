@@ -27,7 +27,8 @@ class Timer(LogMixin):
         self.running = False
         self.start_value = self.config['start_value'].evaluate([])
         self.restart_on_complete = self.config['restart_on_complete']
-        self.ticks = 0
+        self._ticks = 0
+        self.tick_var = '{}_{}_tick'.format(self.mode.name, self.name)
 
         try:
             self.end_value = self.config['end_value'].evaluate([])
@@ -70,6 +71,28 @@ class Timer(LogMixin):
 
         if self.config['control_events']:
             self._setup_control_events(self.config['control_events'])
+
+    @property
+    def ticks(self):
+        return self._ticks
+
+    @ticks.setter
+    def ticks(self, value):
+        self._ticks = value
+
+        try:
+            self.mode.player[self.tick_var] = value
+            '''player_var: (mode)_(timer)_tick
+
+            desc: Stores the current tick value for the timer from the mode
+            (mode) with the time name (timer). For example, a timer called
+            "my_timer" which is in the config for "mode1" will store its tick
+            value in the player variable ``mode1_my_timer_tick``.
+            '''
+
+        except TypeError:
+            pass
+
 
     def _setup_control_events(self, event_list):
         self.debug_log("Setting up control events")
