@@ -156,8 +156,8 @@ class VersionMigrator(object):
     renames = ''
     moves = ''
     additions = ''
-    migration_logger = None
-    config_version = None
+    migration_logger = None     # type: logging.Logger
+    config_version = None       # type: int
     log = logging.getLogger('Migrator')
 
     def __init__(self, file_name, file_contents):

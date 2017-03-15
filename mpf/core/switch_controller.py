@@ -10,6 +10,8 @@ from collections import defaultdict, namedtuple
 import asyncio
 from functools import partial
 
+from typing import List
+
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.mpf_controller import MpfController
 from mpf.core.utility_functions import Util
@@ -397,9 +399,9 @@ class SwitchController(MpfController):
         """Wait for a switch to change into state."""
         return self.wait_for_any_switch([switch_name], state, only_on_change, ms)
 
-    def wait_for_any_switch(self, switch_names: [str], state: int=1, only_on_change=True, ms=0):
+    def wait_for_any_switch(self, switch_names: List[str], state: int=1, only_on_change=True, ms=0):
         """Wait for the first switch in the list to change into state."""
-        future = asyncio.Future(loop=self.machine.clock.loop)
+        future = asyncio.Future(loop=self.machine.clock.loop)   # type: asyncio.Future
 
         if not only_on_change:
             for switch_name in switch_names:
@@ -407,7 +409,7 @@ class SwitchController(MpfController):
                     future.set_result({"switch_name": switch_name, "state": state, "ms": ms})
                     return future
 
-        handlers = []
+        handlers = []   # type: List[SwitchHandler]
         future.add_done_callback(partial(self._future_done, handlers))
         for switch_name in switch_names:
             handlers.append(self.add_switch_handler(switch_name, state=state, ms=ms,
@@ -417,7 +419,7 @@ class SwitchController(MpfController):
                                                                      switch_name=switch_name)))
         return future
 
-    def _future_done(self, handlers, future):
+    def _future_done(self, handlers: List[SwitchHandler], future: asyncio.Future):
         del future
         for handler in handlers:
             self.remove_switch_handler_by_key(handler)

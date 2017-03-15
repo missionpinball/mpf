@@ -1,4 +1,9 @@
 """Contains the Tilt mode code."""
+from typing import Set
+
+from mpf.core.config_validator import ConfigDict
+from mpf.core.events import EventHandlerKey
+from mpf.core.events import QueuedEvent
 from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
 
@@ -7,14 +12,14 @@ class Tilt(Mode):
 
     """A mode which handles a tilt in a pinball machine."""
 
-    def __init__(self, machine: MachineController, config: dict, name: str, path):
+    def __init__(self, machine: MachineController, config: dict, name: str, path) -> None:
         """Create mode."""
-        self._balls_to_collect = None
-        self._last_warning = None
-        self.ball_ending_tilted_queue = None
-        self.tilt_event_handlers = None
-        self.last_tilt_warning_switch = None
-        self.tilt_config = None
+        self._balls_to_collect = None   # type: int
+        self._last_warning = None       # type: int
+        self.ball_ending_tilted_queue = None    # type: QueuedEvent
+        self.tilt_event_handlers = None         # type: Set[EventHandlerKey]
+        self.last_tilt_warning_switch = None    # type: int
+        self.tilt_config = None                 # type: ConfigDict
         super().__init__(machine, config, name, path)
 
     def mode_init(self):

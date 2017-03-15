@@ -11,7 +11,6 @@ class EventPlayer(FlatConfigPlayer):
 
     config_file_section = 'event_player'
     show_section = 'events'
-    device_collection = None
 
     def __init__(self, machine):
         """Initialise EventPlayer."""

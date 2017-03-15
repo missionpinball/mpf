@@ -14,11 +14,6 @@ class TestCreditsMode(MpfTestCase):
     def getMachinePath(self):
         return 'tests/machine_files/credits/'
 
-    def setUp(self):
-        super().setUp()
-        # unschedule crash queue because it makes test slow
-        self.machine.clock.unschedule(self.machine._crash_queue_checker)
-
     def start_game(self, should_work):
         # shots only work in games so we have to do this a lot
         self.machine.playfield.add_ball = MagicMock()

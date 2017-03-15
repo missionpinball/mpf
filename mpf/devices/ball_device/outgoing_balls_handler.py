@@ -416,8 +416,9 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             # if target is playfield mark eject as confirmed
             self.debug_log("Confirming eject because target is playfield and ball did not return.")
             incoming_ball_at_target.ball_arrived()
+            yield from self._handle_eject_success(ball_eject_process, eject_request)
+            return True
 
-        # TODO: timeout
         try:
             event = yield from Util.first([ball_return_future, unknown_balls_future, eject_success_future],
                                           timeout=timeout, loop=self.machine.clock.loop)
@@ -444,6 +445,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                 self.debug_log("Got unknown balls. Assuming a ball returned.")
                 incoming_ball_at_target.did_not_arrive()
                 ball_eject_process.ball_returned()
+                return False
             else:
                 raise AssertionError("Invalid state")
 

@@ -2,6 +2,8 @@
 import asyncio
 from collections import namedtuple
 
+from typing import List
+
 from mpf.core.async_mode import AsyncMode
 from mpf.core.switch_controller import MonitoredSwitchChange
 from mpf.core.utility_functions import Util
@@ -70,7 +72,7 @@ down_events: list|str|sw_service_down_active
 
         self._service_mode_exit()
 
-    def _update_main_menu(self, items: [ServiceMenuEntry], position: int):
+    def _update_main_menu(self, items: List[ServiceMenuEntry], position: int):
         self.machine.events.post("service_menu_deselected")
         self.machine.events.post("service_menu_show")
         self.machine.events.post("service_menu_selected_{}".format(items[position].label))

@@ -32,7 +32,7 @@ class Show(Asset):
     path_string = 'shows'
     config_section = 'shows'
     disk_asset_section = 'file_shows'
-    extensions = 'yaml'
+    extensions = tuple('yaml')
     class_priority = 100
     pool_config_section = 'show_pools'
     asset_group_class = ShowPool

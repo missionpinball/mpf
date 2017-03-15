@@ -7,9 +7,7 @@ from mpf.core.config_processor import ConfigProcessor
 from mpf.core.utility_functions import Util
 from mpf.core.mpf_controller import MpfController
 
-RemoteMethod = namedtuple('RemoteMethod',
-                          'method config_section kwargs priority',
-                          verbose=False)
+RemoteMethod = namedtuple('RemoteMethod', ['method', 'config_section', 'kwargs', 'priority'])
 """RemotedMethod is used by other modules that want to register a method to
 be called on mode_start or mode_stop.
 

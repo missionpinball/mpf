@@ -3,6 +3,9 @@ import logging
 import re
 from copy import deepcopy
 
+from typing import Any
+from typing import Dict
+
 from mpf.core.config_spec import mpf_config_spec
 from mpf.core.rgb_color import named_rgb_colors, RGBColor
 from mpf.exceptions.ConfigFileError import ConfigFileError
@@ -11,14 +14,15 @@ from mpf.core.utility_functions import Util
 
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 
-# log = logging.getLogger('ConfigValidator')
+# TODO: improve this
+ConfigDict = Dict[str, Any]
 
 
 class ConfigValidator(object):
 
     """Validates config against config specs."""
 
-    config_spec = None
+    config_spec = None      # type: ConfigDict
 
     def __init__(self, machine):
         """Initialise validator."""

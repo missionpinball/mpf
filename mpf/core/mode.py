@@ -5,6 +5,7 @@ from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import List
+from typing import Set
 from typing import Tuple
 
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
@@ -12,6 +13,7 @@ from mpf.core.delays import DelayManager
 from mpf.core.device import Device
 from mpf.core.events import EventHandlerKey
 from mpf.core.events import QueuedEvent
+from mpf.core.player import Player
 from mpf.core.switch_controller import SwitchHandler
 
 from mpf.core.timer import Timer
@@ -46,18 +48,18 @@ class Mode(LogMixin):
         self._mode_start_wait_queue = None      # type: QueuedEvent
         self.stop_methods = list()              # type: List[Tuple[Callable, Any]]
         self.timers = dict()                    # type: Dict[str, Timer]
-        self.start_callback = None              # type: Callable
-        self.stop_callback = None               # type: Callable
-        self.event_handlers = set()             # type: List[EventHandlerKey]
+        self.start_callback = None              # type: callable
+        self.stop_callback = None               # type: callable
+        self.event_handlers = set()             # type: Set[EventHandlerKey]
         self.switch_handlers = list()           # type: List[SwitchHandler]
         self.mode_stop_kwargs = dict()          # type: Dict[str, Any]
-        self.mode_devices = set()               # type: List[Device]
-        self.start_event_kwargs = None
+        self.mode_devices = set()               # type: Set[Device]
+        self.start_event_kwargs = None          # type: Dict[str, Any]
         self.stopping = False
 
         self.delay = DelayManager(self.machine.delayRegistry)
 
-        self.player = None
+        self.player = None                      # type: Player
         '''Reference to the current player object.'''
 
         self._validate_mode_config()
@@ -552,7 +554,7 @@ class Mode(LogMixin):
         for timer, settings in self.config['timers'].items():
 
             self.timers[timer] = Timer(machine=self.machine, mode=self,
-                                           name=timer, config=settings)
+                                       name=timer, config=settings)
 
         return self._kill_timers
 

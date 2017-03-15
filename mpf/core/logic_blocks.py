@@ -3,7 +3,10 @@ import abc
 import copy
 import logging
 
+from typing import Set
+
 from mpf.core.delays import DelayManager
+from mpf.core.events import EventHandlerKey
 from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
 from mpf.core.player import Player
@@ -16,7 +19,7 @@ class LogicBlocks(MpfController):
 
     """LogicBlock Manager."""
 
-    def __init__(self, machine: MachineController):
+    def __init__(self, machine: MachineController) -> None:
         """Initialize LogicBlock manager."""
         super().__init__(machine)
 
@@ -103,7 +106,7 @@ class LogicBlocks(MpfController):
     def _create_logic_blocks(self, config: dict, player: Player):
         # config is localized for LogicBlock
 
-        blocks_added = set()
+        blocks_added = set()    # type: Set[LogicBlock]
 
         if 'counters' in config:
             for item in config['counters']:
@@ -138,13 +141,13 @@ class LogicBlock(LogMixin):
 
     """Parent class for each of the logic block classes."""
 
-    def __init__(self, machine: MachineController, name: str, player: Player, config: dict):
+    def __init__(self, machine: MachineController, name: str, player: Player, config: dict) -> None:
         """Initialize logic block."""
         super().__init__()
         self.machine = machine
         self.name = name
         self.player = player
-        self.handler_keys = set()
+        self.handler_keys = set()   # type: Set[EventHandlerKey]
 
         # LogicBlocks are loaded multiple times and config_validator changes the config
         # therefore we have to copy the config
@@ -403,7 +406,7 @@ class Counter(LogicBlock):
         """Return config section."""
         return 'counter'
 
-    def __init__(self, machine: MachineController, name: str, player: Player, config: dict):
+    def __init__(self, machine: MachineController, name: str, player: Player, config: dict) -> None:
         """Initialise counter."""
         if 'events_when_hit' not in config:
             # for compatibility post the same default as previously for
@@ -611,7 +614,7 @@ class Sequence(LogicBlock):
         """Return config section."""
         return "sequence"
 
-    def __init__(self, machine: MachineController, name: str, player: Player, config: dict):
+    def __init__(self, machine: MachineController, name: str, player: Player, config: dict) -> None:
         """Initialise sequence."""
         super().__init__(machine, name, player, config)
 

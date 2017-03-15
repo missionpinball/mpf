@@ -7,22 +7,29 @@ import os
 import pickle
 import tempfile
 
-import queue
 import sys
 import threading
 
 from pkg_resources import iter_entry_points
+from typing import Any, TYPE_CHECKING, Callable, Dict, List, Set
 
 from mpf._version import __version__
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.clock import ClockBase
 from mpf.core.config_processor import ConfigProcessor
+from mpf.core.config_validator import ConfigDict
 from mpf.core.config_validator import ConfigValidator
 from mpf.core.data_manager import DataManager
 from mpf.core.delays import DelayManager, DelayManagerRegistry
 from mpf.core.device_manager import DeviceCollection
 from mpf.core.utility_functions import Util
 from mpf.core.logging import LogMixin
+
+if TYPE_CHECKING:
+    from mpf.modes.game.code.game import Game
+    from mpf.core.events import EventManager
+    from mpf.core.scriptlet import Scriptlet
+    from mpf.core.platform import BasePlatform
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -51,7 +58,7 @@ class MachineController(LogMixin):
 
     """
 
-    def __init__(self, mpf_path: str, machine_path: str, options: dict):
+    def __init__(self, mpf_path: str, machine_path: str, options: dict) -> None:
         """Initialize machine controller."""
         super().__init__()
         self.log = logging.getLogger("Machine")
@@ -67,35 +74,32 @@ class MachineController(LogMixin):
         self.machine_path = machine_path
 
         self.verify_system_info()
-        self._exception = None
+        self._exception = None      # type: Any
 
-        self._boot_holds = set()
+        self._boot_holds = set()    # type: Set[str]
         self.is_init_done = False
         self.register_boot_hold('init')
 
         self._done = False
-        self.monitors = dict()
-        self.plugins = list()
-        self.scriptlets = list()
+        self.monitors = dict()      # type: Dict[str, Set[Callable]]
+        self.plugins = list()       # type: List[Any]
+        self.scriptlets = list()    # type: List[Scriptlet]
         self.modes = DeviceCollection(self, 'modes', None)
-        self.game = None
-        self.active_debugger = dict()
+        self.game = None            # type: Game
         self.machine_vars = CaseInsensitiveDict()
         self.machine_var_monitor = False
-        self.machine_var_data_manager = None
+        self.machine_var_data_manager = None    # type: DataManager
         self.thread_stopper = threading.Event()
 
-        self.crash_queue = queue.Queue()
-
-        self.config = None
-        self.events = None
+        self.config = None      # type: ConfigDict
+        self.events = None      # type: EventManager
 
         self._set_machine_path()
 
         self.config_validator = ConfigValidator(self)
 
         self._load_config()
-        self.machine_config = self.config
+        self.machine_config = self.config       # type: ConfigDict
         self.configure_logging(
             'Machine',
             self.config['logging']['console']['machine_controller'],
@@ -105,10 +109,9 @@ class MachineController(LogMixin):
         self.delay = DelayManager(self.delayRegistry)
 
         self.clock = self._load_clock()
-        self._crash_queue_checker = self.clock.schedule_interval(self._check_crash_queue, 1)
 
-        self.hardware_platforms = dict()
-        self.default_platform = None
+        self.hardware_platforms = dict()    # type: Dict[str, BasePlatform]
+        self.default_platform = None        # type: BasePlatform
 
         self._load_hardware_platforms()
 
@@ -276,17 +279,6 @@ class MachineController(LogMixin):
                 settings['value'] = 0
 
             self.create_machine_var(name=name, value=settings['value'])
-
-    def _check_crash_queue(self, time):
-        del time
-        try:
-            crash = self.crash_queue.get(block=False)
-        except queue.Empty:
-            pass
-        else:
-            print("MPF Shutting down due to child thread crash")
-            print("Crash details: %s", crash)
-            self.stop()
 
     def _set_machine_path(self):
         # Add the machine folder to sys.path so we can import modules from it
