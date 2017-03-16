@@ -108,16 +108,16 @@ flippers:
         eos_switch: s_flipper_eos
         use_eos: true
 
-matrix_lights:
+lights:
   test_pdb_light:
     number: 23
-
-gis:
+    subtype: matrix
   test_gi:
     number: 2A
-
-leds:
+    subtype: gi
   test_led:
     number: 2-23
+    type: grb
   test_led2:
     number: 2-25
+    type: grb

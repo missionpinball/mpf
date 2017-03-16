@@ -4,34 +4,34 @@ mpf:
   default_matrix_light_hw_update_hz: 1
   default_led_hw_update_hz: 1
 
-leds:
+lights:
     led_01:
         number: 0
     led_02:
         number: 1
-
-matrix_lights:
     light_01:
         number: 0
+        subtype: matrix
         label: Test 0
     light_02:
         number: 1
+        subtype: matrix
         label: Test 1
-
-gis:
     gi_01:
+        subtype: gi
         number: 0
+    flasher_01:
+        platform: coils
+        number: flasher_01
 
 coils:
     coil_01:
         number: 1
         pulse_ms: 30
-
-flashers:
     flasher_01:
-        number: 1
+        number: 2
         label: Test flasher
-        flash_ms: 40
+        pulse_ms: 40
 
 modes:
   - mode1

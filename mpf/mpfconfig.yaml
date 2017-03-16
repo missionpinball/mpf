@@ -21,6 +21,7 @@ mpf:
         - service: mpf.core.service_controller.ServiceController
         - settings: mpf.core.settings_controller.SettingsController
         - placeholder_manager: mpf.core.placeholder_manager.PlaceholderManager
+        - light_controller: mpf.core.light_controller.LightController
         - extra_ball_controller: mpf.core.extra_balls.ExtraBallController
 
     config_players:
@@ -29,8 +30,6 @@ mpf:
         queue_event: mpf.config_players.queue_event_player
         queue_relay: mpf.config_players.queue_relay_player
         flasher: mpf.config_players.flasher_player
-        gi: mpf.config_players.gi_player
-        led: mpf.config_players.led_player
         light: mpf.config_players.light_player
         random_event: mpf.config_players.random_event_player
         show: mpf.config_players.show_player
@@ -41,9 +40,7 @@ mpf:
         - mpf.devices.driver.Driver
         - mpf.devices.dual_wound_coil.DualWoundCoil
         - mpf.devices.switch.Switch
-        - mpf.devices.matrix_light.MatrixLight
-        - mpf.devices.led.Led
-        - mpf.devices.gi.Gi
+        - mpf.devices.light.Light
         - mpf.devices.autofire.AutofireCoil
         - mpf.devices.ball_device.ball_device.BallDevice
         - mpf.devices.playfield.Playfield
@@ -56,7 +53,6 @@ mpf:
         - mpf.devices.diverter.Diverter
         - mpf.devices.score_reel.ScoreReel
         - mpf.devices.score_reel_group.ScoreReelGroup
-        - mpf.devices.flasher.Flasher
         - mpf.devices.playfield_transfer.PlayfieldTransfer
         - mpf.devices.ball_lock.BallLock
         - mpf.devices.multiball.Multiball
@@ -68,8 +64,8 @@ mpf:
         - mpf.devices.achievement_group.AchievementGroup
         - mpf.devices.physical_dmd.PhysicalDmd
         - mpf.devices.physical_rgb_dmd.PhysicalRgbDmd
-        - mpf.devices.led_group.LedStrip
-        - mpf.devices.led_group.LedRing
+        - mpf.devices.light_group.LightStrip
+        - mpf.devices.light_group.LightRing
         - mpf.devices.magnet.Magnet
         - mpf.devices.kickback.Kickback
         - mpf.devices.combo_switch.ComboSwitch
@@ -116,8 +112,7 @@ mpf:
     switch_tag_event: sw_%
     allow_invalid_config_sections: false
     save_machine_vars_to_disk: true
-    default_led_hw_update_hz: 50
-    default_matrix_light_hw_update_hz: 50
+    default_light_hw_update_hz: 50
     default_platform_hz: 1000
     default_ball_search: False
     default_show_sync_ms: 0
@@ -134,8 +129,6 @@ mpf:
         flippers:
             - enable
             - disable
-        leds:
-            - "off"
         lights:
             - "off"
         gi:
@@ -153,11 +146,7 @@ mpf:
       - drop_targets
       - drop_target_banks
       - extra_balls
-      - flashers
       - flippers
-      - gis
-      - leds
-      - matrix_lights
       - multiballs
       - playfields
       - playfield_transfers
@@ -192,6 +181,7 @@ logging:
       event_manager: none
       extra_balls: none
       file_manager: none  # todo
+      light_controller: none
       logic_blocks: none
       machine_controller: basic
       mode_controller: basic
@@ -223,6 +213,7 @@ logging:
       event_manager: basic
       extra_balls: basic
       file_manager: basic
+      light_controller: basic
       logic_blocks: basic
       machine_controller: basic
       mode_controller: basic
@@ -349,7 +340,6 @@ open_pixel_control:
     port: 7890
     connection_required: no
     connection_attempts: -1
-    number_format: int
 
 shot_profiles:
     default:
@@ -364,10 +354,9 @@ shows:
         - time: 0
           lights:
             (light):
-              brightness: ff
+              color: on
             (lights):
-              brightness: ff
-          leds:
+              color: on
             (led):
               color: on
             (leds):
@@ -375,24 +364,22 @@ shows:
         - time: 1
           lights:
             (light):
-              brightness: 0
+              color: off
             (lights):
-              brightness: 0
-          leds:
+              color: off
             (led):
-              color: black
+              color: off
             (leds):
-              color: black
+              color: off
         - time: 2
     on:
         - time: 0
           duration: -1
           lights:
             (light):
-              brightness: ff
+              color: on
             (lights):
-              brightness: ff
-          leds:
+              color: on
             (led):
               color: on
             (leds):
@@ -402,18 +389,17 @@ shows:
           duration: -1
           lights:
             (light):
-              brightness: 0
+              color: off
             (lights):
-              brightness: 0
-          leds:
+              color: off
             (led):
-              color: black
+              color: off
             (leds):
-              color: black
+              color: off
     led_color:
         - time: 0
           duration: -1
-          leds:
+          lights:
             (led): (color)
             (leds): (color)
 
@@ -436,11 +422,8 @@ hardware:
   platform: smart_virtual
   coils: default
   switches: default
-  matrix_lights: default
-  leds: default
+  lights: default
   dmd: default
-  gis: default
-  flashers: default
   driverboards: virtual
   accelerometers: default
   servo_controllers: default

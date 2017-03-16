@@ -1,9 +1,9 @@
 #config_version=4
 
-led_stripes:
+light_stripes:
   stripe1:
     number_start: 10
-    led_template:
+    light_template:
       tags: test
     count: 5
     debug: True
@@ -17,7 +17,7 @@ led_stripes:
     distance: 5
     debug: True
 
-led_rings:
+light_rings:
   ring1:
     number_start: 20
     count: 12

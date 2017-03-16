@@ -1,18 +1,36 @@
 #config_version=4
 
-matrix_lights:
+lights:
     light_01:
         number: 0
         label: Test 0
+        subtype: matrix
+        debug: True
     light_02:
         number: 1
         label: Test 1
-
-gis:
+        subtype: matrix
+        debug: True
     gi_01:
         number: 1
+        subtype: gi
+        debug: True
     gi_02:
         number: 2
+        subtype: gi
+        debug: True
+    flasher_01:
+        number: flasher_01
+        platform: drivers
+        debug: True
+    flasher_02:
+        number: flasher_02
+        platform: drivers
+        debug: True
+    flasher_03:
+        number: flasher_03
+        platform: drivers
+        debug: True
 
 coils:
     coil_01:
@@ -23,16 +41,19 @@ coils:
         pulse_ms: 60
     coil_03:
         number: 3
-
-flashers:
     flasher_01:
-        number: 1
+        number: 4
         label: Test flasher
-        flash_ms: 40
+        pulse_ms: 40
     flasher_02:
-        number: 2
+        number: 5
         label: Test flasher 2
-        flash_ms: 100
+        pulse_ms: 100
     flasher_03:
-        number: 3
+        number: 6
+
+flasher_player:
+   flash:
+      flasher_01: 100ms
+
 

@@ -1,9 +1,12 @@
 #config_version=4
 
-leds:
+lights:
   test_led:
     number: 99
+    type: grb
   test_led2:
     number: 0-20
+    type: grb
   test_led3:
     number: 1-99
+    type: grb

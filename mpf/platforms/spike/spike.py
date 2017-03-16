@@ -3,13 +3,13 @@ import asyncio
 
 import logging
 
-from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
+from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface, LightPlatformDirectFade
 
-from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
+from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
 
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 from mpf.platforms.spike.spike_defines import SpikeNodebus
-from mpf.core.platform import SwitchPlatform, MatrixLightsPlatform, DriverPlatform
+from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform
 
 
 class SpikeSwitch(SwitchPlatformInterface):
@@ -25,19 +25,29 @@ class SpikeSwitch(SwitchPlatformInterface):
         self.platform = platform
 
 
-class SpikeLight(MatrixLightPlatformInterface):
+class SpikeLight(LightPlatformDirectFade):
 
     """A light on a Stern Spike node board."""
 
     def __init__(self, node, number, platform):
-        """Initialise switch."""
+        """Initialise light."""
+        super().__init__(platform.machine.clock.loop)
         self.node = node
         self.number = number
         self.platform = platform
 
-    def on(self, brightness=255):
+    def get_max_fade_ms(self):
+        """Return max fade ms."""
+        return 199  # int(199 * 1.28) = 255
+
+    def set_brightness_and_fade(self, brightness: float, fade_ms: int):
         """Set brightness of channel."""
-        fade_time = 12  # 10ms fade time by default
+        fade_time = int(fade_ms * 1.28)
+        brightness = int(brightness * 255)
+        if 0 > brightness > 255:
+            raise AssertionError("Brightness out of bound.")
+        if 0 > fade_time > 255:
+            raise AssertionError("Fade time out of bound.")
         data = bytearray([fade_time, brightness])
         self.platform.send_cmd(self.node, SpikeNodebus.SetLed + self.number, data)
 
@@ -162,7 +172,7 @@ class SpikeDriver(DriverPlatformInterface):
         return "Spike Node {}".format(self.node)
 
 
-class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
+class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
 
     """Stern Spike Platform."""
 
@@ -228,9 +238,18 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
         """Configure a driver on Stern Spike."""
         return SpikeDriver(config, config['number'], self)
 
-    def configure_matrixlight(self, config):
+    def parse_light_number_to_channels(self, number: str, subtype: str):
+        """Return a single light."""
+        return [
+            {
+                "number": number,
+            }
+        ]
+
+    def configure_light(self, number, subtype, platform_settings) -> SpikeLight:
         """Configure a light on Stern Spike."""
-        node, number = config['number'].split("-")
+        del platform_settings, subtype
+        node, number = number.split("-")
         return SpikeLight(int(node), int(number), self)
 
     def configure_switch(self, config):
@@ -288,12 +307,12 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
         yield from self._initialize()
 
     def _update_switches(self, node):
-        if node not in self._nodes:
+        if node not in self._nodes:     # pragma: no cover
             self.log.warning("Cannot read node %s because it is not configured.", node)
             return
 
         new_inputs_str = yield from self._read_inputs(node)
-        if not new_inputs_str:
+        if not new_inputs_str:      # pragma: no cover
             self.log.info("Node: %s did not return any inputs.", node)
             return
 
@@ -313,7 +332,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
                         num=str(node) + "-" + str(index),
                         platform=self)
                 curr_bit <<= 1
-        elif self.debug:
+        elif self.debug:    # pragma: no cover
             self.log.debug("Got input activity but inputs did not change.")
 
         self._inputs[node] = new_inputs
@@ -325,7 +344,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
 
             try:
                 result = yield from asyncio.wait_for(self._read_raw(1), 0.1, loop=self.machine.clock.loop)
-            except asyncio.TimeoutError:
+            except asyncio.TimeoutError:    # pragma: no cover
                 self.log.warning("Spike watchdog expired.")
                 continue
 
@@ -337,7 +356,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
                     # virtual cpu node returns 0xF0 instead of 0 to make it distinguishable
                     ready_node = 0
                 yield from self._update_switches(ready_node)
-            elif ready_node > 0:
+            elif ready_node > 0:    # pragma: no cover
                 # invalid node ids
                 self.log.warning("Spike desynced.")
                 # give it a break of 50ms
@@ -357,11 +376,15 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
 
         if self._poll_task:
             self._poll_task.cancel()
+            try:
+                self.machine.clock.loop.run_until_complete(self._poll_task)
+            except asyncio.CancelledError:
+                pass
 
         self._writer.close()
 
     @staticmethod
-    def _done(future):
+    def _done(future):  # pragma: no cover
         """Evaluate result of task.
 
         Will raise exceptions from within task.
@@ -422,11 +445,11 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
         if response_len:
             try:
                 response = yield from asyncio.wait_for(self._read_raw(response_len), 0.2, loop=self.machine.clock.loop)
-            except asyncio.TimeoutError:
+            except asyncio.TimeoutError:    # pragma: no cover
                 self.log.warning("Failed to read %s bytes from Spike", response_len)
                 return False
 
-            if self._checksum(response) != 0:
+            if self._checksum(response) != 0:   # pragma: no cover
                 self.log.warning("Checksum mismatch for response: %s", "".join("%02x " % b for b in response))
                 # we resync by flushing the input
                 self._writer.transport.serial.reset_input_buffer()

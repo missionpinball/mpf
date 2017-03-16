@@ -235,8 +235,12 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                 # stop device
                 self.ball_device.set_eject_state("eject_broken")
                 yield from self._failed_eject(eject_request, eject_try, False)
-                self.ball_device.stop()
-                # TODO: inform machine about broken device
+                self.machine.events.post("balldevice_{}_broken".format(self.ball_device.name))
+                '''event: balldevice_(name)_froken
+
+                desc: The ball device called "name" is broken and will no longer operate.
+                '''
+                self._task.cancel()
                 return False
             else:
                 yield from self._failed_eject(eject_request, eject_try, True)

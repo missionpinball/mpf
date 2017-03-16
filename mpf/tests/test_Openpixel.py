@@ -49,36 +49,26 @@ class TestOpenpixel(MpfTestCase):
 
     def test_led_color(self):
         # test led on channel 0. position 99
-        self.machine.leds.test_led.on()
+        self.machine.lights.test_led.on()
         self.advance_time_and_run(1)
         self.assertOpenPixelLedsSent({99: (255, 255, 255)}, {})
 
         # test led 20 ond channel 0
-        self.machine.leds.test_led2.color(RGBColor((255, 0, 0)))
+        self.machine.lights.test_led2.color(RGBColor((255, 0, 0)))
         self.advance_time_and_run(1)
         self.assertOpenPixelLedsSent({20: (255, 0, 0), 99: (255, 255, 255)}, {})
 
-        self.machine.leds.test_led.off()
+        self.machine.lights.test_led.off()
         self.advance_time_and_run(1)
         self.assertOpenPixelLedsSent({20: (255, 0, 0), 99: (0, 0, 0)}, {})
         self._messages = []
 
         # test led color
-        self.machine.leds.test_led.color(RGBColor((2, 23, 42)))
+        self.machine.lights.test_led.color(RGBColor((2, 23, 42)))
         self.advance_time_and_run(1)
         self.assertOpenPixelLedsSent({20: (255, 0, 0), 99: (2, 23, 42)}, {})
 
         # test led on channel 1
-        self.machine.leds.test_led3.on()
+        self.machine.lights.test_led3.on()
         self.advance_time_and_run(1)
         self.assertOpenPixelLedsSent({20: (255, 0, 0), 99: (2, 23, 42)}, {99: (255, 255, 255)})
-
-    def test_configure_led(self):
-        # test configure_led with int format
-        led = self.machine.default_platform.configure_led({"number": "10"}, 3)
-        self.assertEqual(10, led.led)
-
-        # test configure_led with hex format
-        self.machine.config['open_pixel_control']['number_format'] = "hex"
-        led = self.machine.default_platform.configure_led({"number": "10"}, 3)
-        self.assertEqual(16, led.led)

@@ -275,7 +275,7 @@ class TestOPP(OPPCommon, MpfTestCase):
         # set led 0 to color 0
         self.serialMock.expected_commands[self._crc_message(b'\x21\x16\x00\x80', False)] = False
 
-        self.machine.leds.test_led1.on()
+        self.machine.lights.test_led1.on()
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
@@ -286,8 +286,8 @@ class TestOPP(OPPCommon, MpfTestCase):
         # set led 1 to color 10
         self.serialMock.expected_commands[self._crc_message(b'\x21\x16\x01\x80', False)] = False
 
-        self.machine.leds.test_led1.off()
-        self.machine.leds.test_led2.on()
+        self.machine.lights.test_led1.off()
+        self.machine.lights.test_led2.on()
 
         self._wait_for_processing()
 

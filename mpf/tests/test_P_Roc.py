@@ -217,40 +217,52 @@ class TestPRoc(MpfTestCase):
         )
 
         # test enable of matrix light
-        assert not self.machine.lights.test_pdb_light.hw_driver.proc.driver_schedule.called
+        assert not self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_patter.called
         self.machine.lights.test_pdb_light.on()
         self.advance_time_and_run(.02)
-        self.machine.lights.test_pdb_light.hw_driver.proc.driver_schedule.assert_called_with(
-            cycle_seconds=0, schedule=4294967295, now=True, number=32
+        self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_patter.assert_called_with(
+            32, 8, 0, 0, True
         )
 
         # test disable of matrix light
-        assert not self.machine.lights.test_pdb_light.hw_driver.proc.driver_disable.called
+        assert not self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_disable.called
         self.machine.lights.test_pdb_light.off()
         self.advance_time_and_run(.1)
-        self.machine.lights.test_pdb_light.hw_driver.proc.driver_disable.assert_called_with(32)
+        self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_disable.assert_called_with(32)
 
     def test_pdb_gi_light(self):
         # test gi on
-        device = self.machine.gis.test_gi
-        device.hw_driver.proc.driver_patter = MagicMock()
-        device.enable()
-        self.machine_run()
-        device.hw_driver.proc.driver_patter.assert_called_with(67, 20, 0, 0, True)
+        device = self.machine.lights.test_gi
+        num = self.machine.coils.test_gi.hw_driver.number
+        device.hw_drivers["white"].driver.hw_driver.proc.driver_patter = MagicMock()
+        device.hw_drivers["white"].driver.hw_driver.proc.driver_schedule = MagicMock()
+        device.color("white")
+        self.advance_time_and_run(.1)
+        device.hw_drivers["white"].driver.hw_driver.proc.driver_schedule.assert_has_calls([
+            call(now=True, number=num, cycle_seconds=0, schedule=4294967295)])
+        device.hw_drivers["white"].driver.hw_driver.proc.driver_patter = MagicMock()
+        device.hw_drivers["white"].driver.hw_driver.proc.driver_schedule = MagicMock()
 
-        device.enable(brightness=128)
-        self.machine_run()
-        device.hw_driver.proc.driver_patter.assert_called_with(67, 10, 10, 0, True)
+        device.color([128, 128, 128])
+        self.advance_time_and_run(.1)
+        device.hw_drivers["white"].driver.hw_driver.proc.driver_patter.assert_has_calls([
+            call(num, 1, 1, 0, True)])
+        device.hw_drivers["white"].driver.hw_driver.proc.driver_patter = MagicMock()
+        device.hw_drivers["white"].driver.hw_driver.proc.driver_schedule = MagicMock()
 
-        device.enable(brightness=245)
-        self.machine_run()
-        device.hw_driver.proc.driver_patter.assert_called_with(67, 19, 1, 0, True)
+        device.color([245, 245, 245])
+        self.advance_time_and_run(.1)
+        device.hw_drivers["white"].driver.hw_driver.proc.driver_patter.assert_has_calls([
+            call(num, 7, 1, 0, True)])
+        device.hw_drivers["white"].driver.hw_driver.proc.driver_patter = MagicMock()
+        device.hw_drivers["white"].driver.hw_driver.proc.driver_schedule = MagicMock()
 
         # test gi off
-        device.hw_driver.proc.driver_disable = MagicMock()
-        device.disable()
-        self.machine_run()
-        device.hw_driver.proc.driver_disable.assert_called_with(67)
+        device.hw_drivers["white"].driver.hw_driver.proc.driver_disable = MagicMock()
+        device.color("off")
+        self.advance_time_and_run(.1)
+        device.hw_drivers["white"].driver.hw_driver.proc.driver_disable.assert_has_calls([
+            call(num)])
 
     def test_load_wpc(self):
         # make sure p-roc properly initialises with WPC config

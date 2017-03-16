@@ -6,6 +6,10 @@ boards.
 """
 import logging
 import asyncio
+from typing import Dict
+from typing import List
+
+from mpf.platforms.opp.opp_neopixel import OPPNeopixel
 
 from mpf.platforms.base_serial_communicator import BaseSerialCommunicator
 
@@ -15,7 +19,7 @@ from mpf.platforms.opp.opp_neopixel import OPPNeopixelCard
 from mpf.platforms.opp.opp_switch import OPPInputCard
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 from mpf.devices.driver import ConfiguredHwDriver
-from mpf.core.platform import MatrixLightsPlatform, LedPlatform, SwitchPlatform, DriverPlatform
+from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform
 
 # Minimum firmware versions needed for this module
 MIN_FW = 0x00000100
@@ -23,7 +27,7 @@ BAD_FW_VERSION = 0x01020304
 
 
 # pylint: disable-msg=too-many-instance-attributes
-class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, DriverPlatform):
+class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
     """Platform class for the OPP hardware.
 
@@ -48,15 +52,14 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self.inpDict = dict()
         self.inpAddrDict = dict()
         self.read_input_msg = {}
-        self.opp_neopixels = []
+        self.opp_neopixels = []     # type: List[OPPNeopixelCard]
         self.neoCardDict = dict()
-        self.neoDict = dict()
+        self.neoDict = dict()   # type: Dict[str, OPPNeopixel]
         self.numGen2Brd = 0
         self.gen2AddrArr = {}
         self.badCRC = 0
         self.minVersion = 0xffffffff
         self._poll_task = None
-        self._light_update_task = None
 
         self.features['tickless'] = True
 
@@ -67,7 +70,6 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
             self.machine.config['hardware']['driverboards'].lower())
 
         if self.machine_type == 'gen1':
-            self.log.debug("Configuring the original OPP boards")
             raise AssertionError("Original OPP boards not currently supported.")
         elif self.machine_type == 'gen2':
             self.log.debug("Configuring the OPP Gen2 boards")
@@ -94,9 +96,6 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         """Stop hardware and close connections."""
         if self._poll_task:
             self._poll_task.cancel()
-
-        if self._light_update_task:
-            self._light_update_task.cancel()
 
         for connections in self.serial_connections:
             connections.stop()
@@ -269,7 +268,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                 has_neo = True
             wing_index += 1
         if incand_mask != 0:
-            self.opp_incands.append(OPPIncandCard(chain_serial, msg[0], incand_mask, self.incandDict))
+            self.opp_incands.append(OPPIncandCard(chain_serial, msg[0], incand_mask, self.incandDict, self.machine))
         if sol_mask != 0:
             self.opp_solenoid.append(
                 OPPSolenoidCard(chain_serial, msg[0], sol_mask, self.solDict, self))
@@ -565,57 +564,66 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
         return self.inpDict[number]
 
-    def configure_led(self, config: dict, channels: int):
-        """Configure LED.
+    def parse_light_number_to_channels(self, number: str, subtype: str):
+        """Parse number and subtype to channel."""
+        if subtype == "matrix":
+            return [
+                {
+                    "number": self._get_dict_index(number)
+                }
+            ]
+        elif not subtype or subtype == "led":
+            return [
+                {
+                    "number": self._get_dict_index(number) + "-0"
+                },
+                {
+                    "number": self._get_dict_index(number) + "-1"
+                },
+                {
+                    "number": self._get_dict_index(number) + "-2"
+                },
+            ]
+        else:
+            raise AssertionError("Unknown subtype {}".format(subtype))
 
-        Args:
-            config: Config dict.
-            channels: Number of channels. OPP supports up to three.
-        """
-        if channels > 3:
-            raise AssertionError("OPP only supports RGB LEDs")
+    def configure_light(self, number, subtype, platform_settings):
+        """Configure a led or matrix light."""
         if not self.opp_connection:
-            raise AssertionError("A request was made to configure an OPP LED, "
+            raise AssertionError("A request was made to configure an OPP light, "
                                  "but no OPP connection is available")
+        if not subtype or subtype == "led":
+            chain_serial, card, pixel_num, index_str = number.split('-')
+            index = chain_serial + '-' + card
+            if index not in self.neoCardDict:
+                raise AssertionError("A request was made to configure an OPP neopixel "
+                                     "with card number %s which doesn't exist", card)
 
-        number = self._get_dict_index(config['number'])
+            neo = self.neoCardDict[index]
+            channel = neo.add_channel(int(pixel_num), self.neoDict, index_str)
+            return channel
+        elif subtype == "matrix":
+            if number not in self.incandDict:
+                raise AssertionError("A request was made to configure a OPP matrix "
+                                     "light (incand board), with number %s "
+                                     "which doesn't exist", number)
 
-        chain_serial, card, pixel_num = number.split('-')
-        index = chain_serial + '-' + card
-        if index not in self.neoCardDict:
-            raise AssertionError("A request was made to configure an OPP neopixel "
-                                 "with card number %s which doesn't exist", card)
+            return self.incandDict[number]
+        else:
+            raise AssertionError("Unknown subtype {}".format(subtype))
 
-        neo = self.neoCardDict[index]
-        pixel = neo.add_neopixel(int(pixel_num), self.neoDict)
+    def light_sync(self):
+        """Update lights."""
+        # first neo pixels
+        for light in self.neoDict.values():
+            if light.dirty:
+                light.update_color()
 
-        return pixel
-
-    def configure_matrixlight(self, config):
-        """Configure a direct incandescent bulb.
-
-        Args:
-            config: Config dict.
-        """
-        if not self.opp_connection:
-            raise AssertionError("A request was made to configure an OPP matrix "
-                                 "light (incand board), but no OPP connection "
-                                 "is available")
-
-        number = self._get_dict_index(config['number'])
-
-        if number not in self.incandDict:
-            raise AssertionError("A request was made to configure a OPP matrix "
-                                 "light (incand board), with number %s "
-                                 "which doesn't exist", number)
-
-        if not self._light_update_task:
-            self._light_update_task = self.machine.clock.loop.create_task(self._update_lights())
-            self._light_update_task.add_done_callback(self._done)
-        return self.incandDict[number]
+        # then incandescents
+        self.update_incand()
 
     @staticmethod
-    def _done(future):
+    def _done(future):  # pragma: no cover
         """Evaluate result of task.
 
         Will raise exceptions from within task.
@@ -933,7 +941,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
         self.writer.write(cmd)
 
     @classmethod
-    def _create_vers_str(cls, version_int):
+    def _create_vers_str(cls, version_int):     # pragma: no cover
         return ("%02d.%02d.%02d.%02d" % (((version_int >> 24) & 0xff),
                                          ((version_int >> 16) & 0xff), ((version_int >> 8) & 0xff),
                                          (version_int & 0xff)))

@@ -2,30 +2,23 @@
 import logging
 
 from mpf.core.utility_functions import Util
-from mpf.platforms.interfaces.gi_platform_interface import GIPlatformInterface
+from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade
 
 
-class FASTGIString(GIPlatformInterface):
+class FASTGIString(LightPlatformSoftwareFade):
 
     """A FAST GI string in a WPC machine."""
 
-    def __init__(self, number, sender):
-        """Initialise GI string.
-
-        TODO: Need to implement the enable_relay and control which strings are
-        dimmable.
-        """
+    def __init__(self, number, sender, machine, software_fade_ms: int):
+        """Initialise GI string."""
+        super().__init__(machine.clock.loop, software_fade_ms)
         self.log = logging.getLogger('FASTGIString.0x' + str(number))
         self.number = number
         self.send = sender
 
-    def off(self):
-        """Turn off GI string."""
-        self.log.debug("Turning Off GI String")
-        self.send('GI:' + self.number + ',00')
-
-    def on(self, brightness=255):
-        """Turn on GI string."""
+    def set_brightness(self, brightness: float):
+        """Set GI string to a certain brightness."""
+        brightness = int(brightness * 255)
         if brightness >= 255:
             brightness = 255
 

@@ -99,24 +99,6 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         """Return string representation."""
         return '<{self.class_label}.{self.name}>'.format(self=self)
 
-    # def enable_debugging(self):
-    #     """Enable debug logging."""
-    #     self.debug_log("Enabling debug logging")
-    #     self.debug = True
-    #     self._enable_related_device_debugging()
-    #
-    # def disable_debugging(self):
-    #     """Disable debug logging."""
-    #     self.debug_log("Disabling debug logging")
-    #     self.debug = False
-    #     self._disable_related_device_debugging()
-    #
-    # def _enable_related_device_debugging(self):
-    #     pass
-    #
-    # def _disable_related_device_debugging(self):
-    #     pass
-
     @classmethod
     def get_config_info(cls):
         """Return config collection and config section.

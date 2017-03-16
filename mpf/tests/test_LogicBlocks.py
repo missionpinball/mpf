@@ -14,47 +14,47 @@ class TestLogicBlocks(MpfFakeGameTestCase):
         self.post_event("start_mode2")
         self.advance_time_and_run()
 
-        self.assertLedColor("led1", "white")
-        self.assertLedColor("led2", "black")
-        self.assertLedColor("led3", "black")
+        self.assertLightColor("led1", "white")
+        self.assertLightColor("led2", "black")
+        self.assertLightColor("led3", "black")
 
         # nothing happens because it is disabled
         self.post_event("counter_with_lights_count")
         self.advance_time_and_run()
-        self.assertLedColor("led1", "white")
-        self.assertLedColor("led2", "black")
-        self.assertLedColor("led3", "black")
+        self.assertLightColor("led1", "white")
+        self.assertLightColor("led2", "black")
+        self.assertLightColor("led3", "black")
 
         # advance
         self.post_event("counter_with_lights_enable")
         self.post_event("counter_with_lights_count")
         self.advance_time_and_run()
-        self.assertLedColor("led1", "black")
-        self.assertLedColor("led2", "white")
-        self.assertLedColor("led3", "black")
+        self.assertLightColor("led1", "black")
+        self.assertLightColor("led2", "white")
+        self.assertLightColor("led3", "black")
 
         # stop mode
         self.post_event("stop_mode2")
         self.advance_time_and_run()
 
         # all off
-        self.assertLedColor("led1", "black")
-        self.assertLedColor("led2", "black")
-        self.assertLedColor("led3", "black")
+        self.assertLightColor("led1", "black")
+        self.assertLightColor("led2", "black")
+        self.assertLightColor("led3", "black")
 
         # restart mode. should restore state
         self.post_event("start_mode2")
         self.advance_time_and_run()
-        self.assertLedColor("led1", "black")
-        self.assertLedColor("led2", "white")
-        self.assertLedColor("led3", "black")
+        self.assertLightColor("led1", "black")
+        self.assertLightColor("led2", "white")
+        self.assertLightColor("led3", "black")
 
         # and complete
         self.post_event("counter_with_lights_count")
         self.advance_time_and_run()
-        self.assertLedColor("led1", "black")
-        self.assertLedColor("led2", "black")
-        self.assertLedColor("led3", "white")
+        self.assertLightColor("led1", "black")
+        self.assertLightColor("led2", "black")
+        self.assertLightColor("led3", "white")
 
 
     def test_accruals_simple(self):

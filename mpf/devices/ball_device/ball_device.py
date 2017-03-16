@@ -65,9 +65,6 @@ class BallDevice(SystemWideDevice):
         self.incoming_balls_handler = None
         self.outgoing_balls_handler = None
 
-        # stop device on shutdown
-        self.machine.events.add_handler("shutdown", self.stop)
-
         # mirrored from ball_count_handler to make it obserable by the monitor
         self.counted_balls = 0
         self._state = "idle"
@@ -134,9 +131,8 @@ class BallDevice(SystemWideDevice):
 
         self.machine.clock.loop.run_until_complete(self._initialize_async())
 
-    def stop(self, **kwargs):
+    def stop_device(self):
         """Stop device."""
-        del kwargs
         self.ball_count_handler.stop()
         self.incoming_balls_handler.stop()
         self.outgoing_balls_handler.stop()
