@@ -8,6 +8,9 @@ boards.
 import logging
 from copy import deepcopy
 
+from typing import Dict
+
+from mpf.platforms.fast.fast_io_board import FastIoBoard
 from mpf.platforms.fast.fast_servo import FastServo
 from mpf.platforms.fast import fast_defines
 from mpf.platforms.fast.fast_dmd import FASTDMD
@@ -52,7 +55,7 @@ class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatfor
         self.config = None
         self.machine_type = None
         self.hw_switch_data = None
-        self.io_boards = {}     # type: {int, 'mpf.platform.fast.fast_io_board.FastIoBoard'}
+        self.io_boards = {}     # type: Dict[int, FastIoBoard]
 
         self.fast_commands = {'ID': lambda x: None,  # processor ID
                               'WX': lambda x: None,  # watchdog

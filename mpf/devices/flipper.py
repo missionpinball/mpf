@@ -45,8 +45,6 @@ class Flipper(SystemWideDevice):
         if "debounce" not in self.config['eos_switch_overwrite']:
             self.config['eos_switch_overwrite']['debounce'] = "quick"
 
-        self.platform = self.config['main_coil'].platform
-
         self.switch = ReconfiguredSwitch(self.config['activation_switch'],
                                          self.config['switch_overwrite'],
                                          False)
@@ -56,13 +54,9 @@ class Flipper(SystemWideDevice):
                                                  self.config['eos_switch_overwrite'],
                                                  False)
 
-        self.debug_log('Platform Driver: %s', self.platform)
-
         if self.config['power_setting_name']:
             self.machine.events.add_handler("machine_var_{}".format(self.config['power_setting_name']),
                                             self._power_changed)
-
-        self.debug_log('Platform Driver: %s', self.platform)
 
         if self.config['include_in_ball_search']:
             self.config['playfield'].ball_search.register(

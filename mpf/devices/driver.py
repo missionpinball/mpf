@@ -4,6 +4,7 @@ import copy
 from typing import Any, Dict
 
 from mpf.core.machine import MachineController
+from mpf.core.platform import DriverPlatform
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.devices.switch import Switch
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
@@ -36,6 +37,7 @@ class Driver(SystemWideDevice):
         self.time_last_changed = -1
         self.time_when_done = -1
         self._configured_driver = None      # type: ConfiguredHwDriver
+        self.platform = None                # type: DriverPlatform
 
     @classmethod
     def device_class_init(cls, machine: MachineController):
@@ -72,9 +74,12 @@ class Driver(SystemWideDevice):
         return config
 
     def _initialize(self):
-        self.load_platform_section('coils')
+        self.platform = self.machine.get_platform_sections('coils', self.config['platform'])
 
-        self.hw_driver = self.platform.configure_driver(self.config)
+        config = dict(self.config)
+        if 'psu' in config:
+            del config['psu']
+        self.hw_driver = self.platform.configure_driver(config)
 
     def enable(self, **kwargs):
         """Enable a driver by holding it 'on'.
@@ -270,7 +275,7 @@ class ReconfiguredDriver(Driver):
     @property
     def config(self) -> Dict[str, Any]:
         """Return the merged config."""
-        config = copy.deepcopy(self._driver.config)
+        config = dict(self._driver.config)
         for name, item in self._config_overwrite.items():
             if item is not None:
                 config[name] = item

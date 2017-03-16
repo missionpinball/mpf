@@ -1,12 +1,15 @@
 """Contains the Switch parent class."""
 import copy
 
-from typing import Set
+from typing import Set, TYPE_CHECKING
 
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.machine import MachineController
 from mpf.core.system_wide_device import SystemWideDevice
-from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
+
+if TYPE_CHECKING:
+    from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
+    from mpf.core.platform import SwitchPlatform
 
 
 @DeviceMonitor("state", "recycle_jitter_count")
@@ -21,6 +24,7 @@ class Switch(SystemWideDevice):
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialise switch."""
         self.hw_switch = None   # type: SwitchPlatformInterface
+        self.platform = None    # type: SwitchPlatform
         super().__init__(machine, name)
 
         self.deactivation_events = set()    # type: Set[str]
@@ -68,7 +72,7 @@ class Switch(SystemWideDevice):
         return config
 
     def _initialize(self):
-        self.load_platform_section('switches')
+        self.platform = self.machine.get_platform_sections('switches', self.config['platform'])
 
         if self.config['type'].upper() == 'NC':
             self.invert = 1

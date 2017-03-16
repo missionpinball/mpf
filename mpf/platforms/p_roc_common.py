@@ -4,7 +4,7 @@ import logging
 import platform
 import sys
 import time
-from typing import Union, List, Callable, Tuple
+from typing import Union, Callable, Tuple
 
 from typing import Any
 from typing import List
@@ -384,7 +384,7 @@ class PDBConfig(object):
         # list. The index of the bank is used to calculate the P-ROC/P3-ROC driver
         # number for each driver.
         num_proc_banks = driver_count // 8
-        self.indexes = [{}] * num_proc_banks    # type: List[Union(int,dict)]
+        self.indexes = [{}] * num_proc_banks    # type: List[Union[int, dict]]
 
         self._initialize_drivers(proc)
 

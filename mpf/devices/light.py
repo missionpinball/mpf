@@ -1,12 +1,15 @@
 """Contains the Light class."""
 from functools import partial
 from operator import itemgetter
+
+from typing import Set
 from typing import Tuple
 
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.rgb_color import RGBColor
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.devices.driver import ReconfiguredDriver
+from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade
 
 
@@ -41,7 +44,7 @@ class Light(SystemWideDevice):
     def __init__(self, machine, name):
         """Initialise light."""
         self.hw_drivers = {}
-        self.platforms = set()
+        self.platforms = set()      # type: Set[LightPlatformInterface]
         self._color = [0, 0, 0]
         self._corrected_color = [0, 0, 0]
         super().__init__(machine, name)
@@ -405,7 +408,7 @@ class Light(SystemWideDevice):
         target_time = current_time + (max_fade_ms / 1000.0)
         # check if fade will be done before max_fade_ms
         if target_time > color_settings['dest_time']:
-            return color_settings['dest_time'], int(color_settings['dest_time'] - current_time) / 1000
+            return color_settings['dest_time'], int((color_settings['dest_time'] - current_time) / 1000)
 
         # figure out the ratio of how far along we are
         try:

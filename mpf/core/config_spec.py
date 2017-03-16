@@ -220,6 +220,7 @@ coils:
     number: single|str|
     pulse_ms: single|ms|None
     pulse_power: single|int(0,8)|None
+    psu: single|machine(psus)|default
     hold_power: single|int(0,8)|None
     recycle: single|bool|False
     allow_enable: single|bool|False
@@ -685,14 +686,10 @@ p3_roc:
     debug: single|bool|False
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
-physical_dmd:
+psus:
     __valid_in__: machine
-    shades: single|pow2|16
-    fps: single|int|30
-    source_display: single|str|dmd
-    luminosity: list|float|.299, .587, .114
-    brightness: single|float|0.5
-    only_send_changes: single|bool|False
+    voltage: single|int|None
+    max_amps: single|int|None
 physical_dmds:
     __valid_in__: machine
     platform: single|str|None
@@ -703,12 +700,6 @@ physical_dmds:
     brightness: single|float|1.0
     gamma: single|float|1.0
     only_send_changes: single|bool|False
-physical_rgb_dmd:
-    __valid_in__: machine
-    fps: single|int|30
-    source_display: single|str|dmd
-    only_send_changes: single|bool|False
-    brightness: single|float|1.0
 physical_rgb_dmds:
     __valid_in__: machine
     platform: single|str|None

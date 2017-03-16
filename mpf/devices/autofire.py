@@ -41,8 +41,6 @@ class AutofireCoil(SystemWideDevice):
         self.switch = ReconfiguredSwitch(self.config['switch'], self.config['switch_overwrite'],
                                          self.config['reverse_switch'])
 
-        self.debug_log('Platform Driver: %s', self.platform)
-
         if self.config['ball_search_order']:
             self.config['playfield'].ball_search.register(
                 self.config['ball_search_order'], self._ball_search, self.name)

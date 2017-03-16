@@ -72,6 +72,7 @@ mpf:
         - mpf.devices.ball_hold.BallHold
         - mpf.devices.multiball_lock.MultiballLock
         - mpf.devices.timed_switch.TimedSwitch
+        - mpf.devices.power_supply_unit.PowerSupplyUnit
 
     plugins:
         mpf.plugins.auditor.Auditor
@@ -413,6 +414,10 @@ settings:
       1.2: Strong
     key_type: float
     default: 1.0
+
+psus:
+  default:
+    voltage: 48
 
 playfields:
     playfield:
