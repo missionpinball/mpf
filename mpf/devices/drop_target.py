@@ -38,9 +38,9 @@ class DropTarget(SystemWideDevice):
 
         # can't read the switch until the switch controller is set up
         self.machine.events.add_handler('init_phase_4',
-                                        self._update_state_from_switch)
+                                        self._update_state_from_switch, priority=2)
         self.machine.events.add_handler('init_phase_4',
-                                        self._register_switch_handlers)
+                                        self._register_switch_handlers, priority=1)
 
         if self.config['ball_search_order']:
             self.config['playfield'].ball_search.register(

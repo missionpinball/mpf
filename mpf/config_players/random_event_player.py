@@ -10,7 +10,6 @@ class RandomEventPlayer(ConfigPlayer):
 
     config_file_section = 'random_event_player'
     show_section = 'random_events'
-    device_collection = None
 
     def __init__(self, machine):
         """Initialise random event player."""

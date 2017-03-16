@@ -1,6 +1,8 @@
 """Handles outgoing balls."""
 import asyncio
 
+from typing import Generator
+
 from mpf.core.utility_functions import Util
 from mpf.devices.ball_device.ball_count_handler import EjectTracker
 from mpf.devices.ball_device.ball_device_state_handler import BallDeviceStateHandler
@@ -307,7 +309,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         '''
 
     @asyncio.coroutine
-    def _eject_ball(self, eject_request: OutgoingBall, eject_try: int) -> bool:
+    def _eject_ball(self, eject_request: OutgoingBall, eject_try: int) -> Generator[int, None, bool]:
         # inform the counter that we are ejecting now
         self.debug_log("Ejecting ball to %s", eject_request.target)
         yield from self._post_ejecting_event(eject_request, eject_try)
@@ -371,7 +373,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
 
     @asyncio.coroutine
     def _handle_confirm(self, eject_request: OutgoingBall, ball_eject_process: EjectTracker,
-                        incoming_ball_at_target: IncomingBall) -> bool:
+                        incoming_ball_at_target: IncomingBall) -> Generator[int, None, bool]:
         # TODO: check double eject (two balls left). can only happen when not jammed
         timeout = eject_request.eject_timeout
         self.debug_log("Wait for confirm with timeout %s", timeout)
@@ -396,7 +398,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
 
     @asyncio.coroutine
     def _handle_late_confirm_or_missing(self, eject_request: OutgoingBall, ball_eject_process: EjectTracker,
-                                        incoming_ball_at_target: IncomingBall) -> bool:
+                                        incoming_ball_at_target: IncomingBall) -> Generator[int, None, bool]:
         ball_return_future = Util.ensure_future(ball_eject_process.wait_for_ball_return(), loop=self.machine.clock.loop)
         unknown_balls_future = Util.ensure_future(ball_eject_process.wait_for_ball_unknown_ball(),
                                                   loop=self.machine.clock.loop)
@@ -414,8 +416,9 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             # if target is playfield mark eject as confirmed
             self.debug_log("Confirming eject because target is playfield and ball did not return.")
             incoming_ball_at_target.ball_arrived()
+            yield from self._handle_eject_success(ball_eject_process, eject_request)
+            return True
 
-        # TODO: timeout
         try:
             event = yield from Util.first([ball_return_future, unknown_balls_future, eject_success_future],
                                           timeout=timeout, loop=self.machine.clock.loop)
@@ -442,6 +445,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                 self.debug_log("Got unknown balls. Assuming a ball returned.")
                 incoming_ball_at_target.did_not_arrive()
                 ball_eject_process.ball_returned()
+                return False
             else:
                 raise AssertionError("Invalid state")
 

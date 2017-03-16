@@ -1,9 +1,12 @@
 """Contains the Switch parent class."""
 import copy
 
+from typing import Set
+
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.machine import MachineController
 from mpf.core.system_wide_device import SystemWideDevice
+from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 
 
 @DeviceMonitor("state", "recycle_jitter_count")
@@ -15,13 +18,13 @@ class Switch(SystemWideDevice):
     collection = 'switches'
     class_label = 'switch'
 
-    def __init__(self, machine: MachineController, name):
+    def __init__(self, machine: MachineController, name: str) -> None:
         """Initialise switch."""
-        self.hw_switch = None
+        self.hw_switch = None   # type: SwitchPlatformInterface
         super().__init__(machine, name)
 
-        self.deactivation_events = set()
-        self.activation_events = set()
+        self.deactivation_events = set()    # type: Set[str]
+        self.activation_events = set()      # type: Set[str]
         self.state = 0
         """ The logical state of a switch. 1 = active, 0 = inactive. This takes
         into consideration the NC or NO settings for the switch."""
@@ -36,7 +39,7 @@ class Switch(SystemWideDevice):
         self.recycle_clear_time = 0
         self.recycle_jitter_count = 0
 
-        self._configured_switch = None
+        self._configured_switch = None  # type: ReconfiguredSwitch
 
         # register switch so other devices can add handlers to it
         self.machine.switch_controller.register_switch(name)

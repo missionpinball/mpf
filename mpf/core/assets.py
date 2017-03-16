@@ -7,6 +7,8 @@ from collections import deque
 
 import asyncio
 
+from typing import Iterable
+
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.mpf_controller import MpfController
 from mpf.core.utility_functions import Util
@@ -763,9 +765,14 @@ class Asset(object):
     path_string = ''  # entry from mpf-mc:paths: for asset folder name
     config_section = ''  # section in the config files for this asset
     disk_asset_section = ''  # option is assets: config name is different
-    extensions = ('', '', '')  # tuple of strings, no dots
+
+    # tuple of strings, no dots
+    extensions = tuple()  # type: Iterable[str]
     class_priority = 0  # Order asset classes will be loaded. Higher is first.
-    pool_config_section = None  # Create an associated AssetPool instance
+
+    # Create an associated AssetPool instance
+    pool_config_section = None  # type: str
+
     asset_group_class = AssetPool  # replace with your own asset group class
 
     @classmethod

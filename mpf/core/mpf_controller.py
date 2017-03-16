@@ -9,8 +9,8 @@ class MpfController(LogMixin, metaclass=abc.ABCMeta):
 
     """Base class for MPF controllers."""
 
-    module_name = None
-    config_name = None
+    module_name = None  # type: str
+    config_name = None  # type: str
 
     def __init__(self, machine):
         """Initialise controller.
@@ -21,6 +21,7 @@ class MpfController(LogMixin, metaclass=abc.ABCMeta):
         Returns:
 
         """
+        super().__init__()
         self.machine = machine
 
         if not self.module_name:

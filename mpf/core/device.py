@@ -1,32 +1,47 @@
 """Contains the Device base class."""
 import abc
 
+from typing import List
+from typing import TYPE_CHECKING
+
 from mpf.core.machine import MachineController
 from mpf.core.logging import LogMixin
+
+if TYPE_CHECKING:
+    from mpf.core.config_validator import ConfigDict
+    from mpf.core.platform import BasePlatform
 
 
 class Device(LogMixin, metaclass=abc.ABCMeta):
 
     """Generic parent class of for every hardware device in a pinball machine."""
 
-    config_section = None  # String of the config section name
-    collection = None  # String name of the collection
-    class_label = None  # String of the friendly name of the device class
-    allow_empty_configs = False  # Can a config for this device be empty?
+    # String of the config section name
+    config_section = None   # type: str
 
-    def __init__(self, machine: MachineController, name: str):
+    # String name of the collection
+    collection = None       # type: str
+
+    # String of the friendly name of the device class
+    class_label = None      # type: str
+
+    # Can a config for this device be empty?
+    allow_empty_configs = False
+
+    def __init__(self, machine: MachineController, name: str) -> None:
         """Set up default attributes of every device.
 
         Args:
             machine: The machine controller.
             name: Name of the device in config.
         """
+        super().__init__()
         self.machine = machine
         self.name = name.lower()
-        self.tags = []
-        self.label = None
-        self.platform = None
-        self.config = dict()
+        self.tags = []          # type: List[str]
+        self.label = None       # type: str
+        self.platform = None    # type: BasePlatform
+        self.config = dict()    # type: ConfigDict
 
     @classmethod
     def get_config_spec(cls):

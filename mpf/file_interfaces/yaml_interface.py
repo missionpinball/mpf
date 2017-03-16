@@ -17,6 +17,9 @@ from ruamel.yaml.composer import Composer
 from ruamel.yaml.constructor import Constructor, RoundTripConstructor, ConstructorError
 from ruamel.yaml.compat import to_str
 from ruamel.yaml.dumper import RoundTripDumper
+from typing import Any
+from typing import Dict
+from typing import List
 
 from mpf.core.file_manager import FileInterface, FileManager
 from mpf.core.utility_functions import Util
@@ -183,7 +186,7 @@ class YamlInterface(FileInterface):
 
     file_types = ['.yaml', '.yml']
     cache = False
-    file_cache = dict()
+    file_cache = dict()     # type: Dict[str, Any]
 
     @staticmethod
     def get_config_file_version(filename):

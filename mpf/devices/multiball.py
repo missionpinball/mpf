@@ -180,6 +180,7 @@ class Multiball(SystemWideDevice, ModeDevice):
         '''
 
         # add handler for ball_drain until self.balls_ejected are drained
+        self.machine.events.remove_handler(self._ball_drain_count_balls)
         self.machine.events.add_handler('ball_drain', self._ball_drain_count_balls)
 
     @event_handler(8)

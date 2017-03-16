@@ -431,13 +431,12 @@ class BallDevice(SystemWideDevice):
             for target in device.config['eject_targets']:
                 if target.name == self.name:
                     self._source_devices.append(device)
-                    self.debug_log("EVENT: %s to %s", device.name, target.name)
-
-                    self.machine.events.add_handler(
-                        'balldevice_balls_available',
-                        self._source_device_balls_available)
-
                     break
+
+        # register event handler for available balls at source devices
+        self.machine.events.add_handler(
+            'balldevice_balls_available',
+            self._source_device_balls_available)
 
     def _balls_added_callback(self, new_balls, unclaimed_balls):
         # If we still have unclaimed_balls here, that means that no one claimed

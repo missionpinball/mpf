@@ -1,6 +1,8 @@
 """Contains the Driver parent class."""
 import copy
 
+from typing import Any, Dict
+
 from mpf.core.machine import MachineController
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.devices.switch import Switch
@@ -26,14 +28,14 @@ class Driver(SystemWideDevice):
     collection = 'coils'
     class_label = 'coil'
 
-    def __init__(self, machine: MachineController, name: str):
+    def __init__(self, machine: MachineController, name: str) -> None:
         """Initialise driver."""
-        self.hw_driver = None
+        self.hw_driver = None   # type: DriverPlatformInterface
         super().__init__(machine, name)
 
         self.time_last_changed = -1
         self.time_when_done = -1
-        self._configured_driver = None
+        self._configured_driver = None      # type: ConfiguredHwDriver
 
     @classmethod
     def device_class_init(cls, machine: MachineController):
@@ -142,12 +144,11 @@ class Driver(SystemWideDevice):
                                      ms=milliseconds,
                                      callback=self.disable)
             self.enable()
-            self.time_when_done = self.time_last_changed + (
-                milliseconds / 1000.0)
+            self.time_when_done = self.time_last_changed + int(milliseconds / 1000.0)
             ms_actual = milliseconds
 
         if ms_actual != -1:
-            self.time_when_done = self.time_last_changed + (ms_actual / 1000.0)
+            self.time_when_done = self.time_last_changed + int(ms_actual / 1000.0)
         else:
             self.time_when_done = -1
 
@@ -225,7 +226,7 @@ class ConfiguredHwDriver:
 
     """A (re-)configured Hw driver."""
 
-    def __init__(self, hw_driver: DriverPlatformInterface, config_overwrite: dict):
+    def __init__(self, hw_driver: DriverPlatformInterface, config_overwrite: dict) -> None:
         """Initialise configured hw driver."""
         self.hw_driver = hw_driver
         self.config = copy.deepcopy(self.hw_driver.config)
@@ -267,7 +268,7 @@ class ReconfiguredDriver(Driver):
         return self._configured_driver
 
     @property
-    def config(self) -> dict:
+    def config(self) -> Dict[str, Any]:
         """Return the merged config."""
         config = copy.deepcopy(self._driver.config)
         for name, item in self._config_overwrite.items():

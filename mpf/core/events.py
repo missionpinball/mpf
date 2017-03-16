@@ -7,6 +7,9 @@ import asyncio
 from functools import partial
 from unittest.mock import MagicMock
 
+from typing import Dict
+from typing import List
+
 from mpf.core.mpf_controller import MpfController
 
 EventHandlerKey = namedtuple("EventHandlerKey", ["key", "event"])
@@ -22,7 +25,7 @@ class EventManager(MpfController):
         """Initialize EventManager."""
         super().__init__(machine)
 
-        self.registered_handlers = {}   # type: {str: [RegisteredHandler]}
+        self.registered_handlers = {}   # type: Dict[str, List[RegisteredHandler]]
         self.event_queue = deque([])
         self.callback_queue = deque([])
         self.monitor_events = False
@@ -131,7 +134,44 @@ class EventManager(MpfController):
         # event post.
         self.registered_handlers[event].sort(key=lambda x: x.priority, reverse=True)
 
+        self._verify_handlers(event, self.registered_handlers[event])
+
         return EventHandlerKey(key, event)
+
+    def _verify_handlers(self, event, sorted_handlers):
+        """Verify that no races can happen."""
+        if not sorted_handlers:
+            return
+        priority = -1
+        devices = []
+        for handler in sorted_handlers:
+            # if priority is different we are fine
+            if priority != handler.priority:
+                priority = handler.priority
+                devices = []
+
+            # same priority order is random. check that is does not happen on one class
+            if not inspect.ismethod(handler.callback):
+                continue
+            cls = handler.callback.__self__
+
+            # noinspection PyProtectedMember
+            # pylint: disable-msg=protected-access
+            if hasattr(self.machine, "device_manager") and cls == self.machine.device_manager and \
+                    handler.callback == self.machine.device_manager._control_event_handler:
+                cls = (handler.kwargs["callback"].__self__, handler.kwargs["ms_delay"])
+
+            if cls in devices:
+                handlers = [h for h in sorted_handlers if h.priority == priority and
+                            inspect.ismethod(h.callback) and
+                            h.callback.__self__ == handler.callback.__self__]
+
+                self.ignorable_runtime_exception(
+                    "Duplicate handler for class {} on event {} with priority {}. Handlers: {}".format(
+                        cls, event, priority, handlers
+                    )
+                )
+            devices.append(cls)
 
     def replace_handler(self, event, handler, priority=1, **kwargs):
         """Check to see if a handler (optionally with kwargs) is registered for an event and replaces it if so.
@@ -142,7 +182,7 @@ class EventManager(MpfController):
             handler: The method of the handler you want to check.
             priority: Optional priority of the new handler that will be
                 registered.
-            **kwargs: The kwargs you want to check and the kwatgs that will be
+            **kwargs: The kwargs you want to check and the kwargs that will be
                 registered with the new handler.
 
         If you don't pass kwargs, this method will just look for the handler and
@@ -257,10 +297,10 @@ class EventManager(MpfController):
         """Wait for event."""
         return self.wait_for_any_event([event_name])
 
-    def wait_for_any_event(self, event_names: [str]):
+    def wait_for_any_event(self, event_names: List[str]) -> asyncio.Future:
         """Wait for any event from event_names."""
-        future = asyncio.Future(loop=self.machine.clock.loop)
-        keys = []
+        future = asyncio.Future(loop=self.machine.clock.loop)   # type: asyncio.Future
+        keys = []   # type: List[EventHandlerKey]
         for event_name in event_names:
             keys.append(self.add_handler(event_name, partial(self._wait_handler,
                                                              _future=future,
@@ -268,7 +308,7 @@ class EventManager(MpfController):
                                                              event=event_name)))
         return future
 
-    def _wait_handler(self, _future: asyncio.Future, _keys: [str], **kwargs):
+    def _wait_handler(self, _future: asyncio.Future, _keys: List[EventHandlerKey], **kwargs):
         for key in _keys:
             self.remove_handler_by_key(key)
 
@@ -656,9 +696,7 @@ class QueuedEvent(object):
 
 
 def event_handler(relative_priority):
-
     """Decorator for event handlers."""
-
     def decorator(func):
         """Decorate a function with relative priority."""
         func.relative_priority = relative_priority

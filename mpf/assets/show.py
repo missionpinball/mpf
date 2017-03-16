@@ -32,7 +32,7 @@ class Show(Asset):
     path_string = 'shows'
     config_section = 'shows'
     disk_asset_section = 'file_shows'
-    extensions = 'yaml'
+    extensions = tuple('yaml')
     class_priority = 100
     pool_config_section = 'show_pools'
     asset_group_class = ShowPool
@@ -269,7 +269,7 @@ class Show(Asset):
              events_when_looped=None, events_when_paused=None,
              events_when_resumed=None, events_when_advanced=None,
              events_when_stepped_back=None, events_when_updated=None,
-             events_when_completed=None):
+             events_when_completed=None) -> "RunningShow":
         """Play a Show.
 
         There are many parameters you can use here which
