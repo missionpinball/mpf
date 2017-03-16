@@ -7,6 +7,8 @@ import os
 import socket
 import sys
 from datetime import datetime
+from logging.handlers import QueueHandler
+from queue import Queue
 
 from mpf.core.machine import MachineController
 from mpf.core.utility_functions import Util
@@ -135,19 +137,34 @@ class Command(object):
                             filename=full_logfile_path,
                             filemode='a')
 
-        # define a Handler which writes INFO messages or higher to the
-        # sys.stderr
-        console = logging.StreamHandler()
-        console.setLevel(args.consoleloglevel)
-
-        # set a format which is simpler for console use
-        formatter = logging.Formatter('%(name)s : %(message)s')
+        # define a Handler which writes INFO messages or higher to the sys.stderr
+        console_log = logging.StreamHandler()
+        console_log.setLevel(args.consoleloglevel)
 
         # tell the handler to use this format
-        console.setFormatter(formatter)
+        console_log.setFormatter(logging.Formatter('%(name)s : %(message)s'))
 
-        # add the handler to the root logger
-        logging.getLogger('').addHandler(console)
+        # initialise async handler for console
+        console_log_queue = Queue()
+        console_queue_handler = QueueHandler(console_log_queue)
+        console_queue_listener = logging.handlers.QueueListener(console_log_queue, console_log)
+        console_queue_listener.start()
+
+        # initialise file log
+        file_log = logging.FileHandler(full_logfile_path)
+        file_log.setFormatter(logging.Formatter('%(asctime)s : %(name)s : %(message)s'))
+
+        # initialise async handler for file log
+        file_log_queue = Queue()
+        file_queue_handler = QueueHandler(file_log_queue)
+        file_queue_listener = logging.handlers.QueueListener(file_log_queue, file_log)
+        file_queue_listener.start()
+
+        # add loggers
+        logger = logging.getLogger()
+        logger.addHandler(console_queue_handler)
+        logger.addHandler(file_queue_handler)
+        logger.setLevel(args.loglevel)
 
         try:
             MachineController(mpf_path, machine_path, vars(args)).run()
@@ -157,6 +174,9 @@ class Command(object):
             logging.exception(e)
 
         logging.shutdown()
+        # stop threads
+        console_queue_listener.stop()
+        file_queue_listener.stop()
 
         if args.pause:
             input('Press ENTER to continue...')
