@@ -1,6 +1,7 @@
 """Contains the Mode base class."""
 import copy
 
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -9,16 +10,18 @@ from typing import Set
 from typing import Tuple
 
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
+from mpf.core.config_validator import ConfigDict
 from mpf.core.delays import DelayManager
-from mpf.core.device import Device
-from mpf.core.events import EventHandlerKey
-from mpf.core.events import QueuedEvent
-from mpf.core.player import Player
-from mpf.core.switch_controller import SwitchHandler
-
 from mpf.core.timer import Timer
 from mpf.core.utility_functions import Util
 from mpf.core.logging import LogMixin
+
+if TYPE_CHECKING:
+    from mpf.core.switch_controller import SwitchHandler
+    from mpf.core.events import QueuedEvent
+    from mpf.core.device import Device
+    from mpf.core.events import EventHandlerKey
+    from mpf.core.player import Player
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -26,7 +29,7 @@ class Mode(LogMixin):
 
     """Parent class for in-game mode code."""
 
-    def __init__(self, machine, config: dict, name: str, path) -> None:
+    def __init__(self, machine, config: ConfigDict, name: str, path) -> None:
         """Initialise mode.
 
         Args:
@@ -46,10 +49,10 @@ class Mode(LogMixin):
         self.priority = 0
         self._active = False
         self._mode_start_wait_queue = None      # type: QueuedEvent
-        self.stop_methods = list()              # type: List[Tuple[Callable, Any]]
+        self.stop_methods = list()              # type: List[Tuple[Callable[[], None], Any]]
         self.timers = dict()                    # type: Dict[str, Timer]
-        self.start_callback = None              # type: callable
-        self.stop_callback = None               # type: callable
+        self.start_callback = None              # type: Callable[[], None]
+        self.stop_callback = None               # type: Callable[[], None]
         self.event_handlers = set()             # type: Set[EventHandlerKey]
         self.switch_handlers = list()           # type: List[SwitchHandler]
         self.mode_stop_kwargs = dict()          # type: Dict[str, Any]
@@ -119,10 +122,10 @@ class Mode(LogMixin):
         return self._active
 
     @active.setter
-    def active(self, active):
+    def active(self, new_active):
         """Setter for _active."""
-        if self._active != active:
-            self._active = active
+        if self._active != new_active:
+            self._active = new_active
             self.machine.mode_controller.set_mode_state(self, self._active)
 
     def configure_mode_settings(self, config):

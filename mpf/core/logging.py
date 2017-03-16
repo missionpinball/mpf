@@ -2,7 +2,7 @@
 import logging
 
 
-class LogMixin:
+class LogMixin(object):
 
     """Mixin class to add smart logging functionality to modules."""
 

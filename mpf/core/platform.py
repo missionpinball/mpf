@@ -285,12 +285,12 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @classmethod
-    def get_switch_config_section(cls):
+    def get_switch_config_section(cls) -> str:
         """Return config section for additional switch config items."""
         return None
 
     @classmethod
-    def get_switch_overwrite_section(cls):
+    def get_switch_overwrite_section(cls) -> str:
         """Return config section for additional switch config overwrite items."""
         return None
 

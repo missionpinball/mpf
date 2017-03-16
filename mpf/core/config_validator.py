@@ -3,7 +3,7 @@ import logging
 import re
 from copy import deepcopy
 
-from typing import Any
+from typing import Any, Union, List
 from typing import Dict
 
 from mpf.core.config_spec import mpf_config_spec
@@ -14,8 +14,8 @@ from mpf.core.utility_functions import Util
 
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 
-# TODO: improve this
-ConfigDict = Dict[str, Any]
+# TODO: improve this. should be a multi dimensional dict
+ConfigDict = Dict[str, Union[List[Any], Dict[str, Any]]]
 
 
 class ConfigValidator(object):
