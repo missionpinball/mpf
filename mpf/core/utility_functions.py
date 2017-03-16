@@ -5,6 +5,7 @@ from functools import reduce
 
 import asyncio
 from ruamel.yaml.compat import ordereddict
+from typing import Dict, Iterable, List
 
 
 class Util(object):
@@ -677,14 +678,14 @@ class Util(object):
             return 1.0
 
     @staticmethod
-    def cancel_futures(futures: [asyncio.Future]):
+    def cancel_futures(futures: Iterable[asyncio.Future]):
         """Cancel futures."""
         for future in futures:
             if hasattr(future, "cancel"):
                 future.cancel()
 
     @staticmethod
-    def any(futures: [asyncio.Future], loop, timeout=None):
+    def any(futures: Iterable[asyncio.Future], loop, timeout=None):
         """Return first future."""
         return Util.first(futures, loop, timeout, False)
 
@@ -698,7 +699,7 @@ class Util(object):
 
     @staticmethod
     @asyncio.coroutine
-    def first(futures: [asyncio.Future], loop, timeout=None, cancel_others=True):
+    def first(futures: Iterable[asyncio.Future], loop, timeout=None, cancel_others=True):
         """Return first future and cancel others."""
         # wait for first
         try:
@@ -719,13 +720,13 @@ class Util(object):
 
     @staticmethod
     @asyncio.coroutine
-    def race(futures: {asyncio.Future: str}, loop):
+    def race(futures: Dict[asyncio.Future, str], loop):
         """Return key of first future and cancel others."""
         # wait for first
         first = yield from Util.first(futures.keys(), loop=loop)
         return futures[first]
 
     @staticmethod
-    def get_named_list_from_objects(switches: []) -> [str]:
+    def get_named_list_from_objects(switches) -> List[str]:
         """Return a list of names from a list of switch objects."""
         return [switch.name for switch in switches]

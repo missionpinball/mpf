@@ -19,6 +19,7 @@ class Timer(LogMixin):
 
     def __init__(self, machine, mode, name, config):
         """Initialise mode timer."""
+        super().__init__()
         self.machine = machine
         self.mode = mode
         self.name = name

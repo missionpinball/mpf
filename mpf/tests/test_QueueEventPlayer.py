@@ -24,8 +24,8 @@ class TestQueueEventPlayer(MpfTestCase):
         self.mock_event("queue_event1_finished")
         self.queue1 = None
         self.queue2 = None
-        self.machine.events.add_handler("queue_event1", self._queue1)
-        self.machine.events.add_handler("queue_event1", self._queue2)
+        self.machine.events.add_handler("queue_event1", self._queue1, priority=2)
+        self.machine.events.add_handler("queue_event1", self._queue2, priority=1)
         self.post_event("play")
         self.advance_time_and_run()
 

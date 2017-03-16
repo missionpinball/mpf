@@ -1,6 +1,9 @@
 """Contains the base class for diverter devices."""
 
 from collections import deque
+
+from mpf.core.events import event_handler
+
 from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.system_wide_device import SystemWideDevice
@@ -77,11 +80,13 @@ class Diverter(SystemWideDevice):
             self.machine.switch_controller.add_switch_handler(
                 switch.name, self.disable)
 
+    @event_handler(1)
     def reset(self, **kwargs):
         """Reset and deactivate the diverter."""
         del kwargs
         self.deactivate()
 
+    @event_handler(10)
     def enable(self, auto=False, **kwargs):
         """Enable this diverter.
 
@@ -120,6 +125,7 @@ class Diverter(SystemWideDevice):
         else:
             self.activate()
 
+    @event_handler(0)
     def disable(self, auto=False, **kwargs):
         """Disable this diverter.
 
@@ -160,6 +166,7 @@ class Diverter(SystemWideDevice):
            self.config['deactivate_events']):
             self.deactivate()
 
+    @event_handler(9)
     def activate(self, **kwargs):
         """Physically activate this diverter's coil."""
         del kwargs
@@ -178,6 +185,7 @@ class Diverter(SystemWideDevice):
             self.config['activation_coil'].enable()
         self.schedule_deactivation()
 
+    @event_handler(2)
     def deactivate(self, **kwargs):
         """Deactivate this diverter.
 

@@ -6,9 +6,15 @@ Mark Sunnucks's System 11 interface board.
 
 import logging
 
+from typing import Set
+from typing import Tuple
+
+from mpf.core.config_validator import ConfigDict
+from mpf.core.machine import MachineController
 from mpf.core.platform import DriverPlatform
 
 from mpf.devices.driver import ConfiguredHwDriver
+from mpf.devices.driver import ReconfiguredDriver
 
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
 
@@ -20,23 +26,23 @@ class HardwarePlatform(DriverPlatform):
 
     """Overlay platform for the snux hardware board."""
 
-    def __init__(self, machine):
+    def __init__(self, machine: MachineController) -> None:
         """Initalize the board."""
         super().__init__(machine)
 
         self.log = logging.getLogger('Platform.Snux')
         self.delay = DelayManager(machine.delayRegistry)
 
-        self.platform = None
+        self.platform = None            # type: DriverPlatform
 
-        self.system11_config = None
+        self.system11_config = None     # type: ConfigDict
         self.snux_config = None
 
-        self.a_side_queue = set()
-        self.c_side_queue = set()
+        self.a_side_queue = set()       # type: Set[Tuple[DriverPlatformInterface, ReconfiguredDriver, int)]]
+        self.c_side_queue = set()       # type: Set[Tuple[DriverPlatformInterface, ReconfiguredDriver, int)]]
 
-        self.a_drivers = set()
-        self.c_drivers = set()
+        self.a_drivers = set()          # type: Set[DriverPlatformInterface]
+        self.c_drivers = set()          # type: Set[DriverPlatformInterface]
 
         self.a_side_done_time = 0
         self.c_side_done_time = 0
@@ -374,7 +380,7 @@ class SnuxDriver(DriverPlatformInterface):
     Two of those drivers may be created for one real driver. One for the A and one for the C side.
     """
 
-    def __init__(self, number, platform_driver: DriverPlatformInterface, overlay):
+    def __init__(self, number, platform_driver: DriverPlatformInterface, overlay) -> None:
         """Initialize driver."""
         super().__init__(platform_driver.config, number)
         self.number = number

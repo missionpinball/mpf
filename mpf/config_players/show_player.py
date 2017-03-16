@@ -8,7 +8,6 @@ class ShowPlayer(DeviceConfigPlayer):
 
     config_file_section = 'show_player'
     show_section = 'shows'
-    device_collection = None
 
     # pylint: disable-msg=too-many-arguments
     def play(self, settings, context, calling_context, priority=0, queue=None, **kwargs):

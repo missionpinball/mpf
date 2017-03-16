@@ -3,6 +3,10 @@
 import logging
 import os
 import importlib
+
+from typing import Dict
+from typing import List
+
 import mpf.file_interfaces
 
 
@@ -10,7 +14,7 @@ class FileInterface(object):
 
     """Interface for config files."""
 
-    file_types = list()
+    file_types = list()     # type: List[str]
 
     def __init__(self):
         """Initialise file manager."""
@@ -72,7 +76,7 @@ class FileManager(object):
     """Manages file interfaces."""
 
     log = logging.getLogger('FileManager')
-    file_interfaces = dict()
+    file_interfaces = dict()    # type: Dict[str, FileInterface]
     initialized = False
 
     @classmethod
@@ -117,7 +121,7 @@ class FileManager(object):
                     if questionable_file:
                         return questionable_file
 
-                raise FileNotFoundError("File not found: {}".format(filename))
+            raise FileNotFoundError("File not found: {}".format(filename))
 
         else:
             return filename

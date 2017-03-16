@@ -5,6 +5,9 @@ import platform
 import sys
 import time
 
+from typing import Any
+from typing import List
+
 from mpf.platforms.p_roc_devices import PROCSwitch
 
 try:    # pragma: no cover
@@ -322,8 +325,8 @@ class PDBConfig(object):
     WPC or Stern mode.
     """
 
-    indexes = []
-    proc = None
+    indexes = []    # type: List[Any]
+    proc = None     # type: pinproc.PinPROC
 
     def __init__(self, proc, config, driver_count):
         """Set up PDB config.

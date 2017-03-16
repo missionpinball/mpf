@@ -513,9 +513,11 @@ class TestEventManager(MpfFakeGameTestCase, MpfTestCase):
         # tests that a queue event that quickly creates and clears a queue
 
         self.machine.events.add_handler('test_event',
-                                        self.event_handler_add_quick_queue)
+                                        self.event_handler_add_quick_queue,
+                                        priority=1)
         self.machine.events.add_handler('test_event',
-                                        self.event_handler_add_quick_queue)
+                                        self.event_handler_add_quick_queue,
+                                        priority=2)
 
         self.advance_time_and_run(1)
 

@@ -8,7 +8,6 @@ class ScorePlayer(ConfigPlayer):
 
     config_file_section = 'scoring'
     show_section = 'score'
-    device_collection = None
 
     def __init__(self, machine):
         """Initialise score player."""

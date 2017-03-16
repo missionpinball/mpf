@@ -7,10 +7,17 @@ boards.
 import logging
 import asyncio
 
+from typing import Dict
+from typing import List
+from typing import Set
+
 from mpf.platforms.base_serial_communicator import BaseSerialCommunicator
+from mpf.platforms.opp.opp_coil import OPPSolenoid
 
 from mpf.platforms.opp.opp_coil import OPPSolenoidCard
+from mpf.platforms.opp.opp_incand import OPPIncand
 from mpf.platforms.opp.opp_incand import OPPIncandCard
+from mpf.platforms.opp.opp_neopixel import OPPNeopixel
 from mpf.platforms.opp.opp_neopixel import OPPNeopixelCard
 from mpf.platforms.opp.opp_switch import OPPInputCard
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
@@ -18,6 +25,8 @@ from mpf.devices.driver import ConfiguredHwDriver
 from mpf.core.platform import MatrixLightsPlatform, LedPlatform, SwitchPlatform, DriverPlatform
 
 # Minimum firmware versions needed for this module
+from mpf.platforms.opp.opp_switch import OPPSwitch
+
 MIN_FW = 0x00000100
 BAD_FW_VERSION = 0x01020304
 
@@ -32,31 +41,37 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
     """
 
-    def __init__(self, machine):
+    def __init__(self, machine) -> None:
         """Initialise OPP platform."""
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger('OPP')
         self.log.info("Configuring OPP hardware.")
 
-        self.opp_connection = {}    # type: {OPPSerialCommunicator}
-        self.serial_connections = set()
-        self.opp_incands = []
-        self.incandDict = dict()
-        self.opp_solenoid = []
-        self.solDict = dict()
-        self.opp_inputs = []
-        self.inpDict = dict()
-        self.inpAddrDict = dict()
-        self.read_input_msg = {}
-        self.opp_neopixels = []
-        self.neoCardDict = dict()
-        self.neoDict = dict()
+        self.opp_connection = {}            # type: Dict[str, OPPSerialCommunicator]
+        self.serial_connections = set()     # type: Set[OPPSerialCommunicator]
+        self.opp_incands = []               # type: List[OPPIncandCard]
+        # TODO: refactor this into the OPPIncandCard
+        self.incandDict = dict()            # type: Dict[str, OPPIncand]
+        self.opp_solenoid = []              # type: List[OPPSolenoidCard]
+        # TODO: refactor this into the OPPSolenoidCard
+        self.solDict = dict()               # type: Dict[str, OPPSolenoid]
+        self.opp_inputs = []                # type: List[OPPInputCard]
+        # TODO: refactor this into the OPPInputCard
+        self.inpDict = dict()               # type: Dict[str, OPPSwitch]
+        # TODO: remove this or opp_inputs
+        self.inpAddrDict = dict()           # type: Dict[str, OPPInputCard]
+        self.read_input_msg = {}            # type: Dict[str, bytearray]
+        self.opp_neopixels = []             # type: List[OPPNeopixelCard]
+        # TODO: remove this or opp_neopixels
+        self.neoCardDict = dict()           # type: Dict[str, OPPNeopixelCard]
+        # TODO: refactor this into the OPPNeopixelCard
+        self.neoDict = dict()               # type: Dict[str, OPPNeopixel]
         self.numGen2Brd = 0
-        self.gen2AddrArr = {}
+        self.gen2AddrArr = {}               # type: Dict[str, List[int]]
         self.badCRC = 0
         self.minVersion = 0xffffffff
-        self._poll_task = None
-        self._light_update_task = None
+        self._poll_task = None              # type: asyncio.Task
+        self._light_update_task = None      # type: asyncio.Task
 
         self.features['tickless'] = True
 
@@ -814,10 +829,10 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
     """Manages a Serial connection to the first processor in a OPP serial chain."""
 
     # pylint: disable=too-many-arguments
-    def __init__(self, platform: HardwarePlatform, port, baud):
+    def __init__(self, platform: HardwarePlatform, port, baud) -> None:
         """Initialise Serial Connection to OPP Hardware."""
         self.partMsg = b""
-        self.chain_serial = None
+        self.chain_serial = None    # type: str
         self._lost_synch = False
 
         super().__init__(platform, port, baud)

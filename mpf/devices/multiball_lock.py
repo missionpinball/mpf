@@ -1,6 +1,7 @@
 """Contains the BallLock device class."""
 
 from mpf.core.device_monitor import DeviceMonitor
+from mpf.core.events import event_handler
 from mpf.core.mode_device import ModeDevice
 
 
@@ -54,6 +55,7 @@ class MultiballLock(ModeDevice):
         self.source_playfield = self.config['source_playfield']
         self.initialised = True
 
+    @event_handler(10)
     def enable(self, **kwargs):
         """Enable the lock.
 
@@ -95,6 +97,7 @@ class MultiballLock(ModeDevice):
 
         return {'balls': balls - 1}
 
+    @event_handler(0)
     def disable(self, **kwargs):
         """Disable the lock.
 
@@ -108,12 +111,14 @@ class MultiballLock(ModeDevice):
         self._unregister_handlers()
         self.enabled = False
 
+    @event_handler(1)
     def reset_all_counts(self, **kwargs):
         """Reset the locked balls for all players."""
         del kwargs
         for player in self.machine.game.player_list:
             player['{}_locked_balls'.format(self.name)] = 0
 
+    @event_handler(2)
     def reset_count_for_current_player(self, **kwargs):
         """Reset the locked balls for the current player."""
         del kwargs

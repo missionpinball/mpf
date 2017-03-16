@@ -1,12 +1,27 @@
 """Contains the Mode base class."""
 import copy
 
-from mpf.core.case_insensitive_dict import CaseInsensitiveDict
-from mpf.core.delays import DelayManager
+from typing import TYPE_CHECKING
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import List
+from typing import Set
+from typing import Tuple
 
+from mpf.core.case_insensitive_dict import CaseInsensitiveDict
+from mpf.core.config_validator import ConfigDict
+from mpf.core.delays import DelayManager
 from mpf.core.timer import Timer
 from mpf.core.utility_functions import Util
 from mpf.core.logging import LogMixin
+
+if TYPE_CHECKING:
+    from mpf.core.switch_controller import SwitchHandler
+    from mpf.core.events import QueuedEvent
+    from mpf.core.device import Device
+    from mpf.core.events import EventHandlerKey
+    from mpf.core.player import Player
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -14,7 +29,7 @@ class Mode(LogMixin):
 
     """Parent class for in-game mode code."""
 
-    def __init__(self, machine, config: dict, name: str, path):
+    def __init__(self, machine, config: ConfigDict, name: str, path) -> None:
         """Initialise mode.
 
         Args:
@@ -26,27 +41,28 @@ class Mode(LogMixin):
         Returns:
 
         """
+        super().__init__()
         self.machine = machine
         self.config = config
         self.name = name.lower()
         self.path = path
         self.priority = 0
         self._active = False
-        self._mode_start_wait_queue = None
-        self.stop_methods = list()
-        self.timers = dict()
-        self.start_callback = None
-        self.stop_callback = None
-        self.event_handlers = set()
-        self.switch_handlers = list()
-        self.mode_stop_kwargs = dict()
-        self.mode_devices = set()
-        self.start_event_kwargs = None
+        self._mode_start_wait_queue = None      # type: QueuedEvent
+        self.stop_methods = list()              # type: List[Tuple[Callable[[], None], Any]]
+        self.timers = dict()                    # type: Dict[str, Timer]
+        self.start_callback = None              # type: Callable[[], None]
+        self.stop_callback = None               # type: Callable[[], None]
+        self.event_handlers = set()             # type: Set[EventHandlerKey]
+        self.switch_handlers = list()           # type: List[SwitchHandler]
+        self.mode_stop_kwargs = dict()          # type: Dict[str, Any]
+        self.mode_devices = set()               # type: Set[Device]
+        self.start_event_kwargs = None          # type: Dict[str, Any]
         self.stopping = False
 
         self.delay = DelayManager(self.machine.delayRegistry)
 
-        self.player = None
+        self.player = None                      # type: Player
         '''Reference to the current player object.'''
 
         self._validate_mode_config()
@@ -106,10 +122,10 @@ class Mode(LogMixin):
         return self._active
 
     @active.setter
-    def active(self, active):
+    def active(self, new_active):
         """Setter for _active."""
-        if self._active != active:
-            self._active = active
+        if self._active != new_active:
+            self._active = new_active
             self.machine.mode_controller.set_mode_state(self, self._active)
 
     def configure_mode_settings(self, config):
@@ -457,12 +473,18 @@ class Mode(LogMixin):
             except ValueError:
                 priority = 0
 
-            self.add_mode_event_handler(
-                event=event,
-                handler=self._control_event_handler,
-                priority=int(priority) + 2,
-                callback=method,
-                ms_delay=delay)
+            if not delay:
+                self.add_mode_event_handler(
+                    event=event,
+                    handler=method,
+                    priority=int(priority) + 2)
+            else:
+                self.add_mode_event_handler(
+                    event=event,
+                    handler=self._control_event_handler,
+                    priority=int(priority) + 2,
+                    callback=method,
+                    ms_delay=delay)
 
         # get all devices in the mode
         device_list = set()
@@ -479,11 +501,7 @@ class Mode(LogMixin):
         del kwargs
         self.debug_log("_control_event_handler: callback: %s,", callback)
 
-        if ms_delay:
-            self.delay.add(name=callback, ms=ms_delay, callback=callback,
-                           mode=self)
-        else:
-            callback(mode=self)
+        self.delay.add(name=callback, ms=ms_delay, callback=callback, mode=self)
 
     def add_mode_event_handler(self, event, handler, priority=0, **kwargs):
         """Register an event handler which is automatically removed when this mode stops.
@@ -539,7 +557,7 @@ class Mode(LogMixin):
         for timer, settings in self.config['timers'].items():
 
             self.timers[timer] = Timer(machine=self.machine, mode=self,
-                                           name=timer, config=settings)
+                                       name=timer, config=settings)
 
         return self._kill_timers
 

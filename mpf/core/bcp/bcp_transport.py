@@ -1,6 +1,8 @@
 """Classes which manage BCP transports."""
 import asyncio
 
+from typing import Union
+
 from mpf.core.bcp.bcp_client import BaseBcpClient
 
 
@@ -80,7 +82,7 @@ class BcpTransportManager:
         if transport.exit_on_close:
             self._machine.stop()
 
-    def get_named_client(self, client_name) -> BaseBcpClient:
+    def get_named_client(self, client_name) -> Union[BaseBcpClient, bool]:
         """Get a client by name."""
         for client in self._transports:
             if client.name == client_name:
