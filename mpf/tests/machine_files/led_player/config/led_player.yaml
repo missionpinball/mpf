@@ -3,7 +3,7 @@
 modes:
  - mode1
 
-leds:
+lights:
   led1:
     debug: True
     number:
@@ -23,10 +23,10 @@ leds:
   led5:
     debug: True
     number:
-    default_color: red
+    default_on_color: red
 
 
-led_player:
+light_player:
   event1:
     led1:
       color: red
@@ -55,20 +55,20 @@ led_player:
 shows:
   show1:
   - time: 0
-    leds:
+    lights:
       led1: red
       led2: red
       led3: red
   show2:
   - time: 0
-    leds:
+    lights:
       led1: red
       led2: red
       led3: red
   - time: 1
   show3:
   - time: 0
-    leds:
+    lights:
       led1: blue
       led2: blue
       led3: blue
@@ -76,7 +76,7 @@ shows:
   show2_stay_on:
   - time: 0
     duration: -1
-    leds:
+    lights:
       led1: red
       led2: red
       led3: red

@@ -586,6 +586,7 @@ class MachineController(LogMixin):
         '''
         self.events.process_event_queue()
         self.thread_stopper.set()
+        self.device_manager.stop_devices()
         self._platform_stop()
 
         self.clock.loop.stop()

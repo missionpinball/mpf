@@ -1,7 +1,10 @@
 """Contains the parent class for all platforms."""
 import abc
 
+from typing import Optional, Callable, Tuple
+
 from mpf.devices.switch import Switch
+from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
 
 class BasePlatform(metaclass=abc.ABCMeta):
@@ -26,9 +29,7 @@ class BasePlatform(metaclass=abc.ABCMeta):
         self.features['has_accelerometers'] = False
         self.features['has_i2c'] = False
         self.features['has_servos'] = False
-        self.features['has_matrix_lights'] = False
-        self.features['has_gis'] = False
-        self.features['has_leds'] = False
+        self.features['has_lights'] = False
         self.features['has_switches'] = False
         self.features['has_drivers'] = False
         self.features['tickless'] = False
@@ -192,72 +193,36 @@ class ServoPlatform(BasePlatform, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
 
-class MatrixLightsPlatform(BasePlatform, metaclass=abc.ABCMeta):
+class LightsPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
-    """Baseclass for platforms with matrix lights in MPF."""
+    """Baseclass for platforms with any kind of lights in MPF.
 
-    def __init__(self, machine):
-        """Add matrix_lights feature."""
-        super().__init__(machine)
-        self.features['has_matrix_lights'] = True
-
-    @abc.abstractmethod
-    def configure_matrixlight(self, config):
-        """Subclass this method in a platform module to configure a matrix light.
-
-        This method should return a reference to the matrix lights's platform
-        interface object which will be called to access the hardware.
-
-        Args:
-            config (dict): Configuration of device.
-
-        """
-        raise NotImplementedError
-
-
-class GiPlatform(BasePlatform, metaclass=abc.ABCMeta):
-
-    """Baseclass for platforms with GIs."""
-
-    def __init__(self, machine):
-        """Add GI feature."""
-        super().__init__(machine)
-        self.features['has_gis'] = True
-
-    @abc.abstractmethod
-    def configure_gi(self, config):
-        """Subclass this method in a platform module to configure a GI string.
-
-        This method should return a reference to the GI string's platform
-        interface object which will be called to access the hardware.
-
-        Args:
-            config (dict): Config of GI.
-
-        """
-        raise NotImplementedError
-
-
-class LedPlatform(BasePlatform, metaclass=abc.ABCMeta):
-
-    """Baseclass for platforms with LEDs in MPF."""
+    This includes LEDs, GIs, Matrix Lights and any other lights.
+    """
 
     def __init__(self, machine):
         """Add led feature."""
         super().__init__(machine)
-        self.features['has_leds'] = True
+        self.features['has_lights'] = True
 
     @abc.abstractmethod
-    def configure_led(self, config, channels):
-        """Subclass this method in a platform module to configure an LED.
+    def parse_light_number_to_channels(self, number: str, subtype: str):
+        """Parse light number to a list of channels."""
+        raise NotImplementedError
 
-        This method should return a reference to the LED's platform interface
+    def light_sync(self):
+        """Called after channels of a light were updated.
+
+        Can be used if multiple channels need to be flushed at once.
+        """
+        pass
+
+    @abc.abstractmethod
+    def configure_light(self, number, subtype, platform_settings) -> LightPlatformInterface:
+        """Subclass this method in a platform module to configure a light.
+
+        This method should return a reference to the light
         object which will be called to access the hardware.
-
-        Args:
-            channels (int): Number of channels (typically 3 for RGB).
-            config (dict): Config of LED.
-
         """
         raise NotImplementedError
 
@@ -285,7 +250,7 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @classmethod
-    def get_switch_config_section(cls) -> str:
+    def get_switch_config_section(cls) -> Optional[str]:
         """Return config section for additional switch config items."""
         return None
 
@@ -380,7 +345,7 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @classmethod
-    def get_coil_config_section(cls):
+    def get_coil_config_section(cls) -> Optional[str]:
         """Return addition config section for coils."""
         return None
 

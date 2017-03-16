@@ -1,23 +1,21 @@
 """Contains code for a virtual hardware platform."""
 
 import logging
+from typing import Callable, Tuple
 
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
+from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 
-from mpf.core.platform import ServoPlatform, MatrixLightsPlatform, GiPlatform, LedPlatform, \
-    SwitchPlatform, DriverPlatform, AccelerometerPlatform, I2cPlatform, DmdPlatform, RgbDmdPlatform
+from mpf.core.platform import ServoPlatform, SwitchPlatform, DriverPlatform, AccelerometerPlatform, I2cPlatform,\
+    DmdPlatform, RgbDmdPlatform, LightsPlatform
 from mpf.core.utility_functions import Util
-from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
-from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
-from mpf.platforms.interfaces.gi_platform_interface import GIPlatformInterface
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
-from mpf.core.rgb_color import RGBColor
 
 
-class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, MatrixLightsPlatform, GiPlatform,
-                       LedPlatform, SwitchPlatform, DriverPlatform, DmdPlatform, RgbDmdPlatform):
+class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, LightsPlatform, SwitchPlatform,
+                       DriverPlatform, DmdPlatform, RgbDmdPlatform):
 
     """Base class for the virtual hardware platform."""
 
@@ -35,6 +33,7 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
         self.features['tickless'] = True
         self._next_driver = 1000
         self._next_switch = 1000
+        self._next_light = 1000
 
     def __repr__(self):
         """Return string representation."""
@@ -166,17 +165,36 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
         """Configure accelerometer."""
         pass
 
-    def configure_matrixlight(self, config):
-        """Configure matrix light."""
-        return VirtualMatrixLight(config['number'])
+    def configure_light(self, number, subtype, platform_settings):
+        """Configure light channel."""
+        del subtype
+        return VirtualLight(number, platform_settings)
 
-    def configure_led(self, config, channels):
-        """Configure led."""
-        return VirtualLED(config['number'])
-
-    def configure_gi(self, config):
-        """Configure GI."""
-        return VirtualGI(config['number'])
+    def parse_light_number_to_channels(self, number: str, subtype: str):
+        """Parse channel str to a list of channels."""
+        if number is None:
+            number = self._next_light
+            self._next_light += 1
+        if subtype in ("gi", "matrix"):
+            return [
+                {
+                    "number": str(number)
+                }
+            ]
+        elif subtype == "led" or not subtype:
+            return [
+                {
+                    "number": str(number) + "-r",
+                },
+                {
+                    "number": str(number) + "-g",
+                },
+                {
+                    "number": str(number) + "-b",
+                }
+            ]
+        else:
+            raise AssertionError("Unknown subtype {}".format(subtype))
 
     def clear_hw_rule(self, switch, coil):
         """Clear hw rule."""
@@ -250,57 +268,31 @@ class VirtualSwitch(SwitchPlatformInterface):
         self.log = logging.getLogger('VirtualSwitch')
 
 
-class VirtualMatrixLight(MatrixLightPlatformInterface):
+class VirtualLight(LightPlatformInterface):
 
-    """Virtual matrix light."""
+    """Virtual Light."""
 
-    def __init__(self, number):
-        """Initialise matrix light."""
-        self.log = logging.getLogger('VirtualMatrixLight')
-        self.number = number
-        self.current_brightness = 0
-
-    def on(self, brightness=255):
-        """Turn on matrix light."""
-        self.current_brightness = brightness
-
-    def off(self):
-        """Turn off matrix light."""
-        self.current_brightness = 0
-
-
-class VirtualLED(RGBLEDPlatformInterface):
-
-    """Virtual LED."""
-
-    def __init__(self, number):
+    def __init__(self, number, settings):
         """Initialise LED."""
-        self.log = logging.getLogger('VirtualLED')
+        self.settings = settings
         self.number = number
-        self.current_color = list(RGBColor().rgb)
+        self.color_and_fade_callback = None
 
-    def color(self, color):
-        """Set color."""
-        self.current_color = color
+    @property
+    def current_brightness(self, max_fade=0) -> float:
+        if self.color_and_fade_callback:
+            return self.color_and_fade_callback(max_fade)[0]
+        else:
+            return 0
 
+    def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
+        """Store CB function."""
+        self.color_and_fade_callback = color_and_fade_callback
 
-class VirtualGI(GIPlatformInterface):
-
-    """Virtual GI."""
-
-    def __init__(self, number):
-        """Initialise GI."""
-        self.log = logging.getLogger('VirtualGI')
-        self.number = number
-        self.current_brightness = 0
-
-    def on(self, brightness=255):
-        """Turn GI on."""
-        self.current_brightness = brightness
-
-    def off(self):
-        """Turn GI off."""
-        self.current_brightness = 0
+    def set_brightness(self, brightness: float, fade_ms: int):
+        """Set brightness."""
+        pass
+        #self.current_brightness = brightness
 
 
 class VirtualServo(ServoPlatformInterface):

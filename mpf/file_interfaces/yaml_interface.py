@@ -143,7 +143,8 @@ class MpfConstructor(Constructor):
             value = self.construct_object(value_node, deep=deep)
             # next two lines differ from original
             if key in mapping:
-                raise KeyError("Key \"{}\" was defined multiple times in config.".format(key))
+                raise KeyError("Key \"{}\" was defined multiple times in config {}".
+                               format(key, key_node.start_mark))
             mapping[key] = value
         return mapping
 

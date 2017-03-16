@@ -196,7 +196,7 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertShowNotRunning("achievement2_enabled")
         self.assertShowNotRunning("achievement2_started")
         self.assertShowNotRunning("achievement2_completed")
-        self.assertLedColor('led1', 'off')
+        self.assertLightColor('led1', 'off')
 
         self.start_game()
 
@@ -209,7 +209,7 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertShowNotRunning("achievement2_started")
         self.assertShowNotRunning("achievement2_completed")
         self.assertEqual("enabled", achievement._state)
-        self.assertLedColor('led1', 'yellow')
+        self.assertLightColor('led1', 'yellow')
 
         self.drain_ball()
         self.assertPlayerNumber(1)
@@ -219,11 +219,11 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertShowNotRunning("achievement2_started")
         self.assertShowNotRunning("achievement2_completed")
         self.assertEqual("disabled", achievement._state)
-        self.assertLedColor('led1', 'off')
+        self.assertLightColor('led1', 'off')
 
         self.post_event("achievement2_enable", 2)
         self.assertEqual("enabled", achievement._state)
-        self.assertLedColor('led1', 'yellow')
+        self.assertLightColor('led1', 'yellow')
 
         self.assertEqual(0, self._events['test_event'])
         self.assertEqual(0, self._events['test_event2'])
@@ -233,7 +233,7 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertShowRunning("achievement2_started")
         self.assertShowNotRunning("achievement2_completed")
         self.assertEqual("started", achievement._state)
-        self.assertLedColor('led1', 'green')
+        self.assertLightColor('led1', 'green')
 
         self.assertEqual(1, self._events['test_event'])
         self.assertEqual(1, self._events['test_event2'])
@@ -245,12 +245,12 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertShowNotRunning("achievement2_enabled")
         self.assertShowNotRunning("achievement2_started")
         self.assertShowNotRunning("achievement2_completed")
-        self.assertLedColor('led1', 'off')  # no show when stopped
+        self.assertLightColor('led1', 'off')  # no show when stopped
 
         # restart after stop is False
         self.post_event("achievement2_start", 2)
         self.assertEqual("stopped", achievement._state)
-        self.assertLedColor('led1', 'off')
+        self.assertLightColor('led1', 'off')
 
     def test_group_select(self):
 
@@ -265,9 +265,9 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertEqual("disabled", a4._state)
         self.assertEqual("disabled", a5._state)
         self.assertEqual("disabled", a6._state)
-        self.assertLedColor('led4', 'off')
-        self.assertLedColor('led5', 'off')
-        self.assertLedColor('led6', 'off')
+        self.assertLightColor('led4', 'off')
+        self.assertLightColor('led5', 'off')
+        self.assertLightColor('led6', 'off')
 
         # achievements are disabled, should select none
 
@@ -286,9 +286,9 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertEqual("enabled", a5._state)
         self.assertEqual("enabled", a6._state)
         self.advance_time_and_run(1)
-        self.assertLedColor('led4', 'yellow')
-        self.assertLedColor('led5', 'yellow')
-        self.assertLedColor('led6', 'yellow')
+        self.assertLightColor('led4', 'yellow')
+        self.assertLightColor('led5', 'yellow')
+        self.assertLightColor('led6', 'yellow')
 
         self.post_event('group2_random', 2)
 
@@ -299,7 +299,7 @@ class TestAchievement(MpfFakeGameTestCase):
 
         self.post_event('group2_enable', 2)
         self.assertTrue(g2._enabled)
-        self.assertLedColors('led2', ['red', 'blue'], 1, .09)  # group led
+        self.assertLightColors('led2', ['red', 'blue'], 1, .09)  # group led
 
         self.post_event('group2_random', 2)
         selected_achievements = [x for x in (a4, a5, a6) if x._state == 'selected']
@@ -315,9 +315,9 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertEqual("disabled", a4._state)
         self.assertEqual("disabled", a5._state)
         self.assertEqual("disabled", a6._state)
-        self.assertLedColor('led4', 'off')
-        self.assertLedColor('led5', 'off')
-        self.assertLedColor('led6', 'off')
+        self.assertLightColor('led4', 'off')
+        self.assertLightColor('led5', 'off')
+        self.assertLightColor('led6', 'off')
 
         self.post_event('group2_random', 2)
         selected_achievements = [x for x in (a4, a5, a6) if x._state == 'selected']
@@ -341,9 +341,9 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertEqual("selected", a4._state)
         self.assertEqual("enabled", a5._state)
         self.assertEqual("enabled", a6._state)
-        self.assertLedColor('led4', 'orange')
-        self.assertLedColor('led5', 'yellow')
-        self.assertLedColor('led6', 'yellow')
+        self.assertLightColor('led4', 'orange')
+        self.assertLightColor('led5', 'yellow')
+        self.assertLightColor('led6', 'yellow')
 
         # don't rotate if group is not enabled
         self.assertEqual(g2.enabled, False)
@@ -351,9 +351,9 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertEqual("selected", a4._state)
         self.assertEqual("enabled", a5._state)
         self.assertEqual("enabled", a6._state)
-        self.assertLedColor('led4', 'orange')
-        self.assertLedColor('led5', 'yellow')
-        self.assertLedColor('led6', 'yellow')
+        self.assertLightColor('led4', 'orange')
+        self.assertLightColor('led5', 'yellow')
+        self.assertLightColor('led6', 'yellow')
 
         # enable the group and test
         self.post_event('group2_enable', 1)
@@ -362,52 +362,52 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertEqual("enabled", a4._state)
         self.assertEqual("selected", a5._state)
         self.assertEqual("enabled", a6._state)
-        self.assertLedColor('led4', 'yellow')
-        self.assertLedColor('led5', 'orange')
-        self.assertLedColor('led6', 'yellow')
+        self.assertLightColor('led4', 'yellow')
+        self.assertLightColor('led5', 'orange')
+        self.assertLightColor('led6', 'yellow')
 
         # rotate 2 more times to make sure
         self.post_event('group2_rotate_right', 1)
         self.assertEqual("enabled", a4._state)
         self.assertEqual("enabled", a5._state)
         self.assertEqual("selected", a6._state)
-        self.assertLedColor('led4', 'yellow')
-        self.assertLedColor('led5', 'yellow')
-        self.assertLedColor('led6', 'orange')
+        self.assertLightColor('led4', 'yellow')
+        self.assertLightColor('led5', 'yellow')
+        self.assertLightColor('led6', 'orange')
 
         self.post_event('group2_rotate_right', 1)
         self.assertEqual("selected", a4._state)
         self.assertEqual("enabled", a5._state)
         self.assertEqual("enabled", a6._state)
-        self.assertLedColor('led4', 'orange')
-        self.assertLedColor('led5', 'yellow')
-        self.assertLedColor('led6', 'yellow')
+        self.assertLightColor('led4', 'orange')
+        self.assertLightColor('led5', 'yellow')
+        self.assertLightColor('led6', 'yellow')
 
         # test rotate left
         self.post_event('group2_rotate_left', 1)
         self.assertEqual("enabled", a4._state)
         self.assertEqual("enabled", a5._state)
         self.assertEqual("selected", a6._state)
-        self.assertLedColor('led4', 'yellow')
-        self.assertLedColor('led5', 'yellow')
-        self.assertLedColor('led6', 'orange')
+        self.assertLightColor('led4', 'yellow')
+        self.assertLightColor('led5', 'yellow')
+        self.assertLightColor('led6', 'orange')
 
         # don't rotate between disabled ones
         self.post_event('achievement4_disable', 1)
         self.assertEqual("disabled", a4._state)
         self.assertEqual("enabled", a5._state)
         self.assertEqual("selected", a6._state)
-        self.assertLedColor('led4', 'off')
-        self.assertLedColor('led5', 'yellow')
-        self.assertLedColor('led6', 'orange')
+        self.assertLightColor('led4', 'off')
+        self.assertLightColor('led5', 'yellow')
+        self.assertLightColor('led6', 'orange')
 
         self.post_event('group2_rotate_right', 1)
         self.assertEqual("disabled", a4._state)
         self.assertEqual("selected", a5._state)
         self.assertEqual("enabled", a6._state)
-        self.assertLedColor('led4', 'off')
-        self.assertLedColor('led5', 'orange')
-        self.assertLedColor('led6', 'yellow')
+        self.assertLightColor('led4', 'off')
+        self.assertLightColor('led5', 'orange')
+        self.assertLightColor('led6', 'yellow')
 
         # complete the event, auto_select is not enabled
 
@@ -417,9 +417,9 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertEqual("disabled", a4._state)
         self.assertEqual("completed", a5._state)
         self.assertEqual("enabled", a6._state)
-        self.assertLedColor('led4', 'off')
-        self.assertLedColor('led5', 'blue')
-        self.assertLedColor('led6', 'yellow')
+        self.assertLightColor('led4', 'off')
+        self.assertLightColor('led5', 'blue')
+        self.assertLightColor('led6', 'yellow')
 
         # rotate should not touch the complete or disabled ones
 
@@ -427,9 +427,9 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertEqual("disabled", a4._state)
         self.assertEqual("completed", a5._state)
         self.assertEqual("enabled", a6._state)
-        self.assertLedColor('led4', 'off')
-        self.assertLedColor('led5', 'blue')
-        self.assertLedColor('led6', 'yellow')
+        self.assertLightColor('led4', 'off')
+        self.assertLightColor('led5', 'blue')
+        self.assertLightColor('led6', 'yellow')
 
         # enable a4, select one, rotate shouldn't touch the disabled one
 
@@ -438,30 +438,30 @@ class TestAchievement(MpfFakeGameTestCase):
         self.post_event('group2_rotate_right', 1)
 
         self.assertEqual("completed", a5._state)
-        self.assertLedColor('led5', 'blue')
+        self.assertLightColor('led5', 'blue')
 
         if a4.state == 'selected':
             old_selected = a4
             old_enabled = a6
-            self.assertLedColor('led4', 'orange')
-            self.assertLedColor('led6', 'yellow')
+            self.assertLightColor('led4', 'orange')
+            self.assertLightColor('led6', 'yellow')
             self.assertEqual("enabled", a6._state)
         else:
             old_selected = a6
             old_enabled = a4
-            self.assertLedColor('led4', 'yellow')
-            self.assertLedColor('led6', 'orange')
+            self.assertLightColor('led4', 'yellow')
+            self.assertLightColor('led6', 'orange')
             self.assertEqual("enabled", a4._state)
 
         self.post_event('group2_rotate_right', 1)
-        self.assertLedColor(old_selected.config['show_tokens']['led'], 'yellow')
-        self.assertLedColor(old_enabled.config['show_tokens']['led'], 'orange')
+        self.assertLightColor(old_selected.config['show_tokens']['led'], 'yellow')
+        self.assertLightColor(old_enabled.config['show_tokens']['led'], 'orange')
         self.assertEqual(old_selected.state, 'enabled')
         self.assertEqual(old_enabled.state, 'selected')
 
         self.post_event('group2_rotate_right', 1)
-        self.assertLedColor(old_selected.config['show_tokens']['led'], 'orange')
-        self.assertLedColor(old_enabled.config['show_tokens']['led'], 'yellow')
+        self.assertLightColor(old_selected.config['show_tokens']['led'], 'orange')
+        self.assertLightColor(old_enabled.config['show_tokens']['led'], 'yellow')
         self.assertEqual(old_selected.state, 'selected')
         self.assertEqual(old_enabled.state, 'enabled')
 

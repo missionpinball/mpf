@@ -34,58 +34,58 @@ class TestInfoLights(MpfTestCase):
     def test_info_lights(self):
         # machine starts at gameover
         self.advance_time_and_run(.1)
-        self.assertEqual([0, 0, 0], self.machine.leds['gameOver'].hw_driver.current_color)
+        self.assertLightColor("gameOver", [0, 0, 0])
         self.advance_time_and_run(1)
-        self.assertEqual([255, 255, 255], self.machine.leds['gameOver'].hw_driver.current_color)
+        self.assertLightColor("gameOver", [255, 255, 255])
         self.advance_time_and_run(1)
-        self.assertEqual([0, 0, 0], self.machine.leds['gameOver'].hw_driver.current_color)
+        self.assertLightColor("gameOver", [0, 0, 0])
 
         self.start_game()
 
         # no more game over
-        self.assertEqual([0, 0, 0], self.machine.leds['gameOver'].hw_driver.current_color)
+        self.assertLightColor("gameOver", [0, 0, 0])
         self.advance_time_and_run(1)
-        self.assertEqual([0, 0, 0], self.machine.leds['gameOver'].hw_driver.current_color)
+        self.assertLightColor("gameOver", [0, 0, 0])
 
         # ball one
-        self.assertTrue(self.machine.lights['bip1'].hw_driver.current_brightness)
-        self.assertFalse(self.machine.lights['bip2'].hw_driver.current_brightness)
-        self.assertFalse(self.machine.lights['bip3'].hw_driver.current_brightness)
+        self.assertLightChannel("bip1", 255)
+        self.assertLightChannel("bip2", 0)
+        self.assertLightChannel("bip3", 0)
         # no tilt
-        self.assertEqual([0, 0, 0], self.machine.leds['tilt'].hw_driver.current_color)
+        self.assertLightColor("tilt", [0, 0, 0])
         # two players
-        self.assertTrue(self.machine.lights['player1'].hw_driver.current_brightness)
-        self.assertTrue(self.machine.lights['player2'].hw_driver.current_brightness)
+        self.assertLightChannel("player1", 255)
+        self.assertLightChannel("player2", 255)
 
         self.machine.game.balls_in_play = 0
         self.advance_time_and_run()
 
         # ball one
-        self.assertTrue(self.machine.lights['bip1'].hw_driver.current_brightness)
-        self.assertFalse(self.machine.lights['bip2'].hw_driver.current_brightness)
-        self.assertFalse(self.machine.lights['bip3'].hw_driver.current_brightness)
+        self.assertLightChannel("bip1", 255)
+        self.assertLightChannel("bip2", 0)
+        self.assertLightChannel("bip3", 0)
         # no tils
-        self.assertEqual([0, 0, 0], self.machine.leds['tilt'].hw_driver.current_color)
+        self.assertLightColor("tilt", [0, 0, 0])
 
         self.machine.game.balls_in_play = 0
         self.advance_time_and_run()
 
         # ball two
-        self.assertFalse(self.machine.lights['bip1'].hw_driver.current_brightness)
-        self.assertTrue(self.machine.lights['bip2'].hw_driver.current_brightness)
-        self.assertFalse(self.machine.lights['bip3'].hw_driver.current_brightness)
+        self.assertLightChannel("bip1", 0)
+        self.assertLightChannel("bip2", 255)
+        self.assertLightChannel("bip3", 0)
         # no tilt
-        self.assertEqual([0, 0, 0], self.machine.leds['tilt'].hw_driver.current_color)
+        self.assertLightColor("tilt", [0, 0, 0])
 
         self.stop_game()
         self.advance_time_and_run(.5)
 
         # gameover
-        self.assertEqual([0, 0, 0], self.machine.leds['gameOver'].hw_driver.current_color)
+        self.assertLightColor("gameOver", [0, 0, 0])
         self.advance_time_and_run(1)
-        self.assertEqual([255, 255, 255], self.machine.leds['gameOver'].hw_driver.current_color)
+        self.assertLightColor("gameOver", [255, 255, 255])
         self.advance_time_and_run(1)
-        self.assertEqual([0, 0, 0], self.machine.leds['gameOver'].hw_driver.current_color)
+        self.assertLightColor("gameOver", [0, 0, 0])
 
         self.start_game()
         self.advance_time_and_run()
@@ -94,12 +94,12 @@ class TestInfoLights(MpfTestCase):
         self.advance_time_and_run()
 
         # no ball
-        self.assertTrue(self.machine.lights['bip1'].hw_driver.current_brightness)
-        self.assertFalse(self.machine.lights['bip2'].hw_driver.current_brightness)
-        self.assertFalse(self.machine.lights['bip3'].hw_driver.current_brightness)
+        self.assertLightChannel("bip1", 255)
+        self.assertLightChannel("bip2", 0)
+        self.assertLightChannel("bip3", 0)
         # tilt
-        self.assertEqual([255, 255, 255], self.machine.leds['tilt'].hw_driver.current_color)
+        self.assertLightColor("tilt", [255, 255, 255])
 
-        self.assertTrue(self.machine.lights['player1'].hw_driver.current_brightness)
-        self.assertTrue(self.machine.lights['player2'].hw_driver.current_brightness)
+        self.assertLightChannel("player1", 255)
+        self.assertLightChannel("player2", 255)
 

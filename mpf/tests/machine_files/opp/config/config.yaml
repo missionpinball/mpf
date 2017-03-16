@@ -43,13 +43,13 @@ coils:
         number: 1-12
         hold_power16: 1
 
-matrix_lights:
+lights:
   test_light1:
     number: 0-16
+    subtype: matrix
   test_light2:
     number: 0-17
-
-leds:
+    subtype: matrix
   test_led1:
     number: 1-0
   test_led2:

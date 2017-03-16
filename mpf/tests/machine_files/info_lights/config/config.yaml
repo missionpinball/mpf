@@ -8,39 +8,52 @@ switches:
         number: 1
         tags: start
 
-matrix_lights:
+lights:
     match00:
         number:
+        subtype: matrix
     match10:
         number:
+        subtype: matrix
     match20:
         number:
+        subtype: matrix
     match30:
         number:
+        subtype: matrix
     match40:
         number:
+        subtype: matrix
     match50:
         number:
+        subtype: matrix
     match60:
         number:
+        subtype: matrix
     match70:
         number:
+        subtype: matrix
     match80:
         number:
+        subtype: matrix
     match90:
         number:
+        subtype: matrix
     bip1:
         number:
+        subtype: matrix
     bip2:
         number:
+        subtype: matrix
     bip3:
         number:
+        subtype: matrix
     player1:
         number:
+        subtype: matrix
     player2:
         number:
-
-leds:
+        subtype: matrix
     tilt:
         number:
     gameOver:

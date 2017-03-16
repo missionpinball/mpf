@@ -19,11 +19,14 @@ coils:
     c_test_fliptronics:
         number: fllm
         pulse_ms: 23
+    test_gi:
+        number: g01
+        pulse_ms: 0
 
-matrix_lights:
+lights:
   test_light:
     number: l11
-
-gis:
-  test_gi_direct:
-    number: g01
+    subtype: matrix
+  test_gi:
+    platform: drivers
+    number: test_gi

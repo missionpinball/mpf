@@ -19,6 +19,6 @@ show_player:
 shows:
   show_from_mode:
     - time: 0
-      leds:
+      lights:
         (leds): red
     - time: 1

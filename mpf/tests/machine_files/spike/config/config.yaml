@@ -25,7 +25,7 @@ coils:
     number: 8-10
     pulse_power: 4
 
-matrix_lights:
+lights:
   backlight:
     number: 0-0
   l_1_3:

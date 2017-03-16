@@ -131,36 +131,6 @@ class BallController(MpfController):
                 yield from Util.first(futures, self.machine.clock.loop)
                 continue
 
-    def _count_stable_balls(self):
-        self.debug_log("Counting Balls")
-        balls = 0
-
-        for device in self.machine.ball_devices:
-            if device.is_playfield():
-                continue
-
-            if not device.is_ball_count_stable():
-                raise ValueError("devices not stable")
-
-            # generally we do not count ball devices without switches
-            if 'ball_switches' not in device.config:
-                continue
-            # special handling for troughs (needed for gottlieb)
-            elif not device.config['ball_switches'] and 'trough' in device.tags:
-                balls += device.balls
-            else:
-                for switch in device.config['ball_switches']:
-                    if self.machine.switch_controller.is_active(
-                            switch.name, ms=device.config['entrance_count_delay']):
-                        balls += 1
-                    elif self.machine.switch_controller.is_inactive(
-                            switch.name, ms=device.config['exit_count_delay']):
-                        continue
-                    else:
-                        raise ValueError("switches not stable")
-
-        return balls
-
     def _count_balls(self):
         self.debug_log("Counting Balls")
         balls = 0

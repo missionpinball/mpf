@@ -191,7 +191,7 @@ class Show(Asset):
                 actions[key] = self.machine.show_controller.show_players[key].validate_config_entry(value, self.name)
 
             elif key != 'duration' and key != 'time':   # pragma: no cover
-                self._show_validation_error('Invalid section "{}:" found in show'.format(key))
+                self._show_validation_error('Invalid section "{}:" found in show {}'.format(key, self.name))
 
     def _do_unload(self):
         self.show_steps = None

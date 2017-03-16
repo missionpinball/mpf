@@ -13,21 +13,21 @@ from mpf.platforms.fast import fast_defines
 from mpf.platforms.fast.fast_dmd import FASTDMD
 from mpf.platforms.fast.fast_driver import FASTDriver
 from mpf.platforms.fast.fast_gi import FASTGIString
-from mpf.platforms.fast.fast_led import FASTDirectLED
+from mpf.platforms.fast.fast_led import FASTDirectLED, FASTDirectLEDChannel
 from mpf.platforms.fast.fast_light import FASTMatrixLight
 from mpf.platforms.fast.fast_serial_communicator import FastSerialCommunicator
 from mpf.platforms.fast.fast_switch import FASTSwitch
 
 from mpf.devices.switch import Switch
-from mpf.core.platform import ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatform, \
-    SwitchPlatform, DriverPlatform
+from mpf.core.platform import ServoPlatform, DmdPlatform, SwitchPlatform, DriverPlatform, LightsPlatform
 from mpf.core.utility_functions import Util
 
 
 # pylint: disable-msg=too-many-instance-attributes
-class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
-                       DmdPlatform, LedPlatform, SwitchPlatform,
-                       DriverPlatform):
+from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
+
+
+class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatform, DriverPlatform):
 
     """Platform class for the FAST hardware controller.
 
@@ -47,12 +47,12 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         self.net_connection = None
         self.rgb_connection = None
         self.serial_connections = set()
-        self.fast_leds = set()
+        self.fast_leds = {}
         self.flag_led_tick_registered = False
         self.config = None
         self.machine_type = None
         self.hw_switch_data = None
-        self.io_boards = {}     # type: dict[int, 'mpf.platform.fast.fast_io_board.FastIoBoard']
+        self.io_boards = {}     # type: {int, 'mpf.platform.fast.fast_io_board.FastIoBoard'}
 
         self.fast_commands = {'ID': lambda x: None,  # processor ID
                               'WX': lambda x: None,  # watchdog
@@ -188,9 +188,11 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             dt: time since last call
         """
         del dt
-        msg = 'RS:' + ','.join(["%s%s" % (led.number, led.current_color)
-                                for led in self.fast_leds])
-        self.rgb_connection.send(msg)
+        dirty_leds = [led for led in self.fast_leds.values() if led.dirty]
+
+        if dirty_leds:
+            msg = 'RS:' + ','.join(["%s%s" % (led.number, led.current_color) for led in dirty_leds])
+            self.rgb_connection.send(msg)
 
     def get_hw_switch_states(self):
         """Return hardware states."""
@@ -246,9 +248,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         hw_states = dict()
 
-        num_local, local_states, num_nw, nw_states = msg.split(',')
-        num_local = Util.hex_string_to_int(num_local) - 1
-        num_nw = Util.hex_string_to_int(num_nw) - 1
+        _, local_states, _, nw_states = msg.split(',')
 
         for offset, byte in enumerate(bytearray.fromhex(nw_states)):
             for i in range(8):
@@ -472,83 +472,80 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         return switch
 
-    def configure_led(self, config: dict, channels: int):
-        """Configure a WS2812 LED.
-
-        Args:
-            config: LED config.
-            channels: Number of channels (3 for RGB)
-
-        Returns: LED object.
-
-        """
-        if channels > 3:
-            raise AssertionError("FAST only supports RGB LEDs")
-        if not self.rgb_connection:
-            raise AssertionError('A request was made to configure a FAST LED, '
-                                 'but no connection to an LED processor is '
-                                 'available')
-
-        if not self.flag_led_tick_registered:
-            # Update leds every frame
-            self.machine.clock.schedule_interval(self.update_leds,
-                                                 1 / self.machine.config['mpf']['default_led_hw_update_hz'])
-            self.flag_led_tick_registered = True
-
-        # if the LED number is in <channel> - <led> format, convert it to a
-        # FAST hardware number
-        if '-' in str(config['number']):
-            num = str(config['number']).split('-')
-            number = Util.int_to_hex_string((int(num[0]) * 64) + int(num[1]))
-        else:
-            number = self.convert_number_from_config(config['number'])
-
-        this_fast_led = FASTDirectLED(number)
-        self.fast_leds.add(this_fast_led)
-
-        return this_fast_led
-
-    def configure_gi(self, config: dict) -> FASTGIString:
-        """Configure a GI.
-
-        Args:
-            config: GI config.
-
-        Returns: GI object.
-        """
-        # TODO: Add support for driver-based GI strings
-
+    def configure_light(self, number, subtype, platform_settings) -> LightPlatformInterface:
+        """Configure light in platform."""
         if not self.net_connection:
-            raise AssertionError('A request was made to configure a FAST GI, '
+            raise AssertionError('A request was made to configure a FAST Light, '
                                  'but no connection to a NET processor is '
                                  'available')
+        if subtype == "gi":
+            return FASTGIString(number, self.net_connection.send, self.machine,
+                                int(1 / self.machine.config['mpf']['default_light_hw_update_hz'] * 1000))
+        elif subtype == "matrix":
+            return FASTMatrixLight(number, self.net_connection.send, self.machine,
+                                   int(1 / self.machine.config['mpf']['default_light_hw_update_hz'] * 1000))
+        elif not subtype or subtype == "led":
+            if not self.flag_led_tick_registered:
+                # Update leds every frame
+                self.machine.clock.schedule_interval(self.update_leds,
+                                                     1 / self.machine.config['mpf']['default_light_hw_update_hz'])
+                self.flag_led_tick_registered = True
 
-        if self.machine_type == 'wpc':  # translate switch num to FAST switch
-            number = fast_defines.wpc_gi_map.get(str(config['number']).upper())
+            number_str, channel = number.split("-")
+            if number_str not in self.fast_leds:
+                self.fast_leds[number_str] = FASTDirectLED(
+                    number_str, int(self.config['hardware_led_fade_time']))
+            fast_led_channel = FASTDirectLEDChannel(self.fast_leds[number_str], channel)
+
+            return fast_led_channel
         else:
-            number = self.convert_number_from_config(config['number'])
+            raise AssertionError("Unknown subtype {}".format(subtype))
 
-        return FASTGIString(number, self.net_connection.send)
+    def parse_light_number_to_channels(self, number: str, subtype: str):
+        """Parse light channels from number string."""
+        if subtype == "gi":
+            if self.machine_type == 'wpc':  # translate number to FAST GI number
+                number = fast_defines.wpc_gi_map.get(str(number).upper())
+            else:
+                number = self.convert_number_from_config(number)
 
-    def configure_matrixlight(self, config: dict) -> FASTMatrixLight:
-        """Configure a matrix light.
+            return [
+                {
+                    "number": number
+                }
+            ]
+        elif subtype == "matrix":
+            if self.machine_type == 'wpc':  # translate number to FAST light num
+                number = fast_defines.wpc_light_map.get(str(number).upper())
+            else:
+                number = self.convert_number_from_config(number)
 
-        Args:
-            config: Matrix light config.
-
-        Returns: Matrix light object.
-        """
-        if not self.net_connection:
-            raise AssertionError('A request was made to configure a FAST '
-                                 'matrix light, but no connection to a NET '
-                                 'processor is available')
-
-        if self.machine_type == 'wpc':  # translate number to FAST light num
-            number = fast_defines.wpc_light_map.get(str(config['number']).upper())
+            return [
+                {
+                    "number": number
+                }
+            ]
+        elif not subtype or subtype == "led":
+            # if the LED number is in <channel> - <led> format, convert it to a
+            # FAST hardware number
+            if '-' in str(number):
+                num = str(number).split('-')
+                number = Util.int_to_hex_string((int(num[0]) * 64) + int(num[1]))
+            else:
+                number = self.convert_number_from_config(number)
+            return [
+                {
+                    "number": number + "-0"
+                },
+                {
+                    "number": number + "-1"
+                },
+                {
+                    "number": number + "-2"
+                },
+            ]
         else:
-            number = self.convert_number_from_config(config['number'])
-
-        return FASTMatrixLight(number, self.net_connection.send)
+            raise AssertionError("Unknown subtype {}".format(subtype))
 
     def configure_dmd(self):
         """Configure a hardware DMD connected to a FAST controller."""

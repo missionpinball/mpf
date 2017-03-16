@@ -116,7 +116,7 @@ score_reel_groups:
         confirm: lazy
         lights_tag: player2
 
-matrix_lights:
+lights:
     light_p1:
         number:
         tags: player1
