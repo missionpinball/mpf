@@ -11,6 +11,7 @@ import queue
 import sys
 import threading
 
+import copy
 from pkg_resources import iter_entry_points
 
 from mpf._version import __version__
@@ -275,6 +276,21 @@ class MachineController(LogMixin):
                 settings['value'] = 0
 
             self.create_machine_var(name=name, value=settings['value'])
+
+        self._load_initial_machine_vars()
+
+    def _load_initial_machine_vars(self):
+        """Load initial machine var values from config if they did not get loaded from data."""
+        if 'machine_vars' not in self.config:
+            return
+
+        config = self.config['machine_vars']
+        for name, element in config.items():
+            if name not in self.machine_vars:
+                element = self.config_validator.validate_config("machine_vars", copy.deepcopy(element))
+                self.create_machine_var(name=name,
+                                        value=Util.convert_to_type(element['initial_value'], element['value_type']),
+                                        persist=element['persist'])
 
     def _check_crash_queue(self, time):
         del time

@@ -13,6 +13,14 @@ player_vars:
     initial_value: hello
     value_type: str  # required for non-ints
 
+machine_vars:
+  test1:
+    initial_value: 4
+    value_type: int
+  test2:
+    initial_value: '5'
+    value_type: str
+
 # below is the min config we need to be able to start a game
 
 game:

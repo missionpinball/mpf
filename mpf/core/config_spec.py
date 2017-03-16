@@ -598,6 +598,11 @@ machine:
     __valid_in__: machine
     balls_installed: single|int|1
     min_balls: single|int|1
+machine_vars:
+    __valid_in__: machine
+    initial_value: single|str|
+    value_type: single|enum(str,float,int)|int
+    persist: single|bool|True
 matrix_light_settings:
     __valid_in__: machine
     default_light_fade_ms: single|int|0
