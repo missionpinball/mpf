@@ -628,43 +628,56 @@ class TestFast(MpfTestCase):
             "L1:23,00": "L1:P",
         }
         self.machine.lights.test_pdb_light.on(brightness=255, fade_ms=100)
-        self.advance_time_and_run(.01)
+        self.advance_time_and_run(.02)
         self.assertFalse(self.net_cpu.expected_commands)
 
         # step 1
         self.net_cpu.expected_commands = {
+            "L1:23,32": "L1:P",
             "L1:23,33": "L1:P",
         }
         self.advance_time_and_run(.02)
-        self.assertFalse(self.net_cpu.expected_commands)
+        self.assertEqual(1, len(self.net_cpu.expected_commands))
 
         # step 2
         self.net_cpu.expected_commands = {
+            "L1:23,65": "L1:P",
             "L1:23,66": "L1:P",
         }
         self.advance_time_and_run(.02)
-        self.assertFalse(self.net_cpu.expected_commands)
+        self.assertEqual(1, len(self.net_cpu.expected_commands))
 
         # step 3
         self.net_cpu.expected_commands = {
+            "L1:23,98": "L1:P",
             "L1:23,99": "L1:P",
         }
         self.advance_time_and_run(.02)
-        self.assertFalse(self.net_cpu.expected_commands)
+        self.assertEqual(1, len(self.net_cpu.expected_commands))
 
         # step 4
         self.net_cpu.expected_commands = {
+            "L1:23,CB": "L1:P",
             "L1:23,CC": "L1:P",
         }
         self.advance_time_and_run(.02)
-        self.assertFalse(self.net_cpu.expected_commands)
+        self.assertEqual(1, len(self.net_cpu.expected_commands))
 
         # step 5
         self.net_cpu.expected_commands = {
+            "L1:23,FE": "L1:P",
             "L1:23,FF": "L1:P",
         }
         self.advance_time_and_run(.02)
-        self.assertFalse(self.net_cpu.expected_commands)
+        self.assertEqual(1, len(self.net_cpu.expected_commands))
+
+        # step 6 if step 5 did not send FF
+        if "L1:23,FE" not in self.net_cpu.expected_commands:
+            self.net_cpu.expected_commands = {
+                "L1:23,FF": "L1:P",
+            }
+            self.advance_time_and_run(.02)
+            self.assertFalse(self.net_cpu.expected_commands)
 
     def _test_pdb_gi_light(self):
         # test gi on
