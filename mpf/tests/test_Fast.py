@@ -633,40 +633,33 @@ class TestFast(MpfTestCase):
 
         # step 1
         self.net_cpu.expected_commands = {
-            "L1:23,32": "L1:P",
+            "L1:23,33": "L1:P",
         }
         self.advance_time_and_run(.02)
         self.assertFalse(self.net_cpu.expected_commands)
 
         # step 2
         self.net_cpu.expected_commands = {
-            "L1:23,65": "L1:P",
+            "L1:23,66": "L1:P",
         }
         self.advance_time_and_run(.02)
         self.assertFalse(self.net_cpu.expected_commands)
 
         # step 3
         self.net_cpu.expected_commands = {
-            "L1:23,98": "L1:P",
+            "L1:23,99": "L1:P",
         }
         self.advance_time_and_run(.02)
         self.assertFalse(self.net_cpu.expected_commands)
 
         # step 4
         self.net_cpu.expected_commands = {
-            "L1:23,CB": "L1:P",
+            "L1:23,CC": "L1:P",
         }
         self.advance_time_and_run(.02)
         self.assertFalse(self.net_cpu.expected_commands)
 
         # step 5
-        self.net_cpu.expected_commands = {
-            "L1:23,FE": "L1:P",
-        }
-        self.advance_time_and_run(.02)
-        self.assertFalse(self.net_cpu.expected_commands)
-
-        # step 6
         self.net_cpu.expected_commands = {
             "L1:23,FF": "L1:P",
         }
