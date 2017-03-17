@@ -1,5 +1,6 @@
 """Contains the base class for autofire coil devices."""
 from mpf.core.device_monitor import DeviceMonitor
+from mpf.core.platform_controller import SwitchRuleSettings, DriverRuleSettings, PulseRuleSettings
 
 from mpf.devices.driver import ReconfiguredDriver
 from mpf.devices.switch import ReconfiguredSwitch
@@ -55,7 +56,16 @@ class AutofireCoil(SystemWideDevice):
 
         self.debug_log("Enabling")
 
-        self.coil.set_pulse_on_hit_rule(self.switch)
+        recycle = True if self.config['coil_overwrite']['recycle'] in (True, None) else False
+        debounce = False if self.config['switch_overwrite']['debounce'] in (None, "quick") else True
+
+        self.machine.platform_controller.set_pulse_on_hit_rule(
+            SwitchRuleSettings(switch=self.config['switch'], debounce=debounce,
+                               invert=self.config['reverse_switch']),
+            DriverRuleSettings(driver=self.config['coil'], recycle=recycle),
+            PulseRuleSettings(duration=self.config['coil_overwrite']['pulse_ms'],
+                              power=self.config['coil_overwrite']['pulse_power'])
+        )
 
     def disable(self, **kwargs):
         """Disable the autofire coil rule."""

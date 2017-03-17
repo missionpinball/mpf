@@ -2,6 +2,7 @@
 import copy
 
 from mpf.core.device_monitor import DeviceMonitor
+from mpf.core.platform_controller import SwitchRuleSettings, DriverRuleSettings, PulseRuleSettings, HoldRuleSettings
 
 from mpf.devices.driver import ReconfiguredDriver
 
@@ -165,22 +166,70 @@ class Flipper(SystemWideDevice):
 
         self._enabled = False
 
+    def _get_pulse_ms(self) -> int:
+        """Return pulse_ms."""
+        pulse_ms = self.config['main_coil_overwrite']["pulse_ms"]
+        if self.config['power_setting_name']:
+            settings_factor = self.machine.settings.get_setting_value(self.config['power_setting_name'])
+            if not pulse_ms:
+                pulse_ms = self.machine.config['mpf']['default_pulse_ms']
+            return int(pulse_ms * settings_factor)
+        else:
+            return pulse_ms
+        
+    def _get_hold_pulse_ms(self) -> int:
+        """Return pulse_ms for hold coil."""
+        pulse_ms = self.config['hold_coil_overwrite']["pulse_ms"]
+        if self.config['power_setting_name']:
+            settings_factor = self.machine.settings.get_setting_value(self.config['power_setting_name'])
+            if not pulse_ms:
+                pulse_ms = self.machine.config['mpf']['default_pulse_ms']
+            return int(pulse_ms * settings_factor)
+        else:
+            return pulse_ms
+
+    def _get_pulse_power(self) -> float:
+        """Return pulse_power."""
+        pulse_power = self.config['main_coil_overwrite']["pulse_power"]
+        return pulse_power
+
+    def _get_hold_pulse_power(self) -> float:
+        """Return pulse_power for hold coil."""
+        pulse_power = self.config['hold_coil_overwrite']["pulse_power"]
+        return pulse_power
+
+    def _get_hold_power(self) -> float:
+        """Return hold_power."""
+        hold_power = self.config['main_coil_overwrite']["hold_power"]
+        return hold_power
+
     def _enable_single_coil_rule(self):
         self.debug_log('Enabling single coil rule')
 
-        self.main_coil.set_pulse_on_hit_and_enable_and_release_rule(self.switch)
+        self.machine.platform_controller.set_pulse_on_hit_and_enable_and_release_rule(
+            SwitchRuleSettings(switch=self.config['activation_switch'], debounce=False, invert=False),
+            DriverRuleSettings(driver=self.config['main_coil'], recycle=False),
+            PulseRuleSettings(duration=self._get_pulse_ms(), power=self._get_pulse_power()),
+            HoldRuleSettings(power=self._get_hold_power())
+        )
 
     def _enable_main_coil_pulse_rule(self):
         self.debug_log('Enabling main coil pulse rule')
 
-        self.main_coil.set_pulse_on_hit_and_release_rule(self.switch)
+        self.machine.platform_controller.set_pulse_on_hit_and_release_rule(
+            SwitchRuleSettings(switch=self.config['activation_switch'], debounce=False, invert=False),
+            DriverRuleSettings(driver=self.config['main_coil'], recycle=False),
+            PulseRuleSettings(duration=self._get_pulse_ms(), power=self._get_pulse_power())
+        )
 
     def _enable_hold_coil_rule(self):
         self.debug_log('Enabling hold coil rule')
 
-        # TODO: why are we pulsing the hold coil?
-
-        self.hold_coil.set_pulse_on_hit_and_enable_and_release_rule(self.switch)
+        self.machine.platform_controller.set_pulse_on_hit_and_enable_and_release_rule(
+            SwitchRuleSettings(switch=self.config['activation_switch'], debounce=False, invert=False),
+            DriverRuleSettings(driver=self.config['hold_coil'], recycle=False),
+            PulseRuleSettings(duration=self._get_hold_pulse_ms(), power=self._get_hold_pulse_power())
+        )
 
     def _enable_main_coil_eos_cutoff_rule(self):
         self.debug_log('Enabling main coil EOS cutoff rule')

@@ -23,6 +23,7 @@ mpf:
         - placeholder_manager: mpf.core.placeholder_manager.PlaceholderManager
         - light_controller: mpf.core.light_controller.LightController
         - extra_ball_controller: mpf.core.extra_balls.ExtraBallController
+        - platform_controller: mpf.core.platform_controller.PlatformController
 
     config_players:
         coil: mpf.config_players.coil_player
@@ -188,6 +189,7 @@ logging:
       mode_controller: basic
       placeholder_manager: none
       platforms: none  # todo
+      platform_controller: none
       players: basic  # todo
       plugins: none  # todo
       score_reel_controller: none
@@ -220,6 +222,7 @@ logging:
       mode_controller: basic
       placeholder_manager: basic
       platforms: basic
+      platform_controller: basic
       players: full
       plugins: basic
       score_reel_controller: basic

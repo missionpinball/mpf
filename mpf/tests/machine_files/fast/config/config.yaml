@@ -30,32 +30,28 @@ switches:
 coils:
     c_test:
         number: 4
-        pulse_ms: 23
+        default_pulse_ms: 23
     c_test_allow_enable:
         number: 6
-        pulse_ms: 23
-        allow_enable: true
+        default_pulse_ms: 23
+        max_hold_power: 1.0
     c_slingshot_test:
         number: 7
-    c_pulse_pwm_mask:
-        number: 10
-        pulse_pwm_mask: 10001001
-        hold_pwm_mask: 10101010
     c_pulse_pwm32_mask:
         number: 11
-        pulse_pwm_mask: 10001001100010011000100110001001
-        hold_pwm_mask: 10101010100010011010101010001001
+        default_pulse_power: 0.53
+        default_hold_power: 0.40
     c_long_pulse:
         number: 12
-        pulse_ms: 2000
-        allow_enable: true
+        default_pulse_ms: 2000
+        max_hold_power: 1.0
     c_flipper_main:
         number: 20
-        pulse_ms: 10
-        hold_power: 1
+        default_pulse_ms: 10
+        default_hold_power: 0.125
     c_flipper_hold:
         number: 3-5
-        hold_power: 1
+        default_hold_power: 0.125
 
 autofire_coils:
     ac_slingshot_test:

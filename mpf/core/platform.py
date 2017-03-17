@@ -1,5 +1,6 @@
 """Contains the parent class for all platforms."""
 import abc
+from collections import namedtuple
 
 from typing import Optional, Callable, Tuple
 
@@ -307,6 +308,10 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
 
+SwitchSettings = namedtuple("SwitchSettings", ["hw_switch", "invert", "debounce"])
+DriverSettings = namedtuple("DriverSettings", ["hw_driver", "pulse_settings", "hold_settings", "recycle"])
+
+
 class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     """Baseclass for platforms with drivers."""
@@ -321,7 +326,7 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['max_pulse'] = 255
 
     @abc.abstractmethod
-    def configure_driver(self, config):
+    def configure_driver(self, config):  # TODO: cleanup
         """Subclass this method in a platform module to configure a driver.
 
         This method should return a reference to the driver's platform interface
@@ -331,7 +336,7 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def clear_hw_rule(self, switch, coil):
+    def clear_hw_rule(self, switch, coil):  # TODO: cleanup
         """Subclass this method in a platform module to clear a hardware switch rule for this switch.
 
         Clearing a hardware rule means actions on this switch will no longer
@@ -345,23 +350,23 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @classmethod
-    def get_coil_config_section(cls) -> Optional[str]:
+    def get_coil_config_section(cls) -> Optional[str]:  # TODO: cleanup
         """Return addition config section for coils."""
         return None
 
     @classmethod
-    def get_coil_overwrite_section(cls):
+    def get_coil_overwrite_section(cls):  # TODO: cleanup
         """Return addition config section for coils overwrites."""
         return None
 
-    def validate_coil_overwrite_section(self, driver, config_overwrite):
+    def validate_coil_overwrite_section(self, driver, config_overwrite):  # TODO: cleanup
         """Validate coil overwrite config for platform."""
         driver.machine.config_validator.validate_config(
             "coil_overwrites", config_overwrite, driver.name,
             base_spec=self.get_coil_overwrite_section())
         return config_overwrite
 
-    def validate_coil_section(self, driver, config):
+    def validate_coil_section(self, driver, config):  # TODO: cleanup
         """Validate coil config for platform."""
         base_spec = ["device"]
         if self.__class__.get_coil_config_section():
@@ -372,7 +377,7 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
         return config
 
     @abc.abstractmethod
-    def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
+    def set_pulse_on_hit_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and release rule to driver.
 
         Pulses a driver when a switch is hit. When the switch is released the pulse is canceled. Typically used on
@@ -381,7 +386,7 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
+    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and enable and relase rule on driver.
 
         Pulses a driver when a switch is hit. Then enables the driver (may be with pwm). When the switch is released
@@ -390,7 +395,8 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
+    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
+                                                                 disable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and enable and release and disable rule on driver.
 
         Pulses a driver when a switch is hit. Then enables the driver (may be with pwm). When the switch is released
@@ -400,7 +406,7 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def set_pulse_on_hit_rule(self, enable_switch, coil):
+    def set_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit rule on driver.
 
         Pulses a driver when a switch is hit. When the switch is released the pulse continues. Typically used for

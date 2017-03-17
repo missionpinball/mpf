@@ -104,8 +104,8 @@ coil_overwrites:
     __valid_in__: machine
     recycle: single|bool|None
     pulse_ms: single|ms|None
-    pulse_power: single|int(0,8)|None
-    hold_power: single|int(0,8)|None
+    pulse_power: single|float(0,1)|None
+    hold_power: single|float(0,1)|None
 fast_coil_overwrites:
     __valid_in__: machine
     pulse_power32: single|int|None
@@ -218,15 +218,22 @@ bonus_entries:
 coils:
     __valid_in__: machine
     number: single|str|
-    pulse_ms: single|ms|None
-    pulse_power: single|int(0,8)|None
-    psu: single|machine(psus)|default
-    hold_power: single|int(0,8)|None
-    recycle: single|bool|False
-    allow_enable: single|bool|False
-    enable_events: dict|str:ms|None
+
+    default_pulse_ms: single|ms|None
+    default_pulse_power: single|float(0,1)|None
+    default_hold_power: single|float(0,1)|None
+
+    max_pulse_ms: single|ms|None
+    max_pulse_power: single|float(0,1)|1.0
+    max_hold_power: single|float(0,1)|None
+
     disable_events: dict|str:ms|None
+    enable_events: dict|str:ms|None
     pulse_events: dict|str:ms|None
+
+    platform_settings: single|dict|None
+
+    psu: single|machine(psus)|default
     platform: single|str|None
 dual_wound_coils:
     __valid_in__: machine

@@ -22,7 +22,8 @@ from mpf.platforms.fast.fast_serial_communicator import FastSerialCommunicator
 from mpf.platforms.fast.fast_switch import FASTSwitch
 
 from mpf.devices.switch import Switch
-from mpf.core.platform import ServoPlatform, DmdPlatform, SwitchPlatform, DriverPlatform, LightsPlatform
+from mpf.core.platform import ServoPlatform, DmdPlatform, SwitchPlatform, DriverPlatform, LightsPlatform, DriverSettings, \
+    SwitchSettings
 from mpf.core.utility_functions import Util
 
 
@@ -629,12 +630,12 @@ class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatfor
             coil.hw_driver.number,
             driver.get_control_for_cmd(enable_switch),
             enable_switch.hw_switch.number[0],
-            driver.get_pulse_ms_for_cmd(coil),
-            driver.get_pwm1_for_cmd(coil),
-            driver.get_recycle_ms_for_cmd(coil))
+            Util.int_to_hex_string(coil.pulse_settings.duration),
+            driver.get_pwm_for_cmd(coil.pulse_settings.power),
+            driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
 
         driver.autofire = True
-        enable_switch.hw_switch.configure_debounce(enable_switch.config)
+        enable_switch.hw_switch.configure_debounce(enable_switch.debounce)
         self.debug_log("Writing hardware rule: %s", cmd)
 
         self.net_connection.send(cmd)
@@ -660,7 +661,7 @@ class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatfor
         del disable_switch
         self.set_pulse_on_hit_and_release_rule(enable_switch, coil)
 
-    def set_pulse_on_hit_rule(self, enable_switch, coil):
+    def set_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit rule on driver."""
         self.debug_log("Setting Pulse on hit and release HW Rule. Switch: %s,"
                        "Driver: %s", enable_switch.hw_switch.number,
@@ -675,17 +676,17 @@ class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatfor
             coil.hw_driver.number,
             driver.get_control_for_cmd(enable_switch),
             enable_switch.hw_switch.number[0],
-            driver.get_pulse_ms_for_cmd(coil),
-            driver.get_pwm1_for_cmd(coil),
-            driver.get_recycle_ms_for_cmd(coil))
+            Util.int_to_hex_string(coil.pulse_settings.duration),
+            driver.get_pwm_for_cmd(coil.pulse_settings.power),
+            driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
 
         driver.autofire = True
-        enable_switch.hw_switch.configure_debounce(enable_switch.config)
+        enable_switch.hw_switch.configure_debounce(enable_switch.debounce)
         self.debug_log("Writing hardware rule: %s", cmd)
 
         self.net_connection.send(cmd)
 
-    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
+    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and enable and relase rule on driver."""
         self.debug_log("Setting Pulse on hit and enable and release HW Rule. "
                        "Switch: %s, Driver: %s",
@@ -694,26 +695,19 @@ class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatfor
         self._check_switch_coil_combincation(enable_switch, coil)
 
         driver = coil.hw_driver
-        if (driver.get_pwm1_for_cmd(coil) == "ff" and
-                driver.get_pwm2_for_cmd(coil) == "ff" and
-                not coil.config['allow_enable']):
-
-            # todo figure how to show the friendly name of this driver
-            raise AssertionError("Coil {} may not be enabled at 100% without "
-                                 "allow_enabled or pwm settings".format(coil.hw_driver.number))
 
         cmd = '{}{},{},{},18,{},{},{},{},00'.format(
             driver.get_config_cmd(),
-            coil.hw_driver.number,
+            driver.number,
             driver.get_control_for_cmd(enable_switch),
             enable_switch.hw_switch.number[0],
-            driver.get_pulse_ms_for_cmd(coil),
-            driver.get_pwm1_for_cmd(coil),
-            driver.get_pwm2_for_cmd(coil),
-            driver.get_recycle_ms_for_cmd(coil))
+            Util.int_to_hex_string(coil.pulse_settings.duration),
+            driver.get_pwm_for_cmd(coil.pulse_settings.power),
+            driver.get_pwm_for_cmd(coil.hold_settings.power),
+            driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
 
         driver.autofire = True
-        enable_switch.hw_switch.configure_debounce(enable_switch.config)
+        enable_switch.hw_switch.configure_debounce(enable_switch.debounce)
         self.debug_log("Writing hardware rule: %s", cmd)
 
         self.net_connection.send(cmd)
