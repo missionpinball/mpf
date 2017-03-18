@@ -31,3 +31,6 @@ class TestPlayerVars(MpfGameTestCase):
         self.assertEqual(7, self.machine.game.player.Test)
         self.assertEqual(7, self.machine.game.player.test)
         self.assertEqual(7, self.machine.game.player.vars["TesT"])
+
+        self.assertEqual(4, self.machine.get_machine_var("test1"))
+        self.assertEqual('5', self.machine.get_machine_var("test2"))
