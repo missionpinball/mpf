@@ -35,22 +35,26 @@ lights:
 coils:
     coil_01:
         number: 1
-        pulse_ms: 30
+        default_pulse_ms: 30
+        default_hold_power: 1.0
     coil_02:
         number: 2
-        pulse_ms: 60
+        default_pulse_ms: 60
     coil_03:
         number: 3
     flasher_01:
         number: 4
         label: Test flasher
-        pulse_ms: 40
+        default_pulse_ms: 40
+        max_hold_power: 1.0
     flasher_02:
         number: 5
         label: Test flasher 2
-        pulse_ms: 100
+        default_pulse_ms: 100
+        max_hold_power: 1.0
     flasher_03:
         number: 6
+        max_hold_power: 1.0
 
 flasher_player:
    flash:

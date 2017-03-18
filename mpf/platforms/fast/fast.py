@@ -733,9 +733,9 @@ class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatfor
 
         driver = coil.hw_driver
 
-        cmd = '{}{},81'.format(driver.get_config_cmd(), coil.hw_driver.number)
+        cmd = '{}{},81'.format(driver.get_config_cmd(), driver.number)
 
-        coil.autofire = None
+        driver.autofire = None
 
         self.debug_log("Clearing hardware rule: %s", cmd)
 

@@ -135,6 +135,9 @@ class Driver(SystemWideDevice):
             else:
                 pulse_ms = self.machine.config['mpf']['default_pulse_ms']
 
+        if not isinstance(pulse_ms, int):
+            raise AssertionError("Wrong type {}".format(pulse_ms))
+
         if 0 > pulse_ms > self.platform.features['max_pulse']:
             raise AssertionError("Pulse_ms {} is not valid.".format(pulse_ms))
 
@@ -211,59 +214,3 @@ class Driver(SystemWideDevice):
         # only needed for score reels
         # self.time_last_changed = self.machine.clock.get_time()
         self.time_when_done = self.time_last_changed + int(pulse_ms / 1000.0)
-
-
-class ConfiguredHwDriver:
-
-    """A (re-)configured Hw driver."""
-
-    def __init__(self, hw_driver: DriverPlatformInterface, config_overwrite: dict) -> None:
-        """Initialise configured hw driver."""
-        self.hw_driver = hw_driver
-        self.config = copy.deepcopy(self.hw_driver.config)
-        for name, item in config_overwrite.items():
-            if item is not None:
-                self.config[name] = item
-
-    def __eq__(self, other):
-        """Compare two configured hw drivers."""
-        return self.hw_driver == other.hw_driver and self.config == other.config
-
-    def __hash__(self):
-        """Return id of hw_driver and config for comparison."""
-        return id((self.hw_driver, self.config))
-
-
-class ReconfiguredDriver(Driver):
-
-    """A reconfigured driver."""
-
-    # pylint: disable-msg=super-init-not-called
-    def __init__(self, driver, config_overwrite):
-        """Reconfigure a driver.
-
-        No call to super init because we do not want to initialise the driver again.
-        """
-        self._driver = driver
-        self._config_overwrite = driver.platform.validate_coil_overwrite_section(driver, config_overwrite)
-        self._configured_driver = None
-
-    def __getattr__(self, item):
-        """Return parent attributes."""
-        return getattr(self._driver, item)
-
-    def get_configured_driver(self):
-        """Return configured hw driver."""
-        if not self._configured_driver:
-            self._configured_driver = ConfiguredHwDriver(self.hw_driver, self._config_overwrite)
-        return self._configured_driver
-
-    @property
-    def config(self) -> Dict[str, Any]:
-        """Return the merged config."""
-        config = dict(self._driver.config)
-        for name, item in self._config_overwrite.items():
-            if item is not None:
-                config[name] = item
-
-        return config

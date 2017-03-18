@@ -15,16 +15,16 @@ class Kickback(AutofireCoil):
     def enable(self, **kwargs):
         """Add switch handler and call parent."""
         if not self._enabled:
-            self.switch.add_handler(self._hit)
+            self.config['switch'].add_handler(self._hit)
 
         super().enable(**kwargs)
 
     def disable(self, **kwargs):
         """Remove switch handler and call parent."""
         if self._enabled:
-            self.switch.remove_handler(self._hit)
+            self.config['switch'].remove_handler(self._hit)
 
-        super().enable(**kwargs)
+        super().disable(**kwargs)
 
     def _hit(self):
         """Post fired event."""

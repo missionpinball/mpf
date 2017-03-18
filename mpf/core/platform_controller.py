@@ -10,7 +10,7 @@ SwitchRuleSettings = namedtuple("SwitchRuleSettings", ["switch", "invert", "debo
 DriverRuleSettings = namedtuple("DriverRuleSettings", ["driver", "recycle"])
 PulseRuleSettings = namedtuple("PulseRuleSettings", ["power", "duration"])
 HoldRuleSettings = namedtuple("HoldRuleSettings", ["power"])
-HardwareRule = namedtuple("HardwareRule", ["switch_settings", "driver_settings"])
+HardwareRule = namedtuple("HardwareRule", ["platform", "switch_settings", "driver_settings"])
 
 
 class PlatformController(MpfController):
@@ -40,19 +40,44 @@ class PlatformController(MpfController):
         """
         platform = self._check_and_get_platform(enable_switch.switch, driver.driver)
 
+        enable_settings = self._get_configured_switch(enable_switch)
+        driver_settings = self._get_configured_driver_no_hold(driver, pulse_setting)
+
+        platform.set_pulse_on_hit_and_release_rule(enable_settings, driver_settings)
+
+        return HardwareRule(platform=platform, switch_settings=[enable_settings], driver_settings=driver_settings)
+
+    @staticmethod
+    def _get_configured_switch(switch: SwitchRuleSettings):
+        """Return configured switch for rule."""
+        return SwitchSettings(
+            hw_switch=switch.switch.hw_switch,
+            invert=switch.invert != switch.switch.invert,
+            debounce=switch.debounce)
+
+    @staticmethod
+    def _get_configured_driver_with_hold(driver: DriverRuleSettings, pulse_setting: PulseRuleSettings,
+                                         hold_settings: HoldRuleSettings):
+        """Return configured driver for rule."""
         pulse_duration = driver.driver.get_and_verify_pulse_ms(pulse_setting.duration if pulse_setting else None)
         pulse_power = driver.driver.get_and_verify_pulse_power(pulse_setting.power if pulse_setting else None)
+        hold_power = driver.driver.get_and_verify_hold_power(hold_settings.power if hold_settings else None)
+        return DriverSettings(
+            hw_driver=driver.driver.hw_driver,
+            pulse_settings=PulseSettings(duration=pulse_duration, power=pulse_power),
+            hold_settings=HoldSettings(power=hold_power),
+            recycle=driver.recycle)
 
-        platform.set_pulse_on_hit_and_release_rule(
-            SwitchSettings(hw_switch=enable_switch.switch.hw_switch,
-                           invert=enable_switch.invert != enable_switch.switch.invert,
-                           debounce=enable_switch.debounce),
-            DriverSettings(hw_driver=driver.driver.hw_driver,
-                           pulse_settings=PulseSettings(duration=pulse_duration, power=pulse_power),
-                           hold_settings=None,
-                           recycle=driver.recycle))
-
-        return HardwareRule(switch_settings=[enable_switch], driver_settings=driver)
+    @staticmethod
+    def _get_configured_driver_no_hold(driver: DriverRuleSettings, pulse_setting: PulseRuleSettings):
+        """Return configured driver for rule."""
+        pulse_duration = driver.driver.get_and_verify_pulse_ms(pulse_setting.duration if pulse_setting else None)
+        pulse_power = driver.driver.get_and_verify_pulse_power(pulse_setting.power if pulse_setting else None)
+        return DriverSettings(
+            hw_driver=driver.driver.hw_driver,
+            pulse_settings=PulseSettings(duration=pulse_duration, power=pulse_power),
+            hold_settings=None,
+            recycle=driver.recycle)
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchRuleSettings,
                                                      driver: DriverRuleSettings,
@@ -68,20 +93,12 @@ class PlatformController(MpfController):
         """
         platform = self._check_and_get_platform(enable_switch.switch, driver.driver)
 
-        pulse_duration = driver.driver.get_and_verify_pulse_ms(pulse_setting.duration if pulse_setting else None)
-        pulse_power = driver.driver.get_and_verify_pulse_power(pulse_setting.power if pulse_setting else None)
-        hold_power = driver.driver.get_and_verify_hold_power(hold_settings.power if hold_settings else None)
+        enable_settings = self._get_configured_switch(enable_switch)
+        driver_settings = self._get_configured_driver_with_hold(driver, pulse_setting, hold_settings)
 
-        platform.set_pulse_on_hit_and_enable_and_release_rule(
-            SwitchSettings(hw_switch=enable_switch.switch.hw_switch,
-                           invert=enable_switch.invert != enable_switch.switch.invert,
-                           debounce=enable_switch.debounce),
-            DriverSettings(hw_driver=driver.driver.hw_driver,
-                           pulse_settings=PulseSettings(duration=pulse_duration, power=pulse_power),
-                           hold_settings=HoldSettings(power=hold_power),
-                           recycle=driver.recycle))
+        platform.set_pulse_on_hit_and_enable_and_release_rule(enable_settings, driver_settings)
 
-        return HardwareRule(switch_settings=[enable_switch], driver_settings=driver)
+        return HardwareRule(platform=platform, switch_settings=[enable_settings], driver_settings=driver_settings)
 
     def set_pulse_on_hit_rule(self, enable_switch: SwitchRuleSettings,
                               driver: DriverRuleSettings,
@@ -95,25 +112,19 @@ class PlatformController(MpfController):
         """
         platform = self._check_and_get_platform(enable_switch.switch, driver.driver)
 
-        pulse_duration = driver.driver.get_and_verify_pulse_ms(pulse_setting.duration if pulse_setting else None)
-        pulse_power = driver.driver.get_and_verify_pulse_power(pulse_setting.power if pulse_setting else None)
+        enable_settings = self._get_configured_switch(enable_switch)
+        driver_settings = self._get_configured_driver_no_hold(driver, pulse_setting)
 
-        platform.set_pulse_on_hit_rule(
-            SwitchSettings(hw_switch=enable_switch.switch.hw_switch,
-                           invert=enable_switch.invert != enable_switch.switch.invert,
-                           debounce=enable_switch.debounce),
-            DriverSettings(hw_driver=driver.driver.hw_driver,
-                           pulse_settings=PulseSettings(duration=pulse_duration, power=pulse_power),
-                           hold_settings=None,
-                           recycle=driver.recycle))
+        platform.set_pulse_on_hit_rule(enable_settings, driver_settings)
 
-        return HardwareRule(switch_settings=[enable_switch], driver_settings=driver)
+        return HardwareRule(platform=platform, switch_settings=[enable_settings], driver_settings=driver_settings)
 
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchRuleSettings,
                                                                  disable_switch: SwitchRuleSettings,
                                                                  driver: DriverRuleSettings,
                                                                  pulse_setting: PulseRuleSettings = None,
-                                                                 hold_settings: HoldRuleSettings = None) -> HardwareRule:
+                                                                 hold_settings: HoldRuleSettings = None
+                                                                 ) -> HardwareRule:
         """Add pulse on hit and enable and release and disable rule to driver.
 
         Pulse and then enable driver. Cancel pulse and enable when switch is released or a disable switch is hit.
@@ -125,23 +136,15 @@ class PlatformController(MpfController):
         platform = self._check_and_get_platform(enable_switch.switch, driver.driver)
         self._check_and_get_platform(disable_switch.switch, driver.driver)
 
-        pulse_duration = driver.driver.get_and_verify_pulse_ms(pulse_setting.duration if pulse_setting else None)
-        pulse_power = driver.driver.get_and_verify_pulse_power(pulse_setting.power if pulse_setting else None)
-        hold_power = driver.driver.get_and_verify_hold_power(hold_settings.power if hold_settings else None)
+        enable_settings = self._get_configured_switch(enable_switch)
+        disable_settings = self._get_configured_switch(disable_switch)
+        driver_settings = self._get_configured_driver_with_hold(driver, pulse_setting, hold_settings)
 
         platform.set_pulse_on_hit_and_enable_and_release_and_disable_rule(
-            SwitchSettings(hw_switch=enable_switch.switch.hw_switch,
-                           invert=enable_switch.invert != enable_switch.switch.invert,
-                           debounce=enable_switch.debounce),
-            SwitchSettings(hw_switch=disable_switch.switch.hw_switch,
-                           invert=disable_switch.invert != disable_switch.switch.invert,
-                           debounce=disable_switch.debounce),
-            DriverSettings(hw_driver=driver.driver.hw_driver,
-                           pulse_settings=PulseSettings(duration=pulse_duration, power=pulse_power),
-                           hold_settings=HoldSettings(power=hold_power),
-                           recycle=driver.recycle))
+            enable_settings, disable_settings, driver_settings)
 
-        return HardwareRule(switch_settings=[enable_switch], driver_settings=driver)
+        return HardwareRule(platform=platform, switch_settings=[enable_settings, disable_settings],
+                            driver_settings=driver_settings)
 
     def clear_hw_rule(self, rule: HardwareRule):
         """Clear all rules for switch and this driver.
@@ -150,4 +153,4 @@ class PlatformController(MpfController):
             switch: Switch to clear on this driver.
         """
         for switch_settings in rule.switch_settings:
-            rule.driver_settings.driver.platform.clear_hw_rule(switch_settings, rule.driver_settings)
+            rule.platform.clear_hw_rule(switch_settings, rule.driver_settings)

@@ -92,7 +92,7 @@ autofire_coils:
     reverse_switch: single|bool|False
     enable_events: dict|str:ms|ball_started
     disable_events: dict|str:ms|ball_will_end, service_mode_entered
-    coil_overwrite: dict|str:str|None
+    coil_overwrite: dict|subconfig(coil_overwrites)|None
     switch_overwrite: dict|str:str|None
     ball_search_order: single|int|100
     playfield: single|machine(playfields)|playfield
@@ -434,8 +434,8 @@ flippers:
     disable_events: dict|str:ms|ball_will_end, service_mode_entered
     # enable_no_hold_events: dict|str:ms|None
     # invert_events: dict|str:ms|None
-    main_coil_overwrite: dict|str:str|None
-    hold_coil_overwrite: dict|str:str|None
+    main_coil_overwrite: dict|subconfig(coil_overwrites)|None
+    hold_coil_overwrite: dict|subconfig(coil_overwrites)|None
     switch_overwrite: dict|str:str|None
     eos_switch_overwrite: dict|str:str|None
     power_setting_name: single|str|None
@@ -485,7 +485,7 @@ kickbacks:
     reverse_switch: single|bool|False
     enable_events: dict|str:ms|None
     disable_events: dict|str:ms|ball_will_end, service_mode_entered
-    coil_overwrite: dict|str:str|None
+    coil_overwrite: dict|subconfig(coil_overwrites)|None
     switch_overwrite: dict|str:str|None
     ball_search_order: single|int|100
     playfield: single|machine(playfields)|playfield

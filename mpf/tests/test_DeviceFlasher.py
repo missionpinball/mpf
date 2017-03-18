@@ -1,4 +1,3 @@
-from mpf.devices.driver import ConfiguredHwDriver
 from mpf.tests.MpfTestCase import MpfTestCase
 from unittest.mock import MagicMock
 
@@ -22,7 +21,6 @@ class TestDeviceDriver(MpfTestCase):
         self.machine.coils.flasher_01.hw_driver.disable = MagicMock()
         self.machine.coils.flasher_01.hw_driver.enable = MagicMock()
         self.machine.coils.flasher_01.hw_driver.pulse = MagicMock()
-        driver = ConfiguredHwDriver(self.machine.coils.flasher_01.hw_driver, {})
 
         # Flash
         self.post_event("flash")

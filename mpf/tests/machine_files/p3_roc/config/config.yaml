@@ -28,28 +28,27 @@ switches:
 coils:
     c_test:
         number: A1-B1-2
-        pulse_ms: 23
+        default_pulse_ms: 23
     c_test_allow_enable:
         number: A1-B1-3
-        pulse_ms: 23
-        allow_enable: true
+        default_pulse_ms: 23
+        default_hold_power: 1.0
     c_slingshot_test:
         number: A0-B1-0
     c_coil_pwm_test:
         number: A0-B1-1
-        pwm_on_ms: 2
-        pwm_off_ms: 8
+        default_hold_power: 0.2
     c_flipper_main:
         number: A0-B0-1
-        pulse_ms: 10
-        hold_power: 3
+        default_pulse_ms: 10
+        default_hold_power: 0.375
     c_flipper_hold:
         number: A0-B0-2
-        hold_power: 1
+        default_hold_power: 0.125
     test_gi:
         number: A2-B0-3
-        allow_enable: True
-        pulse_ms: 0
+        default_hold_power: 1.0
+        default_pulse_ms: 0
 
 autofire_coils:
     ac_slingshot_test:

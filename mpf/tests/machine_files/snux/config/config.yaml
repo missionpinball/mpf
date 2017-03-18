@@ -17,20 +17,20 @@ snux:
 coils:
     c_diag_led_driver:
         number: c24
-        allow_enable: true
+        default_hold_power: 1.0
     c_flipper_enable_driver:
         number: c23
-        allow_enable: true
+        default_hold_power: 1.0
     c_ac_relay:
         number: c25
-        allow_enable: true
+        default_hold_power: 1.0
     c_side_a1:
         number: c11a
     c_side_a2:
         number: c12a
-        hold_power: 4
+        default_hold_power: 0.5
     c_side_c1:
         number: c11c
     c_side_c2:
         number: c12c
-        hold_power: 4
+        default_hold_power: 0.5

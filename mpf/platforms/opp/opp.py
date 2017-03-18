@@ -6,10 +6,6 @@ boards.
 """
 import logging
 import asyncio
-from typing import Dict
-from typing import List
-
-from mpf.platforms.opp.opp_neopixel import OPPNeopixel
 
 from typing import Dict
 from typing import List
@@ -25,7 +21,6 @@ from mpf.platforms.opp.opp_neopixel import OPPNeopixel
 from mpf.platforms.opp.opp_neopixel import OPPNeopixelCard
 from mpf.platforms.opp.opp_switch import OPPInputCard
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
-from mpf.devices.driver import ConfiguredHwDriver
 from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform
 
 # Minimum firmware versions needed for this module

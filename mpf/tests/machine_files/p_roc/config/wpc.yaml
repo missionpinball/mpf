@@ -15,13 +15,13 @@ switches:
 coils:
     c_test_direct:
         number: c01
-        pulse_ms: 23
+        default_pulse_ms: 23
     c_test_fliptronics:
         number: fllm
-        pulse_ms: 23
+        default_pulse_ms: 23
     test_gi:
         number: g01
-        pulse_ms: 0
+        default_pulse_ms: 0
 
 lights:
   test_light:

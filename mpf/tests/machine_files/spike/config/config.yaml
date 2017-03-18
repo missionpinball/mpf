@@ -13,17 +13,17 @@ spike:
 coils:
   c_test:
     number: 1-0
-    pulse_ms: 100
-    hold_power: 5
+    default_pulse_ms: 100
+    default_hold_power: 0.625
   c_flipper_main:
     number: 8-1
-    hold_power: 5
+    default_hold_power: 0.625
   c_flipper_hold:
     number: 8-3
-    allow_enable: True
+    default_hold_power: 1.0
   c_pop:
     number: 8-10
-    pulse_power: 4
+    default_pulse_power: 0.5
 
 lights:
   backlight:
