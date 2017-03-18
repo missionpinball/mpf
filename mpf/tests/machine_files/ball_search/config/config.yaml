@@ -29,8 +29,10 @@ coils:
         number:
     flipper_coil:
         number:
+        default_hold_power: 0.125
     diverter_coil:
         number:
+        default_hold_power: 0.250
     autofire_coil:
         number:
 

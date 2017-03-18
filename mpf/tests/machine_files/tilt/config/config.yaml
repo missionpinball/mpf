@@ -13,6 +13,7 @@ coils:
         number:
     c_flipper:
         number:
+        default_hold_power: 0.125
 
 switches:
     s_start:

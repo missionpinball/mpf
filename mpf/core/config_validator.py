@@ -399,7 +399,7 @@ class ConfigValidator(object):
             if param[0] != "NONE" and value < float(param[0]):
                 self.validation_error(item, validation_failure_info, "{} is smaller then {}".format(item, param[0]))
             elif param[1] != "NONE" and value > float(param[1]):
-                self.validation_error(item, validation_failure_info, "{} is larger then {}".format(item, param[0]))
+                self.validation_error(item, validation_failure_info, "{} is larger then {}".format(item, param[1]))
 
         return value
 
@@ -417,7 +417,7 @@ class ConfigValidator(object):
             if param[0] != "NONE" and value < int(param[0]):
                 self.validation_error(item, validation_failure_info, "{} is smaller then {}".format(item, param[0]))
             elif param[1] != "NONE" and value > int(param[1]):
-                self.validation_error(item, validation_failure_info, "{} is larger then {}".format(item, param[0]))
+                self.validation_error(item, validation_failure_info, "{} is larger then {}".format(item, param[1]))
 
         return value
 

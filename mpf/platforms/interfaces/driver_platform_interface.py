@@ -28,12 +28,6 @@ class DriverPlatformInterface(metaclass=abc.ABCMeta):
         this driver is turned off automatically. Note that on most platforms,
         pulse times are a max of 255ms. (Beyond that MPF will send separate
         enable() and disable() commands.
-
-        Returns:
-            A integer of the actual time this driver is going to be pulsed for.
-            MPF uses this for timing in certain situations to make sure too
-            many drivers aren't activated at once.
-
         """
         raise NotImplementedError('pulse method must be defined to use this base class')
 

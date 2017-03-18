@@ -1,5 +1,6 @@
 """Contains the base class for flippers."""
 import copy
+from typing import Optional
 
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.platform_controller import SwitchRuleSettings, DriverRuleSettings, PulseRuleSettings, HoldRuleSettings
@@ -166,9 +167,9 @@ class Flipper(SystemWideDevice):
 
         self._enabled = False
 
-    def _get_pulse_ms(self) -> int:
+    def _get_pulse_ms(self) -> Optional[int]:
         """Return pulse_ms."""
-        pulse_ms = self.config['main_coil_overwrite']["pulse_ms"]
+        pulse_ms = self.config['main_coil_overwrite'].get("pulse_ms", None)
         if self.config['power_setting_name']:
             settings_factor = self.machine.settings.get_setting_value(self.config['power_setting_name'])
             if not pulse_ms:
@@ -177,9 +178,9 @@ class Flipper(SystemWideDevice):
         else:
             return pulse_ms
         
-    def _get_hold_pulse_ms(self) -> int:
+    def _get_hold_pulse_ms(self) -> Optional[int]:
         """Return pulse_ms for hold coil."""
-        pulse_ms = self.config['hold_coil_overwrite']["pulse_ms"]
+        pulse_ms = self.config['hold_coil_overwrite'].get("pulse_ms", None)
         if self.config['power_setting_name']:
             settings_factor = self.machine.settings.get_setting_value(self.config['power_setting_name'])
             if not pulse_ms:
@@ -188,19 +189,19 @@ class Flipper(SystemWideDevice):
         else:
             return pulse_ms
 
-    def _get_pulse_power(self) -> float:
+    def _get_pulse_power(self) -> Optional[float]:
         """Return pulse_power."""
-        pulse_power = self.config['main_coil_overwrite']["pulse_power"]
+        pulse_power = self.config['main_coil_overwrite'].get("pulse_power", None)
         return pulse_power
 
-    def _get_hold_pulse_power(self) -> float:
+    def _get_hold_pulse_power(self) -> Optional[float]:
         """Return pulse_power for hold coil."""
-        pulse_power = self.config['hold_coil_overwrite']["pulse_power"]
+        pulse_power = self.config['hold_coil_overwrite'].get("pulse_power", None)
         return pulse_power
 
-    def _get_hold_power(self) -> float:
+    def _get_hold_power(self) -> Optional[float]:
         """Return hold_power."""
-        hold_power = self.config['main_coil_overwrite']["hold_power"]
+        hold_power = self.config['main_coil_overwrite'].get("hold_power", None)
         return hold_power
 
     def _enable_single_coil_rule(self):
@@ -234,8 +235,12 @@ class Flipper(SystemWideDevice):
     def _enable_main_coil_eos_cutoff_rule(self):
         self.debug_log('Enabling main coil EOS cutoff rule')
 
-        self.main_coil.set_pulse_on_hit_and_enable_and_release_and_disable_rule(
-            self.switch, self.eos_switch)
+        self.machine.platform_controller.set_pulse_on_hit_and_enable_and_release_and_disable_rule(
+            SwitchRuleSettings(switch=self.config['activation_switch'], debounce=False, invert=False),
+            SwitchRuleSettings(switch=self.config['eos_switch'], debounce=False, invert=False),
+            DriverRuleSettings(driver=self.config['main_coil'], recycle=False),
+            PulseRuleSettings(duration=self._get_hold_pulse_ms(), power=self._get_hold_pulse_power())
+        )
 
     def sw_flip(self, include_switch=False):
         """Activate the flipper via software as if the flipper button was pushed.

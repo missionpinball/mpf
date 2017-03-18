@@ -33,7 +33,7 @@ coils:
     number:
   coil4:
     number:
-    hold_power: 2
+    default_hold_power: 0.250
   coil5:
     number:
   coil6:

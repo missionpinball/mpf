@@ -2,6 +2,8 @@
 
 import logging
 
+from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, HoldSettings
+
 from mpf.core.delays import DelayManager
 from mpf.platforms.virtual import (HardwarePlatform as VirtualPlatform, VirtualDriver)
 
@@ -374,19 +376,18 @@ class SmartVirtualDriver(VirtualDriver):
         """Return string representation."""
         return "SmartVirtualDriver.{}".format(self.number)
 
-    def disable(self, coil):
+    def disable(self):
         """Disable driver."""
         if self.action:
-            self.action.disable(coil)
+            self.action.disable(self)
 
-    def enable(self, coil):
+    def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable driver."""
+        del pulse_settings, hold_settings
         if self.action:
-            self.action.enable(coil)
+            self.action.enable(self)
 
-    def pulse(self, coil, milliseconds):
+    def pulse(self, pulse_settings: PulseSettings):
         """Pulse driver."""
         if self.action:
-            self.action.pulse(coil, milliseconds)
-
-        return milliseconds
+            self.action.pulse(self, pulse_settings.duration)

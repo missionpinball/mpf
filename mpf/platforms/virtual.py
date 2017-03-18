@@ -11,7 +11,7 @@ from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInt
 from mpf.core.platform import ServoPlatform, SwitchPlatform, DriverPlatform, AccelerometerPlatform, I2cPlatform,\
     DmdPlatform, RgbDmdPlatform, LightsPlatform
 from mpf.core.utility_functions import Util
-from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
+from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
 
 class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, LightsPlatform, SwitchPlatform,
@@ -328,25 +328,15 @@ class VirtualDriver(DriverPlatformInterface):
         """Str representation."""
         return "VirtualDriver.{}".format(self.number)
 
-    def disable(self, coil):
+    def disable(self):
         """Disable virtual coil."""
-        del coil
         self.state = "disabled"
 
-    def enable(self, coil):
+    def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable virtual coil."""
-        del coil
-        # pylint: disable-msg=too-many-boolean-expressions
-        if (not self.config.get("allow_enable", False) and not self.config.get("hold_power", 0) and     # defaults
-                not self.config.get("pwm_on_ms", 0) and not self.config.get("pwm_off_ms", 0) and        # p-roc
-                not self.config.get("hold_power32", 0) and not self.config.get("hold_pwm_mask", 0) and  # fast
-                not self.config.get("hold_power16", 0)):                                                # opp
-            raise AssertionError("Cannot enable coil {}. Please specify allow_enable or hold_power".format(self.number))
-
+        del pulse_settings, hold_settings
         self.state = "enabled"
 
-    def pulse(self, coil, milliseconds):
+    def pulse(self, pulse_settings: PulseSettings):
         """Pulse virtual coil."""
-        del coil
-        self.state = "pulsed_" + str(milliseconds)
-        return milliseconds
+        self.state = "pulsed_" + str(pulse_settings.duration)

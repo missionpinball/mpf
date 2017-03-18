@@ -8,7 +8,6 @@ from typing import Tuple
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.rgb_color import RGBColor
 from mpf.core.system_wide_device import SystemWideDevice
-from mpf.devices.driver import ReconfiguredDriver
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade
 
@@ -24,12 +23,10 @@ class DriverLight(LightPlatformSoftwareFade):
 
     def set_brightness(self, brightness: float):
         """Set pwm to coil."""
-        # TODO: fix driver interface
         if brightness <= 0:
             self.driver.disable()
         else:
-            driver = ReconfiguredDriver(self.driver, {"hold_power": 8 * brightness})
-            driver.enable()
+            self.driver.enable(hold_power=brightness)
 
 
 @DeviceMonitor(_color="color", _corrected_color="corrected_color")

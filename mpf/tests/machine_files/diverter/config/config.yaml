@@ -7,6 +7,7 @@ coils:
         number: 2
     c_diverter:
         number: 3
+        default_hold_power: 0.250
     c_diverter_disable:
         number: 4
 

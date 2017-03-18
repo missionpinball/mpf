@@ -7,10 +7,10 @@ game:
 coils:
     outhole:
         number: C09
-        pulse_ms: 20
+        default_pulse_ms: 20
     trough:
         number: C10
-        pulse_ms: 20
+        default_pulse_ms: 20
 
 switches:
     start:

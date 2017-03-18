@@ -44,11 +44,12 @@ lights:
 coils:
     coil_01:
         number: 1
-        pulse_ms: 30
+        default_pulse_ms: 30
     flasher_01:
         number: 2
         label: Test flasher
-        pulse_ms: 40
+        default_pulse_ms: 40
+        max_hold_power: 1.0
 
 shows:
   leds_name_token:

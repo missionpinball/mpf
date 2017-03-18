@@ -1,5 +1,9 @@
 from unittest.mock import MagicMock
 
+from mpf.platforms.interfaces.driver_platform_interface import PulseSettings
+
+from mpf.core.platform import SwitchSettings, DriverSettings
+
 from mpf.tests.MpfTestCase import MpfTestCase
 
 
@@ -27,8 +31,9 @@ class TestKickback(MpfTestCase):
 
         # should write a hw rule
         self.machine.default_platform.set_pulse_on_hit_rule.assert_called_once_with(
-            self.machine.kickbacks.kickback_test.switch.get_configured_switch(),
-            self.machine.kickbacks.kickback_test.coil.get_configured_driver()
+            SwitchSettings(hw_switch=self.machine.switches.s_kickback.hw_switch, invert=False, debounce=False),
+            DriverSettings(hw_driver=self.machine.coils.kickback_coil.hw_driver,
+                           pulse_settings=PulseSettings(power=1.0, duration=100), hold_settings=None, recycle=True)
         )
 
         # a hit should fire it
