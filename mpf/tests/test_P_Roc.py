@@ -102,15 +102,6 @@ class TestPRoc(MpfTestCase):
             number, 23)
         assert not self.machine.coils.c_test.hw_driver.proc.driver_schedule.called
 
-        # enable coil A1-B1-4
-        self.machine.coils.c_pwm_on_off.enable()
-        # A1-B1-4 -> address 16 + 8 + 4 = 28 in P-Roc
-        # 2ms on, 5ms off. 10ms initial pulse (default)
-        number = self.machine.coils.c_pwm_on_off.hw_driver.number
-        self.machine.coils.c_pwm_on_off.hw_driver.proc.driver_patter.assert_called_with(
-            number, 2, 5, 10, True)
-
-
     def test_enable_exception(self):
         # enable coil which does not have allow_enable
         with self.assertRaises(AssertionError):

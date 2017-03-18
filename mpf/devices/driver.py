@@ -1,7 +1,7 @@
 """Contains the Driver parent class."""
 import copy
 
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from mpf.core.machine import MachineController
 from mpf.core.platform import DriverPlatform
@@ -124,13 +124,13 @@ class Driver(SystemWideDevice):
                                  format(self.name, hold_power, max_hold_power))
         return hold_power
 
-    def get_and_verify_pulse_ms(self, pulse_ms: int) -> int:
+    def get_and_verify_pulse_ms(self, pulse_ms: Optional[int]) -> int:
         """Return and verify pulse_ms to use.
 
         If pulse_ms is None return the default.
         """
-        if not pulse_ms:
-            if self.config['default_pulse_ms']:
+        if pulse_ms is None:
+            if self.config['default_pulse_ms'] is not None:
                 pulse_ms = self.config['default_pulse_ms']
             else:
                 pulse_ms = self.machine.config['mpf']['default_pulse_ms']

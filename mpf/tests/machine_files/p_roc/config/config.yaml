@@ -39,9 +39,6 @@ coils:
         number: A0-B0-0
     c_direct:
         number: C01
-    c_pwm_on_off:
-        number: A1-B1-4
-        default_hold_power: 0.25
     test_gi:
         number: A2-B0-3
         default_hold_power: 1.0
