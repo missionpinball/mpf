@@ -31,6 +31,9 @@ coils:
     c_test:
         number: 4
         default_pulse_ms: 23
+        default_recycle: True
+        platform_settings:
+            recycle_ms: 27
     c_test_allow_enable:
         number: 6
         default_pulse_ms: 23

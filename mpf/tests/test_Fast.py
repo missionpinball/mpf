@@ -234,7 +234,7 @@ class TestFast(MpfTestCase):
 
     def _test_pulse(self):
         self.net_cpu.expected_commands = {
-            "DN:04,89,00,10,17,FF,00,00,00": "DN:P"
+            "DN:04,89,00,10,17,FF,00,00,1B": "DN:P"
         }
         # pulse coil 4
         self.machine.coils.c_test.pulse()
@@ -322,7 +322,7 @@ class TestFast(MpfTestCase):
     def _test_two_rules_one_switch(self):
         self.net_cpu.expected_commands = {
             "SN:03,01,02,02": "SN:P",
-            "DN:04,01,03,10,17,FF,00,00,2E": "DN:P",
+            "DN:04,01,03,10,17,FF,00,00,1B": "DN:P",
             "DN:06,01,03,10,17,FF,00,00,2E": "DN:P"
         }
         self.post_event("ac_same_switch")

@@ -116,8 +116,13 @@ class TestSnux(MpfTestCase):
         self.machine_run()
         c_side_c2.disable.assert_called_with()
         c_ac_relay.disable.assert_called_with()
+        c_ac_relay.disable = MagicMock()
         assert not c_side_a2.enable.called
 
         # it should enable a side coils now
         self.advance_time_and_run(0.075)
         c_side_a2.enable.assert_called_with(PulseSettings(power=1.0, duration=10), HoldSettings(power=0.5))
+
+        # disable driver on a side.
+        self.machine.coils.c_side_a2.disable()
+        self.advance_time_and_run(0.2)

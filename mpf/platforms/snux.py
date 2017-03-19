@@ -285,7 +285,7 @@ class HardwarePlatform(DriverPlatform):
         while self.a_side_queue:
             driver, pulse_settings, hold_settings = self.a_side_queue.pop()
 
-            if hold_settings is None:
+            if hold_settings is None and pulse_settings:
                 driver.pulse(pulse_settings)
                 self.a_side_done_time = max(self.a_side_done_time,
                                             self.machine.clock.get_time() + (pulse_settings.duration / 1000.0))
@@ -340,7 +340,7 @@ class HardwarePlatform(DriverPlatform):
         while self.c_side_queue:
             driver, pulse_settings, hold_settings = self.c_side_queue.pop()
 
-            if hold_settings is None:
+            if hold_settings is None and pulse_settings:
                 driver.pulse(pulse_settings)
                 self.c_side_done_time = max(self.c_side_done_time,
                                             self.machine.clock.get_time() + (pulse_settings.duration / 1000.0))

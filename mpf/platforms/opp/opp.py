@@ -599,16 +599,6 @@ class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                 # the line above saturates the link and seems to overhelm the hardware. limit it to 100Hz
                 yield from asyncio.sleep(.01, loop=self.machine.clock.loop)
 
-    @asyncio.coroutine
-    def _update_lights(self):
-        """Update matrix lights."""
-        while True:
-            self.update_incand()
-            for connection in self.opp_connection.values():
-                yield from connection.writer.drain()
-            # limit to 50Hz
-            yield from asyncio.sleep(.02, loop=self.machine.clock.loop)
-
     def _verify_coil_and_switch_fit(self, switch, coil):
         chain_serial, card, solenoid = coil.hw_driver.number.split('-')
         sw_chain_serial, sw_card, sw_num = switch.hw_switch.number.split('-')
@@ -660,29 +650,6 @@ class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         and the driver gets disabled. Typically used on the main coil for dual coil flippers with eos switch.
         """
         raise AssertionError("Not implemented in OPP currently")
-
-    @classmethod
-    def get_hold_value(cls, coil):
-        """Get OPP hold value (0-15)."""
-        if coil.config['hold_power16']:
-            return coil.config['hold_power16']
-        elif coil.config['hold_power']:
-            if coil.config['hold_power'] >= 8:
-                return 16
-            else:
-                # hold_power is 0-8 and OPP supports 0-16
-                return coil.config['hold_power'] * 2
-        elif coil.config['allow_enable']:
-            return 16
-        else:
-            return 0
-
-    def _get_pulse_ms_value(self, coil):
-        if coil.config['pulse_ms']:
-            return coil.config['pulse_ms']
-        else:
-            # use mpf default_pulse_ms
-            return self.machine.config['mpf']['default_pulse_ms']
 
     def _write_hw_rule(self, switch_obj: SwitchSettings, driver_obj: DriverSettings, use_hold):
         if switch_obj.invert:
