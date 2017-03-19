@@ -135,6 +135,28 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
+        # enable a coil (when a rule is active)
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x01\x0a\x06')] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x07\x00\x08\x00\x08', False)] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x03\x0a\x00')] = False
+        self.machine.coils.c_flipper_main.enable()
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # pulse it (when rule is active)
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x07\x00\x08\x00\x08', False)] = False
+        self.machine.coils.c_flipper_main.pulse()
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # pulse it with other settings (when rule is active)
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x03\x2a\x00')] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x07\x00\x08\x00\x08', False)] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x03\x0a\x00')] = False
+        self.machine.coils.c_flipper_main.pulse(42)
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x02\x04\x0a\x2f')] = False
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x00\x0a\x26')] = False
         self.serialMock.expected_commands[self._crc_message(b'\x20\x17\x03\x83')] = False
@@ -147,6 +169,32 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x01\x04\x17\x0f')] = False
         self.serialMock.expected_commands[self._crc_message(b'\x20\x07\x00\x02\x00\x02', False)] = False
         self.machine.coils.c_test_allow_enable.enable()
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # disable it
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x07\x00\x00\x00\x02', False)] = False
+        self.machine.coils.c_test_allow_enable.disable()
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # pulse it
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x01\x02\x17\x00')] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x07\x00\x02\x00\x02', False)] = False
+        self.machine.coils.c_test_allow_enable.pulse()
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # pulse it again with same settings (no reconfigure)
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x07\x00\x02\x00\x02', False)] = False
+        self.machine.coils.c_test_allow_enable.pulse()
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # pulse it with other settings (should reconfigure)
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x01\x02\x2a\x00')] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x07\x00\x02\x00\x02', False)] = False
+        self.machine.coils.c_test_allow_enable.pulse(42)
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
