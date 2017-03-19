@@ -3,12 +3,12 @@
 coils:
   magnet_coil1:
     number:
-    pulse_ms: 100
-    hold_power: 3
+    default_pulse_ms: 100
+    default_hold_power: 0.375
   magnet_coil2:
     number:
-    pulse_ms: 100
-    hold_power: 3
+    default_pulse_ms: 100
+    default_hold_power: 0.375
 
 switches:
   grab_switch1:

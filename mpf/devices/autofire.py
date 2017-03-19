@@ -1,8 +1,7 @@
 """Contains the base class for autofire coil devices."""
 from mpf.core.device_monitor import DeviceMonitor
+from mpf.core.platform_controller import SwitchRuleSettings, DriverRuleSettings, PulseRuleSettings
 
-from mpf.devices.driver import ReconfiguredDriver
-from mpf.devices.switch import ReconfiguredSwitch
 from mpf.core.system_wide_device import SystemWideDevice
 
 
@@ -26,23 +25,11 @@ class AutofireCoil(SystemWideDevice):
 
     def __init__(self, machine, name):
         """Initialise autofire."""
-        self.coil = None
-        self.switch = None
         self._enabled = False
+        self._rule = None
         super().__init__(machine, name)
 
     def _initialize(self):
-        if "debounce" not in self.config['switch_overwrite']:
-            self.config['switch_overwrite']['debounce'] = "quick"
-        if "recycle" not in self.config['coil_overwrite']:
-            self.config['coil_overwrite']['recycle'] = True
-
-        self.coil = ReconfiguredDriver(self.config['coil'], self.config['coil_overwrite'])
-        self.switch = ReconfiguredSwitch(self.config['switch'], self.config['switch_overwrite'],
-                                         self.config['reverse_switch'])
-
-        self.debug_log('Platform Driver: %s', self.platform)
-
         if self.config['ball_search_order']:
             self.config['playfield'].ball_search.register(
                 self.config['ball_search_order'], self._ball_search, self.name)
@@ -57,7 +44,16 @@ class AutofireCoil(SystemWideDevice):
 
         self.debug_log("Enabling")
 
-        self.coil.set_pulse_on_hit_rule(self.switch)
+        recycle = True if self.config['coil_overwrite'].get('recycle', None) in (True, None) else False
+        debounce = False if self.config['switch_overwrite'].get('debounce', None) in (None, "quick") else True
+
+        self._rule = self.machine.platform_controller.set_pulse_on_hit_rule(
+            SwitchRuleSettings(switch=self.config['switch'], debounce=debounce,
+                               invert=self.config['reverse_switch']),
+            DriverRuleSettings(driver=self.config['coil'], recycle=recycle),
+            PulseRuleSettings(duration=self.config['coil_overwrite'].get('pulse_ms', None),
+                              power=self.config['coil_overwrite'].get('pulse_power', None))
+        )
 
     def disable(self, **kwargs):
         """Disable the autofire coil rule."""
@@ -68,10 +64,10 @@ class AutofireCoil(SystemWideDevice):
         self._enabled = False
 
         self.debug_log("Disabling")
-        self.coil.clear_hw_rule(self.switch)
+        self.machine.platform_controller.clear_hw_rule(self._rule)
 
     def _ball_search(self, phase, iteration):
         del phase
         del iteration
-        self.coil.pulse()
+        self.config['coil'].pulse()
         return True

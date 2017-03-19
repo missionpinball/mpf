@@ -26,22 +26,23 @@ switches:
 coils:
     c_test:
         number: 0-0
-        pulse_ms: 23
+        default_pulse_ms: 23
     c_test_allow_enable:
         number: 0-1
-        pulse_ms: 23
-        recycle_factor: 3
-        allow_enable: true
+        default_pulse_ms: 23
+        platform_settings:
+            recycle_factor: 3
+        default_hold_power: 1.0
     c_flipper_hold:
         number: 0-2
-        allow_enable: true
+        default_hold_power: 1.0
     c_flipper_main:
         number: 0-3
-        pulse_ms: 10
-        hold_power: 3
+        default_pulse_ms: 10
+        default_hold_power: 0.375
     c_holdpower_16:
         number: 1-12
-        hold_power16: 1
+        default_hold_power: 0.0625
 
 lights:
   test_light1:

@@ -1,12 +1,13 @@
 """Contains the Switch parent class."""
-import copy
-
-from typing import Set
+from typing import Set, TYPE_CHECKING
 
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.machine import MachineController
 from mpf.core.system_wide_device import SystemWideDevice
-from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
+
+if TYPE_CHECKING:
+    from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
+    from mpf.core.platform import SwitchPlatform
 
 
 @DeviceMonitor("state", "recycle_jitter_count")
@@ -21,6 +22,7 @@ class Switch(SystemWideDevice):
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialise switch."""
         self.hw_switch = None   # type: SwitchPlatformInterface
+        self.platform = None    # type: SwitchPlatform
         super().__init__(machine, name)
 
         self.deactivation_events = set()    # type: Set[str]
@@ -38,8 +40,6 @@ class Switch(SystemWideDevice):
         self.recycle_secs = 0
         self.recycle_clear_time = 0
         self.recycle_jitter_count = 0
-
-        self._configured_switch = None  # type: ReconfiguredSwitch
 
         # register switch so other devices can add handlers to it
         self.machine.switch_controller.register_switch(name)
@@ -68,7 +68,7 @@ class Switch(SystemWideDevice):
         return config
 
     def _initialize(self):
-        self.load_platform_section('switches')
+        self.platform = self.machine.get_platform_sections('switches', self.config['platform'])
 
         if self.config['type'].upper() == 'NC':
             self.invert = 1
@@ -76,12 +76,6 @@ class Switch(SystemWideDevice):
         self.recycle_secs = self.config['ignore_window_ms'] / 1000.0
 
         self.hw_switch = self.platform.configure_switch(self.config)
-
-    def get_configured_switch(self):
-        """Reconfigure switch."""
-        if not self._configured_switch:
-            self._configured_switch = ConfiguredHwSwitch(self.hw_switch, {}, self.invert)
-        return self._configured_switch
 
     # pylint: disable-msg=too-many-arguments
     def add_handler(self, callback, state=1, ms=0, return_info=False, callback_kwargs=None):
@@ -92,68 +86,3 @@ class Switch(SystemWideDevice):
     def remove_handler(self, callback, state=1, ms=0):
         """Remove switch handler for this switch."""
         return self.machine.switch_controller.remove_switch_handler(self.name, callback, state, ms)
-
-
-class ConfiguredHwSwitch:
-
-    """Configured hw switch."""
-
-    def __init__(self, hw_switch, config_overwrite, invert):
-        """Initialise configured hw switch."""
-        self.hw_switch = hw_switch
-        self.invert = invert
-        self.config = copy.deepcopy(self.hw_switch.config)
-        for name, item in config_overwrite.items():
-            if item is not None:
-                self.config[name] = item
-
-    def __eq__(self, other):
-        """Compare two configured switches."""
-        return self.hw_switch == other.hw_switch and self.config == other.config
-
-    def __hash__(self):
-        """Return id of hw switch and config."""
-        return id((self.hw_switch, self.config))
-
-
-class ReconfiguredSwitch:
-
-    """Reconfigured switch.
-
-    Can overwrite platform specific config parameters and invert.
-    """
-
-    def __init__(self, switch, config_switch_overwrite, invert):
-        """Initialise reconfigured switch."""
-        self._config_overwrite = switch.platform.validate_switch_overwrite_section(switch, config_switch_overwrite)
-        self._switch = switch
-        self._configured_switch = None
-        self._invert = invert
-
-    def __getattr__(self, item):
-        """Return parent attributes."""
-        return getattr(self._switch, item)
-
-    @property
-    def invert(self):
-        """Return true if switch is inverted."""
-        if bool(self._invert) != bool(self._switch.invert):
-            return 1
-        else:
-            return 0
-
-    def get_configured_switch(self):
-        """Return configured hw switch."""
-        if not self._configured_switch:
-            self._configured_switch = ConfiguredHwSwitch(self.hw_switch, self._config_overwrite, self.invert)
-        return self._configured_switch
-
-    @property
-    def config(self):
-        """Return merged config."""
-        config = copy.deepcopy(self._switch.config)
-        for name, item in self._config_overwrite.items():
-            if item is not None:
-                config[name] = item
-
-        return config

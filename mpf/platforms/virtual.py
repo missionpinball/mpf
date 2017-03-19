@@ -9,9 +9,9 @@ from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInter
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 
 from mpf.core.platform import ServoPlatform, SwitchPlatform, DriverPlatform, AccelerometerPlatform, I2cPlatform,\
-    DmdPlatform, RgbDmdPlatform, LightsPlatform
+    DmdPlatform, RgbDmdPlatform, LightsPlatform, DriverConfig
 from mpf.core.utility_functions import Util
-from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
+from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
 
 class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, LightsPlatform, SwitchPlatform,
@@ -55,14 +55,15 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Lights
         """Configure a servo device in paltform."""
         return VirtualServo(config['number'])
 
-    def configure_driver(self, config):
+    def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
         """Configure driver."""
+        del platform_settings
         # generate number if None
-        if config['number'] is None:
-            config['number'] = self._next_driver
+        if number is None:
+            number = self._next_driver
             self._next_driver += 1
 
-        driver = VirtualDriver(config)
+        driver = VirtualDriver(config, number)
 
         return driver
 
@@ -139,25 +140,14 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Lights
             base_spec=sections)
         return config_overwrite
 
-    def validate_coil_overwrite_section(self, driver, config_overwrite):
-        """Validate coil overwrite sections."""
-        sections = []
-        for platform in self._get_platforms():
-            if hasattr(platform, "get_coil_overwrite_section") and platform.get_coil_overwrite_section():
-                sections.append(platform.get_coil_overwrite_section())
-        self.machine.config_validator.validate_config(
-            "coil_overwrites", config_overwrite, driver.name,
-            base_spec=sections)
-        return config_overwrite
-
     def validate_coil_section(self, driver, config):
         """Validate coil sections."""
-        sections = ["device"]
+        sections = []
         for platform in self._get_platforms():
             if hasattr(platform, "get_coil_config_section") and platform.get_coil_config_section():
                 sections.append(platform.get_coil_config_section())
         self.machine.config_validator.validate_config(
-            "coils", config, driver.name,
+            sections.pop(), config, driver.name,
             base_spec=sections)
         return config
 
@@ -280,6 +270,7 @@ class VirtualLight(LightPlatformInterface):
 
     @property
     def current_brightness(self, max_fade=0) -> float:
+        """Return current brightness."""
         if self.color_and_fade_callback:
             return self.color_and_fade_callback(max_fade)[0]
         else:
@@ -288,11 +279,6 @@ class VirtualLight(LightPlatformInterface):
     def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
         """Store CB function."""
         self.color_and_fade_callback = color_and_fade_callback
-
-    def set_brightness(self, brightness: float, fade_ms: int):
-        """Set brightness."""
-        pass
-        #self.current_brightness = brightness
 
 
 class VirtualServo(ServoPlatformInterface):
@@ -314,10 +300,10 @@ class VirtualDriver(DriverPlatformInterface):
 
     """A virtual driver object."""
 
-    def __init__(self, config):
+    def __init__(self, config, number):
         """Initialise virtual driver to disabled."""
         self.log = logging.getLogger('VirtualDriver')
-        super().__init__(config, config['number'])
+        super().__init__(config, number)
         self.state = "disabled"
 
     def get_board_name(self):
@@ -328,25 +314,15 @@ class VirtualDriver(DriverPlatformInterface):
         """Str representation."""
         return "VirtualDriver.{}".format(self.number)
 
-    def disable(self, coil):
+    def disable(self):
         """Disable virtual coil."""
-        del coil
         self.state = "disabled"
 
-    def enable(self, coil):
+    def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable virtual coil."""
-        del coil
-        # pylint: disable-msg=too-many-boolean-expressions
-        if (not self.config.get("allow_enable", False) and not self.config.get("hold_power", 0) and     # defaults
-                not self.config.get("pwm_on_ms", 0) and not self.config.get("pwm_off_ms", 0) and        # p-roc
-                not self.config.get("hold_power32", 0) and not self.config.get("hold_pwm_mask", 0) and  # fast
-                not self.config.get("hold_power16", 0)):                                                # opp
-            raise AssertionError("Cannot enable coil {}. Please specify allow_enable or hold_power".format(self.number))
-
+        del pulse_settings, hold_settings
         self.state = "enabled"
 
-    def pulse(self, coil, milliseconds):
+    def pulse(self, pulse_settings: PulseSettings):
         """Pulse virtual coil."""
-        del coil
-        self.state = "pulsed_" + str(milliseconds)
-        return milliseconds
+        self.state = "pulsed_" + str(pulse_settings.duration)

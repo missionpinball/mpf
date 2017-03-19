@@ -3,7 +3,7 @@ import logging
 
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
-from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
+from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 from mpf.core.utility_functions import Util
 
 
@@ -32,12 +32,12 @@ class PROCDriver(DriverPlatformInterface):
 
     """
 
-    def __init__(self, number, config, platform):
+    def __init__(self, number, config, platform, string_number):
         """Initialise driver."""
         self.log = logging.getLogger('PROCDriver')
         super().__init__(config, number)
         self.proc = platform.proc
-        self.machine = platform.machine
+        self.string_number = string_number
         self.pdbconfig = getattr(platform, "pdbconfig", None)
 
         self.log.debug("Driver Settings for %s", self.number)
@@ -47,85 +47,46 @@ class PROCDriver(DriverPlatformInterface):
         if not self.pdbconfig:
             return "P-Roc"
         else:
-            return "P-Roc Board {}".format(str(self.pdbconfig.get_coil_bank(self.config['number'])))
+            return "P-Roc Board {}".format(str(self.pdbconfig.get_coil_bank(self.string_number)))
 
     @classmethod
-    def get_pwm_on_ms(cls, coil):
-        """Find out the pwm_on_ms for this driver."""
-        # figure out what kind of enable we need:
-        if coil.config['hold_power']:
-            pwm_on_ms, pwm_off_ms = (Util.pwm8_to_on_off(coil.config['hold_power']))
-            del pwm_off_ms
-            return pwm_on_ms
+    def get_pwm_on_off_ms(cls, coil: HoldSettings):
+        """Find out the pwm_on_ms and pwm_off_ms for this driver."""
+        return Util.pwm8_to_on_off(int(coil.power * 8))
 
-        elif coil.config['pwm_on_ms'] and coil.config['pwm_off_ms']:
-            return int(coil.config['pwm_on_ms'])
-        else:
-            return 0
-
-    @classmethod
-    def get_pwm_off_ms(cls, coil):
-        """Find out the pwm_off_ms for this driver."""
-        # figure out what kind of enable we need:
-        if coil.config['hold_power']:
-            pwm_on_ms, pwm_off_ms = (Util.pwm8_to_on_off(coil.config['hold_power']))
-            del pwm_on_ms
-            return pwm_off_ms
-
-        elif coil.config['pwm_on_ms'] and coil.config['pwm_off_ms']:
-            return int(coil.config['pwm_off_ms'])
-        else:
-            return 0
-
-    def get_pulse_ms(self, coil):
-        """Find out the pulse_ms for this driver."""
-        if coil.config['pulse_ms'] is not None:
-            return int(coil.config['pulse_ms'])
-        else:
-            return self.machine.config['mpf']['default_pulse_ms']
-
-    def disable(self, coil):
+    def disable(self):
         """Disable (turn off) this driver."""
-        del coil
         self.log.debug('Disabling Driver')
         self.proc.driver_disable(self.number)
 
-    def enable(self, coil):
+    def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable (turn on) this driver."""
-        if self.get_pwm_on_ms(coil) and self.get_pwm_off_ms(coil):
-            self.log.debug('Enabling. Initial pulse_ms:%s, pwm_on_ms: %s'
-                           'pwm_off_ms: %s',
-                           self.get_pwm_on_ms(coil),
-                           self.get_pwm_off_ms(coil),
-                           self.get_pulse_ms(coil))
+        if pulse_settings.power != 1:
+            raise AssertionError("Not pulse_power not supported in P-Roc currently.")
 
-            self.proc.driver_patter(self.number,
-                                    self.get_pwm_on_ms(coil),
-                                    self.get_pwm_off_ms(coil),
-                                    self.get_pulse_ms(coil), True)
+        if hold_settings.power < 1.0:
+            pwm_on, pwm_off = self.get_pwm_on_off_ms(hold_settings)
+            self.log.debug('Enabling. Initial pulse_ms:%s, pwm_on_ms: %s'
+                           'pwm_off_ms: %s', pwm_on, pwm_off, pulse_settings.duration)
+
+            self.proc.driver_patter(self.number, pwm_on, pwm_off, pulse_settings.duration, True)
         else:
             self.log.debug('Enabling at 100%')
-
-            if not coil.config['allow_enable']:
-                raise AssertionError("Received a command to enable this coil "
-                                     "without pwm, but 'allow_enable' has not been"
-                                     "set to True in this coil's configuration.")
 
             self.proc.driver_schedule(number=self.number, schedule=0xffffffff,
                                       cycle_seconds=0, now=True)
 
-    def pulse(self, coil, milliseconds):
+    def pulse(self, pulse_settings: PulseSettings):
         """Enable this driver for `milliseconds`.
 
         ``ValueError`` will be raised if `milliseconds` is outside of the range
         0-255.
         """
-        del coil
-
-        self.log.debug('Pulsing for %sms', milliseconds)
-        self.proc.driver_pulse(self.number, milliseconds)
-
-        return milliseconds
+        # TODO: implement pulsed_patter for pulse_power != 1
+        if pulse_settings.power != 1:
+            raise AssertionError("Not pulse_power not supported in P-Roc currently.")
+        self.log.debug('Pulsing for %sms', pulse_settings.duration)
+        self.proc.driver_pulse(self.number, pulse_settings.duration)
 
     def state(self):
         """Return a dictionary representing this driver's current configuration state."""

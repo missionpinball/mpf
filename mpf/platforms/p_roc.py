@@ -15,7 +15,7 @@ https://github.com/preble/pyprocgame
 
 import logging
 
-from mpf.core.platform import DmdPlatform
+from mpf.core.platform import DmdPlatform, DriverConfig
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.platforms.p_roc_common import PDBConfig, PROCBasePlatform
 from mpf.core.utility_functions import Util
@@ -74,7 +74,7 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
         """Return string representation."""
         return '<Platform.P-ROC>'
 
-    def configure_driver(self, config):
+    def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
         """Create a P-ROC driver.
 
         Typically drivers are coils or flashers, but for the P-ROC this is
@@ -97,13 +97,13 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
         # can provide the number.
 
         if self.machine_type == self.pinproc.MachineTypePDB:
-            proc_num = self.pdbconfig.get_proc_coil_number(str(config['number']))
+            proc_num = self.pdbconfig.get_proc_coil_number(str(number))
             if proc_num == -1:
-                raise AssertionError("Driver {} cannot be controlled by the P-ROC. ".format(str(config['number'])))
+                raise AssertionError("Driver {} cannot be controlled by the P-ROC. ".format(str(number)))
         else:
-            proc_num = self.pinproc.decode(self.machine_type, str(config['number']))
+            proc_num = self.pinproc.decode(self.machine_type, str(number))
 
-        return PROCDriver(proc_num, config, self)
+        return PROCDriver(proc_num, config, self, number)
 
     def configure_switch(self, config):
         """Configure a P-ROC switch.

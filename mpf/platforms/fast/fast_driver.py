@@ -2,24 +2,25 @@
 import logging
 
 from mpf.core.utility_functions import Util
-from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
+from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
 
 class FASTDriver(DriverPlatformInterface):
 
     """Base class for drivers connected to a FAST Controller."""
 
-    def __init__(self, config, sender, machine, platform):
+    def __init__(self, config, platform, number, platform_settings):
         """Initialise driver."""
-        super().__init__(config, config['number'])
+        super().__init__(config, number)
         self.log = logging.getLogger('FASTDriver')
         self.autofire = None
-        self.machine = machine
+        self.machine = platform.machine
         self.platform = platform
         self.driver_settings = dict()
-        self.send = sender
+        self.send = platform.net_connection.send
+        self.platform_settings = platform_settings
 
-        if config['connection'] == 1:
+        if platform_settings['connection'] == 1:
             self.driver_settings['config_cmd'] = 'DN:'
             self.driver_settings['trigger_cmd'] = 'TN:'
         else:
@@ -44,65 +45,23 @@ class FASTDriver(DriverPlatformInterface):
             # fall back if not found
             return "FAST Unknown Board"
 
-    def _get_pulse_ms(self, coil):
-        if coil.config['pulse_ms'] is None:
-            return self.machine.config['mpf']['default_pulse_ms']
-        else:
-            return coil.config['pulse_ms']
-
-    def get_pulse_ms_for_cmd(self, coil):
-        """Return pulse ms."""
-        pulse_ms = self._get_pulse_ms(coil)
-        if pulse_ms > 255:
-            return "00"
-        else:
-            return Util.int_to_hex_string(pulse_ms)
-
     @classmethod
-    def get_pwm1_for_cmd(cls, coil):
-        """Return pwm1/pulse pwm."""
-        if coil.config['pulse_pwm_mask']:
-            pulse_pwm_mask = str(coil.config['pulse_pwm_mask'])
-            if len(pulse_pwm_mask) == 32:
-                return Util.bin_str_to_hex_str(pulse_pwm_mask, 8)
-            elif len(pulse_pwm_mask) == 8:
-                return Util.bin_str_to_hex_str(pulse_pwm_mask, 2)
-            else:
-                raise ValueError("pulse_pwm_mask must either be 8 or 32 bits")
-        elif coil.config['pulse_power32'] is not None:
-            return "ff"
-        elif coil.config['pulse_power'] is not None:
-            return Util.pwm8_to_hex_string(coil.config['pulse_power'])
+    def get_pwm_for_cmd(cls, power: float):
+        """Return a hex string for a float power setting."""
+        # use PWM8 if sufficiently accurate
+        if (power * 8) - int(power * 8) < 0.025:
+            return Util.pwm8_to_hex_string(int(power * 8)).upper()
         else:
-            return "ff"
+            return Util.pwm32_to_hex_string(int(power * 32)).upper()
 
-    @classmethod
-    def get_pwm2_for_cmd(cls, coil):
-        """Return pwm2/hold pwm."""
-        if coil.config['hold_pwm_mask']:
-            hold_pwm_mask = str(coil.config['hold_pwm_mask'])
-            if len(hold_pwm_mask) == 32:
-                return Util.bin_str_to_hex_str(hold_pwm_mask, 8)
-            elif len(hold_pwm_mask) == 8:
-                return Util.bin_str_to_hex_str(hold_pwm_mask, 2)
-            else:
-                raise ValueError("hold_pwm_mask must either be 8 or 32 bits")
-        elif coil.config['hold_power32'] is not None:
-            return "ff"
-        elif coil.config['hold_power'] is not None:
-            return Util.pwm8_to_hex_string(coil.config['hold_power'])
-        else:
-            return "ff"
-
-    def get_recycle_ms_for_cmd(self, coil):
+    def get_recycle_ms_for_cmd(self, recycle, pulse_ms):
         """Return recycle ms."""
-        if not coil.config['recycle']:
+        if not recycle:
             return "00"
-        elif coil.config['recycle_ms'] is not None:
-            return Util.int_to_hex_string(coil.config['recycle_ms'])
+        elif self.platform_settings['recycle_ms'] is not None:
+            return Util.int_to_hex_string(self.platform_settings['recycle_ms'])
         else:
             # default recycle_ms to pulse_ms * 2
-            pulse_ms = self._get_pulse_ms(coil)
             if pulse_ms * 2 > 255:
                 return "FF"
             else:
@@ -127,95 +86,59 @@ class FASTDriver(DriverPlatformInterface):
     def reset(self):
         """Reset a driver."""
         self.log.debug("Resetting driver %s", self.driver_settings)
-        # cmd = (self.get_config_cmd() +
-        #        self.number +
-        #        ',00,00,00')
 
         cmd = '{}{},00,00,00'.format(self.get_config_cmd(), self.number)
 
         self.send(cmd)
 
-    def disable(self, coil):
+    def disable(self):
         """Disable (turn off) this driver."""
-        del coil
-
-        # cmd = (self.get_trigger_cmd() +
-        #        self.number + ',' + '02')
-
         cmd = '{}{},02'.format(self.get_trigger_cmd(), self.number)
 
         self.log.debug("Sending Disable Command: %s", cmd)
         self.send(cmd)
         self.check_auto()
 
-    def enable(self, coil):
+    def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable (turn on) this driver."""
         if self.autofire:
             # If this driver is also configured for an autofire rule, we just
             # manually trigger it with the trigger_cmd and manual on ('03')
-            # cmd = (self.get_trigger_cmd() +
-            #        self.number + ',' +
-            #        '03')
-
             cmd = '{}{},03'.format(self.get_trigger_cmd(), self.number)
-
-            self.log.warning("Recived a command to enable this driver, but "
-                             "this driver is configured with an autofire rule,"
-                             " so this enable will reset that rule. We need to"
-                             " change this behavior...")
-
         else:
             # Otherwise we send a full config command, trigger C1 (logic triggered
             # and drive now) switch ID 00, mode 18 (latched)
 
-            if (self.get_pwm1_for_cmd(coil) == 'ff' and
-                    self.get_pwm2_for_cmd(coil) == 'ff' and
-                    not coil.config['allow_enable']):
-
-                raise AssertionError("Received a command to enable this coil "
-                                     "without pwm, but 'allow_enable' has not been"
-                                     "set to True in this coil's configuration.")
-
-            else:
-
-                pulse_ms = self.get_pulse_ms_for_cmd(coil)
-
-                cmd = '{}{},C1,00,18,{},{},{},{}'.format(
-                    self.get_config_cmd(),
-                    self.number,
-                    pulse_ms,
-                    self.get_pwm1_for_cmd(coil),
-                    self.get_pwm2_for_cmd(coil),
-                    self.get_recycle_ms_for_cmd(coil))
-
-        # todo pwm32
+            cmd = '{}{},C1,00,18,{},{},{},{}'.format(
+                self.get_config_cmd(),
+                self.number,
+                Util.int_to_hex_string(pulse_settings.duration),
+                self.get_pwm_for_cmd(pulse_settings.power),
+                self.get_pwm_for_cmd(hold_settings.power),
+                self.get_recycle_ms_for_cmd(self.config.default_recycle, pulse_settings.duration)
+            )
 
         self.log.debug("Sending Enable Command: %s", cmd)
         self.send(cmd)
-        # todo change hold to pulse with re-ups
 
-    def pulse(self, coil, milliseconds):
+    def pulse(self, pulse_settings: PulseSettings):
         """Pulse this driver."""
-        if isinstance(milliseconds, int):
-            hex_ms_string = Util.int_to_hex_string(milliseconds)
-        else:
-            hex_ms_string = milliseconds
+        hex_ms_string = Util.int_to_hex_string(pulse_settings.duration)
 
         if self.autofire:
             cmd = '{}{},01'.format(self.get_trigger_cmd(), self.number)
 
-            if milliseconds:
-                self.log.debug("Received command to pulse driver for %sms, but"
-                               " this driver is configured with an autofire "
-                               "rule, so that pulse value will be used.",
-                               milliseconds)
+            self.log.debug("Received command to pulse driver, but"
+                           " this driver is configured with an autofire "
+                           "rule, so that pulse value will be used.")
         else:
             cmd = '{}{},89,00,10,{},{},00,00,{}'.format(
                 self.get_config_cmd(),
                 self.number,
                 hex_ms_string,
-                self.get_pwm1_for_cmd(coil),
-                self.get_recycle_ms_for_cmd(coil))
+                self.get_pwm_for_cmd(pulse_settings.power),
+                self.get_recycle_ms_for_cmd(self.config.default_recycle, pulse_settings.duration)
+            )
 
         self.log.debug("Sending Pulse Command: %s", cmd)
         self.send(cmd)

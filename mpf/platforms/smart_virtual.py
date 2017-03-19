@@ -2,6 +2,10 @@
 
 import logging
 
+from mpf.core.platform import DriverConfig
+
+from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, HoldSettings
+
 from mpf.core.delays import DelayManager
 from mpf.platforms.virtual import (HardwarePlatform as VirtualPlatform, VirtualDriver)
 
@@ -303,14 +307,15 @@ class HardwarePlatform(VirtualPlatform):
                 self.machine.events.add_handler('balldevice_{}_ejecting_ball'.format(device.name),
                                                 action.set_target)
 
-    def configure_driver(self, config):
+    def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
         """Configure driver."""
+        del platform_settings
         # generate number if None
-        if config['number'] is None:
-            config['number'] = self._next_driver
+        if number is None:
+            number = self._next_driver
             self._next_driver += 1
 
-        driver = SmartVirtualDriver(config)
+        driver = SmartVirtualDriver(config, number)
 
         return driver
 
@@ -365,28 +370,27 @@ class SmartVirtualDriver(VirtualDriver):
 
     """Smart virtual driver."""
 
-    def __init__(self, config):
+    def __init__(self, config, number):
         """Initialise smart virtual driver."""
-        super().__init__(config)
+        super().__init__(config, number)
         self.action = None
 
     def __repr__(self):
         """Return string representation."""
         return "SmartVirtualDriver.{}".format(self.number)
 
-    def disable(self, coil):
+    def disable(self):
         """Disable driver."""
         if self.action:
-            self.action.disable(coil)
+            self.action.disable(self)
 
-    def enable(self, coil):
+    def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable driver."""
+        del pulse_settings, hold_settings
         if self.action:
-            self.action.enable(coil)
+            self.action.enable(self)
 
-    def pulse(self, coil, milliseconds):
+    def pulse(self, pulse_settings: PulseSettings):
         """Pulse driver."""
         if self.action:
-            self.action.pulse(coil, milliseconds)
-
-        return milliseconds
+            self.action.pulse(self, pulse_settings.duration)

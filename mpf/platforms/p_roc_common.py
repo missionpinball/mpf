@@ -4,7 +4,7 @@ import logging
 import platform
 import sys
 import time
-from typing import Union, List, Callable, Tuple
+from typing import Union, Callable, Tuple
 
 from typing import Any
 from typing import List
@@ -31,7 +31,7 @@ except ImportError:     # pragma: no cover
         pinproc_imported = False
         pinproc = None
 
-from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform
+from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings
 
 
 # pylint does not understand that this class is abstract
@@ -114,27 +114,17 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
 
     @classmethod
     def _get_event_type(cls, sw_activity, debounced):
-        if sw_activity == 0 and debounced in ("normal", "auto"):
+        if sw_activity == 0 and debounced:
             return "open_debounced"
-        elif sw_activity == 0 and debounced == "quick":
+        elif sw_activity == 0 and not debounced:
             return "open_nondebounced"
-        elif sw_activity == 1 and debounced in ("normal", "auto"):
+        elif sw_activity == 1 and debounced:
             return "closed_debounced"
         else:  # if sw_activity == 1 and not debounced:
             return "closed_nondebounced"
 
-    @classmethod
-    def get_coil_config_section(cls):
-        """Additional config validation for coils."""
-        return "p_roc_coils"
-
-    @classmethod
-    def get_coil_overwrite_section(cls):
-        """Additional config validation for coils overwrites."""
-        return "p_roc_coil_overwrites"
-
-    def _add_hw_rule(self, switch, coil, rule, invert=False):
-        rule_type = self._get_event_type(switch.invert == invert, switch.config['debounce'])
+    def _add_hw_rule(self, switch: SwitchSettings, coil: DriverSettings, rule, invert=False):
+        rule_type = self._get_event_type(switch.invert == invert, switch.debounce)
 
         # overwrite rules for the same switch and coil combination
         for rule_num, rule_obj in enumerate(switch.hw_switch.hw_rules[rule_type]):
@@ -149,27 +139,22 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
         # TODO: properly implement pulse_power. previously implemented pwm_on_ms/pwm_off_ms were incorrect here
 
         self._add_hw_rule(switch, coil,
-                          self.pinproc.driver_state_pulse(coil.hw_driver.state(), coil.hw_driver.get_pulse_ms(coil)))
+                          self.pinproc.driver_state_pulse(coil.hw_driver.state(), coil.pulse_settings.duration))
 
-    def _add_pulse_and_hold_rule_to_switch(self, switch, coil):
-        if coil.hw_driver.get_pwm_on_ms(coil) and coil.hw_driver.get_pwm_off_ms(coil):
+    def _add_pulse_and_hold_rule_to_switch(self, switch: SwitchSettings, coil: DriverSettings):
+        if coil.hold_settings.power < 1.0:
+            pwm_on, pwm_off = coil.hw_driver.get_pwm_on_off_ms(coil.hold_settings)
             self._add_hw_rule(switch, coil,
                               self.pinproc.driver_state_patter(
-                                  coil.hw_driver.state(), coil.hw_driver.get_pwm_on_ms(coil),
-                                  coil.hw_driver.get_pwm_off_ms(coil), coil.hw_driver.get_pulse_ms(coil), True))
+                                  coil.hw_driver.state(), pwm_on, pwm_off, coil.pulse_settings.duration, True))
         else:
-            if not coil.config['allow_enable']:
-                raise AssertionError("Coil {} may not be enabled at 100% without allow_enabled or pwm settings".format(
-                    coil.hw_driver.number
-                ))
-            self._add_hw_rule(switch, coil,
-                              self.pinproc.driver_state_pulse(coil.hw_driver.state(), 0))
+            self._add_hw_rule(switch, coil, self.pinproc.driver_state_pulse(coil.hw_driver.state(), 0))
 
-    def _add_release_disable_rule_to_switch(self, switch, coil):
+    def _add_release_disable_rule_to_switch(self, switch: SwitchSettings, coil: DriverSettings):
         self._add_hw_rule(switch, coil,
                           self.pinproc.driver_state_disable(coil.hw_driver.state()), invert=True)
 
-    def _add_disable_rule_to_switch(self, switch, coil):
+    def _add_disable_rule_to_switch(self, switch: SwitchSettings, coil: DriverSettings):
         self._add_hw_rule(switch, coil,
                           self.pinproc.driver_state_disable(coil.hw_driver.state()))
 
@@ -179,13 +164,13 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
             for x in driver_rules:
                 driver.append(x[2])
             rule = {'notifyHost': bool(switch.hw_switch.notify_on_nondebounce) == event_type.endswith("nondebounced"),
-                    'reloadActive': bool(coil.config['recycle'])}
+                    'reloadActive': bool(coil.recycle)}
             if drive_now is None:
                 self.proc.switch_update_rule(switch.hw_switch.number, event_type, rule, driver)
             else:
                 self.proc.switch_update_rule(switch.hw_switch.number, event_type, rule, driver, drive_now)
 
-    def set_pulse_on_hit_rule(self, enable_switch, coil):
+    def set_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit rule on driver."""
         self.debug_log("Setting HW Rule on pulse on hit. Switch: %s, Driver: %s",
                        enable_switch.hw_switch.number, coil.hw_driver.number)
@@ -194,7 +179,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
 
         self._write_rules_to_switch(enable_switch, coil, False)
 
-    def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
+    def set_pulse_on_hit_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and release rule to driver."""
         self.debug_log("Setting HW Rule on pulse on hit and relesae. Switch: %s, Driver: %s",
                        enable_switch.hw_switch.number, coil.hw_driver.number)
@@ -204,7 +189,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
 
         self._write_rules_to_switch(enable_switch, coil, False)
 
-    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
+    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and enable and relase rule on driver."""
         self.debug_log("Setting Pulse on hit and enable and release HW Rule. Switch: %s, Driver: %s",
                        enable_switch.hw_switch.number, coil.hw_driver.number)
@@ -214,7 +199,8 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
 
         self._write_rules_to_switch(enable_switch, coil, False)
 
-    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
+    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
+                                                                 disable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and enable and release and disable rule on driver."""
         self.debug_log("Setting Pulse on hit and enable and release and disable HW Rule. Enable Switch: %s,"
                        "Disable Switch: %s, Driver: %s", enable_switch.hw_switch.number,
@@ -384,7 +370,7 @@ class PDBConfig(object):
         # list. The index of the bank is used to calculate the P-ROC/P3-ROC driver
         # number for each driver.
         num_proc_banks = driver_count // 8
-        self.indexes = [{}] * num_proc_banks    # type: List[Union(int,dict)]
+        self.indexes = [{}] * num_proc_banks    # type: List[Union[int, dict]]
 
         self._initialize_drivers(proc)
 
@@ -848,7 +834,7 @@ class PDBLED(LightPlatformInterface):
         Can fade for up to 100 days so do not bother about too long fades.
 
         Args:
-            brightness: brightness of this channel
+            color_and_fade_callback: brightness of this channel via callback
         """
         brightness, fade_ms = color_and_fade_callback(int(pow(2, 31) * 4))
         if fade_ms <= 0:

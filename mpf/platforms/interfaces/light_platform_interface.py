@@ -11,6 +11,12 @@ class LightPlatformInterface(metaclass=abc.ABCMeta):
     """Interface for a light in hardware platforms."""
 
     def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
+        """Perform a fade to a brightness.
+
+        Pass a callback which has the max_fade_time as parameter and returns the desired fade time and the brightness.
+        This is a callback because the platform may send the brightness later on and we do not want to introduce latency
+        between setting and sending the color.
+        """
         pass
 
 

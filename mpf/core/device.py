@@ -40,8 +40,7 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         self.name = name.lower()
         self.tags = []          # type: List[str]
         self.label = None       # type: str
-        self.platform = None    # type: BasePlatform
-        self.config = dict()    # type: ConfigDict
+        self.config = dict()    # type: ignore
 
     @classmethod
     def get_config_spec(cls):
@@ -96,7 +95,6 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
                                config['console_log'],
                                config['file_log'])
 
-        self.debug_log('Platform Driver: %s', self.platform)
         self.debug_log("Configuring device with settings: '%s'", config)
 
     def load_config(self, config: dict):

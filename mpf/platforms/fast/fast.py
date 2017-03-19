@@ -8,6 +8,9 @@ boards.
 import logging
 from copy import deepcopy
 
+from typing import Dict
+
+from mpf.platforms.fast.fast_io_board import FastIoBoard
 from mpf.platforms.fast.fast_servo import FastServo
 from mpf.platforms.fast import fast_defines
 from mpf.platforms.fast.fast_dmd import FASTDMD
@@ -18,8 +21,8 @@ from mpf.platforms.fast.fast_light import FASTMatrixLight
 from mpf.platforms.fast.fast_serial_communicator import FastSerialCommunicator
 from mpf.platforms.fast.fast_switch import FASTSwitch
 
-from mpf.devices.switch import Switch
-from mpf.core.platform import ServoPlatform, DmdPlatform, SwitchPlatform, DriverPlatform, LightsPlatform
+from mpf.core.platform import ServoPlatform, DmdPlatform, SwitchPlatform, DriverPlatform, LightsPlatform,\
+    DriverSettings, SwitchSettings, DriverConfig
 from mpf.core.utility_functions import Util
 
 
@@ -52,7 +55,7 @@ class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatfor
         self.config = None
         self.machine_type = None
         self.hw_switch_data = None
-        self.io_boards = {}     # type: {int, 'mpf.platform.fast.fast_io_board.FastIoBoard'}
+        self.io_boards = {}     # type: Dict[int, FastIoBoard]
 
         self.fast_commands = {'ID': lambda x: None,  # processor ID
                               'WX': lambda x: None,  # watchdog
@@ -310,7 +313,7 @@ class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatfor
 
         return Util.int_to_hex_string(index + driver)
 
-    def configure_driver(self, config: dict) -> FASTDriver:
+    def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict) -> FASTDriver:
         """Configure a driver.
 
         Args:
@@ -319,44 +322,43 @@ class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatfor
         Returns: Driver object
         """
         # dont modify the config. make a copy
-        config = deepcopy(config)
+        platform_settings = deepcopy(platform_settings)
 
         if not self.net_connection:
             raise AssertionError('A request was made to configure a FAST '
                                  'driver, but no connection to a NET processor'
                                  'is available')
 
-        if not config['number']:
+        if not number:
             raise AssertionError("Driver needs a number")
 
         # If we have WPC driver boards, look up the driver number
         if self.machine_type == 'wpc':
-            config['number'] = fast_defines.wpc_driver_map.get(
-                config['number'].upper())
+            number = fast_defines.wpc_driver_map.get(number.upper())
 
-            if ('connection' in config and
-                    config['connection'].lower() == 'network'):
-                config['connection'] = 1
+            if ('connection' in platform_settings and
+                    platform_settings['connection'].lower() == 'network'):
+                platform_settings['connection'] = 1
             else:
-                config['connection'] = 0  # local driver (default for WPC)
+                platform_settings['connection'] = 0  # local driver (default for WPC)
 
         # If we have FAST IO boards, we need to make sure we have hex strings
         elif self.machine_type == 'fast':
 
-            config['number'] = self._parse_driver_number(config['number'])
+            number = self._parse_driver_number(number)
 
             # Now figure out the connection type
-            if ('connection' in config and
-                    config['connection'].lower() == 'local'):
-                config['connection'] = 0
+            if ('connection' in platform_settings and
+                    platform_settings['connection'].lower() == 'local'):
+                platform_settings['connection'] = 0
             else:
-                config['connection'] = 1  # network driver (default for FAST)
+                platform_settings['connection'] = 1  # network driver (default for FAST)
 
         else:
             raise AssertionError("Invalid machine type: {}".format(
                 self.machine_type))
 
-        return FASTDriver(config, self.net_connection.send, self.machine, self)
+        return FASTDriver(config, self, number, platform_settings)
 
     def configure_servo(self, config: dict):
         """Configure a servo.
@@ -566,30 +568,6 @@ class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatfor
         """Return switch config section."""
         return "fast_switches"
 
-    @classmethod
-    def get_coil_overwrite_section(cls):
-        """Return coil overwrite section."""
-        return "fast_coil_overwrites"
-
-    def validate_switch_overwrite_section(self, switch: Switch, config_overwrite: dict) -> dict:
-        """Validate switch overwrite section for platform.
-
-        Args:
-            switch: switch to validate
-            config_overwrite: overwrite config to validate
-
-        Returns: Validated config.
-        """
-        if ("debounce" in config_overwrite and
-                switch.config['debounce'] != "auto" and
-                switch.config['debounce'] != config_overwrite['debounce']):
-            raise AssertionError("Cannot overwrite debounce for switch %s for"
-                                 "FAST interface", switch.name)
-
-        config_overwrite = super().validate_switch_overwrite_section(
-            switch, config_overwrite)
-        return config_overwrite
-
     def _check_switch_coil_combincation(self, switch, coil):
         switch_number = int(switch.hw_switch.number[0], 16)
         coil_number = int(coil.hw_driver.number, 16)
@@ -626,12 +604,12 @@ class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatfor
             coil.hw_driver.number,
             driver.get_control_for_cmd(enable_switch),
             enable_switch.hw_switch.number[0],
-            driver.get_pulse_ms_for_cmd(coil),
-            driver.get_pwm1_for_cmd(coil),
-            driver.get_recycle_ms_for_cmd(coil))
+            Util.int_to_hex_string(coil.pulse_settings.duration),
+            driver.get_pwm_for_cmd(coil.pulse_settings.power),
+            driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
 
         driver.autofire = True
-        enable_switch.hw_switch.configure_debounce(enable_switch.config)
+        enable_switch.hw_switch.configure_debounce(enable_switch.debounce)
         self.debug_log("Writing hardware rule: %s", cmd)
 
         self.net_connection.send(cmd)
@@ -657,7 +635,7 @@ class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatfor
         del disable_switch
         self.set_pulse_on_hit_and_release_rule(enable_switch, coil)
 
-    def set_pulse_on_hit_rule(self, enable_switch, coil):
+    def set_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit rule on driver."""
         self.debug_log("Setting Pulse on hit and release HW Rule. Switch: %s,"
                        "Driver: %s", enable_switch.hw_switch.number,
@@ -672,17 +650,17 @@ class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatfor
             coil.hw_driver.number,
             driver.get_control_for_cmd(enable_switch),
             enable_switch.hw_switch.number[0],
-            driver.get_pulse_ms_for_cmd(coil),
-            driver.get_pwm1_for_cmd(coil),
-            driver.get_recycle_ms_for_cmd(coil))
+            Util.int_to_hex_string(coil.pulse_settings.duration),
+            driver.get_pwm_for_cmd(coil.pulse_settings.power),
+            driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
 
         driver.autofire = True
-        enable_switch.hw_switch.configure_debounce(enable_switch.config)
+        enable_switch.hw_switch.configure_debounce(enable_switch.debounce)
         self.debug_log("Writing hardware rule: %s", cmd)
 
         self.net_connection.send(cmd)
 
-    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
+    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and enable and relase rule on driver."""
         self.debug_log("Setting Pulse on hit and enable and release HW Rule. "
                        "Switch: %s, Driver: %s",
@@ -691,26 +669,19 @@ class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatfor
         self._check_switch_coil_combincation(enable_switch, coil)
 
         driver = coil.hw_driver
-        if (driver.get_pwm1_for_cmd(coil) == "ff" and
-                driver.get_pwm2_for_cmd(coil) == "ff" and
-                not coil.config['allow_enable']):
-
-            # todo figure how to show the friendly name of this driver
-            raise AssertionError("Coil {} may not be enabled at 100% without "
-                                 "allow_enabled or pwm settings".format(coil.hw_driver.number))
 
         cmd = '{}{},{},{},18,{},{},{},{},00'.format(
             driver.get_config_cmd(),
-            coil.hw_driver.number,
+            driver.number,
             driver.get_control_for_cmd(enable_switch),
             enable_switch.hw_switch.number[0],
-            driver.get_pulse_ms_for_cmd(coil),
-            driver.get_pwm1_for_cmd(coil),
-            driver.get_pwm2_for_cmd(coil),
-            driver.get_recycle_ms_for_cmd(coil))
+            Util.int_to_hex_string(coil.pulse_settings.duration),
+            driver.get_pwm_for_cmd(coil.pulse_settings.power),
+            driver.get_pwm_for_cmd(coil.hold_settings.power),
+            driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
 
         driver.autofire = True
-        enable_switch.hw_switch.configure_debounce(enable_switch.config)
+        enable_switch.hw_switch.configure_debounce(enable_switch.debounce)
         self.debug_log("Writing hardware rule: %s", cmd)
 
         self.net_connection.send(cmd)
@@ -736,9 +707,9 @@ class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatfor
 
         driver = coil.hw_driver
 
-        cmd = '{}{},81'.format(driver.get_config_cmd(), coil.hw_driver.number)
+        cmd = '{}{},81'.format(driver.get_config_cmd(), driver.number)
 
-        coil.autofire = None
+        driver.autofire = None
 
         self.debug_log("Clearing hardware rule: %s", cmd)
 

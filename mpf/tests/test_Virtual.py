@@ -13,8 +13,6 @@ class TestSmartVirtualPlatform(MpfTestCase):
         # test that we can load the config with coil and switch parameters from platforms
 
         self.machine.coils.c_test_allow_enable.enable()
-        self.machine.coils.c_test_hold_fast.enable()
-        self.machine.coils.c_test_hold_p_roc.enable()
         self.machine.coils.c_test_hold_power.enable()
 
         with self.assertRaises(AssertionError):

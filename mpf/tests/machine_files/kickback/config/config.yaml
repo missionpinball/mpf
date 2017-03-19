@@ -3,7 +3,7 @@
 coils:
   kickback_coil:
     number:
-    pulse_ms: 100
+    default_pulse_ms: 100
 
 switches:
   s_kickback:

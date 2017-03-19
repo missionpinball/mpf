@@ -92,32 +92,16 @@ autofire_coils:
     reverse_switch: single|bool|False
     enable_events: dict|str:ms|ball_started
     disable_events: dict|str:ms|ball_will_end, service_mode_entered
-    coil_overwrite: dict|str:str|None
+    coil_overwrite: dict|subconfig(coil_overwrites)|None
     switch_overwrite: dict|str:str|None
     ball_search_order: single|int|100
     playfield: single|machine(playfields)|playfield
-switch_overwrites:
-    __valid_in__: machine
-    debounce: single|enum(quick,normal,None)|None
-
 coil_overwrites:
     __valid_in__: machine
     recycle: single|bool|None
     pulse_ms: single|ms|None
-    pulse_power: single|int(0,8)|None
-    hold_power: single|int(0,8)|None
-fast_coil_overwrites:
-    __valid_in__: machine
-    pulse_power32: single|int|None
-    hold_power32: single|int|None
-    pulse_pwm_mask: single|int|None
-    hold_pwm_mask: single|int|None
-    recycle_ms: single|ms|None
-p_roc_coil_overwrites:
-    __valid_in__: machine
-    pwm_on_ms: single|int|None
-    pwm_off_ms: single|int|None
-
+    pulse_power: single|float(0,1)|None
+    hold_power: single|float(0,1)|None
 ball_devices:
     __valid_in__: machine
     exit_count_delay: single|ms|500ms
@@ -218,14 +202,18 @@ bonus_entries:
 coils:
     __valid_in__: machine
     number: single|str|
-    pulse_ms: single|ms|None
-    pulse_power: single|int(0,8)|None
-    hold_power: single|int(0,8)|None
-    recycle: single|bool|False
-    allow_enable: single|bool|False
-    enable_events: dict|str:ms|None
+    default_recycle: single|bool|False
+    default_pulse_ms: single|ms|None
+    default_pulse_power: single|float(0,1)|None
+    default_hold_power: single|float(0,1)|None
+    max_pulse_ms: single|ms|None
+    max_pulse_power: single|float(0,1)|1.0
+    max_hold_power: single|float(0,1)|None
     disable_events: dict|str:ms|None
+    enable_events: dict|str:ms|None
     pulse_events: dict|str:ms|None
+    platform_settings: single|dict|None
+    psu: single|machine(psus)|default
     platform: single|str|None
 dual_wound_coils:
     __valid_in__: machine
@@ -234,20 +222,11 @@ dual_wound_coils:
     eos_switch: single|machine(switches)|None
 opp_coils:
     __valid_in__: machine
-    hold_power16: single|int|None
     recycle_factor: single|int|None
 fast_coils:
     __valid_in__: machine
-    pulse_power32: single|int|None
-    hold_power32: single|int|None
-    pulse_pwm_mask: single|int|None
-    hold_pwm_mask: single|int|None
     connection: single|enum(network,local,auto)|auto
     recycle_ms: single|ms|None
-p_roc_coils:
-    __valid_in__: machine
-    pwm_on_ms: single|int|None
-    pwm_off_ms: single|int|None
 coil_player:
     __valid_in__: machine, mode, show
     action: single|lstr|pulse
@@ -426,8 +405,8 @@ flippers:
     disable_events: dict|str:ms|ball_will_end, service_mode_entered
     # enable_no_hold_events: dict|str:ms|None
     # invert_events: dict|str:ms|None
-    main_coil_overwrite: dict|str:str|None
-    hold_coil_overwrite: dict|str:str|None
+    main_coil_overwrite: dict|subconfig(coil_overwrites)|None
+    hold_coil_overwrite: dict|subconfig(coil_overwrites)|None
     switch_overwrite: dict|str:str|None
     eos_switch_overwrite: dict|str:str|None
     power_setting_name: single|str|None
@@ -477,7 +456,7 @@ kickbacks:
     reverse_switch: single|bool|False
     enable_events: dict|str:ms|None
     disable_events: dict|str:ms|ball_will_end, service_mode_entered
-    coil_overwrite: dict|str:str|None
+    coil_overwrite: dict|subconfig(coil_overwrites)|None
     switch_overwrite: dict|str:str|None
     ball_search_order: single|int|100
     playfield: single|machine(playfields)|playfield
@@ -685,14 +664,10 @@ p3_roc:
     debug: single|bool|False
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
-physical_dmd:
+psus:
     __valid_in__: machine
-    shades: single|pow2|16
-    fps: single|int|30
-    source_display: single|str|dmd
-    luminosity: list|float|.299, .587, .114
-    brightness: single|float|0.5
-    only_send_changes: single|bool|False
+    voltage: single|int|None
+    max_amps: single|int|None
 physical_dmds:
     __valid_in__: machine
     platform: single|str|None
@@ -703,12 +678,6 @@ physical_dmds:
     brightness: single|float|1.0
     gamma: single|float|1.0
     only_send_changes: single|bool|False
-physical_rgb_dmd:
-    __valid_in__: machine
-    fps: single|int|30
-    source_display: single|str|dmd
-    only_send_changes: single|bool|False
-    brightness: single|float|1.0
 physical_rgb_dmds:
     __valid_in__: machine
     platform: single|str|None

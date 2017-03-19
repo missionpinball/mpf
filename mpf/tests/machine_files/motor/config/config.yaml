@@ -9,7 +9,7 @@ switches:
 coils:
     c_motor_run:
         number:
-        allow_enable: True
+        max_hold_power: 1.0
 
 motors:
     motorized_drop_target_bank:

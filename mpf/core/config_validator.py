@@ -386,13 +386,22 @@ class ConfigValidator(object):
 
         return self.machine.placeholder_manager.build_bool_template(item)
 
-    def _validate_type_float(self, item, validation_failure_info):
+    def _validate_type_float(self, item, validation_failure_info, param=None):
         if item is None:
             return None
         try:
-            return float(item)
+            value = float(item)
         except (TypeError, ValueError):
             self.validation_error(item, validation_failure_info, "Could not convert to float")
+
+        if param:
+            param = param.split(",")
+            if param[0] != "NONE" and value < float(param[0]):
+                self.validation_error(item, validation_failure_info, "{} is smaller then {}".format(item, param[0]))
+            elif param[1] != "NONE" and value > float(param[1]):
+                self.validation_error(item, validation_failure_info, "{} is larger then {}".format(item, param[1]))
+
+        return value
 
     def _validate_type_int(self, item, validation_failure_info, param=None):
         if item is None:
@@ -408,7 +417,7 @@ class ConfigValidator(object):
             if param[0] != "NONE" and value < int(param[0]):
                 self.validation_error(item, validation_failure_info, "{} is smaller then {}".format(item, param[0]))
             elif param[1] != "NONE" and value > int(param[1]):
-                self.validation_error(item, validation_failure_info, "{} is larger then {}".format(item, param[0]))
+                self.validation_error(item, validation_failure_info, "{} is larger then {}".format(item, param[1]))
 
         return value
 

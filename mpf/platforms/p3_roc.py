@@ -12,7 +12,7 @@ https://github.com/preble/pyprocgame
 
 import logging
 
-from mpf.core.platform import I2cPlatform, AccelerometerPlatform
+from mpf.core.platform import I2cPlatform, AccelerometerPlatform, DriverConfig
 from mpf.platforms.p_roc_common import PDBConfig, PROCBasePlatform
 from mpf.platforms.p_roc_devices import PROCDriver
 
@@ -117,7 +117,7 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
         # flush data to proc
         self.proc.flush()
 
-    def configure_driver(self, config):
+    def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
         """Create a P3-ROC driver.
 
         Typically drivers are coils or flashers, but for the P3-ROC this is
@@ -135,11 +135,11 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
         # Find the P3-ROC number for each driver. For P3-ROC driver boards, the
         # P3-ROC number is specified via the Ax-By-C format.
 
-        proc_num = self.pdbconfig.get_proc_coil_number(str(config['number']))
+        proc_num = self.pdbconfig.get_proc_coil_number(str(number))
         if proc_num == -1:
-            raise AssertionError("Driver {} cannot be controlled by the P3-ROC. ".format(str(config['number'])))
+            raise AssertionError("Driver {} cannot be controlled by the P3-ROC. ".format(str(number)))
 
-        proc_driver_object = PROCDriver(proc_num, config, self)
+        proc_driver_object = PROCDriver(proc_num, config, self, number)
 
         return proc_driver_object
 

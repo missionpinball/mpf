@@ -97,16 +97,8 @@ class OpenPixelLED(LightPlatformInterface):
         self.opc_client.add_pixel(self.opc_channel, self.channel_number)
 
     def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
+        """Set brightness using callback."""
         self.opc_client.set_pixel_color(self.opc_channel, self.channel_number, color_and_fade_callback)
-
-    def set_brightness(self, brightness: float, fade_ms: int):
-        """Set brightness of the led."""
-        # fadecandy does not support fade per led
-        del fade_ms
-        return
-        if self.debug:
-            self.log.debug("Setting brightness: %s", brightness)
-        self.opc_client.set_pixel_color(self.opc_channel, self.channel_number, int(brightness * 255))
 
 
 class OpenPixelClient(object):
@@ -183,7 +175,8 @@ class OpenPixelClient(object):
 
             self.dirty = False
 
-    def _add_pixel(self, msg, max_fade_ms, brightness):
+    @staticmethod
+    def _add_pixel(msg, max_fade_ms, brightness):
         if callable(brightness):
             brightness = brightness(max_fade_ms)[0] * 255
         brightness = min(255, max(0, int(brightness)))
@@ -221,7 +214,6 @@ class OpenPixelClient(object):
             self._add_pixel(msg, max_fade_ms, pixels[i * 3 + 1])
             self._add_pixel(msg, max_fade_ms, pixels[i * 3])
             self._add_pixel(msg, max_fade_ms, pixels[i * 3 + 2])
-
 
         self.send(bytes(msg))
 

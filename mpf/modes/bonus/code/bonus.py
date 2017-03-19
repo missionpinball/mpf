@@ -57,7 +57,7 @@ class Bonus(Mode):
                                         self._end_bonus)
 
     def hurry_up(self, **kwargs):
-        """Changes the slide display delay to the "hurry up" setting.
+        """Change the slide display delay to the "hurry up" setting.
 
         This is typically used with a flipper cancel event to hurry up the
         bonus display when the player hits both flippers.

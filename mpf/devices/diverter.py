@@ -30,7 +30,6 @@ class Diverter(SystemWideDevice):
         # Attributes
         self.active = False
         self.enabled = False
-        self.platform = None
 
         self.diverting_ejects_count = 0
         self.eject_state = False
@@ -61,8 +60,6 @@ class Diverter(SystemWideDevice):
 
         self.machine.events.add_handler('init_phase_3',
                                         self._register_switches)
-
-        self.platform = self.config['activation_coil'].platform
 
         if self.config['ball_search_order']:
             self.config['playfield'].ball_search.register(

@@ -1,3 +1,5 @@
+from mpf.core.platform_controller import SwitchRuleSettings, DriverRuleSettings, PulseRuleSettings
+
 from mpf.core.rgb_color import RGBColor
 from mpf.tests.MpfTestCase import MpfTestCase
 from unittest.mock import MagicMock, call
@@ -189,9 +191,10 @@ class TestP3Roc(MpfTestCase):
 
     def test_hw_rule_pulse_disable_on_release(self):
         self.machine.coils.c_test.hw_driver.state = MagicMock(return_value=8)
-        self.machine.default_platform.set_pulse_on_hit_and_release_rule(
-                self.machine.switches.s_test,
-                self.machine.coils.c_test)
+        self.machine.platform_controller.set_pulse_on_hit_and_release_rule(
+            SwitchRuleSettings(switch=self.machine.switches.s_test, debounce=True, invert=False),
+            DriverRuleSettings(driver=self.machine.coils.c_test, recycle=False),
+            PulseRuleSettings(duration=23, power=1.0))
 
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
             call(
@@ -285,9 +288,10 @@ class TestP3Roc(MpfTestCase):
 
     def test_hw_rule_hold_allow_enable(self):
         self.machine.coils.c_test_allow_enable.hw_driver.state = MagicMock(return_value=8)
-        self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule(
-                self.machine.switches.s_test,
-                self.machine.coils.c_test_allow_enable)
+        self.machine.platform_controller.set_pulse_on_hit_and_enable_and_release_rule(
+            SwitchRuleSettings(switch=self.machine.switches.s_test, debounce=True, invert=False),
+            DriverRuleSettings(driver=self.machine.coils.c_test_allow_enable, recycle=False),
+            PulseRuleSettings(duration=23, power=1.0))
 
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
             call(
@@ -326,15 +330,17 @@ class TestP3Roc(MpfTestCase):
     def test_hw_rule_hold_no_allow_enable(self):
         # enable coil which does not have allow_enable
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule(
-                self.machine.switches.s_test,
-                self.machine.coils.c_test)
+            self.machine.platform_controller.set_pulse_on_hit_and_enable_and_release_rule(
+                SwitchRuleSettings(switch=self.machine.switches.s_test, debounce=True, invert=False),
+                DriverRuleSettings(driver=self.machine.coils.c_test, recycle=False),
+                PulseRuleSettings(duration=23, power=1.0))
 
     def test_hw_rule_multiple_pulse(self):
         self.machine.coils.c_test.hw_driver.state = MagicMock(return_value=8)
-        self.machine.default_platform.set_pulse_on_hit_rule(
-                self.machine.switches.s_test,
-                self.machine.coils.c_test)
+        self.machine.platform_controller.set_pulse_on_hit_rule(
+            SwitchRuleSettings(switch=self.machine.switches.s_test, debounce=True, invert=False),
+            DriverRuleSettings(driver=self.machine.coils.c_test, recycle=False),
+            PulseRuleSettings(duration=23, power=1.0))
 
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
             call(
@@ -360,9 +366,10 @@ class TestP3Roc(MpfTestCase):
 
         # test setting the same rule again
         self.machine.coils.c_test.hw_driver.state = MagicMock(return_value=8)
-        self.machine.default_platform.set_pulse_on_hit_rule(
-                self.machine.switches.s_test,
-                self.machine.coils.c_test)
+        self.machine.platform_controller.set_pulse_on_hit_rule(
+            SwitchRuleSettings(switch=self.machine.switches.s_test, debounce=True, invert=False),
+            DriverRuleSettings(driver=self.machine.coils.c_test, recycle=False),
+            PulseRuleSettings(duration=23, power=1.0))
 
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
             call(
@@ -381,11 +388,11 @@ class TestP3Roc(MpfTestCase):
                 False),
         ], any_order=True)
 
-
         self.machine.coils.c_coil_pwm_test.hw_driver.state = MagicMock(return_value=9)
-        self.machine.default_platform.set_pulse_on_hit_rule(
-            self.machine.switches.s_test,
-            self.machine.coils.c_coil_pwm_test)
+        self.machine.platform_controller.set_pulse_on_hit_rule(
+            SwitchRuleSettings(switch=self.machine.switches.s_test, debounce=True, invert=False),
+            DriverRuleSettings(driver=self.machine.coils.c_coil_pwm_test, recycle=False),
+            PulseRuleSettings(duration=23, power=1.0))
 
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
             call(
