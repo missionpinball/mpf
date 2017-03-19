@@ -10,6 +10,7 @@ import tempfile
 import sys
 import threading
 
+import copy
 from pkg_resources import iter_entry_points
 from typing import Any, TYPE_CHECKING, Callable, Dict, List, Set
 
@@ -279,6 +280,32 @@ class MachineController(LogMixin):
                 settings['value'] = 0
 
             self.create_machine_var(name=name, value=settings['value'])
+
+        self._load_initial_machine_vars()
+
+    def _load_initial_machine_vars(self):
+        """Load initial machine var values from config if they did not get loaded from data."""
+        if 'machine_vars' not in self.config:
+            return
+
+        config = self.config['machine_vars']
+        for name, element in config.items():
+            if name not in self.machine_vars:
+                element = self.config_validator.validate_config("machine_vars", copy.deepcopy(element))
+                self.create_machine_var(name=name,
+                                        value=Util.convert_to_type(element['initial_value'], element['value_type']),
+                                        persist=element['persist'])
+
+    def _check_crash_queue(self, time):
+        del time
+        try:
+            crash = self.crash_queue.get(block=False)
+        except queue.Empty:
+            pass
+        else:
+            print("MPF Shutting down due to child thread crash")
+            print("Crash details: %s", crash)
+            self.stop()
 
     def _set_machine_path(self):
         # Add the machine folder to sys.path so we can import modules from it

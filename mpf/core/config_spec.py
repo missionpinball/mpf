@@ -550,6 +550,24 @@ machine:
     __valid_in__: machine
     balls_installed: single|int|1
     min_balls: single|int|1
+machine_vars:
+    __valid_in__: machine
+    initial_value: single|str|
+    value_type: single|enum(str,float,int)|int
+    persist: single|bool|True
+matrix_light_settings:
+    __valid_in__: machine
+    default_light_fade_ms: single|int|0
+matrix_lights:
+    __valid_in__: machine
+    number: single|str|
+    fade_ms: single|ms|None
+    on_events:  dict|str:ms|None
+    off_events:  dict|str:ms|None
+    platform: single|str|None
+    x: single|int|None
+    y: single|int|None
+    z: single|int|None
 mc_scriptlets:
     __valid_in__: machine  # used by the MC, ignored by MPF
 mode:

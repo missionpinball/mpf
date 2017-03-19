@@ -61,38 +61,38 @@ show_pools:
   group1:
     load: preload
     shows:
-      show1
-      show2
-      show3
+      - show1
+      - show2
+      - show3
     type: random
   group2:
     load: preload
     shows:
-      show1
-      show2
-      show3|2
+      - show1
+      - show2
+      - show3|2
     type: random
   group3:
     shows:
-      show1
-      show2
-      show3
+      - show1
+      - show2
+      - show3
     type: sequence
   group4:
     shows:
-      show1|4
-      show2|2
-      show3
+      - show1|4
+      - show2|2
+      - show3
     type: sequence
   group5:
     shows:
-      show1|1
-      show2|5
-      show3|1
+      - show1|1
+      - show2|5
+      - show3|1
     type: random_force_next
   group6:
     shows:
-      show1
-      show2
-      show3
+      - show1
+      - show2
+      - show3
     type: random_force_all
