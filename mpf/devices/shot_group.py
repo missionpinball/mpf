@@ -371,7 +371,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         self.debug_log('Rotating. Mode: %s, Direction: %s, Include states:'
                        ' %s, Exclude states: %s, Shots to be rotated: %s',
                        mode, direction, states,
-                        exclude_states, [x.name for x in shot_list])
+                       exclude_states, [x.name for x in shot_list])
 
         for shot in shot_list:
             shot.debug_log("This shot is part of a rotation event. Current"

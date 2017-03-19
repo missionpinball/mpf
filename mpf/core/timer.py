@@ -75,6 +75,7 @@ class Timer(LogMixin):
 
     @property
     def ticks(self):
+        """Return ticks."""
         return self._ticks
 
     @ticks.setter

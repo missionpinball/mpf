@@ -33,6 +33,7 @@ class ExtraBall(ModeDevice):
             self.machine.extra_ball_controller.award()
 
     def light(self, **kwargs):
+        """Light extra ball light."""
         del kwargs
 
         if not self.player:

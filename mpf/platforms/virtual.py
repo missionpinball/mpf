@@ -270,6 +270,7 @@ class VirtualLight(LightPlatformInterface):
 
     @property
     def current_brightness(self, max_fade=0) -> float:
+        """Return current brightness."""
         if self.color_and_fade_callback:
             return self.color_and_fade_callback(max_fade)[0]
         else:
@@ -278,11 +279,6 @@ class VirtualLight(LightPlatformInterface):
     def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
         """Store CB function."""
         self.color_and_fade_callback = color_and_fade_callback
-
-    def set_brightness(self, brightness: float, fade_ms: int):
-        """Set brightness."""
-        pass
-        #self.current_brightness = brightness
 
 
 class VirtualServo(ServoPlatformInterface):

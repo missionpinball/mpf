@@ -25,7 +25,7 @@ class IncomingBall:
         # 4. lost (timeouted)
 
     def set_can_skip(self):
-        """Tell other devices that this ball may have """
+        """Tell other devices that this ball may have skipped the device."""
         self._can_skip_future.set_result(True)
 
     def wait_for_can_skip(self):

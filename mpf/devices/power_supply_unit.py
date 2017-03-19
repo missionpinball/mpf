@@ -16,7 +16,7 @@ class PowerSupplyUnit(SystemWideDevice):
         self._busy_until = None
 
     def get_wait_time_for_pulse(self, pulse_ms, max_wait_ms) -> int:
-        """Returns a wait time for a pulse or 0."""
+        """Return a wait time for a pulse or 0."""
         current_time = self.machine.clock.get_time()
 
         if self._busy_until and self._busy_until < current_time:

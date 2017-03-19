@@ -35,7 +35,7 @@ class HardwarePlatform(DriverPlatform):
         self.system11_config = None     # type: ConfigDict
         self.snux_config = None
 
-        self.a_side_queue = set()       # type: Set[Tuple[DriverPlatformInterface, PulseSettings, HoldSettings]
+        self.a_side_queue = set()       # type: Set[Tuple[DriverPlatformInterface, PulseSettings, HoldSettings]]
         self.c_side_queue = set()       # type: Set[Tuple[DriverPlatformInterface, PulseSettings, HoldSettings]]
 
         self.a_drivers = set()          # type: Set[DriverPlatformInterface]

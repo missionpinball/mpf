@@ -133,7 +133,7 @@ class Flipper(SystemWideDevice):
             return int(pulse_ms * settings_factor)
         else:
             return pulse_ms
-        
+
     def _get_hold_pulse_ms(self) -> Optional[int]:
         """Return pulse_ms for hold coil."""
         pulse_ms = self.config['hold_coil_overwrite'].get("pulse_ms", None)
@@ -212,7 +212,6 @@ class Flipper(SystemWideDevice):
         Note this method will keep this flipper enabled until you call
         sw_release().
         """
-
         if include_switch:
             self.machine.switch_controller.process_switch(
                 name=self.config['activation_switch'].name,

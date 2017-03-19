@@ -1,3 +1,4 @@
+"""Controls the rules on all platforms."""
 from collections import namedtuple
 
 from mpf.core.mpf_controller import MpfController

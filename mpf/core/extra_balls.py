@@ -1,15 +1,16 @@
-"""Class for the ExtraBallController"""
+"""Class for the ExtraBallController."""
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.mpf_controller import MpfController
 
 
 class ExtraBallController(MpfController):
+
     """Tracks and manages extra balls at the global level."""
 
     config_name = 'extra_balls'
 
     def __init__(self, machine):
-        """Initialize ExtraBallManager"""
+        """Initialize ExtraBallManager."""
         super().__init__(machine)
 
         self.extra_balls = CaseInsensitiveDict()
@@ -104,10 +105,10 @@ class ExtraBallController(MpfController):
             player.extra_balls_lit = 0
 
     def award_lit(self, **kwargs):
-        """Awards a lit extra ball.
+        """Award a lit extra ball.
 
-        If the player does not have any lit extra balls, this method does
-        nothing."""
+        If the player does not have any lit extra balls, this method does nothing.
+        """
         del kwargs
 
         try:
@@ -180,9 +181,8 @@ class ExtraBallController(MpfController):
             if not self.events_only:
                 player.extra_balls += 1
 
-
     def light(self, **kwargs):
-        """Lights the extra ball.
+        """Light the extra ball.
 
         This method also increments the player's extra_balls_lit count.
         """
@@ -242,7 +242,7 @@ class ExtraBallController(MpfController):
             '''
 
     def relight(self, **kwargs):
-        """Relights the extra ball when a player's turn starts.
+        """Relight the extra ball when a player's turn starts.
 
         This event does not post the "extra_ball_lit_awarded" event so you
         can use it to not show the extra ball awards when a player starts

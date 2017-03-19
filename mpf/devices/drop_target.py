@@ -319,7 +319,6 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         This method causes this group to update its down and up counts and
         complete status.
         """
-
         if self._ignore_switch_hits:
             return
 
@@ -379,7 +378,6 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
 
     def device_removed_from_mode(self, mode):
         """Remove targets which were added in this mode."""
-
         self.delay.remove('ignore_hits')
 
         for target in self.drop_targets:

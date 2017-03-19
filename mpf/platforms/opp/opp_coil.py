@@ -5,7 +5,6 @@ from typing import Optional
 
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
-from mpf.core.utility_functions import Util
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 
 SwitchRule = namedtuple("SwitchRule", ["pulse_settings", "hold_settings", "recycle"])
@@ -93,7 +92,7 @@ class OPPSolenoid(DriverPlatformInterface):
         self.apply_switch_rule()
 
     def remove_switch_rule(self):
-        """Remove switch rule. """
+        """Remove switch rule."""
         self.switch_rule = None
         self.reconfigure_driver(
             PulseSettings(
@@ -187,4 +186,3 @@ class OPPSolenoidCard(object):
                 opp_sol = OPPSolenoid(self, number)
                 opp_sol.config = {}
                 sol_dict[number] = opp_sol
-
