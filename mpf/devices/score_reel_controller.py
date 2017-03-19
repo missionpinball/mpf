@@ -1,8 +1,13 @@
 """Score reel controller."""
-from mpf.core.mpf_controller import MpfController
+import logging
+
+import asyncio
+from functools import partial
+
+from mpf.core.utility_functions import Util
 
 
-class ScoreReelController(MpfController):
+class ScoreReelController(object):
 
     """The overall controller that is in charge of and manages the score reels in a pinball machine.
 
@@ -26,7 +31,9 @@ class ScoreReelController(MpfController):
 
     def __init__(self, machine):
         """Initialise score reel controller."""
-        super().__init__(machine)
+        self.machine = machine
+        self.log = logging.getLogger("ScoreReelController")
+        self.log.debug("Loading the ScoreReelController")
 
         self.active_scorereelgroup = None
         """Pointer to the active ScoreReelGroup for the current player.
@@ -36,24 +43,23 @@ class ScoreReelController(MpfController):
         indexes. The first element [0] in this list is the first player (which
         is player index [0], the next one is the next player, etc.
         """
-        self.reset_queue = []
-        """List of score reel groups that still need to be reset"""
-        self.queue = None
-        """Holds any active queue event queue objects"""
 
         # register for events
 
         # switch the active score reel group and reset it (if needed)
         self.machine.events.add_handler('player_turn_start',
-                                        self.rotate_player)
+                                        self._rotate_player)
 
         # receive notification of score changes
-        self.machine.events.add_handler('player_score', self.score_change)
+        self.machine.events.add_handler('player_score', self._score_change)
 
         # receives notifications of game starts to reset the reels
-        self.machine.events.add_handler('game_starting', self.game_starting)
+        self.machine.events.add_handler('game_starting', self._game_starting)
 
-    def rotate_player(self, **kwargs):
+        # Need to hook this in case reels aren't done when ball ends
+        self.machine.events.add_handler('ball_ending', self._ball_ending, 900)
+
+    def _rotate_player(self, **kwargs):
         """Called when a new player's turn starts.
 
         The main purpose of this method is to map the current player to their
@@ -75,23 +81,19 @@ class ScoreReelController(MpfController):
         # to create a new mapping
         if (len(self.player_to_scorereel_map) <
                 len(self.machine.game.player_list)):
-            self.map_new_score_reel_group()
+            self._map_new_score_reel_group()
 
         self.active_scorereelgroup = self.player_to_scorereel_map[
             self.machine.game.player.index]
 
-        self.debug_log("Mapping Player %s to ScoreReelGroup '%s'",
+        self.log.debug("Mapping Player %s to ScoreReelGroup '%s'",
                        self.machine.game.player.number,
                        self.active_scorereelgroup.name)
 
         # Make sure this score reel group is showing the right score
-        self.debug_log("Current player's score: %s",
+        self.log.debug("Current player's score: %s",
                        self.machine.game.player.score)
-        self.debug_log("Score displayed on reels: %s",
-                       self.active_scorereelgroup.assumed_value_int)
-        if (self.active_scorereelgroup.assumed_value_int !=
-                self.machine.game.player.score):
-            self.active_scorereelgroup.set_value(self.machine.game.player.score)
+        self.active_scorereelgroup.set_value(self.machine.game.player.score)
 
         # light up this group
         for group in self.machine.score_reel_groups:
@@ -99,13 +101,13 @@ class ScoreReelController(MpfController):
 
         self.active_scorereelgroup.light()
 
-    def map_new_score_reel_group(self):
+    def _map_new_score_reel_group(self):
         """Create a mapping of a player to a score reel group."""
         # do we have a reel group tagged for this player?
         for reel_group in self.machine.score_reel_groups.items_tagged(
                 "player" + str(self.machine.game.player.number)):
             self.player_to_scorereel_map.append(reel_group)
-            self.debug_log("Found a mapping to add: %s", reel_group.name)
+            self.log.debug("Found a mapping to add: %s", reel_group.name)
             return
 
         # if we didn't find one, then we'll just use the first player's group
@@ -116,7 +118,7 @@ class ScoreReelController(MpfController):
 
         self.player_to_scorereel_map.append(self.player_to_scorereel_map[0])
 
-    def score_change(self, value, change, **kwargs):
+    def _score_change(self, value, **kwargs):
         """Called whenever the score changes and adds the score increase to the current active ScoreReelGroup.
 
         This method is the handler for the score change event, so it's called
@@ -125,12 +127,11 @@ class ScoreReelController(MpfController):
         Args:
             score: Integer value of the new score. This parameter is ignored,
                 and included only because the score change event passes it.
-            change: Interget value of the change to the score.
         """
         del kwargs
-        self.active_scorereelgroup.add_value(value=change, target=value)
+        self.active_scorereelgroup.set_value(value=value)
 
-    def game_starting(self, queue, game, **kwargs):
+    def _game_starting(self, queue, **kwargs):
         """Reset the score reels when a new game starts.
 
         This is a queue event so it doesn't allow the game start to continue
@@ -138,39 +139,32 @@ class ScoreReelController(MpfController):
 
         Args:
             queue: A reference to the queue object for the game starting event.
-            game: A reference to the main game object. This is ignored and only
-                included because the game_starting event passes it.
         """
-        del game
         del kwargs
-        self.queue = queue
         # tell the game_starting event queue that we have stuff to do
-        self.queue.wait()
+        queue.wait()
 
-        # populate the reset queue
-        self.reset_queue = []
+        futures = []
+        for score_reel_group in self.machine.score_reel_groups:
+            score_reel_group.set_value(0)
+            futures.append(score_reel_group.wait_for_ready())
 
-        for dummy_player, score_reel_group in self.machine.score_reel_groups.items():
-            self.reset_queue.append(score_reel_group)
-        self.reset_queue.sort(key=lambda x: x.name)
-        # todo right now this sorts by ScoreGroupName. Need to change to tags
-        self._reset_next_group()  # kick off the reset process
+        future = asyncio.wait(iter(futures), loop=self.machine.clock.loop)
+        future = Util.ensure_future(future, loop=self.machine.clock.loop)
+        future.add_done_callback(partial(self._reels_ready, queue=queue))
 
-    def _reset_next_group(self, value=0, **kwargs):
+    @staticmethod
+    def _reels_ready(future, queue):
+        """Unblock queue since all reels are ready."""
+        del future
+        queue.clear()
+
+    def _ball_ending(self, queue=None, **kwargs):
         del kwargs
-        # param `value` since that's what validate passes. Dunno if we need it.
-        if self.reset_queue:  # there's still more to reset
-            next_group = self.reset_queue.pop(0)
-            self.debug_log("Resetting ScoreReelGroup %s", next_group.name)
-            # add the handler to know when this group is reset
-            self.machine.events.add_handler('scorereelgroup_' +
-                                            next_group.name +
-                                            '_valid', self._reset_next_group)
-            next_group.set_value(value)
+        # We need to hook the ball_ending event in case the ball ends while the
+        # score reel is still catching up.
 
-        else:  # no more to reset
-            # clear the event queue
-            self.queue.clear()
-            self.queue = None
-            # remove all these handlers watching for 0
-            self.machine.events.remove_handler(self._reset_next_group)
+        queue.wait()
+
+        future = Util.ensure_future(self.active_scorereelgroup.wait_for_ready(), loop=self.machine.clock.loop)
+        future.add_done_callback(partial(self._reels_ready, queue=queue))

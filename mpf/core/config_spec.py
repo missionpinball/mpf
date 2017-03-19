@@ -751,7 +751,7 @@ score_reels:
     limit_lo: single|int|0
     limit_hi: single|int|9
     repeat_pulse_time: single|ms|200
-    hw_confirm_time: single|ms|300
+    hw_confirm_time: single|ms|20
     confirm: single|str|strict
     switch_0: single|machine(switches)|None
     switch_1: single|machine(switches)|None
@@ -771,11 +771,7 @@ score_reel_groups:
     max_simultaneous_coils: single|int|2
     reels: list|machine(score_reels)|
     chimes: list|machine(coils)|None
-    repeat_pulse_time: single|ms|200
-    hw_confirm_time: single|ms|300
-    config: single|str|lazy
     lights_tag: single|str|None
-    confirm: single|str|lazy
 scoring:
     __valid_in__: modes
     score: single|template_int|0
