@@ -9,17 +9,18 @@ class FASTDriver(DriverPlatformInterface):
 
     """Base class for drivers connected to a FAST Controller."""
 
-    def __init__(self, config, sender, machine, platform):
+    def __init__(self, config, platform, number, platform_settings):
         """Initialise driver."""
-        super().__init__(config, config['number'])
+        super().__init__(config, number)
         self.log = logging.getLogger('FASTDriver')
         self.autofire = None
-        self.machine = machine
+        self.machine = platform.machine
         self.platform = platform
         self.driver_settings = dict()
-        self.send = sender
+        self.send = platform.net_connection.send
+        self.platform_settings = platform_settings
 
-        if config['connection'] == 1:
+        if platform_settings['connection'] == 1:
             self.driver_settings['config_cmd'] = 'DN:'
             self.driver_settings['trigger_cmd'] = 'TN:'
         else:
@@ -107,8 +108,8 @@ class FASTDriver(DriverPlatformInterface):
         """Return recycle ms."""
         if not recycle:
             return "00"
-        elif self.config['recycle_ms'] is not None:
-            return Util.int_to_hex_string(self.config['recycle_ms'])
+        elif self.platform_settings['recycle_ms'] is not None:
+            return Util.int_to_hex_string(self.platform_settings['recycle_ms'])
         else:
             # default recycle_ms to pulse_ms * 2
             if pulse_ms * 2 > 255:

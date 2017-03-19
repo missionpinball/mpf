@@ -11,7 +11,7 @@ from typing import Tuple
 
 from mpf.core.config_validator import ConfigDict
 from mpf.core.machine import MachineController
-from mpf.core.platform import DriverPlatform
+from mpf.core.platform import DriverPlatform, DriverConfig
 
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
@@ -137,20 +137,19 @@ class HardwarePlatform(DriverPlatform):
         del dt
         self.snux_config['diag_led_driver'].pulse(250)
 
-    def configure_driver(self, config):
+    def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
         """Configure a driver on the snux board.
 
         Args:
             config: Driver config dict
         """
-        orig_number = config['number']
+        orig_number = number
 
-        if (config['number'].lower().endswith('a') or
-                config['number'].lower().endswith('c')):
+        if (number.endswith('a') or number.lower().endswith('c')):
 
-            config['number'] = config['number'][:-1]
+            number = number[:-1]
 
-            platform_driver = self.platform.configure_driver(config)
+            platform_driver = self.platform.configure_driver(config, number, platform_settings)
 
             snux_driver = SnuxDriver(orig_number, platform_driver, self)
 
@@ -162,7 +161,7 @@ class HardwarePlatform(DriverPlatform):
             return snux_driver
 
         else:
-            return self.platform.configure_driver(config)
+            return self.platform.configure_driver(config, number, platform_settings)
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
         """Configure a rule for a driver on the snux board.

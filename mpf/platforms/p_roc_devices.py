@@ -32,11 +32,12 @@ class PROCDriver(DriverPlatformInterface):
 
     """
 
-    def __init__(self, number, config, platform):
+    def __init__(self, number, config, platform, string_number):
         """Initialise driver."""
         self.log = logging.getLogger('PROCDriver')
         super().__init__(config, number)
         self.proc = platform.proc
+        self.string_number = string_number
         self.pdbconfig = getattr(platform, "pdbconfig", None)
 
         self.log.debug("Driver Settings for %s", self.number)
@@ -46,7 +47,7 @@ class PROCDriver(DriverPlatformInterface):
         if not self.pdbconfig:
             return "P-Roc"
         else:
-            return "P-Roc Board {}".format(str(self.pdbconfig.get_coil_bank(self.config['number'])))
+            return "P-Roc Board {}".format(str(self.pdbconfig.get_coil_bank(self.string_number)))
 
     @classmethod
     def get_pwm_on_off_ms(cls, coil: HoldSettings):

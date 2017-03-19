@@ -2,7 +2,7 @@
 import abc
 from collections import namedtuple
 
-from typing import Optional, Callable, Tuple
+from typing import Optional
 
 from mpf.devices.switch import Switch
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
@@ -255,25 +255,6 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """Return config section for additional switch config items."""
         return None
 
-    @classmethod
-    def get_switch_overwrite_section(cls) -> str:
-        """Return config section for additional switch config overwrite items."""
-        return None
-
-    def validate_switch_overwrite_section(self, switch: Switch, config_overwrite: dict) -> dict:
-        """Validate switch overwrite section for platform.
-
-        Args:
-            switch: Switch to validate.
-            config_overwrite: Overwrite config to validate.
-
-        Returns: Validated config.
-        """
-        switch.machine.config_validator.validate_config(
-            "switch_overwrites", config_overwrite, switch.name,
-            base_spec=self.__class__.get_switch_overwrite_section())
-        return config_overwrite
-
     def validate_switch_section(self, switch: Switch, config: dict) -> dict:
         """Validate a switch config for platform.
 
@@ -310,6 +291,8 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
 SwitchSettings = namedtuple("SwitchSettings", ["hw_switch", "invert", "debounce"])
 DriverSettings = namedtuple("DriverSettings", ["hw_driver", "pulse_settings", "hold_settings", "recycle"])
+DriverConfig = namedtuple("DriverConfig", ["default_pulse_ms", "default_pulse_power", "default_hold_power",
+                                           "default_recycle", "max_pulse_ms", "max_pulse_power", "max_hold_power"])
 
 
 class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
@@ -326,7 +309,7 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['max_pulse'] = 255
 
     @abc.abstractmethod
-    def configure_driver(self, config):  # TODO: cleanup
+    def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
         """Subclass this method in a platform module to configure a driver.
 
         This method should return a reference to the driver's platform interface
@@ -336,7 +319,7 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def clear_hw_rule(self, switch, coil):  # TODO: cleanup
+    def clear_hw_rule(self, switch: SwitchSettings, coil: DriverSettings):
         """Subclass this method in a platform module to clear a hardware switch rule for this switch.
 
         Clearing a hardware rule means actions on this switch will no longer
@@ -350,30 +333,16 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @classmethod
-    def get_coil_config_section(cls) -> Optional[str]:  # TODO: cleanup
+    def get_coil_config_section(cls) -> Optional[str]:
         """Return addition config section for coils."""
         return None
 
-    @classmethod
-    def get_coil_overwrite_section(cls):  # TODO: cleanup
-        """Return addition config section for coils overwrites."""
-        return None
-
-    def validate_coil_overwrite_section(self, driver, config_overwrite):  # TODO: cleanup
-        """Validate coil overwrite config for platform."""
-        driver.machine.config_validator.validate_config(
-            "coil_overwrites", config_overwrite, driver.name,
-            base_spec=self.get_coil_overwrite_section())
-        return config_overwrite
-
-    def validate_coil_section(self, driver, config):  # TODO: cleanup
+    def validate_coil_section(self, driver, config):
         """Validate coil config for platform."""
-        base_spec = ["device"]
         if self.__class__.get_coil_config_section():
-            base_spec.append(self.__class__.get_coil_config_section())
-        driver.machine.config_validator.validate_config(
-            "coils", config, driver.name,
-            base_spec=base_spec)
+            spec = self.__class__.get_coil_config_section()
+            config = driver.machine.config_validator.validate_config(
+                spec, config, driver.name)
         return config
 
     @abc.abstractmethod

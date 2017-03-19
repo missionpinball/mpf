@@ -1,6 +1,9 @@
 """Interface for drivers."""
 import abc
 from collections import namedtuple
+from typing import Any
+
+from mpf.core.platform import DriverConfig
 
 PulseSettings = namedtuple("PulseSettings", ["power", "duration"])
 HoldSettings = namedtuple("HoldSettings", ["power"])
@@ -17,8 +20,8 @@ class DriverPlatformInterface(metaclass=abc.ABCMeta):
 
     def __init__(self, config, number):
         """Initialise driver."""
-        self.number = number
-        self.config = config
+        self.number = number    # type: Any
+        self.config = config    # type: DriverConfig
 
     @abc.abstractmethod
     def pulse(self, pulse_settings: PulseSettings):

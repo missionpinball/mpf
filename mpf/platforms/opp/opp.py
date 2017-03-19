@@ -21,7 +21,8 @@ from mpf.platforms.opp.opp_neopixel import OPPNeopixel
 from mpf.platforms.opp.opp_neopixel import OPPNeopixelCard
 from mpf.platforms.opp.opp_switch import OPPInputCard
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
-from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings
+from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings, \
+    DriverConfig
 
 # Minimum firmware versions needed for this module
 from mpf.platforms.opp.opp_switch import OPPSwitch
@@ -473,7 +474,7 @@ class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         return chain_serial + "-" + card_str + "-" + number_str
 
-    def configure_driver(self, config: dict):
+    def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
         """Configure a driver.
 
         Args:
@@ -483,7 +484,7 @@ class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             raise AssertionError("A request was made to configure an OPP solenoid, "
                                  "but no OPP connection is available")
 
-        number = self._get_dict_index(config['number'])
+        number = self._get_dict_index(number)
 
         if number not in self.solDict:
             raise AssertionError("A request was made to configure an OPP solenoid "
@@ -492,6 +493,7 @@ class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         # Use new update individual solenoid command
         opp_sol = self.solDict[number]
         opp_sol.config = config
+        opp_sol.platform_settings = platform_settings
         self.log.debug("Configure driver %s", number)
 
         _, _, coil_num = number.split("-")
@@ -704,7 +706,7 @@ class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         if self.minVersion < 0x00020000:
             return
 
-        _, coil_num = driver.config['number'].split('-')
+        _, _, coil_num = driver.number.split('-')
         msg = bytearray()
         msg.append(driver.solCard.addr)
         msg.extend(OppRs232Intf.SET_SOL_INP_CMD)
@@ -721,7 +723,7 @@ class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Add mapping between switch and coil."""
         if self.minVersion < 0x00020000:
             return
-        _, coil_num = driver.config['number'].split('-')
+        _, _, coil_num = driver.number.split('-')
         msg = bytearray()
         msg.append(driver.solCard.addr)
         msg.extend(OppRs232Intf.SET_SOL_INP_CMD)
@@ -775,7 +777,6 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
         """Identify which processor this serial connection is talking to."""
         # keep looping and wait for an ID response
         count = 0
-        resp = b''
         # read and discard all messages in buffer
         self.writer.write(OppRs232Intf.EOM_CMD)
         yield from asyncio.sleep(.01, loop=self.machine.clock.loop)

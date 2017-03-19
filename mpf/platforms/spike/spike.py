@@ -10,7 +10,8 @@ from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInt
 
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 from mpf.platforms.spike.spike_defines import SpikeNodebus
-from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings
+from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings, \
+    DriverConfig
 
 
 class SpikeSwitch(SwitchPlatformInterface):
@@ -200,9 +201,10 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
              0, 0, 0,
              0, 0, 0]))
 
-    def configure_driver(self, config):
+    def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
         """Configure a driver on Stern Spike."""
-        return SpikeDriver(config, config['number'], self)
+        del platform_settings
+        return SpikeDriver(config, number, self)
 
     def parse_light_number_to_channels(self, number: str, subtype: str):
         """Return a single light."""

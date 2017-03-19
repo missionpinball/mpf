@@ -96,28 +96,12 @@ autofire_coils:
     switch_overwrite: dict|str:str|None
     ball_search_order: single|int|100
     playfield: single|machine(playfields)|playfield
-switch_overwrites:
-    __valid_in__: machine
-    debounce: single|enum(quick,normal,None)|None
-
 coil_overwrites:
     __valid_in__: machine
     recycle: single|bool|None
     pulse_ms: single|ms|None
     pulse_power: single|float(0,1)|None
     hold_power: single|float(0,1)|None
-fast_coil_overwrites:
-    __valid_in__: machine
-    pulse_power32: single|int|None
-    hold_power32: single|int|None
-    pulse_pwm_mask: single|int|None
-    hold_pwm_mask: single|int|None
-    recycle_ms: single|ms|None
-p_roc_coil_overwrites:
-    __valid_in__: machine
-    pwm_on_ms: single|int|None
-    pwm_off_ms: single|int|None
-
 ball_devices:
     __valid_in__: machine
     exit_count_delay: single|ms|500ms
@@ -218,7 +202,7 @@ bonus_entries:
 coils:
     __valid_in__: machine
     number: single|str|
-    recycle: single|bool|False
+    default_recycle: single|bool|False
     default_pulse_ms: single|ms|None
     default_pulse_power: single|float(0,1)|None
     default_hold_power: single|float(0,1)|None
@@ -238,20 +222,11 @@ dual_wound_coils:
     eos_switch: single|machine(switches)|None
 opp_coils:
     __valid_in__: machine
-    hold_power16: single|int|None
     recycle_factor: single|int|None
 fast_coils:
     __valid_in__: machine
-    pulse_power32: single|int|None
-    hold_power32: single|int|None
-    pulse_pwm_mask: single|int|None
-    hold_pwm_mask: single|int|None
     connection: single|enum(network,local,auto)|auto
     recycle_ms: single|ms|None
-p_roc_coils:
-    __valid_in__: machine
-    pwm_on_ms: single|int|None
-    pwm_off_ms: single|int|None
 coil_player:
     __valid_in__: machine, mode, show
     action: single|lstr|pulse

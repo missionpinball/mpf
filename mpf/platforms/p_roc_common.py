@@ -116,22 +116,12 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
     def _get_event_type(cls, sw_activity, debounced):
         if sw_activity == 0 and debounced:
             return "open_debounced"
-        elif sw_activity == 0 and not debounced :
+        elif sw_activity == 0 and not debounced:
             return "open_nondebounced"
         elif sw_activity == 1 and debounced:
             return "closed_debounced"
         else:  # if sw_activity == 1 and not debounced:
             return "closed_nondebounced"
-
-    @classmethod
-    def get_coil_config_section(cls):
-        """Additional config validation for coils."""
-        return "p_roc_coils"
-
-    @classmethod
-    def get_coil_overwrite_section(cls):
-        """Additional config validation for coils overwrites."""
-        return "p_roc_coil_overwrites"
 
     def _add_hw_rule(self, switch: SwitchSettings, coil: DriverSettings, rule, invert=False):
         rule_type = self._get_event_type(switch.invert == invert, switch.debounce)
@@ -844,7 +834,7 @@ class PDBLED(LightPlatformInterface):
         Can fade for up to 100 days so do not bother about too long fades.
 
         Args:
-            brightness: brightness of this channel
+            color_and_fade_callback: brightness of this channel via callback
         """
         brightness, fade_ms = color_and_fade_callback(int(pow(2, 31) * 4))
         if fade_ms <= 0:

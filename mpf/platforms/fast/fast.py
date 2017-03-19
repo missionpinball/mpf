@@ -21,9 +21,8 @@ from mpf.platforms.fast.fast_light import FASTMatrixLight
 from mpf.platforms.fast.fast_serial_communicator import FastSerialCommunicator
 from mpf.platforms.fast.fast_switch import FASTSwitch
 
-from mpf.devices.switch import Switch
-from mpf.core.platform import ServoPlatform, DmdPlatform, SwitchPlatform, DriverPlatform, LightsPlatform, DriverSettings, \
-    SwitchSettings
+from mpf.core.platform import ServoPlatform, DmdPlatform, SwitchPlatform, DriverPlatform, LightsPlatform,\
+    DriverSettings, SwitchSettings, DriverConfig
 from mpf.core.utility_functions import Util
 
 
@@ -314,7 +313,7 @@ class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatfor
 
         return Util.int_to_hex_string(index + driver)
 
-    def configure_driver(self, config: dict) -> FASTDriver:
+    def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict) -> FASTDriver:
         """Configure a driver.
 
         Args:
@@ -323,44 +322,43 @@ class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatfor
         Returns: Driver object
         """
         # dont modify the config. make a copy
-        config = deepcopy(config)
+        platform_settings = deepcopy(platform_settings)
 
         if not self.net_connection:
             raise AssertionError('A request was made to configure a FAST '
                                  'driver, but no connection to a NET processor'
                                  'is available')
 
-        if not config['number']:
+        if not number:
             raise AssertionError("Driver needs a number")
 
         # If we have WPC driver boards, look up the driver number
         if self.machine_type == 'wpc':
-            config['number'] = fast_defines.wpc_driver_map.get(
-                config['number'].upper())
+            number = fast_defines.wpc_driver_map.get(number.upper())
 
-            if ('connection' in config and
-                    config['connection'].lower() == 'network'):
-                config['connection'] = 1
+            if ('connection' in platform_settings and
+                    platform_settings['connection'].lower() == 'network'):
+                platform_settings['connection'] = 1
             else:
-                config['connection'] = 0  # local driver (default for WPC)
+                platform_settings['connection'] = 0  # local driver (default for WPC)
 
         # If we have FAST IO boards, we need to make sure we have hex strings
         elif self.machine_type == 'fast':
 
-            config['number'] = self._parse_driver_number(config['number'])
+            number = self._parse_driver_number(number)
 
             # Now figure out the connection type
-            if ('connection' in config and
-                    config['connection'].lower() == 'local'):
-                config['connection'] = 0
+            if ('connection' in platform_settings and
+                    platform_settings['connection'].lower() == 'local'):
+                platform_settings['connection'] = 0
             else:
-                config['connection'] = 1  # network driver (default for FAST)
+                platform_settings['connection'] = 1  # network driver (default for FAST)
 
         else:
             raise AssertionError("Invalid machine type: {}".format(
                 self.machine_type))
 
-        return FASTDriver(config, self.net_connection.send, self.machine, self)
+        return FASTDriver(config, self, number, platform_settings)
 
     def configure_servo(self, config: dict):
         """Configure a servo.
@@ -569,30 +567,6 @@ class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatfor
     def get_switch_config_section(cls):
         """Return switch config section."""
         return "fast_switches"
-
-    @classmethod
-    def get_coil_overwrite_section(cls):
-        """Return coil overwrite section."""
-        return "fast_coil_overwrites"
-
-    def validate_switch_overwrite_section(self, switch: Switch, config_overwrite: dict) -> dict:
-        """Validate switch overwrite section for platform.
-
-        Args:
-            switch: switch to validate
-            config_overwrite: overwrite config to validate
-
-        Returns: Validated config.
-        """
-        if ("debounce" in config_overwrite and
-                switch.config['debounce'] != "auto" and
-                switch.config['debounce'] != config_overwrite['debounce']):
-            raise AssertionError("Cannot overwrite debounce for switch %s for"
-                                 "FAST interface", switch.name)
-
-        config_overwrite = super().validate_switch_overwrite_section(
-            switch, config_overwrite)
-        return config_overwrite
 
     def _check_switch_coil_combincation(self, switch, coil):
         switch_number = int(switch.hw_switch.number[0], 16)

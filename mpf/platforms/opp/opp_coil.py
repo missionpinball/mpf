@@ -23,6 +23,7 @@ class OPPSolenoid(DriverPlatformInterface):
         self.switch_rule = None        # type: SwitchRule
         self.switches = []
         self._config_state = None
+        self.platform_settings = None
 
     def get_board_name(self):
         """Return OPP chain and addr."""
@@ -35,8 +36,8 @@ class OPPSolenoid(DriverPlatformInterface):
         """
         if not recycle:
             return 0
-        elif self.config['recycle_factor']:
-            return self.config['recycle_factor']
+        elif self.platform_settings['recycle_factor']:
+            return self.platform_settings['recycle_factor']
         else:
             # default to two times pulse_ms
             return 2
@@ -96,9 +97,9 @@ class OPPSolenoid(DriverPlatformInterface):
         self.switch_rule = None
         self.reconfigure_driver(
             PulseSettings(
-                duration=self.config['default_pulse_ms'] if self.config['default_pulse_ms'] is not None else 10,
-                power=self.config['default_pulse_power']),
-            HoldSettings(power=self.config['default_hold_power']),
+                duration=self.config.default_pulse_ms if self.config.default_pulse_ms is not None else 10,
+                power=self.config.default_pulse_power),
+            HoldSettings(power=self.config.default_hold_power),
             True)
 
     def set_switch_rule(self, pulse_settings: PulseSettings, hold_settings: Optional[HoldSettings], recycle: bool):
@@ -145,7 +146,7 @@ class OPPSolenoid(DriverPlatformInterface):
         if self.switch_rule:
             cmd += ord(OppRs232Intf.CFG_SOL_USE_SWITCH)
 
-        _, solenoid = self.config['number'].split('-')
+        _, _, solenoid = self.number.split('-')
         pulse_len = pulse_settings.duration
 
         msg = bytearray()
@@ -184,13 +185,6 @@ class OPPSolenoidCard(object):
             if ((1 << index) & mask) != 0:
                 number = chain_serial + '-' + card + '-' + str(index)
                 opp_sol = OPPSolenoid(self, number)
-                opp_sol.config = self._create_driver_settings(platform.machine)
+                opp_sol.config = {}
                 sol_dict[number] = opp_sol
 
-    @classmethod
-    def _create_driver_settings(cls, machine):
-        return_dict = dict()
-        pulse_ms = machine.config['mpf']['default_pulse_ms']
-        return_dict['pulse_ms'] = str(pulse_ms)
-        return_dict['hold_power'] = '0'
-        return return_dict

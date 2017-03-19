@@ -30,7 +30,8 @@ coils:
     c_test_allow_enable:
         number: 0-1
         default_pulse_ms: 23
-        recycle_factor: 3
+        platform_settings:
+            recycle_factor: 3
         default_hold_power: 1.0
     c_flipper_hold:
         number: 0-2

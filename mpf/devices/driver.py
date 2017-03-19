@@ -1,12 +1,9 @@
 """Contains the Driver parent class."""
-import copy
-
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from mpf.core.machine import MachineController
-from mpf.core.platform import DriverPlatform
+from mpf.core.platform import DriverPlatform, DriverConfig
 from mpf.core.system_wide_device import SystemWideDevice
-from mpf.devices.switch import Switch
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
 
@@ -66,19 +63,25 @@ class Driver(SystemWideDevice):
 
         Returns: Validated config
         """
-        del is_mode_config
+        config = super().validate_and_parse_config(config, is_mode_config)
         platform = self.machine.get_platform_sections('coils', getattr(config, "platform", None))
-        platform.validate_coil_section(self, config)
-        self._configure_device_logging(config)
+        config['platform_settings'] = platform.validate_coil_section(self, config.get('platform_settings', None))
         return config
 
     def _initialize(self):
         self.platform = self.machine.get_platform_sections('coils', self.config['platform'])
 
-        config = dict(self.config)
-        if 'psu' in config:
-            del config['psu']
-        self.hw_driver = self.platform.configure_driver(config)
+        config = DriverConfig(
+            default_pulse_ms=self.config['default_pulse_ms'],
+            default_pulse_power=self.config['default_pulse_power'],
+            default_hold_power=self.config['default_hold_power'],
+            default_recycle=self.config['default_recycle'],
+            max_pulse_ms=self.config['max_pulse_ms'],
+            max_pulse_power=self.config['max_pulse_power'],
+            max_hold_power=self.config['max_hold_power'])
+        platform_settings = dict(self.config['platform_settings']) if self.config['platform_settings'] else dict()
+
+        self.hw_driver = self.platform.configure_driver(config, self.config['number'], platform_settings)
 
     def get_and_verify_pulse_power(self, pulse_power: float) -> float:
         """Return the pulse power to use.
