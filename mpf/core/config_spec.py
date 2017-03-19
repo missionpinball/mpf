@@ -218,21 +218,17 @@ bonus_entries:
 coils:
     __valid_in__: machine
     number: single|str|
-
+    recycle: single|bool|False
     default_pulse_ms: single|ms|None
     default_pulse_power: single|float(0,1)|None
     default_hold_power: single|float(0,1)|None
-
     max_pulse_ms: single|ms|None
     max_pulse_power: single|float(0,1)|1.0
     max_hold_power: single|float(0,1)|None
-
     disable_events: dict|str:ms|None
     enable_events: dict|str:ms|None
     pulse_events: dict|str:ms|None
-
     platform_settings: single|dict|None
-
     psu: single|machine(psus)|default
     platform: single|str|None
 dual_wound_coils:

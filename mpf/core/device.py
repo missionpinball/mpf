@@ -40,7 +40,7 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         self.name = name.lower()
         self.tags = []          # type: List[str]
         self.label = None       # type: str
-        self.config = dict()    # type: ConfigDict
+        self.config = dict()    # type: ignore
 
     @classmethod
     def get_config_spec(cls):

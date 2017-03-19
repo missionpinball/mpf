@@ -5,10 +5,11 @@ from operator import itemgetter
 from typing import Set
 from typing import Tuple
 
+from mpf.core.platform import LightsPlatform
+
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.rgb_color import RGBColor
 from mpf.core.system_wide_device import SystemWideDevice
-from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade
 
 
@@ -41,7 +42,7 @@ class Light(SystemWideDevice):
     def __init__(self, machine, name):
         """Initialise light."""
         self.hw_drivers = {}
-        self.platforms = set()      # type: Set[LightPlatformInterface]
+        self.platforms = set()      # type: Set[LightsPlatform]
         self._color = [0, 0, 0]
         self._corrected_color = [0, 0, 0]
         super().__init__(machine, name)
