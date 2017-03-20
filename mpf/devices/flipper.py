@@ -105,8 +105,6 @@ class Flipper(SystemWideDevice):
             self._enable_main_coil_eos_cutoff_rule()
             self._enable_hold_coil_rule()
 
-            # todo detect bad EOS and program around it
-
     def disable(self, **kwargs):
         """Disable the flipper.
 
@@ -115,6 +113,9 @@ class Flipper(SystemWideDevice):
         tilted.
         """
         del kwargs
+        if not self._enabled:
+            return
+
         self.debug_log("Disabling")
         for rule in self._active_rules:
             self.machine.platform_controller.clear_hw_rule(rule)

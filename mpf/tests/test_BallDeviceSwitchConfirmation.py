@@ -84,7 +84,7 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self.advance_time_and_run(1)
 
         # trough eject
-        coil1.pulse.assert_called_once_with()
+        self.assertTrue(coil1.pulse.called)
         assert not coil2.pulse.called
         assert not coil3.pulse.called
         assert not coil4.pulse.called
@@ -99,8 +99,8 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEqual(1, device2.balls)
 
-        coil1.pulse.assert_called_once_with()
-        coil2.pulse.assert_called_once_with()
+        self.assertTrue(coil1.pulse.called)
+        self.assertTrue(coil2.pulse.called)
         assert not coil3.pulse.called
         assert not coil4.pulse.called
 
@@ -118,8 +118,8 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEqual(1, device4.balls)
 
-        coil1.pulse.assert_called_once_with()
-        coil2.pulse.assert_called_once_with()
+        self.assertTrue(coil1.pulse.called)
+        self.assertTrue(coil2.pulse.called)
         assert not coil3.pulse.called
         assert not coil4.pulse.called
 
@@ -179,7 +179,7 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self.advance_time_and_run(1)
 
         # trough eject
-        coil1.pulse.assert_called_once_with()
+        self.assertTrue(coil1.pulse.called)
         assert not coil2.pulse.called
         assert not coil3.pulse.called
         assert not coil4.pulse.called
@@ -194,8 +194,8 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEqual(1, device2.balls)
 
-        coil1.pulse.assert_called_once_with()
-        coil2.pulse.assert_called_once_with()
+        self.assertTrue(coil1.pulse.called)
+        self.assertTrue(coil2.pulse.called)
         assert not coil3.pulse.called
         assert not coil4.pulse.called
 
@@ -215,8 +215,7 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         # eject will fail since the eject_confirm switch was not hit
         self.advance_time_and_run(100)
 
-        #coil1.pulse.assert_called_once_with()
-        coil2.pulse.assert_called_once_with()
+        self.assertTrue(coil2.pulse.called)
         assert not coil3.pulse.called
         assert not coil4.pulse.called
 
@@ -281,7 +280,7 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self.advance_time_and_run(1)
 
         # trough eject
-        coil1.pulse.assert_called_once_with()
+        self.assertTrue(coil1.pulse.called)
         assert not coil2.pulse.called
         assert not coil3.pulse.called
         assert not coil4.pulse.called
@@ -296,8 +295,8 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEqual(1, device2.balls)
 
-        coil1.pulse.assert_called_once_with()
-        coil2.pulse.assert_called_once_with()
+        self.assertTrue(coil1.pulse.called)
+        self.assertTrue(coil2.pulse.called)
         assert not coil3.pulse.called
         assert not coil4.pulse.called
 
@@ -330,8 +329,8 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEqual(1, device2.balls)
 
-        coil1.pulse.assert_called_once_with()
-        coil2.pulse.assert_called_once_with()
+        self.assertTrue(coil1.pulse.called)
+        self.assertTrue(coil2.pulse.called)
         assert not coil3.pulse.called
         assert not coil4.pulse.called
 
@@ -349,8 +348,8 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEqual(1, device4.balls)
 
-        coil1.pulse.assert_called_once_with()
-        coil2.pulse.assert_called_once_with()
+        self.assertTrue(coil1.pulse.called)
+        self.assertTrue(coil2.pulse.called)
         assert not coil3.pulse.called
         assert not coil4.pulse.called
 
@@ -413,7 +412,7 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self.assertNotEqual(None, self.machine.game)
 
         # trough eject
-        coil1.pulse.assert_called_once_with()
+        self.assertTrue(coil1.pulse.called)
         assert not coil2.pulse.called
         assert not coil3.pulse.called
         assert not coil4.pulse.called
@@ -429,8 +428,8 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEqual(1, device2.balls)
 
-        coil1.pulse.assert_called_once_with()
-        coil2.pulse.assert_called_once_with()
+        self.assertTrue(coil1.pulse.called)
+        self.assertTrue(coil2.pulse.called)
         assert not coil3.pulse.called
         assert not coil4.pulse.called
 
@@ -467,8 +466,8 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self.assertEqual(-1, playfield.balls)
         self.assertEqual(1, self._captured)
 
-        coil1.pulse.assert_called_once_with()
-        coil2.pulse.assert_called_once_with()
+        self.assertTrue(coil1.pulse.called)
+        self.assertTrue(coil2.pulse.called)
         assert not coil3.pulse.called
         assert not coil4.pulse.called
 
@@ -540,7 +539,7 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self.assertNotEqual(None, self.machine.game)
 
         # trough eject
-        coil1.pulse.assert_called_once_with()
+        self.assertTrue(coil1.pulse.called)
         assert not coil2.pulse.called
         assert not coil3.pulse.called
         assert not coil4.pulse.called
@@ -556,8 +555,8 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEqual(1, device2.balls)
 
-        coil1.pulse.assert_called_once_with()
-        coil2.pulse.assert_called_once_with()
+        self.assertTrue(coil1.pulse.called)
+        self.assertTrue(coil2.pulse.called)
         assert not coil3.pulse.called
         assert not coil4.pulse.called
 
@@ -587,8 +586,8 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         # ball should not be at playfield by now
         self.assertEqual(0, playfield.balls)
 
-        coil1.pulse.assert_called_once_with()
-        coil2.pulse.assert_called_once_with()
+        self.assertTrue(coil1.pulse.called)
+        self.assertTrue(coil2.pulse.called)
         assert not coil3.pulse.called
         assert not coil4.pulse.called
 
@@ -632,7 +631,7 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
                                                       1)
         # launcher should eject
         self.advance_time_and_run(1)
-        coil2.pulse.assert_called_once_with()
+        self.assertTrue(coil2.pulse.called)
         coil2.pulse = MagicMock()
         self._captured = 0
 
@@ -660,6 +659,6 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self.machine.switch_controller.process_switch("s_ball_switch_launcher",
                                                       1)
         self.advance_time_and_run(1)
-        coil2.pulse.assert_called_once_with()
+        self.assertTrue(coil2.pulse.called)
 
         self.assertEqual(0, self._captured)

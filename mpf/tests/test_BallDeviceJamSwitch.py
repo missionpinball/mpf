@@ -4,6 +4,8 @@ from unittest.mock import MagicMock
 
 class TestBallDeviceJamSwitch(MpfTestCase):
 
+    max_wait_ms = 200
+
     def getConfigFile(self):
         return 'test_ball_device_jam_switch.yaml'
 
@@ -41,7 +43,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.advance_time_and_run(1)
 
         # default pulse
-        self.trough_coil.pulse.assert_called_once_with()
+        self.trough_coil.pulse.assert_called_once_with(max_wait_ms=self.max_wait_ms)
         self.trough_coil.pulse = MagicMock()
 
         self.machine.switch_controller.process_switch('s_trough_1', 0)
@@ -78,7 +80,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.machine.switch_controller.process_switch('s_playfield', 0)
         self.advance_time_and_run(.1)
 
-        self.plunger_coil.pulse.assert_called_once_with()
+        self.plunger_coil.pulse.assert_called_once_with(max_wait_ms=self.max_wait_ms)
         self.assertEqual(self.machine.ball_devices.trough.balls, 3)
         self.assertEqual(self.machine.ball_devices.plunger.balls, 0)
         self.assertEqual(self.machine.ball_devices.playfield.balls, 1)
@@ -97,7 +99,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.advance_time_and_run(1)
 
         # default pulse
-        self.trough_coil.pulse.assert_called_once_with()
+        self.trough_coil.pulse.assert_called_once_with(max_wait_ms=self.max_wait_ms)
 
         self.machine.switch_controller.process_switch('s_trough_1', 0)
         self.machine.switch_controller.process_switch('s_trough_2', 0)
@@ -153,7 +155,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.advance_time_and_run(1)
 
         # default pulse
-        self.trough_coil.pulse.assert_called_once_with()
+        self.trough_coil.pulse.assert_called_once_with(max_wait_ms=self.max_wait_ms)
         self.trough_coil.pulse = MagicMock()
 
         self.machine.switch_controller.process_switch('s_trough_1', 0)
@@ -164,7 +166,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.advance_time_and_run(11)
 
         # soft pulse to eject only the jammed ball
-        self.trough_coil.pulse.assert_called_once_with(5)
+        self.trough_coil.pulse.assert_called_once_with(5, max_wait_ms=self.max_wait_ms)
 
         self.machine.switch_controller.process_switch('s_trough_1', 0)
         self.machine.switch_controller.process_switch('s_trough_2', 1)
@@ -191,7 +193,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.advance_time_and_run(1)
 
         # default pulse
-        self.trough_coil.pulse.assert_called_once_with()
+        self.trough_coil.pulse.assert_called_once_with(max_wait_ms=self.max_wait_ms)
         self.trough_coil.pulse = MagicMock()
 
         self.machine.switch_controller.process_switch('s_trough_1', 0)
@@ -212,7 +214,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.assertEqual(self.machine.ball_devices.plunger.balls, 0)
 
         # trough should retry softly
-        self.trough_coil.pulse.assert_called_once_with(5)
+        self.trough_coil.pulse.assert_called_once_with(5, max_wait_ms=self.max_wait_ms)
         assert not self.plunger_coil.pulse.called
         self.machine.switch_controller.process_switch('s_trough_jam', 0)
         self.advance_time_and_run(1)
@@ -235,7 +237,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.machine.playfield.add_ball(player_controlled=True)
         self.advance_time_and_run(1)
 
-        self.trough_coil.pulse.assert_called_once_with()
+        self.trough_coil.pulse.assert_called_once_with(max_wait_ms=self.max_wait_ms)
         self.trough_coil.pulse = MagicMock()
 
         self.machine.switch_controller.process_switch('s_trough_1', 0)
@@ -260,7 +262,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         assert not self.plunger_coil.pulse.called
 
         # trough should pulse softly
-        self.trough_coil.pulse.assert_called_once_with(5)
+        self.trough_coil.pulse.assert_called_once_with(5, max_wait_ms=self.max_wait_ms)
         self.trough_coil.pulse = MagicMock()
 
         # ball leaves and comes back again
@@ -276,7 +278,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.assertEqual(self.machine.ball_devices.plunger.balls, 0)
 
         # trough should pulse softly again
-        self.trough_coil.pulse.assert_called_once_with(5)
+        self.trough_coil.pulse.assert_called_once_with(5, max_wait_ms=self.max_wait_ms)
         self.trough_coil.pulse = MagicMock()
 
         # ball leaves and comes back again
@@ -292,7 +294,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.assertEqual(self.machine.ball_devices.plunger.balls, 0)
 
         # trough should pulse normally
-        self.trough_coil.pulse.assert_called_once_with()
+        self.trough_coil.pulse.assert_called_once_with(max_wait_ms=self.max_wait_ms)
         self.trough_coil.pulse = MagicMock()
 
         # ball leaves and comes back again
@@ -308,7 +310,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.assertEqual(self.machine.ball_devices.plunger.balls, 0)
 
         # trough should pulse hard
-        self.trough_coil.pulse.assert_called_once_with(15)
+        self.trough_coil.pulse.assert_called_once_with(15, max_wait_ms=self.max_wait_ms)
         self.trough_coil.pulse = MagicMock()
 
         # ball leaves
@@ -335,7 +337,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.machine.playfield.add_ball(player_controlled=True)
         self.advance_time_and_run(1)
 
-        self.trough_coil.pulse.assert_called_once_with()
+        self.trough_coil.pulse.assert_called_once_with(max_wait_ms=self.max_wait_ms)
         self.trough_coil.pulse = MagicMock()
 
         self.machine.switch_controller.process_switch('s_trough_1', 0)
@@ -384,7 +386,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.machine.playfield.add_ball()
         self.advance_time_and_run(1)
 
-        self.trough_coil.pulse.assert_called_once_with()
+        self.trough_coil.pulse.assert_called_once_with(max_wait_ms=self.max_wait_ms)
         self.trough_coil.pulse = MagicMock()
 
         # ball gets stuck in jam switch while ball drains from pf
@@ -404,7 +406,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.advance_time_and_run(10)
 
         # trough retries softly
-        self.trough_coil.pulse.assert_called_once_with(5)
+        self.trough_coil.pulse.assert_called_once_with(5, max_wait_ms=self.max_wait_ms)
         self.machine.switch_controller.process_switch('s_trough_jam', 0)
         self.advance_time_and_run(1)
 
@@ -429,7 +431,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.machine.playfield.add_ball(player_controlled=True)
         self.advance_time_and_run(1)
 
-        self.trough_coil.pulse.assert_called_once_with()
+        self.trough_coil.pulse.assert_called_once_with(max_wait_ms=self.max_wait_ms)
         self.trough_coil.pulse = MagicMock()
 
         self.machine.switch_controller.process_switch('s_trough_1', 0)
@@ -477,7 +479,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.machine.playfield.add_ball()
         self.advance_time_and_run(1)
 
-        self.trough_coil.pulse.assert_called_once_with()
+        self.trough_coil.pulse.assert_called_once_with(max_wait_ms=self.max_wait_ms)
         self.trough_coil.pulse = MagicMock()
 
         # ball gets stuck in jam switch while ball drains from pf
@@ -519,7 +521,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.advance_time_and_run(1)
 
         # default pulse
-        self.trough_coil.pulse.assert_called_once_with()
+        self.trough_coil.pulse.assert_called_once_with(max_wait_ms=self.max_wait_ms)
         self.trough_coil.pulse = MagicMock()
 
         self.machine.switch_controller.process_switch('s_trough_1', 0)
@@ -558,7 +560,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.machine.switch_controller.process_switch('s_playfield', 0)
         self.advance_time_and_run(1)
 
-        self.plunger_coil.pulse.assert_called_once_with()
+        self.plunger_coil.pulse.assert_called_once_with(max_wait_ms=self.max_wait_ms)
         self.assertEqual(3, self.machine.ball_devices.trough.balls)
         self.assertEqual(0, self.machine.ball_devices.plunger.balls)
         self.assertEqual(1, self.machine.ball_devices.playfield.balls)
@@ -586,7 +588,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.advance_time_and_run(1)
 
         # soft pulse
-        self.trough_coil.pulse.assert_called_once_with(5)
+        self.trough_coil.pulse.assert_called_once_with(5, max_wait_ms=self.max_wait_ms)
         self.trough_coil.pulse = MagicMock()
 
         self.machine.switch_controller.process_switch('s_trough_2', 0)
@@ -621,7 +623,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.machine.switch_controller.process_switch('s_playfield', 0)
         self.advance_time_and_run(.1)
 
-        self.plunger_coil.pulse.assert_called_once_with()
+        self.plunger_coil.pulse.assert_called_once_with(max_wait_ms=self.max_wait_ms)
         self.assertEqual(self.machine.ball_devices.trough.balls, 3)
         self.assertEqual(self.machine.ball_devices.plunger.balls, 0)
         self.assertEqual(self.machine.ball_devices.playfield.balls, 1)
@@ -635,7 +637,7 @@ class TestBallDeviceJamSwitch(MpfTestCase):
         self.advance_time_and_run(1)
 
         # soft pulse
-        self.trough_coil.pulse.assert_called_once_with(5)
+        self.trough_coil.pulse.assert_called_once_with(5, max_wait_ms=self.max_wait_ms)
         self.trough_coil.pulse = MagicMock()
 
         self.machine.switch_controller.process_switch('s_trough_3', 0)
