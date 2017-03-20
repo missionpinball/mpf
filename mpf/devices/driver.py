@@ -1,6 +1,7 @@
 """Contains the Driver parent class."""
 from typing import Optional
 
+from mpf.core.delays import DelayManager
 from mpf.core.machine import MachineController
 from mpf.core.platform import DriverPlatform, DriverConfig
 from mpf.core.system_wide_device import SystemWideDevice
@@ -30,6 +31,7 @@ class Driver(SystemWideDevice):
         """Initialise driver."""
         self.hw_driver = None   # type: DriverPlatformInterface
         super().__init__(machine, name)
+        self.delay = DelayManager(self.machine.delayRegistry)
 
         self.time_last_changed = -1
         self.time_when_done = -1
@@ -188,7 +190,28 @@ class Driver(SystemWideDevice):
         self.machine.delay.remove(name='{}_timed_enable'.format(self.name))
         self.hw_driver.disable()
 
-    def pulse(self, pulse_ms: int=None, pulse_power: float=None, **kwargs):
+    def _get_wait_ms(self, pulse_ms: int, max_wait_ms: Optional[int]) -> int:
+        """Determine if this pulse should be delayed."""
+        if max_wait_ms is None:
+            self.config['psu'].notify_about_instant_pulse(pulse_ms=pulse_ms)
+            return 0
+        else:
+            return self.config['psu'].get_wait_time_for_pulse(pulse_ms=pulse_ms, max_wait_ms=max_wait_ms)
+
+    def _pulse_now(self, pulse_ms: int, pulse_power: float) -> None:
+        """Pulse this driver now."""
+        if 0 < pulse_ms <= self.platform.features['max_pulse']:
+            self.debug_log("Pulsing Driver. %sms (%s pulse_power)", pulse_ms, pulse_power)
+            self.hw_driver.pulse(PulseSettings(power=pulse_power, duration=pulse_ms))
+        else:
+            self.debug_log("Enabling Driver for %sms (%s pulse_power)", pulse_ms, pulse_power)
+            self.delay.reset(name='timed_disable'.format(self.name),
+                             ms=pulse_ms,
+                             callback=self.disable)
+            self.hw_driver.enable(PulseSettings(power=pulse_power, duration=0),
+                                  HoldSettings(power=pulse_power))
+
+    def pulse(self, pulse_ms: int=None, pulse_power: float=None, max_wait_ms: int=None, **kwargs) -> int:
         """Pulse this driver.
 
         Args:
@@ -200,20 +223,16 @@ class Driver(SystemWideDevice):
         del kwargs
 
         pulse_ms = self.get_and_verify_pulse_ms(pulse_ms)
-
         pulse_power = self.get_and_verify_pulse_power(pulse_power)
+        wait_ms = self._get_wait_ms(pulse_ms, max_wait_ms)
 
-        if 0 < pulse_ms <= self.platform.features['max_pulse']:
-            self.debug_log("Pulsing Driver. %sms (%s pulse_power)", pulse_ms, pulse_power)
-            self.hw_driver.pulse(PulseSettings(power=pulse_power, duration=pulse_ms))
+        if wait_ms > 0:
+            self.delay.add(wait_ms, self._pulse_now, pulse_ms=pulse_ms, pulse_power=pulse_power)
         else:
-            self.debug_log("Enabling Driver for %sms (%s pulse_power)", pulse_ms, pulse_power)
-            self.machine.delay.reset(name='{}_timed_enable'.format(self.name),
-                                     ms=pulse_ms,
-                                     callback=self.disable)
-            self.hw_driver.enable(PulseSettings(power=pulse_power, duration=0),
-                                  HoldSettings(power=pulse_power))
+            self._pulse_now(pulse_ms, pulse_power)
 
         # only needed for score reels
         # self.time_last_changed = self.machine.clock.get_time()
-        self.time_when_done = self.time_last_changed + int(pulse_ms / 1000.0)
+        self.time_when_done = self.time_last_changed + int((pulse_ms + wait_ms) / 1000.0)
+
+        return wait_ms

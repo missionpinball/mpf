@@ -109,6 +109,7 @@ ball_devices:
     eject_coil: single|machine(coils)|None
     eject_coil_jam_pulse: single|ms|None
     eject_coil_retry_pulse: single|ms|None
+    eject_coil_max_wait_ms: single|ms|200ms
     retries_before_increasing_pulse: single|int|4
     hold_coil: single|machine(coils)|None
     hold_coil_release_time: single|ms|1s
