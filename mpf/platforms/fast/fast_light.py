@@ -9,7 +9,7 @@ class FASTMatrixLight(LightPlatformSoftwareFade):
 
     """A direct light on a fast controller."""
 
-    def __init__(self, number, sender, machine, fade_interval_ms: int):
+    def __init__(self, number, sender, machine, fade_interval_ms: int) -> None:
         """Initialise light."""
         super().__init__(machine.clock.loop, fade_interval_ms)
         self.log = logging.getLogger('FASTMatrixLight')

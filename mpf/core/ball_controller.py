@@ -3,6 +3,7 @@
 import asyncio
 
 from mpf.core.delays import DelayManager
+from mpf.core.machine import MachineController
 from mpf.core.utility_functions import Util
 from mpf.core.mpf_controller import MpfController
 
@@ -18,7 +19,7 @@ class BallController(MpfController):
         A reference to the instance of the MachineController object.
     """
 
-    def __init__(self, machine):
+    def __init__(self, machine: MachineController) -> None:
         """Initialise ball controller."""
         super().__init__(machine)
 
@@ -37,8 +38,8 @@ class BallController(MpfController):
         self.machine.events.add_handler('shutdown',
                                         self._stop)
 
-        self._add_new_balls_task = None
-        self._captured_balls = asyncio.Queue(loop=self.machine.clock.loop)
+        self._add_new_balls_task = None                                         # type: asyncio.Task
+        self._captured_balls = asyncio.Queue(loop=self.machine.clock.loop)      # type: asyncio.Queue
 
     def _init4(self, **kwargs):
         del kwargs
@@ -333,7 +334,6 @@ class BallController(MpfController):
         del kwargs
         del new_balls
         self.machine.events.post_relay('ball_drain',
-                                       callback=self._process_ball_drained,
                                        device=device,
                                        balls=unclaimed_balls)
         '''event: ball_drain
@@ -351,12 +351,3 @@ class BallController(MpfController):
         after the relay will be processed as newly-drained balls.
 
         '''
-
-        # What happens if the ball enters the trough but the ball_add_live
-        # event hasn't confirmed its eject? todo
-
-    def _process_ball_drained(self, balls=None, ev_result=None, **kwargs):
-        # We don't need to do anything here because other modules (ball save,
-        # the game, etc. should jump in and do whatever they need to do when a
-        # ball is drained.
-        pass

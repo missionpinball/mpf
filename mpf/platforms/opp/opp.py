@@ -7,26 +7,25 @@ boards.
 import logging
 import asyncio
 
-from typing import Dict
-from typing import List
-from typing import Set
-
+from typing import TYPE_CHECKING
 from mpf.platforms.base_serial_communicator import BaseSerialCommunicator
-from mpf.platforms.opp.opp_coil import OPPSolenoid
 
 from mpf.platforms.opp.opp_coil import OPPSolenoidCard
-from mpf.platforms.opp.opp_incand import OPPIncand
 from mpf.platforms.opp.opp_incand import OPPIncandCard
-from mpf.platforms.opp.opp_neopixel import OPPNeopixel
 from mpf.platforms.opp.opp_neopixel import OPPNeopixelCard
 from mpf.platforms.opp.opp_switch import OPPInputCard
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings, \
     DriverConfig
 
-# Minimum firmware versions needed for this module
-from mpf.platforms.opp.opp_switch import OPPSwitch
+if TYPE_CHECKING:
+    from typing import Dict, List, Set
+    from mpf.platforms.opp.opp_coil import OPPSolenoid
+    from mpf.platforms.opp.opp_incand import OPPIncand
+    from mpf.platforms.opp.opp_neopixel import OPPNeopixel
+    from mpf.platforms.opp.opp_switch import OPPSwitch
 
+# Minimum firmware versions needed for this module
 MIN_FW = 0x00000100
 BAD_FW_VERSION = 0x01020304
 
@@ -488,7 +487,7 @@ class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         if number not in self.solDict:
             raise AssertionError("A request was made to configure an OPP solenoid "
-                                 "with number {} which doesn't exist".format(config['number']))
+                                 "with number {} which doesn't exist".format(number))
 
         # Use new update individual solenoid command
         opp_sol = self.solDict[number]
@@ -496,8 +495,8 @@ class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         opp_sol.platform_settings = platform_settings
         self.log.debug("Configure driver %s", number)
 
-        _, _, coil_num = number.split("-")
-        coil_num = int(coil_num)
+        _, _, coil_num_str = number.split("-")
+        coil_num = int(coil_num_str)
         # calculate the default input and remove it by default
         switch_num = int(coil_num - (coil_num % 4)) * 2 + (coil_num % 4)
         self._remove_switch_coil_mapping(switch_num, opp_sol)

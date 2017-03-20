@@ -2,6 +2,7 @@
 from typing import Optional
 
 from mpf.core.delays import DelayManager
+from mpf.core.events import event_handler
 from mpf.core.machine import MachineController
 from mpf.core.platform import DriverPlatform, DriverConfig
 from mpf.core.system_wide_device import SystemWideDevice
@@ -74,7 +75,7 @@ class Driver(SystemWideDevice):
         self.platform = self.machine.get_platform_sections('coils', self.config['platform'])
 
         config = DriverConfig(
-            default_pulse_ms=self.config['default_pulse_ms'],
+            default_pulse_ms=self.get_and_verify_pulse_ms(None),
             default_pulse_power=self.config['default_pulse_power'],
             default_hold_power=self.config['default_hold_power'],
             default_recycle=self.config['default_recycle'],
@@ -85,7 +86,7 @@ class Driver(SystemWideDevice):
 
         self.hw_driver = self.platform.configure_driver(config, self.config['number'], platform_settings)
 
-    def get_and_verify_pulse_power(self, pulse_power: float) -> float:
+    def get_and_verify_pulse_power(self, pulse_power: Optional[float]) -> float:
         """Return the pulse power to use.
 
         If pulse_power is None it will use the default_pulse_power. Additionally it will verify the limits.
@@ -107,7 +108,7 @@ class Driver(SystemWideDevice):
                                  format(self.name, pulse_power, max_pulse_power))
         return pulse_power
 
-    def get_and_verify_hold_power(self, hold_power: float) -> float:
+    def get_and_verify_hold_power(self, hold_power: Optional[float]) -> float:
         """Return the hold power to use.
 
         If hold_power is None it will use the default_hold_power. Additionally it will verify the limits.
@@ -148,6 +149,7 @@ class Driver(SystemWideDevice):
 
         return pulse_ms
 
+    @event_handler(2)
     def enable(self, pulse_ms: int=None, pulse_power: float=None, hold_power: float=None, **kwargs):
         """Enable a driver by holding it 'on'.
 
@@ -181,6 +183,7 @@ class Driver(SystemWideDevice):
         self.hw_driver.enable(PulseSettings(power=pulse_power, duration=pulse_ms),
                               HoldSettings(power=hold_power))
 
+    @event_handler(1)
     def disable(self, **kwargs):
         """Disable this driver."""
         del kwargs
@@ -211,6 +214,7 @@ class Driver(SystemWideDevice):
             self.hw_driver.enable(PulseSettings(power=pulse_power, duration=0),
                                   HoldSettings(power=pulse_power))
 
+    @event_handler(3)
     def pulse(self, pulse_ms: int=None, pulse_power: float=None, max_wait_ms: int=None, **kwargs) -> int:
         """Pulse this driver.
 

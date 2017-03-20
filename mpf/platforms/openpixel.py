@@ -59,13 +59,13 @@ class HardwarePlatform(LightsPlatform):
 
         return [
             {
-                "number": opc_channel + "-"  + str(channel_number)
+                "number": opc_channel + "-" + str(channel_number)
             },
             {
-                "number": opc_channel + "-"  + str(channel_number + 1)
+                "number": opc_channel + "-" + str(channel_number + 1)
             },
             {
-                "number": opc_channel + "-"  + str(channel_number + 2)
+                "number": opc_channel + "-" + str(channel_number + 2)
             }
         ]
 

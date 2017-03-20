@@ -5,6 +5,7 @@ import importlib
 import logging
 import os
 import pickle
+import queue
 import tempfile
 
 import sys
@@ -18,7 +19,6 @@ from mpf._version import __version__
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.clock import ClockBase
 from mpf.core.config_processor import ConfigProcessor
-from mpf.core.config_validator import ConfigDict
 from mpf.core.config_validator import ConfigValidator
 from mpf.core.data_manager import DataManager
 from mpf.core.delays import DelayManager, DelayManagerRegistry
@@ -29,8 +29,19 @@ from mpf.core.logging import LogMixin
 if TYPE_CHECKING:
     from mpf.modes.game.code.game import Game
     from mpf.core.events import EventManager
+    from mpf.core.switch_controller import SwitchController
+
     from mpf.core.scriptlet import Scriptlet
     from mpf.core.platform import BasePlatform
+    from mpf.core.mode_controller import ModeController
+    from mpf.core.settings_controller import SettingsController
+    from mpf.core.shot_profile_manager import ShotProfileManager
+    from mpf.core.bcp.bcp import Bcp
+    from mpf.core.extra_balls import ExtraBallController
+    from mpf.assets.show import Show
+    from mpf.core.assets import BaseAssetManager
+    from mpf.devices.switch import Switch
+    from mpf.devices.driver import Driver
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -42,21 +53,9 @@ class MachineController(LogMixin):
     main part that's in charge and makes things happen.
 
     Args:
-        options: Dictionary of options the machine controller uses to configure
-            itself.
-
-    Attributes:
         options(dict): A dictionary of options built from the command line options
             used to launch mpf.py.
-        config(dict): A dictionary of machine's configuration settings, merged from
-            various sources.
-        game(mpf.modes.game.code.game.Game): the current game
         machine_path: The root path of this machine_files folder
-        plugins:
-        scriptlets:
-        hardware_platforms:
-        events(mpf.core.events.EventManager):
-
     """
 
     def __init__(self, mpf_path: str, machine_path: str, options: dict) -> None:
@@ -92,15 +91,31 @@ class MachineController(LogMixin):
         self.machine_var_data_manager = None    # type: DataManager
         self.thread_stopper = threading.Event()
 
-        self.config = None      # type: ConfigDict
-        self.events = None      # type: EventManager
+        self.config = None      # type: Any
+
+        # add some type hints
+        if TYPE_CHECKING:
+            # controllers
+            self.events = None                          # type: EventManager
+            self.switch_controller = None               # type: SwitchController
+            self.mode_controller = None                 # type: ModeController
+            self.shot_profile_manager = None            # type: ShotProfileManager
+            self.settings = None                        # type: SettingsController
+            self.bcp = None                             # type: Bcp
+            self.extra_ball_controller = None           # type: ExtraBallController
+            self.asset_manager = None                   # type: BaseAssetManager
+
+            # devices
+            self.shows = None                           # type: Dict[str, Show]
+            self.switches = None                        # type: Dict[str, Switch]
+            self.coils = None                           # type: Dict[str, Driver]
 
         self._set_machine_path()
 
         self.config_validator = ConfigValidator(self)
 
         self._load_config()
-        self.machine_config = self.config       # type: ConfigDict
+        self.machine_config = self.config       # type: Any
         self.configure_logging(
             'Machine',
             self.config['logging']['console']['machine_controller'],

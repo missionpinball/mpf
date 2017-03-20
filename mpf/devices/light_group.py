@@ -4,6 +4,8 @@ import copy
 
 import math
 
+from typing import List
+
 from mpf.core.machine import MachineController
 
 from mpf.core.system_wide_device import SystemWideDevice
@@ -14,11 +16,11 @@ class LightGroup(SystemWideDevice):
 
     """An abstract group of lights."""
 
-    def __init__(self, machine: MachineController, name):
+    def __init__(self, machine: MachineController, name) -> None:
         """Initialise light group."""
         super().__init__(machine, name)
 
-        self.lights = []
+        self.lights = []        # type: List[Light]
 
     @classmethod
     def prepare_config(cls, config: dict, is_mode_config: bool):

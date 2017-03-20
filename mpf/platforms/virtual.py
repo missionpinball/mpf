@@ -269,8 +269,12 @@ class VirtualLight(LightPlatformInterface):
         self.color_and_fade_callback = None
 
     @property
-    def current_brightness(self, max_fade=0) -> float:
+    def current_brightness(self) -> float:
         """Return current brightness."""
+        return self.get_current_brightness_for_fade(0)
+
+    def get_current_brightness_for_fade(self, max_fade=0) -> float:
+        """Return brightness for a max_fade long fade."""
         if self.color_and_fade_callback:
             return self.color_and_fade_callback(max_fade)[0]
         else:

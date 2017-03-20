@@ -4,13 +4,11 @@ import logging
 import platform
 import sys
 import time
-from typing import Union, Callable, Tuple
-
-from typing import Any
-from typing import List
+from typing import Any, List, Union, Callable, Tuple
 
 from mpf.platforms.p_roc_devices import PROCSwitch, PROCMatrixLight
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
+from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings
 
 try:    # pragma: no cover
     import pinproc
@@ -30,8 +28,6 @@ except ImportError:     # pragma: no cover
     except ImportError:
         pinproc_imported = False
         pinproc = None
-
-from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings
 
 
 # pylint does not understand that this class is abstract

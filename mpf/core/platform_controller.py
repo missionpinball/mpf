@@ -34,7 +34,7 @@ class PlatformController(MpfController):
 
     def _setup_switch_callback_for_psu(self, switch: Switch, driver: Driver, switch_settings: SwitchSettings,
                                        driver_settings: DriverSettings) -> Optional[SwitchHandler]:
-        """Setup a switch handler which """
+        """Setup a switch handler which informs the PSU about pulses performed by the rule."""
         if driver_settings.pulse_settings.duration == 0:
             return None
 

@@ -5,6 +5,10 @@ mccabe:
   options:
     max-complexity: 15
 
+pyflakes:
+  disable:
+   - F401       # unused import. ignore until pyflakes supports type hints
+
 doc-warnings: true
 
 pep257:

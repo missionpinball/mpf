@@ -2,6 +2,14 @@
 import importlib
 import os
 from collections import namedtuple
+
+from typing import Callable
+from typing import Dict
+from typing import List
+from typing import Tuple
+
+from mpf.core.events import QueuedEvent
+from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
 from mpf.core.config_processor import ConfigProcessor
 from mpf.core.utility_functions import Util
@@ -12,10 +20,6 @@ RemoteMethod = namedtuple('RemoteMethod', ['method', 'config_section', 'kwargs',
 be called on mode_start or mode_stop.
 
 """
-
-# Need to define RemoteMethod before import Mode since the mode module imports
-# it. So this breaks some rules now. Probably should figure out some other way
-# to do this? TODO
 
 
 class ModeController(MpfController):
@@ -29,24 +33,25 @@ class ModeController(MpfController):
 
     """
 
-    def __init__(self, machine):
+    def __init__(self, machine: MachineController) -> None:
         """Initialise mode controller."""
         super().__init__(machine)
 
-        self.queue = None  # ball ending event queue
+        # ball ending event queue
+        self.queue = None                           # type: QueuedEvent
 
-        self.active_modes = list()
+        self.active_modes = list()                  # type: List[Mode]
         self.mode_stop_count = 0
 
-        self._machine_mode_folders = dict()
-        self._mpf_mode_folders = dict()
+        self._machine_mode_folders = dict()         # type: Dict[str, str]
+        self._mpf_mode_folders = dict()             # type: Dict[str, str]
 
         # The following two lists hold namedtuples of any remote components
         # that need to be notified when a mode object is created and/or
         # started.
-        self.loader_methods = list()
-        self.start_methods = list()
-        self.stop_methods = list()
+        self.loader_methods = list()                # type: List[RemoteMethod]
+        self.start_methods = list()                 # type: List[RemoteMethod]
+        self.stop_methods = list()                  # type: List[Tuple[Callable[[Mode], None], int]]
 
         if 'modes' in self.machine.config:
             self.machine.events.add_handler('init_phase_2',
@@ -391,7 +396,7 @@ class ModeController(MpfController):
 
         self.stop_methods.sort(key=lambda x: x[1], reverse=True)
 
-    def set_mode_state(self, mode, active):
+    def set_mode_state(self, mode: Mode, active: bool):
         """Called when a mode goes active or inactive."""
         if active:
             self.active_modes.append(mode)

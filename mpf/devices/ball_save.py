@@ -2,6 +2,7 @@
 
 from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
+from mpf.core.events import event_handler
 from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
 
@@ -51,6 +52,7 @@ class BallSave(SystemWideDevice, ModeDevice):
 
         return config
 
+    @event_handler(10)
     def enable(self, **kwargs):
         """Enable ball save."""
         del kwargs
@@ -79,6 +81,7 @@ class BallSave(SystemWideDevice, ModeDevice):
         desc: The ball save called (name) has just been enabled.
         '''
 
+    @event_handler(1)
     def disable(self, **kwargs):
         """Disable ball save."""
         del kwargs
@@ -99,6 +102,7 @@ class BallSave(SystemWideDevice, ModeDevice):
         desc: The ball save called (name) has just been disabled.
         '''
 
+    @event_handler(9)
     def timer_start(self, **kwargs):
         """Start the timer.
 
@@ -220,6 +224,7 @@ class BallSave(SystemWideDevice, ModeDevice):
 
         return {'balls': balls - balls_to_save}
 
+    @event_handler(8)
     def early_ball_save(self, **kwargs):
         """Perform early ball save if enabled."""
         del kwargs

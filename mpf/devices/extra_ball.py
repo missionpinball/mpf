@@ -1,4 +1,6 @@
 """Device that implements an extra ball."""
+from mpf.core.events import event_handler
+from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
 from mpf.core.mode_device import ModeDevice
 from mpf.core.player import Player
@@ -12,11 +14,12 @@ class ExtraBall(ModeDevice):
     collection = 'extra_balls'
     class_label = 'extra_ball'
 
-    def __init__(self, machine, name):
+    def __init__(self, machine: MachineController, name: str) -> None:
         """Initialise extra ball."""
         super().__init__(machine, name)
-        self.player = None
+        self.player = None      # type: Player
 
+    @event_handler(9)
     def award(self, **kwargs):
         """Award extra ball to player if enabled."""
         del kwargs
@@ -32,6 +35,7 @@ class ExtraBall(ModeDevice):
 
             self.machine.extra_ball_controller.award()
 
+    @event_handler(10)
     def light(self, **kwargs):
         """Light extra ball light."""
         del kwargs
@@ -41,6 +45,7 @@ class ExtraBall(ModeDevice):
 
         self.machine.extra_ball_controller.light()
 
+    @event_handler(1)
     def reset(self, **kwargs):
         """Reset extra ball.
 

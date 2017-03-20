@@ -10,14 +10,13 @@ from typing import Set
 from typing import Tuple
 
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
-from mpf.core.config_validator import ConfigDict
 from mpf.core.delays import DelayManager
 from mpf.core.timer import Timer
 from mpf.core.utility_functions import Util
 from mpf.core.logging import LogMixin
+from mpf.core.switch_controller import SwitchHandler
 
 if TYPE_CHECKING:
-    from mpf.core.switch_controller import SwitchHandler
     from mpf.core.events import QueuedEvent
     from mpf.core.device import Device
     from mpf.core.events import EventHandlerKey
@@ -29,7 +28,7 @@ class Mode(LogMixin):
 
     """Parent class for in-game mode code."""
 
-    def __init__(self, machine, config: ConfigDict, name: str, path) -> None:
+    def __init__(self, machine, config, name: str, path) -> None:
         """Initialise mode.
 
         Args:
@@ -43,13 +42,13 @@ class Mode(LogMixin):
         """
         super().__init__()
         self.machine = machine
-        self.config = config
+        self.config = config                    # type: ignore
         self.name = name.lower()
         self.path = path
         self.priority = 0
         self._active = False
         self._mode_start_wait_queue = None      # type: QueuedEvent
-        self.stop_methods = list()              # type: List[Tuple[Callable[[], None], Any]]
+        self.stop_methods = list()              # type: List[Tuple[Callable[[Any], None], Any]]
         self.timers = dict()                    # type: Dict[str, Timer]
         self.start_callback = None              # type: Callable[[], None]
         self.stop_callback = None               # type: Callable[[], None]

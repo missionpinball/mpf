@@ -3,6 +3,7 @@ import abc
 import copy
 import logging
 
+from typing import Any
 from typing import Set
 
 from mpf.core.delays import DelayManager
@@ -49,7 +50,7 @@ class LogicBlocks(MpfController):
         'player_add_success' event.
         """
         del kwargs
-        player.logic_blocks = set()
+        player.logic_blocks = set()     # type: ignore
         '''player_var: logic_blocks
 
         desc: A set which contains references to all the logic blocks which
@@ -576,7 +577,7 @@ class Accrual(LogicBlock):
         self.debug_log("Status: %s",
                        self.player[self.config['player_variable']])
 
-    def hit(self, step: int, **kwargs):
+    def hit(self, **kwargs):
         """Increase the hit progress towards completion.
 
         Automatically called
@@ -586,9 +587,10 @@ class Accrual(LogicBlock):
         Args:
             step: Integer of the step number (0 indexed) that was just hit.
         """
-        del kwargs
         if not self.enabled:
             return
+
+        step = kwargs["step"]
 
         self.debug_log("Processing hit for step: %s", step)
         if not self.player[self.config['player_variable']][step]:

@@ -1,4 +1,7 @@
 """Handles all light updates."""
+from typing import Dict
+
+from mpf.core.machine import MachineController
 from mpf.core.settings_controller import SettingEntry
 
 from mpf.core.rgb_color import RGBColorCorrectionProfile
@@ -10,12 +13,12 @@ class LightController(MpfController):
 
     """Handles light updates."""
 
-    def __init__(self, machine):
+    def __init__(self, machine: MachineController) -> None:
         """Initialise lights controller."""
         super().__init__(machine)
 
         # Generate and add color correction profiles to the machine
-        self.light_color_correction_profiles = dict()
+        self.light_color_correction_profiles = dict()       # type: Dict[str, RGBColorCorrectionProfile]
 
         # will only get initialised if there are lights
         self._initialised = False

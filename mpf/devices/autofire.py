@@ -1,5 +1,6 @@
 """Contains the base class for autofire coil devices."""
 from mpf.core.device_monitor import DeviceMonitor
+from mpf.core.events import event_handler
 from mpf.core.platform_controller import SwitchRuleSettings, DriverRuleSettings, PulseRuleSettings
 
 from mpf.core.system_wide_device import SystemWideDevice
@@ -34,6 +35,7 @@ class AutofireCoil(SystemWideDevice):
             self.config['playfield'].ball_search.register(
                 self.config['ball_search_order'], self._ball_search, self.name)
 
+    @event_handler(10)
     def enable(self, **kwargs):
         """Enable the autofire coil rule."""
         del kwargs
@@ -55,6 +57,7 @@ class AutofireCoil(SystemWideDevice):
                               power=self.config['coil_overwrite'].get('pulse_power', None))
         )
 
+    @event_handler(1)
     def disable(self, **kwargs):
         """Disable the autofire coil rule."""
         del kwargs

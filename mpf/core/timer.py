@@ -95,7 +95,6 @@ class Timer(LogMixin):
         except TypeError:
             pass
 
-
     def _setup_control_events(self, event_list):
         self.debug_log("Setting up control events")
 

@@ -1,6 +1,5 @@
 """Contains the DeviceManager base class."""
 from collections import OrderedDict
-from unittest.mock import MagicMock
 
 from mpf.core.utility_functions import Util
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict

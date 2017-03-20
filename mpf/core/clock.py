@@ -126,7 +126,7 @@ class ClockBase(LogMixin):
         """
         if not limit:
             # pylint: disable-msg=protected-access
-            limit = asyncio.streams._DEFAULT_LIMIT
+            limit = asyncio.streams._DEFAULT_LIMIT      # type: ignore
 
         reader = asyncio.StreamReader(limit=limit, loop=self.loop)
         protocol = asyncio.StreamReaderProtocol(reader, loop=self.loop)
