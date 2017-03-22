@@ -129,9 +129,9 @@ class TestBcpInterface(MpfBcpTestCase):
             self._bcp_client.send_queue)
 
         # Now stop the monitor
-        self._bcp_client.send_queue.clear()
         self._bcp_client.receive_queue.put_nowait(('monitor_start', {'category': 'devices'}))
         self.advance_time_and_run()
+        self._bcp_client.send_queue.clear()
 
         # Switch hit should not be in BCP queue
         self.hit_switch_and_run("s_test", .1)
