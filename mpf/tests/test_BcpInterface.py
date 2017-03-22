@@ -64,6 +64,15 @@ class TestBcpInterface(MpfBcpTestCase):
                                      event_kwargs={})),
             self._bcp_client.send_queue)
 
+        # Now stop the event monitoring
+        self._bcp_client.send_queue.clear()
+        self._bcp_client.receive_queue.put_nowait(('monitor_stop', {'category': 'events'}))
+        self.advance_time_and_run()
+
+        # Event should not be sent via BCP
+        self.machine.events.post("test1")
+        self.assertFalse(self._bcp_client.send_queue)
+
     def test_device_monitor(self):
         self.hit_switch_and_run("s_test", .1)
         self.release_switch_and_run("s_test2", .1)
@@ -119,6 +128,15 @@ class TestBcpInterface(MpfBcpTestCase):
                         "changes": ('state', 0, 1)}),
             self._bcp_client.send_queue)
 
+        # Now stop the monitor
+        self._bcp_client.send_queue.clear()
+        self._bcp_client.receive_queue.put_nowait(('monitor_start', {'category': 'devices'}))
+        self.advance_time_and_run()
+
+        # Switch hit should not be in BCP queue
+        self.hit_switch_and_run("s_test", .1)
+        self.assertFalse(self._bcp_client.send_queue)
+
     def test_switch_monitor(self):
         self._bcp_client.send_queue.clear()
 
@@ -163,6 +181,15 @@ class TestBcpInterface(MpfBcpTestCase):
                         "state": 1}),
             self._bcp_client.send_queue)
 
+        # Stop switch monitor
+        self._bcp_client.send_queue.clear()
+        self._bcp_client.receive_queue.put_nowait(('monitor_start', {'category': 'switches'}))
+        self.advance_time_and_run()
+
+        # Hit switch should not be in BCP queue
+        self.hit_switch_and_run("s_test", .1)
+        self.assertFalse(self._bcp_client.send_queue)
+
     def test_mode_monitor(self):
         self.assertIn('mode1', self.machine.modes)
         self.assertIn('mode2', self.machine.modes)
@@ -200,6 +227,102 @@ class TestBcpInterface(MpfBcpTestCase):
         self.assertIn(
             ("mode_stop", {"name": "mode1"}),
             self._bcp_client.send_queue)
+
+        self._bcp_client.send_queue.clear()
+
+        # Stop monitoring modes
+        self._bcp_client.receive_queue.put_nowait(('monitor_stop', {'category': 'modes'}))
+        self.advance_time_and_run()
+
+        # start mode 1 again
+        self.machine.modes['mode1'].config['mode']['game_mode'] = False
+        self.machine.modes['mode1'].start(mode_priority=200)
+        self.machine.modes['mode1'].active = True
+
+        # The BCP queue should be empty
+        self.assertFalse(self._bcp_client.send_queue)
+
+    def test_machine_vars_monitor(self):
+        # register monitor
+        self._bcp_client.receive_queue.put_nowait(('monitor_start', {'category': 'machine_vars'}))
+        self.advance_time_and_run()
+        self._bcp_client.send_queue.clear()
+
+        # Create a new machine variable
+        self.machine.create_machine_var("test_var", "testing")
+
+        self.assertIn(
+            ("machine_variable", {"value": "testing",
+                                  "name": "test_var",
+                                  "change": False,
+                                  "prev_value": "testing"}),
+            self._bcp_client.send_queue)
+        self._bcp_client.send_queue.clear()
+
+        self.machine.set_machine_var("test_var", "2nd")
+        self.assertIn(
+            ("machine_variable", {"value": "2nd",
+                                  "name": "test_var",
+                                  "change": True,
+                                  "prev_value": "testing"}),
+            self._bcp_client.send_queue)
+
+        # Now stop monitoring machine variables
+        self._bcp_client.receive_queue.put_nowait(('monitor_stop', {'category': 'machine_vars'}))
+        self.advance_time_and_run()
+        self._bcp_client.send_queue.clear()
+        self.machine.set_machine_var("test_var", "3rd")
+
+        # The BCP queue should be empty
+        self.assertFalse(self._bcp_client.send_queue)
+
+    def test_player_vars_monitor(self):
+        # register monitor
+        self._bcp_client.receive_queue.put_nowait(('monitor_start', {'category': 'player_vars'}))
+        self.advance_time_and_run()
+
+        # Setup and start game (player variables are stored in game)
+        self.machine.switch_controller.process_switch('s_ball_switch1', 1)
+        self.machine.switch_controller.process_switch('s_ball_switch2', 1)
+        self.advance_time_and_run(10)
+        self.assertEqual(2, self.machine.ball_controller.num_balls_known)
+        self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
+
+        self.assertEqual(3, self.machine.config['game']['balls_per_game'])
+        self.hit_and_release_switch("s_start")
+        self.advance_time_and_run()
+        self.assertEqual(1, self.machine.game.num_players)
+        self._bcp_client.send_queue.clear()
+
+        # Create a new player variable
+        self.machine.game.player.test_var = "testing"
+
+        self.assertIn(
+            ("player_variable", {"player_num": 1,
+                                 "value": "testing",
+                                 "prev_value": 0,
+                                 "name": "test_var",
+                                 "change": True}),
+            self._bcp_client.send_queue)
+        self._bcp_client.send_queue.clear()
+
+        self.machine.game.player.test_var = "2nd"
+        self.assertIn(
+            ("player_variable", {"player_num": 1,
+                                 "value": "2nd",
+                                 "prev_value": "testing",
+                                 "name": "test_var",
+                                 "change": True}),
+            self._bcp_client.send_queue)
+
+        # Now stop monitoring machine variables
+        self._bcp_client.receive_queue.put_nowait(('monitor_stop', {'category': 'player_vars'}))
+        self.advance_time_and_run()
+        self._bcp_client.send_queue.clear()
+        self.machine.set_machine_var("test_var", "3rd")
+
+        # The BCP queue should be empty
+        self.assertFalse(self._bcp_client.send_queue)
 
     def test_receive_switch(self):
         # should not crash
