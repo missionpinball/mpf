@@ -47,7 +47,7 @@ class LedPlayer(DeviceConfigPlayer):
 
     @staticmethod
     def _led_color(led, instance_dict, full_context, color, **s):
-        if color == "on":
+        if color in ['on', 'ff']:
             color = led.config['default_color']
         else:
             color = RGBColor(color)
