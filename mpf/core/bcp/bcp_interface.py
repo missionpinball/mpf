@@ -5,6 +5,7 @@ from mpf.core.events import PostedEvent
 from mpf.core.player import Player
 from mpf.core.utility_functions import Util
 from mpf.core.mpf_controller import MpfController
+from mpf.core.switch_controller import MonitoredSwitchChange
 
 
 class BcpInterface(MpfController):
@@ -41,30 +42,19 @@ class BcpInterface(MpfController):
         self.configured = True
 
         self.config = machine.config['bcp']
-        self.bcp_events = dict()
 
         self.bcp_receive_commands = dict(
-            error=self.bcp_receive_error,
-            switch=self.bcp_receive_switch,
-            trigger=self.bcp_receive_trigger,
-            register_trigger=self.bcp_receive_register_trigger,
-            set_machine_var=self._set_machine_var,
-            monitor_events=self._monitor_events,
-            monitor_machine_vars=self._monitor_machine_vars,
-            monitor_player_vars=self._monitor_player_vars,
-            monitor_devices=self._monitor_devices)
+            error=self._bcp_receive_error,
+            switch=self._bcp_receive_switch,
+            trigger=self._bcp_receive_trigger,
+            register_trigger=self._bcp_receive_register_trigger,
+            remove_trigger=self._bcp_receive_deregister_trigger,
+            monitor_start=self._bcp_receive_monitor_start,
+            monitor_stop=self._bcp_receive_monitor_stop,
+            set_machine_var=self._bcp_receive_set_machine_var,
+        )
 
-        self._setup_player_monitor()
-
-        self._setup_machine_var_monitor()
-
-        self.machine.events.add_handler('player_add_success',
-                                        self.bcp_player_added)
-        self.machine.events.add_handler('machine_reset_phase_1',
-                                        self.bcp_reset)
-
-        self.machine.mode_controller.register_start_method(
-            self.bcp_mode_start, 'mode')
+        self.machine.events.add_handler('machine_reset_phase_1', self.bcp_reset)
 
     def __repr__(self):
         """Return string representation."""
@@ -79,14 +69,6 @@ class BcpInterface(MpfController):
     def add_registered_trigger_event_for_client(self, client, event):
         """Add trigger for event."""
         # register handler if first transport
-
-        # Note here we're registering the trigger for the event name, not the
-        # full event with condition. This means that this event will be
-        # always sent regardless of condition, and the MC will have to process
-        # the condition.
-
-        event, _ = self.machine.events.get_event_and_condition_from_string(event)
-
         if not self.machine.bcp.transport.get_transports_for_handler(event):
             self.machine.events.add_handler(event=event,
                                             handler=self.bcp_trigger,
@@ -96,24 +78,77 @@ class BcpInterface(MpfController):
 
     def remove_registered_trigger_event_for_client(self, client, event):
         """Remove trigger for event."""
-        event, _ = self.machine.events.get_event_and_condition_from_string(event)
-
         # unregister transport
         self.machine.bcp.transport.remove_transport_from_handle(event, client)
 
-        # if not transports remain. remove handler
+        # if not transports remain, remove handler
         if not self.machine.bcp.transport.get_transports_for_handler(event):
             self.machine.events.remove_handler_by_event(event=event, handler=self.bcp_trigger)
 
-    def _set_machine_var(self, client, name, value):
+    def _bcp_receive_set_machine_var(self, client, name, value):
         """Set machine var via bcp."""
         del client
         self.machine.create_machine_var(name, value)
+
+    def _bcp_receive_monitor_start(self, client, category):
+        """Start monitoring the specified category."""
+        category = str.lower(category)
+
+        if category == "events":
+            self._monitor_events(client)
+        elif category == "devices":
+            self._monitor_devices(client)
+        elif category == "switches":
+            self._monitor_switches(client)
+        elif category == "machine_vars":
+            self._monitor_machine_vars(client)
+        elif category == "player_vars":
+            self._monitor_player_vars(client)
+        elif category == "modes":
+            self._monitor_modes(client)
+        elif category == "core_events":
+            self._monitor_core_events(client)
+        else:
+            self.machine.bcp.transport.send_to_client(client,
+                                                      "error",
+                                                      cmd="monitor_start?category={}".format(category),
+                                                      error="Invalid category value")
+
+    def _bcp_receive_monitor_stop(self, client, category):
+        """Stop monitoring the specified category."""
+        category = str.lower(category)
+
+        if category == "events":
+            self._monitor_events_stop(client)
+        elif category == "devices":
+            self._monitor_devices_stop(client)
+        elif category == "switches":
+            self._monitor_switches_stop(client)
+        elif category == "machine_vars":
+            self._monitor_machine_vars_stop(client)
+        elif category == "player_vars":
+            self._monitor_player_vars_stop(client)
+        elif category == "modes":
+            self._monitor_modes_stop(client)
+        elif category == "core_events":
+            self._monitor_core_events_stop(client)
+        else:
+            self.machine.bcp.transport.send_to_client(client,
+                                                      "error",
+                                                      cmd="monitor_stop?category={}".format(category),
+                                                      error="Invalid category value")
 
     def _monitor_events(self, client):
         """Monitor all events."""
         self.machine.bcp.transport.add_handler_to_transport("_monitor_events", client)
         self.machine.events.monitor_events = True
+
+    def _monitor_events_stop(self, client):
+        """Stop monitoring all events for the specified client."""
+        self.machine.bcp.transport.remove_transport_from_handle("_monitor_events", client)
+
+        if not self.machine.bcp.transport.get_transports_for_handler("_monitor_events"):
+            self.machine.events.monitor_events = False
 
     def monitor_posted_event(self, posted_event: PostedEvent):
         """Send monitored posted event to bcp clients."""
@@ -143,6 +178,10 @@ class BcpInterface(MpfController):
                     changes=False,
                     state=device.get_monitorable_state())
 
+    def _monitor_devices_stop(self, client):
+        """Remove client to no longer get notified of device changes."""
+        self.machine.bcp.transport.remove_transport_from_handle("_devices", client)
+
     def notify_device_changes(self, device, attribute_name, old_value, new_value):
         """Notify all listeners about device change."""
         if not self.configured:
@@ -156,12 +195,60 @@ class BcpInterface(MpfController):
             changes=(attribute_name, Util.convert_to_simply_type(old_value), Util.convert_to_simply_type(new_value)),
             state=device.get_monitorable_state())
 
+    def _monitor_switches(self, client):
+        """Register client to get notified of switch changes."""
+        self.machine.switch_controller.add_monitor(self._notify_switch_changes)
+        self.machine.bcp.transport.add_handler_to_transport("_switches", client)
+
+    def _monitor_switches_stop(self, client):
+        """Remove client to no longer get notified of switch changes."""
+        self.machine.bcp.transport.add_handler_to_transport("_switches", client)
+
+        # If there are no more clients monitoring switches, remove monitor
+        if not self.machine.bcp.transport.get_transports_for_handler("_switches"):
+            self.machine.switch_controller.remove_monitor(self._notify_switch_changes)
+
+    def _notify_switch_changes(self, change: MonitoredSwitchChange):
+        """Notify all listeners about switch change."""
+        self.machine.bcp.transport.send_to_clients_with_handler(
+            handler="_switches",
+            bcp_command='switch',
+            name=change.name,
+            state=change.state)
+
     def _monitor_player_vars(self, client):
+        # Setup player variables to be monitored (if necessary)
+        if not self.machine.bcp.transport.get_transports_for_handler("_player_vars"):
+            Player.monitor_enabled = True
+            self.machine.register_monitor('player', self._player_var_change)
+
         self.machine.bcp.transport.add_handler_to_transport("_player_vars", client)
 
+    def _monitor_player_vars_stop(self, client):
+        self.machine.bcp.transport.remove_transport_from_handle("_player_vars", client)
+
+        # If there are no more clients monitoring player variables, stop monitoring
+        if not self.machine.bcp.transport.get_transports_for_handler("_player_vars"):
+            Player.monitor_enabled = False
+
     def _monitor_machine_vars(self, client):
+        # Setup machine variables to be monitored (if necessary)
+        if not self.machine.bcp.transport.get_transports_for_handler("_machine_vars"):
+            self.machine.machine_var_monitor = True
+            self.machine.register_monitor('machine_vars', self._machine_var_change)
+
+        # Send initial machine variable values
         self._send_machine_vars(client)
+
+        # Establish handler for machine variable changes
         self.machine.bcp.transport.add_handler_to_transport("_machine_vars", client)
+
+    def _monitor_machine_vars_stop(self, client):
+        self.machine.bcp.transport.remove_transport_from_handle("_machine_vars", client)
+
+        # If there are no more clients monitoring machine variables, stop monitoring
+        if not self.machine.bcp.transport.get_transports_for_handler("_machine_vars"):
+            self.machine.machine_var_monitor = False
 
     def _send_machine_vars(self, client):
         self.machine.bcp.transport.send_to_client(
@@ -170,14 +257,6 @@ class BcpInterface(MpfController):
             self.machine.bcp.transport.send_to_client(client, bcp_command='machine_variable',
                                                       name=var_name,
                                                       value=settings['value'])
-
-    def _setup_player_monitor(self):
-        Player.monitor_enabled = True
-        self.machine.register_monitor('player', self._player_var_change)
-
-    def _setup_machine_var_monitor(self):
-        self.machine.machine_var_monitor = True
-        self.machine.register_monitor('machine_vars', self._machine_var_change)
 
     # pylint: disable-msg=too-many-arguments
     def _player_var_change(self, name, value, prev_value, change, player_num):
@@ -198,6 +277,91 @@ class BcpInterface(MpfController):
             value=value,
             prev_value=prev_value,
             change=change)
+
+    def _monitor_modes(self, client):
+        """Begin monitoring all mode events (start, stop) via the specified client."""
+        if not self.machine.bcp.transport.get_transports_for_handler("_modes"):
+            self.machine.mode_controller.register_start_method(self._mode_start, 'mode')
+
+        self.machine.bcp.transport.add_handler_to_transport("_modes", client)
+
+    def _monitor_modes_stop(self, client):
+        """stop monitoring all mode events (start, stop) via the specified client."""
+        self.machine.bcp.transport.remove_transport_from_handle("_modes", client)
+
+        if not self.machine.bcp.transport.get_transports_for_handler("_modes"):
+            self.machine.mode_controller.remove_start_method(self._mode_start, 'mode')
+
+    def _mode_start(self, config, priority, mode, **kwargs):
+        """Send 'mode_start' to the monitoring clients."""
+        del config
+        del kwargs
+        self.machine.bcp.transport.send_to_clients_with_handler(
+            handler="_modes",
+            bcp_command="mode_start",
+            name=mode.name,
+            priority=priority)
+
+        # Return the method and mode name to call when the mode stops (self-registering)
+        return self._mode_stop, mode.name
+
+    def _mode_stop(self, mode, **kwargs):
+        """Send 'mode_stop' to the monitoring clients."""
+        del kwargs
+        self.machine.bcp.transport.send_to_clients_with_handler(
+            handler="_modes",
+            bcp_command="mode_stop",
+            name=mode)
+
+    def _monitor_core_events(self, client):
+        """Begin monitoring all core events (ball, player turn, etc.) via the specified client."""
+        if not self.machine.bcp.transport.get_transports_for_handler("_core_events"):
+            self.machine.events.add_handler('ball_started', self._ball_started)
+            self.machine.events.add_handler('ball_ended', self._ball_ended)
+            self.machine.events.add_handler('player_turn_start', self._player_turn_start)
+            self.machine.events.add_handler('player_add_success', self._player_add_success)
+
+        self.machine.bcp.transport.add_handler_to_transport("_core_events", client)
+
+    def _monitor_core_events_stop(self, client):
+        """Stop monitoring all core events (ball, player turn, etc.) via the specified client."""
+        self.machine.bcp.transport.remove_transport_from_handle("_core_events", client)
+
+        if not self.machine.bcp.transport.get_transports_for_handler("_core_events"):
+            self.machine.events.remove_handler_by_event('ball_started', self._ball_started)
+            self.machine.events.remove_handler_by_event('ball_ended', self._ball_ended)
+            self.machine.events.remove_handler_by_event('player_turn_start', self._player_turn_start)
+            self.machine.events.remove_handler_by_event('player_add_success', self._player_add_success)
+
+    def _ball_started(self, ball, player, **kwargs):
+        del kwargs
+        self.machine.bcp.transport.send_to_clients_with_handler(
+            handler="_core_events",
+            bcp_command="ball_start",
+            player_num=player,
+            ball=ball)
+
+    def _ball_ended(self, **kwargs):
+        del kwargs
+        self.machine.bcp.transport.send_to_clients_with_handler(
+            handler="_core_events",
+            bcp_command="ball_end")
+
+    def _player_turn_start(self, number, player, **kwargs):
+        del player
+        del kwargs
+        self.machine.bcp.transport.send_to_clients_with_handler(
+            handler="_core_events",
+            bcp_command="ball_start",
+            player_num=number)
+
+    def _player_add_success(self, num, player, **kwargs):
+        del player
+        del kwargs
+        self.machine.bcp.transport.send_to_clients_with_handler(
+            handler="_core_events",
+            bcp_command="ball_start",
+            player_num=num)
 
     def process_bcp_message(self, cmd, kwargs, client):
         """Process BCP message.
@@ -225,7 +389,7 @@ class BcpInterface(MpfController):
         else:
             self.warning_log("Received invalid BCP command: %s from client: %s", cmd, client.name)
 
-    def bcp_receive_error(self, client, **kwargs):
+    def _bcp_receive_error(self, client, **kwargs):
         """A remote BCP host has sent a BCP error message, indicating that a command from MPF was not recognized.
 
         This method only posts a warning to the log. It doesn't do anything else
@@ -241,21 +405,25 @@ class BcpInterface(MpfController):
         """
         del config
         del kwargs
-        self.machine.bcp.transport.send_to_all_clients('mode_start', name=mode.name, priority=priority)
+        self.machine.bcp.transport.send_to_all_clients('mode_start',
+                                                       name=mode.name,
+                                                       priority=priority)
 
         return self.bcp_mode_stop, mode.name
 
     def bcp_mode_stop(self, name, **kwargs):
         """Send BCP 'mode_stop' to the connected BCP hosts."""
         del kwargs
-        self.machine.bcp.transport.send_to_all_clients('mode_stop', name=name)
+        self.machine.bcp.transport.send_to_clients_with_handler('_modes',
+                                                                'mode_stop',
+                                                                name=name)
 
     def bcp_reset(self, **kwargs):
         """Send the 'reset' command to the remote BCP host."""
         del kwargs
         self.machine.bcp.transport.send_to_all_clients("reset")
 
-    def bcp_receive_switch(self, client, name, state, **kwargs):
+    def _bcp_receive_switch(self, client, name, state, **kwargs):
         """Process an incoming switch state change request from a remote BCP host.
 
         Args:
@@ -283,10 +451,15 @@ class BcpInterface(MpfController):
                                                       state=state,
                                                       logical=True)
 
-    def bcp_receive_register_trigger(self, client, event, **kwargs):
+    def _bcp_receive_register_trigger(self, client, event, **kwargs):
         """Register a trigger for a client."""
         del kwargs
         self.add_registered_trigger_event_for_client(client, event)
+
+    def _bcp_receive_deregister_trigger(self, client, event, **kwargs):
+        """Deregister a trigger for a client."""
+        del kwargs
+        self.remove_registered_trigger_event_for_client(client, event)
 
     def bcp_player_added(self, num, **kwargs):
         """Send BCP 'player_added' to the connected BCP hosts."""
@@ -314,7 +487,7 @@ class BcpInterface(MpfController):
         self.machine.bcp.transport.send_to_clients_with_handler(
             handler=name, bcp_command='trigger', name=name, **kwargs)
 
-    def bcp_receive_trigger(self, client, name, callback=None, **kwargs):
+    def _bcp_receive_trigger(self, client, name, callback=None, **kwargs):
         """Process an incoming trigger command from a remote BCP host."""
         del client
         kwargs['_from_bcp'] = True
