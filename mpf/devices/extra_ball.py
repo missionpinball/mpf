@@ -31,8 +31,11 @@ class ExtraBall(ModeDevice):
                 self.player.extra_balls_awarded[self.name] <
                 self.config['max_per_game']):
 
-            self.player.extra_balls_awarded[self.name] += 1
+            if self.machine.extra_ball_controller.enabled:
+                self.player.extra_balls_awarded[self.name] += 1
 
+            # still need to send this even if EBs are disabled since we want
+            # to post the disabled event
             self.machine.extra_ball_controller.award()
 
     @event_handler(10)

@@ -486,6 +486,10 @@ class EventManager(MpfController):
         else:
             self.info_log("Event: ======'%s'====== Args=%s", event, kwargs)
 
+        # fast path for events without handler
+        if not callback and not self.monitor_events and event not in self.registered_handlers:
+            return
+
         if not self.event_queue and hasattr(self.machine.clock, "loop"):
             self.machine.clock.loop.call_soon(self.process_event_queue)
 

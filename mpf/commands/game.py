@@ -132,11 +132,6 @@ class Command(object):
         except OSError:
             pass
 
-        logging.basicConfig(level=args.loglevel,
-                            format='%(asctime)s : %(name)s : %(message)s',
-                            filename=full_logfile_path,
-                            filemode='a')
-
         # define a Handler which writes INFO messages or higher to the sys.stderr
         console_log = logging.StreamHandler()
         console_log.setLevel(args.consoleloglevel)
