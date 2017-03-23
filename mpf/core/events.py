@@ -7,7 +7,7 @@ import asyncio
 from functools import partial
 from unittest.mock import MagicMock
 
-from typing import Dict
+from typing import Dict, Callable, Any
 from typing import List
 
 from mpf.core.mpf_controller import MpfController
@@ -54,7 +54,7 @@ class EventManager(MpfController):
         else:
             return event_string.lower(), None
 
-    def add_handler(self, event, handler, priority=1, **kwargs):
+    def add_handler(self, event: str, handler: Any, priority: int=1, **kwargs) -> EventHandlerKey:
         """Register an event handler to respond to an event.
 
         If you add a handlers for an event for which it has already been

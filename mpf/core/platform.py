@@ -48,7 +48,7 @@ class BasePlatform(metaclass=abc.ABCMeta):
         """
         pass
 
-    def tick(self, dt):
+    def tick(self):
         """Called once per machine loop.
 
         Subclass this method in a platform module to perform periodic updates

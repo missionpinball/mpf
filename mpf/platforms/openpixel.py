@@ -162,13 +162,9 @@ class OpenPixelClient(object):
         self.channels[channel][pixel] = callback
         self.dirty = True
 
-    def tick(self, dt):
+    def tick(self):
         """Called once per machine loop to update the pixels.
-
-        Args:
-            dt: time since last update
         """
-        del dt
         if self.update_every_tick or self.dirty:
             for channel_index, pixel_list in enumerate(self.channels):
                 self.update_pixels(pixel_list, channel_index)

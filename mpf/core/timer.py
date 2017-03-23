@@ -333,10 +333,8 @@ class Timer(LogMixin):
             self.reset()
             self.start()
 
-    def _timer_tick(self, dt):
+    def _timer_tick(self):
         # Automatically called by the core clock each tick
-        del dt
-
         self.debug_log("Timer Tick")
 
         if not self.running:

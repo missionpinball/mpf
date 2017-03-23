@@ -127,12 +127,11 @@ class ScoreReelGroup(SystemWideDevice):
             if self.reels[reel] and (reel < len(self.reels) - 1):
                 self.reels[reel].set_rollover_reel(self.reels[reel + 1])
 
-    def tick(self, dt):
+    def tick(self):
         """Automatically called once per machine tick and checks to see if there are any jumps or advances in progress.
 
         If so, calls those methods.
         """
-        del dt
         if self.jump_in_progress:
             self._jump_advance_step()
         elif self.advance_queue:

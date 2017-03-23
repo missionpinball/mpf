@@ -13,7 +13,7 @@ class TestMpfTestCase(MpfTestCase):
     def get_platform(self):
         return 'smart_virtual'
 
-    def _interval(self, dt=None):
+    def _interval(self):
         self.counter += 1
 
     def test_schedule_interval_in_tests(self):

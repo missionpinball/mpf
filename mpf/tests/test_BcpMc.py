@@ -1,3 +1,4 @@
+from functools import partial
 from queue import Queue
 from unittest.mock import MagicMock, patch, call
 
@@ -22,6 +23,20 @@ class TestBcpClient(MockBcpClient):
         if callback:
             callback()
 
+class MockMcClock:
+
+    def __init__(self, clock):
+        self._clock = clock
+
+    def __getattr__(self, item):
+        return getattr(self._clock, item)
+
+    def schedule_once(self, callback, timeout=0):
+        self._clock.schedule_once(partial(callback, dt=None), timeout)
+
+    def schedule_interval(self, callback, timeout):
+        self._clock.schedule_interval(partial(callback, dt=None), timeout)
+
 
 class TestBcp(MpfTestCase):
 
@@ -40,7 +55,7 @@ class TestBcp(MpfTestCase):
 
         client = self.machine.bcp.transport.get_named_client("local_display")
         self.kivy = MagicMock()
-        self.kivy.clock.Clock = self.machine.clock
+        self.kivy.clock.Clock = MockMcClock(self.machine.clock)
         modules = {
             'kivy': self.kivy,
             'kivy.clock': self.kivy.clock,

@@ -293,7 +293,7 @@ class SwitchController(MpfController):
 
         # if the switch is active, check to see if it's recycle_time has passed
         if state and not self._check_recycle_time(obj, state):
-            self.machine.clock.schedule_once(lambda dt: self._recycle_passed(obj, state, logical, obj.hw_state),
+            self.machine.clock.schedule_once(partial(self._recycle_passed, obj, state, logical, obj.hw_state),
                                              timeout=obj.recycle_clear_time - self.machine.clock.get_time())
             return
 
@@ -563,14 +563,13 @@ class SwitchController(MpfController):
             raise AssertionError("No active timed switches")
         return min(self.active_timed_switches.keys())
 
-    def _process_active_timed_switches(self, dt):
+    def _process_active_timed_switches(self):
         """Process active times switches.
 
         Checks the current list of active timed switches to see if it's
         time to take action on any of them. If so, does the callback and then
         removes that entry from the list.
         """
-        del dt
         next_event_time = False
         for k in list(self.active_timed_switches.keys()):
             if k <= self.machine.clock.get_time():  # change to generator?

@@ -619,9 +619,8 @@ class RunningShow(object):
         if self._show_loaded:
             self._run_next_step(post_events='step_back')
 
-    def _run_next_step(self, dt=None, post_events=None):
-        del dt
-
+    def _run_next_step(self, post_events=None):
+        """Run the next show step."""
         if post_events:
             self._post_events(post_events)
 

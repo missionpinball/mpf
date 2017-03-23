@@ -116,8 +116,8 @@ class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatfor
             raise AssertionError("Duplicate node_id")
         self.io_boards[board.node_id] = board
 
-    def _update_watchdog(self, dt):
-        del dt
+    def _update_watchdog(self):
+        """Send Watchdog command."""
         self.net_connection.send('WD:' + str(hex(self.config['watchdog']))[2:])
 
     def process_received_message(self, msg: str):
@@ -177,7 +177,7 @@ class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatfor
             self.rgb_connection.send('RF:{}'.format(
                 Util.int_to_hex_string(self.config['hardware_led_fade_time'])))
 
-    def update_leds(self, dt):
+    def update_leds(self):
         """Update all the LEDs connected to a FAST controller.
 
         This is done once per game loop for efficiency (i.e. all LEDs are sent as a single
@@ -186,11 +186,7 @@ class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatfor
         Also, every LED is updated every loop, even if it doesn't change. This
         is in case some interference causes a LED to change color. Since we
         update every loop, it will only be the wrong color for one tick.
-
-        Args:
-            dt: time since last call
         """
-        del dt
         dirty_leds = [led for led in self.fast_leds.values() if led.dirty]
 
         if dirty_leds:

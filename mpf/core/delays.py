@@ -3,19 +3,24 @@
 import uuid
 from functools import partial
 
+from typing import Any, Callable, Dict, Set, TYPE_CHECKING
+
 from mpf.core.mpf_controller import MpfController
+
+if TYPE_CHECKING:
+    from mpf.core.machine import MachineController
 
 
 class DelayManagerRegistry(object):
 
     """Keeps references to all DelayManager instances."""
 
-    def __init__(self, machine):
+    def __init__(self, machine: "MachineController") -> None:
         """Initialise delay registry."""
-        self.delay_managers = set()
+        self.delay_managers = set()     # type: Set["DelayManager"]
         self.machine = machine
 
-    def add_delay_manager(self, delay_manager):
+    def add_delay_manager(self, delay_manager: "DelayManager") -> None:
         """Add a delay manager to the list."""
         self.delay_managers.add(delay_manager)
 
@@ -24,14 +29,14 @@ class DelayManager(MpfController):
 
     """Handles delays for one object."""
 
-    def __init__(self, registry):
+    def __init__(self, registry: DelayManagerRegistry) -> None:
         """Initialise delay manager."""
-        self.delays = {}
+        self.delays = {}        # type: Dict[str, Any]
         super().__init__(registry.machine)
         self.registry = registry
         self.registry.add_delay_manager(self)
 
-    def add(self, ms, callback, name=None, **kwargs):
+    def add(self, ms: int, callback: Callable[..., None], name: str=None, **kwargs) -> str:
         """Add a delay.
 
         Args:
@@ -53,7 +58,7 @@ class DelayManager(MpfController):
             String name of the delay which you can use to remove it later.
         """
         if not name:
-            name = uuid.uuid4()
+            name = str(uuid.uuid4())
         self.debug_log("Adding delay. Name: '%s' ms: %s, callback: %s, "
                        "kwargs: %s", name, ms, callback, kwargs)
 
@@ -67,7 +72,7 @@ class DelayManager(MpfController):
 
         return name
 
-    def remove(self, name):
+    def remove(self, name: str):
         """Remove a delay by name.
 
         I.e. prevents the callback from being fired and cancels the delay.
@@ -84,7 +89,7 @@ class DelayManager(MpfController):
             except KeyError:
                 pass
 
-    def add_if_doesnt_exist(self, ms, callback, name, **kwargs):
+    def add_if_doesnt_exist(self, ms: int, callback: Callable[..., None], name: str, **kwargs) -> str:
         """Add a delay only if a delay with that name doesn't exist already.
 
         Args:
@@ -107,19 +112,20 @@ class DelayManager(MpfController):
         """
         if not self.check(name):
             return self.add(ms, callback, name, **kwargs)
+        else:
+            return name
 
-    def check(self, delay):
+    def check(self, delay: str) -> bool:
         """Check to see if a delay exists.
 
         Args:
             delay: A string of the delay you're checking for.
 
-        Returns: The delay object if it exists, or None if not.
+        Returns: The true if the delay exists. False otherwise.
         """
-        if delay in self.delays:
-            return delay
+        return delay in self.delays
 
-    def reset(self, ms, callback, name, **kwargs):
+    def reset(self, ms: int, callback: Callable[..., None], name: str, **kwargs) -> str:
         """Reset a delay, first deleting the old one (if it exists) and then adding new delay with the new settings.
 
         Args:
@@ -130,7 +136,7 @@ class DelayManager(MpfController):
 
         return self.add(ms, callback, name, **kwargs)
 
-    def clear(self):
+    def clear(self) -> None:
         """Remove (clear) all the delays associated with this DelayManager."""
         for name in list(self.delays.keys()):
             self.machine.clock.unschedule(self.delays[name])
@@ -138,7 +144,7 @@ class DelayManager(MpfController):
 
         self.delays = {}
 
-    def run_now(self, name):
+    def run_now(self, name: str):
         """Run a delay callback now instead of waiting until its time comes.
 
         This will cancel the future running of the delay callback.
@@ -159,8 +165,8 @@ class DelayManager(MpfController):
             except KeyError:
                 pass
 
-    def _process_delay_callback(self, name, callback, dt, **kwargs):
-        del dt
+    def _process_delay_callback(self, name: str, callback: Callable[..., None], **kwargs):
+        """Process delay callback and run event queue afterwards."""
         self.debug_log("---Processing delay: %s", name)
         try:
             del self.delays[name]

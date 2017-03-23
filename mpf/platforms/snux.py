@@ -118,15 +118,11 @@ class HardwarePlatform(DriverPlatform):
         self.snux_config = self.machine.config_validator.validate_config(
             'snux', self.machine.config['snux'])
 
-    def tick(self, dt):
+    def tick(self):
         """Snux main loop.
 
         Called based on the timer_tick event
-
-        Args:
-            dt: time since last call
         """
-        del dt
         if self.a_side_queue:
             self._service_a_side()
         elif self.c_side_queue:
@@ -134,8 +130,8 @@ class HardwarePlatform(DriverPlatform):
         elif self.c_side_enabled and not self.c_side_active:
             self._enable_a_side()
 
-    def _flash_diag_led(self, dt):
-        del dt
+    def _flash_diag_led(self):
+        """Flash diagnosis LED."""
         self.snux_config['diag_led_driver'].pulse(250)
 
     def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
