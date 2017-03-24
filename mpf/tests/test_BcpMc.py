@@ -83,7 +83,7 @@ class TestBcp(MpfTestCase):
         self.machine_run()
 
         self.mc.events.post.assert_has_calls([
-            call("trigger", name="ball_started", ball=17, player=23),
+            call("ball_started", ball=17, player=23),
         ])
         self.mc.events.post.reset_mock()
 
