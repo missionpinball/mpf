@@ -271,7 +271,7 @@ class VirtualLight(LightPlatformInterface):
     @property
     def current_brightness(self) -> float:
         """Return current brightness."""
-        return self.get_current_brightness_for_fade(0)
+        return self.get_current_brightness_for_fade()
 
     def get_current_brightness_for_fade(self, max_fade=0) -> float:
         """Return brightness for a max_fade long fade."""
