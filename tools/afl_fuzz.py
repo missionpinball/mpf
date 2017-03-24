@@ -4,6 +4,7 @@ import os
 import sys
 
 import time
+import logging
 
 import mpf.core
 from mpf.core.utility_functions import Util
@@ -90,15 +91,19 @@ class AflRunner(object):
         for action in actions:
             if action & 0b10000000:
                 ms = int(action & 0b01111111)
-                ms = ms * ms
+                ms *= ms
                 self.advance_time_and_run(ms / 1000.0)
             else:
                 switch = int(action & 0b01111111)
-                if switch not in switch_list:
+                if switch >= len(switch_list):
                     continue
-                state = self.machine.switches[switch_list[switch]].hw_state ^ 1
-                self.machine.switch_controller.process_switch_by_num(switch_list[switch], state,
+                switch_obj = self.machine.switches[switch_list[switch]]
+                state = switch_obj.hw_state ^ 1
+                # print(switch_list[switch], state, switch_obj.hw_state)
+                self.machine.switch_controller.process_switch_by_num(switch_obj.hw_switch.number, state,
                                                                      self.machine.default_platform)
+#logging.basicConfig(level=logging.DEBUG,
+#                    format='%(asctime)s : %(levelname)s : %(name)s : %(message)s')
 
 runner = AflRunner()
 try:
