@@ -518,32 +518,32 @@ light_player:
     color: single|str|white
     fade: single|ms|None
     __allow_others__:
-logic_blocks:                                       # todo add validation
+logic_blocks_common:
+    enable_events: dict|str:ms|None
+    disable_events: dict|str:ms|None
+    reset_events: dict|str:ms|None
+    restart_events: dict|str:ms|None
+    reset_on_complete: single|bool|True
+    disable_on_complete: single|bool|True
+    persist_state: single|bool|False
+    events_when_complete: list|str|None
+    events_when_hit: list|str|None
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
+accruals:
     __valid_in__: machine, mode
-    common:
-        enable_events: list|str|None
-        disable_events: list|str|None
-        reset_events: list|str|None
-        restart_events: list|str|None
-        reset_on_complete: single|bool|True
-        disable_on_complete: single|bool|True
-        persist_state: single|bool|False
-        events_when_complete: list|str|None
-        events_when_hit: list|str|None
-        player_variable: single|str|None
-        console_log: single|enum(none,basic,full)|none
-        file_log: single|enum(none,basic,full)|basic
-    accrual:
-        events: list|str|
-    counter:
-        count_events: list|str|
-        count_complete_value: single|template_int|None
-        multiple_hit_window: single|ms|0
-        count_interval: single|int|1
-        direction: single|str|up
-        starting_count: single|template_int|0
-    sequence:
-        events: list|str|
+    events: list|str|
+counters:
+    __valid_in__: machine, mode
+    count_events: dict|str:ms|
+    count_complete_value: single|template_int|None
+    multiple_hit_window: single|ms|0
+    count_interval: single|int|1
+    direction: single|str|up
+    starting_count: single|template_int|0
+sequences:
+    __valid_in__: machine, mode
+    events: list|str|
 logging:
     __valid_in__: machine
     __allow_others__: true

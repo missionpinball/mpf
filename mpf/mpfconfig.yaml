@@ -16,7 +16,6 @@ mpf:
         - asset_manager: mpf.core.assets.AsyncioSyncAssetManager
         - show_controller: mpf.core.show_controller.ShowController
         - bcp: mpf.core.bcp.bcp.Bcp
-        - logic_blocks: mpf.core.logic_blocks.LogicBlocks
         - service: mpf.core.service_controller.ServiceController
         - settings: mpf.core.settings_controller.SettingsController
         - placeholder_manager: mpf.core.placeholder_manager.PlaceholderManager
@@ -73,6 +72,9 @@ mpf:
         - mpf.devices.multiball_lock.MultiballLock
         - mpf.devices.timed_switch.TimedSwitch
         - mpf.devices.power_supply_unit.PowerSupplyUnit
+        - mpf.devices.logic_blocks.Counter
+        - mpf.devices.logic_blocks.Accrual
+        - mpf.devices.logic_blocks.Sequence
 
     plugins:
         mpf.plugins.auditor.Auditor
@@ -162,6 +164,9 @@ mpf:
       - achievement_groups
       - combo_switches
       - multiball_locks
+      - counters
+      - accruals
+      - sequences
 
 # Default settings for machines. All can be overridden
 

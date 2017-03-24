@@ -199,11 +199,18 @@ class DeviceManager(MpfController):
                     for control_event in control_events:
                         # get events from this device's config
                         if settings[control_event]:
+                            if not isinstance(settings[control_event], dict):
+                                raise AssertionError("Type of {}:{} should be dict|str:ms| in config_spec".format(
+                                    collection, control_event))
                             for event, delay in settings[control_event].items():
+                                try:
+                                    method = getattr(self.collections[collection][device], control_event[:-7])
+                                except:
+                                    raise AssertionError("Class {} needs to have method {} to handle {}".format(
+                                        self.collections[collection][device], control_event[:-7], control_event
+                                    ))
                                 yield (event,
-                                       getattr(self.collections
-                                               [collection][device],
-                                               control_event[:-7]),
+                                       method,
                                        delay,
                                        self.collections[collection][device])
 

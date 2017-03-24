@@ -163,8 +163,7 @@ class OpenPixelClient(object):
         self.dirty = True
 
     def tick(self):
-        """Called once per machine loop to update the pixels.
-        """
+        """Called once per machine loop to update the pixels."""
         if self.update_every_tick or self.dirty:
             for channel_index, pixel_list in enumerate(self.channels):
                 self.update_pixels(pixel_list, channel_index)
