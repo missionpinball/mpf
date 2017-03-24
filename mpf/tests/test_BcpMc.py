@@ -77,14 +77,12 @@ class TestBcp(MpfTestCase):
     def test_bcp_mpf_and_mpf_mc(self):
         client = self.machine.bcp.transport.get_named_client("local_display")
         self.machine.bcp.interface.add_registered_trigger_event_for_client(client, 'ball_started')
-        self.machine.events.post('ball_started', ball=17,
-                                 player=23)
+        self.machine.bcp.interface.add_registered_trigger_event_for_client(client, 'ball_ended')
+        self.machine.events.post('ball_started', ball=17, player=23)
 
         self.machine_run()
 
-        self.mc.events.post.assert_has_calls([
-            call("ball_started", ball=17, player=23),
-        ])
+        self.mc.events.post.assert_has_calls([call("ball_started", ball=17, player=23), ])
         self.mc.events.post.reset_mock()
 
         self.machine.events.post('ball_ended')
