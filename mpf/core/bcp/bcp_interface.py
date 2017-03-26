@@ -352,7 +352,7 @@ class BcpInterface(MpfController):
         del kwargs
         self.machine.bcp.transport.send_to_clients_with_handler(
             handler="_core_events",
-            bcp_command="ball_start",
+            bcp_command="player_turn_start",
             player_num=number)
 
     def _player_add_success(self, num, player, **kwargs):
@@ -360,7 +360,7 @@ class BcpInterface(MpfController):
         del kwargs
         self.machine.bcp.transport.send_to_clients_with_handler(
             handler="_core_events",
-            bcp_command="ball_start",
+            bcp_command="player_added",
             player_num=num)
 
     def process_bcp_message(self, cmd, kwargs, client):
