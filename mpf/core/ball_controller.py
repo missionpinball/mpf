@@ -165,10 +165,12 @@ class BallController(MpfController):
             return
 
         for device in self.machine.ball_devices:
+            prio = 0
             if 'drain' in device.tags:  # device is used to drain balls from pf
+                prio += 1   # order handlers
                 self.machine.events.add_handler('balldevice_' + device.name +
                                                 '_ball_enter',
-                                                self._ball_drained_handler, priority=20)
+                                                self._ball_drained_handler, priority=20 + prio)
 
     def dump_ball_counts(self):
         """Dump ball count of all devices."""
