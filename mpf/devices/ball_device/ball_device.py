@@ -441,7 +441,7 @@ class BallDevice(SystemWideDevice):
         self.debug_log("Adding ball")
         self.available_balls += new_balls
 
-        if unclaimed_balls:
+        if unclaimed_balls and self.available_balls > 0:
             if 'trough' in self.tags:
                 # ball already reached trough. everything is fine
                 pass
@@ -655,8 +655,11 @@ class BallDevice(SystemWideDevice):
 
         return False
 
-    def eject(self, balls=1, target=None, **kwargs):
-        """Eject ball to target."""
+    def eject(self, balls=1, target=None, **kwargs) -> int:
+        """Eject balls to target.
+
+        Return the number of balls found for eject. The remaining balls are queued for eject when available.
+        """
         del kwargs
         if not target:
             target = self._target_on_unexpected_ball
@@ -664,9 +667,13 @@ class BallDevice(SystemWideDevice):
         self.debug_log('Adding %s ball(s) to the eject_queue with target %s.',
                        balls, target)
 
+        balls_found = 0
         # add request to queue
         for dummy_iterator in range(balls):
-            self._setup_or_queue_eject_to_target(target)
+            if self._setup_or_queue_eject_to_target(target):
+                balls_found += 1
+
+        return balls_found
 
     def eject_all(self, target=None, **kwargs):
         """Eject all the balls from this device.
