@@ -23,6 +23,7 @@ class AflRunner(object):
         self.machine_config_patches['mpf']['default_platform_hz'] = 1
         self.machine_config_patches['mpf']['plugins'] = list()
         self.machine_config_patches['bcp'] = []
+        self.switch_list = []
 
     def _exception_handler(self, loop, context):
         try:
@@ -86,8 +87,9 @@ class AflRunner(object):
         self.machine.events.process_event_queue()
         self.advance_time_and_run(1)
 
+        self.switch_list = sorted(self.machine.switches.keys())
+
     def run(self, actions):
-        switch_list = sorted(self.machine.switches.keys())
         for action in actions:
             if action & 0b10000000:
                 ms = int(action & 0b01111111)
@@ -95,9 +97,9 @@ class AflRunner(object):
                 self.advance_time_and_run(ms / 1000.0)
             else:
                 switch = int(action & 0b01111111)
-                if switch >= len(switch_list):
+                if switch >= len(self.switch_list):
                     continue
-                switch_obj = self.machine.switches[switch_list[switch]]
+                switch_obj = self.machine.switches[self.switch_list[switch]]
                 state = switch_obj.hw_state ^ 1
                 # print(switch_list[switch], state, switch_obj.hw_state)
                 self.machine.switch_controller.process_switch_by_num(switch_obj.hw_switch.number, state,
