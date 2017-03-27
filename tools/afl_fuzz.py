@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import argparse
 import asyncio
 import os
 import sys
@@ -7,6 +8,7 @@ import time
 import logging
 
 import mpf.core
+from mpf.core.logging import LogMixin
 from mpf.core.utility_functions import Util
 from mpf.tests.MpfTestCase import TestMachineController
 from mpf.tests.loop import TimeTravelLoop, TestClock
@@ -14,16 +16,16 @@ from mpf.tests.loop import TimeTravelLoop, TestClock
 
 class AflRunner(object):
 
-    def __init__(self):
+    def __init__(self, use_virtual):
         self.loop = None
         self.clock = None
         self.machine = None     # type: TestMachineController
         self.machine_config_patches = dict()
         self.machine_config_patches['mpf'] = dict()
         self.machine_config_patches['mpf']['default_platform_hz'] = 1
-        self.machine_config_patches['mpf']['plugins'] = list()
         self.machine_config_patches['bcp'] = []
         self.switch_list = []
+        self.use_virtual = use_virtual
 
     def _exception_handler(self, loop, context):
         try:
@@ -34,7 +36,10 @@ class AflRunner(object):
         self._exception = context
 
     def get_platform(self):
-        return "smart_virtual"
+        if self.use_virtual:
+            return "virtual"
+        else:
+            return "smart_virtual"
 
     def getConfigFile(self):
         return "config.yaml"
@@ -78,7 +83,7 @@ class AflRunner(object):
             os.path.abspath(os.path.join(
                 mpf.core.__path__[0], os.pardir)), machine_path,
             self.getOptions(), self.machine_config_patches, self.clock, dict(),
-            False)
+            True)
 
         start = time.time()
         while not self.machine.test_init_complete and time.time() < start + 20:
@@ -88,6 +93,29 @@ class AflRunner(object):
         self.advance_time_and_run(1)
 
         self.switch_list = sorted(self.machine.switches.keys())
+
+        for switch in self.machine.switches:
+            self.machine.switch_controller.process_switch_obj(switch, 0, True)
+
+    def add_balls(self):
+        """Add balls."""
+        for device in self.machine.ball_devices:
+            if "trough" in device.tags:
+                for switch in device.config['ball_switches']:
+                    self.machine.switch_controller.process_switch_obj(switch, 1, True)
+                if device.config['entrance_switch']:
+                    self.machine.switch_controller.process_switch_obj(device.config['entrance_switch'], 1, True)
+
+
+        # let balls settle
+        self.advance_time_and_run(10)
+
+    def start_game(self):
+        """Start game."""
+        for switch in self.machine.switches:
+            if "start" in switch.tags:
+                self.machine.switch_controller.process_switch_obj(switch, 1, True)
+                self.machine.switch_controller.process_switch_obj(switch, 0, True)
 
     def run(self, actions):
         for action in actions:
@@ -104,15 +132,57 @@ class AflRunner(object):
                 # print(switch_list[switch], state, switch_obj.hw_state)
                 self.machine.switch_controller.process_switch_by_num(switch_obj.hw_switch.number, state,
                                                                      self.machine.default_platform)
-#logging.basicConfig(level=logging.DEBUG,
-#                    format='%(asctime)s : %(levelname)s : %(name)s : %(message)s')
 
-runner = AflRunner()
-try:
-    machine_path = sys.argv[1]
-except:
-    sys.exit("Usage {} machine_path".format(sys.argv[0]))
-runner.setUp(sys.argv[1])
+parser = argparse.ArgumentParser(
+    description='Fuzz MPF using AFL')
+
+parser.add_argument("-d",
+                    action="store_true", dest="debug",
+                    help="Turn on debug to reproduce fuzzer results")
+
+parser.add_argument("-u",
+                    action="store_true", dest="unit_test",
+                    help="Run in unit tests mode which fails early")
+
+parser.add_argument("-b",
+                    action="store_true", dest="add_balls",
+                    help="Add balls to trough")
+
+parser.add_argument("-G",
+                    action="store_true", dest="start_game",
+                    help="Start game")
+
+parser.add_argument("-v",
+                    action="store_true", dest="use_virtual",
+                    help="Use virtual instead of smart_virtual for low-level fuzzing")
+
+parser.add_argument("machine_path", help="Path of the machine folder",
+                    default=None, nargs='?')
+
+args = parser.parse_args()
+
+if args.debug:
+    logging.basicConfig(level=logging.DEBUG,
+                        format='%(asctime)s : %(levelname)s : %(name)s : %(message)s')
+else:
+    logging.basicConfig(level=99)
+
+if args.unit_test:
+    LogMixin.unit_test = True
+
+runner = AflRunner(use_virtual=args.use_virtual)
+runner.setUp(args.machine_path)
+
+if args.add_balls:
+    runner.add_balls()
+
+if args.start_game:
+    if not args.add_balls:
+        raise AssertionError("Cannot start game without balls. Use -b")
+    runner.start_game()
+
+# keep effort minimal after those two lines. everything before this will execute only once.
+# everything after this on every run
 
 import afl
 afl.init()
@@ -121,4 +191,7 @@ action_str = sys.stdin.buffer.read(-1)
 
 runner.run(action_str)
 
-os._exit(0)
+if args.debug:
+    runner.advance_time_and_run(10)
+else:
+    os._exit(0)
