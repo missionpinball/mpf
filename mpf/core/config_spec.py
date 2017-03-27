@@ -60,6 +60,7 @@ achievements:
     show_when_stopped: single|str|None
     show_when_disabled: single|str|None
     show_when_selected: single|str|None
+    sync_ms: single|int|None
 
 animations:
     __valid_in__: machine, mode                 # todo add to validator
