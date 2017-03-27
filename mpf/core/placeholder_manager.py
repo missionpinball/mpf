@@ -8,7 +8,7 @@ from mpf.core.mpf_controller import MpfController
 # supported operators
 operators = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul,
              ast.Div: op.truediv, ast.Pow: op.pow, ast.BitXor: op.xor,
-             ast.USub: op.neg, ast.Not: op.not_}
+             ast.USub: op.neg, ast.Not: op.not_, ast.Mod: op.mod}
 
 bool_operators = {ast.And: lambda a, b: a and b, ast.Or: lambda a, b: a or b}
 
