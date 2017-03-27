@@ -166,7 +166,7 @@ class Achievement(ModeDevice):
 
             self._show = self.machine.shows[show].play(
                 priority=self._mode.priority,
-                loops=-1,
+                loops=-1, sync_ms=self.config['sync_ms'],
                 show_tokens=self.config['show_tokens'])
 
         for group in self._group_memberships:
