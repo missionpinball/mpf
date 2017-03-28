@@ -1,0 +1,9 @@
+#config_version=4
+mode:
+  start_events: game_mode_start
+  stop_events: game_mode_end
+
+random_event_player:
+    test_random_event_player_mode2:
+        - out1
+        - out2

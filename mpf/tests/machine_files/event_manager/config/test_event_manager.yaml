@@ -22,3 +22,4 @@ random_event_player:
 
 modes:
   - test_mode
+  - game_mode

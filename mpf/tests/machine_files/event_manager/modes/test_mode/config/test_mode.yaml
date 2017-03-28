@@ -6,10 +6,12 @@ mode:
 
 event_player:
     test_event_player_mode1:
-        test_event_player_mode2
-        test_event_player_mode3
+        - test_event_player_mode2
+        - test_event_player_mode3
 
 random_event_player:
     test_random_event_player_mode1:
+      scope: machine
+      events:
         - test_random_event_player_mode2
         - test_random_event_player_mode3

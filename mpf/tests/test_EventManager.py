@@ -634,7 +634,6 @@ class TestEventManager(MpfFakeGameTestCase, MpfTestCase):
         self.assertEqual(1, self._handler3_called)
 
     def test_random_event_player_in_mode(self):
-        self.start_game()
         self.machine.events.add_handler('test_random_event_player_mode1', self.event_handler1)
         self.machine.events.add_handler('test_random_event_player_mode2', self.event_handler2)
         self.machine.events.add_handler('test_random_event_player_mode3', self.event_handler3)
@@ -675,6 +674,65 @@ class TestEventManager(MpfFakeGameTestCase, MpfTestCase):
         self.assertEqual(3, self._handler1_called)
         self.assertEqual(1, self._handler2_called)
         self.assertEqual(0, self._handler3_called)
+
+    def event_block(self, queue, **kwargs):
+        del kwargs
+        self.queue = queue
+        queue.wait()
+
+    def test_random_event_player_in_game_mode(self):
+        self.start_game()
+        self.machine.events.add_handler('out1', self.event_handler2)
+        self.machine.events.add_handler('out2', self.event_handler3)
+        self.advance_time_and_run(1)
+
+        # mode not loaded. event should not be replayed
+        self.machine.events.post('test_random_event_player_mode2', test="123")
+        self.advance_time_and_run(1)
+
+        self.assertEqual(0, self._handler2_called)
+        self.assertEqual(0, self._handler3_called)
+
+        # start mode
+        self.machine.events.post('game_mode_start')
+        self.advance_time_and_run(1)
+        self.assertTrue(self.machine.mode_controller.is_active("game_mode"))
+
+        # now the event should get replayed
+        with patch('random.randint', return_value=1) as mock_random:
+            self.machine.events.post('test_random_event_player_mode2', test="123")
+            self.advance_time_and_run(1)
+            mock_random.assert_called_once_with(1, 2)
+
+        self.assertEqual(1, self._handler2_called)
+        self.assertEqual(0, self._handler3_called)
+
+        # block stop of mode
+        self.machine.events.add_handler('mode_game_mode_stopping', self.event_block)
+
+        # stop game
+        self.machine.game.stop()
+        self.advance_time_and_run()
+
+        # event should still work (and not crash)
+        self.machine.events.post('test_random_event_player_mode2', test="123")
+        self.machine_run()
+        self.assertEqual(1, self._handler2_called)
+        self.assertEqual(1, self._handler3_called)
+
+        # when the block ends game should end too
+        self.queue.clear()
+        self.machine_run()
+
+        # but no longer after clear
+        self.machine.events.post('test_random_event_player_mode2', test="123")
+        self.machine_run()
+
+        self.advance_time_and_run(1)
+        self.assertFalse(self.machine.mode_controller.is_active("game_mode"))
+
+        self.assertEqual(1, self._handler2_called)
+        self.assertEqual(1, self._handler3_called)
 
     def delay1_cb(self, **kwargs):
         del kwargs
