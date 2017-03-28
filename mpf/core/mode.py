@@ -51,7 +51,7 @@ class Mode(LogMixin):
         self.stop_methods = list()              # type: List[Tuple[Callable[[Any], None], Any]]
         self.timers = dict()                    # type: Dict[str, Timer]
         self.start_callback = None              # type: Callable[[], None]
-        self.stop_callback = None               # type: Callable[[], None]
+        self.stop_callbacks = []                # type: List[Callable[[], None]]
         self.event_handlers = set()             # type: Set[EventHandlerKey]
         self.switch_handlers = list()           # type: List[SwitchHandler]
         self.mode_stop_kwargs = dict()          # type: Dict[str, Any]
@@ -170,6 +170,11 @@ class Mode(LogMixin):
 
         return return_dict
 
+    @property
+    def is_game_mode(self) -> bool:
+        """Return true if this is a game mode."""
+        return bool(self.config['mode']['game_mode'])
+
     def start(self, mode_priority=None, callback=None, **kwargs) -> None:
         """Start this mode.
 
@@ -281,10 +286,12 @@ class Mode(LogMixin):
 
         self.debug_log('Mode Start process complete.')
 
-    def stop(self, callback: Callable[[], None]=None, **kwargs) -> None:
+    def stop(self, callback: Callable[[], None]=None, **kwargs) -> bool:
         """Stop this mode.
 
         Args:
+            callback: Method which will be called once this mode has stopped. Will only be called when the mode is
+                running (includes currently stopping)
             **kwargs: Catch-all since this mode might start from events with
                 who-knows-what keyword arguments.
 
@@ -292,9 +299,20 @@ class Mode(LogMixin):
         mode code. If you want to write your own mode code by subclassing Mode,
         put whatever code you want to run when this mode stops in the
         mode_stop method which will be called automatically.
+
+        Returns true if the mode is running. Otherwise false.
         """
         if not self._active:
-            return
+            return False
+
+        if callback:
+            self.stop_callbacks.append(callback)
+
+        # do not stop twice. only register callback in that case
+        if self.stopping:
+            # mode is still running
+            return True
+
         self.stopping = True
 
         self.mode_stop_kwargs = kwargs
@@ -302,8 +320,6 @@ class Mode(LogMixin):
         self.debug_log('Mode Stopping.')
 
         self._remove_mode_switch_handlers()
-
-        self.stop_callback = callback
 
         self._kill_timers()
         self.delay.clear()
@@ -316,6 +332,7 @@ class Mode(LogMixin):
         mode won't actually stop until the queue is cleared.
 
         '''
+        return True
 
     def _stopped(self) -> None:
         self.info_log('Stopped.')
@@ -367,8 +384,10 @@ class Mode(LogMixin):
 
         self.mode_stop_kwargs = dict()
 
-        if self.stop_callback:
-            self.stop_callback()
+        for callback in self.stop_callbacks:
+            callback()
+
+        self.stop_callbacks = []
 
     def _add_mode_devices(self) -> None:
         # adds and initializes mode devices which get removed at the end of the mode

@@ -42,6 +42,7 @@ if TYPE_CHECKING:
     from mpf.core.assets import BaseAssetManager
     from mpf.devices.switch import Switch
     from mpf.devices.driver import Driver
+    from mpf.core.mode import Mode
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -84,7 +85,7 @@ class MachineController(LogMixin):
         self.monitors = dict()      # type: Dict[str, Set[Callable]]
         self.plugins = list()       # type: List[Any]
         self.scriptlets = list()    # type: List[Scriptlet]
-        self.modes = DeviceCollection(self, 'modes', None)
+        self.modes = DeviceCollection(self, 'modes', None)          # type: Dict[str, Mode]
         self.game = None            # type: Game
         self.machine_vars = CaseInsensitiveDict()
         self.machine_var_monitor = False
