@@ -148,6 +148,10 @@ parser.add_argument("-b",
                     action="store_true", dest="add_balls",
                     help="Add balls to trough")
 
+parser.add_argument("-w",
+                    action="store", dest="wait", default=0,
+                    help="Run machine for x seconds before forking")
+
 parser.add_argument("-G",
                     action="store_true", dest="start_game",
                     help="Start game")
@@ -180,6 +184,9 @@ if args.start_game:
     if not args.add_balls:
         raise AssertionError("Cannot start game without balls. Use -b")
     runner.start_game()
+
+if int(args.wait) > 0:
+    runner.advance_time_and_run(int(args.wait))
 
 # keep effort minimal after those two lines. everything before this will execute only once.
 # everything after this on every run
