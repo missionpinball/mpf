@@ -2,6 +2,9 @@
 """Base class used for things that "play" from the config files, such as WidgetPlayer, SlidePlayer, etc."""
 import abc
 
+from mpf.core.mode import Mode
+from mpf.exceptions.ConfigFileError import ConfigFileError
+
 
 class ConfigPlayer(object, metaclass=abc.ABCMeta):
 
@@ -211,7 +214,13 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
             event = new_event
         return event, priority
 
-    def register_player_events(self, config, mode=None, priority=0):
+    @staticmethod
+    def is_entry_valid_outside_mode(settings) -> bool:
+        """Return true if this entry may run without a game and player."""
+        del settings
+        return True
+
+    def register_player_events(self, config, mode: Mode=None, priority=0):
         """Register events for standalone player."""
         # config is localized
         key_list = list()
@@ -234,6 +243,12 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
                         "Change the {1}: {2}: event name to "
                         "\"mode_{0}_started:\"".format(
                             mode.name, self.config_file_section, event))
+
+                # prevent runtime crashes
+                if (not mode or (mode and not mode.is_game_mode)) and not self.is_entry_valid_outside_mode(settings):
+                    raise ConfigFileError("Section not valid outside of game modes. {} {}:{} Mode: {}".format(
+                        self, event, settings, mode
+                    ))
 
                 key_list.append(
                     self.machine.events.add_handler(

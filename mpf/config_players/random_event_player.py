@@ -16,6 +16,11 @@ class RandomEventPlayer(ConfigPlayer):
         super().__init__(machine)
         self._machine_wide_dict = {}
 
+    @staticmethod
+    def is_entry_valid_outside_mode(settings) -> bool:
+        """Return true if scope is not player."""
+        return settings['scope'] != "player"
+
     def _get_randomizer(self, settings, context, calling_context):
         key = "random_{}.{}".format(context, calling_context)
         if settings['scope'] == "player":

@@ -14,6 +14,12 @@ class ScorePlayer(ConfigPlayer):
         super().__init__(machine)
         self.blocks = {}
 
+    @staticmethod
+    def is_entry_valid_outside_mode(settings) -> bool:
+        """Return true if this entry may run without a game and player."""
+        del settings
+        return False
+
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Score variable."""
         for var, s in settings.items():
