@@ -41,7 +41,6 @@ class Timer(LogMixin):
         self.direction = self.config['direction'].lower()
         self.tick_secs = self.config['tick_interval'] / 1000.0
         self.timer = None
-        self.bcp = self.config['bcp']
         self.event_keys = set()
         self.delay = DelayManager(self.machine.delayRegistry)
 
@@ -186,11 +185,6 @@ class Timer(LogMixin):
             ticks_remaining: The number of ticks in this timer remaining.
         '''
 
-        if self.bcp:
-            self.machine.bcp.send('timer', name=self.name, action='started',
-                                  ticks=self.ticks,
-                                  ticks_remaining=self.ticks_remaining)
-
         self._post_tick_events()
         # since lots of slides and stuff are tied to the timer tick, we want
         # to post an initial tick event also that represents the starting
@@ -242,11 +236,6 @@ class Timer(LogMixin):
             ticks_remaining: The number of ticks in this timer remaining.
         '''
 
-        if self.bcp:
-            self.machine.bcp.send('timer', name=self.name, action='stopped',
-                                  ticks=self.ticks,
-                                  ticks_remaining=self.ticks_remaining)
-
     def pause(self, timer_value=0, **kwargs):
         """Pause the timer and posts the 'timer_<name>_paused' event.
 
@@ -281,10 +270,6 @@ class Timer(LogMixin):
             ticks: The current tick number this timer is at.
             ticks_remaining: The number of ticks in this timer remaining.
         '''
-        if self.bcp:
-            self.machine.bcp.send('timer', name=self.name, action='paused',
-                                  ticks=self.ticks,
-                                  ticks_remaining=self.ticks_remaining)
 
         if pause_secs > 0:
             self.delay.add(name='pause', ms=pause_secs, callback=self.start)
@@ -305,11 +290,6 @@ class Timer(LogMixin):
         self.info_log("Timer Complete")
 
         self.stop()
-
-        if self.bcp:  # must be before the event post in case it stops the mode
-            self.machine.bcp.send('timer', name=self.name, action='complete',
-                                  ticks=self.ticks,
-                                  ticks_remaining=self.ticks_remaining)
 
         self.machine.events.post('timer_' + self.name + '_complete',
                                  ticks=self.ticks,
@@ -371,11 +351,6 @@ class Timer(LogMixin):
                            self.ticks,
                            self.ticks_remaining)
 
-            if self.bcp:
-                self.machine.bcp.send('timer', name=self.name, action='tick',
-                                      ticks=self.ticks,
-                                      ticks_remaining=self.ticks_remaining)
-
     def add(self, timer_value, **kwargs):
         """Add ticks to this timer.
 
@@ -412,12 +387,6 @@ class Timer(LogMixin):
             ticks_added: How many ticks were just added.
         '''
 
-        if self.bcp:
-            self.machine.bcp.send('timer', name=self.name, action='time_added',
-                                  ticks=self.ticks,
-                                  ticks_added=ticks_added,
-                                  ticks_remaining=self.ticks_remaining)
-
         self._check_for_done()
 
     def subtract(self, timer_value, **kwargs):
@@ -451,13 +420,6 @@ class Timer(LogMixin):
                 timer. (This number will be positive, indicating the ticks
                 subtracted.)
         '''
-
-        if self.bcp:
-            self.machine.bcp.send('timer', name=self.name,
-                                  action='time_subtracted',
-                                  ticks=self.ticks,
-                                  ticks_subtracted=ticks_subtracted,
-                                  ticks_remaining=self.ticks_remaining)
 
         self._check_for_done()
 

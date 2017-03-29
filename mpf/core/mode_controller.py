@@ -382,6 +382,14 @@ class ModeController(MpfController):
 
         self.start_methods.sort(key=lambda x: x.priority, reverse=True)
 
+    def remove_start_method(self, start_method, config_section_name=None, priority=0, **kwargs):
+        """Remove an existing start method."""
+        method = RemoteMethod(method=start_method, config_section=config_section_name,
+                              priority=priority, kwargs=kwargs)
+
+        if method in self.start_methods:
+            self.start_methods.remove(method)
+
     def register_stop_method(self, callback, priority=0):
         """Register a method which is called when the mode is stopped.
 
@@ -395,6 +403,12 @@ class ModeController(MpfController):
         self.stop_methods.append((callback, priority))
 
         self.stop_methods.sort(key=lambda x: x[1], reverse=True)
+
+    def remove_stop_method(self, callback, priority=0):
+        """Remove an existing stop method."""
+
+        if (callback, priority) in self.stop_methods:
+            self.stop_methods.remove((callback, priority))
 
     def set_mode_state(self, mode: Mode, active: bool):
         """Called when a mode goes active or inactive."""

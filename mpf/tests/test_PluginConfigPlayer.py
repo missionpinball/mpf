@@ -148,6 +148,10 @@ class TestPluginConfigPlayer(MpfBcpTestCase):
         self._bcp_client.send = MagicMock()
 
     def test_plugin_config_player(self):
+        # Setup BCP to monitor mode events
+        self._bcp_client.receive_queue.put_nowait(('monitor_start', {'category': 'modes'}))
+        self.advance_time_and_run()
+
         self.assertIn('tests', self.machine.show_controller.show_players)
         self.assertIn('test2s', self.machine.show_controller.show_players)
 
@@ -195,9 +199,9 @@ class TestPluginConfigPlayer(MpfBcpTestCase):
         self.machine.modes['mode1'].stop()
         self.advance_time_and_run()
         self._bcp_client.send.assert_has_calls([
-            call('mode_stop', {'name': 'mode1'}),
             call('trigger', {'context': 'mode1', 'name': 'tests_clear'}),
-            call('trigger', {'context': 'mode1', 'name': 'test2s_clear'})]
+            call('trigger', {'context': 'mode1', 'name': 'test2s_clear'}),
+            call('mode_stop', {'name': 'mode1'})]
         )
         self._bcp_client.send.reset_mock()
 
