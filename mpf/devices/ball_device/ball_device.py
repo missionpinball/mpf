@@ -539,6 +539,9 @@ class BallDevice(SystemWideDevice):
 
     def _setup_or_queue_eject_to_target(self, target, player_controlled=False):
         path_to_target = self.find_path_to_target(target)
+        if target != self and not path_to_target:
+            raise AssertionError("Do not know how to eject to {}".format(target.name))
+
         if self.available_balls > 0 and self != target:
             path = path_to_target
         else:
@@ -550,10 +553,6 @@ class BallDevice(SystemWideDevice):
                 return False
 
             if target != self:
-                if target not in self.config['eject_targets']:
-                    raise AssertionError(
-                        "Do not know how to eject to " + target.name)
-
                 path_to_target.popleft()    # remove self from path
                 path.extend(path_to_target)
 
