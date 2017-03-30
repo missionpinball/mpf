@@ -117,6 +117,44 @@ class DevicesPlaceholder:
         return DeviceClassPlaceholder(device)
 
 
+class ModeClassPlaceholder:
+
+    """Wrap a mode."""
+
+    def __init__(self, mode):
+        """Initialise placeholder."""
+        self._mode = mode
+
+    def __getitem__(self, item):
+        """Array access."""
+        return self.__getattr__(item)
+
+    def __getattr__(self, item):
+        """Attribute access."""
+        this_item = getattr(self._mode, item)
+        return this_item
+
+
+class ModePlaceholder:
+
+    """Mode placeholder."""
+
+    def __init__(self, machine):
+        """Initialise placeholder."""
+        self._machine = machine
+
+    def __getitem__(self, item):
+        """Array access."""
+        return self.__getattr__(item)
+
+    def __getattr__(self, item):
+        """Attribute access."""
+        if item not in self._machine.modes:
+            raise ValueError("{} is not a valid mode name".format(item))
+
+        return ModeClassPlaceholder(self._machine.modes[item])
+
+
 class MachinePlaceholder:
 
     """Wraps the machine."""
@@ -271,6 +309,8 @@ class PlaceholderManager(BasePlaceholderManager):
             return MachinePlaceholder(self.machine)
         elif name == "device":
             return DevicesPlaceholder(self.machine)
+        elif name == "mode":
+            return ModePlaceholder(self.machine)
         elif self.machine.game:
             if name == "current_player":
                 return self.machine.game.player
