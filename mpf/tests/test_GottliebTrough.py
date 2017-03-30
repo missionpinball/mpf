@@ -82,7 +82,7 @@ class TestGottliebTrough(MpfTestCase):
         self.assertEqual(1, self.machine.coils.outhole.pulse.call_count)
         self.assertEqual(1, self.machine.coils.trough.pulse.call_count)
 
-        self.hit_switch_and_run("trough_entry", 3)
+        self.hit_switch_and_run("trough_entry", 4)
 
         self.assertEqual(0, self.machine.ball_devices.outhole.balls)
         self.assertEqual(3, self.machine.ball_devices.trough.balls)
@@ -115,7 +115,6 @@ class TestGottliebTrough(MpfTestCase):
         self.assertEqual(3, self.machine.ball_devices.trough.balls)
         self.assertEqual(4, self.machine.ball_controller.num_balls_known)
 
-
     def test_add_ball_to_pf(self):
         self.machine.coils.outhole.pulse = MagicMock()
         self.machine.coils.trough.pulse = MagicMock()
@@ -134,7 +133,10 @@ class TestGottliebTrough(MpfTestCase):
 
         self.assertEqual(1, self.machine.coils.trough.pulse.call_count)
         self.advance_time_and_run(.1)
+        # simulate some bouncing on the switch on eject
         self.release_switch_and_run("trough_entry", 1)
+        self.hit_switch_and_run("trough_entry", .3)
+        self.release_switch_and_run("trough_entry", .6)
 
         self.machine.switch_controller.process_switch("plunger", 1)
 
@@ -219,7 +221,7 @@ class TestGottliebTrough(MpfTestCase):
         self.hit_switch_and_run("plunger", 1)
         self.assertEqual(1, self.machine.coils.outhole.pulse.call_count)
         self.release_switch_and_run("outhole", 1)
-        self.hit_switch_and_run("trough_entry", 3)
+        self.hit_switch_and_run("trough_entry", 4)
 
         self.assertEqual('idle', self.machine.ball_devices.outhole._state)
         self.assertEqual('idle', self.machine.ball_devices.trough._state)
