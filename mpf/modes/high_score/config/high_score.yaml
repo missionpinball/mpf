@@ -30,22 +30,23 @@ slide_player:
   high_score_award_display: high_score_award_display
 
 slides:
+slides:
   high_score_enter_initials:
   - type: text
     text: PLAYER (player_num)
-    style: medium
+    style: dmd_med
     anchor_y: bottom
     x: center-27
     y: bottom+21
   - type: text
     text: (award)
-    style: small
+    style: dmd_small
     anchor_y: bottom
     x: center-27
     y: bottom+12
   - type: text_input
     key: high_score
-    style: medium
+    style: dmd_med
     anchor_y: bottom
     max_chars: 3
     y: bottom
@@ -59,7 +60,7 @@ slides:
     anchor_x: left
     x: left+90
     y: bottom+12
-    style: medium
+    style: dmd_med
     animations:
       show_slide:
       - property: opacity
@@ -73,6 +74,7 @@ slides:
   - type: text
     text: (player_name)
     color: 0
+    style: dmd_huge
     y: middle-2
     animations:
       show_slide:
@@ -85,6 +87,6 @@ slides:
         repeat: true
   - type: text
     text: (award)
-    style: medium
+    style: dmd_med
     anchor_y: top
     y: top-2
