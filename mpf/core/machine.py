@@ -43,7 +43,9 @@ if TYPE_CHECKING:
     from mpf.devices.switch import Switch
     from mpf.devices.driver import Driver
     from mpf.core.mode import Mode
-
+    from mpf.devices.ball_device.ball_device import BallDevice
+    from mpf.core.ball_controller import BallController
+    from mpf.devices.playfield import Playfield
 
 # pylint: disable-msg=too-many-instance-attributes
 class MachineController(LogMixin):
@@ -105,11 +107,14 @@ class MachineController(LogMixin):
             self.bcp = None                             # type: Bcp
             self.extra_ball_controller = None           # type: ExtraBallController
             self.asset_manager = None                   # type: BaseAssetManager
+            self.ball_controller = None                 # type: BallController
 
             # devices
             self.shows = None                           # type: Dict[str, Show]
             self.switches = None                        # type: Dict[str, Switch]
             self.coils = None                           # type: Dict[str, Driver]
+            self.ball_devices = None                    # type: Dict[str, BallDevice]
+            self.playfield = None                       # type: Playfield
 
         self._set_machine_path()
 
