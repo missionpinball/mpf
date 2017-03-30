@@ -163,11 +163,11 @@ class ModeController(MpfController):
         try:
             file_name, class_name = code_path.split('.')
         except ValueError:
-            return False
+            return None
 
         # check if that mode name exist in machine folder
         if mode_string not in self._machine_mode_folders:
-            return False
+            return None
 
         # try to import
         try:
@@ -176,9 +176,9 @@ class ModeController(MpfController):
                 self._machine_mode_folders[mode_string] + '.code.' +
                 file_name)
         except ImportError:
-            return False
+            return None
 
-        return getattr(i, class_name, False)
+        return getattr(i, class_name, None)
 
     @staticmethod
     def _load_mode_from_full_path(code_path: str) -> Optional[Mode]:
@@ -189,7 +189,7 @@ class ModeController(MpfController):
         try:
             return Util.string_to_class(code_path)
         except ImportError:
-            return False
+            return None
 
     def _load_mode_code(self, mode_string: str, code_path: str) -> Mode:
         """Load code for mode."""
