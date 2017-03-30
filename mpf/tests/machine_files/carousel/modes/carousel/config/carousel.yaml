@@ -2,7 +2,7 @@
 mode:
   start_events: start_mode1
   stop_events: stop_mode1, carousel_item_selected
-  code: carousel.Carousel
+  code: mpf.modes.carousel.code.carousel.Carousel
 
 mode_settings:
   selectable_items: item1, item2, item3
