@@ -30,7 +30,6 @@ slide_player:
   high_score_award_display: high_score_award_display
 
 slides:
-slides:
   high_score_enter_initials:
   - type: text
     text: PLAYER (player_num)
