@@ -540,11 +540,11 @@ class EventManager(MpfController):
             # call the handler and save the results
 
             try:
-                queue = merged_kwargs['queue']
-                handler.callback(**merged_kwargs)
+                queue = merged_kwargs.pop('queue')
             except KeyError:
                 queue = QueuedEvent(self.debug_log)
-                handler.callback(queue=queue, **merged_kwargs)
+
+            handler.callback(queue=queue, **merged_kwargs)
 
             if queue.waiter:
                 queue.event = asyncio.Event(loop=self.machine.clock.loop)

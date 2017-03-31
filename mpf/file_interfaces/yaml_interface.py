@@ -190,7 +190,7 @@ class YamlInterface(FileInterface):
     @staticmethod
     def get_config_file_version(filename):
         """Return config file version."""
-        with open(filename) as f:
+        with open(filename, 'r', encoding='utf8') as f:
             file_version = f.readline().split('config_version=')[-1:][0]
 
         try:
@@ -201,7 +201,7 @@ class YamlInterface(FileInterface):
     @staticmethod
     def get_show_file_version(filename):
         """Return show file version."""
-        with open(filename) as f:
+        with open(filename, 'r', encoding='utf8') as f:
             try:
                 file_version = f.readline().split('show_version=')[-1:][0]
             except ValueError:
@@ -270,7 +270,7 @@ class YamlInterface(FileInterface):
         try:
             self.log.debug("Loading file: %s", filename)
 
-            with open(filename) as f:
+            with open(filename, 'r', encoding='utf8') as f:
                 config = YamlInterface.process(f, round_trip)
         except yaml.YAMLError as exc:
             if hasattr(exc, 'problem_mark'):
@@ -311,7 +311,7 @@ class YamlInterface(FileInterface):
         except KeyError:
             include_comments = False
 
-        with open(filename, 'w') as output_file:
+        with open(filename, 'w', encoding='utf8') as output_file:
 
             if include_comments:
                 output_file.write(yaml.dump(data, Dumper=RoundTripDumper,

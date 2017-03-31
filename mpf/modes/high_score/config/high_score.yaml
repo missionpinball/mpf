@@ -33,46 +33,46 @@ slides:
   high_score_enter_initials:
   - type: text
     text: PLAYER (player_num)
-    style: medium
+    style: dmd_med
     anchor_y: bottom
     x: center-27
     y: bottom+21
   - type: text
     text: (award)
-    style: small
+    style: dmd_small
     anchor_y: bottom
     x: center-27
     y: bottom+12
   - type: text_input
     key: high_score
-    style: medium
+    style: dmd_med
     anchor_y: bottom
     max_chars: 3
-    y: bottom
-    shift_left_event: sw_high_score_left
-    shift_right_event: sw_high_score_right
-    select_event: sw_high_score_select
-  - type: text
-    text: ""
-    key: high_score
-    anchor_y: bottom
-    anchor_x: left
-    x: left+90
-    y: bottom+12
-    style: medium
+    y: 1
     animations:
       show_slide:
       - property: opacity
         value: 1
-        duration: 0.5s
+        duration: 0.3s
+        easing: in_out_quint
       - property: opacity
         value: 0
-        duration: 0.5s
+        duration: 0.3s
         repeat: true
+        easing: in_out_quint
+
+  - type: text
+    text: ""
+    key: high_score
+    anchor_x: left
+    x: left+90
+    style: dmd_big
+
   high_score_award_display:
   - type: text
     text: (player_name)
     color: 0
+    style: dmd_huge
     y: middle-2
     animations:
       show_slide:
@@ -85,6 +85,6 @@ slides:
         repeat: true
   - type: text
     text: (award)
-    style: medium
+    style: dmd_med
     anchor_y: top
     y: top-2

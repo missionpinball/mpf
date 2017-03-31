@@ -75,6 +75,9 @@ class MockFd:
     def send(self, data):
         return len(data)
 
+    def fileno(self):
+        return self
+
     def write_ready(self):
         return False
 
@@ -97,9 +100,6 @@ class MockSocket(MockFd):
 
     def getpeername(self):
         return ""
-
-    def fileno(self):
-        return self
 
     def recv(self, size):
         raise AssertionError("Not implemented")

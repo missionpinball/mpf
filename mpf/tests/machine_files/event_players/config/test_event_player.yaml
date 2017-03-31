@@ -1,5 +1,8 @@
 #config_version=4
 
+modes:
+  - mode1
+
 event_player:
     play_express_single: event1
     play_express_multiple: event1, event2
@@ -24,6 +27,8 @@ event_player:
     test_conditional.3: priority_ok
     test_time_delay1: td1|1500ms
     test_time_delay2: td2|1.5s
+    test_conditional_mode{mode.mode1.active}: mode1_active
+    test_conditional_mode{not mode.mode1.active}: mode1_not_active
 
 shows:
   test_event_show:
