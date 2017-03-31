@@ -2,6 +2,9 @@
 import importlib
 import os
 from collections import namedtuple
+
+from typing import Optional
+
 from mpf.core.mode import Mode
 from mpf.core.config_processor import ConfigProcessor
 from mpf.core.utility_functions import Util
@@ -153,6 +156,56 @@ class ModeController(MpfController):
     def _load_mode_config_spec(self, mode_string, mode_class):
         self.machine.config_validator.load_mode_config_spec(mode_string, mode_class.get_config_spec())
 
+    def _load_mode_from_machine_folder(self, mode_string: str, code_path: str) -> Optional[Mode]:
+        """Load mode from machine folder and return it."""
+        # this will only work for file_name.class_name
+        try:
+            file_name, class_name = code_path.split('.')
+        except ValueError:
+            return False
+
+        # check if that mode name exist in machine folder
+        if mode_string not in self._machine_mode_folders:
+            return False
+
+        # try to import
+        try:
+            i = importlib.import_module(
+                self.machine.config['mpf']['paths']['modes'] + '.' +
+                self._machine_mode_folders[mode_string] + '.code.' +
+                file_name)
+        except ImportError:
+            return False
+
+        return getattr(i, class_name, False)
+
+    @staticmethod
+    def _load_mode_from_full_path(code_path: str) -> Optional[Mode]:
+        """Load mode from full path.
+
+        This is used for built-in modes like attract and game.
+        """
+        try:
+            return Util.string_to_class(code_path)
+        except ImportError:
+            return False
+
+    def _load_mode_code(self, mode_string: str, code_path: str) -> Mode:
+        """Load code for mode."""
+        # First check the machine folder
+        mode_class = self._load_mode_from_machine_folder(mode_string, code_path)
+        if mode_class:
+            self.debug_log("Loaded code for mode %s from machine_folder", mode_string)
+            return mode_class
+
+        # load from full path
+        mode_class = self._load_mode_from_full_path(code_path)
+        if mode_class:
+            self.debug_log("Loaded code for mode %s from full path", mode_string)
+            return mode_class
+
+        raise AssertionError("Could not load code for mode {} from {}".format(mode_string, code_path))
+
     def _load_mode(self, mode_string):
         """Load a mode, reads in its config, and creates the Mode object.
 
@@ -175,34 +228,8 @@ class ModeController(MpfController):
 
         # Figure out where the code is for this mode.
         if config['mode']['code']:
-            try:  # First check the machine folder
-                i = importlib.import_module(
-                    self.machine.config['mpf']['paths']['modes'] + '.' +
-                    self._machine_mode_folders[mode_string] + '.code.' +
-                    config['mode']['code'].split('.')[0])
-
-                mode_class = getattr(i, config['mode']['code'].split('.')[1])
-
-                self.debug_log("Loaded code from %s",
-                               self.machine.config['mpf']['paths']['modes'] + '.' +
-                               self._machine_mode_folders[mode_string] + '.code.' +
-                               config['mode']['code'].split('.')[0])
-
-            except (KeyError, ImportError):     # load path
-                try:
-                    mode_class = Util.string_to_class(config['mode']['code'])
-                except ImportError:     # code is in the mpf folder. legacy
-                    i = importlib.import_module(
-                        'mpf.' + self.machine.config['mpf']['paths']['modes'] + '.' +
-                        self._mpf_mode_folders[mode_string] + '.code.' +
-                        config['mode']['code'].split('.')[0])
-
-                    mode_class = getattr(i, config['mode']['code'].split('.')[1])
-
-                    self.debug_log("Loaded code from %s",
-                                   'mpf.' + self.machine.config['mpf']['paths']['modes'] +
-                                   '.' + self._mpf_mode_folders[mode_string] + '.code.' +
-                                   config['mode']['code'].split('.')[0])
+            # First check the machine folder
+            mode_class = self._load_mode_code(mode_string, config['mode']['code'])
 
         else:  # no code specified, so using the default Mode class
             mode_class = Mode

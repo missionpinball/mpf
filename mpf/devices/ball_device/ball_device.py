@@ -5,6 +5,8 @@ from collections import deque
 import asyncio
 
 from mpf.devices.ball_device.ball_count_handler import BallCountHandler
+from mpf.devices.ball_device.ball_device_ball_counter import BallDeviceBallCounter
+from mpf.devices.ball_device.ball_device_ejector import BallDeviceEjector
 
 from mpf.devices.ball_device.entrance_switch_counter import EntranceSwitchCounter
 from mpf.devices.ball_device.hold_coil_ejector import HoldCoilEjector
@@ -59,11 +61,11 @@ class BallDevice(SystemWideDevice):
         # that this device could fulfil
         # each tuple is (target device, boolean player_controlled flag)
 
-        self.ejector = None
-        self.counter = None
-        self.ball_count_handler = None
-        self.incoming_balls_handler = None
-        self.outgoing_balls_handler = None
+        self.ejector = None                     # type: BallDeviceEjector
+        self.counter = None                     # type: BallDeviceBallCounter
+        self.ball_count_handler = None          # type: BallCountHandler
+        self.incoming_balls_handler = None      # type: IncomingBallsHandler
+        self.outgoing_balls_handler = None      # type: OutgoingBallsHandler
 
         # stop device on shutdown
         self.machine.events.add_handler("shutdown", self.stop)
