@@ -241,7 +241,7 @@ class BallCountHandler(BallDeviceStateHandler):
     def _run(self):
         while True:
             # wait for ball changes
-            ball_changes = Util.ensure_future(self.ball_device.counter.wait_for_ball_count_changes(self._ball_count),
+            ball_changes = Util.ensure_future(self.ball_device.counter.wait_for_ball_activity(),
                                               loop=self.machine.clock.loop)
             event = yield from Util.first([ball_changes, self._eject_started.wait()], loop=self.machine.clock.loop)
 
@@ -254,8 +254,8 @@ class BallCountHandler(BallDeviceStateHandler):
             else:
                 if event != ball_changes:
                     raise AssertionError("Event order problem")
-                new_balls = yield from ball_changes
                 yield from self._is_counting.acquire()
+                new_balls = yield from self.ball_device.counter.count_balls()
 
             self.debug_log("Counting idle")
 
