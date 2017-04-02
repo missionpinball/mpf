@@ -12,6 +12,7 @@ import sys
 import threading
 
 import copy
+
 from pkg_resources import iter_entry_points
 from typing import Any, TYPE_CHECKING, Callable, Dict, List, Set
 
@@ -46,6 +47,8 @@ if TYPE_CHECKING:
     from mpf.devices.ball_device.ball_device import BallDevice
     from mpf.core.ball_controller import BallController
     from mpf.devices.playfield import Playfield
+    from mpf.core.placeholder_manager import PlaceholderManager
+
 
 # pylint: disable-msg=too-many-instance-attributes
 class MachineController(LogMixin):
@@ -108,6 +111,7 @@ class MachineController(LogMixin):
             self.extra_ball_controller = None           # type: ExtraBallController
             self.asset_manager = None                   # type: BaseAssetManager
             self.ball_controller = None                 # type: BallController
+            self.placeholder_manager = None             # type: PlaceholderManager
 
             # devices
             self.shows = None                           # type: Dict[str, Show]

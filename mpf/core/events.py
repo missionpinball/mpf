@@ -7,10 +7,14 @@ import asyncio
 from functools import partial
 from unittest.mock import MagicMock
 
-from typing import Dict, Callable, Any
+from typing import Dict, Any, TYPE_CHECKING, Tuple, Optional, Generator, Callable
 from typing import List
 
 from mpf.core.mpf_controller import MpfController
+
+if TYPE_CHECKING:
+    from mpf.core.machine import MachineController
+    from mpf.core.placeholder_manager import BaseTemplate
 
 EventHandlerKey = namedtuple("EventHandlerKey", ["key", "event"])
 RegisteredHandler = namedtuple("RegisteredHandler", ["callback", "priority", "kwargs", "key", "condition"])
@@ -21,17 +25,17 @@ class EventManager(MpfController):
 
     """Handles all the events and manages the handlers in MPF."""
 
-    def __init__(self, machine):
+    def __init__(self, machine: "MachineController") -> None:
         """Initialize EventManager."""
         super().__init__(machine)
 
-        self.registered_handlers = {}   # type: Dict[str, List[RegisteredHandler]]
-        self.event_queue = deque([])
-        self.callback_queue = deque([])
+        self.registered_handlers = {}       # type: Dict[str, List[RegisteredHandler]]
+        self.event_queue = deque([])        # type: deque[PostedEvent]
+        self.callback_queue = deque([])     # type: deque[Tuple[Any, dict]]
         self.monitor_events = False
-        self._queue_tasks = []
+        self._queue_tasks = []              # type: List[asyncio.Task]
 
-    def get_event_and_condition_from_string(self, event_string):
+    def get_event_and_condition_from_string(self, event_string: str) -> Tuple[str, Optional["BaseTemplate"]]:
         """Parse an event string to divide the event name from a possible placeholder / conditional in braces.
 
         Args:
@@ -173,7 +177,7 @@ class EventManager(MpfController):
                 )
             devices.append(cls)
 
-    def replace_handler(self, event, handler, priority=1, **kwargs):
+    def replace_handler(self, event: str, handler: Any, priority: int=1, **kwargs: dict) -> EventHandlerKey:
         """Check to see if a handler (optionally with kwargs) is registered for an event and replaces it if so.
 
         Args:
@@ -210,9 +214,9 @@ class EventManager(MpfController):
                     if rh[0] == handler:
                         self.registered_handlers[event].remove(rh)
 
-        self.add_handler(event, handler, priority, **kwargs)
+        return self.add_handler(event, handler, priority, **kwargs)
 
-    def remove_handler(self, method):
+    def remove_handler(self, method: Any) -> None:
         """Remove an event handler from all events a method is registered to handle.
 
         Args:
@@ -229,7 +233,7 @@ class EventManager(MpfController):
         for event in events_to_delete_if_empty:
             self._remove_event_if_empty(event)
 
-    def remove_handler_by_event(self, event, handler):
+    def remove_handler_by_event(self, event: str, handler: Any) -> None:
         """Remove the handler you pass from the event you pass.
 
         Args:
@@ -255,7 +259,7 @@ class EventManager(MpfController):
         for event in events_to_delete_if_empty:
             self._remove_event_if_empty(event)
 
-    def remove_handler_by_key(self, key: EventHandlerKey):
+    def remove_handler_by_key(self, key: EventHandlerKey) -> None:
         """Remove a registered event handler by key.
 
         Args:
@@ -272,7 +276,7 @@ class EventManager(MpfController):
         for event in events_to_delete_if_empty:
             self._remove_event_if_empty(event)
 
-    def remove_handlers_by_keys(self, key_list):
+    def remove_handlers_by_keys(self, key_list: List[EventHandlerKey]) -> None:
         """Remove multiple event handlers based on a passed list of keys.
 
         Args:
@@ -281,7 +285,7 @@ class EventManager(MpfController):
         for key in key_list:
             self.remove_handler_by_key(key)
 
-    def _remove_event_if_empty(self, event):
+    def _remove_event_if_empty(self, event: str) -> None:
         # Checks to see if the event doesn't have any more registered handlers,
         # removes it if so.
 
@@ -293,7 +297,7 @@ class EventManager(MpfController):
             self.debug_log("Removing event %s since there are no more"
                            " handlers registered for it", event)
 
-    def wait_for_event(self, event_name: str):
+    def wait_for_event(self, event_name: str) -> asyncio.Future:
         """Wait for event."""
         return self.wait_for_any_event([event_name])
 
@@ -316,7 +320,7 @@ class EventManager(MpfController):
             return
         _future.set_result(result=kwargs)
 
-    def does_event_exist(self, event_name):
+    def does_event_exist(self, event_name: str) -> bool:
         """Check to see if any handlers are registered for the event name that is passed.
 
         Args:
@@ -333,25 +337,25 @@ class EventManager(MpfController):
         if not _future.done():
             _future.set_result(kwargs)
 
-    def post_async(self, event, **kwargs):
+    def post_async(self, event: str, **kwargs: dict) -> asyncio.Future:
         """Post event and wait until all handlers are done."""
-        future = asyncio.Future(loop=self.machine.clock.loop)
+        future = asyncio.Future(loop=self.machine.clock.loop)   # type: asyncio.Future
         self.post(event, partial(self._set_result, _future=future), **kwargs)
         return future
 
-    def post_relay_async(self, event, **kwargs):
+    def post_relay_async(self, event: str, **kwargs: dict) -> asyncio.Future:
         """Post relay event, wait until all handlers are done and return result."""
-        future = asyncio.Future(loop=self.machine.clock.loop)
+        future = asyncio.Future(loop=self.machine.clock.loop)   # type: asyncio.Future
         self.post_relay(event, partial(self._set_result, _future=future), **kwargs)
         return future
 
-    def post_queue_async(self, event, **kwargs):
+    def post_queue_async(self, event: str, **kwargs: dict) -> asyncio.Future:
         """Post queue event, wait until all handlers are done and locks are released."""
-        future = asyncio.Future(loop=self.machine.clock.loop)
+        future = asyncio.Future(loop=self.machine.clock.loop)   # type: asyncio.Future
         self.post_queue(event, partial(self._set_result, _future=future), **kwargs)
         return future
 
-    def post(self, event, callback=None, **kwargs):
+    def post(self, event: str, callback=None, **kwargs) -> None:
         """Post an event which causes all the registered handlers to be called.
 
         Events are processed serially (e.g. one at a time), so if the event
@@ -378,7 +382,7 @@ class EventManager(MpfController):
         """
         self._post(event, ev_type=None, callback=callback, **kwargs)
 
-    def post_boolean(self, event, callback=None, **kwargs):
+    def post_boolean(self, event: str, callback=None, **kwargs) -> None:
         """Post an boolean event which causes all the registered handlers to be called one-by-one.
 
         Boolean events differ from regular events in that if any handler
@@ -441,7 +445,7 @@ class EventManager(MpfController):
         """
         self._post(event, ev_type='queue', callback=callback, **kwargs)
 
-    def post_relay(self, event, callback=None, **kwargs):
+    def post_relay(self, event: str, callback=None, **kwargs) -> None:
         """Post a relay event which causes all the registered handlers to be called.
 
         A dictionary can be passed from handler-to-handler and modified
@@ -476,7 +480,7 @@ class EventManager(MpfController):
         """
         self._post(event, ev_type='relay', callback=callback, **kwargs)
 
-    def _post(self, event, ev_type, callback, **kwargs):
+    def _post(self, event: str, ev_type: Optional[str], callback, **kwargs: dict) -> None:
 
         event = event.lower()
 
@@ -500,13 +504,13 @@ class EventManager(MpfController):
 
         self.event_queue.append(posted_event)
         self.debug_log("+============= EVENTS QUEUE =============")
-        for event in list(self.event_queue):
+        for event in list(self.event_queue):    # type: ignore
             self.debug_log("| %s, %s, %s, %s", event[0], event[1],
                            event[2], event[3])
         self.debug_log("+========================================")
 
     @asyncio.coroutine
-    def _run_handlers_sequential(self, event, callback, kwargs):
+    def _run_handlers_sequential(self, event: str, callback, kwargs: dict) -> Generator[int, None, None]:
         """Run all handlers for an event."""
         self.debug_log("^^^^ Processing queue event '%s'. Callback: %s,"
                        " Args: %s", event, callback, kwargs)
@@ -556,7 +560,7 @@ class EventManager(MpfController):
         if callback:
             callback(**kwargs)
 
-    def _run_handlers(self, event, ev_type, kwargs):
+    def _run_handlers(self, event: str, ev_type: Optional[str], kwargs: dict) -> Any:
         """Run all handlers for an event."""
         result = None
         for handler in self.registered_handlers[event][:]:
@@ -597,7 +601,7 @@ class EventManager(MpfController):
 
         return result
 
-    def _process_queue_event(self, event, callback, **kwargs):
+    def _process_queue_event(self, event: str, callback, **kwargs: dict):
         """Handle queue events."""
         if event not in self.registered_handlers:
             # fast path if there are not handlers
@@ -612,7 +616,7 @@ class EventManager(MpfController):
         future.result()
         self._queue_tasks.remove(future)
 
-    def _process_event(self, event, ev_type, callback=None, **kwargs):
+    def _process_event(self, event: str, ev_type: Optional[str], callback=None, **kwargs: dict) -> None:
         # Internal method which actually handles the events. Don't call this.
 
         result = None
@@ -637,7 +641,7 @@ class EventManager(MpfController):
 
             self.callback_queue.append((callback, kwargs))
 
-    def process_event_queue(self):
+    def process_event_queue(self) -> None:
         """Check if there are any other events that need to be processed, and then process them."""
         while len(self.event_queue) > 0 or len(self.callback_queue) > 0:
             # first process all events. if they post more events we will
@@ -666,24 +670,24 @@ class QueuedEvent(object):
 
     """Base class for an event queue which is created each time a queue event is called."""
 
-    def __init__(self, debug_log):
+    def __init__(self, debug_log: Callable[[str], None]) -> None:
         """Initialize QueueEvent."""
         self.debug_log = debug_log
         self.waiter = False
-        self.event = None
+        self.event = None   # type: asyncio.Event
 
     def __repr__(self):
         """Return str representation."""
         return '<QueuedEvent>'
 
-    def wait(self):
+    def wait(self) -> None:
         """Register a wait for this QueueEvent."""
         if self.waiter:
             raise AssertionError("Double lock")
         self.waiter = True
         self.debug_log("QueuedEvent: Registering a wait.")
 
-    def clear(self):
+    def clear(self) -> None:
         """Clear a wait."""
         if not self.waiter:
             raise AssertionError("Not locked")
@@ -694,7 +698,7 @@ class QueuedEvent(object):
         if self.event:
             self.event.set()
 
-    def is_empty(self):
+    def is_empty(self) -> bool:
         """Return true if unlocked."""
         return not self.waiter
 
