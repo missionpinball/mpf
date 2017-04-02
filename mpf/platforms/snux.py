@@ -142,7 +142,7 @@ class HardwarePlatform(DriverPlatform):
         """
         orig_number = number
 
-        if number.endswith('a') or number.lower().endswith('c'):
+        if number and (number.endswith('a') or number.lower().endswith('c')):
 
             number = number[:-1]
 
@@ -360,6 +360,10 @@ class HardwarePlatform(DriverPlatform):
             self.drivers_holding_c_side = set()
             self.c_side_done_time = 0
             self.c_side_enabled = False
+
+    def validate_coil_section(self, driver, config):
+        """Validate coil config for platform."""
+        return self.platform.validate_coil_section(driver, config)
 
 
 class SnuxDriver(DriverPlatformInterface):
