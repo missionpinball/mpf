@@ -1,0 +1,41 @@
+#config_version=4
+
+hardware:
+    coils: snux
+    driverboards: wpc
+    platform: p_roc
+
+system11:
+    ac_relay_delay_ms: 75
+    ac_relay_driver: c_ac_relay
+
+snux:
+    flipper_enable_driver: c_flipper_enable_driver
+    diag_led_driver: c_diag_led_driver
+    platform:
+
+switches:
+    s_test_fliptronics:
+        number: sf1
+    s_test_direct:
+        number: sd1
+    s_test_matrix:
+        number: s26
+
+coils:
+    c_test_direct:
+        number: c01
+    c_test_a_side:
+        number: c02a
+    c_test_c_side:
+        number: c02c
+        default_hold_power: 1.0
+    c_flipper_enable_driver:
+        number: c23
+        default_hold_power: 1.0
+    c_diag_led_driver:
+        number: c24
+        default_hold_power: 1.0
+    c_ac_relay:
+        number: c25
+        default_hold_power: 1.0
