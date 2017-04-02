@@ -2,6 +2,7 @@
 
 import logging
 
+from mpf.exceptions.ConfigFileError import ConfigFileError
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
@@ -92,9 +93,12 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
 
             if 'virtual_platform_start_active_switches' in self.machine.config:
 
-                initial_active_switches = [self.machine.switches[x].hw_switch.number for x in
-                                           Util.string_to_list(
-                                               self.machine.config['virtual_platform_start_active_switches'])]
+                initial_active_switches = []
+                for switch in Util.string_to_list(self.machine.config['virtual_platform_start_active_switches']):
+                    if switch not in self.machine.switches:
+                        raise ConfigFileError("Switch {} used in virtual_platform_start_active_switches was not found "
+                                              "in switches section.".format(switch))
+                    initial_active_switches.append(self.machine.switches[switch].hw_switch.number)
 
                 for k in self.hw_switches:
                     if k in initial_active_switches:
