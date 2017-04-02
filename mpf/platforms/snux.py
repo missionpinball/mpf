@@ -366,6 +366,16 @@ class HardwarePlatform(DriverPlatform):
             self.c_side_done_time = 0
             self.c_side_enabled = False
 
+    @classmethod
+    def get_coil_config_section(cls):
+        """Additional config validation for coils."""
+        return "p_roc_coils"
+
+    @classmethod
+    def get_coil_overwrite_section(cls):
+        """Additional config validation for coils overwrites."""
+        return "p_roc_coil_overwrites"
+
 
 class SnuxDriver(DriverPlatformInterface):
 
