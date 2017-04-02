@@ -1,9 +1,9 @@
 #config_version=4
 
 hardware:
-    platform: virtual
-    driverboards: wpc
     coils: snux
+    driverboards: wpc
+    platform: p_roc
 
 system11:
     ac_relay_delay_ms: 75
@@ -14,25 +14,28 @@ snux:
     diag_led_driver: c_diag_led_driver
     platform:
 
+switches:
+    s_test_fliptronics:
+        number: sf1
+    s_test_direct:
+        number: sd1
+    s_test_matrix:
+        number: s26
+
 coils:
-    c_diag_led_driver:
-        number: c24
+    c_test_direct:
+        number: c01
+    c_test_a_side:
+        number: c02a
+    c_test_c_side:
+        number: c02c
         allow_enable: true
     c_flipper_enable_driver:
         number: c23
         allow_enable: true
+    c_diag_led_driver:
+        number: c24
+        allow_enable: true
     c_ac_relay:
         number: c25
         allow_enable: true
-    c_side_a1:
-        number: c11a
-    c_side_a2:
-        number: c12a
-        hold_power: 4
-    c_side_c1:
-        number: c11c
-    c_side_c2:
-        number: c12c
-        hold_power: 4
-    c_virtual:
-        number:

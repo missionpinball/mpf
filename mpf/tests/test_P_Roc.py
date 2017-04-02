@@ -50,6 +50,14 @@ class MockPinProcModule(MagicMock):
                 return 80
             elif device_str == "g01":
                 return 72
+            elif device_str == "c02":
+                return 9902
+            elif device_str == "c23":
+                return 9923
+            elif device_str == "c24":
+                return 9924
+            elif device_str == "c25":
+                return 9925
             else:
                 raise AssertionError("cannot decode {}".format(device_str))
 
@@ -59,7 +67,9 @@ class MockPinProcModule(MagicMock):
 
 class TestPRoc(MpfTestCase):
     def getConfigFile(self):
-        if "wpc" in self._testMethodName:
+        if "snux" in self._testMethodName:
+            return "snux.yaml"
+        elif "wpc" in self._testMethodName:
             return "wpc.yaml"
         else:
             return 'config.yaml'
@@ -68,7 +78,8 @@ class TestPRoc(MpfTestCase):
         return 'tests/machine_files/p_roc/'
 
     def get_platform(self):
-        return 'p_roc'
+        # no force platform. we are testing p_roc and p_roc + snux
+        return False
 
     def _normalize(self, type_name):
         if type_name == "pdb":
@@ -255,3 +266,31 @@ class TestPRoc(MpfTestCase):
     def test_load_wpc(self):
         # make sure p-roc properly initialises with WPC config
         pass
+
+    def test_load_snux(self):
+        """Test snux."""
+        # test enable
+        self.machine.coils.c_flipper_enable_driver.enable()
+        self.machine.coils.c_flipper_enable_driver.hw_driver.proc.driver_schedule.assert_called_with(
+            number=9923, cycle_seconds=0, now=True, schedule=0xffffffff)
+
+        # assert diag flash
+        self.advance_time_and_run(1)
+        self.machine.coils.c_diag_led_driver.hw_driver.proc.driver_pulse.assert_called_with(
+            9924, 250)
+
+        # pulse a and c side
+        self.machine.coils.c_ac_relay.hw_driver.proc.driver_schedule = MagicMock()
+        self.machine.coils.c_test_a_side.pulse(100)
+        self.machine.coils.c_test_c_side.pulse(50)
+        self.advance_time_and_run(.050)
+        self.machine.coils.c_diag_led_driver.hw_driver.proc.driver_pulse.assert_called_with(
+            9902, 100)
+        self.assertFalse(self.machine.coils.c_ac_relay.hw_driver.proc.driver_schedule.called)
+
+        # afterwards service c side
+        self.advance_time_and_run(.2)
+        self.machine.coils.c_ac_relay.hw_driver.proc.driver_schedule.assert_called_with(
+            number=9925, cycle_seconds=0, now=True, schedule=0xffffffff)
+        self.machine.coils.c_diag_led_driver.hw_driver.proc.driver_pulse.assert_called_with(
+            9902, 50)
