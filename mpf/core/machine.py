@@ -71,8 +71,10 @@ class MachineController(LogMixin):
         self.verify_system_info()
         self._exception = None
 
+        self.clock = self._load_clock()
+
         self._boot_holds = set()
-        self.is_init_done = False
+        self.is_init_done = asyncio.Event(loop=self.clock.loop)
         self.register_boot_hold('init')
 
         self._done = False
@@ -106,7 +108,6 @@ class MachineController(LogMixin):
         self.delayRegistry = DelayManagerRegistry(self)
         self.delay = DelayManager(self.delayRegistry)
 
-        self.clock = self._load_clock()
         self._crash_queue_checker = self.clock.schedule_interval(self._check_crash_queue, 1)
 
         self.hardware_platforms = dict()
@@ -131,6 +132,10 @@ class MachineController(LogMixin):
         self._load_machine_vars()
         self.clock.loop.run_until_complete(self._run_init_phases())
         self._init_phases_complete()
+
+        # wait until all boot holds were released
+        self.clock.loop.run_until_complete(self.is_init_done.wait())
+        self.clock.loop.run_until_complete(self.init_done())
 
     def _exception_handler(self, loop, context):    # pragma: no cover
         # stop machine
@@ -491,21 +496,17 @@ class MachineController(LogMixin):
 
                 self.scriptlets.append(scriptlet_obj)
 
+    @asyncio.coroutine
     def reset(self):
         """Reset the machine.
 
         This method is safe to call. It essentially sets up everything from
         scratch without reloading the config files and assets from disk. This
         method is called after a game ends and before attract mode begins.
-
-        Note: This method is not yet implemented.
         """
         self.debug_log('Resetting...')
-        self._reset_phase_1()
 
-    def _reset_phase_1(self):
-        """The first phase of resetting the machine."""
-        self.events.post_queue('machine_reset_phase_1', self._reset_phase_2)
+        yield from self.events.post_queue_async('machine_reset_phase_1')
         '''Event: machine_reset_phase_1
 
         Desc: The first phase of resetting the machine.
@@ -518,12 +519,8 @@ class MachineController(LogMixin):
         until the queue is cleared.
 
         '''
-        self.events.process_event_queue()
 
-    def _reset_phase_2(self, **kwargs):
-        """The second phase of resetting the machine."""
-        del kwargs
-        self.events.post_queue('machine_reset_phase_2', self._reset_phase_3)
+        yield from self.events.post_queue_async('machine_reset_phase_2')
         '''Event: machine_reset_phase_2
 
         Desc: The second phase of resetting the machine.
@@ -536,12 +533,8 @@ class MachineController(LogMixin):
         until the queue is cleared.
 
         '''
-        self.events.process_event_queue()
 
-    def _reset_phase_3(self, **kwargs):
-        """The third phase of resetting the machine."""
-        del kwargs
-        self.events.post_queue('machine_reset_phase_3', self._reset_complete)
+        yield from self.events.post_queue_async('machine_reset_phase_3')
         '''Event: machine_reset_phase_3
 
         Desc: The third phase of resetting the machine.
@@ -554,12 +547,10 @@ class MachineController(LogMixin):
         until the queue is cleared.
 
         '''
-        self.events.process_event_queue()
 
-    def _reset_complete(self):
         """Called when the machine reset process is complete."""
         self.debug_log('Reset Complete')
-        self.events.post('reset_complete')
+        yield from self.events.post_async('reset_complete')
         '''event: reset_complete
 
         desc: The machine reset process is complete
@@ -848,33 +839,31 @@ class MachineController(LogMixin):
 
     def register_boot_hold(self, hold):
         """Register a boot hold."""
-        if self.is_init_done:
+        if self.is_init_done.is_set():
             raise AssertionError("Register hold after init_done")
         self._boot_holds.add(hold)
 
     def clear_boot_hold(self, hold):
         """Clear a boot hold."""
-        if self.is_init_done:
+        if self.is_init_done.is_set():
             raise AssertionError("Clearing hold after init_done")
         self._boot_holds.remove(hold)
         self.debug_log('Clearing boot hold %s. Holds remaining: %s', hold, self._boot_holds)
         if not self._boot_holds:
-            self.init_done()
+            self.is_init_done.set()
 
+    @asyncio.coroutine
     def init_done(self):
         """Finish init.
 
         Called when init is done and all boot holds are cleared.
         """
-        self.is_init_done = True
-
-        self.events.post("init_done")
+        yield from self.events.post_async("init_done")
         '''event: init_done
 
         desc: Posted when the initial (one-time / boot) init phase is done. In
         other words, once this is posted, MPF is booted and ready to go.
         '''
-        self.events.process_event_queue()
 
         ConfigValidator.unload_config_spec()
-        self.reset()
+        yield from self.reset()

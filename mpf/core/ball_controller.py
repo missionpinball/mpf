@@ -29,7 +29,7 @@ class BallController(MpfController):
         # register for events
         self.machine.events.add_handler('request_to_start_game',
                                         self.request_to_start_game)
-        self.machine.events.add_handler('machine_reset_phase_2',
+        self.machine.events.add_handler('init_phase_2',
                                         self._initialize)
         self.machine.events.add_handler('init_phase_4',
                                         self._init4, priority=100)

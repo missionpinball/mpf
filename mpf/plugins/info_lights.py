@@ -26,7 +26,7 @@ class InfoLights(object):
                                    'will not be used.')
             return
 
-        self.machine.events.add_handler('machine_reset_phase_3', self._initialize)
+        self.machine.events.add_handler('init_phase_5', self._initialize)
 
     def _initialize(self, **kwargs):
         del kwargs
