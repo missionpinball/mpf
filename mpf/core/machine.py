@@ -129,10 +129,6 @@ class MachineController(LogMixin):
         self._load_machine_vars()
         self._run_init_phases()
 
-        ConfigValidator.unload_config_spec()
-
-        self.clear_boot_hold('init')
-
     def _exception_handler(self, loop, context):    # pragma: no cover
         # stop machine
         self.stop()
@@ -151,39 +147,60 @@ class MachineController(LogMixin):
         return clock
 
     def _run_init_phases(self):
-        self.events.post("init_phase_1")
+        self._init_phase_1()
+
+    def _init_phase_1(self):
+        self.events.post_queue("init_phase_1", self._init_phase_2)
         '''event: init_phase_1
 
         desc: Posted during the initial boot up of MPF.
         '''
 
         self.events.process_event_queue()
-        self.events.post("init_phase_2")
+
+    def _init_phase_2(self, **kwargs):
+        del kwargs
+        self.events.post_queue("init_phase_2", self._init_phase_3)
         '''event: init_phase_2
 
         desc: Posted during the initial boot up of MPF.
         '''
         self.events.process_event_queue()
         self._load_plugins()
-        self.events.post("init_phase_3")
+
+    def _init_phase_3(self, **kwargs):
+        del kwargs
+        self.events.post_queue("init_phase_3", self._init_phase_4)
         '''event: init_phase_3
 
         desc: Posted during the initial boot up of MPF.
         '''
         self.events.process_event_queue()
         self._load_scriptlets()
-        self.events.post("init_phase_4")
+
+    def _init_phase_4(self, **kwargs):
+        del kwargs
+        self.events.post_queue("init_phase_4", self._init_phase_5)
         '''event: init_phase_4
 
         desc: Posted during the initial boot up of MPF.
         '''
         self.events.process_event_queue()
-        self.events.post("init_phase_5")
+
+    def _init_phase_5(self, **kwargs):
+        del kwargs
+        self.events.post_queue("init_phase_5", self._init_phases_complete)
         '''event: init_phase_5
 
         desc: Posted during the initial boot up of MPF.
         '''
         self.events.process_event_queue()
+
+    def _init_phases_complete(self, **kwargs):
+        del kwargs
+        ConfigValidator.unload_config_spec()
+
+        self.clear_boot_hold('init')
 
     def _initialize_platforms(self):
         for platform in list(self.hardware_platforms.values()):
@@ -491,8 +508,11 @@ class MachineController(LogMixin):
         Note: This method is not yet implemented.
         """
         self.debug_log('Resetting...')
-        self.events.process_event_queue()
-        self.events.post('machine_reset_phase_1')
+        self._reset_phase_1()
+
+    def _reset_phase_1(self):
+        """The first phase of resetting the machine."""
+        self.events.post_queue('machine_reset_phase_1', self._reset_phase_2)
         '''Event: machine_reset_phase_1
 
         Desc: The first phase of resetting the machine.
@@ -501,9 +521,16 @@ class MachineController(LogMixin):
         posted), and they're also posted subsequently when the machine is reset
         (after existing the service mode, for example).
 
+        This is a queue event. The machine reset phase 1 will not be complete
+        until the queue is cleared.
+
         '''
         self.events.process_event_queue()
-        self.events.post('machine_reset_phase_2')
+
+    def _reset_phase_2(self, **kwargs):
+        """The second phase of resetting the machine."""
+        del kwargs
+        self.events.post_queue('machine_reset_phase_2', self._reset_phase_3)
         '''Event: machine_reset_phase_2
 
         Desc: The second phase of resetting the machine.
@@ -512,9 +539,16 @@ class MachineController(LogMixin):
         posted), and they're also posted subsequently when the machine is reset
         (after existing the service mode, for example).
 
+        This is a queue event. The machine reset phase 2 will not be complete
+        until the queue is cleared.
+
         '''
         self.events.process_event_queue()
-        self.events.post('machine_reset_phase_3')
+
+    def _reset_phase_3(self, **kwargs):
+        """The third phase of resetting the machine."""
+        del kwargs
+        self.events.post_queue('machine_reset_phase_3', self._reset_complete)
         '''Event: machine_reset_phase_3
 
         Desc: The third phase of resetting the machine.
@@ -523,10 +557,21 @@ class MachineController(LogMixin):
         posted), and they're also posted subsequently when the machine is reset
         (after existing the service mode, for example).
 
+        This is a queue event. The machine reset phase 3 will not be complete
+        until the queue is cleared.
+
         '''
         self.events.process_event_queue()
+
+    def _reset_complete(self):
+        """Called when the machine reset process is complete."""
         self.debug_log('Reset Complete')
-        self._reset_complete()
+        self.events.post('reset_complete')
+        '''event: reset_complete
+
+        desc: The machine reset process is complete
+
+        '''
 
     def add_platform(self, name):
         """Make an additional hardware platform interface available to MPF.
@@ -648,15 +693,6 @@ class MachineController(LogMixin):
         This method is not yet implemented.
         """
         pass
-
-    def _reset_complete(self):
-        self.debug_log('Reset Complete')
-        self.events.post('reset_complete')
-        '''event: reset_complete
-
-        desc: The machine reset process is complete
-
-        '''
 
     def set_machine_var(self, name, value, force_events=False):
         """Set the value of a machine variable.
