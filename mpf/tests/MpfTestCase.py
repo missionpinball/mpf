@@ -266,9 +266,13 @@ class MpfTestCase(unittest.TestCase):
                 self.machine.stop()
             except AttributeError:
                 pass
+            if self._exception and 'exception' in self._exception:
+                raise self._exception['exception']
+            elif self._exception:
+                raise Exception(self._exception, e)
             raise e
 
-        self.assertFalse(self.machine._done, "Machine crashed during start")
+        self.assertTrue(self.machine.test_init_complete, "Machine crashed during start")
 
     def _mock_event_handler(self, event_name, **kwargs):
         self._last_event_kwargs[event_name] = kwargs
