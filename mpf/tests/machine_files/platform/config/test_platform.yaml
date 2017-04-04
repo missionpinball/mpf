@@ -1,7 +1,7 @@
 #config_version=4
 
-#hardware:
-#  leds: fadecandy
+hardware:
+  leds: smart_virtual, fadecandy
 
 leds:
   led1:

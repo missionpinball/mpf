@@ -38,6 +38,8 @@ class HardwarePlatform(LedPlatform):
         if self.machine.config['open_pixel_control']['debug']:
             self.debug = True
 
+        self._setup_opc_client()
+
     def stop(self):
         """Stop platform."""
         # disconnect sender
@@ -52,9 +54,6 @@ class HardwarePlatform(LedPlatform):
         """
         if channels > 3:
             raise AssertionError("More channels not yet implemented")
-
-        if not self.opc_client:
-            self._setup_opc_client()
 
         if isinstance(config['number'], str) and '-' in config['number']:
             channel, led = config['number'].split('-')

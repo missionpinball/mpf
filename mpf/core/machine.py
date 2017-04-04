@@ -12,6 +12,8 @@ import sys
 import threading
 
 import copy
+
+import asyncio
 from pkg_resources import iter_entry_points
 
 from mpf._version import __version__
@@ -127,7 +129,8 @@ class MachineController(LogMixin):
         self._register_config_players()
         self._register_system_events()
         self._load_machine_vars()
-        self._run_init_phases()
+        self.clock.loop.run_until_complete(self._run_init_phases())
+        self._init_phases_complete()
 
     def _exception_handler(self, loop, context):    # pragma: no cover
         # stop machine
@@ -146,55 +149,37 @@ class MachineController(LogMixin):
         clock.loop.set_exception_handler(self._exception_handler)
         return clock
 
+    @asyncio.coroutine
     def _run_init_phases(self):
-        self._init_phase_1()
-
-    def _init_phase_1(self):
-        self.events.post_queue("init_phase_1", self._init_phase_2)
+        yield from self.events.post_queue_async("init_phase_1")
         '''event: init_phase_1
 
         desc: Posted during the initial boot up of MPF.
         '''
-
-        self.events.process_event_queue()
-
-    def _init_phase_2(self, **kwargs):
-        del kwargs
-        self.events.post_queue("init_phase_2", self._init_phase_3)
+        yield from self.events.post_queue_async("init_phase_2")
         '''event: init_phase_2
 
         desc: Posted during the initial boot up of MPF.
         '''
-        self.events.process_event_queue()
         self._load_plugins()
-
-    def _init_phase_3(self, **kwargs):
-        del kwargs
-        self.events.post_queue("init_phase_3", self._init_phase_4)
+        yield from self.events.post_queue_async("init_phase_3")
         '''event: init_phase_3
 
         desc: Posted during the initial boot up of MPF.
         '''
-        self.events.process_event_queue()
         self._load_scriptlets()
 
-    def _init_phase_4(self, **kwargs):
-        del kwargs
-        self.events.post_queue("init_phase_4", self._init_phase_5)
+        yield from self.events.post_queue_async("init_phase_4")
         '''event: init_phase_4
 
         desc: Posted during the initial boot up of MPF.
         '''
-        self.events.process_event_queue()
 
-    def _init_phase_5(self, **kwargs):
-        del kwargs
-        self.events.post_queue("init_phase_5", self._init_phases_complete)
+        yield from self.events.post_queue_async("init_phase_5")
         '''event: init_phase_5
 
         desc: Posted during the initial boot up of MPF.
         '''
-        self.events.process_event_queue()
 
     def _init_phases_complete(self, **kwargs):
         del kwargs
@@ -229,7 +214,6 @@ class MachineController(LogMixin):
 
     def _validate_config(self):
         self.validate_machine_config_section('machine')
-        self.validate_machine_config_section('hardware')
         self.validate_machine_config_section('game')
 
     def validate_machine_config_section(self, section):
@@ -458,15 +442,24 @@ class MachineController(LogMixin):
             setattr(self, name, m)
 
     def _load_hardware_platforms(self):
-        if not self.options['force_platform']:
-            for section, platform in self.config['hardware'].items():
-                if platform.lower() != 'default' and section != 'driverboards':
-                    self.add_platform(platform)
-            self.set_default_platform(self.config['hardware']['platform'])
-
-        else:
+        """Load all hardware platforms"""
+        self.validate_machine_config_section('hardware')
+        # if platform is forced use that one
+        if self.options['force_platform']:
             self.add_platform(self.options['force_platform'])
             self.set_default_platform(self.options['force_platform'])
+            return
+
+        # otherwise load all platforms
+        for section, platforms in self.config['hardware'].items():
+            if section == 'driverboards':
+                continue
+            for platform in platforms:
+                if platform.lower() != 'default':
+                    self.add_platform(platform)
+
+        # set default platform
+        self.set_default_platform(self.config['hardware']['platform'][0])
 
     def _load_plugins(self):
         self.debug_log("Loading plugins...")
@@ -838,20 +831,20 @@ class MachineController(LogMixin):
 
     def get_platform_sections(self, platform_section, overwrite):
         """Return platform section."""
-        if not self.options['force_platform']:
-            if not overwrite:
-                if self.config['hardware'][platform_section] != 'default':
-                    return self.hardware_platforms[self.config['hardware'][platform_section]]
-                else:
-                    return self.default_platform
-            else:
-                try:
-                    return self.hardware_platforms[overwrite]
-                except KeyError:
-                    self.add_platform(overwrite)
-                    return self.hardware_platforms[overwrite]
-        else:
+        if self.options['force_platform']:
             return self.default_platform
+
+        if not overwrite:
+            if self.config['hardware'][platform_section][0] != 'default':
+                return self.hardware_platforms[self.config['hardware'][platform_section][0]]
+            else:
+                return self.default_platform
+        else:
+            try:
+                return self.hardware_platforms[overwrite]
+            except KeyError:
+                raise AssertionError("Platform \"{}\" has not been loaded. Please add it to your \"hardware\" section.".
+                                     format(overwrite))
 
     def register_boot_hold(self, hold):
         """Register a boot hold."""
