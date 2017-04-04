@@ -386,9 +386,11 @@ class BcpInterface(MpfController):
 
         if cmd in self.bcp_receive_commands:
             try:
-                self.bcp_receive_commands[cmd](client=client, **kwargs)
+                callback = self.bcp_receive_commands[cmd]
             except TypeError as e:
                 self.machine.bcp.transport.send_to_client(client, "error", cmd=cmd, error=str(e), kwargs=kwargs)
+            else:
+                callback(client=client, **kwargs)
 
         else:
             self.warning_log("Received invalid BCP command: %s from client: %s", cmd, client.name)
