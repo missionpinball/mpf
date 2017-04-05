@@ -98,6 +98,17 @@ class TestBcpSocketClientEncoding(unittest.TestCase):
                          dict(key3='value5', key4='value6'))
 
 
+class MockBcpQueueSocket(MockQueueSocket):
+
+    """Mock Queue Socket for BCP which emulates reset."""
+
+    def send(self, data):
+        if data == b'reset\n':
+            self.recv_queue.append(b'reset_complete\n')
+            return len(data)
+        return super().send(data)
+
+
 class TestBcpSocketClient(MpfTestCase):
 
     def __init__(self, methodName='runTest'):
@@ -115,7 +126,7 @@ class TestBcpSocketClient(MpfTestCase):
         self._bcp_client = self.machine.bcp.transport.get_named_client("local_display")
 
     def _mock_loop(self):
-        self.client_socket = MockQueueSocket()
+        self.client_socket = MockBcpQueueSocket()
         self.clock.mock_socket("localhost", 5050, self.client_socket)
 
     def testReceiveMessages(self):

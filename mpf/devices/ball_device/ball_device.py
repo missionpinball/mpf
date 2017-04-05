@@ -4,6 +4,7 @@ from collections import deque
 
 import asyncio
 
+from mpf.core.events import QueuedEvent
 from mpf.devices.ball_device.ball_count_handler import BallCountHandler
 from mpf.devices.ball_device.ball_device_ball_counter import BallDeviceBallCounter
 from mpf.devices.ball_device.ball_device_ejector import BallDeviceEjector
@@ -124,14 +125,17 @@ class BallDevice(SystemWideDevice):
                     "'playfield_active' tag from that switch.".format(
                         self.name, switch.name))
 
-    def _create_ball_counters(self, **kwargs):
+    def _create_ball_counters(self, queue: QueuedEvent, **kwargs):
+        """Create ball counters."""
         del kwargs
         if self.config['ball_switches']:
-            self.counter = SwitchCounter(self, self.config)     # pylint: disable-msg=redefined-variable-type
+            self.counter = SwitchCounter(self, self.config)
         else:
-            self.counter = EntranceSwitchCounter(self, self.config)  # pylint: disable-msg=redefined-variable-type
+            self.counter = EntranceSwitchCounter(self, self.config)
 
-        self.machine.clock.loop.run_until_complete(self._initialize_async())
+        queue.wait()
+        complete_future = Util.ensure_future(self._initialize_async(), loop=self.machine.clock.loop)
+        complete_future.add_done_callback(lambda x: queue.clear())
 
     def stop_device(self):
         """Stop device."""

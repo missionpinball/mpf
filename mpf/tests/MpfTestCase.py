@@ -43,6 +43,7 @@ class TestMachineController(MachineController):
         self._test_clock = clock
         self._mock_data = mock_data
         super().__init__(mpf_path, machine_path, options)
+        self.test_init_complete = True
 
     def create_data_manager(self, config_name):
         return TestDataManager(self._mock_data.get(config_name, {}))
@@ -58,10 +59,6 @@ class TestMachineController(MachineController):
         for socket, callback in self.clock.read_sockets.items():
             if socket.ready():
                 callback()
-
-    def _reset_complete(self):
-        self.test_init_complete = True
-        super()._reset_complete()
 
     def _register_plugin_config_players(self):
         if self._enable_plugins:
@@ -271,9 +268,13 @@ class MpfTestCase(unittest.TestCase):
                 self.machine.stop()
             except AttributeError:
                 pass
+            if self._exception and 'exception' in self._exception:
+                raise self._exception['exception']
+            elif self._exception:
+                raise Exception(self._exception, e)
             raise e
 
-        self.assertFalse(self.machine._done, "Machine crashed during start")
+        self.assertTrue(self.machine.test_init_complete, "Machine crashed during start")
 
     def _mock_event_handler(self, event_name, **kwargs):
         self._last_event_kwargs[event_name] = kwargs

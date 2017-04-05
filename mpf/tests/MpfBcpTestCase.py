@@ -15,8 +15,9 @@ class MockBcpClient(BaseBcpClient):
         self.receive_queue = asyncio.Queue(loop=self.machine.clock.loop)
         self.send_queue = []
 
+    @asyncio.coroutine
     def connect(self, config):
-        return True
+        return
 
     @asyncio.coroutine
     def read_message(self):
@@ -27,6 +28,9 @@ class MockBcpClient(BaseBcpClient):
         pass
 
     def send(self, bcp_command, bcp_command_args):
+        if bcp_command == "reset":
+            self.receive_queue.put_nowait(("reset_complete", {}))
+            return
         if bcp_command == "error":
             raise AssertionError("Got bcp error")
         self.send_queue.append((bcp_command, bcp_command_args))

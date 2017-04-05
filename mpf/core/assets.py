@@ -552,7 +552,7 @@ class BaseAssetManager(MpfController, LogMixin):
                       self.num_assets_loaded + self.num_bcp_assets_loaded,
                       total, self.loading_percent)
 
-        if not remaining and not self.machine.is_init_done:
+        if not remaining and not self.machine.is_init_done.is_set():
             self.machine.clear_boot_hold('assets')
 
 

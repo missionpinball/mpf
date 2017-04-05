@@ -152,8 +152,8 @@ class BCPClientSocket(BaseBcpClient):
         config = self.machine.config_validator.validate_config(
             'bcp:connections', config, 'bcp:connections')
 
-        return self.machine.clock.loop.run_until_complete(
-            self._setup_client_socket(config['host'], config['port'], config.get('required')))
+        # return a future
+        return self._setup_client_socket(config['host'], config['port'], config.get('required'))
 
     @asyncio.coroutine
     def _setup_client_socket(self, client_host, client_port, required=True):

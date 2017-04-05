@@ -2,7 +2,7 @@
 mode:
   code: mpf.modes.credits.code.credits.Credits
   priority: 1000010
-  start_events: machine_reset_phase_3
+  start_events: reset_complete
   game_mode: False
   stop_on_ball_end: False
 

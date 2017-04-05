@@ -43,7 +43,11 @@ class BcpInterface(MpfController):
 
         self.config = machine.config['bcp']
 
+        self._client_reset_queue = None
+        self._client_reset_complete_status = None
+
         self.bcp_receive_commands = dict(
+            reset_complete=self._bcp_receive_reset_complete,
             error=self._bcp_receive_error,
             switch=self._bcp_receive_switch,
             trigger=self._bcp_receive_trigger,
@@ -382,9 +386,11 @@ class BcpInterface(MpfController):
 
         if cmd in self.bcp_receive_commands:
             try:
-                self.bcp_receive_commands[cmd](client=client, **kwargs)
+                callback = self.bcp_receive_commands[cmd]
             except TypeError as e:
                 self.machine.bcp.transport.send_to_client(client, "error", cmd=cmd, error=str(e), kwargs=kwargs)
+            else:
+                callback(client=client, **kwargs)
 
         else:
             self.warning_log("Received invalid BCP command: %s from client: %s", cmd, client.name)
@@ -397,6 +403,19 @@ class BcpInterface(MpfController):
         """
         self.warning_log('Received Error command from host with parameters: %s, from client %s',
                          kwargs, str(client))
+
+    def _bcp_receive_reset_complete(self, client, **kwargs):
+        """A remote BCP host has sent a BCP reset_complete message indicating their reset process
+        has completed."""
+        self.debug_log("Received reset_complete from client: %s %s", client.name)
+        self._client_reset_complete_status[client] = True
+
+        # Check if reset_complete status is True from all clients
+        if all(status is True for item, status in self._client_reset_complete_status.items()):
+            self._client_reset_queue.clear()
+            self._client_reset_queue = None
+            self._client_reset_complete_status = None
+            self.debug_log("Received reset_complete from all clients. Clearing wait from queue event.")
 
     def bcp_mode_start(self, config, priority, mode, **kwargs):
         """Send BCP 'mode_start' to the connected BCP hosts.
@@ -418,10 +437,23 @@ class BcpInterface(MpfController):
                                                                 'mode_stop',
                                                                 name=name)
 
-    def bcp_reset(self, **kwargs):
+    def bcp_reset(self, queue, **kwargs):
         """Send the 'reset' command to the remote BCP host."""
         del kwargs
-        self.machine.bcp.transport.send_to_all_clients("reset")
+
+        # Will hold the queue event until all clients respond with a "reset_complete" command
+        clients = self.machine.bcp.transport.get_all_clients()
+        if len(clients) > 0:
+            queue.wait()
+            self._client_reset_queue = queue
+            self._client_reset_complete_status = {}
+            for client in clients:
+                self._client_reset_complete_status[client] = False
+
+            # Send the reset command
+            self.debug_log("Sending reset to all clients (will now wait for reset_complete "
+                           "to be received from all clients).")
+            self.machine.bcp.transport.send_to_all_clients("reset")
 
     def _bcp_receive_switch(self, client, name, state, **kwargs):
         """Process an incoming switch state change request from a remote BCP host.

@@ -426,16 +426,16 @@ game:
     allow_start_with_ball_in_drain: single|bool|False
 hardware:
     __valid_in__: machine
-    platform: single|str|virtual
-    coils: single|str|default
-    switches: single|str|default
-    lights: single|str|default
-    dmd: single|str|default
-    rgb_dmd: single|str|default
+    platform: list|str|virtual
+    coils: list|str|default
+    switches: list|str|default
+    lights: list|str|default
+    dmd: list|str|default
+    rgb_dmd: list|str|default
     driverboards: single|str|
-    servo_controllers: single|str|
-    accelerometers: single|str|
-    i2c: single|str|
+    servo_controllers: list|str|
+    accelerometers: list|str|
+    i2c: list|str|
 high_score:
     __valid_in__: mode
     award_slide_display_time: single|ms|4s

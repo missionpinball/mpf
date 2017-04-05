@@ -41,6 +41,8 @@ class HardwarePlatform(LightsPlatform):
         if self.machine.config['open_pixel_control']['debug']:
             self.debug = True
 
+        self._setup_opc_client()
+
     def stop(self):
         """Stop platform."""
         # disconnect sender
