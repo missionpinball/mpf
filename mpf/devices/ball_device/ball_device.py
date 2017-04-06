@@ -266,6 +266,8 @@ class BallDevice(SystemWideDevice):
         unclaimed balls in the relay will be processed as new balls entering
         this device.
 
+        Please be aware that we did not add those balls to balls or available_balls of the device during this event.
+
         args:
 
         unclaimed_balls: The number of balls that have not yet been claimed.
@@ -481,6 +483,8 @@ class BallDevice(SystemWideDevice):
         # tell targets that we have balls available
         for dummy_iterator in range(new_balls):
             self.machine.events.post_boolean('balldevice_balls_available')
+
+        self.machine.events.post('balldevice_{}_ball_entered'.format(self.name), new_balls=new_balls, device=self)
 
     @asyncio.coroutine
     def _balls_missing(self, balls):
