@@ -71,12 +71,6 @@ class MachineController(LogMixin):
         self.verify_system_info()
         self._exception = None
 
-        self.clock = self._load_clock()
-
-        self._boot_holds = set()
-        self.is_init_done = asyncio.Event(loop=self.clock.loop)
-        self.register_boot_hold('init')
-
         self._done = False
         self.monitors = dict()
         self.plugins = list()
@@ -107,6 +101,12 @@ class MachineController(LogMixin):
 
         self.delayRegistry = DelayManagerRegistry(self)
         self.delay = DelayManager(self.delayRegistry)
+
+        self.clock = self._load_clock()
+
+        self._boot_holds = set()
+        self.is_init_done = asyncio.Event(loop=self.clock.loop)
+        self.register_boot_hold('init')
 
         self._crash_queue_checker = self.clock.schedule_interval(self._check_crash_queue, 1)
 
