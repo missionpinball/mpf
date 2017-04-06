@@ -840,7 +840,7 @@ scoring:
     __valid_in__: modes
     score: single|template_int|0
     block: single|bool|False
-    action: single|enum(add,set)|add
+    action: single|enum(add,set,add_machine,set_machine)|add
     string: single|str|None
 scriptlets:
     __valid_in__: machine                           # todo add to validator

@@ -41,6 +41,13 @@ class ScorePlayer(ConfigPlayer):
             self.machine.game.player[var] += entry['score'].evaluate([])
         elif entry['action'] == "set":
             self.machine.game.player[var] = entry['score'].evaluate([])
+        elif entry['action'] == "add_machine":
+            value = self.machine.get_machine_var(var)
+            if value is None:
+                value = 0
+            self.machine.create_machine_var(var, value + entry['score'].evaluate([]))
+        elif entry['action'] == "set_machine":
+            self.machine.create_machine_var(var, entry['score'].evaluate([]))
         else:
             raise AssertionError("Invalid value: {}".format(entry))
 
