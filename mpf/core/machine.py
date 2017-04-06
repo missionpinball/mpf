@@ -84,13 +84,6 @@ class MachineController(LogMixin):
         self.verify_system_info()
         self._exception = None      # type: Any
 
-        self.clock = self._load_clock()
-
-        self._boot_holds = set()
-        self._boot_holds = set()    # type: Set[str]
-        self.is_init_done = asyncio.Event(loop=self.clock.loop)
-        self.register_boot_hold('init')
-
         self._done = False
         self.monitors = dict()      # type: Dict[str, Set[Callable]]
         self.plugins = list()       # type: List[Any]
@@ -141,6 +134,12 @@ class MachineController(LogMixin):
 
         self.hardware_platforms = dict()    # type: Dict[str, BasePlatform]
         self.default_platform = None        # type: smart_virtual.HardwarePlatform
+
+        self.clock = self._load_clock()
+
+        self._boot_holds = set()    # type: Set[str]
+        self.is_init_done = asyncio.Event(loop=self.clock.loop)
+        self.register_boot_hold('init')
 
         self._load_hardware_platforms()
 
