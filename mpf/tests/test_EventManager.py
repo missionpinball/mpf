@@ -781,3 +781,40 @@ class TestEventManager(MpfFakeGameTestCase, MpfTestCase):
         # settings true
         self.post_event("test")
         self.assertEqual(1, self._called)
+
+    def test_weighted(self):
+        self.mock_event("out3")
+        self.mock_event("out4")
+
+        self.post_event("test_mode_start")
+        self.advance_time_and_run()
+
+        with patch('random.randint', return_value=1) as mock_random:
+            self.machine.events.post('test_random_event_player_weighted')
+            self.advance_time_and_run(1)
+            mock_random.assert_called_once_with(1, 1001)
+
+        self.assertEventCalled("out3")
+        self.assertEventNotCalled("out4")
+
+        self.mock_event("out3")
+        self.mock_event("out4")
+
+        with patch('random.randint', return_value=2) as mock_random:
+            self.machine.events.post('test_random_event_player_weighted')
+            self.advance_time_and_run(1)
+            mock_random.assert_called_once_with(1, 1001)
+
+        self.assertEventNotCalled("out3")
+        self.assertEventCalled("out4")
+
+        self.mock_event("out3")
+        self.mock_event("out4")
+
+        with patch('random.randint', return_value=500) as mock_random:
+            self.machine.events.post('test_random_event_player_weighted')
+            self.advance_time_and_run(1)
+            mock_random.assert_called_once_with(1, 1001)
+
+        self.assertEventNotCalled("out3")
+        self.assertEventCalled("out4")

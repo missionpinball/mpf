@@ -13,3 +13,10 @@ random_event_player:
     test_random_event_player_mode1:
         - test_random_event_player_mode2
         - test_random_event_player_mode3
+    test_random_event_player_weighted:
+      scope: machine
+      force_different: False
+      force_all: False
+      events:
+        out3: 1
+        out4: 1000
