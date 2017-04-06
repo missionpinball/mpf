@@ -80,6 +80,10 @@ class BcpTransportManager:
         if transport.exit_on_close:
             self._machine.stop()
 
+    def get_all_clients(self):
+        """Get a list of all clients."""
+        return self._transports
+
     def get_named_client(self, client_name) -> BaseBcpClient:
         """Get a client by name."""
         for client in self._transports:

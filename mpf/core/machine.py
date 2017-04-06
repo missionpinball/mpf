@@ -12,6 +12,8 @@ import sys
 import threading
 
 import copy
+
+import asyncio
 from pkg_resources import iter_entry_points
 
 from mpf._version import __version__
@@ -69,8 +71,10 @@ class MachineController(LogMixin):
         self.verify_system_info()
         self._exception = None
 
+        self.clock = self._load_clock()
+
         self._boot_holds = set()
-        self.is_init_done = False
+        self.is_init_done = asyncio.Event(loop=self.clock.loop)
         self.register_boot_hold('init')
 
         self._done = False
@@ -104,7 +108,6 @@ class MachineController(LogMixin):
         self.delayRegistry = DelayManagerRegistry(self)
         self.delay = DelayManager(self.delayRegistry)
 
-        self.clock = self._load_clock()
         self._crash_queue_checker = self.clock.schedule_interval(self._check_crash_queue, 1)
 
         self.hardware_platforms = dict()
@@ -127,11 +130,12 @@ class MachineController(LogMixin):
         self._register_config_players()
         self._register_system_events()
         self._load_machine_vars()
-        self._run_init_phases()
+        self.clock.loop.run_until_complete(self._run_init_phases())
+        self._init_phases_complete()
 
-        ConfigValidator.unload_config_spec()
-
-        self.clear_boot_hold('init')
+        # wait until all boot holds were released
+        self.clock.loop.run_until_complete(self.is_init_done.wait())
+        self.clock.loop.run_until_complete(self.init_done())
 
     def _exception_handler(self, loop, context):    # pragma: no cover
         # stop machine
@@ -150,40 +154,43 @@ class MachineController(LogMixin):
         clock.loop.set_exception_handler(self._exception_handler)
         return clock
 
+    @asyncio.coroutine
     def _run_init_phases(self):
-        self.events.post("init_phase_1")
+        yield from self.events.post_queue_async("init_phase_1")
         '''event: init_phase_1
 
         desc: Posted during the initial boot up of MPF.
         '''
-
-        self.events.process_event_queue()
-        self.events.post("init_phase_2")
+        yield from self.events.post_queue_async("init_phase_2")
         '''event: init_phase_2
 
         desc: Posted during the initial boot up of MPF.
         '''
-        self.events.process_event_queue()
         self._load_plugins()
-        self.events.post("init_phase_3")
+        yield from self.events.post_queue_async("init_phase_3")
         '''event: init_phase_3
 
         desc: Posted during the initial boot up of MPF.
         '''
-        self.events.process_event_queue()
         self._load_scriptlets()
-        self.events.post("init_phase_4")
+
+        yield from self.events.post_queue_async("init_phase_4")
         '''event: init_phase_4
 
         desc: Posted during the initial boot up of MPF.
         '''
-        self.events.process_event_queue()
-        self.events.post("init_phase_5")
+
+        yield from self.events.post_queue_async("init_phase_5")
         '''event: init_phase_5
 
         desc: Posted during the initial boot up of MPF.
         '''
-        self.events.process_event_queue()
+
+    def _init_phases_complete(self, **kwargs):
+        del kwargs
+        ConfigValidator.unload_config_spec()
+
+        self.clear_boot_hold('init')
 
     def _initialize_platforms(self):
         for platform in list(self.hardware_platforms.values()):
@@ -212,7 +219,6 @@ class MachineController(LogMixin):
 
     def _validate_config(self):
         self.validate_machine_config_section('machine')
-        self.validate_machine_config_section('hardware')
         self.validate_machine_config_section('game')
 
     def validate_machine_config_section(self, section):
@@ -441,15 +447,24 @@ class MachineController(LogMixin):
             setattr(self, name, m)
 
     def _load_hardware_platforms(self):
-        if not self.options['force_platform']:
-            for section, platform in self.config['hardware'].items():
-                if platform.lower() != 'default' and section != 'driverboards':
-                    self.add_platform(platform)
-            self.set_default_platform(self.config['hardware']['platform'])
-
-        else:
+        """Load all hardware platforms"""
+        self.validate_machine_config_section('hardware')
+        # if platform is forced use that one
+        if self.options['force_platform']:
             self.add_platform(self.options['force_platform'])
             self.set_default_platform(self.options['force_platform'])
+            return
+
+        # otherwise load all platforms
+        for section, platforms in self.config['hardware'].items():
+            if section == 'driverboards':
+                continue
+            for platform in platforms:
+                if platform.lower() != 'default':
+                    self.add_platform(platform)
+
+        # set default platform
+        self.set_default_platform(self.config['hardware']['platform'][0])
 
     def _load_plugins(self):
         self.debug_log("Loading plugins...")
@@ -481,18 +496,17 @@ class MachineController(LogMixin):
 
                 self.scriptlets.append(scriptlet_obj)
 
+    @asyncio.coroutine
     def reset(self):
         """Reset the machine.
 
         This method is safe to call. It essentially sets up everything from
         scratch without reloading the config files and assets from disk. This
         method is called after a game ends and before attract mode begins.
-
-        Note: This method is not yet implemented.
         """
         self.debug_log('Resetting...')
-        self.events.process_event_queue()
-        self.events.post('machine_reset_phase_1')
+
+        yield from self.events.post_queue_async('machine_reset_phase_1')
         '''Event: machine_reset_phase_1
 
         Desc: The first phase of resetting the machine.
@@ -501,9 +515,12 @@ class MachineController(LogMixin):
         posted), and they're also posted subsequently when the machine is reset
         (after existing the service mode, for example).
 
+        This is a queue event. The machine reset phase 1 will not be complete
+        until the queue is cleared.
+
         '''
-        self.events.process_event_queue()
-        self.events.post('machine_reset_phase_2')
+
+        yield from self.events.post_queue_async('machine_reset_phase_2')
         '''Event: machine_reset_phase_2
 
         Desc: The second phase of resetting the machine.
@@ -512,9 +529,12 @@ class MachineController(LogMixin):
         posted), and they're also posted subsequently when the machine is reset
         (after existing the service mode, for example).
 
+        This is a queue event. The machine reset phase 2 will not be complete
+        until the queue is cleared.
+
         '''
-        self.events.process_event_queue()
-        self.events.post('machine_reset_phase_3')
+
+        yield from self.events.post_queue_async('machine_reset_phase_3')
         '''Event: machine_reset_phase_3
 
         Desc: The third phase of resetting the machine.
@@ -523,10 +543,19 @@ class MachineController(LogMixin):
         posted), and they're also posted subsequently when the machine is reset
         (after existing the service mode, for example).
 
+        This is a queue event. The machine reset phase 3 will not be complete
+        until the queue is cleared.
+
         '''
-        self.events.process_event_queue()
+
+        """Called when the machine reset process is complete."""
         self.debug_log('Reset Complete')
-        self._reset_complete()
+        yield from self.events.post_async('reset_complete')
+        '''event: reset_complete
+
+        desc: The machine reset process is complete
+
+        '''
 
     def add_platform(self, name):
         """Make an additional hardware platform interface available to MPF.
@@ -648,15 +677,6 @@ class MachineController(LogMixin):
         This method is not yet implemented.
         """
         pass
-
-    def _reset_complete(self):
-        self.debug_log('Reset Complete')
-        self.events.post('reset_complete')
-        '''event: reset_complete
-
-        desc: The machine reset process is complete
-
-        '''
 
     def set_machine_var(self, name, value, force_events=False):
         """Set the value of a machine variable.
@@ -802,50 +822,48 @@ class MachineController(LogMixin):
 
     def get_platform_sections(self, platform_section, overwrite):
         """Return platform section."""
-        if not self.options['force_platform']:
-            if not overwrite:
-                if self.config['hardware'][platform_section] != 'default':
-                    return self.hardware_platforms[self.config['hardware'][platform_section]]
-                else:
-                    return self.default_platform
-            else:
-                try:
-                    return self.hardware_platforms[overwrite]
-                except KeyError:
-                    self.add_platform(overwrite)
-                    return self.hardware_platforms[overwrite]
-        else:
+        if self.options['force_platform']:
             return self.default_platform
+
+        if not overwrite:
+            if self.config['hardware'][platform_section][0] != 'default':
+                return self.hardware_platforms[self.config['hardware'][platform_section][0]]
+            else:
+                return self.default_platform
+        else:
+            try:
+                return self.hardware_platforms[overwrite]
+            except KeyError:
+                raise AssertionError("Platform \"{}\" has not been loaded. Please add it to your \"hardware\" section.".
+                                     format(overwrite))
 
     def register_boot_hold(self, hold):
         """Register a boot hold."""
-        if self.is_init_done:
+        if self.is_init_done.is_set():
             raise AssertionError("Register hold after init_done")
         self._boot_holds.add(hold)
 
     def clear_boot_hold(self, hold):
         """Clear a boot hold."""
-        if self.is_init_done:
+        if self.is_init_done.is_set():
             raise AssertionError("Clearing hold after init_done")
         self._boot_holds.remove(hold)
         self.debug_log('Clearing boot hold %s. Holds remaining: %s', hold, self._boot_holds)
         if not self._boot_holds:
-            self.init_done()
+            self.is_init_done.set()
 
+    @asyncio.coroutine
     def init_done(self):
         """Finish init.
 
         Called when init is done and all boot holds are cleared.
         """
-        self.is_init_done = True
-
-        self.events.post("init_done")
+        yield from self.events.post_async("init_done")
         '''event: init_done
 
         desc: Posted when the initial (one-time / boot) init phase is done. In
         other words, once this is posted, MPF is booted and ready to go.
         '''
-        self.events.process_event_queue()
 
         ConfigValidator.unload_config_spec()
-        self.reset()
+        yield from self.reset()

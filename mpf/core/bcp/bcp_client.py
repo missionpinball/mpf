@@ -17,6 +17,7 @@ class BaseBcpClient(MpfController, metaclass=abc.ABCMeta):
         self.bcp = bcp
         self.exit_on_close = False
 
+    @asyncio.coroutine
     def connect(self, config):
         """Actively connect client."""
         raise NotImplementedError("implement")

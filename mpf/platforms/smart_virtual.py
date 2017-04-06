@@ -228,7 +228,7 @@ class HardwarePlatform(VirtualPlatform):
 
     def initialize(self):
         """Initialise platform."""
-        self.machine.events.add_handler('machine_reset_phase_1',
+        self.machine.events.add_handler('init_phase_5',
                                         self._initialize2)
 
     def _initialize2(self, **kwargs):

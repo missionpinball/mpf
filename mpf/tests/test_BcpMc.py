@@ -12,6 +12,8 @@ class TestBcpClient(MockBcpClient):
         self.exit_on_close = False
 
     def send(self, bcp_command, kwargs):
+        if bcp_command == "reset":
+            self.receive_queue.put_nowait(("reset_complete", {}))
         self.queue.put((bcp_command, kwargs))
 
     def receive(self, bcp_command, callback=None, rawbytes=None, **kwargs):
