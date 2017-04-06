@@ -1279,7 +1279,7 @@ widgets:
         number_grouping: single|bool|False
         min_digits: single|int|0
         max_chars: single|int|3
-        char_list: single|str|"ABCDEFGHIJKLMNOPQRSTUVWXYZ_- "
+        char_list: "single|str|ABCDEFGHIJKLMNOPQRSTUVWXYZ_- "
         keep_selected_char: single|bool|True
         dynamic_x: single|bool|True
         dynamic_x_pad: single|int|0
