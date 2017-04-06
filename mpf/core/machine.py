@@ -49,6 +49,7 @@ if TYPE_CHECKING:
     from mpf.core.ball_controller import BallController
     from mpf.devices.playfield import Playfield
     from mpf.core.placeholder_manager import PlaceholderManager
+    from mpf.platforms import smart_virtual
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -139,7 +140,7 @@ class MachineController(LogMixin):
         self.delay = DelayManager(self.delayRegistry)
 
         self.hardware_platforms = dict()    # type: Dict[str, BasePlatform]
-        self.default_platform = None        # type: BasePlatform
+        self.default_platform = None        # type: smart_virtual.HardwarePlatform
 
         self._load_hardware_platforms()
 
