@@ -1,7 +1,11 @@
 """Contains the BallLock device class."""
+from typing import TYPE_CHECKING
 
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.mode_device import ModeDevice
+
+if TYPE_CHECKING:
+    from mpf.devices.ball_device.ball_device import BallDevice
 
 
 @DeviceMonitor("enabled")
@@ -21,6 +25,7 @@ class MultiballLock(ModeDevice):
         # initialise variables
         self.enabled = False
         self.initialised = False    # remove when #715 is fixed
+        self._events = {}
 
         super().__init__(machine, name)
 
@@ -50,6 +55,7 @@ class MultiballLock(ModeDevice):
         self.lock_devices = []
         for device in self.config['lock_devices']:
             self.lock_devices.append(device)
+            self._events[device] = []
 
         self.source_playfield = self.config['source_playfield']
         self.initialised = True
@@ -135,6 +141,9 @@ class MultiballLock(ModeDevice):
             self.machine.events.add_handler(
                 'balldevice_' + device.name + '_ball_enter',
                 self._lock_ball, device=device)
+            self.machine.events.add_handler(
+                'balldevice_' + device.name + '_ball_entered',
+                self._post_events, device=device)
 
     def _unregister_handlers(self):
         # unregister ball_enter handlers
@@ -181,7 +190,7 @@ class MultiballLock(ModeDevice):
 
         return balls
 
-    def _lock_ball(self, unclaimed_balls, **kwargs):
+    def _lock_ball(self, unclaimed_balls: int, device: "BallDevice", **kwargs):
         """Callback for _ball_enter event of lock_devices."""
         del kwargs
         # if full do not take any balls
@@ -205,8 +214,8 @@ class MultiballLock(ModeDevice):
         for _ in range(balls_to_lock):
             self.locked_balls += 1
             # post event for ball capture
-            self.machine.events.post('multiball_lock_' + self.name + '_locked_ball',
-                                     total_balls_locked=self.locked_balls)
+            self._events[device].append({"event": 'multiball_lock_' + self.name + '_locked_ball',
+                                         "total_balls_locked": self.locked_balls})
             '''event: multiball_lock_(name)_locked_ball
             desc: The multiball lock device (name) has just locked one additional ball.
 
@@ -225,8 +234,8 @@ class MultiballLock(ModeDevice):
 
         # check if we are full now and post event if yes
         if self.is_virtually_full:
-            self.machine.events.post('multiball_lock_' + self.name + '_full',
-                                     balls=self.locked_balls)
+            self._events[device].append({'event': 'multiball_lock_' + self.name + '_full',
+                                         'balls': self.locked_balls})
         '''event: multiball_lock_(name)_full
         desc: The multiball lock device (name) is now full.
         args:
@@ -239,6 +248,15 @@ class MultiballLock(ModeDevice):
         self.debug_log("Locked %s balls virtually and %s balls physically", balls_to_lock, balls_to_lock_physically)
 
         return {'unclaimed_balls': unclaimed_balls - balls_to_lock_physically}
+
+    def _post_events(self, device, **kwargs):
+        """Post events on callback from _ball_entered handler.
+
+        Events are delayed to this handler because we want the ball device to have accounted for the balls.
+        """
+        del kwargs
+        for event in self._events[device]:
+            self.machine.events.post(**event)
 
     def _request_new_balls(self, balls):
         """Request new ball to playfield."""
