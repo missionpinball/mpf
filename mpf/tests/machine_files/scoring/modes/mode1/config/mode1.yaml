@@ -20,3 +20,11 @@ scoring:
     test_set_string:
         string_test:
           string: HELLO
+    test_set_machine_var:
+        my_var:
+          score: 100
+          action: set_machine
+    test_add_machine_var:
+        my_var:
+          score: 23
+          action: add_machine
