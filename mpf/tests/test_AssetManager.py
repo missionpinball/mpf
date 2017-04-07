@@ -37,6 +37,7 @@ class TestAssets(MpfTestCase):
 
         # test subfolders listed in assets:shows machine-wide config folders
         self.assertIn('show4', self.machine.shows)  # /shows/preload
+        self.assertIn('show4b', self.machine.shows)  # /shows/preload/subfolder
         self.assertIn('show5', self.machine.shows)  # /shows/on_demand
 
         # test shows from subfolder not listed in assets:shows
@@ -58,6 +59,11 @@ class TestAssets(MpfTestCase):
         # test custom k/v pair from default config based on the folder the
         # asset was in
         self.assertEqual(self.machine.shows['show4'].config['test_key'],
+                         'test_value')
+
+        # test custom k/v pair from default config based on the folder the
+        # asset was in (custom pair should be inherited from parent folder)
+        self.assertEqual(self.machine.shows['show4b'].config['test_key'],
                          'test_value')
 
         # test custom k/v pair from asset entry in the shows: section

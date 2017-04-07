@@ -4,6 +4,7 @@ import os
 import random
 import threading
 from collections import deque
+from pathlib import PurePath
 
 import asyncio
 
@@ -294,6 +295,12 @@ class BaseAssetManager(MpfController, LogMixin):
             # create the actual instance of the Asset object and add it
             # to the self.machine asset attribute dict for that asset class
             for asset in config[ac['disk_asset_section']]:
+                if 'file' not in config[ac['disk_asset_section']][asset]:
+                    msg = "The file associated with the disk-based asset '%s' declared in the " \
+                          "'%s' config section could not be found" % (asset, ac['disk_asset_section'])
+                    self.error_log(msg)
+                    raise FileNotFoundError(msg)
+
                 getattr(self.machine, ac['attribute'])[asset] = ac['cls'](
                     self.machine, name=asset,
                     file=config[ac['disk_asset_section']][asset]['file'],
@@ -365,18 +372,31 @@ class BaseAssetManager(MpfController, LogMixin):
         # do not get fooled by windows or mac garbage
         ignore_files = ("desktop.ini", "Thumbs.db")
 
+        # walk files in the asset root directory (include all subfolders)
         for path, _, files in os.walk(root_path, followlinks=True):
+            # Determine the first-level sub-folder of the current path relative to the
+            # asset root path.  The first level sub-folder is used to determine the
+            # default asset keys based on the assets config section.
+            relative_path = PurePath(path).relative_to(root_path)
+            if len(relative_path.parts) > 0:
+                first_level_subfolder = relative_path.parts[0]
+            else:
+                first_level_subfolder = None
+
             valid_files = [f for f in files if f.endswith(
                            asset_class['extensions']) and not f.startswith(ignore_prefixes) and f != ignore_files]
+
+            # loop over valid files in the current path
             for file_name in valid_files:
-                folder = os.path.basename(path)
                 name = os.path.splitext(file_name)[0].lower()
                 full_file_path = os.path.join(path, file_name)
 
-                if folder == asset_class['path_string'] or folder not in asset_class['defaults']:
+                # determine default group based on first level sub-folder and location groups
+                # configured in the assets section
+                if first_level_subfolder is None or first_level_subfolder not in asset_class['defaults']:
                     default_string = 'default'
                 else:
-                    default_string = folder
+                    default_string = first_level_subfolder
 
                 # built_up_config is the built-up config dict for that will be
                 # used for the entry for this asset.
