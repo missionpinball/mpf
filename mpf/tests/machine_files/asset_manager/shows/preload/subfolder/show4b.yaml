@@ -1,0 +1,39 @@
+# show_version=4
+- time: 0
+  leds:
+    led_01: 006400
+    led_02: CCCCCC
+  lights:
+    light_01: CC
+    light_02: 78
+  gis:
+    gi_01: FF
+- time: 1
+  leds:
+    led_01: DarkGreen
+    led_02: Black
+- time: 2
+  leds:
+    led_01: DarkSlateGray
+    led_02: Tomato
+  lights:
+    light_01: FF
+    light_02: 33
+  gis:
+    gi_01: 99
+- time: +1
+  leds:
+    led_01: MidnightBlue-f500 ms
+    led_02: DarkOrange-f0.5 s
+  gis:
+    gi_01: 33
+- time: 4
+  leds:
+    led_01: Off-f800
+    led_02: Off-f800
+  lights:
+    light_01: 00-f800
+    light_02: 00-f800
+  gis:
+    gi_01: 00
+- time: 6
