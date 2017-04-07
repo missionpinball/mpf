@@ -799,7 +799,7 @@ pololu_maestro:
     file_log: single|enum(none,basic,full)|basic
 random_event_player:
     __valid_in__: machine, mode, show
-    events: list|str|
+    events: ignore
     force_different: single|bool|true
     force_all: single|bool|true
     disable_random: single|bool|false

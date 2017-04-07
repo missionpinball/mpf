@@ -33,8 +33,8 @@ class RandomEventPlayer(ConfigPlayer):
             if settings['force_all']:
                 self.machine.game.player[key].force_all = True
 
-            if settings['force_different']:
-                self.machine.game.player[key].force_different = True
+            if not settings['force_different']:
+                self.machine.game.player[key].force_different = False
 
             return self.machine.game.player[key]
 
@@ -45,8 +45,8 @@ class RandomEventPlayer(ConfigPlayer):
             if settings['force_all']:
                 self._machine_wide_dict[key].force_all = True
 
-            if settings['force_different']:
-                self._machine_wide_dict[key].force_different = True
+            if not settings['force_different']:
+                self._machine_wide_dict[key].force_different = False
 
             return self._machine_wide_dict[key]
 
