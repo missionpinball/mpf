@@ -294,6 +294,12 @@ class BaseAssetManager(MpfController, LogMixin):
             # create the actual instance of the Asset object and add it
             # to the self.machine asset attribute dict for that asset class
             for asset in config[ac['disk_asset_section']]:
+                if 'file' not in config[ac['disk_asset_section']][asset]:
+                    msg = "The file associated with the disk-based asset '%s' declared in the " \
+                          "'%s' config section could not be found" % (asset, ac['disk_asset_section'])
+                    self.error_log(msg)
+                    raise FileNotFoundError(msg)
+
                 getattr(self.machine, ac['attribute'])[asset] = ac['cls'](
                     self.machine, name=asset,
                     file=config[ac['disk_asset_section']][asset]['file'],
