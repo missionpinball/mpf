@@ -26,7 +26,7 @@ class ScorePlayer(ConfigPlayer):
                 if (priority, context, calling_context) not in self.blocks[var]:
                     self.blocks[var].append((priority, context, calling_context))
 
-            self._score(var, s)
+            self._score(var, s, kwargs)
 
     def _is_blocked(self, var, context, calling_context):
         if var not in self.blocks or not self.blocks[var]:
@@ -34,20 +34,20 @@ class ScorePlayer(ConfigPlayer):
         priority_sorted = sorted(self.blocks[var], reverse=True)
         return priority_sorted[0][1] != context + "_" + calling_context
 
-    def _score(self, var, entry):
+    def _score(self, var: str, entry: dict, placeholder_parameters: dict) -> None:
         if entry['string']:
             self.machine.game.player[var] = entry['string']
         elif entry['action'] == "add":
-            self.machine.game.player[var] += entry['score'].evaluate([])
+            self.machine.game.player[var] += entry['score'].evaluate(placeholder_parameters)
         elif entry['action'] == "set":
-            self.machine.game.player[var] = entry['score'].evaluate([])
+            self.machine.game.player[var] = entry['score'].evaluate(placeholder_parameters)
         elif entry['action'] == "add_machine":
             value = self.machine.get_machine_var(var)
             if value is None:
                 value = 0
-            self.machine.create_machine_var(var, value + entry['score'].evaluate([]))
+            self.machine.create_machine_var(var, value + entry['score'].evaluate(placeholder_parameters))
         elif entry['action'] == "set_machine":
-            self.machine.create_machine_var(var, entry['score'].evaluate([]))
+            self.machine.create_machine_var(var, entry['score'].evaluate(placeholder_parameters))
         else:
             raise AssertionError("Invalid value: {}".format(entry))
 

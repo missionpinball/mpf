@@ -28,3 +28,7 @@ scoring:
         my_var:
           score: 23
           action: add_machine
+    player_score:
+        my_var2:
+          score: change
+          action: add_machine

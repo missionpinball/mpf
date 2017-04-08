@@ -57,11 +57,13 @@ class TestScoring(MpfTestCase):
         self.assertEqual(1, self.machine.game.player.vars['var_a'])
         self.assertEqual(0, self.machine.game.player.var_c)
         self.machine.game.player.ramps = 3
+        self.assertMachineVarEqual(100, "my_var2")
 
         self.post_event("test_event1")
         self.assertEqual(200, self.machine.game.player.score)
         self.assertEqual(2, self.machine.game.player.vars['var_a'])
         self.assertEqual(3, self.machine.game.player.var_c)
+        self.assertMachineVarEqual(200, "my_var2")
 
         self.post_event("test_set_100")
         self.assertEqual(100, self.machine.game.player.test1)
