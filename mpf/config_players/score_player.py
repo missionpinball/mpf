@@ -18,7 +18,7 @@ class ScorePlayer(ConfigPlayer):
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Score variable."""
         for var, s in settings.items():
-            if self._is_blocked(var, context, calling_context):
+            if self._is_blocked(var, context, calling_context, priority):
                 continue
             if s['block']:
                 if var not in self.blocks:
@@ -28,26 +28,41 @@ class ScorePlayer(ConfigPlayer):
 
             self._score(var, s, kwargs)
 
-    def _is_blocked(self, var, context, calling_context):
+    def _is_blocked(self, var, context, calling_context, priority):
         if var not in self.blocks or not self.blocks[var]:
             return False
         priority_sorted = sorted(self.blocks[var], reverse=True)
-        return priority_sorted[0][1] != context + "_" + calling_context
+        return priority_sorted[0][0] > priority and priority_sorted[0][1] != context + "_" + calling_context
 
     def _score(self, var: str, entry: dict, placeholder_parameters: dict) -> None:
         if entry['string']:
             self.machine.game.player[var] = entry['string']
-        elif entry['action'] == "add":
-            self.machine.game.player[var] += entry['score'].evaluate(placeholder_parameters)
+            return
+
+        # evaluate placeholder
+        value = entry['score'].evaluate(placeholder_parameters)
+
+        if entry['action'] == "add":
+            if entry['player']:
+                # specific player
+                self.machine.game.player_list[entry['player'] - 1][var] += value
+            else:
+                # default to current player
+                self.machine.game.player[var] += value
         elif entry['action'] == "set":
-            self.machine.game.player[var] = entry['score'].evaluate(placeholder_parameters)
+            if entry['player']:
+                # specific player
+                self.machine.game.player_list[entry['player'] - 1][var] = value
+            else:
+                # default to current player
+                self.machine.game.player[var] = value
         elif entry['action'] == "add_machine":
-            value = self.machine.get_machine_var(var)
-            if value is None:
-                value = 0
-            self.machine.create_machine_var(var, value + entry['score'].evaluate(placeholder_parameters))
+            old_value = self.machine.get_machine_var(var)
+            if old_value is None:
+                old_value = 0
+            self.machine.create_machine_var(var, old_value + value)
         elif entry['action'] == "set_machine":
-            self.machine.create_machine_var(var, entry['score'].evaluate(placeholder_parameters))
+            self.machine.create_machine_var(var, value)
         else:
             raise AssertionError("Invalid value: {}".format(entry))
 
