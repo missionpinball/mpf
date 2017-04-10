@@ -72,7 +72,7 @@ slides:
   - type: text
     text: (player_name)
     color: 0
-    style: dmd_huge
+    style: dmd_big
     y: middle-2
     animations:
       show_slide:
