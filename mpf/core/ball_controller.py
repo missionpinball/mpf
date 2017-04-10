@@ -98,7 +98,8 @@ class BallController(MpfController):
                 self.info_log("Found a new ball which was captured from %s. Known balls: %s", capture.name,
                               self.num_balls_known)
 
-            self._balance_playfields()
+            if len(self.machine.playfields) > 1:
+                self._balance_playfields()
 
     def _balance_playfields(self):
         # find negative counts

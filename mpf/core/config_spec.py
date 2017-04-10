@@ -173,6 +173,7 @@ ball_saves:
     balls_to_save: single|int|1
     enable_events: dict|str:ms|None
     early_ball_save_events: dict|str:ms|None
+    delayed_eject_events: dict|str:ms|None
     disable_events: dict|str:ms|ball_will_end, service_mode_entered
     timer_start_events: dict|str:ms|None
 bcp:
