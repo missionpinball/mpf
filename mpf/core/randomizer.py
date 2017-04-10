@@ -19,17 +19,23 @@ class Randomizer(object):
         self.data = None
         self._uuid = uuid4()
 
-        assert isinstance(items, list) or isinstance(items, tuple)
+        if isinstance(items, list) or isinstance(items, tuple):
+            for i in items:
+                if isinstance(i, (tuple, list)):
+                    this_item = i[0]
+                    this_weight = int(i[1])
+                else:
+                    this_item = i
+                    this_weight = 1
 
-        for i in items:
-            if isinstance(i, (tuple, list)):
-                this_item = i[0]
-                this_weight = int(i[1])
-            else:
-                this_item = i
-                this_weight = 1
+                self.items.append((this_item, this_weight))
 
-            self.items.append((this_item, this_weight))
+        elif isinstance(items, dict):
+            for this_item, this_weight in items.items():
+                self.items.append((this_item, int(this_weight)))
+                self.items.sort()
+        else:
+            raise AssertionError("Invalid input for Randomizer")
 
         self.data = dict()
         self._init_data(self.data)

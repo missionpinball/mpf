@@ -741,7 +741,7 @@ pololu_maestro:
     file_log: single|enum(none,basic,full)|basic
 random_event_player:
     __valid_in__: machine, mode, show
-    events: list|str|
+    events: ignore
     force_different: single|bool|true
     force_all: single|bool|true
     disable_random: single|bool|false
@@ -782,7 +782,8 @@ scoring:
     __valid_in__: modes
     score: single|template_int|0
     block: single|bool|False
-    action: single|enum(add,set)|add
+    action: single|enum(add,set,add_machine,set_machine)|add
+    player: single|int|None
     string: single|str|None
 scriptlets:
     __valid_in__: machine                           # todo add to validator

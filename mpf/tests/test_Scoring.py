@@ -35,6 +35,18 @@ class TestScoring(MpfTestCase):
         self.post_event('start_mode1')
         self.assertTrue(self.machine.mode_controller.is_active('mode1'))
 
+        self.post_event("test_add_machine_var")
+        self.machine_run()
+        self.assertMachineVarEqual(23, "my_var")
+
+        self.post_event("test_set_machine_var")
+        self.machine_run()
+        self.assertMachineVarEqual(100, "my_var")
+
+        self.post_event("test_add_machine_var")
+        self.machine_run()
+        self.assertMachineVarEqual(123, "my_var")
+
         # test setting string
         self.post_event('test_set_string')
         self.assertEqual('HELLO', self.machine.game.player.string_test)
@@ -45,11 +57,13 @@ class TestScoring(MpfTestCase):
         self.assertEqual(1, self.machine.game.player.vars['var_a'])
         self.assertEqual(0, self.machine.game.player.var_c)
         self.machine.game.player.ramps = 3
+        self.assertMachineVarEqual(100, "my_var2")
 
         self.post_event("test_event1")
         self.assertEqual(200, self.machine.game.player.score)
         self.assertEqual(2, self.machine.game.player.vars['var_a'])
         self.assertEqual(3, self.machine.game.player.var_c)
+        self.assertMachineVarEqual(200, "my_var2")
 
         self.post_event("test_set_100")
         self.assertEqual(100, self.machine.game.player.test1)
@@ -117,6 +131,23 @@ class TestScoring(MpfTestCase):
         self.assertEqual(2200, self.machine.game.player.score)
         self.assertEqual(2, self.machine.game.player.vars['var_a'])
         self.assertEqual(2, self.machine.game.player.vars['var_b'])
+
+        self.post_event("start_mode3")
+        self.advance_time_and_run()
+
+        self.assertPlayerVarEqual(2200, "score")
+        self.assertEqual(1000, self.machine.game.player_list[1].score)
+        self.post_event("score_player2")
+        self.assertPlayerVarEqual(2200, "score")
+        self.assertEqual(1023, self.machine.game.player_list[1].score)
+
+        self.post_event("score_player1")
+        self.assertPlayerVarEqual(2242, "score")
+        self.assertEqual(1023, self.machine.game.player_list[1].score)
+
+        self.post_event("reset_player2")
+        self.assertPlayerVarEqual(2242, "score")
+        self.assertEqual(10, self.machine.game.player_list[1].score)
 
         # stop game and mode
         self.machine.service.start_service()

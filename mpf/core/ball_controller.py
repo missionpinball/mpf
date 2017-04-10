@@ -166,7 +166,7 @@ class BallController(MpfController):
 
         for device in self.machine.ball_devices:
             prio = 0
-            if 'drain' in device.tags:  # device is used to drain balls from pf
+            if 'drain' in device.tags or 'trough' in device.tags:  # device is used to drain balls from pf
                 prio += 1   # order handlers
                 self.machine.events.add_handler('balldevice_' + device.name +
                                                 '_ball_enter',
