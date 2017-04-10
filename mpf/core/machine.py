@@ -10,13 +10,14 @@ import tempfile
 import queue
 import sys
 import threading
+from platform import platform, python_version, system, release, version, system_alias, machine
 
 import copy
 
 import asyncio
 from pkg_resources import iter_entry_points
 
-from mpf._version import __version__
+from mpf._version import __version__, version as mpf_version, extended_version as mpf_extended_version
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.clock import ClockBase
 from mpf.core.config_processor import ConfigProcessor
@@ -284,6 +285,17 @@ class MachineController(LogMixin):
             self.create_machine_var(name=name, value=settings['value'])
 
         self._load_initial_machine_vars()
+
+        # Create basic system information machine variables
+        self.create_machine_var(name="mpf_version", value=mpf_version)
+        self.create_machine_var(name="mpf_extended_version", value=mpf_extended_version)
+        self.create_machine_var(name="python_version", value=python_version())
+        self.create_machine_var(name="platform", value=platform(aliased=1, terse=0))
+        platform_info = system_alias(system(), release(), version())
+        self.create_machine_var(name="platform_system", value=platform_info[0])
+        self.create_machine_var(name="platform_release", value=platform_info[1])
+        self.create_machine_var(name="platform_version", value=platform_info[2])
+        self.create_machine_var(name="platform_machine", value=machine())
 
     def _load_initial_machine_vars(self):
         """Load initial machine var values from config if they did not get loaded from data."""

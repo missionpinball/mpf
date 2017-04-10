@@ -1,5 +1,6 @@
 """Test the bonus mode."""
 from mpf.tests.MpfTestCase import MpfTestCase
+from mpf._version import version, extended_version
 
 
 class TestMachineVariables(MpfTestCase):
@@ -10,6 +11,18 @@ class TestMachineVariables(MpfTestCase):
                                  "player4_score": {"value": 3006600},
                                  "another_score": {"value": 123}},
                 }
+
+    def testSystemInfoVariables(self):
+        self.assertTrue(self.machine.is_machine_var("mpf_version"))
+        self.assertTrue(self.machine.is_machine_var("mpf_extended_version"))
+        self.assertTrue(self.machine.is_machine_var("python_version"))
+        self.assertTrue(self.machine.is_machine_var("platform"))
+        self.assertTrue(self.machine.is_machine_var("platform_system"))
+        self.assertTrue(self.machine.is_machine_var("platform_release"))
+        self.assertTrue(self.machine.is_machine_var("platform_version"))
+        self.assertTrue(self.machine.is_machine_var("platform_machine"))
+        self.assertEqual(version, self.machine.get_machine_var("mpf_version"))
+        self.assertEqual(extended_version, self.machine.get_machine_var("mpf_extended_version"))
 
     def testVarLoadAndRemove(self):
         self.assertTrue(self.machine.is_machine_var("player2_score"))
