@@ -475,7 +475,7 @@ class MachineController(LogMixin):
             setattr(self, name, m)
 
     def _load_hardware_platforms(self):
-        """Load all hardware platforms"""
+        """Load all hardware platforms."""
         self.validate_machine_config_section('hardware')
         # if platform is forced use that one
         if self.options['force_platform']:

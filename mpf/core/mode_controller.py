@@ -431,7 +431,6 @@ class ModeController(MpfController):
 
     def remove_stop_method(self, callback, priority=0):
         """Remove an existing stop method."""
-
         if (callback, priority) in self.stop_methods:
             self.stop_methods.remove((callback, priority))
 

@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+"""AFL fuzzer."""
 import argparse
 import asyncio
 import os
@@ -16,7 +17,10 @@ from mpf.tests.loop import TimeTravelLoop, TestClock
 
 class AflRunner(object):
 
+    """AFL fuzzer."""
+
     def __init__(self, use_virtual):
+        """Initialize fuzzer."""
         self.loop = None
         self.clock = None
         self.machine = None     # type: TestMachineController
@@ -36,20 +40,22 @@ class AflRunner(object):
         self._exception = context
 
     def get_platform(self):
+        """Return platform."""
         if self.use_virtual:
             return "virtual"
         else:
             return "smart_virtual"
 
-    def getConfigFile(self):
+    def getConfigFile(self):    # noqa
+        """Return config file."""
         return "config.yaml"
 
-    def getAbsoluteMachinePath(self):
-        # creates an absolute path based on machine_path
+    def getAbsoluteMachinePath(self):   # noqa
+        """Return an absolute path based on machine_path."""
         return "/home/kantert/cloud/flipper/src/good_vs_evil"
 
-    def getOptions(self):
-
+    def getOptions(self):   # noqa
+        """Return option arrays."""
         mpfconfig = os.path.abspath(os.path.join(
             mpf.core.__path__[0], os.pardir, 'mpfconfig.yaml'))
 
@@ -64,6 +70,7 @@ class AflRunner(object):
         }
 
     def advance_time_and_run(self, delta=1.0):
+        """Advance time and run."""
         try:
             self.loop.run_until_complete(asyncio.sleep(delay=delta, loop=self.loop))
             return
@@ -75,6 +82,7 @@ class AflRunner(object):
             raise e
 
     def setUp(self, machine_path):
+        """Set up fuzzer."""
         self.loop = TimeTravelLoop()
         self.loop.set_exception_handler(self._exception_handler)
         self.clock = TestClock(self.loop)
@@ -106,7 +114,6 @@ class AflRunner(object):
                 if device.config['entrance_switch']:
                     self.machine.switch_controller.process_switch_obj(device.config['entrance_switch'], 1, True)
 
-
         # let balls settle
         self.advance_time_and_run(10)
 
@@ -118,6 +125,7 @@ class AflRunner(object):
                 self.machine.switch_controller.process_switch_obj(switch, 0, True)
 
     def run(self, actions):
+        """Run fuzzer."""
         for action in actions:
             if action & 0b10000000:
                 ms = int(action & 0b01111111)
@@ -191,7 +199,7 @@ if int(args.wait) > 0:
 # keep effort minimal after those two lines. everything before this will execute only once.
 # everything after this on every run
 
-import afl
+import afl  # noqa
 afl.init()
 
 action_str = sys.stdin.buffer.read(-1)

@@ -83,9 +83,9 @@ class FileManager(object):
     def init(cls):
         """Initialise file manager."""
         # Needs to be a separate method to prevent circular import
-        for module in mpf.file_interfaces.__all__:
-            importlib.import_module('mpf.file_interfaces.{}'.format(module))
-            module_obj = getattr(mpf.file_interfaces, module)
+        for module_name in mpf.file_interfaces.__all__:
+            importlib.import_module('mpf.file_interfaces.{}'.format(module_name))
+            module_obj = getattr(mpf.file_interfaces, module_name)
             interface_class = getattr(module_obj, "file_interface_class")
 
             this_instance = interface_class()
