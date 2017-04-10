@@ -69,3 +69,6 @@ ball_saves:
         enable_events: enable4
         eject_delay: 1s
         debug: yes
+    unlimited_delay:
+        enable_events: enable5
+        delayed_eject_events: eject5
