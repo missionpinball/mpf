@@ -138,7 +138,7 @@ class FileManager(object):
             return None
 
     @staticmethod
-    def load(filename, verify_version=False, halt_on_error=False, round_trip=False):
+    def load(filename, verify_version=False, halt_on_error=True, round_trip=False):
         """Load a file by name."""
         if not FileManager.initialized:
             FileManager.init()
