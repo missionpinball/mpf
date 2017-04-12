@@ -6,7 +6,7 @@ mode:
   use_wait_queue: true
 
 # Instructions on how to use this mode:
-# http://docs.missionpinball.org/en/latest/game_logic/high_score.html
+# http://docs.missionpinball.org/en/latest/game_logic/high_scores/index.html
 
 high_score:
   award_slide_display_time: 4s
@@ -27,7 +27,11 @@ high_score:
 
 slide_player:
   high_score_enter_initials: high_score_enter_initials
-  high_score_award_display: high_score_award_display
+  high_score_award_display:
+    high_score_award_display:
+        action: play
+    high_score_enter_initials:
+        action: remove
 
 slides:
   high_score_enter_initials:
@@ -72,7 +76,7 @@ slides:
   - type: text
     text: (player_name)
     color: 0
-    style: dmd_huge
+    style: dmd_big
     y: middle-2
     animations:
       show_slide:
