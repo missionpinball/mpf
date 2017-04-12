@@ -1,11 +1,11 @@
 #config_version=4
 
 hardware:
-  leds: smart_virtual, fadecandy
+  platform: smart_virtual, virtual
 
-leds:
-  led1:
+switches:
+  switch1:
     number: 1
-  led2:
+  switch2:
     number: 2
-    platform: fadecandy
+    platform: virtual

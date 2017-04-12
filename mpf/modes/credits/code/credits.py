@@ -191,8 +191,10 @@ class Credits(Mode):
 
         self._enable_credit_switch_handlers()
 
-        # setup switch handlers
+        # prevent duplicate handlers
+        self._remove_event_handlers()
 
+        # setup event handlers
         self.add_mode_event_handler('player_add_request',
                                     self._player_add_request)
         self.add_mode_event_handler('request_to_start_game',
@@ -213,17 +215,21 @@ class Credits(Mode):
          is enabled and the game is not set to free play.
         '''
 
-    def enable_free_play(self, post_event=True, **kwargs):
-        """Enable free play."""
-        del kwargs
-        self.credits_config['free_play'] = True
-
+    def _remove_event_handlers(self):
+        """Remove event handlers."""
         self.machine.events.remove_handler(self._player_add_request)
         self.machine.events.remove_handler(self._request_to_start_game)
         self.machine.events.remove_handler(self._player_add_success)
         self.machine.events.remove_handler(self._game_ended)
         self.machine.events.remove_handler(self._game_started)
         self.machine.events.remove_handler(self._ball_starting)
+
+    def enable_free_play(self, post_event=True, **kwargs):
+        """Enable free play."""
+        del kwargs
+        self.credits_config['free_play'] = True
+
+        self._remove_event_handlers()
 
         self._disable_credit_switch_handlers()
 

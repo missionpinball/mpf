@@ -7,8 +7,7 @@ from mpf.config_players.device_config_player import DeviceConfigPlayer
 from mpf.tests.MpfTestCase import MpfTestCase
 from mpf.core.config_player import ConfigPlayer
 
-PlayCall = namedtuple('PlayCall', 'settings key priority kwargs',
-                      verbose=False)
+PlayCall = namedtuple('PlayCall', ['settings', 'key', 'priority', 'kwargs'])
 
 
 class BananaPlayer(DeviceConfigPlayer):

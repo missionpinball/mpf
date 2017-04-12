@@ -4,7 +4,7 @@ switches:
     test:
         number:
 
-leds:
+lights:
   led1:
     number:
   led2:
@@ -33,21 +33,21 @@ shows:
 
   achievement2_disabled:
     - time: 1
-      leds:
+      lights:
         (led): off
   achievement2_enabled:
     - time: 1
-      leds:
+      lights:
         (led): yellow
   achievement2_started:
     - time: 1
-      leds:
+      lights:
         (led): green
   achievement2_stopped:
     - time: 1
-      leds:
+      lights:
         (led): red
   achievement2_completed:
     - time: 1
-      leds:
+      lights:
         (led): blue

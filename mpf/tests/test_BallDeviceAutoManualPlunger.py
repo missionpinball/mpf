@@ -32,7 +32,7 @@ class TestBallDeviceAutoManualPlunger(MpfTestCase):
         playfield.add_ball(player_controlled=True)
         self.advance_time_and_run(1)
 
-        trough_coil.pulse.assert_called_once_with()
+        self.assertTrue(trough_coil.pulse.called)
         assert not plunger_coil.pulse.called
 
         self.machine.switch_controller.process_switch('s_trough_1', 0)
@@ -80,7 +80,7 @@ class TestBallDeviceAutoManualPlunger(MpfTestCase):
         playfield.add_ball(player_controlled=True)
         self.advance_time_and_run(1)
 
-        trough_coil.pulse.assert_called_once_with()
+        self.assertTrue(trough_coil.pulse.called)
         assert not plunger_coil.pulse.called
 
         self.machine.switch_controller.process_switch('s_trough_1', 0)
@@ -98,7 +98,7 @@ class TestBallDeviceAutoManualPlunger(MpfTestCase):
         self.machine.switch_controller.process_switch('s_launch', 0)
 
         self.advance_time_and_run(1)
-        plunger_coil.pulse.assert_called_once_with()
+        self.assertTrue(plunger_coil.pulse.called)
 
         self.machine.switch_controller.process_switch('s_plunger', 0)
 

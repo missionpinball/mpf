@@ -7,7 +7,7 @@ class BaseSerialCommunicator(object):
     """Basic Serial Communcator for platforms."""
 
     # pylint: disable=too-many-arguments
-    def __init__(self, platform, port: str, baud: int):
+    def __init__(self, platform, port: str, baud: int) -> None:
         """Initialise Serial Connection Hardware.
 
         Args:
@@ -21,8 +21,8 @@ class BaseSerialCommunicator(object):
         self.debug = self.platform.config['debug']
         self.port = port
         self.baud = baud
-        self.reader = None
-        self.writer = None
+        self.reader = None  # type: asyncio.StreamReader
+        self.writer = None  # type: asyncio.StreamWriter
 
         self.machine.clock.loop.run_until_complete(self._connect_to_hardware(port, baud))
 

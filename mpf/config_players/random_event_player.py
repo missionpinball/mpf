@@ -10,12 +10,16 @@ class RandomEventPlayer(ConfigPlayer):
 
     config_file_section = 'random_event_player'
     show_section = 'random_events'
-    device_collection = None
 
     def __init__(self, machine):
         """Initialise random event player."""
         super().__init__(machine)
         self._machine_wide_dict = {}
+
+    @staticmethod
+    def is_entry_valid_outside_mode(settings) -> bool:
+        """Return true if scope is not player."""
+        return settings['scope'] != "player"
 
     def _get_randomizer(self, settings, context, calling_context):
         key = "random_{}.{}".format(context, calling_context)

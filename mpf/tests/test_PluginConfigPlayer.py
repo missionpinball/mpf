@@ -11,7 +11,7 @@ def _register_plugin_config_players(self):
     TestConfigPlayer2.register_with_mpf(self)
     TestConfigPlayer3.register_with_mpf(self)
 
-TestMachineController._register_plugin_config_players = _register_plugin_config_players
+TestMachineController._register_plugin_config_players = _register_plugin_config_players     # type: ignore
 
 
 class TestConfigPlayer(PluginPlayer):

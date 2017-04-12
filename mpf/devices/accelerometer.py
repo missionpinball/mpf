@@ -3,6 +3,7 @@
 import math
 
 from mpf.core.device_monitor import DeviceMonitor
+from mpf.core.platform import AccelerometerPlatform
 from mpf.core.system_wide_device import SystemWideDevice
 
 
@@ -21,6 +22,7 @@ class Accelerometer(SystemWideDevice):
 
     def __init__(self, machine, name):
         """Initialise accelerometer."""
+        self.platform = None        # type: AccelerometerPlatform
         super().__init__(machine, name)
 
         self.history = None
@@ -28,7 +30,7 @@ class Accelerometer(SystemWideDevice):
         self.hw_device = None
 
     def _initialize(self):
-        self.load_platform_section('accelerometers')
+        self.platform = self.machine.get_platform_sections('accelerometers', self.config['platform'])
         self.hw_device = self.platform.configure_accelerometer(self.config, self)
 
     @classmethod

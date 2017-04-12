@@ -3,6 +3,7 @@
 import asyncio
 
 from mpf.core.delays import DelayManager
+from mpf.core.machine import MachineController
 from mpf.core.utility_functions import Util
 from mpf.core.mpf_controller import MpfController
 
@@ -18,7 +19,7 @@ class BallController(MpfController):
         A reference to the instance of the MachineController object.
     """
 
-    def __init__(self, machine):
+    def __init__(self, machine: MachineController) -> None:
         """Initialise ball controller."""
         super().__init__(machine)
 
@@ -37,8 +38,8 @@ class BallController(MpfController):
         self.machine.events.add_handler('shutdown',
                                         self._stop)
 
-        self._add_new_balls_task = None
-        self._captured_balls = asyncio.Queue(loop=self.machine.clock.loop)
+        self._add_new_balls_task = None                                         # type: asyncio.Task
+        self._captured_balls = asyncio.Queue(loop=self.machine.clock.loop)      # type: asyncio.Queue
 
     def _init4(self, **kwargs):
         del kwargs
@@ -132,36 +133,6 @@ class BallController(MpfController):
                 yield from Util.first(futures, self.machine.clock.loop)
                 continue
 
-    def _count_stable_balls(self):
-        self.debug_log("Counting Balls")
-        balls = 0
-
-        for device in self.machine.ball_devices:
-            if device.is_playfield():
-                continue
-
-            if not device.is_ball_count_stable():
-                raise ValueError("devices not stable")
-
-            # generally we do not count ball devices without switches
-            if 'ball_switches' not in device.config:
-                continue
-            # special handling for troughs (needed for gottlieb)
-            elif not device.config['ball_switches'] and 'trough' in device.tags:
-                balls += device.balls
-            else:
-                for switch in device.config['ball_switches']:
-                    if self.machine.switch_controller.is_active(
-                            switch.name, ms=device.config['entrance_count_delay']):
-                        balls += 1
-                    elif self.machine.switch_controller.is_inactive(
-                            switch.name, ms=device.config['exit_count_delay']):
-                        continue
-                    else:
-                        raise ValueError("switches not stable")
-
-        return balls
-
     def _count_balls(self):
         self.debug_log("Counting Balls")
         balls = 0
@@ -195,10 +166,12 @@ class BallController(MpfController):
             return
 
         for device in self.machine.ball_devices:
+            prio = 0
             if 'drain' in device.tags or 'trough' in device.tags:  # device is used to drain balls from pf
+                prio += 1   # order handlers
                 self.machine.events.add_handler('balldevice_' + device.name +
                                                 '_ball_enter',
-                                                self._ball_drained_handler)
+                                                self._ball_drained_handler, priority=20 + prio)
 
     def dump_ball_counts(self):
         """Dump ball count of all devices."""
@@ -326,10 +299,11 @@ class BallController(MpfController):
             '''
 
             for device in target_devices:
-                self.machine.events.replace_handler(
+                self.machine.events.remove_handler(self._collecting_balls_entered_callback)
+                self.machine.events.add_handler(
                     'balldevice_{}_ball_enter'.format(device.name),
                     self._collecting_balls_entered_callback,
-                    target=target)
+                    target=target, priority=10)
 
             for device in source_devices:
                 if not device.is_playfield():
@@ -350,7 +324,7 @@ class BallController(MpfController):
         return {'unclaimed_balls': unclaimed_balls}
 
     def _collecting_balls_complete(self):
-        self.machine.events.remove_handler(self._collecting_balls_complete)
+        self.machine.events.remove_handler(self._collecting_balls_entered_callback)
         self.machine.events.post('collecting_balls_complete')
         '''event: collecting_balls_complete
 
@@ -363,7 +337,6 @@ class BallController(MpfController):
         del kwargs
         del new_balls
         self.machine.events.post_relay('ball_drain',
-                                       callback=self._process_ball_drained,
                                        device=device,
                                        balls=unclaimed_balls)
         '''event: ball_drain
@@ -381,12 +354,3 @@ class BallController(MpfController):
         after the relay will be processed as newly-drained balls.
 
         '''
-
-        # What happens if the ball enters the trough but the ball_add_live
-        # event hasn't confirmed its eject? todo
-
-    def _process_ball_drained(self, balls=None, ev_result=None, **kwargs):
-        # We don't need to do anything here because other modules (ball save,
-        # the game, etc. should jump in and do whatever they need to do when a
-        # ball is drained.
-        pass

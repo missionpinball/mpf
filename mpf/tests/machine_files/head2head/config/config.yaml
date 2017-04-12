@@ -63,12 +63,16 @@ coils:
     number:
   c_lock_figur_front:
     number:
+    default_hold_power: 0.125
   c_lock_figur_back:
     number:
+    default_hold_power: 0.125
   c_feeder_front:
     number:
+    default_hold_power: 0.125
   c_feeder_back:
     number:
+    default_hold_power: 0.125
 
 ball_devices:
   bd_trough_front:

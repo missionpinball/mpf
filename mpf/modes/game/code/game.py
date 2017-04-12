@@ -4,7 +4,9 @@ Note that in the Mission Pinball Framework, a distinction is made between a
 *game* and a *machine*. A *game* refers to a game in progress, whereas a
 *machine* is the physical pinball machine.
 """
+from functools import partial
 
+from mpf.core.events import QueuedEvent
 from mpf.core.mode import Mode
 from mpf.core.player import Player
 
@@ -27,6 +29,10 @@ class Game(Mode):
         self.tilted = False
         self.player = None
         self.num_players = None
+        self._stopping_modes = []
+        self._stopping_queue = None
+
+        self.machine.events.add_handler('mode_{}_stopping'.format(self.name), self._stop_game_modes)
 
     @property
     def balls_in_play(self):
@@ -107,10 +113,30 @@ class Game(Mode):
         game: A reference to the game mode object.
         '''
 
+    def _stop_game_modes(self, queue: QueuedEvent, **kwargs):
+        """Stop all game modes and wait until they stopped."""
+        del kwargs
+        self._stopping_modes = []
+        for mode in self.machine.modes.values():
+            if mode.is_game_mode and mode.active:
+                self._stopping_modes.append(mode)
+                mode.stop(callback=partial(self._game_mode_stopped, mode=mode))
+
+        if self._stopping_modes:
+            queue.wait()
+            self._stopping_queue = queue
+
+    def _game_mode_stopped(self, mode):
+        """Mark game mode stopped and clear the wait on stop if this was the last one."""
+        self._stopping_modes.remove(mode)
+        if not self._stopping_modes:
+            self._stopping_queue.clear()
+            self._stopping_queue = None
+
     def mode_stop(self, **kwargs):
         """Stop mode."""
         for mode in self.machine.modes:
-            if mode.active and not mode.stopping and mode.config['mode']['game_mode']:
+            if mode.active and mode.is_game_mode:
                 raise AssertionError("Mode {} is not supposed to run outside of game.".format(mode.name))
         self.machine.game = None
 

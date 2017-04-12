@@ -93,32 +93,16 @@ autofire_coils:
     reverse_switch: single|bool|False
     enable_events: dict|str:ms|ball_started
     disable_events: dict|str:ms|ball_will_end, service_mode_entered
-    coil_overwrite: dict|str:str|None
+    coil_overwrite: dict|subconfig(coil_overwrites)|None
     switch_overwrite: dict|str:str|None
     ball_search_order: single|int|100
     playfield: single|machine(playfields)|playfield
-switch_overwrites:
-    __valid_in__: machine
-    debounce: single|enum(quick,normal,None)|None
-
 coil_overwrites:
     __valid_in__: machine
     recycle: single|bool|None
     pulse_ms: single|ms|None
-    pulse_power: single|int(0,8)|None
-    hold_power: single|int(0,8)|None
-fast_coil_overwrites:
-    __valid_in__: machine
-    pulse_power32: single|int|None
-    hold_power32: single|int|None
-    pulse_pwm_mask: single|int|None
-    hold_pwm_mask: single|int|None
-    recycle_ms: single|ms|None
-p_roc_coil_overwrites:
-    __valid_in__: machine
-    pwm_on_ms: single|int|None
-    pwm_off_ms: single|int|None
-
+    pulse_power: single|float(0,1)|None
+    hold_power: single|float(0,1)|None
 ball_devices:
     __valid_in__: machine
     exit_count_delay: single|ms|500ms
@@ -126,6 +110,7 @@ ball_devices:
     eject_coil: single|machine(coils)|None
     eject_coil_jam_pulse: single|ms|None
     eject_coil_retry_pulse: single|ms|None
+    eject_coil_max_wait_ms: single|ms|200ms
     retries_before_increasing_pulse: single|int|4
     hold_coil: single|machine(coils)|None
     hold_coil_release_time: single|ms|1s
@@ -220,14 +205,18 @@ bonus_entries:
 coils:
     __valid_in__: machine
     number: single|str|
-    pulse_ms: single|ms|None
-    pulse_power: single|int(0,8)|None
-    hold_power: single|int(0,8)|None
-    recycle: single|bool|False
-    allow_enable: single|bool|False
-    enable_events: dict|str:ms|None
+    default_recycle: single|bool|False
+    default_pulse_ms: single|ms|None
+    default_pulse_power: single|float(0,1)|None
+    default_hold_power: single|float(0,1)|None
+    max_pulse_ms: single|ms|None
+    max_pulse_power: single|float(0,1)|1.0
+    max_hold_power: single|float(0,1)|None
     disable_events: dict|str:ms|None
+    enable_events: dict|str:ms|None
     pulse_events: dict|str:ms|None
+    platform_settings: single|dict|None
+    psu: single|machine(psus)|default
     platform: single|str|None
 dual_wound_coils:
     __valid_in__: machine
@@ -236,20 +225,11 @@ dual_wound_coils:
     eos_switch: single|machine(switches)|None
 opp_coils:
     __valid_in__: machine
-    hold_power16: single|int|None
     recycle_factor: single|int|None
 fast_coils:
     __valid_in__: machine
-    pulse_power32: single|int|None
-    hold_power32: single|int|None
-    pulse_pwm_mask: single|int|None
-    hold_pwm_mask: single|int|None
     connection: single|enum(network,local,auto)|auto
     recycle_ms: single|ms|None
-p_roc_coils:
-    __valid_in__: machine
-    pwm_on_ms: single|int|None
-    pwm_off_ms: single|int|None
 coil_player:
     __valid_in__: machine, mode, show
     action: single|lstr|pulse
@@ -416,24 +396,7 @@ file_shows:
 flasher_player:
     __valid_in__: machine, mode, show
     __allow_others__:
-    ms: single|int|None
-flashers:   # TODO: this should be a coil + x. actually extend coil config
-    __valid_in__: machine
-    number: single|str|
-    flash_ms: single|ms|None
-    flash_events: dict|str:ms|None
-    platform: single|str|None
-    # driver settings
-    pulse_ms: single|int|None
-    pwm_on_ms: single|int|None
-    pwm_off_ms: single|int|None
-    pulse_power: single|int|None
-    hold_power: single|int|None
-    pulse_power32: single|int|None
-    hold_power32: single|int|None
-    pulse_pwm_mask: single|int|None
-    hold_pwm_mask: single|int|None
-    recycle: single|ms|None
+    ms: single|ms|100ms
 flippers:
     __valid_in__: machine
     main_coil: single|machine(coils)|
@@ -445,8 +408,8 @@ flippers:
     disable_events: dict|str:ms|ball_will_end, service_mode_entered
     # enable_no_hold_events: dict|str:ms|None
     # invert_events: dict|str:ms|None
-    main_coil_overwrite: dict|str:str|None
-    hold_coil_overwrite: dict|str:str|None
+    main_coil_overwrite: dict|subconfig(coil_overwrites)|None
+    hold_coil_overwrite: dict|subconfig(coil_overwrites)|None
     switch_overwrite: dict|str:str|None
     eos_switch_overwrite: dict|str:str|None
     power_setting_name: single|str|None
@@ -462,29 +425,14 @@ game:
     add_player_switch_tag: single|str|start
     allow_start_with_loose_balls: single|bool|False
     allow_start_with_ball_in_drain: single|bool|False
-gi_player:
-    __valid_in__: machine, mode, show
-    brightness: single|int_from_hex|ff
-    __allow_others__:
-gis:
-    __valid_in__: machine
-    number: single|str|
-    dimmable: single|bool|False
-    enable_events: dict|str:ms|machine_reset_phase_3
-    disable_events: dict|str:ms|None
-    platform: single|str|None
-    __allow_others__:
 hardware:
     __valid_in__: machine
     platform: list|str|virtual
     coils: list|str|default
     switches: list|str|default
-    matrix_lights: list|str|default
-    leds: list|str|default
+    lights: list|str|default
     dmd: list|str|default
     rgb_dmd: list|str|default
-    gis: list|str|default
-    flashers: list|str|default
     driverboards: single|str|
     servo_controllers: list|str|
     accelerometers: list|str|
@@ -511,7 +459,7 @@ kickbacks:
     reverse_switch: single|bool|False
     enable_events: dict|str:ms|None
     disable_events: dict|str:ms|ball_will_end, service_mode_entered
-    coil_overwrite: dict|str:str|None
+    coil_overwrite: dict|subconfig(coil_overwrites)|None
     switch_overwrite: dict|str:str|None
     ball_search_order: single|int|100
     playfield: single|machine(playfields)|playfield
@@ -522,27 +470,12 @@ led_player:
     color: single|str|white
     fade: single|ms|None
     __allow_others__:
-led_settings:
+light_settings:
     __valid_in__: machine
     color_correction_profiles: single|dict|None
     default_color_correction_profile: single|str|None
-    default_led_fade_ms: single|int|0
-leds:
-    __valid_in__: machine
-    number: single|str|
-    polarity: single|bool|False
-    default_color: single|color|ffffff
-    color_correction_profile: single|str|None
-    fade_ms: single|ms|None
-    type: single|lstr|rgb
-    on_events:  dict|str:ms|None
-    off_events:  dict|str:ms|None
-    platform: single|str|None
-    x: single|int|None
-    y: single|int|None
-    z: single|int|None
-    # color_channel_map: single|str|rgb     # not implemented
-led_stripes:
+    default_fade_ms: single|int|0
+light_stripes:
     __valid_in__: machine
     number_start: single|int|
     number_template: single|str|None
@@ -551,8 +484,8 @@ led_stripes:
     direction: single|float|None
     distance: single|float|None
     count: single|int|
-    led_template: single|subconfig(leds,device)|
-led_rings:
+    light_template: single|subconfig(lights,device)|
+light_rings:
     __valid_in__: machine
     number_start: single|int|
     number_template: single|str|None
@@ -561,38 +494,58 @@ led_rings:
     start_angle: single|float|0
     radius: single|float|None
     count: single|int|
-    led_template: single|subconfig(leds,device)|
+    light_template: single|subconfig(lights,device)|
+lights:
+    __valid_in__: machine
+    number: single|str|None
+    type: single|str|None
+    subtype: single|str|None
+    platform: single|str|None
+    platform_settings: single|dict|None
+    fade_ms: single|ms|None
+    color_correction_profile: single|str|None
+    default_fade_ms: single|ms|None
+    default_on_color: single|color|ffffff
+    channels: single|dict|None
+    x: single|int|None
+    y: single|int|None
+    z: single|int|None
+light_channels:
+    number: single|str|
+    subtype: single|str|None
+    platform: single|str|None
+    platform_settings: single|dict|None
 light_player:
     __valid_in__: machine, mode, show
-    brightness: single|int_from_hex|ff
-    fade: single|ms|0
+    color: single|str|white
+    fade: single|ms|None
     __allow_others__:
-logic_blocks:                                       # todo add validation
+logic_blocks_common:
+    enable_events: dict|str:ms|None
+    disable_events: dict|str:ms|None
+    reset_events: dict|str:ms|None
+    restart_events: dict|str:ms|None
+    reset_on_complete: single|bool|True
+    disable_on_complete: single|bool|True
+    persist_state: single|bool|False
+    events_when_complete: list|str|None
+    events_when_hit: list|str|None
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
+accruals:
     __valid_in__: machine, mode
-    common:
-        enable_events: list|str|None
-        disable_events: list|str|None
-        reset_events: list|str|None
-        restart_events: list|str|None
-        reset_on_complete: single|bool|True
-        disable_on_complete: single|bool|True
-        persist_state: single|bool|False
-        events_when_complete: list|str|None
-        events_when_hit: list|str|None
-        player_variable: single|str|None
-        console_log: single|enum(none,basic,full)|none
-        file_log: single|enum(none,basic,full)|basic
-    accrual:
-        events: list|str|
-    counter:
-        count_events: list|str|
-        count_complete_value: single|template_int|None
-        multiple_hit_window: single|ms|0
-        count_interval: single|int|1
-        direction: single|str|up
-        starting_count: single|template_int|0
-    sequence:
-        events: list|str|
+    events: list|str|
+counters:
+    __valid_in__: machine, mode
+    count_events: dict|str:ms|
+    count_complete_value: single|template_int|None
+    multiple_hit_window: single|ms|0
+    count_interval: single|int|1
+    direction: single|str|up
+    starting_count: single|template_int|0
+sequences:
+    __valid_in__: machine, mode
+    events: list|str|
 logging:
     __valid_in__: machine
     __allow_others__: true
@@ -711,7 +664,6 @@ open_pixel_control:
     host: single|str|localhost
     port: single|int|7890
     connection_attempts: single|int|-1
-    number_format: single|enum(int,hex)|int
     debug: single|bool|False
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
@@ -733,14 +685,10 @@ p3_roc:
     debug: single|bool|False
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
-physical_dmd:
+psus:
     __valid_in__: machine
-    shades: single|pow2|16
-    fps: single|int|30
-    source_display: single|str|dmd
-    luminosity: list|float|.299, .587, .114
-    brightness: single|float|0.5
-    only_send_changes: single|bool|False
+    voltage: single|int|None
+    max_amps: single|int|None
 physical_dmds:
     __valid_in__: machine
     platform: single|str|None
@@ -751,12 +699,6 @@ physical_dmds:
     brightness: single|float|1.0
     gamma: single|float|1.0
     only_send_changes: single|bool|False
-physical_rgb_dmd:
-    __valid_in__: machine
-    fps: single|int|30
-    source_display: single|str|dmd
-    only_send_changes: single|bool|False
-    brightness: single|float|1.0
 physical_rgb_dmds:
     __valid_in__: machine
     platform: single|str|None

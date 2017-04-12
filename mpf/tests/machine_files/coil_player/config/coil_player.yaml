@@ -3,12 +3,12 @@
 coils:
   coil_1:
     number:
-    allow_enable: true
+    default_hold_power: 1.0
   coil_2:
     number:
   coil_3:
     number:
-    allow_enable: true
+    default_hold_power: 1.0
 
 coil_player:
   event1: coil_1

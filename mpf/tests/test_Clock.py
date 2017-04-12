@@ -10,13 +10,8 @@ from functools import partial
 counter = 0
 
 
-def callback(dt):
-    """Global test cb.
-
-    Args:
-        dt:
-    """
-    del dt
+def callback():
+    """Global test cb."""
     global counter
     counter += 1
 
@@ -26,14 +21,16 @@ class ClockTestCase(unittest.TestCase):
     def setUp(self):
         global counter
         counter = 0
+        if not asyncio.get_event_loop:
+            self.skipTest("Clock broken")
+            return
         self.clock = ClockBase()
         self.callback_order = []
 
     def advance_time_and_run(self, delta=1.0):
         asyncio.get_event_loop().run_until_complete(asyncio.sleep(delay=delta))
 
-    def callback1(self, number, dt):
-        del dt
+    def callback1(self, number):
         self.callback_order.append(number)
 
     def test_schedule_once(self):

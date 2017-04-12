@@ -1,5 +1,6 @@
 """A kickback device which will fire a ball back into the playfield."""
 from mpf.core.device_monitor import DeviceMonitor
+from mpf.core.events import event_handler
 from mpf.devices.autofire import AutofireCoil
 
 
@@ -12,19 +13,21 @@ class Kickback(AutofireCoil):
     collection = 'kickbacks'
     class_label = 'kickback'
 
+    @event_handler(10)
     def enable(self, **kwargs):
         """Add switch handler and call parent."""
         if not self._enabled:
-            self.switch.add_handler(self._hit)
+            self.config['switch'].add_handler(self._hit)
 
         super().enable(**kwargs)
 
+    @event_handler(1)
     def disable(self, **kwargs):
         """Remove switch handler and call parent."""
         if self._enabled:
-            self.switch.remove_handler(self._hit)
+            self.config['switch'].remove_handler(self._hit)
 
-        super().enable(**kwargs)
+        super().disable(**kwargs)
 
     def _hit(self):
         """Post fired event."""

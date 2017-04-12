@@ -3,24 +3,24 @@ import importlib
 import os
 from collections import namedtuple
 
+from typing import Callable
+from typing import Dict
+from typing import List
+from typing import Tuple
 from typing import Optional
 
+from mpf.core.events import QueuedEvent
+from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
 from mpf.core.config_processor import ConfigProcessor
 from mpf.core.utility_functions import Util
 from mpf.core.mpf_controller import MpfController
 
-RemoteMethod = namedtuple('RemoteMethod',
-                          'method config_section kwargs priority',
-                          verbose=False)
+RemoteMethod = namedtuple('RemoteMethod', ['method', 'config_section', 'kwargs', 'priority'])
 """RemotedMethod is used by other modules that want to register a method to
 be called on mode_start or mode_stop.
 
 """
-
-# Need to define RemoteMethod before import Mode since the mode module imports
-# it. So this breaks some rules now. Probably should figure out some other way
-# to do this? TODO
 
 
 class ModeController(MpfController):
@@ -34,24 +34,25 @@ class ModeController(MpfController):
 
     """
 
-    def __init__(self, machine):
+    def __init__(self, machine: MachineController) -> None:
         """Initialise mode controller."""
         super().__init__(machine)
 
-        self.queue = None  # ball ending event queue
+        # ball ending event queue
+        self.queue = None                           # type: QueuedEvent
 
-        self.active_modes = list()
+        self.active_modes = list()                  # type: List[Mode]
         self.mode_stop_count = 0
 
-        self._machine_mode_folders = dict()
-        self._mpf_mode_folders = dict()
+        self._machine_mode_folders = dict()         # type: Dict[str, str]
+        self._mpf_mode_folders = dict()             # type: Dict[str, str]
 
         # The following two lists hold namedtuples of any remote components
         # that need to be notified when a mode object is created and/or
         # started.
-        self.loader_methods = list()
-        self.start_methods = list()
-        self.stop_methods = list()
+        self.loader_methods = list()                # type: List[RemoteMethod]
+        self.start_methods = list()                 # type: List[RemoteMethod]
+        self.stop_methods = list()                  # type: List[Tuple[Callable[[Mode], None], int]]
 
         if 'modes' in self.machine.config:
             self.machine.events.add_handler('init_phase_2',
@@ -162,11 +163,11 @@ class ModeController(MpfController):
         try:
             file_name, class_name = code_path.split('.')
         except ValueError:
-            return False
+            return None
 
         # check if that mode name exist in machine folder
         if mode_string not in self._machine_mode_folders:
-            return False
+            return None
 
         # try to import
         try:
@@ -175,9 +176,9 @@ class ModeController(MpfController):
                 self._machine_mode_folders[mode_string] + '.code.' +
                 file_name)
         except ImportError:
-            return False
+            return None
 
-        return getattr(i, class_name, False)
+        return getattr(i, class_name, None)
 
     @staticmethod
     def _load_mode_from_full_path(code_path: str) -> Optional[Mode]:
@@ -188,7 +189,7 @@ class ModeController(MpfController):
         try:
             return Util.string_to_class(code_path)
         except ImportError:
-            return False
+            return None
 
     def _load_mode_code(self, mode_string: str, code_path: str) -> Mode:
         """Load code for mode."""
@@ -430,11 +431,10 @@ class ModeController(MpfController):
 
     def remove_stop_method(self, callback, priority=0):
         """Remove an existing stop method."""
-
         if (callback, priority) in self.stop_methods:
             self.stop_methods.remove((callback, priority))
 
-    def set_mode_state(self, mode, active):
+    def set_mode_state(self, mode: Mode, active: bool):
         """Called when a mode goes active or inactive."""
         if active:
             self.active_modes.append(mode)

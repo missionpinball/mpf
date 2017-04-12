@@ -6,10 +6,11 @@ game:
 coils:
     c_flipper_main:
         number:
-        pulse_ms: 10
+        default_pulse_ms: 10
+        default_hold_power: 0.125
     c_flipper_hold:
         number:
-        hold_power: 1
+        default_hold_power: 1.0
 
 
 switches:

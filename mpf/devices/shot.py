@@ -4,6 +4,7 @@ import uuid
 from copy import copy, deepcopy
 
 import mpf.core.delays
+from mpf.core.events import event_handler
 from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
 
@@ -154,6 +155,7 @@ class Shot(ModeDevice, SystemWideDevice):
 
         self.switch_handlers_active = False
 
+    @event_handler(6)
     def advance(self, steps=1, mode=None, force=False, **kwargs):
         """Advance a shot profile forward.
 
@@ -359,6 +361,7 @@ class Shot(ModeDevice, SystemWideDevice):
                     break
         return _wf
 
+    @event_handler(5)
     def hit(self, mode='default#$%', _wf=None, **kwargs):
         """Advance the currently-active shot profile.
 
@@ -385,14 +388,13 @@ class Shot(ModeDevice, SystemWideDevice):
                 not len(self.config['sequence'])):
             return
 
-        if mode == 'default#$%':
-            mode = self.get_profile_by_key('enable', True)['mode']
-
-        try:
-            if not self.get_profile_by_key('enable', True)['enable']:
-                return
-        except TypeError:
+        profile = self.get_profile_by_key('enable', True)
+        # bail out early if we have no profile
+        if not profile:
             return
+
+        if mode == 'default#$%':
+            mode = profile['mode']
 
         profile_settings = self.get_profile_by_key('mode', mode)
 
@@ -646,13 +648,17 @@ class Shot(ModeDevice, SystemWideDevice):
         self.debug_log("Received jump request. Mode: %s, State: %s, Show step:"
                        " %s, Force: %s", mode, state, show_step, force)
 
-        if not (self.get_profile_by_key('mode', mode)['enable'] or force):
+        profile = self.get_profile_by_key('mode', mode)
+        if not profile:
+            return
+
+        if not (profile['enable'] or force):
             self.debug_log("Profile is disabled and force is False. Not "
                            "jumping")
             return
 
         try:
-            if state == self.player[self.get_profile_by_key('mode', mode)['settings']['player_variable']]:
+            if state == self.player[profile['settings']['player_variable']]:
                 self.debug_log("Shot is already in the jump destination state")
                 return
         except KeyError:
@@ -661,14 +667,14 @@ class Shot(ModeDevice, SystemWideDevice):
 
         self.debug_log("Jumping to profile state '%s'", state)
 
-        self.player[
-            self.get_profile_by_key('mode', mode)['settings']['player_variable']] = state
+        self.player[profile['settings']['player_variable']] = state
         self.update_current_state_name(mode)
 
         self.debug_log("Jump is for active mode. Updating lights")
 
         self._update_show(mode=mode, show_step=show_step)
 
+    @event_handler(10)
     def enable(self, mode=None, profile=None, **kwargs):
         """Enable shot."""
         del kwargs
@@ -678,6 +684,7 @@ class Shot(ModeDevice, SystemWideDevice):
 
         self.update_profile(profile=profile, enable=True, mode=mode)
 
+    @event_handler(0)
     def disable(self, mode=None, **kwargs):
         """Disable this shot.
 
@@ -686,6 +693,7 @@ class Shot(ModeDevice, SystemWideDevice):
         del kwargs
         self.update_profile(enable=False, mode=mode)
 
+    @event_handler(1)
     def reset(self, mode=None, **kwargs):
         """Reset the shot profile for the passed mode back to the first state (State 0) and reset all sequences."""
         del kwargs
@@ -708,6 +716,7 @@ class Shot(ModeDevice, SystemWideDevice):
         except TypeError:
             profile['current_state_name'] = None
 
+    @event_handler(2)
     def remove_active_profile(self, mode='default#$%', **kwargs):
         """Remove the active profile."""
         del kwargs

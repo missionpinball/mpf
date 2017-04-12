@@ -7,32 +7,13 @@ switches:
 
 coils:
     c_test:
-        pulse_power32: 123
-        pwm_on_ms: 5
-        pwm_off_ms: 1
+        default_pulse_power: 0.128
         number: 1
     c_test_no_allow_enable:
         number: 2
     c_test_allow_enable:
         number: 3
-        allow_enable: True
-    c_test_hold_fast:
-        number: 4
-        hold_power32: 123
-    c_test_hold_p_roc:
-        number: 5
-        pwm_on_ms: 1
-        pwm_off_ms: 2
+        max_hold_power: 1.0
     c_test_hold_power:
-        number: 6
-        hold_power: 3
-
-autofire_coils:
-    ac_test:
-        coil: c_test
-        switch: s_test
-        coil_overwrite:
-            pwm_off_ms: 20
-            pulse_pwm_mask: 123
-        switch_overwrite:
-            debounce: quick
+        number: 4
+        default_hold_power: 0.1

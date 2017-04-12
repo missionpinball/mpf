@@ -23,10 +23,12 @@ class DeviceManager(MpfController):
                                         self._load_device_modules)
 
         self.machine.events.add_handler('init_phase_2',
-                                        self.create_machinewide_device_control_events)
+                                        self.create_machinewide_device_control_events,
+                                        priority=2)
 
         self.machine.events.add_handler('init_phase_2',
-                                        self.create_collection_control_events)
+                                        self.create_collection_control_events,
+                                        priority=1)
 
     def get_monitorable_devices(self):
         """Return all devices which are registered as monitorable."""
@@ -79,6 +81,15 @@ class DeviceManager(MpfController):
 
         self.load_devices_config(validate=True)
         self.initialize_devices()
+
+    def stop_devices(self):
+        """Stop all devices in the machine."""
+        for device_type in self.machine.config['mpf']['device_modules']:
+            device_cls = Util.string_to_class(device_type)
+            collection_name, config = device_cls.get_config_info()
+            for device in getattr(self.machine, collection_name):
+                if hasattr(device, "stop_device"):
+                    device.stop_device()
 
     def create_devices(self, collection_name, config):
         """Create devices for collection."""
@@ -188,11 +199,18 @@ class DeviceManager(MpfController):
                     for control_event in control_events:
                         # get events from this device's config
                         if settings[control_event]:
+                            if not isinstance(settings[control_event], dict):
+                                raise AssertionError("Type of {}:{} should be dict|str:ms| in config_spec".format(
+                                    collection, control_event))
                             for event, delay in settings[control_event].items():
+                                try:
+                                    method = getattr(self.collections[collection][device], control_event[:-7])
+                                except:
+                                    raise AssertionError("Class {} needs to have method {} to handle {}".format(
+                                        self.collections[collection][device], control_event[:-7], control_event
+                                    ))
                                 yield (event,
-                                       getattr(self.collections
-                                               [collection][device],
-                                               control_event[:-7]),
+                                       method,
                                        delay,
                                        self.collections[collection][device])
 
@@ -206,13 +224,20 @@ class DeviceManager(MpfController):
                 event, priority = event.split('|')
             except ValueError:
                 priority = 0
-            self.machine.events.add_handler(
-                event=event,
-                handler=self._control_event_handler,
-                priority=int(priority),
-                callback=method,
-                ms_delay=delay,
-                delay_mgr=self.machine.delay)
+
+            if delay:
+                self.machine.events.add_handler(
+                    event=event,
+                    handler=self._control_event_handler,
+                    priority=int(priority),
+                    callback=method,
+                    ms_delay=delay,
+                    delay_mgr=self.machine.delay)
+            else:
+                self.machine.events.add_handler(
+                    event=event,
+                    handler=method,
+                    priority=int(priority))
 
     def create_collection_control_events(self, **kwargs):
         """Create control events for collection."""
@@ -231,17 +256,11 @@ class DeviceManager(MpfController):
         for device in self.collections[collection]:
             getattr(device, method)()
 
-    def _control_event_handler(self, callback, ms_delay=0, delay_mgr=None,
-                               mode=None, **kwargs):
+    def _control_event_handler(self, callback, ms_delay, delay_mgr=None, **kwargs):
         del kwargs
 
-        self.debug_log("_control_event_handler: mode: %s, callback: %s,", mode,
-                       callback)
-
-        if ms_delay:
-            delay_mgr.add(ms=ms_delay, callback=callback, mode=mode)
-        else:
-            callback(mode=mode)
+        self.debug_log("_control_event_handler: callback: %s,", callback)
+        delay_mgr.add(ms=ms_delay, callback=callback)
 
     def _create_default_control_events(self, device_list):
         for device in device_list:

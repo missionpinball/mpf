@@ -94,7 +94,7 @@ class TestBallLock(MpfTestCase):
         self.advance_time_and_run(1)
 
         # trough ejects
-        coil1.pulse.assert_called_once_with()
+        self.assertTrue(coil1.pulse.called)
         assert not coil2.pulse.called
         assert not coil3.pulse.called
 
@@ -107,8 +107,8 @@ class TestBallLock(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEqual(1, launcher.balls)
 
-        coil1.pulse.assert_called_once_with()
-        coil2.pulse.assert_called_once_with()
+        self.assertTrue(coil1.pulse.called)
+        self.assertTrue(coil2.pulse.called)
         assert not coil3.pulse.called
 
         # launcher shoots the ball
@@ -135,7 +135,7 @@ class TestBallLock(MpfTestCase):
         self.assertEqual(1, lock.balls)
 
         # it will request another ball
-        coil1.pulse.assert_called_once_with()
+        self.assertTrue(coil1.pulse.called)
         assert not coil2.pulse.called
         assert not coil3.pulse.called
 
@@ -154,8 +154,8 @@ class TestBallLock(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEqual(1, launcher.balls)
 
-        coil1.pulse.assert_called_once_with()
-        coil2.pulse.assert_called_once_with()
+        self.assertTrue(coil1.pulse.called)
+        self.assertTrue(coil2.pulse.called)
         assert not coil3.pulse.called
 
         # launcher shoots the ball
@@ -183,9 +183,9 @@ class TestBallLock(MpfTestCase):
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
 
         # lock should eject all balls
-        coil1.pulse.assert_called_once_with()
-        coil2.pulse.assert_called_once_with()
-        coil3.pulse.assert_called_once_with()
+        self.assertTrue(coil1.pulse.called)
+        self.assertTrue(coil2.pulse.called)
+        self.assertTrue(coil3.pulse.called)
 
         self.machine.switch_controller.process_switch("s_ball_switch_lock1", 0)
         self.advance_time_and_run(1)
@@ -275,7 +275,7 @@ class TestBallLock(MpfTestCase):
         self.advance_time_and_run(1)
 
         # it should eject it right away
-        coil3.pulse.assert_called_once_with()
+        self.assertTrue(coil3.pulse.called)
         coil3.pulse = MagicMock()
         self.assertTrue(lock_logic.is_full())
         self.advance_time_and_run(1)
@@ -288,7 +288,7 @@ class TestBallLock(MpfTestCase):
         lock_logic.release_all_balls()
         self.advance_time_and_run(1)
         self.assertEqual(0, lock.available_balls)
-        coil3.pulse.assert_called_once_with()
+        self.assertTrue(coil3.pulse.called)
         coil3.pulse = MagicMock()
         self.advance_time_and_run(1)
         self.machine.switch_controller.process_switch("s_ball_switch_lock2", 0)
@@ -296,7 +296,7 @@ class TestBallLock(MpfTestCase):
         self.assertFalse(lock_logic.is_full())
 
         self.advance_time_and_run(11)
-        coil3.pulse.assert_called_once_with()
+        self.assertTrue(coil3.pulse.called)
         coil3.pulse = MagicMock()
         self.advance_time_and_run(1)
         self.machine.switch_controller.process_switch("s_ball_switch_lock1", 0)
@@ -347,7 +347,7 @@ class TestBallLock(MpfTestCase):
         self.advance_time_and_run(1)
 
         # trough ejects
-        coil1.pulse.assert_called_once_with()
+        self.assertTrue(coil1.pulse.called)
         assert not coil2.pulse.called
         assert not coil3.pulse.called
 
@@ -360,8 +360,8 @@ class TestBallLock(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEqual(1, launcher.balls)
 
-        coil1.pulse.assert_called_once_with()
-        coil2.pulse.assert_called_once_with()
+        self.assertTrue(coil1.pulse.called)
+        self.assertTrue(coil2.pulse.called)
         assert not coil3.pulse.called
 
         # launcher shoots the ball
@@ -379,7 +379,7 @@ class TestBallLock(MpfTestCase):
         self.assertEqual(1, lock.balls)
 
         # it will request another ball
-        coil1.pulse.assert_called_once_with()
+        self.assertTrue(coil1.pulse.called)
         assert not coil2.pulse.called
         assert not coil3.pulse.called
 
@@ -398,8 +398,8 @@ class TestBallLock(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEqual(1, launcher.balls)
 
-        coil1.pulse.assert_called_once_with()
-        coil2.pulse.assert_called_once_with()
+        self.assertTrue(coil1.pulse.called)
+        self.assertTrue(coil2.pulse.called)
         assert not coil3.pulse.called
 
         # launcher shoots the ball
@@ -425,9 +425,9 @@ class TestBallLock(MpfTestCase):
         self.advance_time_and_run(1)
 
         # lock should eject a ball
-        coil1.pulse.assert_called_once_with()
-        coil2.pulse.assert_called_once_with()
-        coil3.pulse.assert_called_once_with()
+        self.assertTrue(coil1.pulse.called)
+        self.assertTrue(coil2.pulse.called)
+        self.assertTrue(coil3.pulse.called)
 
         self.machine.switch_controller.process_switch("s_ball_switch_lock1", 0)
         self.advance_time_and_run(1)
@@ -475,8 +475,8 @@ class TestBallLock(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEqual(1, launcher.balls)
 
-        coil1.pulse.assert_called_once_with()
-        coil2.pulse.assert_called_once_with()
+        self.assertTrue(coil1.pulse.called)
+        self.assertTrue(coil2.pulse.called)
         assert not coil3.pulse.called
 
         # launcher shoots the ball

@@ -1,6 +1,6 @@
 #config_version=4
 
-led_settings:
+light_settings:
     color_correction_profiles:
         correction_profile_1:
             gamma: 1
@@ -8,36 +8,37 @@ led_settings:
             linear_slope: 0.75
             linear_cutoff: 0.1
 
-leds:
+lights:
   led1:
     number: 1
     debug: True
   led2:
-    number: 2, 3, 4
+    channels:
+      red:
+        number: 4
+      green:
+        number: 3
+      blue:
+        number: 2
+    debug: True
+  led_bgr_2:
     type: bgr
+    number: 42
     debug: True
   led3:
-    number: 7, 8, 9, 10
-    type: rgbw
+    channels:
+      red:
+        number: 7
+      green:
+        number: 8
+      blue:
+        number: 9
+      white:
+        number: 10
     debug: True
   led4:
     number: 11
     fade_ms: 1s
-  led5:
-    number: 12, 13, 14
-    type: w+-
-    debug: True
-  led_lights:
-    number: light_r, light_g, light_b
-    platform: lights
   led_corrected:
     number:
     color_correction_profile: correction_profile_1
-
-matrix_lights:
-    light_r:
-        number: 2
-    light_g:
-        number: 3
-    light_b:
-        number: 4

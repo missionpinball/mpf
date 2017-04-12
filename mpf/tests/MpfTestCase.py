@@ -12,6 +12,9 @@ from unittest.mock import *
 import asyncio
 from asyncio import events
 import ruamel.yaml as yaml
+
+from mpf.core.config_validator import ConfigDict
+from mpf.core.logging import LogMixin
 from mpf.core.rgb_color import RGBColor
 
 from mpf.tests.TestDataManager import TestDataManager
@@ -30,7 +33,7 @@ class TestMachineController(MachineController):
 
     """MachineController used in tests."""
 
-    local_mpf_config_cache = {}
+    local_mpf_config_cache = {}     # type: ConfigDict
 
     def __init__(self, mpf_path, machine_path, options, config_patches, clock, mock_data,
                  enable_plugins=False):
@@ -70,6 +73,8 @@ class MpfTestCase(unittest.TestCase):
     def __init__(self, methodName='runTest'):
         self._get_event_loop = None
         self._get_event_loop2 = None
+
+        LogMixin.unit_test = True
 
         super().__init__(methodName)
         self.machine = None     # type: TestMachineController
@@ -301,13 +306,29 @@ class MpfTestCase(unittest.TestCase):
         self.assertIn(name, self.machine.switch_controller.switches, "Switch {} does not exist.".format(name))
         self.assertEqual(state, self.machine.switch_controller.is_active(name))
 
-    def assertLedColor(self, led_name, color):
+    def assertLightChannel(self, light_name, brightness, channel="white"):
+        self.assertAlmostEqual(brightness / 255.0, self.machine.lights[light_name].hw_drivers[channel].
+                               current_brightness)
+
+    def assertNotLightChannel(self, light_name, brightness, channel="white"):
+        self.assertNotEqual(brightness, self.machine.lights[light_name].hw_drivers[channel].
+                            current_brightness)
+
+    def assertLightColor(self, light_name, color):
         if isinstance(color, str) and color.lower() == 'on':
-            color = self.machine.leds[led_name].config['default_color']
+            color = self.machine.lights[light_name].config['default_on_color']
 
-        self.assertEqual(list(RGBColor(color).rgb), self.machine.leds[led_name].hw_driver.current_color)
+        self.assertEqual(RGBColor(color), self.machine.lights[light_name].get_color(),
+                         "{} != {}".format(RGBColor(color).name, self.machine.lights[light_name].get_color().name))
 
-    def assertLedColors(self, led_name, color_list, secs=1, check_delta=.1):
+    def assertNotLightColor(self, light_name, color):
+        if isinstance(color, str) and color.lower() == 'on':
+            color = self.machine.lights[light_name].config['default_on_color']
+
+        self.assertNotEqual(RGBColor(color), self.machine.lights[light_name].get_color(),
+                            "{} == {}".format(RGBColor(color).name, self.machine.lights[light_name].get_color().name))
+
+    def assertLightColors(self, light_name, color_list, secs=1, check_delta=.1):
         colors = list()
 
         # have to do it this weird way because `if 'on' in color_list:` doesn't
@@ -315,11 +336,12 @@ class MpfTestCase(unittest.TestCase):
         for color in color_list[:]:
             if isinstance(color, str) and color.lower() == 'on':
                 color_list.remove('on')
-                color_list.append(self.machine.leds[led_name].config['default_color'])
+                color_list.append(self.machine.lights[light_name].config['default_on_color'])
                 break
 
         for x in range(int(secs / check_delta)):
-            colors.append(RGBColor(self.machine.leds[led_name].hw_driver.current_color))
+            color = self.machine.lights[light_name].get_color()
+            colors.append(color)
             self.advance_time_and_run(check_delta)
 
         for color in color_list:

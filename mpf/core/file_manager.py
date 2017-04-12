@@ -3,6 +3,10 @@
 import logging
 import os
 import importlib
+
+from typing import Dict
+from typing import List
+
 import mpf.file_interfaces
 
 
@@ -10,7 +14,7 @@ class FileInterface(object):
 
     """Interface for config files."""
 
-    file_types = list()
+    file_types = list()     # type: List[str]
 
     def __init__(self):
         """Initialise file manager."""
@@ -57,7 +61,7 @@ class FileInterface(object):
         """
         raise NotImplementedError
 
-    def load(self, filename, verify_version=True, halt_on_error=True,
+    def load(self, filename, verify_version=False, halt_on_error=True,
              round_trip=False):
         """Load file."""
         raise NotImplementedError
@@ -72,16 +76,16 @@ class FileManager(object):
     """Manages file interfaces."""
 
     log = logging.getLogger('FileManager')
-    file_interfaces = dict()
+    file_interfaces = dict()    # type: Dict[str, FileInterface]
     initialized = False
 
     @classmethod
     def init(cls):
         """Initialise file manager."""
         # Needs to be a separate method to prevent circular import
-        for module in mpf.file_interfaces.__all__:
-            importlib.import_module('mpf.file_interfaces.{}'.format(module))
-            module_obj = getattr(mpf.file_interfaces, module)
+        for module_name in mpf.file_interfaces.__all__:
+            importlib.import_module('mpf.file_interfaces.{}'.format(module_name))
+            module_obj = getattr(mpf.file_interfaces, module_name)
             interface_class = getattr(module_obj, "file_interface_class")
 
             this_instance = interface_class()
@@ -117,7 +121,7 @@ class FileManager(object):
                     if questionable_file:
                         return questionable_file
 
-                raise FileNotFoundError("File not found: {}".format(filename))
+            raise FileNotFoundError("File not found: {}".format(filename))
 
         else:
             return filename

@@ -15,8 +15,9 @@ from ruamel.yaml.scanner import Scanner, RoundTripScanner
 from ruamel.yaml.parser_ import Parser
 from ruamel.yaml.composer import Composer
 from ruamel.yaml.constructor import Constructor, RoundTripConstructor, ConstructorError
-from ruamel.yaml.compat import to_str
 from ruamel.yaml.dumper import RoundTripDumper
+from typing import Any
+from typing import Dict
 
 from mpf.core.file_manager import FileInterface, FileManager
 from mpf.core.utility_functions import Util
@@ -140,7 +141,8 @@ class MpfConstructor(Constructor):
             value = self.construct_object(value_node, deep=deep)
             # next two lines differ from original
             if key in mapping:
-                raise KeyError("Key \"{}\" was defined multiple times in config.".format(key))
+                raise KeyError("Key \"{}\" was defined multiple times in config {}".
+                               format(key, key_node.start_mark))
             mapping[key] = value
         return mapping
 
@@ -183,7 +185,7 @@ class YamlInterface(FileInterface):
 
     file_types = ['.yaml', '.yml']
     cache = False
-    file_cache = dict()
+    file_cache = dict()     # type: Dict[str, Any]
 
     @staticmethod
     def get_config_file_version(filename):

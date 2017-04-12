@@ -73,20 +73,20 @@ class TestFadecandy(MpfTestCase):
 
     def test_led_color(self):
         # test led on channel 0. position 99
-        self.machine.leds.test_led.on()
+        self.machine.lights.test_led.on()
         self.advance_time_and_run(.02)
         self._messages = []
         self.advance_time_and_run(1)
         self.assertOpenPixelLedsSent({99: (255, 255, 255)}, {})
 
         # test led 20 ond channel 0
-        self.machine.leds.test_led2.color(RGBColor((255, 0, 0)))
+        self.machine.lights.test_led2.color(RGBColor((255, 0, 0)))
         self.advance_time_and_run(.02)
         self._messages = []
         self.advance_time_and_run(1)
         self.assertOpenPixelLedsSent({20: (255, 0, 0), 99: (255, 255, 255)}, {})
 
-        self.machine.leds.test_led.off()
+        self.machine.lights.test_led.off()
         self.advance_time_and_run(.02)
         self._messages = []
         self.advance_time_and_run(1)
@@ -94,14 +94,14 @@ class TestFadecandy(MpfTestCase):
         self._messages = []
 
         # test led color
-        self.machine.leds.test_led.color(RGBColor((2, 23, 42)))
+        self.machine.lights.test_led.color(RGBColor((2, 23, 42)))
         self.advance_time_and_run(.02)
         self._messages = []
         self.advance_time_and_run(1)
         self.assertOpenPixelLedsSent({20: (255, 0, 0), 99: (2, 23, 42)}, {})
 
         # test led on channel 1
-        self.machine.leds.test_led3.on()
+        self.machine.lights.test_led3.on()
         self.advance_time_and_run(.02)
         self._messages = []
         self.advance_time_and_run(1)

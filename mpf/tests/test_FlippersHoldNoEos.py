@@ -1,3 +1,7 @@
+from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, HoldSettings
+
+from mpf.core.platform import SwitchSettings, DriverSettings
+
 from mpf.tests.MpfTestCase import MpfTestCase
 from unittest.mock import MagicMock, call
 
@@ -29,24 +33,54 @@ class TestFlippers(MpfTestCase):
         self.assertEqual(1, len(self.machine.default_platform.set_pulse_on_hit_and_release_rule._mock_call_args_list))
         self.assertEqual(1, len(self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule.
                                 _mock_call_args_list))
-        # TODO: check parameter for rule main pulse
-        # TODO: check parameter for rule hold pwm
+
+        self.machine.default_platform.set_pulse_on_hit_and_release_rule.assert_called_once_with(
+            SwitchSettings(hw_switch=self.machine.switches.s_left_flipper.hw_switch, invert=False, debounce=False),
+            DriverSettings(hw_driver=self.machine.coils.c_flipper_left_main.hw_driver,
+                           pulse_settings=PulseSettings(power=1.0, duration=30),
+                           hold_settings=None, recycle=False)
+        )
+
+        self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule.assert_called_once_with(
+            SwitchSettings(hw_switch=self.machine.switches.s_left_flipper.hw_switch, invert=False, debounce=False),
+            DriverSettings(hw_driver=self.machine.coils.c_flipper_left_hold.hw_driver,
+                           pulse_settings=PulseSettings(power=1.0, duration=10),
+                           hold_settings=HoldSettings(power=1.0), recycle=False)
+        )
 
         self.machine.default_platform.clear_hw_rule = MagicMock()
         self.machine.flippers.left_flipper.disable()
         self.assertFalse(self.machine.flippers.left_flipper._enabled)
 
         self.machine.default_platform.clear_hw_rule.assert_has_calls(
-            [call(self.machine.flippers.left_flipper.switch.get_configured_switch(),
-                  self.machine.flippers.left_flipper.main_coil.get_configured_driver()),
-             call(self.machine.flippers.left_flipper.switch.get_configured_switch(),
-                  self.machine.flippers.left_flipper.hold_coil.get_configured_driver())]
-        )
+            [call(
+                SwitchSettings(hw_switch=self.machine.switches.s_left_flipper.hw_switch, invert=False, debounce=False),
+                DriverSettings(hw_driver=self.machine.coils.c_flipper_left_main.hw_driver,
+                               pulse_settings=PulseSettings(power=1.0, duration=30),
+                               hold_settings=None, recycle=False)
+            ),
+             call(
+                 SwitchSettings(hw_switch=self.machine.switches.s_left_flipper.hw_switch, invert=False, debounce=False),
+                 DriverSettings(hw_driver=self.machine.coils.c_flipper_left_hold.hw_driver,
+                                pulse_settings=PulseSettings(power=1.0, duration=10),
+                                hold_settings=HoldSettings(power=1.0), recycle=False)
+            )
+        ], any_order=True)
 
         self.machine.default_platform.set_pulse_on_hit_and_release_rule = MagicMock()
         self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule = MagicMock()
+
         self.machine.flippers.left_flipper.enable()
-        self.assertTrue(self.machine.flippers.left_flipper._enabled)
-        self.assertEqual(1, len(self.machine.default_platform.set_pulse_on_hit_and_release_rule._mock_call_args_list))
-        self.assertEqual(1, len(self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule.
-                                _mock_call_args_list))
+        self.machine.default_platform.set_pulse_on_hit_and_release_rule.assert_called_once_with(
+            SwitchSettings(hw_switch=self.machine.switches.s_left_flipper.hw_switch, invert=False, debounce=False),
+            DriverSettings(hw_driver=self.machine.coils.c_flipper_left_main.hw_driver,
+                           pulse_settings=PulseSettings(power=1.0, duration=30),
+                           hold_settings=None, recycle=False)
+        )
+
+        self.machine.default_platform.set_pulse_on_hit_and_enable_and_release_rule.assert_called_once_with(
+            SwitchSettings(hw_switch=self.machine.switches.s_left_flipper.hw_switch, invert=False, debounce=False),
+            DriverSettings(hw_driver=self.machine.coils.c_flipper_left_hold.hw_driver,
+                           pulse_settings=PulseSettings(power=1.0, duration=10),
+                           hold_settings=HoldSettings(power=1.0), recycle=False)
+        )

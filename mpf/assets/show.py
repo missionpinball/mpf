@@ -32,7 +32,7 @@ class Show(Asset):
     path_string = 'shows'
     config_section = 'shows'
     disk_asset_section = 'file_shows'
-    extensions = 'yaml'
+    extensions = tuple('yaml')
     class_priority = 100
     pool_config_section = 'show_pools'
     asset_group_class = ShowPool
@@ -191,7 +191,7 @@ class Show(Asset):
                 actions[key] = self.machine.show_controller.show_players[key].validate_config_entry(value, self.name)
 
             elif key != 'duration' and key != 'time':   # pragma: no cover
-                self._show_validation_error('Invalid section "{}:" found in show'.format(key))
+                self._show_validation_error('Invalid section "{}:" found in show {}'.format(key, self.name))
 
     def _do_unload(self):
         self.show_steps = None
@@ -269,7 +269,7 @@ class Show(Asset):
              events_when_looped=None, events_when_paused=None,
              events_when_resumed=None, events_when_advanced=None,
              events_when_stepped_back=None, events_when_updated=None,
-             events_when_completed=None):
+             events_when_completed=None) -> "RunningShow":
         """Play a Show.
 
         There are many parameters you can use here which
@@ -619,9 +619,8 @@ class RunningShow(object):
         if self._show_loaded:
             self._run_next_step(post_events='step_back')
 
-    def _run_next_step(self, dt=None, post_events=None):
-        del dt
-
+    def _run_next_step(self, post_events=None):
+        """Run the next show step."""
         if post_events:
             self._post_events(post_events)
 

@@ -8,26 +8,29 @@ boards.
 import logging
 from copy import deepcopy
 
+from typing import Dict
+
+from mpf.platforms.fast.fast_io_board import FastIoBoard
 from mpf.platforms.fast.fast_servo import FastServo
 from mpf.platforms.fast import fast_defines
 from mpf.platforms.fast.fast_dmd import FASTDMD
 from mpf.platforms.fast.fast_driver import FASTDriver
 from mpf.platforms.fast.fast_gi import FASTGIString
-from mpf.platforms.fast.fast_led import FASTDirectLED
+from mpf.platforms.fast.fast_led import FASTDirectLED, FASTDirectLEDChannel
 from mpf.platforms.fast.fast_light import FASTMatrixLight
 from mpf.platforms.fast.fast_serial_communicator import FastSerialCommunicator
 from mpf.platforms.fast.fast_switch import FASTSwitch
 
-from mpf.devices.switch import Switch
-from mpf.core.platform import ServoPlatform, MatrixLightsPlatform, GiPlatform, DmdPlatform, LedPlatform, \
-    SwitchPlatform, DriverPlatform
+from mpf.core.platform import ServoPlatform, DmdPlatform, SwitchPlatform, DriverPlatform, LightsPlatform,\
+    DriverSettings, SwitchSettings, DriverConfig
 from mpf.core.utility_functions import Util
 
 
 # pylint: disable-msg=too-many-instance-attributes
-class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
-                       DmdPlatform, LedPlatform, SwitchPlatform,
-                       DriverPlatform):
+from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
+
+
+class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatform, DriverPlatform):
 
     """Platform class for the FAST hardware controller.
 
@@ -47,12 +50,12 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         self.net_connection = None
         self.rgb_connection = None
         self.serial_connections = set()
-        self.fast_leds = set()
+        self.fast_leds = {}
         self.flag_led_tick_registered = False
         self.config = None
         self.machine_type = None
         self.hw_switch_data = None
-        self.io_boards = {}     # type: dict[int, 'mpf.platform.fast.fast_io_board.FastIoBoard']
+        self.io_boards = {}     # type: Dict[int, FastIoBoard]
 
         self.fast_commands = {'ID': lambda x: None,  # processor ID
                               'WX': lambda x: None,  # watchdog
@@ -113,8 +116,8 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             raise AssertionError("Duplicate node_id")
         self.io_boards[board.node_id] = board
 
-    def _update_watchdog(self, dt):
-        del dt
+    def _update_watchdog(self):
+        """Send Watchdog command."""
         self.net_connection.send('WD:' + str(hex(self.config['watchdog']))[2:])
 
     def process_received_message(self, msg: str):
@@ -174,7 +177,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             self.rgb_connection.send('RF:{}'.format(
                 Util.int_to_hex_string(self.config['hardware_led_fade_time'])))
 
-    def update_leds(self, dt):
+    def update_leds(self):
         """Update all the LEDs connected to a FAST controller.
 
         This is done once per game loop for efficiency (i.e. all LEDs are sent as a single
@@ -183,14 +186,12 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         Also, every LED is updated every loop, even if it doesn't change. This
         is in case some interference causes a LED to change color. Since we
         update every loop, it will only be the wrong color for one tick.
-
-        Args:
-            dt: time since last call
         """
-        del dt
-        msg = 'RS:' + ','.join(["%s%s" % (led.number, led.current_color)
-                                for led in self.fast_leds])
-        self.rgb_connection.send(msg)
+        dirty_leds = [led for led in self.fast_leds.values() if led.dirty]
+
+        if dirty_leds:
+            msg = 'RS:' + ','.join(["%s%s" % (led.number, led.current_color) for led in dirty_leds])
+            self.rgb_connection.send(msg)
 
     def get_hw_switch_states(self):
         """Return hardware states."""
@@ -246,9 +247,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         hw_states = dict()
 
-        num_local, local_states, num_nw, nw_states = msg.split(',')
-        num_local = Util.hex_string_to_int(num_local) - 1
-        num_nw = Util.hex_string_to_int(num_nw) - 1
+        _, local_states, _, nw_states = msg.split(',')
 
         for offset, byte in enumerate(bytearray.fromhex(nw_states)):
             for i in range(8):
@@ -310,7 +309,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         return Util.int_to_hex_string(index + driver)
 
-    def configure_driver(self, config: dict) -> FASTDriver:
+    def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict) -> FASTDriver:
         """Configure a driver.
 
         Args:
@@ -319,44 +318,43 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         Returns: Driver object
         """
         # dont modify the config. make a copy
-        config = deepcopy(config)
+        platform_settings = deepcopy(platform_settings)
 
         if not self.net_connection:
             raise AssertionError('A request was made to configure a FAST '
                                  'driver, but no connection to a NET processor'
                                  'is available')
 
-        if not config['number']:
+        if not number:
             raise AssertionError("Driver needs a number")
 
         # If we have WPC driver boards, look up the driver number
         if self.machine_type == 'wpc':
-            config['number'] = fast_defines.wpc_driver_map.get(
-                config['number'].upper())
+            number = fast_defines.wpc_driver_map.get(number.upper())
 
-            if ('connection' in config and
-                    config['connection'].lower() == 'network'):
-                config['connection'] = 1
+            if ('connection' in platform_settings and
+                    platform_settings['connection'].lower() == 'network'):
+                platform_settings['connection'] = 1
             else:
-                config['connection'] = 0  # local driver (default for WPC)
+                platform_settings['connection'] = 0  # local driver (default for WPC)
 
         # If we have FAST IO boards, we need to make sure we have hex strings
         elif self.machine_type == 'fast':
 
-            config['number'] = self._parse_driver_number(config['number'])
+            number = self._parse_driver_number(number)
 
             # Now figure out the connection type
-            if ('connection' in config and
-                    config['connection'].lower() == 'local'):
-                config['connection'] = 0
+            if ('connection' in platform_settings and
+                    platform_settings['connection'].lower() == 'local'):
+                platform_settings['connection'] = 0
             else:
-                config['connection'] = 1  # network driver (default for FAST)
+                platform_settings['connection'] = 1  # network driver (default for FAST)
 
         else:
             raise AssertionError("Invalid machine type: {}".format(
                 self.machine_type))
 
-        return FASTDriver(config, self.net_connection.send, self.machine, self)
+        return FASTDriver(config, self, number, platform_settings)
 
     def configure_servo(self, config: dict):
         """Configure a servo.
@@ -472,83 +470,80 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         return switch
 
-    def configure_led(self, config: dict, channels: int):
-        """Configure a WS2812 LED.
-
-        Args:
-            config: LED config.
-            channels: Number of channels (3 for RGB)
-
-        Returns: LED object.
-
-        """
-        if channels > 3:
-            raise AssertionError("FAST only supports RGB LEDs")
-        if not self.rgb_connection:
-            raise AssertionError('A request was made to configure a FAST LED, '
-                                 'but no connection to an LED processor is '
-                                 'available')
-
-        if not self.flag_led_tick_registered:
-            # Update leds every frame
-            self.machine.clock.schedule_interval(self.update_leds,
-                                                 1 / self.machine.config['mpf']['default_led_hw_update_hz'])
-            self.flag_led_tick_registered = True
-
-        # if the LED number is in <channel> - <led> format, convert it to a
-        # FAST hardware number
-        if '-' in str(config['number']):
-            num = str(config['number']).split('-')
-            number = Util.int_to_hex_string((int(num[0]) * 64) + int(num[1]))
-        else:
-            number = self.convert_number_from_config(config['number'])
-
-        this_fast_led = FASTDirectLED(number)
-        self.fast_leds.add(this_fast_led)
-
-        return this_fast_led
-
-    def configure_gi(self, config: dict) -> FASTGIString:
-        """Configure a GI.
-
-        Args:
-            config: GI config.
-
-        Returns: GI object.
-        """
-        # TODO: Add support for driver-based GI strings
-
+    def configure_light(self, number, subtype, platform_settings) -> LightPlatformInterface:
+        """Configure light in platform."""
         if not self.net_connection:
-            raise AssertionError('A request was made to configure a FAST GI, '
+            raise AssertionError('A request was made to configure a FAST Light, '
                                  'but no connection to a NET processor is '
                                  'available')
+        if subtype == "gi":
+            return FASTGIString(number, self.net_connection.send, self.machine,
+                                int(1 / self.machine.config['mpf']['default_light_hw_update_hz'] * 1000))
+        elif subtype == "matrix":
+            return FASTMatrixLight(number, self.net_connection.send, self.machine,
+                                   int(1 / self.machine.config['mpf']['default_light_hw_update_hz'] * 1000))
+        elif not subtype or subtype == "led":
+            if not self.flag_led_tick_registered:
+                # Update leds every frame
+                self.machine.clock.schedule_interval(self.update_leds,
+                                                     1 / self.machine.config['mpf']['default_light_hw_update_hz'])
+                self.flag_led_tick_registered = True
 
-        if self.machine_type == 'wpc':  # translate switch num to FAST switch
-            number = fast_defines.wpc_gi_map.get(str(config['number']).upper())
+            number_str, channel = number.split("-")
+            if number_str not in self.fast_leds:
+                self.fast_leds[number_str] = FASTDirectLED(
+                    number_str, int(self.config['hardware_led_fade_time']))
+            fast_led_channel = FASTDirectLEDChannel(self.fast_leds[number_str], channel)
+
+            return fast_led_channel
         else:
-            number = self.convert_number_from_config(config['number'])
+            raise AssertionError("Unknown subtype {}".format(subtype))
 
-        return FASTGIString(number, self.net_connection.send)
+    def parse_light_number_to_channels(self, number: str, subtype: str):
+        """Parse light channels from number string."""
+        if subtype == "gi":
+            if self.machine_type == 'wpc':  # translate number to FAST GI number
+                number = fast_defines.wpc_gi_map.get(str(number).upper())
+            else:
+                number = self.convert_number_from_config(number)
 
-    def configure_matrixlight(self, config: dict) -> FASTMatrixLight:
-        """Configure a matrix light.
+            return [
+                {
+                    "number": number
+                }
+            ]
+        elif subtype == "matrix":
+            if self.machine_type == 'wpc':  # translate number to FAST light num
+                number = fast_defines.wpc_light_map.get(str(number).upper())
+            else:
+                number = self.convert_number_from_config(number)
 
-        Args:
-            config: Matrix light config.
-
-        Returns: Matrix light object.
-        """
-        if not self.net_connection:
-            raise AssertionError('A request was made to configure a FAST '
-                                 'matrix light, but no connection to a NET '
-                                 'processor is available')
-
-        if self.machine_type == 'wpc':  # translate number to FAST light num
-            number = fast_defines.wpc_light_map.get(str(config['number']).upper())
+            return [
+                {
+                    "number": number
+                }
+            ]
+        elif not subtype or subtype == "led":
+            # if the LED number is in <channel> - <led> format, convert it to a
+            # FAST hardware number
+            if '-' in str(number):
+                num = str(number).split('-')
+                number = Util.int_to_hex_string((int(num[0]) * 64) + int(num[1]))
+            else:
+                number = self.convert_number_from_config(number)
+            return [
+                {
+                    "number": number + "-0"
+                },
+                {
+                    "number": number + "-1"
+                },
+                {
+                    "number": number + "-2"
+                },
+            ]
         else:
-            number = self.convert_number_from_config(config['number'])
-
-        return FASTMatrixLight(number, self.net_connection.send)
+            raise AssertionError("Unknown subtype {}".format(subtype))
 
     def configure_dmd(self):
         """Configure a hardware DMD connected to a FAST controller."""
@@ -568,30 +563,6 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
     def get_switch_config_section(cls):
         """Return switch config section."""
         return "fast_switches"
-
-    @classmethod
-    def get_coil_overwrite_section(cls):
-        """Return coil overwrite section."""
-        return "fast_coil_overwrites"
-
-    def validate_switch_overwrite_section(self, switch: Switch, config_overwrite: dict) -> dict:
-        """Validate switch overwrite section for platform.
-
-        Args:
-            switch: switch to validate
-            config_overwrite: overwrite config to validate
-
-        Returns: Validated config.
-        """
-        if ("debounce" in config_overwrite and
-                switch.config['debounce'] != "auto" and
-                switch.config['debounce'] != config_overwrite['debounce']):
-            raise AssertionError("Cannot overwrite debounce for switch %s for"
-                                 "FAST interface", switch.name)
-
-        config_overwrite = super().validate_switch_overwrite_section(
-            switch, config_overwrite)
-        return config_overwrite
 
     def _check_switch_coil_combincation(self, switch, coil):
         switch_number = int(switch.hw_switch.number[0], 16)
@@ -629,12 +600,12 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             coil.hw_driver.number,
             driver.get_control_for_cmd(enable_switch),
             enable_switch.hw_switch.number[0],
-            driver.get_pulse_ms_for_cmd(coil),
-            driver.get_pwm1_for_cmd(coil),
-            driver.get_recycle_ms_for_cmd(coil))
+            Util.int_to_hex_string(coil.pulse_settings.duration),
+            driver.get_pwm_for_cmd(coil.pulse_settings.power),
+            driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
 
         driver.autofire = True
-        enable_switch.hw_switch.configure_debounce(enable_switch.config)
+        enable_switch.hw_switch.configure_debounce(enable_switch.debounce)
         self.debug_log("Writing hardware rule: %s", cmd)
 
         self.net_connection.send(cmd)
@@ -660,7 +631,7 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         del disable_switch
         self.set_pulse_on_hit_and_release_rule(enable_switch, coil)
 
-    def set_pulse_on_hit_rule(self, enable_switch, coil):
+    def set_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit rule on driver."""
         self.debug_log("Setting Pulse on hit and release HW Rule. Switch: %s,"
                        "Driver: %s", enable_switch.hw_switch.number,
@@ -675,17 +646,17 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
             coil.hw_driver.number,
             driver.get_control_for_cmd(enable_switch),
             enable_switch.hw_switch.number[0],
-            driver.get_pulse_ms_for_cmd(coil),
-            driver.get_pwm1_for_cmd(coil),
-            driver.get_recycle_ms_for_cmd(coil))
+            Util.int_to_hex_string(coil.pulse_settings.duration),
+            driver.get_pwm_for_cmd(coil.pulse_settings.power),
+            driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
 
         driver.autofire = True
-        enable_switch.hw_switch.configure_debounce(enable_switch.config)
+        enable_switch.hw_switch.configure_debounce(enable_switch.debounce)
         self.debug_log("Writing hardware rule: %s", cmd)
 
         self.net_connection.send(cmd)
 
-    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
+    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and enable and relase rule on driver."""
         self.debug_log("Setting Pulse on hit and enable and release HW Rule. "
                        "Switch: %s, Driver: %s",
@@ -694,26 +665,19 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
         self._check_switch_coil_combincation(enable_switch, coil)
 
         driver = coil.hw_driver
-        if (driver.get_pwm1_for_cmd(coil) == "ff" and
-                driver.get_pwm2_for_cmd(coil) == "ff" and
-                not coil.config['allow_enable']):
-
-            # todo figure how to show the friendly name of this driver
-            raise AssertionError("Coil {} may not be enabled at 100% without "
-                                 "allow_enabled or pwm settings".format(coil.hw_driver.number))
 
         cmd = '{}{},{},{},18,{},{},{},{},00'.format(
             driver.get_config_cmd(),
-            coil.hw_driver.number,
+            driver.number,
             driver.get_control_for_cmd(enable_switch),
             enable_switch.hw_switch.number[0],
-            driver.get_pulse_ms_for_cmd(coil),
-            driver.get_pwm1_for_cmd(coil),
-            driver.get_pwm2_for_cmd(coil),
-            driver.get_recycle_ms_for_cmd(coil))
+            Util.int_to_hex_string(coil.pulse_settings.duration),
+            driver.get_pwm_for_cmd(coil.pulse_settings.power),
+            driver.get_pwm_for_cmd(coil.hold_settings.power),
+            driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
 
         driver.autofire = True
-        enable_switch.hw_switch.configure_debounce(enable_switch.config)
+        enable_switch.hw_switch.configure_debounce(enable_switch.debounce)
         self.debug_log("Writing hardware rule: %s", cmd)
 
         self.net_connection.send(cmd)
@@ -739,9 +703,9 @@ class HardwarePlatform(ServoPlatform, MatrixLightsPlatform, GiPlatform,
 
         driver = coil.hw_driver
 
-        cmd = '{}{},81'.format(driver.get_config_cmd(), coil.hw_driver.number)
+        cmd = '{}{},81'.format(driver.get_config_cmd(), driver.number)
 
-        coil.autofire = None
+        driver.autofire = None
 
         self.debug_log("Clearing hardware rule: %s", cmd)
 

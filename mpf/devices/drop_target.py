@@ -2,6 +2,7 @@
 
 from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
+from mpf.core.events import event_handler
 from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
 
@@ -38,9 +39,9 @@ class DropTarget(SystemWideDevice):
 
         # can't read the switch until the switch controller is set up
         self.machine.events.add_handler('init_phase_4',
-                                        self._update_state_from_switch)
+                                        self._update_state_from_switch, priority=2)
         self.machine.events.add_handler('init_phase_4',
-                                        self._register_switch_handlers)
+                                        self._register_switch_handlers, priority=1)
 
         if self.config['ball_search_order']:
             self.config['playfield'].ball_search.register(
@@ -137,18 +138,21 @@ class DropTarget(SystemWideDevice):
             self.config['switch'].name,
             self._update_state_from_switch, 1)
 
+    @event_handler(6)
     def enable_keep_up(self, **kwargs):
         """Keep the target up by enabling the coil."""
         del kwargs
         if self.reset_coil:
             self.reset_coil.enable()
 
+    @event_handler(5)
     def disable_keep_up(self, **kwargs):
         """No longer keep up the target up."""
         del kwargs
         if self.reset_coil:
             self.reset_coil.disable()
 
+    @event_handler(7)
     def knockdown(self, **kwargs):
         """Pulse the knockdown coil to knock down this drop target."""
         del kwargs
@@ -213,6 +217,7 @@ class DropTarget(SystemWideDevice):
         """
         self.banks.remove(bank)
 
+    @event_handler(1)
     def reset(self, **kwargs):
         """Reset this drop target.
 
@@ -271,6 +276,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
 
         self.debug_log('Drop Targets: %s', self.drop_targets)
 
+    @event_handler(5)
     def reset(self, **kwargs):
         """Reset this bank of drop targets.
 
@@ -319,7 +325,6 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         This method causes this group to update its down and up counts and
         complete status.
         """
-
         if self._ignore_switch_hits:
             return
 
@@ -379,7 +384,6 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
 
     def device_removed_from_mode(self, mode):
         """Remove targets which were added in this mode."""
-
         self.delay.remove('ignore_hits')
 
         for target in self.drop_targets:

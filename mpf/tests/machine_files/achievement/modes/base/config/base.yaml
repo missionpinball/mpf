@@ -151,32 +151,32 @@ achievement_groups:
 shows:
   group2_show:
     - duration: .1
-      leds:
+      lights:
         (led): red
     - duration: .1
-      leds:
+      lights:
         (led): blue
   achievement_enabled:
     - duration: 1
-      leds:
+      lights:
         (led): yellow
   achievement_disabled:
     - duration: 1
-      leds:
+      lights:
         (led): off
   achievement_completed:
     - duration: 1
-      leds:
+      lights:
         (led): blue
   achievement_started:
     - duration: 1
-      leds:
+      lights:
         (led): green
   achievement_stopped:
     - duration: 1
-      leds:
+      lights:
         (led): red
   achievement_selected:
     - duration: 1
-      leds:
+      lights:
         (led): orange

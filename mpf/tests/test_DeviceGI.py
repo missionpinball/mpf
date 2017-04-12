@@ -16,23 +16,27 @@ class TestDeviceGI(MpfTestCase):
         """Tests setting some GI brightness levels (using default arguments)"""
 
         # Make sure hardware devices have been configured for tests
-        self.assertIn('gi_01', self.machine.gis)
-        self.assertIn('gi_02', self.machine.gis)
+        self.assertIn('gi_01', self.machine.lights)
+        self.assertIn('gi_02', self.machine.lights)
 
         self.advance_time_and_run(10)
 
-        # GI should start out on as enable is called during setup (current brightness is 255)
-        self.assertEqual(255, self.machine.gis.gi_01.hw_driver.current_brightness)
-        self.assertEqual(255, self.machine.gis.gi_02.hw_driver.current_brightness)
+        # GI should start out disabled like any light
+        self.assertLightChannel("gi_01", 0)
+        self.assertLightChannel("gi_02", 0)
 
         # Turn on GI (different brightness levels)
-        self.machine.gis.gi_01.enable(128)
-        self.assertEqual(128, self.machine.gis.gi_01.hw_driver.current_brightness)
-        self.machine.gis.gi_02.enable(77)
-        self.assertEqual(77, self.machine.gis.gi_02.hw_driver.current_brightness)
+        self.machine.lights.gi_01.color([128, 128, 128])
+        self.advance_time_and_run(.1)
+        self.assertLightChannel("gi_01", 128)
+        self.machine.lights.gi_02.color([77, 77, 77])
+        self.advance_time_and_run(.1)
+        self.assertLightChannel("gi_02", 77)
 
         # Turn off GI
-        self.machine.gis.gi_01.disable()
-        self.assertEqual(0, self.machine.gis.gi_01.hw_driver.current_brightness)
-        self.machine.gis.gi_02.disable()
-        self.assertEqual(0, self.machine.gis.gi_02.hw_driver.current_brightness)
+        self.machine.lights.gi_01.off()
+        self.advance_time_and_run(.1)
+        self.assertLightChannel("gi_01", 0)
+        self.machine.lights.gi_02.off()
+        self.advance_time_and_run(.1)
+        self.assertLightChannel("gi_02", 0)

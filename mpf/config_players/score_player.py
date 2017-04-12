@@ -8,12 +8,17 @@ class ScorePlayer(ConfigPlayer):
 
     config_file_section = 'scoring'
     show_section = 'score'
-    device_collection = None
 
     def __init__(self, machine):
         """Initialise score player."""
         super().__init__(machine)
         self.blocks = {}
+
+    @staticmethod
+    def is_entry_valid_outside_mode(settings) -> bool:
+        """Return true if this entry may run without a game and player."""
+        del settings
+        return False
 
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Score variable."""

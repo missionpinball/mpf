@@ -15,11 +15,11 @@ https://github.com/preble/pyprocgame
 
 import logging
 
-from mpf.core.platform import DmdPlatform
+from mpf.core.platform import DmdPlatform, DriverConfig
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.platforms.p_roc_common import PDBConfig, PROCBasePlatform
 from mpf.core.utility_functions import Util
-from mpf.platforms.p_roc_devices import PROCDriver, PROCGiString, PROCMatrixLight
+from mpf.platforms.p_roc_devices import PROCDriver
 
 
 class HardwarePlatform(PROCBasePlatform, DmdPlatform):
@@ -74,7 +74,7 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
         """Return string representation."""
         return '<Platform.P-ROC>'
 
-    def configure_driver(self, config):
+    def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
         """Create a P-ROC driver.
 
         Typically drivers are coils or flashers, but for the P-ROC this is
@@ -97,39 +97,13 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
         # can provide the number.
 
         if self.machine_type == self.pinproc.MachineTypePDB:
-            proc_num = self.pdbconfig.get_proc_coil_number(str(config['number']))
+            proc_num = self.pdbconfig.get_proc_coil_number(str(number))
             if proc_num == -1:
-                raise AssertionError("Driver {} cannot be controlled by the P-ROC. ".format(str(config['number'])))
+                raise AssertionError("Driver {} cannot be controlled by the P-ROC. ".format(str(number)))
         else:
-            proc_num = self.pinproc.decode(self.machine_type, str(config['number']))
+            proc_num = self.pinproc.decode(self.machine_type, str(number))
 
-        return PROCDriver(proc_num, config, self)
-
-    def configure_gi(self, config):
-        """Configure a GI."""
-        # GIs are coils in P-Roc
-        if self.machine_type == self.pinproc.MachineTypePDB:
-            proc_num = self.pdbconfig.get_proc_coil_number(str(config['number']))
-            if proc_num == -1:
-                raise AssertionError("Gi Driver {} cannot be controlled by the P-ROC. ".format(str(config['number'])))
-        else:
-            proc_num = self.pinproc.decode(self.machine_type, str(config['number']))
-        proc_driver_object = PROCGiString(proc_num, self.proc, config)
-
-        return proc_driver_object
-
-    def configure_matrixlight(self, config):
-        """Configure a matrix light."""
-        if self.machine_type == self.pinproc.MachineTypePDB:
-            proc_num = self.pdbconfig.get_proc_light_number(str(config['number']))
-            if proc_num == -1:
-                raise AssertionError("Matrixlight {} cannot be controlled by the P-ROC. ".format(
-                    str(config['number'])))
-
-        else:
-            proc_num = self.pinproc.decode(self.machine_type, str(config['number']))
-
-        return PROCMatrixLight(proc_num, self.proc)
+        return PROCDriver(proc_num, config, self, number)
 
     def configure_switch(self, config):
         """Configure a P-ROC switch.
@@ -180,12 +154,11 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
         self.dmd = PROCDMD(self.pinproc, self.proc, self.machine)
         return self.dmd
 
-    def tick(self, dt):
+    def tick(self):
         """Check the P-ROC for any events (switch state changes or notification that a DMD frame was updated).
 
         Also tickles the watchdog and flushes any queued commands to the P-ROC.
         """
-        del dt
         # Get P-ROC events (switches & DMD frames displayed)
         for event in self.proc.get_events():
             event_type = event['type']

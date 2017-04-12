@@ -2,6 +2,8 @@
 
 from collections import deque
 
+from mpf.core.events import event_handler
+
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
@@ -58,6 +60,7 @@ class BallLock(SystemWideDevice, ModeDevice):
 
         self.source_playfield = self.config['source_playfield']
 
+    @event_handler(10)
     def enable(self, **kwargs):
         """Enable the lock.
 
@@ -72,6 +75,7 @@ class BallLock(SystemWideDevice, ModeDevice):
             self._register_handlers()
         self.enabled = True
 
+    @event_handler(0)
     def disable(self, **kwargs):
         """Disable the lock.
 
@@ -85,6 +89,7 @@ class BallLock(SystemWideDevice, ModeDevice):
         self._unregister_handlers()
         self.enabled = False
 
+    @event_handler(1)
     def reset(self, **kwargs):
         """Reset the lock.
 
@@ -136,12 +141,14 @@ class BallLock(SystemWideDevice, ModeDevice):
             queue.wait()
             self._release_lock = queue
 
+    @event_handler(9)
     def release_one_if_full(self, **kwargs):
         """Release one ball if lock is full."""
         del kwargs
         if self.is_full():
             self.release_one()
 
+    @event_handler(8)
     def release_one(self, **kwargs):
         """Release one ball.
 
@@ -151,6 +158,7 @@ class BallLock(SystemWideDevice, ModeDevice):
         del kwargs
         self.release_balls(balls_to_release=1)
 
+    @event_handler(7)
     def release_all_balls(self):
         """Release all balls in lock."""
         return self.release_balls(self.balls_locked)

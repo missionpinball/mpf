@@ -15,16 +15,16 @@ switches:
 coils:
     c_flipper_left_main:
         number: 0-0
-        pulse_ms: 30
+        default_pulse_ms: 30
     c_flipper_left_hold:
         number: 0-1
-        allow_enable: true
+        default_hold_power: 1.0
     c_flipper_right_main:
         number: 0-2
-        pulse_ms: 30
+        default_pulse_ms: 30
     c_flipper_right_hold:
         number: 0-3
-        allow_enable: true
+        default_hold_power: 1.0
 
 flippers:
     left_flipper:

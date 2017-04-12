@@ -7,8 +7,6 @@ class QueueRelayPlayer(ConfigPlayer):
     """Blocks queue events and converts them to normal events."""
 
     config_file_section = 'queue_relay_player'
-    show_section = None
-    device_collection = None
 
     def play(self, settings, context, priority=0, **kwargs):
         """Block queue event."""

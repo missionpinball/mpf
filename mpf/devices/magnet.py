@@ -1,4 +1,6 @@
 """Controls a playfield magnet in a pinball machine."""
+from mpf.core.events import event_handler
+
 from mpf.core.delays import DelayManager
 
 from mpf.core.device_monitor import DeviceMonitor
@@ -23,6 +25,7 @@ class Magnet(SystemWideDevice):
         self._active = False
         self._release_in_progress = False
 
+    @event_handler(10)
     def enable(self, **kwargs):
         """Enable magnet."""
         del kwargs
@@ -35,6 +38,7 @@ class Magnet(SystemWideDevice):
         if self.config['grab_switch']:
             self.config['grab_switch'].add_handler(self.grab_ball)
 
+    @event_handler(0)
     def disable(self, **kwargs):
         """Disable magnet."""
         del kwargs
@@ -47,6 +51,7 @@ class Magnet(SystemWideDevice):
         if self.config['grab_switch']:
             self.config['grab_switch'].remove_handler(self.grab_ball)
 
+    @event_handler(1)
     def reset(self, **kwargs):
         """Release ball and disable magnet."""
         del kwargs
@@ -54,6 +59,7 @@ class Magnet(SystemWideDevice):
         self.release_ball()
         self.disable()
 
+    @event_handler(9)
     def grab_ball(self, **kwargs):
         """Grab a ball."""
         del kwargs
@@ -81,6 +87,7 @@ class Magnet(SystemWideDevice):
         to).
         '''
 
+    @event_handler(8)
     def release_ball(self, **kwargs):
         """Release the grabbed ball."""
         del kwargs
@@ -107,6 +114,7 @@ class Magnet(SystemWideDevice):
         desc: The magnet called (name) has just released a ball.
         '''
 
+    @event_handler(7)
     def fling_ball(self, **kwargs):
         """Fling the grabbed ball."""
         del kwargs

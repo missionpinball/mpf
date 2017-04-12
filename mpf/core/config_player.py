@@ -2,14 +2,17 @@
 """Base class used for things that "play" from the config files, such as WidgetPlayer, SlidePlayer, etc."""
 import abc
 
+from mpf.core.mode import Mode
+from mpf.exceptions.ConfigFileError import ConfigFileError
+
 
 class ConfigPlayer(object, metaclass=abc.ABCMeta):
 
     """Base class for players which play things based on config."""
 
-    config_file_section = None
-    show_section = None
-    machine_collection_name = None
+    config_file_section = None          # type: str
+    show_section = None                 # type: str
+    machine_collection_name = None      # type: str
 
     def __init__(self, machine):
         """Initialise config player."""
@@ -30,8 +33,8 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
         self._show_keys = {}
 
     def _add_handlers(self):
-        self.machine.events.add_handler('init_phase_1', self._initialize_in_mode)
-        self.machine.events.add_handler('init_phase_1', self._initialise_system_wide)
+        self.machine.events.add_handler('init_phase_1', self._initialize_in_mode, priority=2)
+        self.machine.events.add_handler('init_phase_1', self._initialise_system_wide, priority=1)
 
     def __repr__(self):
         """Return string representation."""
@@ -211,14 +214,20 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
             event = new_event
         return event, priority
 
-    def register_player_events(self, config, mode=None, priority=0):
+    @staticmethod
+    def is_entry_valid_outside_mode(settings) -> bool:
+        """Return true if this entry may run without a game and player."""
+        del settings
+        return True
+
+    def register_player_events(self, config, mode: Mode=None, priority=0):
         """Register events for standalone player."""
         # config is localized
         key_list = list()
 
         if config:
             for event, settings in config.items():
-                event, priority = self._parse_event_priority(event, priority)
+                event, actual_priority = self._parse_event_priority(event, priority)
 
                 if mode and event in mode.config['mode']['start_events']:
                     self.machine.log.error(
@@ -235,12 +244,18 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
                         "\"mode_{0}_started:\"".format(
                             mode.name, self.config_file_section, event))
 
+                # prevent runtime crashes
+                if (not mode or (mode and not mode.is_game_mode)) and not self.is_entry_valid_outside_mode(settings):
+                    raise ConfigFileError("Section not valid outside of game modes. {} {}:{} Mode: {}".format(
+                        self, event, settings, mode
+                    ))
+
                 key_list.append(
                     self.machine.events.add_handler(
                         event=event,
                         handler=self.config_play_callback,
                         calling_context=event,
-                        priority=priority,
+                        priority=actual_priority,
                         mode=mode,
                         settings=settings))
 

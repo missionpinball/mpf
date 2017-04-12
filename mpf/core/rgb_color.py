@@ -7,6 +7,8 @@ The MIT License (MIT)
 """
 import random
 
+from typing import List, Union, Tuple
+
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.utility_functions import Util
 
@@ -164,14 +166,14 @@ class RGBColor(object):
 
     """One RGB Color."""
 
-    def __init__(self, color=None, **kwargs):
+    def __init__(self, color: Union["RGBColor", str, List[int], Tuple[int, int, int]]=None, **kwargs) -> None:
         """Initialise color."""
         if isinstance(color, RGBColor):
             self._color = color.rgb
         elif isinstance(color, str):
             self._color = RGBColor.string_to_rgb(color)
         else:
-            self._color = tuple(color) if color else rgb_min
+            self._color = (color[0], color[1], color[2]) if color else rgb_min
             # This method is also used for Kivy which has 4-element tuples
             # (4th is opacity), so I commented this out. In future version,
             # I want to add opacity support to MPF colors too.
@@ -255,53 +257,47 @@ class RGBColor(object):
         return self._color[0]
 
     @red.setter
-    def red(self, value):
-        color = list(self._color)
-        color[0] = value
-        self._color = tuple(color)
+    def red(self, value: int):
+        self._color = (value, self._color[1], self._color[2])
 
     @property
-    def green(self):
+    def green(self) -> int:
         """Return the green component of the RGB color representation."""
         return self._color[1]
 
     @green.setter
-    def green(self, value):
-        color = list(self._color)
-        color[1] = value
-        self._color = tuple(color)
+    def green(self, value: int):
+        self._color = (self._color[0], value, self._color[2])
 
     @property
-    def blue(self):
+    def blue(self) -> int:
         """Return the blue component of the RGB color representation."""
         return self._color[2]
 
     @blue.setter
-    def blue(self, value):
-        color = list(self._color)
-        color[2] = value
-        self._color = tuple(color)
+    def blue(self, value: int):
+        self._color = (self._color[0], self._color[1], value)
 
     @property
-    def rgb(self):
+    def rgb(self) -> Tuple[int, int, int]:
         """Return an RGB representation of the color."""
         return self._color
 
     @rgb.setter
-    def rgb(self, value):
+    def rgb(self, value: Tuple[int, int, int]):
         self._color = value
 
     @property
-    def hex(self):
+    def hex(self) -> str:
         """Return a 6-char HEX representation of the color."""
         return RGBColor.rgb_to_hex(self.rgb)
 
     @hex.setter
-    def hex(self, value):
+    def hex(self, value: str):
         self._color = RGBColor.hex_to_rgb(value)
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Return the color name or None.
 
         Returns a string containing a standard color name or None
@@ -312,11 +308,11 @@ class RGBColor(object):
             self._color)
 
     @name.setter
-    def name(self, value):
+    def name(self, value: str):
         self._color = RGBColor.name_to_rgb(value)
 
     @staticmethod
-    def rgb_to_hex(rgb):
+    def rgb_to_hex(rgb: Tuple[int, int, int]) -> str:
         """Convert an RGB color representation to a HEX color representation.
 
         (r, g, b) :: r -> [0, 255]
@@ -332,7 +328,7 @@ class RGBColor(object):
                                   hex(int(b))[2:].zfill(2))
 
     @staticmethod
-    def hex_to_rgb(_hex, default=None):
+    def hex_to_rgb(_hex: str, default=None) -> Tuple[int, int, int]:
         """Convert a HEX color representation to an RGB color representation.
 
         Args:
@@ -384,7 +380,7 @@ class RGBColor(object):
         return RGBColor(output_color)
 
     @staticmethod
-    def random_rgb():
+    def random_rgb() -> Tuple[int, int, int]:
         """Generate a uniformly random RGB value.
 
         :return: A tuple of three integers with values between 0 and 255 inclusive
@@ -393,7 +389,7 @@ class RGBColor(object):
             0, 255)
 
     @staticmethod
-    def name_to_rgb(name, default=rgb_min):
+    def name_to_rgb(name: str, default=rgb_min) -> Tuple[int, int, int]:
         """Convert a standard color name to an RGB value (tuple).
 
         If the name is not found, the default value is returned.
@@ -405,7 +401,7 @@ class RGBColor(object):
         return named_rgb_colors.get(name, default)
 
     @staticmethod
-    def string_to_rgb(value, default=rgb_min):
+    def string_to_rgb(value: str, default=rgb_min) -> Tuple[int, int, int]:
         """Convert a string which could be either a standard color name or a hex value to an RGB value (tuple).
 
         If the name is not found and the supplied value is not a
@@ -470,7 +466,7 @@ class RGBColorCorrectionProfile(object):
 
     """Encapsulates a named RGB color correction profile and its associated lookup tables."""
 
-    def __init__(self, name=None):
+    def __init__(self, name: str=None) -> None:
         """Create a linear correction profile that does not alter color values by default.
 
         Args:
@@ -481,7 +477,7 @@ class RGBColorCorrectionProfile(object):
         self._name = name
 
         # Default lookup table values (linear)
-        self._lookup_table = []
+        self._lookup_table = []             # type: List[List[int]]
 
         for dummy_channel in range(3):
             self._lookup_table.append([i for i in range(256)])
@@ -523,7 +519,7 @@ class RGBColorCorrectionProfile(object):
                 # Clamp the lookup table value between 0 and 255
                 self._lookup_table[channel][index] = max(0, min(value, 255))
 
-    def assign_channel_lookup_table_values(self, channel, table_values):
+    def assign_channel_lookup_table_values(self, channel: int, table_values: List[int]):
         """Assign the specified lookup table values to the profile channel.
 
         Args:
@@ -547,7 +543,7 @@ class RGBColorCorrectionProfile(object):
             self._lookup_table[channel][index] = value
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Return the color correction profile name.
 
         Returns:
@@ -555,7 +551,7 @@ class RGBColorCorrectionProfile(object):
         """
         return self._name
 
-    def apply(self, color):
+    def apply(self, color) -> RGBColor:
         """Apply the current color correction profile to the specified RGBColor object.
 
         Args:
@@ -568,7 +564,7 @@ class RGBColorCorrectionProfile(object):
                          self._lookup_table[2][color.blue]))
 
     @staticmethod
-    def default():
+    def default() -> "RGBColorCorrectionProfile":
         """Create a default profile (gamma-corrected).
 
         The values for this table come from a web article:

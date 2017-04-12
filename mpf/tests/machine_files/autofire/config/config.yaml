@@ -10,10 +10,10 @@ switches:
 coils:
     c_test:
         number: 4
-        pulse_ms: 23
+        default_pulse_ms: 23
     c_test2:
         number: 5
-        pulse_ms: 23
+        default_pulse_ms: 23
 
 
 autofire_coils:

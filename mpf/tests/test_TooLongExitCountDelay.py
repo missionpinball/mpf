@@ -42,7 +42,7 @@ class TestTooLongExitCountDelay(MpfTestCase):
         self.advance_time_and_run(1)
 
         # default pulse
-        self.trough_coil.pulse.assert_called_once_with()
+        self.assertTrue(self.trough_coil.pulse.called)
         self.trough_coil.pulse = MagicMock()
 
         self.machine.switch_controller.process_switch('s_trough_1', 0)
@@ -79,7 +79,7 @@ class TestTooLongExitCountDelay(MpfTestCase):
         self.machine.switch_controller.process_switch('s_playfield', 0)
         self.advance_time_and_run(.1)
 
-        self.plunger_coil.pulse.assert_called_once_with()
+        self.assertTrue(self.plunger_coil.pulse.called)
         self.assertEqual(self.machine.ball_devices.trough.balls, 3)
         self.assertEqual(self.machine.ball_devices.plunger.balls, 0)
         self.assertEqual(self.machine.ball_devices.playfield.balls, 1)
@@ -94,7 +94,7 @@ class TestTooLongExitCountDelay(MpfTestCase):
         self.advance_time_and_run(1)
 
         # default pulse
-        self.trough_coil.pulse.assert_called_once_with()
+        self.assertTrue(self.trough_coil.pulse.called)
         self.trough_coil.pulse = MagicMock()
 
         self.machine.switch_controller.process_switch('s_trough_1', 0)

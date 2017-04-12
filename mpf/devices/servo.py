@@ -2,6 +2,8 @@
 from mpf.core.delays import DelayManager
 
 from mpf.core.device_monitor import DeviceMonitor
+from mpf.core.events import event_handler
+from mpf.core.platform import ServoPlatform
 from mpf.core.system_wide_device import SystemWideDevice
 
 
@@ -20,13 +22,14 @@ class Servo(SystemWideDevice):
     def __init__(self, machine, name):
         """Initialise servo."""
         self.hw_servo = None
+        self.platform = None        # type: ServoPlatform
         self._position = None
         self._ball_search_started = False
         self.delay = DelayManager(machine.delayRegistry)
         super().__init__(machine, name)
 
     def _initialize(self):
-        self.load_platform_section('servo_controllers')
+        self.platform = self.machine.get_platform_sections('servo_controllers', self.config['platform'])
 
         for position in self.config['positions']:
             self.machine.events.add_handler(self.config['positions'][position],
@@ -42,11 +45,13 @@ class Servo(SystemWideDevice):
             self.machine.events.add_handler("ball_search_stopped",
                                             self._ball_search_stop)
 
+    @event_handler(1)
     def reset(self, **kwargs):
         """Go to reset position."""
         del kwargs
         self.go_to_position(self.config['reset_position'])
 
+    @event_handler(5)
     def _position_event(self, position, **kwargs):
         del kwargs
         self.go_to_position(position)

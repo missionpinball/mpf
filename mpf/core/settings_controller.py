@@ -1,6 +1,8 @@
 """Manages operator controllable settings."""
 from collections import namedtuple
 
+from typing import Dict, List
+
 from mpf.core.utility_functions import Util
 
 from mpf.core.mpf_controller import MpfController
@@ -25,7 +27,7 @@ class SettingsController(MpfController):
         super().__init__(machine)
 
         # start with default settings
-        self._settings = {}
+        self._settings = {}     # type: Dict[str, SettingEntry]
 
         self._add_entries_from_config()
 
@@ -51,7 +53,7 @@ class SettingsController(MpfController):
         """Add a setting."""
         self._settings[setting.name] = setting
 
-    def get_settings(self) -> {str, SettingEntry}:
+    def get_settings(self) -> List[SettingEntry]:
         """Return all available settings."""
         sorted_list = list(self._settings.values())
         sorted_list.sort(key=lambda x: x.sort)

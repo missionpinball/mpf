@@ -1,5 +1,6 @@
 """Support for physical DMDs."""
 from mpf.core.machine import MachineController
+from mpf.core.platform import DmdPlatform
 
 from mpf.core.system_wide_device import SystemWideDevice
 
@@ -26,10 +27,11 @@ class PhysicalDmd(SystemWideDevice):
     def __init__(self, machine, name):
         """Initialise DMD."""
         self.hw_device = None
+        self.platform = None        # type: DmdPlatform
         super().__init__(machine, name)
 
     def _initialize(self):
-        self.load_platform_section("dmd")
+        self.platform = self.machine.get_platform_sections("dmd", self.config['platform'])
         self.hw_device = self.platform.configure_dmd()
 
     @classmethod

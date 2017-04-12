@@ -5,9 +5,9 @@ import importlib
 import logging
 import os
 import pickle
+import queue
 import tempfile
 
-import queue
 import sys
 import threading
 from platform import platform, python_version, system, release, version, system_alias, machine
@@ -16,6 +16,7 @@ import copy
 
 import asyncio
 from pkg_resources import iter_entry_points
+from typing import Any, TYPE_CHECKING, Callable, Dict, List, Set
 
 from mpf._version import __version__, version as mpf_version, extended_version as mpf_extended_version
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
@@ -28,6 +29,29 @@ from mpf.core.device_manager import DeviceCollection
 from mpf.core.utility_functions import Util
 from mpf.core.logging import LogMixin
 
+if TYPE_CHECKING:
+    from mpf.modes.game.code.game import Game
+    from mpf.core.events import EventManager
+    from mpf.core.switch_controller import SwitchController
+
+    from mpf.core.scriptlet import Scriptlet
+    from mpf.core.platform import BasePlatform
+    from mpf.core.mode_controller import ModeController
+    from mpf.core.settings_controller import SettingsController
+    from mpf.core.shot_profile_manager import ShotProfileManager
+    from mpf.core.bcp.bcp import Bcp
+    from mpf.core.extra_balls import ExtraBallController
+    from mpf.assets.show import Show
+    from mpf.core.assets import BaseAssetManager
+    from mpf.devices.switch import Switch
+    from mpf.devices.driver import Driver
+    from mpf.core.mode import Mode
+    from mpf.devices.ball_device.ball_device import BallDevice
+    from mpf.core.ball_controller import BallController
+    from mpf.devices.playfield import Playfield
+    from mpf.core.placeholder_manager import PlaceholderManager
+    from mpf.platforms import smart_virtual
+
 
 # pylint: disable-msg=too-many-instance-attributes
 class MachineController(LogMixin):
@@ -38,25 +62,14 @@ class MachineController(LogMixin):
     main part that's in charge and makes things happen.
 
     Args:
-        options: Dictionary of options the machine controller uses to configure
-            itself.
-
-    Attributes:
         options(dict): A dictionary of options built from the command line options
             used to launch mpf.py.
-        config(dict): A dictionary of machine's configuration settings, merged from
-            various sources.
-        game(mpf.modes.game.code.game.Game): the current game
         machine_path: The root path of this machine_files folder
-        plugins:
-        scriptlets:
-        hardware_platforms:
-        events(mpf.core.events.EventManager):
-
     """
 
-    def __init__(self, mpf_path: str, machine_path: str, options: dict):
+    def __init__(self, mpf_path: str, machine_path: str, options: dict) -> None:
         """Initialize machine controller."""
+        super().__init__()
         self.log = logging.getLogger("Machine")
         self.log.info("Mission Pinball Framework Core Engine v%s", __version__)
 
@@ -70,31 +83,48 @@ class MachineController(LogMixin):
         self.machine_path = machine_path
 
         self.verify_system_info()
-        self._exception = None
+        self._exception = None      # type: Any
 
         self._done = False
-        self.monitors = dict()
-        self.plugins = list()
-        self.scriptlets = list()
-        self.modes = DeviceCollection(self, 'modes', None)
-        self.game = None
-        self.active_debugger = dict()
+        self.monitors = dict()      # type: Dict[str, Set[Callable]]
+        self.plugins = list()       # type: List[Any]
+        self.scriptlets = list()    # type: List[Scriptlet]
+        self.modes = DeviceCollection(self, 'modes', None)          # type: Dict[str, Mode]
+        self.game = None            # type: Game
         self.machine_vars = CaseInsensitiveDict()
         self.machine_var_monitor = False
-        self.machine_var_data_manager = None
+        self.machine_var_data_manager = None    # type: DataManager
         self.thread_stopper = threading.Event()
 
-        self.crash_queue = queue.Queue()
+        self.config = None      # type: Any
 
-        self.config = None
-        self.events = None
+        # add some type hints
+        if TYPE_CHECKING:
+            # controllers
+            self.events = None                          # type: EventManager
+            self.switch_controller = None               # type: SwitchController
+            self.mode_controller = None                 # type: ModeController
+            self.shot_profile_manager = None            # type: ShotProfileManager
+            self.settings = None                        # type: SettingsController
+            self.bcp = None                             # type: Bcp
+            self.extra_ball_controller = None           # type: ExtraBallController
+            self.asset_manager = None                   # type: BaseAssetManager
+            self.ball_controller = None                 # type: BallController
+            self.placeholder_manager = None             # type: PlaceholderManager
+
+            # devices
+            self.shows = None                           # type: Dict[str, Show]
+            self.switches = None                        # type: Dict[str, Switch]
+            self.coils = None                           # type: Dict[str, Driver]
+            self.ball_devices = None                    # type: Dict[str, BallDevice]
+            self.playfield = None                       # type: Playfield
 
         self._set_machine_path()
 
         self.config_validator = ConfigValidator(self)
 
         self._load_config()
-        self.machine_config = self.config
+        self.machine_config = self.config       # type: Any
         self.configure_logging(
             'Machine',
             self.config['logging']['console']['machine_controller'],
@@ -103,16 +133,14 @@ class MachineController(LogMixin):
         self.delayRegistry = DelayManagerRegistry(self)
         self.delay = DelayManager(self.delayRegistry)
 
+        self.hardware_platforms = dict()    # type: Dict[str, BasePlatform]
+        self.default_platform = None        # type: smart_virtual.HardwarePlatform
+
         self.clock = self._load_clock()
 
-        self._boot_holds = set()
+        self._boot_holds = set()    # type: Set[str]
         self.is_init_done = asyncio.Event(loop=self.clock.loop)
         self.register_boot_hold('init')
-
-        self._crash_queue_checker = self.clock.schedule_interval(self._check_crash_queue, 1)
-
-        self.hardware_platforms = dict()
-        self.default_platform = None
 
         self._load_hardware_platforms()
 
@@ -459,7 +487,7 @@ class MachineController(LogMixin):
             setattr(self, name, m)
 
     def _load_hardware_platforms(self):
-        """Load all hardware platforms"""
+        """Load all hardware platforms."""
         self.validate_machine_config_section('hardware')
         # if platform is forced use that one
         if self.options['force_platform']:
@@ -650,6 +678,7 @@ class MachineController(LogMixin):
         '''
         self.events.process_event_queue()
         self.thread_stopper.set()
+        self.device_manager.stop_devices()
         self._platform_stop()
 
         self.clock.loop.stop()

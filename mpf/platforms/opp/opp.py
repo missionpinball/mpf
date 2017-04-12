@@ -7,6 +7,7 @@ boards.
 import logging
 import asyncio
 
+from typing import TYPE_CHECKING
 from mpf.platforms.base_serial_communicator import BaseSerialCommunicator
 
 from mpf.platforms.opp.opp_coil import OPPSolenoidCard
@@ -14,8 +15,15 @@ from mpf.platforms.opp.opp_incand import OPPIncandCard
 from mpf.platforms.opp.opp_neopixel import OPPNeopixelCard
 from mpf.platforms.opp.opp_switch import OPPInputCard
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
-from mpf.devices.driver import ConfiguredHwDriver
-from mpf.core.platform import MatrixLightsPlatform, LedPlatform, SwitchPlatform, DriverPlatform
+from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings, \
+    DriverConfig
+
+if TYPE_CHECKING:
+    from typing import Dict, List, Set
+    from mpf.platforms.opp.opp_coil import OPPSolenoid
+    from mpf.platforms.opp.opp_incand import OPPIncand
+    from mpf.platforms.opp.opp_neopixel import OPPNeopixel
+    from mpf.platforms.opp.opp_switch import OPPSwitch
 
 # Minimum firmware versions needed for this module
 MIN_FW = 0x00000100
@@ -23,7 +31,7 @@ BAD_FW_VERSION = 0x01020304
 
 
 # pylint: disable-msg=too-many-instance-attributes
-class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, DriverPlatform):
+class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
     """Platform class for the OPP hardware.
 
@@ -32,31 +40,36 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
     """
 
-    def __init__(self, machine):
+    def __init__(self, machine) -> None:
         """Initialise OPP platform."""
         super(HardwarePlatform, self).__init__(machine)
         self.log = logging.getLogger('OPP')
         self.log.info("Configuring OPP hardware.")
 
-        self.opp_connection = {}    # type: {OPPSerialCommunicator}
-        self.serial_connections = set()
-        self.opp_incands = []
-        self.incandDict = dict()
-        self.opp_solenoid = []
-        self.solDict = dict()
-        self.opp_inputs = []
-        self.inpDict = dict()
-        self.inpAddrDict = dict()
-        self.read_input_msg = {}
-        self.opp_neopixels = []
-        self.neoCardDict = dict()
-        self.neoDict = dict()
+        self.opp_connection = {}            # type: Dict[str, OPPSerialCommunicator]
+        self.serial_connections = set()     # type: Set[OPPSerialCommunicator]
+        self.opp_incands = []               # type: List[OPPIncandCard]
+        # TODO: refactor this into the OPPIncandCard
+        self.incandDict = dict()            # type: Dict[str, OPPIncand]
+        self.opp_solenoid = []              # type: List[OPPSolenoidCard]
+        # TODO: refactor this into the OPPSolenoidCard
+        self.solDict = dict()               # type: Dict[str, OPPSolenoid]
+        self.opp_inputs = []                # type: List[OPPInputCard]
+        # TODO: refactor this into the OPPInputCard
+        self.inpDict = dict()               # type: Dict[str, OPPSwitch]
+        # TODO: remove this or opp_inputs
+        self.inpAddrDict = dict()           # type: Dict[str, OPPInputCard]
+        self.read_input_msg = {}            # type: Dict[str, bytearray]
+        self.opp_neopixels = []             # type: List[OPPNeopixelCard]
+        # TODO: remove this or opp_neopixels
+        self.neoCardDict = dict()           # type: Dict[str, OPPNeopixelCard]
+        # TODO: refactor this into the OPPNeopixelCard
+        self.neoDict = dict()               # type: Dict[str, OPPNeopixel]
         self.numGen2Brd = 0
-        self.gen2AddrArr = {}
+        self.gen2AddrArr = {}               # type: Dict[str, List[int]]
         self.badCRC = 0
         self.minVersion = 0xffffffff
-        self._poll_task = None
-        self._light_update_task = None
+        self._poll_task = None              # type: asyncio.Task
 
         self.features['tickless'] = True
 
@@ -67,7 +80,6 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
             self.machine.config['hardware']['driverboards'].lower())
 
         if self.machine_type == 'gen1':
-            self.log.debug("Configuring the original OPP boards")
             raise AssertionError("Original OPP boards not currently supported.")
         elif self.machine_type == 'gen2':
             self.log.debug("Configuring the OPP Gen2 boards")
@@ -94,9 +106,6 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         """Stop hardware and close connections."""
         if self._poll_task:
             self._poll_task.cancel()
-
-        if self._light_update_task:
-            self._light_update_task.cancel()
 
         for connections in self.serial_connections:
             connections.stop()
@@ -269,7 +278,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                 has_neo = True
             wing_index += 1
         if incand_mask != 0:
-            self.opp_incands.append(OPPIncandCard(chain_serial, msg[0], incand_mask, self.incandDict))
+            self.opp_incands.append(OPPIncandCard(chain_serial, msg[0], incand_mask, self.incandDict, self.machine))
         if sol_mask != 0:
             self.opp_solenoid.append(
                 OPPSolenoidCard(chain_serial, msg[0], sol_mask, self.solDict, self))
@@ -442,53 +451,6 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                     curr_bit <<= 1
             opp_inp.oldState = new_state
 
-    def reconfigure_driver(self, driver, use_hold: bool):
-        """Reconfigure a driver.
-
-        Args:
-            driver: Driver object.
-            use_hold: Whether this driver stays enabled after a trigger or not.
-        """
-        # If hold is 0, set the auto clear bit
-        if not use_hold:
-            cmd = ord(OppRs232Intf.CFG_SOL_AUTO_CLR)
-            driver.hw_driver.can_be_pulsed = True
-            hold = 0
-        else:
-            cmd = 0
-            driver.hw_driver.can_be_pulsed = False
-            hold = self.get_hold_value(driver)
-            if not hold:
-                raise AssertionError("Hold may not be 0")
-            if hold >= 16:
-                hold = 15
-                if self.minVersion >= 0x00020000:
-                    # set flag for full power
-                    cmd += ord(OppRs232Intf.CFG_SOL_ON_OFF)
-
-        # TODO: implement separate hold power (0-f) and minimum off time (0-7)
-        minimum_off = self.get_minimum_off_time(driver)
-
-        if driver.hw_driver.use_switch:
-            cmd += ord(OppRs232Intf.CFG_SOL_USE_SWITCH)
-
-        _, solenoid = driver.config['number'].split('-')
-        pulse_len = self._get_pulse_ms_value(driver)
-
-        msg = bytearray()
-        msg.append(driver.hw_driver.solCard.addr)
-        msg.extend(OppRs232Intf.CFG_IND_SOL_CMD)
-        msg.append(int(solenoid))
-        msg.append(cmd)
-        msg.append(pulse_len)
-        msg.append(hold + (minimum_off << 4))
-        msg.extend(OppRs232Intf.calc_crc8_whole_msg(msg))
-        msg.extend(OppRs232Intf.EOM_CMD)
-        final_cmd = bytes(msg)
-
-        self.log.debug("Writing individual config: %s", "".join(" 0x%02x" % b for b in final_cmd))
-        self.send_to_processor(driver.hw_driver.solCard.chain_serial, final_cmd)
-
     def _get_dict_index(self, input_str):
         try:
             chain_str, card_str, number_str = input_str.split("-")
@@ -511,7 +473,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
         return chain_serial + "-" + card_str + "-" + number_str
 
-    def configure_driver(self, config: dict):
+    def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
         """Configure a driver.
 
         Args:
@@ -521,25 +483,20 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
             raise AssertionError("A request was made to configure an OPP solenoid, "
                                  "but no OPP connection is available")
 
-        number = self._get_dict_index(config['number'])
+        number = self._get_dict_index(number)
 
         if number not in self.solDict:
             raise AssertionError("A request was made to configure an OPP solenoid "
-                                 "with number {} which doesn't exist".format(config['number']))
+                                 "with number {} which doesn't exist".format(number))
 
         # Use new update individual solenoid command
         opp_sol = self.solDict[number]
-        if not config['pulse_ms']:
-            config['pulse_ms'] = self.machine.config['mpf']['default_pulse_ms']
         opp_sol.config = config
-        self.log.debug("Config driver %s, %s, %s", number,
-                       opp_sol.config['pulse_ms'], opp_sol.config['hold_power'])
+        opp_sol.platform_settings = platform_settings
+        self.log.debug("Configure driver %s", number)
 
-        hold = self.get_hold_value(opp_sol)
-        self.reconfigure_driver(ConfiguredHwDriver(opp_sol, {}), hold != 0)
-
-        _, _, coil_num = number.split("-")
-        coil_num = int(coil_num)
+        _, _, coil_num_str = number.split("-")
+        coil_num = int(coil_num_str)
         # calculate the default input and remove it by default
         switch_num = int(coil_num - (coil_num % 4)) * 2 + (coil_num % 4)
         self._remove_switch_coil_mapping(switch_num, opp_sol)
@@ -565,57 +522,66 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
         return self.inpDict[number]
 
-    def configure_led(self, config: dict, channels: int):
-        """Configure LED.
+    def parse_light_number_to_channels(self, number: str, subtype: str):
+        """Parse number and subtype to channel."""
+        if subtype == "matrix":
+            return [
+                {
+                    "number": self._get_dict_index(number)
+                }
+            ]
+        elif not subtype or subtype == "led":
+            return [
+                {
+                    "number": self._get_dict_index(number) + "-0"
+                },
+                {
+                    "number": self._get_dict_index(number) + "-1"
+                },
+                {
+                    "number": self._get_dict_index(number) + "-2"
+                },
+            ]
+        else:
+            raise AssertionError("Unknown subtype {}".format(subtype))
 
-        Args:
-            config: Config dict.
-            channels: Number of channels. OPP supports up to three.
-        """
-        if channels > 3:
-            raise AssertionError("OPP only supports RGB LEDs")
+    def configure_light(self, number, subtype, platform_settings):
+        """Configure a led or matrix light."""
         if not self.opp_connection:
-            raise AssertionError("A request was made to configure an OPP LED, "
+            raise AssertionError("A request was made to configure an OPP light, "
                                  "but no OPP connection is available")
+        if not subtype or subtype == "led":
+            chain_serial, card, pixel_num, index_str = number.split('-')
+            index = chain_serial + '-' + card
+            if index not in self.neoCardDict:
+                raise AssertionError("A request was made to configure an OPP neopixel "
+                                     "with card number %s which doesn't exist", card)
 
-        number = self._get_dict_index(config['number'])
+            neo = self.neoCardDict[index]
+            channel = neo.add_channel(int(pixel_num), self.neoDict, index_str)
+            return channel
+        elif subtype == "matrix":
+            if number not in self.incandDict:
+                raise AssertionError("A request was made to configure a OPP matrix "
+                                     "light (incand board), with number %s "
+                                     "which doesn't exist", number)
 
-        chain_serial, card, pixel_num = number.split('-')
-        index = chain_serial + '-' + card
-        if index not in self.neoCardDict:
-            raise AssertionError("A request was made to configure an OPP neopixel "
-                                 "with card number %s which doesn't exist", card)
+            return self.incandDict[number]
+        else:
+            raise AssertionError("Unknown subtype {}".format(subtype))
 
-        neo = self.neoCardDict[index]
-        pixel = neo.add_neopixel(int(pixel_num), self.neoDict)
+    def light_sync(self):
+        """Update lights."""
+        # first neo pixels
+        for light in self.neoDict.values():
+            if light.dirty:
+                light.update_color()
 
-        return pixel
-
-    def configure_matrixlight(self, config):
-        """Configure a direct incandescent bulb.
-
-        Args:
-            config: Config dict.
-        """
-        if not self.opp_connection:
-            raise AssertionError("A request was made to configure an OPP matrix "
-                                 "light (incand board), but no OPP connection "
-                                 "is available")
-
-        number = self._get_dict_index(config['number'])
-
-        if number not in self.incandDict:
-            raise AssertionError("A request was made to configure a OPP matrix "
-                                 "light (incand board), with number %s "
-                                 "which doesn't exist", number)
-
-        if not self._light_update_task:
-            self._light_update_task = self.machine.clock.loop.create_task(self._update_lights())
-            self._light_update_task.add_done_callback(self._done)
-        return self.incandDict[number]
+        # then incandescents
+        self.update_incand()
 
     @staticmethod
-    def _done(future):
+    def _done(future):  # pragma: no cover
         """Evaluate result of task.
 
         Will raise exceptions from within task.
@@ -632,16 +598,6 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                 # the line above saturates the link and seems to overhelm the hardware. limit it to 100Hz
                 yield from asyncio.sleep(.01, loop=self.machine.clock.loop)
 
-    @asyncio.coroutine
-    def _update_lights(self):
-        """Update matrix lights."""
-        while True:
-            self.update_incand()
-            for connection in self.opp_connection.values():
-                yield from connection.writer.drain()
-            # limit to 50Hz
-            yield from asyncio.sleep(.02, loop=self.machine.clock.loop)
-
     def _verify_coil_and_switch_fit(self, switch, coil):
         chain_serial, card, solenoid = coil.hw_driver.number.split('-')
         sw_chain_serial, sw_card, sw_num = switch.hw_switch.number.split('-')
@@ -657,7 +613,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                                      'Switch = %s. For Firmware <2.0 they have to be on the same board and have the '
                                      'same number' % (coil.hw_driver.number, switch.hw_switch.number))
 
-    def set_pulse_on_hit_rule(self, enable_switch, coil):
+    def set_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit rule on driver.
 
         Pulses a driver when a switch is hit. When the switch is released the pulse continues. Typically used for
@@ -666,7 +622,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         # OPP always does the full pulse
         self._write_hw_rule(enable_switch, coil, False)
 
-    def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
+    def set_pulse_on_hit_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and release rule to driver.
 
         Pulses a driver when a switch is hit. When the switch is released the pulse is canceled. Typically used on
@@ -675,19 +631,17 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         # OPP always does the full pulse. So this is not 100% correct
         self.set_pulse_on_hit_rule(enable_switch, coil)
 
-    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
+    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and enable and relase rule on driver.
 
         Pulses a driver when a switch is hit. Then enables the driver (may be with pwm). When the switch is released
         the pulse is canceled and the driver gets disabled. Typically used for single coil flippers.
         """
         # OPP always does the full pulse. Therefore, this is mostly right.
-        if not self.get_hold_value(coil):
-            raise AssertionError("Set allow_enable if you want to enable a coil without hold_power")
-
         self._write_hw_rule(enable_switch, coil, True)
 
-    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
+    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
+                                                                 disable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and enable and release and disable rule on driver.
 
         Pulses a driver when a switch is hit. Then enables the driver (may be with pwm). When the switch is released
@@ -696,66 +650,29 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         """
         raise AssertionError("Not implemented in OPP currently")
 
-    @classmethod
-    def get_hold_value(cls, coil):
-        """Get OPP hold value (0-15)."""
-        if coil.config['hold_power16']:
-            return coil.config['hold_power16']
-        elif coil.config['hold_power']:
-            if coil.config['hold_power'] >= 8:
-                return 16
-            else:
-                # hold_power is 0-8 and OPP supports 0-16
-                return coil.config['hold_power'] * 2
-        elif coil.config['allow_enable']:
-            return 16
-        else:
-            return 0
-
-    @classmethod
-    def get_minimum_off_time(cls, coil):
-        """Return minimum off factor.
-
-        The hardware applies this factor to pulse_ms to prevent the coil from burning.
-        """
-        if not coil.config['recycle']:
-            return 0
-        elif coil.config['recycle_factor']:
-            return coil.config['recycle_factor']
-        else:
-            # default to two times pulse_ms
-            return 2
-
-    def _get_pulse_ms_value(self, coil):
-        if coil.config['pulse_ms']:
-            return coil.config['pulse_ms']
-        else:
-            # use mpf default_pulse_ms
-            return self.machine.config['mpf']['default_pulse_ms']
-
-    def _write_hw_rule(self, switch_obj, driver_obj, use_hold):
+    def _write_hw_rule(self, switch_obj: SwitchSettings, driver_obj: DriverSettings, use_hold):
         if switch_obj.invert:
             raise AssertionError("Cannot handle inverted switches")
 
+        if driver_obj.hold_settings and not use_hold:
+            raise AssertionError("Invalid call")
+
         self._verify_coil_and_switch_fit(switch_obj, driver_obj)
 
-        self.log.debug("Setting HW Rule. Driver: %s, Driver settings: %s",
-                       driver_obj.hw_driver.number, driver_obj.config)
+        self.log.debug("Setting HW Rule. Driver: %s", driver_obj.hw_driver.number)
 
-        driver_obj.hw_driver.use_switch = True
+        driver_obj.hw_driver.set_switch_rule(driver_obj.pulse_settings, driver_obj.hold_settings, driver_obj.recycle)
         driver_obj.hw_driver.switches.append(switch_obj.hw_switch.number)
         _, _, switch_num = switch_obj.hw_switch.number.split("-")
         switch_num = int(switch_num)
         self._add_switch_coil_mapping(switch_num, driver_obj.hw_driver)
-
-        self.reconfigure_driver(driver_obj, use_hold)
 
     def _remove_switch_coil_mapping(self, switch_num, driver):
         """Remove mapping between switch and coil."""
         if self.minVersion < 0x00020000:
             return
 
-        _, coil_num = driver.config['number'].split('-')
+        _, _, coil_num = driver.number.split('-')
         msg = bytearray()
         msg.append(driver.solCard.addr)
         msg.extend(OppRs232Intf.SET_SOL_INP_CMD)
@@ -772,7 +689,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         """Add mapping between switch and coil."""
         if self.minVersion < 0x00020000:
             return
-        _, coil_num = driver.config['number'].split('-')
+        _, _, coil_num = driver.number.split('-')
         msg = bytearray()
         msg.append(driver.solCard.addr)
         msg.extend(OppRs232Intf.SET_SOL_INP_CMD)
@@ -785,7 +702,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         self.log.debug("Mapping input %s and coil %s", switch_num, coil_num)
         self.send_to_processor(driver.solCard.chain_serial, final_cmd)
 
-    def clear_hw_rule(self, switch, coil):
+    def clear_hw_rule(self, switch: SwitchSettings, coil: DriverSettings):
         """Clear a hardware rule.
 
         This is used if you want to remove the linkage between a switch and
@@ -805,8 +722,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
 
         # disable rule if there are no more switches
         if not coil.hw_driver.switches:
-            coil.hw_driver.use_switch = False
-            self.reconfigure_driver(coil, not coil.hw_driver.can_be_pulsed)
+            coil.hw_driver.remove_switch_rule()
 
 
 class OPPSerialCommunicator(BaseSerialCommunicator):
@@ -814,10 +730,10 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
     """Manages a Serial connection to the first processor in a OPP serial chain."""
 
     # pylint: disable=too-many-arguments
-    def __init__(self, platform: HardwarePlatform, port, baud):
+    def __init__(self, platform: HardwarePlatform, port, baud) -> None:
         """Initialise Serial Connection to OPP Hardware."""
         self.partMsg = b""
-        self.chain_serial = None
+        self.chain_serial = None    # type: str
         self._lost_synch = False
 
         super().__init__(platform, port, baud)
@@ -827,7 +743,6 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
         """Identify which processor this serial connection is talking to."""
         # keep looping and wait for an ID response
         count = 0
-        resp = b''
         # read and discard all messages in buffer
         self.writer.write(OppRs232Intf.EOM_CMD)
         yield from asyncio.sleep(.01, loop=self.machine.clock.loop)
@@ -933,7 +848,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
         self.writer.write(cmd)
 
     @classmethod
-    def _create_vers_str(cls, version_int):
+    def _create_vers_str(cls, version_int):     # pragma: no cover
         return ("%02d.%02d.%02d.%02d" % (((version_int >> 24) & 0xff),
                                          ((version_int >> 16) & 0xff), ((version_int >> 8) & 0xff),
                                          (version_int & 0xff)))

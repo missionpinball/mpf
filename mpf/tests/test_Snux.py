@@ -1,5 +1,5 @@
 """Test snux platform."""
-from mpf.devices.driver import ConfiguredHwDriver
+from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, HoldSettings
 
 from mpf.tests.MpfTestCase import MpfTestCase, MagicMock
 
@@ -64,7 +64,7 @@ class TestSnux(MpfTestCase):
         self.machine.coils.c_side_a1.pulse(50)
         self.machine.coils.c_side_c1.pulse(50)
         self.advance_time_and_run(0.001)
-        c_side_a1.pulse.assert_called_with(self.machine.coils.c_side_a1, 50)
+        c_side_a1.pulse.assert_called_with(PulseSettings(power=1.0, duration=50))
         c_side_a1.pulse = MagicMock()
         assert not c_side_c1.pulse.called
         assert not c_ac_relay.enable.called
@@ -79,7 +79,7 @@ class TestSnux(MpfTestCase):
         # after the relay switches. pulse the other coil
         self.advance_time_and_run(0.075)
         assert not c_side_a1.pulse.called
-        c_side_c1.pulse.assert_called_with(self.machine.coils.c_side_c1, 50)
+        c_side_c1.pulse.assert_called_with(PulseSettings(power=1.0, duration=50))
 
         # it should switch back to a side when idle
         self.advance_time_and_run(0.052)
@@ -109,15 +109,20 @@ class TestSnux(MpfTestCase):
         c_ac_relay.enable = MagicMock()
         assert not c_side_c2.enable.called
         self.advance_time_and_run(0.075)
-        c_side_c2.enable.assert_called_with(self.machine.coils.c_side_c2.get_configured_driver())
+        c_side_c2.enable.assert_called_with(PulseSettings(power=1.0, duration=10), HoldSettings(power=0.5))
 
         # a side has preference. it should transition
         self.machine.coils.c_side_a2.enable()
         self.machine_run()
-        c_side_c2.disable.assert_called_with(ConfiguredHwDriver(c_side_c2, {}))
+        c_side_c2.disable.assert_called_with()
         c_ac_relay.disable.assert_called_with()
+        c_ac_relay.disable = MagicMock()
         assert not c_side_a2.enable.called
 
         # it should enable a side coils now
         self.advance_time_and_run(0.075)
-        c_side_a2.enable.assert_called_with(self.machine.coils.c_side_a2.get_configured_driver())
+        c_side_a2.enable.assert_called_with(PulseSettings(power=1.0, duration=10), HoldSettings(power=0.5))
+
+        # disable driver on a side.
+        self.machine.coils.c_side_a2.disable()
+        self.advance_time_and_run(0.2)

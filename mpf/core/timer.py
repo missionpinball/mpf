@@ -19,6 +19,7 @@ class Timer(LogMixin):
 
     def __init__(self, machine, mode, name, config):
         """Initialise mode timer."""
+        super().__init__()
         self.machine = machine
         self.mode = mode
         self.name = name
@@ -73,6 +74,7 @@ class Timer(LogMixin):
 
     @property
     def ticks(self):
+        """Return ticks."""
         return self._ticks
 
     @ticks.setter
@@ -91,7 +93,6 @@ class Timer(LogMixin):
 
         except TypeError:
             pass
-
 
     def _setup_control_events(self, event_list):
         self.debug_log("Setting up control events")
@@ -312,10 +313,8 @@ class Timer(LogMixin):
             self.reset()
             self.start()
 
-    def _timer_tick(self, dt):
+    def _timer_tick(self):
         # Automatically called by the core clock each tick
-        del dt
-
         self.debug_log("Timer Tick")
 
         if not self.running:

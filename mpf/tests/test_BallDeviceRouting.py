@@ -44,7 +44,7 @@ class TestBallDeviceRouting(MpfTestCase):
         self.assertEqual(1, self._captured)
         self._captured = 0
 
-        c_launcher.pulse.assert_called_once_with()
+        self.assertTrue(c_launcher.pulse.called)
         self.assertIsNone(trough1.outgoing_balls_handler._current_target)
         self.assertIsNone(target1.outgoing_balls_handler._current_target)
         self.assertEqual(trough2, launcher.outgoing_balls_handler._current_target)
@@ -74,7 +74,7 @@ class TestBallDeviceRouting(MpfTestCase):
         self.assertEqual(1, drain1.balls)
         self.assertEqual(1, self._captured)
         self._captured = 0
-        c_drain1.pulse.assert_called_once_with()
+        self.assertTrue(c_drain1.pulse.called)
 
         self.assertIsNone(trough2.outgoing_balls_handler._current_target)
         self.assertEqual("ejecting", drain1._state)

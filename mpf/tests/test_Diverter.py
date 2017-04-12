@@ -209,7 +209,7 @@ class TestDiverter(MpfTestCase):
         self.assertTrue(diverter.active)
 
         # only trough1 ejects. trought2 waits because of diverter
-        self.machine.coils.eject_coil1.pulse.assert_called_once_with()
+        self.assertTrue(self.machine.coils.eject_coil1.pulse.called)
         assert not self.machine.coils.eject_coil3.pulse.called
         self.assertEqual(1, diverter.diverting_ejects_count)
 
@@ -217,7 +217,7 @@ class TestDiverter(MpfTestCase):
         self.advance_time_and_run(3)
         self.assertFalse(diverter.enabled)
         self.assertFalse(diverter.active)
-        self.machine.coils.eject_coil3.pulse.assert_called_once_with()
+        self.assertTrue(self.machine.coils.eject_coil3.pulse.called)
         self.assertEqual(0, diverter.diverting_ejects_count)
 
         self.machine.coils.eject_coil1.pulse = MagicMock(wraps=pulse1)
@@ -245,7 +245,7 @@ class TestDiverter(MpfTestCase):
         self.assertFalse(diverter.enabled)
         self.assertFalse(diverter.active)
 
-        self.machine.coils.eject_coil3.pulse.assert_called_once_with()
+        self.assertTrue(self.machine.coils.eject_coil3.pulse.called)
         assert not self.machine.coils.eject_coil1.pulse.called
 
         self.hit_and_release_switch("s_playfield")
@@ -254,7 +254,7 @@ class TestDiverter(MpfTestCase):
         self.assertTrue(diverter.enabled)
         self.assertTrue(diverter.active)
 
-        self.machine.coils.eject_coil1.pulse.assert_called_once_with()
+        self.assertTrue(self.machine.coils.eject_coil1.pulse.called)
 
     def test_pulsed_activation_time(self):
         diverter = self.machine.diverters.d_test_pulse
@@ -265,7 +265,7 @@ class TestDiverter(MpfTestCase):
         self.post_event("machine_reset_phase_3")
         self.assertFalse(diverter.enabled)
         self.assertFalse(diverter.active)
-        self.machine.coils.c_diverter_disable.pulse.assert_called_once_with()
+        self.assertTrue(self.machine.coils.c_diverter_disable.pulse.called)
         assert not self.machine.coils.c_diverter.pulse.called
 
         self.assertEqual("idle", self.machine.ball_devices.test_trough._state)
@@ -283,7 +283,7 @@ class TestDiverter(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertTrue(diverter.enabled)
         self.assertTrue(diverter.active)
-        self.machine.coils.c_diverter.pulse.assert_called_once_with()
+        self.assertTrue(self.machine.coils.c_diverter.pulse.called)
         self.machine.coils.c_diverter.pulse = MagicMock()
         assert not self.machine.coils.c_diverter_disable.pulse.called
 
@@ -293,7 +293,7 @@ class TestDiverter(MpfTestCase):
         self.hit_and_release_switch("s_playfield")
         self.machine_run()
         self.assertFalse(diverter.active)
-        self.machine.coils.c_diverter_disable.pulse.assert_called_once_with()
+        self.assertTrue(self.machine.coils.c_diverter_disable.pulse.called)
 
         self.hit_switch_and_run("s_ball_switch1", 1)
         self.machine.ball_devices.test_trough.tags.remove("ball_add_live")
@@ -455,7 +455,7 @@ class TestDiverter(MpfTestCase):
         self.assertTrue(diverter.active)
         self.machine.coils.c_hold.enable.assert_called_once_with()
         self.machine.coils.c_hold.enable = MagicMock()
-        self.machine.coils.c_power.pulse.assert_called_once_with()
+        self.assertTrue(self.machine.coils.c_power.pulse.called)
         self.machine.coils.c_power.pulse = MagicMock()
         assert not self.machine.coils.c_hold.disable.called
 

@@ -1,6 +1,7 @@
 """An achievement which can be reached in a pinball machine."""
 
 from mpf.core.device_monitor import DeviceMonitor
+from mpf.core.events import event_handler
 
 from mpf.core.mode import Mode
 from mpf.core.mode_device import ModeDevice
@@ -61,6 +62,7 @@ class Achievement(ModeDevice):
 
         return config
 
+    @event_handler(10)
     def enable(self, **kwargs):
         """Enable the achievement.
 
@@ -71,6 +73,7 @@ class Achievement(ModeDevice):
             self._state = "enabled"
             self._run_state()
 
+    @event_handler(5)
     def start(self, **kwargs):
         """Start achievement."""
         del kwargs
@@ -80,6 +83,7 @@ class Achievement(ModeDevice):
             self._state = "started"
             self._run_state()
 
+    @event_handler(4)
     def complete(self, **kwargs):
         """Complete achievement."""
         del kwargs
@@ -87,6 +91,7 @@ class Achievement(ModeDevice):
             self._state = "completed"
             self._run_state()
 
+    @event_handler(2)
     def stop(self, **kwargs):
         """Stop achievement."""
         del kwargs
@@ -94,6 +99,7 @@ class Achievement(ModeDevice):
             self._state = "stopped"
             self._run_state()
 
+    @event_handler(0)
     def disable(self, **kwargs):
         """Disable achievement."""
         del kwargs
@@ -103,6 +109,7 @@ class Achievement(ModeDevice):
             self._state = "disabled"
             self._run_state()
 
+    @event_handler(1)
     def reset(self, **kwargs):
         """Reset the achievement to its initial state."""
         del kwargs
@@ -117,6 +124,7 @@ class Achievement(ModeDevice):
 
         self._run_state()
 
+    @event_handler(9)
     def select(self, **kwargs):
         """Highlight (select) this achievement."""
         del kwargs
@@ -183,7 +191,7 @@ class Achievement(ModeDevice):
         self._player = player
         self._mode = mode
         if not self._player.achievements:
-            self._player.achievements = dict()
+            self._player.achievements = dict()      # type: ignore
 
         if self.name not in self._player.achievements:
             self.reset()

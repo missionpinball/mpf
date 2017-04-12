@@ -20,6 +20,10 @@ class BallDeviceStateHandler:
         """Stop handler."""
         if self._task:
             self._task.cancel()
+            try:
+                self.machine.clock.loop.run_until_complete(self._task)
+            except asyncio.CancelledError:
+                pass
 
     def debug_log(self, *args, **kwargs):
         """Debug log."""

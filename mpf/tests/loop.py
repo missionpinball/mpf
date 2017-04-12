@@ -1,6 +1,6 @@
 import selectors
 import socket
-from asyncio import base_events, coroutine, events
+from asyncio import base_events, coroutine, events      # type: ignore
 import collections
 import heapq
 

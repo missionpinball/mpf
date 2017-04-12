@@ -208,7 +208,7 @@ class TestBallSearch(MpfTestCase):
                 self.machine.coils['drop_target_knockdown4'].pulse = MagicMock()
                 self.machine.coils['flipper_coil'].enable = MagicMock()
                 self.machine.coils['diverter_coil'].enable = MagicMock()
-                self.machine.autofires.autofire1.coil.pulse = MagicMock()
+                self.machine.coils['autofire_coil'].pulse = MagicMock()
                 self.advance_time_and_run(10)
                 if i <= 3:
                     self.assertEqual(1, self.machine.ball_devices['playfield'].ball_search.phase)
@@ -285,14 +285,14 @@ class TestBallSearch(MpfTestCase):
                 self.advance_time_and_run(.25)
                 assert self.machine.coils['diverter_coil'].enable.called
                 assert not self.machine.coils['flipper_coil'].enable.called
-                assert not self.machine.autofires.autofire1.coil.pulse.called
+                assert not self.machine.coils['autofire_coil'].pulse.called
 
                 self.advance_time_and_run(.25)
                 assert self.machine.coils['flipper_coil'].enable.called
-                assert not self.machine.autofires.autofire1.coil.pulse.called
+                assert not self.machine.coils['autofire_coil'].pulse.called
 
                 self.advance_time_and_run(.25)
-                assert self.machine.autofires.autofire1.coil.pulse.called
+                assert self.machine.coils['autofire_coil'].pulse.called
 
         self.advance_time_and_run(10)
 

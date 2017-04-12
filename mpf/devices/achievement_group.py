@@ -1,10 +1,17 @@
 """An achievement group which manages and groups achievements."""
 from random import choice
+from typing import TYPE_CHECKING
 
+from mpf.core.events import event_handler
+from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
 from mpf.core.mode_device import ModeDevice
 from mpf.core.player import Player
 from mpf.core.device_monitor import DeviceMonitor
+
+if TYPE_CHECKING:
+    from mpf.devices.achievement import Achievement
+    from mpf.assets.show import RunningShow
 
 
 @DeviceMonitor(_enabled="enabled", _selected_member="selected_member")
@@ -20,15 +27,15 @@ class AchievementGroup(ModeDevice):
     collection = 'achievement_groups'
     class_label = 'achievement_group'
 
-    def __init__(self, machine, name):
+    def __init__(self, machine: MachineController, name: str) -> None:
         """Initialize achievement."""
         super().__init__(machine, name)
 
-        self._mode = None
-        self._show = None
+        self._mode = None       # type: Mode
+        self._show = None       # type: RunningShow
 
         self._enabled = False
-        self._selected_member = None
+        self._selected_member = None    # type: Achievement
         self._rotation_in_progress = False
 
     @property
@@ -36,6 +43,7 @@ class AchievementGroup(ModeDevice):
         """Return enabled state."""
         return self._enabled
 
+    @event_handler(10)
     def enable(self, **kwargs):
         """Enable achievement group."""
         del kwargs
@@ -64,6 +72,7 @@ class AchievementGroup(ModeDevice):
 
         self._process_current_member_state()
 
+    @event_handler(0)
     def disable(self, **kwargs):
         """Disable achievement group."""
         del kwargs
@@ -101,6 +110,7 @@ class AchievementGroup(ModeDevice):
 
         return self._selected_member
 
+    @event_handler(5)
     def start_selected(self, **kwargs):
         """Start the currently selected achievement."""
         del kwargs
@@ -115,6 +125,7 @@ class AchievementGroup(ModeDevice):
             # don't have a current one
             pass
 
+    @event_handler(6)
     def rotate_right(self, reverse=False, **kwargs):
         """Rotate to the right."""
         del kwargs
@@ -147,6 +158,7 @@ class AchievementGroup(ModeDevice):
 
         self._rotation_in_progress = False
 
+    @event_handler(7)
     def rotate_left(self, **kwargs):
         """Rotate to the left."""
         del kwargs
@@ -165,6 +177,7 @@ class AchievementGroup(ModeDevice):
         for e in self.config['events_when_all_completed']:
             self.machine.events.post(e)
 
+    @event_handler(9)
     def select_random_achievement(self, **kwargs):
         """Select a random achievement."""
         del kwargs

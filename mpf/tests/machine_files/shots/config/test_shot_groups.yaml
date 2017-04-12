@@ -66,7 +66,7 @@ switches:
   s_special_right:
     number:
 
-leds:
+lights:
   led_10:
     number:
   led_11:
@@ -103,12 +103,12 @@ leds:
     number:
   l_GAS_S:
     number:
-
-matrix_lights:
   l_special_right:
     number:
+    subtype: matrix
   l_special_left:
     number:
+    subtype: matrix
 
 shots:
   shot_1:
@@ -274,21 +274,21 @@ shot_groups:
 
 shows:
     rainbow:
-      - leds:
+      - lights:
           (leds): off
-      - leds:
+      - lights:
           (leds): red
-      - leds:
+      - lights:
           (leds): orange
-      - leds:
+      - lights:
           (leds): yellow
-      - leds:
+      - lights:
           (leds): green
     leds_off:
-      - leds:
+      - lights:
           (led): off
     leds_on:
-      - leds:
+      - lights:
           (led): white
 
 shot_profiles:

@@ -1,23 +1,22 @@
 """Contains code for a virtual hardware platform."""
 
 import logging
+from typing import Callable, Tuple
 
+from mpf.exceptions.ConfigFileError import ConfigFileError
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
+from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 
-from mpf.core.platform import ServoPlatform, MatrixLightsPlatform, GiPlatform, LedPlatform, \
-    SwitchPlatform, DriverPlatform, AccelerometerPlatform, I2cPlatform, DmdPlatform, RgbDmdPlatform
+from mpf.core.platform import ServoPlatform, SwitchPlatform, DriverPlatform, AccelerometerPlatform, I2cPlatform,\
+    DmdPlatform, RgbDmdPlatform, LightsPlatform, DriverConfig
 from mpf.core.utility_functions import Util
-from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
-from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
-from mpf.platforms.interfaces.gi_platform_interface import GIPlatformInterface
-from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
-from mpf.core.rgb_color import RGBColor
+from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
 
-class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, MatrixLightsPlatform, GiPlatform,
-                       LedPlatform, SwitchPlatform, DriverPlatform, DmdPlatform, RgbDmdPlatform):
+class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, LightsPlatform, SwitchPlatform,
+                       DriverPlatform, DmdPlatform, RgbDmdPlatform):
 
     """Base class for the virtual hardware platform."""
 
@@ -35,6 +34,7 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
         self.features['tickless'] = True
         self._next_driver = 1000
         self._next_switch = 1000
+        self._next_light = 1000
 
     def __repr__(self):
         """Return string representation."""
@@ -56,14 +56,15 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
         """Configure a servo device in paltform."""
         return VirtualServo(config['number'])
 
-    def configure_driver(self, config):
+    def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
         """Configure driver."""
+        del platform_settings
         # generate number if None
-        if config['number'] is None:
-            config['number'] = self._next_driver
+        if number is None:
+            number = self._next_driver
             self._next_driver += 1
 
-        driver = VirtualDriver(config)
+        driver = VirtualDriver(config, number)
 
         return driver
 
@@ -95,7 +96,7 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
                 initial_active_switches = []
                 for switch in Util.string_to_list(self.machine.config['virtual_platform_start_active_switches']):
                     if switch not in self.machine.switches:
-                        raise AssertionError("Switch {} used in virtual_platform_start_active_switches was not found "
+                        raise ConfigFileError("Switch {} used in virtual_platform_start_active_switches was not found "
                                               "in switches section.".format(switch))
                     initial_active_switches.append(self.machine.switches[switch].hw_switch.number)
 
@@ -143,25 +144,14 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
             base_spec=sections)
         return config_overwrite
 
-    def validate_coil_overwrite_section(self, driver, config_overwrite):
-        """Validate coil overwrite sections."""
-        sections = []
-        for platform in self._get_platforms():
-            if hasattr(platform, "get_coil_overwrite_section") and platform.get_coil_overwrite_section():
-                sections.append(platform.get_coil_overwrite_section())
-        self.machine.config_validator.validate_config(
-            "coil_overwrites", config_overwrite, driver.name,
-            base_spec=sections)
-        return config_overwrite
-
     def validate_coil_section(self, driver, config):
         """Validate coil sections."""
-        sections = ["device"]
+        sections = []
         for platform in self._get_platforms():
             if hasattr(platform, "get_coil_config_section") and platform.get_coil_config_section():
                 sections.append(platform.get_coil_config_section())
         self.machine.config_validator.validate_config(
-            "coils", config, driver.name,
+            sections.pop(), config, driver.name,
             base_spec=sections)
         return config
 
@@ -169,17 +159,36 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Matrix
         """Configure accelerometer."""
         pass
 
-    def configure_matrixlight(self, config):
-        """Configure matrix light."""
-        return VirtualMatrixLight(config['number'])
+    def configure_light(self, number, subtype, platform_settings):
+        """Configure light channel."""
+        del subtype
+        return VirtualLight(number, platform_settings)
 
-    def configure_led(self, config, channels):
-        """Configure led."""
-        return VirtualLED(config['number'])
-
-    def configure_gi(self, config):
-        """Configure GI."""
-        return VirtualGI(config['number'])
+    def parse_light_number_to_channels(self, number: str, subtype: str):
+        """Parse channel str to a list of channels."""
+        if number is None:
+            number = self._next_light
+            self._next_light += 1
+        if subtype in ("gi", "matrix"):
+            return [
+                {
+                    "number": str(number)
+                }
+            ]
+        elif subtype == "led" or not subtype:
+            return [
+                {
+                    "number": str(number) + "-r",
+                },
+                {
+                    "number": str(number) + "-g",
+                },
+                {
+                    "number": str(number) + "-b",
+                }
+            ]
+        else:
+            raise AssertionError("Unknown subtype {}".format(subtype))
 
     def clear_hw_rule(self, switch, coil):
         """Clear hw rule."""
@@ -253,57 +262,31 @@ class VirtualSwitch(SwitchPlatformInterface):
         self.log = logging.getLogger('VirtualSwitch')
 
 
-class VirtualMatrixLight(MatrixLightPlatformInterface):
+class VirtualLight(LightPlatformInterface):
 
-    """Virtual matrix light."""
+    """Virtual Light."""
 
-    def __init__(self, number):
-        """Initialise matrix light."""
-        self.log = logging.getLogger('VirtualMatrixLight')
-        self.number = number
-        self.current_brightness = 0
-
-    def on(self, brightness=255):
-        """Turn on matrix light."""
-        self.current_brightness = brightness
-
-    def off(self):
-        """Turn off matrix light."""
-        self.current_brightness = 0
-
-
-class VirtualLED(RGBLEDPlatformInterface):
-
-    """Virtual LED."""
-
-    def __init__(self, number):
+    def __init__(self, number, settings):
         """Initialise LED."""
-        self.log = logging.getLogger('VirtualLED')
+        self.settings = settings
         self.number = number
-        self.current_color = list(RGBColor().rgb)
+        self.color_and_fade_callback = None
 
-    def color(self, color):
-        """Set color."""
-        self.current_color = color
+    @property
+    def current_brightness(self) -> float:
+        """Return current brightness."""
+        return self.get_current_brightness_for_fade()
 
+    def get_current_brightness_for_fade(self, max_fade=0) -> float:
+        """Return brightness for a max_fade long fade."""
+        if self.color_and_fade_callback:
+            return self.color_and_fade_callback(max_fade)[0]
+        else:
+            return 0
 
-class VirtualGI(GIPlatformInterface):
-
-    """Virtual GI."""
-
-    def __init__(self, number):
-        """Initialise GI."""
-        self.log = logging.getLogger('VirtualGI')
-        self.number = number
-        self.current_brightness = 0
-
-    def on(self, brightness=255):
-        """Turn GI on."""
-        self.current_brightness = brightness
-
-    def off(self):
-        """Turn GI off."""
-        self.current_brightness = 0
+    def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
+        """Store CB function."""
+        self.color_and_fade_callback = color_and_fade_callback
 
 
 class VirtualServo(ServoPlatformInterface):
@@ -325,10 +308,10 @@ class VirtualDriver(DriverPlatformInterface):
 
     """A virtual driver object."""
 
-    def __init__(self, config):
+    def __init__(self, config, number):
         """Initialise virtual driver to disabled."""
         self.log = logging.getLogger('VirtualDriver')
-        super().__init__(config, config['number'])
+        super().__init__(config, number)
         self.state = "disabled"
 
     def get_board_name(self):
@@ -339,25 +322,15 @@ class VirtualDriver(DriverPlatformInterface):
         """Str representation."""
         return "VirtualDriver.{}".format(self.number)
 
-    def disable(self, coil):
+    def disable(self):
         """Disable virtual coil."""
-        del coil
         self.state = "disabled"
 
-    def enable(self, coil):
+    def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable virtual coil."""
-        del coil
-        # pylint: disable-msg=too-many-boolean-expressions
-        if (not self.config.get("allow_enable", False) and not self.config.get("hold_power", 0) and     # defaults
-                not self.config.get("pwm_on_ms", 0) and not self.config.get("pwm_off_ms", 0) and        # p-roc
-                not self.config.get("hold_power32", 0) and not self.config.get("hold_pwm_mask", 0) and  # fast
-                not self.config.get("hold_power16", 0)):                                                # opp
-            raise AssertionError("Cannot enable coil {}. Please specify allow_enable or hold_power".format(self.number))
-
+        del pulse_settings, hold_settings
         self.state = "enabled"
 
-    def pulse(self, coil, milliseconds):
+    def pulse(self, pulse_settings: PulseSettings):
         """Pulse virtual coil."""
-        del coil
-        self.state = "pulsed_" + str(milliseconds)
-        return milliseconds
+        self.state = "pulsed_" + str(pulse_settings.duration)

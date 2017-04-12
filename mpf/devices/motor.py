@@ -1,4 +1,5 @@
 """Motor device."""
+from mpf.core.events import event_handler
 from mpf.core.system_wide_device import SystemWideDevice
 
 
@@ -21,11 +22,13 @@ class Motor(SystemWideDevice):
                 raise AssertionError("Invalid position {} in go_to_position".format(position))
             self.machine.events.add_handler(event, self.go_to_position, position=position)
 
+    @event_handler(1)
     def reset(self, **kwargs):
         """Go to reset position."""
         del kwargs
         self.go_to_position(self.config['reset_position'])
 
+    @event_handler(10)
     def go_to_position(self, position, **kwargs):
         """Move motor to a specific position."""
         del kwargs

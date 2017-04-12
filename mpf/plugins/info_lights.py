@@ -5,8 +5,6 @@ Typically in an EM machine.
 
 import logging
 
-from mpf.devices.led import Led
-
 
 class InfoLights(object):
 
@@ -35,10 +33,8 @@ class InfoLights(object):
             if 'light' in value:
                 if value['light'] in self.machine.lights:
                     self.config[key]['light'] = self.machine.lights[value['light']]
-                elif value['light'] in self.machine.leds:
-                    self.config[key]['light'] = self.machine.leds[value['light']]
                 else:
-                    raise AssertionError("Invalid light or led {}".format(value['light']))
+                    raise AssertionError("Invalid light {}".format(value['light']))
 
         self.machine.events.add_handler('ball_started', self._ball_started)
         self.machine.events.add_handler('game_ended', self._game_ended)
@@ -86,12 +82,8 @@ class InfoLights(object):
         if 'game_over' in self.config:
             if self.game_over_show:
                 self.game_over_show.stop()
-            if isinstance(self.config['game_over']['light'], Led):
-                self.game_over_show = self.machine.shows['flash'].play(
-                    show_tokens=dict(leds=self.config['game_over']['light']))
-            else:
-                self.game_over_show = self.machine.shows['flash'].play(
-                    show_tokens=dict(lights=self.config['game_over']['light']))
+            self.game_over_show = self.machine.shows['flash'].play(
+                show_tokens=dict(leds=self.config['game_over']['light']))
 
     def _game_starting(self, **kwargs):
         del kwargs

@@ -8,19 +8,21 @@ class PulseCoilEjector(BallDeviceEjector):
 
     def eject_one_ball(self, is_jammed, eject_try):
         """Pulse eject coil."""
+        max_wait_ms = self.ball_device.config['eject_coil_max_wait_ms']
         if (eject_try <= 2 and
                 self.ball_device.config['eject_coil_jam_pulse'] and
                 is_jammed):
             # decreased pulse to only eject one ball
             self.ball_device.config['eject_coil'].pulse(
-                self.ball_device.config['eject_coil_jam_pulse'])
+                self.ball_device.config['eject_coil_jam_pulse'], max_wait_ms=max_wait_ms)
         elif (eject_try >= self.ball_device.config['retries_before_increasing_pulse'] and
                 self.ball_device.config['eject_coil_retry_pulse']):
             # increase pulse strength
-            self.ball_device.config['eject_coil'].pulse(self.ball_device.config['eject_coil_retry_pulse'])
+            self.ball_device.config['eject_coil'].pulse(self.ball_device.config['eject_coil_retry_pulse'],
+                                                        max_wait_ms=max_wait_ms)
         else:
             # default pulse
-            self.ball_device.config['eject_coil'].pulse()
+            self.ball_device.config['eject_coil'].pulse(max_wait_ms=max_wait_ms)
 
         self.ball_device.debug_log("Firing eject coil. Current balls: %s.",
                                    self.ball_device.balls)

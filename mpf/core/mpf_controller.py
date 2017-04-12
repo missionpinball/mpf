@@ -2,17 +2,21 @@
 import abc
 import re
 
+from typing import TYPE_CHECKING
+
 from mpf.core.logging import LogMixin
+if TYPE_CHECKING:
+    from mpf.core.machine import MachineController
 
 
 class MpfController(LogMixin, metaclass=abc.ABCMeta):
 
     """Base class for MPF controllers."""
 
-    module_name = None
-    config_name = None
+    module_name = None  # type: str
+    config_name = None  # type: str
 
-    def __init__(self, machine):
+    def __init__(self, machine: "MachineController") -> None:
         """Initialise controller.
 
         Args:
@@ -21,6 +25,7 @@ class MpfController(LogMixin, metaclass=abc.ABCMeta):
         Returns:
 
         """
+        super().__init__()
         self.machine = machine
 
         if not self.module_name:

@@ -3,15 +3,22 @@ import copy
 import os
 import random
 import threading
-from collections import deque
+from collections import deque, namedtuple
 from pathlib import PurePath
 
 import asyncio
 
+from typing import Iterable, Optional
+from typing import List
+
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
+from mpf.core.machine import MachineController
 from mpf.core.mpf_controller import MpfController
 from mpf.core.utility_functions import Util
 from mpf.core.logging import LogMixin
+
+AssetClass = namedtuple("AssetClass", ["attribute", "cls", "path_string", "config_section", "disk_asset_section",
+                                       "extensions", "priority", "pool_config_section", "defaults"])
 
 
 class BaseAssetManager(MpfController, LogMixin):
@@ -26,13 +33,13 @@ class BaseAssetManager(MpfController, LogMixin):
     module_name = 'AssetManager'
     config_name = 'asset_manager'
 
-    def __init__(self, machine):
+    def __init__(self, machine: MachineController) -> None:
         """Initialise asset manager."""
         super().__init__(machine)
 
         self.machine.register_boot_hold('assets')
 
-        self._asset_classes = list()
+        self._asset_classes = list()        # type: List[AssetClass]
         # List of dicts, with each dict being an asset class. See
         # register_asset_class() method for details.
 
@@ -130,22 +137,21 @@ class BaseAssetManager(MpfController, LogMixin):
             # images and animated_images
             setattr(self.machine, attribute, CaseInsensitiveDict())
 
-        ac = dict(attribute=attribute,
-                  cls=asset_class,
-                  path_string=path_string,
-                  config_section=config_section,
-                  disk_asset_section=disk_asset_section,
-                  extensions=extensions,
-                  priority=priority,
-                  pool_config_section=pool_config_section,
-                  defaults=dict())
+        ac = AssetClass(attribute=attribute,
+                        cls=asset_class,
+                        path_string=path_string,
+                        config_section=config_section,
+                        disk_asset_section=disk_asset_section,
+                        extensions=extensions,
+                        priority=priority,
+                        pool_config_section=pool_config_section,
+                        defaults=self._get_asset_class_defaults(disk_asset_section, self.machine.machine_config))
 
         self._asset_classes.append(ac)
-        self._asset_classes.sort(key=lambda x: x['priority'], reverse=True)
-        self._set_asset_class_defaults(ac, self.machine.machine_config)
+        self._asset_classes.sort(key=lambda x: x.priority, reverse=True)
 
     @classmethod
-    def _set_asset_class_defaults(cls, asset_class, config):
+    def _get_asset_class_defaults(cls, disk_asset_section: str, config) -> dict:
         # Creates the folder-based default configs for the asset class
         # starting with the default section and then created folder-specific
         # entries based on that. Just runs once on startup for each asset
@@ -154,10 +160,10 @@ class BaseAssetManager(MpfController, LogMixin):
 
         if 'assets' in config and config['assets']:
 
-            if (asset_class['disk_asset_section'] in config['assets'] and
-                    config['assets'][asset_class['disk_asset_section']]):
+            if (disk_asset_section in config['assets'] and
+                    config['assets'][disk_asset_section]):
 
-                this_config = config['assets'][asset_class['disk_asset_section']]
+                this_config = config['assets'][disk_asset_section]
 
                 # set the default
                 default_config_dict['default'] = this_config['default']
@@ -171,7 +177,7 @@ class BaseAssetManager(MpfController, LogMixin):
                     default_config_dict[default_section_name].update(
                         this_config[default_section_name])
 
-        asset_class['defaults'] = default_config_dict
+        return default_config_dict
 
     def _create_assets(self, **kwargs):
         if 'force_assets_load' in kwargs:
@@ -195,7 +201,7 @@ class BaseAssetManager(MpfController, LogMixin):
 
         for ac in self._asset_classes:
             preload_assets.extend(
-                [x for x in getattr(self.machine, ac['attribute']).values() if
+                [x for x in getattr(self.machine, ac.attribute).values() if
                  x.config['load'] == 'preload' or force_assets_load])
 
         wait_for_assets = False
@@ -281,36 +287,36 @@ class BaseAssetManager(MpfController, LogMixin):
             path = self.machine.machine_path
 
         for ac in self._asset_classes:
-            if ac['disk_asset_section'] not in config:
-                config[ac['disk_asset_section']] = dict()
+            if ac.disk_asset_section not in config:
+                config[ac.disk_asset_section] = dict()
 
             # Populate the config section for this asset class with all the
             # assets found on disk
-            config[ac['disk_asset_section']] = self._create_asset_config_entries(
+            config[ac.disk_asset_section] = self._create_asset_config_entries(
                 asset_class=ac,
-                config=config[ac['disk_asset_section']],
+                config=config[ac.disk_asset_section],
                 mode_name=mode_name,
                 path=path)
 
             # create the actual instance of the Asset object and add it
             # to the self.machine asset attribute dict for that asset class
-            for asset in config[ac['disk_asset_section']]:
-                if 'file' not in config[ac['disk_asset_section']][asset]:
+            for asset in config[ac.disk_asset_section]:
+                if 'file' not in config[ac.disk_asset_section][asset]:
                     msg = "The file associated with the disk-based asset '%s' declared in the " \
-                          "'%s' config section could not be found" % (asset, ac['disk_asset_section'])
+                          "'%s' config section could not be found" % (asset, ac.disk_asset_section)
                     self.error_log(msg)
                     raise FileNotFoundError(msg)
 
-                getattr(self.machine, ac['attribute'])[asset] = ac['cls'](
+                getattr(self.machine, ac.attribute)[asset] = ac.cls(
                     self.machine, name=asset,
-                    file=config[ac['disk_asset_section']][asset]['file'],
-                    config=config[ac['disk_asset_section']][asset])
+                    file=config[ac.disk_asset_section][asset]['file'],
+                    config=config[ac.disk_asset_section][asset])
 
         return config
 
     # pylint: disable-msg=too-many-locals
-    def _create_asset_config_entries(self, asset_class, config, mode_name=None,
-                                     path=None):
+    def _create_asset_config_entries(self, asset_class: AssetClass, config, mode_name: Optional[str]=None,
+                                     path: Optional[str]=None):
         """Scan a folder (and subfolders).
 
         Automatically creates or updates entries in the config dict for any asset files it finds.
@@ -364,7 +370,7 @@ class BaseAssetManager(MpfController, LogMixin):
         if not config:
             config = dict()
 
-        root_path = os.path.join(path, asset_class['path_string'])
+        root_path = os.path.join(path, asset_class.path_string)
         self.debug_log("Processing assets from base folder: %s", root_path)
 
         # ignore temporary files
@@ -384,7 +390,7 @@ class BaseAssetManager(MpfController, LogMixin):
                 first_level_subfolder = None
 
             valid_files = [f for f in files if f.endswith(
-                           asset_class['extensions']) and not f.startswith(ignore_prefixes) and f != ignore_files]
+                           asset_class.extensions) and not f.startswith(ignore_prefixes) and f != ignore_files]
 
             # loop over valid files in the current path
             for file_name in valid_files:
@@ -393,7 +399,7 @@ class BaseAssetManager(MpfController, LogMixin):
 
                 # determine default group based on first level sub-folder and location groups
                 # configured in the assets section
-                if first_level_subfolder is None or first_level_subfolder not in asset_class['defaults']:
+                if first_level_subfolder is None or first_level_subfolder not in asset_class.defaults:
                     default_string = 'default'
                 else:
                     default_string = first_level_subfolder
@@ -406,7 +412,7 @@ class BaseAssetManager(MpfController, LogMixin):
                 # for everything in case one of the custom folder configs
                 # doesn't include all settings
                 built_up_config = copy.deepcopy(
-                    asset_class['defaults'][default_string])
+                    asset_class.defaults[default_string])
 
                 # scan through the existing config to see if this file is used
                 # as the file setting for any entry.
@@ -449,13 +455,13 @@ class BaseAssetManager(MpfController, LogMixin):
         # dicts
         del mode
         for ac in [x for x in self._asset_classes
-                   if x['pool_config_section']]:
+                   if x.pool_config_section]:
 
-            if ac['pool_config_section'] in config:
-                for name, settings in config[ac['pool_config_section']].items():
-                    getattr(self.machine, ac['attribute'])[name] = (
-                        ac['cls'].asset_group_class(self.machine, name, settings,
-                                                    ac['cls']))
+            if ac.pool_config_section in config:
+                for name, settings in config[ac.pool_config_section].items():
+                    getattr(self.machine, ac.attribute)[name] = (
+                        ac.cls.asset_group_class(self.machine, name, settings,
+                                                 ac.cls))
 
     def _load_mode_assets(self, config, priority, mode):
         # Called on mode start to load the assets that are set to automatically
@@ -477,7 +483,7 @@ class BaseAssetManager(MpfController, LogMixin):
         # loop through all the registered assets of each class and look for
         # this key name
         for ac in self._asset_classes:
-            asset_objects = getattr(self.machine, ac['attribute']).values()
+            asset_objects = getattr(self.machine, ac.attribute).values()
             for asset in [x for x in asset_objects if
                           x.config['load'] == key_name]:
                 asset.load()
@@ -783,9 +789,14 @@ class Asset(object):
     path_string = ''  # entry from mpf-mc:paths: for asset folder name
     config_section = ''  # section in the config files for this asset
     disk_asset_section = ''  # option is assets: config name is different
-    extensions = ('', '', '')  # tuple of strings, no dots
+
+    # tuple of strings, no dots
+    extensions = tuple()  # type: Iterable[str]
     class_priority = 0  # Order asset classes will be loaded. Higher is first.
-    pool_config_section = None  # Create an associated AssetPool instance
+
+    # Create an associated AssetPool instance
+    pool_config_section = None  # type: str
+
     asset_group_class = AssetPool  # replace with your own asset group class
 
     @classmethod

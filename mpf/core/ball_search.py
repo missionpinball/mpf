@@ -1,14 +1,24 @@
 """Implements the ball search procedure."""
+from collections import namedtuple
+
+from typing import List
+from typing import TYPE_CHECKING
 
 from mpf.core.delays import DelayManager
+from mpf.core.machine import MachineController
 from mpf.core.mpf_controller import MpfController
+
+if TYPE_CHECKING:
+    from mpf.devices.playfield import Playfield
+
+BallSearchCallback = namedtuple("BallSearchCallback", ["priority", "callback", "name"])
 
 
 class BallSearch(MpfController):
 
     """Ball search controller."""
 
-    def __init__(self, machine, playfield):
+    def __init__(self, machine: MachineController, playfield: "Playfield") -> None:
         """Initialize ball search."""
         self.module_name = 'BallSearch.' + playfield.name
         self.config_name = 'ball_search'
@@ -22,13 +32,11 @@ class BallSearch(MpfController):
         self.started = False
         self.enabled = False
         self.blocked = False
-        self.callbacks = []
+        self.callbacks = []     # type: List[BallSearchCallback]
 
         self.iteration = False
         self.iterator = False
         self.phase = False
-
-        self.ball_search_control_handlers = list()
 
         # register for events
         self.machine.events.add_handler('request_to_start_game',
@@ -69,9 +77,9 @@ class BallSearch(MpfController):
         """
         self.debug_log("Registering callback: {} (priority: {})".format(
             name, priority))
-        self.callbacks.append((priority, callback, name))
+        self.callbacks.append(BallSearchCallback(priority, callback, name))
         # sort by priority
-        self.callbacks = sorted(self.callbacks, key=lambda entry: entry[0])
+        self.callbacks = sorted(self.callbacks, key=lambda entry: entry.priority)
 
     def enable(self, **kwargs):
         """Enable but do not start ball search.
@@ -210,11 +218,10 @@ class BallSearch(MpfController):
                 timeout = self.playfield.config[
                     'ball_search_wait_after_iteration']
 
-            (dummy_priority, callback, name) = element
             # if a callback returns True we wait for the next one
             self.debug_log("Ball search: {} (phase: {}  iteration: {})".format(
-                           name, self.phase, self.iteration))
-            if callback(self.phase, self.iteration):
+                element.name, self.phase, self.iteration))
+            if element.callback(self.phase, self.iteration):
                 self.delay.add(name='run', callback=self._run, ms=timeout)
                 return
 

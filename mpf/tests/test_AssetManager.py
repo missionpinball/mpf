@@ -25,8 +25,7 @@ class TestAssets(MpfTestCase):
         # test that the shows asset class gets built correctly
         self.assertTrue(self.machine, 'shows')
         self.assertTrue(self.machine.asset_manager._asset_classes)
-        self.assertEqual(self.machine.asset_manager._asset_classes[0]
-                         ['path_string'], 'shows')
+        self.assertEqual(self.machine.asset_manager._asset_classes[0].path_string, 'shows')
 
         # tests that assets are registered as expected with various conditions
 

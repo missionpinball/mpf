@@ -4,8 +4,11 @@ import logging
 import platform
 import sys
 import time
+from typing import Any, List, Union, Callable, Tuple
 
-from mpf.platforms.p_roc_devices import PROCSwitch
+from mpf.platforms.p_roc_devices import PROCSwitch, PROCMatrixLight
+from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
+from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings
 
 try:    # pragma: no cover
     import pinproc
@@ -26,14 +29,10 @@ except ImportError:     # pragma: no cover
         pinproc_imported = False
         pinproc = None
 
-from mpf.platforms.interfaces.rgb_led_platform_interface import RGBLEDPlatformInterface
-from mpf.core.platform import MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlatform, DriverPlatform
-
 
 # pylint does not understand that this class is abstract
 # pylint: disable-msg=abstract-method
-class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlatform, DriverPlatform,
-                       metaclass=abc.ABCMeta):
+class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass=abc.ABCMeta):
 
     """Platform class for the P-Roc and P3-ROC hardware controller.
 
@@ -55,6 +54,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
                                  'run MPF in software-only "virtual" mode by using '
                                  'the -x command like option for now instead.')
 
+        self.pdbconfig = None
         self.pinproc = pinproc
         self.proc = None
         self.log = None
@@ -110,27 +110,17 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
 
     @classmethod
     def _get_event_type(cls, sw_activity, debounced):
-        if sw_activity == 0 and debounced in ("normal", "auto"):
+        if sw_activity == 0 and debounced:
             return "open_debounced"
-        elif sw_activity == 0 and debounced == "quick":
+        elif sw_activity == 0 and not debounced:
             return "open_nondebounced"
-        elif sw_activity == 1 and debounced in ("normal", "auto"):
+        elif sw_activity == 1 and debounced:
             return "closed_debounced"
         else:  # if sw_activity == 1 and not debounced:
             return "closed_nondebounced"
 
-    @classmethod
-    def get_coil_config_section(cls):
-        """Additional config validation for coils."""
-        return "p_roc_coils"
-
-    @classmethod
-    def get_coil_overwrite_section(cls):
-        """Additional config validation for coils overwrites."""
-        return "p_roc_coil_overwrites"
-
-    def _add_hw_rule(self, switch, coil, rule, invert=False):
-        rule_type = self._get_event_type(switch.invert == invert, switch.config['debounce'])
+    def _add_hw_rule(self, switch: SwitchSettings, coil: DriverSettings, rule, invert=False):
+        rule_type = self._get_event_type(switch.invert == invert, switch.debounce)
 
         # overwrite rules for the same switch and coil combination
         for rule_num, rule_obj in enumerate(switch.hw_switch.hw_rules[rule_type]):
@@ -145,27 +135,22 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
         # TODO: properly implement pulse_power. previously implemented pwm_on_ms/pwm_off_ms were incorrect here
 
         self._add_hw_rule(switch, coil,
-                          self.pinproc.driver_state_pulse(coil.hw_driver.state(), coil.hw_driver.get_pulse_ms(coil)))
+                          self.pinproc.driver_state_pulse(coil.hw_driver.state(), coil.pulse_settings.duration))
 
-    def _add_pulse_and_hold_rule_to_switch(self, switch, coil):
-        if coil.hw_driver.get_pwm_on_ms(coil) and coil.hw_driver.get_pwm_off_ms(coil):
+    def _add_pulse_and_hold_rule_to_switch(self, switch: SwitchSettings, coil: DriverSettings):
+        if coil.hold_settings.power < 1.0:
+            pwm_on, pwm_off = coil.hw_driver.get_pwm_on_off_ms(coil.hold_settings)
             self._add_hw_rule(switch, coil,
                               self.pinproc.driver_state_patter(
-                                  coil.hw_driver.state(), coil.hw_driver.get_pwm_on_ms(coil),
-                                  coil.hw_driver.get_pwm_off_ms(coil), coil.hw_driver.get_pulse_ms(coil), True))
+                                  coil.hw_driver.state(), pwm_on, pwm_off, coil.pulse_settings.duration, True))
         else:
-            if not coil.config['allow_enable']:
-                raise AssertionError("Coil {} may not be enabled at 100% without allow_enabled or pwm settings".format(
-                    coil.hw_driver.number
-                ))
-            self._add_hw_rule(switch, coil,
-                              self.pinproc.driver_state_pulse(coil.hw_driver.state(), 0))
+            self._add_hw_rule(switch, coil, self.pinproc.driver_state_pulse(coil.hw_driver.state(), 0))
 
-    def _add_release_disable_rule_to_switch(self, switch, coil):
+    def _add_release_disable_rule_to_switch(self, switch: SwitchSettings, coil: DriverSettings):
         self._add_hw_rule(switch, coil,
                           self.pinproc.driver_state_disable(coil.hw_driver.state()), invert=True)
 
-    def _add_disable_rule_to_switch(self, switch, coil):
+    def _add_disable_rule_to_switch(self, switch: SwitchSettings, coil: DriverSettings):
         self._add_hw_rule(switch, coil,
                           self.pinproc.driver_state_disable(coil.hw_driver.state()))
 
@@ -175,13 +160,13 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
             for x in driver_rules:
                 driver.append(x[2])
             rule = {'notifyHost': bool(switch.hw_switch.notify_on_nondebounce) == event_type.endswith("nondebounced"),
-                    'reloadActive': bool(coil.config['recycle'])}
+                    'reloadActive': bool(coil.recycle)}
             if drive_now is None:
                 self.proc.switch_update_rule(switch.hw_switch.number, event_type, rule, driver)
             else:
                 self.proc.switch_update_rule(switch.hw_switch.number, event_type, rule, driver, drive_now)
 
-    def set_pulse_on_hit_rule(self, enable_switch, coil):
+    def set_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit rule on driver."""
         self.debug_log("Setting HW Rule on pulse on hit. Switch: %s, Driver: %s",
                        enable_switch.hw_switch.number, coil.hw_driver.number)
@@ -190,7 +175,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
 
         self._write_rules_to_switch(enable_switch, coil, False)
 
-    def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
+    def set_pulse_on_hit_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and release rule to driver."""
         self.debug_log("Setting HW Rule on pulse on hit and relesae. Switch: %s, Driver: %s",
                        enable_switch.hw_switch.number, coil.hw_driver.number)
@@ -200,7 +185,7 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
 
         self._write_rules_to_switch(enable_switch, coil, False)
 
-    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
+    def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and enable and relase rule on driver."""
         self.debug_log("Setting Pulse on hit and enable and release HW Rule. Switch: %s, Driver: %s",
                        enable_switch.hw_switch.number, coil.hw_driver.number)
@@ -210,7 +195,8 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
 
         self._write_rules_to_switch(enable_switch, coil, False)
 
-    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
+    def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
+                                                                 disable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and enable and release and disable rule on driver."""
         self.debug_log("Setting Pulse on hit and enable and release and disable HW Rule. Enable Switch: %s,"
                        "Disable Switch: %s, Driver: %s", enable_switch.hw_switch.number,
@@ -253,23 +239,55 @@ class PROCBasePlatform(MatrixLightsPlatform, GiPlatform, LedPlatform, SwitchPlat
 
         return bool(coil_number)
 
-    def configure_led(self, config, channels):
-        """Configure a P/P3-ROC RGB LED controlled via a PD-LED."""
-        if channels > 3:
-            raise AssertionError("More than 3 channels not yet implemented")
+    def parse_light_number_to_channels(self, number: str, subtype: str):
+        """Parse light number to a list of channels."""
+        # TODO: implement default subtype
+        if subtype == "matrix":
+            return [
+                {
+                    "number": number
+                }
+            ]
+        elif subtype == "led":
+            # split the number (which comes in as a string like w-x-y-z) into parts
+            number_parts = str(number).split('-')
 
-        # split the number (which comes in as a string like w-x-y-z) into parts
-        number_parts = str(config['number']).split('-')
+            if len(number_parts) != 4:
+                raise AssertionError("Invalid address for LED {}".format(number))
 
-        if len(number_parts) != 4:
-            raise AssertionError("Invalid address for LED {}".format(config['number']))
+            return [
+                {
+                    "number": number_parts[0] + "-" + number_parts[1]
+                },
+                {
+                    "number": number_parts[0] + "-" + number_parts[2]
+                },
+                {
+                    "number": number_parts[0] + "-" + number_parts[3]
+                },
+            ]
+        else:
+            raise AssertionError("Unknown subtype {}".format(subtype))
 
-        return PDBLED(board=int(number_parts[0]),
-                      address=[int(number_parts[1]),
-                               int(number_parts[2]),
-                               int(number_parts[3])],
-                      polarity=config['polarity'],
-                      proc_driver=self.proc)
+    def configure_light(self, number, subtype, platform_settings) -> LightPlatformInterface:
+        """Configure a light channel."""
+        if subtype == "matrix":
+            if self.machine_type == self.pinproc.MachineTypePDB:
+                proc_num = self.pdbconfig.get_proc_light_number(str(number))
+                if proc_num == -1:
+                    raise AssertionError("Matrixlight {} cannot be controlled by the P-ROC. ".format(
+                        str(number)))
+
+            else:
+                proc_num = self.pinproc.decode(self.machine_type, str(number))
+
+            return PROCMatrixLight(proc_num, self.proc, self.machine)
+        elif subtype == "led":
+            board, index = number.split("-")
+            polarity = platform_settings and platform_settings.get("polarity", False)
+            return PDBLED(int(board), int(index), polarity, self.proc)
+        else:
+            raise AssertionError("unknown subtype {}".format(subtype))
 
     def _configure_switch(self, config, proc_num):
         """Configure a P3-ROC switch.
@@ -322,8 +340,8 @@ class PDBConfig(object):
     WPC or Stern mode.
     """
 
-    indexes = []
-    proc = None
+    indexes = []    # type: List[Any]
+    proc = None     # type: pinproc.PinPROC
 
     def __init__(self, proc, config, driver_count):
         """Set up PDB config.
@@ -348,14 +366,13 @@ class PDBConfig(object):
         # list. The index of the bank is used to calculate the P-ROC/P3-ROC driver
         # number for each driver.
         num_proc_banks = driver_count // 8
-        self.indexes = [99] * num_proc_banks
+        self.indexes = [{}] * num_proc_banks    # type: List[Union[int, dict]]
 
         self._initialize_drivers(proc)
 
         # Set up dedicated driver groups (groups 0-3).
         for group_ctr in range(0, 4):
-            # TODO: Fix this.  PDB Banks 0-3 are also interpreted as dedicated
-            # bank here.
+            # PDB Banks 0-3 are interpreted as dedicated bank here. Therefore, we do not use them.
             enable = group_ctr in coil_bank_list
             self.log.debug("Driver group %02d (dedicated): Enable=%s",
                            group_ctr, enable)
@@ -458,8 +475,8 @@ class PDBConfig(object):
 
         # Now set up globals.  First disable them to allow the P-ROC/P3-ROC to set up
         # the polarities on the Drivers.  Then enable them.
-        self._configure_globals(proc, lamp_source_bank_list, False)
-        self._configure_globals(proc, lamp_source_bank_list, True)
+        self._configure_lamp_banks(proc, lamp_source_bank_list, False)
+        self._configure_lamp_banks(proc, lamp_source_bank_list, True)
 
     def _load_lamp_lists_from_config(self, config):
         lamp_source_bank_list = []
@@ -467,10 +484,12 @@ class PDBConfig(object):
         lamp_list_for_index = []
 
         # Make a list of unique lamp source banks.  The P-ROC/P3-ROC only supports 2.
-        # TODO: What should be done if 2 is exceeded?
-        if 'matrix_lights' in config:
-            for name in config['matrix_lights']:
-                item_dict = config['matrix_lights'][name]
+        # If this is exceeded we will error out later.
+        if 'lights' in config:
+            for name in config['lights']:
+                item_dict = config['lights'][name]
+                if "subtype" not in item_dict or item_dict["subtype"] != "matrix":
+                    continue
                 lamp = PDBLight(self, str(item_dict['number']))
 
                 # Catalog PDB banks
@@ -516,14 +535,6 @@ class PDBConfig(object):
                 if coil.bank() not in coil_bank_list:
                     coil_bank_list.append(coil.bank())
 
-        # gis are also coils
-        if 'gis' in config:
-            for name in config['gis']:
-                item_dict = config['gis'][name]
-                coil = PDBCoil(self, str(item_dict['number']))
-                if coil.bank() not in coil_bank_list:
-                    coil_bank_list.append(coil.bank())
-
         return coil_bank_list
 
     @classmethod
@@ -543,41 +554,26 @@ class PDBConfig(object):
 
             proc.driver_update_state(state)
 
-    def _configure_globals(self, proc, lamp_source_bank_list, enable=True):
+    def _configure_lamp_banks(self, proc, lamp_source_bank_list, enable=True):
+        proc.driver_update_global_config(enable,
+                                         True,  # Polarity
+                                         False,  # N/A
+                                         False,  # N/A
+                                         1,  # N/A
+                                         lamp_source_bank_list[0],
+                                         lamp_source_bank_list[1],
+                                         False,  # Active low rows? No
+                                         False,  # N/A
+                                         False,  # Stern? No
+                                         False,  # Reset watchdog trigger
+                                         self.use_watchdog,  # Enable watchdog
+                                         self.watchdog_time)
 
         if enable:
             self.log.debug("Configuring PDB Driver Globals:  polarity = %s  "
                            "matrix column index 0 = %d  matrix column index "
                            "1 = %d", True, lamp_source_bank_list[0],
                            lamp_source_bank_list[1])
-        proc.driver_update_global_config(enable,  # Don't enable outputs yet
-                                         True,  # Polarity
-                                         False,  # N/A
-                                         False,  # N/A
-                                         1,  # N/A
-                                         lamp_source_bank_list[0],
-                                         lamp_source_bank_list[1],
-                                         False,  # Active low rows? No
-                                         False,  # N/A
-                                         False,  # Stern? No
-                                         False,  # Reset watchdog trigger
-                                         self.use_watchdog,  # Enable watchdog
-                                         self.watchdog_time)
-
-        # Now set up globals
-        proc.driver_update_global_config(True,  # Don't enable outputs yet
-                                         True,  # Polarity
-                                         False,  # N/A
-                                         False,  # N/A
-                                         1,  # N/A
-                                         lamp_source_bank_list[0],
-                                         lamp_source_bank_list[1],
-                                         False,  # Active low rows? No
-                                         False,  # N/A
-                                         False,  # Stern? No
-                                         False,  # Reset watchdog trigger
-                                         self.use_watchdog,  # Enable watchdog
-                                         self.watchdog_time)
 
     def get_coil_bank(self, number_str):
         """Return the bank of a coil.
@@ -618,7 +614,7 @@ class PDBConfig(object):
                                'sink_bank': lamp.sink_bank(),
                                'source_output': lamp.source_output()}
         if lamp_dict_for_index not in self.indexes:
-            return -1
+            raise AssertionError("Light not in lamp dict")
         index = self.indexes.index(lamp_dict_for_index)
         num = index * 8 + lamp.sink_output()
         return num
@@ -654,7 +650,7 @@ class PDBSwitch(object):
             except ValueError:
                 try:
                     self.sw_number = int(number_str)
-                except:
+                except ValueError:  # pragma: no cover
                     raise AssertionError('Switch {} is invalid. Use either PDB '
                                          'format or an int'.format(str(number_str)))
 
@@ -690,7 +686,7 @@ class PDBCoil(object):
         else:
             self.coil_type = 'unknown'
 
-    def bank(self):
+    def bank(self) -> int:
         """Return the bank number."""
         if self.coil_type == 'dedicated':
             return self.banknum
@@ -743,10 +739,6 @@ class PDBLight(object):
     def source_board(self):
         """Return source board."""
         return self.source_boardnum
-
-    def sink_board(self):
-        """Return sink board."""
-        return self.sink_boardnum
 
     def source_bank(self):
         """Return source bank."""
@@ -811,7 +803,7 @@ class PDBLight(object):
         return True
 
 
-class PDBLED(RGBLEDPlatformInterface):
+class PDBLED(LightPlatformInterface):
 
     """Represents an RGB LED connected to a PD-LED board."""
 
@@ -823,13 +815,8 @@ class PDBLED(RGBLEDPlatformInterface):
         self.proc = proc_driver
         self.polarity = polarity
 
-        # make sure self.address is a 3-element list
-        if len(self.address) != 3:
-            raise AssertionError("Invalid address for LED {}".format(str(self.address)))
-
         self.log.debug("Creating PD-LED item: board: %s, "
-                       "RGB outputs: %s", self.board,
-                       self.address)
+                       "RGB output: %s", self.board, self.address)
 
     def _normalise_color(self, value):
         if self.polarity:
@@ -837,18 +824,21 @@ class PDBLED(RGBLEDPlatformInterface):
         else:
             return value
 
-    def color(self, color):
-        """Instantly set this LED to the color passed.
+    def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
+        """Set or fade this LED to the color passed.
+
+        Can fade for up to 100 days so do not bother about too long fades.
 
         Args:
-            color: an RGBColor object
+            color_and_fade_callback: brightness of this channel via callback
         """
-        # self.log.debug("Setting Color. Board: %s, Address: %s, Color: %s",
-        #               self.board, self.address, color)
-
-        self.proc.led_color(self.board, self.address[0], self._normalise_color(color[0]))
-        self.proc.led_color(self.board, self.address[1], self._normalise_color(color[1]))
-        self.proc.led_color(self.board, self.address[2], self._normalise_color(color[2]))
+        brightness, fade_ms = color_and_fade_callback(int(pow(2, 31) * 4))
+        if fade_ms <= 0:
+            # just set color
+            self.proc.led_color(self.board, self.address, self._normalise_color(int(brightness * 255)))
+        else:
+            # fade to color
+            self.proc.led_fade(self.board, self.address, self._normalise_color(int(brightness * 255)), int(fade_ms / 4))
 
 
 def is_pdb_address(addr):

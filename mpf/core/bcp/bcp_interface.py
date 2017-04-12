@@ -290,7 +290,7 @@ class BcpInterface(MpfController):
         self.machine.bcp.transport.add_handler_to_transport("_modes", client)
 
     def _monitor_modes_stop(self, client):
-        """stop monitoring all mode events (start, stop) via the specified client."""
+        """Stop monitoring all mode events (start, stop) via the specified client."""
         self.machine.bcp.transport.remove_transport_from_handle("_modes", client)
 
         if not self.machine.bcp.transport.get_transports_for_handler("_modes"):
@@ -405,8 +405,8 @@ class BcpInterface(MpfController):
                          kwargs, str(client))
 
     def _bcp_receive_reset_complete(self, client, **kwargs):
-        """A remote BCP host has sent a BCP reset_complete message indicating their reset process
-        has completed."""
+        """A remote BCP host has sent a BCP reset_complete message indicating their reset process has completed."""
+        del kwargs
         self.debug_log("Received reset_complete from client: %s %s", client.name)
         self._client_reset_complete_status[client] = True
 

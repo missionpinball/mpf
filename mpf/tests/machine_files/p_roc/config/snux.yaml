@@ -29,13 +29,13 @@ coils:
         number: c02a
     c_test_c_side:
         number: c02c
-        allow_enable: true
+        default_hold_power: 1.0
     c_flipper_enable_driver:
         number: c23
-        allow_enable: true
+        default_hold_power: 1.0
     c_diag_led_driver:
         number: c24
-        allow_enable: true
+        default_hold_power: 1.0
     c_ac_relay:
         number: c25
-        allow_enable: true
+        default_hold_power: 1.0

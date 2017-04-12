@@ -2,6 +2,8 @@
 import asyncio
 from functools import partial
 
+from typing import Tuple, Generator
+
 from serial_asyncio import create_serial_connection
 
 from mpf.core.logging import LogMixin
@@ -33,8 +35,7 @@ class PeriodicTask:
         self._last_call = self._last_call + self._interval
         if self._canceled:
             return
-        # TODO: remove dt parameter from all callbacks
-        self._callback(None)
+        self._callback()
         self._schedule()
 
     def cancel(self):
@@ -48,6 +49,7 @@ class ClockBase(LogMixin):
 
     def __init__(self, machine=None):
         """Initialise clock."""
+        super().__init__()
         self.machine = machine
 
         # needed since the test clock is setup before the machine
@@ -104,7 +106,8 @@ class ClockBase(LogMixin):
         return asyncio.open_connection(host=host, port=port, loop=self.loop, limit=limit, **kwds)
 
     @asyncio.coroutine
-    def open_serial_connection(self, limit=None, **kwargs):
+    def open_serial_connection(self, limit=None, **kwargs) ->\
+            Generator[int, None, Tuple[asyncio.StreamReader, asyncio.StreamWriter]]:
         """A wrapper for create_serial_connection() returning a (reader, writer) pair.
 
         The reader returned is a StreamReader instance; the writer is a StreamWriter instance.
@@ -122,7 +125,7 @@ class ClockBase(LogMixin):
         """
         if not limit:
             # pylint: disable-msg=protected-access
-            limit = asyncio.streams._DEFAULT_LIMIT
+            limit = asyncio.streams._DEFAULT_LIMIT      # type: ignore
 
         reader = asyncio.StreamReader(limit=limit, loop=self.loop)
         protocol = asyncio.StreamReaderProtocol(reader, loop=self.loop)
@@ -148,9 +151,7 @@ class ClockBase(LogMixin):
         if not callable(callback):
             raise AssertionError('callback must be a callable, got %s' % callback)
 
-        # TODO: remove dt parameter from all callbacks
-        new_callback = partial(callback, None)
-        event = self.loop.call_later(delay=timeout, callback=new_callback)
+        event = self.loop.call_later(delay=timeout, callback=callback)
 
         self.debug_log("Scheduled a one-time clock callback (callback=%s, timeout=%s)",
                        str(callback), timeout)
