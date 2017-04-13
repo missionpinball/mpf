@@ -166,21 +166,16 @@ class RGBColor(object):
 
     """One RGB Color."""
 
-    def __init__(self, color: Union["RGBColor", str, List[int], Tuple[int, int, int]]=None, **kwargs) -> None:
+    def __init__(self, color: Union["RGBColor", str, List[int], Tuple[int, int, int]]=None) -> None:
         """Initialise color."""
         if isinstance(color, RGBColor):
             self._color = color.rgb
         elif isinstance(color, str):
             self._color = RGBColor.string_to_rgb(color)
+        elif color:
+            self._color = (color[0], color[1], color[2])
         else:
-            self._color = (color[0], color[1], color[2]) if color else rgb_min
-            # This method is also used for Kivy which has 4-element tuples
-            # (4th is opacity), so I commented this out. In future version,
-            # I want to add opacity support to MPF colors too.
-            # assert len(self._color) == 3
-
-        for k, v in list(kwargs.items()):
-            setattr(self, k, v)
+            self._color = rgb_min
 
     def __eq__(self, other):
         """Return true if equal."""

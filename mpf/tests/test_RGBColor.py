@@ -109,13 +109,13 @@ class TestRGBColor(unittest.TestCase):
 
     def test_init_and_equal(self):
         black = RGBColor("black")
-        color = RGBColor(red=1, green=2, blue=3)
+        color = RGBColor([1, 2, 3])
         self.assertEqual((1, 2, 3), color.rgb)
         color2 = RGBColor((1, 2, 3))
         color3 = RGBColor([1, 2, 3])
         color4 = RGBColor(color)
         color5 = RGBColor("010203")
-        color6 = RGBColor(hex="010203")
+        color6 = RGBColor("010203")
         color7 = RGBColor("")
 
         self.assertEqual(color2, color)
@@ -130,7 +130,7 @@ class TestRGBColor(unittest.TestCase):
         self.assertEqual("(1, 2, 3)", str(color5))
 
     def test_add_sub(self):
-        color = RGBColor(red=1, green=2, blue=3)
+        color = RGBColor([1, 2, 3])
         color2 = color + (10, 10, 10)
         color3 = color + RGBColor((10, 10, 10))
         color4 = color2 - color3
