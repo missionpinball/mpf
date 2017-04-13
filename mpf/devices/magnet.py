@@ -63,6 +63,9 @@ class Magnet(SystemWideDevice):
     def grab_ball(self, **kwargs):
         """Grab a ball."""
         del kwargs
+        # mark the playfield active no matter what
+        self.config['playfield'].mark_playfield_active_from_device_action()
+        # check if magnet is enabled or already active
         if not self._enabled or self._active or self._release_in_progress:
             return
         self.debug_log("Grabbing a ball.")
