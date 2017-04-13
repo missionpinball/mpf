@@ -10,7 +10,7 @@ class RGBAColor(RGBColor):
 
     def __init__(self, color: Union[RGBColor, str, List[int], Tuple[int, int, int], Tuple[int, int, int, int]]):
         """Initialise RGBA color."""
-        if isinstance(color, tuple) and len(color) == 4:
+        if isinstance(color, (tuple, list)) and len(color) == 4:
             self.opacity = color[3]
             super().__init__((color[0], color[1], color[2]))
         else:
