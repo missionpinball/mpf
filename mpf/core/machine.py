@@ -288,14 +288,72 @@ class MachineController(LogMixin):
 
         # Create basic system information machine variables
         self.create_machine_var(name="mpf_version", value=mpf_version)
+        '''machine_var: mpf_version
+
+        desc:  .. versionadded:: 0.33
+
+        Holds the version number of MPF (ex: "MPF v0.33.0").
+        '''
+
         self.create_machine_var(name="mpf_extended_version", value=mpf_extended_version)
+        '''machine_var: mpf_extended_version
+
+        desc:  .. versionadded:: 0.33
+
+        Holds the version number of MPF and sub-components (ex: "MPF v0.33.0, Config version: 4,
+        Show version: 4, BCP version: 1.1").
+        '''
+
         self.create_machine_var(name="python_version", value=python_version())
+        '''machine_var: python_version
+
+        desc:  .. versionadded:: 0.33
+
+        Contains the current Python version as string "major.minor.patchlevel" (ex: "3.4.4").
+        '''
+
         self.create_machine_var(name="platform", value=platform(aliased=1, terse=0))
+        '''machine_var: platform
+
+        desc:  .. versionadded:: 0.33
+
+        Contains a string identifying the underlying platform with as much useful information as possible
+        (ex: "Windows-10-10.0.14393").
+        '''
+
         platform_info = system_alias(system(), release(), version())
+
         self.create_machine_var(name="platform_system", value=platform_info[0])
+        '''machine_var: platform_system
+
+        desc:  .. versionadded:: 0.33
+
+        Contains a string identifying the system/OS name (ex: "Windows").
+        '''
+
         self.create_machine_var(name="platform_release", value=platform_info[1])
+        '''machine_var: platform_release
+
+        desc:  .. versionadded:: 0.33
+
+        Contains a string identifying the underlying system's release (ex: "10").
+        '''
+
         self.create_machine_var(name="platform_version", value=platform_info[2])
+        '''machine_var: platform_version
+
+        desc:  .. versionadded:: 0.33
+
+        Contains a string identifying the underlying system's release version (ex: "10.0.14393").
+        '''
+
         self.create_machine_var(name="platform_machine", value=machine())
+        '''machine_var: platform_machine
+
+        desc:  .. versionadded:: 0.33
+
+        Contains a string identifying the underlying machine type (ex: "i386").
+        '''
 
     def _load_initial_machine_vars(self):
         """Load initial machine var values from config if they did not get loaded from data."""
