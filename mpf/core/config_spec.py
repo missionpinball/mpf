@@ -600,6 +600,7 @@ magnets:
     release_time: single|ms|500ms
     fling_drop_time: single|ms|250ms
     fling_regrab_time: single|ms|50ms
+    playfield: single|machine(playfields)|playfield
     enable_events: dict|str:ms|None
     disable_events: dict|str:ms|None
     reset_events: dict|str:ms|machine_reset_phase_3, ball_starting
@@ -828,6 +829,7 @@ shots:
     cancel_switch: list|machine(switches)|None
     delay_switch: dict|machine(switches):ms|None
     time: single|ms|0
+    playfield: single|machine(playfields)|playfield
     enable_events: dict|str:ms|None
     disable_events: dict|str:ms|None
     reset_events: dict|str:ms|None
