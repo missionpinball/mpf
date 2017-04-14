@@ -49,7 +49,7 @@ class LogMixin(object):
         if self.unit_test:
             self._info_to_console = True
 
-    def debug_log(self, msg, *args, **kwargs):
+    def debug_log(self, msg: str, *args, **kwargs):
         """Log a message at the debug level.
 
         Note that whether this message shows up in the console or log file is
@@ -63,7 +63,7 @@ class LogMixin(object):
         elif self._debug_to_file:
             self.log.log(11, msg, *args, **kwargs)
 
-    def info_log(self, msg, *args, **kwargs):
+    def info_log(self, msg: str, *args, **kwargs):
         """Log a message at the info level.
 
         Whether this message shows up in the console or log file is controlled
@@ -77,7 +77,7 @@ class LogMixin(object):
         elif self._info_to_file or self._debug_to_file:
             self.log.log(11, msg, *args, **kwargs)
 
-    def warning_log(self, msg, *args, **kwargs):
+    def warning_log(self, msg: str, *args, **kwargs):
         """Log a message at the warning level.
 
         These messages will always be shown in the console and the log file.
