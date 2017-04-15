@@ -92,7 +92,7 @@ class ScorePlayer(ConfigPlayer):
         else:
             try:
                 value, block = value.split('|')
-            except ValueError:
+            except (ValueError, AttributeError):
                 block = False
             else:
                 if block != "block":

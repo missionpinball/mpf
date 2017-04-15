@@ -8,7 +8,7 @@ from mpf.core.platform import DriverConfig
 from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, HoldSettings
 
 from mpf.core.delays import DelayManager
-from mpf.platforms.virtual import (HardwarePlatform as VirtualPlatform, VirtualDriver)
+from mpf.platforms.virtual import (VirtualHardwarePlatform as VirtualPlatform, VirtualDriver)
 
 
 class BaseSmartVirtualCoilAction:
@@ -214,7 +214,7 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
             self.target_device = None
 
 
-class HardwarePlatform(VirtualPlatform):
+class SmartVirtualHardwarePlatform(VirtualPlatform):
 
     """Base class for the smart_virtual hardware platform."""
 
