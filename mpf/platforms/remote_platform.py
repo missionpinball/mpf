@@ -15,15 +15,19 @@ class RemoteHardwarePlatform(SwitchPlatform, DriverPlatform):
 
     def __init__(self, machine):
         """Initialise remote hardware platform."""
-
-        self._switches = {}     # type: Dict[str, RemoteSwitch]
-        self.machine.bcp.interface.register_command_callback("remote_switch_change", self._remote_switch_change)
         self._initialised = False
         super().__init__(machine)
-        # TODO: wait for remote to connect
+        self._switches = {}     # type: Dict[str, RemoteSwitch]
 
     def initialize(self):
+        self.machine.bcp.interface.register_command_callback("remote_register", self._remote_register)
+        self.machine.bcp.interface.register_command_callback("remote_switch_change", self._remote_switch_change)
+        # TODO: wait for remote to connect
         self._initialised = True
+
+    def _remote_register(self, client, **kwargs):
+        del kwargs
+        self.machine.bcp.transport.add_handler_to_transport("remote_platform", client)
 
     def stop(self):
         pass
