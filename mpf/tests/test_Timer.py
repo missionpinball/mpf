@@ -230,7 +230,7 @@ class TestTimer(MpfFakeGameTestCase):
         self.assertEqual(1, timer.ticks)
         self.post_event('jump_timer_up')
         self.assertEqual(5, timer.ticks)
-        self.post_event("change_tick_interval_timer_up")
+        self.post_event_with_params("change_tick_interval_timer_up", change=1)
         # 1s * 4 = 4s
         self.advance_time_and_run(1)
         self.assertEqual(5, timer.ticks)

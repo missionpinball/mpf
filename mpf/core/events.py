@@ -525,8 +525,8 @@ class EventManager(MpfController):
             # in while we were processing previous handlers
 
             # merge the post's kwargs with the registered handler's kwargs
-            # in case of conflict, posts kwargs will win
-            merged_kwargs = dict(list(handler.kwargs.items()) + list(kwargs.items()))
+            # in case of conflict, handlers kwargs will win
+            merged_kwargs = dict(list(kwargs.items()) + list(handler.kwargs.items()))
 
             # if condition exists and is not true skip
             if handler.condition is not None and not handler.condition.evaluate(merged_kwargs):
@@ -568,8 +568,8 @@ class EventManager(MpfController):
             # in while we were processing previous handlers
 
             # merge the post's kwargs with the registered handler's kwargs
-            # in case of conflict, posts kwargs will win
-            merged_kwargs = dict(list(handler.kwargs.items()) + list(kwargs.items()))
+            # in case of conflict, handler kwargs will win
+            merged_kwargs = dict(list(kwargs.items()) + list(handler.kwargs.items()))
 
             # if condition exists and is not true skip
             if handler.condition is not None and not handler.condition.evaluate(merged_kwargs):
