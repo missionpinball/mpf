@@ -38,12 +38,10 @@ class TestMachineController(MachineController):
     def __init__(self, mpf_path, machine_path, options, config_patches, clock, mock_data,
                  enable_plugins=False):
         self.test_config_patches = config_patches
-        self.test_init_complete = False
         self._enable_plugins = enable_plugins
         self._test_clock = clock
         self._mock_data = mock_data
         super().__init__(mpf_path, machine_path, options)
-        self.test_init_complete = True
 
     def create_data_manager(self, config_name):
         return TestDataManager(self._mock_data.get(config_name, {}))
@@ -254,18 +252,9 @@ class MpfTestCase(unittest.TestCase):
                 self.getOptions(), self.machine_config_patches, self.clock, self._get_mock_data(),
                 self.get_enable_plugins())
 
-            self.clock.loop.run_until_complete(self.machine.initialise())
-
-            start = time.time()
-            while not self.machine.test_init_complete and time.time() < start + 20:
-                self.advance_time_and_run(0.01)
-
-            self.machine.events.process_event_queue()
-            self.advance_time_and_run(1)
+            self._initialise_machine()
 
         except Exception as e:
-            # todo temp until I can figure out how to stop the asset loader
-            # thread automatically.
             try:
                 self.machine.stop()
             except AttributeError:
@@ -276,7 +265,18 @@ class MpfTestCase(unittest.TestCase):
                 raise Exception(self._exception, e)
             raise e
 
-        self.assertTrue(self.machine.test_init_complete, "Machine crashed during start")
+    def _initialise_machine(self):
+        init = Util.ensure_future(self.machine.initialise(), loop=self.loop)
+        self._wait_for_start(init, 20)
+        self.machine.events.process_event_queue()
+        self.advance_time_and_run(1)
+
+    def _wait_for_start(self, init, timeout):
+        start = time.time()
+        while not init.done() and not self._exception:
+            self.loop._run_once()
+            if time.time() > start + timeout:
+                raise AssertionError("Start took more than {}s".format(timeout))
 
     def _mock_event_handler(self, event_name, **kwargs):
         self._last_event_kwargs[event_name] = kwargs
@@ -499,6 +499,12 @@ class MpfTestCase(unittest.TestCase):
         self.machine_run()
 
     def tearDown(self):
+        if self._exception:
+            if self._exception and 'exception' in self._exception:
+                raise self._exception['exception']
+            elif self._exception:
+                raise Exception(self._exception)
+
         duration = time.time() - self.test_start_time
         if duration > self.expected_duration:
             print("Test {}.{} took {} > {}s".format(self.__class__,

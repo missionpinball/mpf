@@ -106,9 +106,9 @@ class MockSocket(MockFd):
 
 
 class MockQueueSocket(MockSocket):
-    def __init__(self):
+    def __init__(self, loop):
         super().__init__()
-        self.send_queue = []
+        self.send_queue = asyncio.Queue(loop=loop)
         self.recv_queue = []
 
     def write_ready(self):
@@ -121,24 +121,24 @@ class MockQueueSocket(MockSocket):
         return self.recv_queue.pop(0)
 
     def send(self, data):
-        self.send_queue.append(data)
+        self.send_queue.put_nowait(data)
         return len(data)
 
 
 class MockServer:
     def __init__(self, loop):
         self.loop = loop
-        self.is_bound = False
+        self.is_bound = asyncio.Future(loop=loop)
         self.client_connected_cb = None
 
     @asyncio.coroutine
     def bind(self, client_connected_cb):
         self.client_connected_cb = client_connected_cb
-        self.is_bound = True
+        self.is_bound.set_result(True)
 
     @asyncio.coroutine
     def add_client(self, socket):
-        if not self.is_bound:
+        if not self.is_bound.done():
             raise AssertionError("Server not running")
 
         limit = asyncio.streams._DEFAULT_LIMIT
@@ -414,7 +414,7 @@ class TestClock(ClockBase):
         if key not in self._mock_servers:
             raise AssertionError("server not mocked for key {}".format(key))
         server = self._mock_servers[key]
-        if server.is_bound:
+        if server.is_bound.done():
             raise AssertionError("server already bound for key {}".format(key))
 
         yield from server.bind(client_connected_cb)

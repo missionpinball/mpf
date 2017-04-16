@@ -126,7 +126,7 @@ class TestBcpSocketClient(MpfTestCase):
         self._bcp_client = self.machine.bcp.transport.get_named_client("local_display")
 
     def _mock_loop(self):
-        self.client_socket = MockBcpQueueSocket()
+        self.client_socket = MockBcpQueueSocket(self.loop)
         self.clock.mock_socket("localhost", 5050, self.client_socket)
 
     def testReceiveMessages(self):
