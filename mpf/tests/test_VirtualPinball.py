@@ -125,32 +125,8 @@ class TestVirtualPinball(MpfTestCase):
         self.assertEqual("flipper", args['type'])
         self.assertEqual({"enabled": False}, args['state'])
 
-    def real_platform(self):
-        # start MPF init asynchronous because we need to connect during init
-        init = Util.ensure_future(self.machine.initialise(), loop=self.loop)
+        self.assertSwitchState("s_test_nc", 0)
 
-        # wait until server is initialised
-        self.loop.run_until_complete(self.mock_server.is_bound)
-
-        # connect a client
-        client = MockQueueSocket(self.loop)
-        self.loop.run_until_complete(self.mock_server.add_client(client))
-
-        # check hello
-        self.assertEqual(1, client.send_queue.qsize())
-        cmd, args = self.loop.run_until_complete(self._get_and_decode(client))
-        self.assertEqual("hello", cmd)
-
-        # we register as remote platform
-        self._encode_and_send(client, "remote_register")
-
-        # mpf will continue and reset all clients
-        cmd, args = self.loop.run_until_complete(self._get_and_decode(client))
-        self.assertEqual("reset", cmd)
-        self._encode_and_send(client, "reset_complete")
-
-        # MPF should finish to boot now
-        self._wait_for_start(init, 20)
-        self.machine.events.process_event_queue()
-        self.advance_time_and_run(1)
-
+        self._encode_and_send(client, "switch", name="s_test_nc", state=1)
+        self.advance_time_and_run()
+        self.assertSwitchState("s_test_nc", 1)
