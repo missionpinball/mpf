@@ -1,4 +1,5 @@
 """Contains the Light class."""
+import asyncio
 from functools import partial
 from operator import itemgetter
 
@@ -30,7 +31,7 @@ class DriverLight(LightPlatformSoftwareFade):
             self.driver.enable(hold_power=brightness)
 
 
-@DeviceMonitor(_color="color", _corrected_color="corrected_color")
+@DeviceMonitor(_color="color")
 class Light(SystemWideDevice):
 
     """A light in a pinball machine."""
@@ -43,8 +44,6 @@ class Light(SystemWideDevice):
         """Initialise light."""
         self.hw_drivers = {}
         self.platforms = set()      # type: Set[LightsPlatform]
-        self._color = [0, 0, 0]
-        self._corrected_color = [0, 0, 0]
         super().__init__(machine, name)
         self.machine.light_controller.initialise_light_subsystem()
 
@@ -429,6 +428,11 @@ class Light(SystemWideDevice):
         else:
             raise AssertionError("Invalid color {}".format(color))
         return brightness, fade_ms
+
+    @property
+    def _color(self):
+        """Getter for color."""
+        return self.get_color()
 
     def get_color(self):
         """Return an RGBColor() instance of the 'color' setting of the highest color setting in the stack.

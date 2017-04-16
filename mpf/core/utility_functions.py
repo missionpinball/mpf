@@ -38,6 +38,10 @@ class Util(object):
             # pylint: disable-msg=protected-access
             return tuple(Util.convert_to_simply_type(x) for x in value)
 
+        # pylint: disable-msg=protected-access
+        elif value.__class__.__name__ == "RGBColor":
+            return value.rgb
+
         # otherwise just cast to string
         return str(value)
 
