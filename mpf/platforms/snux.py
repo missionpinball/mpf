@@ -3,7 +3,7 @@
 This class overlays an existing WPC-compatible platform interface to work with
 Mark Sunnucks's System 11 interface board.
 """
-
+import asyncio
 import logging
 
 from typing import Any, Optional, Set, Tuple, TYPE_CHECKING
@@ -68,6 +68,7 @@ class HardwarePlatform(DriverPlatform):
     def _null_log_handler(self, *args, **kwargs):
         pass
 
+    @asyncio.coroutine
     def initialize(self):
         """Automatically called by the Platform class after all the core modules are loaded."""
         # load coil platform

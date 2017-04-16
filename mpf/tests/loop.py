@@ -131,6 +131,12 @@ class MockServer:
         self.is_bound = False
         self.client_connected_cb = None
 
+    @asyncio.coroutine
+    def bind(self, client_connected_cb):
+        self.client_connected_cb = client_connected_cb
+        self.is_bound = True
+
+    @asyncio.coroutine
     def add_client(self, socket):
         if not self.is_bound:
             raise AssertionError("Server not running")
@@ -140,7 +146,7 @@ class MockServer:
         protocol = asyncio.streams.StreamReaderProtocol(reader, loop=self.loop)
         transport = _SelectorSocketTransport(self.loop, socket, protocol)
         writer = asyncio.streams.StreamWriter(transport, protocol, reader, self.loop)
-        self.loop.run_until_complete(self.client_connected_cb(reader, writer))
+        yield from self.client_connected_cb(reader, writer)
 
     def close(self):
         pass
@@ -411,8 +417,7 @@ class TestClock(ClockBase):
         if server.is_bound:
             raise AssertionError("server already bound for key {}".format(key))
 
-        server.is_bound = True
-        server.client_connected_cb = client_connected_cb
+        yield from server.bind(client_connected_cb)
         return server
 
     @coroutine

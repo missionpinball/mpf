@@ -1,5 +1,5 @@
 """I2C servo controller platform."""
-
+import asyncio
 import logging
 import time
 
@@ -25,9 +25,10 @@ class HardwarePlatform(ServoPlatform):
         """Return string representation."""
         return '<Platform.I2C_Servo_Controller_Platform>'
 
+    @asyncio.coroutine
     def initialize(self):
         """Method is called after all hardware platforms were instantiated."""
-        super().initialize()
+        yield from super().initialize()
 
         # validate our config (has to be in intialize since config_processor
         # is not read in __init__)

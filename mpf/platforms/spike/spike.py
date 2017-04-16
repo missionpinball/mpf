@@ -247,6 +247,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
 
         self._nodes = None
 
+    @asyncio.coroutine
     def initialize(self):
         """Initialise platform."""
         self.config = self.machine.config_validator.validate_config("spike", self.machine.config['spike'])
@@ -259,7 +260,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
         if 0 not in self._nodes:
             raise AssertionError("Please include CPU node 0 in nodes for Spike.")
 
-        self.machine.clock.loop.run_until_complete(self._connect_to_hardware(port, baud))
+        yield from self._connect_to_hardware(port, baud)
 
         self._poll_task = self.machine.clock.loop.create_task(self._poll())
         self._poll_task.add_done_callback(self._done)

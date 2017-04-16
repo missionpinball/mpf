@@ -254,6 +254,8 @@ class MpfTestCase(unittest.TestCase):
                 self.getOptions(), self.machine_config_patches, self.clock, self._get_mock_data(),
                 self.get_enable_plugins())
 
+            self.clock.loop.run_until_complete(self.machine.initialise())
+
             start = time.time()
             while not self.machine.test_init_complete and time.time() < start + 20:
                 self.advance_time_and_run(0.01)

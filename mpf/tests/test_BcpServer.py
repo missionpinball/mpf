@@ -1,20 +1,8 @@
 from unittest.mock import MagicMock
 
-from mpf.core.bcp.bcp_client import BaseBcpClient
 from mpf.core.bcp.bcp_socket_client import decode_command_string, encode_command_string
 from mpf.tests.MpfTestCase import MpfTestCase
 from mpf.tests.loop import MockServer, MockQueueSocket
-
-
-class TestBcpClient(BaseBcpClient):
-    def __init__(self, queue):
-        self.queue = queue
-
-    def send(self, bcp_command, kwargs):
-        self.queue.put((bcp_command, kwargs))
-
-    def stop(self):
-        pass
 
 
 class TestBcp(MpfTestCase):
@@ -39,7 +27,7 @@ class TestBcp(MpfTestCase):
 
         # add client
         client = MockQueueSocket()
-        self.mock_server.add_client(client)
+        self.machine.clock.loop.run_until_complete(self.mock_server.add_client(client))
         self.advance_time_and_run()
 
         # check hello
