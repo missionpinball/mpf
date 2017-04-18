@@ -5,13 +5,14 @@ Note that in the Mission Pinball Framework, a distinction is made between a
 *machine* is the physical pinball machine.
 """
 from functools import partial
+import asyncio
 
 from mpf.core.events import QueuedEvent
-from mpf.core.mode import Mode
+from mpf.core.async_mode import AsyncMode
 from mpf.core.player import Player
 
 
-class Game(Mode):
+class Game(AsyncMode):
 
     """Base mode that runs an active game on a pinball machine.
 
@@ -31,16 +32,247 @@ class Game(Mode):
         self.num_players = None
         self._stopping_modes = []
         self._stopping_queue = None
+        self._end_ball_event = None
 
         self.machine.events.add_handler('mode_{}_stopping'.format(self.name), self._stop_game_modes)
 
+    @asyncio.coroutine
+    def _run(self):
+        """Main game mode method (basic game loop)"""
+
+        # Init the game (game start process)
+
+        # Initialize member variables
+        self.player = None
+        self.player_list = list()
+        self.machine.game = self
+        self.slam_tilted = False
+        self.tilted = False
+        self.num_players = 0
+        self._balls_in_play = 0
+        self._stopping_modes = []
+        self._stopping_queue = None
+        self._end_ball_event = asyncio.Event(loop=self.machine.clock.loop)
+        self._end_ball_event.clear()
+
+        # Add add player switch handler
+        if self.machine.config['game']['add_player_switch_tag']:
+            self.add_mode_event_handler(
+                self.machine.config['mpf']['switch_tag_event'].replace(
+                    '%', self.machine.config['game']['add_player_switch_tag']),
+                self.request_player_add)
+
+        yield from self._start_game()
+
+        # Game loop
+        while True:
+            # Wait for end ball event to be set
+            yield from self._end_ball_event.wait()
+            if self._end_ball_event.is_set():
+                yield from self._end_ball()
+                self._end_ball_event.clear()
+
+    @asyncio.coroutine
+    def _start_game(self):
+        """Start a new game"""
+
+        self.debug_log("Game start")
+
+        yield from self.machine.events.post_async('game_will_start')
+        '''event: game_will_start
+        desc: The game is about to start. This event is posted just before
+        :doc:`game_starting`.'''
+
+        yield from self.machine.events.post_queue_async('game_starting', game=self)
+        '''event: game_starting
+        desc: A game is in the process of starting. This is a queue event, and
+        the game won't actually start until the queue is cleared.
+
+        args:
+        game: A reference to the game mode object.
+        '''
+
+        # Sometimes game_starting handlers will add players, so we only
+        # have to add one here if there aren't any players yet.
+        if not self.player_list:
+            yield from self._add_player()
+
+        self.machine.remove_machine_var_search(startswith='player',
+                                               endswith='_score')
+
+        yield from self._start_player_turn()
+
+        yield from self.machine.events.post_async('game_started')
+        '''event: game_started
+        desc: A new game has started.'''
+
+        self.debug_log("Game started")
+
+    @asyncio.coroutine
+    def _add_player(self):
+        """Add a new player to the current game"""
+
+        new_player_number = len(self.player_list) + 1
+
+        yield from self.machine.events.post_async('player_will_add', number=new_player_number)
+        '''event: player_will_add
+        desc: A new player will be added to this game. This event is sent immediately
+        prior to the player_adding event.
+
+        args:
+        number: The new player number that will be added
+        '''
+
+        # Actually create the new player object
+        player = Player(self.machine, len(self.player_list))
+
+        self.player_list.append(player)
+        self.num_players = len(self.player_list)
+
+        yield from self.machine.events.post_queue_async('player_adding',
+                                                        player=player,
+                                                        number=player.number)
+        '''event: player_adding
+        desc: A new player is in the process of being added to this game. This is a queue 
+        event, and the player won't actually be finished adding until the queue is cleared.
+
+        args:
+        player: The player object for the player being added
+        number: The player number
+        '''
+
+        yield from self.machine.events.post_async('player_added',
+                                                  player=player,
+                                                  num=player.number)
+        '''event: player_added
+
+        desc: A new player was just added to this game
+
+        args:
+
+        player: A reference to the instance of the Player() object.
+
+        num: The number of the player that was just added. (e.g. Player 1 will
+        have *num=1*, Player 4 will have *num=4*, etc.)
+
+        '''
+
+        self.info_log("Player added successfully. Total players: %s", self.num_players)
+
+        if self.num_players == 2:
+            yield from self.machine.events.post_async('multiplayer_game')
+            '''event: multiplayer_game
+            desc: A second player has just been added to this game, meaning
+            this is now a multiplayer game.
+
+            This event is typically used to switch the score display from the
+            single player layout to the multiplayer layout.'''
+
+        # Enable player variable events and send all initial values
+        player.enable_events(True, True)
+
+        # Create machine variable to hold new player's score
+        self.machine.create_machine_var(
+            name='player{}_score'.format(player.number),
+            value=player.score,
+            persist=True)
+        '''machine_var: player(x)_score
+
+        desc: Holds the numeric value of a player's score. The "x" is the
+        player number, so this actual machine variable is
+        ``player1_score`` or ``player2_score``.
+
+        Since these are machine variables, they are maintained even after
+        a game is over. Therefore you can use these machine variables in
+        your attract mode display show to show the scores of the last game
+        that was played.
+
+        These machine variables are updated at the end of each player's
+        turn, and they persist on disk so they are restored the next time
+        MPF starts up.
+
+        '''
+
+    def ball_ending(self):
+        """DEPRECATED in v0.50. Use end_ball() instead."""
+        # TODO: Remove this function as it has been deprecated and replaced
+        self.warning_log("game.ball_ending() function has been deprecated. "
+                         "Please use game.end_ball() instead.")
+        self.end_ball()
+
+    def end_ball(self):
+        """Sets an event flag that will end the current ball"""
+        self._end_ball_event.set()
+
+    @asyncio.coroutine
+    def _end_ball(self):
+        """Start the ball ending process.
+
+        This method posts the queue event *ball_ending*, giving other modules
+        an opportunity to finish up whatever they need to do before the ball
+        ends. Once all the registered handlers for that event have finished,
+        this method calls :meth:`ball_ended`.
+
+        Currently this method also disables the autofire_coils and flippers,
+        though that's temporary as we'll move those into config file options.
+        """
+        # remove the handlers that were looking for ball drain since they'll
+        # be re-added on next ball start
+        self.machine.events.remove_handler(self.ball_drained)
+
+        # todo should clean up the above since they are removed from the
+        # active list of handlers but not the registered_handlers list.
+        # It doesn't really matter since the game ending can just remove them
+        # all, but technically it's not clean.
+
+        self._balls_in_play = 0
+
+        self.debug_log("Entering Game._end_ball()")
+
+        yield from self.machine.events.post_async('ball_will_end')
+        '''event: ball_will_end
+        desc: The ball is about to end. This event is posted just before
+        :doc:`ball_ending`.'''
+
+        yield from self.machine.events.post_queue_async('ball_ending')
+        '''event: ball_ending
+        desc: The ball is ending. This is a queue event and the ball won't
+        actually end until the queue is cleared.
+
+        This event is posted just after :doc:`ball_will_end`'''
+
+        yield from self.machine.events.post_async('ball_ended')
+        '''event: ball_ended
+        desc: The ball has ended.
+    
+        Note that this does not necessarily mean that the next player's turn
+        will start, as this player may have an extra ball which means they'll
+        shoot again.'''
+
+        self.debug_log("Ball has ended")
+
+        if self.slam_tilted:
+            yield from self._end_game()
+            return
+
+        if self.player.extra_balls:
+            self.award_extra_ball()
+            return
+
+        if (self.player.ball == self.machine.config['game']['balls_per_game'] and
+                    self.player.number == self.num_players):
+            yield from self._end_game()
+        else:
+            yield from self._rotate_players()
+            yield from self._start_player_turn()
+
     @property
-    def balls_in_play(self):
+    def balls_in_play(self) -> int:
         """Return balls in play."""
         return self._balls_in_play
 
     @balls_in_play.setter
-    def balls_in_play(self, value):
+    def balls_in_play(self, value: int):
         """Set balls in play."""
         prev_balls_in_play = self._balls_in_play
 
@@ -72,46 +304,8 @@ class Game(Mode):
             balls: The number of ball(s) in play.'''
 
         if prev_balls_in_play and not self._balls_in_play:
-            self.ball_ending()
-
-    def mode_start(self, buttons=None, hold_time=None, **kwargs):
-        """Automatically called when the *Game* machine mode becomes active."""
-        del hold_time
-        del buttons
-
-        # Intialize variables
-        self.num_players = 0
-        self.player = None
-        self.player_list = list()
-        self.machine.game = self
-        self.slam_tilted = False
-        self.tilted = False
-        self._balls_in_play = 0
-
-        # todo register for request_to_start_game so you can deny it, or allow
-        # it with a long press
-
-        self.add_mode_event_handler('player_add_success',
-                                    self.player_add_success)
-
-        if self.machine.config['game']['add_player_switch_tag']:
-            self.add_mode_event_handler(
-                self.machine.config['mpf']['switch_tag_event'].replace(
-                    '%', self.machine.config['game']['add_player_switch_tag']),
-                self.request_player_add)
-
-        self.add_mode_event_handler('ball_ended', self.ball_ended)
-        self.add_mode_event_handler('game_ended', self.game_ended)
-
-        self.machine.events.post_queue('game_starting',
-                                       callback=self.game_started, game=self)
-        '''event: game_starting
-        desc: A game is in the process of starting. This is a queue event, and
-        the game won't actually start until the queue is cleared.
-
-        args:
-        game: A reference to the game mode object.
-        '''
+            # Trigger end ball process by setting event
+            self._end_ball_event.set()
 
     def _stop_game_modes(self, queue: QueuedEvent, **kwargs):
         """Stop all game modes and wait until they stopped."""
@@ -140,48 +334,8 @@ class Game(Mode):
                 raise AssertionError("Mode {} is not supposed to run outside of game.".format(mode.name))
         self.machine.game = None
 
-    def game_started(self, ev_result=True, **kwargs):
-        """All the modules that needed to do something on game start are done, so our game is officially 'started'."""
-        del kwargs
-
-        if ev_result:
-            self.machine.remove_machine_var_search(startswith='player',
-                                                   endswith='_score')
-
-            if not self.player_list:
-                # Sometimes game_starting handlers will add players, so we only
-                # have to here if there aren't any players yet.
-                self._player_add()
-
-            self.player_turn_start()
-
-            self.machine.events.post('game_started')
-            '''event: game_started
-            desc: A new game has started.'''
-
-        else:  # something canceled the game start
-            self.game_ending()
-
-    def player_add_success(self, player, **kwargs):
-        """Called when a new player is successfully added to the current game.
-
-        This includes when the first player is added.
-        """
-        del player
-        del kwargs
-        self.info_log("Player added successfully. Total players: %s",
-                      self.num_players)
-
-        if self.num_players == 2:
-            self.machine.events.post('multiplayer_game')
-            '''event: multiplayer_game
-            desc: A second player has just been added to this game, meaning
-            this is now a multiplayer game.
-
-            This event is typically used to switch the score display from the
-            single player layout to the multiplayer layout.'''
-
-    def ball_starting(self, is_extra_ball=False):
+    @asyncio.coroutine
+    def _start_ball(self, is_extra_ball=False):
         """Called when a new ball is starting.
 
         Note this method is called for each ball that starts, even if it's
@@ -201,38 +355,30 @@ class Game(Mode):
         self.debug_log("***************************************************")
         self.debug_log("***************************************************")
 
-        self.machine.events.post_queue('ball_starting',
-                                       balls_remaining=self.machine.config['game']['balls_per_game'] - self.player.ball,
-                                       is_extra_ball=is_extra_ball,
-                                       callback=self.ball_started)
+        yield from self.machine.events.post_async('ball_will_start',
+                                                  is_extra_ball=is_extra_ball)
+        '''event: ball_will_start
+        desc: The ball is about to start. This event is posted just before
+        :doc:`ball_starting`.'''
+
+        yield from self.machine.events.post_queue_async(
+            'ball_starting',
+            balls_remaining=self.machine.config['game']['balls_per_game'] - self.player.ball,
+            is_extra_ball=is_extra_ball)
         '''event: ball_starting
         desc: A ball is starting. This is a queue event, so the ball won't
         actually start until the queue is cleared.'''
 
-    def ball_started(self, ev_result=True, **kwargs):
-        """Ball started."""
-        del kwargs
-        self.debug_log("Game Machine Mode ball_started()")
-        """Called when the other modules have approved a ball start.
-
-        Mainly used to enable the AutoFire coil rules, like enabling the
-        flippers and bumpers.
-        """
-        if ev_result is False:
-            return
-            # todo what happens if this fails? I mean it shouldn't, but if
-            # any ball_starting handler returns False, it will fail and we'll
-            # be in limbo?
-        self.debug_log("ball_started for Ball %s", self.player.ball)
-
         # register handlers to watch for ball drain and live ball removed
-
         self.add_mode_event_handler('ball_drain', self.ball_drained)
 
         self.balls_in_play = 1
 
-        self.machine.events.post('ball_started', ball=self.player.ball,
-                                 player=self.player.number)
+        self.debug_log("ball_started for Ball %s", self.player.ball)
+
+        yield from self.machine.events.post_async('ball_started',
+                                                  ball=self.player.ball,
+                                                  player=self.player.number)
         '''event: ball_started
         desc: A new ball has started.
         args:
@@ -240,14 +386,14 @@ class Game(Mode):
         player: The player number.'''
 
         if self.num_players == 1:
-            self.machine.events.post('single_player_ball_started')
+            yield from self.machine.events.post_async('single_player_ball_started')
             '''event: single_player_ball_started
             desc: A new ball has started, and this is a single player game.'''
         else:
-            self.machine.events.post('multi_player_ball_started')
+            yield from self.machine.events.post_async('multi_player_ball_started')
             '''event: multi_player_ball_started
             desc: A new ball has started, and this is a multiplayer game.'''
-            self.machine.events.post(
+            yield from self.machine.events.post_async(
                 'player_{}_ball_started'.format(self.player.number))
             '''event player_(number)_ball_started
             desc: A new ball has started, and this is a multiplayer game.
@@ -266,90 +412,25 @@ class Game(Mode):
 
         return {'balls': balls}
 
-    def ball_ending(self):
-        """Start the ball ending process.
+    @asyncio.coroutine
+    def _end_game(self):
+        self.debug_log("Entering Game._end_game()")
 
-        This method posts the queue event *ball_ending*, giving other modules
-        an opportunity to finish up whatever they need to do before the ball
-        ends. Once all the registered handlers for that event have finished,
-        this method calls :meth:`ball_ended`.
+        yield from self.machine.events.post_async('game_will_end')
+        '''event: game_will_end
+        desc: The game is about to end. This event is posted just before
+        :doc:`game_ending`.'''
 
-        Currently this method also disables the autofire_coils and flippers,
-        though that's temporary as we'll move those into config file options.
-        """
-        # remove the handlers that were looking for ball drain since they'll
-        # be re-added on next ball start
-        self.machine.events.remove_handler(self.ball_drained)
+        yield from self.machine.events.post_queue_async('game_ending')
+        '''event: game_ending
+        desc: The game is in the process of ending. This is a queue event, and
+        the game won't actually end until the queue is cleared.'''
 
-        # todo should clean up the above since they are removed from the
-        # active list of handlers but not the registered_handlers list.
-        # It doesn't really matter since the game ending can just remove them
-        # all, but technically it's not clean.
+        yield from self._end_player_turn()
 
-        self._balls_in_play = 0
-
-        # todo everything below is hard coded temporary
-
-        self.debug_log("Entering Game.ball_ending()")
-        self.machine.events.post('ball_will_end')
-        '''event: ball_will_end
-        desc: The ball is about to end. This event is posted just before
-        :doc:`ball_ending`.'''
-
-        self.machine.events.post_queue('ball_ending',
-                                       callback=self._ball_ending_done)
-        '''event: ball_ending
-        desc: The ball is ending. This is a queue event and the ball won't
-        actually end until the queue is cleared.
-
-        This event is posted just after :doc:`ball_will_end`'''
-
-    def _ball_ending_done(self, **kwargs):
-        # Callback for when the ball_ending queue is clear. All this does is
-        # post ball_ended, but we do it this way so that ball_ended slots in
-        # properly after other existing events have been posted.
-        del kwargs
-        self.machine.events.post('ball_ended')
-        '''event: ball_ended
-        desc: The ball has ended.
-
-        Note that this does not necessarily mean that the next player's turn
-        will start, as this player may have an extra ball which means they'll
-        shoot again.'''
-
-    def ball_ended(self, ev_result=True, **kwargs):
-        """Called when the ball has successfully ended.
-
-        This method is called after all the registered handlers of the queue
-        event *ball_ended* finish. (So typically this means that animations
-        have finished, etc.)
-
-        This method also decides if the same player should shoot again (if
-        there's an extra ball) or whether the machine controller should rotate
-        to the next player. It will also end the game if all players and balls
-        are done.
-
-        """
-        del kwargs
-        self.debug_log("Entering Game.ball_ended()")
-        if ev_result is False:
-            return
-
-        if self.slam_tilted:
-            self.game_ending()
-            return
-
-        if self.player.extra_balls:
-            self.award_extra_ball()
-            return
-
-        if (self.player.ball ==
-                self.machine.config['game']['balls_per_game'] and
-                self.player.number == self.num_players):
-            self.game_ending()
-        else:
-            self.player_rotate()
-            self.player_turn_start()
+        yield from self.machine.events.post_async('game_ended')
+        '''event: game_ended
+        desc: The game has ended.'''
 
     def game_ending(self):
         """Called when the game decides it should end.
@@ -360,33 +441,7 @@ class Game(Mode):
         this method calls :meth:`game_end`.
 
         """
-        self.debug_log("Entering Game.game_ending()")
-        self.machine.events.post_queue('game_ending',
-                                       callback=self._game_ending_done)
-        '''event: game_ending
-        desc: The game is in the process of ending. This is a queue event, and
-        the game won't actually end until the queue is cleared.'''
-
-    def _game_ending_done(self, **kwargs):
-        # Callback for when the game_ending queue is clear. All this does is
-        # post game_ended, but we do it this way so that game_ended slots in
-        # properly after other existing events have been posted.
-        del kwargs
-        self.player_turn_stop()
-        self.machine.events.post('game_ended')
-        '''event: game_ended
-        desc: The game has ended.'''
-
-    def game_ended(self, **kwargs):
-        """Actually ends the game once the *game_ending* event is clear.
-
-        Eventually this method will do lots of things. For now it just
-        advances the machine flow which ends the :class:`Game` mode and starts the
-        :class:`Attract` mode.
-
-        """
-        del kwargs
-        self.debug_log("Entering Game.game_ended()")
+        self.machine.clock.loop.run_until_complete(self._end_game)
 
     def award_extra_ball(self):
         """Called when the same player should shoot again."""
@@ -407,7 +462,7 @@ class Game(Mode):
         there are not enough credits in the machine.)
 
         If *player_add_request* comes back True, the event
-        *player_add_success* is posted with a reference to the new player
+        *player_added* is posted with a reference to the new player
         object as a *player* kwarg.
 
         """
@@ -427,7 +482,7 @@ class Game(Mode):
             return False
 
         result = self.machine.events.post_boolean('player_add_request',
-                                                  callback=self._player_add)
+                                                  callback=self._player_add_request_complete)
         '''event: player_add_request
         desc: Posted to request that an additional player be added to this
         game. Any registered handler can deny the player add request by
@@ -435,59 +490,35 @@ class Game(Mode):
         '''
         return result
 
-    def _player_add(self, ev_result=True):
-        # This is the callback from our request player add event.
+    def _player_add_request_complete(self, ev_result=True) -> bool:
+        """This is the callback from our request player add event."""
         # Don't call it directly.
 
         if ev_result is False:
             self.debug_log("Request to add player has been denied.")
             return False
-        else:
-            player = Player(self.machine, len(self.player_list))
-            self.player_list.append(player)
-            self.num_players = len(self.player_list)
 
-            self.machine.create_machine_var(
-                name='player{}_score'.format(player.number),
-                value=player.score,
-                persist=True)
+        # Call the method to actually add the player
+        self.machine.clock.loop.run_until_complete(self._add_player())
+        return True
 
-            '''machine_var: player(x)_score
-
-            desc: Holds the numeric value of a player's score. The "x" is the
-            player number, so this actual machine variable is
-            ``player1_score`` or ``player2_score``.
-
-            Since these are machine variables, they are maintained even after
-            a game is over. Therefore you can use these machine variables in
-            your attract mode display show to show the scores of the last game
-            that was played.
-
-            These machine variables are updated at the end of each player's
-            turn, and they persist on disk so they are restored the next time
-            MPF starts up.
-
-            '''
-
-            return player
-
-    def player_turn_start(self):
+    @asyncio.coroutine
+    def _start_player_turn(self):
         """Called at the beginning of a player's turn.
 
-        Note this method is only called when a new player is first up. So if
-        the same player shoots again due to an extra ball, this method is not
-        called again.
+        Note this method is only called when a different player's turn is up. 
+        So if the same player shoots again due to an extra ball, this method 
+        is not called again.
         """
         # If we get a request to start a turn but we haven't done a rotate to
         # set the first player, do that now.
-
         if not self.player:
-            self.player_rotate()
+            yield from self._rotate_players()
 
-        self.machine.events.post('player_turn_start', player=self.player,
-                                 number=self.player.number,
-                                 callback=self._player_turn_starting)
-        '''event: player_turn_start
+        yield from self.machine.events.post_async('player_turn_will_start',
+                                                  player=self.player,
+                                                  number=self.player.number)
+        '''event: player_turn_will_start
         desc: A new player's turn will start. This event is only posted before the
         start of a new player's turn. If that player gets an extra ball and
         shoots again, this event is not posted a second time.
@@ -497,30 +528,51 @@ class Game(Mode):
         number: The player number
         '''
 
-    def _player_turn_starting(self, **kwargs):
-        del kwargs
-        self.machine.events.post_queue('player_turn_starting', player=self.player,
-                                       number=self.player.number,
-                                       callback=self._player_turn_started)
+        yield from self.machine.events.post_queue_async('player_turn_starting',
+                                                        player=self.player,
+                                                        number=self.player.number)
         '''event: player_turn_starting
-        desc: A new player's turn is starting. This event is only posted at the
-        start of a new player's turn. If that player gets an extra ball and
-        shoots again, this event is not posted a second time.
+        desc: The player's turn is in the process of starting. This is a queue 
+        event, and the player's turn won't actually start until the queue is cleared.
 
         args:
         player: The player object whose turn is starting.
         number: The player number
         '''
 
-    def player_turn_stop(self):
-        """Called when player turn stopped."""
+        self.player.ball += 1
+        '''player_var: ball
+    
+        desc: The ball number for this player. If a player gets an extra ball,
+        this number won't change when they start the extra ball.
+        '''
+
+        yield from self.machine.events.post_async('player_turn_started',
+                                                  player=self.player,
+                                                  number=self.player.number)
+        '''event: player_turn_started
+        desc: A new player's turn started. This event is only posted after the
+        start of a new player's turn. If that player gets an extra ball and
+        shoots again, this event is not posted a second time.
+    
+        args:
+        player: The player object whose turn is starting.
+        number: The player number
+        '''
+
+        yield from self._start_ball()
+
+    @asyncio.coroutine
+    def _end_player_turn(self):
+        """Ends the current player's turn"""
         if not self.player:
             return
 
-        self.machine.events.post('player_turn_stop', player=self.player,
-                                 number=self.player.number)
-        '''event: player_turn_stop
-        desc: The player's turn is ending. This event is only posted when this
+        yield from self.machine.events.post_async('player_turn_will_end',
+                                                  player=self.player,
+                                                  number=self.player.number)
+        '''event: player_turn_will_end
+        desc: The player's turn is about to end. This event is only posted when this
         player's turn is totally over. If the player gets an extra ball and
         shoots again, this event is not posted until after all their extra
         balls and it's no longer their turn.
@@ -530,6 +582,19 @@ class Game(Mode):
         number: The player number
         '''
 
+        yield from self.machine.events.post_queue_async('player_turn_ending',
+                                                        player=self.player,
+                                                        number=self.player.number)
+        '''event: player_turn_ending
+        desc: The current player's turn is ending. This is a queue event, and 
+        the player's turn won't actually end until the queue is cleared.
+
+        args:
+        player: The player object whose turn is ending.
+        number: The player number
+        '''
+
+        # Update player's score before changing turns
         self.machine.set_machine_var(
             name='player{}_score'.format(self.player.number),
             value=self.player.score)
@@ -543,45 +608,35 @@ class Game(Mode):
         else:
             self.player = self.player_list[0]
 
-    def _player_turn_started(self, **kwargs):
-        del kwargs
-        self.player.ball += 1
-        '''player_var: ball
-
-        desc: The ball number for this player. If a player gets an extra ball,
-        this number won't change when they start the extra ball.
-        '''
-
-        self.machine.events.post('player_turn_started', player=self.player,
-                                 number=self.player.number)
-        '''event: player_turn_started
-        desc: A new player's turn started. This event is only posted after the
-        start of a new player's turn. If that player gets an extra ball and
-        shoots again, this event is not posted a second time.
+        yield from self.machine.events.post_async('player_turn_ended',
+                                                  player=self.player,
+                                                  number=self.player.number)
+        '''event: player_turn_ended
+        desc: The current player's turn has ended. This event is only posted when 
+        this player's turn is totally over. If the player gets an extra ball and
+        shoots again, this event is not posted until after all their extra balls 
+        and it's no longer their turn.
 
         args:
-        player: The player object whose turn is starting.
+        player: The player object whose turn is ending.
         number: The player number
         '''
 
-        self.ball_starting()
-
-    def player_rotate(self):
+    @asyncio.coroutine
+    def _rotate_players(self):
         """Rotate the game to the next player.
 
         This method is called after a player's turn is over, so it's even used
         in single-player games between balls.
 
         All it does really is set :attr:`player` to the next player's number.
-
-        Args:
         """
         # todo  do cool stuff in the future to change order, etc.
 
         if self.player:
-            self.player_turn_stop()
-
-        else:  # no current player, grab the first one
+            yield from self._end_player_turn()
+        else:
+            # no current player, grab the first one
             self.player = self.player_list[0]
 
         self.debug_log("Player rotate: Now up is Player %s",
