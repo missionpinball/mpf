@@ -84,7 +84,7 @@ class Shot(ModeDevice, SystemWideDevice):
         """
         super().device_added_to_mode(mode, player)
 
-        self.player_turn_start(player)
+        self.player_turn_started(player)
 
         if not self.config['enable_events']:
             self.enable(mode)
@@ -302,7 +302,7 @@ class Shot(ModeDevice, SystemWideDevice):
 
         profile['running_show'] = self.machine.shows[show_name].play(**s)
 
-    def player_turn_start(self, player, **kwargs):
+    def player_turn_started(self, player, **kwargs):
         """Update the player reference to the current player and to apply the default machine-wide shot profile.
 
         Called by the shot profile manager when a player's turn starts.
@@ -313,7 +313,7 @@ class Shot(ModeDevice, SystemWideDevice):
         if self._created_system_wide:
             self.update_profile()
 
-    def player_turn_stop(self):
+    def player_turn_stopped(self):
         """Remove the profiles from the shot and remove the player reference.
 
         Called by the shot profile manager when the player's turn ends.

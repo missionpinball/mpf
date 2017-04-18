@@ -44,7 +44,7 @@ class ScoreReelController(MpfController):
         # register for events
 
         # switch the active score reel group and reset it (if needed)
-        self.machine.events.add_handler('player_turn_start',
+        self.machine.events.add_handler('player_turn_started',
                                         self.rotate_player)
 
         # receive notification of score changes

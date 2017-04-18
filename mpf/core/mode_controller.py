@@ -64,14 +64,14 @@ class ModeController(MpfController):
         self.machine.events.add_handler('ball_starting', self._ball_starting,
                                         priority=0)
 
-        self.machine.events.add_handler('player_add_success',
+        self.machine.events.add_handler('player_added',
                                         self._player_added, priority=0)
 
-        self.machine.events.add_handler('player_turn_start',
+        self.machine.events.add_handler('player_turn_started',
                                         self._player_turn_start,
                                         priority=1000000)
 
-        self.machine.events.add_handler('player_turn_stop',
+        self.machine.events.add_handler('player_turn_stopped',
                                         self._player_turn_stop,
                                         priority=1000000)
 

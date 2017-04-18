@@ -199,8 +199,8 @@ class Credits(Mode):
                                     self._player_add_request)
         self.add_mode_event_handler('request_to_start_game',
                                     self._request_to_start_game)
-        self.add_mode_event_handler('player_add_success',
-                                    self._player_add_success)
+        self.add_mode_event_handler('player_added',
+                                    self._player_added)
         self.add_mode_event_handler('mode_game_started',
                                     self._game_started)
         self.add_mode_event_handler('mode_game_stopped',
@@ -288,7 +288,7 @@ class Credits(Mode):
             # event docstring covered in _player_add_request() method
             return False
 
-    def _player_add_success(self, **kwargs):
+    def _player_added(self, **kwargs):
         del kwargs
         new_credit_units = (self._get_credit_units() -
                             self.credit_units_per_game)

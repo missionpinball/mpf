@@ -23,11 +23,11 @@ class ExtraBallController(MpfController):
 
         self.events_only = self.config['events_only']
 
-        self.machine.events.add_handler('player_add_success',
+        self.machine.events.add_handler('player_added',
                                         self._player_added)
-        self.machine.events.add_handler('player_turn_start',
+        self.machine.events.add_handler('player_turn_started',
                                         self._player_turn_start)
-        self.machine.events.add_handler('player_turn_stop',
+        self.machine.events.add_handler('player_turn_stopped',
                                         self._player_turn_stop)
         self.machine.events.add_handler('award_extra_ball',
                                         self.award)
