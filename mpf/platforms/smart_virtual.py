@@ -1,5 +1,5 @@
 """Contains code for the smart_virtual platform."""
-
+import asyncio
 import logging
 
 from mpf.core.logging import LogMixin
@@ -231,6 +231,7 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
         self.log = logging.getLogger("Smart Virtual Platform")
         self.log.debug("Configuring smart_virtual hardware interface.")
 
+    @asyncio.coroutine
     def initialize(self):
         """Initialise platform."""
         self.machine.events.add_handler('init_phase_5',

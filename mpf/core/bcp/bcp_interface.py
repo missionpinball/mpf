@@ -102,6 +102,8 @@ class BcpInterface(MpfController):
             self._monitor_events(client)
         elif category == "devices":
             self._monitor_devices(client)
+        elif category == "drivers":
+            self._monitor_drivers(client)
         elif category == "switches":
             self._monitor_switches(client)
         elif category == "machine_vars":
@@ -126,6 +128,8 @@ class BcpInterface(MpfController):
             self._monitor_events_stop(client)
         elif category == "devices":
             self._monitor_devices_stop(client)
+        elif category == "drivers":
+            self._monitor_drivers_stop(client)
         elif category == "switches":
             self._monitor_switches_stop(client)
         elif category == "machine_vars":
@@ -141,6 +145,14 @@ class BcpInterface(MpfController):
                                                       "error",
                                                       cmd="monitor_stop?category={}".format(category),
                                                       error="Invalid category value")
+
+    def _monitor_drivers(self, client):
+        """Monitor all drivers."""
+        self.machine.bcp.transport.add_handler_to_transport("_monitor_drivers", client)
+
+    def _monitor_drivers_stop(self, client):
+        """Monitor all drivers."""
+        self.machine.bcp.transport.remove_transport_from_handle("_monitor_drivers", client)
 
     def _monitor_events(self, client):
         """Monitor all events."""
@@ -170,6 +182,8 @@ class BcpInterface(MpfController):
     def _monitor_devices(self, client):
         """Register client to get notified of device changes."""
         self.machine.bcp.transport.add_handler_to_transport("_devices", client)
+        # trigger updates of lights
+        self.machine.light_controller.monitor_lights()
 
         # initially send all states
         for collection in self.machine.device_manager.get_monitorable_devices().values():
@@ -403,6 +417,10 @@ class BcpInterface(MpfController):
         """
         self.warning_log('Received Error command from host with parameters: %s, from client %s',
                          kwargs, str(client))
+
+    def send_driver_event(self, **kwargs):
+        """Notify all observers about driver event."""
+        self.machine.bcp.transport.send_to_clients_with_handler("_monitor_drivers", "driver_event", **kwargs)
 
     def _bcp_receive_reset_complete(self, client, **kwargs):
         """A remote BCP host has sent a BCP reset_complete message indicating their reset process has completed."""

@@ -1,5 +1,5 @@
 """Contains code for a virtual hardware platform."""
-
+import asyncio
 import logging
 from typing import Callable, Tuple
 
@@ -44,6 +44,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         self.log = logging.getLogger("Virtual Platform")
         self.log.debug("Configuring virtual hardware interface.")
 
+    @asyncio.coroutine
     def initialize(self):
         """Initialise platform."""
         pass

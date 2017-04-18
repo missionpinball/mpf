@@ -1,5 +1,6 @@
 """Contains the parent class for all platforms."""
 import abc
+import asyncio
 from collections import namedtuple
 
 from typing import Optional
@@ -41,6 +42,7 @@ class BasePlatform(metaclass=abc.ABCMeta):
             self.log.debug(msg, *args, **kwargs)
 
     @abc.abstractmethod
+    @asyncio.coroutine
     def initialize(self):
         """Initialise the platform.
 

@@ -138,6 +138,8 @@ class MachineController(LogMixin):
 
         self.clock = self._load_clock()
 
+    @asyncio.coroutine
+    def initialise(self):
         self._boot_holds = set()    # type: Set[str]
         self.is_init_done = asyncio.Event(loop=self.clock.loop)
         self.register_boot_hold('init')
@@ -152,19 +154,19 @@ class MachineController(LogMixin):
         # This is called so hw platforms have a chance to register for events,
         # and/or anything else they need to do with core modules since
         # they're not set up yet when the hw platforms are constructed.
-        self._initialize_platforms()
+        yield from self._initialize_platforms()
 
         self._validate_config()
 
         self._register_config_players()
         self._register_system_events()
         self._load_machine_vars()
-        self.clock.loop.run_until_complete(self._run_init_phases())
+        yield from self._run_init_phases()
         self._init_phases_complete()
 
         # wait until all boot holds were released
-        self.clock.loop.run_until_complete(self.is_init_done.wait())
-        self.clock.loop.run_until_complete(self.init_done())
+        yield from self.is_init_done.wait()
+        yield from self.init_done()
 
     def _exception_handler(self, loop, context):    # pragma: no cover
         # stop machine
@@ -221,9 +223,10 @@ class MachineController(LogMixin):
 
         self.clear_boot_hold('init')
 
+    @asyncio.coroutine
     def _initialize_platforms(self):
         for platform in list(self.hardware_platforms.values()):
-            platform.initialize()
+            yield from platform.initialize()
             if not platform.features['tickless']:
                 self.clock.schedule_interval(platform.tick, 1 / self.config['mpf']['default_platform_hz'])
 
@@ -660,7 +663,7 @@ class MachineController(LogMixin):
     def run(self):
         """Start the main machine run loop."""
         self.info_log("Starting the main run loop.")
-
+        self.clock.loop.run_until_complete(self.initialise())
         self._run_loop()
 
     def stop(self, **kwargs):

@@ -1,5 +1,5 @@
 """Pololu Maestro servo controller platform."""
-
+import asyncio
 import logging
 import serial
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
@@ -28,9 +28,10 @@ class HardwarePlatform(ServoPlatform):
         """Return string representation."""
         return '<Platform.Pololu_Maestro>'
 
+    @asyncio.coroutine
     def initialize(self):
         """Method is called after all hardware platforms were instantiated."""
-        super().initialize()
+        yield from super().initialize()
 
         # validate our config (has to be in intialize since config_processor
         # is not read in __init__)
