@@ -161,7 +161,7 @@ class TestModes(MpfTestCase):
         self.machine.modes.mode2.config['mode']['priority'] = 999
 
         # end the ball
-        self.machine.game.ball_ending()
+        self.machine.game.end_ball()
         self.advance_time_and_run()
 
         self.assertTrue(self.machine.modes.mode1.active)
@@ -174,11 +174,11 @@ class TestModes(MpfTestCase):
         self.assertEqual(self.machine.modes.mode2.priority, 999)
 
         # end ball 2
-        self.machine.game.ball_ending()
+        self.machine.game.end_ball()
         self.advance_time_and_run()
 
         # end ball 3 and end the game
-        self.machine.game.ball_ending()
+        self.machine.game.end_ball()
         self.advance_time_and_run()
 
         self.assertTrue(self.machine.modes.attract.active)
