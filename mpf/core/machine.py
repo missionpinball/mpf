@@ -15,6 +15,7 @@ from platform import platform, python_version, system, release, version, system_
 import copy
 
 import asyncio
+
 from pkg_resources import iter_entry_points
 from typing import Any, TYPE_CHECKING, Callable, Dict, List, Set
 
@@ -50,7 +51,7 @@ if TYPE_CHECKING:
     from mpf.core.ball_controller import BallController
     from mpf.devices.playfield import Playfield
     from mpf.core.placeholder_manager import PlaceholderManager
-    from mpf.platforms import smart_virtual
+    from mpf.platforms.smart_virtual import SmartVirtualHardwarePlatform
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -134,7 +135,7 @@ class MachineController(LogMixin):
         self.delay = DelayManager(self.delayRegistry)
 
         self.hardware_platforms = dict()    # type: Dict[str, BasePlatform]
-        self.default_platform = None        # type: smart_virtual.HardwarePlatform
+        self.default_platform = None        # type: SmartVirtualHardwarePlatform
 
         self.clock = self._load_clock()
 

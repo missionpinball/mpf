@@ -1,4 +1,5 @@
 import asyncio
+from typing import Tuple, Generator
 
 from mpf.core.bcp.bcp_socket_client import decode_command_string, encode_command_string
 from mpf.core.utility_functions import Util
@@ -31,7 +32,7 @@ class TestVirtualPinball(MpfTestCase):
         self.clock.mock_server("127.0.0.1", 5051, self.mock_server)
 
     @asyncio.coroutine
-    def _get_and_decode(self, client) -> (str, dict):
+    def _get_and_decode(self, client) -> Generator[int, None, Tuple[str, dict]]:
         data = yield from client.send_queue.get()
         return decode_command_string(data[0:-1].decode())
 

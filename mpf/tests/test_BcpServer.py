@@ -1,3 +1,4 @@
+from typing import Tuple
 from unittest.mock import MagicMock
 
 from mpf.core.bcp.bcp_socket_client import decode_command_string, encode_command_string
@@ -21,7 +22,7 @@ class TestBcp(MpfTestCase):
         self.mock_server = MockServer(self.clock.loop)
         self.clock.mock_server("127.0.0.1", 5051, self.mock_server)
 
-    def _get_and_decode(self, client) -> (str, dict):
+    def _get_and_decode(self, client) -> Tuple[str, dict]:
         data = client.send_queue.get_nowait()
         return decode_command_string(data[0:-1].decode())
 
