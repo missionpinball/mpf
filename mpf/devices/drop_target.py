@@ -1,4 +1,11 @@
 """Contains the base classes for drop targets and drop target banks."""
+from typing import List
+from typing import Set, TYPE_CHECKING
+
+from mpf.core.machine import MachineController
+
+if TYPE_CHECKING:
+    from mpf.devices.driver import Driver
 
 from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
@@ -19,11 +26,11 @@ class DropTarget(SystemWideDevice):
     collection = 'drop_targets'
     class_label = 'drop_target'
 
-    def __init__(self, machine, name):
+    def __init__(self, machine: "MachineController", name: str) -> None:
         """Initialise drop target."""
-        self.reset_coil = None
-        self.knockdown_coil = None
-        self.banks = None
+        self.reset_coil = None              # type: Driver
+        self.knockdown_coil = None          # type: Driver
+        self.banks = None                   # type: Set[DropTargetBank]
         super().__init__(machine, name)
 
         self._in_ball_search = False
@@ -32,7 +39,7 @@ class DropTarget(SystemWideDevice):
 
         self._ignore_switch_hits = False
 
-    def _initialize(self):
+    def _initialize(self) -> None:
         self.reset_coil = self.config['reset_coil']
         self.knockdown_coil = self.config['knockdown_coil']
         self.banks = set()
@@ -158,7 +165,7 @@ class DropTarget(SystemWideDevice):
         del kwargs
         if self.knockdown_coil and not self.machine.switch_controller.is_active(self.config['switch'].name):
             self._ignore_switch_hits_for(ms=self.config['ignore_switch_ms'])
-            self.knockdown_coil.pulse()
+            self.knockdown_coil.pulse(self.config['knockdown_coil_max_wait_ms'])
 
     def _update_state_from_switch(self, reconcile=False, **kwargs):
         del kwargs
@@ -234,7 +241,7 @@ class DropTarget(SystemWideDevice):
 
         if self.reset_coil and self.machine.switch_controller.is_active(self.config['switch'].name):
             self._ignore_switch_hits_for(ms=self.config['ignore_switch_ms'])
-            self.reset_coil.pulse()
+            self.reset_coil.pulse(self.config['reset_coil_max_wait_ms'])
 
 
 @DeviceMonitor("complete", "down", "up")
@@ -246,13 +253,13 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
     collection = 'drop_target_banks'
     class_label = 'drop_target_bank'
 
-    def __init__(self, machine, name):
+    def __init__(self, machine: "MachineController", name: str) -> None:
         """Initialise drop target bank."""
         super().__init__(machine, name)
 
-        self.drop_targets = list()
-        self.reset_coil = None
-        self.reset_coils = set()
+        self.drop_targets = list()          # type: List[DropTarget]
+        self.reset_coil = None              # type: Driver
+        self.reset_coils = set()            # type: Set[Driver]
         self.complete = False
         self.down = 0
         self.up = 0
@@ -291,7 +298,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         self.debug_log('Resetting')
 
         # figure out all the coils we need to pulse
-        coils = set()
+        coils = set()       # type: Set[Driver]
 
         for drop_target in self.drop_targets:
             if drop_target.reset_coil:
@@ -312,7 +319,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         # now pulse them
         for coil in coils:
             self.debug_log('Pulsing reset coils: %s', coils)
-            coil.pulse()
+            coil.pulse(self.config['reset_coil_max_wait_ms'])
 
     def _restore_switch_hits(self):
         self.machine.events.post('restore')
