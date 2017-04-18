@@ -192,7 +192,7 @@ class Mode(LogMixin):
         """
         self.debug_log("Received request to start")
 
-        if self.config['mode']['game_mode'] and not self.machine.game:
+        if self.config['mode']['game_mode'] and not (self.machine.game and self.player):
             self.warning_log("Can only start mode %s during a game. Aborting start.", self.name)
             return
 
