@@ -82,7 +82,7 @@ class ScorePlayer(ConfigPlayer):
 
     def get_express_config(self, value):
         """Parse express config."""
-        if isinstance(value, int):
+        if not isinstance(value, str):
             block = False
         else:
             try:

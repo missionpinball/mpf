@@ -76,6 +76,19 @@ class IntTemplate(BaseTemplate):
         return int(result)
 
 
+class NativeTypeTemplate:
+
+    def __init__(self, value):
+        """Set value."""
+        self.value = value
+
+    def evaluate(self, parameters, fail_on_missing_params=False):
+        """Return value."""
+        del parameters
+        del fail_on_missing_params
+        return self.value
+
+
 class DeviceClassPlaceholder:
 
     """Wrap a monitorable device."""
@@ -277,14 +290,20 @@ class BasePlaceholderManager(MpfController):
 
     def build_float_template(self, template_str, default_value=0.0):
         """Build a float template from a string."""
+        if isinstance(template_str, (float, int)):
+            return NativeTypeTemplate(float(template_str))
         return FloatTemplate(self._parse_template(template_str), self, default_value)
 
     def build_int_template(self, template_str, default_value=0):
         """Build a int template from a string."""
+        if isinstance(template_str, (float, int)):
+            return NativeTypeTemplate(int(template_str))
         return IntTemplate(self._parse_template(template_str), self, default_value)
 
     def build_bool_template(self, template_str, default_value=False):
         """Build a bool template from a string."""
+        if isinstance(template_str, bool):
+            return NativeTypeTemplate(template_str)
         return BoolTemplate(self._parse_template(template_str), self, default_value)
 
     def get_global_parameters(self, name):

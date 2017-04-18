@@ -839,7 +839,7 @@ score_reel_groups:
     confirm: single|str|lazy
 scoring:
     __valid_in__: modes
-    score: single|template_int|0
+    score: single|template_float|0
     block: single|bool|False
     action: single|enum(add,set,add_machine,set_machine)|add
     player: single|int|None
