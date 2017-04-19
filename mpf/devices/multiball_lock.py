@@ -32,9 +32,6 @@ class MultiballLock(ModeDevice):
 
         self.machine.events.add_handler("player_turn_starting", self._player_turn_starting)
 
-    def _add_balls_in_play(self, number):
-        self.machine.game.balls_in_play += number
-
     def device_removed_from_mode(self, mode):
         """Disable ball lock when mode ends."""
         del mode
@@ -121,6 +118,8 @@ class MultiballLock(ModeDevice):
     def reset_all_counts(self, **kwargs):
         """Reset the locked balls for all players."""
         del kwargs
+        if not self.config['keep_virtual_ball_count_per_player']:
+            raise AssertionError("Cannot reset physical counts")
         for player in self.machine.game.player_list:
             player['{}_locked_balls'.format(self.name)] = 0
 
@@ -128,17 +127,23 @@ class MultiballLock(ModeDevice):
     def reset_count_for_current_player(self, **kwargs):
         """Reset the locked balls for the current player."""
         del kwargs
+        if not self.config['keep_virtual_ball_count_per_player']:
+            raise AssertionError("Cannot reset physical counts")
         self.machine.game.player['{}_locked_balls'.format(self.name)] = 0
 
     @property
     def locked_balls(self):
         """Return the number of locked balls for the current player."""
-        return self.machine.game.player['{}_locked_balls'.format(self.name)]
+        if self.config['keep_virtual_ball_count_per_player']:
+            return self.machine.game.player['{}_locked_balls'.format(self.name)]
+        else:
+            return self._physically_locked_balls
 
     @locked_balls.setter
     def locked_balls(self, value):
         """Set the number of locked balls for the current player."""
-        self.machine.game.player['{}_locked_balls'.format(self.name)] = value
+        if self.config['keep_virtual_ball_count_per_player']:
+            self.machine.game.player['{}_locked_balls'.format(self.name)] = value
 
     def _register_handlers(self):
         # register on ball_enter of lock_devices
@@ -229,13 +234,14 @@ class MultiballLock(ModeDevice):
                     has locked.
             '''
 
-        # only keep ball if any player could use it
-        if self._max_balls_locked_by_any_player <= self._physically_locked_balls:
-            balls_to_lock_physically = 0
+        if self.config['keep_virtual_ball_count_per_player']:
+            # only keep ball if any player could use it
+            if self._max_balls_locked_by_any_player <= self._physically_locked_balls:
+                balls_to_lock_physically = 0
 
-        # do not lock if the lock would be physically full but not virtually
-        if not self.is_virtually_full and self._physically_remaining_space <= 1:
-            balls_to_lock_physically = 0
+            # do not lock if the lock would be physically full but not virtually
+            if not self.is_virtually_full and self._physically_remaining_space <= 1:
+                balls_to_lock_physically = 0
 
         # check if we are full now and post event if yes
         if self.is_virtually_full:
