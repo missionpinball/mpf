@@ -36,13 +36,13 @@ class TestGame(MpfGameTestCase):
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
         self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
 
-        self.assertEqual(3, self.machine.config['game']['balls_per_game'])
-
         # start game (single player)
         self.start_game()
         self.assertGameIsRunning()
         self.assertPlayerNumber(1)
         self.assertBallNumber(1)
+
+        self.assertEqual(3, self.machine.modes.game.balls_per_game)
 
         # Assert game startup sequence
         self.assertEqual(7, self._events.call_count)
@@ -135,14 +135,14 @@ class TestGame(MpfGameTestCase):
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
         self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
 
-        self.assertEqual(3, self.machine.config['game']['balls_per_game'])
-
         # start game (first player)
         self.start_game()
         self.advance_time_and_run(5)
         self.assertGameIsRunning()
         self.assertPlayerNumber(1)
         self.assertBallNumber(1)
+
+        self.assertEqual(3, self.machine.modes.game.balls_per_game)
 
         # Assert game startup sequence
         self.assertEqual(7, self._events.call_count)

@@ -288,9 +288,10 @@ class TestBcpInterface(MpfBcpTestCase):
         self.assertEqual(2, self.machine.ball_controller.num_balls_known)
         self.assertEqual(2, self.machine.ball_devices.bd_trough.balls)
 
-        self.assertEqual(3, self.machine.config['game']['balls_per_game'])
         self.hit_and_release_switch("s_start")
         self.advance_time_and_run()
+
+        self.assertEqual(3, self.machine.modes.game.balls_per_game)
         self.assertEqual(1, self.machine.game.num_players)
         self._bcp_client.send_queue.clear()
 

@@ -545,7 +545,7 @@ class TestBallHoldSmart(MpfTestCase):
         return 'smart_virtual'
 
     def test_ball_end(self):
-        self.machine.config['game']['balls_per_game'] = 3
+        self.machine.config['game']['balls_per_game'] = self.machine.placeholder_manager.build_int_template(3)
         # add an initial ball to trough
         self.hit_switch_and_run("s_ball_switch1", 1)
         self.hit_switch_and_run("s_ball_switch2", 1)

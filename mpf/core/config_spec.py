@@ -456,8 +456,8 @@ flippers:
     playfield: single|machine(playfields)|playfield
 game:
     __valid_in__: machine
-    balls_per_game: single|int|3
-    max_players: single|int|4
+    balls_per_game: single|template_int|3
+    max_players: single|template_int|4
     start_game_switch_tag: single|str|start
     add_player_switch_tag: single|str|start
     allow_start_with_loose_balls: single|bool|False
