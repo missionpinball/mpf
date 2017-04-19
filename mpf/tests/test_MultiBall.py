@@ -425,6 +425,67 @@ class TestMultiBall(MpfGameTestCase):
         self.advance_time_and_run(1)
         self.assertEqual(None, self.machine.game)
 
+    def testMultiballLockNoStateKeepingInMode(self):
+        # prepare game
+        self.fill_troughs()
+
+        # start game
+        self.start_two_player_game()
+
+        # takes roughly 4s to get ball confirmed
+        self.advance_time_and_run(4)
+        self.assertNotEqual(None, self.machine.game)
+        self.assertEqual(1, self.machine.playfield.balls)
+
+        self.advance_time_and_run(4)
+        self.assertEqual(1, self.machine.playfield.available_balls)
+
+        # start mode
+        self.post_event("start_mode5")
+
+        self.advance_time_and_run(4)
+
+        # lock one ball and another one should go to pf
+        self.hit_switch_and_run("s_lock1", 10)
+        self.assertEqual(1, self.machine.ball_devices.bd_lock.balls)
+        self.assertEqual(1, self.machine.playfield.balls)
+
+        # player change
+        self.drain_ball()
+        self.advance_time_and_run(10)
+
+        # start mode
+        self.post_event("start_mode5")
+
+        self.assertPlayerNumber(2)
+        self.assertEqual(1, self.machine.ball_devices.bd_lock.balls)
+        self.assertEqual(1, self.machine.playfield.balls)
+
+        self.hit_switch_and_run("s_lock2", 10)
+        self.assertEqual(2, self.machine.ball_devices.bd_lock.balls)
+        self.assertEqual(1, self.machine.playfield.balls)
+
+        # player change
+        self.drain_ball()
+        self.advance_time_and_run(10)
+        self.assertGameIsNotRunning()
+
+        self.assertEqual(0, self.machine.ball_devices.bd_lock.balls)
+        self.assertEqual(2, self.machine.playfield.balls)
+
+        # game should not start yet
+        self.assertGameIsNotRunning()
+        self.hit_and_release_switch("s_start")
+        self.advance_time_and_run()
+        self.assertGameIsNotRunning()
+
+        self.drain_ball()
+        self.drain_ball()
+        self.advance_time_and_run()
+
+        # game should start again
+        self.start_game()
+
     def testMultiballInModeSimple(self):
         self.mock_event("multiball_mb5_ended")
 
