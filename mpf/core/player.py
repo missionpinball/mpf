@@ -130,7 +130,10 @@ class Player(object):
         """Sends a player variable event for the current value of all player variables"""
         for name, value in self:
             if isinstance(value, (int, str, float)):
-                self._send_variable_event(name, value, value, False, self.vars['number'])
+                if isinstance(value, str):
+                    self._send_variable_event(name, value, value, False, self.vars['number'])
+                else:
+                    self._send_variable_event(name, value, value, 0, self.vars['number'])
 
     def _send_variable_event(self, name: str, value, prev_value, change, player_num: int):
         """
