@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from mpf.devices.ball_device.ball_device import BallDevice
 
 
-@DeviceMonitor("enabled")
+@DeviceMonitor("enabled", "locked_balls")
 class MultiballLock(ModeDevice):
 
     """Ball lock device which locks balls for a multiball."""
