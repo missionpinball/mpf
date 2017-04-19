@@ -462,6 +462,10 @@ class TestMultiBall(MpfGameTestCase):
         self.assertEqual(1, self.machine.playfield.balls)
 
         self.hit_switch_and_run("s_lock2", 10)
+        self.assertEqual(1, self.machine.ball_devices.bd_lock.balls)
+        self.assertEqual(1, self.machine.playfield.balls)
+
+        self.hit_switch_and_run("s_lock1", 10)
         self.assertEqual(2, self.machine.ball_devices.bd_lock.balls)
         self.assertEqual(1, self.machine.playfield.balls)
 
