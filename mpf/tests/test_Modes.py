@@ -23,6 +23,21 @@ class TestModes(MpfTestCase):
         self.assertIn('Mode4', self.machine.modes)
 
     def test_mode_start_stop(self):
+        # Setup mocked event handlers for mode start/stop sequence
+        self.mode1_will_start_event_handler = MagicMock()
+        self.mode1_starting_event_handler = MagicMock()
+        self.mode1_started_event_handler = MagicMock()
+        self.mode1_will_stop_event_handler = MagicMock()
+        self.mode1_stopping_event_handler = MagicMock()
+        self.mode1_stopped_event_handler = MagicMock()
+
+        self.machine.events.add_handler('mode_mode1_will_start', self.mode1_will_start_event_handler)
+        self.machine.events.add_handler('mode_mode1_starting', self.mode1_starting_event_handler)
+        self.machine.events.add_handler('mode_mode1_started', self.mode1_started_event_handler)
+        self.machine.events.add_handler('mode_mode1_will_stop', self.mode1_will_stop_event_handler)
+        self.machine.events.add_handler('mode_mode1_stopping', self.mode1_stopping_event_handler)
+        self.machine.events.add_handler('mode_mode1_stopped', self.mode1_stopped_event_handler)
+
         # start mode 1
         self.machine.events.post('start_mode1')
         self.advance_time_and_run()
@@ -41,11 +56,21 @@ class TestModes(MpfTestCase):
         # start a mode that's already started and make sure it doesn't explode
         self.machine.modes.mode1.start()
 
+        # make sure event handler were called for mode start process
+        self.assertEquals(1, self.mode1_will_start_event_handler.call_count)
+        self.assertEquals(1, self.mode1_starting_event_handler.call_count)
+        self.assertEquals(1, self.mode1_started_event_handler.call_count)
+
         # stop mode 1
         self.machine.events.post('stop_mode1')
         self.advance_time_and_run()
         self.assertFalse(self.machine.mode_controller.is_active('mode1'))
         self.assertFalse(self.machine.modes.mode1.active)
+
+        # make sure event handler were called for mode stop process
+        self.assertEquals(1, self.mode1_will_stop_event_handler.call_count)
+        self.assertEquals(1, self.mode1_stopping_event_handler.call_count)
+        self.assertEquals(1, self.mode1_stopped_event_handler.call_count)
 
     def test_custom_mode_code(self):
         self.assertTrue(self.machine.modes.mode3.custom_code)
