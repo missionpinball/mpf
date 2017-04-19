@@ -57,9 +57,9 @@ class TestModes(MpfTestCase):
         self.machine.modes.mode1.start()
 
         # make sure event handler were called for mode start process
-        self.assertEquals(1, self.mode1_will_start_event_handler.call_count)
-        self.assertEquals(1, self.mode1_starting_event_handler.call_count)
-        self.assertEquals(1, self.mode1_started_event_handler.call_count)
+        self.assertEqual(1, self.mode1_will_start_event_handler.call_count)
+        self.assertEqual(1, self.mode1_starting_event_handler.call_count)
+        self.assertEqual(1, self.mode1_started_event_handler.call_count)
 
         # stop mode 1
         self.machine.events.post('stop_mode1')
@@ -68,9 +68,9 @@ class TestModes(MpfTestCase):
         self.assertFalse(self.machine.modes.mode1.active)
 
         # make sure event handler were called for mode stop process
-        self.assertEquals(1, self.mode1_will_stop_event_handler.call_count)
-        self.assertEquals(1, self.mode1_stopping_event_handler.call_count)
-        self.assertEquals(1, self.mode1_stopped_event_handler.call_count)
+        self.assertEqual(1, self.mode1_will_stop_event_handler.call_count)
+        self.assertEqual(1, self.mode1_stopping_event_handler.call_count)
+        self.assertEqual(1, self.mode1_stopped_event_handler.call_count)
 
     def test_custom_mode_code(self):
         self.assertTrue(self.machine.modes.mode3.custom_code)
