@@ -54,14 +54,14 @@ class TestGame(MpfGameTestCase):
         self.assertBallNumber(1)
 
         # Assert game startup sequence
-        self.assertEqual(12, self._events.call_count)
+        self.assertEqual(13, self._events.call_count)
         self.assertEqual('game_will_start', self._events.call_args_list[0][1]['event_name'])
         self.assertEqual('game_starting', self._events.call_args_list[1][1]['event_name'])
-        self.assertEqual('player_will_add', self._events.call_args_list[2][1]['event_name'])
-        self.assertEqual('player_adding', self._events.call_args_list[3][1]['event_name'])
-        self.assertEqual('player_added', self._events.call_args_list[4][1]['event_name'])
-        self.assertEqual(1, self._events.call_args_list[4][1]['num'])
-        self.assertEqual('game_started', self._events.call_args_list[5][1]['event_name'])
+        self.assertEqual('player_add_request', self._events.call_args_list[2][1]['event_name'])
+        self.assertEqual('player_will_add', self._events.call_args_list[3][1]['event_name'])
+        self.assertEqual('player_adding', self._events.call_args_list[4][1]['event_name'])
+        self.assertEqual('player_added', self._events.call_args_list[5][1]['event_name'])
+        self.assertEqual(1, self._events.call_args_list[5][1]['num'])
         self.assertEqual('player_turn_will_start', self._events.call_args_list[6][1]['event_name'])
         self.assertEqual('player_turn_starting', self._events.call_args_list[7][1]['event_name'])
         self.assertEqual('player_turn_started', self._events.call_args_list[8][1]['event_name'])
@@ -73,6 +73,7 @@ class TestGame(MpfGameTestCase):
         self.assertEqual('ball_started', self._events.call_args_list[11][1]['event_name'])
         self.assertEqual(1, self._events.call_args_list[11][1]['ball'])
         self.assertEqual(1, self._events.call_args_list[11][1]['player'])
+        self.assertEqual('game_started', self._events.call_args_list[12][1]['event_name'])
         self._events.reset_mock()
 
         # Drain the first ball
@@ -177,14 +178,14 @@ class TestGame(MpfGameTestCase):
         self.assertBallNumber(1)
 
         # Assert game startup sequence
-        self.assertEqual(12, self._events.call_count)
+        self.assertEqual(13, self._events.call_count)
         self.assertEqual('game_will_start', self._events.call_args_list[0][1]['event_name'])
         self.assertEqual('game_starting', self._events.call_args_list[1][1]['event_name'])
-        self.assertEqual('player_will_add', self._events.call_args_list[2][1]['event_name'])
-        self.assertEqual('player_adding', self._events.call_args_list[3][1]['event_name'])
-        self.assertEqual('player_added', self._events.call_args_list[4][1]['event_name'])
-        self.assertEqual(1, self._events.call_args_list[4][1]['num'])
-        self.assertEqual('game_started', self._events.call_args_list[5][1]['event_name'])
+        self.assertEqual('player_add_request', self._events.call_args_list[2][1]['event_name'])
+        self.assertEqual('player_will_add', self._events.call_args_list[3][1]['event_name'])
+        self.assertEqual('player_adding', self._events.call_args_list[4][1]['event_name'])
+        self.assertEqual('player_added', self._events.call_args_list[5][1]['event_name'])
+        self.assertEqual(1, self._events.call_args_list[5][1]['num'])
         self.assertEqual('player_turn_will_start', self._events.call_args_list[6][1]['event_name'])
         self.assertEqual('player_turn_starting', self._events.call_args_list[7][1]['event_name'])
         self.assertEqual('player_turn_started', self._events.call_args_list[8][1]['event_name'])
@@ -196,6 +197,7 @@ class TestGame(MpfGameTestCase):
         self.assertEqual('ball_started', self._events.call_args_list[11][1]['event_name'])
         self.assertEqual(1, self._events.call_args_list[11][1]['ball'])
         self.assertEqual(1, self._events.call_args_list[11][1]['player'])
+        self.assertEqual('game_started', self._events.call_args_list[12][1]['event_name'])
         self._events.reset_mock()
 
         # add another player (player 2)
