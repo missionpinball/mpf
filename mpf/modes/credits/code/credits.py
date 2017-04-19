@@ -219,7 +219,7 @@ class Credits(Mode):
         """Remove event handlers."""
         self.machine.events.remove_handler(self._player_add_request)
         self.machine.events.remove_handler(self._request_to_start_game)
-        self.machine.events.remove_handler(self._player_add_success)
+        self.machine.events.remove_handler(self._player_added)
         self.machine.events.remove_handler(self._game_ended)
         self.machine.events.remove_handler(self._game_started)
         self.machine.events.remove_handler(self._ball_starting)

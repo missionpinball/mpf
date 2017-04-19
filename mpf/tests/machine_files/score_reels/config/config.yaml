@@ -3,6 +3,9 @@
 machine:
     min_balls: 0
 
+game:
+    balls_per_game: 3
+
 switches:
     s_start:
         number: 1

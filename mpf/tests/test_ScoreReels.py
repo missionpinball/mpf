@@ -3,10 +3,10 @@ from unittest.mock import MagicMock
 
 from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
-from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.MpfGameTestCase import MpfGameTestCase
 
 
-class TestScoreReels(MpfTestCase):
+class TestScoreReels(MpfGameTestCase):
 
     def getConfigFile(self):
         return 'config.yaml'
@@ -24,16 +24,7 @@ class TestScoreReels(MpfTestCase):
         # shots only work in games so we have to do this a lot
         self.machine.playfield.add_ball = MagicMock()
         self.machine.ball_controller.num_balls_known = 3
-        self.hit_and_release_switch("s_start")
-        self.advance_time_and_run()
-        self.assertIsNotNone(self.machine.game)
-
-    def stop_game(self):
-        # stop game
-        self.assertIsNotNone(self.machine.game)
-        self.machine.game.game_ending()
-        self.advance_time_and_run()
-        self.assertIsNone(self.machine.game)
+        super().start_game()
 
     def testScoring(self):
         player1_10k = self.machine.coils.player1_10k.hw_driver
@@ -44,8 +35,13 @@ class TestScoreReels(MpfTestCase):
         player1_1k.pulse = MagicMock(return_value=10)
         player1_100.pulse = MagicMock(return_value=10)
         player1_10.pulse = MagicMock(return_value=10)
-        self.start_game()
 
+        self.start_game()
+        self.assertGameIsRunning()
+        self.assertPlayerNumber(1)
+        self.assertBallNumber(1)
+
+        self.advance_time_and_run()
         self._synchronise_to_reel()
         self.machine.game.player.score += 110
         self.advance_time_and_run(.1)

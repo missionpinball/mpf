@@ -266,12 +266,12 @@ class BallSearch(MpfController):
                     self.playfield.add_ball()
             else:
                 self.info_log("No more balls left. Ending game!")
-                self.machine.game.game_ending()
+                self.machine.game.end_game()
 
         elif self.playfield.config['ball_search_failed_action'] == "end_game":
             if self.machine.game:
                 self.info_log("Ending the game")
-                self.machine.game.game_ending()
+                self.machine.game.end_game()
             else:
                 self.warning_log("There is no game. Doing nothing!")
         else:

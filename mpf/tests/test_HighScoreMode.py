@@ -50,7 +50,8 @@ class TestHighScoreMode(MpfBcpTestCase):
         self.machine.game.player_list[1].score = 1000
         self.machine.game.player_list[2].score = 1000
         self.machine.game.player_list[3].score = 1000
-        self.machine.game.game_ending()
+        self.machine.game.end_game()
+        self.advance_time_and_run()
         self.advance_time_and_run()
         self.assertFalse(self.machine.modes.high_score.active)
 
@@ -64,11 +65,13 @@ class TestHighScoreMode(MpfBcpTestCase):
                    ('MPF', 1000)])
 
         self.start_game(4)
+        self.advance_time_and_run()
         self.machine.game.player_list[0].score = 8000000
         self.machine.game.player_list[1].score = 1000
         self.machine.game.player_list[2].score = 1000
         self.machine.game.player_list[3].score = 1000
-        self.machine.game.game_ending()
+        self.machine.game.end_game()
+        self.advance_time_and_run()
         self.advance_time_and_run()
         self.assertTrue(self.machine.modes.high_score.active)
 
@@ -112,7 +115,7 @@ class TestHighScoreMode(MpfBcpTestCase):
         self.machine.game.player_list[2].score = 1000
         self.machine.game.player_list[3].score = 1000
         self._bcp_client.send.reset_mock()
-        self.machine.game.game_ending()
+        self.machine.game.end_game()
         self.advance_time_and_run()
         self.assertTrue(self.machine.modes.high_score.active)
 
@@ -162,7 +165,7 @@ class TestHighScoreMode(MpfBcpTestCase):
 
         self.start_game(4)
         self.machine.game.player_list[0].score = 1500
-        self.machine.game.game_ending()
+        self.machine.game.end_game()
         self.advance_time_and_run()
         self.assertTrue(self.machine.modes.high_score.active)
 
@@ -197,7 +200,7 @@ class TestHighScoreMode(MpfBcpTestCase):
         self.machine.game.player_list[1].score = 1000
         self.machine.game.player_list[2].score = 1000
         self.machine.game.player_list[3].score = 1000
-        self.machine.game.game_ending()
+        self.machine.game.end_game()
         self.advance_time_and_run()
         self.assertTrue(self.machine.modes.high_score.active)
 
@@ -243,7 +246,7 @@ class TestHighScoreMode(MpfBcpTestCase):
         self.machine.game.player_list[1].loops = 4
         self.machine.game.player_list[2].loops = 1
         self.machine.game.player_list[3].loops = 0
-        self.machine.game.game_ending()
+        self.machine.game.end_game()
         self.advance_time_and_run()
         self.assertTrue(self.machine.modes.high_score.active)
 
@@ -295,7 +298,7 @@ class TestHighScoreMode(MpfBcpTestCase):
                    ('MPF', 1000)])
 
         self.start_game(4)
-        self.machine.game.game_ending()
+        self.machine.game.end_game()
         self.advance_time_and_run()
 
         self.assertFalse(self.machine.modes.high_score.active)

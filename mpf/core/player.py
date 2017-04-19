@@ -234,7 +234,7 @@ class Player(object):
             self.log.debug("Setting '%s' to: %s, (prior: %s, change: %s)",
                            name, self.vars[name], prev_value, change)
 
-            if self.var_events_enabled:
+            if self._events_enabled:
                 self._send_variable_event(name, self.vars[name], prev_value, change, self.vars['number'])
 
     def __getitem__(self, name):

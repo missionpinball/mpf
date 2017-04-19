@@ -32,7 +32,7 @@ class Game(AsyncMode):
         self.num_players = None
         self._stopping_modes = []
         self._stopping_queue = None
-        self._end_ball_event = None
+        self._end_ball_event = None  # type: asyncio.Event
 
         self.machine.events.add_handler('mode_{}_stopping'.format(self.name), self._stop_game_modes)
 
@@ -100,13 +100,13 @@ class Game(AsyncMode):
         self.machine.remove_machine_var_search(startswith='player',
                                                endswith='_score')
 
-        yield from self._start_player_turn()
-
         yield from self.machine.events.post_async('game_started')
         '''event: game_started
         desc: A new game has started.'''
 
         self.debug_log("Game started")
+
+        yield from self._start_player_turn()
 
     @asyncio.coroutine
     def _add_player(self):
@@ -252,17 +252,19 @@ class Game(AsyncMode):
         self.debug_log("Ball has ended")
 
         if self.slam_tilted:
+            yield from self._end_player_turn()
             yield from self._end_game()
             return
 
         if self.player.extra_balls:
-            self.award_extra_ball()
+            yield from self._award_extra_ball()
             return
 
         if (self.player.ball == self.machine.config['game']['balls_per_game'] and
                     self.player.number == self.num_players):
             yield from self._end_game()
         else:
+            yield from self._end_player_turn()
             yield from self._rotate_players()
             yield from self._start_player_turn()
 
@@ -426,13 +428,18 @@ class Game(AsyncMode):
         desc: The game is in the process of ending. This is a queue event, and
         the game won't actually end until the queue is cleared.'''
 
-        yield from self._end_player_turn()
-
         yield from self.machine.events.post_async('game_ended')
         '''event: game_ended
         desc: The game has ended.'''
 
     def game_ending(self):
+        """DEPRECATED in v0.50. Use end_game() instead."""
+        # TODO: Remove this function as it has been deprecated and replaced
+        self.warning_log("game.game_ending() function has been deprecated. "
+                         "Please use game.end_game() instead.")
+        self.end_game()
+
+    def end_game(self):
         """Called when the game decides it should end.
 
         This method posts the queue event *game_ending*, giving other modules
@@ -441,13 +448,45 @@ class Game(AsyncMode):
         this method calls :meth:`game_end`.
 
         """
-        self.machine.clock.loop.run_until_complete(self._end_game)
+        self._task.cancel()
+        self.machine.events.post('game_will_end')
+        self.machine.events.post_queue('game_ending', callback=self._game_ending_completed)
 
-    def award_extra_ball(self):
+    def _game_ending_completed(self, **kwargs):
+        del kwargs
+
+        if self.player:
+
+            self.machine.events.post('player_turn_will_end',
+                                     player=self.player,
+                                     number=self.player.number)
+            self.machine.events.post_queue('player_turn_ending',
+                                           player=self.player,
+                                           number=self.player.number,
+                                           callback=self._player_turn_at_game_ending_completed)
+        else:
+            self.machine.events.post('game_ended')
+
+    def _player_turn_at_game_ending_completed(self, **kwargs):
+        del kwargs
+
+        # Update player's score before ending
+        self.machine.set_machine_var(
+            name='player{}_score'.format(self.player.number),
+            value=self.player.score)
+
+        self.machine.events.post('player_turn_ended',
+                                 player=self.player,
+                                 number=self.player.number)
+
+        self.machine.events.post('game_ended')
+
+    @asyncio.coroutine
+    def _award_extra_ball(self):
         """Called when the same player should shoot again."""
         self.debug_log("Awarded extra ball to Player %s. Shoot Again", self.player.index + 1)
         self.player.extra_balls -= 1
-        self.ball_starting(is_extra_ball=True)
+        yield from self._start_ball(is_extra_ball=True)
 
     def request_player_add(self, **kwargs):
         """Called by any module that wants to add a player to an active game.
@@ -481,25 +520,59 @@ class Game(AsyncMode):
             self.debug_log("Current ball is after Ball 1. Cannot add player.")
             return False
 
-        result = self.machine.events.post_boolean('player_add_request',
-                                                  callback=self._player_add_request_complete)
+        self.machine.events.post_boolean('player_add_request',
+                                         callback=self._player_add_request_complete)
         '''event: player_add_request
         desc: Posted to request that an additional player be added to this
         game. Any registered handler can deny the player add request by
         returning *False* to this event.
         '''
-        return result
 
-    def _player_add_request_complete(self, ev_result=True) -> bool:
+    def _player_add_request_complete(self, ev_result=True, **kwargs) -> bool:
         """This is the callback from our request player add event."""
         # Don't call it directly.
+        del kwargs
 
         if ev_result is False:
             self.debug_log("Request to add player has been denied.")
             return False
 
-        # Call the method to actually add the player
-        self.machine.clock.loop.run_until_complete(self._add_player())
+        new_player_number = len(self.player_list) + 1
+
+        self.machine.events.post('player_will_add', number=new_player_number)
+
+        # Actually create the new player object
+        player = Player(self.machine, len(self.player_list))
+
+        self.player_list.append(player)
+        self.num_players = len(self.player_list)
+
+        self.machine.events.post_queue('player_adding',
+                                       player=player,
+                                       number=player.number,
+                                       callback=partial(self._player_adding_complete, player=player))
+
+    def _player_adding_complete(self, player, **kwargs):
+        del kwargs
+
+        self.machine.events.post('player_added',
+                                 player=player,
+                                 num=player.number)
+
+        self.info_log("Player added successfully. Total players: %s", self.num_players)
+
+        if self.num_players == 2:
+            self.machine.events.post('multiplayer_game')
+
+        # Enable player variable events and send all initial values
+        player.enable_events(True, True)
+
+        # Create machine variable to hold new player's score
+        self.machine.create_machine_var(
+            name='player{}_score'.format(player.number),
+            value=player.score,
+            persist=True)
+
         return True
 
     @asyncio.coroutine
@@ -594,19 +667,10 @@ class Game(AsyncMode):
         number: The player number
         '''
 
-        # Update player's score before changing turns
+        # Update player's score since their turn is over
         self.machine.set_machine_var(
             name='player{}_score'.format(self.player.number),
             value=self.player.score)
-
-        if self.player.number < self.num_players:
-            self.player = self.player_list[self.player.number]
-            # Note the above line is kind of confusing but it works because
-            # the current player number is always 1 more than the index.
-            # i.e. "Player 1" has an index of 0, etc. So using the current
-            # player number as the next player's index works out.
-        else:
-            self.player = self.player_list[0]
 
         yield from self.machine.events.post_async('player_turn_ended',
                                                   player=self.player,
@@ -633,8 +697,12 @@ class Game(AsyncMode):
         """
         # todo  do cool stuff in the future to change order, etc.
 
-        if self.player:
-            yield from self._end_player_turn()
+        if self.player and self.player.number < self.num_players:
+            self.player = self.player_list[self.player.number]
+            # Note the above line is kind of confusing but it works because
+            # the current player number is always 1 more than the index.
+            # i.e. "Player 1" has an index of 0, etc. So using the current
+            # player number as the next player's index works out.
         else:
             # no current player, grab the first one
             self.player = self.player_list[0]

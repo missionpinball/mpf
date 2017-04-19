@@ -22,13 +22,15 @@ class TestExtraBallDisabled(MpfTestCase):
 
         # start game
         self.machine.switch_controller.process_switch('s_start', 1)
+        self.advance_time_and_run()
         self.machine.switch_controller.process_switch('s_start', 0)
-        self.machine_run()
+        self.advance_time_and_run()
 
         # add second player
         self.machine.switch_controller.process_switch('s_start', 1)
+        self.advance_time_and_run()
         self.machine.switch_controller.process_switch('s_start', 0)
-        self.machine_run()
+        self.advance_time_and_run()
 
         self.assertEqual(2, len(self.machine.game.player_list))
 
