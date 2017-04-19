@@ -7,7 +7,7 @@ import os
 import socket
 import sys
 from datetime import datetime
-from logging.handlers import QueueHandler
+from logging.handlers import QueueHandler, SysLogHandler
 from queue import Queue
 
 from mpf.core.machine import MachineController
@@ -97,6 +97,12 @@ class Command(object):
                             help="Forces the virtual platform to be "
                                  "used for all devices")
 
+        parser.add_argument("--syslog_address",
+                            action="store", dest="syslog_address",
+                            help="Log to the specified syslog address. This can be a domain socket such as /dev/og on "
+                                 "Linux or /var/run/syslog on Mac. Alternatively, you an specify host:port for remote "
+                                 "logging over UDP.")
+
         parser.add_argument("-X",
                             action="store_const", dest="force_platform",
                             const='smart_virtual',
@@ -160,6 +166,16 @@ class Command(object):
         logger.addHandler(console_queue_handler)
         logger.addHandler(file_queue_handler)
         logger.setLevel(args.loglevel)
+
+        if args.syslog_address:
+            try:
+                host, port = args.syslog_address.split(":")
+            except ValueError:
+                syslog_logger = SysLogHandler(args.syslog_address)
+            else:
+                syslog_logger = SysLogHandler((host, int(port)))
+
+            logger.addHandler(syslog_logger)
 
         try:
             MachineController(mpf_path, machine_path, vars(args)).run()
