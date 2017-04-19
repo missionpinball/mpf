@@ -35,6 +35,7 @@ class Game(AsyncMode):
         self._stopping_queue = None
         self._end_ball_event = None  # type: asyncio.Event
         self._at_least_one_player_event = None  # type: asyncio.Event
+        self.balls_per_game = None
 
         self.machine.events.add_handler('mode_{}_stopping'.format(self.name), self._stop_game_modes)
 
@@ -58,6 +59,7 @@ class Game(AsyncMode):
         self._end_ball_event.clear()
         self._at_least_one_player_event = asyncio.Event(loop=self.machine.clock.loop)
         self._at_least_one_player_event.clear()
+        self.balls_per_game = self.machine.config['game']['balls_per_game'].evaluate([])
 
         # Add add player switch handler
         if self.machine.config['game']['add_player_switch_tag']:
@@ -185,8 +187,7 @@ class Game(AsyncMode):
             yield from self._award_extra_ball()
             return
 
-        if (self.player.ball == self.machine.config['game'][
-                'balls_per_game'] and self.player.number == self.num_players):
+        if self.player.ball >= self.balls_per_game and self.player.number == self.num_players:
             yield from self._end_game()
         else:
             yield from self._end_player_turn()
@@ -294,8 +295,9 @@ class Game(AsyncMode):
 
         yield from self.machine.events.post_queue_async(
             'ball_starting',
-            balls_remaining=self.machine.config['game']['balls_per_game'] - self.player.ball,
+            balls_remaining=self.balls_per_game - self.player.ball,
             is_extra_ball=is_extra_ball)
+
         '''event: ball_starting
         desc: A ball is starting. This is a queue event, so the ball won't
         actually start until the queue is cleared.'''
@@ -440,7 +442,7 @@ class Game(AsyncMode):
         # then we'll raise the event to ask other modules if it's ok to add a
         # player
 
-        if len(self.player_list) >= self.machine.config['game']['max_players']:
+        if len(self.player_list) >= self.machine.config['game']['max_players'].evaluate([]):
             self.debug_log("Game is at max players. Cannot add another.")
             return False
 
