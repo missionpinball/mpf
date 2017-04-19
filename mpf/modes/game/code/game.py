@@ -1,4 +1,5 @@
-"""Contains the Game class which is the Machine Mode that actually runs and manages an the game in a pinball machine.
+"""Contains the Game class which is the Machine Mode that actually runs and manages
+the game in a pinball machine.
 
 Note that in the Mission Pinball Framework, a distinction is made between a
 *game* and a *machine*. A *game* refers to a game in progress, whereas a
@@ -71,13 +72,12 @@ class Game(AsyncMode):
         while True:
             # Wait for end ball event to be set
             yield from self._end_ball_event.wait()
-            if self._end_ball_event.is_set():
-                yield from self._end_ball()
-                self._end_ball_event.clear()
+            yield from self._end_ball()
+            self._end_ball_event.clear()
 
     @asyncio.coroutine
     def _start_game(self):
-        """Start a new game"""
+        """Start a new game."""
 
         self.debug_log("Game start")
 
@@ -169,7 +169,7 @@ class Game(AsyncMode):
         yield from self.machine.events.post_async('ball_ended')
         '''event: ball_ended
         desc: The ball has ended.
-    
+
         Note that this does not necessarily mean that the next player's turn
         will start, as this player may have an extra ball which means they'll
         shoot again.'''
@@ -185,8 +185,8 @@ class Game(AsyncMode):
             yield from self._award_extra_ball()
             return
 
-        if (self.player.ball == self.machine.config['game']['balls_per_game'] and
-                    self.player.number == self.num_players):
+        if (self.player.ball == self.machine.config['game'][
+                'balls_per_game'] and self.player.number == self.num_players):
             yield from self._end_game()
         else:
             yield from self._end_player_turn()
@@ -256,9 +256,12 @@ class Game(AsyncMode):
 
     def mode_stop(self, **kwargs):
         """Stop mode."""
+        del kwargs
+
         for mode in self.machine.modes:
             if mode.active and mode.is_game_mode:
-                raise AssertionError("Mode {} is not supposed to run outside of game.".format(mode.name))
+                raise AssertionError("Mode {} is not supposed to run outside of game."
+                                     .format(mode.name))
         self.machine.game = None
 
     @asyncio.coroutine
@@ -275,9 +278,10 @@ class Game(AsyncMode):
         self.debug_log("***************************************************")
         self.debug_log("****************** BALL STARTING ******************")
         self.debug_log("**                                               **")
-        self.debug_log("**    Player: {}    Ball: {}   Score: {}".format(
-                       self.player.number, self.player.ball,
-                       self.player.score).ljust(49) + '**')
+        self.debug_log("**    Player: {}    Ball: {}   Score: {}".format(self.player.number,
+                                                                         self.player.ball,
+                                                                         self.player.score
+                                                                        ).ljust(49) + '**')
         self.debug_log("**                                               **")
         self.debug_log("***************************************************")
         self.debug_log("***************************************************")
@@ -480,9 +484,10 @@ class Game(AsyncMode):
         self.machine.events.post_queue('player_adding',
                                        player=player,
                                        number=player.number,
-                                       callback=partial(self._player_adding_complete, player=player))
+                                       callback=partial(self._player_adding_complete,
+                                                        player=player))
         '''event: player_adding
-        desc: A new player is in the process of being added to this game. This is a queue 
+        desc: A new player is in the process of being added to this game. This is a queue
         event, and the player won't actually be finished adding until the queue is cleared.
 
         args:
@@ -499,13 +504,13 @@ class Game(AsyncMode):
                                  player=player,
                                  num=player.number)
         '''event: player_added
-        
+
         desc: A new player was just added to this game
-        
+
         args:
-        
+
         player: A reference to the instance of the Player() object.
-        
+
         num: The number of the player that was just added. (e.g. Player 1 will
         have *num=1*, Player 4 will have *num=4*, etc.)
         '''
@@ -520,7 +525,7 @@ class Game(AsyncMode):
             '''event: multiplayer_game
              desc: A second player has just been added to this game, meaning
              this is now a multiplayer game.
-    
+
              This event is typically used to switch the score display from the
              single player layout to the multiplayer layout.
              '''
@@ -539,16 +544,15 @@ class Game(AsyncMode):
         desc: Holds the numeric value of a player's score. The "x" is the
         player number, so this actual machine variable is
         ``player1_score`` or ``player2_score``.
-        
+
         Since these are machine variables, they are maintained even after
         a game is over. Therefore you can use these machine variables in
         your attract mode display show to show the scores of the last game
         that was played.
-        
+
         These machine variables are updated at the end of each player's
         turn, and they persist on disk so they are restored the next time
         MPF starts up.
-        
         '''
 
         return True
@@ -557,8 +561,8 @@ class Game(AsyncMode):
     def _start_player_turn(self):
         """Called at the beginning of a player's turn.
 
-        Note this method is only called when a different player's turn is up. 
-        So if the same player shoots again due to an extra ball, this method 
+        Note this method is only called when a different player's turn is up.
+        So if the same player shoots again due to an extra ball, this method
         is not called again.
         """
         # If we get a request to start a turn but we haven't done a rotate to
@@ -583,7 +587,7 @@ class Game(AsyncMode):
                                                         player=self.player,
                                                         number=self.player.number)
         '''event: player_turn_starting
-        desc: The player's turn is in the process of starting. This is a queue 
+        desc: The player's turn is in the process of starting. This is a queue
         event, and the player's turn won't actually start until the queue is cleared.
 
         args:
@@ -593,7 +597,7 @@ class Game(AsyncMode):
 
         self.player.ball += 1
         '''player_var: ball
-    
+
         desc: The ball number for this player. If a player gets an extra ball,
         this number won't change when they start the extra ball.
         '''
@@ -605,7 +609,7 @@ class Game(AsyncMode):
         desc: A new player's turn started. This event is only posted after the
         start of a new player's turn. If that player gets an extra ball and
         shoots again, this event is not posted a second time.
-    
+
         args:
         player: The player object whose turn is starting.
         number: The player number
@@ -637,7 +641,7 @@ class Game(AsyncMode):
                                                         player=self.player,
                                                         number=self.player.number)
         '''event: player_turn_ending
-        desc: The current player's turn is ending. This is a queue event, and 
+        desc: The current player's turn is ending. This is a queue event, and
         the player's turn won't actually end until the queue is cleared.
 
         args:
@@ -654,9 +658,9 @@ class Game(AsyncMode):
                                                   player=self.player,
                                                   number=self.player.number)
         '''event: player_turn_ended
-        desc: The current player's turn has ended. This event is only posted when 
+        desc: The current player's turn has ended. This event is only posted when
         this player's turn is totally over. If the player gets an extra ball and
-        shoots again, this event is not posted until after all their extra balls 
+        shoots again, this event is not posted until after all their extra balls
         and it's no longer their turn.
 
         args:
