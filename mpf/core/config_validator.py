@@ -367,22 +367,23 @@ class ConfigValidator(object):
     def _validate_type_template_float(self, item, validation_failure_info):
         if item is None:
             return None
-        if not isinstance(item, str):
-            self.validation_error(item, validation_failure_info, "Template has to be string.")
+        if not isinstance(item, (str, float, int)):
+            self.validation_error(item, validation_failure_info, "Template has to be string/int/float.")
 
         return self.machine.placeholder_manager.build_float_template(item)
 
     def _validate_type_template_int(self, item, validation_failure_info):
-        del validation_failure_info
         if item is None:
             return None
-        return self.machine.placeholder_manager.build_int_template(str(item))
+        if not isinstance(item, (str, int)):
+            self.validation_error(item, validation_failure_info, "Template has to be string/int.")
+        return self.machine.placeholder_manager.build_int_template(item)
 
     def _validate_type_template_bool(self, item, validation_failure_info):
         if item is None:
             return None
-        if not isinstance(item, str):
-            self.validation_error(item, validation_failure_info, "Template has to be string.")
+        if not isinstance(item, (str, bool)):
+            self.validation_error(item, validation_failure_info, "Template has to be string/bool.")
 
         return self.machine.placeholder_manager.build_bool_template(item)
 

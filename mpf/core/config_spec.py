@@ -327,6 +327,8 @@ drop_targets:
     enable_keep_up_events: dict|str:ms|None
     disable_keep_up_events: dict|str:ms|None
     ball_search_order: single|int|100
+    reset_coil_max_wait_ms: single|ms|100ms
+    knockdown_coil_max_wait_ms: single|ms|100ms
     ignore_switch_ms: single|ms|500ms
     playfield: single|machine(playfields)|playfield
 drop_target_banks:
@@ -335,6 +337,7 @@ drop_target_banks:
     reset_on_complete: single|ms|None
     reset_coil: single|machine(coils)|None
     reset_coils: list|machine(coils)|None
+    reset_coil_max_wait_ms: single|ms|100ms
     reset_events: dict|str:ms|machine_reset_phase_3, ball_starting
     ignore_switch_ms: single|ms|500ms
 event_player:
@@ -787,6 +790,7 @@ scoring:
     action: single|enum(add,set,add_machine,set_machine)|add
     player: single|int|None
     string: single|str|None
+    float: single|template_float|None
 scriptlets:
     __valid_in__: machine                           # todo add to validator
 servo_controller:

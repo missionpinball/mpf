@@ -104,6 +104,19 @@ class PlatformController(MpfController):
         switch_key = self._setup_switch_callback_for_psu(enable_switch.switch, driver.driver, enable_settings,
                                                          driver_settings)
 
+        self.machine.bcp.interface.send_driver_event(
+            action="pulse_on_hit_and_release",
+            enable_switch_number=enable_switch.switch.hw_switch.number,
+            enable_switch_name=enable_switch.switch.name,
+            enable_switch_invert=enable_settings.invert,
+            enable_switch_debounce=enable_settings.debounce,
+            coil_number=driver.driver.hw_driver.number,
+            coil_name=driver.driver.name,
+            coil_pulse_power=driver_settings.pulse_settings.power,
+            coil_pulse_ms=driver_settings.pulse_settings.duration,
+            coil_hold_power=0,
+            coil_recycle=driver_settings.recycle)
+
         return HardwareRule(platform=platform, switch_settings=[enable_settings], driver_settings=driver_settings,
                             switch_key=switch_key)
 
@@ -129,6 +142,19 @@ class PlatformController(MpfController):
         switch_key = self._setup_switch_callback_for_psu(enable_switch.switch, driver.driver, enable_settings,
                                                          driver_settings)
 
+        self.machine.bcp.interface.send_driver_event(
+            action="pulse_on_hit_and_enable_and_release",
+            enable_switch_number=enable_switch.switch.hw_switch.number,
+            enable_switch_name=enable_switch.switch.name,
+            enable_switch_invert=enable_settings.invert,
+            enable_switch_debounce=enable_settings.debounce,
+            coil_number=driver.driver.hw_driver.number,
+            coil_name=driver.driver.name,
+            coil_pulse_power=driver_settings.pulse_settings.power,
+            coil_pulse_ms=driver_settings.pulse_settings.duration,
+            coil_hold_power=driver_settings.hold_settings,
+            coil_recycle=driver_settings.recycle)
+
         return HardwareRule(platform=platform, switch_settings=[enable_settings], driver_settings=driver_settings,
                             switch_key=switch_key)
 
@@ -151,6 +177,19 @@ class PlatformController(MpfController):
 
         switch_key = self._setup_switch_callback_for_psu(enable_switch.switch, driver.driver, enable_settings,
                                                          driver_settings)
+
+        self.machine.bcp.interface.send_driver_event(
+            action="pulse_on_hit",
+            enable_switch_number=enable_switch.switch.hw_switch.number,
+            enable_switch_name=enable_switch.switch.name,
+            enable_switch_invert=enable_settings.invert,
+            enable_switch_debounce=enable_settings.debounce,
+            coil_number=driver.driver.hw_driver.number,
+            coil_name=driver.driver.name,
+            coil_pulse_power=driver_settings.pulse_settings.power,
+            coil_pulse_ms=driver_settings.pulse_settings.duration,
+            coil_hold_power=0,
+            coil_recycle=driver_settings.recycle)
 
         return HardwareRule(platform=platform, switch_settings=[enable_settings], driver_settings=driver_settings,
                             switch_key=switch_key)
@@ -182,6 +221,23 @@ class PlatformController(MpfController):
         switch_key = self._setup_switch_callback_for_psu(enable_switch.switch, driver.driver, enable_settings,
                                                          driver_settings)
 
+        self.machine.bcp.interface.send_driver_event(
+            action="pulse_on_hit_and_enable_and_release_and_disable",
+            enable_switch_number=enable_switch.switch.hw_switch.number,
+            enable_switch_name=enable_switch.switch.name,
+            enable_switch_invert=enable_settings.invert,
+            enable_switch_debounce=enable_settings.debounce,
+            disable_switch_number=disable_switch.switch.hw_switch.number,
+            disable_switch_name=disable_switch.switch.name,
+            disable_switch_invert=disable_settings.invert,
+            disable_switch_debounce=disable_settings.debounce,
+            coil_number=driver.driver.hw_driver.number,
+            coil_name=driver.driver.name,
+            coil_pulse_power=driver_settings.pulse_settings.power,
+            coil_pulse_ms=driver_settings.pulse_settings.duration,
+            coil_hold_power=driver_settings.hold_settings,
+            coil_recycle=driver_settings.recycle)
+
         return HardwareRule(platform=platform, switch_settings=[enable_settings, disable_settings],
                             driver_settings=driver_settings, switch_key=switch_key)
 
@@ -193,6 +249,12 @@ class PlatformController(MpfController):
         """
         for switch_settings in rule.switch_settings:
             rule.platform.clear_hw_rule(switch_settings, rule.driver_settings)
+
+            self.machine.bcp.interface.send_driver_event(
+                action="remove",
+                enable_switch_number=switch_settings.hw_switch.number,
+                enable_switch_invert=switch_settings.invert,
+                coil_number=rule.driver_settings.hw_driver.number)
 
         if rule.switch_key:
             self.machine.switch_controller.remove_switch_handler_by_key(rule.switch_key)

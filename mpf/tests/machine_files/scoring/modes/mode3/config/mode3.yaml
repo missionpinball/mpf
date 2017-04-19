@@ -18,3 +18,12 @@ scoring:
             score: 10
             player: 2
             action: set
+    score_float2:
+        score:
+            float: 2.0
+    score_float3:
+        score: 100 * current_player.multiplier
+    set_float:
+        multiplier:
+            float: 1.5
+            action: set

@@ -94,8 +94,7 @@ class AflRunner(object):
             True)
 
         start = time.time()
-        while not self.machine.test_init_complete and time.time() < start + 20:
-            self.advance_time_and_run(0.01)
+        self.loop.run_until_complete(self.machine.initialise())
 
         self.machine.events.process_event_queue()
         self.advance_time_and_run(1)
@@ -141,12 +140,50 @@ class AflRunner(object):
                 self.machine.switch_controller.process_switch_by_num(switch_obj.hw_switch.number, state,
                                                                      self.machine.default_platform)
 
+    def dump(self, wait, add_balls, start_game, actions):
+        if add_balls:
+            for device in self.machine.ball_devices:
+                if "trough" in device.tags:
+                    for switch in device.config['ball_switches']:
+                        print("Enable switch {}".format(switch.name))
+                    if device.config['entrance_switch']:
+                        print("Enable switch {}".format(switch.name))
+            print("Advance time 10s")
+
+        if start_game:
+            for switch in self.machine.switches:
+                if "start" in switch.tags:
+                    print("Enable/disable switch {}".format(switch.name))
+
+        if wait > 0:
+            print("Advance time {}s".format(wait))
+
+        for action in actions:
+            if action & 0b10000000:
+                ms = int(action & 0b01111111)
+                ms *= ms
+                print("Advance time by {} ms".format(ms))
+            else:
+                switch = int(action & 0b01111111)
+                if switch >= len(self.switch_list):
+                    continue
+                switch_obj = self.machine.switches[self.switch_list[switch]]
+                state = switch_obj.hw_state ^ 1
+                # print(switch_list[switch], state, switch_obj.hw_state)
+                print("Toggle switch {}. New state: {}".format(switch_obj.name, state))
+                self.machine.switch_controller.process_switch_by_num(switch_obj.hw_switch.number, state,
+                                                                     self.machine.default_platform)
+
 parser = argparse.ArgumentParser(
     description='Fuzz MPF using AFL')
 
 parser.add_argument("-d",
                     action="store_true", dest="debug",
                     help="Turn on debug to reproduce fuzzer results")
+
+parser.add_argument("-D",
+                    action="store_true", dest="dump",
+                    help="Dump test case.")
 
 parser.add_argument("-u",
                     action="store_true", dest="unit_test",
@@ -184,6 +221,11 @@ if args.unit_test:
 
 runner = AflRunner(use_virtual=args.use_virtual)
 runner.setUp(args.machine_path)
+
+if args.dump:
+    action_str = sys.stdin.buffer.read(-1)
+    runner.dump(int(args.wait), args.add_balls, args.start_game, action_str)
+    os._exit(-1)
 
 if args.add_balls:
     runner.add_balls()

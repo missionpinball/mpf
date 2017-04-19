@@ -828,6 +828,9 @@ class TestEventManager(MpfFakeGameTestCase, MpfTestCase):
             self.post_event("test")
             self.assertEqual(0, self._called)
 
+        # reset exception
+        self._exception = None
+
         self.machine.settings._settings = {}
         self.machine.settings.add_setting(SettingEntry("test", "Test", 1, "test", "a",
                                                        {False: "A (default)", True: "B"}))

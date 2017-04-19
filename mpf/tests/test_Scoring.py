@@ -151,6 +151,15 @@ class TestScoring(MpfTestCase):
         self.assertPlayerVarEqual(2242, "score")
         self.assertEqual(10, self.machine.game.player_list[1].score)
 
+        self.post_event("score_float2")
+        self.assertPlayerVarEqual(2244, "score")
+
+        self.post_event("set_float")
+        self.assertPlayerVarEqual(1.5, "multiplier")
+
+        self.post_event("score_float3")
+        self.assertPlayerVarEqual(2394, "score")
+
         # stop game and mode
         self.machine.service.start_service()
         self.advance_time_and_run()

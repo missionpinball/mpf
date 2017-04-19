@@ -95,9 +95,10 @@ class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             ord(OppRs232Intf.GET_GET_VERS_CMD): self.vers_resp,
         }
 
+    @asyncio.coroutine
     def initialize(self):
         """Initialise connections to OPP hardware."""
-        self._connect_to_hardware()
+        yield from self._connect_to_hardware()
         self.opp_commands[ord(OppRs232Intf.READ_GEN2_INP_CMD)] = self.read_gen2_inp_resp
         self._poll_task = self.machine.clock.loop.create_task(self._poll_sender())
         self._poll_task.add_done_callback(self._done)
@@ -147,6 +148,7 @@ class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             # TODO: This means synchronization is lost.  Send EOM characters
             #  until they come back
 
+    @asyncio.coroutine
     def _connect_to_hardware(self):
         """Connect to each port from the config.
 
@@ -154,8 +156,9 @@ class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         and to register themselves.
         """
         for port in self.config['ports']:
-            self.serial_connections.add(OPPSerialCommunicator(
-                platform=self, port=port, baud=self.config['baud']))
+            comm = OPPSerialCommunicator(platform=self, port=port, baud=self.config['baud'])
+            yield from comm.connect()
+            self.serial_connections.add(comm)
 
     def register_processor_connection(self, serial_number, communicator):
         """Register the processors to the platform.

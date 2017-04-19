@@ -1,5 +1,6 @@
 """Common code for P-Roc and P3-Roc."""
 import abc
+import asyncio
 import logging
 import platform
 import sys
@@ -65,6 +66,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
         self.machine_type = pinproc.normalize_machine_type(
             self.machine.config['hardware']['driverboards'])
 
+    @asyncio.coroutine
     def initialize(self):
         """Nothing to late initialise."""
         pass

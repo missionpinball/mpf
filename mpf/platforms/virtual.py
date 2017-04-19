@@ -1,5 +1,5 @@
 """Contains code for a virtual hardware platform."""
-
+import asyncio
 import logging
 from typing import Callable, Tuple
 
@@ -15,14 +15,14 @@ from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
 
-class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, LightsPlatform, SwitchPlatform,
+class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, LightsPlatform, SwitchPlatform,
                        DriverPlatform, DmdPlatform, RgbDmdPlatform):
 
     """Base class for the virtual hardware platform."""
 
     def __init__(self, machine):
         """Initialise virtual platform."""
-        super(HardwarePlatform, self).__init__(machine)
+        super().__init__(machine)
         self._setup_log()
 
         # Since the virtual platform doesn't have real hardware, we need to
@@ -44,6 +44,7 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Lights
         self.log = logging.getLogger("Virtual Platform")
         self.log.debug("Configuring virtual hardware interface.")
 
+    @asyncio.coroutine
     def initialize(self):
         """Initialise platform."""
         pass

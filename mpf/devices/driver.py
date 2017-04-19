@@ -182,6 +182,9 @@ class Driver(SystemWideDevice):
         self.debug_log("Enabling Driver")
         self.hw_driver.enable(PulseSettings(power=pulse_power, duration=pulse_ms),
                               HoldSettings(power=hold_power))
+        # inform bcp clients
+        self.machine.bcp.interface.send_driver_event(action="enable", name=self.name, number=self.config['number'],
+                                                     pulse_ms=pulse_ms, pulse_power=pulse_power, hold_power=hold_power)
 
     @event_handler(1)
     def disable(self, **kwargs):
@@ -192,6 +195,8 @@ class Driver(SystemWideDevice):
         self.time_when_done = self.time_last_changed
         self.machine.delay.remove(name='{}_timed_enable'.format(self.name))
         self.hw_driver.disable()
+        # inform bcp clients
+        self.machine.bcp.interface.send_driver_event(action="disable", name=self.name, number=self.config['number'])
 
     def _get_wait_ms(self, pulse_ms: int, max_wait_ms: Optional[int]) -> int:
         """Determine if this pulse should be delayed."""
@@ -213,6 +218,9 @@ class Driver(SystemWideDevice):
                              callback=self.disable)
             self.hw_driver.enable(PulseSettings(power=pulse_power, duration=0),
                                   HoldSettings(power=pulse_power))
+        # inform bcp clients
+        self.machine.bcp.interface.send_driver_event(action="pulse", name=self.name, number=self.config['number'],
+                                                     pulse_ms=pulse_ms, pulse_power=pulse_power)
 
     @event_handler(3)
     def pulse(self, pulse_ms: int=None, pulse_power: float=None, max_wait_ms: int=None, **kwargs) -> int:

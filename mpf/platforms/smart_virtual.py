@@ -1,5 +1,5 @@
 """Contains code for the smart_virtual platform."""
-
+import asyncio
 import logging
 
 from mpf.core.logging import LogMixin
@@ -8,7 +8,7 @@ from mpf.core.platform import DriverConfig
 from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, HoldSettings
 
 from mpf.core.delays import DelayManager
-from mpf.platforms.virtual import (HardwarePlatform as VirtualPlatform, VirtualDriver)
+from mpf.platforms.virtual import (VirtualHardwarePlatform as VirtualPlatform, VirtualDriver)
 
 
 class BaseSmartVirtualCoilAction:
@@ -214,7 +214,7 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
             self.target_device = None
 
 
-class HardwarePlatform(VirtualPlatform):
+class SmartVirtualHardwarePlatform(VirtualPlatform):
 
     """Base class for the smart_virtual hardware platform."""
 
@@ -231,6 +231,7 @@ class HardwarePlatform(VirtualPlatform):
         self.log = logging.getLogger("Smart Virtual Platform")
         self.log.debug("Configuring smart_virtual hardware interface.")
 
+    @asyncio.coroutine
     def initialize(self):
         """Initialise platform."""
         self.machine.events.add_handler('init_phase_5',

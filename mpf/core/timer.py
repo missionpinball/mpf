@@ -1,6 +1,14 @@
 """Mode timers."""
+from typing import TYPE_CHECKING, List
+
 from mpf.core.delays import DelayManager
 from mpf.core.logging import LogMixin
+
+if TYPE_CHECKING:
+    from mpf.core.machine import MachineController
+    from mpf.core.mode import Mode
+    from mpf.core.clock import PeriodicTask
+    from mpf.core.events import EventHandlerKey
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -17,7 +25,7 @@ class Timer(LogMixin):
 
     """
 
-    def __init__(self, machine, mode, name, config):
+    def __init__(self, machine: "MachineController", mode: "Mode", name: str, config: dict) -> None:
         """Initialise mode timer."""
         super().__init__()
         self.machine = machine
@@ -40,8 +48,8 @@ class Timer(LogMixin):
         self.max_value = self.config['max_value']
         self.direction = self.config['direction'].lower()
         self.tick_secs = self.config['tick_interval'] / 1000.0
-        self.timer = None
-        self.event_keys = set()
+        self.timer = None               # type: PeriodicTask
+        self.event_keys = list()        # type: List[EventHandlerKey]
         self.delay = DelayManager(self.machine.delayRegistry)
 
         if self.config['debug']:
@@ -97,7 +105,7 @@ class Timer(LogMixin):
     def _setup_control_events(self, event_list):
         self.debug_log("Setting up control events")
 
-        kwargs = None
+        kwargs = {}
         for entry in event_list:
             if entry['action'] in ('add', 'subtract', 'jump', 'pause', 'set_tick_interval'):
                 handler = getattr(self, entry['action'])
@@ -118,12 +126,8 @@ class Timer(LogMixin):
                 raise AssertionError("Invalid control_event action {} in mode".
                                      format(entry['action']), self.name)
 
-            if kwargs:
-                self.event_keys.add(self.machine.events.add_handler(
-                                    entry['event'], handler, **kwargs))
-            else:
-                self.event_keys.add(self.machine.events.add_handler(
-                                    entry['event'], handler))
+            self.event_keys.append(self.machine.events.add_handler(
+                                entry['event'], handler, **kwargs))
 
     def _remove_control_events(self):
         self.debug_log("Removing control events")

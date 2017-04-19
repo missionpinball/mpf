@@ -45,7 +45,10 @@ class ScorePlayer(ConfigPlayer):
             return
 
         # evaluate placeholder
-        value = entry['score'].evaluate(placeholder_parameters)
+        if entry['float']:
+            value = entry['float'].evaluate(placeholder_parameters)
+        else:
+            value = entry['score'].evaluate(placeholder_parameters)
 
         if entry['action'] == "add":
             if entry['player']:
@@ -81,13 +84,17 @@ class ScorePlayer(ConfigPlayer):
     def validate_config_entry(self, settings, name):
         """Validate one entry of this player."""
         config = {}
+        if not isinstance(settings, dict):
+            raise AssertionError("Settings of score_player {} should be a dict. But are: {}".format(
+                name, settings
+            ))
         for var, s in settings.items():
             config[var] = self._parse_config(s, name)
         return config
 
     def get_express_config(self, value):
         """Parse express config."""
-        if isinstance(value, int):
+        if not isinstance(value, str):
             block = False
         else:
             try:
