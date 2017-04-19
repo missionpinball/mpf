@@ -60,7 +60,7 @@ class MpfGameTestCase(MpfTestCase):
     def stop_game(self):
         # stop game
         self.assertGameIsRunning()
-        self.machine.game.game_ending()
+        self.machine.game.end_game()
         self.advance_time_and_run()
         self.assertGameIsNotRunning()
 

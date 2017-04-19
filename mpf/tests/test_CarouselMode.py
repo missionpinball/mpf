@@ -19,7 +19,7 @@ class TestCarouselMode(MpfTestCase):
     def _stop_game(self):
         # stop game
         self.assertIsNotNone(self.machine.game)
-        self.machine.game.game_ending()
+        self.machine.game.end_game()
         self.advance_time_and_run()
         self.assertIsNone(self.machine.game)
 

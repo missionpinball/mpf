@@ -17,7 +17,9 @@ class TestScoring(MpfTestCase):
 
         # start game with two players
         self.hit_and_release_switch("s_start")
+        self.advance_time_and_run()
         self.hit_and_release_switch("s_start")
+        self.advance_time_and_run()
         self.assertNotEqual(None, self.machine.game)
         self.assertEqual(2, self.machine.game.num_players)
         self.assertEqual(1, self.machine.game.player.number)

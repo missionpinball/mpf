@@ -336,8 +336,8 @@ class BcpInterface(MpfController):
         if not self.machine.bcp.transport.get_transports_for_handler("_core_events"):
             self.machine.events.add_handler('ball_started', self._ball_started)
             self.machine.events.add_handler('ball_ended', self._ball_ended)
-            self.machine.events.add_handler('player_turn_start', self._player_turn_start)
-            self.machine.events.add_handler('player_add_success', self._player_add_success)
+            self.machine.events.add_handler('player_turn_started', self._player_turn_start)
+            self.machine.events.add_handler('player_added', self._player_add_success)
 
         self.machine.bcp.transport.add_handler_to_transport("_core_events", client)
 
@@ -348,8 +348,8 @@ class BcpInterface(MpfController):
         if not self.machine.bcp.transport.get_transports_for_handler("_core_events"):
             self.machine.events.remove_handler_by_event('ball_started', self._ball_started)
             self.machine.events.remove_handler_by_event('ball_ended', self._ball_ended)
-            self.machine.events.remove_handler_by_event('player_turn_start', self._player_turn_start)
-            self.machine.events.remove_handler_by_event('player_add_success', self._player_add_success)
+            self.machine.events.remove_handler_by_event('player_turn_started', self._player_turn_start)
+            self.machine.events.remove_handler_by_event('player_added', self._player_add_success)
 
     def _ball_started(self, ball, player, **kwargs):
         del kwargs

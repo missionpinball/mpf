@@ -173,7 +173,7 @@ class Tilt(Mode):
                         'balldevice_{}_ball_enter'.format(device.name),
                         self._tilted_ball_drain))
 
-        self.machine.game.ball_ending()
+        self.machine.game.end_ball()
 
     def _disable_flippers(self):
         for flipper in self.machine.flippers:

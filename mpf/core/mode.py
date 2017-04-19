@@ -199,6 +199,17 @@ class Mode(LogMixin):
         if self._active:
             self.debug_log("Mode is already active. Aborting start.")
             return
+
+        self.machine.events.post('mode_' + self.name + '_will_start')
+        '''event: mode_(name)_will_start
+
+        desc: Posted when a mode is about to start. The "name" part is replaced
+        with the actual name of the mode, so the actual event posted is
+        something like *mode_attract_will_start*, *mode_base_will_start*, etc.
+
+        This is posted before the "mode_(name)_starting" event.
+        '''
+
         if self.config['mode']['use_wait_queue'] and 'queue' in kwargs:
 
             self.debug_log("Registering a mode start wait queue")
@@ -312,6 +323,16 @@ class Mode(LogMixin):
         if self.stopping:
             # mode is still running
             return True
+
+        self.machine.events.post('mode_' + self.name + '_will_stop')
+        '''event: mode_(name)_will_stop
+
+        desc: Posted when a mode is about to stop. The "name" part is replaced
+        with the actual name of the mode, so the actual event posted is
+        something like *mode_attract_will_stop*, *mode_base_will_stop*, etc.
+
+        This is posted immediately before the "mode_(name)_stopping" event.
+        '''
 
         self.stopping = True
 

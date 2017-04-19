@@ -44,7 +44,7 @@ class ScoreReelController(MpfController):
         # register for events
 
         # switch the active score reel group and reset it (if needed)
-        self.machine.events.add_handler('player_turn_start',
+        self.machine.events.add_handler('player_turn_started',
                                         self.rotate_player)
 
         # receive notification of score changes
@@ -128,7 +128,8 @@ class ScoreReelController(MpfController):
             change: Interget value of the change to the score.
         """
         del kwargs
-        self.active_scorereelgroup.add_value(value=change, target=value)
+        if self.active_scorereelgroup and change:
+            self.active_scorereelgroup.add_value(value=change, target=value)
 
     def game_starting(self, queue, game, **kwargs):
         """Reset the score reels when a new game starts.

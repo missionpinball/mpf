@@ -19,6 +19,7 @@ class TestInfoLights(MpfTestCase):
         self.machine.playfield.add_ball = MagicMock()
         self.machine.ball_controller.num_balls_known = 3
         self.hit_and_release_switch("s_start")
+        self.advance_time_and_run()
         self.hit_and_release_switch("s_start")
         self.advance_time_and_run()
         self.assertEqual(2, self.machine.game.num_players)
@@ -27,7 +28,7 @@ class TestInfoLights(MpfTestCase):
     def stop_game(self):
         # stop game
         self.assertIsNotNone(self.machine.game)
-        self.machine.game.game_ending()
+        self.machine.game.end_game()
         self.advance_time_and_run()
         self.assertIsNone(self.machine.game)
 

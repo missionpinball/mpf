@@ -583,7 +583,7 @@ class TestMultiBall(MpfGameTestCase):
         self.assertEqual(0, self.machine.ball_devices.bd_lock.balls)
 
         # game ends (because of slam tilt)
-        self.machine.game.ball_ending()
+        self.machine.game.end_ball()
         self.advance_time_and_run()
 
         # this should not crash

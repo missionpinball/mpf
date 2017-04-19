@@ -39,7 +39,7 @@ class InfoLights(object):
         self.machine.events.add_handler('ball_started', self._ball_started)
         self.machine.events.add_handler('game_ended', self._game_ended)
         self.machine.events.add_handler('game_starting', self._game_starting)
-        self.machine.events.add_handler('player_add_success', self._player_added)
+        self.machine.events.add_handler('player_added', self._player_added)
         self.machine.events.add_handler('tilt', self._tilt)
         self.machine.events.add_handler('match', self._match)
 
