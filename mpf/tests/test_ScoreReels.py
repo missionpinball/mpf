@@ -180,7 +180,9 @@ class TestScoreReels(MpfGameTestCase):
 
         # add two more players
         self.hit_and_release_switch("s_start")
+        self.advance_time_and_run()
         self.hit_and_release_switch("s_start")
+        self.advance_time_and_run()
         self.machine_run()
         self.assertEqual(3, self.machine.game.num_players)
 
@@ -204,6 +206,7 @@ class TestScoreReels(MpfGameTestCase):
 
         # drain ball
         self.machine.game.balls_in_play = 0
+        self.advance_time_and_run()
         self.machine_run()
         self.assertEqual(2, self.machine.game.player.number)
 

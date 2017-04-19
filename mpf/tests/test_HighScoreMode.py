@@ -72,7 +72,6 @@ class TestHighScoreMode(MpfBcpTestCase):
         self.machine.game.player_list[3].score = 1000
         self.machine.game.end_game()
         self.advance_time_and_run()
-        self.advance_time_and_run()
         self.assertTrue(self.machine.modes.high_score.active)
 
         self.assertEqual(1, self._events['high_score_enter_initials'])

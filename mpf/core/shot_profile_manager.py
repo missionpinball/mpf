@@ -98,7 +98,7 @@ class ShotProfileManager(object):
     def _player_turn_started(self, player, **kwargs):
         del kwargs
         for shot in self.machine.shots:
-            shot.player_turn_start(player)
+            shot.player_turn_started(player)
 
     def _player_turn_stopped(self, player, **kwargs):
         del kwargs
