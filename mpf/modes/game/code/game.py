@@ -33,6 +33,7 @@ class Game(AsyncMode):
         self._stopping_modes = []
         self._stopping_queue = None
         self._end_ball_event = None  # type: asyncio.Event
+        self._at_least_one_player_event = None  # type: asyncio.Event
 
         self.machine.events.add_handler('mode_{}_stopping'.format(self.name), self._stop_game_modes)
 
@@ -54,6 +55,8 @@ class Game(AsyncMode):
         self._stopping_queue = None
         self._end_ball_event = asyncio.Event(loop=self.machine.clock.loop)
         self._end_ball_event.clear()
+        self._at_least_one_player_event = asyncio.Event(loop=self.machine.clock.loop)
+        self._at_least_one_player_event.clear()
 
         # Add add player switch handler
         if self.machine.config['game']['add_player_switch_tag']:
@@ -94,104 +97,26 @@ class Game(AsyncMode):
 
         # Sometimes game_starting handlers will add players, so we only
         # have to add one here if there aren't any players yet.
-        if not self.player_list:
-            yield from self._add_player()
+        if self.player_list:
+            self._at_least_one_player_event.set()
+        else:
+            self._at_least_one_player_event.clear()
+            self.request_player_add()
+
+        # Wait for player to be added before game can start
+        # TODO: Add timeout to wait
+        yield from self._at_least_one_player_event.wait()
 
         self.machine.remove_machine_var_search(startswith='player',
                                                endswith='_score')
+
+        yield from self._start_player_turn()
 
         yield from self.machine.events.post_async('game_started')
         '''event: game_started
         desc: A new game has started.'''
 
         self.debug_log("Game started")
-
-        yield from self._start_player_turn()
-
-    @asyncio.coroutine
-    def _add_player(self):
-        """Add a new player to the current game"""
-
-        new_player_number = len(self.player_list) + 1
-
-        yield from self.machine.events.post_async('player_will_add', number=new_player_number)
-        '''event: player_will_add
-        desc: A new player will be added to this game. This event is sent immediately
-        prior to the player_adding event.
-
-        args:
-        number: The new player number that will be added
-        '''
-
-        # Actually create the new player object
-        player = Player(self.machine, len(self.player_list))
-
-        self.player_list.append(player)
-        self.num_players = len(self.player_list)
-
-        yield from self.machine.events.post_queue_async('player_adding',
-                                                        player=player,
-                                                        number=player.number)
-        '''event: player_adding
-        desc: A new player is in the process of being added to this game. This is a queue 
-        event, and the player won't actually be finished adding until the queue is cleared.
-
-        args:
-        player: The player object for the player being added
-        number: The player number
-        '''
-
-        yield from self.machine.events.post_async('player_added',
-                                                  player=player,
-                                                  num=player.number)
-        '''event: player_added
-
-        desc: A new player was just added to this game
-
-        args:
-
-        player: A reference to the instance of the Player() object.
-
-        num: The number of the player that was just added. (e.g. Player 1 will
-        have *num=1*, Player 4 will have *num=4*, etc.)
-
-        '''
-
-        self.info_log("Player added successfully. Total players: %s", self.num_players)
-
-        if self.num_players == 2:
-            yield from self.machine.events.post_async('multiplayer_game')
-            '''event: multiplayer_game
-            desc: A second player has just been added to this game, meaning
-            this is now a multiplayer game.
-
-            This event is typically used to switch the score display from the
-            single player layout to the multiplayer layout.'''
-
-        # Enable player variable events and send all initial values
-        player.enable_events(True, True)
-
-        # Create machine variable to hold new player's score
-        self.machine.create_machine_var(
-            name='player{}_score'.format(player.number),
-            value=player.score,
-            persist=True)
-        '''machine_var: player(x)_score
-
-        desc: Holds the numeric value of a player's score. The "x" is the
-        player number, so this actual machine variable is
-        ``player1_score`` or ``player2_score``.
-
-        Since these are machine variables, they are maintained even after
-        a game is over. Therefore you can use these machine variables in
-        your attract mode display show to show the scores of the last game
-        that was played.
-
-        These machine variables are updated at the end of each player's
-        turn, and they persist on disk so they are restored the next time
-        MPF starts up.
-
-        '''
 
     def ball_ending(self):
         """DEPRECATED in v0.50. Use end_ball() instead."""
@@ -440,7 +365,7 @@ class Game(AsyncMode):
         self.end_game()
 
     def end_game(self):
-        """Called when the game decides it should end.
+        """Ends the current game.
 
         This method posts the queue event *game_ending*, giving other modules
         an opportunity to finish up whatever they need to do before the game
@@ -448,7 +373,6 @@ class Game(AsyncMode):
         this method calls :meth:`game_end`.
 
         """
-        self._task.cancel()
         self.machine.events.post('game_will_end')
         self.machine.events.post_queue('game_ending', callback=self._game_ending_completed)
 
@@ -483,7 +407,7 @@ class Game(AsyncMode):
 
     @asyncio.coroutine
     def _award_extra_ball(self):
-        """Called when the same player should shoot again."""
+        """An extra ball has been awarded so the same player should shoot again."""
         self.debug_log("Awarded extra ball to Player %s. Shoot Again", self.player.index + 1)
         self.player.extra_balls -= 1
         yield from self._start_ball(is_extra_ball=True)
@@ -529,8 +453,7 @@ class Game(AsyncMode):
         '''
 
     def _player_add_request_complete(self, ev_result=True, **kwargs) -> bool:
-        """This is the callback from our request player add event."""
-        # Don't call it directly.
+        """This is the callback from our request player add event. Don't call it directly."""
         del kwargs
 
         if ev_result is False:
@@ -540,6 +463,13 @@ class Game(AsyncMode):
         new_player_number = len(self.player_list) + 1
 
         self.machine.events.post('player_will_add', number=new_player_number)
+        '''event: player_will_add
+        desc: A new player will be added to this game. This event is sent immediately
+        prior to the player_adding event.
+
+        args:
+        number: The new player number that will be added
+        '''
 
         # Actually create the new player object
         player = Player(self.machine, len(self.player_list))
@@ -551,20 +481,52 @@ class Game(AsyncMode):
                                        player=player,
                                        number=player.number,
                                        callback=partial(self._player_adding_complete, player=player))
+        '''event: player_adding
+        desc: A new player is in the process of being added to this game. This is a queue 
+        event, and the player won't actually be finished adding until the queue is cleared.
+
+        args:
+        player: The player object for the player being added
+        number: The player number
+        '''
 
     def _player_adding_complete(self, player, **kwargs):
+        """The player_adding queue event has completed (this is the callback function).
+        The add player process can now finish."""
         del kwargs
 
         self.machine.events.post('player_added',
                                  player=player,
                                  num=player.number)
+        '''event: player_added
+        
+        desc: A new player was just added to this game
+        
+        args:
+        
+        player: A reference to the instance of the Player() object.
+        
+        num: The number of the player that was just added. (e.g. Player 1 will
+        have *num=1*, Player 4 will have *num=4*, etc.)
+        '''
+
+        # At least one player has been added to the current game, set event
+        self._at_least_one_player_event.set()
 
         self.info_log("Player added successfully. Total players: %s", self.num_players)
 
         if self.num_players == 2:
             self.machine.events.post('multiplayer_game')
+            '''event: multiplayer_game
+             desc: A second player has just been added to this game, meaning
+             this is now a multiplayer game.
+    
+             This event is typically used to switch the score display from the
+             single player layout to the multiplayer layout.
+             '''
 
-        # Enable player variable events and send all initial values
+        # Now that the player_added event has been posted, enable player variable
+        # events and send all initial values
         player.enable_events(True, True)
 
         # Create machine variable to hold new player's score
@@ -572,6 +534,22 @@ class Game(AsyncMode):
             name='player{}_score'.format(player.number),
             value=player.score,
             persist=True)
+        '''machine_var: player(x)_score
+
+        desc: Holds the numeric value of a player's score. The "x" is the
+        player number, so this actual machine variable is
+        ``player1_score`` or ``player2_score``.
+        
+        Since these are machine variables, they are maintained even after
+        a game is over. Therefore you can use these machine variables in
+        your attract mode display show to show the scores of the last game
+        that was played.
+        
+        These machine variables are updated at the end of each player's
+        turn, and they persist on disk so they are restored the next time
+        MPF starts up.
+        
+        '''
 
         return True
 
