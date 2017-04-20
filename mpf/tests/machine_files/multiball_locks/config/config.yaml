@@ -1,0 +1,52 @@
+#config_version=4
+
+game:
+    balls_per_game: 2
+
+coils:
+    eject_coil1:
+        number:
+    eject_coil2:
+        number:
+
+switches:
+    s_ball_switch1:
+        number:
+    s_ball_switch2:
+        number:
+    s_ball_switch3:
+        number:
+    s_ball_switch4:
+        number:
+    s_ball_switch5:
+        number:
+    s_ball_switch6:
+        number:
+    s_lock1:
+        number:
+    s_lock2:
+        number:
+
+ball_devices:
+    bd_trough:
+        eject_coil: eject_coil1
+        ball_switches: s_ball_switch1, s_ball_switch2, s_ball_switch3, s_ball_switch4, s_ball_switch5, s_ball_switch6
+        tags: trough, drain, home, ball_add_live
+        eject_timeouts: 2s
+    bd_lock:
+        eject_coil: eject_coil2
+        ball_switches: s_lock1, s_lock2
+        eject_timeouts: 2s
+
+multiballs:
+    mb:
+        ball_count: 2
+        shoot_again: 0
+        start_events: mb_start
+        ball_locks: bd_lock
+
+modes:
+    - min_virtual_physical
+    - no_virtual
+    - physical_only
+    - virtual_only
