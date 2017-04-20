@@ -765,7 +765,7 @@ class TestMultiBall(MpfGameTestCase):
         self.assertBallsOnPlayfield(1)
 
     def testMultiballLockFullMultiplayer(self):
-        self.machine.config['game']['balls_per_game'] = 3
+        self.machine.config['game']['balls_per_game'] = self.machine.placeholder_manager.build_int_template(3)
         self.mock_event("multiball_lock_lock_mb6_full")
         self.fill_troughs()
         self.start_two_player_game()
