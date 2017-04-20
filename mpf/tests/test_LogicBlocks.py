@@ -369,7 +369,7 @@ class TestLogicBlocks(MpfFakeGameTestCase):
     def test_player_change(self):
         self.mock_event("logicblock_accrual5_complete")
 
-        self.machine.config['game']['balls_per_game'] = 2
+        self.machine.config['game']['balls_per_game'] = self.machine.placeholder_manager.build_int_template(2)
 
         self.start_two_player_game()
 

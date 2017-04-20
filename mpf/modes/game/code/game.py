@@ -27,6 +27,7 @@ class Game(Mode):
         self.tilted = False
         self.player = None
         self.num_players = None
+        self.balls_per_game = None
 
     @property
     def balls_in_play(self):
@@ -81,6 +82,7 @@ class Game(Mode):
         self.slam_tilted = False
         self.tilted = False
         self._balls_in_play = 0
+        self.balls_per_game = self.machine.config['game']['balls_per_game'].evaluate([])
 
         # todo register for request_to_start_game so you can deny it, or allow
         # it with a long press
@@ -176,7 +178,7 @@ class Game(Mode):
         self.debug_log("***************************************************")
 
         self.machine.events.post_queue('ball_starting',
-                                       balls_remaining=self.machine.config['game']['balls_per_game'] - self.player.ball,
+                                       balls_remaining=self.balls_per_game- self.player.ball,
                                        is_extra_ball=is_extra_ball,
                                        callback=self.ball_started)
         '''event: ball_starting
@@ -317,9 +319,7 @@ class Game(Mode):
             self.award_extra_ball()
             return
 
-        if (self.player.ball ==
-                self.machine.config['game']['balls_per_game'] and
-                self.player.number == self.num_players):
+        if (self.player.ball >= self.balls_per_game and self.player.number == self.num_players):
             self.game_ending()
         else:
             self.player_rotate()
@@ -392,7 +392,7 @@ class Game(Mode):
         # then we'll raise the event to ask other modules if it's ok to add a
         # player
 
-        if len(self.player_list) >= self.machine.config['game']['max_players']:
+        if len(self.player_list) >= self.machine.config['game']['max_players'].evaluate([]):
             self.debug_log("Game is at max players. Cannot add another.")
             return False
 
