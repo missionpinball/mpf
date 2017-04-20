@@ -120,7 +120,7 @@ class MultiballLock(ModeDevice):
     def reset_all_counts(self, **kwargs):
         """Reset the locked balls for all players."""
         del kwargs
-        if not self.config['keep_virtual_ball_count_per_player']:
+        if self.config['locked_ball_counting_strategy'] not in ("virtual_only", "min_virtual_physical"):
             raise AssertionError("Count is only tracked per player")
         for player in self.machine.game.player_list:
             player['{}_locked_balls'.format(self.name)] = 0
@@ -128,25 +128,31 @@ class MultiballLock(ModeDevice):
     def reset_count_for_current_player(self, **kwargs):
         """Reset the locked balls for the current player."""
         del kwargs
-        if self.config['keep_virtual_ball_count_per_player']:
+        if self.config['locked_ball_counting_strategy'] in ("virtual_only", "min_virtual_physical"):
             self.machine.game.player['{}_locked_balls'.format(self.name)] = 0
-        else:
+        elif self.config['locked_ball_counting_strategy'] == "no_virtual":
             self._locked_balls = 0
+        else:
+            raise AssertionError("Cannot reset physical balls")
 
     @property
     def locked_balls(self):
         """Return the number of locked balls for the current player."""
-        if self.config['keep_virtual_ball_count_per_player']:
+        if self.config['locked_ball_counting_strategy'] == "virtual_only":
             return self.machine.game.player['{}_locked_balls'.format(self.name)]
+        elif self.config['locked_ball_counting_strategy'] == "min_virtual_physical":
+            return min(self.machine.game.player['{}_locked_balls'.format(self.name)], self._physically_locked_balls)
+        elif self.config['locked_ball_counting_strategy'] == "physical_only":
+            return self._physically_locked_balls
         else:
             return self._locked_balls
 
     @locked_balls.setter
     def locked_balls(self, value):
         """Set the number of locked balls for the current player."""
-        if self.config['keep_virtual_ball_count_per_player']:
+        if self.config['locked_ball_counting_strategy'] in ("virtual_only", "min_virtual_physical"):
             self.machine.game.player['{}_locked_balls'.format(self.name)] = value
-        else:
+        elif self.config['locked_ball_counting_strategy'] in "no_virtual":
             self._locked_balls = value
 
     def _register_handlers(self):
@@ -238,14 +244,20 @@ class MultiballLock(ModeDevice):
                     has locked.
             '''
 
-        if self.config['keep_virtual_ball_count_per_player']:
+        if self.config['locked_ball_counting_strategy'] in ("virtual_only", "min_virtual_physical"):
             # only keep ball if any player could use it
             if self._max_balls_locked_by_any_player <= self._physically_locked_balls:
                 balls_to_lock_physically = 0
 
-        # do not lock if the lock would be physically full but not virtually
-        if not self.is_virtually_full and self._physically_remaining_space <= 1:
-            balls_to_lock_physically = 0
+        if self.config['locked_ball_counting_strategy'] == "min_virtual_physical":
+            # do not lock if the lock would be physically full but not virtually
+            if (self._physically_remaining_space <= 1 and
+                    self.config['balls_to_lock'] - self.machine.game.player['{}_locked_balls'.format(self.name)] > 0):
+                balls_to_lock_physically = 0
+        elif self.config['locked_ball_counting_strategy'] != "physical_only":
+            # do not lock if the lock would be physically full but not virtually
+            if not self.is_virtually_full and self._physically_remaining_space <= 1:
+                balls_to_lock_physically = 0
 
         # check if we are full now and post event if yes
         if self.is_virtually_full:
