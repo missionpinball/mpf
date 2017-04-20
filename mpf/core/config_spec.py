@@ -652,7 +652,7 @@ multiball_locks:
     source_playfield: single|machine(ball_devices)|playfield
     enable_events: dict|str:ms|None
     disable_events: dict|str:ms|None
-    keep_virtual_ball_count_per_player: single|bool|True
+    locked_ball_counting_strategy: single|enum(virtual_only,min_virtual_physical,physical_only,no_virtual)|virtual_only
     reset_all_counts_events: dict|str:ms|None
     reset_count_for_current_player_events: dict|str:ms|None
 opp:
