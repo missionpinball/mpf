@@ -303,6 +303,11 @@ class BcpInterface(MpfController):
 
         self.machine.bcp.transport.add_handler_to_transport("_modes", client)
 
+        self.machine.bcp.transport.send_to_client(
+            client=client,
+            bcp_command="mode_list",
+            running_modes=sorted([(m.name, m.priority) for m in self.machine.modes if m.active]))
+
     def _monitor_modes_stop(self, client):
         """Stop monitoring all mode events (start, stop) via the specified client."""
         self.machine.bcp.transport.remove_transport_from_handle("_modes", client)
@@ -318,6 +323,7 @@ class BcpInterface(MpfController):
             handler="_modes",
             bcp_command="mode_start",
             name=mode.name,
+            running_modes=sorted([(m.name, m.priority) for m in self.machine.modes if m.active or m == mode]),
             priority=priority)
 
         # Return the method and mode name to call when the mode stops (self-registering)
@@ -329,6 +335,7 @@ class BcpInterface(MpfController):
         self.machine.bcp.transport.send_to_clients_with_handler(
             handler="_modes",
             bcp_command="mode_stop",
+            running_modes=sorted([(m.name, m.priority) for m in self.machine.modes if m.active]),
             name=mode)
 
     def _monitor_core_events(self, client):
