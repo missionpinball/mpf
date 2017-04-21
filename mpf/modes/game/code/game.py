@@ -36,6 +36,7 @@ class Game(AsyncMode):
         self._end_ball_event = None  # type: asyncio.Event
         self._at_least_one_player_event = None  # type: asyncio.Event
         self.balls_per_game = None
+        self.max_players = None
 
         self.machine.events.add_handler('mode_{}_stopping'.format(self.name), self._stop_game_modes)
 
@@ -67,6 +68,10 @@ class Game(AsyncMode):
                 self.machine.config['mpf']['switch_tag_event'].replace(
                     '%', self.machine.config['game']['add_player_switch_tag']),
                 self.request_player_add)
+
+        self.max_players = self.machine.config['game']['max_players'].evaluate({})
+        for player_num in range(self.max_players):
+            self.machine.configure_machine_var(name='player{}_score'.format(player_num), persist=True)
 
         yield from self._start_game()
 
@@ -442,7 +447,7 @@ class Game(AsyncMode):
         # then we'll raise the event to ask other modules if it's ok to add a
         # player
 
-        if len(self.player_list) >= self.machine.config['game']['max_players'].evaluate([]):
+        if len(self.player_list) >= self.max_players:
             self.debug_log("Game is at max players. Cannot add another.")
             return False
 
@@ -539,8 +544,7 @@ class Game(AsyncMode):
         # Create machine variable to hold new player's score
         self.machine.create_machine_var(
             name='player{}_score'.format(player.number),
-            value=player.score,
-            persist=True)
+            value=player.score)
         '''machine_var: player(x)_score
 
         desc: Holds the numeric value of a player's score. The "x" is the

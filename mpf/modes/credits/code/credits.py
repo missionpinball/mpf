@@ -135,14 +135,9 @@ class Credits(Mode):
         credit_units = self._get_credit_units()
 
         if self.credits_config['persist_credits_while_off_time']:
-            self.machine.create_machine_var(name='credit_units',
-                                            value=credit_units,
-                                            persist=True,
-                                            expire_secs=self.credits_config[
-                                                'persist_credits_while_off_time'])
-        else:
-            self.machine.create_machine_var(name='credit_units',
-                                            value=credit_units)
+            self.machine.configure_machine_var(name='credit_units', persist=True,
+                                               expire_secs=self.credits_config['persist_credits_while_off_time'])
+        self.machine.create_machine_var(name='credit_units', value=credit_units)
 
         '''machine_var: credit_units
 
