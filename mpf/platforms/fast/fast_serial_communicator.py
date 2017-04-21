@@ -121,8 +121,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                                self.remote_processor, self.remote_model,
                                self.remote_firmware)
 
-        self.machine.create_machine_var("fast_{}_firmware".format(self.remote_processor.lower()), self.remote_firmware,
-                                        persist=False, silent=True)
+        self.machine.create_machine_var("fast_{}_firmware".format(self.remote_processor.lower()), self.remote_firmware)
         '''machine_var: fast_(x)_firmware
 
         desc: Holds the version number of the firmware for the processor on
@@ -130,8 +129,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         either "dmd", "net", or "rgb", one for each processor that's attached.
         '''
 
-        self.machine.create_machine_var("fast_{}_model".format(self.remote_processor.lower()), self.remote_model,
-                                        persist=False, silent=True)
+        self.machine.create_machine_var("fast_{}_model".format(self.remote_processor.lower()), self.remote_model)
 
         '''machine_var: fast_(x)_model
 

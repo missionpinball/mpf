@@ -147,10 +147,10 @@ class MachineController(LogMixin):
 
         self._load_hardware_platforms()
 
-        self._initialize_credit_string()
-
         self._load_core_modules()
         # order is specified in mpfconfig.yaml
+
+        self._initialize_credit_string()
 
         # This is called so hw platforms have a chance to register for events,
         # and/or anything else they need to do with core modules since
@@ -239,7 +239,7 @@ class MachineController(LogMixin):
         except KeyError:
             credit_string = 'FREE PLAY'
 
-        self.create_machine_var('credits_string', credit_string, silent=True)
+        self.create_machine_var('credits_string', credit_string)
         '''machine_var: credits_string
 
         desc: Holds a displayable string which shows how many
@@ -723,16 +723,12 @@ class MachineController(LogMixin):
         """
         pass
 
-    def set_machine_var(self, name, value, force_events=False):
+    def set_machine_var(self, name, value):
         """Set the value of a machine variable.
 
         Args:
             name: String name of the variable you're setting the value for.
             value: The value you're setting. This can be any Type.
-            force_events: Boolean which will force the event posting, the
-                machine monitor callback, and writing the variable to disk (if
-                it's set to persist). By default these things only happen if
-                the new value is different from the old value.
         """
         if name not in self.machine_vars:
             self.log.warning("Received request to set machine_var '%s', but "
@@ -747,8 +743,7 @@ class MachineController(LogMixin):
         except TypeError:
             change = prev_value != value
 
-        if change or force_events:
-
+        if change:
             if self.machine_vars[name]['persist'] and self.config['mpf']['save_machine_vars_to_disk']:
                 disk_var = CaseInsensitiveDict()
                 disk_var['value'] = value
@@ -810,7 +805,7 @@ class MachineController(LogMixin):
         return name in self.machine_vars
 
     # pylint: disable-msg=too-many-arguments
-    def create_machine_var(self, name, value=0, persist=False, expire_secs=None, silent=False):
+    def create_machine_var(self, name, value=0, persist=False, expire_secs=None):
         """Create a new machine variable.
 
         Args:
@@ -825,16 +820,19 @@ class MachineController(LogMixin):
                 the machine to disk to persist even during power off, but you
                 could set it so that those only stay persisted for an hour.
         """
-        var = CaseInsensitiveDict()
 
-        var['value'] = value
-        var['persist'] = persist
-        var['expire_secs'] = expire_secs
+        if name not in self.machine_vars:
+            var = CaseInsensitiveDict()
 
-        self.machine_vars[name] = var
+            var['value'] = None     # initialise to None because we will set the value afterwards
+            var['persist'] = persist
+            var['expire_secs'] = expire_secs
+            self.machine_vars[name] = var
+        else:
+            self.machine_vars[name]['persist'] = persist
+            self.machine_vars[name]['expire_sec'] = expire_secs
 
-        if not silent:
-            self.set_machine_var(name, value, force_events=True)
+        self.set_machine_var(name, value)
 
     def remove_machine_var(self, name):
         """Remove a machine variable by name.
