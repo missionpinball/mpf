@@ -1170,6 +1170,7 @@ widgets:
     animations:
         property: list|str|
         value: list|str|
+        relative: single|bool|False
         duration: single|secs|1
         timing: single|str|after_previous
         repeat: single|bool|False
