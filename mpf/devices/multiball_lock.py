@@ -138,6 +138,11 @@ class MultiballLock(ModeDevice):
     @property
     def locked_balls(self):
         """Return the number of locked balls for the current player."""
+        if not self.machine.game:
+            # this is required for the monitor because it will query this variable outside of a game
+            # remove when #893 is fixed
+            return None
+
         if self.config['locked_ball_counting_strategy'] == "virtual_only":
             return self.machine.game.player['{}_locked_balls'.format(self.name)]
         elif self.config['locked_ball_counting_strategy'] == "min_virtual_physical":
