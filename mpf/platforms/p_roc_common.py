@@ -69,14 +69,14 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
     @asyncio.coroutine
     def initialize(self):
         """Set machine vars."""
-        self.machine.create_machine_var("p_roc_version", self.version)
+        self.machine.set_machine_var("p_roc_version", self.version)
         '''machine_var: p_roc_version
 
         desc: Holds the version number of the P-ROC or P3-ROC controller that's
         attached to MPF.
         '''
 
-        self.machine.create_machine_var("p_roc_revision", self.revision)
+        self.machine.set_machine_var("p_roc_revision", self.revision)
         '''machine_var: p_roc_revision
 
         desc: Holds the revision number of the P-ROC or P3-ROC controller

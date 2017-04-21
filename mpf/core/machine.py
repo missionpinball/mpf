@@ -239,7 +239,7 @@ class MachineController(LogMixin):
         except KeyError:
             credit_string = 'FREE PLAY'
 
-        self.create_machine_var('credits_string', credit_string)
+        self.set_machine_var('credits_string', credit_string)
         '''machine_var: credits_string
 
         desc: Holds a displayable string which shows how many
@@ -314,20 +314,20 @@ class MachineController(LogMixin):
 
                 settings['value'] = 0
 
-            self.create_machine_var(name=name, value=settings['value'])
+            self.set_machine_var(name=name, value=settings['value'])
 
         self._load_initial_machine_vars()
 
         # Create basic system information machine variables
-        self.create_machine_var(name="mpf_version", value=mpf_version)
-        self.create_machine_var(name="mpf_extended_version", value=mpf_extended_version)
-        self.create_machine_var(name="python_version", value=python_version())
-        self.create_machine_var(name="platform", value=platform(aliased=1, terse=0))
+        self.set_machine_var(name="mpf_version", value=mpf_version)
+        self.set_machine_var(name="mpf_extended_version", value=mpf_extended_version)
+        self.set_machine_var(name="python_version", value=python_version())
+        self.set_machine_var(name="platform", value=platform(aliased=1, terse=0))
         platform_info = system_alias(system(), release(), version())
-        self.create_machine_var(name="platform_system", value=platform_info[0])
-        self.create_machine_var(name="platform_release", value=platform_info[1])
-        self.create_machine_var(name="platform_version", value=platform_info[2])
-        self.create_machine_var(name="platform_machine", value=machine())
+        self.set_machine_var(name="platform_system", value=platform_info[0])
+        self.set_machine_var(name="platform_release", value=platform_info[1])
+        self.set_machine_var(name="platform_version", value=platform_info[2])
+        self.set_machine_var(name="platform_machine", value=machine())
 
     def _load_initial_machine_vars(self):
         """Load initial machine var values from config if they did not get loaded from data."""
@@ -339,8 +339,8 @@ class MachineController(LogMixin):
             if name not in self.machine_vars:
                 element = self.config_validator.validate_config("machine_vars", copy.deepcopy(element))
                 self.configure_machine_var(name=name, persist=element['persist'])
-                self.create_machine_var(name=name,
-                                        value=Util.convert_to_type(element['initial_value'], element['value_type']))
+                self.set_machine_var(name=name,
+                                     value=Util.convert_to_type(element['initial_value'], element['value_type']))
 
     def _check_crash_queue(self, time):
         del time
@@ -779,8 +779,7 @@ class MachineController(LogMixin):
             self.machine_vars[name]['persist'] = persist
             self.machine_vars[name]['expire_sec'] = expire_secs
 
-    # pylint: disable-msg=too-many-arguments
-    def create_machine_var(self, name, value):
+    def set_machine_var(self, name, value):
         """Set the value of a machine variable.
 
         Args:

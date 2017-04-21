@@ -93,4 +93,4 @@ class SettingsController(MpfController):
             raise AssertionError("Invalid value {} for setting {}".format(value, setting_name))
 
         self.machine.configure_machine_var(name=self._settings[setting_name].machine_var, persist=True)
-        self.machine.create_machine_var(name=self._settings[setting_name].machine_var, value=value)
+        self.machine.set_machine_var(name=self._settings[setting_name].machine_var, value=value)

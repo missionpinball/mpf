@@ -406,7 +406,7 @@ class Game(AsyncMode):
         del kwargs
 
         # Update player's score before ending
-        self.machine.create_machine_var(
+        self.machine.set_machine_var(
             name='player{}_score'.format(self.player.number),
             value=self.player.score)
 
@@ -542,7 +542,7 @@ class Game(AsyncMode):
         player.enable_events(True, True)
 
         # Create machine variable to hold new player's score
-        self.machine.create_machine_var(
+        self.machine.set_machine_var(
             name='player{}_score'.format(player.number),
             value=player.score)
         '''machine_var: player(x)_score
@@ -656,7 +656,7 @@ class Game(AsyncMode):
         '''
 
         # Update player's score since their turn is over
-        self.machine.create_machine_var(
+        self.machine.set_machine_var(
             name='player{}_score'.format(self.player.number),
             value=self.player.score)
 

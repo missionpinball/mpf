@@ -258,7 +258,7 @@ class TestBcpInterface(MpfBcpTestCase):
         self._bcp_client.send_queue.clear()
 
         # Create a new machine variable
-        self.machine.create_machine_var("test_var", "testing")
+        self.machine.set_machine_var("test_var", "testing")
 
         self.assertIn(
             ("machine_variable", {"value": "testing",
@@ -268,7 +268,7 @@ class TestBcpInterface(MpfBcpTestCase):
             self._bcp_client.send_queue)
         self._bcp_client.send_queue.clear()
 
-        self.machine.create_machine_var("test_var", "2nd")
+        self.machine.set_machine_var("test_var", "2nd")
         self.assertIn(
             ("machine_variable", {"value": "2nd",
                                   "name": "test_var",
@@ -280,7 +280,7 @@ class TestBcpInterface(MpfBcpTestCase):
         self._bcp_client.receive_queue.put_nowait(('monitor_stop', {'category': 'machine_vars'}))
         self.advance_time_and_run()
         self._bcp_client.send_queue.clear()
-        self.machine.create_machine_var("test_var", "3rd")
+        self.machine.set_machine_var("test_var", "3rd")
 
         # The BCP queue should be empty
         self.assertFalse(self._bcp_client.send_queue)
@@ -329,7 +329,7 @@ class TestBcpInterface(MpfBcpTestCase):
         self._bcp_client.receive_queue.put_nowait(('monitor_stop', {'category': 'player_vars'}))
         self.advance_time_and_run()
         self._bcp_client.send_queue.clear()
-        self.machine.create_machine_var("test_var", "3rd")
+        self.machine.set_machine_var("test_var", "3rd")
 
         # The BCP queue should be empty
         self.assertFalse(self._bcp_client.send_queue)

@@ -68,9 +68,9 @@ class ScorePlayer(ConfigPlayer):
             old_value = self.machine.get_machine_var(var)
             if old_value is None:
                 old_value = 0
-            self.machine.create_machine_var(var, old_value + value)
+            self.machine.set_machine_var(var, old_value + value)
         elif entry['action'] == "set_machine":
-            self.machine.create_machine_var(var, value)
+            self.machine.set_machine_var(var, value)
         else:
             raise AssertionError("Invalid value: {}".format(entry))
 
