@@ -185,7 +185,8 @@ class TestPluginConfigPlayer(MpfBcpTestCase):
         self.machine.modes['mode1'].start()
         self.advance_time_and_run()
         self.assertTrue(self.machine.modes['mode1'].active)
-        self._bcp_client.send.assert_called_with('mode_start', {'name': 'mode1', 'priority': 400})
+        self._bcp_client.send.assert_called_with('mode_start', {'name': 'mode1', 'priority': 400,
+                                                                'running_modes': [('attract', 10), ('mode1', 400)]})
         self._bcp_client.send.reset_mock()
 
         # event4 is in test_player for mode1, so make sure it sends now
@@ -201,7 +202,7 @@ class TestPluginConfigPlayer(MpfBcpTestCase):
         self._bcp_client.send.assert_has_calls([
             call('trigger', {'context': 'mode1', 'name': 'tests_clear'}),
             call('trigger', {'context': 'mode1', 'name': 'test2s_clear'}),
-            call('mode_stop', {'name': 'mode1'})]
+            call('mode_stop', {'name': 'mode1', 'running_modes': [('attract', 10)]})]
         )
         self._bcp_client.send.reset_mock()
 
