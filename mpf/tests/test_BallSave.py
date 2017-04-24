@@ -431,3 +431,56 @@ class TestBallSave(MpfGameTestCase):
         # ball 1 continues
         self.assertAvailableBallsOnPlayfield(1)
         self.assertBallNumber(1)
+
+    def test_unlimited_delay_mode(self):
+        # prepare game
+        self.fill_troughs()
+        self.advance_time_and_run()
+
+        # start game
+        self.start_game()
+        self.advance_time_and_run(10)
+        self.assertBallNumber(1)
+
+        # start mode and thereby ball_save
+        self.post_event("start_mode2")
+
+        # drain ball
+        self.drain_ball()
+        self.advance_time_and_run()
+
+        # ball should not end
+        self.assertBallNumber(1)
+
+        # no ball yet on playfield
+        self.assertAvailableBallsOnPlayfield(0)
+
+        self.post_event("mode_ball_save_delayed_eject")
+        self.advance_time_and_run()
+
+        # ball 1 continues
+        self.assertAvailableBallsOnPlayfield(1)
+        self.assertBallNumber(1)
+
+        # save again/drain ball
+        self.drain_ball()
+        self.advance_time_and_run()
+
+        # ball should not end
+        self.assertBallNumber(1)
+
+        # no ball yet on playfield
+        self.assertAvailableBallsOnPlayfield(0)
+
+        # stop mode
+        self.post_event("stop_mode2")
+        self.advance_time_and_run()
+
+        # ball 1 continues
+        self.assertAvailableBallsOnPlayfield(1)
+        self.assertBallNumber(1)
+
+        # ball should end now
+        self.drain_ball()
+        self.advance_time_and_run()
+        self.assertGameIsNotRunning()

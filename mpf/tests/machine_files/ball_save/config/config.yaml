@@ -5,6 +5,7 @@ game:
 
 modes:
    - mode1
+   - mode2
 
 coils:
     eject_coil1:
