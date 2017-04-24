@@ -258,13 +258,13 @@ class TestBcpInterface(MpfBcpTestCase):
         self._bcp_client.send_queue.clear()
 
         # Create a new machine variable
-        self.machine.create_machine_var("test_var", "testing")
+        self.machine.set_machine_var("test_var", "testing")
 
         self.assertIn(
             ("machine_variable", {"value": "testing",
                                   "name": "test_var",
-                                  "change": False,
-                                  "prev_value": "testing"}),
+                                  "change": True,
+                                  "prev_value": None}),
             self._bcp_client.send_queue)
         self._bcp_client.send_queue.clear()
 

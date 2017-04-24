@@ -132,6 +132,9 @@ class TestPRoc(MpfTestCase):
             ["driver_state_pulse"], False)
 
     def test_initial_switches(self):
+        self.assertMachineVarEqual(4660, "p_roc_version")
+        self.assertMachineVarEqual(22136, "p_roc_revision")
+
         self.assertEqual(0x1234, self.machine.default_platform.version)
         self.assertEqual(0x5678, self.machine.default_platform.revision)
 

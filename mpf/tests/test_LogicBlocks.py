@@ -465,7 +465,7 @@ class TestLogicBlocks(MpfFakeGameTestCase):
         self.assertEqual(1, self._events["logicblock_counter4_complete"])
         self.advance_time_and_run(1)
 
-        self.machine.create_machine_var("start", 1)
+        self.machine.set_machine_var("start", 1)
         self.machine.game.player.hits = 5
         self.mock_event("logicblock_counter4_complete")
         self.mock_event("counter_counter4_hit")

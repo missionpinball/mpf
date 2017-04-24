@@ -147,10 +147,10 @@ class MachineController(LogMixin):
 
         self._load_hardware_platforms()
 
-        self._initialize_credit_string()
-
         self._load_core_modules()
         # order is specified in mpfconfig.yaml
+
+        self._initialize_credit_string()
 
         # This is called so hw platforms have a chance to register for events,
         # and/or anything else they need to do with core modules since
@@ -239,7 +239,7 @@ class MachineController(LogMixin):
         except KeyError:
             credit_string = 'FREE PLAY'
 
-        self.create_machine_var('credits_string', credit_string, silent=True)
+        self.set_machine_var('credits_string', credit_string)
         '''machine_var: credits_string
 
         desc: Holds a displayable string which shows how many
@@ -314,20 +314,20 @@ class MachineController(LogMixin):
 
                 settings['value'] = 0
 
-            self.create_machine_var(name=name, value=settings['value'])
+            self.set_machine_var(name=name, value=settings['value'])
 
         self._load_initial_machine_vars()
 
         # Create basic system information machine variables
-        self.create_machine_var(name="mpf_version", value=mpf_version)
-        self.create_machine_var(name="mpf_extended_version", value=mpf_extended_version)
-        self.create_machine_var(name="python_version", value=python_version())
-        self.create_machine_var(name="platform", value=platform(aliased=1, terse=0))
+        self.set_machine_var(name="mpf_version", value=mpf_version)
+        self.set_machine_var(name="mpf_extended_version", value=mpf_extended_version)
+        self.set_machine_var(name="python_version", value=python_version())
+        self.set_machine_var(name="platform", value=platform(aliased=1, terse=0))
         platform_info = system_alias(system(), release(), version())
-        self.create_machine_var(name="platform_system", value=platform_info[0])
-        self.create_machine_var(name="platform_release", value=platform_info[1])
-        self.create_machine_var(name="platform_version", value=platform_info[2])
-        self.create_machine_var(name="platform_machine", value=machine())
+        self.set_machine_var(name="platform_system", value=platform_info[0])
+        self.set_machine_var(name="platform_release", value=platform_info[1])
+        self.set_machine_var(name="platform_version", value=platform_info[2])
+        self.set_machine_var(name="platform_machine", value=machine())
 
     def _load_initial_machine_vars(self):
         """Load initial machine var values from config if they did not get loaded from data."""
@@ -338,9 +338,9 @@ class MachineController(LogMixin):
         for name, element in config.items():
             if name not in self.machine_vars:
                 element = self.config_validator.validate_config("machine_vars", copy.deepcopy(element))
-                self.create_machine_var(name=name,
-                                        value=Util.convert_to_type(element['initial_value'], element['value_type']),
-                                        persist=element['persist'])
+                self.configure_machine_var(name=name, persist=element['persist'])
+                self.set_machine_var(name=name,
+                                     value=Util.convert_to_type(element['initial_value'], element['value_type']))
 
     def _check_crash_queue(self, time):
         del time
@@ -723,40 +723,85 @@ class MachineController(LogMixin):
         """
         pass
 
-    def set_machine_var(self, name, value, force_events=False):
+    def _write_machine_var_to_disk(self, name):
+        """Write value to disk."""
+        if self.machine_vars[name]['persist'] and self.config['mpf']['save_machine_vars_to_disk']:
+            disk_var = CaseInsensitiveDict()
+            disk_var['value'] = self.machine_vars[name]['value']
+
+            if self.machine_vars[name]['expire_secs']:
+                disk_var['expire'] = self.clock.get_time() + self.machine_vars[name]['expire_secs']
+
+            self.machine_var_data_manager.save_key(name, disk_var)
+
+    def get_machine_var(self, name):
+        """Return the value of a machine variable.
+
+        Args:
+            name: String name of the variable you want to get that value for.
+
+        Returns:
+            The value of the variable if it exists, or None if the variable
+            does not exist.
+
+        """
+        try:
+            return self.machine_vars[name]['value']
+        except KeyError:
+            return None
+
+    def is_machine_var(self, name):
+        """Return true if machine variable exists."""
+        return name in self.machine_vars
+
+    def configure_machine_var(self, name, persist, expire_secs=None):
+        """Create a new machine variable.
+
+        Args:
+            name: String name of the variable.
+            persist: Boolean as to whether this variable should be saved to
+                disk so it's available the next time MPF boots.
+            expire_secs: Optional number of seconds you'd like this variable
+                to persist on disk for. When MPF boots, if the expiration time
+                of the variable is in the past, it will be loaded with a value
+                of 0. For example, this lets you write the number of credits on
+                the machine to disk to persist even during power off, but you
+                could set it so that those only stay persisted for an hour.
+        """
+        if name not in self.machine_vars:
+            var = CaseInsensitiveDict()
+
+            var['value'] = None
+            var['persist'] = persist
+            var['expire_secs'] = expire_secs
+            self.machine_vars[name] = var
+        else:
+            self.machine_vars[name]['persist'] = persist
+            self.machine_vars[name]['expire_sec'] = expire_secs
+
+    def set_machine_var(self, name, value):
         """Set the value of a machine variable.
 
         Args:
             name: String name of the variable you're setting the value for.
             value: The value you're setting. This can be any Type.
-            force_events: Boolean which will force the event posting, the
-                machine monitor callback, and writing the variable to disk (if
-                it's set to persist). By default these things only happen if
-                the new value is different from the old value.
         """
         if name not in self.machine_vars:
-            self.log.warning("Received request to set machine_var '%s', but "
-                             "that is not a valid machine_var.", name)
-            return
+            self.configure_machine_var(name=name, persist=False, expire_secs=None)
+            prev_value = None
+            change = True
+        else:
+            prev_value = self.machine_vars[name]['value']
+            try:
+                change = value - prev_value
+            except TypeError:
+                change = prev_value != value
 
-        prev_value = self.machine_vars[name]['value']
+        # set value
         self.machine_vars[name]['value'] = value
 
-        try:
-            change = value - prev_value
-        except TypeError:
-            change = prev_value != value
-
-        if change or force_events:
-
-            if self.machine_vars[name]['persist'] and self.config['mpf']['save_machine_vars_to_disk']:
-                disk_var = CaseInsensitiveDict()
-                disk_var['value'] = value
-
-                if self.machine_vars[name]['expire_secs']:
-                    disk_var['expire'] = self.clock.get_time() + self.machine_vars[name]['expire_secs']
-
-                self.machine_var_data_manager.save_key(name, disk_var)
+        if change:
+            self._write_machine_var_to_disk(name)
 
             self.debug_log("Setting machine_var '%s' to: %s, (prior: %s, "
                            "change: %s)", name, value, prev_value,
@@ -788,53 +833,6 @@ class MachineController(LogMixin):
                 for callback in self.monitors['machine_vars']:
                     callback(name=name, value=value,
                              prev_value=prev_value, change=change)
-
-    def get_machine_var(self, name):
-        """Return the value of a machine variable.
-
-        Args:
-            name: String name of the variable you want to get that value for.
-
-        Returns:
-            The value of the variable if it exists, or None if the variable
-            does not exist.
-
-        """
-        try:
-            return self.machine_vars[name]['value']
-        except KeyError:
-            return None
-
-    def is_machine_var(self, name):
-        """Return true if machine variable exists."""
-        return name in self.machine_vars
-
-    # pylint: disable-msg=too-many-arguments
-    def create_machine_var(self, name, value=0, persist=False, expire_secs=None, silent=False):
-        """Create a new machine variable.
-
-        Args:
-            name: String name of the variable.
-            value: The value of the variable. This can be any Type.
-            persist: Boolean as to whether this variable should be saved to
-                disk so it's available the next time MPF boots.
-            expire_secs: Optional number of seconds you'd like this variable
-                to persist on disk for. When MPF boots, if the expiration time
-                of the variable is in the past, it will be loaded with a value
-                of 0. For example, this lets you write the number of credits on
-                the machine to disk to persist even during power off, but you
-                could set it so that those only stay persisted for an hour.
-        """
-        var = CaseInsensitiveDict()
-
-        var['value'] = value
-        var['persist'] = persist
-        var['expire_secs'] = expire_secs
-
-        self.machine_vars[name] = var
-
-        if not silent:
-            self.set_machine_var(name, value, force_events=True)
 
     def remove_machine_var(self, name):
         """Remove a machine variable by name.

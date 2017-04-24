@@ -92,7 +92,7 @@ class BcpInterface(MpfController):
     def _bcp_receive_set_machine_var(self, client, name, value):
         """Set machine var via bcp."""
         del client
-        self.machine.create_machine_var(name, value)
+        self.machine.set_machine_var(name, value)
 
     def _bcp_receive_monitor_start(self, client, category):
         """Start monitoring the specified category."""
