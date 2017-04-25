@@ -2,6 +2,8 @@
 import asyncio
 import logging
 
+from typing import List, TYPE_CHECKING
+
 from mpf.core.logging import LogMixin
 from mpf.core.platform import DriverConfig
 
@@ -10,12 +12,15 @@ from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, Ho
 from mpf.core.delays import DelayManager
 from mpf.platforms.virtual import (VirtualHardwarePlatform as VirtualPlatform, VirtualDriver)
 
+if TYPE_CHECKING:
+    from mpf.core.machine import MachineController
+
 
 class BaseSmartVirtualCoilAction:
 
     """A action for a coil."""
 
-    def __init__(self, actions, machine):
+    def __init__(self, actions: List[str], machine: "MachineController") -> None:
         """Initialise switch enable action."""
         self.log = logging.getLogger("SmartVirtual Coil Action")
         self.actions = actions
@@ -138,8 +143,11 @@ class ScoreReelAdvanceAction(BaseSmartVirtualCoilAction):
         for position, switch in self.switch_map.items():
             if not switch:
                 continue
-            self.machine.switch_controller.process_switch(switch.name, 1 if self.position == position else 0,
-                                                          logical=True)
+
+            state = self.position == position
+
+            if not self.machine.switch_controller.is_state(switch.name, state):
+                self.machine.switch_controller.process_switch(switch.name, state, logical=True)
 
 
 class AddBallToTargetAction(BaseSmartVirtualCoilAction):
