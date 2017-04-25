@@ -8,7 +8,8 @@ class TestGottliebTrough(MpfTestCase):
     def getConfigFile(self):
         if (self._testMethodName in ("test_boot_with_balls_in_drain_and_trough", "test_add_ball_to_pf",
                                      "test_boot_and_start_game_with_ball_in_plunger",
-                                     "test_drain_during_game_start")):
+                                     "test_drain_during_game_start", "test_double_drain_during_trough_eject",
+                                     "test_eject_during_incoming_ball")):
             return 'test_gottlieb_trough_with_initial_balls.yaml'
         else:
             return 'test_gottlieb_trough.yaml'
@@ -82,7 +83,7 @@ class TestGottliebTrough(MpfTestCase):
         self.assertEqual(1, self.machine.coils.outhole.pulse.call_count)
         self.assertEqual(1, self.machine.coils.trough.pulse.call_count)
 
-        self.hit_switch_and_run("trough_entry", 3)
+        self.hit_switch_and_run("trough_entry", 4)
 
         self.assertEqual(0, self.machine.ball_devices.outhole.balls)
         self.assertEqual(3, self.machine.ball_devices.trough.balls)
@@ -115,7 +116,6 @@ class TestGottliebTrough(MpfTestCase):
         self.assertEqual(3, self.machine.ball_devices.trough.balls)
         self.assertEqual(4, self.machine.ball_controller.num_balls_known)
 
-
     def test_add_ball_to_pf(self):
         self.machine.coils.outhole.pulse = MagicMock()
         self.machine.coils.trough.pulse = MagicMock()
@@ -134,7 +134,10 @@ class TestGottliebTrough(MpfTestCase):
 
         self.assertEqual(1, self.machine.coils.trough.pulse.call_count)
         self.advance_time_and_run(.1)
+        # simulate some bouncing on the switch on eject
         self.release_switch_and_run("trough_entry", 1)
+        self.hit_switch_and_run("trough_entry", .3)
+        self.release_switch_and_run("trough_entry", .6)
 
         self.machine.switch_controller.process_switch("plunger", 1)
 
@@ -219,7 +222,7 @@ class TestGottliebTrough(MpfTestCase):
         self.hit_switch_and_run("plunger", 1)
         self.assertEqual(1, self.machine.coils.outhole.pulse.call_count)
         self.release_switch_and_run("outhole", 1)
-        self.hit_switch_and_run("trough_entry", 3)
+        self.hit_switch_and_run("trough_entry", 4)
 
         self.assertEqual('idle', self.machine.ball_devices.outhole._state)
         self.assertEqual('idle', self.machine.ball_devices.trough._state)
@@ -382,3 +385,76 @@ class TestGottliebTrough(MpfTestCase):
 
         self.assertEqual('idle', self.machine.ball_devices.trough._state)
         self.assertEqual('idle', self.machine.ball_devices.plunger._state)
+
+    def test_double_drain_during_trough_eject(self):
+        self.mock_event("balldevice_outhole_ball_eject_failed")
+        self.mock_event("balldevice_ball_missing")
+        self.machine.ball_devices.plunger.config['eject_timeouts'][self.machine.playfield] = 20000
+        self.machine.coils.outhole.pulse = MagicMock()
+        self.machine.coils.trough.pulse = MagicMock()
+        self.assertEqual(3, self.machine.ball_controller.num_balls_known)
+
+        self.machine.ball_controller.num_balls_known = 7
+        self.machine.playfield.available_balls = 3
+        self.machine.playfield.balls = 3
+
+        self.assertEqual(7, self.machine.ball_controller.num_balls_known)
+
+        self.machine.playfield.add_ball(1)
+        self.advance_time_and_run(1)
+
+        self.release_switch_and_run("trough_entry", .5)
+        self.hit_switch_and_run("plunger", 1)
+        self.release_switch_and_run("plunger", 3)
+
+        # make sure the eject does not fail when the trough has scheduled an eject
+        self.machine.playfield.add_ball(1)
+
+        self.hit_switch_and_run("outhole", 1)
+        self.release_switch_and_run("outhole", 1)
+        # a new ball enters outhole from the playfield
+        self.hit_switch_and_run("outhole", 0)
+        self.hit_switch_and_run("trough_entry", 4)
+        self.advance_time_and_run(4)
+        self.assertEventNotCalled("balldevice_outhole_ball_eject_failed")
+        self.assertEventNotCalled("balldevice_ball_missing")
+
+    def test_eject_during_incoming_ball(self):
+        self.mock_event("balldevice_outhole_ball_eject_failed")
+        self.mock_event("balldevice_ball_missing")
+        self.machine.ball_devices.plunger.config['eject_timeouts'][self.machine.playfield] = 20000
+        self.machine.coils.outhole.pulse = MagicMock()
+        self.machine.coils.trough.pulse = MagicMock()
+        self.assertEqual(3, self.machine.ball_controller.num_balls_known)
+
+        self.machine.ball_controller.num_balls_known = 7
+        self.machine.playfield.available_balls = 3
+        self.machine.playfield.balls = 3
+
+        self.assertEqual(7, self.machine.ball_controller.num_balls_known)
+
+        self.machine.playfield.add_ball(1)
+        self.advance_time_and_run(1)
+
+        self.release_switch_and_run("trough_entry", .5)
+        self.hit_switch_and_run("plunger", 1)
+        self.release_switch_and_run("plunger", 30)
+
+        # a ball drains
+        self.hit_switch_and_run("outhole", 1)
+        self.release_switch_and_run("outhole", 1)
+
+        # another ball enters the outhole
+        self.hit_switch_and_run("outhole", 0)
+        # and the trough gets an eject request
+        self.machine.playfield.add_ball(1)
+        self.advance_time_and_run()
+        self.hit_and_release_switch("trough_entry")
+        # this goed beyond the timeout of the outhole
+        self.advance_time_and_run(6)
+        # a new ball enters outhole from the playfield
+        self.hit_switch_and_run("plunger", 1)
+        self.release_switch_and_run("plunger", 1)
+
+        self.assertEventNotCalled("balldevice_outhole_ball_eject_failed")
+        self.assertEventNotCalled("balldevice_ball_missing")

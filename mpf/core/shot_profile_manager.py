@@ -29,11 +29,11 @@ class ShotProfileManager(object):
         self.machine.mode_controller.register_start_method(
             self.mode_start_for_shot_groups, config_section_name="shot_groups")
 
-        self.machine.events.add_handler('player_turn_start',
-                                        self._player_turn_start,
+        self.machine.events.add_handler('player_turn_started',
+                                        self._player_turn_started,
                                         priority=1000000)
-        self.machine.events.add_handler('player_turn_stop',
-                                        self._player_turn_stop,
+        self.machine.events.add_handler('player_turn_stopped',
+                                        self._player_turn_stopped,
                                         priority=0)
 
     def register_profile(self, name, profile):
@@ -95,16 +95,16 @@ class ShotProfileManager(object):
 
         return config
 
-    def _player_turn_start(self, player, **kwargs):
+    def _player_turn_started(self, player, **kwargs):
         del kwargs
         for shot in self.machine.shots:
-            shot.player_turn_start(player)
+            shot.player_turn_started(player)
 
-    def _player_turn_stop(self, player, **kwargs):
+    def _player_turn_stopped(self, player, **kwargs):
         del kwargs
         del player
         for shot in self.machine.shots:
-            shot.player_turn_stop()
+            shot.player_turn_stopped()
 
     def mode_start_for_shots(self, config, mode, **kwargs):
         """Set the shots' enable_tables.

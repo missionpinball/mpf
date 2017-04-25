@@ -6,6 +6,8 @@ from copy import deepcopy
 
 from ruamel import yaml
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
+from typing import Dict
+from typing import Tuple
 
 from mpf.core.utility_functions import Util
 from mpf.migrator.migrator import VersionMigrator
@@ -73,9 +75,9 @@ class V4Migrator(VersionMigrator):
       enabled: True
     '''
 
-    slides = dict()
-    displays = dict()
-    default_display = None
+    slides = dict()             # type: Dict[str, int]
+    displays = dict()           # type: Dict[str, Tuple[int, int]]
+    default_display = None      # type: str
     color_dmd = False
     WIDTH = 800
     HEIGHT = 600

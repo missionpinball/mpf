@@ -10,16 +10,15 @@ from typing import Set
 from typing import Tuple
 
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
-from mpf.core.config_validator import ConfigDict
 from mpf.core.delays import DelayManager
 from mpf.core.timer import Timer
 from mpf.core.utility_functions import Util
 from mpf.core.logging import LogMixin
+from mpf.core.switch_controller import SwitchHandler
 
 if TYPE_CHECKING:
-    from mpf.core.switch_controller import SwitchHandler
     from mpf.core.events import QueuedEvent
-    from mpf.core.device import Device
+    from mpf.core.mode_device import ModeDevice
     from mpf.core.events import EventHandlerKey
     from mpf.core.player import Player
 
@@ -29,7 +28,7 @@ class Mode(LogMixin):
 
     """Parent class for in-game mode code."""
 
-    def __init__(self, machine, config: ConfigDict, name: str, path) -> None:
+    def __init__(self, machine, config, name: str, path) -> None:
         """Initialise mode.
 
         Args:
@@ -43,20 +42,20 @@ class Mode(LogMixin):
         """
         super().__init__()
         self.machine = machine
-        self.config = config
+        self.config = config                    # type: ignore
         self.name = name.lower()
         self.path = path
         self.priority = 0
         self._active = False
         self._mode_start_wait_queue = None      # type: QueuedEvent
-        self.stop_methods = list()              # type: List[Tuple[Callable[[], None], Any]]
+        self.stop_methods = list()              # type: List[Tuple[Callable[[Any], None], Any]]
         self.timers = dict()                    # type: Dict[str, Timer]
         self.start_callback = None              # type: Callable[[], None]
-        self.stop_callback = None               # type: Callable[[], None]
+        self.stop_callbacks = []                # type: List[Callable[[], None]]
         self.event_handlers = set()             # type: Set[EventHandlerKey]
         self.switch_handlers = list()           # type: List[SwitchHandler]
         self.mode_stop_kwargs = dict()          # type: Dict[str, Any]
-        self.mode_devices = set()               # type: Set[Device]
+        self.mode_devices = set()               # type: Set[ModeDevice]
         self.start_event_kwargs = None          # type: Dict[str, Any]
         self.stopping = False
 
@@ -105,7 +104,7 @@ class Mode(LogMixin):
         self.mode_init()
 
     @staticmethod
-    def get_config_spec():
+    def get_config_spec() -> str:
         """Return config spec for mode_settings."""
         return '''
                 __valid_in__: mode
@@ -117,18 +116,18 @@ class Mode(LogMixin):
         return '<Mode.{}>'.format(self.name)
 
     @property
-    def active(self):
+    def active(self) -> bool:
         """Return true if mode is active."""
         return self._active
 
     @active.setter
-    def active(self, new_active):
+    def active(self, new_active: bool):
         """Setter for _active."""
         if self._active != new_active:
             self._active = new_active
             self.machine.mode_controller.set_mode_state(self, self._active)
 
-    def configure_mode_settings(self, config):
+    def configure_mode_settings(self, config: dict) -> None:
         """Process this mode's configuration settings from a config dictionary."""
         self.config['mode'] = self.machine.config_validator.validate_config(
             config_spec='mode', source=config, section_name='mode')
@@ -138,7 +137,7 @@ class Mode(LogMixin):
                                             priority=self.config['mode']['priority'] +
                                             self.config['mode']['start_priority'])
 
-    def _validate_mode_config(self):
+    def _validate_mode_config(self) -> None:
         """Validate mode config."""
         for section in self.machine.config['mpf']['mode_config_sections']:
             this_section = self.config.get(section, None)
@@ -157,7 +156,7 @@ class Mode(LogMixin):
                 else:
                     self.config[section] = (self.machine.config_validator.validate_config(section, this_section))
 
-    def _get_merged_settings(self, section_name):
+    def _get_merged_settings(self, section_name: str) -> dict:
         """Return a dict of a config section from the machine-wide config with the mode-specific config merged in."""
         if section_name in self.machine.config:
             return_dict = copy.deepcopy(self.machine.config[section_name])
@@ -171,7 +170,12 @@ class Mode(LogMixin):
 
         return return_dict
 
-    def start(self, mode_priority=None, callback=None, **kwargs):
+    @property
+    def is_game_mode(self) -> bool:
+        """Return true if this is a game mode."""
+        return bool(self.config['mode']['game_mode'])
+
+    def start(self, mode_priority=None, callback=None, **kwargs) -> None:
         """Start this mode.
 
         Args:
@@ -188,13 +192,24 @@ class Mode(LogMixin):
         """
         self.debug_log("Received request to start")
 
-        if self.config['mode']['game_mode'] and not self.machine.game:
+        if self.config['mode']['game_mode'] and not (self.machine.game and self.player):
             self.warning_log("Can only start mode %s during a game. Aborting start.", self.name)
             return
 
         if self._active:
             self.debug_log("Mode is already active. Aborting start.")
             return
+
+        self.machine.events.post('mode_' + self.name + '_will_start')
+        '''event: mode_(name)_will_start
+
+        desc: Posted when a mode is about to start. The "name" part is replaced
+        with the actual name of the mode, so the actual event posted is
+        something like *mode_attract_will_start*, *mode_base_will_start*, etc.
+
+        This is posted before the "mode_(name)_starting" event.
+        '''
+
         if self.config['mode']['use_wait_queue'] and 'queue' in kwargs:
 
             self.debug_log("Registering a mode start wait queue")
@@ -248,7 +263,7 @@ class Mode(LogMixin):
         cleared.
         '''
 
-    def _started(self):
+    def _started(self) -> None:
         """Called after the mode_<name>_starting queue event has finished."""
         self.info_log('Started. Priority: %s', self.priority)
 
@@ -270,7 +285,7 @@ class Mode(LogMixin):
         This is posted after the "mode_(name)_starting" event.
         '''
 
-    def _mode_started_callback(self, **kwargs):
+    def _mode_started_callback(self, **kwargs) -> None:
         """Called after the mode_<name>_started queue event has finished."""
         del kwargs
         self.mode_start(**self.start_event_kwargs)
@@ -282,10 +297,12 @@ class Mode(LogMixin):
 
         self.debug_log('Mode Start process complete.')
 
-    def stop(self, callback=None, **kwargs):
+    def stop(self, callback: Callable[[], None]=None, **kwargs) -> bool:
         """Stop this mode.
 
         Args:
+            callback: Method which will be called once this mode has stopped. Will only be called when the mode is
+                running (includes currently stopping)
             **kwargs: Catch-all since this mode might start from events with
                 who-knows-what keyword arguments.
 
@@ -293,9 +310,30 @@ class Mode(LogMixin):
         mode code. If you want to write your own mode code by subclassing Mode,
         put whatever code you want to run when this mode stops in the
         mode_stop method which will be called automatically.
+
+        Returns true if the mode is running. Otherwise false.
         """
         if not self._active:
-            return
+            return False
+
+        if callback:
+            self.stop_callbacks.append(callback)
+
+        # do not stop twice. only register callback in that case
+        if self.stopping:
+            # mode is still running
+            return True
+
+        self.machine.events.post('mode_' + self.name + '_will_stop')
+        '''event: mode_(name)_will_stop
+
+        desc: Posted when a mode is about to stop. The "name" part is replaced
+        with the actual name of the mode, so the actual event posted is
+        something like *mode_attract_will_stop*, *mode_base_will_stop*, etc.
+
+        This is posted immediately before the "mode_(name)_stopping" event.
+        '''
+
         self.stopping = True
 
         self.mode_stop_kwargs = kwargs
@@ -303,8 +341,6 @@ class Mode(LogMixin):
         self.debug_log('Mode Stopping.')
 
         self._remove_mode_switch_handlers()
-
-        self.stop_callback = callback
 
         self._kill_timers()
         self.delay.clear()
@@ -317,8 +353,9 @@ class Mode(LogMixin):
         mode won't actually stop until the queue is cleared.
 
         '''
+        return True
 
-    def _stopped(self):
+    def _stopped(self) -> None:
         self.info_log('Stopped.')
 
         self.priority = 0
@@ -359,7 +396,7 @@ class Mode(LogMixin):
             self._mode_start_wait_queue.clear()
             self._mode_start_wait_queue = None
 
-    def _mode_stopped_callback(self, **kwargs):
+    def _mode_stopped_callback(self, **kwargs) -> None:
         del kwargs
         self._remove_mode_event_handlers()
         self._remove_mode_devices()
@@ -368,10 +405,12 @@ class Mode(LogMixin):
 
         self.mode_stop_kwargs = dict()
 
-        if self.stop_callback:
-            self.stop_callback()
+        for callback in self.stop_callbacks:
+            callback()
 
-    def _add_mode_devices(self):
+        self.stop_callbacks = []
+
+    def _add_mode_devices(self) -> None:
         # adds and initializes mode devices which get removed at the end of the mode
 
         for collection_name, device_class in (
@@ -399,7 +438,7 @@ class Mode(LogMixin):
                     device.device_added_to_mode(mode=self,
                                                 player=self.player)
 
-    def _create_mode_devices(self):
+    def _create_mode_devices(self) -> None:
         """Create new devices that are specified in a mode config that haven't been created in the machine-wide."""
         self.debug_log("Scanning config for mode-based devices")
 
@@ -427,7 +466,7 @@ class Mode(LogMixin):
                     self.machine.device_manager.create_devices(
                         collection.name, {device: settings})
 
-    def _initialise_mode_devices(self):
+    def _initialise_mode_devices(self) -> None:
         """Initialise new devices that are specified in a mode config."""
         for collection_name, device_class in iter(self.machine.device_manager.device_classes.items()):
 
@@ -452,13 +491,13 @@ class Mode(LogMixin):
                     # load config
                     device.load_config(settings)
 
-    def _remove_mode_devices(self):
+    def _remove_mode_devices(self) -> None:
         for device in self.mode_devices:
             device.device_removed_from_mode(self)
 
         self.mode_devices = set()
 
-    def _setup_device_control_events(self):
+    def _setup_device_control_events(self) -> None:
         # registers mode handlers for control events for all devices specified
         # in this mode's config (not just newly-created devices)
 
@@ -497,13 +536,13 @@ class Mode(LogMixin):
         for device in device_list:
             device.add_control_events_in_mode(self)
 
-    def _control_event_handler(self, callback, ms_delay=0, **kwargs):
+    def _control_event_handler(self, callback: Callable[..., None], ms_delay: int=0, **kwargs) -> None:
         del kwargs
         self.debug_log("_control_event_handler: callback: %s,", callback)
 
-        self.delay.add(name=callback, ms=ms_delay, callback=callback, mode=self)
+        self.delay.add(ms=ms_delay, callback=callback, mode=self)
 
-    def add_mode_event_handler(self, event, handler, priority=0, **kwargs):
+    def add_mode_event_handler(self, event: str, handler: Callable, priority: int=0, **kwargs):
         """Register an event handler which is automatically removed when this mode stops.
 
         This method is similar to the Event Manager's add_handler() method,
@@ -541,17 +580,17 @@ class Mode(LogMixin):
 
         return key
 
-    def _remove_mode_event_handlers(self):
+    def _remove_mode_event_handlers(self) -> None:
         for key in self.event_handlers:
             self.machine.events.remove_handler_by_key(key)
         self.event_handlers = set()
 
-    def _remove_mode_switch_handlers(self):
+    def _remove_mode_switch_handlers(self) -> None:
         for handler in self.switch_handlers:
             self.machine.switch_controller.remove_switch_handler_by_key(handler)
         self.switch_handlers = list()
 
-    def _setup_timers(self):
+    def _setup_timers(self) -> Callable[[], None]:
         # config is localized
 
         for timer, settings in self.config['timers'].items():
@@ -561,25 +600,25 @@ class Mode(LogMixin):
 
         return self._kill_timers
 
-    def _start_timers(self):
+    def _start_timers(self) -> None:
         for timer in list(self.timers.values()):
             if timer.config['start_running']:
                 timer.start()
 
-    def _kill_timers(self, ):
+    def _kill_timers(self) -> None:
         for timer in list(self.timers.values()):
             timer.kill()
 
         self.timers = dict()
 
-    def mode_init(self):
+    def mode_init(self) -> None:
         """User-overrideable method which will be called when this mode initializes as part of the MPF boot process."""
         pass
 
-    def mode_start(self, **kwargs):
+    def mode_start(self, **kwargs) -> None:
         """User-overrideable method which will be called whenever this mode starts (i.e. whenever it becomes active)."""
         pass
 
-    def mode_stop(self, **kwargs):
+    def mode_stop(self, **kwargs) -> None:
         """User-overrideable method which will be called whenever this mode stops."""
         pass

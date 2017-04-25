@@ -26,11 +26,14 @@ class Player(object):
     0.
 
     Every time a player variable is changed, an MPF is posted with the name
-    "player_<name>". That event will have three parameters posted along with it:
+    "player_<name>". These events are disabled by default on initialize and 
+    must be enabled by calling the enable_events method.  The player variable
+    events will have four parameters posted along with it:
 
     * value (the new value)
     * prev_value (the old value before it was updated)
     * change (the change in the value)
+    * player_num (the player number the variable belongs to)
 
     For the 'change' parameter, it will attempt to subtract the old value from
     the new value. If that works, it will return the result as the change. If it
@@ -67,12 +70,13 @@ class Player(object):
         self.__dict__['log'] = logging.getLogger("Player")
         self.__dict__['machine'] = machine
         self.__dict__['vars'] = CaseInsensitiveDict()
+        self._events_enabled = False
 
         number = index + 1
 
         self.log.debug("Creating new player: Player %s. (player index '%s')", number, index)
 
-        # Set these after the player_add_success event so any player monitors
+        # Set these after the player_added event so any player monitors
         # get notification of the new player before they start seeing variable
         # changes for it.
         self.vars['index'] = index
@@ -92,21 +96,10 @@ class Player(object):
         a number of "1", Player 2 is "2", etc.
         '''
 
-        self.machine.events.post('player_add_success', player=self, num=number,
-                                 callback=self._player_add_done)
-        '''event: player_add_success
-
-        desc: A new player was just added to this game
-
-        args:
-
-        player: A reference to the instance of the Player() object.
-
-        num: The number of the player that was just added. (e.g. Player 1 will
-        have *num=1*, Player 4 will have *num=4*, etc.)
-
-        '''
         self._load_initial_player_vars()
+
+        # Set the initial player score to 0
+        self.__setattr__("score", 0)
 
     def _load_initial_player_vars(self):
         """Load initial player var values from config."""
@@ -118,14 +111,96 @@ class Player(object):
             element = self.machine.config_validator.validate_config("player_vars", copy.deepcopy(element))
             self[name] = Util.convert_to_type(element['initial_value'], element['value_type'])
 
-    def _player_add_done(self, **kwargs):
-        """Set score to 0 for new player.
-
-        Do it this way so we get the player_score event use a callback so this event is posted after the player add
-        event.
+    def enable_events(self, enable=True, send_all_variables=True):
         """
-        del kwargs
-        self.__setattr__("score", 0)
+        Enable/disable player variable events
+        
+        :param enable: Flag to enable/disable player variable events
+        :param send_all_variables: Flag indicating whether or not to send an event with the 
+            current value of every player variable.
+        """
+
+        self._events_enabled = enable
+
+        # Send all current player variable values as events (if requested)
+        if enable and send_all_variables:
+            self.send_all_variable_events()
+
+    def send_all_variable_events(self):
+        """Sends a player variable event for the current value of all player variables"""
+        for name, value in self:
+            if isinstance(value, (int, str, float)):
+                if isinstance(value, str):
+                    self._send_variable_event(name, value, value, False, self.vars['number'])
+                else:
+                    self._send_variable_event(name, value, value, 0, self.vars['number'])
+
+    def _send_variable_event(self, name: str, value, prev_value, change, player_num: int):
+        """
+        Sends a player variable event performs any monitor callbacks if configured.
+        
+        :param name: The player variable name 
+        :param value: The new variable value
+        :param prev_value: The previous variable value
+        :param change: The change in value or True/False
+        :param player_num: The player number this variable belongs to
+        """
+        self.machine.events.post('player_' + name,
+                                 value=value,
+                                 prev_value=value,
+                                 change=change,
+                                 player_num=player_num)
+
+        '''event: player_(var_name)
+    
+        desc: Posted when simpler types of player variables are added or
+        change value.
+    
+        The actual event has (var_name) replaced with the name of the
+        player variable that changed. Some examples:
+    
+        * player_score
+        * player_shot_upper_lit_hit
+    
+        Lots of things are stored in player variables, so there's no way to
+        build a complete list of what all the options are here. Elsewhere
+        in the documentation, if you see something that says it's stored in
+        a player variable, that means you'll get this event when that
+        player variable is created or is changed.
+    
+        Note that this event is only posted for simpler types of player
+        variables, including player variables that are integers, floating
+        point numbers, or strings. More complex player variables (lists,
+        dicts, etc.) do not get this event posted.
+    
+        This event is posted for a single player variable changing, meaning
+        if multiple player variables change at the same time, multiple
+        events will be posted, one for each change.
+    
+        args:
+    
+        value: The new value of this player variable.
+    
+        prev_value: The previous value of this player variable, e.g. what
+        it was before the current value.
+    
+        change: If the player variable just changed, this will be the
+        amount of the change. If it's not possible to determine a numeric
+        change (for example, if this player variable is a string), then
+        this *change* value will be set to the boolean *True*.
+    
+        player_num: The player number this variable just changed for,
+        starting with 1. (e.g. Player 1 will have *player_num=1*, Player 4
+        will have *player_num=4*, etc.)
+    
+        '''
+
+        # note the monitor is only called for simpler var changes
+        if Player.monitor_enabled and "player" in self.machine.monitors:
+            for callback in self.machine.monitors['player']:
+                callback(name=name, value=value,
+                         prev_value=prev_value, change=change,
+                         player_num=player_num)
 
     def __repr__(self):
         """Return string representation."""
@@ -159,64 +234,11 @@ class Player(object):
             change = prev_value != value
 
         if (change or new_entry) and isinstance(value, (int, str, float)):
-
             self.log.debug("Setting '%s' to: %s, (prior: %s, change: %s)",
                            name, self.vars[name], prev_value, change)
-            self.machine.events.post('player_' + name,
-                                     value=self.vars[name],
-                                     prev_value=prev_value,
-                                     change=change,
-                                     player_num=self.vars['number'])
-            '''event: player_(var_name)
 
-            desc: Posted when simpler types of player variables are added or
-            change value.
-
-            The actual event has (var_name) replaced with the name of the
-            player variable that changed. Some examples:
-
-            * player_score
-            * player_shot_upper_lit_hit
-
-            Lots of things are stored in player variables, so there's no way to
-            build a complete list of what all the options are here. Elsewhere
-            in the documentation, if you see something that says it's stored in
-            a player variable, that means you'll get this event when that
-            player variable is created or is changed.
-
-            Note that this event is only posted for simpler types of player
-            variables, including player variables that are integers, floating
-            point numbers, or strings. More complex player variables (lists,
-            dicts, etc.) do not get this event posted.
-
-            This event is posted for a single player variable changing, meaning
-            if multiple player variables change at the same time, multiple
-            events will be posted, one for each change.
-
-            args:
-
-            value: The new value of this player variable.
-
-            prev_value: The previous value of this player variable, e.g. what
-            it was before the current value.
-
-            change: If the player variable just changed, this will be the
-            amount of the change. If it's not possible to determine a numeric
-            change (for example, if this player variable is a string), then
-            this *change* value will be set to the boolean *True*.
-
-            player_num: The player number this variable just changed for,
-            starting with 1. (e.g. Player 1 will have *player_num=1*, Player 4
-            will have *player_num=4*, etc.)
-
-            '''
-
-            # note the monitor is only called for simpler var changes
-            if Player.monitor_enabled and "player" in self.machine.monitors:
-                for callback in self.machine.monitors['player']:
-                    callback(name=name, value=self.vars[name],
-                             prev_value=prev_value, change=change,
-                             player_num=self.vars['number'])
+            if self._events_enabled:
+                self._send_variable_event(name, self.vars[name], prev_value, change, self.vars['number'])
 
     def __getitem__(self, name):
         """Allow array get access."""

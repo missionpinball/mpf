@@ -25,6 +25,7 @@ class SmartMatrix(RgbDmdPlatform):
             config_spec='smartmatrix',
             source=self.machine.config['smartmatrix'])
 
+    @asyncio.coroutine
     def initialize(self):
         """Initialise platform."""
         pass

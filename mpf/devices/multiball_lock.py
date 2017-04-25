@@ -1,11 +1,15 @@
 """Contains the BallLock device class."""
+from typing import TYPE_CHECKING
 
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.events import event_handler
 from mpf.core.mode_device import ModeDevice
 
+if TYPE_CHECKING:
+    from mpf.devices.ball_device.ball_device import BallDevice
 
-@DeviceMonitor("enabled")
+
+@DeviceMonitor("enabled", "locked_balls")
 class MultiballLock(ModeDevice):
 
     """Ball lock device which locks balls for a multiball."""
@@ -22,13 +26,14 @@ class MultiballLock(ModeDevice):
         # initialise variables
         self.enabled = False
         self.initialised = False    # remove when #715 is fixed
+        self._events = {}
+
+        self._locked_balls = 0
+        # Locked balls in case we are keep_virtual_ball_count_per_player is false
 
         super().__init__(machine, name)
 
         self.machine.events.add_handler("player_turn_starting", self._player_turn_starting)
-
-    def _add_balls_in_play(self, number):
-        self.machine.game.balls_in_play += number
 
     def device_removed_from_mode(self, mode):
         """Disable ball lock when mode ends."""
@@ -51,6 +56,7 @@ class MultiballLock(ModeDevice):
         self.lock_devices = []
         for device in self.config['lock_devices']:
             self.lock_devices.append(device)
+            self._events[device] = []
 
         self.source_playfield = self.config['source_playfield']
         self.initialised = True
@@ -74,6 +80,9 @@ class MultiballLock(ModeDevice):
         del kwargs
         if not self.initialised:
             return
+
+        # reset locked balls
+        self._locked_balls = 0
 
         # check if the lock is physically full and not virtually full and release balls in that case
         if self._physically_remaining_space <= 0 and not self.is_virtually_full:
@@ -115,6 +124,8 @@ class MultiballLock(ModeDevice):
     def reset_all_counts(self, **kwargs):
         """Reset the locked balls for all players."""
         del kwargs
+        if self.config['locked_ball_counting_strategy'] not in ("virtual_only", "min_virtual_physical"):
+            raise AssertionError("Count is only tracked per player")
         for player in self.machine.game.player_list:
             player['{}_locked_balls'.format(self.name)] = 0
 
@@ -122,17 +133,37 @@ class MultiballLock(ModeDevice):
     def reset_count_for_current_player(self, **kwargs):
         """Reset the locked balls for the current player."""
         del kwargs
-        self.machine.game.player['{}_locked_balls'.format(self.name)] = 0
+        if self.config['locked_ball_counting_strategy'] in ("virtual_only", "min_virtual_physical"):
+            self.machine.game.player['{}_locked_balls'.format(self.name)] = 0
+        elif self.config['locked_ball_counting_strategy'] == "no_virtual":
+            self._locked_balls = 0
+        else:
+            raise AssertionError("Cannot reset physical balls")
 
     @property
     def locked_balls(self):
         """Return the number of locked balls for the current player."""
-        return self.machine.game.player['{}_locked_balls'.format(self.name)]
+        if not self.machine.game:
+            # this is required for the monitor because it will query this variable outside of a game
+            # remove when #893 is fixed
+            return None
+
+        if self.config['locked_ball_counting_strategy'] == "virtual_only":
+            return self.machine.game.player['{}_locked_balls'.format(self.name)]
+        elif self.config['locked_ball_counting_strategy'] == "min_virtual_physical":
+            return min(self.machine.game.player['{}_locked_balls'.format(self.name)], self._physically_locked_balls)
+        elif self.config['locked_ball_counting_strategy'] == "physical_only":
+            return self._physically_locked_balls
+        else:
+            return self._locked_balls
 
     @locked_balls.setter
     def locked_balls(self, value):
         """Set the number of locked balls for the current player."""
-        self.machine.game.player['{}_locked_balls'.format(self.name)] = value
+        if self.config['locked_ball_counting_strategy'] in ("virtual_only", "min_virtual_physical"):
+            self.machine.game.player['{}_locked_balls'.format(self.name)] = value
+        elif self.config['locked_ball_counting_strategy'] in "no_virtual":
+            self._locked_balls = value
 
     def _register_handlers(self):
         # register on ball_enter of lock_devices
@@ -140,6 +171,9 @@ class MultiballLock(ModeDevice):
             self.machine.events.add_handler(
                 'balldevice_' + device.name + '_ball_enter',
                 self._lock_ball, device=device)
+            self.machine.events.add_handler(
+                'balldevice_' + device.name + '_ball_entered',
+                self._post_events, device=device)
 
     def _unregister_handlers(self):
         # unregister ball_enter handlers
@@ -186,7 +220,7 @@ class MultiballLock(ModeDevice):
 
         return balls
 
-    def _lock_ball(self, unclaimed_balls, **kwargs):
+    def _lock_ball(self, unclaimed_balls: int, device: "BallDevice", **kwargs):
         """Callback for _ball_enter event of lock_devices."""
         del kwargs
         # if full do not take any balls
@@ -210,8 +244,8 @@ class MultiballLock(ModeDevice):
         for _ in range(balls_to_lock):
             self.locked_balls += 1
             # post event for ball capture
-            self.machine.events.post('multiball_lock_' + self.name + '_locked_ball',
-                                     total_balls_locked=self.locked_balls)
+            self._events[device].append({"event": 'multiball_lock_' + self.name + '_locked_ball',
+                                         "total_balls_locked": self.locked_balls})
             '''event: multiball_lock_(name)_locked_ball
             desc: The multiball lock device (name) has just locked one additional ball.
 
@@ -220,18 +254,25 @@ class MultiballLock(ModeDevice):
                     has locked.
             '''
 
-        # only keep ball if any player could use it
-        if self._max_balls_locked_by_any_player <= self._physically_locked_balls:
-            balls_to_lock_physically = 0
+        if self.config['locked_ball_counting_strategy'] in ("virtual_only", "min_virtual_physical"):
+            # only keep ball if any player could use it
+            if self._max_balls_locked_by_any_player <= self._physically_locked_balls:
+                balls_to_lock_physically = 0
 
-        # do not lock if the lock would be physically full but not virtually
-        if not self.is_virtually_full and self._physically_remaining_space <= 1:
-            balls_to_lock_physically = 0
+        if self.config['locked_ball_counting_strategy'] == "min_virtual_physical":
+            # do not lock if the lock would be physically full but not virtually
+            if (self._physically_remaining_space <= 1 and
+                    self.config['balls_to_lock'] - self.machine.game.player['{}_locked_balls'.format(self.name)] > 0):
+                balls_to_lock_physically = 0
+        elif self.config['locked_ball_counting_strategy'] != "physical_only":
+            # do not lock if the lock would be physically full but not virtually
+            if not self.is_virtually_full and self._physically_remaining_space <= 1:
+                balls_to_lock_physically = 0
 
         # check if we are full now and post event if yes
         if self.is_virtually_full:
-            self.machine.events.post('multiball_lock_' + self.name + '_full',
-                                     balls=self.locked_balls)
+            self._events[device].append({'event': 'multiball_lock_' + self.name + '_full',
+                                         'balls': self.locked_balls})
         '''event: multiball_lock_(name)_full
         desc: The multiball lock device (name) is now full.
         args:
@@ -244,6 +285,15 @@ class MultiballLock(ModeDevice):
         self.debug_log("Locked %s balls virtually and %s balls physically", balls_to_lock, balls_to_lock_physically)
 
         return {'unclaimed_balls': unclaimed_balls - balls_to_lock_physically}
+
+    def _post_events(self, device, **kwargs):
+        """Post events on callback from _ball_entered handler.
+
+        Events are delayed to this handler because we want the ball device to have accounted for the balls.
+        """
+        del kwargs
+        for event in self._events[device]:
+            self.machine.events.post(**event)
 
     def _request_new_balls(self, balls):
         """Request new ball to playfield."""

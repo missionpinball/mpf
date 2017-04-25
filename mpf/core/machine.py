@@ -5,20 +5,24 @@ import importlib
 import logging
 import os
 import pickle
+import queue
 import tempfile
 
 import sys
 import threading
+from platform import platform, python_version, system, release, version, system_alias, machine
 
 import copy
+
+import asyncio
+
 from pkg_resources import iter_entry_points
 from typing import Any, TYPE_CHECKING, Callable, Dict, List, Set
 
-from mpf._version import __version__
+from mpf._version import __version__, version as mpf_version, extended_version as mpf_extended_version
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.clock import ClockBase
 from mpf.core.config_processor import ConfigProcessor
-from mpf.core.config_validator import ConfigDict
 from mpf.core.config_validator import ConfigValidator
 from mpf.core.data_manager import DataManager
 from mpf.core.delays import DelayManager, DelayManagerRegistry
@@ -29,8 +33,25 @@ from mpf.core.logging import LogMixin
 if TYPE_CHECKING:
     from mpf.modes.game.code.game import Game
     from mpf.core.events import EventManager
+    from mpf.core.switch_controller import SwitchController
+
     from mpf.core.scriptlet import Scriptlet
     from mpf.core.platform import BasePlatform
+    from mpf.core.mode_controller import ModeController
+    from mpf.core.settings_controller import SettingsController
+    from mpf.core.shot_profile_manager import ShotProfileManager
+    from mpf.core.bcp.bcp import Bcp
+    from mpf.core.extra_balls import ExtraBallController
+    from mpf.assets.show import Show
+    from mpf.core.assets import BaseAssetManager
+    from mpf.devices.switch import Switch
+    from mpf.devices.driver import Driver
+    from mpf.core.mode import Mode
+    from mpf.devices.ball_device.ball_device import BallDevice
+    from mpf.core.ball_controller import BallController
+    from mpf.devices.playfield import Playfield
+    from mpf.core.placeholder_manager import PlaceholderManager
+    from mpf.platforms.smart_virtual import SmartVirtualHardwarePlatform
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -42,21 +63,9 @@ class MachineController(LogMixin):
     main part that's in charge and makes things happen.
 
     Args:
-        options: Dictionary of options the machine controller uses to configure
-            itself.
-
-    Attributes:
         options(dict): A dictionary of options built from the command line options
             used to launch mpf.py.
-        config(dict): A dictionary of machine's configuration settings, merged from
-            various sources.
-        game(mpf.modes.game.code.game.Game): the current game
         machine_path: The root path of this machine_files folder
-        plugins:
-        scriptlets:
-        hardware_platforms:
-        events(mpf.core.events.EventManager):
-
     """
 
     def __init__(self, mpf_path: str, machine_path: str, options: dict) -> None:
@@ -77,30 +86,46 @@ class MachineController(LogMixin):
         self.verify_system_info()
         self._exception = None      # type: Any
 
-        self._boot_holds = set()    # type: Set[str]
-        self.is_init_done = False
-        self.register_boot_hold('init')
-
         self._done = False
         self.monitors = dict()      # type: Dict[str, Set[Callable]]
         self.plugins = list()       # type: List[Any]
         self.scriptlets = list()    # type: List[Scriptlet]
-        self.modes = DeviceCollection(self, 'modes', None)
+        self.modes = DeviceCollection(self, 'modes', None)          # type: Dict[str, Mode]
         self.game = None            # type: Game
         self.machine_vars = CaseInsensitiveDict()
         self.machine_var_monitor = False
         self.machine_var_data_manager = None    # type: DataManager
         self.thread_stopper = threading.Event()
 
-        self.config = None      # type: ConfigDict
-        self.events = None      # type: EventManager
+        self.config = None      # type: Any
+
+        # add some type hints
+        if TYPE_CHECKING:
+            # controllers
+            self.events = None                          # type: EventManager
+            self.switch_controller = None               # type: SwitchController
+            self.mode_controller = None                 # type: ModeController
+            self.shot_profile_manager = None            # type: ShotProfileManager
+            self.settings = None                        # type: SettingsController
+            self.bcp = None                             # type: Bcp
+            self.extra_ball_controller = None           # type: ExtraBallController
+            self.asset_manager = None                   # type: BaseAssetManager
+            self.ball_controller = None                 # type: BallController
+            self.placeholder_manager = None             # type: PlaceholderManager
+
+            # devices
+            self.shows = None                           # type: Dict[str, Show]
+            self.switches = None                        # type: Dict[str, Switch]
+            self.coils = None                           # type: Dict[str, Driver]
+            self.ball_devices = None                    # type: Dict[str, BallDevice]
+            self.playfield = None                       # type: Playfield
 
         self._set_machine_path()
 
         self.config_validator = ConfigValidator(self)
 
         self._load_config()
-        self.machine_config = self.config       # type: ConfigDict
+        self.machine_config = self.config       # type: Any
         self.configure_logging(
             'Machine',
             self.config['logging']['console']['machine_controller'],
@@ -109,33 +134,40 @@ class MachineController(LogMixin):
         self.delayRegistry = DelayManagerRegistry(self)
         self.delay = DelayManager(self.delayRegistry)
 
+        self.hardware_platforms = dict()    # type: Dict[str, BasePlatform]
+        self.default_platform = None        # type: SmartVirtualHardwarePlatform
+
         self.clock = self._load_clock()
 
-        self.hardware_platforms = dict()    # type: Dict[str, BasePlatform]
-        self.default_platform = None        # type: BasePlatform
+    @asyncio.coroutine
+    def initialise(self):
+        self._boot_holds = set()    # type: Set[str]
+        self.is_init_done = asyncio.Event(loop=self.clock.loop)
+        self.register_boot_hold('init')
 
         self._load_hardware_platforms()
-
-        self._initialize_credit_string()
 
         self._load_core_modules()
         # order is specified in mpfconfig.yaml
 
+        self._initialize_credit_string()
+
         # This is called so hw platforms have a chance to register for events,
         # and/or anything else they need to do with core modules since
         # they're not set up yet when the hw platforms are constructed.
-        self._initialize_platforms()
+        yield from self._initialize_platforms()
 
         self._validate_config()
 
         self._register_config_players()
         self._register_system_events()
         self._load_machine_vars()
-        self._run_init_phases()
+        yield from self._run_init_phases()
+        self._init_phases_complete()
 
-        ConfigValidator.unload_config_spec()
-
-        self.clear_boot_hold('init')
+        # wait until all boot holds were released
+        yield from self.is_init_done.wait()
+        yield from self.init_done()
 
     def _exception_handler(self, loop, context):    # pragma: no cover
         # stop machine
@@ -154,44 +186,48 @@ class MachineController(LogMixin):
         clock.loop.set_exception_handler(self._exception_handler)
         return clock
 
+    @asyncio.coroutine
     def _run_init_phases(self):
-        self.events.post("init_phase_1")
+        yield from self.events.post_queue_async("init_phase_1")
         '''event: init_phase_1
 
         desc: Posted during the initial boot up of MPF.
         '''
-
-        self.events.process_event_queue()
-        self.events.post("init_phase_2")
+        yield from self.events.post_queue_async("init_phase_2")
         '''event: init_phase_2
 
         desc: Posted during the initial boot up of MPF.
         '''
-        self.events.process_event_queue()
         self._load_plugins()
-        self.events.post("init_phase_3")
+        yield from self.events.post_queue_async("init_phase_3")
         '''event: init_phase_3
 
         desc: Posted during the initial boot up of MPF.
         '''
-        self.events.process_event_queue()
         self._load_scriptlets()
-        self.events.post("init_phase_4")
+
+        yield from self.events.post_queue_async("init_phase_4")
         '''event: init_phase_4
 
         desc: Posted during the initial boot up of MPF.
         '''
-        self.events.process_event_queue()
-        self.events.post("init_phase_5")
+
+        yield from self.events.post_queue_async("init_phase_5")
         '''event: init_phase_5
 
         desc: Posted during the initial boot up of MPF.
         '''
-        self.events.process_event_queue()
 
+    def _init_phases_complete(self, **kwargs):
+        del kwargs
+        ConfigValidator.unload_config_spec()
+
+        self.clear_boot_hold('init')
+
+    @asyncio.coroutine
     def _initialize_platforms(self):
         for platform in list(self.hardware_platforms.values()):
-            platform.initialize()
+            yield from platform.initialize()
             if not platform.features['tickless']:
                 self.clock.schedule_interval(platform.tick, 1 / self.config['mpf']['default_platform_hz'])
 
@@ -203,7 +239,7 @@ class MachineController(LogMixin):
         except KeyError:
             credit_string = 'FREE PLAY'
 
-        self.create_machine_var('credits_string', credit_string, silent=True)
+        self.set_machine_var('credits_string', credit_string)
         '''machine_var: credits_string
 
         desc: Holds a displayable string which shows how many
@@ -216,7 +252,6 @@ class MachineController(LogMixin):
 
     def _validate_config(self):
         self.validate_machine_config_section('machine')
-        self.validate_machine_config_section('hardware')
         self.validate_machine_config_section('game')
 
     def validate_machine_config_section(self, section):
@@ -279,9 +314,20 @@ class MachineController(LogMixin):
 
                 settings['value'] = 0
 
-            self.create_machine_var(name=name, value=settings['value'])
+            self.set_machine_var(name=name, value=settings['value'])
 
         self._load_initial_machine_vars()
+
+        # Create basic system information machine variables
+        self.set_machine_var(name="mpf_version", value=mpf_version)
+        self.set_machine_var(name="mpf_extended_version", value=mpf_extended_version)
+        self.set_machine_var(name="python_version", value=python_version())
+        self.set_machine_var(name="platform", value=platform(aliased=1, terse=0))
+        platform_info = system_alias(system(), release(), version())
+        self.set_machine_var(name="platform_system", value=platform_info[0])
+        self.set_machine_var(name="platform_release", value=platform_info[1])
+        self.set_machine_var(name="platform_version", value=platform_info[2])
+        self.set_machine_var(name="platform_machine", value=machine())
 
     def _load_initial_machine_vars(self):
         """Load initial machine var values from config if they did not get loaded from data."""
@@ -292,9 +338,9 @@ class MachineController(LogMixin):
         for name, element in config.items():
             if name not in self.machine_vars:
                 element = self.config_validator.validate_config("machine_vars", copy.deepcopy(element))
-                self.create_machine_var(name=name,
-                                        value=Util.convert_to_type(element['initial_value'], element['value_type']),
-                                        persist=element['persist'])
+                self.configure_machine_var(name=name, persist=element['persist'])
+                self.set_machine_var(name=name,
+                                     value=Util.convert_to_type(element['initial_value'], element['value_type']))
 
     def _check_crash_queue(self, time):
         del time
@@ -314,7 +360,8 @@ class MachineController(LogMixin):
     def _get_mpfcache_file_name(self):
         cache_dir = tempfile.gettempdir()
         path_hash = hashlib.md5(bytes(self.machine_path, 'UTF-8')).hexdigest()
-        path_hash += '-'.join(self.options['configfile'])
+        for configfile in self.options['configfile']:
+            path_hash += '-'.join(hashlib.md5(bytes(os.path.abspath(configfile), 'UTF-8')).hexdigest())
         result = os.path.join(cache_dir, path_hash)
         return result
 
@@ -445,15 +492,24 @@ class MachineController(LogMixin):
             setattr(self, name, m)
 
     def _load_hardware_platforms(self):
-        if not self.options['force_platform']:
-            for section, platform in self.config['hardware'].items():
-                if platform.lower() != 'default' and section != 'driverboards':
-                    self.add_platform(platform)
-            self.set_default_platform(self.config['hardware']['platform'])
-
-        else:
+        """Load all hardware platforms."""
+        self.validate_machine_config_section('hardware')
+        # if platform is forced use that one
+        if self.options['force_platform']:
             self.add_platform(self.options['force_platform'])
             self.set_default_platform(self.options['force_platform'])
+            return
+
+        # otherwise load all platforms
+        for section, platforms in self.config['hardware'].items():
+            if section == 'driverboards':
+                continue
+            for platform in platforms:
+                if platform.lower() != 'default':
+                    self.add_platform(platform)
+
+        # set default platform
+        self.set_default_platform(self.config['hardware']['platform'][0])
 
     def _load_plugins(self):
         self.debug_log("Loading plugins...")
@@ -485,18 +541,17 @@ class MachineController(LogMixin):
 
                 self.scriptlets.append(scriptlet_obj)
 
+    @asyncio.coroutine
     def reset(self):
         """Reset the machine.
 
         This method is safe to call. It essentially sets up everything from
         scratch without reloading the config files and assets from disk. This
         method is called after a game ends and before attract mode begins.
-
-        Note: This method is not yet implemented.
         """
         self.debug_log('Resetting...')
-        self.events.process_event_queue()
-        self.events.post('machine_reset_phase_1')
+
+        yield from self.events.post_queue_async('machine_reset_phase_1')
         '''Event: machine_reset_phase_1
 
         Desc: The first phase of resetting the machine.
@@ -505,9 +560,12 @@ class MachineController(LogMixin):
         posted), and they're also posted subsequently when the machine is reset
         (after existing the service mode, for example).
 
+        This is a queue event. The machine reset phase 1 will not be complete
+        until the queue is cleared.
+
         '''
-        self.events.process_event_queue()
-        self.events.post('machine_reset_phase_2')
+
+        yield from self.events.post_queue_async('machine_reset_phase_2')
         '''Event: machine_reset_phase_2
 
         Desc: The second phase of resetting the machine.
@@ -516,9 +574,12 @@ class MachineController(LogMixin):
         posted), and they're also posted subsequently when the machine is reset
         (after existing the service mode, for example).
 
+        This is a queue event. The machine reset phase 2 will not be complete
+        until the queue is cleared.
+
         '''
-        self.events.process_event_queue()
-        self.events.post('machine_reset_phase_3')
+
+        yield from self.events.post_queue_async('machine_reset_phase_3')
         '''Event: machine_reset_phase_3
 
         Desc: The third phase of resetting the machine.
@@ -527,10 +588,19 @@ class MachineController(LogMixin):
         posted), and they're also posted subsequently when the machine is reset
         (after existing the service mode, for example).
 
+        This is a queue event. The machine reset phase 3 will not be complete
+        until the queue is cleared.
+
         '''
-        self.events.process_event_queue()
+
+        """Called when the machine reset process is complete."""
         self.debug_log('Reset Complete')
-        self._reset_complete()
+        yield from self.events.post_async('reset_complete')
+        '''event: reset_complete
+
+        desc: The machine reset process is complete
+
+        '''
 
     def add_platform(self, name):
         """Make an additional hardware platform interface available to MPF.
@@ -595,7 +665,12 @@ class MachineController(LogMixin):
     def run(self):
         """Start the main machine run loop."""
         self.info_log("Starting the main run loop.")
-
+        try:
+            self.clock.loop.run_until_complete(self.initialise())
+        except RuntimeError:
+            # do not show a runtime useless runtime error
+            self.error_log("Failed to initialise MPF")
+            return
         self._run_loop()
 
     def stop(self, **kwargs):
@@ -654,49 +729,85 @@ class MachineController(LogMixin):
         """
         pass
 
-    def _reset_complete(self):
-        self.debug_log('Reset Complete')
-        self.events.post('reset_complete')
-        '''event: reset_complete
+    def _write_machine_var_to_disk(self, name):
+        """Write value to disk."""
+        if self.machine_vars[name]['persist'] and self.config['mpf']['save_machine_vars_to_disk']:
+            disk_var = CaseInsensitiveDict()
+            disk_var['value'] = self.machine_vars[name]['value']
 
-        desc: The machine reset process is complete
+            if self.machine_vars[name]['expire_secs']:
+                disk_var['expire'] = self.clock.get_time() + self.machine_vars[name]['expire_secs']
 
-        '''
+            self.machine_var_data_manager.save_key(name, disk_var)
 
-    def set_machine_var(self, name, value, force_events=False):
+    def get_machine_var(self, name):
+        """Return the value of a machine variable.
+
+        Args:
+            name: String name of the variable you want to get that value for.
+
+        Returns:
+            The value of the variable if it exists, or None if the variable
+            does not exist.
+
+        """
+        try:
+            return self.machine_vars[name]['value']
+        except KeyError:
+            return None
+
+    def is_machine_var(self, name):
+        """Return true if machine variable exists."""
+        return name in self.machine_vars
+
+    def configure_machine_var(self, name, persist, expire_secs=None):
+        """Create a new machine variable.
+
+        Args:
+            name: String name of the variable.
+            persist: Boolean as to whether this variable should be saved to
+                disk so it's available the next time MPF boots.
+            expire_secs: Optional number of seconds you'd like this variable
+                to persist on disk for. When MPF boots, if the expiration time
+                of the variable is in the past, it will be loaded with a value
+                of 0. For example, this lets you write the number of credits on
+                the machine to disk to persist even during power off, but you
+                could set it so that those only stay persisted for an hour.
+        """
+        if name not in self.machine_vars:
+            var = CaseInsensitiveDict()
+
+            var['value'] = None
+            var['persist'] = persist
+            var['expire_secs'] = expire_secs
+            self.machine_vars[name] = var
+        else:
+            self.machine_vars[name]['persist'] = persist
+            self.machine_vars[name]['expire_sec'] = expire_secs
+
+    def set_machine_var(self, name, value):
         """Set the value of a machine variable.
 
         Args:
             name: String name of the variable you're setting the value for.
             value: The value you're setting. This can be any Type.
-            force_events: Boolean which will force the event posting, the
-                machine monitor callback, and writing the variable to disk (if
-                it's set to persist). By default these things only happen if
-                the new value is different from the old value.
         """
         if name not in self.machine_vars:
-            self.log.warning("Received request to set machine_var '%s', but "
-                             "that is not a valid machine_var.", name)
-            return
+            self.configure_machine_var(name=name, persist=False, expire_secs=None)
+            prev_value = None
+            change = True
+        else:
+            prev_value = self.machine_vars[name]['value']
+            try:
+                change = value - prev_value
+            except TypeError:
+                change = prev_value != value
 
-        prev_value = self.machine_vars[name]['value']
+        # set value
         self.machine_vars[name]['value'] = value
 
-        try:
-            change = value - prev_value
-        except TypeError:
-            change = prev_value != value
-
-        if change or force_events:
-
-            if self.machine_vars[name]['persist'] and self.config['mpf']['save_machine_vars_to_disk']:
-                disk_var = CaseInsensitiveDict()
-                disk_var['value'] = value
-
-                if self.machine_vars[name]['expire_secs']:
-                    disk_var['expire'] = self.clock.get_time() + self.machine_vars[name]['expire_secs']
-
-                self.machine_var_data_manager.save_key(name, disk_var)
+        if change:
+            self._write_machine_var_to_disk(name)
 
             self.debug_log("Setting machine_var '%s' to: %s, (prior: %s, "
                            "change: %s)", name, value, prev_value,
@@ -729,53 +840,6 @@ class MachineController(LogMixin):
                     callback(name=name, value=value,
                              prev_value=prev_value, change=change)
 
-    def get_machine_var(self, name):
-        """Return the value of a machine variable.
-
-        Args:
-            name: String name of the variable you want to get that value for.
-
-        Returns:
-            The value of the variable if it exists, or None if the variable
-            does not exist.
-
-        """
-        try:
-            return self.machine_vars[name]['value']
-        except KeyError:
-            return None
-
-    def is_machine_var(self, name):
-        """Return true if machine variable exists."""
-        return name in self.machine_vars
-
-    # pylint: disable-msg=too-many-arguments
-    def create_machine_var(self, name, value=0, persist=False, expire_secs=None, silent=False):
-        """Create a new machine variable.
-
-        Args:
-            name: String name of the variable.
-            value: The value of the variable. This can be any Type.
-            persist: Boolean as to whether this variable should be saved to
-                disk so it's available the next time MPF boots.
-            expire_secs: Optional number of seconds you'd like this variable
-                to persist on disk for. When MPF boots, if the expiration time
-                of the variable is in the past, it will be loaded with a value
-                of 0. For example, this lets you write the number of credits on
-                the machine to disk to persist even during power off, but you
-                could set it so that those only stay persisted for an hour.
-        """
-        var = CaseInsensitiveDict()
-
-        var['value'] = value
-        var['persist'] = persist
-        var['expire_secs'] = expire_secs
-
-        self.machine_vars[name] = var
-
-        if not silent:
-            self.set_machine_var(name, value, force_events=True)
-
     def remove_machine_var(self, name):
         """Remove a machine variable by name.
 
@@ -807,50 +871,48 @@ class MachineController(LogMixin):
 
     def get_platform_sections(self, platform_section, overwrite):
         """Return platform section."""
-        if not self.options['force_platform']:
-            if not overwrite:
-                if self.config['hardware'][platform_section] != 'default':
-                    return self.hardware_platforms[self.config['hardware'][platform_section]]
-                else:
-                    return self.default_platform
-            else:
-                try:
-                    return self.hardware_platforms[overwrite]
-                except KeyError:
-                    self.add_platform(overwrite)
-                    return self.hardware_platforms[overwrite]
-        else:
+        if self.options['force_platform']:
             return self.default_platform
+
+        if not overwrite:
+            if self.config['hardware'][platform_section][0] != 'default':
+                return self.hardware_platforms[self.config['hardware'][platform_section][0]]
+            else:
+                return self.default_platform
+        else:
+            try:
+                return self.hardware_platforms[overwrite]
+            except KeyError:
+                raise AssertionError("Platform \"{}\" has not been loaded. Please add it to your \"hardware\" section.".
+                                     format(overwrite))
 
     def register_boot_hold(self, hold):
         """Register a boot hold."""
-        if self.is_init_done:
+        if self.is_init_done.is_set():
             raise AssertionError("Register hold after init_done")
         self._boot_holds.add(hold)
 
     def clear_boot_hold(self, hold):
         """Clear a boot hold."""
-        if self.is_init_done:
+        if self.is_init_done.is_set():
             raise AssertionError("Clearing hold after init_done")
         self._boot_holds.remove(hold)
         self.debug_log('Clearing boot hold %s. Holds remaining: %s', hold, self._boot_holds)
         if not self._boot_holds:
-            self.init_done()
+            self.is_init_done.set()
 
+    @asyncio.coroutine
     def init_done(self):
         """Finish init.
 
         Called when init is done and all boot holds are cleared.
         """
-        self.is_init_done = True
-
-        self.events.post("init_done")
+        yield from self.events.post_async("init_done")
         '''event: init_done
 
         desc: Posted when the initial (one-time / boot) init phase is done. In
         other words, once this is posted, MPF is booted and ready to go.
         '''
-        self.events.process_event_queue()
 
         ConfigValidator.unload_config_spec()
-        self.reset()
+        yield from self.reset()

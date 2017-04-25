@@ -3,19 +3,20 @@
 This class overlays an existing WPC-compatible platform interface to work with
 Mark Sunnucks's System 11 interface board.
 """
-
+import asyncio
 import logging
 
-from typing import Set
-from typing import Tuple
+from typing import Any, Optional, Set, Tuple, TYPE_CHECKING
 
-from mpf.core.config_validator import ConfigDict
 from mpf.core.machine import MachineController
 from mpf.core.platform import DriverPlatform, DriverConfig
 
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
 from mpf.core.delays import DelayManager
+
+if TYPE_CHECKING:
+    from mpf.core.config_validator import ConfigDict
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -33,7 +34,7 @@ class HardwarePlatform(DriverPlatform):
         self.platform = None            # type: DriverPlatform
 
         self.system11_config = None     # type: ConfigDict
-        self.snux_config = None
+        self.snux_config = None         # type: Any
 
         self.a_side_queue = set()       # type: Set[Tuple[DriverPlatformInterface, PulseSettings, HoldSettings]]
         self.c_side_queue = set()       # type: Set[Tuple[DriverPlatformInterface, PulseSettings, HoldSettings]]
@@ -43,8 +44,8 @@ class HardwarePlatform(DriverPlatform):
 
         self.a_side_done_time = 0
         self.c_side_done_time = 0
-        self.drivers_holding_a_side = set()
-        self.drivers_holding_c_side = set()
+        self.drivers_holding_a_side = set()     # type: Set[DriverPlatformInterface]
+        self.drivers_holding_c_side = set()     # type: Set[DriverPlatformInterface]
         self.a_side_enabled = True
         self.c_side_enabled = False
 
@@ -67,6 +68,7 @@ class HardwarePlatform(DriverPlatform):
     def _null_log_handler(self, *args, **kwargs):
         pass
 
+    @asyncio.coroutine
     def initialize(self):
         """Automatically called by the Platform class after all the core modules are loaded."""
         # load coil platform
@@ -117,15 +119,11 @@ class HardwarePlatform(DriverPlatform):
         self.snux_config = self.machine.config_validator.validate_config(
             'snux', self.machine.config['snux'])
 
-    def tick(self, dt):
+    def tick(self):
         """Snux main loop.
 
         Called based on the timer_tick event
-
-        Args:
-            dt: time since last call
         """
-        del dt
         if self.a_side_queue:
             self._service_a_side()
         elif self.c_side_queue:
@@ -133,8 +131,8 @@ class HardwarePlatform(DriverPlatform):
         elif self.c_side_enabled and not self.c_side_active:
             self._enable_a_side()
 
-    def _flash_diag_led(self, dt):
-        del dt
+    def _flash_diag_led(self):
+        """Flash diagnosis LED."""
         self.snux_config['diag_led_driver'].pulse(250)
 
     def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
@@ -145,7 +143,7 @@ class HardwarePlatform(DriverPlatform):
         """
         orig_number = number
 
-        if (number.endswith('a') or number.lower().endswith('c')):
+        if number and (number.endswith('a') or number.lower().endswith('c')):
 
             number = number[:-1]
 
@@ -211,17 +209,15 @@ class HardwarePlatform(DriverPlatform):
         """Clear a rule for a driver on the snux board."""
         self.platform.clear_hw_rule(switch, coil)
 
-    def driver_action(self, driver, pulse_settings: PulseSettings, hold_settings: HoldSettings):
+    def driver_action(self, driver, pulse_settings: Optional[PulseSettings], hold_settings: Optional[HoldSettings]):
         """Add a driver action for a switched driver to the queue (for either the A-side or C-side queue).
 
         Args:
             driver: A reference to the original platform class Driver instance.
-            milliseconds: Integer of the number of milliseconds this action is
-                for. 0 = pulse, -1 = enable (hold), any other value is a timed
-                action (either pulse or long_pulse)
+            pulse_settings: Settings for the pulse or None
+            hold_settings:Settings for hold or None
 
         This action will be serviced immediately if it can, or ASAP otherwise.
-
         """
         if driver in self.a_drivers:
             self.a_side_queue.add((driver, pulse_settings, hold_settings))
@@ -365,6 +361,10 @@ class HardwarePlatform(DriverPlatform):
             self.drivers_holding_c_side = set()
             self.c_side_done_time = 0
             self.c_side_enabled = False
+
+    def validate_coil_section(self, driver, config):
+        """Validate coil config for platform."""
+        return self.platform.validate_coil_section(driver, config)
 
 
 class SnuxDriver(DriverPlatformInterface):

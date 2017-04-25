@@ -46,7 +46,7 @@ class TestDropTargets(MpfTestCase):
 
         # it should reset after 1s
         self.advance_time_and_run(.5)
-        self.machine.coils.coil1.pulse.assert_called_once_with()
+        self.machine.coils.coil1.pulse.assert_called_once_with(100)
 
         # after another 100ms the switches releases
         self.release_switch_and_run("switch1", 0)
@@ -69,7 +69,7 @@ class TestDropTargets(MpfTestCase):
         self.post_event("knock_knock")
         self.advance_time_and_run(.3)
         assert not self.machine.coils.coil2.pulse.called
-        self.machine.coils.coil3.pulse.assert_called_once_with()
+        self.machine.coils.coil3.pulse.assert_called_once_with(100)
 
         # ignore ms means the state is not updated yet
         self.assertFalse(self.machine.drop_targets.left6.complete)
@@ -84,7 +84,7 @@ class TestDropTargets(MpfTestCase):
         self.post_event("reset_target")
         self.advance_time_and_run(.3)
         assert not self.machine.coils.coil3.pulse.called
-        self.machine.coils.coil2.pulse.assert_called_once_with()
+        self.machine.coils.coil2.pulse.assert_called_once_with(100)
 
         # ignore ms means the state is not updated yet
         self.assertTrue(self.machine.drop_targets.left6.complete)
@@ -167,7 +167,7 @@ class TestDropTargets(MpfTestCase):
         target.reset()
         self.advance_time_and_run()
 
-        self.machine.coils.coil2.pulse.assert_called_once_with()
+        self.machine.coils.coil2.pulse.assert_called_once_with(100)
         self.machine.coils.coil2.pulse.reset_mock()
         assert not self.machine.coils.coil3.pulse.called
         self.release_switch_and_run("switch6", 1)
@@ -176,7 +176,7 @@ class TestDropTargets(MpfTestCase):
         target.knockdown()
         self.advance_time_and_run()
 
-        self.machine.coils.coil3.pulse.assert_called_once_with()
+        self.machine.coils.coil3.pulse.assert_called_once_with(100)
         self.machine.coils.coil3.pulse.reset_mock()
         assert not self.machine.coils.coil2.pulse.called
         self.hit_switch_and_run("switch6", 1)

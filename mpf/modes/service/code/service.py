@@ -29,8 +29,9 @@ up_events: list|str|sw_service_up_active
 down_events: list|str|sw_service_down_active
 '''
 
+    @asyncio.coroutine
     def _service_mode_exit(self):
-        self.machine.service.stop_service()
+        yield from self.machine.service.stop_service()
 
     def _get_key(self):
         return Util.race({
@@ -70,7 +71,7 @@ down_events: list|str|sw_service_down_active
         self.machine.events.post("service_main_menu")
         yield from self._service_mode_main_menu()
 
-        self._service_mode_exit()
+        yield from self._service_mode_exit()
 
     def _update_main_menu(self, items: List[ServiceMenuEntry], position: int):
         self.machine.events.post("service_menu_deselected")

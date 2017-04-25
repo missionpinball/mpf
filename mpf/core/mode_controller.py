@@ -2,6 +2,15 @@
 import importlib
 import os
 from collections import namedtuple
+
+from typing import Callable
+from typing import Dict
+from typing import List
+from typing import Tuple
+from typing import Optional
+
+from mpf.core.events import QueuedEvent
+from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
 from mpf.core.config_processor import ConfigProcessor
 from mpf.core.utility_functions import Util
@@ -12,10 +21,6 @@ RemoteMethod = namedtuple('RemoteMethod', ['method', 'config_section', 'kwargs',
 be called on mode_start or mode_stop.
 
 """
-
-# Need to define RemoteMethod before import Mode since the mode module imports
-# it. So this breaks some rules now. Probably should figure out some other way
-# to do this? TODO
 
 
 class ModeController(MpfController):
@@ -29,24 +34,25 @@ class ModeController(MpfController):
 
     """
 
-    def __init__(self, machine):
+    def __init__(self, machine: MachineController) -> None:
         """Initialise mode controller."""
         super().__init__(machine)
 
-        self.queue = None  # ball ending event queue
+        # ball ending event queue
+        self.queue = None                           # type: QueuedEvent
 
-        self.active_modes = list()
+        self.active_modes = list()                  # type: List[Mode]
         self.mode_stop_count = 0
 
-        self._machine_mode_folders = dict()
-        self._mpf_mode_folders = dict()
+        self._machine_mode_folders = dict()         # type: Dict[str, str]
+        self._mpf_mode_folders = dict()             # type: Dict[str, str]
 
         # The following two lists hold namedtuples of any remote components
         # that need to be notified when a mode object is created and/or
         # started.
-        self.loader_methods = list()
-        self.start_methods = list()
-        self.stop_methods = list()
+        self.loader_methods = list()                # type: List[RemoteMethod]
+        self.start_methods = list()                 # type: List[RemoteMethod]
+        self.stop_methods = list()                  # type: List[Tuple[Callable[[Mode], None], int]]
 
         if 'modes' in self.machine.config:
             self.machine.events.add_handler('init_phase_2',
@@ -58,14 +64,14 @@ class ModeController(MpfController):
         self.machine.events.add_handler('ball_starting', self._ball_starting,
                                         priority=0)
 
-        self.machine.events.add_handler('player_add_success',
+        self.machine.events.add_handler('player_added',
                                         self._player_added, priority=0)
 
-        self.machine.events.add_handler('player_turn_start',
+        self.machine.events.add_handler('player_turn_started',
                                         self._player_turn_start,
                                         priority=1000000)
 
-        self.machine.events.add_handler('player_turn_stop',
+        self.machine.events.add_handler('player_turn_stopped',
                                         self._player_turn_stop,
                                         priority=1000000)
 
@@ -151,6 +157,56 @@ class ModeController(MpfController):
     def _load_mode_config_spec(self, mode_string, mode_class):
         self.machine.config_validator.load_mode_config_spec(mode_string, mode_class.get_config_spec())
 
+    def _load_mode_from_machine_folder(self, mode_string: str, code_path: str) -> Optional[Mode]:
+        """Load mode from machine folder and return it."""
+        # this will only work for file_name.class_name
+        try:
+            file_name, class_name = code_path.split('.')
+        except ValueError:
+            return None
+
+        # check if that mode name exist in machine folder
+        if mode_string not in self._machine_mode_folders:
+            return None
+
+        # try to import
+        try:
+            i = importlib.import_module(
+                self.machine.config['mpf']['paths']['modes'] + '.' +
+                self._machine_mode_folders[mode_string] + '.code.' +
+                file_name)
+        except ImportError:
+            return None
+
+        return getattr(i, class_name, None)
+
+    @staticmethod
+    def _load_mode_from_full_path(code_path: str) -> Optional[Mode]:
+        """Load mode from full path.
+
+        This is used for built-in modes like attract and game.
+        """
+        try:
+            return Util.string_to_class(code_path)
+        except ImportError:
+            return None
+
+    def _load_mode_code(self, mode_string: str, code_path: str) -> Mode:
+        """Load code for mode."""
+        # First check the machine folder
+        mode_class = self._load_mode_from_machine_folder(mode_string, code_path)
+        if mode_class:
+            self.debug_log("Loaded code for mode %s from machine_folder", mode_string)
+            return mode_class
+
+        # load from full path
+        mode_class = self._load_mode_from_full_path(code_path)
+        if mode_class:
+            self.debug_log("Loaded code for mode %s from full path", mode_string)
+            return mode_class
+
+        raise AssertionError("Could not load code for mode {} from {}".format(mode_string, code_path))
+
     def _load_mode(self, mode_string):
         """Load a mode, reads in its config, and creates the Mode object.
 
@@ -173,34 +229,8 @@ class ModeController(MpfController):
 
         # Figure out where the code is for this mode.
         if config['mode']['code']:
-            try:  # First check the machine folder
-                i = importlib.import_module(
-                    self.machine.config['mpf']['paths']['modes'] + '.' +
-                    self._machine_mode_folders[mode_string] + '.code.' +
-                    config['mode']['code'].split('.')[0])
-
-                mode_class = getattr(i, config['mode']['code'].split('.')[1])
-
-                self.debug_log("Loaded code from %s",
-                               self.machine.config['mpf']['paths']['modes'] + '.' +
-                               self._machine_mode_folders[mode_string] + '.code.' +
-                               config['mode']['code'].split('.')[0])
-
-            except (KeyError, ImportError):     # load path
-                try:
-                    mode_class = Util.string_to_class(config['mode']['code'])
-                except ImportError:     # code is in the mpf folder. legacy
-                    i = importlib.import_module(
-                        'mpf.' + self.machine.config['mpf']['paths']['modes'] + '.' +
-                        self._mpf_mode_folders[mode_string] + '.code.' +
-                        config['mode']['code'].split('.')[0])
-
-                    mode_class = getattr(i, config['mode']['code'].split('.')[1])
-
-                    self.debug_log("Loaded code from %s",
-                                   'mpf.' + self.machine.config['mpf']['paths']['modes'] +
-                                   '.' + self._mpf_mode_folders[mode_string] + '.code.' +
-                                   config['mode']['code'].split('.')[0])
+            # First check the machine folder
+            mode_class = self._load_mode_code(mode_string, config['mode']['code'])
 
         else:  # no code specified, so using the default Mode class
             mode_class = Mode
@@ -377,6 +407,14 @@ class ModeController(MpfController):
 
         self.start_methods.sort(key=lambda x: x.priority, reverse=True)
 
+    def remove_start_method(self, start_method, config_section_name=None, priority=0, **kwargs):
+        """Remove an existing start method."""
+        method = RemoteMethod(method=start_method, config_section=config_section_name,
+                              priority=priority, kwargs=kwargs)
+
+        if method in self.start_methods:
+            self.start_methods.remove(method)
+
     def register_stop_method(self, callback, priority=0):
         """Register a method which is called when the mode is stopped.
 
@@ -391,7 +429,12 @@ class ModeController(MpfController):
 
         self.stop_methods.sort(key=lambda x: x[1], reverse=True)
 
-    def set_mode_state(self, mode, active):
+    def remove_stop_method(self, callback, priority=0):
+        """Remove an existing stop method."""
+        if (callback, priority) in self.stop_methods:
+            self.stop_methods.remove((callback, priority))
+
+    def set_mode_state(self, mode: Mode, active: bool):
         """Called when a mode goes active or inactive."""
         if active:
             self.active_modes.append(mode)

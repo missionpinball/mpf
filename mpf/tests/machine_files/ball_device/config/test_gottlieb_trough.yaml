@@ -30,6 +30,7 @@ ball_devices:
     outhole:
         tags: drain
         ball_switches: outhole
+        eject_timeouts: 2s
         eject_coil: outhole
         eject_targets: trough
         confirm_eject_type: target

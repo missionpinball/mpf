@@ -181,12 +181,11 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
 
         return states
 
-    def tick(self, dt):
+    def tick(self):
         """Check the P3-ROC for any events (switch state changes).
 
         Also tickles the watchdog and flushes any queued commands to the P3-ROC.
         """
-        del dt
         # Get P3-ROC events
         for event in self.proc.get_events():
             event_type = event['type']

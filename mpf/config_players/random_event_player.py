@@ -16,6 +16,11 @@ class RandomEventPlayer(ConfigPlayer):
         super().__init__(machine)
         self._machine_wide_dict = {}
 
+    @staticmethod
+    def is_entry_valid_outside_mode(settings) -> bool:
+        """Return true if scope is not player."""
+        return settings['scope'] != "player"
+
     def _get_randomizer(self, settings, context, calling_context):
         key = "random_{}.{}".format(context, calling_context)
         if settings['scope'] == "player":
@@ -32,8 +37,8 @@ class RandomEventPlayer(ConfigPlayer):
             if settings['force_all']:
                 self.machine.game.player[key].force_all = True
 
-            if settings['force_different']:
-                self.machine.game.player[key].force_different = True
+            if not settings['force_different']:
+                self.machine.game.player[key].force_different = False
 
             return self.machine.game.player[key]
 
@@ -44,8 +49,8 @@ class RandomEventPlayer(ConfigPlayer):
             if settings['force_all']:
                 self._machine_wide_dict[key].force_all = True
 
-            if settings['force_different']:
-                self._machine_wide_dict[key].force_different = True
+            if not settings['force_different']:
+                self._machine_wide_dict[key].force_different = False
 
             return self._machine_wide_dict[key]
 

@@ -1,0 +1,18 @@
+#config_version=4
+mode:
+  start_events: start_mode4
+  stop_events: stop_mode4
+
+multiballs:
+    mb4_autostart:
+        ball_count: 2
+        ball_count_type: total
+        shoot_again: 0s
+        start_events: multiball_lock_lock_mb_autostart_full
+        ball_locks: bd_lock
+
+
+multiball_locks:
+    lock_mb_autostart:
+        lock_devices: bd_lock
+        balls_to_lock: 1

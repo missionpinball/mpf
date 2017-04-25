@@ -154,12 +154,11 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
         self.dmd = PROCDMD(self.pinproc, self.proc, self.machine)
         return self.dmd
 
-    def tick(self, dt):
+    def tick(self):
         """Check the P-ROC for any events (switch state changes or notification that a DMD frame was updated).
 
         Also tickles the watchdog and flushes any queued commands to the P-ROC.
         """
-        del dt
         # Get P-ROC events (switches & DMD frames displayed)
         for event in self.proc.get_events():
             event_type = event['type']

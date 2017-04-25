@@ -5,7 +5,7 @@ from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
 
 
-@DeviceMonitor("activation_count")
+@DeviceMonitor("active_switches")
 class TimedSwitch(SystemWideDevice, ModeDevice):
 
     """Timed Switch device."""
@@ -17,7 +17,7 @@ class TimedSwitch(SystemWideDevice, ModeDevice):
     def __init__(self, machine, name):
         """Initialize Timed Switch."""
         super().__init__(machine, name)
-        self.activation_count = 0
+        self.active_switches = set()
 
     def validate_and_parse_config(self, config: dict, is_mode_config: bool) -> dict:
         """Validate and parse config."""
@@ -29,9 +29,9 @@ class TimedSwitch(SystemWideDevice, ModeDevice):
                     "{}_{}".format(self.name, x)]
 
         if config['state'] == 'active':
-            config['state'] = True
+            config['state'] = 1
         elif config['state'] == 'inactive':
-            config['state'] = False
+            config['state'] = 0
 
         return config
 
@@ -61,11 +61,11 @@ class TimedSwitch(SystemWideDevice, ModeDevice):
     def _register_switch_handlers(self):
         for switch in self.config['switches']:
             switch.add_handler(self._activate,
-                               state=1 if self.config['state'] else 0,
-                               ms=self.config['time'], return_info=False)
+                               state=self.config['state'] ^ 0,
+                               ms=self.config['time'], return_info=True)
             switch.add_handler(self._deactivate,
-                               state=0 if self.config['state'] else 1,
-                               ms=0, return_info=False)
+                               state=self.config['state'] ^ 1,
+                               ms=0, return_info=True)
 
     def _remove_switch_handlers(self):
         for switch in self.config['switches']:
@@ -74,22 +74,30 @@ class TimedSwitch(SystemWideDevice, ModeDevice):
             switch.remove_handler(self._deactivate,
                                   state=0 if self.config['state'] else 1)
 
-    def _activate(self):
-        if not self.activation_count:
+    def _activate(self, switch_name, state, ms):
+        del state, ms
+        if not self.active_switches:
             for event in self.config['events_when_active']:
                 self.machine.events.post(event)
 
-        self.activation_count += 1
+        self.active_switches.add(switch_name)
 
-    def _deactivate(self):
-        self.activation_count -= 1
+    def _deactivate(self, switch_name, state, ms):
+        del state, ms
 
-        if not self.activation_count:
-            for event in self.config['events_when_released']:
-                self.machine.events.post(event)
+        try:
 
-        if self.activation_count < 0:
-            self.activation_count = 0
+            # why 'try' with 'remove' instead of 'discard'? Because we only
+            # want to post the event if it was active and there is no more
+            # active
+
+            self.active_switches.remove(switch_name)
+
+            if not self.active_switches:
+                for event in self.config['events_when_released']:
+                    self.machine.events.post(event)
+        except KeyError:
+            pass
 
         '''event: flipper_cradle
 

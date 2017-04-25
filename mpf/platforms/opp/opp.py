@@ -7,26 +7,25 @@ boards.
 import logging
 import asyncio
 
-from typing import Dict
-from typing import List
-from typing import Set
-
+from typing import TYPE_CHECKING
 from mpf.platforms.base_serial_communicator import BaseSerialCommunicator
-from mpf.platforms.opp.opp_coil import OPPSolenoid
 
 from mpf.platforms.opp.opp_coil import OPPSolenoidCard
-from mpf.platforms.opp.opp_incand import OPPIncand
 from mpf.platforms.opp.opp_incand import OPPIncandCard
-from mpf.platforms.opp.opp_neopixel import OPPNeopixel
 from mpf.platforms.opp.opp_neopixel import OPPNeopixelCard
 from mpf.platforms.opp.opp_switch import OPPInputCard
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings, \
     DriverConfig
 
-# Minimum firmware versions needed for this module
-from mpf.platforms.opp.opp_switch import OPPSwitch
+if TYPE_CHECKING:
+    from typing import Dict, List, Set
+    from mpf.platforms.opp.opp_coil import OPPSolenoid
+    from mpf.platforms.opp.opp_incand import OPPIncand
+    from mpf.platforms.opp.opp_neopixel import OPPNeopixel
+    from mpf.platforms.opp.opp_switch import OPPSwitch
 
+# Minimum firmware versions needed for this module
 MIN_FW = 0x00000100
 BAD_FW_VERSION = 0x01020304
 
@@ -96,9 +95,10 @@ class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             ord(OppRs232Intf.GET_GET_VERS_CMD): self.vers_resp,
         }
 
+    @asyncio.coroutine
     def initialize(self):
         """Initialise connections to OPP hardware."""
-        self._connect_to_hardware()
+        yield from self._connect_to_hardware()
         self.opp_commands[ord(OppRs232Intf.READ_GEN2_INP_CMD)] = self.read_gen2_inp_resp
         self._poll_task = self.machine.clock.loop.create_task(self._poll_sender())
         self._poll_task.add_done_callback(self._done)
@@ -148,6 +148,7 @@ class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             # TODO: This means synchronization is lost.  Send EOM characters
             #  until they come back
 
+    @asyncio.coroutine
     def _connect_to_hardware(self):
         """Connect to each port from the config.
 
@@ -155,8 +156,9 @@ class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         and to register themselves.
         """
         for port in self.config['ports']:
-            self.serial_connections.add(OPPSerialCommunicator(
-                platform=self, port=port, baud=self.config['baud']))
+            comm = OPPSerialCommunicator(platform=self, port=port, baud=self.config['baud'])
+            yield from comm.connect()
+            self.serial_connections.add(comm)
 
     def register_processor_connection(self, serial_number, communicator):
         """Register the processors to the platform.
@@ -488,7 +490,7 @@ class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         if number not in self.solDict:
             raise AssertionError("A request was made to configure an OPP solenoid "
-                                 "with number {} which doesn't exist".format(config['number']))
+                                 "with number {} which doesn't exist".format(number))
 
         # Use new update individual solenoid command
         opp_sol = self.solDict[number]
@@ -496,8 +498,8 @@ class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         opp_sol.platform_settings = platform_settings
         self.log.debug("Configure driver %s", number)
 
-        _, _, coil_num = number.split("-")
-        coil_num = int(coil_num)
+        _, _, coil_num_str = number.split("-")
+        coil_num = int(coil_num_str)
         # calculate the default input and remove it by default
         switch_num = int(coil_num - (coil_num % 4)) * 2 + (coil_num % 4)
         self._remove_switch_coil_mapping(switch_num, opp_sol)

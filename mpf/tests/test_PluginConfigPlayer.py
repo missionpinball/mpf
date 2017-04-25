@@ -11,7 +11,7 @@ def _register_plugin_config_players(self):
     TestConfigPlayer2.register_with_mpf(self)
     TestConfigPlayer3.register_with_mpf(self)
 
-TestMachineController._register_plugin_config_players = _register_plugin_config_players
+TestMachineController._register_plugin_config_players = _register_plugin_config_players     # type: ignore
 
 
 class TestConfigPlayer(PluginPlayer):
@@ -148,6 +148,10 @@ class TestPluginConfigPlayer(MpfBcpTestCase):
         self._bcp_client.send = MagicMock()
 
     def test_plugin_config_player(self):
+        # Setup BCP to monitor mode events
+        self._bcp_client.receive_queue.put_nowait(('monitor_start', {'category': 'modes'}))
+        self.advance_time_and_run()
+
         self.assertIn('tests', self.machine.show_controller.show_players)
         self.assertIn('test2s', self.machine.show_controller.show_players)
 
@@ -181,7 +185,8 @@ class TestPluginConfigPlayer(MpfBcpTestCase):
         self.machine.modes['mode1'].start()
         self.advance_time_and_run()
         self.assertTrue(self.machine.modes['mode1'].active)
-        self._bcp_client.send.assert_called_with('mode_start', {'name': 'mode1', 'priority': 400})
+        self._bcp_client.send.assert_called_with('mode_start', {'name': 'mode1', 'priority': 400,
+                                                                'running_modes': [('attract', 10), ('mode1', 400)]})
         self._bcp_client.send.reset_mock()
 
         # event4 is in test_player for mode1, so make sure it sends now
@@ -195,9 +200,9 @@ class TestPluginConfigPlayer(MpfBcpTestCase):
         self.machine.modes['mode1'].stop()
         self.advance_time_and_run()
         self._bcp_client.send.assert_has_calls([
-            call('mode_stop', {'name': 'mode1'}),
             call('trigger', {'context': 'mode1', 'name': 'tests_clear'}),
-            call('trigger', {'context': 'mode1', 'name': 'test2s_clear'})]
+            call('trigger', {'context': 'mode1', 'name': 'test2s_clear'}),
+            call('mode_stop', {'name': 'mode1', 'running_modes': [('attract', 10)]})]
         )
         self._bcp_client.send.reset_mock()
 

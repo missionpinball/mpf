@@ -1,5 +1,6 @@
 """Contains the parent class for all platforms."""
 import abc
+import asyncio
 from collections import namedtuple
 
 from typing import Optional
@@ -41,6 +42,7 @@ class BasePlatform(metaclass=abc.ABCMeta):
             self.log.debug(msg, *args, **kwargs)
 
     @abc.abstractmethod
+    @asyncio.coroutine
     def initialize(self):
         """Initialise the platform.
 
@@ -48,7 +50,7 @@ class BasePlatform(metaclass=abc.ABCMeta):
         """
         pass
 
-    def tick(self, dt):
+    def tick(self):
         """Called once per machine loop.
 
         Subclass this method in a platform module to perform periodic updates
@@ -265,8 +267,8 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
         Returns: Validated config.
         """
         base_spec = ["device"]
-        if self.__class__.get_switch_config_section():
-            base_spec.append(self.__class__.get_switch_config_section())
+        if self.get_switch_config_section():
+            base_spec.append(self.get_switch_config_section())
         switch.machine.config_validator.validate_config(
             "switches", config, switch.name,
             base_spec=base_spec)

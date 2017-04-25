@@ -21,16 +21,13 @@ class ExtraBallController(MpfController):
 
         self.enabled = self.config['enabled']
 
-        if not self.enabled:
-            return
-
         self.events_only = self.config['events_only']
 
-        self.machine.events.add_handler('player_add_success',
+        self.machine.events.add_handler('player_added',
                                         self._player_added)
-        self.machine.events.add_handler('player_turn_start',
+        self.machine.events.add_handler('player_turn_started',
                                         self._player_turn_start)
-        self.machine.events.add_handler('player_turn_stop',
+        self.machine.events.add_handler('player_turn_stopped',
                                         self._player_turn_stop)
         self.machine.events.add_handler('award_extra_ball',
                                         self.award)
@@ -92,6 +89,9 @@ class ExtraBallController(MpfController):
 
     def _player_turn_start(self, player, **kwargs):
         del kwargs
+
+        if not self.enabled:
+            return
 
         player.extra_balls_current_ball = 0
 

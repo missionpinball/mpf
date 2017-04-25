@@ -34,3 +34,5 @@ coils:
     c_side_c2:
         number: c12c
         default_hold_power: 0.5
+    c_virtual:
+        number:

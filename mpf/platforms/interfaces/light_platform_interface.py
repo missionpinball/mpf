@@ -24,10 +24,10 @@ class LightPlatformDirectFade(LightPlatformInterface, metaclass=abc.ABCMeta):
 
     """Implement a light which can set fade and brightness directly."""
 
-    def __init__(self, loop: AbstractEventLoop):
+    def __init__(self, loop: AbstractEventLoop) -> None:
         """Initialise light."""
         self.loop = loop
-        self.task = None
+        self.task = None    # type: asyncio.Task
 
     @abc.abstractmethod
     def get_max_fade_ms(self) -> int:
@@ -78,7 +78,7 @@ class LightPlatformSoftwareFade(LightPlatformDirectFade, metaclass=abc.ABCMeta):
 
     """Implement a light which cannot fade on its own."""
 
-    def __init__(self, loop: AbstractEventLoop, software_fade_ms: int):
+    def __init__(self, loop: AbstractEventLoop, software_fade_ms: int) -> None:
         """Initialise light with software fade."""
         super().__init__(loop)
         self.software_fade_ms = software_fade_ms

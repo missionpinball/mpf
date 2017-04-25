@@ -1,3 +1,4 @@
+from functools import partial
 from queue import Queue
 from unittest.mock import MagicMock, patch, call
 
@@ -12,6 +13,8 @@ class TestBcpClient(MockBcpClient):
         self.exit_on_close = False
 
     def send(self, bcp_command, kwargs):
+        if bcp_command == "reset":
+            self.receive_queue.put_nowait(("reset_complete", {}))
         self.queue.put((bcp_command, kwargs))
 
     def receive(self, bcp_command, callback=None, rawbytes=None, **kwargs):
@@ -21,6 +24,20 @@ class TestBcpClient(MockBcpClient):
 
         if callback:
             callback()
+
+class MockMcClock:
+
+    def __init__(self, clock):
+        self._clock = clock
+
+    def __getattr__(self, item):
+        return getattr(self._clock, item)
+
+    def schedule_once(self, callback, timeout=0):
+        self._clock.schedule_once(partial(callback, dt=None), timeout)
+
+    def schedule_interval(self, callback, timeout):
+        self._clock.schedule_interval(partial(callback, dt=None), timeout)
 
 
 class TestBcp(MpfTestCase):
@@ -40,7 +57,7 @@ class TestBcp(MpfTestCase):
 
         client = self.machine.bcp.transport.get_named_client("local_display")
         self.kivy = MagicMock()
-        self.kivy.clock.Clock = self.machine.clock
+        self.kivy.clock.Clock = MockMcClock(self.machine.clock)
         modules = {
             'kivy': self.kivy,
             'kivy.clock': self.kivy.clock,
@@ -75,14 +92,14 @@ class TestBcp(MpfTestCase):
         super().tearDown()
 
     def test_bcp_mpf_and_mpf_mc(self):
-        self.machine.events.post('ball_started', ball=17,
-                                 player=23)
+        client = self.machine.bcp.transport.get_named_client("local_display")
+        self.machine.bcp.interface.add_registered_trigger_event_for_client(client, 'ball_started')
+        self.machine.bcp.interface.add_registered_trigger_event_for_client(client, 'ball_ended')
+        self.machine.events.post('ball_started', ball=17, player=23)
 
         self.machine_run()
 
-        self.mc.events.post.assert_has_calls([
-            call("ball_started", ball=17, player=23),
-        ])
+        self.mc.events.post.assert_has_calls([call("ball_started", ball=17, player=23), ])
         self.mc.events.post.reset_mock()
 
         self.machine.events.post('ball_ended')

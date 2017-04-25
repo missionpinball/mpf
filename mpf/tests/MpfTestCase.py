@@ -38,7 +38,6 @@ class TestMachineController(MachineController):
     def __init__(self, mpf_path, machine_path, options, config_patches, clock, mock_data,
                  enable_plugins=False):
         self.test_config_patches = config_patches
-        self.test_init_complete = False
         self._enable_plugins = enable_plugins
         self._test_clock = clock
         self._mock_data = mock_data
@@ -58,10 +57,6 @@ class TestMachineController(MachineController):
         for socket, callback in self.clock.read_sockets.items():
             if socket.ready():
                 callback()
-
-    def _reset_complete(self):
-        self.test_init_complete = True
-        super()._reset_complete()
 
     def _register_plugin_config_players(self):
         if self._enable_plugins:
@@ -257,23 +252,31 @@ class MpfTestCase(unittest.TestCase):
                 self.getOptions(), self.machine_config_patches, self.clock, self._get_mock_data(),
                 self.get_enable_plugins())
 
-            start = time.time()
-            while not self.machine.test_init_complete and time.time() < start + 20:
-                self.advance_time_and_run(0.01)
-
-            self.machine.events.process_event_queue()
-            self.advance_time_and_run(1)
+            self._initialise_machine()
 
         except Exception as e:
-            # todo temp until I can figure out how to stop the asset loader
-            # thread automatically.
             try:
                 self.machine.stop()
             except AttributeError:
                 pass
+            if self._exception and 'exception' in self._exception:
+                raise self._exception['exception']
+            elif self._exception:
+                raise Exception(self._exception, e)
             raise e
 
-        self.assertFalse(self.machine._done, "Machine crashed during start")
+    def _initialise_machine(self):
+        init = Util.ensure_future(self.machine.initialise(), loop=self.loop)
+        self._wait_for_start(init, 20)
+        self.machine.events.process_event_queue()
+        self.advance_time_and_run(1)
+
+    def _wait_for_start(self, init, timeout):
+        start = time.time()
+        while not init.done() and not self._exception:
+            self.loop._run_once()
+            if time.time() > start + timeout:
+                raise AssertionError("Start took more than {}s".format(timeout))
 
     def _mock_event_handler(self, event_name, **kwargs):
         self._last_event_kwargs[event_name] = kwargs
@@ -354,16 +357,18 @@ class MpfTestCase(unittest.TestCase):
     def assertLightOff(self, light_name):
         self.assertEqual(0, self.machine.lights[light_name].hw_driver.current_brightness)
 
-    def assertLightFlashing(self, light_name, secs=1, check_delta=.1):
+    def assertLightFlashing(self, light_name, color=None, secs=1, check_delta=.1):
         brightness_values = list()
+        if not color:
+            color = [255, 255, 255]
 
         for _ in range(int(secs / check_delta)):
             brightness_values.append(
-                self.machine.lights[light_name].hw_driver.current_brightness)
+                self.machine.lights[light_name].get_color())
             self.advance_time_and_run(check_delta)
 
-        self.assertIn(0, brightness_values)
-        self.assertIn(255, brightness_values)
+        self.assertIn([0, 0, 0], brightness_values)
+        self.assertIn(color, brightness_values)
 
     def assertModeRunning(self, mode_name):
         if mode_name not in self.machine.modes:
@@ -496,6 +501,12 @@ class MpfTestCase(unittest.TestCase):
         self.machine_run()
 
     def tearDown(self):
+        if self._exception:
+            if self._exception and 'exception' in self._exception:
+                raise self._exception['exception']
+            elif self._exception:
+                raise Exception(self._exception)
+
         duration = time.time() - self.test_start_time
         if duration > self.expected_duration:
             print("Test {}.{} took {} > {}s".format(self.__class__,

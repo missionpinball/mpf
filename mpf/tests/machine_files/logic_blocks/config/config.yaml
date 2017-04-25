@@ -10,87 +10,82 @@ lights:
 
 
 # system wide logic blocks
-logic_blocks:
-    accruals:
-        accrual1:
-            events:
-                - accrual1_step1a, accrual1_step1b, accrual1_step1c
-                - accrual1_step2a, accrual1_step2b, accrual1_step2c
-                - accrual1_step3a, accrual1_step3b, accrual1_step3c
-            events_when_complete: accrual1_complete1, accrual1_complete2
-            enable_events: accrual1_enable
-            disable_events: accrual1_disable
-            reset_events: accrual1_reset
-            events_when_hit: accrual1_hit
-        accrual2:
-            events:
-                - accrual2_step1
-                - accrual2_step2
-        accrual3:
-            events:
-                - accrual3_step1
-                - accrual3_step2
-            reset_on_complete: False
-            disable_on_complete: True
-            enable_events: accrual3_enable
-            disable_events: accrual3_disable
-            reset_events: accrual3_reset
-        accrual4:
-            events:
-                - accrual4_step1
-                - accrual4_step2
-            reset_on_complete: False
-            disable_on_complete: False
-            enable_events: accrual4_enable
-            disable_events: accrual4_disable
-            reset_events: accrual4_reset
-        accrual5:
-            events:
-                - accrual5_step1
-                - accrual5_step2
-            persist_state: True
-    counters:
-        counter1:
-            count_events: counter1_count
-            starting_count: 5
-            count_complete_value: 0
-            direction: down
-            enable_events: counter1_enable
-            disable_events: counter1_disable
-            restart_events: counter1_restart
-            reset_events: counter1_reset
-        counter3:
-            count_events: counter3_count
-            starting_count: 0
-            count_complete_value: 5
-            count_interval: -1
-            direction: up
-            enable_events: counter3_enable
-            disable_events: counter3_disable
-            restart_events: counter3_restart
-            reset_events: counter3_reset
-            multiple_hit_window: 1s
-        counter4:
-            count_events: counter4_count
-            starting_count: machine.start if machine.start else 0
-            count_complete_value: current_player.hits
-            direction: up
-            enable_events: counter4_enable
-            disable_events: counter4_disable
-            restart_events: counter4_restart
-            reset_events: counter4_reset
-        counter5:
-            count_events: counter5_count
-    sequences:
-        sequence1:
-            events:
-                - sequence1_step1a, sequence1_step1b
-                - sequence1_step2a, sequence1_step2b
-                - sequence1_step3a, sequence1_step3b
-            events_when_complete: sequence1_complete
-            enable_events: sequence1_enable
-            disable_events: sequence1_disable
-            reset_events: sequence1_reset
+accruals:
+    accrual1:
+        events:
+            - accrual1_step1a, accrual1_step1b, accrual1_step1c
+            - accrual1_step2a, accrual1_step2b, accrual1_step2c
+            - accrual1_step3a, accrual1_step3b, accrual1_step3c
+        events_when_complete: accrual1_complete1, accrual1_complete2
+        enable_events: accrual1_enable
+        disable_events: accrual1_disable
+        reset_events: accrual1_reset
+        events_when_hit: accrual1_hit
+    accrual2:
+        events:
+            - accrual2_step1
+            - accrual2_step2
+        restart_events: accrual2_restart
+    accrual3:
+        events:
+            - accrual3_step1
+            - accrual3_step2
+        reset_on_complete: False
+        disable_on_complete: True
+        enable_events: accrual3_enable
+        disable_events: accrual3_disable
+        reset_events: accrual3_reset
+    accrual4:
+        events:
+            - accrual4_step1
+            - accrual4_step2
+        reset_on_complete: False
+        disable_on_complete: False
+        enable_events: accrual4_enable
+        disable_events: accrual4_disable
+        reset_events: accrual4_reset
+counters:
+    counter1:
+        count_events: counter1_count
+        starting_count: 5
+        count_complete_value: 0
+        direction: down
+        enable_events: counter1_enable
+        disable_events: counter1_disable
+        restart_events: counter1_restart
+        reset_events: counter1_reset
+    counter3:
+        count_events: counter3_count
+        starting_count: 0
+        count_complete_value: 5
+        count_interval: -1
+        direction: up
+        enable_events: counter3_enable
+        disable_events: counter3_disable
+        restart_events: counter3_restart
+        reset_events: counter3_reset
+        multiple_hit_window: 1s
+    counter4:
+        count_events: counter4_count
+        starting_count: machine.start if machine.start else 0
+        count_complete_value: current_player.hits
+        direction: up
+        enable_events: counter4_enable
+        disable_events: counter4_disable
+        restart_events: counter4_restart
+        reset_events: counter4_reset
+    counter5:
+        count_events: counter5_count
+sequences:
+    sequence1:
+        events:
+            - sequence1_step1a, sequence1_step1b
+            - sequence1_step2a, sequence1_step2b
+            - sequence1_step3a, sequence1_step3b
+        events_when_complete: sequence1_complete
+        enable_events: sequence1_enable
+        disable_events: sequence1_disable
+        reset_events: sequence1_reset
 
 # logic blocks in mode1
 modes:

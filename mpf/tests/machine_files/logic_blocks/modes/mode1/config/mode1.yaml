@@ -3,21 +3,26 @@ mode:
   start_events: start_mode1
   stop_events: stop_mode1
 
-logic_blocks:
-     counters:
-        counter2:
-            count_events: counter2_count
-            events_when_hit: counter2_hit
-            events_when_complete: counter2_complete
-            starting_count: 0
-            count_complete_value: 3
-            direction: up
-            reset_on_complete: True
-            disable_on_complete: False
-        counter_persist:
-            count_events: counter_persist_count
-            enable_events: counter_persist_enable
-            direction: down
-            starting_count: 5
-            count_complete_value: 0
-            persist_state: true
+counters:
+  counter2:
+      count_events: counter2_count
+      events_when_hit: counter2_hit
+      events_when_complete: counter2_complete
+      starting_count: 0
+      count_complete_value: 3
+      direction: up
+      reset_on_complete: True
+      disable_on_complete: False
+  counter_persist:
+      count_events: counter_persist_count
+      enable_events: counter_persist_enable
+      direction: down
+      starting_count: 5
+      count_complete_value: 0
+      persist_state: true
+accruals:
+  accrual5:
+      events:
+        - accrual5_step1
+        - accrual5_step2
+      persist_state: True

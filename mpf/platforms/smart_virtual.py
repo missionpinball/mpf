@@ -1,13 +1,14 @@
 """Contains code for the smart_virtual platform."""
-
+import asyncio
 import logging
 
+from mpf.core.logging import LogMixin
 from mpf.core.platform import DriverConfig
 
 from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, HoldSettings
 
 from mpf.core.delays import DelayManager
-from mpf.platforms.virtual import (HardwarePlatform as VirtualPlatform, VirtualDriver)
+from mpf.platforms.virtual import (VirtualHardwarePlatform as VirtualPlatform, VirtualDriver)
 
 
 class BaseSmartVirtualCoilAction:
@@ -213,7 +214,7 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
             self.target_device = None
 
 
-class HardwarePlatform(VirtualPlatform):
+class SmartVirtualHardwarePlatform(VirtualPlatform):
 
     """Base class for the smart_virtual hardware platform."""
 
@@ -230,9 +231,10 @@ class HardwarePlatform(VirtualPlatform):
         self.log = logging.getLogger("Smart Virtual Platform")
         self.log.debug("Configuring smart_virtual hardware interface.")
 
+    @asyncio.coroutine
     def initialize(self):
         """Initialise platform."""
-        self.machine.events.add_handler('machine_reset_phase_1',
+        self.machine.events.add_handler('init_phase_5',
                                         self._initialize2)
 
     def _initialize2(self, **kwargs):
@@ -321,7 +323,7 @@ class HardwarePlatform(VirtualPlatform):
 
     def add_ball_to_device(self, device):
         """Add ball to device."""
-        if device.balls >= device.config['ball_capacity']:
+        if LogMixin.unit_test and device.balls >= device.config['ball_capacity']:
             raise AssertionError("KABOOM! We just added a ball to {} which has a capacity "
                                  "of {} but already had {} ball(s)".format(device.name,
                                                                            device.config['ball_capacity'],
@@ -336,7 +338,7 @@ class HardwarePlatform(VirtualPlatform):
             if device.config['entrance_switch_full_timeout']:
                 if device.balls == device.config['ball_capacity'] - 1:
 
-                    if self.machine.switch_controller.is_active(
+                    if LogMixin.unit_test and self.machine.switch_controller.is_active(
                             device.config['entrance_switch'].name):
                         raise AssertionError(
                             "KABOOM! We just added a ball to {} which already "
@@ -361,7 +363,7 @@ class HardwarePlatform(VirtualPlatform):
                     found_switch = True
                     break
 
-            if not found_switch:
+            if LogMixin.unit_test and not found_switch:
                 raise AssertionError("KABOOM! We just added a ball to {} which"
                                      "was already full.".format(device.name))
 

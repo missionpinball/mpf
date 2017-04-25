@@ -1,4 +1,8 @@
 """Handles all light updates."""
+import asyncio
+from typing import Dict
+
+from mpf.core.machine import MachineController
 from mpf.core.settings_controller import SettingEntry
 
 from mpf.core.rgb_color import RGBColorCorrectionProfile
@@ -10,15 +14,17 @@ class LightController(MpfController):
 
     """Handles light updates."""
 
-    def __init__(self, machine):
+    def __init__(self, machine: MachineController) -> None:
         """Initialise lights controller."""
         super().__init__(machine)
 
         # Generate and add color correction profiles to the machine
-        self.light_color_correction_profiles = dict()
+        self.light_color_correction_profiles = dict()       # type: Dict[str, RGBColorCorrectionProfile]
 
         # will only get initialised if there are lights
         self._initialised = False
+
+        self._monitor_update_task = None                    # type: asyncio.Task
 
     def initialise_light_subsystem(self):
         """Initialise the light subsystem."""
@@ -55,3 +61,27 @@ class LightController(MpfController):
         # add setting for brightness
         self.machine.settings.add_setting(SettingEntry("brightness", "Brightness", 100, "brightness", 1.0,
                                                        {0.25: "25%", 0.5: "50%", 0.75: "75%", 1.0: "100% (default)"}))
+
+    def monitor_lights(self):
+        """Update the color of lights for the monitor."""
+        if not self._monitor_update_task:
+            self._monitor_update_task = self.machine.clock.loop.create_task(self._monitor_update_lights())
+            self._monitor_update_task.add_done_callback(self._done)
+
+    def _done(self, future: asyncio.Future):
+        try:
+            future.result()
+        except asyncio.CancelledError:
+            pass
+
+    @asyncio.coroutine
+    def _monitor_update_lights(self):
+        colors = {}
+        while True:
+            for light in self.machine.lights:
+                color = light.get_color()
+                old = colors.get(light, None)
+                if old != color:
+                    self.machine.device_manager.notify_device_changes(light, "color", old, color)
+                    colors[light] = color
+            yield from asyncio.sleep(1 / 30, loop=self.machine.clock.loop)

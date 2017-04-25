@@ -35,8 +35,7 @@ class PeriodicTask:
         self._last_call = self._last_call + self._interval
         if self._canceled:
             return
-        # TODO: remove dt parameter from all callbacks
-        self._callback(None)
+        self._callback()
         self._schedule()
 
     def cancel(self):
@@ -126,7 +125,7 @@ class ClockBase(LogMixin):
         """
         if not limit:
             # pylint: disable-msg=protected-access
-            limit = asyncio.streams._DEFAULT_LIMIT
+            limit = asyncio.streams._DEFAULT_LIMIT      # type: ignore
 
         reader = asyncio.StreamReader(limit=limit, loop=self.loop)
         protocol = asyncio.StreamReaderProtocol(reader, loop=self.loop)
@@ -152,9 +151,7 @@ class ClockBase(LogMixin):
         if not callable(callback):
             raise AssertionError('callback must be a callable, got %s' % callback)
 
-        # TODO: remove dt parameter from all callbacks
-        new_callback = partial(callback, None)
-        event = self.loop.call_later(delay=timeout, callback=new_callback)
+        event = self.loop.call_later(delay=timeout, callback=callback)
 
         self.debug_log("Scheduled a one-time clock callback (callback=%s, timeout=%s)",
                        str(callback), timeout)

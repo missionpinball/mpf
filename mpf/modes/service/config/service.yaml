@@ -1,6 +1,6 @@
 #config_version=4
 mode:
-  code: service.Service
+  code: mpf.modes.service.code.service.Service
   priority: 100000
   game_mode: False
   start_events: reset_complete

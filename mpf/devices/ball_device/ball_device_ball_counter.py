@@ -6,6 +6,8 @@ import asyncio
 
 
 # TODO: rename to hardware counter
+from typing import Generator
+
 from mpf.devices.ball_device.ball_count_handler import EjectTracker
 
 
@@ -23,7 +25,7 @@ class BallDeviceBallCounter:
         """Debug log."""
         self.ball_device.debug_log(*args, **kwargs)
 
-    def count_balls_sync(self):
+    def count_balls_sync(self) -> int:
         """Return the number of current active switches or raises ValueError when count is not stable."""
         raise NotImplementedError()
 
@@ -32,9 +34,17 @@ class BallDeviceBallCounter:
         raise NotImplementedError()
 
     @asyncio.coroutine
-    def count_balls(self):
-        """Return the number of current active switches."""
-        raise NotImplementedError()
+    def count_balls(self) -> Generator[int, None, int]:
+        """Return the current ball count."""
+        while True:
+            # register the waiter before counting to prevent races
+            waiter = self.wait_for_ball_activity()
+            try:
+                balls = self.count_balls_sync()
+                waiter.cancel()
+                return balls
+            except ValueError:
+                yield from waiter
 
     def wait_for_ball_activity(self):
         """Wait for ball activity."""

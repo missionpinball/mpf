@@ -1,8 +1,9 @@
 """Contains code for a virtual hardware platform."""
-
+import asyncio
 import logging
 from typing import Callable, Tuple
 
+from mpf.exceptions.ConfigFileError import ConfigFileError
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
@@ -14,14 +15,14 @@ from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
 
-class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, LightsPlatform, SwitchPlatform,
+class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, LightsPlatform, SwitchPlatform,
                        DriverPlatform, DmdPlatform, RgbDmdPlatform):
 
     """Base class for the virtual hardware platform."""
 
     def __init__(self, machine):
         """Initialise virtual platform."""
-        super(HardwarePlatform, self).__init__(machine)
+        super().__init__(machine)
         self._setup_log()
 
         # Since the virtual platform doesn't have real hardware, we need to
@@ -43,6 +44,7 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Lights
         self.log = logging.getLogger("Virtual Platform")
         self.log.debug("Configuring virtual hardware interface.")
 
+    @asyncio.coroutine
     def initialize(self):
         """Initialise platform."""
         pass
@@ -92,9 +94,12 @@ class HardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, Lights
 
             if 'virtual_platform_start_active_switches' in self.machine.config:
 
-                initial_active_switches = [self.machine.switches[x].hw_switch.number for x in
-                                           Util.string_to_list(
-                                               self.machine.config['virtual_platform_start_active_switches'])]
+                initial_active_switches = []
+                for switch in Util.string_to_list(self.machine.config['virtual_platform_start_active_switches']):
+                    if switch not in self.machine.switches:
+                        raise ConfigFileError("Switch {} used in virtual_platform_start_active_switches was not found "
+                                              "in switches section.".format(switch))
+                    initial_active_switches.append(self.machine.switches[switch].hw_switch.number)
 
                 for k in self.hw_switches:
                     if k in initial_active_switches:
@@ -269,8 +274,12 @@ class VirtualLight(LightPlatformInterface):
         self.color_and_fade_callback = None
 
     @property
-    def current_brightness(self, max_fade=0) -> float:
+    def current_brightness(self) -> float:
         """Return current brightness."""
+        return self.get_current_brightness_for_fade()
+
+    def get_current_brightness_for_fade(self, max_fade=0) -> float:
+        """Return brightness for a max_fade long fade."""
         if self.color_and_fade_callback:
             return self.color_and_fade_callback(max_fade)[0]
         else:

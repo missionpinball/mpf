@@ -47,7 +47,7 @@ class ScoreReelController(object):
         # register for events
 
         # switch the active score reel group and reset it (if needed)
-        self.machine.events.add_handler('player_turn_start',
+        self.machine.events.add_handler('player_turn_started',
                                         self._rotate_player)
 
         # receive notification of score changes
@@ -129,7 +129,8 @@ class ScoreReelController(object):
                 and included only because the score change event passes it.
         """
         del kwargs
-        self.active_scorereelgroup.set_value(value=value)
+        if self.active_scorereelgroup:
+            self.active_scorereelgroup.set_value(value=value)
 
     def _game_starting(self, queue, **kwargs):
         """Reset the score reels when a new game starts.

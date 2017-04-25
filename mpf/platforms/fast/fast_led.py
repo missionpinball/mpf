@@ -2,6 +2,8 @@
 import logging
 
 from typing import Callable, Tuple
+from typing import List
+from typing import Union
 
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
@@ -10,12 +12,12 @@ class FASTDirectLED:
 
     """FAST RGB LED."""
 
-    def __init__(self, number: str, hardware_fade_ms: int):
+    def __init__(self, number: str, hardware_fade_ms: int) -> None:
         """Initialise FAST LED."""
         self.number = number
         self.dirty = True
         self.hardware_fade_ms = hardware_fade_ms
-        self.colors = [0, 0, 0]
+        self.colors = [0, 0, 0]     # type: List[Union[int, Callable[[int], Tuple[float, int]]]]
         self.log = logging.getLogger('FASTLED')
         # All FAST LEDs are 3 element RGB and are set using hex strings
         self.log.debug("Creating FAST RGB LED at hardware address: %s", self.number)
@@ -43,7 +45,7 @@ class FASTDirectLEDChannel(LightPlatformInterface):
 
     """Represents a single RGB LED channel connected to the Fast hardware platform."""
 
-    def __init__(self, led: FASTDirectLED, channel):
+    def __init__(self, led: FASTDirectLED, channel) -> None:
         """Initialise LED."""
         self.led = led
         self.channel = int(channel)

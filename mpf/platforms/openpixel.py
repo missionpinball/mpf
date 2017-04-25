@@ -3,7 +3,7 @@
 The python code to build the OPC message packet came from here:
 https://github.com/zestyping/openpixelcontrol/blob/master/python_clients/opc.py
 """
-
+import asyncio
 import logging
 
 from typing import Callable
@@ -35,11 +35,14 @@ class HardwarePlatform(LightsPlatform):
         """Return str representation."""
         return '<Platform.OpenPixel>'
 
+    @asyncio.coroutine
     def initialize(self):
         """Initialise openpixel platform."""
         self.machine.config_validator.validate_config("open_pixel_control", self.machine.config['open_pixel_control'])
         if self.machine.config['open_pixel_control']['debug']:
             self.debug = True
+
+        yield from self._setup_opc_client()
 
     def stop(self):
         """Stop platform."""
@@ -59,27 +62,26 @@ class HardwarePlatform(LightsPlatform):
 
         return [
             {
-                "number": opc_channel + "-"  + str(channel_number)
+                "number": opc_channel + "-" + str(channel_number)
             },
             {
-                "number": opc_channel + "-"  + str(channel_number + 1)
+                "number": opc_channel + "-" + str(channel_number + 1)
             },
             {
-                "number": opc_channel + "-"  + str(channel_number + 2)
+                "number": opc_channel + "-" + str(channel_number + 2)
             }
         ]
 
     def configure_light(self, number, subtype, platform_settings) -> LightPlatformInterface:
         """Configure an LED."""
-        if not self.opc_client:
-            self._setup_opc_client()
-
         opc_channel, channel_number = number.split("-")
 
         return OpenPixelLED(self.opc_client, opc_channel, channel_number, self.debug)
 
+    @asyncio.coroutine
     def _setup_opc_client(self):
         self.opc_client = OpenPixelClient(self.machine, self.machine.config['open_pixel_control'])
+        yield from self.opc_client.connect()
 
 
 class OpenPixelLED(LightPlatformInterface):
@@ -119,9 +121,12 @@ class OpenPixelClient(object):
         self.update_every_tick = False
         self.socket_sender = None
         self.channels = list()
+        self.openpixel_config = config
 
-        connector = self.machine.clock.open_connection(config['host'], config['port'])
-        _, self.socket_sender = self.machine.clock.loop.run_until_complete(connector)
+    @asyncio.coroutine
+    def connect(self):
+        connector = self.machine.clock.open_connection(self.openpixel_config['host'], self.openpixel_config['port'])
+        _, self.socket_sender = yield from connector
 
         # Update the FadeCandy at a regular interval
         self.machine.clock.schedule_interval(self.tick, 1 / self.machine.config['mpf']['default_light_hw_update_hz'])
@@ -162,13 +167,8 @@ class OpenPixelClient(object):
         self.channels[channel][pixel] = callback
         self.dirty = True
 
-    def tick(self, dt):
-        """Called once per machine loop to update the pixels.
-
-        Args:
-            dt: time since last update
-        """
-        del dt
+    def tick(self):
+        """Called once per machine loop to update the pixels."""
         if self.update_every_tick or self.dirty:
             for channel_index, pixel_list in enumerate(self.channels):
                 self.update_pixels(pixel_list, channel_index)

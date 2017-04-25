@@ -522,7 +522,7 @@ class TestMultiBall(MpfGameTestCase):
         self.assertEqual(0, self.machine.ball_devices.bd_lock.balls)
 
         # game ends (because of slam tilt)
-        self.machine.game.ball_ending()
+        self.machine.game.end_ball()
         self.advance_time_and_run()
 
         # this should not crash
@@ -700,7 +700,7 @@ class TestMultiBall(MpfGameTestCase):
         self.assertBallsOnPlayfield(1)
 
     def testMultiballLockFullMultiplayer(self):
-        self.machine.config['game']['balls_per_game'] = 3
+        self.machine.config['game']['balls_per_game'] = self.machine.placeholder_manager.build_int_template(3)
         self.mock_event("multiball_lock_lock_mb6_full")
         self.fill_troughs()
         self.start_two_player_game()
@@ -911,3 +911,47 @@ class TestMultiBall(MpfGameTestCase):
         # multiball should be enabled now but not started
         self.assertTrue(self.machine.multiballs.mb_autostart.enabled)
         self.assertEqual(1, self.machine.multiballs.mb_autostart.balls_added_live)
+
+    def testMultiballWhichStartsAfterLock(self):
+        self.mock_event("multiball_mb_autostart_ended")
+        self.mock_event("multiball_mb_autostart_ball_lost")
+
+        # prepare game
+        self.fill_troughs()
+        self.assertFalse(self.machine.multiballs.mb4_autostart.enabled)
+
+        # start game
+        self.start_game()
+
+        # start mode
+        self.post_event("start_mode4")
+        self.advance_time_and_run(5)
+
+        self.assertAvailableBallsOnPlayfield(1)
+        self.assertEqual(5, self.machine.ball_devices.bd_trough.available_balls)
+
+        # multiball should be enabled now but not started
+        self.assertTrue(self.machine.multiballs.mb4_autostart.enabled)
+        self.assertEqual(0, self.machine.multiballs.mb4_autostart.balls_added_live)
+
+        # lock a ball
+        self.machine.default_platform.add_ball_to_device(self.machine.ball_devices.bd_lock)
+        self.advance_time_and_run(1)
+
+        # mb should start
+        self.assertTrue(self.machine.multiballs.mb4_autostart.enabled)
+        self.assertEqual(1, self.machine.multiballs.mb4_autostart.balls_added_live)
+        self.assertBallsInPlay(2)
+        self.assertAvailableBallsOnPlayfield(2)
+
+        # lock should eject
+        self.assertEqual(4, self.machine.ball_devices.bd_trough.available_balls)
+        self.assertEqual(0, self.machine.ball_devices.bd_lock.available_balls)
+
+        # both balls drain
+        self.drain_ball()
+        self.drain_ball()
+
+        # game should end
+        self.advance_time_and_run(1)
+        self.assertEqual(None, self.machine.game)

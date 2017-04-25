@@ -2,7 +2,7 @@
 
 mode:
   start_events: ball_ending
-  code: bonus.Bonus
+  code: mpf.modes.bonus.code.bonus.Bonus
   priority: 500
   use_wait_queue: true
 

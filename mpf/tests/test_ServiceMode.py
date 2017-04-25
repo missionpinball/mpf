@@ -60,6 +60,7 @@ class TestServiceMode(MpfFakeGameTestCase):
 
         # exit service
         self.hit_and_release_switch("s_service_esc")
+        self.advance_time_and_run()
         self.assertEventCalled('service_mode_exited', 2)
         self.assertEventCalled('service_door_closed', 1)
         self.assertModeRunning("attract")
@@ -109,6 +110,7 @@ class TestServiceMode(MpfFakeGameTestCase):
 
         # exit service mode
         self.hit_and_release_switch("s_service_esc")
+        self.advance_time_and_run()
         self.assertModeRunning("attract")
         self.assertEventCalled('service_mode_exited')
 

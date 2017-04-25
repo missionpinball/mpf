@@ -1,4 +1,5 @@
 """A dual wound coil which consists of two coils."""
+from mpf.core.events import event_handler
 from mpf.core.system_wide_device import SystemWideDevice
 
 
@@ -16,6 +17,7 @@ class DualWoundCoil(SystemWideDevice):
         # Add this device to the coil section
         self.machine.coils[name] = self
 
+    @event_handler(2)
     def enable(self, **kwargs):
         """Enable a dual wound coil.
 
@@ -25,12 +27,14 @@ class DualWoundCoil(SystemWideDevice):
         self.config['main_coil'].pulse()
         self.config['hold_coil'].enable()
 
+    @event_handler(1)
     def disable(self, **kwargs):
         """Disable a driver."""
         del kwargs
         self.config['main_coil'].disable()
         self.config['hold_coil'].disable()
 
+    @event_handler(3)
     def pulse(self, milliseconds: int=None, power: float=None, **kwargs):
         """Pulse this driver.
 

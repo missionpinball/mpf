@@ -3,6 +3,9 @@
 machine:
     min_balls: 0
 
+game:
+    balls_per_game: 3
+
 switches:
     s_start:
         number: 1
@@ -104,7 +107,7 @@ score_reel_groups:
         chimes: chime3, None
         lights_tag: player2
 
-matrix_lights:
+lights:
     light_p1:
         number:
         tags: player1

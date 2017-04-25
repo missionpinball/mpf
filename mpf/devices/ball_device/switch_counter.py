@@ -39,19 +39,6 @@ class SwitchCounter(BallDeviceBallCounter):
                 future.set_result(True)
         self._futures = []
 
-    @asyncio.coroutine
-    def count_balls(self):
-        """Return the current ball count."""
-        while True:
-            # register the waiter before counting to prevent races
-            waiter = self.wait_for_ball_activity()
-            try:
-                balls = self.count_balls_sync()
-                waiter.cancel()
-                return balls
-            except ValueError:
-                yield from waiter
-
     def _count_switches_sync(self):
         """Return active switches or raise ValueError if switches are unstable."""
         switches = []

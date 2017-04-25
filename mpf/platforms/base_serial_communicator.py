@@ -24,7 +24,9 @@ class BaseSerialCommunicator(object):
         self.reader = None  # type: asyncio.StreamReader
         self.writer = None  # type: asyncio.StreamWriter
 
-        self.machine.clock.loop.run_until_complete(self._connect_to_hardware(port, baud))
+    @asyncio.coroutine
+    def connect(self):
+        yield from self._connect_to_hardware(self.port, self.baud)
 
     @asyncio.coroutine
     def _connect_to_hardware(self, port, baud):

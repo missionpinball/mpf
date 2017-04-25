@@ -2,6 +2,7 @@
 from typing import List
 from typing import Optional
 
+from mpf.core.events import event_handler
 from mpf.core.platform_controller import HardwareRule
 
 from mpf.core.device_monitor import DeviceMonitor
@@ -42,6 +43,7 @@ class Flipper(SystemWideDevice):
             self.config['playfield'].ball_search.register(
                 self.config['ball_search_order'], self._ball_search, self.name)
 
+    @event_handler(10)
     def enable(self, **kwargs):
         """Enable the flipper by writing the necessary hardware rules to the hardware controller.
 
@@ -105,6 +107,7 @@ class Flipper(SystemWideDevice):
             self._enable_main_coil_eos_cutoff_rule()
             self._enable_hold_coil_rule()
 
+    @event_handler(1)
     def disable(self, **kwargs):
         """Disable the flipper.
 
@@ -203,6 +206,7 @@ class Flipper(SystemWideDevice):
         )
         self._active_rules.append(rule)
 
+    @event_handler(6)
     def sw_flip(self, include_switch=False):
         """Activate the flipper via software as if the flipper button was pushed.
 
@@ -225,6 +229,7 @@ class Flipper(SystemWideDevice):
         else:
             self.config['main_coil'].enable()
 
+    @event_handler(5)
     def sw_release(self, include_switch=False):
         """Deactive the flipper via software as if the flipper button was released.
 

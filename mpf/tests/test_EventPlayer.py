@@ -112,3 +112,26 @@ class TestEventPlayer(MpfTestCase):
         self.assertEventNotCalled('td2')
         self.advance_time_and_run(1)
         self.assertEventCalled('td2')
+
+    def test_mode_condition(self):
+        self.mock_event('mode1_active')
+        self.mock_event('mode1_not_active')
+
+        self.assertFalse(self.machine.modes.mode1.active)
+
+        self.post_event('test_conditional_mode')
+
+        self.assertEventNotCalled('mode1_active')
+        self.assertEventCalled('mode1_not_active')
+
+        self.mock_event('mode1_active')
+        self.mock_event('mode1_not_active')
+
+        self.machine.modes.mode1.start()
+        self.advance_time_and_run()
+
+        self.post_event('test_conditional_mode')
+        self.assertTrue(self.machine.modes.mode1.active)
+
+        self.assertEventCalled('mode1_active')
+        self.assertEventNotCalled('mode1_not_active')

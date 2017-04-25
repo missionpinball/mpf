@@ -1,7 +1,7 @@
 #config_version=4
 mode:
-  start_events: game_ended, reset_complete, service_mode_exited
+  start_events: game_ended, reset_complete
   stop_events: game_start, service_mode_entered
   priority: 10
   game_mode: False
-  code: attract.Attract
+  code: mpf.modes.attract.code.attract.Attract

@@ -1,6 +1,6 @@
 import selectors
 import socket
-from asyncio import base_events, coroutine, events
+from asyncio import base_events, coroutine, events      # type: ignore
 import collections
 import heapq
 
@@ -75,6 +75,9 @@ class MockFd:
     def send(self, data):
         return len(data)
 
+    def fileno(self):
+        return self
+
     def write_ready(self):
         return False
 
@@ -98,17 +101,14 @@ class MockSocket(MockFd):
     def getpeername(self):
         return ""
 
-    def fileno(self):
-        return self
-
     def recv(self, size):
         raise AssertionError("Not implemented")
 
 
 class MockQueueSocket(MockSocket):
-    def __init__(self):
+    def __init__(self, loop):
         super().__init__()
-        self.send_queue = []
+        self.send_queue = asyncio.Queue(loop=loop)
         self.recv_queue = []
 
     def write_ready(self):
@@ -121,18 +121,24 @@ class MockQueueSocket(MockSocket):
         return self.recv_queue.pop(0)
 
     def send(self, data):
-        self.send_queue.append(data)
+        self.send_queue.put_nowait(data)
         return len(data)
 
 
 class MockServer:
     def __init__(self, loop):
         self.loop = loop
-        self.is_bound = False
+        self.is_bound = asyncio.Future(loop=loop)
         self.client_connected_cb = None
 
+    @asyncio.coroutine
+    def bind(self, client_connected_cb):
+        self.client_connected_cb = client_connected_cb
+        self.is_bound.set_result(True)
+
+    @asyncio.coroutine
     def add_client(self, socket):
-        if not self.is_bound:
+        if not self.is_bound.done():
             raise AssertionError("Server not running")
 
         limit = asyncio.streams._DEFAULT_LIMIT
@@ -140,7 +146,7 @@ class MockServer:
         protocol = asyncio.streams.StreamReaderProtocol(reader, loop=self.loop)
         transport = _SelectorSocketTransport(self.loop, socket, protocol)
         writer = asyncio.streams.StreamWriter(transport, protocol, reader, self.loop)
-        self.loop.run_until_complete(self.client_connected_cb(reader, writer))
+        yield from self.client_connected_cb(reader, writer)
 
     def close(self):
         pass
@@ -408,11 +414,10 @@ class TestClock(ClockBase):
         if key not in self._mock_servers:
             raise AssertionError("server not mocked for key {}".format(key))
         server = self._mock_servers[key]
-        if server.is_bound:
+        if server.is_bound.done():
             raise AssertionError("server already bound for key {}".format(key))
 
-        server.is_bound = True
-        server.client_connected_cb = client_connected_cb
+        yield from server.bind(client_connected_cb)
         return server
 
     @coroutine

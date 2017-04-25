@@ -1,8 +1,15 @@
 """Contains the base class for autofire coil devices."""
+from typing import TYPE_CHECKING
+
+from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
-from mpf.core.platform_controller import SwitchRuleSettings, DriverRuleSettings, PulseRuleSettings
+from mpf.core.events import event_handler
+from mpf.core.platform_controller import SwitchRuleSettings, DriverRuleSettings, PulseRuleSettings, HardwareRule
 
 from mpf.core.system_wide_device import SystemWideDevice
+
+if TYPE_CHECKING:
+    from mpf.core.machine import MachineController
 
 
 @DeviceMonitor(_enabled="enabled")
@@ -23,17 +30,22 @@ class AutofireCoil(SystemWideDevice):
     collection = 'autofires'
     class_label = 'autofire'
 
-    def __init__(self, machine, name):
+    def __init__(self, machine: "MachineController", name: str) -> None:
         """Initialise autofire."""
         self._enabled = False
-        self._rule = None
+        self._rule = None       # type: HardwareRule
         super().__init__(machine, name)
+        self.delay = DelayManager(self.machine.delayRegistry)
+        self._ball_search_in_progress = False
 
-    def _initialize(self):
+    def _initialize(self) -> None:
         if self.config['ball_search_order']:
             self.config['playfield'].ball_search.register(
                 self.config['ball_search_order'], self._ball_search, self.name)
+        # pulse is handled via rule but add a handler so that we take notice anyway
+        self.config['switch'].add_handler(self._hit)
 
+    @event_handler(10)
     def enable(self, **kwargs):
         """Enable the autofire coil rule."""
         del kwargs
@@ -55,6 +67,7 @@ class AutofireCoil(SystemWideDevice):
                               power=self.config['coil_overwrite'].get('pulse_power', None))
         )
 
+    @event_handler(1)
     def disable(self, **kwargs):
         """Disable the autofire coil rule."""
         del kwargs
@@ -66,8 +79,19 @@ class AutofireCoil(SystemWideDevice):
         self.debug_log("Disabling")
         self.machine.platform_controller.clear_hw_rule(self._rule)
 
+    def _hit(self):
+        """Rule was triggered."""
+        if not self._ball_search_in_progress:
+            self.config['playfield'].mark_playfield_active_from_device_action()
+
     def _ball_search(self, phase, iteration):
         del phase
         del iteration
+        self.delay.reset(ms=200, callback=self._ball_search_ignore_done, name="ball_search_ignore_done")
+        self._ball_search_in_progress = True
         self.config['coil'].pulse()
         return True
+
+    def _ball_search_ignore_done(self):
+        """We no longer expect any fake hits """
+        self._ball_search_in_progress = False

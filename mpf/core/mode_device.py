@@ -2,6 +2,7 @@
 import abc
 
 from mpf.core.device import Device
+from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
 from mpf.core.player import Player
 
@@ -10,12 +11,12 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
 
     """A device in a mode."""
 
-    def __init__(self, machine, name):
+    def __init__(self, machine: MachineController, name: str) -> None:
         """Initialise mode device."""
         super().__init__(machine, name)
-        self.loaded_in_mode = None
+        self.loaded_in_mode = None      # type: Mode
 
-    def device_added_to_mode(self, mode: Mode, player: Player):
+    def device_added_to_mode(self, mode: Mode, player: Player) -> None:
         """Called when a device is created by a mode.
 
         Args:
@@ -27,17 +28,21 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
         self._initialize()
 
     @property
-    def can_exist_outside_of_game(self):
+    def can_exist_outside_of_game(self) -> bool:
         """Return true if this device can exist outside of a game."""
         return False
 
-    def overload_config_in_mode(self, mode, config):
+    def overload_config_in_mode(self, mode: Mode, config: dict) -> None:
         """Overload config in mode."""
         del mode
         del config
         raise AssertionError("Device {} cannot be overloaded.".format(self))
 
-    def add_control_events_in_mode(self, mode):
+    def enable(self, **kwarg) -> None:
+        """Enable handler."""
+        pass
+
+    def add_control_events_in_mode(self, mode: Mode) -> None:
         """Called on mode start if this device has any mode control events.
 
         Args:
@@ -47,11 +52,11 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
             mode.add_mode_event_handler("mode_{}_started".format(mode.name),
                                         self.enable, priority=100)
 
-    def remove_control_events_in_mode(self):
+    def remove_control_events_in_mode(self) -> None:
         """Remove control events."""
         pass
 
-    def device_removed_from_mode(self, mode):
+    def device_removed_from_mode(self, mode: Mode) -> None:
         """Remove device because mode is unloading.
 
         Device object will continue to exist and may be added to the mode again later.

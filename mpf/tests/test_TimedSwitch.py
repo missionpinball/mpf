@@ -89,5 +89,10 @@ class TestTimedSwitch(MpfTestCase):
         self.assertEventCalled('flipper_cradle')
         self.assertEventNotCalled('flipper_cradle_release')
 
+        # tap the second flipper
+        self.hit_and_release_switch('switch5')
+        self.assertEventNotCalled('flipper_cradle_release')
+
+        # release the initial switch
         self.release_switch_and_run('switch4', 1)
         self.assertEventCalled('flipper_cradle_release')

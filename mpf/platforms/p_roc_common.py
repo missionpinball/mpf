@@ -1,16 +1,15 @@
 """Common code for P-Roc and P3-Roc."""
 import abc
+import asyncio
 import logging
 import platform
 import sys
 import time
-from typing import Union, Callable, Tuple
-
-from typing import Any
-from typing import List
+from typing import Any, List, Union, Callable, Tuple
 
 from mpf.platforms.p_roc_devices import PROCSwitch, PROCMatrixLight
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
+from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings
 
 try:    # pragma: no cover
     import pinproc
@@ -30,8 +29,6 @@ except ImportError:     # pragma: no cover
     except ImportError:
         pinproc_imported = False
         pinproc = None
-
-from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings
 
 
 # pylint does not understand that this class is abstract
@@ -69,9 +66,22 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
         self.machine_type = pinproc.normalize_machine_type(
             self.machine.config['hardware']['driverboards'])
 
+    @asyncio.coroutine
     def initialize(self):
-        """Nothing to late initialise."""
-        pass
+        """Set machine vars."""
+        self.machine.set_machine_var("p_roc_version", self.version)
+        '''machine_var: p_roc_version
+
+        desc: Holds the version number of the P-ROC or P3-ROC controller that's
+        attached to MPF.
+        '''
+
+        self.machine.set_machine_var("p_roc_revision", self.revision)
+        '''machine_var: p_roc_revision
+
+        desc: Holds the revision number of the P-ROC or P3-ROC controller
+        that's attached to MPF.
+        '''
 
     def stop(self):
         """Stop proc."""
@@ -96,20 +106,6 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
 
         self.revision = version_revision & 0xFFFF
         self.version = (version_revision & 0xFFFF0000) >> 16
-        self.machine.create_machine_var("p_roc_version", self.version, persist=False, silent=True)
-        '''machine_var: p_roc_version
-
-        desc: Holds the version number of the P-ROC or P3-ROC controller that's
-        attached to MPF.
-        '''
-
-        self.machine.create_machine_var("p_roc_revision", self.revision, persist=False, silent=True)
-        '''machine_var: p_roc_revision
-
-        desc: Holds the revision number of the P-ROC or P3-ROC controller
-        that's attached to MPF.
-        '''
-
         self.log.info("Successfully connected to P-ROC/P3-ROC. Revision: %s. Version: %s", self.revision, self.version)
 
     @classmethod
