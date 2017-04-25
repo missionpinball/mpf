@@ -139,10 +139,11 @@ class BallDevice(SystemWideDevice):
 
     def stop_device(self):
         """Stop device."""
-        self.ball_count_handler.stop()
-        self.incoming_balls_handler.stop()
-        self.outgoing_balls_handler.stop()
         self.debug_log("Stopping ball device")
+        if self.ball_count_handler:
+            self.ball_count_handler.stop()
+            self.incoming_balls_handler.stop()
+            self.outgoing_balls_handler.stop()
 
     @asyncio.coroutine
     def expected_ball_received(self):

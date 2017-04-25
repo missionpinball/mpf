@@ -360,7 +360,8 @@ class MachineController(LogMixin):
     def _get_mpfcache_file_name(self):
         cache_dir = tempfile.gettempdir()
         path_hash = hashlib.md5(bytes(self.machine_path, 'UTF-8')).hexdigest()
-        path_hash += '-'.join(self.options['configfile'])
+        for configfile in self.options['configfile']:
+            path_hash += '-'.join(hashlib.md5(bytes(os.path.abspath(configfile), 'UTF-8')).hexdigest())
         result = os.path.join(cache_dir, path_hash)
         return result
 
@@ -664,7 +665,12 @@ class MachineController(LogMixin):
     def run(self):
         """Start the main machine run loop."""
         self.info_log("Starting the main run loop.")
-        self.clock.loop.run_until_complete(self.initialise())
+        try:
+            self.clock.loop.run_until_complete(self.initialise())
+        except RuntimeError:
+            # do not show a runtime useless runtime error
+            self.error_log("Failed to initialise MPF")
+            return
         self._run_loop()
 
     def stop(self, **kwargs):
