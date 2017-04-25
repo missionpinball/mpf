@@ -1,49 +1,62 @@
+dist: trusty
+sudo: required
+
 matrix:
   fast_finish: true
   include:
-   - language: python
-     python: 3.4
-     os: linux
-   - language: python
-     python: 3.5
-     os: linux
-   - language: generic
-     os: osx
+   - os: linux
+     env: LINUX=ubuntu:14.04
+     sudo: required
+     language: python
+   - os: linux
+     env: LINUX=ubuntu:16.04
+     sudo: required
+     language: python
+   - os: linux
+     env: LINUX=debian:jessie
+     sudo: required
+     language: python
+   - os: osx
+     language: generic
+     osx_image: xcode8.2  # OS 10.12
+   - os: osx
+     language: generic
+     osx_image: xcode8  # OS 10.11
+   - os: osx
+     language: generic
+     osx_image: xcode6.4  # OS 10.10
+
+services:
+  - docker
+
+before_install:
+  - git clone --recursive --branch ${TRAVIS_BRANCH} https://github.com/missionpinball/mpf-mc.git _mpf-mc || git clone --recursive --branch `python3 get_version.py` https://github.com/missionpinball/mpf-mc.git _mpf-mc || git clone --recursive --branch dev https://github.com/missionpinball/mpf-mc.git _mpf-mc;
+  - git clone --branch ${TRAVIS_BRANCH} https://github.com/missionpinball/mpf-debian-installer.git _mpf_installer || git clone --recursive --branch `python3 get_version.py` https://github.com/missionpinball/mpf-debian-installer.git _mpf_installer || git clone --recursive --branch dev https://github.com/missionpinball/mpf-debian-installer.git _mpf_installer;
 
 install:
 - if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
       curl -sS https://www.python.org/ftp/python/3.5.2/python-3.5.2-macosx10.6.pkg > python-3.5.2-macosx10.6.pkg;
       sudo installer -pkg python-3.5.2-macosx10.6.pkg -target /;
+      pip3 install .;
   fi;
-
-- if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
-      pip3 install coveralls coverage;
-  fi;
-
-- python3 setup.py install
-- git clone --branch $TRAVIS_BRANCH https://github.com/missionpinball/mpf-examples.git || git clone --branch `python3 get_version.py` https://github.com/missionpinball/mpf-examples.git || git clone --branch dev https://github.com/missionpinball/mpf-examples.git
-- git clone --branch $TRAVIS_BRANCH https://github.com/missionpinball/mpf-mc.git || git clone --branch `python3 get_version.py` https://github.com/missionpinball/mpf-mc.git || git clone --branch dev https://github.com/missionpinball/mpf-mc.git
-
-before_script:
-- export PYTHONPATH=$PYTHONPATH:$(pwd)/mpf-mc; 
+- pip3 install packaging coveralls coverage setuptools --upgrade
 
 script:
-
 - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
-      coverage run -m unittest discover mpf/tests;
+    docker run -v $PWD:$PWD -w $PWD $LINUX /bin/sh -c "_mpf_installer/install-mpf-dependencies && pip3 install --upgrade coveralls && python3 setup.py install && export PYTHONPATH=$PYTHONPATH:$(pwd):$(pwd)/_mpf-mc && coverage3 run --concurrency=thread -m unittest discover -s mpf/tests;";
   fi;
-
 - if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
       python3 -m unittest discover mpf/tests;
   fi;
 
-#- cd mpf-examples/demo_man/ && python3 -m unittest discover -s tests/ && cd ../../
+before_script:
+- if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
+      export PYTHONPATH=$PYTHONPATH:$(pwd)/_mpf-mc;
+  fi;
 
 after_success:
 
 - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
       coveralls;
   fi;
-
-
 
