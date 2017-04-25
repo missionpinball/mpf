@@ -298,3 +298,7 @@ class BallSave(SystemWideDevice, ModeDevice):
         self.debug_log("Removing...")
 
         self.disable()
+
+        if self.config['delayed_eject_events']:
+            self.debug_log("Triggering delayed eject because mode ended.")
+            self.delayed_eject()
