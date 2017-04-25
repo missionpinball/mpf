@@ -79,7 +79,8 @@ class ScoreReel(SystemWideDevice):
     def stop(self, **kwargs):
         """Stop device."""
         del kwargs
-        self._runner.cancel()
+        if self._runner:
+            self._runner.cancel()
 
     @staticmethod
     def _done(future):
