@@ -2,7 +2,7 @@
 import asyncio
 
 import logging
-from typing import Optional
+from typing import Optional, Generator
 
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformDirectFade
 
@@ -317,6 +317,15 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
                 self.log.warning("Spike watchdog expired.")
                 continue
 
+            if not result:
+                self.log.warning("Empty poll result. Spike desynced.")
+                # give it a break of 50ms
+                yield from asyncio.sleep(.05, loop=self.machine.clock.loop)
+                # clear buffer
+                # pylint: disable-msg=protected-access
+                self._reader._buffer = bytearray()
+                continue
+
             ready_node = result[0]
 
             if 0 < ready_node <= 0x0F or ready_node == 0xF0:
@@ -370,7 +379,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
         self._writer.write("\n\r".encode())
 
     @asyncio.coroutine
-    def _read_raw(self, msg_len):
+    def _read_raw(self, msg_len: int) -> Generator[int, None, bytearray]:
         if not msg_len:
             raise AssertionError("Cannot read 0 length")
 
@@ -386,8 +395,13 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
         result = bytearray()
         if self.debug:
             self.log.debug("Data: %s", data)
+
         for i in range(msg_len):
-            result.append(int(data[i * 3:(i * 3) + 2], 16))
+            try:
+                result.append(int(data[i * 3:(i * 3) + 2], 16))
+            except ValueError:
+                self.log.warning("Read/encoding error.")
+                return bytearray()
 
         return result
 
