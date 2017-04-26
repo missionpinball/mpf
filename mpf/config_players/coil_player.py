@@ -16,20 +16,18 @@ class CoilPlayer(DeviceConfigPlayer):
         del kwargs
         instance_dict = self._get_instance_dict(context)
 
-        for coil, s in settings.items():
+        for coil_name, s in settings.items():
             s = deepcopy(s)
             action = s.pop('action')
-            try:
-                coil = getattr(coil, action)
-            except AttributeError:
-                coil = getattr(self.machine.coils[coil], action)
+            coil = self.machine.coils[coil_name]
+            coil_action = getattr(coil, action)
 
             if action in ("disable", "off") and coil.name in instance_dict:
                 del instance_dict[coil.name]
             elif action in ("on", "enable"):
                 instance_dict[coil.name] = coil
 
-            coil(**s)
+            coil_action(**s)
 
     def clear_context(self, context):
         """Disable enabled coils."""
@@ -43,7 +41,7 @@ class CoilPlayer(DeviceConfigPlayer):
         """Parse short config version."""
         try:
             value = int(value)
-            return dict(action='pulse', milliseconds=value)
+            return dict(action='pulse', pulse_ms=value)
         except (TypeError, ValueError):
             pass
 
