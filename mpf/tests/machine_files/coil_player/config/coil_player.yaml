@@ -1,5 +1,8 @@
 #config_version=4
 
+modes:
+  - mode1
+
 coils:
   coil_1:
     number:
@@ -20,7 +23,7 @@ coil_player:
   event3:
     coil_1:
       action: pulse
-      ms: 49
+      pulse_ms: 49
   event4:
     coil_1:
       action: enable
