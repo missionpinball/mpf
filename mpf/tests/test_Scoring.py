@@ -1,7 +1,7 @@
-from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.MpfGameTestCase import MpfGameTestCase
 
 
-class TestScoring(MpfTestCase):
+class TestScoring(MpfGameTestCase):
 
     def getConfigFile(self):
         return 'config.yaml'
@@ -11,18 +11,11 @@ class TestScoring(MpfTestCase):
 
     def test_scoring(self):
         # start game with two players
-        self.machine.ball_controller.num_balls_known = 0
         self.hit_switch_and_run("s_ball_switch1", 1)
         self.advance_time_and_run(2)
 
         # start game with two players
-        self.hit_and_release_switch("s_start")
-        self.advance_time_and_run()
-        self.hit_and_release_switch("s_start")
-        self.advance_time_and_run()
-        self.assertNotEqual(None, self.machine.game)
-        self.assertEqual(2, self.machine.game.num_players)
-        self.assertEqual(1, self.machine.game.player.number)
+        self.start_two_player_game()
 
         self.advance_time_and_run(1)
         self.release_switch_and_run("s_ball_switch1", 20)
@@ -167,3 +160,28 @@ class TestScoring(MpfTestCase):
         # it should not crash
         self.post_event("test_event1")
         self.advance_time_and_run()
+
+    def test_blocking(self):
+        # start game
+        self.hit_switch_and_run("s_ball_switch1", 1)
+        self.advance_time_and_run(2)
+        self.start_game()
+
+        self.advance_time_and_run(1)
+        self.release_switch_and_run("s_ball_switch1", 20)
+
+        # start mode 1
+        self.post_event("start_mode1", 1)
+
+        # test scoring
+        self.post_event("test_score_mode", 1)
+        # should score 100
+        self.assertPlayerVarEqual(100, "score")
+
+        # start mode 2
+        self.post_event("start_mode2", 1)
+
+        # test scoring
+        self.post_event("test_score_mode", 1)
+        # should score 1000 (+ 100 from the previous)
+        self.assertPlayerVarEqual(1100, "score")

@@ -32,3 +32,5 @@ scoring:
         my_var2:
           score: change
           action: add_machine
+    test_score_mode:
+        score: 100
