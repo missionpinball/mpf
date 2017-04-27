@@ -1137,7 +1137,7 @@ widget_styles:
 widgets:
     __valid_in__: machine, mode
     common:
-        type: single|str|slide_frame
+        type: single|str|
         x: single|str|None
         y: single|str|None
         anchor_x: single|str|None
@@ -1234,10 +1234,6 @@ widgets:
         height: single|float|
         corner_radius: single|int|0
         corner_segments: single|int|10
-    slide_frame:
-        name: single|str|
-        width: single|int|
-        height: single|int|
     text:
         text: single|str|
         font_size: single|num|15
