@@ -254,8 +254,11 @@ class BasePlaceholderManager(MpfController):
     def _eval_compare(self, node, variables):
         if len(node.ops) > 1:
             raise AssertionError("Only single comparisons are supported.")
-        return comparisons[type(node.ops[0])](self._eval(node.left, variables),
-                                              self._eval(node.comparators[0], variables))
+        try:
+            return comparisons[type(node.ops[0])](self._eval(node.left, variables),
+                                                  self._eval(node.comparators[0], variables))
+        except TypeError as e:
+            raise ValueError("Comparison failed: {}".format(e))
 
     def _eval_bool_op(self, node, variables):
         result = self._eval(node.values[0], variables)
