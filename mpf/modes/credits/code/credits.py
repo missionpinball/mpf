@@ -59,7 +59,7 @@ class Credits(Mode):
     def mode_stop(self, **kwargs):
         """Stop mode."""
         self._set_free_play_string()
-        self._disable_credit_switch_handlers()
+        self._disable_credit_handlers()
 
     def _calculate_credit_units(self):
         # "credit units" are how we handle fractional credits (since most
@@ -106,7 +106,7 @@ class Credits(Mode):
 
         self.credit_units_per_game = int(price_per_game / self.credit_unit)
 
-        self.debug_log("Credit units per game: %s", self.credit_units_per_game)
+        self.info_log("Credit units per game: %s", self.credit_units_per_game)
 
     def _calculate_pricing_tiers(self):
         # pricing tiers are calculated with a set of tuples which indicate the
@@ -184,7 +184,7 @@ class Credits(Mode):
 
         self._update_credit_strings()
 
-        self._enable_credit_switch_handlers()
+        self._enable_credit_handlers()
 
         # prevent duplicate handlers
         self._remove_event_handlers()
@@ -226,7 +226,7 @@ class Credits(Mode):
 
         self._remove_event_handlers()
 
-        self._disable_credit_switch_handlers()
+        self._disable_credit_handlers()
 
         self._update_credit_strings()
 
@@ -257,11 +257,11 @@ class Credits(Mode):
         del kwargs
         if (self._get_credit_units() >=
                 self.credit_units_per_game):
-            self.debug_log("Received request to add player. Request Approved")
+            self.info_log("Received request to add player. Request Approved. Sufficient credits available.")
             return True
 
         else:
-            self.debug_log("Received request to add player. Request Denied")
+            self.info_log("Received request to add player. Request Denied. Not enough credits available.")
             self.machine.events.post("not_enough_credits")
             '''event: not_enough_credits
             desc: A player has pushed the start button, but the game is not set
@@ -274,11 +274,11 @@ class Credits(Mode):
         del kwargs
         if (self._get_credit_units() >=
                 self.credit_units_per_game):
-            self.debug_log("Received request to start game. Request Approved")
+            self.info_log("Received request to start game. Request Approved. Sufficient credits available.")
             return True
 
         else:
-            self.debug_log("Received request to start game. Request Denied")
+            self.info_log("Received request to start game. Request Denied. Not enough credits available.")
             self.machine.events.post("not_enough_credits")
             # event docstring covered in _player_add_request() method
             return False
@@ -289,14 +289,14 @@ class Credits(Mode):
                             self.credit_units_per_game)
 
         if new_credit_units < 0:
-            self.log.warning("Somehow credit units went below 0?!? Resetting "
+            self.warning_log("Somehow credit units went below 0?!? Resetting "
                              "to 0.")
             new_credit_units = 0
 
         self.machine.set_machine_var('credit_units', new_credit_units)
         self._update_credit_strings()
 
-    def _enable_credit_switch_handlers(self):
+    def _enable_credit_handlers(self):
         for switch_settings in self.credits_config['switches']:
             self.machine.switch_controller.add_switch_handler(
                 switch_name=switch_settings['switch'].name,
@@ -309,11 +309,20 @@ class Credits(Mode):
                 switch_name=switch.name,
                 callback=self._service_credit_callback)
 
-    def _disable_credit_switch_handlers(self):
+        for event_settings in self.credits_config['events']:
+            self.machine.events.add_handler(
+                event=event_settings['event'],
+                handler=self._credit_event_callback,
+                credits=event_settings['credits'],
+                audit_class=event_settings['type'])
+
+    def _disable_credit_handlers(self):
         for switch_settings in self.credits_config['switches']:
             self.machine.switch_controller.remove_switch_handler(
                 switch_name=switch_settings['switch'].name,
                 callback=self._credit_switch_callback)
+
+        self.machine.events.remove_handler(self._credit_event_callback)
 
         for switch in self.credits_config['service_credits_switch']:
             self.machine.switch_controller.remove_switch_handler(
@@ -321,12 +330,20 @@ class Credits(Mode):
                 callback=self._service_credit_callback)
 
     def _credit_switch_callback(self, value, audit_class):
+        self.info_log("Credit switch hit. Credit Added. Value: %s. Type: %s", value, audit_class)
         self._add_credit_units(credit_units=value / self.credit_unit)
         self._audit(value, audit_class)
         self._reset_timeouts()
 
+    def _credit_event_callback(self, credits, audit_class, **kwargs):
+        del kwargs
+        self.info_log("Credit event hit. Credit Added. Credits: %s. Type: %s", credits, audit_class)
+        self._add_credit_units(credit_units=credits * self.credit_units_per_game, price_tiering=False)
+        self._audit(credits, audit_class)
+        self._reset_timeouts()
+
     def _service_credit_callback(self):
-        self.debug_log("Service Credit Added")
+        self.info_log("Service Credit Added. Value: 1.")
         self.add_credit(price_tiering=False)
         self._audit(1, 'service_credit')
 
@@ -351,7 +368,7 @@ class Credits(Mode):
                             self.credit_units_per_game)
 
         if max_credit_units and total_credit_units > max_credit_units:
-            self.debug_log("Max credits reached")
+            self.info_log("Max credits reached.")
             self._update_credit_strings()
             self.machine.events.post('max_credits_reached')
             '''event: max_credits_reached
@@ -360,7 +377,7 @@ class Credits(Mode):
             self.machine.set_machine_var('credit_units', max_credit_units)
 
         if max_credit_units <= 0 or max_credit_units > previous_credit_units:
-            self.debug_log("Credit units added")
+            self.info_log("Credit units added")
             self.machine.set_machine_var('credit_units', total_credit_units)
             self._update_credit_strings()
             self.machine.events.post('credits_added')
@@ -380,7 +397,7 @@ class Credits(Mode):
 
     def _reset_pricing_tier_credits(self):
         if not self.reset_pricing_tier_count_this_game:
-            self.debug_log("Resetting pricing tier credit count")
+            self.info_log("Resetting pricing tier credit count.")
             self.credit_units_for_pricing_tiers = 0
             self.reset_pricing_tier_count_this_game = True
 
@@ -439,7 +456,7 @@ class Credits(Mode):
 
     def _game_started(self, **kwargs):
         del kwargs
-        self.debug_log("Removing credit clearing delays")
+        self.debug_log("Removing credit clearing delays.")
         self.delay.remove('clear_fractional_credits')
         self.delay.remove('clear_all_credits')
 
@@ -465,7 +482,7 @@ class Credits(Mode):
         self.reset_pricing_tier_count_this_game = False
 
     def _clear_fractional_credits(self):
-        self.debug_log("Clearing fractional credits")
+        self.info_log("Clearing fractional credits.")
 
         credit_units = self._get_credit_units()
         credit_units -= credit_units % self.credit_units_per_game
@@ -476,6 +493,6 @@ class Credits(Mode):
     def clear_all_credits(self, **kwargs):
         """Clear all credits."""
         del kwargs
-        self.debug_log("Clearing all credits")
+        self.info_log("Clearing all credits.")
         self.machine.set_machine_var('credit_units', 0)
         self._update_credit_strings()
