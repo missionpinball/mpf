@@ -23,6 +23,17 @@ coils:
     c_eject:
         number:
 
+settings:
+  replay_score:
+    label: Replay Score
+    values:
+      500000: "500000 (default)"
+      1000000: "1000000"
+      1500000: "1500000"
+    default: 500000
+    key_type: int
+    sort: 100
+
 credits:
   max_credits: 12
   free_play: no
@@ -37,6 +48,10 @@ credits:
     - switch: s_right_coin
       type: money
       value: 1
+  events:
+    - event: game_ending{current_player.score > settings.replay_score}
+      type: award
+      credits: 1
   pricing_tiers:
     - price: .50
       credits: 1
