@@ -301,6 +301,10 @@ credits:
         switch: single|machine(switches)|None
         value: single|float|0.25
         type: single|str|money
+    events:
+        event: single|str|None
+        credits: single|float|0.25
+        type: single|str|replay
     pricing_tiers:
         price: single|float|.50
         credits: single|int|1
