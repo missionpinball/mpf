@@ -344,7 +344,8 @@ effects:
     __valid_in__: None
     common:
         type: single|str|
-    anti_aliasing: None
+    anti_aliasing:
+        none: ignore
     color_channel_mix:
         order: list|int|1, 2, 0
     color_dmd:
@@ -374,20 +375,24 @@ effects:
         blur: single|float|0.1
         dot_size: single|float|0.7
         background_color: single|kivycolor|191919ff
-    flip_vertical: None
+    flip_vertical:
+        none: ignore
     gain:
         gain: single|float|1.0
     gamma:
         gamma: single|float|1.0
     horizontal_blur:
         size: single|float|4.0
-    invert_colors: None
+    invert_colors:
+        none: ignore
     monochrome:
         luminosity: list|float|.299, .587, .114
     pixelate:
         pixel_size: single|int|10
     reduce:
         shades: single|int|16
+    scanlines:
+        none: ignore
     vertical_blur:
         size: single|float|4.0
 event_player:
