@@ -340,6 +340,56 @@ drop_target_banks:
     reset_coil_max_wait_ms: single|ms|100ms
     reset_events: dict|str:ms|machine_reset_phase_3, ball_starting
     ignore_switch_ms: single|ms|500ms
+effects:
+    __valid_in__: None
+    common:
+        type: single|str|
+    anti_aliasing: None
+    color_channel_mix:
+        order: list|int|1, 2, 0
+    color_dmd:
+        dot_filter: single|bool|True
+        dots_x: single|int|128
+        dots_y: single|int|32
+        blur: single|float|0.1
+        dot_size: single|float|0.7
+        background_color: single|kivycolor|191919ff
+        gain: single|float|1.0
+    colorize:
+        tint_color: single|kivycolor|ff66ff00
+    dmd:
+        dot_filter: single|bool|True
+        dots_x: single|int|128
+        dots_y: single|int|32
+        blur: single|float|0.1
+        dot_size: single|float|0.7
+        background_color: single|kivycolor|191919ff
+        gain: single|float|1.0
+        luminosity: list|float|.299, .587, .114
+        shades: single|int|16
+        dot_color: single|kivycolor|ff5500  # classic DMD orange
+    dot_filter:
+        dots_x: single|int|128
+        dots_y: single|int|32
+        blur: single|float|0.1
+        dot_size: single|float|0.7
+        background_color: single|kivycolor|191919ff
+    flip_vertical: None
+    gain:
+        gain: single|float|1.0
+    gamma:
+        gamma: single|float|1.0
+    horizontal_blur:
+        size: single|float|4.0
+    invert_colors: None
+    monochrome:
+        luminosity: list|float|.299, .587, .114
+    pixelate:
+        pixel_size: single|int|10
+    reduce:
+        shades: single|int|16
+    vertical_blur:
+        size: single|float|4.0
 event_player:
     __valid_in__: machine, mode, show
     __allow_others__:
@@ -1175,31 +1225,11 @@ widgets:
         width: single|num|
         height: single|num|
         camera_index: single|int|-1
-    color_dmd:
+    display:
         width: single|num|
         height: single|num|
         source_display: single|str|dmd
-        gain: single|float|1.0
-        pixel_color: single|kivycolor|None
-        dark_color: single|kivycolor|221100
-        shades: single|int|0
-        bg_color: single|kivycolor|191919ff
-        blur: single|float|0.1
-        pixel_size: single|float|0.7
-        dot_filter: single|bool|True
-    dmd:
-        width: single|num|
-        height: single|num|
-        source_display: single|str|dmd
-        luminosity: list|float|.299, .587, .114
-        gain: single|float|1.0
-        pixel_color: single|kivycolor|ff5500  # classic DMD orange
-        dark_color: single|kivycolor|221100
-        shades: single|int|16
-        bg_color: single|kivycolor|191919ff
-        blur: single|float|0.1
-        pixel_size: single|float|0.7
-        dot_filter: single|bool|True
+        effects: ignore        
     ellipse:
         width: single|num|
         height: single|num|
