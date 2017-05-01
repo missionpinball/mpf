@@ -8,7 +8,7 @@ from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInter
 from mpf.core.platform import ServoPlatform
 
 
-class HardwarePlatform(ServoPlatform):
+class I2CServoControllerHardwarePlatform(ServoPlatform):
 
     """Supports the PCA9685/PCA9635 chip via I2C."""
 

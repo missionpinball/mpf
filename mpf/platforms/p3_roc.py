@@ -17,7 +17,7 @@ from mpf.platforms.p_roc_common import PDBConfig, PROCBasePlatform
 from mpf.platforms.p_roc_devices import PROCDriver
 
 
-class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
+class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
 
     """Platform class for the P3-ROC hardware controller.
 
@@ -30,7 +30,7 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
 
     def __init__(self, machine):
         """Initialise and connect P3-Roc."""
-        super(HardwarePlatform, self).__init__(machine)
+        super().__init__(machine)
         self.log = logging.getLogger('P3-ROC')
         self.debug_log("Configuring P3-ROC hardware.")
 

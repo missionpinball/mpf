@@ -82,17 +82,17 @@ mpf:
         mpf.plugins.switch_player.SwitchPlayer
 
     platforms:
-        fadecandy: mpf.platforms.fadecandy.HardwarePlatform
-        fast: mpf.platforms.fast.fast.HardwarePlatform
-        i2c_servo_controller: mpf.platforms.i2c_servo_controller.HardwarePlatform
-        openpixel: mpf.platforms.openpixel.HardwarePlatform
-        opp: mpf.platforms.opp.opp.HardwarePlatform
-        p_roc:  mpf.platforms.p_roc.HardwarePlatform
-        p3_roc:  mpf.platforms.p3_roc.HardwarePlatform
-        pololu_maestro: mpf.platforms.pololu_maestro.HardwarePlatform
+        fadecandy: mpf.platforms.fadecandy.FadecandyHardwarePlatform
+        fast: mpf.platforms.fast.fast.FastHardwarePlatform
+        i2c_servo_controller: mpf.platforms.i2c_servo_controller.I2CServoControllerHardwarePlatform
+        openpixel: mpf.platforms.openpixel.OpenpixelHardwarePlatform
+        opp: mpf.platforms.opp.opp.OppHardwarePlatform
+        p_roc:  mpf.platforms.p_roc.PRocHardwarePlatform
+        p3_roc:  mpf.platforms.p3_roc.P3RocHardwarePlatform
+        pololu_maestro: mpf.platforms.pololu_maestro.PololuMaestroHardwarePlatform
         smart_virtual: mpf.platforms.smart_virtual.SmartVirtualHardwarePlatform
         smartmatrix: mpf.platforms.smartmatrix.SmartMatrix
-        snux: mpf.platforms.snux.HardwarePlatform
+        snux: mpf.platforms.snux.SnuxHardwarePlatform
         virtual: mpf.platforms.virtual.VirtualHardwarePlatform
         spike: mpf.platforms.spike.spike.SpikePlatform
 

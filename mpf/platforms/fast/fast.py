@@ -30,7 +30,7 @@ from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
 
-class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatform, DriverPlatform):
+class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatform, DriverPlatform):
 
     """Platform class for the FAST hardware controller.
 
@@ -40,7 +40,7 @@ class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatfor
 
     def __init__(self, machine):
         """Initialise fast hardware platform."""
-        super(HardwarePlatform, self).__init__(machine)
+        super().__init__(machine)
         self.log = logging.getLogger('FAST')
         self.log.debug("Configuring FAST hardware.")
 

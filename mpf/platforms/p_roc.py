@@ -22,7 +22,7 @@ from mpf.core.utility_functions import Util
 from mpf.platforms.p_roc_devices import PROCDriver
 
 
-class HardwarePlatform(PROCBasePlatform, DmdPlatform):
+class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform):
 
     """Platform class for the P-ROC hardware controller.
 
@@ -35,7 +35,7 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
 
     def __init__(self, machine):
         """Initialise P-ROC."""
-        super(HardwarePlatform, self).__init__(machine)
+        super().__init__(machine)
         self.log = logging.getLogger('P-ROC')
         self.debug_log("Configuring P-ROC hardware")
 
