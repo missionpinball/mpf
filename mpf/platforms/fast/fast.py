@@ -22,7 +22,7 @@ from mpf.platforms.fast.fast_serial_communicator import FastSerialCommunicator
 from mpf.platforms.fast.fast_switch import FASTSwitch
 
 from mpf.core.platform import ServoPlatform, DmdPlatform, SwitchPlatform, DriverPlatform, LightsPlatform,\
-    DriverSettings, SwitchSettings, DriverConfig
+    DriverSettings, SwitchSettings, DriverConfig, SwitchConfig
 from mpf.core.utility_functions import Util
 
 
@@ -30,7 +30,7 @@ from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
 
-class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatform, DriverPlatform):
+class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatform, DriverPlatform):
 
     """Platform class for the FAST hardware controller.
 
@@ -40,7 +40,7 @@ class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatfor
 
     def __init__(self, machine):
         """Initialise fast hardware platform."""
-        super(HardwarePlatform, self).__init__(machine)
+        super().__init__(machine)
         self.log = logging.getLogger('FAST')
         self.log.debug("Configuring FAST hardware.")
 
@@ -403,7 +403,7 @@ class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatfor
 
         return Util.int_to_hex_string(index + switch)
 
-    def configure_switch(self, config: dict) -> FASTSwitch:
+    def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict) -> FASTSwitch:
         """Configure the switch object for a FAST Pinball controller.
 
         FAST Controllers support two types of switches: `local` and `network`.
@@ -428,10 +428,7 @@ class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatfor
 
         Returns: Switch object.
         """
-        # dont modify the config. make a copy
-        config = deepcopy(config)
-
-        if not config['number']:
+        if not number:
             raise AssertionError("Switch needs a number")
 
         if not self.net_connection:
@@ -440,35 +437,34 @@ class HardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatfor
                                  "is available")
 
         if self.machine_type == 'wpc':  # translate switch num to FAST switch
-            config['number'] = fast_defines.wpc_switch_map.get(
-                str(config['number']).upper())
-            if 'connection' not in config:
-                config['connection'] = 0  # local switch (default for WPC)
+            number = fast_defines.wpc_switch_map.get(
+                str(number).upper())
+            if 'connection' not in platform_config:
+                platform_config['connection'] = 0  # local switch (default for WPC)
             else:
-                config['connection'] = 1  # network switch
+                platform_config['connection'] = 1  # network switch
 
         elif self.machine_type == 'fast':
-            if 'connection' not in config:
-                config['connection'] = 1  # network switch (default for FAST)
+            if 'connection' not in platform_config:
+                platform_config['connection'] = 1  # network switch (default for FAST)
             else:
-                config['connection'] = 0  # local switch
+                platform_config['connection'] = 0  # local switch
 
             try:
-                config['number'] = self._parse_switch_number(config['number'])
+                number = self._parse_switch_number(number)
             except ValueError:
                 raise AssertionError("Could not parse switch number %s. Seems "
                                      "to be not a valid switch number for the"
-                                     "FAST platform.", config['number'])
+                                     "FAST platform.", number)
 
         # convert the switch number into a tuple which is:
         # (switch number, connection)
-        config['number'] = (config['number'], config['connection'])
+        number_tuple = (number, platform_config['connection'])
 
-        self.debug_log("FAST Switch hardware tuple: %s", config['number'])
+        self.debug_log("FAST Switch hardware tuple: %s", number)
 
-        switch = FASTSwitch(config=config,
-                            sender=self.net_connection.send,
-                            platform=self)
+        switch = FASTSwitch(config=config, number_tuple=number_tuple,
+                            platform=self, platform_settings=platform_config)
 
         return switch
 

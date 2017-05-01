@@ -12,12 +12,12 @@ https://github.com/preble/pyprocgame
 
 import logging
 
-from mpf.core.platform import I2cPlatform, AccelerometerPlatform, DriverConfig
+from mpf.core.platform import I2cPlatform, AccelerometerPlatform, DriverConfig, SwitchConfig
 from mpf.platforms.p_roc_common import PDBConfig, PROCBasePlatform
 from mpf.platforms.p_roc_devices import PROCDriver
 
 
-class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
+class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
 
     """Platform class for the P3-ROC hardware controller.
 
@@ -30,7 +30,7 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
 
     def __init__(self, machine):
         """Initialise and connect P3-Roc."""
-        super(HardwarePlatform, self).__init__(machine)
+        super().__init__(machine)
         self.log = logging.getLogger('P3-ROC')
         self.debug_log("Configuring P3-ROC hardware.")
 
@@ -143,7 +143,7 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
 
         return proc_driver_object
 
-    def configure_switch(self, config):
+    def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict):
         """Configure a P3-ROC switch.
 
         Args:
@@ -157,7 +157,8 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
                 configuration files would specify a switch number like `SD12` or
                 `7/5`. This `proc_num` is an int between 0 and 255.
         """
-        proc_num = self.pdbconfig.get_proc_switch_number(str(config['number']))
+        del platform_config
+        proc_num = self.pdbconfig.get_proc_switch_number(str(number))
         return self._configure_switch(config, proc_num)
 
     def get_hw_switch_states(self):

@@ -16,7 +16,7 @@ from mpf.platforms.opp.opp_neopixel import OPPNeopixelCard
 from mpf.platforms.opp.opp_switch import OPPInputCard
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings, \
-    DriverConfig
+    DriverConfig, SwitchConfig
 
 if TYPE_CHECKING:
     from typing import Dict, List, Set
@@ -31,7 +31,7 @@ BAD_FW_VERSION = 0x01020304
 
 
 # pylint: disable-msg=too-many-instance-attributes
-class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
+class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
     """Platform class for the OPP hardware.
 
@@ -42,7 +42,7 @@ class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
     def __init__(self, machine) -> None:
         """Initialise OPP platform."""
-        super(HardwarePlatform, self).__init__(machine)
+        super().__init__(machine)
         self.log = logging.getLogger('OPP')
         self.log.info("Configuring OPP hardware.")
 
@@ -506,18 +506,20 @@ class HardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         return opp_sol
 
-    def configure_switch(self, config: dict):
+    def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict):
         """Configure a switch.
 
         Args:
             config: Config dict.
         """
+        del platform_config
+        del config
         # A switch is termed as an input to OPP
         if not self.opp_connection:
             raise AssertionError("A request was made to configure an OPP switch, "
                                  "but no OPP connection is available")
 
-        number = self._get_dict_index(config['number'])
+        number = self._get_dict_index(number)
 
         if number not in self.inpDict:
             raise AssertionError("A request was made to configure an OPP switch "
@@ -733,7 +735,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
     """Manages a Serial connection to the first processor in a OPP serial chain."""
 
     # pylint: disable=too-many-arguments
-    def __init__(self, platform: HardwarePlatform, port, baud) -> None:
+    def __init__(self, platform: OppHardwarePlatform, port, baud) -> None:
         """Initialise Serial Connection to OPP Hardware."""
         self.partMsg = b""
         self.chain_serial = None    # type: str

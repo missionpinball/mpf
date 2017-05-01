@@ -6,14 +6,17 @@ https://github.com/zestyping/openpixelcontrol/blob/master/python_clients/opc.py
 import asyncio
 import logging
 
-from typing import Callable
+from typing import Callable, TYPE_CHECKING
 from typing import Tuple
 
 from mpf.core.platform import LightsPlatform
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
+if TYPE_CHECKING:
+    from mpf.core.machine import MachineController
 
-class HardwarePlatform(LightsPlatform):
+
+class OpenpixelHardwarePlatform(LightsPlatform):
 
     """Base class for the open pixel hardware platform.
 
@@ -22,13 +25,13 @@ class HardwarePlatform(LightsPlatform):
 
     """
 
-    def __init__(self, machine):
+    def __init__(self, machine: "MachineController") -> None:
         """Instantiate openpixel hardware platform."""
-        super(HardwarePlatform, self).__init__(machine)
+        super().__init__(machine)
 
         self.log = logging.getLogger("OpenPixel")
         self.debug_log("Configuring Open Pixel hardware interface.")
-        self.opc_client = None
+        self.opc_client = None      # type: OpenPixelClient
         self.features['tickless'] = True
 
     def __repr__(self):

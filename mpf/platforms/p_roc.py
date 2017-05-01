@@ -15,14 +15,14 @@ https://github.com/preble/pyprocgame
 
 import logging
 
-from mpf.core.platform import DmdPlatform, DriverConfig
+from mpf.core.platform import DmdPlatform, DriverConfig, SwitchConfig
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.platforms.p_roc_common import PDBConfig, PROCBasePlatform
 from mpf.core.utility_functions import Util
 from mpf.platforms.p_roc_devices import PROCDriver
 
 
-class HardwarePlatform(PROCBasePlatform, DmdPlatform):
+class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform):
 
     """Platform class for the P-ROC hardware controller.
 
@@ -35,7 +35,7 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
 
     def __init__(self, machine):
         """Initialise P-ROC."""
-        super(HardwarePlatform, self).__init__(machine)
+        super().__init__(machine)
         self.log = logging.getLogger('P-ROC')
         self.debug_log("Configuring P-ROC hardware")
 
@@ -105,7 +105,7 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
 
         return PROCDriver(proc_num, config, self, number)
 
-    def configure_switch(self, config):
+    def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict):
         """Configure a P-ROC switch.
 
         Args:
@@ -120,14 +120,14 @@ class HardwarePlatform(PROCBasePlatform, DmdPlatform):
                 `7/5`. This `proc_num` is an int between 0 and 255.
 
         """
+        del platform_config
         if self.machine_type == self.pinproc.MachineTypePDB:
-            proc_num = self.pdbconfig.get_proc_switch_number(str(config['number']))
+            proc_num = self.pdbconfig.get_proc_switch_number(str(number))
             if proc_num == -1:
-                raise AssertionError("Switch {} cannot be controlled by the P-ROC. ".format(
-                    str(config['number'])))
+                raise AssertionError("Switch {} cannot be controlled by the P-ROC. ".format(str(number)))
 
         else:
-            proc_num = self.pinproc.decode(self.machine_type, str(config['number']))
+            proc_num = self.pinproc.decode(self.machine_type, str(number))
         return self._configure_switch(config, proc_num)
 
     def get_hw_switch_states(self):

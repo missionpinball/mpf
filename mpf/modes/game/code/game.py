@@ -501,6 +501,7 @@ class Game(AsyncMode):
         player: The player object for the player being added
         number: The player number
         '''
+        return True
 
     def _player_adding_complete(self, player, **kwargs):
         """The player_adding queue event has completed (this is the callback function).

@@ -1022,8 +1022,8 @@ switches:
     events_when_activated: list|str|None
     events_when_deactivated: list|str|None
     platform: single|str|None
+    platform_settings: single|dict|None
 fast_switches:
-    __valid_in__: machine
     debounce_open: single|str|None
     debounce_close: single|str|None
 system11:
