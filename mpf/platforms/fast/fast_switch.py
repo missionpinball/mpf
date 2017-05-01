@@ -1,16 +1,20 @@
 """A switch conntected to a fast controller."""
 import logging
+from typing import TYPE_CHECKING
 
 from mpf.core.platform import SwitchConfig
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
+
+if TYPE_CHECKING:
+    from mpf.platforms.fast.fast import FastHardwarePlatform
 
 
 class FASTSwitch(SwitchPlatformInterface):
 
     """A switch conntected to a fast controller."""
 
-    def __init__(self, config: SwitchConfig, number_tuple, platform, platform_settings):
+    def __init__(self, config: SwitchConfig, number_tuple, platform: "FastHardwarePlatform", platform_settings) -> None:
         """Initialise switch."""
         super().__init__(config, number_tuple)
         self.log = logging.getLogger('FASTSwitch')

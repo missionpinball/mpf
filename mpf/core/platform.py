@@ -271,8 +271,8 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
         Returns: Validated config.
         """
-        if self.__class__.get_switch_config_section():
-            spec = self.__class__.get_switch_config_section()
+        if self.get_switch_config_section():
+            spec = self.get_switch_config_section()
             config = switch.machine.config_validator.validate_config(spec, config, switch.name)
         elif config:
             raise AssertionError("No platform_config supported but not empty {} for switch {}".
@@ -345,10 +345,10 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """Return addition config section for coils."""
         return None
 
-    def validate_coil_section(self, driver, config):
+    def validate_coil_section(self, driver, config) -> dict:
         """Validate coil config for platform."""
-        if self.__class__.get_coil_config_section():
-            spec = self.__class__.get_coil_config_section()
+        if self.get_coil_config_section():
+            spec = self.get_coil_config_section()
             config = driver.machine.config_validator.validate_config(spec, config, driver.name)
         elif config:
             raise AssertionError("No platform_config supported but not empty {} for driver {}".

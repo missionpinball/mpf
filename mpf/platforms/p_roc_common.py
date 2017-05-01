@@ -306,7 +306,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
         """
         if proc_num == -1:
             raise AssertionError("Switch %s cannot be controlled by the "
-                                 "P-ROC/P3-ROC.", str(config['number']))
+                                 "P-ROC/P3-ROC.", str(proc_num))
 
         switch = PROCSwitch(config, proc_num, config.debounce == "quick")
         # The P3-ROC needs to be configured to notify the host computers of
