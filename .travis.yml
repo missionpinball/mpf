@@ -24,6 +24,11 @@ matrix:
      sudo: required
      language: python
      python: "3.5"
+   - os: linux
+     env: LINUX=debian:experimental
+     sudo: required
+     language: python
+     python: "3.5"
    - os: osx
      language: generic
      osx_image: xcode8.2  # OS 10.12
