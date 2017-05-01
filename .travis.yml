@@ -13,6 +13,10 @@ matrix:
      sudo: required
      language: python
    - os: linux
+     env: LINUX=ubuntu:17.04
+     sudo: required
+     language: python
+   - os: linux
      env: LINUX=debian:jessie
      sudo: required
      language: python
