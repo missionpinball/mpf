@@ -3,10 +3,12 @@ import abc
 import asyncio
 from collections import namedtuple
 
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
-from mpf.devices.switch import Switch
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
+
+if TYPE_CHECKING:
+    from mpf.devices.switch import Switch
 
 
 class BasePlatform(metaclass=abc.ABCMeta):
@@ -230,6 +232,9 @@ class LightsPlatform(BasePlatform, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
 
+SwitchConfig = namedtuple("SwitchConfig", ["invert", "debounce"])
+
+
 class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     """Baseclass for platforms with switches in MPF."""
@@ -240,14 +245,14 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['has_switches'] = True
 
     @abc.abstractmethod
-    def configure_switch(self, config):
+    def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict):
         """Subclass this method in a platform module to configure a switch.
 
         This method should return a reference to the switch's platform interface
         object which will be called to access the hardware.
 
         Args:
-            config (dict): Config of switch.
+            config : Config of switch.
 
         """
         raise NotImplementedError
@@ -257,7 +262,7 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """Return config section for additional switch config items."""
         return None
 
-    def validate_switch_section(self, switch: Switch, config: dict) -> dict:
+    def validate_switch_section(self, switch: "Switch", config: dict) -> dict:
         """Validate a switch config for platform.
 
         Args:
@@ -266,12 +271,13 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
         Returns: Validated config.
         """
-        base_spec = ["device"]
-        if self.get_switch_config_section():
-            base_spec.append(self.get_switch_config_section())
-        switch.machine.config_validator.validate_config(
-            "switches", config, switch.name,
-            base_spec=base_spec)
+        if self.__class__.get_switch_config_section():
+            spec = self.__class__.get_switch_config_section()
+            config = switch.machine.config_validator.validate_config(spec, config, switch.name)
+        elif config:
+            raise AssertionError("No platform_config supported but not empty {} for switch {}".
+                                 format(config, switch.name))
+
         return config
 
     @abc.abstractmethod
@@ -343,8 +349,11 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """Validate coil config for platform."""
         if self.__class__.get_coil_config_section():
             spec = self.__class__.get_coil_config_section()
-            config = driver.machine.config_validator.validate_config(
-                spec, config, driver.name)
+            config = driver.machine.config_validator.validate_config(spec, config, driver.name)
+        elif config:
+            raise AssertionError("No platform_config supported but not empty {} for driver {}".
+                                 format(config, driver.name))
+
         return config
 
     @abc.abstractmethod

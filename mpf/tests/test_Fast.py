@@ -1,3 +1,4 @@
+from mpf.core.platform import SwitchConfig
 from mpf.core.platform_controller import DriverRuleSettings
 from mpf.core.platform_controller import SwitchRuleSettings
 from mpf.core.rgb_color import RGBColor
@@ -400,28 +401,28 @@ class TestFast(MpfTestCase):
         self.net_cpu.expected_commands = {
             "SN:1F,01,0A,0A": "SN:P"
         }
-        self.machine.default_platform.configure_switch({'number': '0-31', 'debounce': 'auto'})
+        self.machine.default_platform.configure_switch('0-31', SwitchConfig(debounce='auto', invert=0), {})
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         # next should not work
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_switch({'number': '0-32', 'debounce': 'auto'})
+            self.machine.default_platform.configure_switch('0-32', SwitchConfig(debounce='auto', invert=0), {})
 
         self.net_cpu.expected_commands = {
             "SN:47,01,0A,0A": "SN:P"
         }
-        self.machine.default_platform.configure_switch({'number': '3-15', 'debounce': 'auto'})
+        self.machine.default_platform.configure_switch('3-15', SwitchConfig(debounce='auto', invert=0), {})
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         # invalid board
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_switch({'number': '4-0', 'debounce': 'auto'})
+            self.machine.default_platform.configure_switch('4-0', SwitchConfig(debounce='auto', invert=0), {})
 
         # last switch is 0x47
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_switch({'number': '48', 'debounce': 'auto'})
+            self.machine.default_platform.configure_switch('48', SwitchConfig(debounce='auto', invert=0), {})
 
     def _test_switch_changes(self):
         self.assertFalse(self.machine.switch_controller.is_active("s_flipper"))

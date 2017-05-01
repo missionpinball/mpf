@@ -1,6 +1,7 @@
 """A switch conntected to a fast controller."""
 import logging
 
+from mpf.core.platform import SwitchConfig
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 
@@ -9,15 +10,16 @@ class FASTSwitch(SwitchPlatformInterface):
 
     """A switch conntected to a fast controller."""
 
-    def __init__(self, config, sender, platform):
+    def __init__(self, config: SwitchConfig, number_tuple, platform, platform_settings):
         """Initialise switch."""
-        super().__init__(config, config['number'])
+        super().__init__(config, number_tuple)
         self.log = logging.getLogger('FASTSwitch')
-        self.connection = config['number'][1]
-        self.send = sender
+        self.connection = number_tuple[1]
+        self.send = platform.net_connection.send
         self.platform = platform
+        self.platform_settings = platform_settings
         self._configured_debounce = False
-        self.configure_debounce(config['debounce'] in ("normal", "auto"))
+        self.configure_debounce(config.debounce in ("normal", "auto"))
 
     def configure_debounce(self, debounce):
         """Configure debounce settings."""
@@ -28,11 +30,11 @@ class FASTSwitch(SwitchPlatformInterface):
             debounce_open = Util.int_to_hex_string(self.platform.config['default_quick_debounce_open'])
             debounce_close = Util.int_to_hex_string(self.platform.config['default_quick_debounce_close'])
 
-        if 'debounce_open' in self.config and self.config['debounce_open'] is not None:
-            debounce_open = self.platform.convert_number_from_config(self.config['debounce_open'])
+        if 'debounce_open' in self.platform_settings and self.platform_settings['debounce_open'] is not None:
+            debounce_open = self.platform.convert_number_from_config(self.platform_settings['debounce_open'])
 
-        if 'debounce_close' in self.config and self.config['debounce_close'] is not None:
-            debounce_close = self.platform.convert_number_from_config(self.config['debounce_close'])
+        if 'debounce_close' in self.platform_settings and self.platform_settings['debounce_close'] is not None:
+            debounce_close = self.platform.convert_number_from_config(self.platform_settings['debounce_close'])
 
         if self.connection:
             cmd = 'SN:'

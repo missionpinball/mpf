@@ -16,7 +16,7 @@ from mpf.platforms.opp.opp_neopixel import OPPNeopixelCard
 from mpf.platforms.opp.opp_switch import OPPInputCard
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings, \
-    DriverConfig
+    DriverConfig, SwitchConfig
 
 if TYPE_CHECKING:
     from typing import Dict, List, Set
@@ -506,18 +506,20 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         return opp_sol
 
-    def configure_switch(self, config: dict):
+    def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict):
         """Configure a switch.
 
         Args:
             config: Config dict.
         """
+        del platform_config
+        del config
         # A switch is termed as an input to OPP
         if not self.opp_connection:
             raise AssertionError("A request was made to configure an OPP switch, "
                                  "but no OPP connection is available")
 
-        number = self._get_dict_index(config['number'])
+        number = self._get_dict_index(number)
 
         if number not in self.inpDict:
             raise AssertionError("A request was made to configure an OPP switch "

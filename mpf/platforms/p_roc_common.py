@@ -9,7 +9,8 @@ from typing import Any, List, Union, Callable, Tuple
 
 from mpf.platforms.p_roc_devices import PROCSwitch, PROCMatrixLight
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
-from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings
+from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings, \
+    SwitchConfig
 
 try:    # pragma: no cover
     import pinproc
@@ -289,7 +290,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
         else:
             raise AssertionError("unknown subtype {}".format(subtype))
 
-    def _configure_switch(self, config, proc_num):
+    def _configure_switch(self, config: SwitchConfig, proc_num):
         """Configure a P3-ROC switch.
 
         Args:
@@ -307,14 +308,14 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
             raise AssertionError("Switch %s cannot be controlled by the "
                                  "P-ROC/P3-ROC.", str(config['number']))
 
-        switch = PROCSwitch(config, proc_num, config['debounce'] == "quick")
+        switch = PROCSwitch(config, proc_num, config.debounce == "quick")
         # The P3-ROC needs to be configured to notify the host computers of
         # switch events. (That notification can be for open or closed,
         # debounced or nondebounced.)
         self.debug_log("Configuring switch's host notification settings. P3-ROC"
                        "number: %s, debounce: %s", proc_num,
-                       config['debounce'])
-        if config['debounce'] == "quick":
+                       config.debounce)
+        if config.debounce == "quick":
             self.proc.switch_update_rule(proc_num, 'closed_nondebounced',
                                          {'notifyHost': True,
                                           'reloadActive': False}, [], False)
