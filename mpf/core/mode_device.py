@@ -16,7 +16,7 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
         super().__init__(machine, name)
         self.loaded_in_mode = None      # type: Mode
 
-    def device_added_to_mode(self, mode: Mode, player: Player) -> None:
+    def device_added_to_mode(self, mode: Mode) -> None:
         """Called when a device is created by a mode.
 
         Args:
@@ -24,8 +24,16 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
             player: Current active player
         """
         del mode
-        del player
         self._initialize()
+
+    def device_loaded_in_mode(self, mode: Mode, player: Player) -> None:
+        """Called when a mode is loaded which contains this device.
+
+        Args:
+            mode: Mode which loaded the device
+            player: Current active player
+        """
+        pass
 
     @property
     def can_exist_outside_of_game(self) -> bool:

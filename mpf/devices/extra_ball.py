@@ -62,14 +62,13 @@ class ExtraBall(ModeDevice):
 
         self.player.extra_balls_awarded[self.name] = 0
 
-    def device_added_to_mode(self, mode: Mode, player: Player):
+    def device_loaded_in_mode(self, mode: Mode, player: Player):
         """Load extra ball in mode and initialise player.
 
         Args:
             mode: Mode which is loaded
             player: Current player
         """
-        super().device_added_to_mode(mode, player)
         self.player = player
 
         if self.name not in self.player.extra_balls_awarded:

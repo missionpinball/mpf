@@ -8,7 +8,6 @@ from mpf.core.logging import LogMixin
 
 if TYPE_CHECKING:
     from mpf.core.mode import Mode
-    from mpf.core.player import Player
 
 
 class Device(LogMixin, metaclass=abc.ABCMeta):
@@ -41,7 +40,7 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         self.label = None       # type: str
         self.config = dict()    # type: Any
 
-    def device_added_to_mode(self, mode: "Mode", player: "Player") -> None:
+    def device_added_to_mode(self, mode: "Mode") -> None:
         """Called when a device is created by a mode.
 
         Args:

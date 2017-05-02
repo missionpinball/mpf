@@ -5,7 +5,7 @@ from mpf.tests.MpfGameTestCase import MpfGameTestCase
 class TestMultiballLock(MpfGameTestCase):
 
     def getConfigFile(self):
-        return 'config.yaml'
+        return self._testMethodName + '.yaml'
 
     def getMachinePath(self):
         return 'tests/machine_files/multiball_locks/'
