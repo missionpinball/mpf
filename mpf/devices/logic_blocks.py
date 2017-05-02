@@ -84,9 +84,8 @@ class LogicBlock(SystemWideDevice, ModeDevice):
 
         self.post_update_event()
 
-    def device_added_to_mode(self, mode: Mode, player: Player):
+    def device_loaded_in_mode(self, mode: Mode, player: Player):
         """Restore internal state from player if persist_state is set or create new state."""
-        super().device_added_to_mode(mode, player)
         if self.config['persist_state']:
             if not player.is_player_var(self.player_state_variable):
                 player[self.player_state_variable] = LogicBlockState(self.get_start_value())

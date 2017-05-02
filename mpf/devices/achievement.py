@@ -180,14 +180,13 @@ class Achievement(ModeDevice):
         for group in self._group_memberships:
             group.member_state_changed()
 
-    def device_added_to_mode(self, mode: Mode, player: Player):
+    def device_loaded_in_mode(self, mode: Mode, player: Player):
         """Load device on mode start and restore state.
 
         Args:
             mode: mode which was contains the device
             player: player which is currently active
         """
-        super().device_added_to_mode(mode, player)
         self._player = player
         self._mode = mode
         if not self._player.achievements:

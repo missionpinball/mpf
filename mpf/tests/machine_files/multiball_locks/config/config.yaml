@@ -44,9 +44,3 @@ multiballs:
         shoot_again: 0
         start_events: mb_start
         ball_locks: bd_lock
-
-modes:
-    - min_virtual_physical
-    - no_virtual
-    - physical_only
-    - virtual_only

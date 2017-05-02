@@ -3,6 +3,8 @@ from typing import List
 from typing import Set, TYPE_CHECKING
 
 from mpf.core.machine import MachineController
+from mpf.core.mode import Mode
+from mpf.core.player import Player
 
 if TYPE_CHECKING:
     from mpf.devices.driver import Driver
@@ -276,6 +278,17 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         self.reset_coil = self.config['reset_coil']
         self.reset_coils = self.config['reset_coils']
 
+    def device_loaded_in_mode(self, mode: Mode, player: Player):
+        """Add targets."""
+        self._add_targets_to_bank()
+
+    def device_added_system_wide(self):
+        """Add targets."""
+        super().device_added_system_wide()
+        self._add_targets_to_bank()
+
+    def _add_targets_to_bank(self):
+        """Add targets to bank."""
         for target in self.drop_targets:
             target.add_to_bank(self)
 
