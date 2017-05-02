@@ -93,7 +93,6 @@ class AflRunner(object):
             self.getOptions(), self.machine_config_patches, self.clock, dict(),
             True)
 
-        start = time.time()
         self.loop.run_until_complete(self.machine.initialise())
 
         self.machine.events.process_event_queue()
@@ -141,6 +140,7 @@ class AflRunner(object):
                                                                      self.machine.default_platform)
 
     def dump(self, wait, add_balls, start_game, actions):
+        """Dump fuzzer input."""
         if add_balls:
             for device in self.machine.ball_devices:
                 if "trough" in device.tags:

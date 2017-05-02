@@ -16,7 +16,7 @@ from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInt
 
 
 class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, LightsPlatform, SwitchPlatform,
-                       DriverPlatform, DmdPlatform, RgbDmdPlatform):
+                              DriverPlatform, DmdPlatform, RgbDmdPlatform):
 
     """Base class for the virtual hardware platform."""
 
@@ -72,7 +72,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict):
         """Configure switch."""
         # switch needs a number to be distingishable from other switches
-        if number == None:
+        if number is None:
             number = self._next_switch
             self._next_switch += 1
 

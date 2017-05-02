@@ -40,12 +40,12 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
         return config
 
     def device_added_system_wide(self):
-        """Add event handlers"""
+        """Add event handlers."""
         super().device_added_system_wide()
         self._add_switch_handlers()
 
     def device_loaded_in_mode(self, mode: Mode, player: Player):
-        """Add event handlers"""
+        """Add event handlers."""
         self._add_switch_handlers()
 
     def _add_switch_handlers(self):

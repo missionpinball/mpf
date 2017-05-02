@@ -126,8 +126,7 @@ class Timer(LogMixin):
                 raise AssertionError("Invalid control_event action {} in mode".
                                      format(entry['action']), self.name)
 
-            self.event_keys.append(self.machine.events.add_handler(
-                                entry['event'], handler, **kwargs))
+            self.event_keys.append(self.machine.events.add_handler(entry['event'], handler, **kwargs))
 
     def _remove_control_events(self):
         self.debug_log("Removing control events")

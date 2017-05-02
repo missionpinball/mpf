@@ -26,6 +26,7 @@ class BaseSerialCommunicator(object):
 
     @asyncio.coroutine
     def connect(self):
+        """Connect to the hardware."""
         yield from self._connect_to_hardware(self.port, self.baud)
 
     @asyncio.coroutine

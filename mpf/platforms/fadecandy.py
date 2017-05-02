@@ -81,6 +81,7 @@ class FadeCandyOPClient(OpenPixelClient):
 
     @asyncio.coroutine
     def connect(self):
+        """Connect to the hardware."""
         yield from super().connect()
         self.set_global_color_correction()
         self.write_firmware_options()

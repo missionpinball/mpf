@@ -6,14 +6,14 @@ from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
 from mpf.core.player import Player
 
-if TYPE_CHECKING:
-    from mpf.devices.driver import Driver
-
 from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.events import event_handler
 from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
+
+if TYPE_CHECKING:
+    from mpf.devices.driver import Driver
 
 
 @DeviceMonitor("complete")

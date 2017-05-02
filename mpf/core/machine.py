@@ -508,9 +508,9 @@ class MachineController(LogMixin):
         for section, platforms in self.config['hardware'].items():
             if section == 'driverboards':
                 continue
-            for platform in platforms:
-                if platform.lower() != 'default':
-                    self.add_platform(platform)
+            for hardware_platform in platforms:
+                if hardware_platform.lower() != 'default':
+                    self.add_platform(hardware_platform)
 
         # set default platform
         self.set_default_platform(self.config['hardware']['platform'][0])
@@ -726,8 +726,8 @@ class MachineController(LogMixin):
 
     def _platform_stop(self) -> None:
         """Stop all platforms."""
-        for platform in list(self.hardware_platforms.values()):
-            platform.stop()
+        for hardware_platform in list(self.hardware_platforms.values()):
+            hardware_platform.stop()
 
     def _write_machine_var_to_disk(self, name: str) -> None:
         """Write value to disk."""

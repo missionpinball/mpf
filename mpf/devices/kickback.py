@@ -19,6 +19,6 @@ class Kickback(AutofireCoil):
         if self._enabled:
             self.machine.events.post("kickback_{}_fired".format(self.name))
             '''event: kickback_(name)_fired
-    
+
             desc: Kickback fired a ball.
             '''

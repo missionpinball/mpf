@@ -78,6 +78,8 @@ class IntTemplate(BaseTemplate):
 
 class NativeTypeTemplate:
 
+    """Native type template which encapsulates an int/float/bool."""
+
     def __init__(self, value):
         """Set value."""
         self.value = value
