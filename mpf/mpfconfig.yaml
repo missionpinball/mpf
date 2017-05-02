@@ -24,16 +24,16 @@ mpf:
         - platform_controller: mpf.core.platform_controller.PlatformController
 
     config_players:
-        coil: mpf.config_players.coil_player
-        event: mpf.config_players.event_player
-        queue_event: mpf.config_players.queue_event_player
-        queue_relay: mpf.config_players.queue_relay_player
-        flasher: mpf.config_players.flasher_player
-        light: mpf.config_players.light_player
-        random_event: mpf.config_players.random_event_player
-        show: mpf.config_players.show_player
-        trigger: mpf.config_players.trigger_player
-        score: mpf.config_players.score_player
+        coil: mpf.config_players.coil_player.CoilPlayer
+        event: mpf.config_players.event_player.EventPlayer
+        queue_event: mpf.config_players.queue_event_player.QueueEventPlayer
+        queue_relay: mpf.config_players.queue_relay_player.QueueRelayPlayer
+        flasher: mpf.config_players.flasher_player.FlasherPlayer
+        light: mpf.config_players.light_player.LightPlayer
+        random_event: mpf.config_players.random_event_player.RandomEventPlayer
+        show: mpf.config_players.show_player.ShowPlayer
+        trigger: mpf.config_players.trigger_player.TriggerPlayer
+        score: mpf.config_players.score_player.ScorePlayer
 
     device_modules:
         - mpf.devices.driver.Driver

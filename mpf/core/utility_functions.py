@@ -5,7 +5,7 @@ from functools import reduce
 
 import asyncio
 from ruamel.yaml.compat import ordereddict
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, Iterable, List, Tuple, Callable, Any
 
 
 class Util(object):
@@ -562,7 +562,7 @@ class Util(object):
         return Util.string_to_ms(time_string) / 1000.0
 
     @staticmethod
-    def string_to_class(class_string):
+    def string_to_class(class_string: str) -> Callable[..., Any]:
         """Convert a string like mpf.core.events.EventManager into a Python class.
 
         Args:

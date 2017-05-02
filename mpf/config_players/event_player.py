@@ -48,6 +48,3 @@ class EventPlayer(FlatConfigPlayer):
     def get_express_config(self, value):
         """Parse short config."""
         return self.get_list_config(Util.string_to_list(value))
-
-
-player_cls = EventPlayer

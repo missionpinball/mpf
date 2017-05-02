@@ -37,11 +37,11 @@ class CoilPlayer(DeviceConfigPlayer):
 
         self._reset_instance_dict(context)
 
-    def get_express_config(self, value):
+    def get_express_config(self, value: str):
         """Parse short config version."""
         try:
-            value = int(value)
-            return dict(action='pulse', pulse_ms=value)
+            int_value = int(value)
+            return dict(action='pulse', pulse_ms=int_value)
         except (TypeError, ValueError):
             pass
 
@@ -54,6 +54,3 @@ class CoilPlayer(DeviceConfigPlayer):
             action = 'enable'
 
         return dict(action=action, power=1.0)
-
-
-player_cls = CoilPlayer

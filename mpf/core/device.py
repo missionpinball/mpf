@@ -2,14 +2,9 @@
 import abc
 
 from typing import List
-from typing import TYPE_CHECKING
 
 from mpf.core.machine import MachineController
 from mpf.core.logging import LogMixin
-
-if TYPE_CHECKING:
-    from mpf.core.config_validator import ConfigDict
-    from mpf.core.platform import BasePlatform
 
 
 class Device(LogMixin, metaclass=abc.ABCMeta):

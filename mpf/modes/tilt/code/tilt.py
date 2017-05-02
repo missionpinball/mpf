@@ -1,7 +1,6 @@
 """Contains the Tilt mode code."""
 from typing import Set
 
-from mpf.core.config_validator import ConfigDict
 from mpf.core.events import EventHandlerKey
 from mpf.core.events import QueuedEvent
 from mpf.core.machine import MachineController
@@ -19,7 +18,7 @@ class Tilt(Mode):
         self.ball_ending_tilted_queue = None    # type: QueuedEvent
         self.tilt_event_handlers = None         # type: Set[EventHandlerKey]
         self.last_tilt_warning_switch = None    # type: int
-        self.tilt_config = None                 # type: ConfigDict
+        self.tilt_config = None                 # type: Any
         super().__init__(machine, config, name, path)
 
     def mode_init(self):

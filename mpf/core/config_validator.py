@@ -14,15 +14,12 @@ from mpf.core.utility_functions import Util
 
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 
-# TODO: improve this. should be a multi dimensional dict
-ConfigDict = Dict[str, Union[List[Any], Dict[str, Any]]]
-
 
 class ConfigValidator(object):
 
     """Validates config against config specs."""
 
-    config_spec = None      # type: ConfigDict
+    config_spec = None      # type: Any
 
     def __init__(self, machine):
         """Initialise validator."""

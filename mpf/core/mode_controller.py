@@ -157,7 +157,7 @@ class ModeController(MpfController):
     def _load_mode_config_spec(self, mode_string, mode_class):
         self.machine.config_validator.load_mode_config_spec(mode_string, mode_class.get_config_spec())
 
-    def _load_mode_from_machine_folder(self, mode_string: str, code_path: str) -> Optional[Mode]:
+    def _load_mode_from_machine_folder(self, mode_string: str, code_path: str) -> Optional[Callable[..., Mode]]:
         """Load mode from machine folder and return it."""
         # this will only work for file_name.class_name
         try:
@@ -181,7 +181,7 @@ class ModeController(MpfController):
         return getattr(i, class_name, None)
 
     @staticmethod
-    def _load_mode_from_full_path(code_path: str) -> Optional[Mode]:
+    def _load_mode_from_full_path(code_path: str) -> Optional[Callable[..., Mode]]:
         """Load mode from full path.
 
         This is used for built-in modes like attract and game.
@@ -191,7 +191,7 @@ class ModeController(MpfController):
         except ImportError:
             return None
 
-    def _load_mode_code(self, mode_string: str, code_path: str) -> Mode:
+    def _load_mode_code(self, mode_string: str, code_path: str) -> Callable[..., Mode]:
         """Load code for mode."""
         # First check the machine folder
         mode_class = self._load_mode_from_machine_folder(mode_string, code_path)
@@ -207,7 +207,7 @@ class ModeController(MpfController):
 
         raise AssertionError("Could not load code for mode {} from {}".format(mode_string, code_path))
 
-    def _load_mode(self, mode_string):
+    def _load_mode(self, mode_string) -> Mode:
         """Load a mode, reads in its config, and creates the Mode object.
 
         Args:

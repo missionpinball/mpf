@@ -32,6 +32,3 @@ class QueueEventPlayer(ConfigPlayer):
     def get_express_config(self, value):
         """No express config."""
         raise AssertionError("Not supported")
-
-
-player_cls = QueueEventPlayer
