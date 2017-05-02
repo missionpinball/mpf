@@ -12,6 +12,7 @@ from unittest.mock import *
 import asyncio
 from asyncio import events
 import ruamel.yaml as yaml
+from typing import Any
 
 from mpf.core.logging import LogMixin
 from mpf.core.rgb_color import RGBColor

@@ -142,10 +142,6 @@ class Mode(LogMixin):
         for section in self.machine.config['mpf']['mode_config_sections']:
             this_section = self.config.get(section, None)
 
-            # do not double validate devices
-            if section in self.machine.device_manager.device_classes:
-                continue
-
             if this_section:
                 if isinstance(this_section, dict):
                     for device, settings in this_section.items():
@@ -447,12 +443,6 @@ class Mode(LogMixin):
             # check if there is config for the device type
             if device_class.config_section not in self.config:
                 continue
-
-            # check if it is supposed to be used in mode
-            if collection_name not in self.machine.config['mpf']['mode_config_sections']:
-                raise AssertionError("Found config for device {} in mode {} which may not be used in modes".format(
-                    collection_name, self.name
-                ))
 
             for device, settings in iter(self.config[device_class.config_section].items()):
 

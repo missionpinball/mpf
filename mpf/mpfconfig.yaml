@@ -138,35 +138,8 @@ mpf:
             - enable
             - disable
 
-    mode_config_sections:
-      - autofire_coils
-      - ball_devices
-      - ball_saves
-      - ball_holds
-      - ball_locks
-      - coils
-      - diverters
-      - drop_targets
-      - drop_target_banks
-      - extra_balls
-      - flippers
-      - multiballs
-      - playfields
-      - playfield_transfers
-      - score_reels
-      - score_reel_groups
-      - shots
-      - shot_groups
-      - shot_profiles
-      - switches
+    mode_config_sections:   # only non-devices
       - timers
-      - achievements
-      - achievement_groups
-      - combo_switches
-      - multiball_locks
-      - counters
-      - accruals
-      - sequences
 
 # Default settings for machines. All can be overridden
 

@@ -277,8 +277,8 @@ class ConfigValidator(object):
         except TypeError:
             raise ConfigFileError(
                 'Error in config. Your "{}:" section contains a value that is '
-                'not a parent with sub-settings'.format(
-                    validation_failure_info[0]))
+                'not a parent with sub-settings: {}'.format(
+                    validation_failure_info[0], config))
 
     def _validate_type_subconfig(self, item, param, validation_failure_info):
         try:
