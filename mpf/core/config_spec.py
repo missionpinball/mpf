@@ -321,6 +321,16 @@ diverters:
     ball_search_order: single|int|100
     ball_search_hold_time: single|ms|1s
     playfield: single|machine(playfields)|playfield
+dmds:
+    __valid_in__: machine
+    platform: single|str|None
+    shades: single|pow2|16
+    fps: single|int|30
+    source_display: single|str|dmd
+    luminosity: list|float|.299, .587, .114
+    brightness: single|float|1.0
+    gamma: single|float|1.0
+    only_send_changes: single|bool|False
 drop_targets:
     __valid_in__: machine
     switch: single|machine(switches)|
@@ -741,24 +751,6 @@ psus:
     __valid_in__: machine
     voltage: single|int|None
     max_amps: single|int|None
-physical_dmds:
-    __valid_in__: machine
-    platform: single|str|None
-    shades: single|pow2|16
-    fps: single|int|30
-    source_display: single|str|dmd
-    luminosity: list|float|.299, .587, .114
-    brightness: single|float|1.0
-    gamma: single|float|1.0
-    only_send_changes: single|bool|False
-physical_rgb_dmds:
-    __valid_in__: machine
-    platform: single|str|None
-    fps: single|int|30
-    source_display: single|str|dmd
-    only_send_changes: single|bool|False
-    brightness: single|float|0.5
-    gamma: single|float|2.2
 player_vars:
     __valid_in__: machine
     initial_value: single|str|
@@ -799,6 +791,14 @@ random_event_player:
     force_all: single|bool|true
     disable_random: single|bool|false
     scope: single|enum(player,machine)|player
+rgb_dmds:
+    __valid_in__: machine
+    platform: single|str|None
+    fps: single|int|30
+    source_display: single|str|dmd
+    only_send_changes: single|bool|False
+    brightness: single|float|0.5
+    gamma: single|float|2.2
 score_reels:
     __valid_in__: machine
     coil_inc: single|machine(coils)|None
