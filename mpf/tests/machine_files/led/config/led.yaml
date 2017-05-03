@@ -8,6 +8,9 @@ light_settings:
             linear_slope: 0.75
             linear_cutoff: 0.1
 
+named_colors:
+    jans_red: [251, 23, 42]
+
 lights:
   led1:
     number: 1
