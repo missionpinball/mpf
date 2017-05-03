@@ -128,6 +128,7 @@ class OpenPixelClient(object):
 
     @asyncio.coroutine
     def connect(self):
+        """Connect to the hardware."""
         connector = self.machine.clock.open_connection(self.openpixel_config['host'], self.openpixel_config['port'])
         _, self.socket_sender = yield from connector
 

@@ -5,7 +5,9 @@ from copy import copy, deepcopy
 
 import mpf.core.delays
 from mpf.core.events import event_handler
+from mpf.core.mode import Mode
 from mpf.core.mode_device import ModeDevice
+from mpf.core.player import Player
 from mpf.core.system_wide_device import SystemWideDevice
 
 
@@ -72,18 +74,15 @@ class Shot(ModeDevice, SystemWideDevice):
         super().device_added_system_wide()
         self._created_system_wide = True
 
-        self.update_profile(profile=self.config['profile'], enable=False,
-                            mode=None)
+        self.update_profile(profile=self.config['profile'], enable=False)
 
-    def device_added_to_mode(self, mode, player):
+    def device_loaded_in_mode(self, mode: Mode, player: Player):
         """Called when this shot is dynamically added to a mode that was already started.
 
         Automatically enables the shot and calls the the method
         that's usually called when a player's turn starts since that was missed
         since the mode started after that.
         """
-        super().device_added_to_mode(mode, player)
-
         self.player_turn_started(player)
 
         if not self.config['enable_events']:

@@ -34,9 +34,6 @@ class BananaPlayer(DeviceConfigPlayer):
         return value
 
 
-player_cls = BananaPlayer
-
-
 class TestConfigPlayers(MpfTestCase):
 
     def getConfigFile(self):
@@ -48,7 +45,7 @@ class TestConfigPlayers(MpfTestCase):
     def setUp(self):
         self.machine_config_patches['mpf']['config_players'] = dict()
         self.machine_config_patches['mpf']['config_players']['banana'] = \
-            'mpf.tests.test_ConfigPlayers'
+            'mpf.tests.test_ConfigPlayers.BananaPlayer'
 
         self.add_to_config_validator('banana_player',
                                      dict(__valid_in__='machine, mode'))

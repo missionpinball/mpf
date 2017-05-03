@@ -17,7 +17,7 @@ import copy
 import asyncio
 
 from pkg_resources import iter_entry_points
-from typing import Any, TYPE_CHECKING, Callable, Dict, List, Set
+from typing import Any, TYPE_CHECKING, Callable, Dict, List, Set, Generator
 
 from mpf._version import __version__, version as mpf_version, extended_version as mpf_extended_version
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
@@ -36,7 +36,6 @@ if TYPE_CHECKING:
     from mpf.core.switch_controller import SwitchController
 
     from mpf.core.scriptlet import Scriptlet
-    from mpf.core.platform import BasePlatform
     from mpf.core.mode_controller import ModeController
     from mpf.core.settings_controller import SettingsController
     from mpf.core.shot_profile_manager import ShotProfileManager
@@ -52,6 +51,7 @@ if TYPE_CHECKING:
     from mpf.devices.playfield import Playfield
     from mpf.core.placeholder_manager import PlaceholderManager
     from mpf.platforms.smart_virtual import SmartVirtualHardwarePlatform
+    from mpf.core.device_manager import DeviceManager
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -85,6 +85,8 @@ class MachineController(LogMixin):
 
         self.verify_system_info()
         self._exception = None      # type: Any
+        self._boot_holds = set()    # type: Set[str]
+        self.is_init_done = None    # type: asyncio.Event
 
         self._done = False
         self.monitors = dict()      # type: Dict[str, Set[Callable]]
@@ -112,6 +114,7 @@ class MachineController(LogMixin):
             self.asset_manager = None                   # type: BaseAssetManager
             self.ball_controller = None                 # type: BallController
             self.placeholder_manager = None             # type: PlaceholderManager
+            self.device_manager = None                  # type: DeviceManager
 
             # devices
             self.shows = None                           # type: Dict[str, Show]
@@ -134,13 +137,14 @@ class MachineController(LogMixin):
         self.delayRegistry = DelayManagerRegistry(self)
         self.delay = DelayManager(self.delayRegistry)
 
-        self.hardware_platforms = dict()    # type: Dict[str, BasePlatform]
+        self.hardware_platforms = dict()    # type: Dict[str, SmartVirtualHardwarePlatform]
         self.default_platform = None        # type: SmartVirtualHardwarePlatform
 
         self.clock = self._load_clock()
 
     @asyncio.coroutine
-    def initialise(self):
+    def initialise(self) -> Generator[int, None, None]:
+        """Initialise machine."""
         self._boot_holds = set()    # type: Set[str]
         self.is_init_done = asyncio.Event(loop=self.clock.loop)
         self.register_boot_hold('init')
@@ -170,6 +174,7 @@ class MachineController(LogMixin):
         yield from self.init_done()
 
     def _exception_handler(self, loop, context):    # pragma: no cover
+        """Handle asyncio loop exceptions."""
         # stop machine
         self.stop()
 
@@ -181,13 +186,15 @@ class MachineController(LogMixin):
         self._exception = context
 
     # pylint: disable-msg=no-self-use
-    def _load_clock(self):  # pragma: no cover
+    def _load_clock(self) -> ClockBase:  # pragma: no cover
+        """Load clock and loop."""
         clock = ClockBase(self)
         clock.loop.set_exception_handler(self._exception_handler)
         return clock
 
     @asyncio.coroutine
-    def _run_init_phases(self):
+    def _run_init_phases(self) -> Generator[int, None, None]:
+        """Run init phases."""
         yield from self.events.post_queue_async("init_phase_1")
         '''event: init_phase_1
 
@@ -218,20 +225,23 @@ class MachineController(LogMixin):
         desc: Posted during the initial boot up of MPF.
         '''
 
-    def _init_phases_complete(self, **kwargs):
+    def _init_phases_complete(self, **kwargs) -> None:
+        """Cleanup after init and remove boot holds."""
         del kwargs
         ConfigValidator.unload_config_spec()
 
         self.clear_boot_hold('init')
 
     @asyncio.coroutine
-    def _initialize_platforms(self):
-        for platform in list(self.hardware_platforms.values()):
-            yield from platform.initialize()
-            if not platform.features['tickless']:
-                self.clock.schedule_interval(platform.tick, 1 / self.config['mpf']['default_platform_hz'])
+    def _initialize_platforms(self) -> Generator[int, None, None]:
+        """Initialise all used hardware platforms."""
+        for hardware_platform in list(self.hardware_platforms.values()):
+            yield from hardware_platform.initialize()
+            if not hardware_platform.features['tickless']:
+                self.clock.schedule_interval(hardware_platform.tick, 1 / self.config['mpf']['default_platform_hz'])
 
     def _initialize_credit_string(self):
+        """Set default credit string."""
         # Do this here so there's a credit_string var even if they're not using
         # the credits mode
         try:
@@ -250,11 +260,12 @@ class MachineController(LogMixin):
         section of the machine config file.
         '''
 
-    def _validate_config(self):
+    def _validate_config(self) -> None:
+        """Validate game and machine config."""
         self.validate_machine_config_section('machine')
         self.validate_machine_config_section('game')
 
-    def validate_machine_config_section(self, section):
+    def validate_machine_config_section(self, section: str) -> None:
         """Validate a config section."""
         if section not in ConfigValidator.config_spec:
             return
@@ -265,32 +276,31 @@ class MachineController(LogMixin):
         self.config[section] = self.config_validator.validate_config(
             section, self.config[section], section)
 
-    def _register_system_events(self):
-        self.events.add_handler('shutdown', self.power_off)
-        self.events.add_handler(self.config['mpf']['switch_tag_event'].
-                                replace('%', 'shutdown'), self.power_off)
+    def _register_system_events(self) -> None:
+        """Register default event handlers."""
         self.events.add_handler('quit', self.stop)
         self.events.add_handler(self.config['mpf']['switch_tag_event'].
                                 replace('%', 'quit'), self.stop)
 
-    def _register_config_players(self):
+    def _register_config_players(self) -> None:
+        """Register config players."""
         # todo move this to config_player module
         for name, module in self.config['mpf']['config_players'].items():
-            imported_module = importlib.import_module(module)
+            config_player_class = Util.string_to_class(module)
             setattr(self, '{}_player'.format(name),
-                    imported_module.player_cls(self))
+                    config_player_class(self))
 
         self._register_plugin_config_players()
 
     def _register_plugin_config_players(self):
-
+        """Register plugin config players."""
         self.debug_log("Registering Plugin Config Players")
         for entry_point in iter_entry_points(group='mpf.config_player',
                                              name=None):
             self.debug_log("Registering %s", entry_point)
             entry_point.load()(self)
 
-    def create_data_manager(self, config_name):     # pragma: no cover
+    def create_data_manager(self, config_name: str) -> DataManager:     # pragma: no cover
         """Return a new DataManager for a certain config.
 
         Args:
@@ -298,7 +308,8 @@ class MachineController(LogMixin):
         """
         return DataManager(self, config_name)
 
-    def _load_machine_vars(self):
+    def _load_machine_vars(self) -> None:
+        """Load machine vars from data manager."""
         self.machine_var_data_manager = self.create_data_manager('machine_vars')
 
         current_time = self.clock.get_time()
@@ -322,14 +333,14 @@ class MachineController(LogMixin):
         self.set_machine_var(name="mpf_version", value=mpf_version)
         self.set_machine_var(name="mpf_extended_version", value=mpf_extended_version)
         self.set_machine_var(name="python_version", value=python_version())
-        self.set_machine_var(name="platform", value=platform(aliased=1, terse=0))
+        self.set_machine_var(name="platform", value=platform(aliased=True))
         platform_info = system_alias(system(), release(), version())
         self.set_machine_var(name="platform_system", value=platform_info[0])
         self.set_machine_var(name="platform_release", value=platform_info[1])
         self.set_machine_var(name="platform_version", value=platform_info[2])
         self.set_machine_var(name="platform_machine", value=machine())
 
-    def _load_initial_machine_vars(self):
+    def _load_initial_machine_vars(self) -> None:
         """Load initial machine var values from config if they did not get loaded from data."""
         if 'machine_vars' not in self.config:
             return
@@ -342,19 +353,8 @@ class MachineController(LogMixin):
                 self.set_machine_var(name=name,
                                      value=Util.convert_to_type(element['initial_value'], element['value_type']))
 
-    def _check_crash_queue(self, time):
-        del time
-        try:
-            crash = self.crash_queue.get(block=False)
-        except queue.Empty:
-            pass
-        else:
-            print("MPF Shutting down due to child thread crash")
-            print("Crash details: %s", crash)
-            self.stop()
-
-    def _set_machine_path(self):
-        # Add the machine folder to sys.path so we can import modules from it
+    def _set_machine_path(self) -> None:
+        """Add the machine folder to sys.path so we can import modules from it."""
         sys.path.insert(0, self.machine_path)
 
     def _get_mpfcache_file_name(self):
@@ -365,7 +365,7 @@ class MachineController(LogMixin):
         result = os.path.join(cache_dir, path_hash)
         return result
 
-    def _load_config(self):     # pragma: no cover
+    def _load_config(self) -> None:     # pragma: no cover
         if self.options['no_load_cache']:
             load_from_cache = False
         else:
@@ -388,7 +388,7 @@ class MachineController(LogMixin):
         if not config_loaded:
             self._load_config_from_files()
 
-    def _load_config_from_files(self):
+    def _load_config_from_files(self) -> None:
         self.log.info("Loading config from original files")
 
         self.config = self._get_mpf_config()
@@ -411,11 +411,13 @@ class MachineController(LogMixin):
         if self.options['create_config_cache']:
             self._cache_config()
 
-    def _get_mpf_config(self):
+    def _get_mpf_config(self) -> dict:
+        """Return mpf config dict."""
         return ConfigProcessor.load_config_file(self.options['mpfconfigfile'],
                                                 config_type='machine')
 
-    def _load_config_from_cache(self):
+    def _load_config_from_cache(self) -> bool:
+        """Return true if config was loaded from cache."""
         self.log.info("Loading cached config: %s", self._get_mpfcache_file_name())
 
         with open(self._get_mpfcache_file_name(), 'rb') as f:
@@ -436,8 +438,8 @@ class MachineController(LogMixin):
 
             return True
 
-    def _get_latest_config_mod_time(self):
-
+    def _get_latest_config_mod_time(self) -> int:
+        """Return last modification time of the config file."""
         latest_time = os.path.getmtime(self.options['mpfconfigfile'])
 
         for root, dirs, files in os.walk(
@@ -455,6 +457,7 @@ class MachineController(LogMixin):
         return latest_time
 
     def _cache_config(self):    # pragma: no cover
+        """Dump config to cache."""
         with open(self._get_mpfcache_file_name(), 'wb') as f:
             pickle.dump(self.config, f, protocol=4)
             self.log.info('Config file cache created: %s', self._get_mpfcache_file_name())
@@ -484,14 +487,15 @@ class MachineController(LogMixin):
             self.log.info("Python version: %s.%s.%s (64-bit)", python_version[0],
                           python_version[1], python_version[2])
 
-    def _load_core_modules(self):
+    def _load_core_modules(self) -> None:
+        """Load core modules."""
         self.debug_log("Loading core modules...")
         for name, module in self.config['mpf']['core_modules'].items():
             self.debug_log("Loading '%s' core module", module)
             m = Util.string_to_class(module)(self)
             setattr(self, name, m)
 
-    def _load_hardware_platforms(self):
+    def _load_hardware_platforms(self) -> None:
         """Load all hardware platforms."""
         self.validate_machine_config_section('hardware')
         # if platform is forced use that one
@@ -504,14 +508,15 @@ class MachineController(LogMixin):
         for section, platforms in self.config['hardware'].items():
             if section == 'driverboards':
                 continue
-            for platform in platforms:
-                if platform.lower() != 'default':
-                    self.add_platform(platform)
+            for hardware_platform in platforms:
+                if hardware_platform.lower() != 'default':
+                    self.add_platform(hardware_platform)
 
         # set default platform
         self.set_default_platform(self.config['hardware']['platform'][0])
 
-    def _load_plugins(self):
+    def _load_plugins(self) -> None:
+        """Load plugins."""
         self.debug_log("Loading plugins...")
 
         # TODO: This should be cleaned up. Create a Plugins base class and
@@ -525,7 +530,8 @@ class MachineController(LogMixin):
             plugin_obj = Util.string_to_class(plugin)(self)
             self.plugins.append(plugin_obj)
 
-    def _load_scriptlets(self):
+    def _load_scriptlets(self) -> None:
+        """Load scriptlets."""
         if 'scriptlets' in self.config:
             self.config['scriptlets'] = self.config['scriptlets'].split(' ')
 
@@ -542,7 +548,7 @@ class MachineController(LogMixin):
                 self.scriptlets.append(scriptlet_obj)
 
     @asyncio.coroutine
-    def reset(self):
+    def reset(self) -> Generator[int, None, None]:
         """Reset the machine.
 
         This method is safe to call. It essentially sets up everything from
@@ -602,7 +608,7 @@ class MachineController(LogMixin):
 
         '''
 
-    def add_platform(self, name):
+    def add_platform(self, name: str) -> None:
         """Make an additional hardware platform interface available to MPF.
 
         Args:
@@ -621,7 +627,7 @@ class MachineController(LogMixin):
             self.hardware_platforms[name] = (
                 hardware_platform(self))
 
-    def set_default_platform(self, name):
+    def set_default_platform(self, name: str) -> None:
         """Set the default platform.
 
         It is used if a device class-specific or device-specific platform is not specified.
@@ -636,13 +642,13 @@ class MachineController(LogMixin):
             raise AssertionError("Cannot set default platform to '{}', as that's not"
                                  " a currently active platform".format(name))
 
-    def register_monitor(self, monitor_class, monitor):
+    def register_monitor(self, monitor_class: str, monitor: Callable[..., Any]) -> None:
         """Register a monitor.
 
         Args:
             monitor_class: String name of the monitor class for this monitor
                 that's being registered.
-            monitor: String name of the monitor.
+            monitor: Callback to notify
 
         MPF uses monitors to allow components to monitor certain internal
         elements of MPF.
@@ -662,7 +668,7 @@ class MachineController(LogMixin):
 
         self.monitors[monitor_class].add(monitor)
 
-    def run(self):
+    def run(self) -> None:
         """Start the main machine run loop."""
         self.info_log("Starting the main run loop.")
         try:
@@ -673,7 +679,7 @@ class MachineController(LogMixin):
             return
         self._run_loop()
 
-    def stop(self, **kwargs):
+    def stop(self, **kwargs) -> None:
         """Perform a graceful exit of MPF."""
         del kwargs
         if self._done:
@@ -693,7 +699,7 @@ class MachineController(LogMixin):
 
         self.clock.loop.stop()
 
-    def _do_stop(self):
+    def _do_stop(self) -> None:
         if self._done:
             return
 
@@ -702,7 +708,7 @@ class MachineController(LogMixin):
         # this is needed to properly close all sockets
         self.clock.loop.run_forever()
 
-    def _run_loop(self):    # pragma: no cover
+    def _run_loop(self) -> None:    # pragma: no cover
         # Main machine run loop with when the default platform interface
         # specifies the MPF should control the main timer
 
@@ -718,18 +724,12 @@ class MachineController(LogMixin):
         self._do_stop()
         self.clock.loop.close()
 
-    def _platform_stop(self):
-        for platform in list(self.hardware_platforms.values()):
-            platform.stop()
+    def _platform_stop(self) -> None:
+        """Stop all platforms."""
+        for hardware_platform in list(self.hardware_platforms.values()):
+            hardware_platform.stop()
 
-    def power_off(self, **kwargs):
-        """Attempt to perform a power down of the pinball machine and ends MPF.
-
-        This method is not yet implemented.
-        """
-        pass
-
-    def _write_machine_var_to_disk(self, name):
+    def _write_machine_var_to_disk(self, name: str) -> None:
         """Write value to disk."""
         if self.machine_vars[name]['persist'] and self.config['mpf']['save_machine_vars_to_disk']:
             disk_var = CaseInsensitiveDict()
@@ -740,7 +740,7 @@ class MachineController(LogMixin):
 
             self.machine_var_data_manager.save_key(name, disk_var)
 
-    def get_machine_var(self, name):
+    def get_machine_var(self, name: str) -> Any:
         """Return the value of a machine variable.
 
         Args:
@@ -756,11 +756,11 @@ class MachineController(LogMixin):
         except KeyError:
             return None
 
-    def is_machine_var(self, name):
+    def is_machine_var(self, name: str) -> bool:
         """Return true if machine variable exists."""
         return name in self.machine_vars
 
-    def configure_machine_var(self, name, persist, expire_secs=None):
+    def configure_machine_var(self, name: str, persist: bool, expire_secs: int=None) -> None:
         """Create a new machine variable.
 
         Args:
@@ -785,7 +785,7 @@ class MachineController(LogMixin):
             self.machine_vars[name]['persist'] = persist
             self.machine_vars[name]['expire_sec'] = expire_secs
 
-    def set_machine_var(self, name, value):
+    def set_machine_var(self, name: str, value: Any) -> None:
         """Set the value of a machine variable.
 
         Args:
@@ -840,7 +840,7 @@ class MachineController(LogMixin):
                     callback(name=name, value=value,
                              prev_value=prev_value, change=change)
 
-    def remove_machine_var(self, name):
+    def remove_machine_var(self, name: str) -> None:
         """Remove a machine variable by name.
 
         If this variable persists to disk, it will remove it from there too.
@@ -854,7 +854,7 @@ class MachineController(LogMixin):
         except KeyError:
             pass
 
-    def remove_machine_var_search(self, startswith='', endswith=''):
+    def remove_machine_var_search(self, startswith: str='', endswith: str='') -> None:
         """Remove a machine variable by matching parts of its name.
 
         Args:
@@ -869,7 +869,7 @@ class MachineController(LogMixin):
                 del self.machine_vars[var]
                 self.machine_var_data_manager.remove_key(var)
 
-    def get_platform_sections(self, platform_section, overwrite):
+    def get_platform_sections(self, platform_section: str, overwrite: str) -> "SmartVirtualHardwarePlatform":
         """Return platform section."""
         if self.options['force_platform']:
             return self.default_platform
@@ -886,13 +886,13 @@ class MachineController(LogMixin):
                 raise AssertionError("Platform \"{}\" has not been loaded. Please add it to your \"hardware\" section.".
                                      format(overwrite))
 
-    def register_boot_hold(self, hold):
+    def register_boot_hold(self, hold: str) -> None:
         """Register a boot hold."""
         if self.is_init_done.is_set():
             raise AssertionError("Register hold after init_done")
         self._boot_holds.add(hold)
 
-    def clear_boot_hold(self, hold):
+    def clear_boot_hold(self, hold: str) -> None:
         """Clear a boot hold."""
         if self.is_init_done.is_set():
             raise AssertionError("Clearing hold after init_done")
@@ -902,7 +902,7 @@ class MachineController(LogMixin):
             self.is_init_done.set()
 
     @asyncio.coroutine
-    def init_done(self):
+    def init_done(self) -> Generator[int, None, None]:
         """Finish init.
 
         Called when init is done and all boot holds are cleared.

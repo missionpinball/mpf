@@ -145,5 +145,3 @@ class ShowPlayer(DeviceConfigPlayer):
     def get_express_config(self, value):
         """Parse express config."""
         return {"action": value}
-
-player_cls = ShowPlayer

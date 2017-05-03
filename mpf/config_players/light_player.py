@@ -85,5 +85,3 @@ class LightPlayer(DeviceConfigPlayer):
         super().get_full_config(value)
         value['fade_ms'] = value.pop('fade')
         return value
-
-player_cls = LightPlayer

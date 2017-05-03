@@ -296,15 +296,13 @@ class AchievementGroup(ModeDevice):
         self.debug_log("No member is started")
         return False
 
-    def device_added_to_mode(self, mode: Mode, player: Player):
+    def device_loaded_in_mode(self, mode: Mode, player: Player):
         """Load device on mode start and restore state.
 
         Args:
             mode: mode which was contains the device
             player: player which is currently active
         """
-        super().device_added_to_mode(mode, player)
-
         self._mode = mode
 
         for ach in self.config['achievements']:

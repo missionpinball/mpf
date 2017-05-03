@@ -1,15 +1,13 @@
 """Contains the Device base class."""
 import abc
 
-from typing import List
-from typing import TYPE_CHECKING
+from typing import List, Any, TYPE_CHECKING
 
 from mpf.core.machine import MachineController
 from mpf.core.logging import LogMixin
 
 if TYPE_CHECKING:
-    from mpf.core.config_validator import ConfigDict
-    from mpf.core.platform import BasePlatform
+    from mpf.core.mode import Mode
 
 
 class Device(LogMixin, metaclass=abc.ABCMeta):
@@ -40,7 +38,16 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         self.name = name.lower()
         self.tags = []          # type: List[str]
         self.label = None       # type: str
-        self.config = dict()    # type: ignore
+        self.config = dict()    # type: Any
+
+    def device_added_to_mode(self, mode: "Mode") -> None:
+        """Called when a device is created by a mode.
+
+        Args:
+            mode: Mode which loaded the device
+            player: Current active player
+        """
+        raise AssertionError("Cannot use device {} in mode {}.".format(self.name, mode.name))
 
     @classmethod
     def get_config_spec(cls):

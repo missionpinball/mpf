@@ -93,5 +93,5 @@ class AutofireCoil(SystemWideDevice):
         return True
 
     def _ball_search_ignore_done(self):
-        """We no longer expect any fake hits """
+        """We no longer expect any fake hits."""
         self._ball_search_in_progress = False

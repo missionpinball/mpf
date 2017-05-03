@@ -25,15 +25,12 @@ class MultiballLock(ModeDevice):
 
         # initialise variables
         self.enabled = False
-        self.initialised = False    # remove when #715 is fixed
         self._events = {}
 
         self._locked_balls = 0
         # Locked balls in case we are keep_virtual_ball_count_per_player is false
 
         super().__init__(machine, name)
-
-        self.machine.events.add_handler("player_turn_starting", self._player_turn_starting)
 
     def device_removed_from_mode(self, mode):
         """Disable ball lock when mode ends."""
@@ -49,17 +46,14 @@ class MultiballLock(ModeDevice):
         # load lock_devices
         super()._initialize()
 
-        # we only need to initialise once
-        if self.initialised:
-            return
-
         self.lock_devices = []
         for device in self.config['lock_devices']:
             self.lock_devices.append(device)
             self._events[device] = []
 
         self.source_playfield = self.config['source_playfield']
-        self.initialised = True
+
+        self.machine.events.add_handler("player_turn_starting", self._player_turn_starting)
 
     @event_handler(10)
     def enable(self, **kwargs):
@@ -78,9 +72,6 @@ class MultiballLock(ModeDevice):
 
     def _player_turn_starting(self, queue, **kwargs):
         del kwargs
-        if not self.initialised:
-            return
-
         # reset locked balls
         self._locked_balls = 0
 

@@ -2,7 +2,9 @@
 
 from mpf.core.delays import DelayManager, DelayManagerRegistry
 from mpf.core.device_monitor import DeviceMonitor
+from mpf.core.mode import Mode
 from mpf.core.mode_device import ModeDevice
+from mpf.core.player import Player
 from mpf.core.system_wide_device import SystemWideDevice
 
 
@@ -37,7 +39,16 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
 
         return config
 
-    def _initialize(self):
+    def device_added_system_wide(self):
+        """Add event handlers."""
+        super().device_added_system_wide()
+        self._add_switch_handlers()
+
+    def device_loaded_in_mode(self, mode: Mode, player: Player):
+        """Add event handlers."""
+        self._add_switch_handlers()
+
+    def _add_switch_handlers(self):
         if self.config['tag_1']:
             for tag in self.config['tag_1']:
                 for switch in self.machine.switches.items_tagged(tag):

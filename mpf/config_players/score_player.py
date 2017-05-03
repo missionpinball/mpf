@@ -111,6 +111,3 @@ class ScorePlayer(ConfigPlayer):
     def get_list_config(self, value):
         """Parse list."""
         raise AssertionError("Score player does not support lists.")
-
-
-player_cls = ScorePlayer

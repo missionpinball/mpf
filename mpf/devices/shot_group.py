@@ -3,7 +3,9 @@
 from collections import deque
 
 from mpf.core.events import event_handler
+from mpf.core.mode import Mode
 from mpf.core.mode_device import ModeDevice
+from mpf.core.player import Player
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.utility_functions import Util
 
@@ -74,10 +76,8 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         """Overload config in mode."""
         self.mode_config[mode.name] = config
 
-    def device_added_to_mode(self, mode, player):
+    def device_loaded_in_mode(self, mode: Mode, player: Player):
         """Add device in mode."""
-        super().device_added_to_mode(mode, player)
-
         # If there are no enable_events configured, then we enable this shot
         # group when its created on mode start
 

@@ -20,6 +20,3 @@ class TriggerPlayer(DeviceConfigPlayer):
         """Not supported."""
         del value
         raise NotImplementedError("Trigger Player does not support express config")
-
-
-player_cls = TriggerPlayer

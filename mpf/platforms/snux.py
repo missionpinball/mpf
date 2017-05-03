@@ -6,7 +6,7 @@ Mark Sunnucks's System 11 interface board.
 import asyncio
 import logging
 
-from typing import Any, Optional, Set, Tuple, TYPE_CHECKING
+from typing import Any, Optional, Set, Tuple
 
 from mpf.core.machine import MachineController
 from mpf.core.platform import DriverPlatform, DriverConfig
@@ -14,9 +14,6 @@ from mpf.core.platform import DriverPlatform, DriverConfig
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
 from mpf.core.delays import DelayManager
-
-if TYPE_CHECKING:
-    from mpf.core.config_validator import ConfigDict
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -33,7 +30,7 @@ class SnuxHardwarePlatform(DriverPlatform):
 
         self.platform = None            # type: DriverPlatform
 
-        self.system11_config = None     # type: ConfigDict
+        self.system11_config = None     # type: Any
         self.snux_config = None         # type: Any
 
         self.a_side_queue = set()       # type: Set[Tuple[DriverPlatformInterface, PulseSettings, HoldSettings]]

@@ -1,5 +1,4 @@
-"""Contains the Game class which is the Machine Mode that actually runs and manages
-the game in a pinball machine.
+"""Contains the Game class which is the Machine Mode that actually runs and manages the game in a pinball machine.
 
 Note that in the Mission Pinball Framework, a distinction is made between a
 *game* and a *machine*. A *game* refers to a game in progress, whereas a
@@ -42,10 +41,8 @@ class Game(AsyncMode):
 
     @asyncio.coroutine
     def _run(self):
-        """Main game mode method (basic game loop)"""
-
+        """Main game mode method (basic game loop)."""
         # Init the game (game start process)
-
         # Initialize member variables
         self.player = None
         self.player_list = list()
@@ -85,9 +82,7 @@ class Game(AsyncMode):
     @asyncio.coroutine
     def _start_game(self):
         """Start a new game."""
-
         self.debug_log("Game start")
-
         yield from self.machine.events.post_async('game_will_start')
         '''event: game_will_start
         desc: The game is about to start. This event is posted just before
@@ -133,7 +128,7 @@ class Game(AsyncMode):
         self.end_ball()
 
     def end_ball(self):
-        """Sets an event flag that will end the current ball"""
+        """Set an event flag that will end the current ball."""
         self._end_ball_event.set()
 
     @asyncio.coroutine
@@ -287,7 +282,7 @@ class Game(AsyncMode):
         self.debug_log("**    Player: {}    Ball: {}   Score: {}".format(self.player.number,
                                                                          self.player.ball,
                                                                          self.player.score
-                                                                        ).ljust(49) + '**')
+                                                                         ).ljust(49) + '**')
         self.debug_log("**                                               **")
         self.debug_log("***************************************************")
         self.debug_log("***************************************************")
@@ -376,7 +371,7 @@ class Game(AsyncMode):
         self.end_game()
 
     def end_game(self):
-        """Ends the current game.
+        """End the current game.
 
         This method posts the queue event *game_ending*, giving other modules
         an opportunity to finish up whatever they need to do before the game
@@ -464,9 +459,11 @@ class Game(AsyncMode):
         '''
 
     def _player_add_request_complete(self, ev_result=True, **kwargs) -> bool:
-        """This is the callback from our request player add event. Don't call it directly."""
-        del kwargs
+        """Callback from our request player add event.
 
+        Don't call it directly.
+        """
+        del kwargs
         if ev_result is False:
             self.debug_log("Request to add player has been denied.")
             return False
@@ -505,9 +502,10 @@ class Game(AsyncMode):
 
     def _player_adding_complete(self, player, **kwargs):
         """The player_adding queue event has completed (this is the callback function).
-        The add player process can now finish."""
-        del kwargs
 
+        The add player process can now finish.
+        """
+        del kwargs
         self.machine.events.post('player_added',
                                  player=player,
                                  num=player.number)
@@ -626,7 +624,7 @@ class Game(AsyncMode):
 
     @asyncio.coroutine
     def _end_player_turn(self):
-        """Ends the current player's turn"""
+        """End the current player's turn."""
         if not self.player:
             return
 

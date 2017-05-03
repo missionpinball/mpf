@@ -142,10 +142,6 @@ class Mode(LogMixin):
         for section in self.machine.config['mpf']['mode_config_sections']:
             this_section = self.config.get(section, None)
 
-            # do not double validate devices
-            if section in self.machine.device_manager.device_classes:
-                continue
-
             if this_section:
                 if isinstance(this_section, dict):
                     for device, settings in this_section.items():
@@ -435,8 +431,7 @@ class Mode(LogMixin):
                         ))
 
                     # This lets the device know it was added to a mode
-                    device.device_added_to_mode(mode=self,
-                                                player=self.player)
+                    device.device_loaded_in_mode(mode=self, player=self.player)
 
     def _create_mode_devices(self) -> None:
         """Create new devices that are specified in a mode config that haven't been created in the machine-wide."""
@@ -447,12 +442,6 @@ class Mode(LogMixin):
             # check if there is config for the device type
             if device_class.config_section not in self.config:
                 continue
-
-            # check if it is supposed to be used in mode
-            if collection_name not in self.machine.config['mpf']['mode_config_sections']:
-                raise AssertionError("Found config for device {} in mode {} which may not be used in modes".format(
-                    collection_name, self.name
-                ))
 
             for device, settings in iter(self.config[device_class.config_section].items()):
 
@@ -490,6 +479,16 @@ class Mode(LogMixin):
                     self.debug_log("Initializing mode-based device: %s", device)
                     # load config
                     device.load_config(settings)
+
+        for collection_name, device_class in iter(self.machine.device_manager.device_classes.items()):
+            # check if there is config for the device type
+            if device_class.config_section not in self.config:
+                continue
+
+            for device, settings in iter(self.config[device_class.config_section].items()):
+                collection = getattr(self.machine, collection_name)
+                device = collection[device]
+                device.device_added_to_mode(mode=self)
 
     def _remove_mode_devices(self) -> None:
         for device in self.mode_devices:

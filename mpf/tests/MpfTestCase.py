@@ -12,8 +12,8 @@ from unittest.mock import *
 import asyncio
 from asyncio import events
 import ruamel.yaml as yaml
+from typing import Any
 
-from mpf.core.config_validator import ConfigDict
 from mpf.core.logging import LogMixin
 from mpf.core.rgb_color import RGBColor
 
@@ -33,7 +33,7 @@ class TestMachineController(MachineController):
 
     """MachineController used in tests."""
 
-    local_mpf_config_cache = {}     # type: ConfigDict
+    local_mpf_config_cache = {}     # type: Any
 
     def __init__(self, mpf_path, machine_path, options, config_patches, clock, mock_data,
                  enable_plugins=False):
