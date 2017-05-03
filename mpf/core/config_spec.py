@@ -356,6 +356,7 @@ effects:
         dot_size: single|float|0.7
         background_color: single|kivycolor|191919ff
         gain: single|float|1.0
+        shades: single|int|0
     colorize:
         tint_color: single|kivycolor|ff66ff00
     dmd:
@@ -366,8 +367,8 @@ effects:
         dot_size: single|float|0.7
         background_color: single|kivycolor|191919ff
         gain: single|float|1.0
-        luminosity: list|float|.299, .587, .114
         shades: single|int|16
+        luminosity: list|float|.299, .587, .114
         dot_color: single|kivycolor|ff5500  # classic DMD orange
     dot_filter:
         dots_x: single|int|128
