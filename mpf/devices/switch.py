@@ -7,6 +7,7 @@ from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.machine import MachineController
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.utility_functions import Util
+from mpf.core.platform import SwitchConfig
 
 if TYPE_CHECKING:
     from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
@@ -63,8 +64,9 @@ class Switch(SystemWideDevice):
 
     def validate_and_parse_config(self, config, is_mode_config):
         """Validate switch config."""
+        config = super().validate_and_parse_config(config, is_mode_config)
         platform = self.machine.get_platform_sections('switches', getattr(config, "platform", None))
-        platform.validate_switch_section(self, config)
+        config['platform_settings'] = platform.validate_switch_section(self, config.get('platform_settings', None))
         self._configure_device_logging(config)
         return config
 
@@ -90,7 +92,8 @@ class Switch(SystemWideDevice):
 
         self.recycle_secs = self.config['ignore_window_ms'] / 1000.0
 
-        self.hw_switch = self.platform.configure_switch(self.config)
+        config = SwitchConfig(invert=self.invert, debounce=self.config['debounce'])
+        self.hw_switch = self.platform.configure_switch(self.config['number'], config, self.config['platform_settings'])
 
         if self.machine.config['mpf']['auto_create_switch_events']:
             self._create_activation_event(

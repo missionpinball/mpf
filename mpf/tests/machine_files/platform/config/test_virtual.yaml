@@ -3,7 +3,8 @@
 switches:
     s_test:
         number: 1
-        debounce_open: 20ms
+        platform_settings:
+            debounce_open: 20ms
 
 coils:
     c_test:

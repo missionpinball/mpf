@@ -281,6 +281,10 @@ credits:
         switch: single|machine(switches)|None
         value: single|float|0.25
         type: single|str|money
+    events:
+        event: single|str|None
+        credits: single|float|0.25
+        type: single|str|replay
     pricing_tiers:
         price: single|float|.50
         credits: single|int|1
@@ -1074,8 +1078,8 @@ switches:
     events_when_activated: list|str|None
     events_when_deactivated: list|str|None
     platform: single|str|None
+    platform_settings: single|dict|None
 fast_switches:
-    __valid_in__: machine
     debounce_open: single|str|None
     debounce_close: single|str|None
 system11:

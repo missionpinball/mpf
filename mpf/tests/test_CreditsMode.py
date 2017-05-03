@@ -136,6 +136,33 @@ class TestCreditsMode(MpfTestCase):
         self.machine_run()
         self.assertEqual("CREDITS 3", self.machine.get_machine_var('credits_string'))
 
+    def testReplay(self):
+        # add coins
+        self.hit_and_release_switch("s_left_coin")
+        self.hit_and_release_switch("s_left_coin")
+        self.advance_time_and_run()
+        self.assertEqual("CREDITS 1", self.machine.get_machine_var('credits_string'))
+        # start game
+        self.start_game(True)
+
+        self.assertEqual("CREDITS 0", self.machine.get_machine_var('credits_string'))
+        # no replay
+        self.stop_game()
+
+        # try again
+        self.hit_and_release_switch("s_left_coin")
+        self.hit_and_release_switch("s_left_coin")
+        self.advance_time_and_run()
+        self.assertEqual("CREDITS 1", self.machine.get_machine_var('credits_string'))
+        self.start_game(True)
+
+        # score 600k
+        self.machine.game.player.score = 600000
+
+        # replay credit on game end
+        self.stop_game()
+        self.assertEqual("CREDITS 1", self.machine.get_machine_var('credits_string'))
+
     def testMorePlayers(self):
         self.assertTrue(self.machine.mode_controller.is_active('credits'))
         self.assertEqual("CREDITS 0", self.machine.get_machine_var('credits_string'))

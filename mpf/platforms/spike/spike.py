@@ -11,16 +11,16 @@ from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInt
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 from mpf.platforms.spike.spike_defines import SpikeNodebus
 from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings, \
-    DriverConfig
+    DriverConfig, SwitchConfig
 
 
 class SpikeSwitch(SwitchPlatformInterface):
 
     """A switch on a Stern Spike node board."""
 
-    def __init__(self, config, platform):
+    def __init__(self, config, number, platform):
         """Initialise switch."""
-        super().__init__(config, config['number'])
+        super().__init__(config, number)
         self.node, self.index = self.number.split("-")
         self.node = int(self.node)
         self.index = int(self.index)
@@ -220,9 +220,10 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
         node, number = number.split("-")
         return SpikeLight(int(node), int(number), self)
 
-    def configure_switch(self, config):
+    def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict):
         """Configure switch on Stern Spike."""
-        return SpikeSwitch(config, self)
+        del platform_config
+        return SpikeSwitch(config, number, self)
 
     def get_hw_switch_states(self):
         """Return current switch states."""

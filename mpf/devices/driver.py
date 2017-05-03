@@ -69,6 +69,7 @@ class Driver(SystemWideDevice):
         config = super().validate_and_parse_config(config, is_mode_config)
         platform = self.machine.get_platform_sections('coils', getattr(config, "platform", None))
         config['platform_settings'] = platform.validate_coil_section(self, config.get('platform_settings', None))
+        self._configure_device_logging(config)
         return config
 
     def _initialize(self):

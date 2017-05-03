@@ -10,7 +10,7 @@ from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInter
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 
 from mpf.core.platform import ServoPlatform, SwitchPlatform, DriverPlatform, AccelerometerPlatform, I2cPlatform,\
-    DmdPlatform, RgbDmdPlatform, LightsPlatform, DriverConfig
+    DmdPlatform, RgbDmdPlatform, LightsPlatform, DriverConfig, SwitchConfig
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
@@ -69,24 +69,18 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
 
         return driver
 
-    def configure_switch(self, config):
+    def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict):
         """Configure switch."""
-        # We want to have the virtual platform set all the initial switch states
-        # to inactive, so we have to check the config.
-
-        state = 0
-
-        if config['type'].upper() == 'NC':
-            state = 1
-
         # switch needs a number to be distingishable from other switches
-        if config['number'] is None:
-            config['number'] = self._next_switch
+        if number == None:
+            number = self._next_switch
             self._next_switch += 1
 
-        self.hw_switches[config['number']] = state
+        # We want to have the virtual platform set all the initial switch states
+        # to inactive, so we have to check the config.
+        self.hw_switches[number] = config.invert
 
-        return VirtualSwitch(config)
+        return VirtualSwitch(config, number)
 
     def get_hw_switch_states(self):
         """Return hw switch states."""
@@ -125,35 +119,10 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
 
     def validate_switch_section(self, switch, config):
         """Validate switch sections."""
-        sections = ["device"]
-        for platform in self._get_platforms():
-            if hasattr(platform, "get_switch_config_section") and platform.get_switch_config_section():
-                sections.append(platform.get_switch_config_section())
-        self.machine.config_validator.validate_config(
-            "switches", config, switch.name,
-            base_spec=sections)
         return config
-
-    def validate_switch_overwrite_section(self, switch, config_overwrite):
-        """Validate switch overwrite sections."""
-        sections = []
-        for platform in self._get_platforms():
-            if hasattr(platform, "get_switch_overwrite_section") and platform.get_switch_overwrite_section():
-                sections.append(platform.get_switch_overwrite_section())
-        self.machine.config_validator.validate_config(
-            "switch_overwrites", config_overwrite, switch.name,
-            base_spec=sections)
-        return config_overwrite
 
     def validate_coil_section(self, driver, config):
         """Validate coil sections."""
-        sections = []
-        for platform in self._get_platforms():
-            if hasattr(platform, "get_coil_config_section") and platform.get_coil_config_section():
-                sections.append(platform.get_coil_config_section())
-        self.machine.config_validator.validate_config(
-            sections.pop(), config, driver.name,
-            base_spec=sections)
         return config
 
     def configure_accelerometer(self, config, callback):
@@ -257,9 +226,9 @@ class VirtualSwitch(SwitchPlatformInterface):
 
     """Represents a switch in a pinball machine used with virtual hardware."""
 
-    def __init__(self, config):
+    def __init__(self, config, number):
         """Initialise switch."""
-        super().__init__(config, config['number'])
+        super().__init__(config, number)
         self.log = logging.getLogger('VirtualSwitch')
 
 

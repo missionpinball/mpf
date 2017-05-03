@@ -7,7 +7,7 @@ from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInter
 from mpf.core.platform import ServoPlatform
 
 
-class HardwarePlatform(ServoPlatform):
+class PololuMaestroHardwarePlatform(ServoPlatform):
 
     """Supports the Pololu Maestro servo controllers via PySerial.
 

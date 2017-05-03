@@ -3,13 +3,17 @@ import asyncio
 import logging
 import json
 import struct
+from typing import TYPE_CHECKING
 
 from mpf.core.utility_functions import Util
 from mpf.platforms.openpixel import OpenPixelClient
-from mpf.platforms.openpixel import HardwarePlatform as OPHardwarePlatform
+from mpf.platforms.openpixel import OpenpixelHardwarePlatform
+
+if TYPE_CHECKING:
+    from mpf.core.machine import MachineController
 
 
-class HardwarePlatform(OPHardwarePlatform):
+class FadecandyHardwarePlatform(OpenpixelHardwarePlatform):
 
     """Base class for the open pixel hardware platform.
 
@@ -18,9 +22,9 @@ class HardwarePlatform(OPHardwarePlatform):
 
     """
 
-    def __init__(self, machine):
+    def __init__(self, machine: "MachineController") -> None:
         """Initialise Fadecandy."""
-        super(HardwarePlatform, self).__init__(machine)
+        super().__init__(machine)
 
         self.log = logging.getLogger("FadeCandy")
         self.debug_log("Configuring FadeCandy hardware interface.")

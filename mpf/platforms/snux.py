@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 
 # pylint: disable-msg=too-many-instance-attributes
-class HardwarePlatform(DriverPlatform):
+class SnuxHardwarePlatform(DriverPlatform):
 
     """Overlay platform for the snux hardware board."""
 

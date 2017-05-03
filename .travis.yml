@@ -13,6 +13,10 @@ matrix:
      sudo: required
      language: python
    - os: linux
+     env: LINUX=ubuntu:17.04
+     sudo: required
+     language: python
+   - os: linux
      env: LINUX=debian:jessie
      sudo: required
      language: python
@@ -43,7 +47,7 @@ install:
 
 script:
 - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
-    docker run -v $PWD:$PWD -w $PWD $LINUX /bin/sh -c "_mpf_installer/install-mpf-dependencies && pip3 install --upgrade coveralls && python3 setup.py install && export PYTHONPATH=$PYTHONPATH:$(pwd):$(pwd)/_mpf-mc && coverage3 run --concurrency=thread -m unittest discover -s mpf/tests;";
+    docker run -v $PWD:$PWD -w $PWD $LINUX /bin/sh -c "_mpf_installer/install-mpf-dependencies && pip3 install --upgrade coveralls && pip3 install . && export PYTHONPATH=$PYTHONPATH:$(pwd):$(pwd)/_mpf-mc && coverage3 run --concurrency=thread -m unittest discover -s mpf/tests;";
   fi;
 - if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
       python3 -m unittest discover mpf/tests;
