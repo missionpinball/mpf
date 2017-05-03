@@ -194,7 +194,7 @@ class DeviceManager(MpfController):
                 for device, settings in iter(config[self.collections[collection].config_section].items()):
 
                     control_events = [x for x in settings if
-                                      x.endswith('_events')]
+                                      x.endswith('_events') and x != "control_events"]
 
                     for control_event in control_events:
                         # get events from this device's config

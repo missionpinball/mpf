@@ -75,6 +75,7 @@ mpf:
         - mpf.devices.logic_blocks.Counter
         - mpf.devices.logic_blocks.Accrual
         - mpf.devices.logic_blocks.Sequence
+        - mpf.devices.timer.Timer
 
     plugins:
         mpf.plugins.auditor.Auditor
@@ -139,7 +140,7 @@ mpf:
             - disable
 
     mode_config_sections:   # only non-devices
-      - timers
+      - dummy_remove
 
 # Default settings for machines. All can be overridden
 
