@@ -139,9 +139,6 @@ mpf:
             - enable
             - disable
 
-    mode_config_sections:   # only non-devices
-      - dummy_remove
-
 # Default settings for machines. All can be overridden
 
 logging:

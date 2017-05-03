@@ -62,8 +62,6 @@ class Mode(LogMixin):
         self.player = None                      # type: Player
         '''Reference to the current player object.'''
 
-        self._validate_mode_config()
-
         self.configure_logging('Mode.' + name,
                                self.config['mode']['console_log'],
                                self.config['mode']['file_log'])
@@ -134,21 +132,6 @@ class Mode(LogMixin):
             self.machine.events.add_handler(event=event, handler=self.start,
                                             priority=self.config['mode']['priority'] +
                                             self.config['mode']['start_priority'])
-
-    def _validate_mode_config(self) -> None:
-        """Validate mode config."""
-        for section in self.machine.config['mpf']['mode_config_sections']:
-            this_section = self.config.get(section, None)
-
-            if this_section:
-                if isinstance(this_section, dict):
-                    for device, settings in this_section.items():
-                        self.config[section][device] = (
-                            self.machine.config_validator.validate_config(
-                                section, settings, "mode:" + self.name))
-
-                else:
-                    self.config[section] = (self.machine.config_validator.validate_config(section, this_section))
 
     def _get_merged_settings(self, section_name: str) -> dict:
         """Return a dict of a config section from the machine-wide config with the mode-specific config merged in."""
