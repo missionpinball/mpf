@@ -1249,13 +1249,15 @@ widgets:
     image:
         allow_stretch: single|bool|False
         fps: single|int|10
-        loops: single|int|0
+        loops: single|int|-1
         keep_ratio: single|bool|False
         image: single|str|
         height: single|int|0
         width: single|int|0
         auto_play: single|bool|True
         start_frame: single|int|0                          # todo
+        rotation: single|int|0
+        scale: single|float|1.0
     line:
         points: list|num|
         thickness: single|float|1.0
