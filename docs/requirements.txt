@@ -2,4 +2,6 @@
 # These packages are not required to build or run MPF itself.
 
 sphinxcontrib-napoleon
+gitpython
+sphinx_rtd_theme
 autoapi
