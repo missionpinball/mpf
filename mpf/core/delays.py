@@ -1,4 +1,4 @@
-"""Manages delays within a context."""
+"""Contains the DelayManager and DelayManagerRegistry base classes."""
 
 import uuid
 from functools import partial
@@ -9,6 +9,8 @@ from mpf.core.mpf_controller import MpfController
 
 if TYPE_CHECKING:
     from mpf.core.machine import MachineController
+
+__api__ = ['DelayManager', 'DelayManagerRegistry']
 
 
 class DelayManagerRegistry(object):
@@ -21,13 +23,28 @@ class DelayManagerRegistry(object):
         self.machine = machine
 
     def add_delay_manager(self, delay_manager: "DelayManager") -> None:
-        """Add a delay manager to the list."""
+        """Add a delay manager to the list.
+        
+        Args:
+            delay_manager: The :class:`DelayManager` instance you're adding to
+                this registry.
+        
+        """
         self.delay_managers.add(delay_manager)
 
 
 class DelayManager(MpfController):
 
-    """Handles delays for one object."""
+    """Handles delays for one object.
+    
+    By default, a machine-wide instance is created and available via
+    ``self.machine.delay``.
+    
+    Individual modes also have Delay Managers which can be accessed in
+    mode code via ``self.delay``. (Delays in mode-based delay managers
+    are automatically removed when the mode stops.)
+    
+    """
 
     def __init__(self, registry: DelayManagerRegistry) -> None:
         """Initialise delay manager."""
@@ -36,26 +53,23 @@ class DelayManager(MpfController):
         self.registry = registry
         self.registry.add_delay_manager(self)
 
-    def add(self, ms: int, callback: Callable[..., None], name: str=None, **kwargs) -> str:
+    def add(self, ms: int, callback: Callable[..., None], name: str=None,
+            **kwargs) -> str:
         """Add a delay.
 
         Args:
-            ms: Int of the number of milliseconds you want this delay to be for.
-                Note that the resolution of this time is based on your
-                machine's tick rate. The callback will be called on the
-                first machine tick *after* the delay time has expired. For
-                example, if you have a machine tick rate of 30Hz, that's 33.33ms
-                per tick. So if you set a delay for 40ms, the actual delay will
-                be 66.66ms since that's the next tick time after the delay ends.
+            ms: The number of milliseconds you want this delay to be for.
             callback: The method that is called when this delay ends.
             name: String name of this delay. This name is arbitrary and only
-                used to identify the delay later if you want to remove or change
-                it. If you don't provide it, a UUID4 name will be created.
+                used to identify the delay later if you want to remove or
+                change it. If you don't provide it, a UUID4 name will be
+                created.
             **kwargs: Any other (optional) kwarg pairs you pass will be
                 passed along as kwargs to the callback method.
 
         Returns:
-            String name of the delay which you can use to remove it later.
+            String name or UUID4 of the delay which you can use to remove it
+            later.
         """
         if not name:
             name = str(uuid.uuid4())
@@ -75,7 +89,8 @@ class DelayManager(MpfController):
     def remove(self, name: str):
         """Remove a delay by name.
 
-        I.e. prevents the callback from being fired and cancels the delay.
+        Removing a delay prevents the callback from being called and cancels
+        the delay.
 
         Args:
             name: String name of the delay you want to remove. If there is no
@@ -89,21 +104,17 @@ class DelayManager(MpfController):
             except KeyError:
                 pass
 
-    def add_if_doesnt_exist(self, ms: int, callback: Callable[..., None], name: str, **kwargs) -> str:
+    def add_if_doesnt_exist(self, ms: int, callback: Callable[..., None],
+                            name: str, **kwargs) -> str:
         """Add a delay only if a delay with that name doesn't exist already.
 
         Args:
-            ms: Int of the number of milliseconds you want this delay to be for.
-                Note that the resolution of this time is based on your
-                machine's tick rate. The callback will be called on the
-                first machine tick *after* the delay time has expired. For
-                example, if you have a machine tick rate of 30Hz, that's 33.33ms
-                per tick. So if you set a delay for 40ms, the actual delay will
-                be 66.66ms since that's the next tick time after the delay ends.
+            ms: Int of the number of milliseconds you want this delay to be
+                for.
             callback: The method that is called when this delay ends.
             name: String name of this delay. This name is arbitrary and only
-                used to identify the delay later if you want to remove or change
-                it.
+                used to identify the delay later if you want to remove or
+                change it.
             **kwargs: Any other (optional) kwarg pairs you pass will be
                 passed along as kwargs to the callback method.
 
@@ -121,15 +132,33 @@ class DelayManager(MpfController):
         Args:
             delay: A string of the delay you're checking for.
 
-        Returns: The true if the delay exists. False otherwise.
+        Returns:
+            True if the delay exists. False otherwise.
         """
         return delay in self.delays
 
-    def reset(self, ms: int, callback: Callable[..., None], name: str, **kwargs) -> str:
-        """Reset a delay, first deleting the old one (if it exists) and then adding new delay with the new settings.
+    def reset(self, ms: int, callback: Callable[..., None], name: str,
+              **kwargs) -> str:
+        """Reset a delay.
+        
+        Resetting will first delete the existing delay (if it exists) and then
+        add new delay with the new settings. If the delay does not exist,
+        that's ok, and this method is essentially the same as just adding a
+        delay with this name.
 
         Args:
-            same as add()
+            ms: The number of milliseconds you want this delay to be for.
+            callback: The method that is called when this delay ends.
+            name: String name of this delay. This name is arbitrary and only
+                used to identify the delay later if you want to remove or
+                change it. If you don't provide it, a UUID4 name will be
+                created.
+            **kwargs: Any other (optional) kwarg pairs you pass will be
+                passed along as kwargs to the callback method.
+
+        Returns:
+            String name or UUID4 of the delay which you can use to remove it
+            later.
         """
         if name in self.delays:
             self.remove(name)
@@ -166,7 +195,7 @@ class DelayManager(MpfController):
                 pass
 
     def _process_delay_callback(self, name: str, callback: Callable[..., None], **kwargs):
-        """Process delay callback and run event queue afterwards."""
+        # Process the delay callback and run the event queue afterwards
         self.debug_log("---Processing delay: %s", name)
         try:
             del self.delays[name]

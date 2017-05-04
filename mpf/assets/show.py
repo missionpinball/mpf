@@ -7,6 +7,8 @@ from mpf.core.utility_functions import Util
 from mpf.file_interfaces.yaml_interface import YamlInterface
 from mpf._version import __show_version__, __version__
 
+__api__ = ['Show', 'RunningShow', 'ShowPool']
+
 
 class ShowPool(AssetPool):
 
@@ -322,7 +324,8 @@ class Show(Asset):
                 False.
             show_tokens: Replacement tokens for the show
 
-        Returns: The RunningShow() instance if this show plays now, or False if
+        Returns:
+            The RunningShow() instance if this show plays now, or False if
             the show is not loaded. (In this case the show will be loaded and
             will automatically play once its loaded.)
         """

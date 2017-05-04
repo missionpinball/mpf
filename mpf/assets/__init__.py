@@ -1,1 +1,1 @@
-"""Contains the asset classes."""
+"""Contains modules which hold the asset base classes."""
