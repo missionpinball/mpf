@@ -8,18 +8,17 @@ import os
 import time
 import sphinx_rtd_theme
 import git
-import mpf._version
 
 sys.path.insert(0, os.path.abspath('..'))
+
+import mpf._version
 
 # -- General configuration ------------------------------------------------
 
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.todo',
-    # 'sphinx.ext.inheritance_diagram',
     'autoapi.sphinx',
-    # 'sphinx.ext.graphviz',
     'sphinxcontrib.napoleon',
 ]
 
@@ -34,8 +33,6 @@ autoapi_modules = {'mpf': None}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
-
-graphviz_output_format = 'svg'
 
 source_suffix = '.rst'
 
