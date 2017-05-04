@@ -56,6 +56,9 @@ Classes
 .. autoclass:: {{ item }}
    :members:
 
+   .. rubric:: Inheritance
+   .. inheritance-diagram:: {{ item }}
+      :parts: 1
 {##}
 {%- endfor -%}
 {%- endif -%}
@@ -76,6 +79,9 @@ Exceptions
 {% for item in node.exceptions %}
 .. autoexception:: {{ item }}
 
+   .. rubric:: Inheritance
+   .. inheritance-diagram:: {{ item }}
+      :parts: 1
 {##}
 {%- endfor -%}
 {%- endif -%}

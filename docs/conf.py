@@ -9,7 +9,7 @@ import time
 import sphinx_rtd_theme
 import git
 
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath(os.pardir))
 
 import mpf._version
 
@@ -20,6 +20,8 @@ extensions = [
     'sphinx.ext.todo',
     'autoapi.sphinx',
     'sphinxcontrib.napoleon',
+    'sphinx.ext.graphviz',
+    'sphinx.ext.inheritance_diagram',
 ]
 
 # Specify which modules will be scanned by autoapi
