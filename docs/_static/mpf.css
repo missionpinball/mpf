@@ -76,7 +76,7 @@ body {
 
 /* software version in sidebar */
 .wy-side-nav-search > div.version {
-    color: white;
+    color: #D63E29;
     font-size: 90%;
 }
 
@@ -118,12 +118,8 @@ body {
     background: #a9e6a9;
 }
 
-.rst-content code {
-    background: black;
-}
-
 .rst-content code.literal {
-    color: white;
+    color: #D63E29;
     vertical-align: 10%;
 }
 
