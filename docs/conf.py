@@ -5,41 +5,40 @@
 
 import sys
 import os
+import shutil
 import time
+
+from copy import copy
+
 import sphinx_rtd_theme
 import git
+from sphinx.ext.autosummary import Autosummary
+from sphinx.ext.autosummary import get_documenter
+from docutils.parsers.rst import directives
+from sphinx.util.inspect import safe_getattr
+
+from mpf.core.utility_functions import Util
 
 sys.path.insert(0, os.path.abspath(os.pardir))
 
 import mpf._version
+from mpf.core.config_processor import ConfigProcessor
 
 # -- General configuration ------------------------------------------------
 
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.todo',
-    'autoapi.sphinx',
     'sphinxcontrib.napoleon',
-    'sphinx.ext.graphviz',
-    'sphinx.ext.inheritance_diagram',
+    'sphinx.ext.autosummary',
 ]
 
-# Specify which modules will be scanned by autoapi
-autoapi_modules = {'mpf': None}
-
-# Specify what will be added to each page by autodoc
-# http://www.sphinx-doc.org/en/stable/ext/autodoc.html#confval-autodoc_default_flags
-# autodoc_default_flags = ['members', 'show_inheritance', 'inherited-members']
-# http://www.sphinx-doc.org/en/stable/ext/autodoc.html#confval-autoclass_content
-# autoclass_content = 'both'
-
-# Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
 source_suffix = '.rst'
 
 # The encoding of source files.
-#source_encoding = 'utf-8-sig'
+# source_encoding = 'utf-8-sig'
 
 # The master toctree document.
 master_doc = 'index'
@@ -67,29 +66,29 @@ language = None
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
-#today = ''
+# today = ''
 # Else, today_fmt is used as the format for a strftime call.
-#today_fmt = '%B %d, %Y'
+# today_fmt = '%B %d, %Y'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', 'mpf/mpf.__main__.rst']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
-#default_role = None
+# default_role = None
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
-#add_function_parentheses = True
+# add_function_parentheses = True
 
 # If true, the current module name will be prepended to all description
 # unit titles (such as .. function::).
-#add_module_names = True
+# add_module_names = True
 
 # If true, sectionauthor and moduleauthor directives will be shown in the
 # output. They are ignored by default.
-#show_authors = False
+# show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
@@ -98,7 +97,7 @@ pygments_style = 'sphinx'
 modindex_common_prefix = ['mpf']
 
 # If true, keep warnings as "system message" paragraphs in the built documents.
-#keep_warnings = False
+# keep_warnings = False
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
@@ -115,10 +114,10 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-#html_theme_options = {}
+# html_theme_options = {}
 
 # Add any paths that contain custom themes here, relative to this directory.
-#html_theme_path = []
+# html_theme_path = []
 
 # The name for this set of Sphinx documents.
 # "<project> v<release> documentation" by default.
@@ -129,10 +128,11 @@ html_short_title = 'MPF API v{}'.format(version)
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-#html_logo = None
+# html_logo = None
 
 # The name of an image file (relative to this directory) to use as a favicon of
-# the docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
+# the docs.  This file should be a Windows icon file (.ico) being 16x16 or
+# 32x32
 # pixels large.
 html_favicon = '_static/images/icons/favicon.ico'
 
@@ -144,7 +144,7 @@ html_static_path = ['_static']
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
 # directly to the root of the documentation.
-#html_extra_path = []
+# html_extra_path = []
 
 # If not None, a 'Last updated on:' timestamp is inserted at every page
 # bottom, using the given strftime format.
@@ -153,55 +153,55 @@ html_last_updated_fmt = '%b %d, %Y'
 
 # If true, SmartyPants will be used to convert quotes and dashes to
 # typographically correct entities.
-#html_use_smartypants = True
+# html_use_smartypants = True
 
 # Custom sidebar templates, maps document names to template names.
-#html_sidebars = {}
+# html_sidebars = {}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
-#html_additional_pages = {}
+# html_additional_pages = {}
 
 # If false, no module index is generated.
-#html_domain_indices = True
+# html_domain_indices = True
 
 # If false, no index is generated.
-#html_use_index = True
+# html_use_index = True
 
 # If true, the index is split into individual pages for each letter.
-#html_split_index = False
+# html_split_index = False
 
 # If true, links to the reST sources are added to the pages.
-#html_show_sourcelink = True
+# html_show_sourcelink = True
 
 # If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
-#html_show_sphinx = True
+# html_show_sphinx = True
 
 # If true, "(C) Copyright ..." is shown in the HTML footer. Default is True.
-#html_show_copyright = True
+# html_show_copyright = True
 
 # If true, an OpenSearch description file will be output, and all pages will
 # contain a <link> tag referring to it.  The value of this option must be the
 # base URL from which the finished HTML is served.
-#html_use_opensearch = ''
+# html_use_opensearch = ''
 
 # This is the file name suffix for HTML files (e.g. ".xhtml").
-#html_file_suffix = None
+# html_file_suffix = None
 
 # Language to be used for generating the HTML full-text search index.
 # Sphinx supports the following languages:
 #   'da', 'de', 'en', 'es', 'fi', 'fr', 'h', 'it', 'ja'
 #   'nl', 'no', 'pt', 'ro', 'r', 'sv', 'tr', 'zh'
-#html_search_language = 'en'
+# html_search_language = 'en'
 
 # A dictionary with options for the search language support, empty by default.
 # 'ja' uses this config value.
 # 'zh' user can custom change `jieba` dictionary path.
-#html_search_options = {'type': 'default'}
+# html_search_options = {'type': 'default'}
 
 # The name of a javascript file (relative to the configuration directory) that
 # implements a search results scorer. If empty, the default will be used.
-#html_search_scorer = 'scorer.js'
+# html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'MPFAPIdoc'
@@ -209,17 +209,17 @@ htmlhelp_basename = 'MPFAPIdoc'
 # -- Options for LaTeX output ---------------------------------------------
 
 latex_elements = {
-# The paper size ('letterpaper' or 'a4paper').
-#'papersize': 'letterpaper',
+    # The paper size ('letterpaper' or 'a4paper').
+    # 'papersize': 'letterpaper',
 
-# The font size ('10pt', '11pt' or '12pt').
-#'pointsize': '10pt',
+    # The font size ('10pt', '11pt' or '12pt').
+    # 'pointsize': '10pt',
 
-# Additional stuff for the LaTeX preamble.
-#'preamble': '',
+    # Additional stuff for the LaTeX preamble.
+    # 'preamble': '',
 
-# Latex figure (float) alignment
-#'figure_align': 'htbp',
+    # Latex figure (float) alignment
+    # 'figure_align': 'htbp',
 }
 
 # Grouping the document tree into LaTeX files. List of tuples
@@ -232,23 +232,23 @@ latex_documents = [
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
-#latex_logo = None
+# latex_logo = None
 
 # For "manual" documents, if this is true, then toplevel headings are parts,
 # not chapters.
-#latex_use_parts = False
+# latex_use_parts = False
 
 # If true, show page references after internal links.
-#latex_show_pagerefs = False
+# latex_show_pagerefs = False
 
 # If true, show URL addresses after external links.
-#latex_show_urls = False
+# latex_show_urls = False
 
 # Documents to append as an appendix to all manuals.
-#latex_appendices = []
+# latex_appendices = []
 
 # If false, no module index is generated.
-#latex_domain_indices = True
+# latex_domain_indices = True
 
 
 # -- Options for manual page output ---------------------------------------
@@ -261,103 +261,7 @@ man_pages = [
 ]
 
 # If true, show URL addresses after external links.
-#man_show_urls = False
-
-
-# -- Options for Texinfo output -------------------------------------------
-
-# Grouping the document tree into Texinfo files. List of tuples
-# (source start file, target name, title, author,
-#  dir menu entry, description, category)
-texinfo_documents = [
-    (master_doc, 'MPFAPI', 'MPF API Documentation',
-     author, 'MPFAPI', 'One line description of project.',
-     'Miscellaneous'),
-]
-
-# Documents to append as an appendix to all manuals.
-#texinfo_appendices = []
-
-# If false, no module index is generated.
-#texinfo_domain_indices = True
-
-# How to display URL addresses: 'footnote', 'no', or 'inline'.
-#texinfo_show_urls = 'footnote'
-
-# If true, do not generate a @detailmenu in the "Top" node's menu.
-#texinfo_no_detailmenu = False
-
-# -- Options for Epub output ----------------------------------------------
-
-# Bibliographic Dublin Core info.
-epub_title = project
-epub_author = author
-epub_publisher = author
-epub_copyright = copyright
-
-# The basename for the epub file. It defaults to the project name.
-#epub_basename = project
-
-# The HTML theme for the epub output. Since the default themes are not
-# optimized for small screen space, using the same theme for HTML and epub
-# output is usually not wise. This defaults to 'epub', a theme designed to save
-# visual space.
-#epub_theme = 'epub'
-
-# The language of the text. It defaults to the language option
-# or 'en' if the language is not set.
-#epub_language = ''
-
-# The scheme of the identifier. Typical schemes are ISBN or URL.
-#epub_scheme = ''
-
-# The unique identifier of the text. This can be a ISBN number
-# or the project homepage.
-#epub_identifier = ''
-
-# A unique identification for the text.
-#epub_uid = ''
-
-# A tuple containing the cover image and cover page html template filenames.
-#epub_cover = ()
-
-# A sequence of (type, uri, title) tuples for the guide element of content.opf.
-#epub_guide = ()
-
-# HTML files that should be inserted before the pages created by sphinx.
-# The format is a list of tuples containing the path and title.
-#epub_pre_files = []
-
-# HTML files that should be inserted after the pages created by sphinx.
-# The format is a list of tuples containing the path and title.
-#epub_post_files = []
-
-# A list of files that should not be packed into the epub file.
-epub_exclude_files = ['search.html']
-
-# The depth of the table of contents in toc.ncx.
-#epub_tocdepth = 3
-
-# Allow duplicate toc entries.
-#epub_tocdup = True
-
-# Choose between 'default' and 'includehidden'.
-#epub_tocscope = 'default'
-
-# Fix unsupported image types using the Pillow.
-#epub_fix_images = False
-
-# Scale large images.
-#epub_max_image_width = 0
-
-# How to display URL addresses: 'footnote', 'no', or 'inline'.
-#epub_show_urls = 'inline'
-
-# If false, no index is generated.
-#epub_use_index = True
-
-# Example configuration for intersphinx: refer to the Python standard library.
-intersphinx_mapping = {'https://docs.python.org/': None}
+# man_show_urls = False
 
 # -- Show warnings for dev branches in HTML docs --------------------------
 
@@ -375,6 +279,8 @@ except TypeError:
 
 def setup(app):
     app.add_stylesheet('mpf.css')
+    app.add_directive('autoautosummary', AutoAutoSummary)
+    RstBuilder().build_rst_files()
 
     # We need to do this in the setup() function since ReadTheDocs will append
     # the context dict to the end of conf.py which means we don't have the
@@ -392,7 +298,169 @@ def setup(app):
         
               This is the API for MPF |version|, which is the "dev" (next)
               release of MPF that is a work-in-progress. Use the "Read the Docs"
-              link in the lower left corner to view the docs for the version of
-              MPF you're using.
+              link in the lower left corner to view the API docs for the
+              version of MPF you're using.
         
         '''
+
+
+class AutoAutoSummary(Autosummary):
+    # http://stackoverflow.com/questions/20569011/python-sphinx-autosummary-automated-listing-of-member-functions
+
+        option_spec = {
+            'methods': directives.unchanged,
+            'attributes': directives.unchanged,
+            'toctree': directives.unchanged,
+            'nosignatures': directives.flag,
+            'template': directives.unchanged,
+        }
+
+        required_arguments = 1
+
+        @staticmethod
+        def get_members(obj, typ, include_public=None):
+            if not include_public:
+                include_public = []
+            items = []
+            for name in dir(obj):
+                try:
+                    documenter = get_documenter(safe_getattr(obj, name), obj)
+                except AttributeError:
+                    continue
+                if documenter.objtype == typ:
+                    items.append(name)
+            public = [x for x in items
+                      if x in include_public or not x.startswith('_')]
+            return public, items
+
+        def run(self):
+            clazz = self.arguments[0]
+            try:
+                (module_name, class_name) = clazz.rsplit('.', 1)
+                m = __import__(module_name, globals(), locals(), [class_name])
+                c = getattr(m, class_name)
+                if 'methods' in self.options:
+                    _, methods = self.get_members(c, 'method', ['__init__'])
+
+                    self.content = ["~%s.%s" % (clazz, method) for method in
+                                    methods if not method.startswith('_')]
+                if 'attributes' in self.options:
+                    _, attribs = self.get_members(c, 'attribute')
+                    self.content = ["~%s.%s" % (clazz, attrib) for attrib in
+                                    attribs if not attrib.startswith('_')]
+            finally:
+                return super(AutoAutoSummary, self).run()
+
+
+class RstBuilder(object):
+
+    def __init__(self):
+
+        self.dest_folder = 'mpf'
+
+        self.mpfconfig = ConfigProcessor.load_config_file(os.path.join(
+            os.pardir, 'mpf', 'mpfconfig.yaml'), 'machine')
+
+        self.doc_sections = dict()
+        self.index_entries = dict()
+        self.templates = dict()
+
+        self.populate_doc_sections()
+        self.get_templates()
+
+    def populate_doc_sections(self):
+
+        self.doc_sections['machine'] = self.mpfconfig['mpf']['core_modules']
+
+        self.doc_sections['config_players'] = (
+            self.mpfconfig['mpf']['config_players'])
+
+        self.doc_sections['platforms'] = self.mpfconfig['mpf']['platforms']
+
+        for plugin in Util.string_to_list(self.mpfconfig['mpf']['plugins']):
+            name = plugin.split('.')[-2]
+            self.doc_sections['machine'][name] = plugin
+
+        self.doc_sections['devices'] = dict()
+
+        for device in self.mpfconfig['mpf']['device_modules']:
+            device_cls = Util.string_to_class(device)
+            name = device_cls.collection
+            self.doc_sections['devices'][name] = device
+
+        self.doc_sections['modes'] = dict()
+
+        for name in [x for x in
+                     os.walk(os.path.join(os.pardir, 'mpf', 'modes'))][0][1]:
+
+            if name.startswith('__'):
+                continue
+
+            class_name = ''.join([x.capitalize() for x in name.split('_')])
+
+            self.doc_sections['modes'][name] = (
+                'mpf.modes.{0}.code.{0}.{1}'.format(name, class_name))
+
+        # populate the index entries
+
+        for name in self.doc_sections.keys():
+            self.index_entries[name] = list()
+
+    def get_templates(self):
+        for name in self.doc_sections.keys():
+            with open(os.path.join(
+                    templates_path[0], '{}.rst'.format(name)), 'r') as f:
+                self.templates[name] = f.read()
+
+    def build_rst_files(self):
+        print('Building RST files from templates')
+
+        try:
+            shutil.rmtree(self.dest_folder)
+        except FileNotFoundError:
+            pass
+
+        os.makedirs(self.dest_folder)
+
+        for section, items in self.doc_sections.items():
+            for name, module_ in items.items():
+                self.create_rst_file(section, name, module_)
+
+        self.write_index()
+
+    def create_rst_file(self, section, name, module_):
+        this_rst = copy(self.templates[section])
+
+        with open(os.path.join(self.dest_folder, '{}.rst'.format(name)),
+                  'w') as f:
+            f.write(this_rst.format(
+                name=name,
+                module_underline='=' * (len(this_rst.split('\n')[0]) +
+                                        len(name) - 6),
+                full_path_to_class=module_))
+
+        self.index_entries[section].append(name)
+
+    def create_rst_file_list(self, file_list):
+        file_list.sort()
+
+        final_string = str()
+
+        for file in file_list:
+            final_string += '   {0} <{1}/{0}>\n'.format(file, self.dest_folder)
+
+        return final_string
+
+    def write_index(self):
+
+        with open(os.path.join(templates_path[0], 'index.rst'), 'r') as f:
+                template = f.read()
+
+        string_indices = dict()
+        for section, files in self.index_entries.items():
+            string_indices[section] = self.create_rst_file_list(files)
+
+        template = template.format(**string_indices)
+
+        with open('index.rst', 'w') as f:
+            f.write(template)
