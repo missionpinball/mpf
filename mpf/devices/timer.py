@@ -33,13 +33,13 @@ class Timer(ModeDevice):
         self.name = name
 
         self.running = False
-        self.start_value = None
-        self.restart_on_complete = None
+        self.start_value = None             # type: int
+        self.restart_on_complete = None     # type: bool
         self._ticks = 0
-        self.tick_var = None
-        self.tick_secs = None
-        self.player = None
-        self.end_value = None
+        self.tick_var = None                # type: str
+        self.tick_secs = None               # type: float
+        self.player = None                  # type: Player
+        self.end_value = None               # type: int
 
     def device_added_to_mode(self, mode: Mode):
         """Device added in mode."""
