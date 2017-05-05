@@ -431,7 +431,13 @@ class RstBuilder(object):
     def create_rst_file(self, section, name, module_):
         this_rst = copy(self.templates[section])
 
-        with open(os.path.join(self.dest_folder, '{}.rst'.format(name)),
+        file_name = this_rst.split('\n')[0].format(name=name)
+
+        file_name = file_name.replace('[', '.')
+        file_name = file_name.replace(']', '')
+        file_name = file_name.replace("'", '')
+
+        with open(os.path.join(self.dest_folder, '{}.rst'.format(file_name)),
                   'w') as f:
             f.write(this_rst.format(
                 name=name,
@@ -439,15 +445,16 @@ class RstBuilder(object):
                                         len(name) - 6),
                 full_path_to_class=module_))
 
-        self.index_entries[section].append(name)
+        self.index_entries[section].append((name, file_name))
 
     def create_rst_file_list(self, file_list):
         file_list.sort()
 
         final_string = str()
 
-        for file in file_list:
-            final_string += '   {0} <{1}/{0}>\n'.format(file, self.dest_folder)
+        for name, file in file_list:
+            final_string += '   {0} <{1}/{2}>\n'.format(name, self.dest_folder,
+                                                        file)
 
         return final_string
 
