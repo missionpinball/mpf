@@ -105,7 +105,7 @@ class Auditor(object):
             audit_class: A string of the section we want this event to be
             logged to.
             event: A string name of the event we're auditing.
-            **kawargs: Not used, but included since some of the audit events
+            **kwargs: Not used, but included since some of the audit events
                 might include random kwargs.
         """
         del kwargs

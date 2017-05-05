@@ -21,7 +21,6 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
 
         Args:
             mode: Mode which loaded the device
-            player: Current active player
         """
         del mode
         self._initialize()

@@ -114,10 +114,11 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform):
 
         Returns:
             switch : A reference to the switch object that was just created.
-            proc_num : Integer of the actual hardware switch number the P-ROC
+            proc_num :
+                Integer of the actual hardware switch number the P-ROC
                 uses to refer to this switch. Typically your machine
-                configuration files would specify a switch number like `SD12` or
-                `7/5`. This `proc_num` is an int between 0 and 255.
+                configuration files would specify a switch number like ``SD12``
+                or ``7/5``. This ``proc_num`` is an int between 0 and 255.
 
         """
         del platform_config
