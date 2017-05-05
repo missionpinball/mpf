@@ -224,6 +224,7 @@ class TestHighScoreMode(MpfBcpTestCase):
 
     def test_multiple_awards(self):
         self.mock_event("high_score_enter_initials")
+        self.mock_event("high_score_award_display")
         # tests multiple awards (score & loops)
         # also tests 2 players getting an award for one slot, so only the
         # highest one should be presented
@@ -255,24 +256,32 @@ class TestHighScoreMode(MpfBcpTestCase):
         self._bcp_client.send.reset_mock()
 
         self._bcp_client.receive_queue.put_nowait(('trigger', dict(name='text_input_high_score_complete', text='NEW')))
-        self.advance_time_and_run(5)
+        self.advance_time_and_run(.5)
+        self.assertEventCalledWith("high_score_award_display",
+                                   award='GRAND CHAMPION', player_name='NEW', value=10000000)
+        self.mock_event("high_score_award_display")
+        self.advance_time_and_run(4)
 
         # High score 1
 
         self.assertEqual(2, self._events['high_score_enter_initials'])
 
         self._bcp_client.receive_queue.put_nowait(('trigger', dict(name='text_input_high_score_complete', text='P1')))
-        self.advance_time_and_run(5)
+        self.advance_time_and_run(.5)
+        self.assertEventCalledWith("high_score_award_display",
+                                   award='HIGH SCORE 1', player_name='P1', value=8000000)
+        self.mock_event("high_score_award_display")
+        self.advance_time_and_run(4)
 
-        # Loops champ
-
-        self.assertEqual(3, self._events['high_score_enter_initials'])
-
-        self._bcp_client.receive_queue.put_nowait(('trigger', dict(name='text_input_high_score_complete', text='YAY')))
-        self.advance_time_and_run(5)
+        # Loops champ should not ask again but show a slide
+        self.assertTrue(self.machine.modes.high_score.active)
+        self.advance_time_and_run(.5)
+        self.assertEventCalledWith("high_score_award_display",
+                                   award='LOOP CHAMP', player_name='P1', value=50)
+        self.mock_event("high_score_award_display")
+        self.advance_time_and_run(4)
 
         # High score done
-
         self.assertFalse(self.machine.modes.high_score.active)
 
         # verify the data is accurate
@@ -283,7 +292,10 @@ class TestHighScoreMode(MpfBcpTestCase):
                                    ('BRI', 7050550),
                                    ('GHK', 93060),
                                    ('JK', 87890)]
-        new_score_data['loops'] = [('YAY', 50)]
+        new_score_data['loops'] = [('P1', 50)]
+
+        # only ask every player once
+        self.assertEqual(2, self._events['high_score_enter_initials'])
 
         self.assertEqual(new_score_data,
                          self.machine.modes.high_score.high_scores)
