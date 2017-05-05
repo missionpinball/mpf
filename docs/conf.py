@@ -372,8 +372,11 @@ class RstBuilder(object):
 
         self.doc_sections['machine'] = self.mpfconfig['mpf']['core_modules']
 
-        self.doc_sections['config_players'] = (
-            self.mpfconfig['mpf']['config_players'])
+        self.doc_sections['config_players'] = dict()
+
+        for name, module_ in self.mpfconfig['mpf']['config_players'].items():
+            self.doc_sections['config_players'
+                              ]['{}_player'.format(name)] = module_
 
         self.doc_sections['platforms'] = self.mpfconfig['mpf']['platforms']
 
