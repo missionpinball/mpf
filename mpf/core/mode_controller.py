@@ -29,13 +29,17 @@ class ModeController(MpfController):
 
     There is one instance of this in MPF and it's responsible for loading, unloading, and managing all modes.
 
-    Args:
-        machine: The main MachineController instance.
+
 
     """
 
     def __init__(self, machine: MachineController) -> None:
-        """Initialise mode controller."""
+        """Initialise mode controller.
+        
+        Args:
+            machine: The main MachineController instance.
+        
+        """
         super().__init__(machine)
 
         # ball ending event queue
