@@ -1,4 +1,4 @@
-self.machine.{name}
+self.machine.{name}.*
 {module_underline}
 
 .. autoclass:: {full_path_to_class}

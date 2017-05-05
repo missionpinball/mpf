@@ -17,10 +17,9 @@ from sphinx.ext.autosummary import get_documenter
 from docutils.parsers.rst import directives
 from sphinx.util.inspect import safe_getattr
 
-from mpf.core.utility_functions import Util
-
 sys.path.insert(0, os.path.abspath(os.pardir))
 
+from mpf.core.utility_functions import Util
 import mpf._version
 from mpf.core.config_processor import ConfigProcessor
 
@@ -437,8 +436,12 @@ class RstBuilder(object):
         file_name = this_rst.split('\n')[0].format(name=name)
 
         file_name = file_name.replace('[', '.')
-        file_name = file_name.replace(']', '')
-        file_name = file_name.replace("'", '')
+
+        for char in "''*":
+            file_name = file_name.replace(char, '')
+
+        if file_name[-1] == '.':
+            file_name = file_name[:-1]
 
         with open(os.path.join(self.dest_folder, '{}.rst'.format(file_name)),
                   'w') as f:
