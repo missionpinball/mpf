@@ -3,8 +3,6 @@ self.machine.hardware_platforms['{name}']
 
 .. autoclass:: {full_path_to_class}
    :members:
-   :undoc-members:
-   :inherited-members:
    :show-inheritance:
 
    .. rubric:: Methods

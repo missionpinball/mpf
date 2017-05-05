@@ -3,9 +3,8 @@ self.machine.{name}
 
 .. autoclass:: {full_path_to_class}
    :members:
-   :undoc-members:
-   :inherited-members:
    :show-inheritance:
+   :exclude-members: configure_logging
 
    .. rubric:: Methods
 

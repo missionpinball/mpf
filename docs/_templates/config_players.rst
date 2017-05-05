@@ -3,8 +3,6 @@ self.machine.{name}_player
 
 .. autoclass:: {full_path_to_class}
    :members:
-   :undoc-members:
-   :inherited-members:
    :show-inheritance:
 
    .. rubric:: Methods
