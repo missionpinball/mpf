@@ -18,7 +18,6 @@ class HighScore(AsyncMode):
         self.high_scores = None
         self.high_score_config = None
         self.pending_award = None
-        self.new_high_score_list = None
         super().__init__(machine, config, name, path)
 
     def mode_init(self):
@@ -96,7 +95,7 @@ class HighScore(AsyncMode):
         if not self.machine.game.player_list:
             return
 
-        self.new_high_score_list = {}
+        new_high_score_list = {}
 
         # iterate highscore categories
         for category_settings in self.high_score_config['categories']:
@@ -121,31 +120,34 @@ class HighScore(AsyncMode):
                 # sort if from highest to lowest
                 new_list.sort(key=lambda x: x[1], reverse=True)
 
-                # trim it so that it's the length specified in the config
-                new_list = new_list[:len(award_names)]
-
-                # save the new list for this category
-                self.new_high_score_list[category_name] = new_list
-
                 # scan through and see if any of our players are in this list
-                for i in range(0, len(new_list)):
+                i = 0
+                while i < len(award_names) and i < len(new_list):
                     entry = new_list[i]
                     if isinstance(entry[0], Player):
                         player, value = entry
                         # ask player for initials if we do not know them
                         if not player.initials:
-                            player.initials = yield from self._ask_player_for_initials(player, award_names[i], value)
+                            try:
+                                player.initials = yield from self._ask_player_for_initials(player, award_names[i],
+                                                                                           value)
+                            except asyncio.TimeoutError:
+                                del new_list[i]
+                                # no entry when the player missed the timeout
+                                continue
                         # add high score
-                        self._add_high_score_entry(player.initials, category_name, i, value)
+                        new_list[i] = (player.initials, value)
                         # show award slide
                         yield from self._show_award_slide(player.initials, award_names[i], value)
 
-        self.high_scores = self.new_high_score_list
-        self._write_scores_to_disk()
+                    # next entry
+                    i += 1
 
-    def _add_high_score_entry(self, initials: str, config_cat_name: str, index: int, value: int) -> None:
-        """Add high score entry."""
-        self.new_high_score_list[config_cat_name][index] = (initials, value)
+                # save the new list for this category and trim it so that it's the length specified in the config
+                new_high_score_list[category_name] = new_list[:len(award_names)]
+
+        self.high_scores = new_high_score_list
+        self._write_scores_to_disk()
 
     @asyncio.coroutine
     # pylint: disable-msg=too-many-arguments
@@ -159,7 +161,11 @@ class HighScore(AsyncMode):
                                  player_num=player.number,
                                  value=value)
 
-        event_result = yield from self.machine.events.wait_for_event("text_input_high_score_complete")
+        event_result = yield from asyncio.wait_for(
+            self.machine.events.wait_for_event("text_input_high_score_complete"),
+            timeout=self.high_score_config['enter_initials_timeout'],
+            loop=self.machine.clock.loop
+        )   # type: dict
 
         return event_result["text"] if "text" in event_result else ''
 
