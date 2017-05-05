@@ -92,13 +92,9 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
-# A list of ignored prefixes for module index sorting.
-modindex_common_prefix = ['mpf']
-
 # If true, keep warnings as "system message" paragraphs in the built documents.
 # keep_warnings = False
 
-# If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
 
 
@@ -171,7 +167,7 @@ html_last_updated_fmt = '%b %d, %Y'
 # html_split_index = False
 
 # If true, links to the reST sources are added to the pages.
-# html_show_sourcelink = True
+html_show_sourcelink = False
 
 # If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
 # html_show_sphinx = True
@@ -272,7 +268,7 @@ context = dict()
 
 try:
     context['github_version'] = git.Repo('..').active_branch.name
-except TypeError:
+except:
     context['github_version'] = None
 
 
