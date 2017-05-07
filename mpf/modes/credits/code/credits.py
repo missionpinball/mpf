@@ -73,17 +73,19 @@ class Credits(Mode):
         # values relate to game cost.
 
         if self.credits_config['switches']:
-            min_currency_value = min(x['value'] for x in
+            min_currency_value = min(x['value'].evaluate([]) for x in
                                      self.credits_config['switches'])
         else:
             try:
                 min_currency_value = (
-                    self.credits_config['pricing_tiers'][0]['price'])
+                    self.credits_config['pricing_tiers'][0]['price'].evaluate([]))
             except IndexError:
                 min_currency_value = 1
 
         try:
-            price_per_game = self.credits_config['pricing_tiers'][0]['price']
+            price_per_game = self.credits_config['pricing_tiers'][0]['price'].evaluate([])
+            if self.credits_config['pricing_tiers'][0]['credits'] != 1:
+                raise AssertionError("First pricing_tier entry has to give exactly one credits.")
         except IndexError:
             price_per_game = 1
 
@@ -113,18 +115,26 @@ class Credits(Mode):
         # credit units for the price break as well as the "bump" in credit
         # units that should be added once that break is passed.
 
+        index = 0
         for pricing_tier in self.credits_config['pricing_tiers']:
-            credit_units = pricing_tier['price'] / self.credit_unit
+            price = pricing_tier['price'].evaluate([])
+            credit_units = price / self.credit_unit
             actual_credit_units = self.credit_units_per_game * pricing_tier['credits']
             bonus = actual_credit_units - credit_units
+
+            self.machine.create_machine_var("price_per_game_raw_{}".format(index), price)
+            self.machine.create_machine_var("price_per_game_string_{}".format(index),
+                                         self.credits_config['price_tier_template'].format(
+                                             price=price, credits=pricing_tier['credits']))
 
             self.debug_log("Pricing Tier Bonus. Price: %s, Credits: %s. "
                            "Credit units for this tier: %s, Credit units this "
                            "tier buys: %s, Bonus bump needed: %s",
-                           pricing_tier['price'], pricing_tier['credits'],
+                           pricing_tier['price'].evaluate([]), pricing_tier['credits'],
                            credit_units, actual_credit_units, bonus)
 
             self.pricing_tiers.add((credit_units, bonus))
+            index += 1
 
     def enable_credit_play(self, post_event=True, **kwargs):
         """Enable credits play."""
@@ -155,6 +165,8 @@ class Credits(Mode):
 
         self.machine.create_machine_var('credits_string', ' ')
         # doc string is in machine.py for credits_string
+
+        self.machine.create_machine_var('free_play', False)
 
         self.machine.create_machine_var('credits_value', '0')
         '''machine_var: credits_value
@@ -224,6 +236,11 @@ class Credits(Mode):
         self.machine.events.remove_handler(self._game_ended)
         self.machine.events.remove_handler(self._game_started)
         self.machine.events.remove_handler(self._ball_starting)
+        self.machine.create_machine_var('free_play', True)
+
+        for index in range(len(self.credits_config['pricing_tiers'])):
+            self.machine.remove_machine_var("price_per_game_raw_{}".format(index))
+            self.machine.remove_machine_var("price_per_game_string_{}".format(index))
 
         self._disable_credit_handlers()
 
@@ -300,7 +317,7 @@ class Credits(Mode):
             self.machine.switch_controller.add_switch_handler(
                 switch_name=switch_settings['switch'].name,
                 callback=self._credit_switch_callback,
-                callback_kwargs={'value': switch_settings['value'],
+                callback_kwargs={'value': switch_settings['value'].evaluate([]),
                                  'audit_class': switch_settings['type']})
 
         for switch in self.credits_config['service_credits_switch']:
@@ -312,7 +329,7 @@ class Credits(Mode):
             self.machine.events.add_handler(
                 event=event_settings['event'],
                 handler=self._credit_event_callback,
-                credits=event_settings['credits'],
+                credits=event_settings['credits'].evaluate([]),
                 audit_class=event_settings['type'])
 
     def _disable_credit_handlers(self):
@@ -363,7 +380,7 @@ class Credits(Mode):
 
             total_credit_units += bonus_credit_units
 
-        max_credit_units = (self.credits_config['max_credits'] *
+        max_credit_units = (self.credits_config['max_credits'].evaluate([]) *
                             self.credit_units_per_game)
 
         if max_credit_units and total_credit_units > max_credit_units:
@@ -377,7 +394,7 @@ class Credits(Mode):
 
         if max_credit_units <= 0 or max_credit_units > previous_credit_units:
             self.info_log("Credit units added")
-            self.machine.set_machine_var('credit_units', total_credit_units)
+            self.machine.create_machine_var('credit_units', total_credit_units)
             self.machine.create_machine_var('credit_units', total_credit_units)
             self._update_credit_strings()
             self.machine.events.post('credits_added')
