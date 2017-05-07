@@ -12,7 +12,7 @@ from typing import Tuple
 from mpf.core.platform import LightsPlatform
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:   # pragma: no cover
     from mpf.core.machine import MachineController
 
 

@@ -7,7 +7,7 @@ from typing import Optional, TYPE_CHECKING
 
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:   # pragma: no cover
     from mpf.devices.switch import Switch
 
 

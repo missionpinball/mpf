@@ -5,7 +5,7 @@ from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.events import event_handler
 from mpf.core.mode_device import ModeDevice
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:   # pragma: no cover
     from mpf.devices.ball_device.ball_device import BallDevice
 
 

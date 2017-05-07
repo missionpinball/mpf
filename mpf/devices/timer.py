@@ -6,7 +6,7 @@ from mpf.core.mode_device import ModeDevice
 from mpf.core.player import Player
 from mpf.core.mode import Mode
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:   # pragma: no cover
     from mpf.core.machine import MachineController
     from mpf.core.clock import PeriodicTask
     from mpf.core.events import EventHandlerKey

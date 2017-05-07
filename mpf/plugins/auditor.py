@@ -2,14 +2,13 @@
 
 import logging
 from typing import Any
-from typing import Dict
 from typing import Set
 from typing import TYPE_CHECKING
 
 from mpf.core.switch_controller import MonitoredSwitchChange
 from mpf.devices.shot import Shot
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:   # pragma: no cover
     from mpf.core.machine import MachineController
 
 
@@ -35,7 +34,7 @@ class Auditor(object):
         self.machine.auditor = self
         self.switchnames_to_audit = set()       # type: Set[str]
         self.config = None                      # type: Any
-        self.current_audits = None              # type: Dict[str,Dict[str,Any]]
+        self.current_audits = None              # type: Any
 
         self.enabled = False
         """Attribute that's viewed by other core components to let them know

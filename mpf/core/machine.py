@@ -28,7 +28,7 @@ from mpf.core.device_manager import DeviceCollection, DeviceCollectionType
 from mpf.core.utility_functions import Util
 from mpf.core.logging import LogMixin
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:   # pragma: no cover
     from mpf.modes.game.code.game import Game
     from mpf.core.events import EventManager
     from mpf.core.switch_controller import SwitchController
@@ -102,7 +102,7 @@ class MachineController(LogMixin):
         self.config = None      # type: Any
 
         # add some type hints
-        if TYPE_CHECKING:
+        if TYPE_CHECKING:   # pragma: no cover
             # controllers
             self.events = None                          # type: EventManager
             self.switch_controller = None               # type: SwitchController

@@ -11,7 +11,7 @@ from typing import Dict, Any, TYPE_CHECKING, Tuple, Optional, Generator, Callabl
 
 from mpf.core.mpf_controller import MpfController
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:   # pragma: no cover
     from mpf.core.machine import MachineController
     from mpf.core.placeholder_manager import BaseTemplate
     from typing import Deque
