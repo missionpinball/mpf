@@ -287,9 +287,14 @@ class DeviceCollectionType(Sized, Container[KT], Generic[KT, VT], Iterable[VT], 
 
     """Type for a device collection."""
 
-    def values(self) -> Iterable[VT]: ...
+    def values(self) -> Iterable[VT]:
+        pass
 
-    def __getitem__(self, key: KT) -> VT: ...
+    def __getitem__(self, key: KT) -> VT:
+        pass
+
+    def __getattr__(self, key: str) -> VT:
+        pass
 
 
 class DeviceCollection(CaseInsensitiveDict):

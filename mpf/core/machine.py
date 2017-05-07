@@ -51,6 +51,7 @@ if TYPE_CHECKING:
     from mpf.platforms.smart_virtual import SmartVirtualHardwarePlatform
     from mpf.core.device_manager import DeviceManager
     from mpf.plugins.auditor import Auditor
+    from mpf.devices.light import Light
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -120,6 +121,7 @@ class MachineController(LogMixin):
             self.shows = None                           # type: DeviceCollectionType[str, Show]
             self.switches = None                        # type: DeviceCollectionType[str, Switch]
             self.coils = None                           # type: DeviceCollectionType[str, Driver]
+            self.lights = None                          # type: DeviceCollectionType[str, Light]
             self.ball_devices = None                    # type: DeviceCollectionType[str, BallDevice]
             self.playfield = None                       # type: Playfield
 
