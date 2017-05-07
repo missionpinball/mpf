@@ -1,9 +1,16 @@
 """MPF plugin for an auditor which records switch events, high scores, shots, etc."""
 
 import logging
+from typing import Any
+from typing import Dict
+from typing import Set
+from typing import TYPE_CHECKING
 
 from mpf.core.switch_controller import MonitoredSwitchChange
 from mpf.devices.shot import Shot
+
+if TYPE_CHECKING:
+    from mpf.core.machine import MachineController
 
 
 class Auditor(object):
@@ -14,7 +21,7 @@ class Auditor(object):
         machine: A refence to the machine controller object.
     """
 
-    def __init__(self, machine):
+    def __init__(self, machine: "MachineController") -> None:
         """Initialise auditor."""
         if 'auditor' not in machine.config:
             machine.log.debug('"Auditor:" section not found in machine '
@@ -26,9 +33,9 @@ class Auditor(object):
         self.machine = machine
 
         self.machine.auditor = self
-        self.switchnames_to_audit = set()
-        self.config = None
-        self.current_audits = None
+        self.switchnames_to_audit = set()       # type: Set[str]
+        self.config = None                      # type: Any
+        self.current_audits = None              # type: Dict[str,Dict[str,Any]]
 
         self.enabled = False
         """Attribute that's viewed by other core components to let them know

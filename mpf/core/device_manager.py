@@ -1,5 +1,6 @@
 """Contains the DeviceManager base class."""
 from collections import OrderedDict
+from typing import Sized, Iterable, Container, Generic, TypeVar
 
 from mpf.core.utility_functions import Util
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
@@ -276,6 +277,19 @@ class DeviceManager(MpfController):
                 self.machine.events.add_handler(event=event_prefix2 + method,
                                                 handler=getattr(device,
                                                                 method))
+
+
+KT = TypeVar('KT') # key type.
+VT = TypeVar('VT')  # Value type.
+
+
+class DeviceCollectionType(Sized, Container[KT], Generic[KT, VT], Iterable[VT], extra=dict):
+
+    """Type for a device collection."""
+
+    def values(self) -> Iterable[VT]: ...
+
+    def __getitem__(self, key: KT) -> VT: ...
 
 
 class DeviceCollection(CaseInsensitiveDict):

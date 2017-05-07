@@ -1,11 +1,9 @@
 """Contains the MachineController base class."""
 import errno
 import hashlib
-import importlib
 import logging
 import os
 import pickle
-import queue
 import tempfile
 
 import sys
@@ -26,7 +24,7 @@ from mpf.core.config_processor import ConfigProcessor
 from mpf.core.config_validator import ConfigValidator
 from mpf.core.data_manager import DataManager
 from mpf.core.delays import DelayManager, DelayManagerRegistry
-from mpf.core.device_manager import DeviceCollection
+from mpf.core.device_manager import DeviceCollection, DeviceCollectionType
 from mpf.core.utility_functions import Util
 from mpf.core.logging import LogMixin
 
@@ -52,6 +50,7 @@ if TYPE_CHECKING:
     from mpf.core.placeholder_manager import PlaceholderManager
     from mpf.platforms.smart_virtual import SmartVirtualHardwarePlatform
     from mpf.core.device_manager import DeviceManager
+    from mpf.plugins.auditor import Auditor
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -115,12 +114,13 @@ class MachineController(LogMixin):
             self.ball_controller = None                 # type: BallController
             self.placeholder_manager = None             # type: PlaceholderManager
             self.device_manager = None                  # type: DeviceManager
+            self.auditor = None                         # type: Auditor
 
             # devices
-            self.shows = None                           # type: Dict[str, Show]
-            self.switches = None                        # type: Dict[str, Switch]
-            self.coils = None                           # type: Dict[str, Driver]
-            self.ball_devices = None                    # type: Dict[str, BallDevice]
+            self.shows = None                           # type: DeviceCollectionType[str, Show]
+            self.switches = None                        # type: DeviceCollectionType[str, Switch]
+            self.coils = None                           # type: DeviceCollectionType[str, Driver]
+            self.ball_devices = None                    # type: DeviceCollectionType[str, BallDevice]
             self.playfield = None                       # type: Playfield
 
         self._set_machine_path()
@@ -285,8 +285,8 @@ class MachineController(LogMixin):
     def _register_config_players(self) -> None:
         """Register config players."""
         # todo move this to config_player module
-        for name, module in self.config['mpf']['config_players'].items():
-            config_player_class = Util.string_to_class(module)
+        for name, module_class in self.config['mpf']['config_players'].items():
+            config_player_class = Util.string_to_class(module_class)
             setattr(self, '{}_player'.format(name),
                     config_player_class(self))
 
@@ -438,7 +438,7 @@ class MachineController(LogMixin):
 
             return True
 
-    def _get_latest_config_mod_time(self) -> int:
+    def _get_latest_config_mod_time(self) -> float:
         """Return last modification time of the config file."""
         latest_time = os.path.getmtime(self.options['mpfconfigfile'])
 
@@ -468,31 +468,31 @@ class MachineController(LogMixin):
         Information includes Python version, Python executable, platform, and
         core architecture.
         """
-        python_version = sys.version_info
+        python_version_info = sys.version_info
 
-        if not (python_version[0] == 3 and (
-                python_version[1] == 4 or python_version[1] == 5)):
+        if not (python_version_info[0] == 3 and (
+                python_version_info[1] == 4 or python_version_info[1] == 5)):
             raise AssertionError("Incorrect Python version. MPF requires "
                                  "Python 3.4 or 3.5. You have Python {}.{}.{}."
-                                 .format(python_version[0], python_version[1],
-                                         python_version[2]))
+                                 .format(python_version_info[0], python_version_info[1],
+                                         python_version_info[2]))
 
         self.log.info("Platform: %s", sys.platform)
         self.log.info("Python executable location: %s", sys.executable)
 
         if sys.maxsize < 2**32:
-            self.log.info("Python version: %s.%s.%s (32-bit)", python_version[0],
-                          python_version[1], python_version[2])
+            self.log.info("Python version: %s.%s.%s (32-bit)", python_version_info[0],
+                          python_version_info[1], python_version_info[2])
         else:
-            self.log.info("Python version: %s.%s.%s (64-bit)", python_version[0],
-                          python_version[1], python_version[2])
+            self.log.info("Python version: %s.%s.%s (64-bit)", python_version_info[0],
+                          python_version_info[1], python_version_info[2])
 
     def _load_core_modules(self) -> None:
         """Load core modules."""
         self.debug_log("Loading core modules...")
-        for name, module in self.config['mpf']['core_modules'].items():
-            self.debug_log("Loading '%s' core module", module)
-            m = Util.string_to_class(module)(self)
+        for name, module_class in self.config['mpf']['core_modules'].items():
+            self.debug_log("Loading '%s' core module", module_class)
+            m = Util.string_to_class(module_class)(self)
             setattr(self, name, m)
 
     def _load_hardware_platforms(self) -> None:
@@ -793,7 +793,7 @@ class MachineController(LogMixin):
             value: The value you're setting. This can be any Type.
         """
         if name not in self.machine_vars:
-            self.configure_machine_var(name=name, persist=False, expire_secs=None)
+            self.configure_machine_var(name=name, persist=False)
             prev_value = None
             change = True
         else:

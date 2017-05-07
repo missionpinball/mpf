@@ -7,14 +7,14 @@ import asyncio
 from functools import partial
 from unittest.mock import MagicMock
 
-from typing import Dict, Any, TYPE_CHECKING, Tuple, Optional, Generator, Callable
-from typing import List
+from typing import Dict, Any, TYPE_CHECKING, Tuple, Optional, Generator, Callable, List
 
 from mpf.core.mpf_controller import MpfController
 
 if TYPE_CHECKING:
     from mpf.core.machine import MachineController
     from mpf.core.placeholder_manager import BaseTemplate
+    from typing import Deque
 
 EventHandlerKey = namedtuple("EventHandlerKey", ["key", "event"])
 RegisteredHandler = namedtuple("RegisteredHandler", ["callback", "priority", "kwargs", "key", "condition"])
@@ -35,8 +35,8 @@ class EventManager(MpfController):
         super().__init__(machine)
 
         self.registered_handlers = {}       # type: Dict[str, List[RegisteredHandler]]
-        self.event_queue = deque([])        # type: deque[PostedEvent]
-        self.callback_queue = deque([])     # type: deque[Tuple[Any, dict]]
+        self.event_queue = deque([])        # type: Deque[PostedEvent]
+        self.callback_queue = deque([])     # type: Deque[Tuple[Any, dict]]
         self.monitor_events = False
         self._queue_tasks = []              # type: List[asyncio.Task]
 
