@@ -105,6 +105,10 @@ class Auditor(object):
         # Add the switches monitor
         self.machine.switch_controller.add_monitor(self.audit_switch)
 
+        for category, audits in self.current_audits.items():
+            for name, value in audits.items():
+                self.machine.set_machine_var("audits_{}_{}".format(category, name), value)
+
     def audit(self, audit_class, event, **kwargs):
         """Called to log an auditable event.
 
@@ -124,6 +128,7 @@ class Auditor(object):
             self.current_audits[audit_class][event] = 0
 
         self.current_audits[audit_class][event] += 1
+        self.machine.set_machine_var("audits_{}_{}".format(audit_class, event), self.current_audits[audit_class][event])
 
     def audit_switch(self, change: MonitoredSwitchChange):
         """Record switch change."""
