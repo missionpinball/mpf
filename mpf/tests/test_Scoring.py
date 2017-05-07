@@ -185,3 +185,10 @@ class TestScoring(MpfGameTestCase):
         self.post_event("test_score_mode", 1)
         # should score 1000 (+ 100 from the previous)
         self.assertPlayerVarEqual(1100, "score")
+
+        self.post_event("stop_mode2", 1)
+
+        # test scoring
+        self.post_event("test_score_mode", 1)
+        # should score 100 again (+ 1100 from the previous)
+        self.assertPlayerVarEqual(1200, "score")
