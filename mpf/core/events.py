@@ -72,7 +72,7 @@ class EventManager(MpfController):
                 Note that all event strings will be converted to lowercase.
             handler: The callable method that will be called when the event is
                 fired. Since it's possible for events to have kwargs attached
-                to them, the handler method must include **kwargs in its
+                to them, the handler method must include ``**kwargs`` in its
                 signature.
             priority: An arbitrary integer value that defines what order the
                 handlers will be called in. The default is 1, so if you have a
@@ -91,7 +91,10 @@ class EventManager(MpfController):
             the handler via ``remove_handler_by_key``.
 
         For example:
-        ``my_handler = self.machine.events.add_handler('ev', self.test))``
+        
+        .. code::
+        
+            my_handler = self.machine.events.add_handler('ev', self.test))
 
         Then later to remove all the handlers that a module added, you could:
         for handler in handler_list:
@@ -442,10 +445,10 @@ class EventManager(MpfController):
             callback: The method which will be called when the final
                 handler is done processing this event and any handlers that
                 registered waits have cleared their waits.
-            \**kwargs: One or more options keyword/value pairs that will be
+            **kwargs: One or more options keyword/value pairs that will be
                 passed to each handler. (Just make sure your handlers are
-                expecting them. You can add **kwargs to your handler methods if
-                certain ones don't need them.)
+                expecting them. You can add ``**kwargs`` to your handler
+                methods if certain ones don't need them.)
                 
         Examples:
             
@@ -455,9 +458,7 @@ class EventManager(MpfController):
             .. code::
 
                  self.machine.events.post_queue('pizza_time', self.pizza_done)
-            
-            
-                
+
         """
         self._post(event, ev_type='queue', callback=callback, **kwargs)
 
@@ -477,8 +478,8 @@ class EventManager(MpfController):
                 done processing this event. Default is None.
             **kwargs: One or more options keyword/value pairs that will be
                 passed to each handler. (Just make sure your handlers are
-                expecting them. You can add **kwargs to your handler methods if
-                certain ones don't need them.)
+                expecting them. You can add ``**kwargs`` to your handler
+                methods if certain ones don't need them.)
 
         Events are processed serially (e.g. one at a time), so if the event
         core is in the process of handling another event, this event is

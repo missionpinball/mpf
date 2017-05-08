@@ -109,16 +109,10 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform):
         """Configure a P-ROC switch.
 
         Args:
-            config: Dictionary of settings for the switch. In the case
-                of the P-ROC, it uses the following:
+            number: String number of the switch to configure.
+            config: SwitchConfig settings.
 
-        Returns:
-            switch : A reference to the switch object that was just created.
-            proc_num :
-                Integer of the actual hardware switch number the P-ROC
-                uses to refer to this switch. Typically your machine
-                configuration files would specify a switch number like ``SD12``
-                or ``7/5``. This ``proc_num`` is an int between 0 and 255.
+        Returns: A configured switch object.
 
         """
         del platform_config
