@@ -10,9 +10,14 @@ from mpf.core.system_wide_device import SystemWideDevice
 @DeviceMonitor("value")
 class Accelerometer(SystemWideDevice):
 
-    """Implement an accelerometer.
+    """Implements a multi-axis accelerometer.
 
-    Args: Same as the Device parent class
+    In modern machines, accelerometers can be used for tilt detection and to
+    detect whether a machine is properly leveled.
+    
+    The accelerometer device produces a data stream of readings which MPF
+    converts to g-forces, and then events can be posted when the "hit" (or
+    g-force) of an accelerometer exceeds a predefined threshold.
 
     """
 
@@ -21,7 +26,10 @@ class Accelerometer(SystemWideDevice):
     class_label = 'accelerometer'
 
     def __init__(self, machine, name):
-        """Initialise accelerometer."""
+        """Initialise accelerometer.
+        
+        Args: Same as the Device parent class
+        """
         self.platform = None        # type: AccelerometerPlatform
         super().__init__(machine, name)
 
@@ -30,8 +38,10 @@ class Accelerometer(SystemWideDevice):
         self.hw_device = None
 
     def _initialize(self):
-        self.platform = self.machine.get_platform_sections('accelerometers', self.config['platform'])
-        self.hw_device = self.platform.configure_accelerometer(self.config, self)
+        self.platform = self.machine.get_platform_sections(
+            'accelerometers', self.config['platform'])
+        self.hw_device = self.platform.configure_accelerometer(self.config,
+                                                               self)
 
     @classmethod
     def _calculate_vector_length(cls, x, y, z):

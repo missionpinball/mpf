@@ -23,12 +23,7 @@ PostedEvent = namedtuple("PostedEvent", ["event", "type", "callback", "kwargs"])
 
 class EventManager(MpfController):
 
-    """Handles all the events and manages the handlers in MPF.
-    
-    The EventManager is available as ``self.machine.events`` within MPF custom
-    mode and machine code.
-    
-    """
+    """Handles all the events and manages the handlers in MPF."""
 
     def __init__(self, machine: "MachineController") -> None:
         """Initialize EventManager."""

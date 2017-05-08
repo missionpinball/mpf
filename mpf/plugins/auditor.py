@@ -8,14 +8,17 @@ from mpf.devices.shot import Shot
 
 class Auditor(object):
 
-    """Base class for the auditor.
-
-    Args:
-        machine: A refence to the machine controller object.
+    """Writes switch events, regular events, and player variables to an audit
+    log file.
+    
     """
 
     def __init__(self, machine):
-        """Initialise auditor."""
+        """Initialise auditor.
+        
+        Args:
+            machine: A reference to the machine controller object.
+        """
         if 'auditor' not in machine.config:
             machine.log.debug('"Auditor:" section not found in machine '
                               'configuration, so the auditor will not be '
@@ -103,7 +106,7 @@ class Auditor(object):
 
         Args:
             audit_class: A string of the section we want this event to be
-            logged to.
+                logged to.
             event: A string name of the event we're auditing.
             **kwargs: Not used, but included since some of the audit events
                 might include random kwargs.
@@ -134,7 +137,7 @@ class Auditor(object):
 
         Args:
             eventname: The string name of the event.
-            **kwargs, not used, but included since some types of events include
+            **kwargs: not used, but included since some types of events include
                 kwargs.
         """
         del kwargs
@@ -147,7 +150,7 @@ class Auditor(object):
         Typically this is only called at the end of a game.
 
         Args:
-            **kwargs, not used, but included since some types of events include
+            **kwargs: not used, but included since some types of events include
                 kwargs.
         """
         del kwargs

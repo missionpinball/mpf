@@ -8,7 +8,7 @@ from mpf.core.mpf_controller import MpfController
 
 class DeviceManager(MpfController):
 
-    """Manages devices in a MPF machine."""
+    """Manages all the devices in MPF."""
 
     def __init__(self, machine):
         """Initialize device manager."""
@@ -35,13 +35,26 @@ class DeviceManager(MpfController):
         return self._monitorable_devices
 
     def register_monitorable_device(self, device):
-        """Register a monitorable device."""
+        """Register a monitorable device.
+        
+            Args:
+                device: The device to register.
+        
+        """
         if device.collection not in self._monitorable_devices:
             self._monitorable_devices[device.collection] = {}
         self._monitorable_devices[device.collection][device.name] = device
 
     def notify_device_changes(self, device, notify, old, value):
-        """Notify subscribers about changes in a registered device."""
+        """Notify subscribers about changes in a registered device.
+        
+        Args:
+            device: The device that changed.
+            notify:
+            old: The old value.
+            value: The new value.
+        
+        """
         self.machine.bcp.interface.notify_device_changes(device, notify, old, value)
 
     def _load_device_modules(self, **kwargs):
@@ -92,7 +105,7 @@ class DeviceManager(MpfController):
                     device.stop_device()
 
     def create_devices(self, collection_name, config):
-        """Create devices for collection."""
+        """Create devices for a collection."""
         cls = self.device_classes[collection_name]
 
         collection = getattr(self.machine, collection_name)

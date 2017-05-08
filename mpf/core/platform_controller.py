@@ -93,6 +93,8 @@ class PlatformController(MpfController):
 
         Args:
             enable_switch: Switch which triggers the rule.
+            driver: .. class:: DriverRuleSettings
+            pulse_setting: .. class:: PulseRuleSettings
         """
         platform = self._check_and_get_platform(enable_switch.switch, driver.driver)
 
@@ -131,6 +133,8 @@ class PlatformController(MpfController):
         Args:
             enable_switch: Switch which triggers the rule.
             driver: Driver to trigger.
+            pulse_setting: .. class:: PulseRuleSettings
+            hold_settings: .. class:: HoldRuleSettings
         """
         platform = self._check_and_get_platform(enable_switch.switch, driver.driver)
 
@@ -163,10 +167,12 @@ class PlatformController(MpfController):
                               pulse_setting: PulseRuleSettings = None) -> HardwareRule:
         """Add pulse on hit rule to driver.
 
-        Alway do the full pulse. Even when the switch is released.
+        Always do the full pulse. Even when the switch is released.
 
         Args:
             enable_switch: Switch which triggers the rule.
+            driver: .. class:: DriverRuleSettings
+            pulse_setting: .. class:: PulseRuleSettings
         """
         platform = self._check_and_get_platform(enable_switch.switch, driver.driver)
 
@@ -205,8 +211,11 @@ class PlatformController(MpfController):
         Pulse and then enable driver. Cancel pulse and enable when switch is released or a disable switch is hit.
 
         Args:
-            enable_switch: Switch which triggers the rule.
-            disable_switch: Switch which disables the rule.
+            enable_switch:
+            disable_switch:
+            driver:
+            pulse_setting:
+            hold_settings:
         """
         platform = self._check_and_get_platform(enable_switch.switch, driver.driver)
         self._check_and_get_platform(disable_switch.switch, driver.driver)

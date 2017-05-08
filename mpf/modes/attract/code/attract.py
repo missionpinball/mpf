@@ -7,9 +7,9 @@ class Attract(Mode):
 
     """Default mode running in a machine when a game is not in progress.
 
-    Its main job is to watch for the start button to be pressed, to
-    post the requests to start games, and to move the machine flow to the next
-    mode if the request to start game comes back as approved.
+    The attract mode's main job is to watch for the start button to be pressed, 
+    to post the requests to start games, and to move the machine flow to the
+    next mode if the request to start game comes back as approved.
     """
 
     def __init__(self, machine, config, name, path):
@@ -21,7 +21,7 @@ class Attract(Mode):
         self.start_buttons_held = list()
 
     def mode_start(self, **kwargs):
-        """Automatically called when the Attract game mode becomes active."""
+        """Contains the code which runs when the attract mode starts."""
         # register switch handlers for the start button press so we can
         # capture long presses
 
@@ -46,7 +46,15 @@ class Attract(Mode):
                 playfield.ball_search.start()
 
     def start_button_pressed(self):
-        """Called when the a switch tagged with *start* is activated."""
+        """Called when the a switch tagged with *start* is activated.
+        
+        Note that in MPF, the game start process is initiated when the start
+        button is *released*, so when the button is first pressed, MPF just
+        records the time stamp. This allows the total time the start button
+        was pressed to be note, so that, for example, different types of games
+        can be started based on long-presses of the start button.
+        
+        """
         self.start_button_pressed_time = self.machine.clock.get_time()
 
     def start_button_released(self):

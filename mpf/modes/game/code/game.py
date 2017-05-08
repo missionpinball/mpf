@@ -16,8 +16,8 @@ class Game(AsyncMode):
 
     """Base mode that runs an active game on a pinball machine.
 
-    Responsible for creating players, starting and ending balls, rotating to
-    the next player, etc.
+    The game mode is responsible for creating players, starting and ending
+    balls, rotating to the next player, etc.
     """
 
     def __init__(self, machine, config, name, path):
@@ -121,7 +121,7 @@ class Game(AsyncMode):
         self.debug_log("Game started")
 
     def ball_ending(self):
-        """DEPRECATED in v0.50. Use end_ball() instead."""
+        """DEPRECATED in v0.50. Use ``end_ball()`` instead."""
         # TODO: Remove this function as it has been deprecated and replaced
         self.warning_log("game.ball_ending() function has been deprecated. "
                          "Please use game.end_ball() instead.")
@@ -196,7 +196,17 @@ class Game(AsyncMode):
 
     @property
     def balls_in_play(self) -> int:
-        """Return balls in play."""
+        """Property which holds the current number of balls in play.
+        
+        Note that the number of balls in play is not necessarily the same as
+        the number of balls that are active on the playfield. (For example,
+        a ball could be held in a device while a show is playing, etc.)
+        
+        You can set this property to change it, or get it's value.
+        
+        If you set this value to 0, the ball ending process will be started.
+        
+        """
         return self._balls_in_play
 
     @balls_in_play.setter
@@ -335,7 +345,18 @@ class Game(AsyncMode):
         self.machine.playfield.add_ball(player_controlled=True)
 
     def ball_drained(self, balls=0, **kwargs):
-        """Ball drained."""
+        """One or more balls has drained.
+        
+        Drained balls will be subtracted from the number of balls in play. 
+        
+        Args:
+            balls: The number of balls that just drained.
+        
+        Returns:
+            A dictionary:
+                {balls: *number of balls drained*}
+        
+        """
         del kwargs
         self.debug_log("Entering Game.ball_drained()")
 
@@ -364,7 +385,7 @@ class Game(AsyncMode):
         desc: The game has ended.'''
 
     def game_ending(self):
-        """DEPRECATED in v0.50. Use end_game() instead."""
+        """DEPRECATED in v0.50. Use ``end_game()`` instead."""
         # TODO: Remove this function as it has been deprecated and replaced
         self.warning_log("game.game_ending() function has been deprecated. "
                          "Please use game.end_game() instead.")
@@ -419,16 +440,16 @@ class Game(AsyncMode):
         yield from self._start_ball(is_extra_ball=True)
 
     def request_player_add(self, **kwargs):
-        """Called by any module that wants to add a player to an active game.
+        """Request to add a player to an active game.
 
         This method contains the logic to verify whether it's ok to add a
-        player. (For example, the game must be on ball 1 and the current
-        number of players must be less than the max number allowed.)
+        player. For example, the game must be on Ball 1 and the current
+        number of players must be less than the max number allowed.
 
         Assuming this method believes it's ok to add a player, it posts the
-        boolean event *player_add_request* to give other modules the opportunity
-        to deny it. (For example, a credits module might deny the request if
-        there are not enough credits in the machine.)
+        boolean event *player_add_request* to give other modules the
+        opportunity to deny it. For example, a credits module might deny the
+        request if there are not enough credits in the machine.
 
         If *player_add_request* comes back True, the event
         *player_added* is posted with a reference to the new player
@@ -536,8 +557,8 @@ class Game(AsyncMode):
              single player layout to the multiplayer layout.
              '''
 
-        # Now that the player_added event has been posted, enable player variable
-        # events and send all initial values
+        # Now that the player_added event has been posted, enable player
+        # variable events and send all initial values
         player.enable_events(True, True)
 
         # Create machine variable to hold new player's score
