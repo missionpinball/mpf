@@ -26,11 +26,11 @@ Adding custom code to your machine
 API Reference
 -------------
 
-* :doc:`mpf/machine_overview`
-* :doc:`mpf/devices_overview`
-* :doc:`mpf/modes_overview`
-* :doc:`mpf/config_players_overview`
-* :doc:`mpf/platforms_overview`
+* :doc:`api/machine_overview`
+* :doc:`api/devices_overview`
+* :doc:`api/modes_overview`
+* :doc:`api/config_players_overview`
+* :doc:`api/platforms_overview`
 
 Index
 -----
@@ -41,10 +41,10 @@ We have an  which lists all the classes, methods, and attributes in MPF across t
    :hidden:
    :maxdepth: 2
 
-   Coding Overview <code/index>
-   mpf/machine_overview
-   mpf/devices_overview
-   mpf/modes_overview
-   mpf/platforms_overview
-   mpf/config_players_overview
-   Method & Class Index <:ref:`genindex`>
+   Adding custom code to your game <code/index>
+   API Reference <api/index>
+   Testing your Game <testing/index>
+   Extending MPF <dev/index>
+   BCP Protocol <bcp/index>
+   Method & Class Index <genindex>
+

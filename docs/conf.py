@@ -9,6 +9,7 @@ import shutil
 import time
 
 from copy import copy
+from shutil import copyfile
 
 import sphinx_rtd_theme
 import git
@@ -106,7 +107,6 @@ autodoc_default_flags = [
          # "private-members",
          "show-inheritance",
 ]
-
 
 # -- Options for HTML output ----------------------------------------------
 
@@ -231,7 +231,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'MPFAPI.tex', 'MPF API Documentation',
+    (master_doc, 'MPFdev.tex', 'MPF Documentation Developer Documentation',
      'The Mission Pinball Framework Team', 'manual'),
 ]
 
@@ -261,7 +261,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'mpfapi', 'MPF API Documentation',
+    (master_doc, 'mpf-dev', 'MPF Developer Documentation',
      [author], 1)
 ]
 
@@ -312,7 +312,7 @@ class RstBuilder(object):
 
     def __init__(self):
 
-        self.dest_folder = 'mpf'
+        self.dest_folder = 'api'
 
         self.mpfconfig = ConfigProcessor.load_config_file(os.path.join(
             os.pardir, 'mpf', 'mpfconfig.yaml'), 'machine')
@@ -388,7 +388,10 @@ class RstBuilder(object):
             for name, module_ in items.items():
                 self.create_rst_file(section, name, module_)
 
-        self.write_index()
+        self.write_overviews()
+
+        copyfile(os.path.join('_templates', 'index.rst'),
+                 os.path.join(self.dest_folder, 'index.rst'))
 
     def create_rst_file(self, section, name, module_):
         this_rst = copy(self.templates[section])
@@ -415,21 +418,7 @@ class RstBuilder(object):
 
         self.index_entries[section].append((name, file_name))
 
-    def create_rst_file_list(self, file_list):
-        file_list.sort()
-
-        final_string = str()
-
-        for name, file in file_list:
-            final_string += '   {0} <{1}>\n'.format(name, file)
-
-        return final_string
-
-    def write_index(self):
-
-        # with open(os.path.join(templates_path[0], 'index.rst'), 'r') as f:
-        #         template = f.read()
-
+    def write_overviews(self):
         string_indices = dict()
         for section, files in self.index_entries.items():
             string_indices[section] = self.create_rst_file_list(files)
@@ -442,3 +431,14 @@ class RstBuilder(object):
 
             with open(file_name, 'w') as f:
                 f.write(template)
+
+    @staticmethod
+    def create_rst_file_list(file_list):
+        file_list.sort()
+
+        final_string = str()
+
+        for name, file in file_list:
+            final_string += '   {0} <{1}>\n'.format(name, file)
+
+        return final_string

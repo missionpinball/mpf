@@ -17,16 +17,22 @@ Scriptlets are nice if you have some kind of custom device type that doesn't
 match up to any of MPF's built in devices. The elevator and claw unloader
 in *Demolition Man* is a good example, and what we'll use here.
 
+(You can read about how to download and run *Demo Man* in the
+`example games section <http://docs.missionpinball.org/en/latest/example_games>`_
+section of the MPF User Documentation.)
+
 Here's how to create a scriptlet:
 
 1. Create your scriptlet file
 -----------------------------
 
 First, add a ``scriptlets`` folder to your machine folder. Then inside there,
-create the Python file that will hold your scriptlet. In the *Demo Man* example,
-it looks like this:
+create the Python file that will hold your scriptlet. You can name this file
+whatever you want, just remember the name for the next step.
 
-.. image:: images/scriptlet.png
+In the *Demo Man* example, it looks like this:
+
+.. image:: /images/scriptlet.png
 
 2. Open and edit your scriptlet file
 ------------------------------------
