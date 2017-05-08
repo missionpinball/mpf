@@ -3,4 +3,7 @@ Extending MPF
 
 
 
-todo
+.. toctree::
+
+   dev_environment
+   hardware
