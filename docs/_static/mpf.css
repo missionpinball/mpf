@@ -120,7 +120,9 @@ body {
 
 .rst-content code.literal {
     color: #D63E29;
-    vertical-align: 10%;
+    vertical-align: 5%;
+    padding: 3px 5px;
+    font-size: 85%;
 }
 
 div[class^="highlight"] pre {
@@ -168,4 +170,10 @@ h1 {
 
 .inheritance {
     margin-bottom: 1.2em;
+}
+
+.rubric {
+    font-family: 'Oswald', sans-serif !important;
+    font-size: 16pt;
+    margin-top: 20pt;
 }
