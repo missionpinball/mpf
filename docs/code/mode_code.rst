@@ -23,7 +23,7 @@ extension.
 For example, if you wanted to create custom code for your base mode, it would
 look like this:
 
-.. image:: images/custom_mode_code.png
+.. image:: /images/custom_mode_code.png
 
 2. Open up the new Python file you just created
 -----------------------------------------------
