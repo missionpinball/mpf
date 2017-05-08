@@ -4,15 +4,13 @@ self.machine.{name}
 .. autoclass:: {full_path_to_class}
    :members:
    :show-inheritance:
-   :exclude-members: configure_logging
 
-   .. rubric:: Methods
+   .. rubric:: Accessing the {name} in code
 
-   .. autoautosummary:: {full_path_to_class}
-      :methods:
-      :nosignatures:
+   There is only one instance of the {name} in MPF, and it's accessible via
+   ``self.machine.{name}``.
 
-   .. rubric:: Attributes
+   .. rubric:: Methods & Attributes
 
-   .. autoautosummary:: {full_path_to_class}
-      :attributes:
+   The {name} has the following methods & attributes available. Note that methods & attributes inherited from
+   base classes are not included here.

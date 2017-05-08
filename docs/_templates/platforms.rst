@@ -5,13 +5,12 @@ self.machine.hardware_platforms['{name}']
    :members:
    :show-inheritance:
 
-   .. rubric:: Methods
+   .. rubric:: Accessing the {name} platform via code
 
-   .. autoautosummary:: {full_path_to_class}
-      :methods:
-      :nosignatures:
+   Hardware platforms are stored in the ``self.machine.hardware_platforms`` dictionary, so the {name} platform
+   is available via ``self.machine.hardware_platforms['{name}']``.
 
-   .. rubric:: Attributes
+   .. rubric:: Methods & Attributes
 
-   .. autoautosummary:: {full_path_to_class}
-      :attributes:
+   The {name} platform has the following methods & attributes available. Note that methods & attributes inherited from
+   base classes are not included here.

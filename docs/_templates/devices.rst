@@ -4,15 +4,16 @@ self.machine.{name}.*
 .. autoclass:: {full_path_to_class}
    :members:
    :show-inheritance:
-   :exclude-members: device_added_to_mode, device_removed_from_mode, prepare_config, configure_logging
 
-   .. rubric:: Methods
+   .. rubric:: Accessing {name} in code
 
-   .. autoautosummary:: {full_path_to_class}
-      :methods:
-      :nosignatures:
+   The device collection which contains the {name} in your machine is available via ``self.machine.{name}``. For
+   example, to access one called "foo", you would use ``self.machine.{name}.foo``. You can also access {name} in
+   dictionary form, e.g. ``self.machine.{name}['foo']``.
 
-   .. rubric:: Attributes
+   You can also get devices by tag or hardware number. See the DeviceCollection documentation for details.
 
-   .. autoautosummary:: {full_path_to_class}
-      :attributes:
+   .. rubric:: Methods & Attributes
+
+   {cap_name} have the following methods & attributes available. Note that methods & attributes inherited from
+   base classes are not included here.

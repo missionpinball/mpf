@@ -5,13 +5,11 @@ self.machine.{name}
    :members:
    :show-inheritance:
 
-   .. rubric:: Methods
+   .. rubric:: Accessing the {name} in code
 
-   .. autoautosummary:: {full_path_to_class}
-      :methods:
-      :nosignatures:
+   The {name} is available via ``self.machine.{name}``.
 
-   .. rubric:: Attributes
+   .. rubric:: Methods & Attributes
 
-   .. autoautosummary:: {full_path_to_class}
-      :attributes:
+   The {name} has the following methods & attributes available. Note that methods & attributes inherited from
+   the base class are not included here.
