@@ -97,6 +97,16 @@ pygments_style = 'sphinx'
 
 todo_include_todos = True
 
+numpydoc_show_inherited_class_members = False
+
+autodoc_default_flags = [
+         # Make sure that any autodoc declarations show the right members
+         "members",
+         # "inherited-members",
+         # "private-members",
+         "show-inheritance",
+]
+
 
 # -- Options for HTML output ----------------------------------------------
 
@@ -274,7 +284,6 @@ except:
 
 def setup(app):
     app.add_stylesheet('mpf.css')
-    app.add_directive('autoautosummary', AutoAutoSummary)
     RstBuilder().build_rst_files()
 
     # We need to do this in the setup() function since ReadTheDocs will append
@@ -297,54 +306,6 @@ def setup(app):
               version of MPF you're using.
         
         '''
-
-
-class AutoAutoSummary(Autosummary):
-    # http://stackoverflow.com/questions/20569011/python-sphinx-autosummary-automated-listing-of-member-functions
-
-        option_spec = {
-            'methods': directives.unchanged,
-            'attributes': directives.unchanged,
-            'toctree': directives.unchanged,
-            'nosignatures': directives.flag,
-            'template': directives.unchanged,
-        }
-
-        required_arguments = 1
-
-        @staticmethod
-        def get_members(obj, typ, include_public=None):
-            if not include_public:
-                include_public = []
-            items = []
-            for name in dir(obj):
-                try:
-                    documenter = get_documenter(safe_getattr(obj, name), obj)
-                except AttributeError:
-                    continue
-                if documenter.objtype == typ:
-                    items.append(name)
-            public = [x for x in items
-                      if x in include_public or not x.startswith('_')]
-            return public, items
-
-        def run(self):
-            clazz = self.arguments[0]
-            try:
-                (module_name, class_name) = clazz.rsplit('.', 1)
-                m = __import__(module_name, globals(), locals(), [class_name])
-                c = getattr(m, class_name)
-                if 'methods' in self.options:
-                    _, methods = self.get_members(c, 'method', ['__init__'])
-
-                    self.content = ["~%s.%s" % (clazz, method) for method in
-                                    methods if not method.startswith('_')]
-                if 'attributes' in self.options:
-                    _, attribs = self.get_members(c, 'attribute')
-                    self.content = ["~%s.%s" % (clazz, attrib) for attrib in
-                                    attribs if not attrib.startswith('_')]
-            finally:
-                return super(AutoAutoSummary, self).run()
 
 
 class RstBuilder(object):
@@ -433,7 +394,7 @@ class RstBuilder(object):
 
         file_name = file_name.replace('[', '.')
 
-        for char in "''*":
+        for char in "''*]":
             file_name = file_name.replace(char, '')
 
         if file_name[-1] == '.':
@@ -445,7 +406,9 @@ class RstBuilder(object):
                 name=name,
                 module_underline='=' * (len(this_rst.split('\n')[0]) +
                                         len(name) - 6),
-                full_path_to_class=module_))
+                full_path_to_class=module_,
+                article='an' if name[0] in ('a', 'e', 'i', 'o', 'u') else 'a',
+                cap_name=name.capitalize()))
 
         self.index_entries[section].append((name, file_name))
 
