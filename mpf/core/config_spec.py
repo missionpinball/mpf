@@ -1231,6 +1231,8 @@ widgets:
         joint_precision: single|int|10
         close: single|bool|False
         precision: single|int|180
+        rotation: single|float|0
+        scale: single|float|1.0
     camera:
         width: single|num|
         height: single|num|
@@ -1246,6 +1248,8 @@ widgets:
         segments: single|int|180
         angle_start: single|int|0
         angle_end: single|int|360
+        rotation: single|float|0
+        scale: single|float|1.0
     image:
         allow_stretch: single|bool|False
         fps: single|int|10
@@ -1269,13 +1273,19 @@ widgets:
     points:
         points: list|num|
         pointsize: single|float|1.0
+        rotation: single|int|0
+        scale: single|float|1.0
     quad:
         points: list|num|
+        rotation: single|int|0
+        scale: single|float|1.0
     rectangle:
         width: single|float|
         height: single|float|
         corner_radius: single|int|0
         corner_segments: single|int|10
+        rotation: single|int|0
+        scale: single|float|1.0
     text:
         text: single|str|
         font_size: single|num|15
@@ -1320,6 +1330,8 @@ widgets:
         dynamic_x_pad: single|int|0
     triangle:
         points: list|num|
+        rotation: single|int|0
+        scale: single|float|1.0
     video:
         video: single|str|
         height: single|int|0
