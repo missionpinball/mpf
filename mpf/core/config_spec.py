@@ -1157,6 +1157,9 @@ transitions:
     swap:
         type: single|str|
         duration: single|secs|2
+    card:
+        type: single|str|
+        mode: single|enum(push,pop)|push
     wipe:
         type: single|str|
     fade_back:
