@@ -52,7 +52,7 @@ mypy_coverage/
 # Sphinx documentation
 docs/_build/
 docs/mpf
-docs/index.rst
+docs/*_overview.rst
 
 # PyBuilder
 target/

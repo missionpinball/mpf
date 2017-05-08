@@ -48,7 +48,7 @@ version = mpf._version.__short_version__
 release = mpf._version.__version__
 
 # General information about the project.
-project = 'Mission Pinball Framework v{} API'.format(version)
+project = 'Mission Pinball Framework v{} Developer Documentation'.format(version)
 copyright = '2013-%s, The Mission Pinball Framework Team' % time.strftime('%Y')
 author = 'The Mission Pinball Framework Team'
 
@@ -126,10 +126,10 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 # The name for this set of Sphinx documents.
 # "<project> v<release> documentation" by default.
-html_title = 'Mission Pinball Framework API v{}'.format(version)
+# html_title = 'Mission Pinball Framework API v{}'.format(version)
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
-html_short_title = 'MPF API v{}'.format(version)
+# html_short_title = 'MPF API v{}'.format(version)
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
@@ -366,10 +366,13 @@ class RstBuilder(object):
             self.index_entries[name] = list()
 
     def get_templates(self):
-        for name in self.doc_sections.keys():
-            with open(os.path.join(
-                    templates_path[0], '{}.rst'.format(name)), 'r') as f:
-                self.templates[name] = f.read()
+
+        for suffix in ('', '_overview'):
+
+            for name in self.doc_sections.keys():
+                with open(os.path.join(
+                        templates_path[0], '{}{}.rst'.format(name, suffix)), 'r') as f:
+                    self.templates[name + suffix] = f.read()
 
     def build_rst_files(self):
         print('Building RST files from templates')
@@ -418,21 +421,24 @@ class RstBuilder(object):
         final_string = str()
 
         for name, file in file_list:
-            final_string += '   {0} <{1}/{2}>\n'.format(name, self.dest_folder,
-                                                        file)
+            final_string += '   {0} <{1}>\n'.format(name, file)
 
         return final_string
 
     def write_index(self):
 
-        with open(os.path.join(templates_path[0], 'index.rst'), 'r') as f:
-                template = f.read()
+        # with open(os.path.join(templates_path[0], 'index.rst'), 'r') as f:
+        #         template = f.read()
 
         string_indices = dict()
         for section, files in self.index_entries.items():
             string_indices[section] = self.create_rst_file_list(files)
 
-        template = template.format(**string_indices)
+            template = self.templates['{}_overview'.format(section)].format(
+                **string_indices)
 
-        with open('index.rst', 'w') as f:
-            f.write(template)
+            file_name = os.path.join(self.dest_folder,
+                                     '{}_overview.rst'.format(section))
+
+            with open(file_name, 'w') as f:
+                f.write(template)
