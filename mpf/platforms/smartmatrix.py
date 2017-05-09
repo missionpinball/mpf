@@ -28,7 +28,7 @@ class SmartMatrix(RgbDmdPlatform):
     @asyncio.coroutine
     def initialize(self):
         """Initialise platform."""
-        pass
+        yield from self._connect()
 
     def stop(self):
         """Stop platform."""
@@ -44,7 +44,6 @@ class SmartMatrix(RgbDmdPlatform):
 
     def configure_rgb_dmd(self):
         """Configure rgb dmd."""
-        self.machine.clock.loop.run_until_complete(self._connect())
         return self
 
     @staticmethod
