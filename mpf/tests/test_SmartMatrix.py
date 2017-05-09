@@ -34,18 +34,21 @@ class TestSmartMatrix(MpfTestCase):
         return 'smartmatrix'
 
     def setUp(self):
-        self.serial = SmartMatrixSerial()
+        self.serial1 = SmartMatrixSerial()
+        self.serial2 = SmartMatrixSerial()
         super().setUp()
 
     def _mock_loop(self):
-        self.clock.mock_serial("com4", self.serial)
+        self.clock.mock_serial("com4", self.serial1)
+        self.clock.mock_serial("com5", self.serial2)
 
     def test_smart_matrix(self):
-        self.machine.default_platform.update([0x00, 0x01, 0x02, 0x03])
+        # test new cookie
+        self.machine.physical_rgb_dmds.smartmatrix_1.update([0x00, 0x01, 0x02, 0x03])
         self.advance_time_and_run()
-        self.assertEqual(b'\xba\x11\x00\x03\x04\x00\x00\x00\x00\x01\x02\x03', self.serial.receive_data)
+        self.assertEqual(b'\xba\x11\x00\x03\x04\x00\x00\x00\x00\x01\x02\x03', self.serial1.receive_data)
 
-    def test_smart_matrix_old_cookie(self):
-        self.machine.default_platform.update([0x00, 0x01, 0x02, 0x03])
+        # test old cookie
+        self.machine.physical_rgb_dmds.smartmatrix_2.update([0x00, 0x01, 0x02, 0x03])
         self.advance_time_and_run()
-        self.assertEqual(b'\x01\x00\x01\x02\x03', self.serial.receive_data)
+        self.assertEqual(b'\x01\x00\x01\x02\x03', self.serial2.receive_data)
