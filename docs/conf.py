@@ -158,7 +158,7 @@ html_last_updated_fmt = '%b %d, %Y'
 
 # If true, SmartyPants will be used to convert quotes and dashes to
 # typographically correct entities.
-# html_use_smartypants = True
+html_use_smartypants = False
 
 # Custom sidebar templates, maps document names to template names.
 # html_sidebars = {}
@@ -313,6 +313,7 @@ class RstBuilder(object):
     def __init__(self):
 
         self.dest_folder = 'api'
+        self.template_folder = '_templates'
 
         self.mpfconfig = ConfigProcessor.load_config_file(os.path.join(
             os.pardir, 'mpf', 'mpfconfig.yaml'), 'machine')
@@ -323,6 +324,13 @@ class RstBuilder(object):
 
         self.populate_doc_sections()
         self.get_templates()
+
+        self.additional_files = list()  # section, title, file
+        self.additional_files.append(('machine', 'machine', 'self.machine'))
+
+        # add manually-created files to the index entries so they get included
+        # in the index
+        # self.doc_sections['machine'].append(('machine', 'self.machine'))
 
     def populate_doc_sections(self):
 
@@ -388,10 +396,20 @@ class RstBuilder(object):
             for name, module_ in items.items():
                 self.create_rst_file(section, name, module_)
 
+        self.handle_additional_files()
         self.write_overviews()
 
-        copyfile(os.path.join('_templates', 'index.rst'),
+        copyfile(os.path.join(self.template_folder, 'index.rst'),
                  os.path.join(self.dest_folder, 'index.rst'))
+
+    def handle_additional_files(self):
+        for section, title, file in self.additional_files:
+            self.index_entries[section].append((title, file))
+
+            file_name = '{}.rst'.format(file)
+
+            copyfile(os.path.join(self.template_folder, file_name),
+                 os.path.join(self.dest_folder, file_name))
 
     def create_rst_file(self, section, name, module_):
         this_rst = copy(self.templates[section])
