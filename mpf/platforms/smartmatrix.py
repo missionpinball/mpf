@@ -32,11 +32,10 @@ class SmartMatrix(RgbDmdPlatform):
 
     def stop(self):
         """Stop platform."""
-        try:
+        if self.writer:
             self.log.info("Disconnecting from SmartMatrix RGB DMD hardware...")
             self.writer.close()
-        except AttributeError:
-            pass
+            self.writer = None
 
     def __repr__(self):
         """Return string representation."""
