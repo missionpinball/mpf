@@ -54,8 +54,29 @@
     background: #c9c9c9;
 }
 
-h1 h2 h3 h4 h5 {
+h1 {
     font-family: 'Oswald', sans-serif;
+    font-weight: 400;
+}
+
+h2 {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 400;
+}
+
+h3 {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 400;
+}
+
+h4 {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 400;
+}
+
+h5 {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 400;
 }
 
 a {
@@ -164,16 +185,13 @@ footer p {
     font-weight: 300;
 }
 
-h1 {
-    font-family: 'Oswald', sans-serif !important;
-}
-
 .inheritance {
     margin-bottom: 1.2em;
 }
 
-.rubric {
+.rst-content p.rubric {
     font-family: 'Oswald', sans-serif !important;
     font-size: 16pt;
     margin-top: 20pt;
+    font-weight: 400;
 }
