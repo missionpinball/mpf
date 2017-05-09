@@ -41,6 +41,7 @@ We have an  which lists all the classes, methods, and attributes in MPF across t
    :hidden:
    :maxdepth: 2
 
+   Understanding the MPF codebase <overview/index>
    Adding custom code to your game <code/index>
    API Reference <api/index>
    Testing your Game <testing/index>
