@@ -14,7 +14,7 @@ class TestDeviceManager(MpfTestCase):
             config_spec = self.machine.config_validator.config_spec[device_cls.config_section]
 
             for k in config_spec:
-                if not k.endswith('_events'):
+                if not k.endswith('_events') or k == "control_events":
                     continue
                 method_name = k[:-7]
                 method = getattr(device_cls, method_name, None)

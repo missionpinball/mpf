@@ -1,4 +1,4 @@
-"""Contains AssetManager, AssetLoader, and Asset parent classes."""
+"""Contains AssetManager, AssetLoader, and Asset base classes."""
 import copy
 import os
 import random

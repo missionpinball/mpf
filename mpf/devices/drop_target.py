@@ -12,7 +12,7 @@ from mpf.core.events import event_handler
 from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:   # pragma: no cover
     from mpf.devices.driver import Driver
 
 

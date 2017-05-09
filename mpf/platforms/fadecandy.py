@@ -9,7 +9,7 @@ from mpf.core.utility_functions import Util
 from mpf.platforms.openpixel import OpenPixelClient
 from mpf.platforms.openpixel import OpenpixelHardwarePlatform
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:   # pragma: no cover
     from mpf.core.machine import MachineController
 
 

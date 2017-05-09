@@ -1,4 +1,4 @@
-"""Runs mc and game."""
+"""Command which launches both the MPF core engine and MPF-MC."""
 
 from importlib import import_module
 import multiprocessing

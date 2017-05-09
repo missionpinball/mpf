@@ -9,7 +9,7 @@ from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.utility_functions import Util
 from mpf.core.platform import SwitchConfig
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:   # pragma: no cover
     from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
     from mpf.core.platform import SwitchPlatform
 

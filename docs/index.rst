@@ -1,25 +1,21 @@
-.. MPF Developer documentation master file, created by
-   sphinx-quickstart on Sat Aug 20 11:15:09 2016.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+Mission Pinball Framework |version| API Reference
+=================================================
 
-Welcome to MPF Developer's documentation!
-=========================================
+This API reference is for people who want to:
 
-This is the developer / API reference for The Mission Pinball Framework (MPF)
-|version|.
+* Help us write MPF itself
+* Add custom Python code to their machine
 
-Contents:
+If you're a *user* of MPF, you should read the
+`MPF User Documentation <http://docs.missionpinball.org>`_ instead.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
+   :hidden:
+   :glob:
 
-   mpf/mpf
-
-Indices and tables
-==================
+   mpf/mpf.*
 
 * :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+
 

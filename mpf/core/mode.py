@@ -11,12 +11,11 @@ from typing import Tuple
 
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.delays import DelayManager
-from mpf.core.timer import Timer
 from mpf.core.utility_functions import Util
 from mpf.core.logging import LogMixin
 from mpf.core.switch_controller import SwitchHandler
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:   # pragma: no cover
     from mpf.core.events import QueuedEvent
     from mpf.core.mode_device import ModeDevice
     from mpf.core.events import EventHandlerKey
@@ -49,7 +48,6 @@ class Mode(LogMixin):
         self._active = False
         self._mode_start_wait_queue = None      # type: QueuedEvent
         self.stop_methods = list()              # type: List[Tuple[Callable[[Any], None], Any]]
-        self.timers = dict()                    # type: Dict[str, Timer]
         self.start_callback = None              # type: Callable[[], None]
         self.stop_callbacks = []                # type: List[Callable[[], None]]
         self.event_handlers = set()             # type: Set[EventHandlerKey]
@@ -63,8 +61,6 @@ class Mode(LogMixin):
 
         self.player = None                      # type: Player
         '''Reference to the current player object.'''
-
-        self._validate_mode_config()
 
         self.configure_logging('Mode.' + name,
                                self.config['mode']['console_log'],
@@ -136,21 +132,6 @@ class Mode(LogMixin):
             self.machine.events.add_handler(event=event, handler=self.start,
                                             priority=self.config['mode']['priority'] +
                                             self.config['mode']['start_priority'])
-
-    def _validate_mode_config(self) -> None:
-        """Validate mode config."""
-        for section in self.machine.config['mpf']['mode_config_sections']:
-            this_section = self.config.get(section, None)
-
-            if this_section:
-                if isinstance(this_section, dict):
-                    for device, settings in this_section.items():
-                        self.config[section][device] = (
-                            self.machine.config_validator.validate_config(
-                                section, settings, "mode:" + self.name))
-
-                else:
-                    self.config[section] = (self.machine.config_validator.validate_config(section, this_section))
 
     def _get_merged_settings(self, section_name: str) -> dict:
         """Return a dict of a config section from the machine-wide config with the mode-specific config merged in."""
@@ -265,11 +246,6 @@ class Mode(LogMixin):
 
         self.active = True
 
-        if 'timers' in self.config:
-            self._setup_timers()
-
-        self._start_timers()
-
         self.machine.events.post('mode_' + self.name + '_started',
                                  callback=self._mode_started_callback)
         '''event: mode_(name)_started
@@ -338,7 +314,6 @@ class Mode(LogMixin):
 
         self._remove_mode_switch_handlers()
 
-        self._kill_timers()
         self.delay.clear()
 
         self.machine.events.post_queue(event='mode_' + self.name + '_stopping',
@@ -588,27 +563,6 @@ class Mode(LogMixin):
         for handler in self.switch_handlers:
             self.machine.switch_controller.remove_switch_handler_by_key(handler)
         self.switch_handlers = list()
-
-    def _setup_timers(self) -> Callable[[], None]:
-        # config is localized
-
-        for timer, settings in self.config['timers'].items():
-
-            self.timers[timer] = Timer(machine=self.machine, mode=self,
-                                       name=timer, config=settings)
-
-        return self._kill_timers
-
-    def _start_timers(self) -> None:
-        for timer in list(self.timers.values()):
-            if timer.config['start_running']:
-                timer.start()
-
-    def _kill_timers(self) -> None:
-        for timer in list(self.timers.values()):
-            timer.kill()
-
-        self.timers = dict()
 
     def mode_init(self) -> None:
         """User-overrideable method which will be called when this mode initializes as part of the MPF boot process."""

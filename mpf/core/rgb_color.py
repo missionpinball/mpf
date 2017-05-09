@@ -430,7 +430,7 @@ class RGBColor(object):
         return rgb
 
     @staticmethod
-    def add_color(name, color):
+    def add_color(name: str, color: Union["RGBColor", str, List[int], Tuple[int, int, int]]):
         """Add (or updates if it already exists) a color.
 
         Note that this is not

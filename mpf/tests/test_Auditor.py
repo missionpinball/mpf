@@ -32,6 +32,7 @@ class TestAuditor(MpfTestCase):
         self.advance_time_and_run(1)
 
         self.assertEqual(0, auditor.current_audits['switches']['s_test'])
+        self.assertMachineVarEqual(0, "audits_switches_s_test")
 
         # start a game
         self.machine.switch_controller.process_switch("s_start", 1)
@@ -53,6 +54,7 @@ class TestAuditor(MpfTestCase):
         self.assertEqual(None, self.machine.game)
 
         self.assertEqual(1, auditor.current_audits['switches']['s_test'])
+        self.assertMachineVarEqual(1, "audits_switches_s_test")
 
         self.machine.switch_controller.process_switch("s_test", 1)
         self.advance_time_and_run(1)
@@ -60,6 +62,7 @@ class TestAuditor(MpfTestCase):
         self.advance_time_and_run(1)
 
         self.assertEqual(1, auditor.current_audits['switches']['s_test'])
+        self.assertMachineVarEqual(1, "audits_switches_s_test")
 
         auditor.enable()
 
@@ -69,6 +72,7 @@ class TestAuditor(MpfTestCase):
         self.advance_time_and_run(1)
 
         self.assertEqual(2, auditor.current_audits['switches']['s_test'])
+        self.assertMachineVarEqual(2, "audits_switches_s_test")
 
         # should not crash on unknown switch
         self.machine.switch_controller.process_switch_by_num(123123123123, 1, self.machine.default_platform)

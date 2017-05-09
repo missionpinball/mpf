@@ -1,4 +1,4 @@
-"""Version string of MPF.
+"""Holds various Version strings of MPF.
 
 This modules holds the MPF version strings, including the version of BCP it
 needs and the config file version it needs.
@@ -11,13 +11,33 @@ PyPI.
 """
 
 __version__ = '0.50.0-dev.4'
+'''The full version of MPF.'''
+
 __short_version__ = '0.50'
+'''The major.minor version of MPF.'''
+
 __bcp_version__ = '1.1'
+'''The version of BCP this build of MPF uses.'''
+
 __config_version__ = '4'
+'''The config file version this build of MPF uses.'''
+
 __show_version__ = '4'
+'''The show format version this build of MPF uses.'''
 
 version = "MPF v{}".format(__version__)
+'''A friendly version string for this build of MPF.'''
 
 extended_version = "MPF v{}, Config version:{}, Show version: {}, " \
                    "BCP version:{}".format(__version__, __config_version__,
                                            __show_version__, __bcp_version__)
+'''An extended version string that includes the MPF version, show version,
+and BCP versions used in this build of MPF.'''
+
+__api__ = ['version',
+           '__short_version__',
+           '__bcp_version__',
+           '__config_version__',
+           '__show_version__',
+           'version',
+           'extended_version']

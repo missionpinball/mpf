@@ -6,7 +6,7 @@ from typing import List, Any, TYPE_CHECKING
 from mpf.core.machine import MachineController
 from mpf.core.logging import LogMixin
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:   # pragma: no cover
     from mpf.core.mode import Mode
 
 
