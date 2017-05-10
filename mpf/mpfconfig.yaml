@@ -92,7 +92,7 @@ mpf:
         p3_roc:  mpf.platforms.p3_roc.P3RocHardwarePlatform
         pololu_maestro: mpf.platforms.pololu_maestro.PololuMaestroHardwarePlatform
         smart_virtual: mpf.platforms.smart_virtual.SmartVirtualHardwarePlatform
-        smartmatrix: mpf.platforms.smartmatrix.SmartMatrix
+        smartmatrix: mpf.platforms.smartmatrix.SmartMatrixHardwarePlatform
         snux: mpf.platforms.snux.SnuxHardwarePlatform
         virtual: mpf.platforms.virtual.VirtualHardwarePlatform
         spike: mpf.platforms.spike.spike.SpikePlatform
