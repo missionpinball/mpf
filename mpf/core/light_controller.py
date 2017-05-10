@@ -12,7 +12,7 @@ from mpf.core.mpf_controller import MpfController
 
 class LightController(MpfController):
 
-    """Handles light updates."""
+    """Handles light updates and light monitoring."""
 
     def __init__(self, machine: MachineController) -> None:
         """Initialise lights controller."""

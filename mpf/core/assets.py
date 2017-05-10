@@ -23,18 +23,18 @@ AssetClass = namedtuple("AssetClass", ["attribute", "cls", "path_string", "confi
 
 class BaseAssetManager(MpfController, LogMixin):
 
-    """Base class for the Asset Manager.
-
-    Args:
-        machine: The machine controller
-    """
+    """Base class for the Asset Manager."""
 
     # needed here so the auto-detection of child classes works
     module_name = 'AssetManager'
     config_name = 'asset_manager'
 
     def __init__(self, machine: MachineController) -> None:
-        """Initialise asset manager."""
+        """Initialise asset manager.
+        
+        Args:
+            machine: The machine controller
+        """
         super().__init__(machine)
 
         self.machine.register_boot_hold('assets')

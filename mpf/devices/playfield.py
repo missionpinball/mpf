@@ -22,8 +22,12 @@ class Playfield(SystemWideDevice):
         """Create the playfield."""
         super().__init__(machine, name)
         self.ball_search = BallSearch(self.machine, self)
+        """An instance of :class:`mpf.core.ball_search.BallSearch` which
+        handles ball search for this playfield."""
 
         self.delay = DelayManager(self.machine.delayRegistry)
+        """An instance of :class:`mpf.core.delays.DelayManager` which
+        handles delays for this playfield."""
 
         self.machine.ball_devices[name] = self
 

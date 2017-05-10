@@ -45,7 +45,6 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
 
         Args:
             mode: Mode which loaded the device
-            player: Current active player
         """
         raise AssertionError("Cannot use device {} in mode {}.".format(self.name, mode.name))
 

@@ -6,7 +6,7 @@ from collections import deque
 
 class ShotProfileManager(object):
 
-    """Controller for show profiles."""
+    """Controller for shot profiles."""
 
     def __init__(self, machine):
         """Initialise shot profile manager."""

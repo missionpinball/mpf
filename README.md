@@ -34,7 +34,7 @@ Installation, Documentation, and Examples
 * Getting started tutorial : http://docs.missionpinball.org/en/latest/tutorial/
 * Installation : http://docs.missionpinball.org/en/latest/install/
 * User documentation : http://docs.missionpinball.org
-* API / developer documentation : http://docs.missionpinball.org/en/latest/developer/
+* Developer documentation : http://developer.missionpinball.org/
 
 Support
 -------

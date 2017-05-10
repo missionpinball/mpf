@@ -1,21 +1,91 @@
-Mission Pinball Framework |version| API Reference
-=================================================
+Mission Pinball Framework |version| Developer Documentation
+===========================================================
 
-This API reference is for people who want to:
+This is the developer documentation for the `Mission Pinball Framework <http://missionpinball.org>`_ (MPF), version
+|version|. Click the "Read the Docs" link in the lower left corner for other versions & downloads.
 
-* Help us write MPF itself
-* Add custom Python code to their machine
+This documentation is for people who want to want to add custom Python code & game logic to their machine and for
+people who want to contribute to MPF itself.
 
-If you're a *user* of MPF, you should read the
-`MPF User Documentation <http://docs.missionpinball.org>`_ instead.
+.. note::
+
+   **This is DEVELOPER documentation, not general USER documentation!**
+
+   This documentation is for people writing custom Python code for MPF.
+   If you're a general *user* of MPF, read the `MPF User Documentation <http://docs.missionpinball.org>`_ instead.
+
+This developer documentation is broken into several sections:
+
+Understanding the MPF codebase
+------------------------------
+
+* :doc:`overview/index`
+* :doc:`overview/files`
+* :doc:`overview/installation`
+* :doc:`overview/boot_process`
+* :doc:`overview/yaml`
+
+
+Adding custom code to your machine
+----------------------------------
+
+* :doc:`code/index`
+* :doc:`code/machine_code`
+* :doc:`code/mode_code`
+
+API Reference
+-------------
+
+* :doc:`api/machine_overview`
+* :doc:`api/devices_overview`
+* :doc:`api/modes_overview`
+* :doc:`api/config_players_overview`
+* :doc:`api/platforms_overview`
+* :doc:`api/misc_overview`
+* :doc:`api/tests_overview`
+
+Writing Tests
+-------------
+
+* :doc:`testing/index`
+* :doc:`testing/running_mpf_tests`
+* :doc:`testing/writing_mpf_tests`
+* :doc:`testing/your_game`
+* :doc:`testing/fuzz_testing`
+
+Extending, Adding to, and Enhancing MPF
+---------------------------------------
+
+* :doc:`dev/index`
+* :doc:`dev/dev_environment`
+* :doc:`dev/plugins`
+* :doc:`dev/hardware`
+
+BCP Protocol
+------------
+
+* :doc:`bcp/index`
+
+Index
+-----
+
+* We have an :doc:`index <genindex>` which lists all the classes, methods, and attributes in MPF across the board.
 
 .. toctree::
-   :maxdepth: 1
    :hidden:
-   :glob:
+   :maxdepth: 2
+   :caption: DEVELOPER DOCUMENTATION
 
-   mpf/mpf.*
+   Understanding the MPF codebase <overview/index>
+   Adding custom code to your game <code/index>
+   API Reference <api/index>
+   Writing Tests <testing/index>
+   Extending MPF <dev/index>
+   BCP Protocol <bcp/index>
+   Method & Class Index <genindex>
 
-* :ref:`genindex`
+.. toctree::
+   :hidden:
+   :caption: USER DOCUMENTATION
 
-
+   User Documentation <http://docs.missionpinball.org>

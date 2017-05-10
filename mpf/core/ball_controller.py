@@ -10,17 +10,16 @@ from mpf.core.mpf_controller import MpfController
 
 class BallController(MpfController):
 
-    """Base class for the Ball Controller which is used to keep track of all the balls in a pinball machine.
-
-    Parameters
-    ----------
-
-    machine : :class:`MachineController`
-        A reference to the instance of the MachineController object.
-    """
+    """Tracks and manages all the balls in a pinball machine."""
 
     def __init__(self, machine: MachineController) -> None:
-        """Initialise ball controller."""
+        """Initialise ball controller.
+        
+        Args:
+            machine : :class:`MachineController`. A reference to the instance
+                of the MachineController object.
+        
+        """
         super().__init__(machine)
 
         self.delay = DelayManager(self.machine.delayRegistry)

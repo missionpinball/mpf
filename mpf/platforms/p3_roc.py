@@ -150,12 +150,8 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
             config: Dictionary of settings for the switch. In the case
                 of the P3-ROC, it uses the following:
 
-        Returns:
-            switch : A reference to the switch object that was just created.
-            proc_num : Integer of the actual hardware switch number the P3-ROC
-                uses to refer to this switch. Typically your machine
-                configuration files would specify a switch number like `SD12` or
-                `7/5`. This `proc_num` is an int between 0 and 255.
+        Returns: A configured switch object.
+        
         """
         del platform_config
         proc_num = self.pdbconfig.get_proc_switch_number(str(number))

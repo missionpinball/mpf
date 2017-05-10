@@ -31,8 +31,19 @@ YamlInterface.cache = True
 
 class TestMachineController(MachineController):
 
-    """MachineController used in tests."""
-
+    """A patched version of the MachineController used in tests.
+    
+    The TestMachineController has a few changes from the regular machine
+    controller to facilitate running unit tests, including:
+    
+    * Use the TestDataManager instead of the real one.
+    * Use a test clock which we can manually advance instead of the regular
+      clock tied to real-world time.
+    * Only load plugins if ``self._enable_plugins`` is *True*.
+    * Merge any ``test_config_patches`` into the machine config.
+    * Disabled the config file caching to always load the config from disk.
+    
+    """
     local_mpf_config_cache = {}     # type: Any
 
     def __init__(self, mpf_path, machine_path, options, config_patches, clock, mock_data,
@@ -68,6 +79,9 @@ class TestMachineController(MachineController):
 
 
 class MpfTestCase(unittest.TestCase):
+
+    """Primary TestCase class used for all MPF unit tests."""
+
     def __init__(self, methodName='runTest'):
         self._get_event_loop = None
         self._get_event_loop2 = None
@@ -87,17 +101,44 @@ class MpfTestCase(unittest.TestCase):
         self.min_frame_time = 1 / 30  # test with default Hz
 
     def getConfigFile(self):
-        """Override this method in your own test class to point to the config
-        file you need for your tests.
+        """Return a string name of the machine config file to use for the tests
+        in this class.
+        
+        You should override this method in your own test class to point to the
+        config file you need for your tests.
+        
+        Returns:
+            A string name of the machine config file to use, complete with the
+            ``.yaml`` file extension.
+            
+        For example:
+        
+        .. code::
+        
+            def getConfigFile(self):
+                return 'my_config.yaml'
 
         """
         return 'null.yaml'
 
     def getMachinePath(self):
-        """Override this method in your own test class to point to the machine
-        folder you need for your tests.
+        """Return a string name of the path to the machine folder to use for
+        the tests in this class.
 
-        Path is related to the MPF package root
+        You should override this method in your own test class to point to the
+        machine folder root you need for your tests.
+        
+        Returns:
+            A string name of the machine path to use
+            
+        For example:
+        
+        .. code::
+        
+            def getMachinePath(self):
+                return 'tests/machine_files/my_test/'
+
+        Note that this path is relative to the MPF package root
 
         """
         return 'tests/machine_files/null/'
@@ -111,24 +152,112 @@ class MpfTestCase(unittest.TestCase):
         return os.path.join(os.path.abspath(os.curdir), path)
 
     def post_event(self, event_name, run_time=0):
+        """Post an MPF event and optionally advance the time.
+        
+        Args:
+            event_name: String name of the event to post
+            run_time: How much time (in seconds) the test should advance
+                after this event has been posted.
+        
+        For example, to post an event called "shot1_hit":
+        
+        .. code::
+        
+            self.post_event('shot1_hit')
+        
+        To post an event called "tilt" and then advance the time 1.5 seconds:
+        
+        .. code::
+        
+            self.post_event('tilt', 1.5)
+        
+        """
         self.machine.events.post(event_name)
         self.advance_time_and_run(run_time)
 
     def post_event_with_params(self, event_name, **params):
+        """Post an MPF event with kwarg parameters.
+        
+        Args:
+            event_name: String name of the event to post
+            **params: One or more kwarg key/value pairs to post with the event.
+        
+        For example, to post an event called "jackpot" with the parameters
+        ``count=1`` and ``first_time=True``, you would use:
+        
+        .. code::
+        
+            self.post_event('jackpot', count=1, first_time=True)
+        
+        """
         self.machine.events.post(event_name, **params)
         self.machine_run()
 
     def set_num_balls_known(self, balls):
+        """Set the ball controller's ``num_balls_known`` attribute.
+        
+        This is needed for tests where you don't have any ball devices and
+        other situations where you need the ball controller to think the
+        machine has a certain amount of balls to run a test.
+        
+        Example:
+            
+        .. code::
+        
+            self.set_num_balls_known(3)
+        
+        
+        """
         # in case the test does not have any ball devices
         self.machine.ball_controller.num_balls_known = balls
 
     def get_platform(self):
+        """Force this test class to use a certain platform.
+        
+        Returns:
+            String name of the platform this test class will use.
+        
+        If you don't include this method in your test class, the platform will
+        be set to `virtual`. If you want to use the smart virtual platform,
+        you would add the following to your test class:
+        
+        .. code::
+        
+            def get_platform(self):
+                return 'smart_virtual`
+
+        """
         return 'virtual'
 
     def get_use_bcp(self):
+        """Control whether tests in this class should use BCP.
+        
+        Returns: True or False
+        
+        The default is False. To use BCP in your test class, add the following:
+         
+         .. code::
+         
+            def get_use_bcp(self):
+                return True
+        
+        """
         return False
 
     def get_enable_plugins(self):
+        """Control whether tests in this class should load MPF plugins.
+        
+        Returns: True or False
+        
+        The default is False. To load plugins in your test class, add the
+        following:
+         
+         .. code::
+         
+            def get_enable_plugins(self):
+                return True
+        
+        """
         return False
 
     def getOptions(self):
@@ -147,6 +276,28 @@ class MpfTestCase(unittest.TestCase):
         }
 
     def advance_time_and_run(self, delta=1.0):
+        """Advance the test clock and run anything that should run during that
+        time.
+        
+        Args:
+            delta: How much time to advance the test clock by (in seconds)
+        
+        This method will cause anything scheduled during the time to run,
+        including things like delays, timers, etc.
+        
+        Advancing the clock will happen in multiple small steps if things are
+        scheduled to happen during this advance. For example, you can advance
+        the clock 10 seconds like this:
+        
+        .. code::
+        
+            self.advance_time_and_run(10)
+        
+        If there is a delay callback that is scheduled to happen in 2 seconds,
+        then this method will advance the clock 2 seconds, process that delay,
+        and then advance the remaining 8 seconds.
+        
+        """
         self.machine.log.info("Advancing time by %s", delta)
         try:
             self.loop.run_until_complete(asyncio.sleep(delay=delta, loop=self.loop))
@@ -159,11 +310,22 @@ class MpfTestCase(unittest.TestCase):
             raise e
 
     def machine_run(self):
+        """Process any delays, timers, or anything else scheduled.
+        
+        Note this is the same as:
+        
+        .. code::
+        
+            self.advance_time_and_run(0)
+        
+        """
         self.advance_time_and_run(0)
 
     def unittest_verbosity(self):
         """Return the verbosity setting of the currently running unittest
         program, or 0 if none is running.
+        
+        Returns: An integer value of the current verbosity setting.
 
         """
         frame = inspect.currentframe()
@@ -286,6 +448,31 @@ class MpfTestCase(unittest.TestCase):
         self._events[event_name] += 1
 
     def mock_event(self, event_name):
+        """Configure an event to be mocked.
+        
+        Args:
+            event_name: String name of the event to mock.
+            
+        Mocking an event is an easy way to check if an event was called without
+        configuring some kind of callback action in your tests.
+        
+        Note that an event must be mocked here *before* it's posted in order
+        for :meth:`assertEventNotCalled` and :meth:`assertEventCalled` to work.
+        
+        Mocking an event will not "break" it. In other words, any other
+        registered handlers for this event will also be called even if the
+        event has been mocked.
+        
+        For example:
+        
+        .. code::
+        
+            self.mock_event('my_event')
+            self.assertEventNotCalled('my_event')  # This will be True
+            self.post_event('my_event')
+            self.assertEventCalled('my_event')  # This will also be True
+        
+        """
         self._events[event_name] = 0
         self.machine.events.remove_handler_by_event(event=event_name, handler=self._mock_event_handler)
         self.machine.events.add_handler(event=event_name,
@@ -386,7 +573,15 @@ class MpfTestCase(unittest.TestCase):
                          "Mode {} running but should not.".format(mode_name))
 
     def assertEventNotCalled(self, event_name):
-        """Assert that event was not called."""
+        """Assert that event was not called.
+        
+        Args:
+            event_name: String name of the event to check.
+        
+        Note that the event must be mocked via ``self.mock_event()`` first in
+        order to use this method.
+        
+        """
         if event_name not in self._events:
             raise AssertionError("Event {} not mocked.".format(event_name))
 
@@ -394,7 +589,36 @@ class MpfTestCase(unittest.TestCase):
             raise AssertionError("Event {} was called {} times.".format(event_name, self._events[event_name]))
 
     def assertEventCalled(self, event_name, times=None):
-        """Assert that event was called."""
+        """Assert that event was called.
+        
+        Args:
+            event_name: String name of the event to check.
+            times: An optional value to confirm the number of times the event
+                was called. Default of *None* means this method will pass as
+                long as the event has been called at least once.
+        
+        If you want to reset the ``times`` count, you can mock the event
+        again.
+        
+        Note that the event must be mocked via ``self.mock_event()`` first in
+        order to use this method.
+
+        For example:
+        
+        .. code::
+        
+            self.mock_event('my_event')
+            self.assertEventNotCalled('my_event')  # This will pass
+            
+            self.post_event('my_event')
+            self.assertEventCalled('my_event')     # This will pass
+            self.assertEventCalled('my_event', 1)  # This will pass
+
+            self.post_event('my_event')
+            self.assertEventCalled('my_event')     # This will pass
+            self.assertEventCalled('my_event', 2)  # This will pass
+
+        """
         if event_name not in self._events:
             raise AssertionError("Event {} not mocked.".format(event_name))
 
@@ -406,13 +630,37 @@ class MpfTestCase(unittest.TestCase):
                 event_name, self._events[event_name], times))
 
     def assertEventCalledWith(self, event_name, **kwargs):
-        """Assert that event was called with kwargs."""
+        """Assert an event was called with certain kwargs.
+        
+        Args:
+            event_name: String name of the event to check.
+            **kwargs: Name/value parameters to check.
+            
+        For example:
+        
+        .. code::
+        
+            self.mock_event('jackpot')
+        
+            self.post_event('jackpot', count=1, first_time=True)
+            self.assertEventCalled('jackpot')  # This will pass
+            self.assertEventCalledWith('jackpot', count=1, first_time=True)  # This will also pass
+            self.assertEventCalledWith('jackpot', count=1, first_time=False)  # This will fail
+
+        
+        """
         self.assertEventCalled(event_name)
         self.assertEqual(kwargs, self._last_event_kwargs[event_name], "Args for {} differ.".format(event_name))
 
     def assertShotShow(self, shot_name, show_name):
         """Assert that the highest priority running show for a shot is a
-        certain show name."""
+        certain show name.
+        
+        Args:
+            shot_name: String name of the shot.
+            show_name: String name of the show.
+        
+        """
         if shot_name not in self.machine.shots:
             raise AssertionError("Shot {} is not a valid shot".format(shot_name))
 
@@ -425,7 +673,13 @@ class MpfTestCase(unittest.TestCase):
 
     def assertShotProfile(self, shot_name, profile_name):
         """Assert that the highest priority profile for a shot is a
-        certain profile name."""
+        certain profile name.
+        
+        Args:
+            shot_name: String name of the shot.
+            profile_name: String name of the profile.
+        
+        """
         if shot_name not in self.machine.shots:
             raise AssertionError("Shot {} is not a valid shot".format(shot_name))
 
@@ -438,7 +692,13 @@ class MpfTestCase(unittest.TestCase):
 
     def assertShotProfileState(self, shot_name, state_name):
         """Assert that the highest priority profile for a shot is in a certain
-        state."""
+        state.
+        
+        Args:
+            shot_name: String name of the shot.
+            state_name: String name of the state.
+        
+        """
         if shot_name not in self.machine.shots:
             raise AssertionError("Shot {} is not a valid shot".format(shot_name))
 
@@ -450,12 +710,24 @@ class MpfTestCase(unittest.TestCase):
             self.assertIsNone(self.machine.shots[shot_name].profiles[0]['current_state_name'])
 
     def assertShotEnabled(self, shot_name):
+        """Assert that a shot is enabled.
+        
+        Args:
+            shot_name: String name of the shot.
+        
+        """
         if shot_name not in self.machine.shots:
             raise AssertionError("Shot {} is not a valid shot".format(shot_name))
 
         self.assertTrue(self.machine.shots[shot_name].profiles[0]['enable'])
 
     def assertShowRunning(self, show_name):
+        """Assert that at least one instance of a show is currently running.
+        
+        Args:
+            show_name: String name of the show to check.
+        
+        """
         for running_show in self.machine.show_controller.running_shows:
             if self.machine.shows[show_name] == running_show.show:
                 return
@@ -463,11 +735,27 @@ class MpfTestCase(unittest.TestCase):
         self.fail("Show {} not running".format(show_name))
 
     def assertShowNotRunning(self, show_name):
+        """Assert that there are no running instances of a show.
+        
+        Args:
+            show_name: String name of the show to check.
+        
+        """
         for running_show in self.machine.show_controller.running_shows:
             if self.machine.shows[show_name] == running_show.show:
                 self.fail("Show {} should not be running".format(show_name))
 
     def assertColorAlmostEqual(self, color1, color2, delta=6):
+        """Assert that two color are almost equal.
+        
+        Args:
+            color1: The first color, as an RGBColor instance or 3-item iterable.
+            color2: The second color, as an RGBColor instance or 3-item iterable.
+            delta: How close the colors have to be. The deltas between red,
+                green, and blue are added together and must be less or equal
+                to this value for this assertion to succeed.
+        
+        """
         if isinstance(color1, RGBColor) and isinstance(color2, RGBColor):
             difference = abs(color1.red - color2.red) +\
                 abs(color1.blue - color2.blue) +\
@@ -479,6 +767,18 @@ class MpfTestCase(unittest.TestCase):
         self.assertLessEqual(difference, delta, "Colors do not match: " + str(color1) + " " + str(color2))
 
     def get_timer(self, timer):
+        """Return a timer object from a mode based on a name.
+        
+        Args:
+            timer: String name of the timer to look for.
+        
+        Returns:
+            A Timer object.
+        
+        Raises:
+            AssertionError if the timer does not exist.
+        
+        """
         for mode in self.machine.modes:
             for t in mode.timers:
                 if t == timer:
@@ -487,18 +787,51 @@ class MpfTestCase(unittest.TestCase):
         raise AssertionError("Timer {} not found".format(timer))
 
     def reset_mock_events(self):
+        """Reset all mocked events.
+        
+        This will reset the count of number of times called every mocked
+        event is.
+        
+        """
         for event in self._events.keys():
             self._events[event] = 0
 
     def hit_switch_and_run(self, name, delta):
+        """Activates a switch and advances the time.
+        
+        Args:
+            name: The name of the switch to activate.
+            delta: The time (in seconds) to advance the clock.
+        
+        Note that this method does not deactivate the switch once the time
+        has been advanced, meaning the switch stays active. To make the
+        switch inactive, use the :meth:`release_switch_and_run`.
+        
+        """
         self.machine.switch_controller.process_switch(name, 1, True)
         self.advance_time_and_run(delta)
 
     def release_switch_and_run(self, name, delta):
+        """Deactivates a switch and advances the time.
+        
+        Args:
+            name: The name of the switch to activate.
+            delta: The time (in seconds) to advance the clock.
+        
+        """
         self.machine.switch_controller.process_switch(name, 0, True)
         self.advance_time_and_run(delta)
 
     def hit_and_release_switch(self, name):
+        """Momentarily activates and then deactivates a switch.
+        
+        Args:
+            name: The name of the switch to hit.
+        
+        This method immediately activates and deactivates a switch with no
+        time in between.
+        
+        """
         self.machine.switch_controller.process_switch(name, 1, True)
         self.machine.switch_controller.process_switch(name, 0, True)
         self.machine_run()

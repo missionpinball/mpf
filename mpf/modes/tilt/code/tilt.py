@@ -9,7 +9,11 @@ from mpf.core.mode import Mode
 
 class Tilt(Mode):
 
-    """A mode which handles a tilt in a pinball machine."""
+    """A mode which handles a tilt in a pinball machine.
+    
+    Note that this mode is always running (even during attract mode) since the
+    machine needs to watch for slam tilts at all times.
+    """
 
     def __init__(self, machine: MachineController, config: dict, name: str, path) -> None:
         """Create mode."""
@@ -95,8 +99,8 @@ class Tilt(Mode):
     def tilt_warning(self, **kwargs):
         """Process a tilt warning.
 
-         If the number of warnings is the number to
-        cause a tilt, a tilt will be processed.
+        If the number of warnings is the number to cause a tilt, a tilt will be
+        processed.
         """
         del kwargs
         self.last_tilt_warning_switch = self.machine.clock.get_time()
@@ -140,7 +144,13 @@ class Tilt(Mode):
             pass
 
     def tilt(self, **kwargs):
-        """Cause the ball to tilt."""
+        """Cause the ball to tilt.
+        
+        This will post an event called *tilt*, set the game mode's ``tilted``
+        attribute to *True*, disable the flippers and autofire devices, end the
+        current ball, and wait for all the balls to drain.
+        
+        """
         del kwargs
         if not self.machine.game or self.machine.game.tilted:
             return
@@ -240,7 +250,13 @@ class Tilt(Mode):
             self.tilt_event_handlers = set()
 
     def tilt_settle_ms_remaining(self):
-        """Return the amount of milliseconds remaining until the tilt settle time has cleared."""
+        """Return the amount of milliseconds remaining until the tilt settle
+        time has cleared.
+        
+        Returns:
+            Integer of the number of ms remaining until tilt settled is
+            cleared.
+        """
         if not self.last_tilt_warning_switch:
             return 0
 
@@ -253,7 +269,12 @@ class Tilt(Mode):
             return 0
 
     def slam_tilt(self, **kwargs):
-        """Process a slam tilt."""
+        """Process a slam tilt.
+        
+        This method posts the *slam_tilt* event and (if a game is active) sets
+        the game mode's ``slam_tilted`` attribute to *True*.
+        
+        """
         del kwargs
         self.machine.events.post('slam_tilt')
         '''event: slam_tilt

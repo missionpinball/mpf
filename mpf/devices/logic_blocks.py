@@ -299,9 +299,9 @@ class Counter(LogicBlock):
     def count(self, **kwargs):
         """Increase the hit progress towards completion.
 
-        Automatically called
-        when one of the `count_events`s is posted. Can also manually be
-        called.
+        This method is also automatically called when one of the
+        ``count_events`` is posted.
+        
         """
         del kwargs
         if not self.enabled:
