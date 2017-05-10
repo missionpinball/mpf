@@ -95,10 +95,9 @@ body {
     text-decoration: none;
 }
 
-/* software version in sidebar */
+/* hide software version in sidebar */
 .wy-side-nav-search > div.version {
-    color: #D63E29;
-    font-size: 90%;
+    font-size: 0;
 }
 
 .wy-breadcrumbs {
