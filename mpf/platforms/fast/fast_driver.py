@@ -1,22 +1,28 @@
 """A driver/coil in the fast platform."""
 import logging
+from typing import TYPE_CHECKING, Dict
 
+from mpf.core.platform import DriverConfig
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
+
+if TYPE_CHECKING:   # pragma: no cover
+    from mpf.platforms.fast.fast import FastHardwarePlatform
 
 
 class FASTDriver(DriverPlatformInterface):
 
     """Base class for drivers connected to a FAST Controller."""
 
-    def __init__(self, config, platform, number, platform_settings):
+    def __init__(self, config: DriverConfig, platform: "FastHardwarePlatform", number: str,
+                 platform_settings: dict) -> None:
         """Initialise driver."""
         super().__init__(config, number)
         self.log = logging.getLogger('FASTDriver')
-        self.autofire = None
+        self.autofire = None                        # type: bool
         self.machine = platform.machine
         self.platform = platform
-        self.driver_settings = dict()
+        self.driver_settings = dict()               # type: Dict[str, str]
         self.send = platform.net_connection.send
         self.platform_settings = platform_settings
 

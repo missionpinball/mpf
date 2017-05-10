@@ -1,9 +1,15 @@
 """MPF plugin for an auditor which records switch events, high scores, shots, etc."""
 
 import logging
+from typing import Any
+from typing import Set
+from typing import TYPE_CHECKING
 
 from mpf.core.switch_controller import MonitoredSwitchChange
 from mpf.devices.shot import Shot
+
+if TYPE_CHECKING:   # pragma: no cover
+    from mpf.core.machine import MachineController
 
 
 class Auditor(object):
@@ -13,7 +19,7 @@ class Auditor(object):
     
     """
 
-    def __init__(self, machine):
+    def __init__(self, machine: "MachineController") -> None:
         """Initialise auditor.
         
         Args:
@@ -29,9 +35,9 @@ class Auditor(object):
         self.machine = machine
 
         self.machine.auditor = self
-        self.switchnames_to_audit = set()
-        self.config = None
-        self.current_audits = None
+        self.switchnames_to_audit = set()       # type: Set[str]
+        self.config = None                      # type: Any
+        self.current_audits = None              # type: Any
 
         self.enabled = False
         """Attribute that's viewed by other core components to let them know
@@ -101,6 +107,10 @@ class Auditor(object):
         # Add the switches monitor
         self.machine.switch_controller.add_monitor(self.audit_switch)
 
+        for category, audits in self.current_audits.items():
+            for name, value in audits.items():
+                self.machine.set_machine_var("audits_{}_{}".format(category, name), value)
+
     def audit(self, audit_class, event, **kwargs):
         """Called to log an auditable event.
 
@@ -120,6 +130,7 @@ class Auditor(object):
             self.current_audits[audit_class][event] = 0
 
         self.current_audits[audit_class][event] += 1
+        self.machine.set_machine_var("audits_{}_{}".format(audit_class, event), self.current_audits[audit_class][event])
 
     def audit_switch(self, change: MonitoredSwitchChange):
         """Record switch change."""

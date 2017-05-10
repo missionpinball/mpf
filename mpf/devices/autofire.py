@@ -8,7 +8,7 @@ from mpf.core.platform_controller import SwitchRuleSettings, DriverRuleSettings,
 
 from mpf.core.system_wide_device import SystemWideDevice
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:   # pragma: no cover
     from mpf.core.machine import MachineController
 
 

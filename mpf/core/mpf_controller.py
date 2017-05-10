@@ -5,7 +5,7 @@ import re
 from typing import TYPE_CHECKING
 
 from mpf.core.logging import LogMixin
-if TYPE_CHECKING:
+if TYPE_CHECKING:   # pragma: no cover
     from mpf.core.machine import MachineController
 
 

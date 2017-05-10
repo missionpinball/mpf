@@ -269,8 +269,9 @@ config_player_common:
     priority: single|int|0
 credits:
     __valid_in__: machine
-    max_credits: single|int|0
+    max_credits: single|template_int|0
     free_play: single|bool|yes
+    price_tier_template: single|str|{{credits}} CREDITS ${{price}}
     service_credits_switch: list|machine(switches)|None
     fractional_credit_expiration_time: single|ms|0
     credit_expiration_time: single|ms|0
@@ -279,14 +280,14 @@ credits:
     credits_string: single|str|CREDITS
     switches:
         switch: single|machine(switches)|None
-        value: single|float|0.25
+        value: single|template_float|0.25
         type: single|str|money
     events:
         event: single|str|None
-        credits: single|float|0.25
+        credits: single|template_float|0.25
         type: single|str|replay
     pricing_tiers:
-        price: single|float|.50
+        price: single|template_float|.50
         credits: single|int|1
 device:     # base for all devices
     __valid_in__: None
@@ -449,6 +450,7 @@ high_score:
     award_slide_display_time: single|ms|4s
     categories: list|str:list|
     defaults: list|str:dict|None
+    enter_initials_timeout: single|secs|20s
 info_lights:
     __valid_in__: machine                            # todo add to validator
 image_pools:
@@ -646,6 +648,8 @@ multiball_locks:
     locked_ball_counting_strategy: single|enum(virtual_only,min_virtual_physical,physical_only,no_virtual)|virtual_only
     reset_all_counts_events: dict|str:ms|None
     reset_count_for_current_player_events: dict|str:ms|None
+named_colors:
+    __valid_in__: machine
 opp:
     __valid_in__: machine
     ports: list|str|

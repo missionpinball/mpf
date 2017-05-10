@@ -2,48 +2,51 @@
 from typing import TYPE_CHECKING, List
 
 from mpf.core.delays import DelayManager
-from mpf.core.logging import LogMixin
+from mpf.core.mode_device import ModeDevice
+from mpf.core.player import Player
+from mpf.core.mode import Mode
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:   # pragma: no cover
     from mpf.core.machine import MachineController
-    from mpf.core.mode import Mode
     from mpf.core.clock import PeriodicTask
     from mpf.core.events import EventHandlerKey
 
 
 # pylint: disable-msg=too-many-instance-attributes
-class Timer(LogMixin):
+class Timer(ModeDevice):
 
     """Parent class for a mode timer.
 
     Args:
         machine: The main MPF MachineController object.
-        mode: The parent mode object that this timer belongs to.
         name: The string name of this timer.
-        config: A Python dictionary which contains the configuration settings
-            for this timer.
-
     """
 
-    def __init__(self, machine: "MachineController", mode: "Mode", name: str, config: dict) -> None:
+    config_section = 'timers'
+    collection = 'timers'
+    class_label = 'timer'
+
+    def __init__(self, machine: "MachineController", name: str) -> None:
         """Initialise mode timer."""
-        super().__init__()
+        super().__init__(machine, name)
         self.machine = machine
-        self.mode = mode
         self.name = name
-        self.config = config
 
         self.running = False
-        self.start_value = self.config['start_value'].evaluate([])
-        self.restart_on_complete = self.config['restart_on_complete']
+        self.start_value = None             # type: int
+        self.restart_on_complete = None     # type: bool
         self._ticks = 0
-        self.tick_var = '{}_{}_tick'.format(self.mode.name, self.name)
+        self.tick_var = None                # type: str
+        self.tick_secs = None               # type: float
+        self.player = None                  # type: Player
+        self.end_value = None               # type: int
 
-        try:
-            self.end_value = self.config['end_value'].evaluate([])
-        except AttributeError:
-            self.end_value = None
+    def device_added_to_mode(self, mode: Mode):
+        """Device added in mode."""
+        super().device_added_to_mode(mode)
+        self.tick_var = '{}_{}_tick'.format(mode.name, self.name)
 
+    def _initialize(self):
         self.ticks_remaining = 0
         self.max_value = self.config['max_value']
         self.direction = self.config['direction'].lower()
@@ -52,18 +55,26 @@ class Timer(LogMixin):
         self.event_keys = list()        # type: List[EventHandlerKey]
         self.delay = DelayManager(self.machine.delayRegistry)
 
-        if self.config['debug']:
-            self.configure_logging('Timer.' + name,
-                                   'full', 'full')
-        else:
-            self.configure_logging('Timer.' + name,
-                                   self.config['console_log'],
-                                   self.config['file_log'])
+        try:
+            self.end_value = self.config['end_value'].evaluate([])
+        except AttributeError:
+            self.end_value = None
 
         if self.direction == 'down' and not self.end_value:
             self.end_value = 0  # need it to be 0 not None
 
+        self.start_value = self.config['start_value'].evaluate([])
+        self.restart_on_complete = self.config['restart_on_complete']
+
         self.ticks = self.start_value
+
+        if self.config['debug']:
+            self.configure_logging('Timer.' + self.name,
+                                   'full', 'full')
+        else:
+            self.configure_logging('Timer.' + self.name,
+                                   self.config['console_log'],
+                                   self.config['file_log'])
 
         self.debug_log("----------- Initial Values -----------")
         self.debug_log("running: %s", self.running)
@@ -77,8 +88,15 @@ class Timer(LogMixin):
         self.debug_log("tick_secs: %s", self.tick_secs)
         self.debug_log("--------------------------------------")
 
+    def device_loaded_in_mode(self, mode: Mode, player: Player):
+        """Set up control events when mode is loaded."""
+        del mode
+        self.player = player
         if self.config['control_events']:
             self._setup_control_events(self.config['control_events'])
+
+        if self.config['start_running']:
+            self.start()
 
     @property
     def ticks(self):
@@ -90,7 +108,7 @@ class Timer(LogMixin):
         self._ticks = value
 
         try:
-            self.mode.player[self.tick_var] = value
+            self.player[self.tick_var] = value
             '''player_var: (mode)_(timer)_tick
 
             desc: Stores the current tick value for the timer from the mode
@@ -101,6 +119,10 @@ class Timer(LogMixin):
 
         except TypeError:
             pass
+
+    def can_exist_outside_of_game(self):
+        """Timer can live outside of games."""
+        return True
 
     def _setup_control_events(self, event_list):
         self.debug_log("Setting up control events")
@@ -520,7 +542,7 @@ class Timer(LogMixin):
 
         self._check_for_done()
 
-    def kill(self):
+    def device_removed_from_mode(self, mode: Mode):
         """Stop this timer and also removes all the control events."""
         self.stop()
         self._remove_control_events()

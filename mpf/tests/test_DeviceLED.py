@@ -119,6 +119,14 @@ class TestLed(MpfTestCase):
         self.assertEqual(RGBColor('green'), led1.stack[2]['color'])
         self.assertEqual(RGBColor('orange'), led1.stack[3]['color'])
 
+    def test_named_colors(self):
+        led1 = self.machine.lights.led1
+        led1.color('jans_red')
+        self.machine_run()
+
+        self.assertLightColor(led1.name, "jans_red")
+        self.assertLightColor(led1.name, [251, 23, 42])
+
     def test_fades(self):
         led1 = self.machine.lights.led1
 

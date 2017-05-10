@@ -5,7 +5,7 @@ from typing import Dict
 from mpf.core.machine import MachineController
 from mpf.core.settings_controller import SettingEntry
 
-from mpf.core.rgb_color import RGBColorCorrectionProfile
+from mpf.core.rgb_color import RGBColorCorrectionProfile, RGBColor
 
 from mpf.core.mpf_controller import MpfController
 
@@ -25,6 +25,14 @@ class LightController(MpfController):
         self._initialised = False
 
         self._monitor_update_task = None                    # type: asyncio.Task
+
+        if 'named_colors' in self.machine.config:
+            self._load_named_colors()
+
+    def _load_named_colors(self):
+        """Load named colors from config."""
+        for name, color in self.machine.config['named_colors'].items():
+            RGBColor.add_color(name, color)
 
     def initialise_light_subsystem(self):
         """Initialise the light subsystem."""

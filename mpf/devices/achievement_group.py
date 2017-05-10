@@ -9,7 +9,7 @@ from mpf.core.mode_device import ModeDevice
 from mpf.core.player import Player
 from mpf.core.device_monitor import DeviceMonitor
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:   # pragma: no cover
     from mpf.devices.achievement import Achievement
     from mpf.assets.show import RunningShow
 

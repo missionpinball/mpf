@@ -1,14 +1,34 @@
 import unittest
+
+from mpf.core.rgba_color import RGBAColor
+
 from mpf.core.rgb_color import RGBColor, RGBColorCorrectionProfile
 
 
 class TestRGBColor(unittest.TestCase):
 
     def test_default_color(self):
-        # Tests the default color
+        """Test the default color."""
         color = RGBColor()
         self.assertEqual((0, 0, 0), color.rgb)
         self.assertIn(color.name, ['black', 'off'])
+
+    def test_rgba(self):
+        # Test alpha channel."""
+        color = RGBAColor("red")
+        self.assertEqual((255, 0, 0), color.rgb)
+        self.assertEqual((255, 0, 0, 255), color.rgba)
+        self.assertEqual(255, color.opacity)
+        self.assertEqual("red", color.name)
+
+        color.rgba = (1, 2, 3, 4)
+        self.assertEqual((1, 2, 3, 4), color.rgba)
+
+        color = RGBAColor((255, 0, 0, 128))
+        self.assertEqual((255, 0, 0), color.rgb)
+        self.assertEqual((255, 0, 0, 128), color.rgba)
+        self.assertEqual(128, color.opacity)
+        self.assertEqual("red", color.name)
 
     def test_off_color(self):
         # Tests the 'Off' color (nicely readable in LED show files)

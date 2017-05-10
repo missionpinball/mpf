@@ -75,6 +75,7 @@ mpf:
         - mpf.devices.logic_blocks.Counter
         - mpf.devices.logic_blocks.Accrual
         - mpf.devices.logic_blocks.Sequence
+        - mpf.devices.timer.Timer
 
     plugins:
         mpf.plugins.auditor.Auditor
@@ -91,7 +92,7 @@ mpf:
         p3_roc:  mpf.platforms.p3_roc.P3RocHardwarePlatform
         pololu_maestro: mpf.platforms.pololu_maestro.PololuMaestroHardwarePlatform
         smart_virtual: mpf.platforms.smart_virtual.SmartVirtualHardwarePlatform
-        smartmatrix: mpf.platforms.smartmatrix.SmartMatrix
+        smartmatrix: mpf.platforms.smartmatrix.SmartMatrixHardwarePlatform
         snux: mpf.platforms.snux.SnuxHardwarePlatform
         virtual: mpf.platforms.virtual.VirtualHardwarePlatform
         spike: mpf.platforms.spike.spike.SpikePlatform
@@ -137,9 +138,6 @@ mpf:
         gi:
             - enable
             - disable
-
-    mode_config_sections:   # only non-devices
-      - timers
 
 # Default settings for machines. All can be overridden
 
