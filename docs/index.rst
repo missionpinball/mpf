@@ -21,8 +21,8 @@ Understanding the MPF codebase
 
 * :doc:`overview/index`
 * :doc:`overview/files`
-* :doc:`overview/install`
-* :doc:`overview/boot`
+* :doc:`overview/installation`
+* :doc:`overview/boot_process`
 * :doc:`overview/yaml`
 
 
