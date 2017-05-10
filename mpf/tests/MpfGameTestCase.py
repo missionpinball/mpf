@@ -6,10 +6,20 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 class MpfGameTestCase(MpfTestCase):
 
-    """Base testcase for games that includes game-related assertion methods."""
+    """Test case for starting and running games.
+    
+    This is based on ``MpfTestCase`` but adds methods and assertions related
+    to running games (rather than just testing MPF components or devices).
+    
+    """
 
     def __init__(self, methodName):
-        """Patch minimal config into machine."""
+        """Patch minimal config needed to start a game into the machine config.
+        
+        This method adds a switch called ``s_start`` with a tag called
+        ``start``.
+        
+        """
         super().__init__(methodName)
         self.machine_config_patches['switches'] = dict()
         self.machine_config_patches['switches']['s_start'] = {"number": "", "tags": "start"}
@@ -20,7 +30,7 @@ class MpfGameTestCase(MpfTestCase):
         self.add_player()
 
     def fill_troughs(self):
-        """Fill all troughs will balls."""
+        """Fill all ball devices tagged with  ``trough`` with balls."""
         for trough in self.machine.ball_devices.items_tagged("trough"):
             for switch in trough.config['ball_switches']:
                 self.hit_switch_and_run(switch.name, 0)
@@ -31,7 +41,7 @@ class MpfGameTestCase(MpfTestCase):
         """Start a game.
         
         This method checks to make sure a game is not running,
-        then hits and releases a switch called ``s_start``, and
+        then hits and releases the ``s_start`` switch, and
         finally checks to make sure a game actually started
         properly.
         

@@ -5,6 +5,14 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 
 class MockBcpClient(BaseBcpClient):
+
+    """A Mock BCP Client.
+     
+    This is used in tests require BCP for testing but where you don't actually
+    create a real BCP connection.
+    
+    """
+
     def __init__(self, machine, name, bcp):
 
         self.module_name = "BCPClient"
@@ -41,7 +49,7 @@ class MockBcpClient(BaseBcpClient):
 
 class MpfBcpTestCase(MpfTestCase):
 
-    """MpfTestCase with mocked BCP."""
+    """An MpfTestCase instance which uses the MockBcpClient."""
 
     def __init__(self, methodName='runTest'):
         super().__init__(methodName)

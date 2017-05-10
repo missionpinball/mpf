@@ -9,54 +9,73 @@ from mpf.core.utility_functions import Util
 
 class Player(object):
 
-    """Base class for a player. One instance of this class is created for each player.
+    """Base class for a player in a game.
+    
+    One instance of this class is automatically created for each player.
+    
+    The game mode maintains a ``player`` attribute which always points to the
+    current player and is available via ``self.machine.game.player``.
+    
+    It also contains a ``player_list`` attribute which is a list
+    of the player instances (in order) which you can use to access the
+    non-current player.
 
-    The Game class maintains a "player" attribute which always points to the
-    current player. You can access this via game.player. (Or
-    self.machine.game.player).
+    This Player class is responsible for tracking *player variables* which
+    is a dictionary of key/value pairs maintained on a per-player basis. There
+    are several ways they can be used:
+    
+    First, player variables can be accessed as attributes of the player
+    object directly. For example, to set a player variable `foo` for the
+    current player, you could use:
+    
+    .. code::
+    
+        self.machine.player.foo = 0
+    
+    If that variable didn't exist, it will be automatically created.
+        
+    You can get the value of player variables by accessing them directly. For
+    example:
+    
+    .. code::
+    
+        print(self.machine.player.foo)  # prints 0
+    
+    If you attempt to access a player variable that doesn't exist, it will
+    automatically be created with a value of ``0``.
 
-    This class is responsible for tracking per-player variables. There are
-    several ways they can be used:
+    Every time a player variable is created or changed, an MPF event is posted
+    in the form *player_* plus the variable name. For example, creating or 
+    changing the `foo` variable will cause an event called *player_foo* to
+    be posted.
+    
+    The player variable event will have four parameters posted along with it:
 
-    player.ball = 0 (sets the player's 'ball' value to 0)
-    print player.ball (prints the value of the player's 'ball' value)
+    * ``value`` (the new value)
+    * ``prev_value`` (the old value before it was updated)
+    * ``change`` (the change in the value)
+    * ``player_num`` (the player number the variable belongs to)
 
-    If the value of a variable is requested but that variable doesn't exist,
-    that variable will automatically be created (and returned) with a value of
-    0.
+    For the ``change`` parameter, it will attempt to subtract the old value
+    from the new value. If that works, it will return the result as the change.
+    If it doesn't work (like if you're not storing numbers in this variable),
+    then the change parameter will be *True* if the new value is different and
+    *False* if the value didn't change.
 
-    Every time a player variable is changed, an MPF is posted with the name
-    "player_<name>". These events are disabled by default on initialize and
-    must be enabled by calling the enable_events method.  The player variable
-    events will have four parameters posted along with it:
+    For examples, the following three lines:
 
-    * value (the new value)
-    * prev_value (the old value before it was updated)
-    * change (the change in the value)
-    * player_num (the player number the variable belongs to)
+    .. code::
 
-    For the 'change' parameter, it will attempt to subtract the old value from
-    the new value. If that works, it will return the result as the change. If it
-    doesn't work (like if you're not storing numbers in this variable), then
-    the change paramter will be True if the new value is different and False if
-    the value didn't change.
+        self.machine.player.score = 0
+        self.machine.player.score += 500
+        self.machine.player.score = 1200
 
-    Some examples:
-
-    player.score = 0
-
-    Event posted:
-    'player_score' with Args: value=0, change=0, prev_value=0
-
-    player.score += 500
-
-    Event posted:
-    'player_score' with Args: value=500, change=500, prev_value=0
-
-    player.score = 1200
-
-    Event posted:
-    'player_score' with Args: value=1200, change=700, prev_value=500
+    ... will cause the following three events to be posted:
+    
+    ``player_score`` with Args: ``value=0, change=0, prev_value=0``
+    ``player_score`` with Args: ``value=500, change=500, prev_value=0``
+    ``player_score`` with Args: ``value=1200, change=700, prev_value=500``
+    
     """
 
     monitor_enabled = False
@@ -100,6 +119,10 @@ class Player(object):
 
         # Set the initial player score to 0
         self.__setattr__("score", 0)
+        '''player_var: score
+
+        desc: The player's score.
+        '''
 
     def _load_initial_player_vars(self):
         """Load initial player var values from config."""
@@ -114,9 +137,11 @@ class Player(object):
     def enable_events(self, enable=True, send_all_variables=True):
         """Enable/disable player variable events.
 
-        :param enable: Flag to enable/disable player variable events
-        :param send_all_variables: Flag indicating whether or not to send an event with the
-            current value of every player variable.
+        Args:
+
+            enable: Flag to enable/disable player variable events
+            send_all_variables: Flag indicating whether or not to send an event
+                with the current value of every player variable.
         """
         self._events_enabled = enable
 
@@ -250,5 +275,12 @@ class Player(object):
             yield name, value
 
     def is_player_var(self, var_name):
-        """Check if player var exists."""
+        """Check if player var exists.
+        
+        Args:
+            var_name: String name of the player variable to test.
+            
+        Returns: *True* if the variable exists and *False* if not.
+        
+        """
         return var_name in self.vars

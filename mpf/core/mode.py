@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 # pylint: disable-msg=too-many-instance-attributes
 class Mode(LogMixin):
 
-    """Parent class for in-game mode code."""
+    """Base class for a mode."""
 
     def __init__(self, machine, config, name: str, path) -> None:
         """Initialise mode.
@@ -60,6 +60,8 @@ class Mode(LogMixin):
         self.stopping = False
 
         self.delay = DelayManager(self.machine.delayRegistry)
+        '''DelayManager instance for delays in this mode. Note that all delays
+        scheduled here will be automatically canceled when the mode stops.'''
 
         self.player = None                      # type: Player
         '''Reference to the current player object.'''
@@ -117,7 +119,7 @@ class Mode(LogMixin):
 
     @property
     def active(self) -> bool:
-        """Return true if mode is active."""
+        """Return *True* if this mode is active."""
         return self._active
 
     @active.setter
