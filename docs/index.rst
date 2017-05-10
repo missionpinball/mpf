@@ -1,14 +1,15 @@
 Mission Pinball Framework |version| Developer Documentation
 ===========================================================
 
-This is the developer documentation for the `Mission Pinball Framework <http://missionpinball.org>`_ (MPF), version |version|.
-Click the "Read the Docs" link in the lower left corner for other versions & downloads.
+This is the developer documentation for the `Mission Pinball Framework <http://missionpinball.org>`_ (MPF), version
+|version|. Click the "Read the Docs" link in the lower left corner for other versions & downloads.
 
-This documentation is for people who want to want to add custom Python code & game logic to their machine.
+This documentation is for people who want to want to add custom Python code & game logic to their machine and for
+people who want to contribute to MPF itself.
 
-.. warning::
+.. note::
 
-   **This is not general user documentation!**
+   **This is DEVELOPER documentation, not general USER documentation!**
 
    This documentation is for people writing custom Python code for MPF.
    If you're a general *user* of MPF, read the `MPF User Documentation <http://docs.missionpinball.org>`_ instead.
@@ -19,6 +20,11 @@ Understanding the MPF codebase
 ------------------------------
 
 * :doc:`overview/index`
+* :doc:`overview/files`
+* :doc:`overview/install`
+* :doc:`overview/boot`
+* :doc:`overview/yaml`
+
 
 Adding custom code to your machine
 ----------------------------------
@@ -38,16 +44,18 @@ API Reference
 * :doc:`api/misc_overview`
 * :doc:`api/tests_overview`
 
-Writing tests for your code
----------------------------
+Writing Tests
+-------------
 
 * :doc:`testing/index`
 * :doc:`testing/running_mpf_tests`
 * :doc:`testing/writing_mpf_tests`
 * :doc:`testing/your_game`
+* :doc:`testing/fuzz_testing`
 
-Extending MPF
--------------
+Extending, Adding to, and Enhancing MPF
+---------------------------------------
+
 * :doc:`dev/index`
 * :doc:`dev/dev_environment`
 * :doc:`dev/plugins`
@@ -55,8 +63,8 @@ Extending MPF
 
 BCP Protocol
 ------------
-* :doc:`bcp/index`
 
+* :doc:`bcp/index`
 
 Index
 -----
@@ -66,12 +74,18 @@ Index
 .. toctree::
    :hidden:
    :maxdepth: 2
+   :caption: DEVELOPER DOCUMENTATION
 
    Understanding the MPF codebase <overview/index>
    Adding custom code to your game <code/index>
    API Reference <api/index>
-   Testing your Game <testing/index>
+   Writing Tests <testing/index>
    Extending MPF <dev/index>
    BCP Protocol <bcp/index>
    Method & Class Index <genindex>
 
+.. toctree::
+   :hidden:
+   :caption: USER DOCUMENTATION
+
+   User Documentation <http://docs.missionpinball.org>
