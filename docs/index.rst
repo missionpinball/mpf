@@ -10,18 +10,22 @@ This documentation is for people who want to want to add custom Python code & ga
 
    **This is not general user documentation!**
 
-   If you're a *user* of MPF setting up your hardware or using YAML config files, read the
-   `MPF User Documentation <http://docs.missionpinball.org>`_ instead.
+   This documentation is for people writing custom Python code for MPF.
+   If you're a general *user* of MPF, read the `MPF User Documentation <http://docs.missionpinball.org>`_ instead.
 
 This developer documentation is broken into several sections:
 
+Understanding the MPF codebase
+------------------------------
+
+* :doc:`overview/index`
 
 Adding custom code to your machine
 ----------------------------------
 
-* :doc:`/code/index`
-* :doc:`/code/machine_code`
-* :doc:`/code/mode_code`
+* :doc:`code/index`
+* :doc:`code/machine_code`
+* :doc:`code/mode_code`
 
 API Reference
 -------------
@@ -31,11 +35,33 @@ API Reference
 * :doc:`api/modes_overview`
 * :doc:`api/config_players_overview`
 * :doc:`api/platforms_overview`
+* :doc:`api/misc_overview`
+* :doc:`api/tests_overview`
+
+Writing tests for your code
+---------------------------
+
+* :doc:`testing/index`
+* :doc:`testing/running_mpf_tests`
+* :doc:`testing/writing_mpf_tests`
+* :doc:`testing/your_game`
+
+Extending MPF
+-------------
+* :doc:`dev/index`
+* :doc:`dev/dev_environment`
+* :doc:`dev/plugins`
+* :doc:`dev/hardware`
+
+BCP Protocol
+------------
+* :doc:`bcp/index`
+
 
 Index
 -----
 
-We have an  which lists all the classes, methods, and attributes in MPF across the board.
+* We have an :doc:`index <genindex>` which lists all the classes, methods, and attributes in MPF across the board.
 
 .. toctree::
    :hidden:

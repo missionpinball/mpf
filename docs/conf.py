@@ -103,8 +103,6 @@ numpydoc_show_inherited_class_members = False
 autodoc_default_flags = [
          # Make sure that any autodoc declarations show the right members
          "members",
-         # "inherited-members",
-         # "private-members",
          "show-inheritance",
 ]
 
@@ -368,6 +366,34 @@ class RstBuilder(object):
             self.doc_sections['modes'][name] = (
                 'mpf.modes.{0}.code.{0}.{1}'.format(name, class_name))
 
+        self.doc_sections['tests'] = dict(
+            MockBcpClient='mpf.tests.MpfBcpTestCase.MockBcpClient',
+            MpfBcpTestCase='mpf.tests.MpfBcpTestCase.MpfBcpTestCase',
+            MpfFakeGameTestCase='mpf.tests.MpfFakeGameTestCase.MpfFakeGameTestCase',
+            MpfGameTestCase='mpf.tests.MpfGameTestCase.MpfGameTestCase',
+            MpfMachineTestCase='mpf.tests.MpfMachineTestCase.MpfMachineTestCase',
+            MpfTestCase='mpf.tests.MpfTestCase.MpfTestCase',
+            TestMachineController='mpf.tests.MpfTestCase.TestMachineController',
+            TestDataManager='mpf.tests.TestDataManager.TestDataManager',
+        )
+
+        self.doc_sections['misc'] = dict(
+            data_manager='mpf.core.data_manager.DataManager',
+            delay_manager='mpf.core.delays.DelayManager',
+            delay_manager_registry='mpf.core.delays.DelayManagerRegistry',
+            LogMixin='mpf.core.logging.LogMixin',
+            Players='mpf.core.player.Player',
+            RGBColor='mpf.core.rgb_color.RGBColor',
+            RGBAColor='mpf.core.rgba_color.RGBAColor',
+            Randomizer='mpf.core.randomizer.Randomizer',
+            Timers='mpf.core.timer.Timer',
+        )
+
+        self.doc_sections['misc']['Ball Search'] = 'mpf.core.ball_search.BallSearch'
+        self.doc_sections['misc']['File Manager'] = 'mpf.core.file_manager.FileManager'
+        self.doc_sections['misc']['Utility Functions'] = 'mpf.core.utility_functions.Util'
+        self.doc_sections['misc']['Mode base class'] = 'mpf.core.mode.Mode'
+
         # populate the index entries
 
         for name in self.doc_sections.keys():
@@ -418,7 +444,7 @@ class RstBuilder(object):
 
         file_name = file_name.replace('[', '.')
 
-        for char in "''*]":
+        for char in "''*] ":
             file_name = file_name.replace(char, '')
 
         if file_name[-1] == '.':

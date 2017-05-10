@@ -4,7 +4,8 @@ self.machine.modes.{name}
 .. autoclass:: {full_path_to_class}
    :members:
    :show-inheritance:
-   :exclude-members: mode_init, mode_start, mode_stop
+   :inherited-members:
+   :exclude-members: mode_init, mode_start, mode_stop, configure_mode_settings, get_config_spec
 
    .. rubric:: Accessing the {name} mode via code
 
