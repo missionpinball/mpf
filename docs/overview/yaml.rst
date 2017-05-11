@@ -2,7 +2,9 @@ MPF's divergence for pure YAML
 ==============================
 
 MPF uses the YAML file format for config and show files. That said, MPF diverges from the
-`pure YAML 1.2 specification <http://www.yaml.org/spec/1.2/spec.html>`_ in a few ways:
+`pure YAML 1.2 specification <http://www.yaml.org/spec/1.2/spec.html>`_ for unquoted strings
+in a few ways. Those are cases where YAML guesses which data type the value is which led to
+problems/confusion in the past:
 
 **Values beginning with "+" are strings**
 
