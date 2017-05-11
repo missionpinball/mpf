@@ -181,14 +181,6 @@ class Tilt(Mode):
 
         self.machine.game.end_ball()
 
-    def _disable_flippers(self):
-        for flipper in self.machine.flippers:
-            flipper.disable()
-
-    def _disable_autofires(self):
-        for autofire in self.machine.autofires:
-            autofire.disable()
-
     def _tilted_ball_drain(self, new_balls, unclaimed_balls, device, **kwargs):
         del new_balls
         del device
