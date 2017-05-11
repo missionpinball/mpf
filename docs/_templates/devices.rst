@@ -4,6 +4,8 @@ self.machine.{name}.*
 .. autoclass:: {full_path_to_class}
    :members:
    :show-inheritance:
+   :inherited-members:
+   :exclude-members: config_section_name, setup_event_handlers, device_loaded_in_mode, device_added_to_mode, device_removed_from_mode, validate_and_parse_config, can_exist_outside_of_game, device_class_init, device_added_system_wide, configure_logging, debug_log, info_log, error_log, get_config_info, get_config_spec, load_config, load_platform_section, prepare_config, warning_log, ignorable_runtime_exception, get_monitorable_state, add_control_events_in_mode, overload_config_in_mode, remove_control_events_in_mode, post_update_event
 
    .. rubric:: Accessing {name} in code
 

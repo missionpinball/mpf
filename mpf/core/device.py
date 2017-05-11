@@ -37,8 +37,15 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         self.machine = machine
         self.name = name.lower()
         self.tags = []          # type: List[str]
+        """List of tags applied to this device."""
+
         self.label = None       # type: str
         self.config = dict()    # type: Any
+        """Validated dictionary of this device's settings. Note that this will
+        map to the YAML-based config specified in the Config Spec section of
+        the User Documentation.
+        
+        """
 
     def device_added_to_mode(self, mode: "Mode") -> None:
         """Called when a device is created by a mode.
