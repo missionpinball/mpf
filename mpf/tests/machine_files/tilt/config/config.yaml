@@ -2,6 +2,7 @@
 
 modes:
     - tilt
+    - base
 
 game:
     balls_per_game: 2

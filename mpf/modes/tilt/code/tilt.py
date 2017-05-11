@@ -155,12 +155,9 @@ class Tilt(Mode):
         self.machine.events.post('tilt')
         '''event: tilt
         desc: The player has tilted.'''
-        self._disable_autofires()
-        self._disable_flippers()
 
         self.tilt_event_handlers.add(
-            self.machine.events.add_handler('ball_ending',
-                                            self._ball_ending_tilted))
+            self.machine.events.add_handler('player_turn_ending', self._ball_ending_tilted))
 
         for device in self.machine.ball_devices:
             if 'drain' in device.tags:
