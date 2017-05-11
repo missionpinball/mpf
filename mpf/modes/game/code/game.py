@@ -129,6 +129,9 @@ class Game(Mode):
                 # have to here if there aren't any players yet.
                 self._player_add()
 
+            # set up first player
+            self.player = self.player_list[0]
+
             self.player_turn_start()
 
             self.machine.events.post('game_started')
@@ -323,7 +326,6 @@ class Game(Mode):
             self.game_ending()
         else:
             self.player_rotate()
-            self.player_turn_start()
 
     def game_ending(self):
         """Called when the game decides it should end.
@@ -334,6 +336,12 @@ class Game(Mode):
         this method calls :meth:`game_end`.
 
         """
+        self.machine.events.post_queue('player_turn_ending', player=self.player,
+                                       number=self.player.number,
+                                       callback=self._game_ending2)
+
+    def _game_ending2(self, **kwargs):
+        del kwargs
         self.debug_log("Entering Game.game_ending()")
         self.machine.events.post_queue('game_ending',
                                        callback=self._game_ending_done)
@@ -346,7 +354,7 @@ class Game(Mode):
         # post game_ended, but we do it this way so that game_ended slots in
         # properly after other existing events have been posted.
         del kwargs
-        self.player_turn_stop()
+        self.player_turn_stop()     # this is out of order for legacy reasons in 0.33. fixed in 0.50
         self.machine.events.post('game_ended')
         '''event: game_ended
         desc: The game has ended.'''
@@ -452,12 +460,6 @@ class Game(Mode):
         the same player shoots again due to an extra ball, this method is not
         called again.
         """
-        # If we get a request to start a turn but we haven't done a rotate to
-        # set the first player, do that now.
-
-        if not self.player:
-            self.player_rotate()
-
         self.machine.events.post('player_turn_start', player=self.player,
                                  number=self.player.number,
                                  callback=self._player_turn_starting)
@@ -504,19 +506,6 @@ class Game(Mode):
         number: The player number
         '''
 
-        self.machine.set_machine_var(
-            name='player{}_score'.format(self.player.number),
-            value=self.player.score)
-
-        if self.player.number < self.num_players:
-            self.player = self.player_list[self.player.number]
-            # Note the above line is kind of confusing but it works because
-            # the current player number is always 1 more than the index.
-            # i.e. "Player 1" has an index of 0, etc. So using the current
-            # player number as the next player's index works out.
-        else:
-            self.player = self.player_list[0]
-
     def _player_turn_started(self, **kwargs):
         del kwargs
         self.player.ball += 1
@@ -550,15 +539,37 @@ class Game(Mode):
 
         Args:
         """
-        # todo  do cool stuff in the future to change order, etc.
+        self.machine.events.post_queue('player_turn_ending', player=self.player,
+                                       number=self.player.number,
+                                       callback=self._player_rotate2)
+        '''event: player_turn_ending
+        desc: A player's turn is ending.
 
-        if self.player:
-            self.player_turn_stop()
+        args:
+        player: The player object whose turn is ending.
+        number: The player number
+        '''
 
-        else:  # no current player, grab the first one
+    def _player_rotate2(self, **kwargs):
+        del kwargs
+        self.player_turn_stop()
+
+        self.machine.set_machine_var(
+            name='player{}_score'.format(self.player.number),
+            value=self.player.score)
+
+        if self.player.number < self.num_players:
+            self.player = self.player_list[self.player.number]
+            # Note the above line is kind of confusing but it works because
+            # the current player number is always 1 more than the index.
+            # i.e. "Player 1" has an index of 0, etc. So using the current
+            # player number as the next player's index works out.
+        else:
             self.player = self.player_list[0]
 
         self.debug_log("Player rotate: Now up is Player %s",
                        self.player.number)
+
+        self.player_turn_start()
 
 # todo player events should come next, including tracking inc/dec, other values
