@@ -187,10 +187,11 @@ class Game(AsyncMode):
             yield from self._award_extra_ball()
             return
 
+        yield from self._end_player_turn()
+
         if self.player.ball >= self.balls_per_game and self.player.number == self.num_players:
             yield from self._end_game()
         else:
-            yield from self._end_player_turn()
             yield from self._rotate_players()
             yield from self._start_player_turn()
 
