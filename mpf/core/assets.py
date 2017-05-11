@@ -8,8 +8,10 @@ from pathlib import PurePath
 
 import asyncio
 
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Set, Callable, Tuple, Any
 from typing import List
+
+from mpf.core.mode import Mode
 
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.machine import MachineController
@@ -73,13 +75,13 @@ class BaseAssetManager(MpfController, LogMixin):
         self.machine.events.add_handler('assets_to_load',
                                         self._bcp_client_asset_load)
 
-    def get_next_id(self):
+    def get_next_id(self) -> int:
         """Return the next free id."""
         self._next_id += 1
         return self._next_id
 
     @property
-    def loading_percent(self):
+    def loading_percent(self) -> int:
         """Return the percent of assets that are in the process of loading that have been loaded.
 
         This value is an integer between 0 and 100. It's reset
@@ -100,10 +102,10 @@ class BaseAssetManager(MpfController, LogMixin):
             return 100
 
     # pylint: disable-msg=too-many-arguments
-    def register_asset_class(self, asset_class, attribute, config_section,
-                             disk_asset_section,
-                             path_string, extensions, priority,
-                             pool_config_section):
+    def register_asset_class(self, asset_class: str, attribute: str, config_section: str,
+                             disk_asset_section: str,
+                             path_string: str, extensions: Iterable[str], priority: int,
+                             pool_config_section: str) -> None:
         """Register a a type of assets to be controlled by the AssetManager.
 
         Args:
@@ -179,7 +181,7 @@ class BaseAssetManager(MpfController, LogMixin):
 
         return default_config_dict
 
-    def _create_assets(self, **kwargs):
+    def _create_assets(self, **kwargs) -> None:
         if 'force_assets_load' in kwargs:
             force_assets_load = kwargs['force_assets_load']
         else:
@@ -212,7 +214,7 @@ class BaseAssetManager(MpfController, LogMixin):
         if not wait_for_assets:
             self.machine.clear_boot_hold('assets')
 
-    def _create_assets_from_disk(self, config, mode=None):
+    def _create_assets_from_disk(self, config: dict, mode: Optional[Mode]=None) -> dict:
         """Walk a folder (and subfolders) and finds all the assets.
 
         Check to see if those assets have config entries in the passed config file, and
@@ -316,7 +318,7 @@ class BaseAssetManager(MpfController, LogMixin):
 
     # pylint: disable-msg=too-many-locals
     def _create_asset_config_entries(self, asset_class: AssetClass, config, mode_name: Optional[str]=None,
-                                     path: Optional[str]=None):
+                                     path: Optional[str]=None) -> dict:
         """Scan a folder (and subfolders).
 
         Automatically creates or updates entries in the config dict for any asset files it finds.
@@ -450,7 +452,7 @@ class BaseAssetManager(MpfController, LogMixin):
                               default_string, built_up_config)
         return config
 
-    def _create_asset_groups(self, config, mode=None):
+    def _create_asset_groups(self, config, mode=None) -> None:
         # creates named groups of assets and adds them to to the mc's asset
         # dicts
         del mode
@@ -463,7 +465,8 @@ class BaseAssetManager(MpfController, LogMixin):
                         ac.cls.asset_group_class(self.machine, name, settings,
                                                  ac.cls))
 
-    def _load_mode_assets(self, config, priority, mode):
+    def _load_mode_assets(self, config, priority: int, mode: Mode)->\
+            Tuple[Callable[[Iterable["Asset"]], None], Set["Asset"]]:
         # Called on mode start to load the assets that are set to automatically
         # load based on that mode starting
         del config
@@ -472,7 +475,7 @@ class BaseAssetManager(MpfController, LogMixin):
                     key_name='{}_start'.format(mode.name),
                     priority=priority))
 
-    def load_assets_by_load_key(self, key_name, priority=0):
+    def load_assets_by_load_key(self, key_name: str, priority: int=0) -> Set["Asset"]:
         """Load all the assets with a given load key.
 
         Args:
@@ -492,7 +495,7 @@ class BaseAssetManager(MpfController, LogMixin):
         return assets
 
     @classmethod
-    def unload_assets(cls, assets):
+    def unload_assets(cls, assets: Iterable["Asset"]) -> None:
         """Unload multiple assets.
 
         Args:
@@ -502,7 +505,7 @@ class BaseAssetManager(MpfController, LogMixin):
         for asset in assets:
             asset.unload()
 
-    def load_asset(self, asset):
+    def load_asset(self, asset: "Asset") -> None:
         """Load an asset."""
         raise NotImplementedError("implement")
 
