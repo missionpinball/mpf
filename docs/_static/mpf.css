@@ -1,0 +1,196 @@
+@import url("https://fonts.googleapis.com/css?family=Open+Sans:300,400,600|Oswald:300,400,700");
+
+/* sidebar header background color */
+.wy-side-nav-search {
+    background-color: #D63E29;
+}
+
+/* search box */
+.wy-side-nav-search input[type="text"] {
+    border-color: #D63E29;
+}
+
+/* top background on mobile devices */
+.wy-nav-top {
+    background: #D63E29;
+}
+
+/* links in sidebar */
+.wy-menu-vertical li ul li a {
+    padding: 0.2045em 1.618em;
+    font-weight: 300;
+}
+
+.wy-menu-vertical a {
+    text-decoration: none;
+}
+
+/* captions in sidebar */
+.wy-menu-vertical p.caption {
+    color: #D63E29;
+    font-size: 90%;
+    font-family: 'Open Sans', sans-serif;
+    font-weight: 300;
+}
+
+.wy-menu-vertical li.on a, .wy-menu-vertical li.current > a {
+    border-bottom: 0;
+    background: yellow;
+}
+
+.wy-menu-vertical li.current a:hover {
+    background: #c9c9c9;
+}
+
+.wy-menu-vertical li.toctree-l2.current > a {
+    background: yellow;
+}
+
+.wy-menu-vertical li.toctree-l2.current li.toctree-l3 > a {
+    background: #d6d6d6;
+}
+
+.wy-menu-vertical li.toctree-l2.current li.toctree-l3 > a:hover {
+    background: #c9c9c9;
+}
+
+h1 {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 400;
+}
+
+h2 {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 400;
+}
+
+h3 {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 400;
+}
+
+h4 {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 400;
+}
+
+h5 {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 400;
+}
+
+a {
+    color: blue;
+    text-decoration: underline;
+}
+
+body {
+    font-family: 'Open Sans', sans-serif;
+    font-weight: 300;
+}
+
+/* sidebar title */
+.wy-side-nav-search > a {
+    font-family: 'Oswald', sans-serif;
+    text-decoration: none;
+}
+
+/* hide software version in sidebar */
+.wy-side-nav-search > div.version {
+    font-size: 0;
+}
+
+.wy-breadcrumbs {
+    font-size: 90%;
+}
+
+
+.rst-content .warning .admonition-title {
+    background: #d40 linear-gradient(-45deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.2) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.2) 75%, transparent 75%, transparent);
+    background-size: 28px 28px
+}
+
+.rst-content .warning {
+    background: #ffd238;
+}
+
+.rst-content .note .admonition-title {
+    background: blue;
+}
+
+.rst-content .note {
+    background: #ececff;
+}
+
+.rst-content .admonition-todo .admonition-title {
+    background: #f70;
+}
+
+.rst-content .admonition-todo {
+    background: #ffbd83;
+}
+
+.rst-content .tip .admonition-title {
+    background: green;
+}
+
+.rst-content .tip {
+    background: #a9e6a9;
+}
+
+.rst-content code.literal {
+    color: #D63E29;
+    vertical-align: 5%;
+    padding: 3px 5px;
+    font-size: 85%;
+}
+
+div[class^="highlight"] pre {
+    font-size: 14px;
+    background-color: #eee;
+    border: 1px solid #c4c7c8;
+}
+
+.btn {
+    border: 0;
+    box-shadow: unset;
+}
+
+.btn-neutral {
+    background-color: #d2d2d2 !important;
+}
+
+.rst-content .toc-backref {
+    text-decoration: none;
+}
+
+footer {
+    font-size: 90%;
+}
+
+footer p {
+    font-size: 90%;
+}
+
+.wy-breadcrumbs li.wy-breadcrumbs-aside a {
+    text-decoration: none;
+}
+
+/* API-specific stuff below here */
+
+.wy-menu-vertical li code {
+    font-size: 100%;
+    font-family: 'Open Sans', sans-serif;
+    font-weight: 300;
+}
+
+.inheritance {
+    margin-bottom: 1.2em;
+}
+
+.rst-content p.rubric {
+    font-family: 'Oswald', sans-serif !important;
+    font-size: 16pt;
+    margin-top: 20pt;
+    font-weight: 400;
+}
