@@ -194,6 +194,7 @@ class TestScoring(MpfGameTestCase):
         self.assertPlayerVarEqual(1200, "score")
 
     def test_blocking_multiple_with_logic_block(self):
+        # this test was adapted from a real game
         # start game
         self.hit_switch_and_run("s_ball_switch1", 1)
         self.advance_time_and_run(2)
@@ -210,6 +211,9 @@ class TestScoring(MpfGameTestCase):
         for x in range(0, 3):
             self.hit_and_release_switch("s_counter_target")
         self.assertPlayerVarEqual(30, "score")
+
+        # start mode_for_logic_block
+        self.post_event("counter_target_complete")
 
         # both modes running now
         self.assertModeRunning('mode_for_logic_block')
