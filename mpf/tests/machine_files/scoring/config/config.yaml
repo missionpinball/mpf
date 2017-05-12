@@ -27,16 +27,6 @@ ball_devices:
         eject_coil: eject_coil1
         tags: trough, drain, home, ball_add_live
 
-logic_blocks:
-  counters:
-    counter_target:
-      count_events: s_counter_target_active
-      starting_count: 3
-      count_complete_value: 0
-      direction: down
-      events_when_complete: counter_target_complete
-      reset_on_complete: true
-
 modes:
   - mode1
   - mode2
