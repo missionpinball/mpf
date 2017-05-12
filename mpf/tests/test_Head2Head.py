@@ -175,7 +175,7 @@ class TestHead2Head(MpfTestCase):
         self.assertEqual(0, pf2.available_balls)
 
         # game should start
-        self.assertIsNone(self.machine.ball_controller.request_to_start_game())
+        self.assertTrue(self.machine.ball_controller.request_to_start_game())
         self.assertEventNotCalled("playfield_jump")
 
     def testPlayfieldJump(self):

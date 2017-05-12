@@ -124,6 +124,7 @@ class MachineController(LogMixin):
             self.lights = None                          # type: DeviceCollectionType[str, Light]
             self.ball_devices = None                    # type: DeviceCollectionType[str, BallDevice]
             self.playfield = None                       # type: Playfield
+            self.playfields = None                      # type: DeviceCollectionType[str, Playfield]
 
         self._set_machine_path()
 

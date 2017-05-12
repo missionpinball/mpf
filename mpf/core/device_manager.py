@@ -303,6 +303,9 @@ class DeviceCollectionType(Sized, Container[KT], Generic[KT, VT], Iterable[VT], 
     def values(self) -> Iterable[VT]:
         pass
 
+    def items_tagged(self, tag: str) -> Iterable[VT]:
+        pass
+
     def __getitem__(self, key: KT) -> VT:
         pass
 
