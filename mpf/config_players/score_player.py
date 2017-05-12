@@ -1,5 +1,10 @@
 """Scoring Config Player."""
+from collections import namedtuple
+from typing import Dict, List
+
 from mpf.core.config_player import ConfigPlayer
+
+VarBlock = namedtuple("VarBlock", ["priority", "context"])
 
 
 class ScorePlayer(ConfigPlayer):
@@ -12,7 +17,7 @@ class ScorePlayer(ConfigPlayer):
     def __init__(self, machine):
         """Initialise score player."""
         super().__init__(machine)
-        self.blocks = {}
+        self.blocks = {}    # type: Dict[str, List[VarBlock]]
 
     @staticmethod
     def is_entry_valid_outside_mode(settings) -> bool:
@@ -23,21 +28,22 @@ class ScorePlayer(ConfigPlayer):
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Score variable."""
         for var, s in settings.items():
-            if self._is_blocked(var, context, calling_context, priority):
+            block_item = var + ":" + calling_context
+            if self._is_blocked(block_item, context, priority):
                 continue
             if s['block']:
-                if var not in self.blocks:
-                    self.blocks[var] = []
-                if (priority, context, calling_context) not in self.blocks[var]:
-                    self.blocks[var].append((priority, context, calling_context))
+                if block_item not in self.blocks:
+                    self.blocks[block_item] = []
+                if VarBlock(priority, context) not in self.blocks[block_item]:
+                    self.blocks[block_item].append(VarBlock(priority, context))
 
             self._score(var, s, kwargs)
 
-    def _is_blocked(self, var, context, calling_context, priority):
-        if var not in self.blocks or not self.blocks[var]:
+    def _is_blocked(self, block_item, context, priority):
+        if block_item not in self.blocks or not self.blocks[block_item]:
             return False
-        priority_sorted = sorted(self.blocks[var], reverse=True)
-        return priority_sorted[0][0] > priority and priority_sorted[0][1] != context + "_" + calling_context
+        priority_sorted = sorted(self.blocks[block_item], reverse=True)
+        return priority_sorted[0].priority > priority and priority_sorted[0].context != context
 
     def _score(self, var: str, entry: dict, placeholder_parameters: dict) -> None:
         if entry['string']:
@@ -78,7 +84,7 @@ class ScorePlayer(ConfigPlayer):
         """Clear context."""
         for var in self.blocks:
             for entry, s in enumerate(self.blocks[var]):
-                if s[1] == context:
+                if s.context == context:
                     del self.blocks[var][entry]
 
     def validate_config_entry(self, settings, name):
