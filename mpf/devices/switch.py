@@ -134,13 +134,12 @@ class Switch(SystemWideDevice):
     # pylint: disable-msg=too-many-arguments
     def add_handler(self, callback, state=1, ms=0, return_info=False,
                     callback_kwargs=None):
-        """Add switch handler (callback) for this switch which is called when
-        this switch state changes.
-        
+        """Add switch handler (callback) for this switch which is called when this switch state changes.
+
         Note that this method just calls the
         :doc:`Switch Controller's <self.machine.switch_controller>`
         ``add_switch_handler()`` method behind the scenes.
-        
+
         Args:
             callback: A callable method that will be called when the switch
                 state changes.
@@ -158,7 +157,6 @@ class Switch(SystemWideDevice):
                 including switch_name, state, and ms.
             callback_kwargs: Additional kwargs that will be passed with the
                 callback.
-        
         """
         return self.machine.switch_controller.add_switch_handler(
             self.name, callback, state, ms, return_info, callback_kwargs)

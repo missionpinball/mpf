@@ -29,10 +29,10 @@ class ModeController(MpfController):
 
     def __init__(self, machine: MachineController) -> None:
         """Initialise mode controller.
-        
+
         Args:
             machine: The main MachineController instance.
-        
+
         """
         super().__init__(machine)
 

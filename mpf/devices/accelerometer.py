@@ -14,7 +14,7 @@ class Accelerometer(SystemWideDevice):
 
     In modern machines, accelerometers can be used for tilt detection and to
     detect whether a machine is properly leveled.
-    
+
     The accelerometer device produces a data stream of readings which MPF
     converts to g-forces, and then events can be posted when the "hit" (or
     g-force) of an accelerometer exceeds a predefined threshold.
@@ -27,7 +27,7 @@ class Accelerometer(SystemWideDevice):
 
     def __init__(self, machine, name):
         """Initialise accelerometer.
-        
+
         Args: Same as the Device parent class
         """
         self.platform = None        # type: AccelerometerPlatform

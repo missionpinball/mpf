@@ -198,15 +198,15 @@ class Game(AsyncMode):
     @property
     def balls_in_play(self) -> int:
         """Property which holds the current number of balls in play.
-        
+
         Note that the number of balls in play is not necessarily the same as
         the number of balls that are active on the playfield. (For example,
         a ball could be held in a device while a show is playing, etc.)
-        
+
         You can set this property to change it, or get it's value.
-        
+
         If you set this value to 0, the ball ending process will be started.
-        
+
         """
         return self._balls_in_play
 
@@ -347,16 +347,15 @@ class Game(AsyncMode):
 
     def ball_drained(self, balls=0, **kwargs):
         """One or more balls has drained.
-        
-        Drained balls will be subtracted from the number of balls in play. 
-        
+
+        Drained balls will be subtracted from the number of balls in play.
+
         Args:
             balls: The number of balls that just drained.
-        
+
         Returns:
             A dictionary:
                 {balls: *number of balls drained*}
-        
         """
         del kwargs
         self.debug_log("Entering Game.ball_drained()")

@@ -17,11 +17,11 @@ class BallController(MpfController):
 
     def __init__(self, machine: MachineController) -> None:
         """Initialise ball controller.
-        
+
         Args:
             machine : :class:`MachineController`. A reference to the instance
                 of the MachineController object.
-        
+
         """
         super().__init__(machine)
 

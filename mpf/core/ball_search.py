@@ -17,12 +17,12 @@ BallSearchCallback = namedtuple("BallSearchCallback", ["priority", "callback", "
 class BallSearch(MpfController):
 
     """Implements Ball search for a playfield device.
-    
+
     In MPF, the ball search functionality is attached to each playfield
     device, rather than being done at the global level. (In other words, each
     playfield is responsible for making sure no balls get stuck on it, and it
     leverages an instance of this BallSearch class to handle it.)
-    
+
     """
 
     def __init__(self, machine: MachineController, playfield: "Playfield") -> None:
@@ -69,7 +69,7 @@ class BallSearch(MpfController):
 
         If ball search is running, this method will return *False* to prevent
         the game from starting while ball search is running.
-        
+
         This method also posts the *ball_search_prevents_game_start* event
         if ball search is started.
 

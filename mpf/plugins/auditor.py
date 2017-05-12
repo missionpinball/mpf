@@ -14,14 +14,11 @@ if TYPE_CHECKING:   # pragma: no cover
 
 class Auditor(object):
 
-    """Writes switch events, regular events, and player variables to an audit
-    log file.
-    
-    """
+    """Writes switch events, regular events, and player variables to an audit log file."""
 
     def __init__(self, machine: "MachineController") -> None:
         """Initialise auditor.
-        
+
         Args:
             machine: A reference to the machine controller object.
         """

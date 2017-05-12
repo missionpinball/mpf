@@ -24,11 +24,11 @@ class DelayManagerRegistry(object):
 
     def add_delay_manager(self, delay_manager: "DelayManager") -> None:
         """Add a delay manager to the list.
-        
+
         Args:
             delay_manager: The :class:`DelayManager` instance you're adding to
                 this registry.
-        
+
         """
         self.delay_managers.add(delay_manager)
 
@@ -36,14 +36,14 @@ class DelayManagerRegistry(object):
 class DelayManager(MpfController):
 
     """Handles delays for one object.
-    
+
     By default, a machine-wide instance is created and available via
     ``self.machine.delay``.
-    
+
     Individual modes also have Delay Managers which can be accessed in
     mode code via ``self.delay``. (Delays in mode-based delay managers
     are automatically removed when the mode stops.)
-    
+
     """
 
     def __init__(self, registry: DelayManagerRegistry) -> None:
@@ -140,7 +140,7 @@ class DelayManager(MpfController):
     def reset(self, ms: int, callback: Callable[..., None], name: str,
               **kwargs) -> str:
         """Reset a delay.
-        
+
         Resetting will first delete the existing delay (if it exists) and then
         add new delay with the new settings. If the delay does not exist,
         that's ok, and this method is essentially the same as just adding a

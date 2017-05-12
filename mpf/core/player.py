@@ -10,12 +10,12 @@ from mpf.core.utility_functions import Util
 class Player(object):
 
     """Base class for a player in a game.
-    
+
     One instance of this class is automatically created for each player.
-    
+
     The game mode maintains a ``player`` attribute which always points to the
     current player and is available via ``self.machine.game.player``.
-    
+
     It also contains a ``player_list`` attribute which is a list
     of the player instances (in order) which you can use to access the
     non-current player.
@@ -23,32 +23,32 @@ class Player(object):
     This Player class is responsible for tracking *player variables* which
     is a dictionary of key/value pairs maintained on a per-player basis. There
     are several ways they can be used:
-    
+
     First, player variables can be accessed as attributes of the player
     object directly. For example, to set a player variable `foo` for the
     current player, you could use:
-    
+
     .. code::
-    
+
         self.machine.player.foo = 0
-    
+
     If that variable didn't exist, it will be automatically created.
-        
+
     You can get the value of player variables by accessing them directly. For
     example:
-    
+
     .. code::
-    
+
         print(self.machine.player.foo)  # prints 0
-    
+
     If you attempt to access a player variable that doesn't exist, it will
     automatically be created with a value of ``0``.
 
     Every time a player variable is created or changed, an MPF event is posted
-    in the form *player_* plus the variable name. For example, creating or 
+    in the form *player_* plus the variable name. For example, creating or
     changing the `foo` variable will cause an event called *player_foo* to
     be posted.
-    
+
     The player variable event will have four parameters posted along with it:
 
     * ``value`` (the new value)
@@ -71,11 +71,11 @@ class Player(object):
         self.machine.player.score = 1200
 
     ... will cause the following three events to be posted:
-    
+
     ``player_score`` with Args: ``value=0, change=0, prev_value=0``
     ``player_score`` with Args: ``value=500, change=500, prev_value=0``
     ``player_score`` with Args: ``value=1200, change=700, prev_value=500``
-    
+
     """
 
     monitor_enabled = False
@@ -276,11 +276,11 @@ class Player(object):
 
     def is_player_var(self, var_name):
         """Check if player var exists.
-        
+
         Args:
             var_name: String name of the player variable to test.
-            
+
         Returns: *True* if the variable exists and *False* if not.
-        
+
         """
         return var_name in self.vars

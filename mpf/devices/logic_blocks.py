@@ -301,7 +301,7 @@ class Counter(LogicBlock):
 
         This method is also automatically called when one of the
         ``count_events`` is posted.
-        
+
         """
         del kwargs
         if not self.enabled:

@@ -15,14 +15,16 @@ if TYPE_CHECKING:   # pragma: no cover
 @DeviceMonitor(_enabled="enabled")
 class AutofireCoil(SystemWideDevice):
 
-    """Coils in the pinball machine which should fire automatically based on
+    """Autofire coils which fire based on switch hits with a hardware rule.
+
+    Coils in the pinball machine which should fire automatically based on
     switch hits using defined hardware switch rules.
 
     Autofire coils work with rules written to the hardware pinball controller
     that allow them to respond "instantly" to switch hits versus waiting for
     the lag of USB and the host computer.
 
-    Examples of Autofire Coils are pop bumpers, slingshots, and kicking 
+    Examples of Autofire Coils are pop bumpers, slingshots, and kicking
     targets. (Flippers use the same autofire rules under the hood, but flipper
     devices have their own device type in MPF.
 
@@ -50,20 +52,20 @@ class AutofireCoil(SystemWideDevice):
     @event_handler(10)
     def enable(self, **kwargs):
         """Enable the autofire device.
-        
+
         This causes the coil to respond to the switch hits. This is typically
         called when a ball starts to enable the slingshots, pops, etc.
-        
+
         Note that there are several options for both the coil and the switch
         which can be incorporated into this rule, including recycle times,
         switch debounce, reversing the switch (fire the coil when the switch
         goes inactive), etc. These rules vary by hardware platform. See the
         user documentation for the hardware platform for details.
-        
+
         Args:
             **kwargs: Not used, just included so this method can be used as an
                 event callback.
-        
+
         """
         del kwargs
 
@@ -87,14 +89,14 @@ class AutofireCoil(SystemWideDevice):
     @event_handler(1)
     def disable(self, **kwargs):
         """Disable the autofire device.
-        
+
         This is typically called at the end of a ball and when a tilt event
         happens.
-        
+
         Args:
             **kwargs: Not used, just included so this method can be used as an
                 event callback.
-                
+
         """
         del kwargs
 

@@ -10,8 +10,11 @@ from mpf.core.player import Player
 
 class HighScore(AsyncMode):
 
-    """Mode which runs during the game ending process to check for high scores
-    and lets the players enter their names or initials."""
+    """High score mode.
+
+    Mode which runs during the game ending process to check for high scores and lets the players enter their names or
+    initials.
+    """
 
     def __init__(self, machine, config, name, path):
         """Initialise high score mode."""

@@ -15,7 +15,7 @@ class ShowController(MpfController):
 
     def __init__(self, machine):
         """Initialise show controller.
-        
+
         Args:
             machine: Parent machine object.
         """

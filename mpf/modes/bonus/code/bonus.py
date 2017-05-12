@@ -23,7 +23,7 @@ class Bonus(Mode):
         self.bonus_iterator = None
 
     def mode_start(self, **kwargs):
-        """Contains the code that runs when the mode is started."""
+        """Start the bonus mode and setup all handlers."""
         if not self.bonus_entries:
             raise ValueError(
                 "Bonus mode started, but `bonus_entries` is not configured.")

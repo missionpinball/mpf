@@ -37,10 +37,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
     def __init__(self, machine):
         """Initialise fast hardware platform.
-        
+
         Args:
             machine: The main ``MachineController`` instance.
-        
         """
         super().__init__(machine)
         self.log = logging.getLogger('FAST')
@@ -124,8 +123,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.net_connection.send('WD:' + str(hex(self.config['watchdog']))[2:])
 
     def process_received_message(self, msg: str):
-        """Send an incoming message from the FAST controller to the proper
-        method for servicing.
+        """Send an incoming message from the FAST controller to the proper method for servicing.
 
         Args:
             msg: messaged which was received

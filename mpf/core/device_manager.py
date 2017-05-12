@@ -37,10 +37,9 @@ class DeviceManager(MpfController):
 
     def register_monitorable_device(self, device):
         """Register a monitorable device.
-        
-            Args:
-                device: The device to register.
-        
+
+        Args:
+            device: The device to register.
         """
         if device.collection not in self._monitorable_devices:
             self._monitorable_devices[device.collection] = {}
@@ -48,13 +47,13 @@ class DeviceManager(MpfController):
 
     def notify_device_changes(self, device, notify, old, value):
         """Notify subscribers about changes in a registered device.
-        
+
         Args:
             device: The device that changed.
             notify:
             old: The old value.
             value: The new value.
-        
+
         """
         self.machine.bcp.interface.notify_device_changes(device, notify, old, value)
 
@@ -292,24 +291,28 @@ class DeviceManager(MpfController):
                                                                 method))
 
 
-KT = TypeVar('KT') # key type.
-VT = TypeVar('VT')  # Value type.
+KT = TypeVar('KT')      # key type.
+VT = TypeVar('VT')      # Value type.
 
 
-class DeviceCollectionType(Sized, Container[KT], Generic[KT, VT], Iterable[VT], extra=dict):
+class DeviceCollectionType(Sized, Container[KT], Generic[KT, VT], Iterable[VT], extra=dict):    # noqa
 
     """Type for a device collection."""
 
     def values(self) -> Iterable[VT]:
+        """Dummy for type annotations."""
         pass
 
     def items_tagged(self, tag: str) -> Iterable[VT]:
+        """Dummy for type annotations."""
         pass
 
     def __getitem__(self, key: KT) -> VT:
+        """Dummy for type annotations."""
         pass
 
     def __getattr__(self, key: str) -> VT:
+        """Dummy for type annotations."""
         pass
 
 

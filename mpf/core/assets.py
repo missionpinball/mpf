@@ -33,7 +33,7 @@ class BaseAssetManager(MpfController, LogMixin):
 
     def __init__(self, machine: MachineController) -> None:
         """Initialise asset manager.
-        
+
         Args:
             machine: The machine controller
         """

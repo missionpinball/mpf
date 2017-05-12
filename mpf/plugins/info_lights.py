@@ -9,11 +9,11 @@ import logging
 class InfoLights(object):
 
     """Uses lights to represent game state.
-    
+
     Info lights are primarily used in EM and early solid state machines,
     typically lights in the backbox for game over, tilt, which player is up,
     the current ball number, etc.
-    
+
     """
 
     def __init__(self, machine):

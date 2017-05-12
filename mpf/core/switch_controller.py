@@ -24,9 +24,7 @@ TimedSwitchHandler = namedtuple("TimedSwitchHandler", ["callback", 'switch_name'
 
 class SwitchController(MpfController):
 
-    """Tracks all switches in the machine, receives switch activity,
-    and converts switch changes into events.
-    """
+    """Tracks all switches in the machine, receives switch activity, and converts switch changes into events."""
 
     log = logging.getLogger('SwitchController')
 
@@ -59,7 +57,7 @@ class SwitchController(MpfController):
         self.monitors = list()      # type: List[Callable[[MonitoredSwitchChange], None]]
 
     def register_switch(self, name):
-        """Adds the name of a switch to the switch controller for tracking.
+        """Add the name of a switch to the switch controller for tracking.
 
         Args:
             name: String name of the switch to add
@@ -78,8 +76,7 @@ class SwitchController(MpfController):
             self.set_state(switch.name, switch.state, reset_time=True)
 
     def update_switches_from_hw(self):
-        """Update the states of all the switches be re-reading the states from
-        the hardware platform.
+        """Update the states of all the switches be re-reading the states from the hardware platform.
 
         This method works silently and does not post any events if any switches
         changed state.
@@ -140,7 +137,7 @@ class SwitchController(MpfController):
 
         Query whether a switch is in a given state and (optionally)
         whether it has been in that state for the specified number of ms.
-        
+
         Args:
             switch_name: String name of the switch to check.
             state: Bool of the state to check. True is active and False is
@@ -196,28 +193,26 @@ class SwitchController(MpfController):
                              ms=ms)
 
     def ms_since_change(self, switch_name):
-        """Return the number of ms that have elapsed since this switch last
-        changed state.
-        
+        """Return the number of ms that have elapsed since this switch last changed state.
+
         Args:
             switch_name: String name of the switch to check.
-        
+
         Returns:
             Integer of milliseconds.
-        
         """
         return round((self.machine.clock.get_time() - self.switches[switch_name].time) * 1000.0, 0)
 
     def set_state(self, switch_name, state=1, reset_time=False):
         """Set the state of a switch.
-        
+
         Note that since this method just sets the logical state of the switch,
         weird things can happen if the state diverges from the physical state
         of the switch.
-        
+
         It's mainly used with the virtual platforms to set the initial states
         of switches on MPF boot.
-        
+
         Args:
             switch_name: String name of the switch to set.
             state: Logical state to set. 0 is inactive and 1 is active.
@@ -225,7 +220,7 @@ class SwitchController(MpfController):
                 indicates that this switch was in this state when the machine
                 was powered on and therefore the various timed switch
                 handlers will not be triggered.
-        
+
         """
         if reset_time:
             timestamp = -100000     # clock can be 0 at start
@@ -236,7 +231,7 @@ class SwitchController(MpfController):
 
     def process_switch_by_num(self, num, state, platform, logical=False):
         """Process a switch state change by switch number.
-        
+
         Args:
             num: The switch number (based on the platform number) for the
                 switch you're setting.
@@ -247,7 +242,7 @@ class SwitchController(MpfController):
                 open), then the logical and physical states will be the same.
                 NC (normally closed) switches will have physical and
                 logical states that are inverted from each other.
-        
+
         """
         for switch in self.machine.switches:
             if switch.hw_switch.number == num and switch.platform == platform:
@@ -389,7 +384,7 @@ class SwitchController(MpfController):
 
     def wait_for_switch(self, switch_name: str, state: int=1, only_on_change=True, ms=0):
         """Wait for a switch to change into a state.
-        
+
         Args:
             switch_name: String name of the switch to wait for.
             state: The state to wait for. 0 = inactive, 1 = active.
@@ -398,24 +393,22 @@ class SwitchController(MpfController):
                 whether it will wait until the switch changes into that state.
             ms: How long the switch needs to be in the new state to trigger
                 the wait.
-        
+
         """
         return self.wait_for_any_switch([switch_name], state, only_on_change, ms)
 
     def wait_for_any_switch(self, switch_names: List[str], state: int=1, only_on_change=True, ms=0):
         """Wait for the first switch in the list to change into state.
-        
-        
+
         Args:
-            switch_names: Iterable of strings of switch names. Whichever switch
-                changes first will trigger this wait.
+            switch_names: Iterable of strings of switch names. Whichever switch changes first will trigger this wait.
             state: The state to wait for. 0 = inactive, 1 = active.
             only_on_change: Bool which controls whether this wait will be
                 triggered now if the switch is already in the state, or
                 whether it will wait until the switch changes into that state.
             ms: How long the switch needs to be in the new state to trigger
                 the wait.
-        
+
         """
         future = asyncio.Future(loop=self.machine.clock.loop)   # type: asyncio.Future
 
@@ -603,9 +596,7 @@ class SwitchController(MpfController):
                     del self.active_timed_switches[k][dummy_key]
 
     def log_active_switches(self, **kwargs):
-        """Write out entries to the INFO log file of all switches that are
-        currently active.
-        """
+        """Write out entries to the INFO log file of all switches that are currently active."""
         del kwargs
         for k, v in self.switches.items():
             if v.state:
@@ -625,8 +616,7 @@ class SwitchController(MpfController):
 
     @staticmethod
     def get_active_event_for_switch(switch_name):
-        """Return the event name which is posted when switch_name becomes
-        active."""
+        """Return the event name which is posted when switch_name becomes active."""
         return "{}_active".format(switch_name)
 
     def get_next_timed_switch_event(self):

@@ -19,7 +19,7 @@ class FadecandyHardwarePlatform(OpenpixelHardwarePlatform):
 
     def __init__(self, machine: "MachineController") -> None:
         """Initialise Fadecandy.
-        
+
         Args:
             machine: The main ``MachineController`` object.
         """
@@ -42,8 +42,6 @@ class FadeCandyOPClient(OpenPixelClient):
 
     """Base class of an OPC client which connects to a FadeCandy server.
 
-
-
     This class implements some FadeCandy-specific features that are not
     available with generic OPC implementations.
 
@@ -51,12 +49,11 @@ class FadeCandyOPClient(OpenPixelClient):
 
     def __init__(self, machine, config):
         """Initialise Fadecandy client.
-        
+
         Args:
             machine: The main ``MachineController`` instance.
             config: Dictionary which contains configuration settings for the
                 OPC client.
-        
         """
         super().__init__(machine, config)
 
@@ -109,8 +106,7 @@ class FadeCandyOPClient(OpenPixelClient):
             "!BBHHH", 0x00, 0xFF, len(msg) + 4, 0x0001, 0x0001) + bytes(msg, 'UTF-8'))
 
     def write_firmware_options(self):
-        """Write the current firmware settings (keyframe interpolation and
-        dithering) to the FadeCandy hardware."""
+        """Write the current firmware settings (keyframe interpolation and dithering) to the FadeCandy hardware."""
         config_byte = 0x00
 
         if not self.dithering:

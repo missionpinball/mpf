@@ -151,7 +151,6 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
                 of the P3-ROC, it uses the following:
 
         Returns: A configured switch object.
-        
         """
         del platform_config
         proc_num = self.pdbconfig.get_proc_switch_number(str(number))

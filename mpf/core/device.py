@@ -44,7 +44,6 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         """Validated dictionary of this device's settings. Note that this will
         map to the YAML-based config specified in the Config Spec section of
         the User Documentation.
-        
         """
 
     def device_added_to_mode(self, mode: "Mode") -> None:

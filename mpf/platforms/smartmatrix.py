@@ -68,6 +68,7 @@ class SmartMatrixDevice(DmdPlatformInterface):
     """A smartmatrix device."""
 
     def __init__(self, config, machine):
+        """Initialise smart matrix device."""
         self.config = config
         self.reader = None
         self.writer = None
