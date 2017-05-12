@@ -8,7 +8,7 @@ from pathlib import PurePath
 
 import asyncio
 
-from typing import Iterable, Optional, Set, Callable, Tuple, Any
+from typing import Iterable, Optional, Set, Callable, Tuple
 from typing import List
 
 from mpf.core.mode import Mode
@@ -98,7 +98,7 @@ class BaseAssetManager(MpfController, LogMixin):
                          (self.num_assets_to_load +
                           self.num_bcp_assets_to_load) * 100)
 
-        except ZeroDivisionError:
+        except ZeroDivisionError:   # pragma: no cover
             return 100
 
     # pylint: disable-msg=too-many-arguments
@@ -278,7 +278,7 @@ class BaseAssetManager(MpfController, LogMixin):
         full path), and a config dict appropriately merged from default,
         folder-specific, and asset specific settings
         """
-        if not config:
+        if not config:      # pragma: no cover
             config = dict()
 
         try:
@@ -303,7 +303,7 @@ class BaseAssetManager(MpfController, LogMixin):
             # create the actual instance of the Asset object and add it
             # to the self.machine asset attribute dict for that asset class
             for asset in config[ac.disk_asset_section]:
-                if 'file' not in config[ac.disk_asset_section][asset]:
+                if 'file' not in config[ac.disk_asset_section][asset]:      # pragma: no cover
                     msg = "The file associated with the disk-based asset '%s' declared in the " \
                           "'%s' config section could not be found" % (asset, ac.disk_asset_section)
                     self.error_log(msg)
@@ -441,7 +441,7 @@ class BaseAssetManager(MpfController, LogMixin):
 
                 # Update the config for that asset
 
-                if name in config and not found_in_config:
+                if name in config and not found_in_config:      # pragma: no cover
                     raise RuntimeError(
                         "Duplicate Asset name found: {}".format(name))
 
@@ -579,34 +579,6 @@ class BaseAssetManager(MpfController, LogMixin):
             self.machine.clear_boot_hold('assets')
 
 
-class AsyncioAssetManager(BaseAssetManager):
-
-    """AssetManager which uses asyncio to load assets."""
-
-    @staticmethod
-    def _load_sync(asset):
-        with asset.lock:
-            if not asset.loaded:
-                asset.do_load()
-                return True
-            else:
-                return False
-
-    @asyncio.coroutine
-    def wait_for_asset_load(self, asset):
-        """Wait for an asset to load."""
-        result = yield from self.machine.clock.loop.run_in_executor(None, self._load_sync, asset)
-        if result:
-            asset.is_loaded()
-        self.num_assets_loaded += 1
-        self._post_loading_event()
-
-    def load_asset(self, asset):
-        """Load an asset."""
-        self.num_assets_to_load += 1
-        self.machine.clock.loop.create_task(self.wait_for_asset_load(asset))
-
-
 class AsyncioSyncAssetManager(BaseAssetManager):
 
     """AssetManager which uses asyncio to load assets."""
@@ -683,7 +655,7 @@ class AssetPool(object):
                 self.assets.append((
                     getattr(self.machine, self.member_cls.attribute)[name],
                     number))
-            except KeyError:
+            except KeyError:    # pragma: no cover
                 raise ValueError("No asset named {}".format(name))
 
         self._configure_return_asset()
