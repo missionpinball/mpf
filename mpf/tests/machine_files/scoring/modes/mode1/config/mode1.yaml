@@ -4,6 +4,15 @@ mode:
     stop_events: stop_mode1
     priority: 200
 
+counters:
+  counter_target:
+    count_events: s_counter_target_active
+    starting_count: 3
+    count_complete_value: 0
+    direction: down
+    events_when_complete: counter_target_complete
+    reset_on_complete: true
+
 scoring:
     test_event1:
         score: 100
@@ -33,4 +42,8 @@ scoring:
           score: change
           action: add_machine
     test_score_mode:
+        score: 100
+    s_counter_target_active:
+        score: 10
+    s_kills_counter_target_active:
         score: 100

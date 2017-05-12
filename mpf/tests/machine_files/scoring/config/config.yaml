@@ -16,6 +16,10 @@ switches:
         number:
     s_ball_switch2:
         number:
+    s_counter_target:
+        number:
+    s_kills_counter_target:
+        number:
 
 ball_devices:
     test_trough:
@@ -27,3 +31,4 @@ modes:
   - mode1
   - mode2
   - mode3
+  - mode_for_logic_block
