@@ -59,7 +59,7 @@ class Auditor(object):
 
         self.current_audits = self.data_manager.get_data()
 
-        if not self.current_audits:
+        if not isinstance(self.current_audits, dict):
             self.current_audits = dict()
 
         # Make sure we have all the sections we need in our audit dict
@@ -105,6 +105,8 @@ class Auditor(object):
         self.machine.switch_controller.add_monitor(self.audit_switch)
 
         for category, audits in self.current_audits.items():
+            if not isinstance(audits, dict):
+                continue
             for name, value in audits.items():
                 self.machine.set_machine_var("audits_{}_{}".format(category, name), value)
 
