@@ -206,7 +206,7 @@ logging:
       service_controller: basic
       settings_controller: basic
       show_controller: basic
-      switch_controller: full
+      switch_controller: basic
       timers: none
 
 p_roc:

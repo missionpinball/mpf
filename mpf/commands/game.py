@@ -73,8 +73,9 @@ class Command(object):
                             action="store", dest="logfile",
                             metavar='file_name',
                             default=os.path.join("logs",
-                                                 datetime.now().strftime(
-                                                     "%Y-%m-%d-%H-%M-%S-mpf-" + socket.gethostname() + ".log")),
+                                datetime.now().strftime(
+                                    "%Y-%m-%d-%H-%M-%S-mpf-" +
+                                    socket.gethostname() + ".log")),
                             help="The name (and path) of the log file")
 
         parser.add_argument("-p",
@@ -159,7 +160,8 @@ class Command(object):
             console_log.setLevel(self.args.consoleloglevel)
 
         # tell the handler to use this format
-        console_log.setFormatter(logging.Formatter('%(name)s : %(message)s'))
+        console_log.setFormatter(logging.Formatter(
+            '%(levelname)s : %(name)s : %(message)s'))
 
         # initialise async handler for console
         console_log_queue = Queue()
@@ -170,7 +172,8 @@ class Command(object):
 
         # initialise file log
         file_log = logging.FileHandler(full_logfile_path)
-        file_log.setFormatter(logging.Formatter('%(asctime)s : %(name)s : %(message)s'))
+        file_log.setFormatter(logging.Formatter(
+            '%(asctime)s : %(levelname)s : %(name)s : %(message)s'))
 
         # initialise async handler for file log
         file_log_queue = Queue()
