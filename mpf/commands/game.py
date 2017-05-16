@@ -4,6 +4,7 @@ import argparse
 import errno
 import logging
 import os
+import signal
 import socket
 import sys
 from datetime import datetime
@@ -20,6 +21,9 @@ class Command(object):
 
     def __init__(self, mpf_path, machine_path, args):
         """Run mpf game."""
+
+        signal.signal(signal.SIGINT, self.exit)
+
         parser = argparse.ArgumentParser(
             description='Starts the MPF game engine')
 
@@ -76,6 +80,10 @@ class Command(object):
                             "when launching in a separate window so you can "
                             "see any errors before the window closes.")
 
+        parser.add_argument("-t",
+                            action="store_false", dest='text_ui', default=True,
+                            help="Use the ASCII test-based UI")
+
         parser.add_argument("-v",
                             action="store_const", dest="loglevel",
                             const=10,
@@ -118,8 +126,8 @@ class Command(object):
                             metavar='mc_file_name',
                             default=None, help=argparse.SUPPRESS)
 
-        args = parser.parse_args(args)
-        args.configfile = Util.string_to_list(args.configfile)
+        self.args = parser.parse_args(args)
+        self.args.configfile = Util.string_to_list(self.args.configfile)
 
         # Configure logging. Creates a logfile and logs to the console.
         # Formatting options are documented here:
@@ -131,7 +139,7 @@ class Command(object):
             if exception.errno != errno.EEXIST:
                 raise
 
-        full_logfile_path = os.path.join(machine_path, args.logfile)
+        full_logfile_path = os.path.join(machine_path, self.args.logfile)
 
         try:
             os.remove(full_logfile_path)
@@ -139,8 +147,15 @@ class Command(object):
             pass
 
         # define a Handler which writes INFO messages or higher to the sys.stderr
-        console_log = logging.StreamHandler()
-        console_log.setLevel(args.consoleloglevel)
+
+
+
+        if self.args.text_ui:
+            console_log = logging.NullHandler()
+            console_log.setLevel(logging.ERROR)
+        else:
+            console_log = logging.StreamHandler()
+            console_log.setLevel(self.args.consoleloglevel)
 
         # tell the handler to use this format
         console_log.setFormatter(logging.Formatter('%(name)s : %(message)s'))
@@ -148,8 +163,8 @@ class Command(object):
         # initialise async handler for console
         console_log_queue = Queue()
         console_queue_handler = QueueHandler(console_log_queue)
-        console_queue_listener = logging.handlers.QueueListener(console_log_queue, console_log)
-        console_queue_listener.start()
+        self.console_queue_listener = logging.handlers.QueueListener(console_log_queue, console_log)
+        self.console_queue_listener.start()
 
         # initialise file log
         file_log = logging.FileHandler(full_logfile_path)
@@ -158,37 +173,65 @@ class Command(object):
         # initialise async handler for file log
         file_log_queue = Queue()
         file_queue_handler = QueueHandler(file_log_queue)
-        file_queue_listener = logging.handlers.QueueListener(file_log_queue, file_log)
-        file_queue_listener.start()
+        self.file_queue_listener = logging.handlers.QueueListener(file_log_queue, file_log)
+        self.file_queue_listener.start()
 
         # add loggers
         logger = logging.getLogger()
         logger.addHandler(console_queue_handler)
         logger.addHandler(file_queue_handler)
-        logger.setLevel(args.loglevel)
+        logger.setLevel(self.args.loglevel)
 
-        if args.syslog_address:
+        if self.args.syslog_address:
             try:
-                host, port = args.syslog_address.split(":")
+                host, port = self.args.syslog_address.split(":")
             except ValueError:
-                syslog_logger = SysLogHandler(args.syslog_address)
+                syslog_logger = SysLogHandler(self.args.syslog_address)
             else:
                 syslog_logger = SysLogHandler((host, int(port)))
 
             logger.addHandler(syslog_logger)
 
+        if self.args.text_ui:
+            from asciimatics.screen import Screen
+            self.args.screen = Screen.open()
+
         try:
-            MachineController(mpf_path, machine_path, vars(args)).run()
+            MachineController(mpf_path, machine_path, vars(self.args)).run()
             logging.info("MPF run loop ended.")
+            self.exit()
+
         # pylint: disable-msg=broad-except
         except Exception as e:
-            logging.exception(e)
+            self.exit(exception=e)
+
+    def exit(self, signal=None, frame=None, exception=None):
+        """Called when MPF exits (either cleanly or from a crash.
+        
+        Cleanly shuts down logging and restores the console window if the Text
+        UI option is used.
+        """
+
+        del signal
+        del frame
+
+        if self.args.text_ui:
+            self.args.screen.close(True)
+
+        # If we got here via an exception, log it to the console after the
+        # Text UI has been restored so the user knows what happened.
+        if exception:
+            # Re-enable the console logging first
+            logger = logging.getLogger()
+            logger.addHandler(logging.StreamHandler())
+            logging.exception(exception)
 
         logging.shutdown()
         # stop threads
-        console_queue_listener.stop()
-        file_queue_listener.stop()
+        self.console_queue_listener.stop()
+        self.file_queue_listener.stop()
 
-        if args.pause:
+        if self.args.pause:
             input('Press ENTER to continue...')
-        sys.exit()
+
+        sys.exit(0)
