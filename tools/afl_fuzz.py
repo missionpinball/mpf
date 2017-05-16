@@ -67,6 +67,7 @@ class AflRunner(object):
             'bcp': False,
             'no_load_cache': False,
             'create_config_cache': True,
+            'text_ui': False,
         }
 
     def advance_time_and_run(self, delta=1.0):

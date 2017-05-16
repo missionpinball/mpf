@@ -273,6 +273,7 @@ class MpfTestCase(unittest.TestCase):
             'bcp': self.get_use_bcp(),
             'no_load_cache': False,
             'create_config_cache': True,
+            'text_ui': False,
         }
 
     def advance_time_and_run(self, delta=1.0):

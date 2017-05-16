@@ -234,4 +234,4 @@ class Command(object):
         if self.args.pause:
             input('Press ENTER to continue...')
 
-        sys.exit(0)
+        sys.exit()
