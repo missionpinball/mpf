@@ -17,13 +17,16 @@ class TextUi(object):
     def __init__(self, machine: "MachineController") -> None:
         """Initialize TextUi."""
 
+        self.screen = None
+
         if not machine.options['text_ui']:
             return
 
         self.start_time = datetime.now()
         self.machine = machine
         self.machine.clock.schedule_interval(self._tick, 1)
-        self.screen = self.machine.options['screen']
+        self.screen = Screen.open()
+        self.mpf_process = psutil.Process()
 
         self.machine.events.add_handler('init_phase_1', self._init)
         self.machine.events.add_handler('init_phase_3', self._update_switches)
@@ -54,6 +57,7 @@ class TextUi(object):
         self._bcp_status = cpu, rss, vms
 
     def _draw_screen(self):
+        height, width = self.screen.dimensions
         title = 'Mission Pinball Framework v{}'.format(
             mpf._version.__version__)
         padding = int((self.screen.width - len(title)) / 2)
@@ -62,56 +66,61 @@ class TextUi(object):
                              0, 0, colour=7, bg=1)
 
         self.screen.print_at('ACTIVE MODES', 1, 1)
-        self.screen.print_at('ACTIVE SWITCHES', int(self.screen.width / 2), 1)
-        self.screen.print_at('-' * self.screen.width, 0, 2)
+        self.screen.print_at('ACTIVE SWITCHES', int(width / 2), 1)
+        self.screen.print_at('-' * width, 0, 2)
 
-        self.screen.print_at(self.machine.machine_path,
-                             0, self.screen.height-1,
-                             colour=3)
+        self.screen.print_at(self.machine.machine_path, 0, height-2, colour=3)
 
         if 0 < self._asset_percent < 100:
             self.screen.print_at(
                 'LOADING ASSETS: {}%'.format(self._asset_percent),
-                int(self.screen.width / 2) - 10, int(self.screen.height / 2) + 1,
-                colour=0, bg=3)
+                int(width / 2) - 10, int(height / 2) + 1, colour=0, bg=3)
 
         if self._pending_bcp_connection:
             bcp_string = 'WAITING FOR MEDIA CONTROLLER {}...'.format(
                 self._pending_bcp_connection)
 
             self.screen.print_at(
-                bcp_string,
-                int((self.screen.width - len(bcp_string)) / 2),
-                int(self.screen.height / 2) - 1,
-                colour=0, bg=3)
+                bcp_string, int((width - len(bcp_string)) / 2),
+                int(height / 2) - 1, colour=0, bg=3)
 
-        self._update_runtime()
+        self._update_stats()
 
-    def _update_runtime(self):
+    def _update_stats(self):
+        height, width = self.screen.dimensions
+
+        # Runtime
         rt = (datetime.now() - self.start_time)
+        mins, sec = divmod(rt.seconds + rt.days * 86400, 60)
+        hours, mins = divmod(mins, 60)
+        time_string = 'RUNNING {:d}:{:02d}:{:02d}'.format(hours, mins, sec)
+        self.screen.print_at(time_string, width - len(time_string),
+                             height-2, colour=2)
 
-        min, sec = divmod(rt.seconds + rt.days * 86400, 60)
-        hours, min = divmod(min, 60)
-
-        time_string = 'RUNNING {:d}:{:02d}:{:02d}'.format(hours, min, sec)
-        self.screen.print_at(time_string, self.screen.width - len(time_string),
-                             self.screen.height-1, colour=2, bg=0)
-
-        mpf_process = psutil.Process()
-        stats = 'MPF (CPU,RSS,VMS): {}% {}/{} MB  MC (CPU,RSS,VMS) {}% {}/{} MB  Free Memory (MB): {} CPU:{:3d}%'.format(
-            round(mpf_process.cpu_percent()),
-            round(mpf_process.memory_info().rss / 1048576),
-            round(mpf_process.memory_info().vms / 1048576),
-            round(self._bcp_status[0]),
-            round(self._bcp_status[1] / 1048576),
-            round(self._bcp_status[2] / 1048576),
+        # System Stats
+        system_str = 'Free Memory (MB): {} CPU:{:3d}%'.format(
             round(virtual_memory().available / 1048576),
             round(cpu_percent(interval=None, percpu=False)))
+        self.screen.print_at(system_str, width-len(system_str), height-1,
+                             colour=2)
 
-        self.screen.print_at(
-            stats,
-            self.screen.width - len(time_string) - len(stats) - 3,
-            self.screen.height-1, colour=6, bg=0)
+        # MPF process stats
+        stats_str = 'MPF (CPU RSS/VMS): {}% {}/{} MB    '.format(
+            round(self.mpf_process.cpu_percent()),
+            round(self.mpf_process.memory_info().rss / 1048576),
+            round(self.mpf_process.memory_info().vms / 1048576))
+
+        self.screen.print_at(stats_str, 0, height-1, colour=6)
+
+        # MC process stats
+        if self._bcp_status != (0, 0, 0):
+            bcp_string = 'MC (CPU RSS/VMS) {}% {}/{} MB'.format(
+                round(self._bcp_status[0]),
+                round(self._bcp_status[1] / 1048576),
+                round(self._bcp_status[2] / 1048576))
+
+            self.screen.print_at(bcp_string,
+                len(stats_str) - 2, height-1, colour=5)
 
         self.screen.refresh()
 
@@ -160,7 +169,7 @@ class TextUi(object):
             self._update_modes()
 
         else:
-            self._update_runtime()
+            self._update_stats()
 
         # request status from all bcp clients
         self.machine.bcp.transport.send_to_all_clients("status_request")

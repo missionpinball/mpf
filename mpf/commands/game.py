@@ -11,6 +11,8 @@ from datetime import datetime
 from logging.handlers import QueueHandler, SysLogHandler
 from queue import Queue
 
+from asciimatics.screen import Screen
+
 from mpf.core.machine import MachineController
 from mpf.core.utility_functions import Util
 
@@ -61,7 +63,8 @@ class Command(object):
                                  "mpf/mpfconfig.yaml")
 
         parser.add_argument("-f",
-                            action="store_true", dest="force_assets_load", default=False,
+                            action="store_true", dest="force_assets_load",
+                            default=False,
                             help="Load all assets upon startup.  Useful for "
                             "ensuring all assets are set up properly "
                             "during development.")
@@ -107,9 +110,11 @@ class Command(object):
 
         parser.add_argument("--syslog_address",
                             action="store", dest="syslog_address",
-                            help="Log to the specified syslog address. This can be a domain socket such as /dev/og on "
-                                 "Linux or /var/run/syslog on Mac. Alternatively, you an specify host:port for remote "
-                                 "logging over UDP.")
+                            help="Log to the specified syslog address. This "
+                                 "can be a domain socket such as /dev/og on "
+                                 "Linux or /var/run/syslog on Mac. "
+                                 "Alternatively, you an specify host:port for "
+                                 "remote logging over UDP.")
 
         parser.add_argument("-X",
                             action="store_const", dest="force_platform",
@@ -146,10 +151,6 @@ class Command(object):
         except OSError:
             pass
 
-        # define a Handler which writes INFO messages or higher to the sys.stderr
-
-
-
         if self.args.text_ui:
             console_log = logging.NullHandler()
             console_log.setLevel(logging.ERROR)
@@ -163,7 +164,8 @@ class Command(object):
         # initialise async handler for console
         console_log_queue = Queue()
         console_queue_handler = QueueHandler(console_log_queue)
-        self.console_queue_listener = logging.handlers.QueueListener(console_log_queue, console_log)
+        self.console_queue_listener = logging.handlers.QueueListener(
+            console_log_queue, console_log)
         self.console_queue_listener.start()
 
         # initialise file log
@@ -173,7 +175,8 @@ class Command(object):
         # initialise async handler for file log
         file_log_queue = Queue()
         file_queue_handler = QueueHandler(file_log_queue)
-        self.file_queue_listener = logging.handlers.QueueListener(file_log_queue, file_log)
+        self.file_queue_listener = logging.handlers.QueueListener(
+            file_log_queue, file_log)
         self.file_queue_listener.start()
 
         # add loggers
@@ -191,10 +194,6 @@ class Command(object):
                 syslog_logger = SysLogHandler((host, int(port)))
 
             logger.addHandler(syslog_logger)
-
-        if self.args.text_ui:
-            from asciimatics.screen import Screen
-            self.args.screen = Screen.open()
 
         try:
             MachineController(mpf_path, machine_path, vars(self.args)).run()
@@ -215,19 +214,19 @@ class Command(object):
         del signal
         del frame
 
+        # reset the console to its previous state
         if self.args.text_ui:
-            self.args.screen.close(True)
+            Screen.open().close(True)
 
         # If we got here via an exception, log it to the console after the
         # Text UI has been restored so the user knows what happened.
         if exception:
-            # Re-enable the console logging first
+            # Make sure console logging is enabled since Text UI disables it
             logger = logging.getLogger()
             logger.addHandler(logging.StreamHandler())
             logging.exception(exception)
 
         logging.shutdown()
-        # stop threads
         self.console_queue_listener.stop()
         self.file_queue_listener.stop()
 
