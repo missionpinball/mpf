@@ -3,6 +3,7 @@
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING
 from asciimatics.screen import Screen
+from psutil import cpu_percent
 import mpf._version
 
 if TYPE_CHECKING:   # pragma: no cover
@@ -57,6 +58,10 @@ class TextUi(object):
         self.screen.print_at('ACTIVE SWITCHES', int(self.screen.width / 2), 1)
         self.screen.print_at('-' * self.screen.width, 0, 2)
 
+        self.screen.print_at(self.machine.machine_path,
+                             0, self.screen.height-1,
+                             colour=3)
+
         if 0 < self._asset_percent < 100:
             self.screen.print_at(
                 'LOADING ASSETS: {}%'.format(self._asset_percent),
@@ -84,6 +89,14 @@ class TextUi(object):
         time_string = 'RUNNING {:d}:{:02d}:{:02d}'.format(hours, min, sec)
         self.screen.print_at(time_string, self.screen.width - len(time_string),
                              self.screen.height-1, colour=2, bg=0)
+
+        cpu_string = 'CPU:{:3d}%'.format(round(cpu_percent(interval=None,
+                                                           percpu=False)))
+
+        self.screen.print_at(
+            cpu_string,
+            self.screen.width - len(time_string) - len(cpu_string) - 3,
+            self.screen.height-1, colour=6, bg=0)
 
         self.screen.refresh()
 
