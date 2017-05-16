@@ -3,7 +3,7 @@
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING
 from asciimatics.screen import Screen
-from psutil import cpu_percent
+from psutil import cpu_percent, virtual_memory
 import mpf._version
 
 if TYPE_CHECKING:   # pragma: no cover
@@ -90,12 +90,13 @@ class TextUi(object):
         self.screen.print_at(time_string, self.screen.width - len(time_string),
                              self.screen.height-1, colour=2, bg=0)
 
-        cpu_string = 'CPU:{:3d}%'.format(round(cpu_percent(interval=None,
-                                                           percpu=False)))
+        stats = 'Free Memory (MB): {}  CPU:{:3d}%'.format(
+            round(virtual_memory().available / 1048576),
+            round(cpu_percent(interval=None, percpu=False)))
 
         self.screen.print_at(
-            cpu_string,
-            self.screen.width - len(time_string) - len(cpu_string) - 3,
+            stats,
+            self.screen.width - len(time_string) - len(stats) - 3,
             self.screen.height-1, colour=6, bg=0)
 
         self.screen.refresh()
