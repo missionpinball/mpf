@@ -1,7 +1,8 @@
 """Contains the TextUI class."""
+from datetime import datetime
+from typing import TYPE_CHECKING, Tuple
 
-from datetime import datetime, timedelta
-from typing import TYPE_CHECKING
+import psutil
 from asciimatics.screen import Screen
 from psutil import cpu_percent, virtual_memory
 import mpf._version
@@ -37,6 +38,7 @@ class TextUi(object):
 
         self._pending_bcp_connection = False
         self._asset_percent = 0
+        self._bcp_status = (0, 0, 0)  # type: Tuple[float, int, int]
 
         self._draw_screen()
 
@@ -45,6 +47,11 @@ class TextUi(object):
         self.machine.mode_controller.register_start_method(self._mode_change)
         self.machine.mode_controller.register_stop_method(self._mode_change)
         self.machine.switch_controller.add_monitor(self._update_switches)
+        self.machine.bcp.interface.register_command_callback("status_report", self._bcp_status_report)
+
+    def _bcp_status_report(self, client, cpu, rss, vms):
+        del client
+        self._bcp_status = cpu, rss, vms
 
     def _draw_screen(self):
         title = 'Mission Pinball Framework v{}'.format(
@@ -90,7 +97,14 @@ class TextUi(object):
         self.screen.print_at(time_string, self.screen.width - len(time_string),
                              self.screen.height-1, colour=2, bg=0)
 
-        stats = 'Free Memory (MB): {}  CPU:{:3d}%'.format(
+        mpf_process = psutil.Process()
+        stats = 'MPF (CPU,RSS,VMS): {}% {}/{} MB  MC (CPU,RSS,VMS) {}% {}/{} MB  Free Memory (MB): {} CPU:{:3d}%'.format(
+            round(mpf_process.cpu_percent()),
+            round(mpf_process.memory_info().rss / 1048576),
+            round(mpf_process.memory_info().vms / 1048576),
+            round(self._bcp_status[0]),
+            round(self._bcp_status[1] / 1048576),
+            round(self._bcp_status[2] / 1048576),
             round(virtual_memory().available / 1048576),
             round(cpu_percent(interval=None, percpu=False)))
 
@@ -147,6 +161,9 @@ class TextUi(object):
 
         else:
             self._update_runtime()
+
+        # request status from all bcp clients
+        self.machine.bcp.transport.send_to_all_clients("status_request")
 
     def _bcp_connection_attempt(self, name, host, port, **kwargs):
         del name

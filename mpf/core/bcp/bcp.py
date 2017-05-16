@@ -1,5 +1,6 @@
 """BCP module."""
 import asyncio
+from typing import TYPE_CHECKING, List
 
 from mpf.core.events import QueuedEvent
 from mpf.core.mpf_controller import MpfController
@@ -10,17 +11,20 @@ from mpf.core.utility_functions import Util
 from mpf.core.bcp.bcp_interface import BcpInterface
 from mpf.core.bcp.bcp_transport import BcpTransportManager
 
+if TYPE_CHECKING:   # pragma: no cover
+    from mpf.core.machine import MachineController
+
 
 class Bcp(MpfController):
 
     """BCP Module."""
 
-    def __init__(self, machine):
+    def __init__(self, machine: "MachineController") -> None:
         """Initialise BCP module."""
         super().__init__(machine)
         self.interface = BcpInterface(machine)
         self.transport = BcpTransportManager(machine)
-        self.servers = []
+        self.servers = []       # type: List[BcpServer]
 
         if self.machine.options['bcp']:
             self.machine.events.add_handler('init_phase_2',
