@@ -416,6 +416,7 @@ class MpfTestCase(unittest.TestCase):
 
             self._initialise_machine()
 
+        # pylint: disable-msg=broad-except
         except Exception as e:
             try:
                 self.machine.stop()

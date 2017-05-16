@@ -2,7 +2,7 @@ Understanding the MPF boot up / start process
 =============================================
 
 A user runs "mpf" from the command line, which is registered as a console script entry point when MPF is installed.
-That entry point calls the function ``run_from_command_line`` in ``mpf.commands.__init__`` module.
+That entry point calls the function ``run_from_command_line()`` in ``mpf.commands.__init__`` module.
 
 That module parses the command line arguments, figures out the
 machine path that's being executed, and figures out which MPF

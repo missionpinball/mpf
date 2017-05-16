@@ -14,7 +14,7 @@ following Python packages to their latest versions:
 
 * ``pip``
 * ``setuptools`` (for Linux & Mac)
-* ``Cython 0.24.1`` (for Linux * Mac)
+* ``Cython 0.24.1`` (for Linux & Mac)
 
 The additional packages for Linux & Mac are used because MPF-MC is actually compiled on built on those platforms. For
 Windows we have pre-built wheels, so compiling is not necessary.

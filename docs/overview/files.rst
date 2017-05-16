@@ -33,4 +33,4 @@ It also includes the following files in the package root:
 * ``__main__.py``: Allows the MPF commands to run
 * ``_version.py``: Contains version strings used throughout MPF for the current version
 * ``mpfconfig.yaml``: The "base" machine config file that is used for all machines (unless this is specifically
-  overridden via the command-line options.
+  overridden via the command-line options)
