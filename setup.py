@@ -72,7 +72,7 @@ community.''',
                       'pyserial>=3.2.0',
                       'pyserial-asyncio>=0.3',
                       'typing',
-                      'asciimatics>=1.8'],
+                      'asciimatics'],
 
     tests_require=[],
     test_suite="mpf.tests",
