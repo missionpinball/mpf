@@ -12,7 +12,7 @@ class TestCommands(TestCase):
             with patch("mpf.commands.game.os"):
                 with patch("mpf.commands.game.sys") as sys:
                     with patch("mpf.commands.game.MachineController") as controller:
-                        with patch("asciimatics.screen.Screen"):
+                        with patch("asciimatics.screen.Screen.open"):
                             game.Command("test", "machine", "")
                             self.assertEqual("test", controller.call_args[0][0])
                             self.assertEqual("machine", controller.call_args[0][1])
