@@ -19,8 +19,40 @@ class TestAccelerometer(MpfTestCase):
         del kwargs
         self._level2 = True
 
+    def test_leveling_different_base_angle(self):
+        accelerometer = self.machine.accelerometers["test_accelerometer"]
+
+        # change base angle to 6.5 degree
+        accelerometer.config['level_x'] = math.sin(math.radians(6.5))
+        accelerometer.config['level_y'] = 0
+        accelerometer.config['level_z'] = math.cos(math.radians(6.5))
+
+        # machine should be 6.5 degree off
+        accelerometer.update_acceleration(0.0, 0.0, 1)
+        self.assertAlmostEqual(math.radians(6.5), accelerometer.get_level_xz())
+        self.assertAlmostEqual(0.0, accelerometer.get_level_yz())
+        self.assertAlmostEqual(math.radians(6.5), accelerometer.get_level_xyz())
+
+        # add a small tilt
+        accelerometer.update_acceleration(0.0, math.sin(math.radians(5)), math.cos(math.radians(5)))
+        self.assertAlmostEqual(math.radians(6.5), accelerometer.get_level_xz())
+        self.assertAlmostEqual(math.radians(5), accelerometer.get_level_yz())
+
+        # leveled
+        accelerometer.update_acceleration(math.sin(math.radians(6.5)), 0.0, math.cos(math.radians(6.5)))
+        self.assertAlmostEqual(0.0, accelerometer.get_level_xz())
+        self.assertAlmostEqual(0.0, accelerometer.get_level_yz())
+        self.assertAlmostEqual(0.0, accelerometer.get_level_xyz())
+
+        # leveled + tilt
+        accelerometer.update_acceleration(math.sin(math.radians(6.5)) / math.cos(math.radians(6.5)),
+                                          math.sin(math.radians(5)) / math.cos(math.radians(5)),
+                                          1)
+        self.assertAlmostEqual(0.0, accelerometer.get_level_xz())
+        self.assertAlmostEqual(math.radians(5), accelerometer.get_level_yz())
+
     def test_leveling(self):
-        accelerometer = self.machine.accelerometers.test_accelerometer
+        accelerometer = self.machine.accelerometers["test_accelerometer"]
 
         self._level1 = False
         self._level2 = False

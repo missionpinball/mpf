@@ -11,10 +11,15 @@ https://github.com/preble/pyprocgame
 """
 
 import logging
+from typing import TYPE_CHECKING
 
 from mpf.core.platform import I2cPlatform, AccelerometerPlatform, DriverConfig, SwitchConfig
+from mpf.platforms.interfaces.accelerometer_platform_interface import AccelerometerPlatformInterface
 from mpf.platforms.p_roc_common import PDBConfig, PROCBasePlatform
 from mpf.platforms.p_roc_devices import PROCDriver
+
+if TYPE_CHECKING:   # pragma: no cover
+    from mpf.devices.accelerometer import Accelerometer
 
 
 class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
@@ -52,7 +57,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         self.pdbconfig = PDBConfig(self.proc, self.machine.config, self.pinproc.DriverCount)
 
         self.acceleration = [0] * 3
-        self.accelerometer_device = None
+        self.accelerometer_device = None    # type: PROCAccelerometer
 
     def __repr__(self):
         """Return string representation."""
@@ -230,14 +235,14 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         self.proc.flush()
 
 
-class PROCAccelerometer(object):
+class PROCAccelerometer(AccelerometerPlatformInterface):
 
     """The accelerometer on the P3-Roc."""
 
-    def __init__(self, callback):
+    def __init__(self, callback: "Accelerometer") -> None:
         """Remember the callback."""
-        self.callback = callback
+        self.callback = callback    # type: Accelerometer
 
-    def update_acceleration(self, x, y, z):
+    def update_acceleration(self, x: float, y: float, z: float) -> None:
         """Call the callback."""
         self.callback.update_acceleration(x, y, z)

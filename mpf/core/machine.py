@@ -52,6 +52,7 @@ if TYPE_CHECKING:   # pragma: no cover
     from mpf.core.device_manager import DeviceManager
     from mpf.plugins.auditor import Auditor
     from mpf.devices.light import Light
+    from mpf.devices.accelerometer import Accelerometer
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -123,6 +124,7 @@ class MachineController(LogMixin):
             self.coils = None                           # type: DeviceCollectionType[str, Driver]
             self.lights = None                          # type: DeviceCollectionType[str, Light]
             self.ball_devices = None                    # type: DeviceCollectionType[str, BallDevice]
+            self.accelerometers = None                  # type: DeviceCollectionType[str, Accelerometer]
             self.playfield = None                       # type: Playfield
             self.playfields = None                      # type: DeviceCollectionType[str, Playfield]
 
