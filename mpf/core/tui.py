@@ -130,7 +130,8 @@ class TextUi(object):
         for i, mode in enumerate(modes):
             self.screen.print_at(' ' * (int(self.screen.width / 2) - 1),
                                  1, i+3)
-            self.screen.print_at(mode.name, 1, i+3)
+            self.screen.print_at('{} ({})'.format(mode.name, mode.priority),
+                                 1, i+3)
 
         self.screen.print_at(' ' * (int(self.screen.width / 2) - 1),
                              1, len(modes) + 3)
