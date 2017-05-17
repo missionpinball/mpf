@@ -397,10 +397,6 @@ psus:
   default:
     voltage: 48
 
-playfields:
-    playfield:
-        tags: default
-
 hardware:
   platform: smart_virtual
   coils: default

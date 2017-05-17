@@ -3,8 +3,14 @@
 game:
     balls_per_game: 3
     allow_start_with_ball_in_drain: True
+
 machine:
     min_balls: 3
+
+playfields:
+    playfield:
+        default_source_device: plunger
+        tags: default
 
 coils:
     outhole:
@@ -45,7 +51,6 @@ ball_devices:
         ball_capacity: 3
         debug: true
     plunger:
-        tags: ball_add_live
         ball_switches: plunger
         mechanical_eject: true
         eject_timeouts: 4s

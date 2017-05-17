@@ -24,6 +24,11 @@ switches:
     s_target:
         number: 5
 
+playfields:
+    playfield:
+        default_source_device: test_target
+        tags: default
+
 ball_devices:
     test_trough:
         eject_coil: eject_coil1

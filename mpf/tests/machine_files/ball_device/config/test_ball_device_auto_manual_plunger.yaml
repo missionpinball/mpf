@@ -6,6 +6,11 @@ coils:
     plunger_eject:
         number:
 
+playfields:
+    playfield:
+        default_source_device: plunger
+        tags: default
+
 switches:
     s_trough_1:
         number:
@@ -33,5 +38,4 @@ ball_devices:
         ball_switches: s_plunger
         debug: true
         mechanical_eject: true
-        tags: ball_add_live
         player_controlled_eject_event: sw_launch
