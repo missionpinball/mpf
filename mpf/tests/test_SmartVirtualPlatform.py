@@ -6,6 +6,8 @@ class TestSmartVirtualPlatform(MpfTestCase):
     def getConfigFile(self):
         if self._testMethodName in ["test_eject", "test_eject_with_plunger"]:
             return "test_smart_virtual_initial.yaml"
+        elif self._testMethodName == 'test_coil_fired_plunger':
+            return "test_coil_fired_plunger.yaml"
         else:
             return 'test_smart_virtual.yaml'
 
@@ -194,3 +196,19 @@ class TestSmartVirtualPlatform(MpfTestCase):
         self.assertFalse(self.machine.drop_targets['left1'].complete)
         self.assertFalse(self.machine.drop_targets['left2'].complete)
         self.assertFalse(self.machine.drop_target_banks['left_bank'].complete)
+
+    def test_coil_fired_plunger(self):
+        self.advance_time_and_run(2)
+        self.assertEqual(5, self.machine.ball_devices.trough.balls)
+        self.assertEqual(0, self.machine.ball_devices.shooter_lane.balls)
+        self.assertEqual(0, self.machine.playfield.balls)
+
+        self.hit_and_release_switch('s_start')
+        self.assertModeRunning('game')
+        self.advance_time_and_run(3)
+
+        self.assertSwitchState('s_shooter_lane', True)
+
+        self.assertEqual(4, self.machine.ball_devices.trough.balls)
+        self.assertEqual(1, self.machine.ball_devices.shooter_lane.balls)
+        self.assertEqual(0, self.machine.playfield.balls)
