@@ -32,6 +32,7 @@ class TextUi(MpfController):
 
         self.machine.events.add_handler('init_phase_1', self._init)
         self.machine.events.add_handler('init_phase_3', self._update_switches)
+        self.machine.events.add_handler('init_phase_3', self._init2)
         self.machine.events.add_handler('loading_assets',
                                         self._asset_load_change)
         self.machine.events.add_handler('bcp_connection_attempt',
@@ -55,6 +56,16 @@ class TextUi(MpfController):
         self.machine.bcp.interface.register_command_callback(
             "status_report", self._bcp_status_report)
 
+    def _init2(self, **kwargs):
+        del kwargs
+
+        for bd in self.machine.ball_devices:
+            self.machine.events.add_handler(
+                'balldevice_{}_ball_enter'.format(bd.name),
+                self._update_ball_devices)
+
+        self._update_ball_devices(0, 0, None)
+
     def _bcp_status_report(self, client, cpu, rss, vms):
         del client
         self._bcp_status = cpu, rss, vms
@@ -70,9 +81,10 @@ class TextUi(MpfController):
 
         self.screen.print_at('<CTRL+C> TO EXIT', width-16, 0, colour=0, bg=1)
 
-        self.screen.print_at('ACTIVE MODES', 1, 1)
-        self.screen.print_at('ACTIVE SWITCHES', int(width / 2), 1)
-        self.screen.print_at('-' * width, 0, 2)
+        self.screen.print_at('ACTIVE MODES', 1, 2)
+        self.screen.print_at('ACTIVE SWITCHES', int(width * .33), 2)
+        self.screen.print_at('BALL COUNTS', int(width * .66), 2)
+        self.screen.print_at('-' * width, 0, 3)
 
         self.screen.print_at(self.machine.machine_path, 0, height-2, colour=3)
 
@@ -135,13 +147,13 @@ class TextUi(MpfController):
         switches = sorted(list(
             x.name for x in self.machine.switches if x.state))
 
-        for i, switch in enumerate(switches):
-            self.screen.print_at(' ' * int(self.screen.width / 2),
-                                 int(self.screen.width / 2), i+3)
-            self.screen.print_at(switch, int(self.screen.width / 2), i+3)
+        x_pos = int(self.screen.width * .33)
 
-        self.screen.print_at(' ' * int(self.screen.width / 2),
-                             int(self.screen.width / 2), len(switches)+3)
+        for i, switch in enumerate(switches):
+            self.screen.print_at(' ' * x_pos, x_pos, i+4)
+            self.screen.print_at(switch, x_pos, i+4)
+
+        self.screen.print_at(' ' * x_pos, x_pos, len(switches)+4)
         self.screen.refresh()
 
     def _mode_change(self, *args, **kwargs):
@@ -157,14 +169,36 @@ class TextUi(MpfController):
         modes = self.machine.mode_controller.active_modes
 
         for i, mode in enumerate(modes):
-            self.screen.print_at(' ' * (int(self.screen.width / 2) - 1),
-                                 1, i+3)
+            self.screen.print_at(' ' * (int(self.screen.width * .33) - 1),
+                                 1, i+4)
             self.screen.print_at('{} ({})'.format(mode.name, mode.priority),
-                                 1, i+3)
+                                 1, i+4)
 
-        self.screen.print_at(' ' * (int(self.screen.width / 2) - 1),
-                             1, len(modes) + 3)
+        self.screen.print_at(' ' * (int(self.screen.width * .33) - 1),
+                             1, len(modes) + 4)
         self.screen.refresh()
+
+    def _update_ball_devices(self, new_balls, unclaimed_balls, device,
+                             **kwargs):
+        del kwargs
+
+        bd_list = list()
+        for bd in self.machine.ball_devices:
+            try:
+                bd_list.append((bd.name, bd.balls, '({})'.format(bd.state)))
+            except AttributeError:
+                bd_list.append((bd.name, bd.balls, ''))
+
+        x_pos = int(self.screen.width * .66)
+
+        for i, bd in enumerate(sorted(bd_list, key=lambda x: x[2])):
+
+            # extra spaces to overwrite previous chars if the str shrinks
+            self.screen.print_at('{}: {} {}                   '.format(
+                bd[0], bd[1], bd[2]), x_pos, i+4)
+
+        return dict(unclaimed_balls=unclaimed_balls, new_balls=new_balls,
+                    device=device)
 
     def _tick(self):
         if self.screen.has_resized():
