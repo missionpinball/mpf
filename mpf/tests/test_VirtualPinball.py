@@ -2,7 +2,6 @@ import asyncio
 from typing import Tuple, Generator
 
 from mpf.core.bcp.bcp_socket_client import decode_command_string, encode_command_string
-from mpf.core.utility_functions import Util
 
 from mpf.tests.loop import MockServer, MockQueueSocket
 

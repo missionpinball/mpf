@@ -34,6 +34,11 @@ switches:
         tags: playfield_active
         number:
 
+playfields:
+    playfield:
+        default_source_device: test_launcher
+        tags: default
+
 ball_devices:
     test_trough:
         eject_coil: eject_coil1
@@ -48,7 +53,6 @@ ball_devices:
         debug: true
         confirm_eject_type: target
         eject_timeouts: 6s, 10s
-        tags: ball_add_live
     test_lock:
         eject_coil: eject_coil3
         ball_switches: s_ball_switch_lock1, s_ball_switch_lock2, s_ball_switch_lock3

@@ -28,6 +28,11 @@ coils:
     eject_coil2:
         number:
 
+playfields:
+    playfield:
+        default_source_device: bd_launcher
+        tags: default
+
 ball_devices:
     bd_trough:
         eject_coil: eject_coil1
@@ -42,4 +47,3 @@ ball_devices:
         debug: true
         confirm_eject_type: target
         eject_timeouts: 2s
-        tags: ball_add_live

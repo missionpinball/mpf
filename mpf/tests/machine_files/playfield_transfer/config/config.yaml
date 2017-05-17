@@ -18,5 +18,7 @@ playfield_transfers:
 playfields:
     playfield1:
         label: Playfield 1
+        default_source_device: None
     playfield2:
         label: Playfield 2
+        default_source_device: None

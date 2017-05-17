@@ -46,9 +46,10 @@ class TestMachineController(MachineController):
     """
     local_mpf_config_cache = {}     # type: Any
 
-    def __init__(self, mpf_path, machine_path, options, config_patches, clock, mock_data,
+    def __init__(self, mpf_path, machine_path, options, config_patches, config_defaults, clock, mock_data,
                  enable_plugins=False):
         self.test_config_patches = config_patches
+        self.test_config_defaults = config_defaults
         self._enable_plugins = enable_plugins
         self._test_clock = clock
         self._mock_data = mock_data
@@ -75,6 +76,7 @@ class TestMachineController(MachineController):
 
     def _load_config(self):
         super()._load_config()
+        self.config = Util.dict_merge(self.test_config_defaults, self.config)
         self.config = Util.dict_merge(self.config, self.test_config_patches)
 
 
@@ -95,6 +97,13 @@ class MpfTestCase(unittest.TestCase):
         self.machine_config_patches['mpf']['default_platform_hz'] = 100
         self.machine_config_patches['mpf']['plugins'] = list()
         self.machine_config_patches['bcp'] = []
+
+        self.machine_config_defaults = dict()
+        self.machine_config_defaults['playfields'] = dict()
+        self.machine_config_defaults['playfields']['playfield'] = dict()
+        self.machine_config_defaults['playfields']['playfield']['tags'] = "default"
+        self.machine_config_defaults['playfields']['playfield']['default_source_device'] = None
+
         self._last_event_kwargs = {}
         self._events = {}
         self.expected_duration = 0.5
@@ -411,7 +420,8 @@ class MpfTestCase(unittest.TestCase):
             self.machine = TestMachineController(
                 os.path.abspath(os.path.join(
                     mpf.core.__path__[0], os.pardir)), machine_path,
-                self.getOptions(), self.machine_config_patches, self.clock, self._get_mock_data(),
+                self.getOptions(), self.machine_config_patches, self.machine_config_defaults,
+                self.clock, self._get_mock_data(),
                 self.get_enable_plugins())
 
             self._initialise_machine()

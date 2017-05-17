@@ -3,6 +3,11 @@
 game:
     balls_per_game: 1
 
+playfields:
+    playfield:
+        default_source_device: test_target1
+        tags: default
+
 coils:
     eject_coil1:
         number:
@@ -61,7 +66,6 @@ ball_devices:
         eject_coil: eject_coil3
         ball_switches: s_ball_switch_target1
         debug: true
-        tags: ball_add_live
         confirm_eject_type: target
     test_target2:
         eject_coil: eject_coil4

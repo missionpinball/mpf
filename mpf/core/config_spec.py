@@ -725,6 +725,7 @@ playfields:
     ball_search_unblock_events: dict|str:ms|flipper_cradle_release
     ball_search_enable_events: dict|str:ms|None
     ball_search_disable_events: dict|str:ms|None
+    default_source_device: single|machine(ball_devices)|
 playfield_transfers:
     __valid_in__: machine
     ball_switch: single|machine(switches)|None
