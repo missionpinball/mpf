@@ -49,7 +49,7 @@ switches:
     label:
     tags:
     type: NC
-  s_standup_5:
+  s_standup:
     number: s38
     label:
     tags: playfield_active

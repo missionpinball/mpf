@@ -207,8 +207,20 @@ class TestSmartVirtualPlatform(MpfTestCase):
         self.assertModeRunning('game')
         self.advance_time_and_run(3)
 
-        self.assertSwitchState('s_shooter_lane', True)
-
         self.assertEqual(4, self.machine.ball_devices.trough.balls)
         self.assertEqual(1, self.machine.ball_devices.shooter_lane.balls)
         self.assertEqual(0, self.machine.playfield.balls)
+
+        self.hit_and_release_switch('s_shooter_lane')
+        self.advance_time_and_run()
+
+        self.assertEqual(4, self.machine.ball_devices.trough.balls)
+        self.assertEqual(0, self.machine.ball_devices.shooter_lane.balls)
+        self.assertEqual(0, self.machine.playfield.balls)
+
+        self.hit_and_release_switch('s_standup')
+        self.advance_time_and_run()
+
+        self.assertEqual(4, self.machine.ball_devices.trough.balls)
+        self.assertEqual(0, self.machine.ball_devices.shooter_lane.balls)
+        self.assertEqual(1, self.machine.playfield.balls)
