@@ -1,9 +1,11 @@
 """Contains the TextUI class."""
+from collections import OrderedDict
 from datetime import datetime
 from typing import TYPE_CHECKING, Tuple
-import psutil
+
 from asciimatics.screen import Screen
-from psutil import cpu_percent, virtual_memory
+from psutil import cpu_percent, virtual_memory, Process
+
 import mpf._version
 from mpf.core.mpf_controller import MpfController
 
@@ -28,11 +30,13 @@ class TextUi(MpfController):
         self.machine = machine
         self.machine.clock.schedule_interval(self._tick, 1)
         self.screen = Screen.open()
-        self.mpf_process = psutil.Process()
+        self.mpf_process = Process()
+        self.ball_devices = list()
+        self.switches = OrderedDict()
 
-        self.machine.events.add_handler('init_phase_1', self._init)
+        self.machine.events.add_handler('init_phase_2', self._init)
         self.machine.events.add_handler('init_phase_3', self._update_switches)
-        self.machine.events.add_handler('init_phase_3', self._init2)
+        # self.machine.events.add_handler('init_phase_3', self._init2)
         self.machine.events.add_handler('loading_assets',
                                         self._asset_load_change)
         self.machine.events.add_handler('bcp_connection_attempt',
@@ -47,6 +51,7 @@ class TextUi(MpfController):
         self._bcp_status = (0, 0, 0)  # type: Tuple[float, int, int]
 
         self._draw_screen()
+        self.screen.refresh()
 
     def _init(self, **kwargs):
         del kwargs
@@ -56,15 +61,12 @@ class TextUi(MpfController):
         self.machine.bcp.interface.register_command_callback(
             "status_report", self._bcp_status_report)
 
-    def _init2(self, **kwargs):
-        del kwargs
+        for bd in [x for x in self.machine.ball_devices if not x.is_playfield()]:
+            self.ball_devices.append(bd)
 
-        for bd in self.machine.ball_devices:
-            self.machine.events.add_handler(
-                'balldevice_{}_ball_enter'.format(bd.name),
-                self._update_ball_devices)
+        self.ball_devices.sort()
 
-        self._update_ball_devices(0, 0, None)
+        self._update_switch_layout()
 
     def _bcp_status_report(self, client, cpu, rss, vms):
         del client
@@ -82,13 +84,14 @@ class TextUi(MpfController):
         self.screen.print_at('<CTRL+C> TO EXIT', width-16, 0, colour=0, bg=1)
 
         self.screen.print_at('ACTIVE MODES', 1, 2)
-        self.screen.print_at('ACTIVE SWITCHES', int(width * .33), 2)
-        self.screen.print_at('BALL COUNTS', int(width * .66), 2)
+        self.screen.print_at('SWITCHES', int((width * .5) - 8), 2)
+        self.screen.print_at('BALL COUNTS', int(width * .75), 2)
         self.screen.print_at('-' * width, 0, 3)
 
         self.screen.print_at(self.machine.machine_path, 0, height-2, colour=3)
 
         if 0 < self._asset_percent < 100:
+            self.screen.print_at(' ' * width, 0, int(height / 2) + 1, bg=3)
             self.screen.print_at(
                 'LOADING ASSETS: {}%'.format(self._asset_percent),
                 int(width / 2) - 10, int(height / 2) + 1, colour=0, bg=3)
@@ -97,6 +100,7 @@ class TextUi(MpfController):
             bcp_string = 'WAITING FOR MEDIA CONTROLLER {}...'.format(
                 self._pending_bcp_connection)
 
+            self.screen.print_at(' ' * width, 0, int(height / 2) - 1, bg=3)
             self.screen.print_at(
                 bcp_string, int((width - len(bcp_string)) / 2),
                 int(height / 2) - 1, colour=0, bg=3)
@@ -139,21 +143,38 @@ class TextUi(MpfController):
             self.screen.print_at(bcp_string,
                 len(stats_str) - 2, height-1, colour=5)
 
-        self.screen.refresh()
+    def _update_switch_layout(self):
+        start_row = 4
+        cutoff = int(len(self.machine.switches) / 2) + start_row -1
+        row = start_row
+        col = .25
+        width = self.screen.width
 
-    def _update_switches(self, *args, **kwargs):
-        del args
+        for sw in sorted(self.machine.switches):
+            if sw.invert:
+                name = sw.name + '*'
+            else:
+                name = sw.name
+
+            self.switches[sw] = (name, int(col * width), row)
+
+            if row == cutoff:
+                row = start_row
+                col = .50
+            else:
+                row += 1
+
+        self._update_switches()
+
+    def _update_switches(self, **kwargs):
         del kwargs
-        switches = sorted(list(
-            x.name for x in self.machine.switches if x.state))
 
-        x_pos = int(self.screen.width * .33)
+        for sw, info in self.switches.items():
+            if sw.state:
+                self.screen.print_at(*info, colour=0, bg=2)
+            else:
+                self.screen.print_at(*info)
 
-        for i, switch in enumerate(switches):
-            self.screen.print_at(' ' * x_pos, x_pos, i+4)
-            self.screen.print_at(switch, x_pos, i+4)
-
-        self.screen.print_at(' ' * x_pos, x_pos, len(switches)+4)
         self.screen.refresh()
 
     def _mode_change(self, *args, **kwargs):
@@ -169,49 +190,44 @@ class TextUi(MpfController):
         modes = self.machine.mode_controller.active_modes
 
         for i, mode in enumerate(modes):
-            self.screen.print_at(' ' * (int(self.screen.width * .33) - 1),
+            self.screen.print_at(' ' * (int(self.screen.width * .25) - 1),
                                  1, i+4)
             self.screen.print_at('{} ({})'.format(mode.name, mode.priority),
                                  1, i+4)
 
-        self.screen.print_at(' ' * (int(self.screen.width * .33) - 1),
+        self.screen.print_at(' ' * (int(self.screen.width * .25) - 1),
                              1, len(modes) + 4)
-        self.screen.refresh()
 
-    def _update_ball_devices(self, new_balls, unclaimed_balls, device,
-                             **kwargs):
+    def _update_ball_devices(self, **kwargs):
         del kwargs
 
-        bd_list = list()
-        for bd in self.machine.ball_devices:
-            try:
-                bd_list.append((bd.name, bd.balls, '({})'.format(bd.state)))
-            except AttributeError:
-                bd_list.append((bd.name, bd.balls, ''))
+        x_pos = int(self.screen.width * .75)
 
-        x_pos = int(self.screen.width * .66)
+        row = 4
 
-        for i, bd in enumerate(sorted(bd_list, key=lambda x: x[2])):
+        for pf in self.machine.playfields:
+            self.screen.print_at('{}: {} '.format(pf.name, pf.balls), x_pos,
+                                 row, colour=2 if pf.balls else 7)
+            row += 1
 
+        for bd in self.ball_devices:
             # extra spaces to overwrite previous chars if the str shrinks
-            self.screen.print_at('{}: {} {}                   '.format(
-                bd[0], bd[1], bd[2]), x_pos, i+4)
-
-        return dict(unclaimed_balls=unclaimed_balls, new_balls=new_balls,
-                    device=device)
+            self.screen.print_at('{}: {} ({})                   '.format(
+                bd.name, bd.balls, bd.state), x_pos, row,
+                colour=2 if bd.balls else 7)
+            row += 1
 
     def _tick(self):
         if self.screen.has_resized():
             self.screen = Screen.open()
-            self._draw_screen()
-            self._update_switches()
+            self._update_switch_layout()
             self._update_modes()
+            self._draw_screen()
 
-        else:
-            self._update_stats()
-
-        # request status from all bcp clients
         self.machine.bcp.transport.send_to_all_clients("status_request")
+        self._update_stats()
+        self._update_ball_devices()
+        self.screen.refresh()
 
     def _bcp_connection_attempt(self, name, host, port, **kwargs):
         del name
@@ -224,6 +240,10 @@ class TextUi(MpfController):
         self._pending_bcp_connection = None
         self.screen.print_at(' ' * self.screen.width,
                              0, int(self.screen.height / 2) - 1)
+
+        self._update_modes()
+        self._update_switches()
+        self._update_ball_devices()
 
     def _asset_load_change(self, percent, **kwargs):
         del kwargs
@@ -242,3 +262,7 @@ class TextUi(MpfController):
         self._asset_percent = 100
         self.screen.print_at(' ' * self.screen.width,
                              0, int(self.screen.height / 2) + 1)
+
+        self._update_modes()
+        self._update_switches()
+        self._update_ball_devices()
