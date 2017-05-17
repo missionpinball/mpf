@@ -1,21 +1,23 @@
 """Contains the TextUI class."""
 from datetime import datetime
 from typing import TYPE_CHECKING, Tuple
-
 import psutil
 from asciimatics.screen import Screen
 from psutil import cpu_percent, virtual_memory
 import mpf._version
+from mpf.core.mpf_controller import MpfController
 
 if TYPE_CHECKING:   # pragma: no cover
     from mpf.core.machine import MachineController
 
 
-class TextUi(object):
+class TextUi(MpfController):
     """Handles the text-based UI"""
 
     def __init__(self, machine: "MachineController") -> None:
         """Initialize TextUi."""
+
+        super().__init__(machine)
 
         self.screen = None
 
@@ -50,7 +52,8 @@ class TextUi(object):
         self.machine.mode_controller.register_start_method(self._mode_change)
         self.machine.mode_controller.register_stop_method(self._mode_change)
         self.machine.switch_controller.add_monitor(self._update_switches)
-        self.machine.bcp.interface.register_command_callback("status_report", self._bcp_status_report)
+        self.machine.bcp.interface.register_command_callback(
+            "status_report", self._bcp_status_report)
 
     def _bcp_status_report(self, client, cpu, rss, vms):
         del client
@@ -64,6 +67,8 @@ class TextUi(object):
 
         self.screen.print_at((' ' * padding) + title + (' ' * (padding + 1)),
                              0, 0, colour=7, bg=1)
+
+        self.screen.print_at('<CTRL+C> TO EXIT', width-16, 0, colour=0, bg=1)
 
         self.screen.print_at('ACTIVE MODES', 1, 1)
         self.screen.print_at('ACTIVE SWITCHES', int(width / 2), 1)
