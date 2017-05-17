@@ -53,6 +53,8 @@ if TYPE_CHECKING:   # pragma: no cover
     from mpf.plugins.auditor import Auditor
     from mpf.devices.light import Light
     from mpf.devices.accelerometer import Accelerometer
+    from mpf.devices.drop_target import DropTarget
+    from mpf.devices.logic_blocks import Accrual, Sequence, Counter
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -127,6 +129,10 @@ class MachineController(LogMixin):
             self.accelerometers = None                  # type: DeviceCollectionType[str, Accelerometer]
             self.playfield = None                       # type: Playfield
             self.playfields = None                      # type: DeviceCollectionType[str, Playfield]
+            self.counters = None                        # type: DeviceCollectionType[str, Counter]
+            self.sequences = None                       # type: DeviceCollectionType[str, Sequence]
+            self.accruals = None                        # type: DeviceCollectionType[str, Accrual]
+            self.drop_targets = None                    # type: DeviceCollectionType[str, DropTarget]
 
         self._set_machine_path()
 
