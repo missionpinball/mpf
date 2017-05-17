@@ -47,6 +47,10 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         
         """
 
+    def __lt__(self, other):
+        """Compare two devices."""
+        return self.name < other.name
+
     def device_added_to_mode(self, mode: "Mode") -> None:
         """Called when a device is created by a mode.
 
