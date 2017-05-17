@@ -166,8 +166,8 @@ class TextUi(MpfController):
 
         self._update_switches()
 
-    def _update_switches(self, **kwargs):
-        del kwargs
+    def _update_switches(self, *args, **kwargs):
+        del args, kwargs
 
         for sw, info in self.switches.items():
             if sw.state:
