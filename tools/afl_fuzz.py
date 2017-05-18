@@ -28,6 +28,7 @@ class AflRunner(object):
         self.machine_config_patches['mpf'] = dict()
         self.machine_config_patches['mpf']['default_platform_hz'] = 1
         self.machine_config_patches['bcp'] = []
+        self.machine_config_defaults = {}
         self.switch_list = []
         self.use_virtual = use_virtual
 
@@ -90,7 +91,7 @@ class AflRunner(object):
         self.machine = TestMachineController(
             os.path.abspath(os.path.join(
                 mpf.core.__path__[0], os.pardir)), machine_path,
-            self.getOptions(), self.machine_config_patches, self.clock, dict(),
+            self.getOptions(), self.machine_config_patches, self.machine_config_defaults, self.clock, dict(),
             True)
 
         self.loop.run_until_complete(self.machine.initialise())
