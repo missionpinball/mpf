@@ -101,6 +101,7 @@ class BallController(MpfController):
                 capture.available_balls += 1
                 self.info_log("Found a new ball which was captured from %s. Known balls: %s", capture.name,
                               self.num_balls_known)
+                self.machine.events.post("found_new_ball")
 
             if len(self.machine.playfields) > 1:
                 self._balance_playfields()
