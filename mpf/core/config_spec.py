@@ -1226,7 +1226,7 @@ widgets:
         value: list|str|
         relative: single|bool|False
         duration: single|secs|1
-        timing: single|enum(after_previous|with_previous)|after_previous
+        timing: single|enum(after_previous,with_previous)|after_previous
         repeat: single|bool|False
         easing: single|str|linear
     bezier:
