@@ -1215,10 +1215,10 @@ widgets:
         reset_animations_events: list|str|None
         color: single|kivycolor|ffffffff
         style: single|str|None
-        adjust_top: single|int|None
-        adjust_bottom: single|int|None
-        adjust_left: single|int|None
-        adjust_right: single|int|None
+        adjust_top: single|int|0
+        adjust_bottom: single|int|0
+        adjust_left: single|int|0
+        adjust_right: single|int|0
         expire: single|secs|None
         key: single|str|None
     animations:
