@@ -1,6 +1,7 @@
 """Contains the TextUI class."""
 from collections import OrderedDict
 from datetime import datetime
+import logging
 from typing import TYPE_CHECKING, Tuple
 
 from asciimatics.screen import Screen
@@ -28,7 +29,7 @@ class TextUi(MpfController):
 
         self.start_time = datetime.now()
         self.machine = machine
-        self.machine.clock.schedule_interval(self._tick, 1)
+        self._tick_task = self.machine.clock.schedule_interval(self._tick, 1)
         self.screen = Screen.open()
         self.mpf_process = Process()
         self.ball_devices = list()
@@ -45,6 +46,7 @@ class TextUi(MpfController):
                                         self._asset_load_complete)
         self.machine.events.add_handler('bcp_clients_connected',
                                         self._bcp_connected)
+        self.machine.events.add_handler('shutdown', self.stop)
 
         self._pending_bcp_connection = False
         self._asset_percent = 0
@@ -168,7 +170,6 @@ class TextUi(MpfController):
 
     def _update_switches(self, *args, **kwargs):
         del args, kwargs
-
         for sw, info in self.switches.items():
             if sw.state:
                 self.screen.print_at(*info, colour=0, bg=2)
@@ -205,10 +206,13 @@ class TextUi(MpfController):
 
         row = 4
 
-        for pf in self.machine.playfields:
-            self.screen.print_at('{}: {} '.format(pf.name, pf.balls), x_pos,
-                                 row, colour=2 if pf.balls else 7)
-            row += 1
+        try:
+            for pf in self.machine.playfields:
+                self.screen.print_at('{}: {} '.format(pf.name, pf.balls), x_pos,
+                                     row, colour=2 if pf.balls else 7)
+                row += 1
+        except AttributeError:
+            pass
 
         for bd in self.ball_devices:
             # extra spaces to overwrite previous chars if the str shrinks
@@ -266,3 +270,13 @@ class TextUi(MpfController):
         self._update_modes()
         self._update_switches()
         self._update_ball_devices()
+
+    def stop(self, **kwargs):
+        """Stop the Text UI and restore the original console screen"""
+        del kwargs
+
+        if self.screen:
+            self.machine.clock.unschedule(self._tick_task)
+            logger = logging.getLogger()
+            logger.addHandler(logging.StreamHandler())
+            self.screen.close(True)

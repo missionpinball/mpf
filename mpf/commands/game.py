@@ -213,20 +213,20 @@ class Command(object):
         Cleanly shuts down logging and restores the console window if the Text
         UI option is used.
         """
+        del signal, frame
 
-        del signal
-        del frame
-
-        # reset the console to its previous state
-        if self.args.text_ui:
-            Screen.open().close(True)
-
-        # If we got here via an exception, log it to the console after the
-        # Text UI has been restored so the user knows what happened.
         if exception:
-            # Make sure console logging is enabled since Text UI disables it
             logger = logging.getLogger()
-            logger.addHandler(logging.StreamHandler())
+
+            # If we got here via an exception, the console could be stuck in
+            # the Text UI state
+            if self.args.text_ui:
+                # restore the console to the old state
+                Screen.open().close(True)
+
+                # Re-enable console logging to show the exception
+                logger.addHandler(logging.StreamHandler())
+
             logging.exception(exception)
 
         logging.shutdown()
