@@ -38,7 +38,6 @@ if TYPE_CHECKING:   # pragma: no cover
     from mpf.core.settings_controller import SettingsController
     from mpf.core.shot_profile_manager import ShotProfileManager
     from mpf.core.bcp.bcp import Bcp
-    from mpf.core.extra_balls import ExtraBallController
     from mpf.assets.show import Show
     from mpf.core.assets import BaseAssetManager
     from mpf.devices.switch import Switch
@@ -113,7 +112,6 @@ class MachineController(LogMixin):
             self.shot_profile_manager = None            # type: ShotProfileManager
             self.settings = None                        # type: SettingsController
             self.bcp = None                             # type: Bcp
-            self.extra_ball_controller = None           # type: ExtraBallController
             self.asset_manager = None                   # type: BaseAssetManager
             self.ball_controller = None                 # type: BallController
             self.placeholder_manager = None             # type: PlaceholderManager

@@ -358,20 +358,21 @@ queue_relay_player:
     args: dict|str:str|None
     post: single|str|
     wait_for: single|str|
-global_extra_ball_settings:
+extra_balls:
+    __valid_in__: mode
+    enabled: single|bool|True
+    group: single|machine(extra_ball_groups)|None
+    award_events: dict|str:ms|None
+    light_events: dict|str:ms|None
+    max_per_game: single|int|1
+extra_ball_groups:
     __valid_in__: machine
+    enabled: single|bool|True
+    award_events: dict|str:ms|None
     max_per_game: single|int|None
     max_per_ball: single|int|None
     max_lit: single|int|None
     lit_memory: single|bool|True
-    enabled: single|bool|True
-    events_only: single|bool|False
-extra_balls:
-    __valid_in__: mode
-    award_events: dict|str:ms|None
-    light_events: dict|str:ms|None
-    reset_events: dict|str:ms|None
-    max_per_game: single|int|1
 fadecandy:
     __valid_in__: machine
     gamma: single|float|2.5
