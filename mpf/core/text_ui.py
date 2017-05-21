@@ -34,6 +34,9 @@ class TextUi(MpfController):
         self.mpf_process = Process()
         self.ball_devices = list()
         self.switches = OrderedDict()
+        self.player_start_row = 0
+        self.column_positions = [0, .25, .5, .75]
+        self.columns = [0] * len(self.column_positions)
 
         self.machine.events.add_handler('init_phase_2', self._init)
         self.machine.events.add_handler('init_phase_3', self._update_switches)
@@ -47,6 +50,11 @@ class TextUi(MpfController):
         self.machine.events.add_handler('bcp_clients_connected',
                                         self._bcp_connected)
         self.machine.events.add_handler('shutdown', self.stop)
+        self.machine.events.add_handler('player_number', self._update_player)
+        self.machine.events.add_handler('player_ball', self._update_player)
+        self.machine.events.add_handler('player_score', self._update_player)
+        self.machine.events.add_handler('ball_ended',
+                                        self._update_player_no_game)
 
         self._pending_bcp_connection = False
         self._asset_percent = 0
@@ -63,10 +71,12 @@ class TextUi(MpfController):
         self.machine.bcp.interface.register_command_callback(
             "status_report", self._bcp_status_report)
 
-        for bd in [x for x in self.machine.ball_devices if not x.is_playfield()]:
+        for bd in [x for x in self.machine.ball_devices if not
+                x.is_playfield()]:
             self.ball_devices.append(bd)
 
         self.ball_devices.sort()
+        self._draw_player_header()
 
         self._update_switch_layout()
 
@@ -75,6 +85,12 @@ class TextUi(MpfController):
         self._bcp_status = cpu, rss, vms
 
     def _draw_screen(self):
+
+        for i, percent in enumerate(self.column_positions):
+            if not i:
+                self.columns[i] = 1
+            self.columns[i] = int(self.screen.width * percent)
+
         height, width = self.screen.dimensions
         title = 'Mission Pinball Framework v{}'.format(
             mpf._version.__version__)
@@ -85,9 +101,9 @@ class TextUi(MpfController):
 
         self.screen.print_at('<CTRL+C> TO EXIT', width-16, 0, colour=0, bg=1)
 
-        self.screen.print_at('ACTIVE MODES', 1, 2)
+        self.screen.print_at('ACTIVE MODES', self.columns[0], 2)
         self.screen.print_at('SWITCHES', int((width * .5) - 8), 2)
-        self.screen.print_at('BALL COUNTS', int(width * .75), 2)
+        self.screen.print_at('BALL COUNTS', self.columns[3], 2)
         self.screen.print_at('-' * width, 0, 3)
 
         self.screen.print_at(self.machine.machine_path, 0, height-2, colour=3)
@@ -108,6 +124,17 @@ class TextUi(MpfController):
                 int(height / 2) - 1, colour=0, bg=3)
 
         self._update_stats()
+
+    def _draw_player_header(self):
+        self.player_start_row = (
+            len(self.ball_devices) + len(self.machine.playfields)) + 7
+
+        self.screen.print_at('CURRENT PLAYER', self.columns[3],
+                             self.player_start_row-2)
+        self.screen.print_at('-' * (int(self.screen.width * .75) + 1),
+                             self.columns[3],
+                             self.player_start_row-1)
+        self._update_player()
 
     def _update_stats(self):
         height, width = self.screen.dimensions
@@ -147,10 +174,9 @@ class TextUi(MpfController):
 
     def _update_switch_layout(self):
         start_row = 4
-        cutoff = int(len(self.machine.switches) / 2) + start_row -1
+        cutoff = int(len(self.machine.switches) / 2) + start_row - 1
         row = start_row
-        col = .25
-        width = self.screen.width
+        col = 1
 
         for sw in sorted(self.machine.switches):
             if sw.invert:
@@ -158,11 +184,11 @@ class TextUi(MpfController):
             else:
                 name = sw.name
 
-            self.switches[sw] = (name, int(col * width), row)
+            self.switches[sw] = (name, self.columns[col], row)
 
             if row == cutoff:
                 row = start_row
-                col = .50
+                col += 1
             else:
                 row += 1
 
@@ -191,25 +217,24 @@ class TextUi(MpfController):
         modes = self.machine.mode_controller.active_modes
 
         for i, mode in enumerate(modes):
-            self.screen.print_at(' ' * (int(self.screen.width * .25) - 1),
-                                 1, i+4)
+            self.screen.print_at(' ' * (self.columns[0] - 1),
+                                 self.columns[0], i+4)
             self.screen.print_at('{} ({})'.format(mode.name, mode.priority),
-                                 1, i+4)
+                                 self.columns[0], i+4)
 
         self.screen.print_at(' ' * (int(self.screen.width * .25) - 1),
-                             1, len(modes) + 4)
+                             self.columns[0], len(modes) + 4)
 
     def _update_ball_devices(self, **kwargs):
         del kwargs
-
-        x_pos = int(self.screen.width * .75)
 
         row = 4
 
         try:
             for pf in self.machine.playfields:
-                self.screen.print_at('{}: {} '.format(pf.name, pf.balls), x_pos,
-                                     row, colour=2 if pf.balls else 7)
+                self.screen.print_at('{}: {} '.format(pf.name, pf.balls),
+                                     self.columns[3], row,
+                                     colour=2 if pf.balls else 7)
                 row += 1
         except AttributeError:
             pass
@@ -217,9 +242,38 @@ class TextUi(MpfController):
         for bd in self.ball_devices:
             # extra spaces to overwrite previous chars if the str shrinks
             self.screen.print_at('{}: {} ({})                   '.format(
-                bd.name, bd.balls, bd.state), x_pos, row,
+                bd.name, bd.balls, bd.state), self.columns[3], row,
                 colour=2 if bd.balls else 7)
             row += 1
+
+    def _update_player(self, **kwargs):
+        for i in range(3):
+            self.screen.print_at(
+                ' ' * (int(self.screen.width * (1/len(self.columns))) + 1),
+                self.columns[3],
+                self.player_start_row + i)
+        try:
+            self.screen.print_at(
+                'PLAYER: {}'.format(self.machine.game.player.number),
+                self.columns[3], self.player_start_row)
+            self.screen.print_at(
+                'BALL: {}'.format(self.machine.game.player.ball),
+                self.columns[3], self.player_start_row + 1)
+            self.screen.print_at(
+                'SCORE: {:,}'.format(self.machine.game.player.score),
+                self.columns[3], self.player_start_row + 2)
+        except AttributeError:
+            self._update_player_no_game()
+
+    def _update_player_no_game(self, **kwargs):
+        for i in range(3):
+            self.screen.print_at(
+                ' ' * (int(self.screen.width * (1/len(self.columns))) + 1),
+                self.columns[3],
+                self.player_start_row + i)
+
+        self.screen.print_at('NO GAME IN PROGRESS', self.columns[3],
+                             self.player_start_row)
 
     def _tick(self):
         if self.screen.has_resized():
@@ -227,6 +281,7 @@ class TextUi(MpfController):
             self._update_switch_layout()
             self._update_modes()
             self._draw_screen()
+            self._draw_player_header()
 
         self.machine.bcp.transport.send_to_all_clients("status_request")
         self._update_stats()
