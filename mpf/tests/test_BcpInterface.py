@@ -357,3 +357,10 @@ class TestBcpInterface(MpfBcpTestCase):
         self._bcp_client.receive_queue.put_nowait(('switch', {'name': 's_test', 'state': -1}))
         self.advance_time_and_run()
         self.assertFalse(self.machine.switch_controller.is_active('s_test'))
+
+    def test_double_reset_complete(self):
+        # Test when a BCP server sends reset_complete twice (was causing MPF to crash)
+        self._bcp_client.receive_queue.put_nowait(('reset_complete', {}))
+        self.advance_time_and_run()
+        self._bcp_client.receive_queue.put_nowait(('reset_complete', {}))
+        self.advance_time_and_run()
