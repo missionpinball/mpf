@@ -44,7 +44,7 @@ class BcpInterface(MpfController):
         self.config = machine.config['bcp']
 
         self._client_reset_queue = None
-        self._client_reset_complete_status = None
+        self._client_reset_complete_status = {}
 
         self.bcp_receive_commands = dict(
             reset_complete=self._bcp_receive_reset_complete,
@@ -412,9 +412,10 @@ class BcpInterface(MpfController):
 
         # Check if reset_complete status is True from all clients
         if all(status is True for item, status in self._client_reset_complete_status.items()):
-            self._client_reset_queue.clear()
-            self._client_reset_queue = None
-            self._client_reset_complete_status = None
+            if self._client_reset_queue:
+                self._client_reset_queue.clear()
+                self._client_reset_queue = None
+            self._client_reset_complete_status.clear()
             self.debug_log("Received reset_complete from all clients. Clearing wait from queue event.")
 
     def bcp_mode_start(self, config, priority, mode, **kwargs):
@@ -446,7 +447,7 @@ class BcpInterface(MpfController):
         if len(clients) > 0:
             queue.wait()
             self._client_reset_queue = queue
-            self._client_reset_complete_status = {}
+            self._client_reset_complete_status.clear()
             for client in clients:
                 self._client_reset_complete_status[client] = False
 
