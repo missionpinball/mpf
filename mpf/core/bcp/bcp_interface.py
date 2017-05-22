@@ -44,6 +44,7 @@ class BcpInterface(MpfController):
         self.config = machine.config['bcp']
 
         self._client_reset_queue = None
+        self._client_reset_complete_status = {}
 
         self.bcp_receive_commands = dict(
             reset_complete=self._bcp_receive_reset_complete,
