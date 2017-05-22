@@ -1303,6 +1303,10 @@ widgets:
         min_digits: single|int|0
         halign: single|str|center
         valign: single|str|middle
+        rotation: single|int|0
+        scale: single|float|1.0
+        # outline_color: single|kivycolor|ffffffff
+        # outline_width: single|int|0
         # text_size: single|int|None  # sets width of bounding box, not font
         # shorten: single|bool|None
         # mipmap: single|bool|None
