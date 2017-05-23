@@ -1,5 +1,6 @@
 """BCP module."""
 import asyncio
+from functools import partial
 
 from mpf.core.events import QueuedEvent
 from mpf.core.mpf_controller import MpfController
@@ -53,7 +54,7 @@ class Bcp(MpfController):
             client = Util.string_to_class(settings['type'])(self.machine, name, self.machine.bcp)
             client.exit_on_close = settings['exit_on_close']
             connect_future = Util.ensure_future(client.connect(settings), loop=self.machine.clock.loop)
-            connect_future.add_done_callback(lambda x: self.transport.register_transport(client))
+            connect_future.add_done_callback(partial(self.transport.register_transport, client))
             client_connect_futures.append(connect_future)
 
         # block init until all clients are connected

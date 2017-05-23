@@ -35,8 +35,10 @@ class BcpTransportManager:
         """Get clients which registered for a certain handler."""
         return self._handlers.get(handler, [])
 
-    def register_transport(self, transport):
+    def register_transport(self, transport, future=None, **kwargs):
         """Register a client."""
+        del kwargs
+        del future
         self._transports.append(transport)
         self._readers[transport] = self._machine.clock.loop.create_task(self._receive_loop(transport))
         self._readers[transport].add_done_callback(self._done)

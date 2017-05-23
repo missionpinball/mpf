@@ -200,10 +200,13 @@ class TestBcpSocketMultipleClients(MpfTestCase):
         # test message without bytes
         receiver = MagicMock()
         self.machine.bcp.interface.register_command_callback("receive_msg", receiver)
+
         self.client_socket_1.recv_queue.append(b'receive_msg?param1=1&param2=2\n')
-        self.client_socket_2.recv_queue.append(b'receive_msg?param1=1&param2=2\n')
         self.advance_time_and_run()
         receiver.assert_called_once_with(param1="1", param2="2", client=self._bcp_client_1)
-        receiver.assert_called_once_with(param1="1", param2="2", client=self._bcp_client_2)
         receiver.reset_mock()
+
+        self.client_socket_2.recv_queue.append(b'receive_msg?param1=1&param2=2\n')
+        self.advance_time_and_run()
+        receiver.assert_called_once_with(param1="1", param2="2", client=self._bcp_client_2)
 
