@@ -108,7 +108,7 @@ class RgbDmdPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['has_rgb_dmd'] = True
 
     @abc.abstractmethod
-    def configure_rgb_dmd(self):
+    def configure_rgb_dmd(self, name: str):
         """Subclass this method in a platform module to configure the DMD.
 
         This method should return a reference to the DMD's platform interface

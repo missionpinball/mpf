@@ -11,10 +11,15 @@ https://github.com/preble/pyprocgame
 """
 
 import logging
+from typing import TYPE_CHECKING
 
 from mpf.core.platform import I2cPlatform, AccelerometerPlatform, DriverConfig, SwitchConfig
+from mpf.platforms.interfaces.accelerometer_platform_interface import AccelerometerPlatformInterface
 from mpf.platforms.p_roc_common import PDBConfig, PROCBasePlatform
 from mpf.platforms.p_roc_devices import PROCDriver
+
+if TYPE_CHECKING:   # pragma: no cover
+    from mpf.devices.accelerometer import Accelerometer
 
 
 class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
@@ -52,7 +57,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         self.pdbconfig = PDBConfig(self.proc, self.machine.config, self.pinproc.DriverCount)
 
         self.acceleration = [0] * 3
-        self.accelerometer_device = None
+        self.accelerometer_device = None    # type: PROCAccelerometer
 
     def __repr__(self):
         """Return string representation."""
@@ -150,12 +155,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
             config: Dictionary of settings for the switch. In the case
                 of the P3-ROC, it uses the following:
 
-        Returns:
-            switch : A reference to the switch object that was just created.
-            proc_num : Integer of the actual hardware switch number the P3-ROC
-                uses to refer to this switch. Typically your machine
-                configuration files would specify a switch number like `SD12` or
-                `7/5`. This `proc_num` is an int between 0 and 255.
+        Returns: A configured switch object.
         """
         del platform_config
         proc_num = self.pdbconfig.get_proc_switch_number(str(number))
@@ -235,14 +235,14 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         self.proc.flush()
 
 
-class PROCAccelerometer(object):
+class PROCAccelerometer(AccelerometerPlatformInterface):
 
     """The accelerometer on the P3-Roc."""
 
-    def __init__(self, callback):
+    def __init__(self, callback: "Accelerometer") -> None:
         """Remember the callback."""
-        self.callback = callback
+        self.callback = callback    # type: Accelerometer
 
-    def update_acceleration(self, x, y, z):
+    def update_acceleration(self, x: float, y: float, z: float) -> None:
         """Call the callback."""
         self.callback.update_acceleration(x, y, z)

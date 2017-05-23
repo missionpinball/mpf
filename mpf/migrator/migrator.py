@@ -8,13 +8,13 @@ import logging
 import importlib
 from copy import deepcopy
 
+from mpf.file_interfaces.yaml_roundtrip import YamlRoundtrip
 from ruamel import yaml
 from ruamel.yaml.comments import CommentedSeq, CommentedMap
 
 from mpf._version import version
 from mpf.core.file_manager import FileManager
 from mpf.core.utility_functions import Util
-from mpf.file_interfaces.yaml_interface import YamlInterface
 from mpf.core.config_validator import mpf_config_spec
 
 EXTENSION = '.yaml'
@@ -353,7 +353,7 @@ class VersionMigrator(object):
         if not key:  # single item
             if first_key in self.fc:
 
-                YamlInterface.del_key_with_comments(self.fc, first_key,
+                YamlRoundtrip.del_key_with_comments(self.fc, first_key,
                                                     self.log)
                 return True
 
@@ -369,7 +369,7 @@ class VersionMigrator(object):
                     # lowest level key
                     dic = dic[key.pop(0)]
 
-                YamlInterface.del_key_with_comments(dic, final_key, self.log)
+                YamlRoundtrip.del_key_with_comments(dic, final_key, self.log)
                 return True
         except (KeyError, IndexError):
             pass
@@ -406,7 +406,7 @@ class VersionMigrator(object):
 
                 self.log.debug('Renaming key: %s: -> %s:',
                                ':'.join(rename['old']), rename['new'])
-                YamlInterface.rename_key(rename['old'][-1], rename['new'],
+                YamlRoundtrip.rename_key(rename['old'][-1], rename['new'],
                                          found_section)
 
             else:  # searching for a single key anywhere
@@ -420,7 +420,7 @@ class VersionMigrator(object):
         elif isinstance(target, dict):
 
             if old in target:
-                YamlInterface.rename_key(old, new, target, self.log)
+                YamlRoundtrip.rename_key(old, new, target, self.log)
 
             for item in target.values():
                 self._recursive_rename(old, new, item)
@@ -466,7 +466,7 @@ class VersionMigrator(object):
 
         for key in key_list:
             try:
-                YamlInterface.rename_key(key, key.lower(), dic, self.log)
+                YamlRoundtrip.rename_key(key, key.lower(), dic, self.log)
             except AttributeError:
                 pass
 

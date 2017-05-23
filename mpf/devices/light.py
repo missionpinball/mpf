@@ -56,26 +56,32 @@ class Light(SystemWideDevice):
         in to set this light to a certain color (and/or fade). Each entry in the
         list contains the following key/value pairs:
 
-        priority: The relative priority of this color command. Higher numbers
+        priority:
+            The relative priority of this color command. Higher numbers
             take precedent, and the highest priority entry will be the command
             that's currently active. In the event of a tie, whichever entry was
             added last wins (based on 'start_time' below).
-        start_time: The clock time when this command was added. Primarily used
+        start_time:
+            The clock time when this command was added. Primarily used
             to calculate fades, but also used as a tie-breaker for multiple
             entries with the same priority.
-        start_color: RGBColor() of the color of this light when this command came
-            in.
-        dest_time: Clock time that represents when a fade (from start_color to
+        start_color:
+            RGBColor() of the color of this light when this command came in.
+        dest_time:
+            Clock time that represents when a fade (from start_color to
             dest_color) will be done. If this is 0, that means there is no
             fade. When a fade is complete, this value is reset to 0.
-        dest_color: RGBColor() of the destination this light is fading to. If
+        dest_color:
+            RGBColor() of the destination this light is fading to. If
             a command comes in with no fade, then this will be the same as the
             'color' below.
-        color: The current color of the light based on this command. This value
+        color:
+            The current color of the light based on this command. This value
             is updated automatically as fades progress, and it's the value
             that's actually written to the hardware (prior to color
             correction).
-        key: An arbitrary unique identifier to keep multiple entries in the
+        key:
+            An arbitrary unique identifier to keep multiple entries in the
             stack separate. If a new color command comes in with a key that
             already exists for an entry in the stack, that entry will be
             replaced by the new entry. The key is also used to remove entries

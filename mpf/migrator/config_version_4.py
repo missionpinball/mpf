@@ -4,6 +4,7 @@ import os
 import re
 from copy import deepcopy
 
+from mpf.file_interfaces.yaml_roundtrip import YamlRoundtrip, MpfRoundTripLoader
 from ruamel import yaml
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from typing import Dict
@@ -12,9 +13,6 @@ from typing import Tuple
 from mpf.core.utility_functions import Util
 from mpf.migrator.migrator import VersionMigrator
 from mpf.core.rgb_color import named_rgb_colors, RGBColor
-
-from mpf.file_interfaces.yaml_interface import YamlInterface, \
-    MpfRoundTripLoader
 
 
 class V4Migrator(VersionMigrator):
@@ -137,7 +135,7 @@ class V4Migrator(VersionMigrator):
                     else:
                         raise ValueError("Both start_paused and start_running are true. This is impossible")
 
-                    YamlInterface.del_key_with_comments(self.fc['timers'][timer_name], 'start_paused', self.log)
+                    YamlRoundtrip.del_key_with_comments(self.fc['timers'][timer_name], 'start_paused', self.log)
 
     def _migrate_window(self):
         # Create a display from the window
@@ -182,30 +180,30 @@ class V4Migrator(VersionMigrator):
 
             self.log.debug("Converting physical dmd: settings")
 
-            YamlInterface.del_key_with_comments(self.fc['dmd'], 'physical',
+            YamlRoundtrip.del_key_with_comments(self.fc['dmd'], 'physical',
                                                 self.log)
-            YamlInterface.del_key_with_comments(self.fc['dmd'], 'fps',
+            YamlRoundtrip.del_key_with_comments(self.fc['dmd'], 'fps',
                                                 self.log)
 
             if 'type' in self.fc['dmd'] and self.fc['dmd']['type'] == 'color':
                 # physical color DMD
-                YamlInterface.del_key_with_comments(self.fc['dmd'], 'type',
+                YamlRoundtrip.del_key_with_comments(self.fc['dmd'], 'type',
                                                     self.log)
-                YamlInterface.rename_key('dmd', 'physical_rgb_dmd', self.fc,
+                YamlRoundtrip.rename_key('dmd', 'physical_rgb_dmd', self.fc,
                                          self.log)
 
             else:  # physical mono DMD
-                YamlInterface.del_key_with_comments(self.fc['dmd'], 'type',
+                YamlRoundtrip.del_key_with_comments(self.fc['dmd'], 'type',
                                                     self.log)
 
-                YamlInterface.rename_key('dmd', 'physical_dmd', self.fc,
+                YamlRoundtrip.rename_key('dmd', 'physical_dmd', self.fc,
                                          self.log)
 
-            YamlInterface.del_key_with_comments(self.fc['displays']['dmd'],
+            YamlRoundtrip.del_key_with_comments(self.fc['displays']['dmd'],
                                                 'physical', self.log)
-            YamlInterface.del_key_with_comments(self.fc['displays']['dmd'],
+            YamlRoundtrip.del_key_with_comments(self.fc['displays']['dmd'],
                                                 'shades', self.log)
-            YamlInterface.del_key_with_comments(self.fc['displays']['dmd'],
+            YamlRoundtrip.del_key_with_comments(self.fc['displays']['dmd'],
                                                 'fps', self.log)
 
     def _set_dmd_type(self):
@@ -348,7 +346,7 @@ class V4Migrator(VersionMigrator):
             self.fc['slides'][slide_name] = (
                 self._migrate_elements(elements, 'window'))
 
-            YamlInterface.del_key_with_comments(self.fc['window'], 'elements',
+            YamlRoundtrip.del_key_with_comments(self.fc['window'], 'elements',
                                                 self.log)
 
             if 'slide_player' not in self.fc:
@@ -396,13 +394,13 @@ class V4Migrator(VersionMigrator):
             self.log.debug("Converting widget_styles: from the old fonts: "
                            "settings")
             for settings in self.fc['widget_styles'].values():
-                YamlInterface.rename_key('size', 'font_size', settings,
+                YamlRoundtrip.rename_key('size', 'font_size', settings,
                                          self.log)
-                YamlInterface.rename_key('file', 'font_name', settings,
+                YamlRoundtrip.rename_key('file', 'font_name', settings,
                                          self.log)
-                YamlInterface.rename_key('crop_top', 'adjust_top', settings,
+                YamlRoundtrip.rename_key('crop_top', 'adjust_top', settings,
                                          self.log)
-                YamlInterface.rename_key('crop_bottom', 'adjust_bottom',
+                YamlRoundtrip.rename_key('crop_bottom', 'adjust_bottom',
                                          settings, self.log)
 
                 if 'font_name' in settings:
@@ -428,7 +426,7 @@ class V4Migrator(VersionMigrator):
         # convert asset_defaults to assets:
         if 'asset_defaults' in self.fc:
             self.log.debug('Renaming key: asset_defaults -> assets:')
-            YamlInterface.rename_key('asset_defaults', 'assets', self.fc,
+            YamlRoundtrip.rename_key('asset_defaults', 'assets', self.fc,
                                      self.log)
 
             assets = self.fc['assets']
@@ -438,23 +436,23 @@ class V4Migrator(VersionMigrator):
                 if 'images' in assets:
                     self.log.debug("Merging animations: into current "
                                    "asset:images:")
-                    YamlInterface.copy_with_comments(assets, 'animations',
+                    YamlRoundtrip.copy_with_comments(assets, 'animations',
                                                      assets, 'images',
                                                      True, self.log)
                 else:
-                    YamlInterface.rename_key('animations', 'images', assets,
+                    YamlRoundtrip.rename_key('animations', 'images', assets,
                                              self.log)
-                YamlInterface.del_key_with_comments(self.fc, 'animations',
+                YamlRoundtrip.del_key_with_comments(self.fc, 'animations',
                                                     self.log)
 
             if 'movies' in assets:
-                YamlInterface.rename_key('movies', 'videos', assets, self.log)
+                YamlRoundtrip.rename_key('movies', 'videos', assets, self.log)
 
             if 'images' in assets:
                 self.log.debug("Converting assets:images:")
 
                 for settings in assets['images'].values():
-                    YamlInterface.del_key_with_comments(settings, 'target',
+                    YamlRoundtrip.del_key_with_comments(settings, 'target',
                                                         self.log)
 
             if 'sounds' in assets:
@@ -470,12 +468,12 @@ class V4Migrator(VersionMigrator):
                 self.log.debug("Merging animations: into current "
                                "asset:images:")
 
-                YamlInterface.copy_with_comments(self.fc, 'animations',
+                YamlRoundtrip.copy_with_comments(self.fc, 'animations',
                                                  self.fc, 'images',
                                                  True, self.log)
 
             else:
-                YamlInterface.rename_key('animations', 'images', self.fc,
+                YamlRoundtrip.rename_key('animations', 'images', self.fc,
                                          self.log)
 
     def _migrate_show_player(self):
@@ -539,7 +537,7 @@ class V4Migrator(VersionMigrator):
 
             self._add_to_show_player(event, this_events_shows)
 
-        YamlInterface.del_key_with_comments(self.fc, 'light_player', self.log)
+        YamlRoundtrip.del_key_with_comments(self.fc, 'light_player', self.log)
 
     def _migrate_shot_profiles(self):
         if 'shot_profiles' not in self.fc:
@@ -550,7 +548,7 @@ class V4Migrator(VersionMigrator):
                 for dummy_i, state_settings in enumerate(settings['states']):
                     if 'loops' in state_settings and state_settings['loops']:
                         state_settings['loops'] = -1
-                    YamlInterface.rename_key('light_script', 'show',
+                    YamlRoundtrip.rename_key('light_script', 'show',
                                              state_settings)
 
     def _add_to_show_player(self, event, show_dict):
@@ -588,7 +586,7 @@ class V4Migrator(VersionMigrator):
                 if 'show_tokens' not in settings:
                     settings['show_tokens'] = CommentedMap()
 
-                YamlInterface.copy_with_comments(settings, token,
+                YamlRoundtrip.copy_with_comments(settings, token,
                                                  settings['show_tokens'],
                                                  token, True)
 
@@ -609,7 +607,7 @@ class V4Migrator(VersionMigrator):
                         keys_to_remove = keys - keys_to_keep
 
                         for key in keys_to_remove:
-                            YamlInterface.del_key_with_comments(settings, key,
+                            YamlRoundtrip.del_key_with_comments(settings, key,
                                                                 self.log)
 
                     if not settings:
@@ -618,13 +616,13 @@ class V4Migrator(VersionMigrator):
                         empty_entries.add(name)
 
                 for name in empty_entries:
-                    YamlInterface.del_key_with_comments(self.fc[section_name],
+                    YamlRoundtrip.del_key_with_comments(self.fc[section_name],
                                                         name, self.log)
 
             if len(self.fc[section_name]) == 0:
                 self.log.debug("%s: is now empty. Will remove it.",
                                section_name)
-                YamlInterface.del_key_with_comments(self.fc, section_name,
+                YamlRoundtrip.del_key_with_comments(self.fc, section_name,
                                                     self.log)
 
     def _migrate_elements(self, elements, display=None):
@@ -672,16 +670,16 @@ class V4Migrator(VersionMigrator):
 
     def _migrate_layer(self, element):
         # Migrate layer
-        YamlInterface.rename_key('layer', 'z', element, self.log)
-        YamlInterface.rename_key('h_pos', 'anchor_x', element, self.log)
-        YamlInterface.rename_key('v_pos', 'anchor_y', element, self.log)
-        YamlInterface.rename_key('font', 'style', element, self.log)
-        YamlInterface.rename_key('shade', 'brightness', element, self.log)
-        YamlInterface.del_key_with_comments(element, 'pixel_spacing', self.log)
-        YamlInterface.del_key_with_comments(element, 'antialias', self.log)
-        YamlInterface.del_key_with_comments(element, 'thickness', self.log)
-        YamlInterface.del_key_with_comments(element, 'bg_shade', self.log)
-        YamlInterface.del_key_with_comments(element, 'slide', self.log)
+        YamlRoundtrip.rename_key('layer', 'z', element, self.log)
+        YamlRoundtrip.rename_key('h_pos', 'anchor_x', element, self.log)
+        YamlRoundtrip.rename_key('v_pos', 'anchor_y', element, self.log)
+        YamlRoundtrip.rename_key('font', 'style', element, self.log)
+        YamlRoundtrip.rename_key('shade', 'brightness', element, self.log)
+        YamlRoundtrip.del_key_with_comments(element, 'pixel_spacing', self.log)
+        YamlRoundtrip.del_key_with_comments(element, 'antialias', self.log)
+        YamlRoundtrip.del_key_with_comments(element, 'thickness', self.log)
+        YamlRoundtrip.del_key_with_comments(element, 'bg_shade', self.log)
+        YamlRoundtrip.del_key_with_comments(element, 'slide', self.log)
         return element
 
     @classmethod
@@ -718,7 +716,7 @@ class V4Migrator(VersionMigrator):
 
         try:
             if element['anchor_y'] in ('middle', 'center'):
-                YamlInterface.del_key_with_comments(element, 'anchor_y',
+                YamlRoundtrip.del_key_with_comments(element, 'anchor_y',
                                                     self.log)
 
         except KeyError:
@@ -757,7 +755,7 @@ class V4Migrator(VersionMigrator):
 
         try:
             if element['anchor_x'] in ('middle', 'center'):
-                YamlInterface.del_key_with_comments(element, 'anchor_x',
+                YamlRoundtrip.del_key_with_comments(element, 'anchor_x',
                                                     self.log)
         except KeyError:
             pass
@@ -796,13 +794,13 @@ class V4Migrator(VersionMigrator):
                        element_type, element['type'])
 
         if element_type == 'text':
-            YamlInterface.rename_key('size', 'font_size', element, self.log)
+            YamlRoundtrip.rename_key('size', 'font_size', element, self.log)
 
         if element_type != 'dmd':
-            YamlInterface.del_key_with_comments(element, 'bg_color', self.log)
+            YamlRoundtrip.del_key_with_comments(element, 'bg_color', self.log)
 
         if element_type == 'virtualdmd' and V4Migrator.color_dmd:
-            YamlInterface.del_key_with_comments(element, 'pixel_color',
+            YamlRoundtrip.del_key_with_comments(element, 'pixel_color',
                                                 self.log)
             self.log.debug('Changing widget type from "dmd" to "color_dmd"')
             element['type'] = 'color_dmd'
@@ -827,12 +825,12 @@ class V4Migrator(VersionMigrator):
             element['color'] = self._get_color(element['color'])
 
         if 'movie' in element:
-            YamlInterface.rename_key('movie', 'video', element, self.log)
+            YamlRoundtrip.rename_key('movie', 'video', element, self.log)
 
             if 'repeat' in element:  # indented on purpose
-                YamlInterface.rename_key('repeat', 'loop', element, self.log)
+                YamlRoundtrip.rename_key('repeat', 'loop', element, self.log)
             if 'loops' in element:  # indented on purpose
-                YamlInterface.rename_key('loops', 'loop', element, self.log)
+                YamlRoundtrip.rename_key('loops', 'loop', element, self.log)
 
         self._convert_tokens(element)
 
@@ -871,8 +869,8 @@ class V4Migrator(VersionMigrator):
         self.log.debug("Converting 'animation' display_element to animated "
                        "'image' widget")
         element['type'] = 'image'
-        YamlInterface.rename_key('play_now', 'auto_play', element, self.log)
-        YamlInterface.rename_key('animation', 'image', element, self.log)
+        YamlRoundtrip.rename_key('play_now', 'auto_play', element, self.log)
+        YamlRoundtrip.rename_key('animation', 'image', element, self.log)
 
         element.pop('drop_frames', None)
 
@@ -915,7 +913,7 @@ class V4Migrator(VersionMigrator):
         if 'light_scripts' not in self.fc:
             return
 
-        YamlInterface.rename_key('light_scripts', 'shows', self.fc, self.log)
+        YamlRoundtrip.rename_key('light_scripts', 'shows', self.fc, self.log)
 
         for show_contents in self.fc['shows'].values():
             self._convert_tocks_to_time(show_contents)
@@ -925,16 +923,16 @@ class V4Migrator(VersionMigrator):
                 if 'color' in step:
                     step['color'] = self._get_color(step['color'])
                     if len(str(step['color'])) > 2:
-                        YamlInterface.rename_key('color', '(leds)', step,
+                        YamlRoundtrip.rename_key('color', '(leds)', step,
                                                  self.log)
                         step['leds'] = CommentedMap()
-                        YamlInterface.copy_with_comments(step, '(leds)',
+                        YamlRoundtrip.copy_with_comments(step, '(leds)',
                                                          step['leds'], '(leds)', True, self.log)
                     else:
-                        YamlInterface.rename_key('color', '(lights)', step,
+                        YamlRoundtrip.rename_key('color', '(lights)', step,
                                                  self.log)
                         step['lights'] = CommentedMap()
-                        YamlInterface.copy_with_comments(step, '(lights)',
+                        YamlRoundtrip.copy_with_comments(step, '(lights)',
                                                          step['lights'], '(lights)', True, self.log)
 
     def _migrate_switches(self):
@@ -942,10 +940,10 @@ class V4Migrator(VersionMigrator):
             return
 
         for switch_settings in self.fc['switches'].values():
-            YamlInterface.rename_key('activation_events',
+            YamlRoundtrip.rename_key('activation_events',
                                      'events_when_activated',
                                      switch_settings, self.log)
-            YamlInterface.rename_key('deactivation_events',
+            YamlRoundtrip.rename_key('deactivation_events',
                                      'events_when_deactivated',
                                      switch_settings, self.log)
 
@@ -1115,7 +1113,7 @@ class V4Migrator(VersionMigrator):
                         self._convert_tokens(widget)
 
                         if 'transition' in widget:
-                            YamlInterface.copy_with_comments(
+                            YamlRoundtrip.copy_with_comments(
                                 widget, 'transition', step['display'],
                                 'transition', True, self.log)
 
@@ -1123,7 +1121,7 @@ class V4Migrator(VersionMigrator):
                     step['display'] = self._migrate_elements(step['display'])
                     self._convert_tokens(step['display'])
 
-                YamlInterface.rename_key('display', 'slides', step)
+                YamlRoundtrip.rename_key('display', 'slides', step)
 
                 slide_num += 1
                 old_slides = step['slides']
@@ -1157,7 +1155,7 @@ class V4Migrator(VersionMigrator):
             else:
                 step['tocks'] = '+{}'.format(previous_tocks)
 
-            YamlInterface.rename_key('tocks', 'time', step, self.log)
+            YamlRoundtrip.rename_key('tocks', 'time', step, self.log)
 
         if len(show_steps) > 1:
             show_steps.append(CommentedMap())
@@ -1171,7 +1169,7 @@ class V4Migrator(VersionMigrator):
             if isinstance(v, dict):
                 for k1 in v.keys():
                     if k1.startswith('tag|'):
-                        YamlInterface.rename_key(k1, k1.strip('tag|'), v)
+                        YamlRoundtrip.rename_key(k1, k1.strip('tag|'), v)
                         found = True
                         break
 

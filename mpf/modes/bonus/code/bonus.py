@@ -6,7 +6,7 @@ class Bonus(Mode):
 
     """Bonus mode for MPF.
 
-    Give a player bonus for their achievements. But only if the machine is not
+    Give a player bonus for their achievements, but only if the machine is not
     tilted.
     """
 
@@ -23,7 +23,7 @@ class Bonus(Mode):
         self.bonus_iterator = None
 
     def mode_start(self, **kwargs):
-        """Start the bonus mode."""
+        """Start the bonus mode and setup all handlers."""
         if not self.bonus_entries:
             raise ValueError(
                 "Bonus mode started, but `bonus_entries` is not configured.")

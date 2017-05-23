@@ -299,9 +299,9 @@ class Counter(LogicBlock):
     def count(self, **kwargs):
         """Increase the hit progress towards completion.
 
-        Automatically called
-        when one of the `count_events`s is posted. Can also manually be
-        called.
+        This method is also automatically called when one of the
+        ``count_events`` is posted.
+
         """
         del kwargs
         if not self.enabled:
@@ -438,7 +438,8 @@ class Sequence(LogicBlock):
         """Add the handlers for the current step."""
         for step, events in enumerate(self.config['events']):
             for event in Util.string_to_list(events):
-                self.machine.events.add_handler(event, self.hit, step=step)
+                # increase priority with steps to prevent advancing multiple steps at once
+                self.machine.events.add_handler(event, self.hit, step=step, priority=step)
 
     def hit(self, step: int=None, **kwargs):
         """Increase the hit progress towards completion.

@@ -25,17 +25,15 @@ be called on mode_start or mode_stop.
 
 class ModeController(MpfController):
 
-    """Parent class for the Mode Controller.
-
-    There is one instance of this in MPF and it's responsible for loading, unloading, and managing all modes.
-
-    Args:
-        machine: The main MachineController instance.
-
-    """
+    """Responsible for loading, unloading, and managing all modes in MPF."""
 
     def __init__(self, machine: MachineController) -> None:
-        """Initialise mode controller."""
+        """Initialise mode controller.
+
+        Args:
+            machine: The main MachineController instance.
+
+        """
         super().__init__(machine)
 
         # ball ending event queue
@@ -373,7 +371,7 @@ class ModeController(MpfController):
 
     def register_start_method(self, start_method, config_section_name=None,
                               priority=0, **kwargs):
-        """Register a method which is called when the mode is started.
+        """Register a method which is called anytime a mode is started.
 
         Used by core components, plugins, etc. to register themselves with
         the Mode Controller for anything that they a mode to do when it starts.
@@ -390,8 +388,6 @@ class ModeController(MpfController):
             **kwargs: Any additional keyword arguments specified will be passed
                 to the start_method.
 
-        Note that these methods will be called every single time this mode is
-        started.
         """
         if not callable(start_method):
             raise ValueError("Cannot add start method '{}' as it is not"

@@ -30,16 +30,17 @@ from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
 
-class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPlatform, DriverPlatform):
+class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
+                           SwitchPlatform, DriverPlatform):
 
-    """Platform class for the FAST hardware controller.
-
-    Args:
-        machine: The main ``MachineController`` instance.
-    """
+    """Platform class for the FAST hardware controller."""
 
     def __init__(self, machine):
-        """Initialise fast hardware platform."""
+        """Initialise fast hardware platform.
+
+        Args:
+            machine: The main ``MachineController`` instance.
+        """
         super().__init__(machine)
         self.log = logging.getLogger('FAST')
         self.log.debug("Configuring FAST hardware.")
@@ -139,8 +140,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPla
             self.fast_commands[cmd](payload)
         else:   # pragma: no cover
             self.log.warning("Received unknown serial command? %s. (This is ok"
-                             " to ignore for now while the FAST platform is in "
-                             "development)", msg)
+                             " to ignore for now while the FAST platform is "
+                             "in development)", msg)
 
     @asyncio.coroutine
     def _connect_to_hardware(self):
@@ -150,7 +151,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform, SwitchPla
         and to register themselves.
         """
         for port in self.config['ports']:
-            comm = FastSerialCommunicator(platform=self, port=port, baud=self.config['baud'])
+            comm = FastSerialCommunicator(platform=self, port=port,
+                                          baud=self.config['baud'])
             yield from comm.connect()
             self.serial_connections.add(comm)
 

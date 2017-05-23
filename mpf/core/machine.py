@@ -38,7 +38,6 @@ if TYPE_CHECKING:   # pragma: no cover
     from mpf.core.settings_controller import SettingsController
     from mpf.core.shot_profile_manager import ShotProfileManager
     from mpf.core.bcp.bcp import Bcp
-    from mpf.core.extra_balls import ExtraBallController
     from mpf.assets.show import Show
     from mpf.core.assets import BaseAssetManager
     from mpf.devices.switch import Switch
@@ -52,6 +51,9 @@ if TYPE_CHECKING:   # pragma: no cover
     from mpf.core.device_manager import DeviceManager
     from mpf.plugins.auditor import Auditor
     from mpf.devices.light import Light
+    from mpf.devices.accelerometer import Accelerometer
+    from mpf.devices.drop_target import DropTarget
+    from mpf.devices.logic_blocks import Accrual, Sequence, Counter
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -110,7 +112,6 @@ class MachineController(LogMixin):
             self.shot_profile_manager = None            # type: ShotProfileManager
             self.settings = None                        # type: SettingsController
             self.bcp = None                             # type: Bcp
-            self.extra_ball_controller = None           # type: ExtraBallController
             self.asset_manager = None                   # type: BaseAssetManager
             self.ball_controller = None                 # type: BallController
             self.placeholder_manager = None             # type: PlaceholderManager
@@ -123,7 +124,13 @@ class MachineController(LogMixin):
             self.coils = None                           # type: DeviceCollectionType[str, Driver]
             self.lights = None                          # type: DeviceCollectionType[str, Light]
             self.ball_devices = None                    # type: DeviceCollectionType[str, BallDevice]
+            self.accelerometers = None                  # type: DeviceCollectionType[str, Accelerometer]
             self.playfield = None                       # type: Playfield
+            self.playfields = None                      # type: DeviceCollectionType[str, Playfield]
+            self.counters = None                        # type: DeviceCollectionType[str, Counter]
+            self.sequences = None                       # type: DeviceCollectionType[str, Sequence]
+            self.accruals = None                        # type: DeviceCollectionType[str, Accrual]
+            self.drop_targets = None                    # type: DeviceCollectionType[str, DropTarget]
 
         self._set_machine_path()
 

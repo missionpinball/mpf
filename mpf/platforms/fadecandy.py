@@ -15,15 +15,14 @@ if TYPE_CHECKING:   # pragma: no cover
 
 class FadecandyHardwarePlatform(OpenpixelHardwarePlatform):
 
-    """Base class for the open pixel hardware platform.
-
-    Args:
-        machine: The main ``MachineController`` object.
-
-    """
+    """Base class for the FadeCandy hardware platform."""
 
     def __init__(self, machine: "MachineController") -> None:
-        """Initialise Fadecandy."""
+        """Initialise Fadecandy.
+
+        Args:
+            machine: The main ``MachineController`` object.
+        """
         super().__init__(machine)
 
         self.log = logging.getLogger("FadeCandy")
@@ -43,18 +42,19 @@ class FadeCandyOPClient(OpenPixelClient):
 
     """Base class of an OPC client which connects to a FadeCandy server.
 
-    Args:
-        machine: The main ``MachineController`` instance.
-        config: Dictionary which contains configuration settings for the OPC
-            client.
-
     This class implements some FadeCandy-specific features that are not
     available with generic OPC implementations.
 
     """
 
     def __init__(self, machine, config):
-        """Initialise Fadecandy client."""
+        """Initialise Fadecandy client.
+
+        Args:
+            machine: The main ``MachineController`` instance.
+            config: Dictionary which contains configuration settings for the
+                OPC client.
+        """
         super().__init__(machine, config)
 
         self.log = logging.getLogger('FadeCandyClient')

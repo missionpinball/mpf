@@ -7,7 +7,7 @@ from mpf.core.utility_functions import Util
 
 class SwitchPlayer(object):
 
-    """Plays switches from config."""
+    """Plays back switch sequences from a config file, used for testing."""
 
     def __init__(self, machine):
         """Initialise switch player."""

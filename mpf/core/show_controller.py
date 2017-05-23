@@ -8,16 +8,17 @@ class ShowController(MpfController):
 
     """Manages all the shows in a pinball machine.
 
-    'hardware shows' are coordinated light, flasher, coil, and event effects.
     The ShowController handles priorities, restores, running and stopping
-    Shows, etc. There should be only one per machine.
+    shows, etc.
 
-    Args:
-        machine: Parent machine object.
     """
 
     def __init__(self, machine):
-        """Initialise show controller."""
+        """Initialise show controller.
+
+        Args:
+            machine: Parent machine object.
+        """
         super().__init__(machine)
 
         self.show_players = {}

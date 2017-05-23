@@ -6,3 +6,5 @@ gitpython
 sphinx_rtd_theme
 autoapi
 graphviz
+sphinx
+docutils

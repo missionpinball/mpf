@@ -1,4 +1,4 @@
-"""MPF CLI commands"""
+"""MPF CLI commands."""
 import argparse
 from importlib import import_module
 import os
@@ -104,16 +104,14 @@ class CommandLineUtility(object):
         return machine_path, remaining_args
 
     def get_machine_path(self, machine_path_hint=None):
-        """Finds the full machine path based on the current directory and
-            and option hint.
-        
+        """Find the full machine path based on the current directory and option hint.
+
         Args:
             machine_path_hint: Helps MPF locate the machine path. If None,
                 the 'config' folder in the current working directory is used.
-        
+
         Returns:
             String of full path of the machine folder that was located.
-        
         """
         machine_path = None
 
@@ -150,10 +148,10 @@ class CommandLineUtility(object):
 
 def run_from_command_line(args=None):
     """Run a CLI command.
-    
+
     Args:
         args: Command line arguments that were passed.
-    
+
     """
     del args
     path = os.path.abspath(os.path.curdir)

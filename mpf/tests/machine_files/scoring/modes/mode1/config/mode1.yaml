@@ -34,3 +34,7 @@ scoring:
           action: add_machine
     test_score_mode:
         score: 100
+    s_counter_target_active:
+        score: 10
+    s_kills_counter_target_active:
+        score: 100

@@ -2,9 +2,15 @@
 
 modes:
     - tilt
+    - base
 
 game:
     balls_per_game: 2
+
+playfields:
+    playfield:
+        default_source_device: bd_launcher
+        tags: default
 
 coils:
     eject_coil1:
@@ -51,7 +57,6 @@ ball_devices:
         debug: true
         confirm_eject_type: target
         eject_timeouts: 6s, 10s
-        tags: ball_add_live
 
 flippers:
     f_test:

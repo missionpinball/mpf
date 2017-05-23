@@ -4,6 +4,34 @@ mode:
   stop_events: stop_mode1
 
 extra_balls:
-    test_extra_ball:
-        award_events: extra_ball_award
-        reset_events: extra_ball_reset
+    eb1:
+        award_events: award_eb1
+        max_per_game: 1
+    eb2:
+        light_events: light_eb2
+        max_per_game: 2
+    eb3:
+        award_events: award_eb3
+        enabled: false
+    eb4:
+        light_events: light_eb4
+        enabled: false
+    eb5:
+        award_events: award_eb5
+        light_events: light_eb5
+        group: main
+    eb6:
+        light_events: light_eb6
+        group: main
+    eb7:
+        light_events: light_eb7
+        group: main
+    eb8:
+        light_events: light_eb8
+        award_events: award_eb8
+        group: disabled_eb
+    eb9:
+        group: no_memory
+        light_events: light_eb9
+        award_events: award_eb9
+        max_per_game: None

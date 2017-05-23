@@ -185,3 +185,53 @@ class TestScoring(MpfGameTestCase):
         self.post_event("test_score_mode", 1)
         # should score 1000 (+ 100 from the previous)
         self.assertPlayerVarEqual(1100, "score")
+
+        self.post_event("stop_mode2", 1)
+
+        # test scoring
+        self.post_event("test_score_mode", 1)
+        # should score 100 again (+ 1100 from the previous)
+        self.assertPlayerVarEqual(1200, "score")
+
+    def test_blocking_multiple_with_logic_block(self):
+        # this test was adapted from a real game
+        # start game
+        self.hit_switch_and_run("s_ball_switch1", 1)
+        self.advance_time_and_run(2)
+        self.start_game()
+
+        self.advance_time_and_run(1)
+        self.release_switch_and_run("s_ball_switch1", 20)
+
+        # start mode 1
+        self.post_event("start_mode1", 1)
+
+        # hit target 3 times for 10 points each
+        # and complete the logic block
+        for x in range(0, 3):
+            self.hit_and_release_switch("s_counter_target")
+        self.assertPlayerVarEqual(30, "score")
+
+        # start mode_for_logic_block
+        self.post_event("counter_target_complete")
+
+        # both modes running now
+        self.assertModeRunning('mode_for_logic_block')
+        self.assertModeRunning('mode1')
+
+        # hit the target while in the new mode
+        self.hit_and_release_switch("s_counter_target")
+        self.assertPlayerVarEqual(130, "score")
+
+        # trigger the end of the counter_targer mode
+        # which also blocks its mode1 scoring this once
+        self.hit_and_release_switch("s_kills_counter_target")
+        self.assertPlayerVarEqual(630, "score")
+
+        # only mode1 running now
+        self.assertModeNotRunning('mode_for_logic_block')
+        self.assertModeRunning('mode1')
+
+        # target only scores 10 again... or does it???
+        self.hit_and_release_switch("s_counter_target")
+        self.assertPlayerVarEqual(640, "score")

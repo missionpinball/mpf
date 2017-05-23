@@ -54,8 +54,29 @@
     background: #c9c9c9;
 }
 
-h1 h2 h3 h4 h5 {
+h1 {
     font-family: 'Oswald', sans-serif;
+    font-weight: 400;
+}
+
+h2 {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 400;
+}
+
+h3 {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 400;
+}
+
+h4 {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 400;
+}
+
+h5 {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 400;
 }
 
 a {
@@ -74,10 +95,9 @@ body {
     text-decoration: none;
 }
 
-/* software version in sidebar */
+/* hide software version in sidebar */
 .wy-side-nav-search > div.version {
-    color: white;
-    font-size: 90%;
+    font-size: 0;
 }
 
 .wy-breadcrumbs {
@@ -118,13 +138,11 @@ body {
     background: #a9e6a9;
 }
 
-.rst-content code {
-    background: black;
-}
-
 .rst-content code.literal {
-    color: white;
-    vertical-align: 10%;
+    color: #D63E29;
+    vertical-align: 5%;
+    padding: 3px 5px;
+    font-size: 85%;
 }
 
 div[class^="highlight"] pre {
@@ -166,6 +184,13 @@ footer p {
     font-weight: 300;
 }
 
-h1 {
+.inheritance {
+    margin-bottom: 1.2em;
+}
+
+.rst-content p.rubric {
     font-family: 'Oswald', sans-serif !important;
+    font-size: 16pt;
+    margin-top: 20pt;
+    font-weight: 400;
 }

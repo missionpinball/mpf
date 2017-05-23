@@ -18,10 +18,10 @@ class LogMixin(object):
 
     def configure_logging(self, logger, console_level='basic',
                           file_level='basic'):
-        """Configure the logging for the module this class is mixed into.
+        """Configure logging.
 
         Args:
-            logger: The string name of the logger to use
+            logger: The string name of the logger to use.
             console_level: The level of logging for the console. Valid options
                 are "none", "basic", or "full".
             file_level: The level of logging for the console. Valid options

@@ -200,8 +200,9 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         """Configure DMD."""
         return VirtualDmd()
 
-    def configure_rgb_dmd(self):
+    def configure_rgb_dmd(self, name: str):
         """Configure DMD."""
+        del name
         return VirtualDmd()
 
 

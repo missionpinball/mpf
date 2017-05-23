@@ -3,8 +3,10 @@
 modes:
     - mode1
 
-game:
-    balls_per_game: 1
+playfields:
+  playfield:
+    default_source_device: bd_launcher
+    tags: default
 
 coils:
     eject_coil1:
@@ -13,12 +15,9 @@ coils:
         number:
 
 switches:
-    s_start:
+    s_trough1:
         number:
-        tags: start
-    s_ball_switch1:
-        number:
-    s_ball_switch2:
+    s_trough2:
         number:
     s_ball_switch_launcher:
         number:
@@ -26,7 +25,7 @@ switches:
 ball_devices:
     bd_trough:
         eject_coil: eject_coil1
-        ball_switches: s_ball_switch1, s_ball_switch2
+        ball_switches: s_trough1, s_trough2
         debug: true
         confirm_eject_type: target
         eject_targets: bd_launcher
@@ -38,3 +37,15 @@ ball_devices:
         confirm_eject_type: target
         eject_timeouts: 2s
         tags: ball_add_live
+
+extra_ball_groups:
+  main:
+    enabled: yes
+    award_events: award_group_eb
+    max_lit: 1
+    max_per_ball: 2
+  disabled_eb:
+    enabled: no
+  no_memory:
+    lit_memory: false
+    max_per_game: 2

@@ -1,6 +1,8 @@
 import unittest
 import ruamel.yaml as yaml
-from mpf.file_interfaces.yaml_interface import YamlInterface, MpfLoader
+from mpf.file_interfaces.yaml_roundtrip import YamlRoundtrip
+
+from mpf.file_interfaces.yaml_interface import MpfLoader
 
 
 class TestYamlInterface(unittest.TestCase):
@@ -70,8 +72,8 @@ sound_system:
         name: music
         priority: 0
 """
-        parsed_config = YamlInterface.process(orig_config, True)
-        saved_config = YamlInterface.save_to_str(parsed_config)
+        parsed_config = YamlRoundtrip.process(orig_config)
+        saved_config = YamlRoundtrip.save_to_str(parsed_config)
 
         # print(saved_config)
 
@@ -110,7 +112,7 @@ float_1: 1.0
 
         """
 
-        parsed_config = YamlInterface.process(config, True)
+        parsed_config = YamlRoundtrip.process(config)
 
         for k, v in parsed_config.items():
             if not type(v) is eval(k.split('_')[0]):

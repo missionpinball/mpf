@@ -24,15 +24,7 @@ TimedSwitchHandler = namedtuple("TimedSwitchHandler", ["callback", 'switch_name'
 
 class SwitchController(MpfController):
 
-    """Handles all switches in the machine.
-
-    Base class for the switch controller, which is responsible for receiving
-    all switch activity in the machine and converting them into events.
-
-    More info:
-    http://docs.missionpinball.org/en/latest/core/switch_controller.html
-
-    """
+    """Tracks all switches in the machine, receives switch activity, and converts switch changes into events."""
 
     log = logging.getLogger('SwitchController')
 
@@ -65,10 +57,10 @@ class SwitchController(MpfController):
         self.monitors = list()      # type: List[Callable[[MonitoredSwitchChange], None]]
 
     def register_switch(self, name):
-        """Populate self.registered_switches.
+        """Add the name of a switch to the switch controller for tracking.
 
         Args:
-            name: Name of switch
+            name: String name of the switch to add
         """
         self.registered_switches[name + '-0'] = list()
         self.registered_switches[name + '-1'] = list()
@@ -113,8 +105,8 @@ class SwitchController(MpfController):
     def verify_switches(self) -> bool:
         """Verify that switches states match the hardware.
 
-        Loop through all the switches and queries their hardware states via
-        their platform interfaces and them compares that to the state that MPF
+        Loops through all the switches and queries their hardware states via
+        their platform interfaces and then compares that to the state that MPF
         thinks the switches are in.
 
         Throws logging warnings if anything doesn't match.
@@ -146,9 +138,18 @@ class SwitchController(MpfController):
         Query whether a switch is in a given state and (optionally)
         whether it has been in that state for the specified number of ms.
 
-        Returns True if the switch_name has been in the state for the given
-        number of ms. If ms is not specified, returns True if the switch
-        is in the state regardless of how long it's been in that state.
+        Args:
+            switch_name: String name of the switch to check.
+            state: Bool of the state to check. True is active and False is
+                inactive.
+            ms: Milliseconds that the switch has been in that state. If this
+                is non-zero, then this method will only return True if the
+                switch has been in that state for at least the number of ms
+                specified.
+
+        Returns: True if the switch_name has been in the state for the given
+            number of ms. If ms is not specified, returns True if the switch
+            is in the state regardless of how long it's been in that state.
         """
         if not ms:
             ms = 0
@@ -158,12 +159,16 @@ class SwitchController(MpfController):
     def is_active(self, switch_name, ms=None):
         """Query whether a switch is active.
 
-        Returns True if the current switch is active. If optional arg ms
-        is passed, will only return true if switch has been active for that
-        many ms.
+        Args:
+            switch_name: String name of the switch to check.
+            ms: Milliseconds that the switch has been active. If this
+                is non-zero, then this method will only return True if the
+                switch has been in that state for at least the number of ms
+                specified.
 
-        Note this method does consider whether a switch is NO or NC. So an NC
-        switch will show as active if it is open, rather than closed.
+        Returns: True if the switch_name has been active for the given
+            number of ms. If ms is not specified, returns True if the switch
+            is in the state regardless of how long it's been in that state.
         """
         return self.is_state(switch_name=switch_name,
                              state=1,
@@ -172,23 +177,51 @@ class SwitchController(MpfController):
     def is_inactive(self, switch_name, ms=None):
         """Query whether a switch is inactive.
 
-        Returns True if the current switch is inactive. If optional arg
-        `ms` is passed, will only return true if switch has been inactive
-        for that many ms.
+        Args:
+            switch_name: String name of the switch to check.
+            ms: Milliseconds that the switch has been inactive. If this
+                is non-zero, then this method will only return True if the
+                switch has been in that state for at least the number of ms
+                specified.
 
-        Note this method does consider whether a switch is NO or NC. So an NC
-        switch will show as active if it is closed, rather than open.
+        Returns: True if the switch_name has been inactive for the given
+            number of ms. If ms is not specified, returns True if the switch
+            is in the state regardless of how long it's been in that state.
         """
         return self.is_state(switch_name=switch_name,
                              state=0,
                              ms=ms)
 
     def ms_since_change(self, switch_name):
-        """Return the number of ms that have elapsed since this switch last changed state."""
+        """Return the number of ms that have elapsed since this switch last changed state.
+
+        Args:
+            switch_name: String name of the switch to check.
+
+        Returns:
+            Integer of milliseconds.
+        """
         return round((self.machine.clock.get_time() - self.switches[switch_name].time) * 1000.0, 0)
 
     def set_state(self, switch_name, state=1, reset_time=False):
-        """Set the state of a switch."""
+        """Set the state of a switch.
+
+        Note that since this method just sets the logical state of the switch,
+        weird things can happen if the state diverges from the physical state
+        of the switch.
+
+        It's mainly used with the virtual platforms to set the initial states
+        of switches on MPF boot.
+
+        Args:
+            switch_name: String name of the switch to set.
+            state: Logical state to set. 0 is inactive and 1 is active.
+            reset_time: Sets the timestamp of the change to -100000 which
+                indicates that this switch was in this state when the machine
+                was powered on and therefore the various timed switch
+                handlers will not be triggered.
+
+        """
         if reset_time:
             timestamp = -100000     # clock can be 0 at start
         else:
@@ -197,7 +230,20 @@ class SwitchController(MpfController):
         self.switches[switch_name] = SwitchState(state=state, time=timestamp)
 
     def process_switch_by_num(self, num, state, platform, logical=False):
-        """Process a switch state change by switch number."""
+        """Process a switch state change by switch number.
+
+        Args:
+            num: The switch number (based on the platform number) for the
+                switch you're setting.
+            state: The state to set, either 0 or 1.
+            platform: The platform this switch is on.
+            logical: Whether the state you're setting is the logical or
+                physical state of the switch. If a switch is NO (normally
+                open), then the logical and physical states will be the same.
+                NC (normally closed) switches will have physical and
+                logical states that are inverted from each other.
+
+        """
         for switch in self.machine.switches:
             if switch.hw_switch.number == num and switch.platform == platform:
                 self.process_switch_obj(obj=switch, state=state, logical=logical)
@@ -212,20 +258,6 @@ class SwitchController(MpfController):
     def process_switch(self, name, state=1, logical=False):
         """Process a new switch state change for a switch by name.
 
-        Args:
-            name: The string name of the switch.
-            state: Boolean or int of state of the switch you're processing,
-                True/1 is active, False/0 is inactive.
-            logical: Boolean which specifies whether the 'state' argument
-                represents the "physical" or "logical" state of the switch. If
-                True, a 1 means this switch is active and a 0 means it's
-                inactive, regardless of the NC/NO configuration of the switch.
-                If False, then the state paramenter passed will be inverted if
-                the switch is configured to be an 'NC' type. Typically the
-                hardware will send switch states in their raw (logical=False)
-                states, but other interfaces like the keyboard and OSC will use
-                logical=True.
-
         This is the method that is called by the platform driver whenever a
         switch changes state. It's also used by the "other" modules that
         activate switches, including the keyboard and OSC interfaces.
@@ -234,6 +266,21 @@ class SwitchController(MpfController):
         it changed from inactive to active. (The hardware & platform code
         handles NC versus NO switches and translates them to 'active' versus
         'inactive'.)
+
+        Args:
+            name: The string name of the switch.
+            state: Boolean or int of state of the switch you're processing,
+                True/1 is active, False/0 is inactive.
+            logical: Boolean which specifies whether the 'state' argument
+                represents the "physical" or "logical" state of the switch. If
+                True, a 1 means this switch is active and a 0 means it's
+                inactive, regardless of the NC/NO configuration of the switch.
+                If False, then the state parameter passed will be inverted if
+                the switch is configured to be an 'NC' type. Typically the
+                hardware will send switch states in their raw (logical=False)
+                states, but other interfaces like the keyboard and OSC will use
+                logical=True.
+
         """
         self.debug_log("Processing switch. Name: %s, state: %s, logical: %s,", name, state, logical)
 
@@ -256,7 +303,7 @@ class SwitchController(MpfController):
                 represents the "physical" or "logical" state of the switch. If
                 True, a 1 means this switch is active and a 0 means it's
                 inactive, regardless of the NC/NO configuration of the switch.
-                If False, then the state paramenter passed will be inverted if
+                If False, then the state parameter passed will be inverted if
                 the switch is configured to be an 'NC' type. Typically the
                 hardware will send switch states in their raw (logical=False)
                 states, but other interfaces like the keyboard and OSC will use
@@ -336,11 +383,33 @@ class SwitchController(MpfController):
             self.process_switch(obj.name, state, logical)
 
     def wait_for_switch(self, switch_name: str, state: int=1, only_on_change=True, ms=0):
-        """Wait for a switch to change into state."""
+        """Wait for a switch to change into a state.
+
+        Args:
+            switch_name: String name of the switch to wait for.
+            state: The state to wait for. 0 = inactive, 1 = active.
+            only_on_change: Bool which controls whether this wait will be
+                triggered now if the switch is already in the state, or
+                whether it will wait until the switch changes into that state.
+            ms: How long the switch needs to be in the new state to trigger
+                the wait.
+
+        """
         return self.wait_for_any_switch([switch_name], state, only_on_change, ms)
 
     def wait_for_any_switch(self, switch_names: List[str], state: int=1, only_on_change=True, ms=0):
-        """Wait for the first switch in the list to change into state."""
+        """Wait for the first switch in the list to change into state.
+
+        Args:
+            switch_names: Iterable of strings of switch names. Whichever switch changes first will trigger this wait.
+            state: The state to wait for. 0 = inactive, 1 = active.
+            only_on_change: Bool which controls whether this wait will be
+                triggered now if the switch is already in the state, or
+                whether it will wait until the switch changes into that state.
+            ms: How long the switch needs to be in the new state to trigger
+                the wait.
+
+        """
         future = asyncio.Future(loop=self.machine.clock.loop)   # type: asyncio.Future
 
         if not only_on_change:
@@ -446,7 +515,7 @@ class SwitchController(MpfController):
                 inactive
             ms: Integer. If you specify a 'ms' parameter, the handler won't be
                 called until the witch is in that state for that many
-                milliseconds (rounded up to the nearst machine timer tick).
+                milliseconds.
             return_info: If True, the switch controller will pass the
                 parameters of the switch handler as arguments to the callback,
                 including switch_name, state, and ms. If False (default), it
@@ -496,7 +565,7 @@ class SwitchController(MpfController):
         return SwitchHandler(switch_name, callback, state, ms)
 
     def remove_switch_handler_by_key(self, switch_handler: SwitchHandler):
-        """Remove switch hander by key returned from add_switch_handler."""
+        """Remove switch handler by key returned from add_switch_handler."""
         self.remove_switch_handler(switch_handler.switch_name, switch_handler.callback, switch_handler.state,
                                    switch_handler.ms)
 
@@ -504,8 +573,8 @@ class SwitchController(MpfController):
         """Remove a registered switch handler.
 
         Currently this only works if you specify everything exactly as you set
-        it up. (Except for return_info, which doesn't matter if true or false, it
-        will remove either / both.
+        it up. (Except for return_info, which doesn't matter if true or false,
+        it will remove either / both.
         """
         self.debug_log(
             "Removing switch handler. Switch: %s, State: %s, ms: %s",
@@ -527,14 +596,7 @@ class SwitchController(MpfController):
                     del self.active_timed_switches[k][dummy_key]
 
     def log_active_switches(self, **kwargs):
-        """Write out entries to the log file of all switches that are currently active.
-
-        This is used to set the "initial" switch states of standalone testing
-        tools, like our log file playback utility, but it might be useful in
-        other scenarios when weird things are happening.
-
-        This method dumps these events with logging level "INFO."
-        """
+        """Write out entries to the INFO log file of all switches that are currently active."""
         del kwargs
         for k, v in self.switches.items():
             if v.state:
