@@ -170,9 +170,6 @@ class TestBcpSocketMultipleClients(MpfTestCase):
         super().__init__(methodName)
 
         # use bcp mock
-        self.machine_config_patches['bcp'] = \
-            {"connections": {"local_display": {"type": "mpf.tests.MpfBcpTestCase.MockBcpClient", "port": 5050},
-                             "another_display": {"type": "mpf.tests.MpfBcpTestCase.MockBcpClient", "port": 9001}}}
         self.machine_config_patches['bcp'] = {}
         self.machine_config_patches['bcp']['servers'] = []
 
