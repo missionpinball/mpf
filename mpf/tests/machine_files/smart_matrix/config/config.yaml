@@ -16,7 +16,7 @@ displays:
     width: 128
     height: 32
 
-physical_rgb_dmds:
+rgb_dmds:
   smartmatrix_1:
     brightness: .5
     fps: 25
