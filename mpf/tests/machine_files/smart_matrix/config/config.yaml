@@ -5,3 +5,14 @@ hardware:
 smartmatrix:
     port: com4
     baud: 3400000
+
+displays:
+  dmd:
+    width: 128
+    height: 32
+
+physical_rgb_dmds:
+  smartmatrix:
+    brightness: .5
+    fps: 25
+    gamma: 2.5

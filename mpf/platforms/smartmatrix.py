@@ -25,6 +25,8 @@ class SmartMatrix(RgbDmdPlatform):
             config_spec='smartmatrix',
             source=self.machine.config['smartmatrix'])
 
+        self.machine.clock.loop.run_until_complete(self._connect())
+
     def initialize(self):
         """Initialise platform."""
         pass
@@ -43,7 +45,6 @@ class SmartMatrix(RgbDmdPlatform):
 
     def configure_rgb_dmd(self):
         """Configure rgb dmd."""
-        self.machine.clock.loop.run_until_complete(self._connect())
         return self
 
     @staticmethod
