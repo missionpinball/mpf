@@ -147,6 +147,9 @@ class BCPClientSocket(BaseBcpClient):
         self._bcp_client_socket_commands = {'hello': self._receive_hello,
                                             'goodbye': self._receive_goodbye}
 
+    def __repr__(self):
+        return self.module_name
+
     def connect(self, config):
         """Actively connect to server."""
         config = self.machine.config_validator.validate_config(
