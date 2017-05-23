@@ -162,3 +162,48 @@ class TestBcpSocketClient(MpfTestCase):
         self._bcp_client.send = MagicMock()
         self.client_socket.recv_queue.append(b'invalid_method?param1=1&param2=2\n')
         self.advance_time_and_run()
+
+
+class TestBcpSocketMultipleClients(MpfTestCase):
+
+    def __init__(self, methodName='runTest'):
+        super().__init__(methodName)
+
+        # use bcp mock
+        self.machine_config_patches['bcp'] = {}
+        self.machine_config_patches['bcp']['servers'] = []
+
+    def get_use_bcp(self):
+        return True
+
+    def setUp(self):
+        super().setUp()
+        self._bcp_client_1 = self.machine.bcp.transport.get_named_client("local_display")
+        self._bcp_client_2 = self.machine.bcp.transport.get_named_client("another_display")
+
+    def _mock_loop(self):
+        self.client_socket_1 = MockBcpQueueSocket()
+        self.clock.mock_socket("localhost", 5050, self.client_socket_1)
+        self.client_socket_2 = MockBcpQueueSocket()
+        self.clock.mock_socket("localhost", 9001, self.client_socket_2)
+
+    def getConfigFile(self):
+        return 'multiple_connections_config.yaml'
+
+    def getMachinePath(self):
+        return 'tests/machine_files/bcp/'
+
+    def testReceiveMessages(self):
+        # test message without bytes
+        receiver = MagicMock()
+        self.machine.bcp.interface.register_command_callback("receive_msg", receiver)
+
+        self.client_socket_1.recv_queue.append(b'receive_msg?param1=1&param2=2\n')
+        self.advance_time_and_run()
+        receiver.assert_called_once_with(param1="1", param2="2", client=self._bcp_client_1)
+        receiver.reset_mock()
+
+        self.client_socket_2.recv_queue.append(b'receive_msg?param1=1&param2=2\n')
+        self.advance_time_and_run()
+        receiver.assert_called_once_with(param1="1", param2="2", client=self._bcp_client_2)
+
