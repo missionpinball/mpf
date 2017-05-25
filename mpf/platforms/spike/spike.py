@@ -313,7 +313,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
             self._send_raw(bytearray([0]))
 
             try:
-                result = yield from asyncio.wait_for(self._read_raw(1), 0.1, loop=self.machine.clock.loop)
+                result = yield from asyncio.wait_for(self._read_raw(1), 0.5, loop=self.machine.clock.loop)
             except asyncio.TimeoutError:    # pragma: no cover
                 self.log.warning("Spike watchdog expired.")
                 continue
