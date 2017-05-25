@@ -70,6 +70,8 @@ assets:
         load: single|str|preload
         file: single|str|None
         priority: single|int|0
+    bitmap_fonts: 
+        descriptor: list|str|None
     images: # no image-specific config items
         __allow_others__:
     shows:  # no show-specific config items
@@ -189,6 +191,11 @@ bcp:
         ip: single|str|None
         port: single|int|5050
         type: single|str|
+bitmap_fonts:
+    __valid_in__: machine, mode
+    file: single|str|None
+    load: single|str|None
+    descriptor: list|str|None
 bonus_mode_settings:
     display_delay_ms: single|ms|2000
     hurry_up_delay_ms: single|ms|500
@@ -1299,6 +1306,7 @@ widgets:
         text: single|str|
         font_size: single|num|15
         font_name: ignore
+        bitmap_font: single|bool|False
         bold: single|bool|False
         italic: single|bool|False
         number_grouping: single|bool|False
