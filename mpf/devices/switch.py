@@ -66,9 +66,9 @@ class Switch(SystemWideDevice):
 
             check_set.add(key)
 
-    def validate_and_parse_config(self, config, is_mode_config):
+    def validate_and_parse_config(self, config, is_mode_config, debug_prefix: str=None):
         """Validate switch config."""
-        config = super().validate_and_parse_config(config, is_mode_config)
+        config = super().validate_and_parse_config(config, is_mode_config, debug_prefix)
         platform = self.machine.get_platform_sections(
             'switches', getattr(config, "platform", None))
         config['platform_settings'] = platform.validate_switch_section(

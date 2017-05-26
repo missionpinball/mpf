@@ -80,7 +80,7 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         del is_mode_config
         return config
 
-    def validate_and_parse_config(self, config: dict, is_mode_config: bool) -> dict:
+    def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str=None) -> dict:
         """Return the parsed and validated config.
 
         Args:
@@ -91,7 +91,7 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         """
         del is_mode_config
         self.machine.config_validator.validate_config(
-            self.config_section, config, self.name, "device")
+            self.config_section, config, self.name, "device", prefix=debug_prefix)
 
         self._configure_device_logging(config)
 

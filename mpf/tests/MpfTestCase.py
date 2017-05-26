@@ -107,7 +107,6 @@ class MpfTestCase(unittest.TestCase):
         self._last_event_kwargs = {}
         self._events = {}
         self.expected_duration = 0.5
-        self.min_frame_time = 1 / 30  # test with default Hz
 
     def getConfigFile(self):
         """Return a string name of the machine config file to use for the tests
@@ -866,7 +865,6 @@ class MpfTestCase(unittest.TestCase):
             logging.basicConfig(level=99)
         else:
             # fire all delays
-            self.min_frame_time = 20.0
             self.advance_time_and_run(300)
         self.machine.stop()
         self.machine._do_stop()
