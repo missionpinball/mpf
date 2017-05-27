@@ -257,8 +257,11 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
         self._inputs = {}
         self.config = None
         self._poll_task = None
+        self._sender_task = None
 
         self._nodes = None
+        self._bus_busy = asyncio.Lock(loop=self.machine.clock.loop)
+        self._cmd_queue = asyncio.Queue(loop=self.machine.clock.loop)
 
     def initialize(self):
         """Initialise platform."""
@@ -276,6 +279,9 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
 
         self._poll_task = self.machine.clock.loop.create_task(self._poll())
         self._poll_task.add_done_callback(self._done)
+
+        self._sender_task = self.machine.clock.loop.create_task(self._sender())
+        self._sender_task.add_done_callback(self._done)
 
     @asyncio.coroutine
     def _connect_to_hardware(self, port, baud):
@@ -319,15 +325,23 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
         self._inputs[node] = new_inputs
 
     @asyncio.coroutine
+    def _sender(self):
+        while True:
+            cmd = yield from self._cmd_queue.get()
+            with (yield from self._bus_busy):
+                self._send_raw(cmd)
+
+    @asyncio.coroutine
     def _poll(self):
         while True:
-            self._send_raw(bytearray([0]))
+            with (yield from self._bus_busy):
+                self._send_raw(bytearray([0]))
 
-            try:
-                result = yield from asyncio.wait_for(self._read_raw(1), 0.5, loop=self.machine.clock.loop)
-            except asyncio.TimeoutError:    # pragma: no cover
-                self.log.warning("Spike watchdog expired.")
-                continue
+                try:
+                    result = yield from asyncio.wait_for(self._read_raw(1), 0.5, loop=self.machine.clock.loop)
+                except asyncio.TimeoutError:    # pragma: no cover
+                    self.log.warning("Spike watchdog expired.")
+                    continue
 
             ready_node = result[0]
 
@@ -351,12 +365,19 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
 
     def stop(self):
         """Stop hardware and close connections."""
+        if self._poll_task:
+            self._poll_task.cancel()
+
+        if self._sender_task:
+            self._sender_task.cancel()
+            try:
+                self.machine.clock.loop.run_until_complete(self._sender_task)
+            except asyncio.CancelledError:
+                pass
+
         if self._writer:
             # send ctrl+c to stop the mpf-spike-bridge
             self._writer.write(b'\x03')
-
-        if self._poll_task:
-            self._poll_task.cancel()
 
         self._writer.close()
 
@@ -418,25 +439,26 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
         cmd_str.extend(data)
         cmd_str.append(self._checksum(cmd_str))
         cmd_str.append(response_len)
-        self._send_raw(cmd_str)
-        if response_len:
-            try:
-                response = yield from asyncio.wait_for(self._read_raw(response_len), 0.2, loop=self.machine.clock.loop)
-            except asyncio.TimeoutError:
-                self.log.warning("Failed to read %s bytes from Spike", response_len)
-                return False
+        with (yield from self._bus_busy):
+            self._send_raw(cmd_str)
+            if response_len:
+                try:
+                    response = yield from asyncio.wait_for(self._read_raw(response_len), 0.2, loop=self.machine.clock.loop)
+                except asyncio.TimeoutError:    # pragma: no cover
+                    self.log.warning("Failed to read %s bytes from Spike", response_len)
+                    return False
 
-            if self._checksum(response) != 0:
-                self.log.warning("Checksum mismatch for response: %s", "".join("%02x " % b for b in response))
-                # we resync by flushing the input
-                self._writer.transport.serial.reset_input_buffer()
-                # pylint: disable-msg=protected-access
-                self._reader._buffer = bytearray()
-                return False
+                if self._checksum(response) != 0:   # pragma: no cover
+                    self.log.warning("Checksum mismatch for response: %s", "".join("%02x " % b for b in response))
+                    # we resync by flushing the input
+                    self._writer.transport.serial.reset_input_buffer()
+                    # pylint: disable-msg=protected-access
+                    self._reader._buffer = bytearray()
+                    return False
 
-            return response
+                return response
 
-        return False
+            return False
 
     def send_cmd(self, node, cmd, data):
         """Send cmd which does not require a response."""
@@ -449,7 +471,8 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
         cmd_str.extend(data)
         cmd_str.append(self._checksum(cmd_str))
         cmd_str.append(0)
-        self._send_raw(cmd_str)
+        # queue command
+        self._cmd_queue.put_nowait(cmd_str)
 
     def _read_inputs(self, node):
         return self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetInputState, bytearray(), 10)
