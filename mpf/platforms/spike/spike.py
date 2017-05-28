@@ -2,6 +2,7 @@
 import asyncio
 
 import logging
+from typing import Generator
 
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
 
@@ -39,7 +40,7 @@ class SpikeLight(MatrixLightPlatformInterface):
         """Set brightness of channel."""
         fade_time = 12  # 10ms fade time by default
         data = bytearray([fade_time, brightness])
-        self.platform.send_cmd(self.node, SpikeNodebus.SetLed + self.number, data)
+        self.platform.send_cmd_async(self.node, SpikeNodebus.SetLed + self.number, data)
 
 
 class SpikeDriver(DriverPlatformInterface):
@@ -99,7 +100,7 @@ class SpikeDriver(DriverPlatformInterface):
             0,
             0
         ])
-        self.platform.send_cmd(self.node, SpikeNodebus.CoilFireRelease, msg)
+        self.platform.send_cmd_async(self.node, SpikeNodebus.CoilFireRelease, msg)
 
     def enable(self, coil):
         """Pulse and enable coil."""
@@ -173,7 +174,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
         pulse_value = int(pulse_ms * 1.28)
         second_coil_action = 6 if disable_switch_index else 0
 
-        self.send_cmd(node, SpikeNodebus.CoilSetReflex, bytearray(
+        self.send_cmd_async(node, SpikeNodebus.CoilSetReflex, bytearray(
             [coil_index,
              pulse_power, pulse_value & 0xFF, (pulse_value & 0xFF00) >> 8,
              hold_power, 0x00, 0x00, 0x00, 0x00,
@@ -218,7 +219,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
     def clear_hw_rule(self, switch, coil):
         """Disable hardware rule for this coil."""
         del switch
-        self.send_cmd(coil.hw_driver.node, SpikeNodebus.CoilSetReflex, bytearray(
+        self.send_cmd_async(coil.hw_driver.node, SpikeNodebus.CoilSetReflex, bytearray(
             [coil.hw_driver.index, 0, 0, 0, 0, 0x00, 0x00, 0x00, 0x00,
              0, 0, 0, 0, 0, 0, 0, 0,
              0, 0, 0,
@@ -338,7 +339,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
                 self._send_raw(bytearray([0]))
 
                 try:
-                    result = yield from asyncio.wait_for(self._read_raw(1), 0.5, loop=self.machine.clock.loop)
+                    result = yield from asyncio.wait_for(self._read_raw(1), 0.2, loop=self.machine.clock.loop)
                 except asyncio.TimeoutError:    # pragma: no cover
                     self.log.warning("Spike watchdog expired.")
                     continue
@@ -428,7 +429,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
         return (256 - (checksum % 256)) % 256
 
     @asyncio.coroutine
-    def send_cmd_and_wait_for_response(self, node, cmd, data, response_len):
+    def send_cmd_and_wait_for_response(self, node, cmd, data, response_len) -> Generator[int, None, str]:
         """Send cmd and wait for response."""
         if node > 15:
             raise AssertionError("Node must be 0-15.")
@@ -460,8 +461,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
 
             return False
 
-    def send_cmd(self, node, cmd, data):
-        """Send cmd which does not require a response."""
+    def _create_cmd_str(self, node, cmd, data):
         if node > 15:
             raise AssertionError("Node must be 0-15.")
         cmd_str = bytearray()
@@ -471,6 +471,18 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
         cmd_str.extend(data)
         cmd_str.append(self._checksum(cmd_str))
         cmd_str.append(0)
+        return cmd_str
+
+    @asyncio.coroutine
+    def send_cmd_sync(self, node, cmd, data):
+        """Send cmd which does not require a response."""
+        cmd_str = self._create_cmd_str(node, cmd, data)
+        with (yield from self._bus_busy):
+            self._send_raw(cmd_str)
+
+    def send_cmd_async(self, node, cmd, data):
+        """Send cmd which does not require a response."""
+        cmd_str = self._create_cmd_str(node, cmd, data)
         # queue command
         self._cmd_queue.put_nowait(cmd_str)
 
@@ -489,7 +501,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
         return result
 
     @asyncio.coroutine
-    def _initialize(self):
+    def _initialize(self) -> None:
         # send ctrl+c to stop whatever is running
         self._writer.write(b'\x03')
         # flush input
@@ -504,17 +516,17 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
         if data[-len(welcome_str):] != welcome_str:
             raise AssertionError("Expected '{}' got '{}'".format(welcome_str, data[:len(welcome_str)]))
 
-        self.send_cmd(0, SpikeNodebus.Reset, bytearray())
-        self.send_cmd(0, SpikeNodebus.SetTraffic, bytearray([34]))
-        self.send_cmd(0, SpikeNodebus.SetTraffic, bytearray([17]))
+        yield from self.send_cmd_sync(0, SpikeNodebus.Reset, bytearray())
+        yield from self.send_cmd_sync(0, SpikeNodebus.SetTraffic, bytearray([34]))
+        yield from self.send_cmd_sync(0, SpikeNodebus.SetTraffic, bytearray([17]))
 
         for node in self._nodes:
             if node == 0:
                 continue
-            self.send_cmd(node, SpikeNodebus.SetTraffic, bytearray([16]))
-            self.send_cmd(node, SpikeNodebus.SetTraffic, bytearray([32]))
+            yield from self.send_cmd_sync(node, SpikeNodebus.SetTraffic, bytearray([16]))
+            yield from self.send_cmd_sync(node, SpikeNodebus.SetTraffic, bytearray([32]))
 
-        self.send_cmd(0, SpikeNodebus.SetTraffic, bytearray([34]))
+        yield from self.send_cmd_sync(0, SpikeNodebus.SetTraffic, bytearray([34]))
 
         yield from asyncio.sleep(.2, loop=self.machine.clock.loop)
 
@@ -536,7 +548,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
             yield from self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetStatus, bytearray(), 10)
             yield from self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetCoilCurrent, bytearray([0]), 12)
 
-        self.send_cmd(0, SpikeNodebus.SetTraffic, bytearray([17]))
+        yield from self.send_cmd_sync(0, SpikeNodebus.SetTraffic, bytearray([17]))
         yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
 
         for node in self._nodes:
