@@ -67,8 +67,6 @@ class Game(AsyncMode):
                 self.request_player_add)
 
         self.max_players = self.machine.config['game']['max_players'].evaluate({})
-        for player_num in range(self.max_players):
-            self.machine.configure_machine_var(name='player{}_score'.format(player_num), persist=True)
 
         yield from self._start_game()
 
@@ -108,9 +106,6 @@ class Game(AsyncMode):
         # Wait for player to be added before game can start
         # TODO: Add timeout to wait
         yield from self._at_least_one_player_event.wait()
-
-        self.machine.remove_machine_var_search(startswith='player',
-                                               endswith='_score')
 
         yield from self._start_player_turn()
 
@@ -380,6 +375,34 @@ class Game(AsyncMode):
         desc: The game is in the process of ending. This is a queue event, and
         the game won't actually end until the queue is cleared.'''
 
+        # set playerX_score variables
+        if self.player_list:
+            for player in self.player_list:
+                self.machine.configure_machine_var(name='player{}_score'.format(player.number), persist=True)
+                self.machine.set_machine_var(
+                    name='player{}_score'.format(player.number),
+                    value=player.score)
+                '''machine_var: player(x)_score
+    
+                desc: Holds the numeric value of a player's score. The "x" is the
+                player number, so this actual machine variable is
+                ``player1_score`` or ``player2_score``.
+    
+                Since these are machine variables, they are maintained even after
+                a game is over. Therefore you can use these machine variables in
+                your attract mode display show to show the scores of the last game
+                that was played.
+    
+                These machine variables are updated at the end of each player's
+                turn, and they persist on disk so they are restored the next time
+                MPF starts up.
+    
+                '''
+
+            # remove all other vars
+            for i in range(len(self.player_list) + 1, self.max_players):
+                self.machine.remove_machine_var('player{}_score'.format(i))
+
         yield from self.machine.events.post_async('game_ended')
         '''event: game_ended
         desc: The game has ended.'''
@@ -420,12 +443,6 @@ class Game(AsyncMode):
 
     def _player_turn_at_game_ending_completed(self, **kwargs):
         del kwargs
-
-        # Update player's score before ending
-        self.machine.set_machine_var(
-            name='player{}_score'.format(self.player.number),
-            value=self.player.score)
-
         self.machine.events.post('player_turn_ended',
                                  player=self.player,
                                  number=self.player.number)
@@ -561,26 +578,6 @@ class Game(AsyncMode):
         # variable events and send all initial values
         player.enable_events(True, True)
 
-        # Create machine variable to hold new player's score
-        self.machine.set_machine_var(
-            name='player{}_score'.format(player.number),
-            value=player.score)
-        '''machine_var: player(x)_score
-
-        desc: Holds the numeric value of a player's score. The "x" is the
-        player number, so this actual machine variable is
-        ``player1_score`` or ``player2_score``.
-
-        Since these are machine variables, they are maintained even after
-        a game is over. Therefore you can use these machine variables in
-        your attract mode display show to show the scores of the last game
-        that was played.
-
-        These machine variables are updated at the end of each player's
-        turn, and they persist on disk so they are restored the next time
-        MPF starts up.
-        '''
-
         return True
 
     @asyncio.coroutine
@@ -674,11 +671,6 @@ class Game(AsyncMode):
         player: The player object whose turn is ending.
         number: The player number
         '''
-
-        # Update player's score since their turn is over
-        self.machine.set_machine_var(
-            name='player{}_score'.format(self.player.number),
-            value=self.player.score)
 
         yield from self.machine.events.post_async('player_turn_ended',
                                                   player=self.player,

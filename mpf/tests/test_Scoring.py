@@ -162,6 +162,9 @@ class TestScoring(MpfGameTestCase):
         self.advance_time_and_run()
 
     def test_blocking(self):
+        self.machine.set_machine_var("player1_score", 42)
+        self.machine.set_machine_var("player2_score", 23)
+
         # start game
         self.hit_switch_and_run("s_ball_switch1", 1)
         self.advance_time_and_run(2)
@@ -192,6 +195,21 @@ class TestScoring(MpfGameTestCase):
         self.post_event("test_score_mode", 1)
         # should score 100 again (+ 1100 from the previous)
         self.assertPlayerVarEqual(1200, "score")
+
+        self.post_event("stop_mode1")
+        # we still see the old score here
+        self.assertMachineVarEqual(42, "player1_score")
+
+        self.machine.game.end_ball()
+        self.advance_time_and_run()
+        self.machine.game.end_ball()
+        self.advance_time_and_run(10)
+        self.assertGameIsNotRunning()
+
+        self.assertMachineVarEqual(1200, "player1_score")
+        self.assertFalse(self.machine.is_machine_var("player2_score"))
+        self.assertFalse(self.machine.is_machine_var("player3_score"))
+        self.assertFalse(self.machine.is_machine_var("player4_score"))
 
     def test_blocking_multiple_with_logic_block(self):
         # this test was adapted from a real game
