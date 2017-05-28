@@ -121,9 +121,6 @@ class Game(Mode):
         del kwargs
 
         if ev_result:
-            self.machine.remove_machine_var_search(startswith='player',
-                                                   endswith='_score')
-
             if not self.player_list:
                 # Sometimes game_starting handlers will add players, so we only
                 # have to here if there aren't any players yet.
@@ -370,6 +367,35 @@ class Game(Mode):
         del kwargs
         self.debug_log("Entering Game.game_ended()")
 
+        if not self.player_list:
+            return
+
+        for player in self.player_list:
+            self.machine.create_machine_var(
+                name='player{}_score'.format(player.number),
+                value=player.score,
+                persist=True)
+            '''machine_var: player(x)_score
+
+            desc: Holds the numeric value of a player's score. The "x" is the
+            player number, so this actual machine variable is
+            ``player1_score`` or ``player2_score``.
+
+            Since these are machine variables, they are maintained even after
+            a game is over. Therefore you can use these machine variables in
+            your attract mode display show to show the scores of the last game
+            that was played.
+
+            These machine variables are updated at the end of each player's
+            turn, and they persist on disk so they are restored the next time
+            MPF starts up.
+
+            '''
+
+        # remove all other vars
+        for i in range(len(self.player_list) + 1, self.machine.config['game']['max_players'].evaluate([])):
+            self.machine.remove_machine_var('player{}_score'.format(i))
+
     def award_extra_ball(self):
         """Called when the same player should shoot again."""
         self.debug_log("Awarded extra ball to Player %s. Shoot Again", self.player.index + 1)
@@ -428,29 +454,6 @@ class Game(Mode):
             player = Player(self.machine, len(self.player_list))
             self.player_list.append(player)
             self.num_players = len(self.player_list)
-
-            self.machine.create_machine_var(
-                name='player{}_score'.format(player.number),
-                value=player.score,
-                persist=True)
-
-            '''machine_var: player(x)_score
-
-            desc: Holds the numeric value of a player's score. The "x" is the
-            player number, so this actual machine variable is
-            ``player1_score`` or ``player2_score``.
-
-            Since these are machine variables, they are maintained even after
-            a game is over. Therefore you can use these machine variables in
-            your attract mode display show to show the scores of the last game
-            that was played.
-
-            These machine variables are updated at the end of each player's
-            turn, and they persist on disk so they are restored the next time
-            MPF starts up.
-
-            '''
-
             return player
 
     def player_turn_start(self):
@@ -553,10 +556,6 @@ class Game(Mode):
     def _player_rotate2(self, **kwargs):
         del kwargs
         self.player_turn_stop()
-
-        self.machine.set_machine_var(
-            name='player{}_score'.format(self.player.number),
-            value=self.player.score)
 
         if self.player.number < self.num_players:
             self.player = self.player_list[self.player.number]
