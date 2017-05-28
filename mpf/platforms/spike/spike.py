@@ -180,7 +180,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
              hold_power, 0x00, 0x00, 0x00, 0x00,
              0, 0, 0, 0, 0, 0, 0, 0,
              0x40 + enable_switch_index, 0x40 + disable_switch_index if disable_switch_index is not None else 0, 0,
-             2, second_coil_action, 1 if can_cancel_pulse else 0]))
+             2, second_coil_action, 1 if can_cancel_pulse else 0]), 25)
 
     @staticmethod
     def _check_coil_switch_combination(switch, coil):
@@ -223,7 +223,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
             [coil.hw_driver.index, 0, 0, 0, 0, 0x00, 0x00, 0x00, 0x00,
              0, 0, 0, 0, 0, 0, 0, 0,
              0, 0, 0,
-             0, 0, 0]))
+             0, 0, 0]), 25)
 
     def configure_driver(self, config):
         """Configure a driver on Stern Spike."""
@@ -328,9 +328,11 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
     @asyncio.coroutine
     def _sender(self):
         while True:
-            cmd = yield from self._cmd_queue.get()
+            cmd, wait_ms = yield from self._cmd_queue.get()
             with (yield from self._bus_busy):
                 self._send_raw(cmd)
+                if wait_ms > 0:
+                    yield from asyncio.sleep(wait_ms / 1000.0, loop=self.machine.clock.loop)
 
     @asyncio.coroutine
     def _poll(self):
@@ -339,7 +341,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
                 self._send_raw(bytearray([0]))
 
                 try:
-                    result = yield from asyncio.wait_for(self._read_raw(1), 0.2, loop=self.machine.clock.loop)
+                    result = yield from asyncio.wait_for(self._read_raw(1), 0.5, loop=self.machine.clock.loop)
                 except asyncio.TimeoutError:    # pragma: no cover
                     self.log.warning("Spike watchdog expired.")
                     continue
@@ -378,7 +380,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
 
         if self._writer:
             # send ctrl+c to stop the mpf-spike-bridge
-            self._writer.write(b'\x03')
+            self._writer.write(b'\x03reset\n')
 
         self._writer.close()
 
@@ -480,11 +482,11 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
         with (yield from self._bus_busy):
             self._send_raw(cmd_str)
 
-    def send_cmd_async(self, node, cmd, data):
+    def send_cmd_async(self, node, cmd, data, wait_ms=0):
         """Send cmd which does not require a response."""
         cmd_str = self._create_cmd_str(node, cmd, data)
         # queue command
-        self._cmd_queue.put_nowait(cmd_str)
+        self._cmd_queue.put_nowait((cmd_str, wait_ms))
 
     def _read_inputs(self, node):
         return self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetInputState, bytearray(), 10)
@@ -503,7 +505,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
     @asyncio.coroutine
     def _initialize(self) -> None:
         # send ctrl+c to stop whatever is running
-        self._writer.write(b'\x03')
+        self._writer.write(b'\x03reset\n')
         # flush input
         self._writer.transport.serial.reset_input_buffer()
         # pylint: disable-msg=protected-access

@@ -31,7 +31,7 @@ class MockSpikeSocket(MockSerial):
     def write(self, encoded_msg):
         """Write message."""
         # currently needed for the bridge
-        if encoded_msg == '\n\r'.encode() or encoded_msg == b'\x03':
+        if encoded_msg == '\n\r'.encode() or encoded_msg == b'\x03reset\n':
             return len(encoded_msg)
 
         if encoded_msg == "/bin/bridge\r\n".encode():
