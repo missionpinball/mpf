@@ -243,7 +243,7 @@ class SpikePlatformTest(MpfTestCase):
         # pop bumbers
         self.serialMock.expected_commands = {
             self._checksummed_cmd(b'\x88\x19\x41\x0a\x7f\x0c\x00\x00\x00\x00\x00\x00\x00'
-                                  b'\x00\x00\x00\x00\x00\x00\x00\x44\x00\x00\x02\x00\x00'): b''
+                                  b'\x00\x00\x00\x00\x00\x00\x00\x44\x00\x00\x00\x00\x00'): b''
         }
         self.machine.autofires.ac_pops.enable()
         self.advance_time_and_run(.1)
@@ -260,7 +260,7 @@ class SpikePlatformTest(MpfTestCase):
         # single-wound flippers
         self.serialMock.expected_commands = {
             self._checksummed_cmd(b'\x88\x19\x41\x01\xff\x0c\x00\x9f\x00\x00\x00\x00\x00'
-                                  b'\x00\x00\x00\x00\x00\x00\x00\x4d\x00\x00\x02\x00\x01'): b''
+                                  b'\x00\x00\x00\x00\x00\x00\x00\x4d\x00\x00\x00\x01\x00'): b''
         }
         self.machine.flippers.f_test_single.enable()
         self.advance_time_and_run(.1)
@@ -274,12 +274,15 @@ class SpikePlatformTest(MpfTestCase):
         self.advance_time_and_run(.1)
         self.assertFalse(self.serialMock.expected_commands)
 
-        # dual-wound flippers
+        # dual-wound flippers without EOS
         self.serialMock.expected_commands = {
+            # main should be pulsed only
             self._checksummed_cmd(b'\x88\x19\x41\x01\xff\x0c\x00\x00\x00\x00\x00\x00\x00'
-                                  b'\x00\x00\x00\x00\x00\x00\x00\x4d\x00\x00\x02\x00\x01'): b'',
+                                  b'\x00\x00\x00\x00\x00\x00\x00\x4d\x00\x00\x00\x01\x00'): b'',
+
+            # hold should be pulsed and then pwmed (100% here)
             self._checksummed_cmd(b'\x88\x19\x41\x03\xff\x0c\x00\xff\x00\x00\x00\x00\x00'
-                                  b'\x00\x00\x00\x00\x00\x00\x00\x4d\x00\x00\x02\x00\x01'): b''
+                                  b'\x00\x00\x00\x00\x00\x00\x00\x4d\x00\x00\x00\x01\x00'): b''
         }
         self.machine.flippers.f_test_hold.enable()
         self.advance_time_and_run(.1)
@@ -296,12 +299,14 @@ class SpikePlatformTest(MpfTestCase):
         self.assertFalse(self.serialMock.expected_commands)
 
         # dual-wound flippers with eos
-        # TODO: this is not exactly how stern would do it
         self.serialMock.expected_commands = {
+            # main should be pulsed and disabled when eos is hit (or timed). retriggers when eos is released.
             self._checksummed_cmd(b'\x88\x19\x41\x01\xff\x0c\x00\x9f\x00\x00\x00\x00\x00'
-                                  b'\x00\x00\x00\x00\x00\x00\x00\x4d\x4f\x00\x02\x06\x01'): b'',
+                                  b'\x00\x00\x00\x00\x00\x00\x00\x4d\x4f\x00\x02\x06\x00'): b'',
+
+            # hold should be pulsed and then pwmed (100% here)
             self._checksummed_cmd(b'\x88\x19\x41\x03\xff\x0c\x00\xff\x00\x00\x00\x00\x00'
-                                  b'\x00\x00\x00\x00\x00\x00\x00\x4d\x00\x00\x02\x00\x01'): b''
+                                  b'\x00\x00\x00\x00\x00\x00\x00\x4d\x00\x00\x00\x01\x00'): b''
         }
         self.machine.flippers.f_test_hold_eos.enable()
         self.advance_time_and_run(.1)
