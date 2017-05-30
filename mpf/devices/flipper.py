@@ -184,8 +184,7 @@ class Flipper(SystemWideDevice):
     def _enable_hold_coil_rule(self):
         self.debug_log('Enabling hold coil rule')
 
-        # TODO: why are we pulsing the hold coil?
-
+        # pulse hold coil and enable it afterwards
         self.hold_coil.set_pulse_on_hit_and_enable_and_release_rule(self.switch)
 
     def _enable_main_coil_eos_cutoff_rule(self):

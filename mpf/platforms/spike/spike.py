@@ -169,10 +169,12 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
 
     # pylint: disable-msg=too-many-arguments
     def _write_rule(self, node, enable_switch_index, disable_switch_index, coil_index, pulse_power, pulse_ms,
-                    hold_power, can_cancel_pulse):
-        """Write a hardware rule to Stern Spike."""
+                    hold_power, param1, param2, param3):
+        """Write a hardware rule to Stern Spike.
+
+        We do not fully understand param1, param2 and param3 yet.
+        """
         pulse_value = int(pulse_ms * 1.28)
-        second_coil_action = 6 if disable_switch_index else 0
 
         self.send_cmd_async(node, SpikeNodebus.CoilSetReflex, bytearray(
             [coil_index,
@@ -180,7 +182,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
              hold_power, 0x00, 0x00, 0x00, 0x00,
              0, 0, 0, 0, 0, 0, 0, 0,
              0x40 + enable_switch_index, 0x40 + disable_switch_index if disable_switch_index is not None else 0, 0,
-             2, second_coil_action, 1 if can_cancel_pulse else 0]), 25)
+             param1, param2, param3]), 25)
 
     @staticmethod
     def _check_coil_switch_combination(switch, coil):
@@ -190,31 +192,58 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
             ))
 
     def set_pulse_on_hit_rule(self, enable_switch, coil):
-        """Set pulse on hit rule on driver."""
+        """Set pulse on hit rule on driver.
+
+        This is mostly used for popbumpers. Example from WWE:
+        Type: 8 Cmd: 65 Node: 9 Msg: 0x00 0xa6 0x28 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x14 0x00 0x00 0x00 0x38
+        0x00 0x40 0x00 0x00 0x00 0x00 0x00 Len: 25
+        """
         self._check_coil_switch_combination(enable_switch, coil)
         self._write_rule(coil.hw_driver.node, enable_switch.hw_switch.index, None, coil.hw_driver.index,
-                         coil.hw_driver.get_pulse_power(), coil.hw_driver.get_pulse_ms(), 0, False)
+                         coil.hw_driver.get_pulse_power(), coil.hw_driver.get_pulse_ms(), 0, 0, 0, 0)
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
-        """Set pulse on hit and enable and relase rule on driver."""
+        """Set pulse on hit and enable and relase rule on driver.
+
+        Used for single coil flippers. Examples from WWE:
+        Dual-wound flipper hold coil:
+        Type: 8 Cmd: 65 Node: 8 Msg: 0x02 0xff 0x46 0x01 0xff 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x3a
+        0x00 0x42 0x40 0x00 0x00 0x01 0x00  Len: 25
+
+        Ring Slings (different flags):
+        Type: 8 Cmd: 65 Node: 10 Msg: 0x00 0xff 0x19 0x00 0x14 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x80
+        0x00 0x4a 0x40 0x00 0x00 0x06 0x05  Len: 25
+        """
         self._check_coil_switch_combination(enable_switch, coil)
         self._write_rule(coil.hw_driver.node, enable_switch.hw_switch.index, None, coil.hw_driver.index,
                          coil.hw_driver.get_pulse_power(), coil.hw_driver.get_pulse_ms(),
-                         coil.hw_driver.get_hold_power(), True)
+                         coil.hw_driver.get_hold_power(), 0, 1, 0)
 
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
-        """Set pulse on hit and release rule to driver."""
+        """Set pulse on hit and release rule to driver.
+
+        Used for high-power coil on dual-wound flippers. Example from WWE:
+        Type: 8 Cmd: 65 Node: 8 Msg: 0x00 0xff 0x33 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00
+        0x00 0x42 0x40 0x00 0x02 0x06 0x00  Len: 25
+        """
         self._check_coil_switch_combination(enable_switch, coil)
         self._check_coil_switch_combination(disable_switch, coil)
         self._write_rule(coil.hw_driver.node, enable_switch.hw_switch.index, disable_switch.hw_switch.index,
                          coil.hw_driver.index, coil.hw_driver.get_pulse_power(), coil.hw_driver.get_pulse_ms(),
-                         coil.hw_driver.get_hold_power(), True)
+                         coil.hw_driver.get_hold_power(), 2, 6, 0)
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch, coil):
-        """Set pulse on hit and release rule to driver."""
+        """Set pulse on hit and release rule to driver.
+
+        I believe that param2 == 1 means that it will cancel the pulse when the switch is released.
+
+        Used for high-power coils on dual-wound flippers. Example from WWE:
+        Type: 8 Cmd: 65 Node: 8 Msg: 0x03 0xff 0x46 0x01 0xff 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00 0x00
+        0x00 0x43 0x40 0x00 0x00 0x01 0x00  Len: 25
+        """
         self._check_coil_switch_combination(enable_switch, coil)
         self._write_rule(coil.hw_driver.node, enable_switch.hw_switch.index, None, coil.hw_driver.index,
-                         coil.hw_driver.get_pulse_power(), coil.hw_driver.get_pulse_ms(), 0, True)
+                         coil.hw_driver.get_pulse_power(), coil.hw_driver.get_pulse_ms(), 0, 0, 1, 0)
 
     def clear_hw_rule(self, switch, coil):
         """Disable hardware rule for this coil."""
