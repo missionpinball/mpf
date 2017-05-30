@@ -71,7 +71,7 @@ assets:
         file: single|str|None
         priority: single|int|0
     bitmap_fonts: 
-        descriptor: list|str|None
+        descriptor: ignore
     images: # no image-specific config items
         __allow_others__:
     shows:  # no show-specific config items
@@ -195,7 +195,7 @@ bitmap_fonts:
     __valid_in__: machine, mode
     file: single|str|None
     load: single|str|None
-    descriptor: list|str|None
+    descriptor: ignore
 bonus_mode_settings:
     display_delay_ms: single|ms|2000
     hurry_up_delay_ms: single|ms|500
