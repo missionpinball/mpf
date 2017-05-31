@@ -1307,6 +1307,7 @@ widgets:
         font_size: single|num|15
         font_name: ignore
         bitmap_font: single|bool|False
+        font_kerning: single|bool|True
         bold: single|bool|False
         italic: single|bool|False
         number_grouping: single|bool|False
