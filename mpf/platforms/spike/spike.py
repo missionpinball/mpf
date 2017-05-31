@@ -2,6 +2,7 @@
 import asyncio
 
 import logging
+import random
 from typing import Generator
 
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
@@ -172,7 +173,11 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
                     hold_power, param1, param2, param3):
         """Write a hardware rule to Stern Spike.
 
-        We do not fully understand param1, param2 and param3 yet.
+        We do not yet understand param1, param2 and param3:
+        param1 == 2 -> second switch (eos switch)
+        param2 == 1 -> ??
+        param2 == 6 -> ??
+        param3 == 5 -> allow enable
         """
         pulse_value = int(pulse_ms * 1.28)
 
@@ -217,7 +222,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
         self._check_coil_switch_combination(enable_switch, coil)
         self._write_rule(coil.hw_driver.node, enable_switch.hw_switch.index, None, coil.hw_driver.index,
                          coil.hw_driver.get_pulse_power(), coil.hw_driver.get_pulse_ms(),
-                         coil.hw_driver.get_hold_power(), 0, 1, 0)
+                         coil.hw_driver.get_hold_power(), 0, 6, 5)
 
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
         """Set pulse on hit and release rule to driver.
@@ -288,6 +293,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
         self.config = None
         self._poll_task = None
         self._sender_task = None
+        self._send_key_task = None
 
         self._nodes = None
         self._bus_busy = asyncio.Lock(loop=self.machine.clock.loop)
@@ -312,6 +318,10 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
 
         self._sender_task = self.machine.clock.loop.create_task(self._sender())
         self._sender_task.add_done_callback(self._done)
+
+        if self.config['use_send_key']:
+            self._send_key_task = self.machine.clock.loop.create_task(self._send_key())
+            self._send_key_task.add_done_callback(self._done)
 
     @asyncio.coroutine
     def _connect_to_hardware(self, port, baud):
@@ -364,6 +374,25 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
                     yield from asyncio.sleep(wait_ms / 1000.0, loop=self.machine.clock.loop)
 
     @asyncio.coroutine
+    def _send_key(self):
+        while True:
+            for node in self._nodes:
+                # do not send watchdog to cpu since it is a virtual node
+                if node == 0:
+                    continue
+
+                # generate super secret "key"
+                key = bytearray()
+                for i in range(16):
+                    key.append(random.randint(0, 255))
+
+                # send SendKey message
+                yield from self.send_cmd_sync(node, SpikeNodebus.SendKey, key, 25)
+
+                # wait one second
+                yield from asyncio.sleep(1, loop=self.machine.clock.loop)
+
+    @asyncio.coroutine
     def _poll(self):
         while True:
             with (yield from self._bus_busy):
@@ -404,6 +433,13 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
             self._sender_task.cancel()
             try:
                 self.machine.clock.loop.run_until_complete(self._sender_task)
+            except asyncio.CancelledError:
+                pass
+
+        if self._send_key_task:
+            self._send_key_task.cancel()
+            try:
+                self.machine.clock.loop.run_until_complete(self._send_key_task)
             except asyncio.CancelledError:
                 pass
 
@@ -505,11 +541,12 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
         return cmd_str
 
     @asyncio.coroutine
-    def send_cmd_sync(self, node, cmd, data):
+    def send_cmd_sync(self, node, cmd, data, wait_ms=0):
         """Send cmd which does not require a response."""
         cmd_str = self._create_cmd_str(node, cmd, data)
         with (yield from self._bus_busy):
             self._send_raw(cmd_str)
+            yield from asyncio.sleep(wait_ms / 1000, loop=self.machine.clock.loop)
 
     def send_cmd_async(self, node, cmd, data, wait_ms=0):
         """Send cmd which does not require a response."""

@@ -1073,6 +1073,7 @@ spike:
     baud: single|int|
     nodes: list|int|
     poll_hz: single|int|1000
+    use_send_key: single|bool|False
     connection: single|enum(shell)|shell
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
