@@ -28,7 +28,7 @@ like this:
    C:\>
 
 Note that the number of tests is changing all the time, so it probably won't
-be exactly 501. And also the time they took to run will be different depending
+be exactly 587. And also the time they took to run will be different depending
 on how fast your computer is.
 
 These tests are the actual tests that the developers of MPF use to test MPF
