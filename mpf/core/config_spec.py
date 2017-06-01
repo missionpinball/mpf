@@ -1077,6 +1077,7 @@ spike:
     connection: single|enum(shell)|shell
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
+    wait_times: dict|int:int|None
 switch_player:
     __valid_in__: machine
     start_event: single|str|machine_reset_phase_3

@@ -52,6 +52,10 @@ class MockSpikeSocket(MockSerial):
         if len(msg) == 21 and msg[1] == 18 and msg[2] == 0xF3:
             return len(encoded_msg)
 
+        # ignore wait
+        if len(msg) == 2 and msg[0] == 1:
+            return len(encoded_msg)
+
         # print("Serial received: " + "".join("\\x%02x" % b for b in msg) + " len: " + str(len(msg)))
         if msg not in self.expected_commands:
             self.crashed = True

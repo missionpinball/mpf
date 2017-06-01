@@ -255,6 +255,10 @@ fast:
     rgb_buffer: 3
     dmd_buffer: 3
 
+spike:
+    wait_times:
+      65: 12
+
 fadecandy:
     gamma: 2.5
     whitepoint: [1.0, 1.0, 1.0]
