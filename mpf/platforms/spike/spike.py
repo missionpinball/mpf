@@ -164,7 +164,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
              int(hold_settings.power * 255) if hold_settings else 0, 0x00, 0x00, 0x00, 0x00,
              0, 0, 0, 0, 0, 0, 0, 0,
              0x40 + enable_switch_index, 0x40 + disable_switch_index if disable_switch_index is not None else 0, 0,
-             param1, param2, param3]), 25)
+             param1, param2, param3]))
 
     @staticmethod
     def _check_coil_switch_combination(switch, coil):
@@ -234,7 +234,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
             [coil.hw_driver.index, 0, 0, 0, 0, 0x00, 0x00, 0x00, 0x00,
              0, 0, 0, 0, 0, 0, 0, 0,
              0, 0, 0,
-             0, 0, 0]), 25)
+             0, 0, 0]))
 
     def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
         """Configure a driver on Stern Spike."""
@@ -322,15 +322,16 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
 
         yield from self._initialize()
 
+    @asyncio.coroutine
     def _update_switches(self, node):
         if node not in self._nodes:     # pragma: no cover
             self.log.warning("Cannot read node %s because it is not configured.", node)
-            return
+            return False
 
         new_inputs_str = yield from self._read_inputs(node)
         if not new_inputs_str:      # pragma: no cover
             self.log.info("Node: %s did not return any inputs.", node)
-            return
+            return True
 
         new_inputs = self._input_to_int(new_inputs_str)
 
@@ -353,14 +354,16 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
 
         self._inputs[node] = new_inputs
 
+        return True
+
     @asyncio.coroutine
     def _sender(self):
         while True:
             cmd, wait_ms = yield from self._cmd_queue.get()
             with (yield from self._bus_busy):
-                self._send_raw(cmd)
-                if wait_ms > 0:
-                    yield from asyncio.sleep(wait_ms / 1000.0, loop=self.machine.clock.loop)
+                yield from self._send_raw(cmd)
+                if wait_ms:
+                    yield from self._send_raw(bytearray([1, wait_ms]))
 
     @asyncio.coroutine
     def _send_key(self):
@@ -376,7 +379,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
                     key.append(random.randint(0, 255))
 
                 # send SendKey message
-                yield from self.send_cmd_sync(node, SpikeNodebus.SendKey, key, 25)
+                yield from self.send_cmd_sync(node, SpikeNodebus.SendKey, key)
 
                 # wait one second
                 yield from asyncio.sleep(1, loop=self.machine.clock.loop)
@@ -385,12 +388,15 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
     def _poll(self):
         while True:
             with (yield from self._bus_busy):
-                self._send_raw(bytearray([0]))
+                yield from self._send_raw(bytearray([0]))
 
                 try:
                     result = yield from asyncio.wait_for(self._read_raw(1), 0.5, loop=self.machine.clock.loop)
                 except asyncio.TimeoutError:    # pragma: no cover
                     self.log.warning("Spike watchdog expired.")
+                    # clear buffer
+                    # pylint: disable-msg=protected-access
+                    self._reader._buffer = bytearray()
                     continue
 
             if not result:
@@ -409,7 +415,13 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
                 if ready_node == 0xF0:
                     # virtual cpu node returns 0xF0 instead of 0 to make it distinguishable
                     ready_node = 0
-                yield from self._update_switches(ready_node)
+                result = yield from self._update_switches(ready_node)
+                if not result:
+                    self.log.warning("Spike desynced during input.")
+                    yield from asyncio.sleep(.05, loop=self.machine.clock.loop)
+                    # clear buffer
+                    # pylint: disable-msg=protected-access
+                    self._reader._buffer = bytearray()
             elif ready_node > 0:    # pragma: no cover
                 # invalid node ids
                 self.log.warning("Spike desynced.")
@@ -462,11 +474,13 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
         except asyncio.CancelledError:
             pass
 
+    @asyncio.coroutine
     def _send_raw(self, data):
         if self.debug:
             self.log.debug("Sending: %s", "".join("0x%02x " % b for b in data))
         self._writer.write(("".join("%02x " % b for b in data).encode()))
         self._writer.write("\n\r".encode())
+        yield from self._writer.drain()
 
     @asyncio.coroutine
     def _read_raw(self, msg_len: int) -> Generator[int, None, bytearray]:
@@ -515,7 +529,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
         cmd_str.append(self._checksum(cmd_str))
         cmd_str.append(response_len)
         with (yield from self._bus_busy):
-            self._send_raw(cmd_str)
+            yield from self._send_raw(cmd_str)
             if response_len:
                 try:
                     response = yield from asyncio.wait_for(self._read_raw(response_len), 0.2, loop=self.machine.clock.loop)
@@ -548,16 +562,19 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
         return cmd_str
 
     @asyncio.coroutine
-    def send_cmd_sync(self, node, cmd, data, wait_ms=0):
+    def send_cmd_sync(self, node, cmd, data):
         """Send cmd which does not require a response."""
         cmd_str = self._create_cmd_str(node, cmd, data)
+        wait_ms = self.config['wait_times'][cmd] if cmd in self.config['wait_times'] else 0
         with (yield from self._bus_busy):
-            self._send_raw(cmd_str)
-            yield from asyncio.sleep(wait_ms / 1000, loop=self.machine.clock.loop)
+            yield from self._send_raw(cmd_str)
+            if wait_ms:
+                yield from self._send_raw(bytearray([1, wait_ms]))
 
-    def send_cmd_async(self, node, cmd, data, wait_ms=0):
+    def send_cmd_async(self, node, cmd, data):
         """Send cmd which does not require a response."""
         cmd_str = self._create_cmd_str(node, cmd, data)
+        wait_ms = self.config['wait_times'][cmd] if cmd in self.config['wait_times'] else 0
         # queue command
         self._cmd_queue.put_nowait((cmd_str, wait_ms))
 
