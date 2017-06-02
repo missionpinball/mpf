@@ -34,6 +34,7 @@ class ConfigValidator(object):
             "template_float": self._validate_type_template_float,
             "template_int": self._validate_type_template_int,
             "template_bool": self._validate_type_template_bool,
+            "template_secs": self._validate_type_template_secs,
             "boolean": self._validate_type_bool,
             "ms": self._validate_type_ms,
             "secs": self._validate_type_secs,
@@ -364,6 +365,20 @@ class ConfigValidator(object):
             return None
         if not isinstance(item, (str, float, int)):
             self.validation_error(item, validation_failure_info, "Template has to be string/int/float.")
+
+        return self.machine.placeholder_manager.build_float_template(item)
+
+    def _validate_type_template_secs(self, item, validation_failure_info):
+        if item is None:
+            return None
+        if not isinstance(item, (str, int)):
+            self.validation_error(item, validation_failure_info, "Template has to be string/int.")
+
+        # try to convert to float. if we fail it will be a template
+        try:
+            item = Util.string_to_secs(item)
+        except ValueError:
+            pass
 
         return self.machine.placeholder_manager.build_float_template(item)
 
