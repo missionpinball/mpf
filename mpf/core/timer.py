@@ -38,7 +38,7 @@ class Timer(LogMixin):
         self.ticks_remaining = 0
         self.max_value = self.config['max_value']
         self.direction = self.config['direction'].lower()
-        self.tick_secs = self.config['tick_interval'] / 1000.0
+        self.tick_secs = self.config['tick_interval'].evaluate([])
         self.timer = None
         self.event_keys = set()
         self.delay = DelayManager(self.machine.delayRegistry)
@@ -111,7 +111,7 @@ class Timer(LogMixin):
 
             elif entry['action'] == 'reset_tick_interval':
                 handler = self.set_tick_interval
-                kwargs = {'timer_value': self.config['tick_interval'] / 1000.0}
+                kwargs = {'timer_value': self.config['tick_interval'].evaluate([])}
 
             else:
                 raise AssertionError("Invalid control_event action {} in mode".

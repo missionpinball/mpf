@@ -325,3 +325,32 @@ class TestTimer(MpfFakeGameTestCase):
         self.advance_time_and_run(20)
         self.assertEqual(3, self.tick)
         self.assertFalse(self.started)
+
+    def test_mode_timer_with_player_var(self):
+        # add a fake player
+        self.start_game()
+
+        # start mode. no player vars
+        self.mock_event("timer_timer_player_var_complete")
+        self.machine.events.post('start_mode_with_timers')
+        self.advance_time_and_run(.1)
+
+        self.assertEventCalled("timer_timer_player_var_complete")
+        self.machine.events.post('stop_mode_with_timers')
+        self.advance_time_and_run(.1)
+
+        # set player vars. timer should run 5s
+        self.machine.game.player.start = 2
+        self.machine.game.player.end = 7
+
+        self.machine.log.debug("START")
+        self.mock_event("timer_timer_player_var_complete")
+        self.machine.events.post('start_mode_with_timers')
+        self.advance_time_and_run(4.5)
+        self.machine.log.debug("END")
+        self.assertEventNotCalled("timer_timer_player_var_complete")
+
+        self.advance_time_and_run(0.6)
+
+        self.assertEventCalled("timer_timer_player_var_complete")
+        self.machine.events.post('stop_mode_with_timers')
