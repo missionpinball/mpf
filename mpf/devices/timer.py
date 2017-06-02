@@ -50,23 +50,15 @@ class Timer(ModeDevice):
         self.ticks_remaining = 0
         self.max_value = self.config['max_value']
         self.direction = self.config['direction'].lower()
-        self.tick_secs = self.config['tick_interval'] / 1000.0
+        self.tick_secs = None
         self.timer = None               # type: PeriodicTask
         self.event_keys = list()        # type: List[EventHandlerKey]
         self.delay = DelayManager(self.machine.delayRegistry)
 
-        try:
-            self.end_value = self.config['end_value'].evaluate([])
-        except AttributeError:
-            self.end_value = None
-
-        if self.direction == 'down' and not self.end_value:
-            self.end_value = 0  # need it to be 0 not None
-
-        self.start_value = self.config['start_value'].evaluate([])
         self.restart_on_complete = self.config['restart_on_complete']
-
-        self.ticks = self.start_value
+        self.end_value = None
+        self.start_value = None
+        self.ticks = None
 
         if self.config['debug']:
             self.configure_logging('Timer.' + self.name,
@@ -91,6 +83,19 @@ class Timer(ModeDevice):
     def device_loaded_in_mode(self, mode: Mode, player: Player):
         """Set up control events when mode is loaded."""
         del mode
+        self.tick_secs = self.config['tick_interval'].evaluate([])
+
+        try:
+            self.end_value = self.config['end_value'].evaluate([])
+        except AttributeError:
+            self.end_value = None
+
+        if self.direction == 'down' and not self.end_value:
+            self.end_value = 0  # need it to be 0 not None
+
+        self.start_value = self.config['start_value'].evaluate([])
+        self.ticks = self.start_value
+
         self.player = player
         if self.config['control_events']:
             self._setup_control_events(self.config['control_events'])
@@ -142,7 +147,7 @@ class Timer(ModeDevice):
 
             elif entry['action'] == 'reset_tick_interval':
                 handler = self.set_tick_interval
-                kwargs = {'timer_value': self.config['tick_interval'] / 1000.0}
+                kwargs = {'timer_value': self.config['tick_interval'].evaluate([])}
 
             else:
                 raise AssertionError("Invalid control_event action {} in mode".
