@@ -1216,8 +1216,8 @@ widgets:
         type: single|str|
         x: single|str|None
         y: single|str|None
-        anchor_x: single|str|None
-        anchor_y: single|str|None
+        anchor_x: single|str|center
+        anchor_y: single|str|center
         opacity: single|float|1.0
         z: single|int|0
         animations: ignore
