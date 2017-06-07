@@ -793,7 +793,7 @@ class TestEventManager(MpfFakeGameTestCase, MpfTestCase):
         self.delay.add(ms=0, name="second", callback=self.delay_zero_ms_next_frame, start=start)
 
     def delay_zero_ms_next_frame(self, start):
-        self.assertLessEqual(self.machine.clock.get_time(), start + self.min_frame_time)
+        self.assertLessEqual(self.machine.clock.get_time(), start)
 
     def test_zero_ms_delay(self):
         self.called = False

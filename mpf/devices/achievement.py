@@ -48,9 +48,9 @@ class Achievement(ModeDevice):
         self.debug_log('New state: %s', value)
         self._player.achievements[self.name] = value
 
-    def validate_and_parse_config(self, config: dict, is_mode_config: bool) -> dict:
+    def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str=None) -> dict:
         """Validate and parse config."""
-        config = super().validate_and_parse_config(config, is_mode_config)
+        config = super().validate_and_parse_config(config, is_mode_config, debug_prefix)
 
         states = ['disabled', 'enabled', 'started', 'stopped', 'selected',
                   'completed']

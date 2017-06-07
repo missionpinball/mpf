@@ -57,7 +57,7 @@ class Driver(SystemWideDevice):
 
             check_set.add(key)
 
-    def validate_and_parse_config(self, config: dict, is_mode_config: bool) -> dict:
+    def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str=None) -> dict:
         """Return the parsed and validated config.
 
         Args:
@@ -66,7 +66,7 @@ class Driver(SystemWideDevice):
 
         Returns: Validated config
         """
-        config = super().validate_and_parse_config(config, is_mode_config)
+        config = super().validate_and_parse_config(config, is_mode_config, debug_prefix)
         platform = self.machine.get_platform_sections('coils', getattr(config, "platform", None))
         config['platform_settings'] = platform.validate_coil_section(self, config.get('platform_settings', None))
         self._configure_device_logging(config)

@@ -36,6 +36,7 @@ class ConfigValidator(object):
             "template_float": self._validate_type_template_float,
             "template_int": self._validate_type_template_int,
             "template_bool": self._validate_type_template_bool,
+            "template_secs": self._validate_type_template_secs,
             "boolean": self._validate_type_bool,
             "ms": self._validate_type_ms,
             "secs": self._validate_type_secs,
@@ -114,7 +115,7 @@ class ConfigValidator(object):
 
     # pylint: disable-msg=too-many-arguments
     def validate_config(self, config_spec, source, section_name=None,
-                        base_spec=None, add_missing_keys=True):
+                        base_spec=None, add_missing_keys=True, prefix=None):
         """Validate a config dict against spec."""
         # config_spec, str i.e. "device:shot"
         # source is dict
@@ -126,7 +127,10 @@ class ConfigValidator(object):
         if not section_name:
             section_name = config_spec  # str
 
-        validation_failure_info = (config_spec, section_name)
+        if prefix:
+            validation_failure_info = (prefix + ":" + config_spec, section_name)
+        else:
+            validation_failure_info = (config_spec, section_name)
 
         this_spec = self._build_spec(config_spec, base_spec)
 
@@ -366,6 +370,20 @@ class ConfigValidator(object):
             return None
         if not isinstance(item, (str, float, int)):
             self.validation_error(item, validation_failure_info, "Template has to be string/int/float.")
+
+        return self.machine.placeholder_manager.build_float_template(item)
+
+    def _validate_type_template_secs(self, item, validation_failure_info):
+        if item is None:
+            return None
+        if not isinstance(item, (str, int)):
+            self.validation_error(item, validation_failure_info, "Template has to be string/int.")
+
+        # try to convert to float. if we fail it will be a template
+        try:
+            item = Util.string_to_secs(item)
+        except ValueError:
+            pass
 
         return self.machine.placeholder_manager.build_float_template(item)
 

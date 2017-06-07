@@ -445,7 +445,7 @@ class Mode(LogMixin):
                 collection = getattr(self.machine, collection_name)
                 device = collection[device]
                 settings = device.prepare_config(settings, True)
-                settings = device.validate_and_parse_config(settings, True)
+                settings = device.validate_and_parse_config(settings, True, "mode:" + self.name)
 
                 if device.config:
                     self.debug_log("Overwrite mode-based device: %s", device)
