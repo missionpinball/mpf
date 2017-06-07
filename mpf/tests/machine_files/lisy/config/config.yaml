@@ -1,0 +1,34 @@
+#config_version=4
+
+hardware:
+    platform: lisy
+
+lisy:
+    port: com1
+    baud: 115200
+
+switches:
+    s_test00:
+        number: 00
+    s_test37:
+        number: 37
+    s_test77_nc:
+        number: 77
+        type: 'NC'
+
+coils:
+    c_test:
+        number: 0
+    c_test_allow_enable:
+        number: 1
+        default_hold_power: 1.0
+
+lights:
+  game_over_relay:
+    number: 1
+  tilt_relay:
+    number: 2
+  light3:
+    number: 3
+  light4:
+    number: 4

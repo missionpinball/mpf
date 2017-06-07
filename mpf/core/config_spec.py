@@ -530,6 +530,13 @@ light_player:
     color: single|str|white
     fade: single|ms|None
     __allow_others__:
+lisy:
+    __valid_in__: machine
+    port: single|str|
+    baud: single|int|
+    poll_hz: single|int|1000
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
 logic_blocks_common:
     enable_events: dict|str:ms|None
     disable_events: dict|str:ms|None
