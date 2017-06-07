@@ -1,8 +1,9 @@
 """Interface for switches."""
 import abc
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
-from mpf.core.platform import SwitchConfig
+if TYPE_CHECKING:   # pragma: no cover
+    from mpf.core.platform import SwitchConfig
 
 
 class SwitchPlatformInterface(metaclass=abc.ABCMeta):
@@ -14,7 +15,7 @@ class SwitchPlatformInterface(metaclass=abc.ABCMeta):
     methods are implemented to support switch operations in MPF.
     """
 
-    def __init__(self, config: SwitchConfig, number: Any) -> None:
+    def __init__(self, config: "SwitchConfig", number: Any) -> None:
         """Initialise default attributes for switches."""
         self.config = config
         self.number = number

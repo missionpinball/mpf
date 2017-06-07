@@ -5,10 +5,11 @@ from collections import namedtuple
 
 from typing import Optional, TYPE_CHECKING
 
-from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
-
 if TYPE_CHECKING:   # pragma: no cover
     from mpf.devices.switch import Switch
+    from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
+    from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
+    from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
 
 class BasePlatform(metaclass=abc.ABCMeta):
@@ -223,7 +224,7 @@ class LightsPlatform(BasePlatform, metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def configure_light(self, number, subtype, platform_settings) -> LightPlatformInterface:
+    def configure_light(self, number: str, subtype: str, platform_settings: dict) -> "LightPlatformInterface":
         """Subclass this method in a platform module to configure a light.
 
         This method should return a reference to the light
@@ -245,7 +246,7 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['has_switches'] = True
 
     @abc.abstractmethod
-    def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict):
+    def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict) -> "SwitchPlatformInterface":
         """Subclass this method in a platform module to configure a switch.
 
         This method should return a reference to the switch's platform interface
@@ -317,7 +318,7 @@ class DriverPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['max_pulse'] = 255
 
     @abc.abstractmethod
-    def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
+    def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict) -> "DriverPlatformInterface":
         """Subclass this method in a platform module to configure a driver.
 
         This method should return a reference to the driver's platform interface
