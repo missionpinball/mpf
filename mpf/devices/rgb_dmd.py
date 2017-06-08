@@ -5,13 +5,13 @@ from mpf.core.platform import RgbDmdPlatform
 from mpf.core.system_wide_device import SystemWideDevice
 
 
-class PhysicalRgbDmd(SystemWideDevice):
+class RgbDmd(SystemWideDevice):
 
     """A physical DMD."""
 
-    config_section = 'physical_rgb_dmds'
-    collection = 'physical_rgb_dmds'
-    class_label = 'physical_rgb_dmd'
+    config_section = 'rgb_dmds'
+    collection = 'rgb_dmds'
+    class_label = 'rgb_dmd'
     machine = None
 
     @classmethod
@@ -40,10 +40,10 @@ class PhysicalRgbDmd(SystemWideDevice):
         del client
         del kwargs
 
-        if name not in cls.machine.physical_rgb_dmds:
+        if name not in cls.machine.rgb_dmds:
             raise TypeError("rgb dmd {} not known".format(name))
 
-        cls.machine.physical_rgb_dmds[name].update(rawbytes)
+        cls.machine.rgb_dmds[name].update(rawbytes)
 
     def update(self, data: bytes):
         """Update data on the dmd.

@@ -5,13 +5,13 @@ from mpf.core.platform import DmdPlatform
 from mpf.core.system_wide_device import SystemWideDevice
 
 
-class PhysicalDmd(SystemWideDevice):
+class Dmd(SystemWideDevice):
 
     """A physical DMD."""
 
-    config_section = 'physical_dmds'
-    collection = 'physical_dmds'
-    class_label = 'physical_dmd'
+    config_section = 'dmds'
+    collection = 'dmds'
+    class_label = 'dmd'
     machine = None
 
     @classmethod
@@ -40,10 +40,10 @@ class PhysicalDmd(SystemWideDevice):
         del client
         del kwargs
 
-        if name not in cls.machine.physical_dmds:
+        if name not in cls.machine.dmds:
             raise TypeError("dmd {} not known".format(name))
 
-        cls.machine.physical_dmds[name].update(rawbytes)
+        cls.machine.dmds[name].update(rawbytes)
 
     def update(self, data: bytes):
         """Update data on the dmd.

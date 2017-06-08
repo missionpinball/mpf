@@ -70,6 +70,8 @@ assets:
         load: single|str|preload
         file: single|str|None
         priority: single|int|0
+    bitmap_fonts: 
+        descriptor: ignore
     images: # no image-specific config items
         __allow_others__:
     shows:  # no show-specific config items
@@ -189,6 +191,11 @@ bcp:
         ip: single|str|None
         port: single|int|5050
         type: single|str|
+bitmap_fonts:
+    __valid_in__: machine, mode
+    file: single|str|None
+    load: single|str|None
+    descriptor: ignore
 bonus_mode_settings:
     display_delay_ms: single|ms|2000
     hurry_up_delay_ms: single|ms|500
@@ -322,6 +329,16 @@ diverters:
     ball_search_order: single|int|100
     ball_search_hold_time: single|ms|1s
     playfield: single|machine(playfields)|playfield
+dmds:
+    __valid_in__: machine
+    platform: single|str|None
+    shades: single|pow2|16
+    fps: single|int|30
+    source_display: single|str|dmd
+    luminosity: list|float|.299, .587, .114
+    brightness: single|float|1.0
+    gamma: single|float|1.0
+    only_send_changes: single|bool|False
 drop_targets:
     __valid_in__: machine
     switch: single|machine(switches)|
@@ -345,6 +362,62 @@ drop_target_banks:
     reset_coil_max_wait_ms: single|ms|100ms
     reset_events: dict|str:ms|machine_reset_phase_3, ball_starting
     ignore_switch_ms: single|ms|500ms
+effects:
+    __valid_in__: None
+    common:
+        type: single|str|
+    anti_aliasing:
+        none: ignore
+    color_channel_mix:
+        order: list|int|1, 2, 0
+    color_dmd:
+        dot_filter: single|bool|True
+        dots_x: single|int|128
+        dots_y: single|int|32
+        blur: single|float|0.1
+        dot_size: single|float|0.7
+        background_color: single|kivycolor|191919ff
+        gain: single|float|1.0
+        shades: single|int|0
+    colorize:
+        tint_color: single|kivycolor|ff66ff00
+    dmd:
+        dot_filter: single|bool|True
+        dots_x: single|int|128
+        dots_y: single|int|32
+        blur: single|float|0.1
+        dot_size: single|float|0.7
+        background_color: single|kivycolor|191919ff
+        gain: single|float|1.0
+        shades: single|int|16
+        luminosity: list|float|.299, .587, .114
+        dot_color: single|kivycolor|ff5500  # classic DMD orange
+    dot_filter:
+        dots_x: single|int|128
+        dots_y: single|int|32
+        blur: single|float|0.1
+        dot_size: single|float|0.7
+        background_color: single|kivycolor|191919ff
+    flip_vertical:
+        none: ignore
+    gain:
+        gain: single|float|1.0
+    gamma:
+        gamma: single|float|1.0
+    horizontal_blur:
+        size: single|float|4.0
+    invert_colors:
+        none: ignore
+    monochrome:
+        luminosity: list|float|.299, .587, .114
+    pixelate:
+        pixel_size: single|int|10
+    reduce:
+        shades: single|int|16
+    scanlines:
+        none: ignore
+    vertical_blur:
+        size: single|float|4.0
 event_player:
     __valid_in__: machine, mode, show
     __allow_others__:
@@ -690,24 +763,6 @@ psus:
     __valid_in__: machine
     voltage: single|int|None
     max_amps: single|int|None
-physical_dmds:
-    __valid_in__: machine
-    platform: single|str|None
-    shades: single|pow2|16
-    fps: single|int|30
-    source_display: single|str|dmd
-    luminosity: list|float|.299, .587, .114
-    brightness: single|float|1.0
-    gamma: single|float|1.0
-    only_send_changes: single|bool|False
-physical_rgb_dmds:
-    __valid_in__: machine
-    platform: single|str|None
-    fps: single|int|30
-    source_display: single|str|dmd
-    only_send_changes: single|bool|False
-    brightness: single|float|0.5
-    gamma: single|float|2.2
 player_vars:
     __valid_in__: machine
     initial_value: single|str|
@@ -749,6 +804,14 @@ random_event_player:
     force_all: single|bool|true
     disable_random: single|bool|false
     scope: single|enum(player,machine)|player
+rgb_dmds:
+    __valid_in__: machine
+    platform: single|str|None
+    fps: single|int|30
+    source_display: single|str|dmd
+    only_send_changes: single|bool|False
+    brightness: single|float|0.5
+    gamma: single|float|2.2
 score_reels:
     __valid_in__: machine
     coil_inc: single|machine(coils)|None
@@ -1109,6 +1172,9 @@ transitions:
     swap:
         type: single|str|
         duration: single|secs|2
+    card:
+        type: single|str|
+        mode: single|enum(push,pop)|push
     wipe:
         type: single|str|
     fade_back:
@@ -1149,21 +1215,21 @@ widget_styles:
 widgets:
     __valid_in__: machine, mode
     common:
-        type: single|str|slide_frame
+        type: single|str|
         x: single|str|None
         y: single|str|None
-        anchor_x: single|str|None
-        anchor_y: single|str|None
+        anchor_x: single|str|center
+        anchor_y: single|str|center
         opacity: single|float|1.0
         z: single|int|0
         animations: ignore
         reset_animations_events: list|str|None
         color: single|kivycolor|ffffffff
         style: single|str|None
-        adjust_top: single|int|None
-        adjust_bottom: single|int|None
-        adjust_left: single|int|None
-        adjust_right: single|int|None
+        adjust_top: single|int|0
+        adjust_bottom: single|int|0
+        adjust_left: single|int|0
+        adjust_right: single|int|0
         expire: single|secs|None
         key: single|str|None
     animations:
@@ -1171,7 +1237,7 @@ widgets:
         value: list|str|
         relative: single|bool|False
         duration: single|secs|1
-        timing: single|str|after_previous
+        timing: single|enum(after_previous,with_previous)|after_previous
         repeat: single|bool|False
         easing: single|str|linear
     bezier:
@@ -1183,51 +1249,37 @@ widgets:
         joint_precision: single|int|10
         close: single|bool|False
         precision: single|int|180
+        rotation: single|float|0
+        scale: single|float|1.0
     camera:
         width: single|num|
         height: single|num|
         camera_index: single|int|-1
-    color_dmd:
+    display:
         width: single|num|
         height: single|num|
         source_display: single|str|dmd
-        gain: single|float|1.0
-        pixel_color: single|kivycolor|None
-        dark_color: single|kivycolor|221100
-        shades: single|int|0
-        bg_color: single|kivycolor|191919ff
-        blur: single|float|0.1
-        pixel_size: single|float|0.7
-        dot_filter: single|bool|True
-    dmd:
-        width: single|num|
-        height: single|num|
-        source_display: single|str|dmd
-        luminosity: list|float|.299, .587, .114
-        gain: single|float|1.0
-        pixel_color: single|kivycolor|ff5500  # classic DMD orange
-        dark_color: single|kivycolor|221100
-        shades: single|int|16
-        bg_color: single|kivycolor|191919ff
-        blur: single|float|0.1
-        pixel_size: single|float|0.7
-        dot_filter: single|bool|True
+        effects: ignore        
     ellipse:
         width: single|num|
         height: single|num|
         segments: single|int|180
         angle_start: single|int|0
         angle_end: single|int|360
+        rotation: single|float|0
+        scale: single|float|1.0
     image:
         allow_stretch: single|bool|False
         fps: single|int|10
-        loops: single|int|0
+        loops: single|int|-1
         keep_ratio: single|bool|False
         image: single|str|
         height: single|int|0
         width: single|int|0
         auto_play: single|bool|True
         start_frame: single|int|0                          # todo
+        rotation: single|int|0
+        scale: single|float|1.0
     line:
         points: list|num|
         thickness: single|float|1.0
@@ -1239,27 +1291,35 @@ widgets:
     points:
         points: list|num|
         pointsize: single|float|1.0
+        rotation: single|int|0
+        scale: single|float|1.0
     quad:
         points: list|num|
+        rotation: single|int|0
+        scale: single|float|1.0
     rectangle:
         width: single|float|
         height: single|float|
         corner_radius: single|int|0
         corner_segments: single|int|10
-    slide_frame:
-        name: single|str|
-        width: single|int|
-        height: single|int|
+        rotation: single|int|0
+        scale: single|float|1.0
     text:
         text: single|str|
         font_size: single|num|15
         font_name: ignore
+        bitmap_font: single|bool|False
+        font_kerning: single|bool|True
         bold: single|bool|False
         italic: single|bool|False
         number_grouping: single|bool|False
         min_digits: single|int|0
         halign: single|str|center
         valign: single|str|middle
+        rotation: single|int|0
+        scale: single|float|1.0
+        # outline_color: single|kivycolor|ffffffff
+        # outline_width: single|int|0
         # text_size: single|int|None  # sets width of bounding box, not font
         # shorten: single|bool|None
         # mipmap: single|bool|None
@@ -1294,6 +1354,8 @@ widgets:
         dynamic_x_pad: single|int|0
     triangle:
         points: list|num|
+        rotation: single|int|0
+        scale: single|float|1.0
     video:
         video: single|str|
         height: single|int|0
