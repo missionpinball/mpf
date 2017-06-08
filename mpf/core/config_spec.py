@@ -1389,4 +1389,5 @@ window:
     left: single|int|None
     top: single|int|None
     no_window: single|bool|False
+    effects: ignore
 '''.format(__version__)
