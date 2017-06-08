@@ -10,6 +10,7 @@ if TYPE_CHECKING:   # pragma: no cover
     from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
     from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
     from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
+    from logging import Logger
 
 
 class BasePlatform(metaclass=abc.ABCMeta):
@@ -24,7 +25,7 @@ class BasePlatform(metaclass=abc.ABCMeta):
         """
         self.machine = machine
         self.features = {}
-        self.log = None
+        self.log = None         # type: Logger
         self.debug = False
 
         # Set default platform features. Each platform interface can change

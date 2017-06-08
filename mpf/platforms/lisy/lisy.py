@@ -93,12 +93,12 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, LogMi
 
         self.configure_logging("lisy", self.config['console_log'], self.config['file_log'])
 
-        self.log.info("Connecting to %s at %sbps", self.config['port'], self.config['baud'])
-
         if self.config['connection'] == "serial":
+            self.log.info("Connecting to %s at %sbps", self.config['port'], self.config['baud'])
             connector = self.machine.clock.open_serial_connection(
                 url=self.config['port'], baudrate=self.config['baud'], limit=0)
         else:
+            self.log.info("Connecting to %s:%s", self.config['network_host'], self.config['network_port'])
             connector = self.machine.clock.open_connection(self.config['network_host'], self.config['network_port'])
 
         self._reader, self._writer = yield from connector
@@ -227,12 +227,16 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, LogMi
     def send_byte(self, cmd: int, byte: int=None):
         """Send a command with optional payload."""
         if byte is not None:
+            self.log.debug("Sending %s %s", cmd, byte)
             self._writer.write(bytes([cmd, byte]))
         else:
+            self.log.debug("Sending %s", cmd)
             self._writer.write(bytes([cmd]))
 
     @asyncio.coroutine
     def read_byte(self) -> Generator[int, None, int]:
         """Read one byte."""
+        self.log.debug("Reading one byte")
         data = yield from self._reader.readexactly(1)
+        self.log.debug("Received %s", ord(data))
         return ord(data)
