@@ -10,6 +10,7 @@ class LightPlatformInterface(metaclass=abc.ABCMeta):
 
     """Interface for a light in hardware platforms."""
 
+    @abc.abstractmethod
     def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
         """Perform a fade to a brightness.
 
@@ -96,6 +97,7 @@ class LightPlatformSoftwareFade(LightPlatformDirectFade, metaclass=abc.ABCMeta):
         assert fade_ms == 0
         self.set_brightness(brightness)
 
+    @abc.abstractmethod
     def set_brightness(self, brightness: float):
         """Set the light to the specified brightness.
 
