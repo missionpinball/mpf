@@ -532,11 +532,14 @@ light_player:
     __allow_others__:
 lisy:
     __valid_in__: machine
-    port: single|str|
-    baud: single|int|
+    port: single|str|None
+    baud: single|int|None
     poll_hz: single|int|1000
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
+    connection: single|enum(network,serial)|network
+    network_port: single|int|None
+    network_host: single|str|None
 logic_blocks_common:
     enable_events: dict|str:ms|None
     disable_events: dict|str:ms|None

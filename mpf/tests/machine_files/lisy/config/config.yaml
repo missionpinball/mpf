@@ -4,8 +4,12 @@ hardware:
     platform: lisy
 
 lisy:
-    port: com1
-    baud: 115200
+    connection: network
+    network_port: 1234
+    network_host: "localhost"
+#    connection: serial
+#    port: com1
+#    baud: 115200
 
 switches:
     s_test00:

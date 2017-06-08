@@ -1,10 +1,10 @@
 import time
 
 from mpf.tests.MpfTestCase import MpfTestCase
-from mpf.tests.loop import MockSerial
+from mpf.tests.loop import MockSerial, MockSocket
 
 
-class MockLisySocket(MockSerial):
+class MockLisySocket(MockSerial, MockSocket):
 
     def read(self, length):
         del length
@@ -37,6 +37,12 @@ class MockLisySocket(MockSerial):
         del self.expected_commands[msg]
         return len(msg)
 
+    def send(self, data):
+        return self.write(data)
+
+    def recv(self, size):
+        return self.read(size)
+
     def __init__(self):
         super().__init__()
         self.name = "SerialMock"
@@ -56,6 +62,7 @@ class TestLisy(MpfTestCase):
 
     def _mock_loop(self):
         self.clock.mock_serial("com1", self.serialMock)
+        self.clock.mock_socket("localhost", 1234, self.serialMock)
 
     def tearDown(self):
         self.assertFalse(self.serialMock.crashed)

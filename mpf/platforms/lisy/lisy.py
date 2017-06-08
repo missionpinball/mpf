@@ -95,8 +95,12 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, LogMi
 
         self.log.info("Connecting to %s at %sbps", self.config['port'], self.config['baud'])
 
-        connector = self.machine.clock.open_serial_connection(
-            url=self.config['port'], baudrate=self.config['baud'], limit=0)
+        if self.config['connection'] == "serial":
+            connector = self.machine.clock.open_serial_connection(
+                url=self.config['port'], baudrate=self.config['baud'], limit=0)
+        else:
+            connector = self.machine.clock.open_connection(self.config['network_host'], self.config['network_port'])
+
         self._reader, self._writer = yield from connector
 
         # reset platform
@@ -135,6 +139,9 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, LogMi
         """Stop platform."""
         if self._poll_task:
             self._poll_task.cancel()
+
+        if self._reader:
+            self._writer.close()
 
     @staticmethod
     def _done(future):
