@@ -626,6 +626,8 @@ class MachineController(LogMixin):
                 extension).
         """
         if name not in self.hardware_platforms:
+            if name not in self.config['mpf']['platforms']:
+                raise AssertionError("Invalid platform {}".format(name))
 
             try:
                 hardware_platform = Util.string_to_class(self.config['mpf']['platforms'][name])
