@@ -191,11 +191,11 @@ class ServoPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['has_servos'] = True
 
     @abc.abstractmethod
-    def configure_servo(self, config) -> "ServoPlatformInterface":
+    def configure_servo(self, number: str) -> "ServoPlatformInterface":
         """Configure a servo device in paltform.
 
         Args:
-            config (dict): Configuration of device
+            number: Number of the servo
         """
         raise NotImplementedError
 

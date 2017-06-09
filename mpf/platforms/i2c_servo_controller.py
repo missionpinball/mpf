@@ -51,15 +51,15 @@ class I2CServoControllerHardwarePlatform(ServoPlatform):
                                  0x01)  # no more sleep
         time.sleep(.01)  # needed to end sleep according to datasheet
 
-    def configure_servo(self, config):
+    def configure_servo(self, number: str):
         """Configure servo."""
-        number = int(config['number'])
+        number_int = int(number)
 
         # check bounds
-        if number < 0 or number > 15:
+        if number_int < 0 or number_int > 15:
             raise AssertionError("invalid number")
 
-        return I2cServo(number, self.config, self.platform)
+        return I2cServo(number_int, self.config, self.platform)
 
     def stop(self):
         """Stop platform."""

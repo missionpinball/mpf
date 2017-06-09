@@ -360,7 +360,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         return FASTDriver(config, self, number, platform_settings)
 
-    def configure_servo(self, config: dict):
+    def configure_servo(self, number: str):
         """Configure a servo.
 
         Args:
@@ -368,9 +368,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         Returns: Servo object.
         """
-        number = self.convert_number_from_config(config['number'])
+        number_int = self.convert_number_from_config(number)
 
-        return FastServo(number, self.net_connection)
+        return FastServo(number_int, self.net_connection)
 
     def _parse_switch_number(self, number):
         try:

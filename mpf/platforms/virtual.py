@@ -53,9 +53,9 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         """Stop platform."""
         pass
 
-    def configure_servo(self, config):
+    def configure_servo(self, number: str):
         """Configure a servo device in paltform."""
-        return VirtualServo(config['number'])
+        return VirtualServo(number)
 
     def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
         """Configure driver."""

@@ -42,13 +42,13 @@ class PololuMaestroHardwarePlatform(ServoPlatform):
         """Close serial."""
         self.serial.close()
 
-    def configure_servo(self, config):
+    def configure_servo(self, number: str):
         """Configure a servo device in paltform.
 
         Args:
             config (dict): Configuration of device
         """
-        return PololuServo(int(config['number']), self.config, self.serial)
+        return PololuServo(int(number), self.config, self.serial)
 
 
 class PololuServo(ServoPlatformInterface):
