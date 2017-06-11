@@ -301,10 +301,26 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, Segme
         return ord(data)
 
     @asyncio.coroutine
+    def readuntil(self, separator, min_chars: int=0):
+        """Read until separator.
+
+        Args:
+            separator: Read until this separator byte.
+            min_chars: Minimum message length before separator
+        """
+        # asyncio StreamReader only supports this from python 3.5.2 on
+        buffer = b''
+        while True:
+            char = yield from self._reader.readexactly(1)
+            buffer += char
+            if char == separator and len(buffer) > min_chars:
+                return buffer
+
+    @asyncio.coroutine
     def read_string(self) -> Generator[int, None, bytes]:
         """Read zero terminated string."""
         self.log.debug("Reading zero terminated string")
-        data = yield from self._reader.readuntil(b'\x00')
+        data = yield from self.readuntil(b'\x00')
         # remove terminator
         data = data[:-1]
         self.log.debug("Received %s", data)
