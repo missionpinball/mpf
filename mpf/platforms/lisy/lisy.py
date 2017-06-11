@@ -3,6 +3,7 @@ import asyncio
 from typing import Generator
 
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
+from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
 
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 
@@ -13,7 +14,7 @@ from mpf.platforms.lisy.defines import LisyDefines
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade
 
 from mpf.core.platform import SwitchPlatform, LightsPlatform, DriverPlatform, SwitchSettings, DriverSettings, \
-    DriverConfig, SwitchConfig
+    DriverConfig, SwitchConfig, SegmentDisplayPlatform
 
 
 class LisySwitch(SwitchPlatformInterface):
@@ -70,7 +71,21 @@ class LisyLight(LightPlatformSoftwareFade):
             self.platform.send_byte(LisyDefines.LampsSetLampOff, self.number)
 
 
-class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, LogMixin):
+class LisyDisplay(SegmentDisplayPlatformInterface):
+
+    """A segment display in the LISY platform."""
+
+    def __init__(self, number: int, platform: "LisyHardwarePlatform"):
+        """Initialise segment display."""
+        super().__init__(number)
+        self.platform = platform
+
+    def set_text(self, text: str):
+        """Set text to display."""
+        self.platform.send_string(LisyDefines.DisplaysSetDisplay0To + self.number, text)
+
+
+class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, SegmentDisplayPlatform, LogMixin):
 
     """LISY platform."""
 
@@ -224,6 +239,14 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, LogMi
         """Configure a driver."""
         return LisyDriver(config=config, number=number, platform=self)
 
+    def configure_segment_display(self, number: str) -> SegmentDisplayPlatformInterface:
+        """Configure a segment display."""
+        if 0 < int(number) >= self._number_of_displays:
+            raise AssertionError("Invalid display number {}. Hardware only supports {} displays (indexed with 0)".
+                                 format(number, self._number_of_displays))
+
+        return LisyDisplay(int(number), self)
+
     def send_byte(self, cmd: int, byte: int=None):
         """Send a command with optional payload."""
         if byte is not None:
@@ -232,6 +255,11 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, LogMi
         else:
             self.log.debug("Sending %s", cmd)
             self._writer.write(bytes([cmd]))
+
+    def send_string(self, cmd: int, string: str):
+        """Send a command with null terminated string."""
+        self.log.debug("Sending %s %s", cmd, string)
+        self._writer.write(bytes([cmd]) + string.encode() + bytes([0]))
 
     @asyncio.coroutine
     def read_byte(self) -> Generator[int, None, int]:

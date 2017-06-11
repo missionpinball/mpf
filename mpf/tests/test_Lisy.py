@@ -167,3 +167,19 @@ class TestLisy(MpfTestCase):
         self.machine.lights.game_over_relay.off()
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
+
+        # set info display to TEST
+        self.serialMock.expected_commands = {
+            b'\x1ETEST\x00': None
+        }
+        self.machine.segment_displays.info_display.set_text("TEST")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # set player 1 display to 42000
+        self.serialMock.expected_commands = {
+            b'\x1F42000\x00': None
+        }
+        self.machine.segment_displays.player1_display.set_text("42000")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)

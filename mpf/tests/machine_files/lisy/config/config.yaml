@@ -36,3 +36,11 @@ lights:
     number: 3
   light4:
     number: 4
+
+segment_displays:
+  info_display:
+    number: 0
+  player1_display:
+    number: 1
+  player2_display:
+    number: 2
