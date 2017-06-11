@@ -130,6 +130,7 @@ class TestLisy(MpfTestCase):
 
         # pulse coil
         self.serialMock.expected_commands = {
+            b'\x18\x00\x00\x0a': None,      # set pulse_ms to 10ms
             b'\x17\x00': None
         }
         self.machine.coils.c_test.pulse()
@@ -138,6 +139,7 @@ class TestLisy(MpfTestCase):
 
         # enable coil
         self.serialMock.expected_commands = {
+            b'\x18\x01\x00\x0a': None,  # set pulse_ms to 10ms
             b'\x15\x01': None
         }
         self.machine.coils.c_test_allow_enable.enable()

@@ -20,6 +20,7 @@ class LisyDefines:
     SolenoidsSetSolenoidToOn            = 21
     SolenoidsSetSolenoidToOff           = 22
     SolenoidsPulseSolenioid             = 23
+    SolenoidsSetSolenoidPulseTime       = 24
 
     DisplaysSetDisplay0To               = 30
     DisplaysSetDisplay1To               = 31

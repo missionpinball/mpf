@@ -32,21 +32,32 @@ class LisyDriver(DriverPlatformInterface):
         """Initialise driver."""
         super().__init__(config, number)
         self.platform = platform
+        self._pulse_ms = -1
+
+    def _configure_pulse_ms(self, pulse_ms):
+        """Configure pulse ms for this driver if it changed."""
+        if pulse_ms != self._pulse_ms:
+            self._pulse_ms = pulse_ms
+            self.platform.send_byte(LisyDefines.SolenoidsSetSolenoidPulseTime, bytes(
+                [int(self.number),
+                 int(pulse_ms / 256),
+                 pulse_ms % 256
+                 ]))
 
     def pulse(self, pulse_settings: PulseSettings):
         """Pulse driver."""
-        del pulse_settings
-        self.platform.send_byte(LisyDefines.SolenoidsPulseSolenioid, int(self.number))
+        self._configure_pulse_ms(pulse_settings.duration)
+        self.platform.send_byte(LisyDefines.SolenoidsPulseSolenioid, bytes([int(self.number)]))
 
     def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable driver."""
-        del pulse_settings
         del hold_settings
-        self.platform.send_byte(LisyDefines.SolenoidsSetSolenoidToOn, int(self.number))
+        self._configure_pulse_ms(pulse_settings.duration)
+        self.platform.send_byte(LisyDefines.SolenoidsSetSolenoidToOn, bytes([int(self.number)]))
 
     def disable(self):
         """Disable driver."""
-        self.platform.send_byte(LisyDefines.SolenoidsSetSolenoidToOff, int(self.number))
+        self.platform.send_byte(LisyDefines.SolenoidsSetSolenoidToOff, bytes([int(self.number)]))
 
     def get_board_name(self):
         """Return board name."""
@@ -66,9 +77,9 @@ class LisyLight(LightPlatformSoftwareFade):
     def set_brightness(self, brightness: float):
         """Turn lamp on or off."""
         if brightness > 0:
-            self.platform.send_byte(LisyDefines.LampsSetLampOn, self.number)
+            self.platform.send_byte(LisyDefines.LampsSetLampOn, bytes([self.number]))
         else:
-            self.platform.send_byte(LisyDefines.LampsSetLampOff, self.number)
+            self.platform.send_byte(LisyDefines.LampsSetLampOff, bytes([self.number]))
 
 
 class LisyDisplay(SegmentDisplayPlatformInterface):
@@ -100,6 +111,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, Segme
         self._number_of_solenoids = None
         self._number_of_displays = None
         self._inputs = dict()
+        self.features['max_pulse'] = 65536
 
     @asyncio.coroutine
     def initialize(self):
@@ -140,7 +152,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, Segme
         for row in range(8):
             for col in range(8):
                 number = row * 10 + col
-                self.send_byte(LisyDefines.SwitchesGetStatusOfSwitch, number)
+                self.send_byte(LisyDefines.SwitchesGetStatusOfSwitch, bytes([number]))
                 state = yield from self.read_byte()
                 if state > 1:
                     raise AssertionError("Invalid switch {}. Got response: {}".format(number, state))
@@ -247,11 +259,13 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, Segme
 
         return LisyDisplay(int(number), self)
 
-    def send_byte(self, cmd: int, byte: int=None):
+    def send_byte(self, cmd: int, byte: bytes=None):
         """Send a command with optional payload."""
         if byte is not None:
+            cmd_str = bytes([cmd])
+            cmd_str += byte
             self.log.debug("Sending %s %s", cmd, byte)
-            self._writer.write(bytes([cmd, byte]))
+            self._writer.write(cmd_str)
         else:
             self.log.debug("Sending %s", cmd)
             self._writer.write(bytes([cmd]))
