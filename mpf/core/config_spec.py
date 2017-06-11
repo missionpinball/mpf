@@ -801,6 +801,10 @@ scoring:
     float: single|template_float|None
 scriptlets:
     __valid_in__: machine                           # todo add to validator
+segment_displays:
+    __valid_in__: machine
+    number: single|str|
+    platform: single|str|None
 servo_controller:
     __valid_in__: machine                           # todo add to validator
 servo_controllers:
