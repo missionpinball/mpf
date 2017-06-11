@@ -8,15 +8,16 @@ from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
+from mpf.platforms.interfaces.smartstepper_platform_interface import SmartStepperPlatformInterface
 
 from mpf.core.platform import ServoPlatform, SwitchPlatform, DriverPlatform, AccelerometerPlatform, I2cPlatform,\
-    DmdPlatform, RgbDmdPlatform, LightsPlatform, DriverConfig, SwitchConfig
+    DmdPlatform, RgbDmdPlatform, LightsPlatform, DriverConfig, SwitchConfig, SmartStepperPlatform
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
 
 class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, LightsPlatform, SwitchPlatform,
-                              DriverPlatform, DmdPlatform, RgbDmdPlatform):
+                              DriverPlatform, DmdPlatform, RgbDmdPlatform, SmartStepperPlatform):
 
     """Base class for the virtual hardware platform."""
 
@@ -53,9 +54,14 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         """Stop platform."""
         pass
 
-    def configure_servo(self, number: str):
+    def configure_servo(self, number:str):
         """Configure a servo device in paltform."""
         return VirtualServo(number)
+        
+    def configure_smartstepper(self, number:str):
+        """Configure a smart stepper / axis device in platform"""
+        return VirtualSmartStepper(number)
+
 
     def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
         """Configure driver."""
@@ -274,6 +280,26 @@ class VirtualServo(ServoPlatformInterface):
         """Go to position."""
         self.current_position = position
 
+class VirtualSmartStepper(SmartStepperPlatformInterface):
+    """ Virtual Stepper"""
+    self.number = number
+    self.current_position = 0
+
+    def home(self):
+        """Home an axis, resetting 0 position"""
+        self.current_position = 0
+
+    def move_abs_pos(self, position):
+        """Move axis to a certain absolute position"""
+        self.current_position = position
+
+    def move_rel_pos(self, position):
+        """Move axis to a relative position"""
+        self.current_position += position
+
+    def move_vel_mode(self, velocity):
+        """Move at a specific velocity indefinitely"""
+        self.current_position = 999
 
 class VirtualDriver(DriverPlatformInterface):
 

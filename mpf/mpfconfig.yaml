@@ -76,6 +76,7 @@ mpf:
         - mpf.devices.logic_blocks.Accrual
         - mpf.devices.logic_blocks.Sequence
         - mpf.devices.timer.Timer
+        - mpf.devices.smartstepper.SmartStepper
 
     plugins:
         mpf.plugins.auditor.Auditor
@@ -96,6 +97,7 @@ mpf:
         snux: mpf.platforms.snux.SnuxHardwarePlatform
         virtual: mpf.platforms.virtual.VirtualHardwarePlatform
         spike: mpf.platforms.spike.spike.SpikePlatform
+        trinamics_steprocker: mpf.platforms.trinamics.StepRockerHardwarePlatform
 
     paths:
         scriptlets: scriptlets
@@ -411,6 +413,7 @@ hardware:
   accelerometers: default
   servo_controllers: default
   i2c: default
+  smartstepper_controllers: default
 
 combo_switches:
   both_flippers:

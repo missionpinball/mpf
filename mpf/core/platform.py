@@ -39,6 +39,7 @@ class BasePlatform(metaclass=abc.ABCMeta):
         self.features['has_switches'] = False
         self.features['has_drivers'] = False
         self.features['tickless'] = False
+        self.features['has_smartsteppers'] = False
 
     def debug_log(self, msg, *args, **kwargs):
         """Log when debug is set to True for platform."""
@@ -199,6 +200,23 @@ class ServoPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
+class SmartStepperPlatform(BasePlatform, metaclass=abc.ABCMeta):
+
+    """Baseclass for smart servo (axis) platforms in MPF."""
+
+    def __init__(self, machine):
+        """Add smart servo feature."""
+        super().__init__(machine)
+        self.features['has_smartsteppers'] = True
+
+    @abc.abstractmethod
+    def configure_smartstepper(self, number: str) -> "SmartStepperPlatformInterface":
+        """Configure a smart stepper (axis) device in paltform.
+
+        Args:
+            number: Number of the smart servo
+        """
+        raise NotImplementedError
 
 class LightsPlatform(BasePlatform, metaclass=abc.ABCMeta):
 

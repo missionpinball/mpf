@@ -519,6 +519,7 @@ hardware:
     servo_controllers: list|str|
     accelerometers: list|str|
     i2c: list|str|
+    smartstepper_controllers: list|str|
 high_score:
     __valid_in__: mode
     award_slide_display_time: single|ms|4s
@@ -1005,6 +1006,32 @@ smartmatrix:
     old_cookie: single|bool|False
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
+smartstepper_controllers:
+    __valid_in__: machine
+    platform: single|str|None
+    address: single|int|64
+    servo_min: single|int|150
+    servo_max: single|int|600
+    debug: single|bool|False
+smartsteppers:
+   __valid_in__: machine
+    positions: dict|float:str|None
+    pos_min: single|float|0.0
+    pos_max: single|float|1.0
+    move_current: single|int|200
+    hold_current: single|int|0
+    microstep_per_fullstep: single|int|16
+    home_direction: single|enum(right,left)
+    velocity_limit: single|int|100
+    acceleration_limit: single|int|100
+    ball_search_min: single|float|0.0
+    ball_search_max: single|float|1.0
+    ball_search_wait: single|ms|5s
+    include_in_ball_search: single|bool|True
+    reset_position: single|float|0.5
+    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
+    number: single|str|
+    platform: single|str|None
 smart_virtual:
     __valid_in__: machine
     simulate_manual_plunger: single|bool|False
@@ -1192,6 +1219,9 @@ transitions:
 trigger_player:                                    # todo
     __valid_in__: machine, mode, show
     __allow_others__:
+trinamics_steprocker:
+    __valid_in__: machine
+    port: single|str|
 video_pools:
     __valid_in__: machine, mode                      # todo add to validator
 videos:
