@@ -85,6 +85,7 @@ class TestLisy(MpfTestCase):
         }
 
         self.serialMock.expected_commands = {
+            b'\x00': b'LISY1\00',       # hw LISY1
             b'\x64': b'\x00',           # reset -> ok
             b'\x03': b'\x28',           # get number of lamps -> 40
             b'\x04': b'\x09',           # get number of solenoids -> 9

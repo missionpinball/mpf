@@ -111,6 +111,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, Segme
         self._number_of_solenoids = None
         self._number_of_displays = None
         self._inputs = dict()
+        self._system_type = None
         self.features['max_pulse'] = 65536
 
     @asyncio.coroutine
@@ -135,6 +136,17 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, Segme
         return_code = yield from self.read_byte()
         if return_code != 0:
             raise AssertionError("Reset of LISY failed. Got {} instead of 0".format(return_code))
+
+        # get type (system 1 vs system 80)
+        self.send_byte(LisyDefines.InfoGetConnectedLisyHardware)
+        type = yield from self.read_string()
+
+        if type == b'LISY1':
+            self._system_type = 1
+        elif type == b'LISY80':
+            self._system_type = 80
+        else:
+            raise AssertionError("Invalid LISY hardware version {}".format(type))
 
         # get number of lamps
         self.send_byte(LisyDefines.InfoGetNumberOfLamps)
@@ -222,9 +234,14 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, Segme
         """Configure light on LISY."""
         del platform_settings, subtype
 
-        if int(number) >= self._number_of_lamps:
-            raise AssertionError("LISY only has {} lamps. Cannot configure lamp {} (zero indexed).".
-                                 format(self._number_of_lamps, number))
+        if self._system_type == 80:
+            if 0 < int(number) >= self._number_of_lamps:
+                raise AssertionError("LISY only has {} lamps. Cannot configure lamp {} (zero indexed).".
+                                     format(self._number_of_lamps, number))
+        else:
+            if 1 < int(number) > self._number_of_lamps:
+                raise AssertionError("LISY only has {} lamps. Cannot configure lamp {} (one indexed).".
+                                     format(self._number_of_lamps, number))
 
         return LisyLight(int(number), self)
 
@@ -282,3 +299,13 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, Segme
         data = yield from self._reader.readexactly(1)
         self.log.debug("Received %s", ord(data))
         return ord(data)
+
+    @asyncio.coroutine
+    def read_string(self) -> Generator[int, None, bytes]:
+        """Read zero terminated string."""
+        self.log.debug("Reading zero terminated string")
+        data = yield from self._reader.readuntil(b'\x00')
+        # remove terminator
+        data = data[:-1]
+        self.log.debug("Received %s", data)
+        return data
