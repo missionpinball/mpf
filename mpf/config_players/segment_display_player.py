@@ -1,3 +1,5 @@
+from mpf.core.delays import DelayManager
+
 from mpf.config_players.device_config_player import DeviceConfigPlayer
 
 
@@ -8,6 +10,11 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
     config_file_section = 'segment_display_player'
     show_section = 'segment_displays'
     machine_collection_name = 'segment_displays'
+
+    def __init__(self, machine):
+        """Initialise SegmentDisplayPlayer."""
+        super().__init__(machine)
+        self.delay = DelayManager(self.machine.delayRegistry)
 
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Show text on display"""
@@ -27,23 +34,36 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
 
             if action == "add":
                 # in case it is already there
-                if key in instance_dict[display]:
-                    display.remove_text_by_key(key)
+                self._remove(instance_dict=instance_dict, key=key, display=display)
                 # add text
                 display.add_text(s['text'], priority + s['priority'], key)
-                instance_dict[display][key] = True
+
+                if s['expire']:
+                    instance_dict[display][key] = self.delay.add(s['expire'], self._remove,
+                                                                 instance_dict=instance_dict,
+                                                                 key=key,
+                                                                 display=display)
+                else:
+                    instance_dict[display][key] = True
             elif action == "remove":
-                if key in instance_dict[display]:
-                    display.remove_text_by_key(key)
-                    del instance_dict[display][key]
+                self._remove(instance_dict=instance_dict, key=key, display=display)
             else:
                 raise AssertionError("Invalid action {}".format(action))
+
+    def _remove(self, instance_dict, key, display):
+        if key in instance_dict[display]:
+            display.remove_text_by_key(key)
+            if instance_dict[display][key] is not True:
+                self.delay.remove(instance_dict[display][key])
+            del instance_dict[display][key]
 
     def clear_context(self, context):
         """Remove all texts."""
         full_context = self._get_full_context(context)
-        for light in self._get_instance_dict(context).values():
-            light.remove_from_stack_by_key(full_context)
+        instance_dict = self._get_instance_dict(context)
+        for display, keys in instance_dict.items():
+            for key in dict(keys).keys():
+                self._remove(instance_dict=instance_dict, key=key, display=display)
 
         self._reset_instance_dict(context)
 

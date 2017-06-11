@@ -52,20 +52,17 @@ class SegmentDisplay(SystemWideDevice):
                 self._current_text = None
             return
 
-        old_entry = self._text_stack[0]
-
         # sort stack by priority
         self._text_stack.sort(key=attrgetter("priority"), reverse=True)
         # get top entry
         top_entry = self._text_stack[0]
 
-        if not self._current_text or old_entry != top_entry:
-            if self._current_text:
-                self._current_text.stop_monitor()
+        if self._current_text:
+            self._current_text.stop_monitor()
 
-            self._current_text = TextTemplate(self.machine, top_entry.text)
-            self._current_text.monitor_changes(self._update_display)
-            self._update_display()
+        self._current_text = TextTemplate(self.machine, top_entry.text)
+        self._current_text.monitor_changes(self._update_display)
+        self._update_display()
 
     def _update_display(self) -> None:
         """Update display to current text."""
