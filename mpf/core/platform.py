@@ -11,6 +11,8 @@ if TYPE_CHECKING:   # pragma: no cover
     from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
     from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
     from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
+    from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
+    from logging import Logger
 
 
 class BasePlatform(metaclass=abc.ABCMeta):
@@ -39,6 +41,7 @@ class BasePlatform(metaclass=abc.ABCMeta):
         self.features['has_switches'] = False
         self.features['has_drivers'] = False
         self.features['tickless'] = False
+        self.features['segment_display'] = False
 
     def debug_log(self, msg, *args, **kwargs):
         """Log when debug is set to True for platform."""
@@ -116,6 +119,25 @@ class RgbDmdPlatform(BasePlatform, metaclass=abc.ABCMeta):
         This method should return a reference to the DMD's platform interface
         method will will receive the frame data.
 
+        """
+        raise NotImplementedError
+
+
+class SegmentDisplayPlatform(BasePlatform, metaclass=abc.ABCMeta):
+
+    """Baseclass for 7-segment/6-digits display in MPF."""
+
+    def __init__(self, machine):
+        """Add segment display feature."""
+        super().__init__(machine)
+        self.features['segment_display'] = True
+
+    @abc.abstractmethod
+    def configure_segment_display(self, number: str) -> "SegmentDisplayPlatformInterface":
+        """Subclass this method in a platform module to configure a segment display.
+
+        This method should return a reference to the segment display platform interface
+        method will will receive the text to show.
         """
         raise NotImplementedError
 
