@@ -139,14 +139,14 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, Segme
 
         # get type (system 1 vs system 80)
         self.send_byte(LisyDefines.InfoGetConnectedLisyHardware)
-        type = yield from self.read_string()
+        type_str = yield from self.read_string()
 
-        if type == b'LISY1':
+        if type_str == b'LISY1':
             self._system_type = 1
-        elif type == b'LISY80':
+        elif type_str == b'LISY80':
             self._system_type = 80
         else:
-            raise AssertionError("Invalid LISY hardware version {}".format(type))
+            raise AssertionError("Invalid LISY hardware version {}".format(type_str))
 
         # get number of lamps
         self.send_byte(LisyDefines.InfoGetNumberOfLamps)

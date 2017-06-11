@@ -175,7 +175,7 @@ class TestLisy(MpfTestCase):
         self.serialMock.expected_commands = {
             b'\x1ETEST\x00': None
         }
-        self.machine.segment_displays.info_display.set_text("TEST")
+        self.machine.segment_displays.info_display.add_text("TEST")
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
@@ -183,6 +183,6 @@ class TestLisy(MpfTestCase):
         self.serialMock.expected_commands = {
             b'\x1F42000\x00': None
         }
-        self.machine.segment_displays.player1_display.set_text("42000")
+        self.machine.segment_displays.player1_display.add_text("42000")
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
