@@ -805,6 +805,12 @@ segment_displays:
     __valid_in__: machine
     number: single|str|
     platform: single|str|None
+segment_display_player:
+    __valid_in__: machine, mode, show
+    priority: single|int|0
+    text: single|str|None
+    action: single|enum(add,remove)|add
+    key: single|str|None
 servo_controller:
     __valid_in__: machine                           # todo add to validator
 servo_controllers:
