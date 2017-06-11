@@ -1,5 +1,8 @@
 #config_version=4
 
+modes:
+ - mode1
+
 segment_displays:
   display1:
     number: 1
@@ -23,3 +26,10 @@ segment_display_player:
       text: "1: (player1|score)"
     display2:
       text: "2: (machine|test)"
+
+  test_flash:
+    display1:
+      priority: 10
+      key: flash
+      text: "TEST"
+      expire: 2s

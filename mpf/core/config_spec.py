@@ -811,6 +811,7 @@ segment_display_player:
     text: single|str|None
     action: single|enum(add,remove)|add
     key: single|str|None
+    expire: single|ms|None
 servo_controller:
     __valid_in__: machine                           # todo add to validator
 servo_controllers:
