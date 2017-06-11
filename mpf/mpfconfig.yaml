@@ -33,6 +33,7 @@ mpf:
         show: mpf.config_players.show_player.ShowPlayer
         trigger: mpf.config_players.trigger_player.TriggerPlayer
         score: mpf.config_players.score_player.ScorePlayer
+        segment_display_player: mpf.config_players.segment_display_player.SegmentDisplayPlayer
 
     device_modules:
         - mpf.devices.driver.Driver
