@@ -88,6 +88,7 @@ mpf:
         fadecandy: mpf.platforms.fadecandy.FadecandyHardwarePlatform
         fast: mpf.platforms.fast.fast.FastHardwarePlatform
         i2c_servo_controller: mpf.platforms.i2c_servo_controller.I2CServoControllerHardwarePlatform
+        mypinballs: mpf.platforms.mypinballs.mypinballs.MyPinballsHardwarePlatform
         openpixel: mpf.platforms.openpixel.OpenpixelHardwarePlatform
         opp: mpf.platforms.opp.opp.OppHardwarePlatform
         p_roc:  mpf.platforms.p_roc.PRocHardwarePlatform
