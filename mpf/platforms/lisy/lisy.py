@@ -266,6 +266,18 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, Segme
 
     def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict) -> DriverPlatformInterface:
         """Configure a driver."""
+        if 1 < int(number) > self._number_of_solenoids and int(number) < 100:
+            raise AssertionError("LISY only has {} drivers. Cannot configure driver {} (zero indexed).".
+                                 format(self._number_of_solenoids, number))
+        elif self._system_type == 80:
+            if 100 < int(number) >= self._number_of_lamps + 100:
+                raise AssertionError("LISY only has {} lamps. Cannot configure lamp driver {} (zero indexed).".
+                                     format(self._number_of_lamps, number))
+        else:
+            if 101 < int(number) > self._number_of_lamps + 100:
+                raise AssertionError("LISY only has {} lamps. Cannot configure lamp driver {} (one indexed).".
+                                     format(self._number_of_lamps, number))
+
         return LisyDriver(config=config, number=number, platform=self)
 
     def configure_segment_display(self, number: str) -> SegmentDisplayPlatformInterface:

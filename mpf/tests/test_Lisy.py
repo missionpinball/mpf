@@ -138,6 +138,15 @@ class TestLisy(MpfTestCase):
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
+        # pulse trough eject
+        self.serialMock.expected_commands = {
+            b'\x18\x67\x0B\xB8': None,      # set pulse_ms to 3s
+            b'\x17\x67': None
+        }
+        self.machine.coils.c_trough_eject.pulse()
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
         # enable coil
         self.serialMock.expected_commands = {
             b'\x18\x01\x00\x0a': None,  # set pulse_ms to 10ms

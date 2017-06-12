@@ -26,16 +26,15 @@ coils:
     c_test_allow_enable:
         number: 1
         default_hold_power: 1.0
+    c_trough_eject:
+        number: 103
+        default_pulse_ms: 3s
 
 lights:
   game_over_relay:
     number: 1
   tilt_relay:
     number: 2
-  light3:
-    number: 3
-  light4:
-    number: 4
 
 segment_displays:
   info_display:
