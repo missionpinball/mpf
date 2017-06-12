@@ -42,6 +42,9 @@ class MyPinballsHardwarePlatform(SegmentDisplayPlatform):
             url=self.config['port'], baudrate=self.config['baud'])
         self._reader, self._writer = yield from connector
 
+        # reset all displays to empty
+        self.send_cmd(b'9::\n')
+
     def stop(self):
         """Stop platform."""
         if self._writer:
