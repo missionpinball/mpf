@@ -44,11 +44,11 @@ class TestSmartMatrix(MpfTestCase):
 
     def test_smart_matrix(self):
         # test new cookie
-        self.machine.physical_rgb_dmds.smartmatrix_1.update([0x00, 0x01, 0x02, 0x03])
+        self.machine.rgb_dmds.smartmatrix_1.update([0x00, 0x01, 0x02, 0x03])
         self.advance_time_and_run()
         self.assertEqual(b'\xba\x11\x00\x03\x04\x00\x00\x00\x00\x01\x02\x03', self.serial1.receive_data)
 
         # test old cookie
-        self.machine.physical_rgb_dmds.smartmatrix_2.update([0x00, 0x01, 0x02, 0x03])
+        self.machine.rgb_dmds.smartmatrix_2.update([0x00, 0x01, 0x02, 0x03])
         self.advance_time_and_run()
         self.assertEqual(b'\x01\x00\x01\x02\x03', self.serial2.receive_data)

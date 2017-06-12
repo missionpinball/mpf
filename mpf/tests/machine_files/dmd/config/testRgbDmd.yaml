@@ -1,5 +1,5 @@
 #config_version=4
 
-physical_dmds:
+rgb_dmds:
   test_dmd:
     label: Test

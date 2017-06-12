@@ -10,6 +10,7 @@ if TYPE_CHECKING:   # pragma: no cover
     from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
     from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
     from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
+    from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
     from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
     from logging import Logger
 
@@ -212,11 +213,11 @@ class ServoPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['has_servos'] = True
 
     @abc.abstractmethod
-    def configure_servo(self, config):
+    def configure_servo(self, number: str) -> "ServoPlatformInterface":
         """Configure a servo device in paltform.
 
         Args:
-            config (dict): Configuration of device
+            number: Number of the servo
         """
         raise NotImplementedError
 
