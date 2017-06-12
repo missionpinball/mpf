@@ -17,7 +17,12 @@ class MyPinballsSegmentDisplay(SegmentDisplayPlatformInterface):
 
     def set_text(self, text: str):
         """Set digits to display."""
-        cmd = b'1:' + bytes([ord(str(self.number))]) + b':' + text.encode() + b'\n'
+        if not text:
+            # blank display
+            cmd = b'3:' + bytes([ord(str(self.number))]) + b':\n'
+        else:
+            # set text
+            cmd = b'1:' + bytes([ord(str(self.number))]) + b':' + text.encode() + b'\n'
         self.platform.send_cmd(cmd)
 
 

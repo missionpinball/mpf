@@ -32,12 +32,12 @@ class MockMypinballsSocket(MockSerial):
             self.queue.append(self.permanent_commands[msg])
             return len(msg)
 
-        #print("Serial received: " + "".join("\\x%02x" % b for b in msg) + " len: " + str(len(msg)))
+        # print("Serial received: " + "".join("\\x%02x" % b for b in msg) + " len: " + str(len(msg)))
         if msg not in self.expected_commands:
             self.crashed = True
-            print("Unexpected command: " + "".join("\\x%02x" % b for b in msg) + " len: " + str(len(msg)))
-
-            raise AssertionError("Unexpected command: " + "".join("\\x%02x" % b for b in msg) +
+            # print("Unexpected command: " + msg.decode() + "".join("\\x%02x" % b for b in msg) +
+            #       " len: " + str(len(msg)))
+            raise AssertionError("Unexpected command: " + msg.decode() + "".join("\\x%02x" % b for b in msg) +
                                  " len: " + str(len(msg)))
 
         if self.expected_commands[msg] is not False:
@@ -97,7 +97,15 @@ class MyPinballsPlatformTest(MpfTestCase):
         self.serialMock.expected_commands = {
             b'1:1:1234\n': False,
         }
-        self.machine.segment_displays.display1.add_text("1234")
+        self.machine.segment_displays.display1.add_text("1234", key="score")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # set to empty
+        self.serialMock.expected_commands = {
+            b'3:1:\n': False,
+        }
+        self.machine.segment_displays.display1.remove_text_by_key("score")
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
