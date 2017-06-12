@@ -282,8 +282,11 @@ class VirtualServo(ServoPlatformInterface):
 
 class VirtualSmartStepper(SmartStepperPlatformInterface):
     """ Virtual Stepper"""
-    self.number = number
-    self.current_position = 0
+    def __init__(self, number):
+        """Initialise servo."""
+        self.log = logging.getLogger('VirtualSmartStepper')
+        self.number = number
+        self.current_position = 0
 
     def home(self):
         """Home an axis, resetting 0 position"""

@@ -9,7 +9,7 @@ class SmartStepperPlatformInterface(metaclass=abc.ABCMeta):
     and step type interface.  Including homing, positioning, and velocity modes.
 
     SmartStepperPlatformInterface is an abstract base class that should be overridden for all
-    servo interface classes on supported platforms.  This class ensures the proper required
+    smart stepper/axis interface classes on supported platforms.  This class ensures the proper required
     methods are implemented to support smart stepper operations in MPF.
     """
 
@@ -28,7 +28,7 @@ class SmartStepperPlatformInterface(metaclass=abc.ABCMeta):
         """Move axis to a relative position"""
         raise NotImplementedError()
 
-        @abc.abstractmethod
+    @abc.abstractmethod
     def move_vel_mode(self, velocity):
         """Move at a specific velocity indefinitely"""
         raise NotImplementedError()

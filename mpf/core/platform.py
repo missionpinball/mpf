@@ -11,6 +11,7 @@ if TYPE_CHECKING:   # pragma: no cover
     from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
     from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
     from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
+    from mpf.platforms.interfaces.smartstepper_platform_interface import SmartStepperPlatformInterface
 
 
 class BasePlatform(metaclass=abc.ABCMeta):

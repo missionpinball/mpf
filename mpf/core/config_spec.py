@@ -1014,7 +1014,7 @@ smartstepper_controllers:
     servo_max: single|int|600
     debug: single|bool|False
 smartsteppers:
-   __valid_in__: machine
+    __valid_in__: machine
     positions: dict|float:str|None
     pos_min: single|float|0.0
     pos_max: single|float|1.0
@@ -1028,7 +1028,7 @@ smartsteppers:
     ball_search_max: single|float|1.0
     ball_search_wait: single|ms|5s
     include_in_ball_search: single|bool|True
-    reset_position: single|float|0.5
+    reset_position: single|float|0.0
     reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
     number: single|str|
     platform: single|str|None
