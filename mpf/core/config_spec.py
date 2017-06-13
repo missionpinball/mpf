@@ -511,6 +511,7 @@ hardware:
     __valid_in__: machine
     platform: list|str|virtual
     coils: list|str|default
+    segment_displays: list|str|default
     switches: list|str|default
     lights: list|str|default
     dmd: list|str|default
