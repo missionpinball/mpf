@@ -3,25 +3,25 @@ from mpf.core.delays import DelayManager
 
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.events import event_handler
-from mpf.core.platform import SmartStepperPlatform
+from mpf.core.platform import StepperPlatform
 from mpf.core.system_wide_device import SystemWideDevice
 
 
 @DeviceMonitor(_position="position")
-class SmartStepper(SystemWideDevice):
+class Stepper(SystemWideDevice):
 
     """Represents an stepper motor based axis in a pinball machine.
 
     Args: Same as the Device parent class.
     """
 
-    config_section = 'smartsteppers'
-    collection = 'smartsteppers'
-    class_label = 'smartstepper'
+    config_section = 'steppers'
+    collection = 'steppers'
+    class_label = 'stepper'
 
     def __init__(self, machine, name):
         """Initialise smart stepper."""
-        self.hw_smartstepper = None
+        self.hw_stepper = None
         self.platform = None        # type: ServoPlatform
         self._position = None
         self._ball_search_started = False
@@ -29,14 +29,14 @@ class SmartStepper(SystemWideDevice):
         super().__init__(machine, name)
 
     def _initialize(self):
-        self.platform = self.machine.get_platform_sections('smartstepper_controllers', self.config['platform'])
+        self.platform = self.machine.get_platform_sections('stepper_controllers', self.config['platform'])
 
         for position in self.config['positions']:
             self.machine.events.add_handler(self.config['positions'][position],
                                             self._position_event,
                                             position=position)
 
-        self.hw_smartstepper = self.platform.configure_smartstepper(self.config['number'])
+        self.hw_stepper = self.platform.configure_stepper(self.config['number'])
         self._position = self.config['reset_position']
 
         if self.config['include_in_ball_search']:
@@ -69,7 +69,7 @@ class SmartStepper(SystemWideDevice):
         #    self.config['servo_max'] - self.config['servo_min'])
 
         # call platform with calculated position
-        self.hw_smartstepper.move_abs_pos(position)
+        self.hw_stepper.move_abs_pos(position)
 
     def _ball_search_start(self, **kwargs):
         del kwargs

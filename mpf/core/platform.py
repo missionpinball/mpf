@@ -11,7 +11,7 @@ if TYPE_CHECKING:   # pragma: no cover
     from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
     from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
     from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
-    from mpf.platforms.interfaces.smartstepper_platform_interface import SmartStepperPlatformInterface
+    from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface
 
 
 class BasePlatform(metaclass=abc.ABCMeta):
@@ -40,7 +40,7 @@ class BasePlatform(metaclass=abc.ABCMeta):
         self.features['has_switches'] = False
         self.features['has_drivers'] = False
         self.features['tickless'] = False
-        self.features['has_smartsteppers'] = False
+        self.features['has_steppers'] = False
 
     def debug_log(self, msg, *args, **kwargs):
         """Log when debug is set to True for platform."""
@@ -201,17 +201,17 @@ class ServoPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
-class SmartStepperPlatform(BasePlatform, metaclass=abc.ABCMeta):
+class StepperPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     """Baseclass for smart servo (axis) platforms in MPF."""
 
     def __init__(self, machine):
         """Add smart servo feature."""
         super().__init__(machine)
-        self.features['has_smartsteppers'] = True
+        self.features['has_steppers'] = True
 
     @abc.abstractmethod
-    def configure_smartstepper(self, number: str) -> "SmartStepperPlatformInterface":
+    def configure_stepper(self, number: str) -> "StepperPlatformInterface":
         """Configure a smart stepper (axis) device in paltform.
 
         Args:

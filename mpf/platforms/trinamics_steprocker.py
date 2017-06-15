@@ -5,12 +5,12 @@ import trinamics.TMCL
 #import asyncio
 import logging
 import serial
-from mpf.platforms.interfaces.smartstepper_platform_interface import SmartStepperPlatformInterface
+from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface
 
-from mpf.core.platform import SmartStepperPlatform
+from mpf.core.platform import StepperPlatform
 
 
-class TrinamicsStepRocker(SmartStepperPlatform):
+class TrinamicsStepRocker(StepperPlatform):
 
     """Supports the Trinamics Step Rocker via PySerial.
 
@@ -44,7 +44,7 @@ class TrinamicsStepRocker(SmartStepperPlatform):
         """Close serial."""
         self.TMCL.stop()
 
-    def configure_smartstepper(self, number: str):
+    def configure_stepper(self, number: str):
         """Configure a smart stepper device in platform.
 
         Args:
@@ -53,7 +53,7 @@ class TrinamicsStepRocker(SmartStepperPlatform):
         return TrinamicsTMCLStepper(int(number), self.config, self.serial)
 
 
-class TrinamicsTMCLStepper(SmartStepperPlatformInterface):
+class TrinamicsTMCLStepper(StepperPlatformInterface):
 
     """A servo on the pololu servo controller."""
 

@@ -519,7 +519,7 @@ hardware:
     servo_controllers: list|str|
     accelerometers: list|str|
     i2c: list|str|
-    smartstepper_controllers: list|str|
+    stepper_controllers: list|str|
 high_score:
     __valid_in__: mode
     award_slide_display_time: single|ms|4s
@@ -1006,14 +1006,7 @@ smartmatrix:
     old_cookie: single|bool|False
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
-smartstepper_controllers:
-    __valid_in__: machine
-    platform: single|str|None
-    address: single|int|64
-    servo_min: single|int|150
-    servo_max: single|int|600
-    debug: single|bool|False
-smartsteppers:
+steppers:
     __valid_in__: machine
     positions: dict|float:str|None
     pos_min: single|float|0.0

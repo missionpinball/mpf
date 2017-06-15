@@ -2,13 +2,13 @@
 import abc
 
 
-class SmartStepperPlatformInterface(metaclass=abc.ABCMeta):
+class StepperPlatformInterface(metaclass=abc.ABCMeta):
 
     """Interface for smart steppers in hardware platforms.  Smart steppers is being used here 
     to designate axis controllers that add motion control over the top of a regular direction 
     and step type interface.  Including homing, positioning, and velocity modes.
 
-    SmartStepperPlatformInterface is an abstract base class that should be overridden for all
+    StepperPlatformInterface is an abstract base class that should be overridden for all
     smart stepper/axis interface classes on supported platforms.  This class ensures the proper required
     methods are implemented to support smart stepper operations in MPF.
     """
