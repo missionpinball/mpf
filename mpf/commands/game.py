@@ -138,6 +138,9 @@ class Command(object):
         except OSError:
             pass
 
+        logger = logging.getLogger()
+        logger.setLevel(args.loglevel)
+
         # define a Handler which writes INFO messages or higher to the sys.stderr
         console_log = logging.StreamHandler()
         console_log.setLevel(args.consoleloglevel)
@@ -151,21 +154,23 @@ class Command(object):
         console_queue_listener = logging.handlers.QueueListener(console_log_queue, console_log)
         console_queue_listener.start()
 
-        # initialise file log
-        file_log = logging.FileHandler(full_logfile_path)
-        file_log.setFormatter(logging.Formatter('%(asctime)s : %(name)s : %(message)s'))
-
-        # initialise async handler for file log
-        file_log_queue = Queue()
-        file_queue_handler = QueueHandler(file_log_queue)
-        file_queue_listener = logging.handlers.QueueListener(file_log_queue, file_log)
-        file_queue_listener.start()
-
-        # add loggers
-        logger = logging.getLogger()
+        # add logger
         logger.addHandler(console_queue_handler)
-        logger.addHandler(file_queue_handler)
-        logger.setLevel(args.loglevel)
+
+        file_queue_listener = None
+        if args.logfile:
+            # initialise file log
+            file_log = logging.FileHandler(full_logfile_path)
+            file_log.setFormatter(logging.Formatter('%(asctime)s : %(name)s : %(message)s'))
+
+            # initialise async handler for file log
+            file_log_queue = Queue()
+            file_queue_handler = QueueHandler(file_log_queue)
+            file_queue_listener = logging.handlers.QueueListener(file_log_queue, file_log)
+            file_queue_listener.start()
+
+            # add logger
+            logger.addHandler(file_queue_handler)
 
         if args.syslog_address:
             try:
@@ -187,7 +192,8 @@ class Command(object):
         logging.shutdown()
         # stop threads
         console_queue_listener.stop()
-        file_queue_listener.stop()
+        if file_queue_listener:
+            file_queue_listener.stop()
 
         if args.pause:
             input('Press ENTER to continue...')
