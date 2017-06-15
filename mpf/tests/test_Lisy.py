@@ -21,7 +21,8 @@ class MockLisySocket(MockSerial, MockSocket):
 
     def write(self, msg):
         if msg in self.permanent_commands and msg not in self.expected_commands:
-            self.queue.append(self.permanent_commands[msg])
+            if self.permanent_commands[msg] is not None:
+                self.queue.append(self.permanent_commands[msg])
             return len(msg)
 
         # print("Serial received: " + "".join("\\x%02x" % b for b in msg) + " len: " + str(len(msg)))
@@ -81,7 +82,8 @@ class TestLisy(MpfTestCase):
         self.serialMock = MockLisySocket()
 
         self.serialMock.permanent_commands = {
-            b'\x29': b'\x7F'            # changed switches? -> no
+            b'\x29': b'\x7F',           # changed switches? -> no
+            b'\x65': None               # watchdog
         }
 
         self.serialMock.expected_commands = {
@@ -103,6 +105,12 @@ class TestLisy(MpfTestCase):
         self.assertFalse(self.serialMock.expected_commands)
 
     def test_platform(self):
+        # wait for watchdog
+        self.serialMock.expected_commands = {
+            b'\x65': None           # watchdog
+        }
+        self._wait_for_processing()
+
         # test initial switch state
         self.assertSwitchState("s_test00", False)
         self.assertSwitchState("s_test37", True)

@@ -99,13 +99,14 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, Segme
 
     """LISY platform."""
 
-    def __init__(self, machine):
+    def __init__(self, machine) -> None:
         """Initialise platform."""
         super().__init__(machine)
         self.config = None
         self._writer = None
         self._reader = None
         self._poll_task = None
+        self._watchdog_task = None
         self._number_of_lamps = None
         self._number_of_solenoids = None
         self._number_of_displays = None
@@ -173,10 +174,16 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, Segme
         self._poll_task = self.machine.clock.loop.create_task(self._poll())
         self._poll_task.add_done_callback(self._done)
 
+        self._watchdog_task = self.machine.clock.loop.create_task(self._watchdog())
+        self._watchdog_task.add_done_callback(self._done)
+
     def stop(self):
         """Stop platform."""
         if self._poll_task:
             self._poll_task.cancel()
+
+        if self._watchdog_task:
+            self._watchdog_task.cancel()
 
         if self._reader:
             self._writer.close()
@@ -207,6 +214,15 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, Segme
 
                 # store in dict as well
                 self._inputs[str(switch_num)] = bool(switch_state)
+
+    @asyncio.coroutine
+    def _watchdog(self):
+        """Periodically send watchdog."""
+        while True:
+            # send watchdog
+            self.send_byte(LisyDefines.GeneralWatchdog)
+            # sleep 500ms
+            yield from asyncio.sleep(.5, loop=self.machine.clock.loop)
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """No rules on LISY."""
