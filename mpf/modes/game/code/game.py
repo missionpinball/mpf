@@ -559,6 +559,10 @@ class Game(AsyncMode):
         have *num=1*, Player 4 will have *num=4*, etc.)
         '''
 
+        # set player if there is none
+        if not self.player:
+            self.player = player
+
         # At least one player has been added to the current game, set event
         self._at_least_one_player_event.set()
 
