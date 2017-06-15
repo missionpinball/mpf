@@ -40,8 +40,7 @@ class LisyDriver(DriverPlatformInterface):
             self._pulse_ms = pulse_ms
             self.platform.send_byte(LisyDefines.SolenoidsSetSolenoidPulseTime, bytes(
                 [int(self.number),
-                 int(pulse_ms / 256),
-                 pulse_ms % 256
+                 pulse_ms if pulse_ms < 255 else 255
                  ]))
 
     def pulse(self, pulse_settings: PulseSettings):
@@ -112,7 +111,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, Segme
         self._number_of_displays = None
         self._inputs = dict()
         self._system_type = None
-        self.features['max_pulse'] = 65536
+        self.features['max_pulse'] = 255
 
     @asyncio.coroutine
     def initialize(self):

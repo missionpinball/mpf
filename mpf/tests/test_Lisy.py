@@ -31,7 +31,7 @@ class MockLisySocket(MockSerial, MockSocket):
             raise AssertionError("Unexpected command: " + "".join("\\x%02x" % b for b in msg) +
                                  " len: " + str(len(msg)))
 
-        if self.expected_commands[msg] is not False:
+        if self.expected_commands[msg] is not None:
             self.queue.append(self.expected_commands[msg])
 
         del self.expected_commands[msg]
@@ -131,25 +131,33 @@ class TestLisy(MpfTestCase):
 
         # pulse coil
         self.serialMock.expected_commands = {
-            b'\x18\x00\x00\x0a': None,      # set pulse_ms to 10ms
+            b'\x18\x00\x0a': None,      # set pulse_ms to 10ms
             b'\x17\x00': None
         }
         self.machine.coils.c_test.pulse()
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
-        # pulse trough eject
+        # pulse trough eject. enable and disable in software
         self.serialMock.expected_commands = {
-            b'\x18\x67\x0B\xB8': None,      # set pulse_ms to 3s
-            b'\x17\x67': None
+            b'\x18\x67\x00': None,  # set pulse_ms to 10ms
+            b'\x15\x67': None       # enable
         }
         self.machine.coils.c_trough_eject.pulse()
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
+        self.advance_time_and_run(2)
+        self.serialMock.expected_commands = {
+            b'\x16\x67': None       # disable
+        }
+        self.advance_time_and_run()
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
         # enable coil
         self.serialMock.expected_commands = {
-            b'\x18\x01\x00\x0a': None,  # set pulse_ms to 10ms
+            b'\x18\x01\x0a': None,  # set pulse_ms to 10ms
             b'\x15\x01': None
         }
         self.machine.coils.c_test_allow_enable.enable()
