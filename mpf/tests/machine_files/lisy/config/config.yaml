@@ -29,12 +29,19 @@ coils:
     c_trough_eject:
         number: 103
         default_pulse_ms: 3s
+    game_over_relay:
+        number: 101
+        default_hold_power: 1.0
 
 lights:
-  game_over_relay:
-    number: 1
-  tilt_relay:
-    number: 2
+  test_light:
+    number: 3
+
+coil_player:
+   ball_started:
+     game_over_relay: enable
+   ball_will_end:
+     game_over_relay: disable
 
 segment_displays:
   info_display:

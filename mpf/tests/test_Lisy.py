@@ -172,19 +172,36 @@ class TestLisy(MpfTestCase):
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
-        # enable flipper (using light 1)
+        # test light enable (using light 3)
         self.serialMock.expected_commands = {
-            b'\x0b\x01': None
+            b'\x0b\x03': None
         }
-        self.machine.lights.game_over_relay.on()
+        self.machine.lights.test_light.on(key="test")
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
         # disable flipper (using light 1)
         self.serialMock.expected_commands = {
-            b'\x0c\x01': None
+            b'\x0c\x03': None
         }
-        self.machine.lights.game_over_relay.off()
+        self.machine.lights.test_light.remove_from_stack_by_key("test")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # start ball. enable flipper (using light 1)
+        self.serialMock.expected_commands = {
+            b'\x18\x65\x0a': None,  # set pulse_ms to 10ms
+            b'\x15\x65': None
+        }
+        self.post_event("ball_started")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # end ball. disable flipper (using light 1)
+        self.serialMock.expected_commands = {
+            b'\x16\x65': None
+        }
+        self.post_event("ball_will_end")
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
