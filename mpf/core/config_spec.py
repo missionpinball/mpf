@@ -1096,6 +1096,15 @@ switch_player:
     __valid_in__: machine
     start_event: single|str|machine_reset_phase_3
     steps: ignore
+sequence_shots:
+    __valid_in__: machine, mode
+    switch_sequence: list|machine(switches)|None
+    event_sequence: list|str|None
+    cancel_switches: list|machine(switches)|None
+    cancel_events: dict|str:ms|None
+    delay_switch_list: dict|machine(switches):ms|None
+    delay_event_list: dict|str:ms|None
+    sequence_timeout: single|ms|0
 switches:
     __valid_in__: machine
     number: single|str|

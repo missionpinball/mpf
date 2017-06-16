@@ -78,6 +78,7 @@ mpf:
         - mpf.devices.logic_blocks.Sequence
         - mpf.devices.timer.Timer
         - mpf.devices.segment_display.SegmentDisplay
+        - mpf.devices.sequence_shot.SequenceShot
 
     plugins:
         mpf.plugins.auditor.Auditor
