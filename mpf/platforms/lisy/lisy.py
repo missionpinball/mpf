@@ -132,6 +132,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, Segme
         self._reader, self._writer = yield from connector
 
         # reset platform
+        self.debug_log("Sending reset.")
         self.send_byte(LisyDefines.GeneralReset)
         return_code = yield from self.read_byte()
         if return_code != 0:
@@ -148,6 +149,30 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, Segme
         else:
             raise AssertionError("Invalid LISY hardware version {}".format(type_str))
 
+        self.send_byte(LisyDefines.InfoLisyVersion)
+        lisy_version = yield from self.read_string()
+        self.send_byte(LisyDefines.InfoGetApiVersion)
+        api_version = yield from self.read_string()
+
+        self.debug_log("Connected to %s hardware. LISY version: %s. API version: %s.",
+                       type_str, lisy_version, api_version)
+
+        self.machine.set_machine_var("lisy_hardware", type_str)
+        '''machine_var: lisy_hardware
+
+        desc: Connected LISY hardware. Either LISY1 or LISY80.
+        '''
+        self.machine.set_machine_var("lisy_version", lisy_version)
+        '''machine_var: lisy_version
+
+        desc: LISY version.
+        '''
+        self.machine.set_machine_var("lisy_api_version", api_version)
+        '''machine_var: lisy_api_version
+
+        desc: LISY API version.
+        '''
+
         # get number of lamps
         self.send_byte(LisyDefines.InfoGetNumberOfLamps)
         self._number_of_lamps = yield from self.read_byte()
@@ -160,7 +185,11 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, Segme
         self.send_byte(LisyDefines.InfoGetNumberOfDisplays)
         self._number_of_displays = yield from self.read_byte()
 
+        self.debug_log("Number of lamps: %s. Number of coils: %s. Numbers of display: %s",
+                       self._number_of_lamps, self._number_of_solenoids, self._number_of_displays)
+
         # initially read all switches
+        self.debug_log("Reading all switches.")
         for row in range(8):
             for col in range(8):
                 number = row * 10 + col
@@ -176,6 +205,8 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, Segme
 
         self._watchdog_task = self.machine.clock.loop.create_task(self._watchdog())
         self._watchdog_task.add_done_callback(self._done)
+
+        self.debug_log("Init of LISY done.")
 
     def stop(self):
         """Stop platform."""
