@@ -520,6 +520,15 @@ hardware:
     servo_controllers: list|str|
     accelerometers: list|str|
     i2c: list|str|
+    hardware_sound_system: list|str|default
+hardware_sound_systems:
+    __valid_in__: machine
+    platform: single|str|None
+hardware_sound_player:
+    __valid_in__: machine, mode, show
+    action: single|enum(play,stop)|play
+    sound: single|int|None
+    sound_system: single|machine(hardware_sound_systems)|default
 high_score:
     __valid_in__: mode
     award_slide_display_time: single|ms|4s

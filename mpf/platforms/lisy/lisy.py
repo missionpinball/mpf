@@ -3,6 +3,7 @@ import asyncio
 from typing import Generator
 
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
+from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareSoundPlatformInterface
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
 
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
@@ -14,7 +15,7 @@ from mpf.platforms.lisy.defines import LisyDefines
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade
 
 from mpf.core.platform import SwitchPlatform, LightsPlatform, DriverPlatform, SwitchSettings, DriverSettings, \
-    DriverConfig, SwitchConfig, SegmentDisplayPlatform
+    DriverConfig, SwitchConfig, SegmentDisplayPlatform, HardwareSoundPlatform
 
 
 class LisySwitch(SwitchPlatformInterface):
@@ -95,7 +96,25 @@ class LisyDisplay(SegmentDisplayPlatformInterface):
         self.platform.send_string(LisyDefines.DisplaysSetDisplay0To + self.number, text)
 
 
-class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, SegmentDisplayPlatform, LogMixin):
+class LisySound(HardwareSoundPlatformInterface):
+
+    """Hardware sound interface for LISY."""
+
+    def __init__(self, platform):
+        """Initialise hardware sound."""
+        self.platform = platform        # type: LisyHardwarePlatform
+
+    def play_sound(self, number: int):
+        """Play sound with number."""
+        self.platform.send_byte(LisyDefines.SoundPlaySound, bytes([number]))
+
+    def stop_all_sounds(self):
+        """Stop all sounds."""
+        self.platform.send_byte(LisyDefines.SoundStopAllSounds)
+
+
+class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, SegmentDisplayPlatform,
+                           HardwareSoundPlatform, LogMixin):
 
     """LISY platform."""
 
@@ -333,6 +352,10 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, Segme
                                  format(number, self._number_of_displays))
 
         return LisyDisplay(int(number), self)
+
+    def configure_hardware_sound_system(self) -> HardwareSoundPlatformInterface:
+        """Configure hardware sound."""
+        return LisySound(self)
 
     def send_byte(self, cmd: int, byte: bytes=None):
         """Send a command with optional payload."""

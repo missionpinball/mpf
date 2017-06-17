@@ -230,3 +230,27 @@ class TestLisy(MpfTestCase):
         self.machine.segment_displays.player1_display.add_text("42000")
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
+
+        # test sound
+        self.serialMock.expected_commands = {
+            b'\x32\x02': None
+        }
+        self.post_event("test2")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # test another sound
+        self.serialMock.expected_commands = {
+            b'\x32\x03': None
+        }
+        self.post_event("test3")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        # stop sound
+        self.serialMock.expected_commands = {
+            b'\x33': None
+        }
+        self.post_event("test_stop")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)

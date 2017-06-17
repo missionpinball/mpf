@@ -16,7 +16,7 @@ class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
         # that
         if not isinstance(settings, dict):
             if isinstance(settings, (str, int, float)):
-                settings = {settings: dict()}
+                settings = self.get_string_config(settings)
             else:
                 raise AssertionError("Invalid settings for player {}:{}".format(self.show_section, name))
 
@@ -26,6 +26,10 @@ class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
                 self._validate_config_item(device, device_settings))
 
         return validated_config
+
+    def get_string_config(self, string):
+        """Parse string config."""
+        return {string: dict()}
 
     def _validate_config_item(self, device, device_settings):
         """Validate show config."""

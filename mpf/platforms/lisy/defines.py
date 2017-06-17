@@ -33,5 +33,8 @@ class LisyDefines:
     SwitchesGetStatusOfSwitch           = 40
     SwitchesGetChangedSwitches          = 41
 
+    SoundPlaySound                      = 50
+    SoundStopAllSounds                  = 51
+
     GeneralReset                        = 100
     GeneralWatchdog                     = 101

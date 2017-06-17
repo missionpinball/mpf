@@ -50,3 +50,15 @@ segment_displays:
     number: 1
   player2_display:
     number: 2
+
+hardware_sound_systems:
+    default:
+        label: LISY
+
+hardware_sound_player:
+    test2:
+        2:
+            action: play
+    test3:
+        3: play
+    test_stop: stop
