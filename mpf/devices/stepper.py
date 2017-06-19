@@ -47,7 +47,6 @@ class Stepper(SystemWideDevice):
         self._max_pos = self.config['pos_max']
         self._min_pos = self.config['pos_min']
         self._max_velocity = self.config['velocity_limit']
-        self._microstepsPerUserUnit = self.config['microstep_per_userunit']
 
         mode = self.config['mode']
         if mode == 'position':
@@ -64,7 +63,7 @@ class Stepper(SystemWideDevice):
                                             self._ball_search_stop)
     def currentPosition(self):
         """ return position in user units (vs microsteps) """
-        return self.ToUU(self.hw_stepper.current_position)
+        return self.hw_stepper.currentPosition()
 
     def move_abs_pos(self, position):
         """Move servo to position."""
@@ -73,14 +72,14 @@ class Stepper(SystemWideDevice):
         if not self.positionMode:
             raise RuntimeError("Cannot do a position move in velocity mode")
         if position >= self._min_pos and position <= self._max_pos:
-            self.hw_stepper.move_abs_pos(self.ToMsteps(position))
+            self.hw_stepper.move_abs_pos(position)
             self._cachedPosition = position # TODO: this needs to move to move complete handler
         else:
             raise ValueError("move_abs: position argument beyond limits")
 
     def home(self):
         """Home an axis, resetting 0 position"""
-        if(self.positionMode):
+        if self.positionMode:
             self.hw_stepper.home()
             self._isHomed = True # TODO: this needs to move to move complete handler
             self._cachedPosition = 0 # TODO: this needs to move to move complete handler
@@ -97,7 +96,7 @@ class Stepper(SystemWideDevice):
         if self.positionMode:
             raise RuntimeError("Cannot do a velocity move in position mode")
         if velocity <= self._max_velocity:
-            self.hw_stepper.move_vel_mode(self.ToMsteps(velocity))
+            self.hw_stepper.move_vel_mode(velocity)
             self._cachedVelocity = velocity # TODO: this needs to move to move complete handler
         else:
             raise ValueError("move_vel_mode: velocity argument is above limit")
@@ -141,13 +140,8 @@ class Stepper(SystemWideDevice):
         self._ball_search_started = False
 
         # move to last commanded
-        if(self.positionMode):
+        if self.positionMode:
             self.move_abs_pos(self._cachedPosition)
         else:
             self.move_vel_mode(self._cachedVelocity)
     
-    def ToMsteps(self, userUnits : float) -> int:
-        return int(userUnits * self._microstepsPerUserUnit)
-
-    def ToUU(self, mSteps : int) -> float:
-        return ((mSteps * 1.0) / self._microstepsPerUserUnit)

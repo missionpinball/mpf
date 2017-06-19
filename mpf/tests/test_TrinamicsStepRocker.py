@@ -19,9 +19,9 @@ class TestTrinamicsStepRocker(MpfTestCase):
     def test_rotary(self):
         stepper = self.machine.steppers.rotaryMotor_stepper
 
-        # spin clockwise 
-        stepper.move_vel_mode( 60 )
-        self.assertEqual( 60, stepper._cachedVelocity )
+        # spin clockwise, 45 degrees per second
+        stepper.move_vel_mode( 45 )
+        self.assertEqual( 45, stepper._cachedVelocity )
         
         # stop
         stepper.move_vel_mode( 0 )

@@ -326,6 +326,10 @@ class VirtualStepper(StepperPlatformInterface):
         """Move at a specific velocity indefinitely"""
         self.velocity = velocity
 
+    def currentPosition(self): 
+        """Current Position of Stepper""" 
+        return self.current_position
+
 class VirtualDriver(DriverPlatformInterface):
 
     """A virtual driver object."""

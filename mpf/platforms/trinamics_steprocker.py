@@ -69,8 +69,8 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
         self._hold_current = int(2.55 * self.config['hold_current']) #percent to 0...255(100%)
         self._microstep_per_fullstep = self.config['microstep_per_fullstep']
         self._microstepsPerUserUnit = self.config['microstep_per_userunit']
-        self._velocity_limit = self._ToMsteps(self.config['velocity_limit'])
-        self._acceleration_limit = self._ToMsteps(self.config['acceleration_limit'])
+        self._velocity_limit = self._ToVelocityCmd(self.config['velocity_limit'])
+        self._acceleration_limit = self._ToVelocityCmd(self.config['acceleration_limit'])
         self._home_direction = self.config['home_direction']
         self._set_important_parameters(self._velocity_limit, self._acceleration_limit,
                                              self._move_current, self._hold_current, 
@@ -92,8 +92,7 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
 
     def move_vel_mode(self, velocity):
         """Move at a specific velocity and direction (pos = clockwise, neg = counterclockwise)"""
-        # assumes already converted to microsteps
-        self._rotate(velocity)
+        self._rotate(self._ToVelocityCmd(velocity))
 
     def currentPosition(self):
         raise NotImplementedError()
@@ -113,6 +112,9 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
 
     def _ToUU(self, mSteps : int) -> float:
         return ((mSteps * 1.0) / self._microstepsPerUserUnit)
+
+    def _ToVelocityCmd(self, velocity) -> int:
+        return int((64.0 * self._ToMsteps(velocity)) / 15625.0) * self._microstepsPerUserUnit
 
     def _get_globals(self):
         ret = {}
