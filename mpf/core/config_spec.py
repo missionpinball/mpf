@@ -1006,25 +1006,6 @@ smartmatrix:
     old_cookie: single|bool|False
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
-steppers:
-    __valid_in__: machine
-    positions: dict|float:str|None
-    pos_min: single|float|0.0
-    pos_max: single|float|1.0
-    move_current: single|int|200
-    hold_current: single|int|0
-    microstep_per_fullstep: single|int|16
-    home_direction: single|enum(right,left)
-    velocity_limit: single|int|100
-    acceleration_limit: single|int|100
-    ball_search_min: single|float|0.0
-    ball_search_max: single|float|1.0
-    ball_search_wait: single|ms|5s
-    include_in_ball_search: single|bool|True
-    reset_position: single|float|0.0
-    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
-    number: single|str|
-    platform: single|str|None
 smart_virtual:
     __valid_in__: machine
     simulate_manual_plunger: single|bool|False
@@ -1100,6 +1081,27 @@ spike:
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
     wait_times: dict|int:int|None
+steppers:
+    __valid_in__: machine
+    mode: single|enum(position,velocity)|position
+    named_positions: dict|float:str|None
+    pos_min: single|float|0.0
+    pos_max: single|float|1.0
+    move_current: single|int|20
+    hold_current: single|int|0
+    microstep_per_fullstep: single|int|16
+    velocity_limit: single|int|100
+    acceleration_limit: single|int|100
+    home_direction: single|enum(clockwise,counterclockwise)|clockwise
+    microstep_per_userunit: single|float|1.0    
+    ball_search_min: single|float|0.0
+    ball_search_max: single|float|1.0
+    ball_search_wait: single|ms|5s
+    include_in_ball_search: single|bool|True
+    reset_position: single|float|0.0
+    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
+    number: single|str|
+    platform: single|str|None
 switch_player:
     __valid_in__: machine
     start_event: single|str|machine_reset_phase_3

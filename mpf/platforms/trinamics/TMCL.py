@@ -15,8 +15,8 @@ def encodeRequestCommand(m_address, n_command, n_type, n_motor, value, debug=Fal
     checksum = (m_address + n_command + n_type + n_motor + sum(value)) % (1<<8)
     tmcl_bytes = [m_address, n_command, n_type, n_motor] + value + [checksum]
     tmcl_cmd = sum(b << (8-i)*8 for i,b in enumerate(tmcl_bytes))
-    if debug:
-        print "{0:0>18X}".format(tmcl_cmd), "".join([chr(b) for b in tmcl_bytes])
+    #if debug:
+    #    print "{0:>18X}".format(tmcl_cmd), "".join([chr(b) for b in tmcl_bytes])
     return "".join([chr(b) for b in tmcl_bytes])
 
 def encodeReplyCommand(r_address, m_address, status, n_command, value, debug=False):
@@ -30,8 +30,8 @@ def encodeReplyCommand(r_address, m_address, status, n_command, value, debug=Fal
     checksum = (r_address + m_address + status + n_command + sum(value)) % (1<<8)
     tmcl_bytes = [r_address, m_address, status, n_command] + value + [checksum]
     tmcl_cmd = sum(b << (8-i)*8 for i,b in enumerate(tmcl_bytes))
-    if debug:
-        print "{0:0>18X}".format(tmcl_cmd), "".join([chr(b) for b in tmcl_bytes])
+    #if debug:
+    #    print "{0:>18X}".format(tmcl_cmd), "".join([chr(b) for b in tmcl_bytes])
     return "".join([chr(b) for b in tmcl_bytes])
 
 def decodeRequestCommand(cmd_string):
@@ -89,7 +89,7 @@ COMMAND_NUMBERS = {  1 : "ROR",    2 : "ROL",    3 : "MST",
                     39 : "ACO" 
                   }
 
-NUMBER_COMMANDS = dict([(v, k) for k, v in COMMAND_NUMBERS.iteritems()])
+NUMBER_COMMANDS = dict([(v, k) for k, v in COMMAND_NUMBERS.items()])
 
 INTERRUPT_VECTORS = {  0 : "Timer 0",
                        1 : "Timer 1",
@@ -209,7 +209,7 @@ AXIS_PARAMETER = {   0 : ("target position", TR_24s, T_RW),
                    214 : ("power down delay", TR_xPWR0, T_RWE)
                 }
 
-SINGLE_AXIS_PARAMETERS = [140]+range(160, 184)
+#SINGLE_AXIS_PARAMETERS = [140]+range(160, 184)
 
 
 
@@ -250,14 +250,31 @@ class TMCLDevice(object):
         self._ser.close()
     
     def _query(self, request):
+        """Encode and send a query. Receive, decode, and return reply"""
+        #Insert inside encode request command function a way to check the value ranges
         req = encodeRequestCommand(*request)
+        req = list(map(ord,req))
         if self._debug:
-            print "send to TMCL: ", req
+            print(("send to TMCL: ", _hexString(req),decodeRequestCommand(req)))
         self._ser.write(req)
-        rep = decodeReplyCommand(self._ser.read(9))
+        resp = decodeReplyCommand(self._ser.read(9))
         if self._debug:
-            print "got from TMCL: ", rep
-        return rep['status'], rep['value']
+            tmp = list(resp.values())[:-1]
+            tmp = encodeReplyCommand(*tmp)
+            print(("got from TMCL:", _hexString(tmp), resp))
+        return resp['status'], resp['value']
+
+    def _hexString(self, cmd):
+        """Convert encoded command string to human-readable string of hex values"""
+        temp = None
+        #Quickfix
+        if(type(cmd[0]) is str):
+            temp = [ord(i) for i in cmd]
+        elif(type(cmd[0]) is int):
+            temp = [i for i in cmd]
+
+        s = ['{:x}'.format(i).rjust(2) for i in temp]
+        return "[" + ", ".join(s) + "]"
 
     def _pn_checkrange(self, parameter_number, value, prefix):
         pn = parameter_number
@@ -699,4 +716,17 @@ class TMCLDevice(object):
     def rsgp(self):
         raise NotImplementedError("yet!")
 
+    def getMicroStepMode(self, microsteps_per_fullstep : int) -> int:
+        retVal = int({
+            1: 0,
+            2: 1,
+            4: 2,
+            8: 3,
+            16: 4,
+            32: 5,
+            64: 6,
+            128: 7,
+            256: 8
+        }.get(microsteps_per_fullstep,0))
+        return retVal
 

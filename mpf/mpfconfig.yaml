@@ -97,7 +97,7 @@ mpf:
         snux: mpf.platforms.snux.SnuxHardwarePlatform
         virtual: mpf.platforms.virtual.VirtualHardwarePlatform
         spike: mpf.platforms.spike.spike.SpikePlatform
-        trinamics_steprocker: mpf.platforms.trinamics.StepRockerHardwarePlatform
+        trinamics_steprocker: mpf.platforms.trinamics_steprocker.TrinamicsStepRocker
 
     paths:
         scriptlets: scriptlets

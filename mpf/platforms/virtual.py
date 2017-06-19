@@ -287,6 +287,8 @@ class VirtualStepper(StepperPlatformInterface):
         self.log = logging.getLogger('VirtualStepper')
         self.number = number
         self.current_position = 0
+        self.velocity = 0
+        self.direction = 0 #clockwise
 
     def home(self):
         """Home an axis, resetting 0 position"""
@@ -300,9 +302,9 @@ class VirtualStepper(StepperPlatformInterface):
         """Move axis to a relative position"""
         self.current_position += position
 
-    def move_vel_mode(self, velocity):
+    def move_vel_mode(self, velocity ):
         """Move at a specific velocity indefinitely"""
-        self.current_position = 999
+        self.velocity = velocity
 
 class VirtualDriver(DriverPlatformInterface):
 

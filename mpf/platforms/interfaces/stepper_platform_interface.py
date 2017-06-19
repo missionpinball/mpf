@@ -1,7 +1,6 @@
 """Platform interface for smart steppers."""
 import abc
 
-
 class StepperPlatformInterface(metaclass=abc.ABCMeta):
 
     """Interface for smart steppers in hardware platforms.  Smart steppers is being used here 
@@ -12,7 +11,6 @@ class StepperPlatformInterface(metaclass=abc.ABCMeta):
     smart stepper/axis interface classes on supported platforms.  This class ensures the proper required
     methods are implemented to support smart stepper operations in MPF.
     """
-
     @abc.abstractmethod
     def home(self):
         """Home an axis, resetting 0 position"""
@@ -30,5 +28,10 @@ class StepperPlatformInterface(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def move_vel_mode(self, velocity):
-        """Move at a specific velocity indefinitely"""
+        """Move at a specific velocity (pos = clockwise, neg = counterclockwise)"""
+        raise NotImplementedError()
+
+    @abc.abstractproperty
+    def currentPosition(self):
+        """Current Position of Stepper"""
         raise NotImplementedError()
