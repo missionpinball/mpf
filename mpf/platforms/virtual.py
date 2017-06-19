@@ -3,6 +3,8 @@ import asyncio
 import logging
 from typing import Callable, Tuple
 
+from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
+
 from mpf.exceptions.ConfigFileError import ConfigFileError
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
@@ -10,14 +12,14 @@ from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInter
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface
 
-from mpf.core.platform import ServoPlatform, SwitchPlatform, DriverPlatform, AccelerometerPlatform, I2cPlatform,\
-    DmdPlatform, RgbDmdPlatform, LightsPlatform, DriverConfig, SwitchConfig, StepperPlatform
+from mpf.core.platform import ServoPlatform, SwitchPlatform, DriverPlatform, AccelerometerPlatform, I2cPlatform, \
+    DmdPlatform, RgbDmdPlatform, LightsPlatform, DriverConfig, SwitchConfig, SegmentDisplayPlatform, StepperPlatform
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
 
 class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, LightsPlatform, SwitchPlatform,
-                              DriverPlatform, DmdPlatform, RgbDmdPlatform, StepperPlatform):
+                              DriverPlatform, DmdPlatform, RgbDmdPlatform, SegmentDisplayPlatform, StepperPlatform):
 
     """Base class for the virtual hardware platform."""
 
@@ -210,6 +212,24 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         """Configure DMD."""
         del name
         return VirtualDmd()
+
+    def configure_segment_display(self, number: str) -> SegmentDisplayPlatformInterface:
+        """Configure segment display."""
+        return VirtualSegmentDisplay(number)
+
+
+class VirtualSegmentDisplay(SegmentDisplayPlatformInterface):
+
+    """Virtual segment display."""
+
+    def __init__(self, number):
+        """Initialise virtual segment display."""
+        super().__init__(number)
+        self.text = ''
+
+    def set_text(self, text: str):
+        """Set text."""
+        self.text = text
 
 
 class VirtualDmd(DmdPlatformInterface):

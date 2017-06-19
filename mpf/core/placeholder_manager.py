@@ -2,8 +2,13 @@
 import ast
 import operator as op
 import abc
+import re
+from typing import TYPE_CHECKING
 
 from mpf.core.mpf_controller import MpfController
+
+if TYPE_CHECKING:
+    from mpf.core.machine import MachineController
 
 # supported operators
 operators = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul,
@@ -89,6 +94,105 @@ class NativeTypeTemplate:
         del parameters
         del fail_on_missing_params
         return self.value
+
+
+class TextTemplate:
+
+    var_finder = re.compile("(?<=\()[a-zA-Z_0-9|]+(?=\))")
+    string_finder = re.compile("(?<=\$)[a-zA-Z_0-9]+")
+
+    def __init__(self, machine: "MachineController", text: str):
+        self.machine = machine
+        self.text = text
+        self.vars = self.var_finder.findall(text)
+        self._change_callback = None
+
+    def evaluate(self) -> str:
+        """Evaluate placeholder to string."""
+        return self._evaluate_text()
+
+    def monitor_changes(self, callback):
+        """Monitor variables for changes and call callback on changes."""
+        self._change_callback = callback
+        self._setup_variable_monitors()
+
+    def stop_monitor(self):
+        """Stop monitoring for changes."""
+        self._change_callback = None
+        self.machine.events.remove_handler(self._var_changes)
+
+    def _add_player_var_handler(self, name: str) -> None:
+        self.machine.events.add_handler('player_{}'.format(name), self._var_changes)
+
+    def _add_current_player_handler(self) -> None:
+        self.machine.events.add_handler('player_turn_started', self._var_changes)
+
+    def _add_machine_var_handler(self, name: str) -> None:
+        self.machine.events.add_handler('machine_var_{}'.format(name), self._var_changes)
+
+    def _var_changes(self, **kwargs) -> None:
+        del kwargs
+        if self._change_callback:
+            self._change_callback()
+
+    def _setup_variable_monitors(self) -> None:
+        for var_string in self.vars:
+            if '|' not in var_string:
+                self._add_player_var_handler(name=var_string)
+                self._add_current_player_handler()
+            else:
+                source, variable_name = var_string.split('|')
+                if source.lower().startswith('player'):
+
+                    if source.lstrip('player'):  # we have player num
+                        self._add_player_var_handler(name=variable_name)
+                    else:  # no player num
+                        self._add_player_var_handler(name=var_string)
+                        self._add_current_player_handler()
+                elif source.lower() == 'machine':
+                    self._add_machine_var_handler(name=variable_name)
+
+    def _evaluate_text(self) -> str:
+        """Evaluate placeholder to string."""
+        text = self.text
+        for var_string in self.vars:
+            if var_string.startswith('machine|'):
+                _, var_name = var_string.split('|')
+                if self.machine.is_machine_var(var_name):
+                    replacement = str(self.machine.get_machine_var(var_name))
+                else:
+                    replacement = ''
+
+                text = text.replace('(' + var_string + ')', replacement)
+
+            elif self.machine.game and self.machine.game.player:
+                if var_string.startswith('player|'):
+                    text = text.replace('(' + var_string + ')',
+                                        str(self.machine.game.player[var_string.split('|')[1]]))
+                elif var_string.startswith('player') and '|' in var_string:
+                    player_num, var_name = var_string.lstrip('player').split(
+                            '|')
+                    try:
+                        value = self.machine.game.player_list[int(player_num) - 1][var_name]
+
+                        if value is not None:
+                            text = text.replace('(' + var_string + ')', str(value))
+                        else:
+                            text = text.replace('(' + var_string + ')', '')
+                    except IndexError:
+                        text = text.replace('(' + var_string + ')', '')
+                elif self.machine.game.player.is_player_var(var_string):
+                    value = self.machine.game.player[var_string]
+                    if value is not None:
+                        text = text.replace('(' + var_string + ')', str(value))
+                    else:
+                        text = text.replace('(' + var_string + ')', '')
+            else:
+                # set var to empty otherwise
+                if var_string.startswith('player') or var_string.startswith('player') and '|' in var_string:
+                    text = text.replace('(' + var_string + ')', '')
+
+        return text
 
 
 class DeviceClassPlaceholder:
