@@ -3,12 +3,14 @@ from collections import namedtuple
 from operator import attrgetter
 from typing import List, TYPE_CHECKING
 
+from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.placeholder_manager import TextTemplate
 from mpf.core.system_wide_device import SystemWideDevice
 
 TextStack = namedtuple("TextStack", ["text", "priority", "key"])
 
 
+@DeviceMonitor("text")
 class SegmentDisplay(SystemWideDevice):
 
     """A physical segment display in a pinball machine."""
@@ -22,8 +24,9 @@ class SegmentDisplay(SystemWideDevice):
         super().__init__(machine, name)
         self.hw_display = None
         self.platform = None
-        self._text_stack = []       # type: List[TextStack]
-        self._current_text = None   # type: TextTemplate
+        self._text_stack = []               # type: List[TextStack]
+        self._current_placeholder = None    # type: TextTemplate
+        self.text = ""                      # type: str
 
     def _initialize(self):
         """Initialise display."""
@@ -47,9 +50,9 @@ class SegmentDisplay(SystemWideDevice):
         # do nothing if stack is emtpy. set display empty
         if not self._text_stack:
             self.hw_display.set_text("")
-            if self._current_text:
-                self._current_text.stop_monitor()
-                self._current_text = None
+            if self._current_placeholder:
+                self._current_placeholder.stop_monitor()
+                self._current_placeholder = None
             return
 
         # sort stack by priority
@@ -57,18 +60,21 @@ class SegmentDisplay(SystemWideDevice):
         # get top entry
         top_entry = self._text_stack[0]
 
-        if self._current_text:
-            self._current_text.stop_monitor()
+        if self._current_placeholder:
+            self._current_placeholder.stop_monitor()
 
-        self._current_text = TextTemplate(self.machine, top_entry.text)
-        self._current_text.monitor_changes(self._update_display)
+        self._current_placeholder = TextTemplate(self.machine, top_entry.text)
+        self._current_placeholder.monitor_changes(self._update_display)
         self._update_display()
 
     def _update_display(self) -> None:
         """Update display to current text."""
-        if not self._current_text:
-            self.hw_display.set_text("")
-            return
+        if not self._current_placeholder:
+            new_text = ""
+        else:
+            new_text = self._current_placeholder.evaluate()
 
-        # set text to display
-        self.hw_display.set_text(self._current_text.evaluate())
+        # set text to display if it changed
+        if new_text != self.text:
+            self.text = new_text
+            self.hw_display.set_text(self.text)

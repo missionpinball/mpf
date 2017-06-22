@@ -82,3 +82,29 @@ class TestShots(MpfFakeGameTestCase):
         self.advance_time_and_run(5)
         self.assertEqual("MODE1", display1.hw_display.text)
         self.assertEqual("2: 1337", display2.hw_display.text)
+
+    def test_scoring(self):
+        display1 = self.machine.segment_displays.display1
+        display2 = self.machine.segment_displays.display2
+
+        # default scoring
+        self.post_event("test_score_two_player")
+
+        # one player game
+        self.start_game()
+
+        # first display shows score. second empty
+        self.assertEqual("0", display1.hw_display.text)
+        self.assertEqual("", display2.hw_display.text)
+
+        # player scores
+        self.machine.game.player.score += 42
+        self.advance_time_and_run(.01)
+        self.assertEqual("42", display1.hw_display.text)
+        self.assertEqual("", display2.hw_display.text)
+
+        # add player
+        self.add_player()
+        self.advance_time_and_run(.01)
+        self.assertEqual("42", display1.hw_display.text)
+        self.assertEqual("0", display2.hw_display.text)

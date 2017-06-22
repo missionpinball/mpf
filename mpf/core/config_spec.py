@@ -511,6 +511,7 @@ hardware:
     __valid_in__: machine
     platform: list|str|virtual
     coils: list|str|default
+    segment_displays: list|str|default
     switches: list|str|default
     lights: list|str|default
     dmd: list|str|default
@@ -519,6 +520,15 @@ hardware:
     servo_controllers: list|str|
     accelerometers: list|str|
     i2c: list|str|
+    hardware_sound_system: list|str|default
+hardware_sound_systems:
+    __valid_in__: machine
+    platform: single|str|None
+hardware_sound_player:
+    __valid_in__: machine, mode, show
+    action: single|enum(play,stop)|play
+    sound: single|int|None
+    sound_system: single|machine(hardware_sound_systems)|default
 high_score:
     __valid_in__: mode
     award_slide_display_time: single|ms|4s
@@ -603,6 +613,16 @@ light_player:
     color: single|str|white
     fade: single|ms|None
     __allow_others__:
+lisy:
+    __valid_in__: machine
+    port: single|str|None
+    baud: single|int|None
+    poll_hz: single|int|1000
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
+    connection: single|enum(network,serial)|network
+    network_port: single|int|None
+    network_host: single|str|None
 logic_blocks_common:
     enable_events: dict|str:ms|None
     disable_events: dict|str:ms|None

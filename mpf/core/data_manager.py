@@ -29,15 +29,24 @@ class DataManager(MpfController):
         """
         super().__init__(machine)
         self.name = name
-        self.filename = os.path.join(self.machine.machine_path,
-                                     self.machine.config['mpf']['paths'][name])
+        config_path = self.machine.config['mpf']['paths'][name]
+        if config_path is False:
+            self.filename = False
+        elif isinstance(config_path, str) and config_path.startswith("/"):
+            self.filename = config_path
+        elif isinstance(config_path, str):
+            self.filename = os.path.join(self.machine.machine_path,
+                                         self.machine.config['mpf']['paths'][name])
+        else:
+            raise AssertionError("Invalid path {} for {}".format(config_path, name))
 
         self.data = dict()
         self._dirty = threading.Event()
 
-        self._setup_file()
+        if self.filename:
+            self._setup_file()
 
-        _thread.start_new_thread(self._writing_thread, ())
+            _thread.start_new_thread(self._writing_thread, ())
 
     def _setup_file(self):
         self._make_sure_path_exists(os.path.dirname(self.filename))

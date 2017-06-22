@@ -10,16 +10,16 @@ class CoilPlayer(DeviceConfigPlayer):
 
     config_file_section = 'coil_player'
     show_section = 'coils'
+    machine_collection_name = 'coils'
 
     def play(self, settings, context, priority=0, **kwargs):
         """Enable, Pulse or disable coils."""
         del kwargs
         instance_dict = self._get_instance_dict(context)
 
-        for coil_name, s in settings.items():
+        for coil, s in settings.items():
             s = deepcopy(s)
             action = s.pop('action')
-            coil = self.machine.coils[coil_name]
             coil_action = getattr(coil, action)
 
             if action in ("disable", "off") and coil.name in instance_dict:

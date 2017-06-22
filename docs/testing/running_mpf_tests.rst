@@ -7,7 +7,7 @@ following command and then press <enter>:
 
 ::
 
-  python3 -m unittest discover mpf
+  python3 -m unittest discover mpf/tests
 
 When you do this, you should see a bunch of dots on the screen (one for each
 test that's run), and then when it's done, you should see a message showing
@@ -44,7 +44,7 @@ this):
 
 ::
 
-  python3 -m unittest discover mpfmc
+  python3 -m unittest discover mpfmc/tests
 
 (Note that ``mpfmc`` does not have a dash in it, like it did when you installed
 it via *pip*.)

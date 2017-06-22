@@ -12,6 +12,7 @@ if TYPE_CHECKING:   # pragma: no cover
     from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
     from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
     from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
+    from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareSoundPlatformInterface
     from logging import Logger
 
 
@@ -27,7 +28,7 @@ class BasePlatform(metaclass=abc.ABCMeta):
         """
         self.machine = machine
         self.features = {}
-        self.log = None
+        self.log = None         # type: Logger
         self.debug = False
 
         # Set default platform features. Each platform interface can change
@@ -42,6 +43,7 @@ class BasePlatform(metaclass=abc.ABCMeta):
         self.features['has_drivers'] = False
         self.features['tickless'] = False
         self.features['segment_display'] = False
+        self.features['hardware_sounds'] = False
 
     def debug_log(self, msg, *args, **kwargs):
         """Log when debug is set to True for platform."""
@@ -100,6 +102,21 @@ class DmdPlatform(BasePlatform, metaclass=abc.ABCMeta):
         method will will receive the frame data.
 
         """
+        raise NotImplementedError
+
+
+class HardwareSoundPlatform(BasePlatform, metaclass=abc.ABCMeta):
+
+    """Baseclass for hardware sounds in MPF."""
+
+    def __init__(self, machine):
+        """Add hardware sound feature."""
+        super().__init__(machine)
+        self.features['hardware_sounds'] = True
+
+    @abc.abstractmethod
+    def configure_hardware_sound_system(self) -> "HardwareSoundPlatformInterface":
+        """Return a reference to the hardware sound interface."""
         raise NotImplementedError
 
 

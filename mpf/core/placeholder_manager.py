@@ -122,16 +122,13 @@ class TextTemplate:
         self.machine.events.remove_handler(self._var_changes)
 
     def _add_player_var_handler(self, name: str) -> None:
-        self.machine.events.add_handler('player_{}'.format(name),
-                                        self._var_changes)
+        self.machine.events.add_handler('player_{}'.format(name), self._var_changes)
 
     def _add_current_player_handler(self) -> None:
-        self.machine.events.add_handler('player_turn_start',
-                                        self._var_changes)
+        self.machine.events.add_handler('player_turn_started', self._var_changes)
 
     def _add_machine_var_handler(self, name: str) -> None:
-        self.machine.events.add_handler('machine_var_{}'.format(name),
-                                        self._var_changes)
+        self.machine.events.add_handler('machine_var_{}'.format(name), self._var_changes)
 
     def _var_changes(self, **kwargs) -> None:
         del kwargs
@@ -181,15 +178,15 @@ class TextTemplate:
                         if value is not None:
                             text = text.replace('(' + var_string + ')', str(value))
                         else:
-                            text.replace('(' + var_string + ')', '')
+                            text = text.replace('(' + var_string + ')', '')
                     except IndexError:
-                        pass
+                        text = text.replace('(' + var_string + ')', '')
                 elif self.machine.game.player.is_player_var(var_string):
                     value = self.machine.game.player[var_string]
                     if value is not None:
                         text = text.replace('(' + var_string + ')', str(value))
                     else:
-                        text.replace('(' + var_string + ')', '')
+                        text = text.replace('(' + var_string + ')', '')
             else:
                 # set var to empty otherwise
                 if var_string.startswith('player') or var_string.startswith('player') and '|' in var_string:
