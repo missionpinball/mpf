@@ -79,6 +79,7 @@ mpf:
         - mpf.devices.logic_blocks.Sequence
         - mpf.devices.timer.Timer
         - mpf.devices.segment_display.SegmentDisplay
+        - mpf.devices.sequence_shot.SequenceShot
         - mpf.devices.hardware_sound_system.HardwareSoundSystem
 
     plugins:
