@@ -742,6 +742,10 @@ multiball_locks:
     locked_ball_counting_strategy: single|enum(virtual_only,min_virtual_physical,physical_only,no_virtual)|virtual_only
     reset_all_counts_events: dict|str:ms|None
     reset_count_for_current_player_events: dict|str:ms|None
+mypinballs:
+    __valid_in__: machine
+    port: single|str|
+    baud: single|int|115200
 named_colors:
     __valid_in__: machine
 opp:
