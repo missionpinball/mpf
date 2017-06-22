@@ -84,10 +84,11 @@ class TestDataManager(MpfTestCase):
             with patch('mpf.core.file_manager.os.path.isfile') as isfile_mock:
                 with patch('mpf.core.file_manager.os.mkdir') as mkdir_mock:
                     manager = DataManager(self.machine, "relative_test")
-                    path = os.path.join(os.path.abspath(self.machine.machine_path), os.path.join('subdir', 'subdir2'))
-                    isfile_mock.assert_called_with(os.path.join(path, 'test.yaml'))
+                    path = os.path.join(os.path.abspath(self.machine.machine_path), 'subdir/subdir2')
+                    file_path = os.path.join(os.path.abspath(self.machine.machine_path), 'subdir/subdir2/test.yaml')
+                    isfile_mock.assert_called_with(file_path)
                     mkdir_mock.assert_called_with(path, 511)
-                    open_mock.assert_called_once_with(os.path.join(path, 'test.yaml'), encoding='utf8')
+                    open_mock.assert_called_once_with(file_path, encoding='utf8')
 
         self.assertEqual({"test": "world"}, manager.get_data("hallo"))
         self.assertEqual({}, manager.get_data("invalid"))
