@@ -62,7 +62,8 @@ class DeviceManager(MpfController):
 
     def _load_device_modules(self, **kwargs):
         del kwargs
-        self.debug_log("Loading devices...")
+        # step 1: create devices in machine collection
+        self.debug_log("Creating devices...")
         for device_type in self.machine.config['mpf']['device_modules']:
             device_cls = Util.string_to_class(device_type)      # type: Device
 
@@ -95,7 +96,13 @@ class DeviceManager(MpfController):
             except KeyError:
                 pass
 
+        self.machine.mode_controller.create_mode_devices()
+
+        # step 2: load config and validate devices
         self.load_devices_config(validate=True)
+        self.machine.mode_controller.load_mode_devices()
+
+        # step 3: initialise devices (mode devices will be initialised when mode is started)
         self.initialize_devices()
 
     def stop_devices(self):

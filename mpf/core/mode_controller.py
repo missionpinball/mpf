@@ -53,8 +53,9 @@ class ModeController(MpfController):
         self.stop_methods = list()                  # type: List[Tuple[Callable[[Mode], None], int]]
 
         if 'modes' in self.machine.config:
-            self.machine.events.add_handler('init_phase_2',
-                                            self._load_modes)
+            # priority needs to be higher than device_manager::_load_device_modules
+            self.machine.events.add_handler('init_phase_1', self.load_modes, priority=10)
+            self.machine.events.add_handler('init_phase_2', self.initialise_modes)
 
         self.machine.events.add_handler('ball_ending', self._ball_ending,
                                         priority=0)
@@ -73,24 +74,35 @@ class ModeController(MpfController):
                                         self._player_turn_stop,
                                         priority=1000000)
 
-    def _load_modes(self, **kwargs):
-        # Loads the modes from the modes: section of the machine configuration
-        # file.
+    def create_mode_devices(self):
+        """Create mode devices."""
+        for mode in self.machine.modes:
+            mode.create_mode_devices()
 
-        # todo if we get the config validator to validate files pre-merge, then
-        # we can handle proper merging if people don't use dashes in their list
-        # of modes
+    def load_mode_devices(self):
+        """Load mode devices."""
+        for mode in self.machine.modes:
+            mode.load_mode_devices()
+
+    def initialise_modes(self, **kwargs):
+        """Initialise modes."""
+        del kwargs
+        for mode in self.machine.modes:
+            mode.initialise_mode()
+
+    def load_modes(self, **kwargs):
+        """Load the modes from the modes: section of the machine configuration file."""
         del kwargs
 
         self._build_mode_folder_dicts()
 
         for mode in set(self.machine.config['modes']):
 
-            if mode not in self.machine.modes:
-                self.machine.modes[mode] = self._load_mode(mode.lower())
-            else:
-                raise ValueError('Mode {} already exists. Cannot load again.'.
-                                 format(mode))
+            if mode in self.machine.modes:
+                raise AssertionError('Mode {} already exists. Cannot load again.'.format(mode))
+
+            # load mode
+            self.machine.modes[mode] = self._load_mode(mode.lower())
 
     def _find_mode_path(self, mode_string):
         if mode_string in self._machine_mode_folders:
