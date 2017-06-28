@@ -33,6 +33,6 @@ steppers:
         move_current:  20 #percent
         hold_current:   0 #percent
         microstep_per_fullstep: 16 # 1/16 mode (1 step = 1/16 of a full step)
-        microstep_per_userunit: 8.89 # rough conversion to 1 degree units: 1/360 degree * (1 / (1/16 mode)) * (360/1.8 degrees per fullstep motor))
-        velocity_limit: 3600 #user units/sec   (so, 10 RPS second based on user unit of 1 degree)
-        acceleration_limit: 600  #user units/sec^2         
+        fullstep_per_userunit: 200 # RPS : 200 steps per rev (1.8 deg stepper)
+        velocity_limit: 10 #user units/sec   (so, 10 RPS )
+        acceleration_limit: 2 #user units/sec^2  (so, 2 RPS^S)     

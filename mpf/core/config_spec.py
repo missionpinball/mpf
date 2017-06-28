@@ -1105,7 +1105,7 @@ steppers:
     velocity_limit: single|int|100
     acceleration_limit: single|int|100
     home_direction: single|enum(clockwise,counterclockwise)|clockwise
-    microstep_per_userunit: single|float|1.0    
+    fullstep_per_userunit: single|float|1.0    
     ball_search_min: single|float|0.0
     ball_search_max: single|float|1.0
     ball_search_wait: single|ms|5s

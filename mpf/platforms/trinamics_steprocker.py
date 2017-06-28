@@ -68,14 +68,16 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
         self._move_current = int(2.55 * self.config['move_current']) #percent to 0...255(100%)
         self._hold_current = int(2.55 * self.config['hold_current']) #percent to 0...255(100%)
         self._microstep_per_fullstep = self.config['microstep_per_fullstep']
-        self._microstepsPerUserUnit = self.config['microstep_per_userunit']
-        self._velocity_limit = self._ToVelocityCmd(self.config['velocity_limit'])
-        self._acceleration_limit = self._ToVelocityCmd(self.config['acceleration_limit'])
+        self._fullstep_per_userunit = self.config['fullstep_per_userunit']
+        self._velocity_limit = self.UU_To_VelocityCmd(self.config['velocity_limit'])
+        self._acceleration_limit = self.UU_To_AccelCmd(self.config['acceleration_limit'])
         self._home_direction = self.config['home_direction']
         self._set_important_parameters(self._velocity_limit, self._acceleration_limit,
                                              self._move_current, self._hold_current, 
                                              self.TMCL.getMicroStepMode(self._microstep_per_fullstep), False)
-        
+        self._pulse_div = 1
+        self._ramp_div = 1
+        self._clockFreq = 16000000.0
 
     # Public Stepper Platform Interface
     def home(self):
@@ -92,29 +94,39 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
 
     def move_vel_mode(self, velocity):
         """Move at a specific velocity and direction (pos = clockwise, neg = counterclockwise)"""
-        self._rotate(self._ToVelocityCmd(velocity))
+        self._rotate(self.UU_To_VelocityCmd(velocity))
 
     def currentPosition(self):
         raise NotImplementedError()
 
     # Private utility functions
-    # def _set_motor_steps(self, N0=None, N1=None, N2=None):
-    #     if not (N0 is None):
-    #         self._N0 = int(N0)
-    #     if not (N1 is None):
-    #         self._N1 = int(N1)
-    #     if not (N2 is None):
-    #         self._N2 = int(N2)
 
+    # def _ToUU(self, mSteps : int) -> float:
+    #     return ((mSteps * 1.0) / self._microstepsPerUserUnit)
 
-    def _ToMsteps(self, userUnits : float) -> int:
-        return int(userUnits * self._microstepsPerUserUnit)
+    def _ToVelocityCmd( self, microStepsPerSec ):
+        ret =  (microStepsPerSec * 2**self._pulse_div * 2048.0 * 32.0) / self._clockFreq
+        if abs(ret) > 2047:
+            raise ValueError("Velocity out of scale, adjust pulse_div")
+        if ret == 0:
+            raise ValueError("Velocity cannot be zero")
+        return int(ret)
 
-    def _ToUU(self, mSteps : int) -> float:
-        return ((mSteps * 1.0) / self._microstepsPerUserUnit)
+    def _ToAccelerationCmd( self, microStepsPerSS ):
+        ret = (2 ** (self._pulse_div + self._ramps_div + 29) * microStepsPerSS) /  self._clockFreq ** 2
+        if ret > 2047:
+            raise ValueError("Acceleration out of scale, adjust ramps_div")
+        if ret == 0:
+            raise ValueError("Acceleration cannot be zero")
+        return int(ret)
+    
+    def UU_To_VelocityCmd( userUnit ) :
+        microStepsPerSec = userUnit * self._fullstep_per_userunit * self._microstep_per_fullstep
+        return self._ToVelocityCmd(microStepsPerSec)
 
-    def _ToVelocityCmd(self, velocity) -> int:
-        return int((64.0 * self._ToMsteps(velocity)) / 15625.0) * self._microstepsPerUserUnit
+    def UU_To_AccelCmd( userUnit ) :
+        microStepsPerSec = userUnit * self._fullstep_per_userunit * self._microstep_per_fullstep
+        return self._ToAccelerationCmd(microStepsPerSec)
 
     def _get_globals(self):
         ret = {}
