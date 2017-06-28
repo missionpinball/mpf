@@ -211,6 +211,7 @@ bonus_entries:
     skip_if_zero: single|bool|True
 coils:
     __valid_in__: machine
+    allow_enable: single|bool|False
     number: single|str|
     default_recycle: single|bool|False
     default_pulse_ms: single|ms|None
