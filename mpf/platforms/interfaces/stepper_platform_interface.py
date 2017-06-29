@@ -35,3 +35,9 @@ class StepperPlatformInterface(metaclass=abc.ABCMeta):
     def currentPosition(self):
         """Current Position of Stepper"""
         raise NotImplementedError()
+
+    @abc.abstractproperty
+    def stop(self):
+        """Stops a motor"""
+        raise NotImplementedError()
+

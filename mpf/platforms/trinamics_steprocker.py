@@ -82,7 +82,8 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
     # Public Stepper Platform Interface
     def home(self):
         """Home an axis, resetting 0 position"""
-        raise NotImplementedError()
+        self._set_home_parameters()
+        self.TMCL.rfs(self._mn,'START')
 
     def move_abs_pos(self, position):
         """Move axis to a certain absolute position"""
@@ -99,10 +100,10 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
     def currentPosition(self):
         raise NotImplementedError()
 
-    # Private utility functions
+    def stop(self):
+        self.TMCL.mst(self._mn)        
 
-    # def _ToUU(self, mSteps : int) -> float:
-    #     return ((mSteps * 1.0) / self._microstepsPerUserUnit)
+    #Private Utility Functions
 
     def _ToVelocityCmd( self, microStepsPerSec ):
         ret =  (microStepsPerSec * 2**self._pulse_div * 2048.0 * 32.0) / self._clockFreq
@@ -165,6 +166,22 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
         self.TMCL.stap(self._mn, 6)
         self.TMCL.stap(self._mn, 7)
 
+    def _set_home_parameters(self):
+        #self.TMCL.sap(self._mn, 9,  ) #ref. switch status
+        #self.TMCL.sap(self._mn, 10, ) #right limit switch status
+        #self.TMCL.sap(self._mn, 11, ) #left limit switch status
+        #self.TMCL.sap(self._mn, 12, ) #right limit switch disable
+        #self.TMCL.sap(self._mn, 13, ) #left limit switch disable
+        #self.TMCL.sap(self._mn, 141, ) #ref. switch tolerance
+        #self.TMCL.sap(self._mn, 149, ) #soft stop flag
+        if self._home_direction == 'clockwise':
+            self.TMCL.sap(self._mn, 193, 7) #ref. search mode
+        elif self._home_direction == 'counterclockwise':
+            self.TMCL.sap(self._mn, 193, 8)
+        self.TMCL.sap(self._mn, 194, int(self._velocity_limit * 0.10)) #referencing search speed #TODO add parameter
+        #self.TMCL.sap(self._mn, 195, ) #referencing switch speed
+        #self.TMCL.sap(self._mn, 196, ) # distance end switches 
+
     def _rotate(self, velocity):
         if velocity == 0:
             self.TMCL.mst(self._mn) #motor stop
@@ -174,23 +191,21 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
             self.TMCL.rol(self._mn, abs(velocity))        
         return velocity
 
-    def _stop():
-        self.TMCL.mst(self.number)
 
 
 
-#if __name__ == "__main__":
-#    
-#    import time
-#    time.sleep(100)
-#
-#    rocker = StepRocker(24, port='/dev/ttyACM0')
-#    rocker.set_important_parameters(maxspeed=1000,
-#                                    maxaccel=10,
-#                                    maxcurrent=50,
-#                                    standbycurrent=10,
-#                                    microstep_resolution=4)
-#    rocker.rotate(10.)
-#    time.sleep(10)
-#    rocker.stop()
+if __name__ == "__main__":
+    
+    import time
+    time.sleep(100)
+
+    rocker = TMCLDevice(port='/dev/ttyACM0')
+    rocker.set_important_parameters(maxspeed=1000,
+                                    maxaccel=10,
+                                    maxcurrent=50,
+                                    standbycurrent=10,
+                                    microstep_resolution=4)
+    rocker.rotate(10.)
+    time.sleep(10)
+    rocker.stop()
 

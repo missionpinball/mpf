@@ -101,6 +101,10 @@ class Stepper(SystemWideDevice):
         else:
             raise ValueError("move_vel_mode: velocity argument is above limit")
 
+    def stop(self):
+        """ Stops motor """
+        self.hw_stepper.stop()
+
     @event_handler(1)
     def reset(self, **kwargs):
         """Go to reset position."""

@@ -138,7 +138,7 @@ TR_m16 = [(0, 16)]
 TR_xCHP0 = [(-3, 13)]
 TR_xCHP1 = [(0, 1), (2, 16)]
 TR_xSE0 = [(1, 4)]
-TR_xRFS0 = [(1, 9)]
+TR_xRFS0 = [(1, 137)]
 TR_xRFS1 = [(0, 8388307)]
 TR_xPWR0 = [(1, 2**16)]
 TR_xRND0 = [(0, 2**31)]
@@ -729,4 +729,3 @@ class TMCLDevice(object):
             256: 8
         }.get(microsteps_per_fullstep,0))
         return retVal
-

@@ -352,6 +352,10 @@ class VirtualStepper(StepperPlatformInterface):
         """Current Position of Stepper""" 
         return self.current_position
 
+    def stop(self):
+        """ Stops motor """
+        self.velocity = 0
+
 class VirtualDriver(DriverPlatformInterface):
 
     """A virtual driver object."""
