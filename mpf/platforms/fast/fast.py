@@ -62,6 +62,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                               'WX': lambda x: None,  # watchdog
                               'NI': lambda x: None,  # node ID
                               'RX': lambda x: None,  # RGB cmd received
+                              'RA': lambda x: None,  # RGB all cmd received
+                              'RF': lambda x: None,  # RGB fade cmd received
                               'DX': lambda x: None,  # DMD cmd received
                               'SX': lambda x: None,  # sw config received
                               'LX': lambda x: None,  # lamp cmd received
@@ -131,6 +133,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         Args:
             msg: messaged which was received
         """
+        if msg == "!SRE":
+            # ignore system interrupt
+            return
+
         if msg[2:3] == ':':
             cmd = msg[0:2]
             payload = msg[3:].replace('\r', '')
