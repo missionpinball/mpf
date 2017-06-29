@@ -123,6 +123,8 @@ class Driver(SystemWideDevice):
         max_hold_power = 0
         if self.config['max_hold_power']:
             max_hold_power = self.config['max_hold_power']
+        elif self.config['allow_enable']:
+            max_hold_power = 1.0
         elif self.config['default_hold_power']:
             max_hold_power = self.config['default_hold_power']
 

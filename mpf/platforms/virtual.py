@@ -3,6 +3,7 @@ import asyncio
 import logging
 from typing import Callable, Tuple
 
+from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareSoundPlatformInterface
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
 
 from mpf.exceptions.ConfigFileError import ConfigFileError
@@ -142,6 +143,10 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         del subtype
         return VirtualLight(number, platform_settings)
 
+    def configure_hardware_sound_system(self) -> "HardwareSoundPlatformInterface":
+        """Configure virtual hardware sound system."""
+        return VirtualSound()
+
     def parse_light_number_to_channels(self, number: str, subtype: str):
         """Parse channel str to a list of channels."""
         if number is None:
@@ -230,6 +235,23 @@ class VirtualSegmentDisplay(SegmentDisplayPlatformInterface):
     def set_text(self, text: str):
         """Set text."""
         self.text = text
+
+
+class VirtualSound(HardwareSoundPlatformInterface):
+
+    """Virtual hardware sound interface."""
+
+    def __init__(self):
+        """Initialise virtual hardware sound."""
+        self.playing = None
+
+    def play_sound(self, number: int):
+        """Play virtual sound."""
+        self.playing = number
+
+    def stop_all_sounds(self):
+        """Stop sound."""
+        self.playing = None
 
 
 class VirtualDmd(DmdPlatformInterface):

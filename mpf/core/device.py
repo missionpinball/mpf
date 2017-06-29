@@ -130,6 +130,9 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
 
         Returns (str, str): Tuple with (collection, config_section)
         """
+        if not cls.collection or not cls.config_section:
+            raise AssertionError("Implement collection and config_section in {}".format(cls))
+
         return cls.collection, cls.config_section
 
     def _initialize(self):

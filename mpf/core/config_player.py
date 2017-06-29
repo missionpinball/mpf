@@ -34,7 +34,7 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
         self._show_keys = {}
 
     def _add_handlers(self):
-        self.machine.events.add_handler('init_phase_1', self._initialize_in_mode, priority=2)
+        self.machine.events.add_handler('init_phase_1', self._initialize_in_mode, priority=20)
         self.machine.events.add_handler('init_phase_1', self._initialise_system_wide, priority=1)
 
     def __repr__(self):

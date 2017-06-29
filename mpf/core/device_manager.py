@@ -1,10 +1,13 @@
 """Contains the DeviceManager base class."""
 from collections import OrderedDict
-from typing import Sized, Iterable, Container, Generic, TypeVar
+from typing import Sized, Iterable, Container, Generic, TypeVar, TYPE_CHECKING
 
 from mpf.core.utility_functions import Util
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.mpf_controller import MpfController
+
+if TYPE_CHECKING:
+    from mpf.core.device import Device
 
 
 class DeviceManager(MpfController):
@@ -59,9 +62,10 @@ class DeviceManager(MpfController):
 
     def _load_device_modules(self, **kwargs):
         del kwargs
-        self.debug_log("Loading devices...")
+        # step 1: create devices in machine collection
+        self.debug_log("Creating devices...")
         for device_type in self.machine.config['mpf']['device_modules']:
-            device_cls = Util.string_to_class(device_type)
+            device_cls = Util.string_to_class(device_type)      # type: Device
 
             if device_cls.get_config_spec():
                 # add specific config spec if device has any
@@ -92,7 +96,13 @@ class DeviceManager(MpfController):
             except KeyError:
                 pass
 
+        self.machine.mode_controller.create_mode_devices()
+
+        # step 2: load config and validate devices
         self.load_devices_config(validate=True)
+        self.machine.mode_controller.load_mode_devices()
+
+        # step 3: initialise devices (mode devices will be initialised when mode is started)
         self.initialize_devices()
 
     def stop_devices(self):

@@ -1,0 +1,64 @@
+#config_version=4
+
+hardware:
+    platform: lisy
+
+lisy:
+    connection: network
+    network_port: 1234
+    network_host: "localhost"
+#    connection: serial
+#    port: com1
+#    baud: 115200
+
+switches:
+    s_test00:
+        number: 00
+    s_test37:
+        number: 37
+    s_test77_nc:
+        number: 77
+        type: 'NC'
+
+coils:
+    c_test:
+        number: 0
+    c_test_allow_enable:
+        number: 1
+        default_hold_power: 1.0
+    c_trough_eject:
+        number: 103
+        default_pulse_ms: 3s
+    game_over_relay:
+        number: 101
+        default_hold_power: 1.0
+
+lights:
+  test_light:
+    number: 3
+
+coil_player:
+   ball_started:
+     game_over_relay: enable
+   ball_will_end:
+     game_over_relay: disable
+
+segment_displays:
+  info_display:
+    number: 0
+  player1_display:
+    number: 1
+  player2_display:
+    number: 2
+
+hardware_sound_systems:
+    default:
+        label: LISY
+
+hardware_sound_player:
+    test2:
+        2:
+            action: play
+    test3:
+        3: play
+    test_stop: stop
