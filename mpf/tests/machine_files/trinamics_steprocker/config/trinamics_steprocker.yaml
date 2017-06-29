@@ -27,12 +27,15 @@ steppers:
     #         999: test_01
     #         500: test_10
 
+
     rotaryMotor_stepper:
         number: 0
-        mode: velocity
+        #mode: velocity
+        mode: position
         move_current:  20 #percent
-        hold_current:   0 #percent
+        hold_current:  0 #percent
+        home_direction: clockwise
         microstep_per_fullstep: 16 # 1/16 mode (1 step = 1/16 of a full step)
-        fullstep_per_userunit: 200 # RPS : 200 steps per rev (1.8 deg stepper)
-        velocity_limit: 10 #user units/sec   (so, 10 RPS )
-        acceleration_limit: 2 #user units/sec^2  (so, 2 RPS^S)     
+        fullstep_per_userunit: 1400 #  200 full steps per rev (1.8 deg stepper) * 7 gear ratio
+        velocity_limit: 1 #user units/sec   (so, 1 RPS of output gear )
+        acceleration_limit: 20 #user units/sec^2  (so, 20 RPS^S of output gear)

@@ -61,6 +61,9 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
 
     def __init__(self, config, TMCLDevice ):
         """Initialise stepper."""
+        self._pulse_div = 1 #tbd add to config
+        self._ramp_div = 10  #tbd add to config
+        self._clockFreq = 16000000.0
         self.config = config
         self.log = logging.getLogger('TMCL Stepper')
         self._mn = int(self.config['number'])
@@ -75,9 +78,10 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
         self._set_important_parameters(self._velocity_limit, self._acceleration_limit,
                                              self._move_current, self._hold_current, 
                                              self.TMCL.getMicroStepMode(self._microstep_per_fullstep), False)
-        self._pulse_div = 1
-        self._ramp_div = 1
-        self._clockFreq = 16000000.0
+        # apply pulse and ramp divisors as well                                             
+        self.TMCL.sap(self._mn, 154, self._pulse_div)
+        self.TMCL.sap(self._mn, 153, self._ramp_div)
+
 
     # Public Stepper Platform Interface
     def home(self):
@@ -87,11 +91,13 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
 
     def move_abs_pos(self, position):
         """Move axis to a certain absolute position"""
-        raise NotImplementedError()
+        microStepPos = self._UU_To_Microsteps(position)
+        self.TMCL.mvp(self._mn,"ABS",microStepPos)
 
     def move_rel_pos(self, position):
         """Move axis to a relative position"""
-        raise NotImplementedError()
+        microStepRel = self._UU_To_Microsteps(position)
+        self.TMCL.mvp(self._mn,"REL",microStepPos)
 
     def move_vel_mode(self, velocity):
         """Move at a specific velocity and direction (pos = clockwise, neg = counterclockwise)"""
@@ -104,28 +110,32 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
         self.TMCL.mst(self._mn)        
 
     #Private Utility Functions
+    def _UU_To_Microsteps(self , userunits ):
+        return userunits * self._fullstep_per_userunit * self._microstep_per_fullstep
+    def _MicroSteps_To_UU(self, microsteps):
+        return microsteps / (self._fullstep_per_userunit * self._microstep_per_fullstep)
 
     def _ToVelocityCmd( self, microStepsPerSec ):
         ret =  (microStepsPerSec * 2**self._pulse_div * 2048.0 * 32.0) / self._clockFreq
         if abs(ret) > 2047:
-            raise ValueError("Velocity out of scale, adjust pulse_div")
-        if ret == 0:
-            raise ValueError("Velocity cannot be zero")
+            raise ValueError("Scaled Velocity too high, lower pulse_div")
+        if ret < 1:
+            raise ValueError("Scaled Velocity too low, raise ramps_div")
         return int(ret)
 
     def _ToAccelerationCmd( self, microStepsPerSS ):
-        ret = (2 ** (self._pulse_div + self._ramps_div + 29) * microStepsPerSS) /  self._clockFreq ** 2
+        ret = (2 ** (self._pulse_div + self._ramp_div + 29) * microStepsPerSS) /  self._clockFreq ** 2
         if ret > 2047:
-            raise ValueError("Acceleration out of scale, adjust ramps_div")
-        if ret == 0:
-            raise ValueError("Acceleration cannot be zero")
+            raise ValueError("Acceleration too high, lower ramps_div")
+        if ret < 1:
+            raise ValueError("Acceleration too low, raise ramps_div")
         return int(ret)
     
-    def UU_To_VelocityCmd( userUnit ) :
+    def UU_To_VelocityCmd( self, userUnit ) :
         microStepsPerSec = userUnit * self._fullstep_per_userunit * self._microstep_per_fullstep
         return self._ToVelocityCmd(microStepsPerSec)
 
-    def UU_To_AccelCmd( userUnit ) :
+    def UU_To_AccelCmd( self, userUnit ) :
         microStepsPerSec = userUnit * self._fullstep_per_userunit * self._microstep_per_fullstep
         return self._ToAccelerationCmd(microStepsPerSec)
 
@@ -191,21 +201,5 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
             self.TMCL.rol(self._mn, abs(velocity))        
         return velocity
 
-
-
-
-if __name__ == "__main__":
-    
-    import time
-    time.sleep(100)
-
-    rocker = TMCLDevice(port='/dev/ttyACM0')
-    rocker.set_important_parameters(maxspeed=1000,
-                                    maxaccel=10,
-                                    maxcurrent=50,
-                                    standbycurrent=10,
-                                    microstep_resolution=4)
-    rocker.rotate(10.)
-    time.sleep(10)
-    rocker.stop()
+     
 

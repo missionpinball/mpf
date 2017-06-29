@@ -20,8 +20,8 @@ class TestTrinamicsStepRocker(MpfTestCase):
         stepper = self.machine.steppers.rotaryMotor_stepper
 
         # spin clockwise, 45 degrees per second
-        stepper.move_vel_mode( 45 )
-        self.assertEqual( 45, stepper._cachedVelocity )
+        stepper.move_vel_mode( 360 )
+        self.assertEqual( 360, stepper._cachedVelocity )
         
         # stop
         stepper.move_vel_mode( 0 )
@@ -45,11 +45,18 @@ class TestTrinamicsStepRocker(MpfTestCase):
 
         # try a position move / should be rejected
         with self.assertRaises(RuntimeError):
-            stepper.move_abs_pos( 42 )          
+            stepper.move_abs_pos( 42 )
         
         # try a relative move / should be rejected
         with self.assertRaises(RuntimeError):
-            stepper.move_rel_pos( 42 )    
+            stepper.move_rel_pos( 42 )
+
+    def test_homing(self):
+        stepper = self.machine.steppers.rotaryMotor_stepper
+        stepper.stop()
+        stepper.home()
+
+        stepper.stop() 
 
     # def setUp(self):
     #     self.serial = MagicMock()
