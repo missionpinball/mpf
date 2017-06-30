@@ -757,6 +757,7 @@ opp:
     chains: dict|str:str|None
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
+    poll_hz: single|int|100
 open_pixel_control:
     __valid_in__: machine
     connection_required: single|bool|False
