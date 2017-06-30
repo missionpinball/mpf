@@ -630,7 +630,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                 self.send_to_processor(chain_serial, self.read_input_msg[chain_serial])
                 yield from self.opp_connection[chain_serial].writer.drain()
                 # the line above saturates the link and seems to overhelm the hardware. limit it to 100Hz
-                yield from asyncio.sleep(.01, loop=self.machine.clock.loop)
+                yield from asyncio.sleep(1 / self.config['poll_hz'], loop=self.machine.clock.loop)
 
     @asyncio.coroutine
     def _update_lights(self):
