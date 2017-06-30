@@ -43,6 +43,7 @@ class HardwarePlatform(LedPlatform):
     def stop(self):
         """Stop platform."""
         # disconnect sender
+        self.opc_client.blank_all()
         self.opc_client.socket_sender.close()
 
     def configure_led(self, config, channels):
@@ -203,6 +204,11 @@ class OpenPixelClient(object):
             msg.append(g)
             msg.append(b)
         self.send(bytes(msg))
+
+    def blank_all(self):
+        """Blank all channels."""
+        for channel_index, pixel_list in enumerate(self.channels):
+            self.update_pixels([(0, 0, 0)] * len(pixel_list), channel_index)
 
     def send(self, message):
         """Send a message to the socket.
