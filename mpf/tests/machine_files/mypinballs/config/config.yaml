@@ -1,0 +1,12 @@
+#config_version=4
+
+mypinballs:
+  port: /dev/ttyUSB0
+
+segment_displays:
+  display1:
+    number: 1
+  display2:
+    number: 2
+  display6:
+    number: 6

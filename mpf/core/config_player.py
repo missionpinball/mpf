@@ -2,6 +2,7 @@
 """Base class used for things that "play" from the config files, such as WidgetPlayer, SlidePlayer, etc."""
 import abc
 
+from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
 from mpf.exceptions.ConfigFileError import ConfigFileError
 
@@ -18,7 +19,7 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
         """Initialise config player."""
         self.device_collection = None
 
-        self.machine = machine
+        self.machine = machine      # type: MachineController
 
         # MPF only
         if hasattr(self.machine, "show_controller"):
@@ -33,7 +34,7 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
         self._show_keys = {}
 
     def _add_handlers(self):
-        self.machine.events.add_handler('init_phase_1', self._initialize_in_mode, priority=2)
+        self.machine.events.add_handler('init_phase_1', self._initialize_in_mode, priority=20)
         self.machine.events.add_handler('init_phase_1', self._initialise_system_wide, priority=1)
 
     def __repr__(self):

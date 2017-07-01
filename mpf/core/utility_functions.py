@@ -5,7 +5,7 @@ from functools import reduce
 
 import asyncio
 from ruamel.yaml.compat import ordereddict
-from typing import Dict, Iterable, List, Tuple, Callable, Any
+from typing import Dict, Iterable, List, Tuple, Callable, Any, Union
 
 
 class Util(object):
@@ -86,7 +86,7 @@ class Util(object):
             return source_dict
 
     @staticmethod
-    def string_to_list(string: str) -> List[str]:
+    def string_to_list(string: Union[str, List[str], None]) -> List[str]:
         """Convert a comma-separated and/or space-separated string into a Python list.
 
         Args:

@@ -211,6 +211,7 @@ bonus_entries:
     skip_if_zero: single|bool|True
 coils:
     __valid_in__: machine
+    allow_enable: single|bool|False
     number: single|str|
     default_recycle: single|bool|False
     default_pulse_ms: single|ms|None
@@ -511,6 +512,7 @@ hardware:
     __valid_in__: machine
     platform: list|str|virtual
     coils: list|str|default
+    segment_displays: list|str|default
     switches: list|str|default
     lights: list|str|default
     dmd: list|str|default
@@ -519,6 +521,15 @@ hardware:
     servo_controllers: list|str|
     accelerometers: list|str|
     i2c: list|str|
+    hardware_sound_system: list|str|default
+hardware_sound_systems:
+    __valid_in__: machine
+    platform: single|str|None
+hardware_sound_player:
+    __valid_in__: machine, mode, show
+    action: single|enum(play,stop)|play
+    sound: single|int|None
+    sound_system: single|machine(hardware_sound_systems)|default
 high_score:
     __valid_in__: mode
     award_slide_display_time: single|ms|4s
@@ -603,6 +614,16 @@ light_player:
     color: single|str|white
     fade: single|ms|None
     __allow_others__:
+lisy:
+    __valid_in__: machine
+    port: single|str|None
+    baud: single|int|None
+    poll_hz: single|int|1000
+    console_log: single|enum(none,basic,full)|none
+    file_log: single|enum(none,basic,full)|basic
+    connection: single|enum(network,serial)|network
+    network_port: single|int|None
+    network_host: single|str|None
 logic_blocks_common:
     enable_events: dict|str:ms|None
     disable_events: dict|str:ms|None
@@ -722,6 +743,10 @@ multiball_locks:
     locked_ball_counting_strategy: single|enum(virtual_only,min_virtual_physical,physical_only,no_virtual)|virtual_only
     reset_all_counts_events: dict|str:ms|None
     reset_count_for_current_player_events: dict|str:ms|None
+mypinballs:
+    __valid_in__: machine
+    port: single|str|
+    baud: single|int|115200
 named_colors:
     __valid_in__: machine
 opp:
@@ -732,6 +757,7 @@ opp:
     chains: dict|str:str|None
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
+    poll_hz: single|int|100
 open_pixel_control:
     __valid_in__: machine
     connection_required: single|bool|False
@@ -858,6 +884,17 @@ scoring:
     float: single|template_float|None
 scriptlets:
     __valid_in__: machine                           # todo add to validator
+segment_displays:
+    __valid_in__: machine
+    number: single|str|
+    platform: single|str|None
+segment_display_player:
+    __valid_in__: machine, mode, show
+    priority: single|int|0
+    text: single|str|None
+    action: single|enum(add,remove)|add
+    key: single|str|None
+    expire: single|ms|None
 servo_controller:
     __valid_in__: machine                           # todo add to validator
 servo_controllers:
@@ -1088,6 +1125,15 @@ switch_player:
     __valid_in__: machine
     start_event: single|str|machine_reset_phase_3
     steps: ignore
+sequence_shots:
+    __valid_in__: machine, mode
+    switch_sequence: list|machine(switches)|None
+    event_sequence: list|str|None
+    cancel_switches: list|machine(switches)|None
+    cancel_events: dict|str:ms|None
+    delay_switch_list: dict|machine(switches):ms|None
+    delay_event_list: dict|str:ms|None
+    sequence_timeout: single|ms|0
 switches:
     __valid_in__: machine
     number: single|str|

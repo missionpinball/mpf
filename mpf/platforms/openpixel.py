@@ -50,6 +50,7 @@ class OpenpixelHardwarePlatform(LightsPlatform):
     def stop(self):
         """Stop platform."""
         # disconnect sender
+        self.opc_client.blank_all()
         self.opc_client.socket_sender.close()
 
     def parse_light_number_to_channels(self, number: str, subtype: str):
@@ -220,6 +221,11 @@ class OpenPixelClient(object):
             self._add_pixel(msg, max_fade_ms, pixels[i * 3 + 2])
 
         self.send(bytes(msg))
+
+    def blank_all(self):
+        """Blank all channels."""
+        for channel_index, pixel_list in enumerate(self.channels):
+            self.update_pixels([0] * len(pixel_list), channel_index)
 
     def send(self, message):
         """Send a message to the socket.

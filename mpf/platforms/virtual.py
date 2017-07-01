@@ -3,20 +3,25 @@ import asyncio
 import logging
 from typing import Callable, Tuple
 
+from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareSoundPlatformInterface
+from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
+
 from mpf.exceptions.ConfigFileError import ConfigFileError
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 
-from mpf.core.platform import ServoPlatform, SwitchPlatform, DriverPlatform, AccelerometerPlatform, I2cPlatform,\
-    DmdPlatform, RgbDmdPlatform, LightsPlatform, DriverConfig, SwitchConfig
+from mpf.core.platform import ServoPlatform, SwitchPlatform, DriverPlatform, AccelerometerPlatform, I2cPlatform, \
+    DmdPlatform, RgbDmdPlatform, LightsPlatform, DriverConfig, SwitchConfig, SegmentDisplayPlatform, \
+    HardwareSoundPlatform
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
 
 class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, LightsPlatform, SwitchPlatform,
-                              DriverPlatform, DmdPlatform, RgbDmdPlatform):
+                              DriverPlatform, DmdPlatform, RgbDmdPlatform, SegmentDisplayPlatform,
+                              HardwareSoundPlatform):
 
     """Base class for the virtual hardware platform."""
 
@@ -134,6 +139,10 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         del subtype
         return VirtualLight(number, platform_settings)
 
+    def configure_hardware_sound_system(self) -> "HardwareSoundPlatformInterface":
+        """Configure virtual hardware sound system."""
+        return VirtualSound()
+
     def parse_light_number_to_channels(self, number: str, subtype: str):
         """Parse channel str to a list of channels."""
         if number is None:
@@ -204,6 +213,41 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         """Configure DMD."""
         del name
         return VirtualDmd()
+
+    def configure_segment_display(self, number: str) -> SegmentDisplayPlatformInterface:
+        """Configure segment display."""
+        return VirtualSegmentDisplay(number)
+
+
+class VirtualSegmentDisplay(SegmentDisplayPlatformInterface):
+
+    """Virtual segment display."""
+
+    def __init__(self, number):
+        """Initialise virtual segment display."""
+        super().__init__(number)
+        self.text = ''
+
+    def set_text(self, text: str):
+        """Set text."""
+        self.text = text
+
+
+class VirtualSound(HardwareSoundPlatformInterface):
+
+    """Virtual hardware sound interface."""
+
+    def __init__(self):
+        """Initialise virtual hardware sound."""
+        self.playing = None
+
+    def play_sound(self, number: int):
+        """Play virtual sound."""
+        self.playing = number
+
+    def stop_all_sounds(self):
+        """Stop sound."""
+        self.playing = None
 
 
 class VirtualDmd(DmdPlatformInterface):

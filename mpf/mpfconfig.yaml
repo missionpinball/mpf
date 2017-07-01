@@ -33,6 +33,8 @@ mpf:
         show: mpf.config_players.show_player.ShowPlayer
         trigger: mpf.config_players.trigger_player.TriggerPlayer
         score: mpf.config_players.score_player.ScorePlayer
+        segment_display_player: mpf.config_players.segment_display_player.SegmentDisplayPlayer
+        hardware_sound_player: mpf.config_players.hardware_sound_player.HardwareSoundPlayer
 
     device_modules:
         - mpf.devices.driver.Driver
@@ -76,6 +78,9 @@ mpf:
         - mpf.devices.logic_blocks.Accrual
         - mpf.devices.logic_blocks.Sequence
         - mpf.devices.timer.Timer
+        - mpf.devices.segment_display.SegmentDisplay
+        - mpf.devices.sequence_shot.SequenceShot
+        - mpf.devices.hardware_sound_system.HardwareSoundSystem
 
     plugins:
         mpf.plugins.auditor.Auditor
@@ -86,6 +91,8 @@ mpf:
         fadecandy: mpf.platforms.fadecandy.FadecandyHardwarePlatform
         fast: mpf.platforms.fast.fast.FastHardwarePlatform
         i2c_servo_controller: mpf.platforms.i2c_servo_controller.I2CServoControllerHardwarePlatform
+        mypinballs: mpf.platforms.mypinballs.mypinballs.MyPinballsHardwarePlatform
+        lisy: mpf.platforms.lisy.lisy.LisyHardwarePlatform
         openpixel: mpf.platforms.openpixel.OpenpixelHardwarePlatform
         opp: mpf.platforms.opp.opp.OppHardwarePlatform
         p_roc:  mpf.platforms.p_roc.PRocHardwarePlatform

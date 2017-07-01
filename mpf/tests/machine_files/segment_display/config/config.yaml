@@ -1,0 +1,41 @@
+#config_version=4
+
+modes:
+ - mode1
+
+segment_displays:
+  display1:
+    number: 1
+  display2:
+    number: 2
+
+segment_display_player:
+  test_event1:
+    display1: "HELLO1"
+    display2:
+      text: "HELLO2"
+  test_event2:
+    display1:
+      action: remove
+  test_event3:
+    display2:
+      action: remove
+
+  test_score:
+    display1:
+      text: "1: (player1|score)"
+    display2:
+      text: "2: (machine|test)"
+
+  test_score_two_player:
+    display1:
+      text: "(player1|score)"
+    display2:
+      text: "(player2|score)"
+
+  test_flash:
+    display1:
+      priority: 10
+      key: flash
+      text: "TEST"
+      expire: 2s

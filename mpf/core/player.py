@@ -153,6 +153,7 @@ class Player(object):
         """Send a player variable event for the current value of all player variables."""
         for name, value in self:
             if isinstance(value, (int, str, float)):
+                #print(name, value)
                 if isinstance(value, str):
                     self._send_variable_event(name, value, value, False, self.vars['number'])
                 else:
