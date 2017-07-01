@@ -128,7 +128,7 @@ class TestFast(MpfTestCase):
         return 'tests/machine_files/fast/'
 
     def get_platform(self):
-        return 'fast'
+        return False
 
     def _mock_loop(self):
         self.clock.mock_serial("com4", self.net_cpu)

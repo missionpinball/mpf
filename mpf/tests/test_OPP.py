@@ -73,7 +73,7 @@ class OPPCommon(MpfTestCase):
         super().tearDown()
 
     def get_platform(self):
-        return 'opp'
+        return False
 
     def _wait_for_processing(self):
         start = time.time()
