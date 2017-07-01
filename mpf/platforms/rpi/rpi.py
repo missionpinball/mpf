@@ -1,5 +1,6 @@
 """Platform to control the hardware of a Raspberry Pi."""
 import asyncio
+from typing import Optional
 
 from mpf.core.delays import DelayManager
 
@@ -45,7 +46,7 @@ class RpiDriver(DriverPlatformInterface):
         """Pulse output."""
         self.enable(pulse_settings, None)
 
-    def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
+    def enable(self, pulse_settings: PulseSettings, hold_settings: Optional[HoldSettings]):
         """Enable output."""
         self.platform.send_command(self.platform.pi.write(self.gpio, 1))
         if hold_settings and hold_settings.power == 1:
@@ -139,7 +140,7 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform)
         if self._cmd_task:
             self._cmd_task.cancel()
 
-        yield from self.pi.stop()
+        self.machine.clock.loop.run_until_complete(self.pi.stop())
 
     @staticmethod
     def _done(future):  # pragma: no cover
@@ -186,7 +187,7 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform)
 
     def _switch_changed(self, gpio, level, tick):
         """Callback for switch change."""
-        print(gpio, level, tick)
+        del tick
         self.machine.switch_controller.process_switch_by_num(str(gpio), level, self)
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
