@@ -1,8 +1,6 @@
 from unittest.mock import MagicMock
 from mpf.tests.MpfTestCase import MpfTestCase
 from mpf.core.events import event_handler
-import asyncio
-
 
 class TestTrinamicsStepRocker(MpfTestCase):
 
@@ -18,14 +16,14 @@ class TestTrinamicsStepRocker(MpfTestCase):
         return options
 
     def test_rotary(self):
-        stepper = self.machine.steppers.rotaryMotor_stepper
+        stepper = self.machine.steppers.velocityStepper
 
         # spin clockwise, 45 degrees per second
-        stepper.move_vel_mode( 360 )
-        self.assertEqual( 360, stepper._cachedVelocity )
+        stepper.move_vel_mode( 45 )
+        self.assertEqual( 45, stepper._cachedVelocity )
         
         # stop
-        stepper.move_vel_mode( 0 )
+        stepper.stop()
         self.assertEqual( 0, stepper._cachedVelocity )
 
         # spin counter clockwise
@@ -33,7 +31,7 @@ class TestTrinamicsStepRocker(MpfTestCase):
         self.assertEqual( -60, stepper._cachedVelocity )
 
         # stop
-        stepper.move_vel_mode( 0 )
+        stepper.stop()
         self.assertEqual( 0, stepper._cachedVelocity )
 
         # try to go too fast
@@ -53,24 +51,35 @@ class TestTrinamicsStepRocker(MpfTestCase):
             stepper.move_rel_pos( 42 )
 
     def test_homing(self):
-        stepper = self.machine.steppers.rotaryMotor_stepper
-        self.machine.events.add_handler('stepper_rotaryMotor_stepper_ready', self.moveComplete)
-
-        stepper.stop()
-        self._moveComplete = False
-        stepper.home()
-        while self._moveComplete == False:
-            self.advance_time_and_run(0.20)
-        stepper.stop() 
-
-    def test_positionTest(self):
-        move_complete = self.machine.events.wait_for_event('stepper_rotaryMotor_stepper_ready')
-        stepper = self.machine.steppers.rotaryMotor_stepper
+        move_complete = self.machine.events.wait_for_event('stepper_positionStepper_ready')
+        stepper = self.machine.steppers.positionStepper
 
         stepper.home()
-        asyncio.wait_for(move_complete,100.0,loop=self.machine.clock.loop)
-        print("waited till home was done")
-        stepper.stop() 
+        self.machine.clock.loop.run_until_complete(move_complete)
+        self.assertEqual( 0, stepper.currentPosition())
+
+    def test_AbsPositionTest(self):
+        stepper = self.machine.steppers.positionStepper
+
+        #home
+        stepper.home()
+        self.machine.clock.loop.run_until_complete(self.machine.events.wait_for_event('stepper_positionStepper_ready'))
+        self.assertEqual( 0.0, stepper.currentPosition())
+
+        # min/max in test file is 0,1 scaling setup for 1.0 = 1 revolution
+        stepper.move_abs_pos(0.5)
+        self.machine.clock.loop.run_until_complete(self.machine.events.wait_for_event('stepper_positionStepper_ready'))
+        self.assertEqual( 0.5, stepper.currentPosition())
+
+        # Go to max
+        stepper.move_abs_pos(1.0)
+        self.machine.clock.loop.run_until_complete(self.machine.events.wait_for_event('stepper_positionStepper_ready'))
+        self.assertEqual( 1.0, stepper.currentPosition())
+
+        # Go to min
+        stepper.move_abs_pos(0.0)
+        self.machine.clock.loop.run_until_complete(self.machine.events.wait_for_event('stepper_positionStepper_ready'))
+        self.assertEqual( 0.0, stepper.currentPosition())
 
     def setUp(self):
         #self._moveComplete = False
