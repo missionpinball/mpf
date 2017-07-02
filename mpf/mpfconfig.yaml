@@ -99,6 +99,7 @@ mpf:
         p_roc:  mpf.platforms.p_roc.PRocHardwarePlatform
         p3_roc:  mpf.platforms.p3_roc.P3RocHardwarePlatform
         pololu_maestro: mpf.platforms.pololu_maestro.PololuMaestroHardwarePlatform
+        rpi: mpf.platforms.rpi.rpi.RaspberryPiHardwarePlatform
         smart_virtual: mpf.platforms.smart_virtual.SmartVirtualHardwarePlatform
         smartmatrix: mpf.platforms.smartmatrix.SmartMatrixHardwarePlatform
         snux: mpf.platforms.snux.SnuxHardwarePlatform

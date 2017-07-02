@@ -8,7 +8,7 @@ import asyncio
 import logging
 from copy import deepcopy
 
-from typing import Dict
+from typing import Dict, Set
 
 from mpf.platforms.fast.fast_io_board import FastIoBoard
 from mpf.platforms.fast.fast_servo import FastServo
@@ -50,7 +50,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.dmd_connection = None
         self.net_connection = None
         self.rgb_connection = None
-        self.serial_connections = set()
+        self.serial_connections = set()         # type: Set[FastSerialCommunicator]
         self.fast_leds = {}
         self.flag_led_tick_registered = False
         self.config = None
@@ -62,6 +62,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                               'WX': lambda x: None,  # watchdog
                               'NI': lambda x: None,  # node ID
                               'RX': lambda x: None,  # RGB cmd received
+                              'RA': lambda x: None,  # RGB all cmd received
+                              'RF': lambda x: None,  # RGB fade cmd received
                               'DX': lambda x: None,  # DMD cmd received
                               'SX': lambda x: None,  # sw config received
                               'LX': lambda x: None,  # lamp cmd received
@@ -102,7 +104,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
     def stop(self):
         """Stop platform and close connections."""
         for connection in self.serial_connections:
+            connection.writer.write(b'BL:AA55\r')   # reset CPU using bootloader
             connection.stop()
+
+        self.serial_connections = set()
 
     def __repr__(self):
         """Return str representation."""
@@ -128,6 +133,10 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         Args:
             msg: messaged which was received
         """
+        if msg == "!SRE":
+            # ignore system interrupt
+            return
+
         if msg[2:3] == ':':
             cmd = msg[0:2]
             payload = msg[3:].replace('\r', '')
@@ -174,6 +183,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             self.dmd_connection = communicator
         elif name == 'NET':
             self.net_connection = communicator
+            self.net_connection.send("RE:")
         elif name == 'RGB':
             self.rgb_connection = communicator
             self.rgb_connection.send('RF:0')

@@ -1,0 +1,30 @@
+#config_version=4
+
+hardware:
+    platform: rpi
+
+raspberry_pi:
+    __valid_in__: machine
+    ip: localhost
+    port: 8888
+
+switches:
+    s_test:
+        number: 1
+    s_test2:
+        number: 7
+
+coils:
+    c_test:
+        number: 23
+        default_pulse_ms: 23
+    c_test_allow_enable:
+        number: 30
+        default_hold_power: 1.0
+    c_pwm:
+        number: 2
+        default_hold_power: 0.2
+
+servos:
+    servo1:
+        number: 10

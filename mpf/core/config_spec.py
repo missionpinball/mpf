@@ -758,6 +758,7 @@ opp:
     chains: dict|str:str|None
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
+    poll_hz: single|int|100
 open_pixel_control:
     __valid_in__: machine
     connection_required: single|bool|False
@@ -830,6 +831,10 @@ random_event_player:
     force_all: single|bool|true
     disable_random: single|bool|false
     scope: single|enum(player,machine)|player
+raspberry_pi:
+    __valid_in__: machine
+    ip: single|str|
+    port: single|int|8888
 rgb_dmds:
     __valid_in__: machine
     platform: single|str|None

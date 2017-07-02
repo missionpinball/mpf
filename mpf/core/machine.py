@@ -54,6 +54,7 @@ if TYPE_CHECKING:   # pragma: no cover
     from mpf.devices.accelerometer import Accelerometer
     from mpf.devices.drop_target import DropTarget
     from mpf.devices.logic_blocks import Accrual, Sequence, Counter
+    from mpf.devices.servo import Servo
     from mpf.devices.segment_display import SegmentDisplay
 
 
@@ -132,6 +133,7 @@ class MachineController(LogMixin):
             self.sequences = None                       # type: DeviceCollectionType[str, Sequence]
             self.accruals = None                        # type: DeviceCollectionType[str, Accrual]
             self.drop_targets = None                    # type: DeviceCollectionType[str, DropTarget]
+            self.servos = None                          # type: DeviceCollectionType[str, Servo]
             self.segment_displays = None                # type: DeviceCollectionType[str, SegmentDisplay]
 
         self._set_machine_path()

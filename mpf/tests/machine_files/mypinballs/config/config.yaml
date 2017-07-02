@@ -1,5 +1,8 @@
 #config_version=4
 
+hardware:
+  segment_displays: mypinballs
+
 mypinballs:
   port: /dev/ttyUSB0
 

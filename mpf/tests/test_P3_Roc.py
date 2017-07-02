@@ -42,13 +42,8 @@ class TestP3Roc(MpfTestCase):
     def getMachinePath(self):
         return 'tests/machine_files/p3_roc/'
 
-    def getOptions(self):
-        options = super().getOptions()
-        options['force_platform'] = False
-        return options
-
     def get_platform(self):
-        return 'p3_roc'
+        return False
 
     def setUp(self):
         p_roc_common.pinproc_imported = True
