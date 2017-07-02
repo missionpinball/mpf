@@ -81,13 +81,16 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
         # apply pulse and ramp divisors as well                                             
         self.TMCL.sap(self._mn, 154, self._pulse_div)
         self.TMCL.sap(self._mn, 153, self._ramp_div)
+        self._homingActive = False
 
 
     # Public Stepper Platform Interface
     def home(self):
         """Home an axis, resetting 0 position"""
+        self.TMCL.rfs(self._mn,'STOP') # in case in progress
         self._set_home_parameters()
         self.TMCL.rfs(self._mn,'START')
+        self._homingActive = True
 
     def move_abs_pos(self, position):
         """Move axis to a certain absolute position"""
@@ -108,6 +111,21 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
 
     def stop(self):
         self.TMCL.mst(self._mn)        
+
+    def is_move_complete(self):
+        if self._homingActive == True:
+            ret = self.TMCL.rfs(self._mn,'STATUS') 
+            if ret != 0:  # This is reversed from manual but is how it works
+                 return False
+            else:
+                return True  
+        else: # check normal move status
+            ret = self.TMCL.gap(self._mn, 8)
+            print (ret)
+            if ret == 1:
+                return True
+            else:
+                return False
 
     #Private Utility Functions
     def _UU_To_Microsteps(self , userunits ):
@@ -184,11 +202,11 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
         #self.TMCL.sap(self._mn, 13, ) #left limit switch disable
         #self.TMCL.sap(self._mn, 141, ) #ref. switch tolerance
         #self.TMCL.sap(self._mn, 149, ) #soft stop flag
+        self.TMCL.sap(self._mn, 194, int(self._velocity_limit * 0.10)) #referencing search speed #TODO add parameter
         if self._home_direction == 'clockwise':
             self.TMCL.sap(self._mn, 193, 7) #ref. search mode
         elif self._home_direction == 'counterclockwise':
             self.TMCL.sap(self._mn, 193, 8)
-        self.TMCL.sap(self._mn, 194, int(self._velocity_limit * 0.10)) #referencing search speed #TODO add parameter
         #self.TMCL.sap(self._mn, 195, ) #referencing switch speed
         #self.TMCL.sap(self._mn, 196, ) # distance end switches 
 

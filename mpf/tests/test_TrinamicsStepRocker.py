@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 from mpf.tests.MpfTestCase import MpfTestCase
-#import mpf.platforms.TrinamicsStepRocker
+from mpf.core.events import event_handler
+import asyncio
 
 
 class TestTrinamicsStepRocker(MpfTestCase):
@@ -53,12 +54,34 @@ class TestTrinamicsStepRocker(MpfTestCase):
 
     def test_homing(self):
         stepper = self.machine.steppers.rotaryMotor_stepper
-        stepper.stop()
-        stepper.home()
+        self.machine.events.add_handler('stepper_rotaryMotor_stepper_ready', self.moveComplete)
 
+        stepper.stop()
+        self._moveComplete = False
+        stepper.home()
+        while self._moveComplete == False:
+            self.advance_time_and_run(0.20)
         stepper.stop() 
 
-    # def setUp(self):
+    def test_positionTest(self):
+        move_complete = self.machine.events.wait_for_event('stepper_rotaryMotor_stepper_ready')
+        stepper = self.machine.steppers.rotaryMotor_stepper
+
+        stepper.home()
+        asyncio.wait_for(move_complete,100.0,loop=self.machine.clock.loop)
+        print("waited till home was done")
+        stepper.stop() 
+
+    def setUp(self):
+        #self._moveComplete = False
+        super().setUp()
+    
+    @event_handler(1)
+    def moveComplete(self,**kwargs):
+        del kwargs
+        self._moveComplete = True
+
+    #def setUp(self):
     #     self.serial = MagicMock()
     #     mpf.platforms.trinamics_steprocker.serial = MagicMock()
     #     mpf.platforms.trinamics_steprocker.serial.Serial.return_value = self.serial
