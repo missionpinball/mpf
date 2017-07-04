@@ -11,10 +11,8 @@ class TestTrinamicsStepRocker(MpfTestCase):
     def getMachinePath(self):
         return 'tests/machine_files/trinamics_steprocker/'
 
-    def getOptions(self):
-        options = super().getOptions()
-        options['force_platform'] = False
-        return options
+    def get_platform(self): 
+        return False 
 
     def test_rotary(self):
         stepper = self.machine.steppers.velocityStepper
