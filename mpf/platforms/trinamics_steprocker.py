@@ -26,6 +26,7 @@ class TrinamicsStepRocker(StepperPlatform):
         self.config = self.machine.config['trinamics_steprocker']
         self.platform = None
         self.features['tickless'] = True
+        self.TMCL = None
 
     def __repr__(self):
         """Return string representation."""
@@ -81,7 +82,7 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
 
         self._set_important_parameters(self._velocity_limit, self._acceleration_limit,
                                              self._move_current, self._hold_current, 
-                                             self.TMCL.getMicroStepMode(self._microstep_per_fullstep), False)
+                                             self._getMicroStepMode(self._microstep_per_fullstep), False)
         # apply pulse and ramp divisors as well                                             
         self.TMCL.sap(self._mn, 154, self._pulse_div)
         self.TMCL.sap(self._mn, 153, self._ramp_div)
@@ -133,6 +134,20 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
                 return False
 
     #Private Utility Functions
+    def _getMicroStepMode(self, microsteps_per_fullstep : int) -> int:
+        retVal = int({
+            1: 0,
+            2: 1,
+            4: 2,
+            8: 3,
+            16: 4,
+            32: 5,
+            64: 6,
+            128: 7,
+            256: 8
+        }.get(microsteps_per_fullstep,0))
+        return retVal
+    
     def _UU_To_Microsteps(self , userunits ):
         return userunits * self._fullstep_per_userunit * self._microstep_per_fullstep
     def _MicroSteps_To_UU(self, microsteps):

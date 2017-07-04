@@ -243,11 +243,11 @@ class TMCLDevice(object):
     def __init__(self, port="/dev/ttyACM0", debug=False):
         self._port = port
         self._debug = debug
-        self._ser = serial.Serial(port)
+        self.serial = serial.Serial(port)
 
     def stop(self):
         """Close serial."""
-        self._ser.close()
+        self.serial.close()
     
     def _query(self, request):
         """Encode and send a query. Receive, decode, and return reply"""
@@ -255,13 +255,13 @@ class TMCLDevice(object):
         req = encodeRequestCommand(*request)
         req = list(map(ord,req))
         if self._debug:
-            print(("send to TMCL: ", _hexString(req),decodeRequestCommand(req)))
-        self._ser.write(req)
-        resp = decodeReplyCommand(self._ser.read(9))
+            print(("send to TMCL: ",self._hexString(req),decodeRequestCommand(req)))
+        self.serial.write(req)
+        resp = decodeReplyCommand(self.serial.read(9))
         if self._debug:
             tmp = list(resp.values())[:-1]
             tmp = encodeReplyCommand(*tmp)
-            print(("got from TMCL:", _hexString(tmp), resp))
+            print(("got from TMCL:",self._hexString(tmp), resp))
         return resp['status'], resp['value']
 
     def _hexString(self, cmd):
@@ -715,17 +715,3 @@ class TMCLDevice(object):
 
     def rsgp(self):
         raise NotImplementedError("yet!")
-
-    def getMicroStepMode(self, microsteps_per_fullstep : int) -> int:
-        retVal = int({
-            1: 0,
-            2: 1,
-            4: 2,
-            8: 3,
-            16: 4,
-            32: 5,
-            64: 6,
-            128: 7,
-            256: 8
-        }.get(microsteps_per_fullstep,0))
-        return retVal
