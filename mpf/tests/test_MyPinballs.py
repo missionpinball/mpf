@@ -72,7 +72,7 @@ class MyPinballsPlatformTest(MpfTestCase):
         super().tearDown()
 
     def get_platform(self):
-        return 'mypinballs'
+        return False
 
     def _wait_for_processing(self):
         start = time.time()

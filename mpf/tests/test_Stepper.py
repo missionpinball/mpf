@@ -106,12 +106,12 @@ class TestStepper(MpfTestCase):
 
         # post another defined event
         self.post_event("test_00")
-        self.assertAlmostEqual(-5.0, stepper.currentPosition(), 0)
+        self.assertEqual(-5.0, stepper.currentPosition(), 0)
 
         # post another defined event
         self.post_event("test_01")
-        self.assertAlmostEqual(999.0, stepper.currentPosition(),0)
+        self.assertEqual(999.0, stepper.currentPosition(),0)
 
         # post another defined event
         self.post_event("test_10")
-        self.assertAlmostEqual(500.0, stepper.currentPosition(),0)
+        self.assertEqual(500.0, stepper.currentPosition(),0)

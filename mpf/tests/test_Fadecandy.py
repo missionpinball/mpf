@@ -30,6 +30,11 @@ class TestFadecandy(MpfTestCase):
 
         self.assertOpenPixelLedsSent({}, {})
 
+    def tearDown(self):
+        super().tearDown()
+        # test that we blanked all LEDs at shutdown
+        self.assertOpenPixelLedsSent({}, {})
+
     def _mock_loop(self):
         self._mock_socket = MockSocket()
         self.clock.mock_socket("localhost", 7890, self._mock_socket)

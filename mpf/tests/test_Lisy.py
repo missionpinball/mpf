@@ -70,7 +70,7 @@ class TestLisy(MpfTestCase):
         super().tearDown()
 
     def get_platform(self):
-        return 'lisy'
+        return False
 
     def _wait_for_processing(self):
         start = time.time()

@@ -128,12 +128,27 @@ class TestFast(MpfTestCase):
         return 'tests/machine_files/fast/'
 
     def get_platform(self):
-        return 'fast'
+        return False
 
     def _mock_loop(self):
         self.clock.mock_serial("com4", self.net_cpu)
         self.clock.mock_serial("com5", self.rgb_cpu)
         self.clock.mock_serial("com6", self.dmd_cpu)
+
+    def tearDown(self):
+        self.dmd_cpu.expected_commands = {
+            b'BL:AA55\r': "!SRE"
+        }
+        self.rgb_cpu.expected_commands = {
+            "BL:AA55": "!SRE"
+        }
+        self.net_cpu.expected_commands = {
+            "BL:AA55": "!SRE"
+        }
+        super().tearDown()
+        self.assertFalse(self.net_cpu.expected_commands)
+        self.assertFalse(self.rgb_cpu.expected_commands)
+        self.assertFalse(self.dmd_cpu.expected_commands)
 
     def setUp(self):
         self.net_cpu = MockFastNet()
@@ -151,6 +166,7 @@ class TestFast(MpfTestCase):
             "RF:00": "RF:P",
         }
         self.net_cpu.expected_commands = {
+            'RE:': '!SRE',
             'ID:': 'ID:NET FP-CPU-002-1 00.90',
             'NN:0': 'NN:00,FP-I/O-3208-2   ,01.00,08,20,04,06,00,00,00,00',     # 3208 board
             'NN:1': 'NN:01,FP-I/O-0804-1   ,01.00,04,08,04,06,00,00,00,00',     # 0804 board

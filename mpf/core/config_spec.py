@@ -758,6 +758,7 @@ opp:
     chains: dict|str:str|None
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
+    poll_hz: single|int|100
 open_pixel_control:
     __valid_in__: machine
     connection_required: single|bool|False
@@ -830,6 +831,10 @@ random_event_player:
     force_all: single|bool|true
     disable_random: single|bool|false
     scope: single|enum(player,machine)|player
+raspberry_pi:
+    __valid_in__: machine
+    ip: single|str|
+    port: single|int|8888
 rgb_dmds:
     __valid_in__: machine
     platform: single|str|None
@@ -1126,9 +1131,10 @@ steppers:
     move_current: single|int|20
     hold_current: single|int|0
     microstep_per_fullstep: single|int|16
-    velocity_limit: single|int|100
-    acceleration_limit: single|int|100
-    home_direction: single|enum(clockwise,counterclockwise)|clockwise
+    velocity_limit: single|float|1.0
+    acceleration_limit: single|float|1.0
+    homing_direction: single|enum(clockwise,counterclockwise)|clockwise
+    homing_speed: single|float|1.0
     fullstep_per_userunit: single|float|1.0    
     ball_search_min: single|float|0.0
     ball_search_max: single|float|1.0
