@@ -521,6 +521,7 @@ hardware:
     servo_controllers: list|str|
     accelerometers: list|str|
     i2c: list|str|
+    stepper_controllers: list|str|
     hardware_sound_system: list|str|default
 hardware_sound_systems:
     __valid_in__: machine
@@ -1121,6 +1122,28 @@ spike:
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
     wait_times: dict|int:int|None
+steppers:
+    __valid_in__: machine
+    mode: single|enum(position,velocity)|position
+    named_positions: dict|float:str|None
+    pos_min: single|float|0.0
+    pos_max: single|float|1.0
+    move_current: single|int|20
+    hold_current: single|int|0
+    microstep_per_fullstep: single|int|16
+    velocity_limit: single|float|1.0
+    acceleration_limit: single|float|1.0
+    homing_direction: single|enum(clockwise,counterclockwise)|clockwise
+    homing_speed: single|float|1.0
+    fullstep_per_userunit: single|float|1.0    
+    ball_search_min: single|float|0.0
+    ball_search_max: single|float|1.0
+    ball_search_wait: single|ms|5s
+    include_in_ball_search: single|bool|True
+    reset_position: single|float|0.0
+    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
+    number: single|str|
+    platform: single|str|None
 switch_player:
     __valid_in__: machine
     start_event: single|str|machine_reset_phase_3
@@ -1242,6 +1265,9 @@ transitions:
 trigger_player:                                    # todo
     __valid_in__: machine, mode, show
     __allow_others__:
+trinamics_steprocker:
+    __valid_in__: machine
+    port: single|str|
 video_pools:
     __valid_in__: machine, mode                      # todo add to validator
 videos:

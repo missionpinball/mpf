@@ -14,6 +14,7 @@ if TYPE_CHECKING:   # pragma: no cover
     from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
     from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareSoundPlatformInterface
     from logging import Logger
+    from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface
 
 
 class BasePlatform(metaclass=abc.ABCMeta):
@@ -44,6 +45,7 @@ class BasePlatform(metaclass=abc.ABCMeta):
         self.features['tickless'] = False
         self.features['segment_display'] = False
         self.features['hardware_sounds'] = False
+        self.features['has_steppers'] = False
 
     def debug_log(self, msg, *args, **kwargs):
         """Log when debug is set to True for platform."""
@@ -238,6 +240,23 @@ class ServoPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
+class StepperPlatform(BasePlatform, metaclass=abc.ABCMeta):
+
+    """Baseclass for smart servo (axis) platforms in MPF."""
+
+    def __init__(self, machine):
+        """Add smart servo feature."""
+        super().__init__(machine)
+        self.features['has_steppers'] = True
+
+    @abc.abstractmethod
+    def configure_stepper(self, number: str) -> "StepperPlatformInterface":
+        """Configure a smart stepper (axis) device in paltform.
+
+        Args:
+            number: Number of the smart servo
+        """
+        raise NotImplementedError
 
 class LightsPlatform(BasePlatform, metaclass=abc.ABCMeta):
 

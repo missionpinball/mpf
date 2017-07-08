@@ -81,6 +81,7 @@ mpf:
         - mpf.devices.segment_display.SegmentDisplay
         - mpf.devices.sequence_shot.SequenceShot
         - mpf.devices.hardware_sound_system.HardwareSoundSystem
+        - mpf.devices.stepper.Stepper
 
     plugins:
         mpf.plugins.auditor.Auditor
@@ -104,6 +105,7 @@ mpf:
         snux: mpf.platforms.snux.SnuxHardwarePlatform
         virtual: mpf.platforms.virtual.VirtualHardwarePlatform
         spike: mpf.platforms.spike.spike.SpikePlatform
+        trinamics_steprocker: mpf.platforms.trinamics_steprocker.TrinamicsStepRocker
 
     paths:
         scriptlets: scriptlets
@@ -419,6 +421,7 @@ hardware:
   accelerometers: default
   servo_controllers: default
   i2c: default
+  stepper_controllers: default
 
 combo_switches:
   both_flippers:
