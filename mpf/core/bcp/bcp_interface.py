@@ -545,6 +545,14 @@ class BcpInterface(MpfController):
         self.machine.bcp.transport.send_to_clients_with_handler(
             handler=name, bcp_command='trigger', name=name, **kwargs)
 
+    def bcp_trigger_client(self, client, name, **kwargs):
+        """Send BCP 'trigger' to a specific client."""
+        # ignore events which already came from bcp to prevent loops
+        if "_from_bcp" in kwargs:
+            return
+
+        self.machine.bcp.transport.send_to_client(client=client, bcp_command='trigger', name=name, **kwargs)
+
     def _bcp_receive_trigger(self, client, name, callback=None, **kwargs):
         """Process an incoming trigger command from a remote BCP host."""
         del client
