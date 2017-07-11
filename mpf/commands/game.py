@@ -215,15 +215,14 @@ class Command(object):
         """
         del signal, frame
 
+        if self.args.text_ui:
+            # restore the console to the old state
+            Screen.open().close(True)
+
         if exception:
             logger = logging.getLogger()
 
-            # If we got here via an exception, the console could be stuck in
-            # the Text UI state
             if self.args.text_ui:
-                # restore the console to the old state
-                Screen.open().close(True)
-
                 # Re-enable console logging to show the exception
                 logger.addHandler(logging.StreamHandler())
 
