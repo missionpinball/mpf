@@ -11,9 +11,9 @@ machines.
 MPF is written in Python 3. It can run on Windows, Mac, and Linux using the same code and configurations.
 
 MPF interacts with real, physical pinball machines via modern pinball controller hardware such as the Multimorphic
-P-ROC or P3-ROC, FAST Pinball controllers, Open Pinball Project (OPP) open source hardware, or Stern SPIKE pinball
-machines. You can use it to power your own custom-built machine or to update the software in existing Williams, Bally,
-Stern, or Data East machines.
+P-ROC or P3-ROC, FAST Pinball controllers, Open Pinball Project (OPP) open source hardware, Stern SPIKE pinball
+machines, LISY controllers for Gottlieb System 1 / System 80 machines. You can also use it to power your own
+custom-built machine or to update the software in existing Williams, Bally, Stern, Data East, or Gottlieb machines.
 
 There's also an [MPF Media Controller](https://github.com/missionpinball/mpf-mc/) (based on [Kivy](http://kivy.org))
 which is used to control graphics and sounds, including high-res LCD displays, classic DMDs, and modern RGB LED DMDs.
@@ -44,7 +44,7 @@ Authors & Contributing
 ----------------------
 MPF is a labor of love awesome pinball-loving people. There's a list of authors in the AUTHORS file. We'd love for you
 to join us! Even if you don't know Python well, you can help improve the documentation or write how to guides. Drop us a
-line in the forum, or make a change and submit a pull request! More info [here](http://docs.missionpinball.org/en/latest/contribute/).
+line in the forum, or make a change and submit a pull request! More info [here](http://docs.missionpinball.org/en/latest/about/contributing_to_mpf.html).
 
 License
 -------
