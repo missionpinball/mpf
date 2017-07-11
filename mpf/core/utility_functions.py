@@ -112,6 +112,9 @@ class Util(object):
         elif string is None:
             return []  # If it's None, make it into an empty list
 
+        elif isinstance(string, int) or isinstance(string, float):
+            return [string]
+
         elif str(type(string)) == "<class 'ruamel.yaml.comments.CommentedSeq'>":
             # If it's a ruamel CommentedSeq, just pretend its a list
             # I did it as a str comparison so I didn't have to
