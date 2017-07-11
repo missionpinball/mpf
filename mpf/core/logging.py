@@ -1,5 +1,9 @@
 """Contains the LogMixin class."""
 import logging
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:   # pragma: no cover
+    from logging import Logger
 
 
 class LogMixin(object):
@@ -10,7 +14,7 @@ class LogMixin(object):
 
     def __init__(self) -> None:
         """Initialise Log Mixin."""
-        self.log = None
+        self.log = None     # type: Logger
         self._info_to_console = False
         self._debug_to_console = False
         self._info_to_file = False

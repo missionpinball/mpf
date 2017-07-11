@@ -57,6 +57,7 @@ if TYPE_CHECKING:   # pragma: no cover
     from mpf.devices.logic_blocks import Accrual, Sequence, Counter
     from mpf.devices.servo import Servo
     from mpf.devices.segment_display import SegmentDisplay
+    from logging import Logger
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -76,7 +77,7 @@ class MachineController(LogMixin):
     def __init__(self, mpf_path: str, machine_path: str, options: dict) -> None:
         """Initialize machine controller."""
         super().__init__()
-        self.log = logging.getLogger("Machine")
+        self.log = logging.getLogger("Machine")     # type: Logger
         self.log.info("Mission Pinball Framework Core Engine v%s", __version__)
 
         self.log.info("Command line arguments: %s", options)

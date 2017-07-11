@@ -120,7 +120,7 @@ class Driver(SystemWideDevice):
         if hold_power and 0 > hold_power > 1:
             raise AssertionError("Hold_power has to be between 0 and 1 but is {}".format(hold_power))
 
-        max_hold_power = 0
+        max_hold_power = 0      # type: float
         if self.config['max_hold_power']:
             max_hold_power = self.config['max_hold_power']
         elif self.config['allow_enable']:

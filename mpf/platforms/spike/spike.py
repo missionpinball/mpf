@@ -517,7 +517,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
         return (256 - (checksum % 256)) % 256
 
     @asyncio.coroutine
-    def send_cmd_and_wait_for_response(self, node, cmd, data, response_len) -> Generator[int, None, str]:
+    def send_cmd_and_wait_for_response(self, node, cmd, data, response_len) -> Generator[int, None, Optional[bytearray]]:
         """Send cmd and wait for response."""
         if node > 15:
             raise AssertionError("Node must be 0-15.")
@@ -532,10 +532,11 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
             yield from self._send_raw(cmd_str)
             if response_len:
                 try:
-                    response = yield from asyncio.wait_for(self._read_raw(response_len), 0.2, loop=self.machine.clock.loop)
+                    response = yield from asyncio.wait_for(self._read_raw(response_len), 0.2,
+                                                           loop=self.machine.clock.loop)    # type: bytearray
                 except asyncio.TimeoutError:    # pragma: no cover
                     self.log.warning("Failed to read %s bytes from Spike", response_len)
-                    return False
+                    return None
 
                 if self._checksum(response) != 0:   # pragma: no cover
                     self.log.warning("Checksum mismatch for response: %s", "".join("%02x " % b for b in response))
@@ -543,11 +544,11 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
                     self._writer.transport.serial.reset_input_buffer()
                     # pylint: disable-msg=protected-access
                     self._reader._buffer = bytearray()
-                    return False
+                    return None
 
                 return response
 
-            return False
+            return None
 
     def _create_cmd_str(self, node, cmd, data):
         if node > 15:
@@ -593,7 +594,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
         return result
 
     @asyncio.coroutine
-    def _initialize(self) -> None:
+    def _initialize(self) -> Generator[int, None, None]:
         # send ctrl+c to stop whatever is running
         self._writer.write(b'\x03reset\n')
         # flush input

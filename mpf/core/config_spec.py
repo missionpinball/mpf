@@ -535,7 +535,7 @@ high_score:
     __valid_in__: mode
     award_slide_display_time: single|ms|4s
     categories: list|str:list|
-    defaults: list|str:dict|None
+    defaults: dict|str:dict|None
     enter_initials_timeout: single|secs|20s
 info_lights:
     __valid_in__: machine                            # todo add to validator

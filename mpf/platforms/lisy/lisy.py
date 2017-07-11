@@ -1,6 +1,6 @@
 """LISY platform for System 1 and System 80."""
 import asyncio
-from typing import Generator
+from typing import Generator, Dict
 
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareSoundPlatformInterface
@@ -86,7 +86,7 @@ class LisyDisplay(SegmentDisplayPlatformInterface):
 
     """A segment display in the LISY platform."""
 
-    def __init__(self, number: int, platform: "LisyHardwarePlatform"):
+    def __init__(self, number: int, platform: "LisyHardwarePlatform") -> None:
         """Initialise segment display."""
         super().__init__(number)
         self.platform = platform
@@ -122,14 +122,14 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, Segme
         """Initialise platform."""
         super().__init__(machine)
         self.config = None
-        self._writer = None
-        self._reader = None
+        self._writer = None                 # type: asyncio.StreamWriter
+        self._reader = None                 # type: asyncio.StreamReader
         self._poll_task = None
         self._watchdog_task = None
         self._number_of_lamps = None
         self._number_of_solenoids = None
         self._number_of_displays = None
-        self._inputs = dict()
+        self._inputs = dict()               # type: Dict[str, bool]
         self._system_type = None
         self.features['max_pulse'] = 255
 

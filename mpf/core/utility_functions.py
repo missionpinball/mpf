@@ -118,8 +118,8 @@ class Util(object):
             # import the actual ruamel.yaml classes
             return string
         else:
-            # if we're passed anything else, just make it into a list
-            return [string]
+            # if we're passed anything else raise an error
+            raise AssertionError("Incorrect type in list for element {}".format(string))
 
     @staticmethod
     def string_to_lowercase_list(string: str) -> List[str]:

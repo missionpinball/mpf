@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from mpf.config_players.device_config_player import DeviceConfigPlayer
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:   # pragma: no cover
     from mpf.devices.hardware_sound_system import HardwareSoundSystem
 
 
