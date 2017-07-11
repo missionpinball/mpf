@@ -164,7 +164,7 @@ class TextUi(MpfController):
 
         # MC process stats
         if self._bcp_status != (0, 0, 0):
-            bcp_string = 'MC (CPU RSS/VMS) {}% {}/{} MB'.format(
+            bcp_string = 'MC (CPU RSS/VMS) {}% {}/{} MB '.format(
                 round(self._bcp_status[0]),
                 round(self._bcp_status[1] / 1048576),
                 round(self._bcp_status[2] / 1048576))
