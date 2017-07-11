@@ -76,7 +76,11 @@ ball_devices:
     jam_switch: s_trough_jam
 
   shooter_lane:
-    tags: ball_add_live
     ball_switches: s_shooter_lane
     eject_coil: c_plunger_lane
     player_controlled_eject_event: sw_plunger
+
+playfields:
+    playfield:
+        default_source_device: shooter_lane
+        tags: default
