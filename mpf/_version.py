@@ -10,7 +10,7 @@ PyPI.
 
 """
 
-__version__ = '0.50.0-dev.10'
+__version__ = '0.50.0-dev.11'
 '''The full version of MPF.'''
 
 __short_version__ = '0.50'
@@ -19,10 +19,10 @@ __short_version__ = '0.50'
 __bcp_version__ = '1.1'
 '''The version of BCP this build of MPF uses.'''
 
-__config_version__ = '4'
+__config_version__ = '5'
 '''The config file version this build of MPF uses.'''
 
-__show_version__ = '4'
+__show_version__ = '5'
 '''The show format version this build of MPF uses.'''
 
 version = "MPF v{}".format(__version__)

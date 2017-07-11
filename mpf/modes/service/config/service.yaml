@@ -1,4 +1,4 @@
-#config_version=4
+#config_version=5
 mode:
   code: mpf.modes.service.code.service.Service
   priority: 100000

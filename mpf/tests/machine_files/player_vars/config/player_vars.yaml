@@ -1,4 +1,4 @@
-#config_version=4
+#config_version=5
 
 player_vars:
   some_var:
