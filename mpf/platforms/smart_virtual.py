@@ -90,6 +90,7 @@ class SwitchDisableAction(BaseSmartVirtualCoilAction):
 
     def _hit_switches(self):
         for switch in self.switches:
+            self.log.debug("Disabling switch %s due to coil pulse", switch)
             self.machine.switch_controller.process_switch(switch.name, 0, logical=True)
 
     def _perform_action(self):
@@ -102,6 +103,7 @@ class SwitchEnableAction(SwitchDisableAction):
 
     def _hit_switches(self):
         for switch in self.switches:
+            self.log.debug("Enabling switch {} due to coil pulse".format(switch.name))
             self.machine.switch_controller.process_switch(switch.name, 1, logical=True)
 
 
@@ -158,15 +160,18 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
 
     def confirm_eject_via_switch(self, switch):
         """Simulate eject via switch."""
+        self.log.debug('Confirming eject via switch: {}'.format(switch.name))
         self.machine.switch_controller.process_switch(switch.name, 1, logical=True)
         self.delay.add(ms=10, callback=self._release_confirm_switch, switch=switch)
 
     def _release_confirm_switch(self, switch):
+        self.log.debug('Releasing eject confirmation switch: {}'.format(switch.name))
         self.machine.switch_controller.process_switch(switch.name, 0, logical=True)
 
     def set_target(self, source, target, mechanical_eject, **kwargs):
         """Set target for action."""
-        self.log.debug("Setting eject target. %s -> %s. Mechanical: %s", source.name, target.name, mechanical_eject)
+        self.log.debug("Setting eject target. %s -> %s. Mechanical: %s",
+                       source.name, target.name, mechanical_eject)
         del kwargs
         driver = None
         if source.config['eject_coil']:
@@ -177,6 +182,8 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
             driver.action.target_device = target
 
         if "delay" in self.actions and self.machine.config['smart_virtual']['simulate_manual_plunger']:
+            self.log.debug("Adding {}ms delay before ejecting".format(self.machine.config['smart_virtual']['simulate_manual_plunger_timeout']))
+
             # simulate mechanical eject
             self.delay.add(ms=self.machine.config['smart_virtual']['simulate_manual_plunger_timeout'],
                            callback=self._perform_action)
@@ -323,6 +330,7 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
 
     def add_ball_to_device(self, device):
         """Add ball to device."""
+        self.log.debug("Adding ball to {}".format(device.name))
         if LogMixin.unit_test and device.balls >= device.config['ball_capacity']:
             raise AssertionError("KABOOM! We just added a ball to {} which has a capacity "
                                  "of {} but already had {} ball(s)".format(device.name,
@@ -345,10 +353,13 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
                             "had an active entrance switch".format(
                                 device.name))
 
+                    self.log.debug('Enabling switch {} due to ball being added to {}'.format(device.config['entrance_switch'].name, device.name))
+
                     self.machine.switch_controller.process_switch(
                         device.config['entrance_switch'].name, 1, True)
                     return
 
+            self.log.debug('Hitting switch {} due to ball being added to {}'.format(device.config['entrance_switch'].name, device.name))
             self.machine.switch_controller.process_switch(
                 device.config['entrance_switch'].name, 1, True)
             self.machine.switch_controller.process_switch(
@@ -358,6 +369,7 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
             found_switch = False
             for switch in device.config['ball_switches']:
                 if self.machine.switch_controller.is_inactive(switch.name):
+                    self.log.debug('Enabling switch {} due to ball being added to {}'.format(switch.name, device.name))
                     self.machine.switch_controller.process_switch(
                         switch.name, 1, logical=True)
                     found_switch = True
@@ -384,15 +396,18 @@ class SmartVirtualDriver(VirtualDriver):
     def disable(self):
         """Disable driver."""
         if self.action:
+            self.log.debug("Disabling driver")
             self.action.disable(self)
 
     def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable driver."""
         del pulse_settings, hold_settings
         if self.action:
+            self.log.debug("Enabling driver")
             self.action.enable(self)
 
     def pulse(self, pulse_settings: PulseSettings):
         """Pulse driver."""
         if self.action:
+            self.log.debug("Pulsing driver for {}ms".format(pulse_settings.duration))
             self.action.pulse(self, pulse_settings.duration)

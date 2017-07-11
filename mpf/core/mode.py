@@ -319,7 +319,8 @@ class Mode(LogMixin):
             callback[0](self)
 
         for item in self.stop_methods:
-            item[0](item[1])
+            if item:
+                item[0](item[1])
 
         self.stop_methods = list()
 

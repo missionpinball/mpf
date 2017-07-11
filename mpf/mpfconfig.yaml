@@ -8,6 +8,7 @@
 mpf:
     core_modules: !!omap
         - events: mpf.core.events.EventManager
+        - text_ui: mpf.core.text_ui.TextUi
         - mode_controller: mpf.core.mode_controller.ModeController
         - shot_profile_manager: mpf.core.shot_profile_manager.ShotProfileManager
         - device_manager: mpf.core.device_manager.DeviceManager
@@ -183,6 +184,7 @@ logging:
       settings_controller: none
       show_controller: none
       switch_controller: basic
+      text_ui: none
       timers: none
 
     file:
@@ -215,7 +217,8 @@ logging:
       service_controller: basic
       settings_controller: basic
       show_controller: basic
-      switch_controller: full
+      switch_controller: basic
+      text_ui: none
       timers: none
 
 p_roc:

@@ -38,6 +38,7 @@ if TYPE_CHECKING:   # pragma: no cover
     from mpf.core.settings_controller import SettingsController
     from mpf.core.shot_profile_manager import ShotProfileManager
     from mpf.core.bcp.bcp import Bcp
+    from mpf.core.tui import TextUi
     from mpf.assets.show import Show
     from mpf.core.assets import BaseAssetManager
     from mpf.devices.switch import Switch
@@ -119,6 +120,7 @@ class MachineController(LogMixin):
             self.placeholder_manager = None             # type: PlaceholderManager
             self.device_manager = None                  # type: DeviceManager
             self.auditor = None                         # type: Auditor
+            self.tui = None                             # type: TextUi
 
             # devices
             self.shows = None                           # type: DeviceCollectionType[str, Show]
