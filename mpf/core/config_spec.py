@@ -1052,21 +1052,13 @@ sound_loop_player:
         action: single|enum(queue,play,stop,stop_looping,set_volume,queue_layer,play_layer,stop_layer,stop_looping_layer,set_layer_volume)|queue
         track: single|str|
     actions:
-        queue:
-            sound_loop_set: single|str|
-            volume: single|gain|None
-            fade_in: single|secs|None
-            fade_out: single|secs|None
-            events_when_played: list|str|use_sound_loop_setting
-            events_when_stopped: list|str|use_sound_loop_setting
-            events_when_looping: list|str|use_sound_loop_setting
-            mode_end_action: single|enum(stop,stop_looping,use_sound_loop_setting)|use_sound_loop_setting
         play:
             sound_loop_set: single|str|
             volume: single|gain|None
             fade_in: single|secs|None
             fade_out: single|secs|None
-            synchronize: single|bool|True
+            queue: single|bool|True
+            synchronize: single|bool|False
             events_when_played: list|str|use_sound_loop_setting
             events_when_stopped: list|str|use_sound_loop_setting
             events_when_looping: list|str|use_sound_loop_setting
@@ -1078,14 +1070,11 @@ sound_loop_player:
         set_volume:
             volume: single|gain|None
             fade: single|secs|0
-        queue_layer:
-            layer: single|int|
-            volume: single|gain|None
-            fade_in: single|secs|0
         play_layer:
             layer: single|int|
             volume: single|gain|None
             fade_in: single|secs|0
+            queue: single|bool|True
         stop_layer:
             layer: single|int|
             fade_out: single|secs|0
@@ -1105,7 +1094,7 @@ sound_loop_sets:
     mode_end_action: single|enum(stop,stop_looping)|stop_looping
     layers:
         sound: single|str|
-        volume: single|gain|0.5
+        volume: single|gain|None
         initial_state: single|enum(play,stop)|play
 sound_player:
     __valid_in__: machine, mode, show
