@@ -75,20 +75,26 @@ slides:
   high_score_award_display:
   - type: text
     text: (player_name)
-    color: 0
+    color: ffffff
     style: dmd_big
-    y: middle-2
-    animations:
-      show_slide:
-      - property: opacity
-        value: 1
-        duration: 0.05s
-      - property: opacity
-        value: 0
-        duration: 0.05s
-        repeat: true
+    anchor_y: middle
+    anchor_x: middle
+    x: middle
+    y: middle
   - type: text
     text: (award)
+    color: ffffff
     style: dmd_med
     anchor_y: top
-    y: top-2
+    anchor_x: middle
+    y: top-1
+    x: middle
+  - type: text
+    text: (value)
+    color: ffffff
+    number_grouping: true
+    style: dmd_med
+    anchor_y: bottom
+    anchor_x: middle
+    y: bottom+1
+    x: middle
