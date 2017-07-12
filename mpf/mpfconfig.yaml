@@ -1,4 +1,4 @@
-# config_version=4
+# config_version=5
 # This file contains configuration options for the MPF itself, including
 # default settings for your machine-wide game-specific config files.
 
@@ -8,6 +8,7 @@
 mpf:
     core_modules: !!omap
         - events: mpf.core.events.EventManager
+        - text_ui: mpf.core.text_ui.TextUi
         - mode_controller: mpf.core.mode_controller.ModeController
         - shot_profile_manager: mpf.core.shot_profile_manager.ShotProfileManager
         - device_manager: mpf.core.device_manager.DeviceManager
@@ -81,6 +82,7 @@ mpf:
         - mpf.devices.segment_display.SegmentDisplay
         - mpf.devices.sequence_shot.SequenceShot
         - mpf.devices.hardware_sound_system.HardwareSoundSystem
+        - mpf.devices.stepper.Stepper
 
     plugins:
         mpf.plugins.auditor.Auditor
@@ -98,11 +100,13 @@ mpf:
         p_roc:  mpf.platforms.p_roc.PRocHardwarePlatform
         p3_roc:  mpf.platforms.p3_roc.P3RocHardwarePlatform
         pololu_maestro: mpf.platforms.pololu_maestro.PololuMaestroHardwarePlatform
+        rpi: mpf.platforms.rpi.rpi.RaspberryPiHardwarePlatform
         smart_virtual: mpf.platforms.smart_virtual.SmartVirtualHardwarePlatform
         smartmatrix: mpf.platforms.smartmatrix.SmartMatrixHardwarePlatform
         snux: mpf.platforms.snux.SnuxHardwarePlatform
         virtual: mpf.platforms.virtual.VirtualHardwarePlatform
         spike: mpf.platforms.spike.spike.SpikePlatform
+        trinamics_steprocker: mpf.platforms.trinamics_steprocker.TrinamicsStepRocker
 
     paths:
         scriptlets: scriptlets
@@ -180,6 +184,7 @@ logging:
       settings_controller: none
       show_controller: none
       switch_controller: basic
+      text_ui: none
       timers: none
 
     file:
@@ -212,7 +217,8 @@ logging:
       service_controller: basic
       settings_controller: basic
       show_controller: basic
-      switch_controller: full
+      switch_controller: basic
+      text_ui: none
       timers: none
 
 p_roc:
@@ -418,6 +424,7 @@ hardware:
   accelerometers: default
   servo_controllers: default
   i2c: default
+  stepper_controllers: default
 
 combo_switches:
   both_flippers:

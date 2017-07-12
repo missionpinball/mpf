@@ -212,13 +212,22 @@ class YamlInterface(FileInterface):
             log.error("Config file %s is version %s. MPF %s requires "
                       "version %s", filename, file_version,
                       __version__, __config_version__)
-            log.error("Use the Config File Migrator to automatically "
-                      "migrate your config file to the latest version.")
-            log.error("Migration tool: https://missionpinball.com/docs/tools/config-file-migrator/")
-            log.error("More info on config version %s: "
-                      "http://docs.missionpinball.org/docs/configuration-file"
-                      "-reference/important-config-file-concepts/config_version/config-version-%s/",
-                      __config_version__, __config_version__)
+
+            # TODO remove this line when migrator is done
+
+            log.error("We have not created the config file migration tool yet"
+                      " for v5. In the meantime, see https://github.com/missionpinball/mpf/issues/897"
+                      " for a list of changes between config versions 4 and 5.")
+
+            # TODO uncomment these and update links when migrator is done
+
+            # log.error("Use the Config File Migrator to automatically "
+            #           "migrate your config file to the latest version.")
+            # log.error("Migration tool: https://missionpinball.com/docs/tools/config-file-migrator/")
+            # log.error("More info on config version %s: "
+            #           "http://docs.missionpinball.org/docs/configuration-file"
+            #           "-reference/important-config-file-concepts/config_version/config-version-%s/",
+            #           __config_version__, __config_version__)
             return False
         else:
             return True

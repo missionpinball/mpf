@@ -7,6 +7,9 @@ from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.placeholder_manager import TextTemplate
 from mpf.core.system_wide_device import SystemWideDevice
 
+if TYPE_CHECKING:   # pragma: no cover
+    from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
+
 TextStack = namedtuple("TextStack", ["text", "priority", "key"])
 
 
@@ -22,7 +25,7 @@ class SegmentDisplay(SystemWideDevice):
     def __init__(self, machine, name: str) -> None:
         """Initialise segment display device."""
         super().__init__(machine, name)
-        self.hw_display = None
+        self.hw_display = None              # type: SegmentDisplayPlatformInterface
         self.platform = None
         self._text_stack = []               # type: List[TextStack]
         self._current_placeholder = None    # type: TextTemplate

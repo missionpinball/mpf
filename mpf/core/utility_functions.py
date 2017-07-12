@@ -112,14 +112,17 @@ class Util(object):
         elif string is None:
             return []  # If it's None, make it into an empty list
 
+        elif isinstance(string, int) or isinstance(string, float):
+            return [string]
+
         elif str(type(string)) == "<class 'ruamel.yaml.comments.CommentedSeq'>":
             # If it's a ruamel CommentedSeq, just pretend its a list
             # I did it as a str comparison so I didn't have to
             # import the actual ruamel.yaml classes
             return string
         else:
-            # if we're passed anything else, just make it into a list
-            return [string]
+            # if we're passed anything else raise an error
+            raise AssertionError("Incorrect type in list for element {}".format(string))
 
     @staticmethod
     def string_to_lowercase_list(string: str) -> List[str]:

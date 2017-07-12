@@ -242,7 +242,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                 self.ball_device.set_eject_state("eject_broken")
                 yield from self._failed_eject(eject_request, eject_try, False)
                 self.machine.events.post("balldevice_{}_broken".format(self.ball_device.name))
-                '''event: balldevice_(name)_froken
+                '''event: balldevice_(name)_broken
 
                 desc: The ball device called "name" is broken and will no longer operate.
                 '''

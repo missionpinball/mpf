@@ -1,4 +1,4 @@
-#config_version=4
+#config_version=5
 
 mpf:
   default_matrix_light_hw_update_hz: 1

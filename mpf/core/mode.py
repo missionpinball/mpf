@@ -68,10 +68,6 @@ class Mode(LogMixin):
                                self.config['mode']['console_log'],
                                self.config['mode']['file_log'])
 
-        self._create_mode_devices()
-
-        self._initialise_mode_devices()
-
         self.configure_mode_settings(config.get('mode', dict()))
 
         self.auto_stop_on_ball_end = self.config['mode']['stop_on_ball_end']
@@ -84,22 +80,6 @@ class Mode(LogMixin):
         works if the mode was running when the ball ended. It's tracked per-
         player in the 'restart_modes_on_next_ball' player variable.
         '''
-
-        # Call registered remote loader methods
-        for item in self.machine.mode_controller.loader_methods:
-            if (item.config_section and
-                    item.config_section in self.config and
-                    self.config[item.config_section]):
-                item.method(config=self.config[item.config_section],
-                            mode_path=self.path,
-                            mode=self,
-                            root_config_dict=self.config,
-                            **item.kwargs)
-            elif not item.config_section:
-                item.method(config=self.config, mode_path=self.path,
-                            **item.kwargs)
-
-        self.mode_init()
 
     @staticmethod
     def get_config_spec() -> str:
@@ -339,7 +319,8 @@ class Mode(LogMixin):
             callback[0](self)
 
         for item in self.stop_methods:
-            item[0](item[1])
+            if item:
+                item[0](item[1])
 
         self.stop_methods = list()
 
@@ -410,7 +391,7 @@ class Mode(LogMixin):
                     # This lets the device know it was added to a mode
                     device.device_loaded_in_mode(mode=self, player=self.player)
 
-    def _create_mode_devices(self) -> None:
+    def create_mode_devices(self) -> None:
         """Create new devices that are specified in a mode config that haven't been created in the machine-wide."""
         self.debug_log("Scanning config for mode-based devices")
 
@@ -432,8 +413,8 @@ class Mode(LogMixin):
                     self.machine.device_manager.create_devices(
                         collection.name, {device: settings})
 
-    def _initialise_mode_devices(self) -> None:
-        """Initialise new devices that are specified in a mode config."""
+    def load_mode_devices(self) -> None:
+        """Load config of mode devices."""
         for collection_name, device_class in iter(self.machine.device_manager.device_classes.items()):
 
             # check if there is config for the device type
@@ -565,6 +546,23 @@ class Mode(LogMixin):
         for handler in self.switch_handlers:
             self.machine.switch_controller.remove_switch_handler_by_key(handler)
         self.switch_handlers = list()
+
+    def initialise_mode(self) -> None:
+        """Initialise this mode."""
+        # Call registered remote loader methods
+        for item in self.machine.mode_controller.loader_methods:
+            if (item.config_section and
+                    item.config_section in self.config and
+                    self.config[item.config_section]):
+                item.method(config=self.config[item.config_section],
+                            mode_path=self.path,
+                            mode=self,
+                            root_config_dict=self.config,
+                            **item.kwargs)
+            elif not item.config_section:
+                item.method(config=self.config, mode_path=self.path,
+                            **item.kwargs)
+        self.mode_init()
 
     def mode_init(self) -> None:
         """User-overrideable method which will be called when this mode initializes as part of the MPF boot process."""

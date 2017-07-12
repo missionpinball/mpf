@@ -106,7 +106,10 @@ class PROCMatrixLight(LightPlatformSoftwareFade):
 
     def set_brightness(self, brightness: float):
         """Enable (turns on) this driver."""
-        if brightness > 0:
+        if brightness >= 1:
+            self.proc.driver_schedule(number=self.number, schedule=0xffffffff,
+                                      cycle_seconds=0, now=True)
+        elif brightness > 0:
             pwm_on_ms, pwm_off_ms = (Util.pwm8_to_on_off(int(brightness * 8)))
             self.proc.driver_patter(self.number, pwm_on_ms, pwm_off_ms, 0, True)
         else:

@@ -31,7 +31,7 @@ class TestSmartMatrix(MpfTestCase):
         return 'tests/machine_files/smart_matrix/'
 
     def get_platform(self):
-        return 'smartmatrix'
+        return False
 
     def setUp(self):
         self.serial1 = SmartMatrixSerial()

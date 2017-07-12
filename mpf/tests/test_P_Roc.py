@@ -223,10 +223,18 @@ class TestPRoc(MpfTestCase):
 
         # test enable of matrix light
         assert not self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_patter.called
+        assert not self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_schedule.called
         self.machine.lights.test_pdb_light.on()
         self.advance_time_and_run(.02)
+        self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_schedule.assert_called_with(
+            cycle_seconds=0, schedule=4294967295, now=True, number=32
+        )
+
+        self.machine.lights.test_pdb_light.on(brightness=128)
+        self.advance_time_and_run(.02)
+
         self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_patter.assert_called_with(
-            32, 8, 0, 0, True
+            32, 1, 1, 0, True
         )
 
         # test disable of matrix light
@@ -234,6 +242,34 @@ class TestPRoc(MpfTestCase):
         self.machine.lights.test_pdb_light.off()
         self.advance_time_and_run(.1)
         self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_disable.assert_called_with(32)
+
+        self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_patter = MagicMock()
+        self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_schedule = MagicMock()
+        self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_disable = MagicMock()
+
+        self.post_event("play_test_show")
+        self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_schedule.assert_called_with(
+            cycle_seconds=0, schedule=4294967295, now=True, number=32
+        )
+
+        self.advance_time_and_run(1)
+        self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_patter.assert_called_with(
+            32, 3, 1, 0, True
+        )
+
+        self.advance_time_and_run(1)
+        self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_disable.assert_called_with(32)
+        self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_disable = MagicMock()
+
+        self.advance_time_and_run(1)
+        self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_schedule.assert_called_with(
+            cycle_seconds=0, schedule=4294967295, now=True, number=32
+        )
+        self.advance_time_and_run(10)
+        self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_schedule.assert_called_with(
+            cycle_seconds=0, schedule=4294967295, now=True, number=32
+        )
+        assert not self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_disable.called
 
     def test_pdb_gi_light(self):
         # test gi on

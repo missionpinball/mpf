@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from mpf.core.mpf_controller import MpfController
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:   # pragma: no cover
     from mpf.core.machine import MachineController
 
 # supported operators
@@ -101,7 +101,7 @@ class TextTemplate:
     var_finder = re.compile("(?<=\()[a-zA-Z_0-9|]+(?=\))")
     string_finder = re.compile("(?<=\$)[a-zA-Z_0-9]+")
 
-    def __init__(self, machine: "MachineController", text: str):
+    def __init__(self, machine: "MachineController", text: str) -> None:
         self.machine = machine
         self.text = text
         self.vars = self.var_finder.findall(text)

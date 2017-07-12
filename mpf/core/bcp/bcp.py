@@ -1,6 +1,7 @@
 """BCP module."""
 import asyncio
 from functools import partial
+from typing import TYPE_CHECKING, List
 
 from mpf.core.events import QueuedEvent
 from mpf.core.mpf_controller import MpfController
@@ -11,17 +12,20 @@ from mpf.core.utility_functions import Util
 from mpf.core.bcp.bcp_interface import BcpInterface
 from mpf.core.bcp.bcp_transport import BcpTransportManager
 
+if TYPE_CHECKING:   # pragma: no cover
+    from mpf.core.machine import MachineController
+
 
 class Bcp(MpfController):
 
     """BCP Module."""
 
-    def __init__(self, machine):
+    def __init__(self, machine: "MachineController") -> None:
         """Initialise BCP module."""
         super().__init__(machine)
         self.interface = BcpInterface(machine)
         self.transport = BcpTransportManager(machine)
-        self.servers = []
+        self.servers = []       # type: List[BcpServer]
 
         if self.machine.options['bcp']:
             self.machine.events.add_handler('init_phase_2',
@@ -51,6 +55,18 @@ class Bcp(MpfController):
         client_connect_futures = []
         for name, settings in self.machine.config['bcp']['connections'].items():
             settings = self.machine.config_validator.validate_config("bcp:connections", settings)
+
+            self.machine.events.post('bcp_connection_attempt',
+                                     name=name,
+                                     host=settings['host'],
+                                     port=settings['port'])
+            '''event: bcp_connection_attempt
+            desc: MPF is attempting to make a BCP connection.
+            args:
+            name: The name of the connection.
+            host: The host name MPF is attempting to connect to.
+            port: The TCP port MPF is attempting to connect to'''
+
             client = Util.string_to_class(settings['type'])(self.machine, name, self.machine.bcp)
             client.exit_on_close = settings['exit_on_close']
             connect_future = Util.ensure_future(client.connect(settings), loop=self.machine.clock.loop)
@@ -63,6 +79,13 @@ class Bcp(MpfController):
             future = Util.ensure_future(asyncio.wait(iter(client_connect_futures), loop=self.machine.clock.loop),
                                         loop=self.machine.clock.loop)
             future.add_done_callback(lambda x: queue.clear())
+            future.add_done_callback(self._bcp_clients_connected)
+
+    def _bcp_clients_connected(self, *args):
+        del args
+        self.machine.events.post('bcp_clients_connected')
+        '''event: bcp_clients_connected
+        desc: All BCP outgoing BCP connections have been made.'''
 
     def _setup_bcp_servers(self, queue: QueuedEvent, **kwargs):
         """Start BCP servers to allow other clients to connect."""

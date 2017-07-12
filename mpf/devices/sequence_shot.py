@@ -29,7 +29,7 @@ class SequenceShot(SystemWideDevice, ModeDevice):
         self.active_delays = set()      # type: Set[str]
 
         self._sequence_events = []      # type: List[str]
-        self._delay_events = {}         # type: Dict[str:int]
+        self._delay_events = {}         # type: Dict[str, int]
 
     @property
     def can_exist_outside_of_game(self):

@@ -42,13 +42,8 @@ class TestP3Roc(MpfTestCase):
     def getMachinePath(self):
         return 'tests/machine_files/p3_roc/'
 
-    def getOptions(self):
-        options = super().getOptions()
-        options['force_platform'] = False
-        return options
-
     def get_platform(self):
-        return 'p3_roc'
+        return False
 
     def setUp(self):
         p_roc_common.pinproc_imported = True
@@ -714,10 +709,11 @@ class TestP3Roc(MpfTestCase):
 
         # test enable of matrix light
         assert not self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_patter.called
+        assert not self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_schedule.called
         self.machine.lights.test_pdb_light.on()
         self.advance_time_and_run(.02)
-        self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_patter.assert_called_with(
-            32, 8, 0, 0, True
+        self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_schedule.assert_called_with(
+            cycle_seconds=0, schedule=4294967295, now=True, number=32
         )
 
         self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_patter = MagicMock()

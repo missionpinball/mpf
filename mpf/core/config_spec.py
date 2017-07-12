@@ -211,6 +211,7 @@ bonus_entries:
     skip_if_zero: single|bool|True
 coils:
     __valid_in__: machine
+    allow_enable: single|bool|False
     number: single|str|
     default_recycle: single|bool|False
     default_pulse_ms: single|ms|None
@@ -520,6 +521,7 @@ hardware:
     servo_controllers: list|str|
     accelerometers: list|str|
     i2c: list|str|
+    stepper_controllers: list|str|
     hardware_sound_system: list|str|default
 hardware_sound_systems:
     __valid_in__: machine
@@ -533,7 +535,7 @@ high_score:
     __valid_in__: mode
     award_slide_display_time: single|ms|4s
     categories: list|str:list|
-    defaults: list|str:dict|None
+    defaults: dict|str:dict|None
     enter_initials_timeout: single|secs|20s
 info_lights:
     __valid_in__: machine                            # todo add to validator
@@ -756,6 +758,7 @@ opp:
     chains: dict|str:str|None
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
+    poll_hz: single|int|100
 open_pixel_control:
     __valid_in__: machine
     connection_required: single|bool|False
@@ -828,6 +831,10 @@ random_event_player:
     force_all: single|bool|true
     disable_random: single|bool|false
     scope: single|enum(player,machine)|player
+raspberry_pi:
+    __valid_in__: machine
+    ip: single|str|
+    port: single|int|8888
 rgb_dmds:
     __valid_in__: machine
     platform: single|str|None
@@ -1168,6 +1175,28 @@ spike:
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
     wait_times: dict|int:int|None
+steppers:
+    __valid_in__: machine
+    mode: single|enum(position,velocity)|position
+    named_positions: dict|float:str|None
+    pos_min: single|float|0.0
+    pos_max: single|float|1.0
+    move_current: single|int|20
+    hold_current: single|int|0
+    microstep_per_fullstep: single|int|16
+    velocity_limit: single|float|1.0
+    acceleration_limit: single|float|1.0
+    homing_direction: single|enum(clockwise,counterclockwise)|clockwise
+    homing_speed: single|float|1.0
+    fullstep_per_userunit: single|float|1.0    
+    ball_search_min: single|float|0.0
+    ball_search_max: single|float|1.0
+    ball_search_wait: single|ms|5s
+    include_in_ball_search: single|bool|True
+    reset_position: single|float|0.0
+    reset_events: dict|str:ms|machine_reset_phase_3, ball_starting, ball_will_end, service_mode_entered
+    number: single|str|
+    platform: single|str|None
 switch_player:
     __valid_in__: machine
     start_event: single|str|machine_reset_phase_3
@@ -1289,6 +1318,9 @@ transitions:
 trigger_player:                                    # todo
     __valid_in__: machine, mode, show
     __allow_others__:
+trinamics_steprocker:
+    __valid_in__: machine
+    port: single|str|
 video_pools:
     __valid_in__: machine, mode                      # todo add to validator
 videos:

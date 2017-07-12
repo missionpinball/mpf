@@ -38,6 +38,7 @@ if TYPE_CHECKING:   # pragma: no cover
     from mpf.core.settings_controller import SettingsController
     from mpf.core.shot_profile_manager import ShotProfileManager
     from mpf.core.bcp.bcp import Bcp
+    from mpf.core.tui import TextUi
     from mpf.assets.show import Show
     from mpf.core.assets import BaseAssetManager
     from mpf.devices.switch import Switch
@@ -54,7 +55,9 @@ if TYPE_CHECKING:   # pragma: no cover
     from mpf.devices.accelerometer import Accelerometer
     from mpf.devices.drop_target import DropTarget
     from mpf.devices.logic_blocks import Accrual, Sequence, Counter
+    from mpf.devices.servo import Servo
     from mpf.devices.segment_display import SegmentDisplay
+    from logging import Logger
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -74,7 +77,7 @@ class MachineController(LogMixin):
     def __init__(self, mpf_path: str, machine_path: str, options: dict) -> None:
         """Initialize machine controller."""
         super().__init__()
-        self.log = logging.getLogger("Machine")
+        self.log = logging.getLogger("Machine")     # type: Logger
         self.log.info("Mission Pinball Framework Core Engine v%s", __version__)
 
         self.log.info("Command line arguments: %s", options)
@@ -118,6 +121,7 @@ class MachineController(LogMixin):
             self.placeholder_manager = None             # type: PlaceholderManager
             self.device_manager = None                  # type: DeviceManager
             self.auditor = None                         # type: Auditor
+            self.tui = None                             # type: TextUi
 
             # devices
             self.shows = None                           # type: DeviceCollectionType[str, Show]
@@ -132,6 +136,7 @@ class MachineController(LogMixin):
             self.sequences = None                       # type: DeviceCollectionType[str, Sequence]
             self.accruals = None                        # type: DeviceCollectionType[str, Accrual]
             self.drop_targets = None                    # type: DeviceCollectionType[str, DropTarget]
+            self.servos = None                          # type: DeviceCollectionType[str, Servo]
             self.segment_displays = None                # type: DeviceCollectionType[str, SegmentDisplay]
 
         self._set_machine_path()

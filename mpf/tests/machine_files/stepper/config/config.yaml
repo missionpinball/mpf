@@ -1,0 +1,30 @@
+#config_version=5
+
+steppers:
+    linearAxis_stepper:
+        number: 1
+        pos_min:   -5.0 #user units (negative is behind home flag)
+        pos_max: 1000.0 #user units
+        move_current:  30 #percent
+        hold_current:   0 #percent
+        microstep_per_fullstep: 16 # 1/16 mode (1 step = 1/16 of a full step); this allows finer resolution than 1.8 degrees; set to 1 to run fullsteps
+        fullstep_per_userunit: 0.55 # UU = 1 Degree =  1 / 1.8 Degrees per Fullstep
+        homing_direction: clockwise
+        velocity_limit: 1000 #user units/sec
+        acceleration_limit: 1000 #user units/sec^2
+        reset_position: 0
+        reset_events: test_reset
+        named_positions:
+            -5: test_00
+            999: test_01
+            500: test_10
+
+    rotaryMotor_stepper:
+        number: 2
+        mode: velocity
+        move_current:  10 #percent
+        hold_current:   0 #percent
+        microstep_per_fullstep: 16 # 1/16 mode (1 step = 1/16 of a full step)
+        fullstep_per_userunit: 0.55 # UU = 1 Degree =  1 / 1.8 Degrees per Fullstep
+        velocity_limit: 3600 #user units/sec   (so, 10 RPM based on user unit of 1 degree)
+        acceleration_limit: 100 #user units/sec^2         
