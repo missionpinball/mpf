@@ -1085,7 +1085,6 @@ sound_loop_player:
             fade: single|secs|0
 sound_loop_sets:
     __valid_in__: machine, mode
-    track: single|str|None
     events_when_played: list|str|None
     events_when_stopped: list|str|None
     events_when_looping: list|str|None
