@@ -28,6 +28,6 @@ problems/confusion in the past:
 
 **Values with only digits and "e" are strings**
 
-   The MPF spec will process a value like ``123e45`` as "123 exponent 45". Since those could
+   The YAML spec will process a value like ``123e45`` as "123 exponent 45". Since those could
    be hex color codes, MPF's YAML interface processes values that are all digits with a single
    "e" character as strings.
