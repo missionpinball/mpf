@@ -43,8 +43,7 @@ def setup_mpf_examples_link():
     verify_version(os.path.join(examples_root, '_version.py'))
 
     print("Creating '{}' link to {}".format(mpf_examples_link_name, examples_root))
-    os.link(examples_root, mpf_examples_link_name)
-
+    os.symlink(examples_root, mpf_examples_link_name)
 
 def verify_version(version_file):
 

@@ -33,7 +33,7 @@ For now let's call it ``test_step_2.py``.
 Open that file and add the following lines to it: (If you are interested in what all this means, then read on
 below the file. Otherwise you can skip down to Step 4.)
 
-.. include:: ../examples/tutorial/step_2/tests/test_step_2.py
+.. include:: ../../examples/tutorial/step_2/tests/test_step_2.py
    :code: python
 
 So what's this file actually doing?
