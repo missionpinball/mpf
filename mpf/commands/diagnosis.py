@@ -2,6 +2,8 @@
 
 import sys
 
+from serial.tools import list_ports
+
 from mpf._version import version as mpf_version
 
 
@@ -23,4 +25,12 @@ class Command(object):
         except:
             print("MPF-MC not found")
 
+        print("\nSerial ports found:")
+        iterator = list_ports.comports()
+        for n, (port, desc, hwid) in enumerate(iterator, 1):
+            sys.stdout.write("{:20}\n".format(port))
+            sys.stdout.write("    desc: {}\n".format(desc))
+            sys.stdout.write("    hwid: {}\n".format(hwid))
+
         sys.exit()
+

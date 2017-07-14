@@ -32,8 +32,8 @@ class CommandLineUtility(object):
         This is used from mpf mc.
         """
         for entry_point in iter_entry_points(group='mpf.command', name=None):
-            command, function = entry_point.load()()
-            self.external_commands[command] = function
+            command, function_ref = entry_point.load()()
+            self.external_commands[command] = function_ref
 
     @classmethod
     def check_python_version(cls):
@@ -141,9 +141,15 @@ class CommandLineUtility(object):
         if machine_path:
             return machine_path
         else:
-            print("Error. Could not find machine folder: '{}'.".format(
-                machine_path_hint))
-            sys.exit()
+            if machine_path_hint:
+                wrong_path = os.path.abspath(machine_path_hint)
+            else:
+                wrong_path = os.path.abspath(os.curdir)
+
+            print("Error: Could not find machine in folder: '{}'.".format(wrong_path))
+            print("Either start MPF from within your machine root folder or provide the path after the command.")
+
+            sys.exit(2)
 
 
 def run_from_command_line(args=None):
