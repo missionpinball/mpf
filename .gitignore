@@ -52,6 +52,7 @@ mypy_coverage/
 # Sphinx documentation
 docs/_build/
 docs/api
+docs/examples
 
 # PyBuilder
 target/
