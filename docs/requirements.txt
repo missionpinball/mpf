@@ -8,3 +8,4 @@ autoapi
 graphviz
 sphinx
 docutils
+-e git+https://github.com/missionpinball/mpf-examples.git#egg=mpf-examples
