@@ -47,7 +47,7 @@ class Carousel(Mode):
             player['available_items_{}'.format(self.name)] = copy.deepcopy(self._items)
         self._highlighted_item_index = 0
 
-        self._update_highlighted_item()
+        self._update_highlighted_item(None)
 
     def mode_stop(self, **kwargs):
         """Stop mode."""
@@ -60,12 +60,16 @@ class Carousel(Mode):
     def _get_highlighted_item(self):
         return self._get_available_items()[self._highlighted_item_index]
 
-    def _update_highlighted_item(self):
+    def _update_highlighted_item(self, direction):
         self.debug_log("Highlighted item: " + self._get_highlighted_item())
 
-        self.machine.events.post("{}_{}_highlighted".format(self.name, self._get_highlighted_item()))
+        self.machine.events.post("{}_{}_highlighted".format(self.name, self._get_highlighted_item()),
+                                 direction=direction)
         '''event (carousel_name)_(item)_highlighted
-            desc: Player highlighted an item in a carousel. Mostly used to play shows or trigger slides. '''
+            desc: Player highlighted an item in a carousel. Mostly used to play shows or trigger slides.
+            args:
+               direction: The direction the carousel is moving. Either forwards or backwards. None on mode start.
+            '''
 
     def _get_available_items(self):
         player = self.machine.game.player
@@ -79,7 +83,7 @@ class Carousel(Mode):
         if self._highlighted_item_index >= len(self._get_available_items()):
             self._highlighted_item_index = 0
 
-        self._update_highlighted_item()
+        self._update_highlighted_item("forwards")
 
     def _previous_item(self, **kwargs):
         del kwargs
@@ -89,7 +93,7 @@ class Carousel(Mode):
         if self._highlighted_item_index < 0:
             self._highlighted_item_index = len(self._get_available_items()) - 1
 
-        self._update_highlighted_item()
+        self._update_highlighted_item("backwards")
 
     def _select_item(self, **kwargs):
         del kwargs
