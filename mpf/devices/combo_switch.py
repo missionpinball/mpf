@@ -34,6 +34,10 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
             if not config['events_when_{}'.format(state)]:
                 config['events_when_{}'.format(state)] = [
                     "{}_{}".format(self.name, state)]
+        for state in ["switches_1", "switches_2"]:
+            if not config['events_when_{}'.format(state)]:
+                config['events_when_{}'.format(state)] = [
+                    "{}_{}".format(self.name, state)]
 
         return config
 
@@ -156,6 +160,7 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
         self.debug_log('Switches_1 has passed the hold time and is now '
                        'active')
         self._switches_1_active = self.machine.clock.get_time()
+        self.delay.remove("switch_2_only")
 
         if self._switches_2_active:
             if (self.config['max_offset_time'] >= 0 and
@@ -171,11 +176,15 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
                 return
 
             self._switch_state('both')
+        elif self.config['max_offset_time'] >= 0:
+            self.delay.add_if_doesnt_exist(self.config['max_offset_time'] * 1000, self._post_only_one_active_event,
+                                           "switch_1_only", number=1)
 
     def _activate_switches_2(self):
         self.debug_log('Switches_2 has passed the hold time and is now '
                        'active')
         self._switches_2_active = self.machine.clock.get_time()
+        self.delay.remove("switch_1_only")
 
         if self._switches_1_active:
             if (self.config['max_offset_time'] >= 0 and
@@ -189,6 +198,13 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
                 return
 
             self._switch_state('both')
+        elif self.config['max_offset_time'] >= 0:
+            self.delay.add_if_doesnt_exist(self.config['max_offset_time'] * 1000, self._post_only_one_active_event,
+                                           "switch_2_only", number=2)
+
+    def _post_only_one_active_event(self, number):
+        for event in self.config['events_when_switches_{}'.format(number)]:
+            self.machine.events.post(event)
 
     def _release_switches_1(self):
         self.debug_log('Switches_1 has passed the release time and is now '
@@ -239,6 +255,18 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
 
             Either switch 1 or switch 2 has been released for at
             least the ``release_time:`` but the other switch is still active.
+
+            ..rubric:: switches_1
+
+            Only switches_1 is active. max_offset_time has passed and this hit
+            cannot become both later on. Only emmited when ``max_offset_time:``
+            is defined.
+
+            ..rubric:: switches_2
+
+            Only switches_2 is active. max_offset_time has passed and this hit
+            cannot become both later on. Only emmited when ``max_offset_time:``
+            is defined.
 
             ..rubric:: inactive
 
