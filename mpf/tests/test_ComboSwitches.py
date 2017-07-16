@@ -248,17 +248,27 @@ class TestComboSwitches(MpfTestCase):
         self.mock_event('custom_offset_both')
         self.mock_event('custom_offset_inactive')
         self.mock_event('custom_offset_one')
+        self.mock_event('custom_offset_switches_1')
+        self.mock_event('custom_offset_switches_2')
 
-        self.hit_switch_and_run('switch1', 2)
+        self.hit_switch_and_run('switch1', .1)
+        self.assertEventNotCalled('custom_offset_switches_1')
+        self.assertEventNotCalled('custom_offset_switches_2')
+        self.advance_time_and_run(1.9)
         self.assertEventNotCalled('custom_offset_both')
         self.assertEventNotCalled('custom_offset_inactive')
         self.assertEventNotCalled('custom_offset_one')
+        self.assertEventCalled('custom_offset_switches_1')
+        self.assertEventNotCalled('custom_offset_switches_2')
+        self.mock_event('custom_offset_switches_1')
 
         # switch2 in more than 1s offset time, so events should not be posted
         self.hit_switch_and_run('switch2', 1)
         self.assertEventNotCalled('custom_offset_both')
         self.assertEventNotCalled('custom_offset_inactive')
         self.assertEventNotCalled('custom_offset_one')
+        self.assertEventNotCalled('custom_offset_switches_1')
+        self.assertEventNotCalled('custom_offset_switches_2')
 
         self.release_switch_and_run('switch1', .1)
         self.release_switch_and_run('switch2', .1)
@@ -267,8 +277,11 @@ class TestComboSwitches(MpfTestCase):
         self.hit_switch_and_run('switch1', .1)
         self.hit_switch_and_run('switch2', .1)
         self.assertEventCalled('custom_offset_both')
+        self.advance_time_and_run(10)
         self.assertEventNotCalled('custom_offset_inactive')
         self.assertEventNotCalled('custom_offset_one')
+        self.assertEventNotCalled('custom_offset_switches_1')
+        self.assertEventNotCalled('custom_offset_switches_2')
 
     def test_custom_hold(self):
 
