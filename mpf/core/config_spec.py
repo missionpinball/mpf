@@ -284,6 +284,8 @@ combo_switches:
     events_when_both: list|str|None
     events_when_inactive: list|str|None
     events_when_one: list|str|None
+    events_when_switches_1: list|str|None
+    events_when_switches_2: list|str|None
 config:
     __valid_in__: machine, mode                           # todo add to validator
 config_player_common:
