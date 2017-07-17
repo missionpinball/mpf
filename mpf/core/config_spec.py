@@ -310,6 +310,15 @@ displays:
     height: single|int|600
     default: single|bool|False
     fps: single|int|0
+display_light_player:
+    __valid_in__: machine, mode, show
+    action: single|enum(play,stop)|play
+    lights: list|str|None
+    bcp_connection: single|str|local_display
+    min_x: single|int|0
+    max_x: single|int|None
+    min_y: single|int|0
+    max_y: single|int|None
 diverters:
     __valid_in__: machine
     activate_events: dict|str:ms|None

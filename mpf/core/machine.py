@@ -314,7 +314,8 @@ class MachineController(LogMixin):
         for entry_point in iter_entry_points(group='mpf.config_player',
                                              name=None):
             self.debug_log("Registering %s", entry_point)
-            entry_point.load()(self)
+            name, player = entry_point.load()(self)
+            setattr(self, '{}_player'.format(name), player)
 
     def create_data_manager(self, config_name: str) -> DataManager:     # pragma: no cover
         """Return a new DataManager for a certain config.

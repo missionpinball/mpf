@@ -3,26 +3,66 @@
 
 # sphinx-doc config file
 
-import sys
+from copy import copy
 import os
+import re
 import shutil
+import sys
 import time
 
-from copy import copy
-from shutil import copyfile
-
-import sphinx_rtd_theme
 import git
-from sphinx.ext.autosummary import Autosummary
-from sphinx.ext.autosummary import get_documenter
-from docutils.parsers.rst import directives
-from sphinx.util.inspect import safe_getattr
+import sphinx_rtd_theme
 
 sys.path.insert(0, os.path.abspath(os.pardir))
 
 from mpf.core.utility_functions import Util
 import mpf._version
 from mpf.core.config_processor import ConfigProcessor
+
+
+# MPF Examples Link -------------------------------------------------------
+
+mpf_examples_link_name = 'examples'
+
+
+def setup_mpf_examples_link():
+    try:
+        os.unlink(mpf_examples_link_name)
+    except FileNotFoundError:
+        pass
+
+    if os.path.isdir(os.path.join(os.getcwd(), os.pardir, os.pardir, 'mpf-examples')):
+        examples_root = os.path.join(os.getcwd(), os.pardir, os.pardir, 'mpf-examples')
+
+    elif os.path.isdir(os.path.join(sys.prefix, 'src', 'mpf-examples')):
+        examples_root = os.path.join(sys.prefix, 'src', 'mpf-examples')
+
+    else:
+        raise RuntimeError("Cannot find mpf-examples repo. Aborting")
+
+    verify_version(os.path.join(examples_root, '_version.py'))
+
+    print("Creating '{}' link to {}".format(mpf_examples_link_name, examples_root))
+    os.symlink(examples_root, mpf_examples_link_name)
+
+def verify_version(version_file):
+
+    #  http://stackoverflow.com/questions/458550/standard-way-to-embed-version-into-python-package
+    verstrline = open(version_file, "rt").read()
+    VSRE = r"^mpf_version_required = ['\"]([^'\"]*)['\"]"
+    mo = re.search(VSRE, verstrline, re.M)
+    if mo:
+        mpf_version_required_string = mo.group(1)
+    else:
+        raise RuntimeError("Unable to find version string in %s." % (version_file,))
+
+    if mpf_version_required_string != mpf._version.__short_version__:
+        raise RuntimeError("mpf-examples version mismatch. MPF is version {} "
+                           "but the mpf-examples repo found requires MPF {}".format(
+            mpf._version.__short_version__, mpf_version_required_string))
+
+setup_mpf_examples_link()
+
 
 # -- General configuration ------------------------------------------------
 
@@ -153,10 +193,6 @@ html_static_path = ['_static']
 # bottom, using the given strftime format.
 # The empty string is equivalent to '%b %d, %Y'.
 html_last_updated_fmt = '%b %d, %Y'
-
-# If true, SmartyPants will be used to convert quotes and dashes to
-# typographically correct entities.
-html_use_smartypants = False
 
 # Custom sidebar templates, maps document names to template names.
 # html_sidebars = {}
@@ -296,12 +332,12 @@ def setup(app):
         
            .. warning::
            
-              **This is the API reference for an unreleased version of MPF!**
+              **This documentation is for an unreleased version of MPF!**
         
-              This is the API for MPF |version|, which is the "dev" (next)
-              release of MPF that is a work-in-progress. Use the "Read the Docs"
-              link in the lower left corner to view the API docs for the
-              version of MPF you're using.
+              This is the developer documentation for MPF |version|, which is
+              the "dev" (next) release of MPF that is a work-in-progress. Use
+              the "Read the Docs" link in the lower left corner to view the
+              developer docs for the version of MPF you're using.
         
         '''
 
@@ -425,7 +461,7 @@ class RstBuilder(object):
         self.handle_additional_files()
         self.write_overviews()
 
-        copyfile(os.path.join(self.template_folder, 'index.rst'),
+        shutil.copyfile(os.path.join(self.template_folder, 'index.rst'),
                  os.path.join(self.dest_folder, 'index.rst'))
 
     def handle_additional_files(self):
@@ -434,7 +470,7 @@ class RstBuilder(object):
 
             file_name = '{}.rst'.format(file)
 
-            copyfile(os.path.join(self.template_folder, file_name),
+            shutil.copyfile(os.path.join(self.template_folder, file_name),
                  os.path.join(self.dest_folder, file_name))
 
     def create_rst_file(self, section, name, module_):

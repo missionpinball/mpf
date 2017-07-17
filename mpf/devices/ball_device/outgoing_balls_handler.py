@@ -41,6 +41,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         self._no_incoming_ball_which_may_skip = asyncio.Event(loop=self.machine.clock.loop)
         self._no_incoming_ball_which_may_skip.set()
         self._incoming_ball_which_may_skip_obj = []     # type: List[IncomingBall]
+        self._eject_future = None       # type: asyncio.Future
 
     def add_eject_to_queue(self, eject: OutgoingBall):
         """Add an eject request to queue."""
@@ -58,6 +59,15 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         if not self._incoming_ball_which_may_skip_obj:
             self._incoming_ball_which_may_skip.clear()
             self._no_incoming_ball_which_may_skip.set()
+
+    @asyncio.coroutine
+    def wait_for_ready_to_receive(self):
+        """Wait until the outgoing balls handler is ready to receive."""
+        # if we are ejecting to a playfield wait until the eject finished because we cannot properly confirm otherwise
+        if self._current_target and self._current_target.is_playfield() and self._eject_future:
+            self.debug_log("Wait for eject to finish")
+            yield from self._eject_future
+            self.debug_log("Eject finished")
 
     @asyncio.coroutine
     def _run(self):
@@ -213,6 +223,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                         self._cancel_future = None
                         return True
                     else:
+                        self._cancel_future.cancel()
                         self._cancel_future = None
                         continue
 
@@ -220,6 +231,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                     # eject cancelled
                     self._cancel_future = None
                     return True
+                self._cancel_future.cancel()
                 self._cancel_future = None
 
             self.ball_device.set_eject_state("waiting_for_target_ready")
@@ -230,7 +242,10 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             # TODO: block one spot in target device to prevent double eject
             yield from eject_request.target.wait_for_ready_to_receive(self.ball_device)
             self.ball_device.set_eject_state("ejecting")
+            self._eject_future = asyncio.Future(loop=self.machine.clock.loop)
             result = yield from self._eject_ball(eject_request, eject_try)
+            self._eject_future.set_result(result)
+            self._eject_future = None
             if result:
                 # eject is done. return to main loop
                 return True
