@@ -417,10 +417,9 @@ class Game(AsyncMode):
     def end_game(self):
         """End the current game.
 
-        This method posts the queue event *game_ending*, giving other modules
+        This method posts the event *game_will_end* and the queue event *game_ending*, giving other modules
         an opportunity to finish up whatever they need to do before the game
-        ends. Once all the registered handlers for that event have finished,
-        this method calls :meth:`game_end`.
+        ends.
 
         """
         self.machine.events.post('game_will_end')
