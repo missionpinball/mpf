@@ -29,6 +29,8 @@ event_player:
     test_time_delay2: td2|1.5s
     test_conditional_mode{mode.mode1.active}: mode1_active
     test_conditional_mode{not mode.mode1.active}: mode1_not_active
+    play_placeholder_event:
+      - my_event_(machine.test)_123
 
 shows:
   test_event_show:
