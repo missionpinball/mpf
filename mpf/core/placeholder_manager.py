@@ -81,21 +81,6 @@ class IntTemplate(BaseTemplate):
         return int(result)
 
 
-class StringTemplate(BaseTemplate):
-
-    """String template."""
-
-    def evaluate(self, parameters, fail_on_missing_params=False):
-        """Evaluate template to string."""
-        try:
-            result = self.placeholder_manager.evaluate_template(self.template, parameters)
-        except ValueError:
-            if fail_on_missing_params:
-                raise
-            return self.default_value
-        return str(result)
-
-
 class NativeTypeTemplate:
 
     """Native type template which encapsulates an int/float/bool."""
@@ -113,9 +98,8 @@ class NativeTypeTemplate:
 
 class TextTemplate:
 
-    """A simple text template."""
-
     var_finder = re.compile("(?<=\()[a-zA-Z_0-9|]+(?=\))")
+    string_finder = re.compile("(?<=\$)[a-zA-Z_0-9]+")
 
     def __init__(self, machine: "MachineController", text: str) -> None:
         self.machine = machine
@@ -430,10 +414,6 @@ class BasePlaceholderManager(MpfController):
         if isinstance(template_str, bool):
             return NativeTypeTemplate(template_str)
         return BoolTemplate(self._parse_template(template_str), self, default_value)
-
-    def build_string_template(self, template_str, default_value=""):
-        """Build a string template from a string."""
-        return StringTemplate(self._parse_template(template_str), self, default_value)
 
     def get_global_parameters(self, name):
         """Return global params."""
