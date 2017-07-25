@@ -265,8 +265,8 @@ class BallSearch(MpfController):
         """Give up the ball search.
 
         This method is called when the ball search process Did not find the
-        missing ball. It executes the failed action which either
-        adds a replacement ball or ends the game.
+        missing ball. It executes the failed action which depending on the specification of *ball_search_failed_action*,
+        either adds a replacement ball, ends the game, or ends the current ball. 
         """
         self.info_log("Ball Search failed to find ball. Giving up!")
         self.disable()
@@ -305,6 +305,11 @@ class BallSearch(MpfController):
                 self.machine.game.end_game()
             else:
                 self.warning_log("There is no game. Doing nothing!")
+
+        elif self.playfield.config['ball_search_failed_action'] == "end_ball":
+            self.info_log("Ending current ball")
+            self.machine.game.end_ball()
+
         else:
             raise AssertionError("Unknown action " + self.playfield.config[
                 'ball_search_failed_action'])
