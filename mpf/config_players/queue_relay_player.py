@@ -13,14 +13,18 @@ class QueueRelayPlayer(ConfigPlayer):
         try:
             queue = kwargs['queue']
         except KeyError:
-            raise AssertionError("Can only use queue relay player with queue event.")
+            raise AssertionError(
+                "Can only use queue relay player with queue event.")
 
         instance_dict = self._get_instance_dict(context)
 
         p = settings['priority']
         if priority:
             p += priority
-        handler = self.machine.events.add_handler(settings['wait_for'], self._callback, p, context=context, queue=queue)
+        handler = self.machine.events.add_handler(settings['wait_for'],
+                                                  self._callback, p,
+                                                  context=context,
+                                                  queue=queue)
         instance_dict[queue] = handler
         queue.wait()
 

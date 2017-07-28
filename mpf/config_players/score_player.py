@@ -26,7 +26,8 @@ class ScorePlayer(ConfigPlayer):
         del settings
         return False
 
-    def play(self, settings: dict, context: str, calling_context: str, priority: int=0, **kwargs) -> None:
+    def play(self, settings: dict, context: str, calling_context: str,
+             priority: int=0, **kwargs) -> None:
         """Score variable."""
         for var, s in settings.items():
             block_item = var + ":" + calling_context
@@ -40,15 +41,19 @@ class ScorePlayer(ConfigPlayer):
 
             self._score(var, s, kwargs)
 
-    def _is_blocked(self, block_item: str, context: str, priority: int) -> bool:
+    def _is_blocked(self, block_item: str, context: str,
+                    priority: int) -> bool:
         if block_item not in self.blocks or not self.blocks[block_item]:
             return False
         priority_sorted = sorted(self.blocks[block_item], reverse=True)
-        return priority_sorted[0].priority > priority and priority_sorted[0].context != context
+        firstChar = priority_sorted[0]
+        return firstChar.priority > priority and firstChar.context != context
 
-    def _score(self, var: str, entry: dict, placeholder_parameters: dict) -> None:
+    def _score(self, var: str, entry: dict,
+               placeholder_parameters: dict) -> None:
+        mac = self.machine
         if entry['string']:
-            self.machine.game.player[var] = entry['string']
+            mac.game.player[var] = entry['string']
             return
 
         # evaluate placeholder
@@ -60,24 +65,24 @@ class ScorePlayer(ConfigPlayer):
         if entry['action'] == "add":
             if entry['player']:
                 # specific player
-                self.machine.game.player_list[entry['player'] - 1][var] += value
+                mac.game.player_list[entry['player'] - 1][var] += value
             else:
                 # default to current player
-                self.machine.game.player[var] += value
+                mac.game.player[var] += value
         elif entry['action'] == "set":
             if entry['player']:
                 # specific player
-                self.machine.game.player_list[entry['player'] - 1][var] = value
+                mac.game.player_list[entry['player'] - 1][var] = value
             else:
                 # default to current player
-                self.machine.game.player[var] = value
+                mac.game.player[var] = value
         elif entry['action'] == "add_machine":
-            old_value = self.machine.get_machine_var(var)
+            old_value = mac.get_machine_var(var)
             if old_value is None:
                 old_value = 0
-            self.machine.set_machine_var(var, old_value + value)
+            mac.set_machine_var(var, old_value + value)
         elif entry['action'] == "set_machine":
-            self.machine.set_machine_var(var, value)
+            mac.set_machine_var(var, value)
         else:
             raise AssertionError("Invalid value: {}".format(entry))
 
@@ -92,9 +97,8 @@ class ScorePlayer(ConfigPlayer):
         """Validate one entry of this player."""
         config = {}
         if not isinstance(settings, dict):
-            raise AssertionError("Settings of score_player {} should be a dict. But are: {}".format(
-                name, settings
-            ))
+            msg = "Settings of score_player {} should be a dict. But are: {}"
+            raise AssertionError(msg.format(name, settings))
         for var, s in settings.items():
             config[var] = self._parse_config(s, name)
         return config
@@ -110,7 +114,8 @@ class ScorePlayer(ConfigPlayer):
                 block = False
             else:
                 if block_str != "block":
-                    raise AssertionError("Invalid action in scoring entry: {}".format(value))
+                    raise AssertionError(
+                        "Invalid action in scoring entry: {}".format(value))
                 block = True
 
         return {"score": value, "block": block}

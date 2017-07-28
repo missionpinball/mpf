@@ -72,7 +72,8 @@ class Command(object):
         parser.add_argument("-l",
                             action="store", dest="logfile",
                             metavar='file_name',
-                            default=os.path.join("logs",
+                            default=os.path.join(
+                                "logs",
                                 datetime.now().strftime(
                                     "%Y-%m-%d-%H-%M-%S-mpf-" +
                                     socket.gethostname() + ".log")),
@@ -209,7 +210,7 @@ class Command(object):
 
     def exit(self, signal=None, frame=None, exception=None):
         """Called when MPF exits (either cleanly or from a crash.
-        
+
         Cleanly shuts down logging and restores the console window if the Text
         UI option is used.
         """

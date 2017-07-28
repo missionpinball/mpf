@@ -33,4 +33,3 @@ class Command(object):
             sys.stdout.write("    hwid: {}\n".format(hwid))
 
         sys.exit()
-

@@ -27,20 +27,24 @@ class LightPlayer(DeviceConfigPlayer):
                 s['priority'] = priority
             if isinstance(light, str):
                 if light in self.machine.lights:
-                    self._light_named_color(light, instance_dict, full_context, **s)
+                    self._light_named_color(light, instance_dict,
+                                            full_context, **s)
                 else:
                     light_list = Util.string_to_list(light)
                     if len(light_list) > 1:
                         for light1 in light_list:
-                            self._light_named_color(light1, instance_dict, full_context, **s)
+                            self._light_named_color(light1, instance_dict,
+                                                    full_context, **s)
                     else:
                         # TODO: this case fails silently if leds do not exist
                         for light1 in self.machine.lights.items_tagged(light):
-                            self._light_color(light1, instance_dict, full_context, **s)
+                            self._light_color(light1, instance_dict,
+                                              full_context, **s)
             else:
                 self._light_color(light, instance_dict, full_context, **s)
 
-    def _light_named_color(self, light_name, instance_dict, full_context, color, **s):
+    def _light_named_color(self, light_name, instance_dict,
+                           full_context, color, **s):
         light = self.machine.lights[light_name]
         self._light_color(light, instance_dict, full_context, color, **s)
 

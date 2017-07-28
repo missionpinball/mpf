@@ -24,7 +24,7 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
 
         for display, s in settings.items():
             action = s['action']
-            if not display in instance_dict:
+            if display not in instance_dict:
                 instance_dict[display] = {}
 
             key = full_context + "." + display.name
@@ -34,19 +34,21 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
 
             if action == "add":
                 # in case it is already there
-                self._remove(instance_dict=instance_dict, key=key, display=display)
+                self._remove(instance_dict=instance_dict, key=key,
+                             display=display)
                 # add text
                 display.add_text(s['text'], priority + s['priority'], key)
 
                 if s['expire']:
-                    instance_dict[display][key] = self.delay.add(s['expire'], self._remove,
-                                                                 instance_dict=instance_dict,
-                                                                 key=key,
-                                                                 display=display)
+                    instance_dict[display][key] = self.delay.add(
+                        s['expire'], self._remove,
+                        instance_dict=instance_dict,
+                        key=key, display=display)
                 else:
                     instance_dict[display][key] = True
             elif action == "remove":
-                self._remove(instance_dict=instance_dict, key=key, display=display)
+                self._remove(instance_dict=instance_dict,
+                             key=key, display=display)
             else:
                 raise AssertionError("Invalid action {}".format(action))
 
@@ -63,7 +65,8 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
         instance_dict = self._get_instance_dict(context)
         for display, keys in instance_dict.items():
             for key in dict(keys).keys():
-                self._remove(instance_dict=instance_dict, key=key, display=display)
+                self._remove(instance_dict=instance_dict,
+                             key=key, display=display)
 
         self._reset_instance_dict(context)
 

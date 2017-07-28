@@ -10,12 +10,14 @@ class ShowPlayer(DeviceConfigPlayer):
     show_section = 'shows'
 
     # pylint: disable-msg=too-many-arguments
-    def play(self, settings, context, calling_context, priority=0, queue=None, **kwargs):
+    def play(self, settings, context, calling_context,
+             priority=0, queue=None, **kwargs):
         """Play, start, stop, pause, resume or advance show based on config."""
         for show, show_settings in settings.items():
             show_settings = dict(show_settings)
             if 'hold' in show_settings and show_settings['hold'] is not None:
-                raise AssertionError("Setting 'hold' is no longer supported for shows. Use duration -1 in your show.")
+                raise AssertionError(
+                    "Setting 'hold' is no longer supported for shows. Use duration -1 in your show.")
             try:
                 show_settings['priority'] += priority
             except KeyError:
@@ -30,7 +32,8 @@ class ShowPlayer(DeviceConfigPlayer):
         callback = None
         if show_settings['block_queue']:
             if not queue:
-                raise AssertionError("block_queue can only be used with a queue event.")
+                msg = "block_queue can only be used with a queue event."
+                raise AssertionError(msg)
             queue.wait()
             callback = queue.clear
 
@@ -132,7 +135,8 @@ class ShowPlayer(DeviceConfigPlayer):
         action = actions.get(show_settings['action'].lower(), None)
 
         if not callable(action):
-            raise AssertionError("Invalid action {} in show_player {}".format(show_settings['action'], key))
+            raise AssertionError("Invalid action {} in show_player {}".format(
+                show_settings['action'], key))
 
         action(key, instance_dict, show, show_settings, queue)
 
