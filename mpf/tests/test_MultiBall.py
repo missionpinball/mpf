@@ -520,6 +520,7 @@ class TestMultiBall(MpfGameTestCase):
         self.advance_time_and_run(10)
         self.assertEqual(3, self.machine.playfield.balls)
         self.assertEqual(0, self.machine.ball_devices.bd_lock.balls)
+        self.assertEqual(0, self.machine.game.player_list[0]["lock_mb6_locked_balls"])
 
         # game ends (because of slam tilt)
         self.machine.game.ball_ending()
