@@ -7,7 +7,6 @@ boards.
 import logging
 import asyncio
 
-from typing import TYPE_CHECKING
 from mpf.platforms.base_serial_communicator import BaseSerialCommunicator
 
 from mpf.platforms.opp.opp_coil import OPPSolenoidCard
@@ -18,7 +17,8 @@ from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings, \
     DriverConfig, SwitchConfig
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from typing import Dict, List, Set
     from mpf.platforms.opp.opp_coil import OPPSolenoid
     from mpf.platforms.opp.opp_incand import OPPIncand

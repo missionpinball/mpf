@@ -1,13 +1,14 @@
 """Physical segment displays."""
 from collections import namedtuple
 from operator import attrgetter
-from typing import List, TYPE_CHECKING
+from typing import List
 
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.placeholder_manager import TextTemplate
 from mpf.core.system_wide_device import SystemWideDevice
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
 
 TextStack = namedtuple("TextStack", ["text", "priority", "key"])

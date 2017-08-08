@@ -2,7 +2,7 @@
 from collections import OrderedDict
 from datetime import datetime
 import logging
-from typing import TYPE_CHECKING, Tuple
+from typing import Tuple
 
 from asciimatics.screen import Screen
 from psutil import cpu_percent, virtual_memory, Process
@@ -10,7 +10,8 @@ from psutil import cpu_percent, virtual_memory, Process
 import mpf._version
 from mpf.core.mpf_controller import MpfController
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController
 
 

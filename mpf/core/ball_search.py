@@ -2,13 +2,13 @@
 from collections import namedtuple
 
 from typing import List
-from typing import TYPE_CHECKING
 
 from mpf.core.delays import DelayManager
 from mpf.core.machine import MachineController
 from mpf.core.mpf_controller import MpfController
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.devices.playfield import Playfield
 
 BallSearchCallback = namedtuple("BallSearchCallback", ["priority", "callback", "name"])

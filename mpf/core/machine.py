@@ -15,7 +15,7 @@ import copy
 import asyncio
 
 from pkg_resources import iter_entry_points
-from typing import Any, TYPE_CHECKING, Callable, Dict, List, Set, Generator
+from typing import Any, Callable, Dict, List, Set, Generator
 
 from mpf._version import __version__, version as mpf_version, extended_version as mpf_extended_version
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
@@ -28,7 +28,8 @@ from mpf.core.device_manager import DeviceCollection, DeviceCollectionType
 from mpf.core.utility_functions import Util
 from mpf.core.logging import LogMixin
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.modes.game.code.game import Game
     from mpf.core.events import EventManager
     from mpf.core.switch_controller import SwitchController
@@ -108,7 +109,8 @@ class MachineController(LogMixin):
         self.config = None      # type: Any
 
         # add some type hints
-        if TYPE_CHECKING:   # pragma: no cover
+        MYPY = False
+        if MYPY:   # pragma: no cover
             # controllers
             self.events = None                          # type: EventManager
             self.switch_controller = None               # type: SwitchController

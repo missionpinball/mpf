@@ -7,11 +7,12 @@ import asyncio
 from functools import partial
 from unittest.mock import MagicMock
 
-from typing import Dict, Any, TYPE_CHECKING, Tuple, Optional, Generator, Callable, List
+from typing import Dict, Any, Tuple, Optional, Generator, Callable, List
 
 from mpf.core.mpf_controller import MpfController
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController
     from mpf.core.placeholder_manager import BaseTemplate
     from typing import Deque

@@ -1,11 +1,12 @@
 """Base class for asyncio modes."""
 import abc
 import asyncio
-from typing import TYPE_CHECKING, Generator
+from typing import Generator
 
 from mpf.core.mode import Mode
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController
 
 

@@ -1,12 +1,13 @@
 """A driver/coil in the fast platform."""
 import logging
-from typing import TYPE_CHECKING, Dict
+from typing import Dict
 
 from mpf.core.platform import DriverConfig
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.platforms.fast.fast import FastHardwarePlatform
 
 

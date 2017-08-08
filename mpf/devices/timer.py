@@ -1,12 +1,13 @@
 """Mode timers."""
-from typing import TYPE_CHECKING, List
+from typing import List
 
 from mpf.core.delays import DelayManager
 from mpf.core.mode_device import ModeDevice
 from mpf.core.player import Player
 from mpf.core.mode import Mode
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController
     from mpf.core.clock import PeriodicTask
     from mpf.core.events import EventHandlerKey

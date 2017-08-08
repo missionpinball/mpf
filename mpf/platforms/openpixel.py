@@ -6,13 +6,14 @@ https://github.com/zestyping/openpixelcontrol/blob/master/python_clients/opc.py
 import asyncio
 import logging
 
-from typing import Callable, TYPE_CHECKING
+from typing import Callable
 from typing import Tuple
 
 from mpf.core.platform import LightsPlatform
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController
 
 

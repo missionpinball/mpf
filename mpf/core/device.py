@@ -1,12 +1,13 @@
 """Contains the Device base class."""
 import abc
 
-from typing import List, Any, TYPE_CHECKING
+from typing import List, Any
 
 from mpf.core.machine import MachineController
 from mpf.core.logging import LogMixin
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.core.mode import Mode
 
 

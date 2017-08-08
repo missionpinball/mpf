@@ -3,13 +3,13 @@ import asyncio
 import logging
 import json
 import struct
-from typing import TYPE_CHECKING
 
 from mpf.core.utility_functions import Util
 from mpf.platforms.openpixel import OpenPixelClient
 from mpf.platforms.openpixel import OpenpixelHardwarePlatform
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController
 
 

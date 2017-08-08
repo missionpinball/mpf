@@ -1,8 +1,9 @@
 """Interface for switches."""
 import abc
-from typing import Any, TYPE_CHECKING
+from typing import Any
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.core.platform import SwitchConfig
 
 

@@ -1,5 +1,5 @@
 """Device that implements a ball save."""
-from typing import TYPE_CHECKING, Optional
+from typing import Optional
 
 from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
@@ -8,7 +8,8 @@ from mpf.core.mode import Mode
 from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController
     from mpf.devices.playfield import Playfield
 

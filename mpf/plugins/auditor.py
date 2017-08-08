@@ -3,12 +3,12 @@
 import logging
 from typing import Any
 from typing import Set
-from typing import TYPE_CHECKING
 
 from mpf.core.switch_controller import MonitoredSwitchChange
 from mpf.devices.shot import Shot
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController
 
 

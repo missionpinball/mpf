@@ -1,15 +1,14 @@
 """Contains the Switch parent class."""
 from functools import partial
 
-from typing import TYPE_CHECKING
-
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.machine import MachineController
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.utility_functions import Util
 from mpf.core.platform import SwitchConfig
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
     from mpf.core.platform import SwitchPlatform
 

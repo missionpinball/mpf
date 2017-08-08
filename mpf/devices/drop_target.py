@@ -1,6 +1,6 @@
 """Contains the base classes for drop targets and drop target banks."""
 from typing import List
-from typing import Set, TYPE_CHECKING
+from typing import Set
 
 from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
@@ -12,7 +12,8 @@ from mpf.core.events import event_handler
 from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.devices.driver import Driver
 
 

@@ -1,12 +1,12 @@
 """A switch conntected to a fast controller."""
 import logging
-from typing import TYPE_CHECKING
 
 from mpf.core.platform import SwitchConfig
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.platforms.fast.fast import FastHardwarePlatform
 
 

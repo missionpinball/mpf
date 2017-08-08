@@ -1,8 +1,8 @@
 """Contains the LogMixin class."""
 import logging
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from logging import Logger
 
 

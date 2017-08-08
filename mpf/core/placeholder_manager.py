@@ -3,11 +3,11 @@ import ast
 import operator as op
 import abc
 import re
-from typing import TYPE_CHECKING
 
 from mpf.core.mpf_controller import MpfController
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController
 
 # supported operators

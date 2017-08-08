@@ -3,9 +3,10 @@ import abc
 import asyncio
 from collections import namedtuple
 
-from typing import Optional, TYPE_CHECKING
+from typing import Optional
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.devices.switch import Switch
     from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
     from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface

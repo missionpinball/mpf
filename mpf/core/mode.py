@@ -1,7 +1,6 @@
 """Contains the Mode base class."""
 import copy
 
-from typing import TYPE_CHECKING
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -15,7 +14,8 @@ from mpf.core.utility_functions import Util
 from mpf.core.logging import LogMixin
 from mpf.core.switch_controller import SwitchHandler
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.core.events import QueuedEvent
     from mpf.core.mode_device import ModeDevice
     from mpf.core.events import EventHandlerKey
