@@ -100,8 +100,11 @@ class Switch(SystemWideDevice):
 
         config = SwitchConfig(invert=self.invert,
                               debounce=self.config['debounce'])
-        self.hw_switch = self.platform.configure_switch(
-            self.config['number'], config, self.config['platform_settings'])
+        try:
+            self.hw_switch = self.platform.configure_switch(
+                self.config['number'], config, self.config['platform_settings'])
+        except AssertionError as e:
+            raise AssertionError("Failed to configure switch {} in platform. See error above".format(self.name)) from e
 
         if self.machine.config['mpf']['auto_create_switch_events']:
             self._create_activation_event(
