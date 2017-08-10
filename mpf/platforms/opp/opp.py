@@ -455,6 +455,10 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             opp_inp.oldState = new_state
 
     def _get_dict_index(self, input_str):
+        if not isinstance(input_str, str):
+            raise AssertionError("Invalid number format for OPP. Number should be card-number or chain-card-number " +
+                                 " (e.g. 0-1)")
+
         try:
             chain_str, card_str, number_str = input_str.split("-")
         except ValueError:
