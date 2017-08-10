@@ -23,7 +23,7 @@ class PowerSupplyUnit(SystemWideDevice):
             # prevent negative times
             self._busy_until = None
 
-        if not self._busy_until:
+        if not self._busy_until or not max_wait_ms:
             # if we are not busy. do pulse now
             self.notify_about_instant_pulse(pulse_ms)
             return 0
@@ -33,14 +33,17 @@ class PowerSupplyUnit(SystemWideDevice):
             self.notify_about_instant_pulse(pulse_ms)
             return 0
         else:
+
             # calculate wait time and return it
             wait_ms = (self._busy_until - current_time) * 1000
-            self._busy_until += pulse_ms / 1000.0
+            self._busy_until += (pulse_ms + self.config['release_wait_ms']) / 1000.0
             return wait_ms
 
     def notify_about_instant_pulse(self, pulse_ms):
         """Notify PSU about pulse."""
         if self._busy_until:
-            self._busy_until = max(self._busy_until, self.machine.clock.get_time() + (pulse_ms / 1000.0))
+            self._busy_until = max(
+                    self._busy_until,
+                    self.machine.clock.get_time() + (pulse_ms + self.config['release_wait_ms']) / 1000.0)
         else:
-            self._busy_until = self.machine.clock.get_time() + (pulse_ms / 1000.0)
+            self._busy_until = self.machine.clock.get_time() + ((pulse_ms + self.config['release_wait_ms']) / 1000.0)

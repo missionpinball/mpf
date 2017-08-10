@@ -801,6 +801,7 @@ psus:
     __valid_in__: machine
     voltage: single|int|None
     max_amps: single|int|None
+    release_wait_ms: single|ms|10
 player_vars:
     __valid_in__: machine
     initial_value: single|str|
