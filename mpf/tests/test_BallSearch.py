@@ -1,8 +1,8 @@
-from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.MpfGameTestCase import MpfGameTestCase
 from unittest.mock import MagicMock
 
 
-class TestBallSearch(MpfTestCase):
+class TestBallSearch(MpfGameTestCase):
 
     def getConfigFile(self):
         if self._testMethodName == "test_missing_initial" or self._testMethodName == "test_missing_initial2":
@@ -373,20 +373,23 @@ class TestBallSearch(MpfTestCase):
         self.machine.switch_controller.process_switch("s_ball_switch3", 1)
         self.advance_time_and_run(1)
 
-        self.machine.switch_controller.process_switch("s_start", 1)
-        self.machine.switch_controller.process_switch("s_start", 0)
-        self.advance_time_and_run(1)
-        self.assertNotEqual(None, self.machine.game)
-        self.assertNotEqual(0, self.machine.game.balls_in_play)
-        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.enabled)
+        self.start_game()
+        self.advance_time_and_run(10)
+        self.assertBallNumber(1)
+        self.assertBallsOnPlayfield(1)
+        self.assertBallsInPlay(1)
+        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.enabled)
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
 
         self.advance_time_and_run(30)
         self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.enabled)
         self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)
 
         # wait for ball search to fail
-        self.advance_time_and_run(300)
-        self.assertEqual(0, self.machine.ball_devices['playfield'].balls)
+        self.advance_time_and_run(100)
+        self.assertBallNumber(2)
+        self.advance_time_and_run(10)
+        self.assertBallsOnPlayfield(1)
 
     def test_give_up_with_no_more_balls(self):
         self.machine.ball_controller.num_balls_known = 0
