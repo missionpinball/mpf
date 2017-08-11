@@ -374,7 +374,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """Configure a servo.
 
         Args:
-            config: Servo config.
+            number: Number of servo
 
         Returns: Servo object.
         """
