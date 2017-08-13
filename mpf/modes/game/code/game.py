@@ -545,7 +545,8 @@ class Game(AsyncMode):
         del kwargs
         self.machine.events.post('player_added',
                                  player=player,
-                                 num=player.number)
+                                 num=player.number,
+                                 callback=self._player_added)
         '''event: player_added
 
         desc: A new player was just added to this game
@@ -577,11 +578,12 @@ class Game(AsyncMode):
              single player layout to the multiplayer layout.
              '''
 
+        return True
+
+    def _player_added(self, player, num):
         # Now that the player_added event has been posted, enable player
         # variable events and send all initial values
         player.enable_events(True, True)
-
-        return True
 
     @asyncio.coroutine
     def _start_player_turn(self):
