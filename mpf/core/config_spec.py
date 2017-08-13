@@ -327,6 +327,8 @@ diverters:
     activation_coil: single|machine(coils)|None
     activation_time: single|ms|0
     activation_switches: list|machine(switches)|None
+    allow_multiple_concurrent_ejects_to_same_side: single|bool|True
+    cool_down_time: single|ms|0
     deactivate_events: dict|str:ms|None
     deactivation_switches: list|machine(switches)|None
     deactivation_coil: single|machine(coils)|None
