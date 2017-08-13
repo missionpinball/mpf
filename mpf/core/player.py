@@ -106,7 +106,6 @@ class Player(object):
         have *num=1*, Player 4 will have *num=4*, etc.)
 
         '''
-        self._load_initial_player_vars()
 
     def _load_initial_player_vars(self):
         """Load initial player var values from config."""
@@ -126,6 +125,7 @@ class Player(object):
         """
         del kwargs
         self.__setattr__("score", 0)
+        self._load_initial_player_vars()
 
     def __repr__(self):
         """Return string representation."""
