@@ -1111,6 +1111,7 @@ sound_loop_sets:
 sound_player:
     __valid_in__: machine, mode, show
     action: single|enum(play,stop,stop_looping,load,unload)|play
+    track: single|str|use_sound_setting
     volume: single|gain|None
     loops: single|int|None
     priority: single|int|None
@@ -1122,6 +1123,7 @@ sound_player:
     events_when_stopped: list|str|use_sound_setting
     events_when_looping: list|str|use_sound_setting
     mode_end_action: single|enum(stop,stop_looping,use_sound_setting)|use_sound_setting
+    key: single|str|None
 sound_pools:
     __valid_in__: machine, mode                      # todo add to validator
 sound_system:
@@ -1161,6 +1163,7 @@ sounds:
     events_when_stopped: list|str|None
     events_when_looping: list|str|None
     mode_end_action: single|enum(stop,stop_looping)|stop_looping
+    key: single|str|None
     markers: ignore                                 # todo add subconfig
     ducking:
         target: list|str|
