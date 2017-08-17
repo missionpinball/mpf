@@ -863,6 +863,9 @@ class Asset(object):
         """
         # No need to attempt to load the asset if it is already loading
         if self.loading:
+            # Add the supplied callback before returning
+            if callback:
+                self._callbacks.add(callback)
             return False
 
         if priority is not None:
