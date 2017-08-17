@@ -233,6 +233,12 @@ class Diverter(SystemWideDevice):
     def _feeder_eject_count_decrease(self, target, **kwargs):
         del target
         del kwargs
+        if self.config['cool_down_time']:
+            self.delay.add(self.config['cool_down_time'], self._reduce_eject_count)
+        else:
+            self._reduce_eject_count()
+
+    def _reduce_eject_count(self):
         self.diverting_ejects_count -= 1
         if self.diverting_ejects_count <= 0:
             self.diverting_ejects_count = 0
@@ -248,7 +254,7 @@ class Diverter(SystemWideDevice):
                 elif self.eject_state:
                     self.eject_state = False
                     self.debug_log(
-                        "Enabling diverter since eject target is on the "
+                        "Disabling diverter since eject target is on the "
                         "inactive target list")
                     self.disable()
                 # And perform those ejects
@@ -287,13 +293,19 @@ class Diverter(SystemWideDevice):
                            "Ignoring!", target.name)
             return
 
-        if self.diverting_ejects_count > 0 and self.eject_state != desired_state:
-            self.debug_log("Feeder devices tries to eject to a target which "
-                           "would require a state change. Postponing that "
-                           "because we have an eject to the other side")
-            queue.wait()
-            self.eject_attempt_queue.append(queue)
-            return
+        if self.diverting_ejects_count > 0:
+            if self.config['allow_multiple_concurrent_ejects_to_same_side'] and self.eject_state != desired_state:
+                self.debug_log("Feeder devices tries to eject to a target which "
+                               "would require a state change. Postponing that "
+                               "because we have an eject to the other side")
+                queue.wait()
+                self.eject_attempt_queue.append(queue)
+                return
+            elif not self.config['allow_multiple_concurrent_ejects_to_same_side']:
+                self.debug_log("More than one eject and allow_multiple_concurrent_ejects_to_same_side is false")
+                queue.wait()
+                self.eject_attempt_queue.append(queue)
+                return
 
         self.diverting_ejects_count += 1
         self.eject_state = desired_state

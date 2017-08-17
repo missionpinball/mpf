@@ -1,12 +1,13 @@
 """Contains the DeviceManager base class."""
 from collections import OrderedDict
-from typing import Sized, Iterable, Container, Generic, TypeVar, TYPE_CHECKING
+from typing import Sized, Iterable, Container, Generic, TypeVar
 
 from mpf.core.utility_functions import Util
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.mpf_controller import MpfController
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.core.device import Device
 
 

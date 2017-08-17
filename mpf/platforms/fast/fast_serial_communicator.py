@@ -199,13 +199,17 @@ class FastSerialCommunicator(BaseSerialCommunicator):
                 msg = (yield from self.readuntil(b'\r')).decode()
                 if not msg.startswith('NN:'):
                     self.platform.debug_log("Got unexpected message from FAST: {}".format(msg))
+
+            if msg == 'NN:F\r':
+                break
+
             node_id, model, fw, dr, sw, _, _, _, _, _, _ = msg.split(',')
             node_id = node_id[3:]
 
             model = model.strip('\x00')
 
             # Iterate as many boards as possible
-            if not len(model):
+            if not len(model) or model == '!Node Not Found!':
                 break
 
             self.platform.register_io_board(FastIoBoard(int(node_id, 16), model, fw, int(sw, 16), int(dr, 16)))

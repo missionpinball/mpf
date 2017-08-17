@@ -1,11 +1,10 @@
 """Contains the BallLock device class."""
-from typing import TYPE_CHECKING
-
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.events import event_handler
 from mpf.core.mode_device import ModeDevice
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.devices.ball_device.ball_device import BallDevice
 
 

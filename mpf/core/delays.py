@@ -3,11 +3,12 @@
 import uuid
 from functools import partial
 
-from typing import Any, Callable, Dict, Set, TYPE_CHECKING
+from typing import Any, Callable, Dict, Set
 
 from mpf.core.mpf_controller import MpfController
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController
 
 __api__ = ['DelayManager', 'DelayManagerRegistry']

@@ -1,9 +1,10 @@
 """Interface for drivers."""
 import abc
 from collections import namedtuple
-from typing import Any, TYPE_CHECKING
+from typing import Any
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.core.platform import DriverConfig
 
 PulseSettings = namedtuple("PulseSettings", ["power", "duration"])

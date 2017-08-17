@@ -270,6 +270,8 @@ combo_switches:
     events_when_both: list|str|None
     events_when_inactive: list|str|None
     events_when_one: list|str|None
+    events_when_switches_1: list|str|None
+    events_when_switches_2: list|str|None
 config:
     __valid_in__: machine, mode                           # todo add to validator
 config_player_common:
@@ -325,6 +327,8 @@ diverters:
     activation_coil: single|machine(coils)|None
     activation_time: single|ms|0
     activation_switches: list|machine(switches)|None
+    allow_multiple_concurrent_ejects_to_same_side: single|bool|True
+    cool_down_time: single|ms|0
     deactivate_events: dict|str:ms|None
     deactivation_switches: list|machine(switches)|None
     deactivation_coil: single|machine(coils)|None
@@ -799,6 +803,7 @@ psus:
     __valid_in__: machine
     voltage: single|int|None
     max_amps: single|int|None
+    release_wait_ms: single|ms|10
 player_vars:
     __valid_in__: machine
     initial_value: single|str|

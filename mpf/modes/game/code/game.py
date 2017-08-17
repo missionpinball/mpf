@@ -417,10 +417,9 @@ class Game(AsyncMode):
     def end_game(self):
         """End the current game.
 
-        This method posts the queue event *game_ending*, giving other modules
+        This method posts the event *game_will_end* and the queue event *game_ending*, giving other modules
         an opportunity to finish up whatever they need to do before the game
-        ends. Once all the registered handlers for that event have finished,
-        this method calls :meth:`game_end`.
+        ends.
 
         """
         self.machine.events.post('game_will_end')
@@ -546,7 +545,8 @@ class Game(AsyncMode):
         del kwargs
         self.machine.events.post('player_added',
                                  player=player,
-                                 num=player.number)
+                                 num=player.number,
+                                 callback=self._player_added)
         '''event: player_added
 
         desc: A new player was just added to this game
@@ -578,11 +578,12 @@ class Game(AsyncMode):
              single player layout to the multiplayer layout.
              '''
 
+        return True
+
+    def _player_added(self, player, num):
         # Now that the player_added event has been posted, enable player
         # variable events and send all initial values
         player.enable_events(True, True)
-
-        return True
 
     @asyncio.coroutine
     def _start_player_turn(self):

@@ -89,7 +89,7 @@ class Player(object):
         self.__dict__['log'] = logging.getLogger("Player")
         self.__dict__['machine'] = machine
         self.__dict__['vars'] = CaseInsensitiveDict()
-        self._events_enabled = False
+        self.__dict__['_events_enabled'] = False
 
         number = index + 1
 
@@ -151,9 +151,8 @@ class Player(object):
 
     def send_all_variable_events(self):
         """Send a player variable event for the current value of all player variables."""
-        for name, value in self:
+        for name, value in self.vars.items():
             if isinstance(value, (int, str, float)):
-                #print(name, value)
                 if isinstance(value, str):
                     self._send_variable_event(name, value, value, False, self.vars['number'])
                 else:
@@ -241,6 +240,11 @@ class Player(object):
 
     def __setattr__(self, name, value):
         """Set value and post event to inform about the change."""
+        # prevent events for internal variables
+        if name in self.__dict__:
+            self.__dict__[name] = value
+            return
+
         new_entry = False
         prev_value = 0
         if name in self.vars:

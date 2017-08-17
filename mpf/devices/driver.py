@@ -85,7 +85,11 @@ class Driver(SystemWideDevice):
             max_hold_power=self.config['max_hold_power'])
         platform_settings = dict(self.config['platform_settings']) if self.config['platform_settings'] else dict()
 
-        self.hw_driver = self.platform.configure_driver(config, self.config['number'], platform_settings)
+        try:
+            self.hw_driver = self.platform.configure_driver(config, self.config['number'], platform_settings)
+        except AssertionError as e:
+            raise AssertionError("Failed to configure driver {} in platform. See error above".format(self.name)) from e
+
 
     def get_and_verify_pulse_power(self, pulse_power: Optional[float]) -> float:
         """Return the pulse power to use.

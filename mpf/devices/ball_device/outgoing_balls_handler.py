@@ -1,7 +1,7 @@
 """Handles outgoing balls."""
 import asyncio
 
-from typing import Generator, TYPE_CHECKING, Optional
+from typing import Generator, Optional
 from typing import List
 
 from mpf.core.utility_functions import Util
@@ -9,7 +9,8 @@ from mpf.devices.ball_device.ball_count_handler import EjectTracker
 from mpf.devices.ball_device.ball_device_state_handler import BallDeviceStateHandler
 from mpf.devices.ball_device.incoming_balls_handler import IncomingBall
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.devices.ball_device.ball_device import BallDevice
 
 

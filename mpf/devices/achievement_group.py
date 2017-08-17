@@ -1,6 +1,5 @@
 """An achievement group which manages and groups achievements."""
 from random import choice
-from typing import TYPE_CHECKING
 
 from mpf.core.events import event_handler
 from mpf.core.machine import MachineController
@@ -9,7 +8,8 @@ from mpf.core.mode_device import ModeDevice
 from mpf.core.player import Player
 from mpf.core.device_monitor import DeviceMonitor
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.devices.achievement import Achievement
     from mpf.assets.show import RunningShow
 

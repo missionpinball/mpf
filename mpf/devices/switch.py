@@ -1,15 +1,14 @@
 """Contains the Switch parent class."""
 from functools import partial
 
-from typing import TYPE_CHECKING
-
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.machine import MachineController
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.utility_functions import Util
 from mpf.core.platform import SwitchConfig
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
     from mpf.core.platform import SwitchPlatform
 
@@ -101,8 +100,11 @@ class Switch(SystemWideDevice):
 
         config = SwitchConfig(invert=self.invert,
                               debounce=self.config['debounce'])
-        self.hw_switch = self.platform.configure_switch(
-            self.config['number'], config, self.config['platform_settings'])
+        try:
+            self.hw_switch = self.platform.configure_switch(
+                self.config['number'], config, self.config['platform_settings'])
+        except AssertionError as e:
+            raise AssertionError("Failed to configure switch {} in platform. See error above".format(self.name)) from e
 
         if self.machine.config['mpf']['auto_create_switch_events']:
             self._create_activation_event(

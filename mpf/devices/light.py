@@ -142,7 +142,12 @@ class Light(SystemWideDevice):
         elif not self.config['channels']:
             # get channels from number + platform
             platform = self.machine.get_platform_sections('lights', self.config['platform'])
-            channel_list = platform.parse_light_number_to_channels(self.config['number'], self.config['subtype'])
+            try:
+                channel_list = platform.parse_light_number_to_channels(self.config['number'], self.config['subtype'])
+            except AssertionError as e:
+                raise AssertionError("Failed to parse light number {} in platform. See error above".
+                                     format(self.name)) from e
+
             # copy platform and platform_settings to all channels
             for channel, settings in enumerate(channel_list):
                 channel_list[channel]['subtype'] = self.config['subtype']
@@ -172,7 +177,12 @@ class Light(SystemWideDevice):
         else:
             platform = self.machine.get_platform_sections('lights', channel['platform'])
             self.platforms.add(platform)
-            return platform.configure_light(channel['number'], channel['subtype'], channel['platform_settings'])
+            try:
+                return platform.configure_light(channel['number'], channel['subtype'], channel['platform_settings'])
+            except AssertionError as e:
+                raise AssertionError("Failed to configure light {} in platform. See error above".
+                                     format(self.name)) from e
+
 
     def _initialize(self):
         self._load_hw_drivers()

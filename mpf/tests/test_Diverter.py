@@ -214,8 +214,14 @@ class TestDiverter(MpfTestCase):
         self.advance_time_and_run(3)
         self.assertFalse(diverter.enabled)
         self.assertFalse(diverter.active)
+        # wait for cooldown
+        self.assertFalse(self.machine.coils.eject_coil3.pulse.called)
+        self.assertEqual(1, diverter.diverting_ejects_count)
+        self.advance_time_and_run(3)
         self.assertTrue(self.machine.coils.eject_coil3.pulse.called)
-        self.assertEqual(0, diverter.diverting_ejects_count)
+        self.assertEqual(1, diverter.diverting_ejects_count)
+        self.assertFalse(diverter.enabled)
+        self.assertFalse(diverter.active)
 
         self.machine.coils.eject_coil1.pulse = MagicMock(wraps=pulse1)
         self.machine.coils.eject_coil3.pulse = MagicMock(wraps=pulse3)
@@ -246,6 +252,11 @@ class TestDiverter(MpfTestCase):
         assert not self.machine.coils.eject_coil1.pulse.called
 
         self.hit_and_release_switch("s_playfield")
+        self.advance_time_and_run(3)
+        self.assertFalse(diverter.enabled)
+        self.assertFalse(diverter.active)
+
+        # wait for cooldown
         self.advance_time_and_run(3)
 
         self.assertTrue(diverter.enabled)

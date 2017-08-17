@@ -1,7 +1,7 @@
 """BCP module."""
 import asyncio
 from functools import partial
-from typing import TYPE_CHECKING, List
+from typing import List
 
 from mpf.core.events import QueuedEvent
 from mpf.core.mpf_controller import MpfController
@@ -12,7 +12,8 @@ from mpf.core.utility_functions import Util
 from mpf.core.bcp.bcp_interface import BcpInterface
 from mpf.core.bcp.bcp_transport import BcpTransportManager
 
-if TYPE_CHECKING:   # pragma: no cover
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController
 
 
