@@ -676,6 +676,30 @@ class AssetPool(object):
         elif self.config['type'] == 'random_force_all':
             return self._get_random_force_all_asset()
 
+    @property
+    def loaded(self):
+        for asset in self.assets:
+            if not asset[0].loaded:
+                return False
+
+        return True
+
+    @property
+    def loading(self):
+        for asset in self.assets:
+            if asset[0].loading:
+                return True
+
+        return False
+
+    @property
+    def unloading(self):
+        for asset in self.assets:
+            if asset[0].unloading:
+                return True
+
+        return False
+
     def _configure_return_asset(self):
         self._total_weights = sum([x[1] for x in self.assets])
 
@@ -686,7 +710,8 @@ class AssetPool(object):
             self._asset_sequence.rotate(1)
 
     def load(self, callback=None, priority=None) -> bool:
-        """Load pool."""
+        """Load all assets in the pool."""
+        # No need to attempt to load the asset if it is already loading
         if priority is not None:
             self.priority = priority
 
@@ -694,7 +719,7 @@ class AssetPool(object):
             self._callbacks.add(callback)
 
         for asset in self.assets:
-            if not asset[0].loaded:
+            if not asset[0].loaded and not asset[0].loading:
                 self.loading_members.add(asset)
                 asset[0].load(callback=self._group_member_loaded)
 
@@ -703,6 +728,12 @@ class AssetPool(object):
             return True
 
         return False
+
+    def unload(self):
+        """Unloads all assets in the pool."""
+        for asset in self.assets:
+            if asset[0].loaded:
+                asset[0].unload()
 
     def _group_member_loaded(self, asset):
         self.loading_members.discard(asset)
@@ -830,6 +861,10 @@ class Asset(object):
 
         Returns True if the asset is already loaded.
         """
+        # No need to attempt to load the asset if it is already loading
+        if self.loading:
+            return False
+
         if priority is not None:
             self.priority = priority
 
