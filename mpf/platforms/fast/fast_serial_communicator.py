@@ -193,7 +193,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         firmware_ok = True
 
         for board_id in range(128):
-            self.writer.write('NN:{0}\r'.format(board_id).encode())
+            self.writer.write('NN:{:02X}\r'.format(board_id).encode())
             msg = ''
             while not msg.startswith('NN:'):
                 msg = (yield from self.readuntil(b'\r')).decode()
