@@ -289,7 +289,7 @@ class YamlInterface(FileInterface):
     @staticmethod
     def process(data_string: Iterable[str]) -> dict:
         """Parse yaml from a string."""
-        return Util.keys_to_lower(yaml.load(data_string, Loader=MpfLoader))
+        return yaml.load(data_string, Loader=MpfLoader)
 
     def save(self, filename: str, data: dict) -> None:   # pragma: no cover
         """Save config to yaml file."""
