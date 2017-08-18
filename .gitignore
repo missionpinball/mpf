@@ -66,6 +66,9 @@ data/
 logs/
 audits.yaml
 
+# editor temp
+.*.swp
+
 # MPF build files
 build_scripts/wheels
 
