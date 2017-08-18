@@ -84,8 +84,7 @@ class Show(Asset):
                 # special case with an empty last step (but longer than 1 step)
                 if 'time' in step and len(step) == 1 and step_num != 0:
                     return False
-                else:
-                    return 1
+                return 1
             elif 'time' in data[step_num + 1]:
                 next_step_time = data[step_num + 1]['time']
                 if str(next_step_time)[0] == "+":
@@ -111,7 +110,6 @@ class Show(Asset):
             data = self.load_show_from_disk()
 
         # Pylint complains about the change from dict to list. This is intended and fine.
-        # pylint: disable-msg=redefined-variable-type
         if isinstance(data, dict):
             data = list(data)
         elif not isinstance(data, list):    # pragma: no cover
@@ -238,8 +236,8 @@ class Show(Asset):
             for i in data:
                 new_list.append(self.get_show_steps(i))
             return new_list
-        else:
-            return data
+
+        return data
 
     def _check_token(self, path, data, token_type):
         if not isinstance(data, str):
