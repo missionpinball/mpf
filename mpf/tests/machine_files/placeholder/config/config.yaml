@@ -1,0 +1,17 @@
+#config_version=5
+
+game:
+    balls_per_game: 3
+
+player_vars:
+  test_int:
+    initial_value: 4
+    value_type: int 
+  test_str:
+    initial_value: "Test"
+    value_type: str
+
+event_player:
+   test_conditional{current_player.test_str == "Test"}: test_yes
+   test_conditional{current_player.test_str != "Test"}: test_no
+                
