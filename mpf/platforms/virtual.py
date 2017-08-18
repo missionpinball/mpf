@@ -300,8 +300,8 @@ class VirtualLight(LightPlatformInterface):
         """Return brightness for a max_fade long fade."""
         if self.color_and_fade_callback:
             return self.color_and_fade_callback(max_fade)[0]
-        else:
-            return 0
+
+        return 0
 
     def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
         """Store CB function."""
