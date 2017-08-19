@@ -75,4 +75,5 @@ class ServiceController(MpfController):
 
         # sort by board + driver number
         coil_map.sort(key=lambda x: x[0] + str(x[1].hw_driver.number))
+        coil_map.sort(key=lambda x: len(x[0] + str(x[1].hw_driver.number)))
         return coil_map
