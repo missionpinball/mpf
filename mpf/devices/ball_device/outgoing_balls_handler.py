@@ -205,6 +205,10 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         while True:
             self._current_target = eject_request.target
 
+            # prevent physical races with eject confirm
+            if self._current_target.is_playfield():
+                yield from self.ball_device.incoming_balls_handler.wait_for_no_incoming_balls()
+
             if not self.ball_device.ball_count_handler.has_ball:
                 # wait until we have a ball
                 self._cancel_future = asyncio.Future(loop=self.machine.clock.loop)

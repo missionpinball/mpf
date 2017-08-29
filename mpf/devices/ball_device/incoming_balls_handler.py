@@ -116,10 +116,16 @@ class IncomingBallsHandler(BallDeviceStateHandler):
         # list of incoming balls sorted by their expiring time
         self._incoming_balls = []
         self._has_incoming_balls = asyncio.Event(loop=self.machine.clock.loop)
+        self._has_no_incoming_balls = asyncio.Event(loop=self.machine.clock.loop)
+        self._has_no_incoming_balls.set()
 
     def get_num_incoming_balls(self):
         """Return number of incoming ball."""
         return len(self._incoming_balls)
+
+    def wait_for_no_incoming_balls(self):
+        """Wait until there are no incoming balls."""
+        return self._has_no_incoming_balls.wait()
 
     @asyncio.coroutine
     def _run(self):
@@ -127,6 +133,7 @@ class IncomingBallsHandler(BallDeviceStateHandler):
         while True:
             if not self._incoming_balls:
                 self._has_incoming_balls.clear()
+                self._has_no_incoming_balls.set()
 
             # sleep until we have incoming balls
             yield from self._has_incoming_balls.wait()
@@ -151,6 +158,7 @@ class IncomingBallsHandler(BallDeviceStateHandler):
         self.debug_log("Adding incoming ball from %s", incoming_ball.source)
         self._incoming_balls.append(incoming_ball)
         self._has_incoming_balls.set()
+        self._has_no_incoming_balls.clear()
 
         if self.ball_device.config['mechanical_eject']:
             incoming_ball.wait_for_can_skip().add_done_callback(
