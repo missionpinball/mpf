@@ -1067,9 +1067,56 @@ smart_virtual:
     simulate_manual_plunger_timeout: single|ms|10s
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
+sound_loop_player:
+    __valid_in__: machine, mode, show
+    common:
+        action: single|enum(play,stop,stop_looping,play_layer,stop_layer,stop_looping_layer)|play
+        track: single|str|
+    actions:
+        play:
+            sound_loop_set: single|str|
+            volume: single|gain|None
+            fade_in: single|secs|None
+            fade_out: single|secs|None
+            queue: single|bool|True
+            synchronize: single|bool|False
+            events_when_played: list|str|use_sound_loop_setting
+            events_when_stopped: list|str|use_sound_loop_setting
+            events_when_looping: list|str|use_sound_loop_setting
+            mode_end_action: single|enum(stop,stop_looping,use_sound_loop_setting)|use_sound_loop_setting
+        stop:
+            fade_out: single|secs|None
+        stop_looping:
+            none: ignore
+        play_layer:
+            layer: single|int|
+            volume: single|gain|None
+            fade_in: single|secs|0
+            queue: single|bool|True
+        stop_layer:
+            layer: single|int|
+            fade_out: single|secs|0
+        stop_looping_layer:
+            layer: single|int|
+sound_loop_sets:
+    __valid_in__: machine, mode
+    sound: single|str|
+    volume: single|gain|None
+    layers:
+        sound: single|str|
+        volume: single|gain|None
+        initial_state: single|enum(play,stop)|play
+    events_when_played: list|str|None
+    events_when_stopped: list|str|None
+    events_when_looping: list|str|None
+    fade_in: single|secs|0
+    fade_out: single|secs|0
+    mode_end_action: single|enum(stop,stop_looping)|stop
+        
 sound_player:
     __valid_in__: machine, mode, show
     action: single|enum(play,stop,stop_looping,load,unload)|play
+    track: single|str|use_sound_setting
     volume: single|gain|None
     loops: single|int|None
     priority: single|int|None
@@ -1081,6 +1128,7 @@ sound_player:
     events_when_stopped: list|str|use_sound_setting
     events_when_looping: list|str|use_sound_setting
     mode_end_action: single|enum(stop,stop_looping,use_sound_setting)|use_sound_setting
+    key: single|str|None
 sound_pools:
     __valid_in__: machine, mode                      # todo add to validator
 sound_system:
@@ -1091,13 +1139,17 @@ sound_system:
     channels: single|int|1
     master_volume: single|gain|0.5
     tracks:
-        type: single|enum(standard)|standard
-        volume: single|gain|0.5
-        simultaneous_sounds: single|int|8
-        events_when_played: list|str|None
-        events_when_stopped: list|str|None
-        events_when_paused: list|str|None
-        events_when_resumed: list|str|None
+        common:
+            type: single|enum(standard,sound_loop)|standard
+            volume: single|gain|0.5
+            events_when_played: list|str|None
+            events_when_stopped: list|str|None
+            events_when_paused: list|str|None
+            events_when_resumed: list|str|None
+        standard:
+            simultaneous_sounds: single|int|8
+        sound_loop:
+            max_layers: single|int|8
 sounds:
     __valid_in__: machine, mode
     file: single|str|None
@@ -1116,6 +1168,7 @@ sounds:
     events_when_stopped: list|str|None
     events_when_looping: list|str|None
     mode_end_action: single|enum(stop,stop_looping)|stop_looping
+    key: single|str|None
     markers: ignore                                 # todo add subconfig
     ducking:
         target: list|str|
