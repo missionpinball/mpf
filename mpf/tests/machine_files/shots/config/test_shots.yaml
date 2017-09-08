@@ -141,6 +141,10 @@ shots:
       s_delay: 2s
     time: 2s
     cancel_switch: switch_4
+  shot_sequence2:
+    switch_sequence: switch_1, switch_2
+    time: 3s
+    profile: rainbow
   default_show_light:
     switch: switch_5
     show_tokens:
