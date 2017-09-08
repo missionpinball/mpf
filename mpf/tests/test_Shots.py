@@ -163,6 +163,18 @@ class TestShots(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertEqual(1, self._events["shot_sequence_hit"])
 
+    def test_shot_sequence_two_switches(self):
+        self.mock_event("shot_sequence2_hit")
+        self.start_game()
+
+        self.hit_and_release_switch("switch_1")
+        self.advance_time_and_run(.1)
+        self.assertEventNotCalled("shot_sequence2_hit")
+
+        self.hit_and_release_switch("switch_2")
+        self.advance_time_and_run(.1)
+        self.assertEventCalled("shot_sequence2_hit")
+
     def test_shot_sequence_delay(self):
         self.mock_event("shot_sequence_hit")
         self.start_game()
