@@ -376,3 +376,50 @@ class TestHighScoreMode(MpfBcpTestCase):
 
         self.assertEqual(new_score_data,
                          self.machine.modes.high_score.high_scores)
+
+    def _get_mock_data(self):
+        if self._testMethodName == "testInvalidData":
+            new_score_data = OrderedDict()
+            new_score_data['score'] = [(13, '123'),
+                                       (123.1, 4),
+                                       (1)]
+            new_score_data['loops'] = ""
+
+            return {"high_scores": new_score_data}
+        elif self._testMethodName == "testLoadData":
+            new_score_data = OrderedDict()
+            new_score_data['score'] = [('BRI', 5),
+                                       ('GHK', 4),
+                                       ('JK', 3),
+                                       ('QC', 2),
+                                       ('MPF', 1)]
+            new_score_data['loops'] = []
+            return {"high_scores": new_score_data}
+
+        return super()._get_mock_data()
+
+    def testLoadData(self):
+        new_score_data = OrderedDict()
+        new_score_data['score'] = [('BRI', 5),
+                                   ('GHK', 4),
+                                   ('JK', 3),
+                                   ('QC', 2),
+                                   ('MPF', 1)]
+        new_score_data['loops'] = []
+        self.assertEqual(new_score_data, self.machine.modes.high_score.high_scores)
+
+    def testInvalidData(self):
+        self.start_game(4)
+        self.machine.game.game_ending()
+        self.advance_time_and_run(10)
+
+        # this should reload the defaults
+        new_score_data = OrderedDict()
+        new_score_data['score'] = [('BRI', 4242),
+                                   ('GHK', 2323),
+                                   ('JK', 1337),
+                                   ('QC', 42),
+                                   ('MPF', 23)]
+        new_score_data['loops'] = [('JK', 42)]
+
+        self.assertEqual(new_score_data, self.machine.modes.high_score.high_scores)
