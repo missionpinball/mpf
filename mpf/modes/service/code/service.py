@@ -84,6 +84,7 @@ down_events: list|str|sw_service_down_active
         return [
             ServiceMenuEntry("switch", self._switch_test_menu),
             ServiceMenuEntry("coil", self._coil_test_menu),
+            ServiceMenuEntry("light", self._light_test_menu),
             ServiceMenuEntry("settings", self._settings_menu)
         ]
 
@@ -171,6 +172,42 @@ down_events: list|str|sw_service_down_active
             elif key == 'ENTER':
                 # pulse coil
                 items[position].coil.pulse()
+
+        self.machine.events.post("service_coil_test_stop")
+
+    @asyncio.coroutine
+    def _light_test_menu(self):
+        position = 0
+        items = self.machine.service.get_light_map()
+
+        # do not crash if no coils are configured
+        if not items:   # pragma: no cover
+            return
+
+        #self._update_coil_slide(items, position)
+
+        while True:
+            key = yield from self._get_key()
+            if key == 'ESC':
+                break
+            elif key == 'UP':
+                items[position].light.off()
+                position += 1
+                if position >= len(items):
+                    position = 0
+                #self._update_coil_slide(items, position)
+                items[position].light.on()
+            elif key == 'DOWN':
+                items[position].light.off()
+                position -= 1
+                if position < 0:
+                    position = len(items) - 1
+                #self._update_coil_slide(items, position)
+                items[position].light.on()
+            elif key == 'ENTER':
+                # change color
+                pass
+                #items[position].coil.pulse()
 
         self.machine.events.post("service_coil_test_stop")
 

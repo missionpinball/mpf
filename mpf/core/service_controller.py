@@ -12,6 +12,7 @@ import asyncio
 from mpf.core.mpf_controller import MpfController
 
 CoilMap = namedtuple("CoilMap", ["board", "coil"])
+LightMap = namedtuple("LightMap", ["board", "light"])
 
 
 class ServiceController(MpfController):
@@ -76,3 +77,15 @@ class ServiceController(MpfController):
         # sort by board + driver number
         coil_map.sort(key=lambda x: x[0] + str(x[1].hw_driver.number))
         return coil_map
+
+    def get_light_map(self) -> List[LightMap]:
+        """Return a map of all lights in the machine."""
+        if not self.is_in_service():
+            raise AssertionError("Not in service mode!")
+        light_map = []
+        for light in self.machine.lights.values():
+            light_map.append(LightMap("", light))
+
+        # sort by board + driver number
+        light_map.sort(key=lambda x: x[0] + str(x[1].config['number']))
+        return light_map
