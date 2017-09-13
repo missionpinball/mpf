@@ -265,6 +265,23 @@ class SpikePlatformTest(MpfTestCase):
         self.advance_time_and_run(.1)
         self.assertFalse(self.serialMock.expected_commands)
 
+        # pop bumbers with inverted switch
+        self.serialMock.expected_commands = {
+            self._checksummed_cmd(b'\x88\x19\x41\x0a\x7f\x0c\x00\x00\x00\x00\x00\x00\x00'
+                                  b'\x00\x00\x00\x00\x00\x00\x00\x05\x00\x00\x00\x00\x00'): b''
+        }
+        self.machine.autofires.ac_pops2.enable()
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.serialMock.expected_commands)
+
+        self.serialMock.expected_commands = {
+            self._checksummed_cmd(b'\x88\x19\x41\x0a\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+                                  b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'): b''
+        }
+        self.machine.autofires.ac_pops2.disable()
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.serialMock.expected_commands)
+
         # single-wound flippers
         self.serialMock.expected_commands = {
             self._checksummed_cmd(b'\x88\x19\x41\x01\xff\x0c\x00\x9f\x00\x00\x00\x00\x00'
