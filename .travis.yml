@@ -1,6 +1,5 @@
 dist: trusty
 sudo: required
-python: "3.5"
 
 matrix:
   fast_finish: true
@@ -9,18 +8,22 @@ matrix:
      env: LINUX=ubuntu:14.04
      sudo: required
      language: python
+     python: "3.4"
    - os: linux
      env: LINUX=ubuntu:16.04
      sudo: required
      language: python
+     python: "3.5"
    - os: linux
      env: LINUX=ubuntu:17.04
      sudo: required
      language: python
+     python: "3.5"
    - os: linux
      env: LINUX=debian:jessie
      sudo: required
      language: python
+     python: "3.5"
    - os: osx
      language: generic
      osx_image: xcode8.2  # OS 10.12
