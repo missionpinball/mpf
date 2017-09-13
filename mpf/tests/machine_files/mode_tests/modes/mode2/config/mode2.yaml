@@ -5,3 +5,6 @@ mode:
   stop_priority: 2
   restart_on_next_ball: true
   game_mode: False
+
+mode_settings:
+  this: true

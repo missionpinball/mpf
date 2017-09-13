@@ -120,6 +120,7 @@ class ModeController(MpfController):
 
     def _load_mode_config(self, mode_string):
         config = dict()
+        found_config = False
         # Is there an MPF default config for this mode? If so, load it first
         try:
             mpf_mode_config = os.path.join(
@@ -132,6 +133,7 @@ class ModeController(MpfController):
             if os.path.isfile(mpf_mode_config):
                 config = ConfigProcessor.load_config_file(mpf_mode_config,
                                                           config_type='mode')
+                found_config = True
 
             self.debug_log("Loading config from %s", mpf_mode_config)
 
@@ -152,6 +154,7 @@ class ModeController(MpfController):
                 config = Util.dict_merge(config,
                                          ConfigProcessor.load_config_file(
                                              mode_config_file, 'mode'))
+                found_config = True
 
             self.debug_log("Loading config from %s", mode_config_file)
 
@@ -161,6 +164,9 @@ class ModeController(MpfController):
         # validate config
         if 'mode' not in config:
             config['mode'] = dict()
+
+        if not found_config:
+            raise AssertionError("Did not find any config for mode {}.".format(mode_string))
 
         return config
 
