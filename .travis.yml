@@ -1,5 +1,6 @@
 dist: trusty
 sudo: required
+python: "3.5"
 
 matrix:
   fast_finish: true
