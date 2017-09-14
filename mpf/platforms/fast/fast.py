@@ -96,9 +96,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         yield from self._connect_to_hardware()
 
-        if 'config_number_format' not in self.machine.config['fast']:
-            self.machine.config['fast']['config_number_format'] = 'int'
-
         self.machine.clock.schedule_interval(self._update_watchdog, self.config['watchdog'] / 2000)
 
     def stop(self):
@@ -284,11 +281,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         self.hw_switch_data = hw_states
 
     def convert_number_from_config(self, number):
-        """Convert a number from config format to int."""
-        if self.config['config_number_format'] == 'int':
-            return Util.int_to_hex_string(number)
-        else:
-            return Util.normalize_hex_string(number)
+        """Convert a number from config format to hex."""
+        return Util.int_to_hex_string(number)
 
     def _parse_driver_number(self, number):
         try:
