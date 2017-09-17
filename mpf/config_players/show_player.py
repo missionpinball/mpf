@@ -32,8 +32,7 @@ class ShowPlayer(DeviceConfigPlayer):
         callback = None
         if show_settings['block_queue']:
             if not queue:
-                msg = "block_queue can only be used with a queue event."
-                raise AssertionError(msg)
+                raise AssertionError("block_queue can only be used with a queue event.")
             queue.wait()
             callback = queue.clear
 

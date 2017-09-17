@@ -46,8 +46,8 @@ class ScorePlayer(ConfigPlayer):
         if block_item not in self.blocks or not self.blocks[block_item]:
             return False
         priority_sorted = sorted(self.blocks[block_item], reverse=True)
-        firstChar = priority_sorted[0]
-        return firstChar.priority > priority and firstChar.context != context
+        first_element = priority_sorted[0]
+        return first_element.priority > priority and first_element.context != context
 
     def _score(self, var: str, entry: dict,
                placeholder_parameters: dict) -> None:
@@ -96,8 +96,8 @@ class ScorePlayer(ConfigPlayer):
         """Validate one entry of this player."""
         config = {}
         if not isinstance(settings, dict):
-            msg = "Settings of score_player {} should be a dict. But are: {}"
-            raise AssertionError(msg.format(name, settings))
+            raise AssertionError("Settings of score_player {} should "
+                                 "be a dict. But are: {}".format(name, settings))
         for var, s in settings.items():
             config[var] = self._parse_config(s, name)
         return config
