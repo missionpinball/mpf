@@ -51,9 +51,8 @@ class ScorePlayer(ConfigPlayer):
 
     def _score(self, var: str, entry: dict,
                placeholder_parameters: dict) -> None:
-        mac = self.machine
         if entry['string']:
-            mac.game.player[var] = entry['string']
+            self.machine.game.player[var] = entry['string']
             return
 
         # evaluate placeholder
@@ -65,24 +64,24 @@ class ScorePlayer(ConfigPlayer):
         if entry['action'] == "add":
             if entry['player']:
                 # specific player
-                mac.game.player_list[entry['player'] - 1][var] += value
+                self.machine.game.player_list[entry['player'] - 1][var] += value
             else:
                 # default to current player
-                mac.game.player[var] += value
+                self.machine.game.player[var] += value
         elif entry['action'] == "set":
             if entry['player']:
                 # specific player
-                mac.game.player_list[entry['player'] - 1][var] = value
+                self.machine.game.player_list[entry['player'] - 1][var] = value
             else:
                 # default to current player
-                mac.game.player[var] = value
+                self.machine.game.player[var] = value
         elif entry['action'] == "add_machine":
-            old_value = mac.get_machine_var(var)
+            old_value = self.machine.get_machine_var(var)
             if old_value is None:
                 old_value = 0
-            mac.set_machine_var(var, old_value + value)
+            self.machine.set_machine_var(var, old_value + value)
         elif entry['action'] == "set_machine":
-            mac.set_machine_var(var, value)
+            self.machine.set_machine_var(var, value)
         else:
             raise AssertionError("Invalid value: {}".format(entry))
 

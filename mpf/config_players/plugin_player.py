@@ -53,16 +53,15 @@ class PluginPlayer(DeviceConfigPlayer):
 
         self.bcp_client = self._get_bcp_client(config)
 
-        m = self.machine
         for event in config:
-            event_name, _ = m.events.get_event_and_condition_from_string(event)
-            m.bcp.interface.add_registered_trigger_event_for_client(
+            event_name, _ = self.machine.events.get_event_and_condition_from_string(event)
+            self.machine.bcp.interface.add_registered_trigger_event_for_client(
                 self.bcp_client, event_name)
             event_list.append(event_name)
 
-        m.bcp.interface.add_registered_trigger_event_for_client(
+        self.machine.bcp.interface.add_registered_trigger_event_for_client(
             self.bcp_client, '{}_play'.format(self.show_section))
-        m.bcp.interface.add_registered_trigger_event_for_client(
+        self.machine.bcp.interface.add_registered_trigger_event_for_client(
             self.bcp_client, '{}_clear'.format(self.show_section))
 
         return event_list
