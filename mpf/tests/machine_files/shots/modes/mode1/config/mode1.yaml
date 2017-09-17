@@ -15,6 +15,9 @@ shots:
     disable_events: custom_disable_17
     reset_events: custom_reset_17
     hit_events: custom_hit_17
+  shot_sequence3:
+    switch_sequence: switch_1, switch_2
+    time: 3s
   shot_21:
     profile: mode1_shot_21
   shot_22:

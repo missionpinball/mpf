@@ -1,4 +1,6 @@
 """Test the bonus mode."""
+from unittest.mock import MagicMock
+
 from mpf.tests.MpfTestCase import MpfTestCase
 from mpf._version import version, extended_version
 
@@ -33,11 +35,17 @@ class TestMachineVariables(MpfTestCase):
         self.assertFalse(self.machine.is_machine_var("player2_score"))
         self.assertTrue(self.machine.is_machine_var("player3_score"))
 
+        self.machine.machine_var_data_manager.save_all = MagicMock()
         self.machine.remove_machine_var_search(startswith="player", endswith="_score")
         self.assertFalse(self.machine.is_machine_var("player2_score"))
         self.assertFalse(self.machine.is_machine_var("player3_score"))
 
         self.assertEqual(123, self.machine.get_machine_var("another_score"))
+
+        self.advance_time_and_run(10)
+
+        self.machine.machine_var_data_manager.save_all.assert_called_with()
+        self.assertEqual({'another_score': {'value': 123}}, self.machine.machine_var_data_manager.data)
 
 
 class TestMalformedMachineVariables(MpfTestCase):

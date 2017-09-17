@@ -95,6 +95,7 @@ class TestModes(MpfTestCase):
         self.assertEqual(self.machine.modes.mode1.priority, 200)
         self.assertEqual(self.machine.modes.mode2.priority, 100)
         self.assertEqual(self.machine.modes.attract.priority, 10)
+        self.assertEqual(self.machine.modes.mode2.config['mode_settings']['this'], True)
 
         # test the stop priorities
         found_it = False

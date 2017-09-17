@@ -163,7 +163,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
              int(pulse_settings.power * 255), pulse_value & 0xFF, (pulse_value & 0xFF00) >> 8,
              int(hold_settings.power * 255) if hold_settings else 0, 0x00, 0x00, 0x00, 0x00,
              0, 0, 0, 0, 0, 0, 0, 0,
-             0x40 + enable_switch_index, 0x40 + disable_switch_index if disable_switch_index is not None else 0, 0,
+             0x40 ^ enable_switch_index, 0x40 ^ disable_switch_index if disable_switch_index is not None else 0, 0,
              param1, param2, param3]))
 
     @staticmethod
@@ -181,7 +181,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
         0x00 0x40 0x00 0x00 0x00 0x00 0x00 Len: 25
         """
         self._check_coil_switch_combination(enable_switch, coil)
-        self._write_rule(coil.hw_driver.node, enable_switch.hw_switch.index, None, coil.hw_driver.index,
+        self._write_rule(coil.hw_driver.node, enable_switch.hw_switch.index ^ (enable_switch.invert * 0x40),
+                         None, coil.hw_driver.index,
                          coil.pulse_settings, None, 0, 0, 0)
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
@@ -197,7 +198,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
         0x00 0x4a 0x40 0x00 0x00 0x06 0x05  Len: 25
         """
         self._check_coil_switch_combination(enable_switch, coil)
-        self._write_rule(coil.hw_driver.node, enable_switch.hw_switch.index, None, coil.hw_driver.index,
+        self._write_rule(coil.hw_driver.node, enable_switch.hw_switch.index ^ (enable_switch.invert * 0x40),
+                         None, coil.hw_driver.index,
                          coil.pulse_settings, coil.hold_settings, 0, 6, 5)
 
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchSettings,
@@ -210,7 +212,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
         """
         self._check_coil_switch_combination(enable_switch, coil)
         self._check_coil_switch_combination(disable_switch, coil)
-        self._write_rule(coil.hw_driver.node, enable_switch.hw_switch.index, disable_switch.hw_switch.index,
+        self._write_rule(coil.hw_driver.node, enable_switch.hw_switch.index ^ (enable_switch.invert * 0x40),
+                         disable_switch.hw_switch.index ^ (disable_switch.invert * 0x40),
                          coil.hw_driver.index, coil.pulse_settings, coil.hold_settings, 2, 6, 0)
 
     def set_pulse_on_hit_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
@@ -224,7 +227,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
 
         """
         self._check_coil_switch_combination(enable_switch, coil)
-        self._write_rule(coil.hw_driver.node, enable_switch.hw_switch.index, None, coil.hw_driver.index,
+        self._write_rule(coil.hw_driver.node, enable_switch.hw_switch.index ^ (enable_switch.invert * 0x40),
+                         None, coil.hw_driver.index,
                          coil.pulse_settings, None, 0, 1, 0)
 
     def clear_hw_rule(self, switch, coil):
@@ -566,7 +570,11 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
     def send_cmd_sync(self, node, cmd, data):
         """Send cmd which does not require a response."""
         cmd_str = self._create_cmd_str(node, cmd, data)
-        wait_ms = self.config['wait_times'][cmd] if cmd in self.config['wait_times'] else 0
+        if (cmd & 0xF0) == 0x80:
+            # special case for LED updates
+            wait_ms = self.config['wait_times'][0x80] if 0x80 in self.config['wait_times'] else 0
+        else:
+            wait_ms = self.config['wait_times'][cmd] if cmd in self.config['wait_times'] else 0
         with (yield from self._bus_busy):
             yield from self._send_raw(cmd_str)
             if wait_ms:

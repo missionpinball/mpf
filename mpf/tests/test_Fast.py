@@ -246,7 +246,7 @@ class TestFast(MpfTestCase):
 
         # only 8 + 4 + 16 + 16 = 44 = 0x2C driver exist
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_driver(self.machine.coils.c_test.hw_driver.config, '2C',
+            self.machine.default_platform.configure_driver(self.machine.coils.c_test.hw_driver.config, '44',
                                                            {"connection": "network", "recycle_ms": 10})
 
     def _test_pulse(self):
@@ -436,9 +436,9 @@ class TestFast(MpfTestCase):
         with self.assertRaises(AssertionError):
             self.machine.default_platform.configure_switch('4-0', SwitchConfig(debounce='auto', invert=0), {})
 
-        # last switch is 0x47
+        # last switch is 0x47. 0x48 = 72
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_switch('48', SwitchConfig(debounce='auto', invert=0), {})
+            self.machine.default_platform.configure_switch('72', SwitchConfig(debounce='auto', invert=0), {})
 
     def _test_switch_changes(self):
         self.assertFalse(self.machine.switch_controller.is_active("s_flipper"))

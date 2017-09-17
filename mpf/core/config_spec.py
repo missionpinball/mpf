@@ -474,7 +474,6 @@ fast:
     __valid_in__: machine
     ports: list|str|
     baud: single|int|921600
-    config_number_format: single|str|hex
     watchdog: single|ms|1000
     default_quick_debounce_open: single|ms|
     default_quick_debounce_close: single|ms|

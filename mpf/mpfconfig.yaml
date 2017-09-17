@@ -241,6 +241,7 @@ fast:
 spike:
     wait_times:
       65: 12
+      128: 5
 
 fadecandy:
     gamma: 2.5

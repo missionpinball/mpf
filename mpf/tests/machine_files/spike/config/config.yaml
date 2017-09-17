@@ -46,11 +46,17 @@ switches:
     number: 8-15
   s_pop:
     number: 8-4
+  s_pop2:
+    number: 8-5
+    type: NC
 
 autofire_coils:
   ac_pops:
     coil: c_pop
     switch: s_pop
+  ac_pops2:
+    coil: c_pop
+    switch: s_pop2
 
 flippers:
     f_test_single:

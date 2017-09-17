@@ -34,6 +34,11 @@ class HighScore(AsyncMode):
             source=self._get_merged_settings('high_score'),
             section_name='high_score')
 
+        # if data is invalid. do not use it
+        if self.high_scores and not self._validate_data(self.high_scores):
+           self.log.warning("High score data failed validation. Resetting to defaults.")
+           self.high_scores = None
+
         # Load defaults if no high_scores are stored
         if not self.high_scores:
             self.high_scores = {k: [(next(iter(a.keys())), next(iter(a.values()))) for a in v] for (k, v) in
@@ -41,6 +46,27 @@ class HighScore(AsyncMode):
 
         self._create_machine_vars()
         self.pending_award = None
+
+    def _validate_data(self, data):
+        try:
+            for category in data:
+                if category not in [next(iter(k.keys())) for k in self.high_score_config['categories']]:
+                    self.log.warning("Found invalid category in high scores.")
+                    return False
+
+                for entry in data[category]:
+                    if not isinstance(entry, tuple) or len(entry) != 2:
+                        self.log.warning("Found invalid high score entry.")
+                        return False
+
+                    if not isinstance(entry[0], str) or not isinstance(entry[1], (int, float)):
+                        self.log.warning("Found invalid data type in high score entry.")
+                        return False
+
+        except TypeError:
+            return False
+
+        return True
 
     def _create_machine_vars(self):
         """Create all machine vars in the machine on start.
