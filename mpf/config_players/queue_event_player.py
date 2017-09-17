@@ -14,12 +14,15 @@ class QueueEventPlayer(ConfigPlayer):
         """Post queue events."""
         del kwargs
         if settings['events_when_finished']:
-            self.machine.events.post_queue(settings['queue_event'],
-                                           callback=partial(self._callback, settings['events_when_finished'],
-                                                            settings['args']),
-                                           **settings['args'])
+            self.machine.events.post_queue(
+                settings['queue_event'],
+                callback=partial(self._callback,
+                                 settings['events_when_finished'],
+                                 settings['args']),
+                **settings['args'])
         else:
-            self.machine.events.post_queue(settings['queue_event'], **settings['args'])
+            self.machine.events.post_queue(settings['queue_event'],
+                                           **settings['args'])
 
     def validate_config_entry(self, settings, name):
         """Validate one entry of this player."""

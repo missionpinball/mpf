@@ -26,7 +26,8 @@ class ScorePlayer(ConfigPlayer):
         del settings
         return False
 
-    def play(self, settings: dict, context: str, calling_context: str, priority: int=0, **kwargs) -> None:
+    def play(self, settings: dict, context: str, calling_context: str,
+             priority: int=0, **kwargs) -> None:
         """Score variable."""
         for var, s in settings.items():
             block_item = var + ":" + calling_context
@@ -40,13 +41,16 @@ class ScorePlayer(ConfigPlayer):
 
             self._score(var, s, kwargs)
 
-    def _is_blocked(self, block_item: str, context: str, priority: int) -> bool:
+    def _is_blocked(self, block_item: str, context: str,
+                    priority: int) -> bool:
         if block_item not in self.blocks or not self.blocks[block_item]:
             return False
         priority_sorted = sorted(self.blocks[block_item], reverse=True)
-        return priority_sorted[0].priority > priority and priority_sorted[0].context != context
+        first_element = priority_sorted[0]
+        return first_element.priority > priority and first_element.context != context
 
-    def _score(self, var: str, entry: dict, placeholder_parameters: dict) -> None:
+    def _score(self, var: str, entry: dict,
+               placeholder_parameters: dict) -> None:
         if entry['string']:
             self.machine.game.player[var] = entry['string']
             return
@@ -92,9 +96,8 @@ class ScorePlayer(ConfigPlayer):
         """Validate one entry of this player."""
         config = {}
         if not isinstance(settings, dict):
-            raise AssertionError("Settings of score_player {} should be a dict. But are: {}".format(
-                name, settings
-            ))
+            raise AssertionError("Settings of score_player {} should "
+                                 "be a dict. But are: {}".format(name, settings))
         for var, s in settings.items():
             config[var] = self._parse_config(s, name)
         return config
@@ -110,7 +113,8 @@ class ScorePlayer(ConfigPlayer):
                 block = False
             else:
                 if block_str != "block":
-                    raise AssertionError("Invalid action in scoring entry: {}".format(value))
+                    raise AssertionError(
+                        "Invalid action in scoring entry: {}".format(value))
                 block = True
 
         return {"score": value, "block": block}
