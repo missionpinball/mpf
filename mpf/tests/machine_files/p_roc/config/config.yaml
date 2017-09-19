@@ -77,3 +77,8 @@ shows:
 
 show_player:
   play_test_show: test
+
+segment_displays:
+  display1:
+    number: 0
+
