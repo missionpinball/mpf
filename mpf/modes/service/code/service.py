@@ -175,41 +175,51 @@ down_events: list|str|sw_service_down_active
 
         self.machine.events.post("service_coil_test_stop")
 
+    def _update_light_slide(self, items, position, color):
+        board, light = items[position]
+        self.machine.events.post("service_light_test_start",
+                                 board_name=board,
+                                 light_name=light.name,
+                                 light_label=light.config['label'],
+                                 light_num=light.config['number'],
+                                 test_color=color)
+
     @asyncio.coroutine
     def _light_test_menu(self):
         position = 0
+        color_position = 0
+        colors = ["white", "red", "green", "blue", "yellow"]
         items = self.machine.service.get_light_map()
 
-        # do not crash if no coils are configured
+        # do not crash if no lights are configured
         if not items:   # pragma: no cover
             return
 
-        #self._update_coil_slide(items, position)
+        self._update_light_slide(items, position, colors[color_position])
 
         while True:
+            self._update_light_slide(items, position, colors[color_position])
+            items[position].light.color(colors[color_position], key="service", priority=1000000)
+
             key = yield from self._get_key()
+            items[position].light.remove_from_stack_by_key("service")
             if key == 'ESC':
                 break
             elif key == 'UP':
-                items[position].light.off()
                 position += 1
                 if position >= len(items):
                     position = 0
-                #self._update_coil_slide(items, position)
-                items[position].light.on()
             elif key == 'DOWN':
-                items[position].light.off()
                 position -= 1
                 if position < 0:
                     position = len(items) - 1
-                #self._update_coil_slide(items, position)
-                items[position].light.on()
             elif key == 'ENTER':
                 # change color
-                pass
-                #items[position].coil.pulse()
+                color_position += 1
+                if color_position >= len(colors):
+                    color_position = 0
 
-        self.machine.events.post("service_coil_test_stop")
+        self.machine.events.post("service_light_test_stop")
 
     def _update_settings_slide(self, items, position):
         setting = items[position]

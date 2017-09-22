@@ -34,3 +34,9 @@ switches:
     s_service_down:
         number:
         tags: service_down
+
+lights:
+    l_light1:
+      number: 1
+    l_light5:
+      number: 5

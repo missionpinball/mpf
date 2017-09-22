@@ -117,6 +117,7 @@ class TestServiceMode(MpfFakeGameTestCase):
     def test_start_menu(self):
         self.mock_event("service_menu_selected_switch")
         self.mock_event("service_menu_selected_coil")
+        self.mock_event("service_menu_selected_light")
         self.mock_event("service_menu_selected_settings")
         # enter menu
         self.hit_and_release_switch("s_service_enter")
@@ -127,6 +128,10 @@ class TestServiceMode(MpfFakeGameTestCase):
         self.hit_and_release_switch("s_service_up")
         self.advance_time_and_run()
         self.assertEventCalled("service_menu_selected_coil", 1)
+
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+        self.assertEventCalled("service_menu_selected_light", 1)
 
         self.hit_and_release_switch("s_service_up")
         self.advance_time_and_run()
@@ -160,6 +165,68 @@ class TestServiceMode(MpfFakeGameTestCase):
         self.hit_and_release_switch("s_service_esc")
         self.advance_time_and_run()
         self.assertEventCalled("service_switch_test_stop")
+
+    def test_light_test(self):
+        # enter menu
+        self.hit_and_release_switch("s_service_enter")
+        self.advance_time_and_run()
+
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+
+        self.mock_event("service_light_test_start")
+        self.mock_event("service_light_test_stop")
+
+        # enter switch test
+        self.hit_and_release_switch("s_service_enter")
+        self.advance_time_and_run()
+
+        for color in ["white", "red", "green", "blue", "yellow", "white"]:
+            self.assertEventCalledWith("service_light_test_start",
+                                       board_name='',
+                                       light_label='%',
+                                       light_name='l_light1',
+                                       light_num='1',
+                                       test_color=color)
+
+            self.assertLightColor("l_light1", color)
+
+            self.hit_and_release_switch("s_service_enter")
+            self.advance_time_and_run()
+
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+
+        self.assertEventCalledWith("service_light_test_start",
+                                   board_name='',
+                                   light_label='%',
+                                   light_name='l_light5',
+                                   light_num='5',
+                                   test_color="red")
+
+        self.assertLightColor("l_light1", "black")
+        self.assertLightColor("l_light5", "red")
+
+        self.hit_and_release_switch("s_service_up")
+        self.advance_time_and_run()
+
+        self.assertEventCalledWith("service_light_test_start",
+                                   board_name='',
+                                   light_label='%',
+                                   light_name='l_light1',
+                                   light_num='1',
+                                   test_color="red")
+
+        self.assertLightColor("l_light1", "red")
+        self.assertLightColor("l_light5", "black")
+
+        # leave switch test
+        self.hit_and_release_switch("s_service_esc")
+        self.advance_time_and_run()
+        self.assertEventCalled("service_light_test_stop")
 
     def test_coil_test(self):
         self.mock_event("service_coil_test_start")
