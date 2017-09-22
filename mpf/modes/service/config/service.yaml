@@ -72,6 +72,15 @@ slide_player:
     service_coil_test:
       action: remove
 
+  # light test:
+  service_light_test_start:
+    service_light_test:
+      action: play
+      priority: 2
+  service_light_test_stop:
+    service_light_test:
+      action: remove
+
   # settings:
   service_settings_start:
     service_settings:
@@ -106,6 +115,9 @@ widget_player:
     service_menu_item_coil:
       action: remove
       slide: service_menu
+    service_menu_item_light:
+      action: remove
+      slide: service_menu
     service_menu_item_settings:
       action: remove
       slide: service_menu
@@ -115,6 +127,10 @@ widget_player:
       slide: service_menu
   service_menu_selected_coil:
     service_menu_item_coil:
+      action: add
+      slide: service_menu
+  service_menu_selected_light:
+    service_menu_item_light:
       action: add
       slide: service_menu
   service_menu_selected_settings:
@@ -191,6 +207,26 @@ slides:
     text: "(coil_num)"
     style: small
     y: center-6
+  # coil test
+  service_light_test:
+  - type: text
+    text: "Light Test - (board_name)"
+    style: small
+    anchor_y: top
+    x: center
+    y: top
+  - type: text
+    text: "(light_name)"
+    style: small
+    y: center+6
+  - type: text
+    text: "(light_label)"
+    style: small
+    y: center
+  - type: text
+    text: "(light_num)/(test_color)"
+    style: small
+    y: center-6
   # settings
   service_settings:
   - type: text
@@ -253,6 +289,11 @@ widgets:
   service_menu_item_coil:
     type: text
     text: Coil Test
+    anchor_y: center
+    style: medium
+  service_menu_item_light:
+    type: text
+    text: Light Test
     anchor_y: center
     style: medium
   service_menu_item_settings:

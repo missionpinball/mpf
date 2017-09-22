@@ -20,6 +20,7 @@ if MYPY:   # pragma: no cover
     from mpf.core.mode_device import ModeDevice
     from mpf.core.events import EventHandlerKey
     from mpf.core.player import Player
+    from mpf.core.machine import MachineController
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -27,11 +28,11 @@ class Mode(LogMixin):
 
     """Base class for a mode."""
 
-    def __init__(self, machine, config, name: str, path) -> None:
+    def __init__(self, machine: "MachineController", config, name: str, path) -> None:
         """Initialise mode.
 
         Args:
-            machine(mpf.core.machine.MachineController): the machine controller
+            machine: the machine controller
             config: config dict for mode
             name: name of mode
             path: path of mode
@@ -40,7 +41,7 @@ class Mode(LogMixin):
 
         """
         super().__init__()
-        self.machine = machine
+        self.machine = machine                  # type: MachineController
         self.config = config                    # type: ignore
         self.name = name.lower()
         self.path = path

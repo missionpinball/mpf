@@ -4,6 +4,7 @@ Controller provides all service information and can perform service tasks. Displ
 the service mode or other components.
 """
 import logging
+import re
 from collections import namedtuple
 
 from typing import List
@@ -12,6 +13,7 @@ import asyncio
 from mpf.core.mpf_controller import MpfController
 
 CoilMap = namedtuple("CoilMap", ["board", "coil"])
+LightMap = namedtuple("LightMap", ["board", "light"])
 
 
 class ServiceController(MpfController):
@@ -23,6 +25,14 @@ class ServiceController(MpfController):
         super().__init__(machine)
         self._enabled = False
         self.log = logging.getLogger("ServiceController")
+
+    @staticmethod
+    def _natural_key_sort(string_):
+        """Sort by natural keys like humans do.
+
+        See http://www.codinghorror.com/blog/archives/001018.html.
+        """
+        return [int(s) if s.isdigit() else s for s in re.split(r'(\d+)', string_)]
 
     def is_in_service(self) -> bool:
         """Return true if in service mode."""
@@ -74,5 +84,17 @@ class ServiceController(MpfController):
             coil_map.append(CoilMap(coil.hw_driver.get_board_name(), coil))
 
         # sort by board + driver number
-        coil_map.sort(key=lambda x: x[0] + str(x[1].hw_driver.number))
+        coil_map.sort(key=lambda x: (self._natural_key_sort(x[0]), self._natural_key_sort(str(x[1].hw_driver.number))))
         return coil_map
+
+    def get_light_map(self) -> List[LightMap]:
+        """Return a map of all lights in the machine."""
+        if not self.is_in_service():
+            raise AssertionError("Not in service mode!")
+        light_map = []
+        for light in self.machine.lights.values():
+            light_map.append(LightMap("", light))
+
+        # sort by board + driver number
+        light_map.sort(key=lambda x: (self._natural_key_sort(x[0]), self._natural_key_sort(str(x[1].config['number']))))
+        return light_map
