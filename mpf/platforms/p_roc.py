@@ -269,12 +269,13 @@ class PRocAlphanumericDisplay(SegmentDisplayPlatformInterface):
     """Since AuxAlphanumericDisplay updates all four displays wrap it and set the correct offset."""
 
     def __init__(self, display, index):
+        super().__init__(index)
         self.display = display
-        self.index = index
 
-    def set_text(self, text: str):
+    def set_text(self, text: str, flashing: bool):
         """Set digits to display."""
-        self.display.set_text(text, self.index)
+        # TODO: handle flashing using delay
+        self.display.set_text(text, self.number)
 
 
 class AuxAlphanumericDisplay():

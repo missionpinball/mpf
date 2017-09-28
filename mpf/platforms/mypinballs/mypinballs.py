@@ -15,14 +15,20 @@ class MyPinballsSegmentDisplay(SegmentDisplayPlatformInterface):
         super().__init__(number)
         self.platform = platform        # type: MyPinballsHardwarePlatform
 
-    def set_text(self, text: str):
+    def set_text(self, text: str, flashing: bool):
         """Set digits to display."""
+        self._text = text
+
         if not text:
             # blank display
             cmd = b'3:' + bytes([ord(str(self.number))]) + b':\n'
         else:
             # set text
-            cmd = b'1:' + bytes([ord(str(self.number))]) + b':' + text.encode() + b'\n'
+            if flashing:
+                cmd = b'2:'
+            else:
+                cmd = b'1:'
+            cmd += bytes([ord(str(self.number))]) + b':' + text.encode() + b'\n'
         self.platform.send_cmd(cmd)
 
 

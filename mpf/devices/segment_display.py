@@ -31,6 +31,7 @@ class SegmentDisplay(SystemWideDevice):
         self._text_stack = []               # type: List[TextStack]
         self._current_placeholder = None    # type: TextTemplate
         self.text = ""                      # type: str
+        self.flashing = False               # type: bool
 
     def _initialize(self):
         """Initialise display."""
@@ -44,6 +45,13 @@ class SegmentDisplay(SystemWideDevice):
         self._text_stack.append(TextStack(text, priority, key))
         self._update_stack()
 
+    def set_flashing(self, flashing: bool):
+        """Enable/Disable flashing."""
+        self.flashing = flashing
+        # invalidate text to force an update
+        self.text = None
+        self._update_display()
+
     def remove_text_by_key(self, key: str):
         """Remove entry from text stack."""
         self._text_stack[:] = [x for x in self._text_stack if x.key != key]
@@ -53,7 +61,7 @@ class SegmentDisplay(SystemWideDevice):
         """Sort stack and show top entry on display."""
         # do nothing if stack is emtpy. set display empty
         if not self._text_stack:
-            self.hw_display.set_text("")
+            self.hw_display.set_text("", flashing=False)
             if self._current_placeholder:
                 self._current_placeholder.stop_monitor()
                 self._current_placeholder = None
@@ -81,4 +89,4 @@ class SegmentDisplay(SystemWideDevice):
         # set text to display if it changed
         if new_text != self.text:
             self.text = new_text
-            self.hw_display.set_text(self.text)
+            self.hw_display.set_text(self.text, flashing=self.flashing)

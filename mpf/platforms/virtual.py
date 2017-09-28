@@ -231,10 +231,12 @@ class VirtualSegmentDisplay(SegmentDisplayPlatformInterface):
         """Initialise virtual segment display."""
         super().__init__(number)
         self.text = ''
+        self.flashing = False
 
-    def set_text(self, text: str):
+    def set_text(self, text: str, flashing: bool):
         """Set text."""
         self.text = text
+        self.flashing = flashing
 
 
 class VirtualSound(HardwareSoundPlatformInterface):

@@ -12,6 +12,6 @@ class SegmentDisplayPlatformInterface(metaclass=abc.ABCMeta):
         self.number = number
 
     @abc.abstractmethod
-    def set_text(self, text: str) -> None:
+    def set_text(self, text: str, flashing: bool) -> None:
         """Set a text to the display."""
         pass

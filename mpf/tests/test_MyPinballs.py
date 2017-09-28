@@ -115,3 +115,17 @@ class MyPinballsPlatformTest(MpfTestCase):
         self.machine.segment_displays.display2.add_text("424242")
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
+
+        self.serialMock.expected_commands = {
+            b'2:2:424242\n': False,
+        }
+        self.machine.segment_displays.display2.set_flashing(True)
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        self.serialMock.expected_commands = {
+            b'1:2:424242\n': False,
+        }
+        self.machine.segment_displays.display2.set_flashing(False)
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
