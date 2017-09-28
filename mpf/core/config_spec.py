@@ -906,7 +906,7 @@ segment_display_player:
     __valid_in__: machine, mode, show
     priority: single|int|0
     text: single|str|None
-    action: single|enum(add,remove)|add
+    action: single|enum(add,remove,flash,no_flash)|add
     key: single|str|None
     expire: single|ms|None
 servo_controller:

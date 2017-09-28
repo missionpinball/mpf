@@ -21,6 +21,26 @@ segment_display_player:
     display2:
       action: remove
 
+  test_flashing:
+    display1:
+      action: flash
+  test_no_flashing:
+    display1:
+      action: no_flash
+
+  player_turn_start{number==1}:
+    display1:
+      action: flash
+  player_turn_stop{number==1}:
+    display1:
+      action: no_flash
+  player_turn_start{number==2}:
+    display2:
+      action: flash
+  player_turn_stop{number==2}:
+    display2:
+      action: no_flash
+
   test_score:
     display1:
       text: "1: (player1|score)"

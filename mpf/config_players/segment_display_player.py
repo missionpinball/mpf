@@ -2,6 +2,11 @@ from mpf.core.delays import DelayManager
 
 from mpf.config_players.device_config_player import DeviceConfigPlayer
 
+MYPY = False
+if MYPY:   # pragma: no cover
+    from typing import Dict
+    from mpf.devices.segment_display import SegmentDisplay
+
 
 class SegmentDisplayPlayer(DeviceConfigPlayer):
 
@@ -19,7 +24,7 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Show text on display"""
         del kwargs
-        instance_dict = self._get_instance_dict(context)
+        instance_dict = self._get_instance_dict(context)    # type: Dict[str, SegmentDisplay]
         full_context = self._get_full_context(context)
 
         for display, s in settings.items():
@@ -49,6 +54,10 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
             elif action == "remove":
                 self._remove(instance_dict=instance_dict,
                              key=key, display=display)
+            elif action == "flash":
+                display.set_flashing(True)
+            elif action == "no_flash":
+                display.set_flashing(False)
             else:
                 raise AssertionError("Invalid action {}".format(action))
 

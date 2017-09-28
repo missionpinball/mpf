@@ -25,6 +25,12 @@ class TestShots(MpfFakeGameTestCase):
         self.assertEqual("", display1.hw_display.text)
         self.assertEqual("HELLO2", display2.hw_display.text)
 
+        self.post_event("test_flashing")
+        self.assertEqual(True, display1.hw_display.flashing)
+
+        self.post_event("test_no_flashing")
+        self.assertEqual(False, display1.hw_display.flashing)
+
         self.post_event("test_event3")
         self.advance_time_and_run()
 
