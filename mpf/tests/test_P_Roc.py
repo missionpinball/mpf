@@ -326,7 +326,7 @@ class TestPRoc(MpfTestCase):
         device.color([245, 245, 245])
         self.advance_time_and_run(.1)
         device.hw_drivers["white"].driver.hw_driver.proc.driver_patter.assert_has_calls([
-            call(num, 7, 1, 0, True)])
+            call(num, 19, 1, 0, True)])
         device.hw_drivers["white"].driver.hw_driver.proc.driver_patter = MagicMock()
         device.hw_drivers["white"].driver.hw_driver.proc.driver_schedule = MagicMock()
 

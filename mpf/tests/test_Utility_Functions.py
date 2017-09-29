@@ -181,10 +181,13 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(Util.pwm32_to_int(4), 33686018)
         self.assertRaises(ValueError, Util.pwm32_to_int, 33)
 
-    def test_pwm8_to_on_off(self):
-        self.assertEqual(Util.pwm8_to_on_off(0), (0, 0))
-        self.assertEqual(Util.pwm8_to_on_off(4), (1, 1))
-        self.assertRaises(ValueError, Util.pwm8_to_on_off, 9)
+    def test_power_to_on_off(self):
+        self.assertEqual(Util.power_to_on_off(0), (0, 0))
+        self.assertEqual(Util.power_to_on_off(0.1), (1, 9))
+        self.assertEqual(Util.power_to_on_off(0.15), (3, 17))
+        self.assertEqual(Util.power_to_on_off(0.5), (1, 1))
+        self.assertEqual(Util.power_to_on_off(1), (1, 0))
+        self.assertRaises(ValueError, Util.power_to_on_off, 9)
 
     def test_normalize_hex_string(self):
         result = Util.normalize_hex_string('ff00', 4)

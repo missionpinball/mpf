@@ -52,7 +52,7 @@ class PROCDriver(DriverPlatformInterface):
     @classmethod
     def get_pwm_on_off_ms(cls, coil: HoldSettings):
         """Find out the pwm_on_ms and pwm_off_ms for this driver."""
-        return Util.pwm8_to_on_off(int(coil.power * 8))
+        return Util.power_to_on_off(coil.power)
 
     def disable(self):
         """Disable (turn off) this driver."""
@@ -110,7 +110,7 @@ class PROCMatrixLight(LightPlatformSoftwareFade):
             self.proc.driver_schedule(number=self.number, schedule=0xffffffff,
                                       cycle_seconds=0, now=True)
         elif brightness > 0:
-            pwm_on_ms, pwm_off_ms = (Util.pwm8_to_on_off(int(brightness * 8)))
+            pwm_on_ms, pwm_off_ms = Util.power_to_on_off(brightness)
             self.proc.driver_patter(self.number, pwm_on_ms, pwm_off_ms, 0, True)
         else:
             self.proc.driver_disable(self.number)

@@ -1,6 +1,7 @@
 """Contains the Util class which includes many utility functions."""
 from copy import deepcopy
 import re
+from fractions import Fraction
 from functools import reduce
 
 import asyncio
@@ -450,26 +451,21 @@ class Util(object):
             raise ValueError("Invalid pwm value. (Expected value 0-8)")
 
     @staticmethod
-    def pwm8_to_on_off(source_int: int) -> Tuple[int, int]:
-        """Convert a PWM8 value to on/off times."""
-        lookup_table = {
-            0: (0, 0),  # 0-0
-            1: (1, 7),  # 1-7
-            2: (1, 3),  # 2-6
-            3: (3, 5),  # 3-5
-            4: (1, 1),  # 4-4
-            5: (5, 3),  # 5-3
-            6: (3, 1),  # 6-2
-            7: (7, 1),  # 7-1
-            8: (8, 0),  # 8-0
-        }
+    def power_to_on_off(power: float, max_period: int=20) -> Tuple[int, int]:
+        """Convert a float value to on/off times."""
+        if 0.0 < power > 1.0:
+            raise ValueError("power has to be between 0 and 1")
 
-        source_int = int(source_int)
+        # special case for 0%
+        if 0.0 == power:
+            return 0, 0
 
-        if 0 <= source_int <= 8:
-            return lookup_table[source_int]
-        else:
-            raise ValueError("Invalid pwm value. (Expected value 0-8)")
+        fraction = Fraction.from_float(power).limit_denominator(max_period)
+
+        on_ms = fraction.numerator
+        off_ms = fraction.denominator - fraction.numerator
+
+        return on_ms, off_ms
 
     @staticmethod
     def normalize_hex_string(source_hex: str, num_chars: int=2) -> str:
