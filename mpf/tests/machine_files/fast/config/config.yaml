@@ -85,6 +85,8 @@ autofire_coils:
 servos:
     servo1:
         number: 3
+    servo20:
+        number: 3-2
 
 flippers:
     f_test_single:

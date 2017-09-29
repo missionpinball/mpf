@@ -364,6 +364,23 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         return FASTDriver(config, self, number, platform_settings)
 
+    def _parse_servo_number(self, number):
+        try:
+            board_str, servo_str = number.split("-")
+        except ValueError:
+            return self.convert_number_from_config(number)
+
+        board = int(board_str)
+        servo = int(servo_str)
+        if 0 > board:
+            raise AssertionError("Board needs to be positive.")
+
+        if servo < 0 or servo > 5:
+            raise AssertionError("Servo number has to be between 0 and 5.")
+
+        # every servo board supports exactly 6 servos
+        return self.convert_number_from_config(board * 6 + servo)
+
     def configure_servo(self, number: str):
         """Configure a servo.
 
@@ -372,7 +389,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         Returns: Servo object.
         """
-        number_int = self.convert_number_from_config(number)
+        number_int = self._parse_servo_number(str(number))
 
         return FastServo(number_int, self.net_connection)
 

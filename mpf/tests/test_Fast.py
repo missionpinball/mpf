@@ -188,7 +188,8 @@ class TestFast(MpfTestCase):
             "DN:12,00,00,00": "DN:P",
             "DN:20,00,00,00": "DN:P",
             "DN:21,00,00,00": "DN:P",
-            "XO:03,7F": "XO:P"
+            "XO:03,7F": "XO:P",
+            "XO:14,7F": "XO:P"
         }
 
         super().setUp()
