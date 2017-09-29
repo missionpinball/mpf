@@ -75,6 +75,7 @@ class TestDiverter(MpfTestCase):
 
         self.advance_time_and_run(4)
         assert not self.machine.coils.c_diverter.enable.called
+        self.assertEqual(0, diverter.diverting_ejects_count)
 
     def test_hold_activation_time(self):
         diverter = self.machine.diverters.d_test_hold_activation_time
@@ -179,6 +180,35 @@ class TestDiverter(MpfTestCase):
 
         self.hit_switch_and_run("s_ball_switch1", 1)
 
+    def test_eject_to_oposide_sides2(self):
+        diverter = self.machine.diverters.d_test_hold
+        trough1 = self.machine.ball_devices.test_trough
+        trough2 = self.machine.ball_devices.test_trough2
+        playfield = self.machine.playfield
+        target = self.machine.ball_devices.test_target
+
+        self.assertEqual(3, trough1.balls)
+        self.assertEqual(3, trough2.balls)
+
+        trough1.eject(1, playfield)
+        trough2.eject(1, target)
+        trough1.eject(1, playfield)
+        trough2.eject(1, playfield)
+        trough1.eject(1, target)
+        trough2.eject(1, target)
+
+        self.advance_time_and_run(100)
+
+        self.assertEqual("idle", trough1._state)
+        self.assertEqual("idle", trough2._state)
+
+        self.assertEqual(0, diverter.diverting_ejects_count)
+
+        self.assertEqual(3, playfield.balls)
+        self.assertEqual(3, target.balls)
+        self.assertEqual(0, trough1.balls)
+        self.assertEqual(0, trough2.balls)
+
     def test_eject_to_oposide_sides(self):
         diverter = self.machine.diverters.d_test_hold
         trough1 = self.machine.ball_devices.test_trough
@@ -231,6 +261,9 @@ class TestDiverter(MpfTestCase):
 
         self.assertEqual("idle", trough1._state)
         self.assertEqual("idle", trough2._state)
+        self.assertEqual(2, trough1.balls)
+        self.assertEqual(1, trough2.balls)
+
         self.assertEqual("idle", target._state)
         self.assertEqual(0, diverter.diverting_ejects_count)
 
@@ -263,6 +296,9 @@ class TestDiverter(MpfTestCase):
         self.assertTrue(diverter.active)
 
         self.assertTrue(self.machine.coils.eject_coil1.pulse.called)
+        self.advance_time_and_run(20)
+
+        self.assertEqual(0, diverter.diverting_ejects_count)
 
     def test_pulsed_activation_time(self):
         diverter = self.machine.diverters.d_test_pulse
@@ -318,6 +354,7 @@ class TestDiverter(MpfTestCase):
 
         self.advance_time_and_run(4)
         assert not self.machine.coils.c_diverter.pulse.called
+        self.assertEqual(0, diverter.diverting_ejects_count)
 
     def test_diverter_with_switch(self):
         diverter = self.machine.diverters.d_test
@@ -433,6 +470,7 @@ class TestDiverter(MpfTestCase):
 
         self.advance_time_and_run(4)
         assert not self.machine.coils.c_diverter.enable.called
+        self.assertEqual(0, diverter.diverting_ejects_count)
 
     def test_diverter_dual_wound_coil(self):
         diverter = self.machine.diverters.d_test_dual_wound

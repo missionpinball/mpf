@@ -51,7 +51,7 @@ class Diverter(SystemWideDevice):
             self.machine.events.add_handler(
                 'balldevice_' + feeder_device.name +
                 '_ball_eject_failed',
-                self._feeder_eject_count_decrease)
+                self._feeder_eject_count_decrease2)
 
             self.machine.events.add_handler(
                 'balldevice_' + feeder_device.name +
@@ -230,9 +230,13 @@ class Diverter(SystemWideDevice):
             self.machine.switch_controller.remove_switch_handler(
                 switch_name=switch.name, callback=self.activate)
 
+    def _feeder_eject_count_decrease2(self, target, **kwargs):
+        raise AssertionError("asd")
+
     def _feeder_eject_count_decrease(self, target, **kwargs):
         del target
         del kwargs
+        self.debug_log("Source reported success")
         if self.config['cool_down_time']:
             self.delay.add(self.config['cool_down_time'], self._reduce_eject_count)
         else:
@@ -258,10 +262,16 @@ class Diverter(SystemWideDevice):
                         "inactive target list")
                     self.disable()
                 # And perform those ejects
-                while len(self.eject_attempt_queue) > 0:
-                    self.diverting_ejects_count += 1
-                    queue = self.eject_attempt_queue.pop()
-                    queue.clear()
+                if self.config['allow_multiple_concurrent_ejects_to_same_side']:
+                    while len(self.eject_attempt_queue) > 0:
+                        self.diverting_ejects_count += 1
+                        queue = self.eject_attempt_queue.pop()
+                        queue.clear()
+                else:
+                    if len(self.eject_attempt_queue) > 0:
+                        self.diverting_ejects_count += 1
+                        queue = self.eject_attempt_queue.pop()
+                        queue.clear()
             elif self.active and not self.config['activation_time']:
                 # if diverter is active and no more ejects are ongoing
                 self.deactivate()
