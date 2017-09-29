@@ -181,6 +181,9 @@ class TestBallDevice(MpfTestCase):
         self._captured = 0
         self._enter = 0
 
+        self.mock_event("balldevice_test_launcher_ball_eject_failed")
+        self.mock_event("balldevice_test_launcher_ball_eject_success")
+
         self.machine.events.add_handler(
             'balldevice_test_launcher_ball_request', self._requesting_ball)
         self.machine.events.add_handler('balldevice_1_ball_missing',
@@ -211,6 +214,9 @@ class TestBallDevice(MpfTestCase):
         self.assertEqual(0, self._requesting)
         self.assertEqual(1, self._missing)
         self.assertEqual(1, playfield.balls)
+
+        self.assertEventNotCalled("balldevice_test_launcher_ball_eject_success")
+        self.assertEventCalled("balldevice_test_launcher_ball_eject_failed")
 
         self._missing = 0
         self._requesting = 0
