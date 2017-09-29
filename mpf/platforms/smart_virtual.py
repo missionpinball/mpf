@@ -11,6 +11,12 @@ from mpf.core.delays import DelayManager
 from mpf.platforms.virtual import (VirtualHardwarePlatform as VirtualPlatform, VirtualDriver)
 
 
+MYPY = False
+if MYPY:   # pragma: no cover
+    from typing import Dict
+    from mpf.devices.ball_device.ball_device import BallDevice
+
+
 class BaseSmartVirtualCoilAction:
 
     """A action for a coil."""
@@ -157,6 +163,7 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
         self.platform = platform
         self.confirm_eject_switch = device.config['confirm_eject_switch']
         self.target_device = None
+        self.result = "success"
 
     def confirm_eject_via_switch(self, switch):
         """Simulate eject via switch."""
@@ -182,11 +189,16 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
             driver.action.target_device = target
 
         if "delay" in self.actions and self.machine.config['smart_virtual']['simulate_manual_plunger']:
-            self.log.debug("Adding {}ms delay before ejecting".format(self.machine.config['smart_virtual']['simulate_manual_plunger_timeout']))
+            self.log.debug("Adding {}ms delay before ejecting".format(
+                self.machine.config['smart_virtual']['simulate_manual_plunger_timeout']))
 
             # simulate mechanical eject
             self.delay.add(ms=self.machine.config['smart_virtual']['simulate_manual_plunger_timeout'],
                            callback=self._perform_action)
+
+    def set_result(self, result):
+        """Set result to "success" (default), "return" or "missing"."""
+        self.result = result
 
     def _perform_action(self):
         self.log.debug("Removing ball from device %s", self.device.name)
@@ -201,24 +213,35 @@ class AddBallToTargetAction(BaseSmartVirtualCoilAction):
                 self.log.debug("Deactivating: %s", switch.name)
                 break
 
-        if (self.device.config['entrance_switch_full_timeout'] and
-                self.device.machine.switch_controller.is_active(
-                self.device.config['entrance_switch'].name)):
+        if self.result == "success":
+            if (self.device.config['entrance_switch_full_timeout'] and
+                    self.device.machine.switch_controller.is_active(
+                    self.device.config['entrance_switch'].name)):
 
-            self.machine.switch_controller.process_switch(
-                self.device.config['entrance_switch'].name, 0, logical=True)
-            self.log.debug("Deactivating: %s", self.device.config['entrance_switch'].name)
+                self.machine.switch_controller.process_switch(
+                    self.device.config['entrance_switch'].name, 0, logical=True)
+                self.log.debug("Deactivating: %s", self.device.config['entrance_switch'].name)
 
-        if self.confirm_eject_switch:
-            self.delay.add(ms=50, callback=self.confirm_eject_via_switch,
-                           switch=self.confirm_eject_switch)
-            self.log.debug("Adding delay for confirm eject switch")
+            if self.confirm_eject_switch:
+                self.delay.add(ms=50, callback=self.confirm_eject_via_switch,
+                               switch=self.confirm_eject_switch)
+                self.log.debug("Adding delay for confirm eject switch")
 
-        if self.target_device and not self.target_device.is_playfield():
+            if self.target_device and not self.target_device.is_playfield():
+                self.delay.add(ms=100, callback=self.platform.add_ball_to_device,
+                               device=self.target_device)
+                self.log.debug("Adding delay for %s to receive ball in 100ms", self.target_device.name)
+                self.target_device = None
+        elif self.result == "return":
             self.delay.add(ms=100, callback=self.platform.add_ball_to_device,
                            device=self.target_device)
-            self.log.debug("Adding delay for %s to receive ball in 100ms", self.target_device.name)
-            self.target_device = None
+        elif self.result == "missing":
+            if self.target_device.is_playfield() and not self.confirm_eject_switch:
+                raise AssertionError("Ball cannot go missing to a playfield without confirm_switch.")
+            # missing does not do anything
+            pass
+        else:
+            raise AssertionError("Invalid result {}".format(self.result))
 
 
 class SmartVirtualHardwarePlatform(VirtualPlatform):
@@ -229,6 +252,7 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
         """Initialise smart virtual platform."""
         super().__init__(machine)
         self.delay = DelayManager(self.machine.delayRegistry)
+        self.actions = {}       # type: Dict[BallDevice, AddBallToTargetAction]
 
     def __repr__(self):
         """Return string representation."""
@@ -315,6 +339,7 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
                 # we assume that the device always reaches its target. diverters are ignored
                 self.machine.events.add_handler('balldevice_{}_ejecting_ball'.format(device.name),
                                                 action.set_target)
+                self.actions[device] = action
 
     def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
         """Configure driver."""
