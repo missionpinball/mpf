@@ -453,7 +453,7 @@ class Util(object):
     @staticmethod
     def power_to_on_off(power: float, max_period: int=20) -> Tuple[int, int]:
         """Convert a float value to on/off times."""
-        if 0.0 < power > 1.0:
+        if power > 1.0 or power < 0.0:
             raise ValueError("power has to be between 0 and 1")
 
         # special case for 0%
