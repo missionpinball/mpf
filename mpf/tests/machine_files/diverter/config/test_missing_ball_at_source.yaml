@@ -1,0 +1,13 @@
+#config_version=5
+
+config:
+- config.yaml
+
+diverters:
+    d_test:
+        activation_coil: c_diverter
+        feeder_devices: test_trough
+        targets_when_active: playfield
+        targets_when_inactive: test_target
+        activation_time: 4s
+        debug: True
