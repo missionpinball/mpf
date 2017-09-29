@@ -51,7 +51,7 @@ class Diverter(SystemWideDevice):
             self.machine.events.add_handler(
                 'balldevice_' + feeder_device.name +
                 '_ball_eject_failed',
-                self._feeder_eject_count_decrease2)
+                self._feeder_eject_count_decrease)
 
             self.machine.events.add_handler(
                 'balldevice_' + feeder_device.name +
@@ -229,9 +229,6 @@ class Diverter(SystemWideDevice):
         for switch in self.config['activation_switches']:
             self.machine.switch_controller.remove_switch_handler(
                 switch_name=switch.name, callback=self.activate)
-
-    def _feeder_eject_count_decrease2(self, target, **kwargs):
-        raise AssertionError("asd")
 
     def _feeder_eject_count_decrease(self, target, **kwargs):
         del target

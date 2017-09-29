@@ -180,6 +180,20 @@ class TestDiverter(MpfTestCase):
 
         self.hit_switch_and_run("s_ball_switch1", 1)
 
+    def test_missing_ball_at_source(self):
+        diverter = self.machine.diverters.d_test
+        trough1 = self.machine.ball_devices.test_trough
+        target = self.machine.ball_devices.test_target
+
+        self.machine.default_platform.actions[trough1].set_result("missing")
+        trough1.eject(1, target)
+        self.advance_time_and_run(1)
+        self.assertEqual(1, diverter.diverting_ejects_count)
+
+        self.advance_time_and_run(100)
+
+        self.assertEqual(0, diverter.diverting_ejects_count)
+
     def test_eject_to_oposide_sides2(self):
         diverter = self.machine.diverters.d_test_hold
         trough1 = self.machine.ball_devices.test_trough
