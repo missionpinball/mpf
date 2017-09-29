@@ -20,7 +20,8 @@ class FASTDriver(DriverPlatformInterface):
         """Initialise driver."""
         super().__init__(config, number)
         self.log = logging.getLogger('FASTDriver')
-        self.autofire = None                        # type: bool
+        self.autofire = None                        # type: str
+        self._config_state = None
         self.machine = platform.machine
         self.platform = platform
         self.driver_settings = dict()               # type: Dict[str, str]
@@ -131,25 +132,27 @@ class FASTDriver(DriverPlatformInterface):
     def pulse(self, pulse_settings: PulseSettings):
         """Pulse this driver."""
         hex_ms_string = Util.int_to_hex_string(pulse_settings.duration)
+        config_state = (pulse_settings.duration, pulse_settings.power)
 
-        if self.autofire:
-            cmd = '{}{},01'.format(self.get_trigger_cmd(), self.number)
+        # reconfigure if we have to
+        if self._config_state != config_state:
+            self._config_state = config_state
 
-            self.log.debug("Received command to pulse driver, but"
-                           " this driver is configured with an autofire "
-                           "rule, so that pulse value will be used.")
-        else:
-            cmd = '{}{},89,00,10,{},{},00,00,{}'.format(
+            cmd = '{}{},81,00,10,{},{},00,00,00'.format(
                 self.get_config_cmd(),
                 self.number,
                 hex_ms_string,
-                self.get_pwm_for_cmd(pulse_settings.power),
-                self.get_recycle_ms_for_cmd(self.config.default_recycle, pulse_settings.duration)
-            )
+                self.get_pwm_for_cmd(pulse_settings.power))
+            self.send(cmd)
 
-        self.log.debug("Sending Pulse Command: %s", cmd)
+        # trigger driver
+        cmd = '{}{},01'.format(self.get_trigger_cmd(), self.number)
         self.send(cmd)
-        self.check_auto()
+
+        # restore autofire
+        if self.autofire:
+            self._config_state = None
+            self.send(self.autofire)
 
         return Util.hex_string_to_int(hex_ms_string)
 
