@@ -17,11 +17,9 @@ class MyPinballsSegmentDisplay(SegmentDisplayPlatformInterface):
 
     def set_text(self, text: str, flashing: bool):
         """Set digits to display."""
-        self._text = text
-
         if not text:
             # blank display
-            cmd = b'3:' + bytes([ord(str(self.number))]) + b':\n'
+            cmd = b'3:' + bytes([ord(str(self.number))]) + b'\n'
         else:
             # set text
             if flashing:
@@ -54,7 +52,7 @@ class MyPinballsHardwarePlatform(SegmentDisplayPlatform):
         self._reader, self._writer = yield from connector
 
         # reset all displays to empty
-        self.send_cmd(b'9::\n')
+        self.send_cmd(b'9\n')
 
     def stop(self):
         """Stop platform."""

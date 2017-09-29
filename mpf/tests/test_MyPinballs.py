@@ -84,7 +84,7 @@ class MyPinballsPlatformTest(MpfTestCase):
 
         # all display are reset at startup
         self.serialMock.expected_commands = {
-            b'9::\n': False,
+            b'9\n': False,
         }
         self.serialMock.permanent_commands = {}
         super().setUp()
@@ -103,7 +103,7 @@ class MyPinballsPlatformTest(MpfTestCase):
 
         # set to empty
         self.serialMock.expected_commands = {
-            b'3:1:\n': False,
+            b'3:1\n': False,
         }
         self.machine.segment_displays.display1.remove_text_by_key("score")
         self._wait_for_processing()
