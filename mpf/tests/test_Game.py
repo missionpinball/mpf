@@ -1,5 +1,5 @@
 from mpf.tests.MpfGameTestCase import MpfGameTestCase
-from unittest.mock import MagicMock, call
+from unittest.mock import MagicMock
 
 
 class TestGame(MpfGameTestCase):

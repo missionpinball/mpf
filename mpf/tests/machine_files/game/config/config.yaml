@@ -24,6 +24,7 @@ playfields:
     playfield:
         default_source_device: bd_launcher
         tags: default
+        enable_ball_search: True
 
 ball_devices:
     bd_trough:
