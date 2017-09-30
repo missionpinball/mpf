@@ -19,8 +19,8 @@ class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
                 settings = self.get_string_config(settings)
             else:
                 raise AssertionError(
-                    "Invalid settings for player {}:{}".format(
-                        self.show_section, name))
+                    "Invalid settings for player {}:{} {}".format(
+                        self.show_section, name, settings))
 
         # settings here are dicts of devices/settings
         for device, device_settings in settings.items():
