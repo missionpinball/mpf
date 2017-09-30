@@ -998,6 +998,7 @@ shot_profiles:
 show_player:
     __valid_in__: machine, mode, show
     action: single|enum(play,stop,pause,resume,advance,step_back,update)|play
+    show: single|str|None
     priority: single|int|0
     speed: single|float|1
     block_queue: single|bool|False

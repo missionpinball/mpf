@@ -137,7 +137,12 @@ class ShowPlayer(DeviceConfigPlayer):
             raise AssertionError("Invalid action {} in show_player {}".format(
                 show_settings['action'], key))
 
-        action(key, instance_dict, show, show_settings, queue)
+        if 'show' in show_settings and show_settings['show']:
+            show_name = show_settings['show']
+        else:
+            show_name = show
+
+        action(key, instance_dict, show_name, show_settings, queue)
 
     def clear_context(self, context):
         """Stop running shows from context."""
