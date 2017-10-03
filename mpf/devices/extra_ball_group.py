@@ -20,7 +20,7 @@ class ExtraBallGroup(SystemWideDevice):
         super().__init__(machine, name)
 
         self.player = None  # type: Player
-        self.machine.events.add_handler('player_add_success',
+        self.machine.events.add_handler('player_added',
                                         self._player_added)
         self.machine.events.add_handler('player_turn_starting',
                                         self._player_turn_starting)
@@ -32,7 +32,7 @@ class ExtraBallGroup(SystemWideDevice):
     @property
     def enabled(self):
         """Return whether this extra ball group is enabled.
-        
+
         This attribute considers the enabled setting plus the
         max balls per game and ball settings.
         """
