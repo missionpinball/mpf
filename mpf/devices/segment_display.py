@@ -63,6 +63,7 @@ class SegmentDisplay(SystemWideDevice):
         if not self._text_stack:
             self.hw_display.set_text("", flashing=False)
             if self._current_placeholder:
+                self.text = ""
                 self._current_placeholder.stop_monitor()
                 self._current_placeholder = None
             return
