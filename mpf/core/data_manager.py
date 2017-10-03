@@ -5,6 +5,7 @@ import os
 import errno
 import _thread
 import threading
+import time
 
 from mpf.core.file_manager import FileManager
 from mpf.core.mpf_controller import MpfController
@@ -14,7 +15,7 @@ class DataManager(MpfController):
 
     """Handles key value data loading and saving for the machine."""
 
-    def __init__(self, machine, name):
+    def __init__(self, machine, name, min_wait_secs=1):
         """Initialise data manger.
 
         The DataManager is responsible for reading and writing data to/from a
@@ -26,9 +27,11 @@ class DataManager(MpfController):
                 is for. This name is used to lookup the configuration option
                 in the machine config in the mpf:paths:<name> location. That's
                 how you specify the file name this DataManager will use.
+            min_wait_secs: Minimal seconds to wait between two writes.
         """
         super().__init__(machine)
         self.name = name
+        self.min_wait_secs = min_wait_secs
         config_path = self.machine.config['mpf']['paths'][name]
         if config_path is False:
             self.filename = False
@@ -92,32 +95,15 @@ class DataManager(MpfController):
         else:
             return dict()
 
-    def save_all(self, data=None, delay_secs=0):
-        """Write this DataManager's data to the disk.
-
-        Args:
-            data: An optional dict() of the data you want to write. If None
-                then it will write the data as it exists in its own data
-                attribute.
-            delay_secs: Optional integer value of the amount of time you want
-                to wait before the disk write occurs. Useful for writes that
-                occur when MPF is busy, so you can delay them by a few seconds
-                so they don't slow down MPF. Default is 0.
-        """
-        self.debug_log("Will write %s to disk in %s sec(s)", self.name,
-                       delay_secs)
-
-        if data:
-            self.data = data
-
-        if delay_secs:
-            self.machine.delay.add(callback=self._delayed_save_callback,
-                                   ms=delay_secs * 1000)
-        else:
-            self._dirty.set()
-
-    def _delayed_save_callback(self):
+    def _trigger_save(self):
+        """Trigger a write of this DataManager's data to the disk."""
+        self.debug_log("Will write %s to disk", self.name)
         self._dirty.set()
+
+    def save_all(self, data):
+        """Update all data."""
+        self.data = data
+        self._trigger_save()
 
     def save_key(self, key, value, delay_secs=0):
         """Update an individual key and then write the entire dictionary to disk.
@@ -136,17 +122,19 @@ class DataManager(MpfController):
             self.data = dict()
             self.data[key] = value
 
-        self.save_all(delay_secs=delay_secs)
+        self._trigger_save()
 
     def remove_key(self, key):
         """Remove key by name."""
         try:
             del self.data[key]
-            self.save_all()
+            self._trigger_save()
         except KeyError:
             pass
 
     def _writing_thread(self):  # pragma: no cover
+        # prevent early writes at start-up
+        time.sleep(self.min_wait_secs)
         while not self.machine.thread_stopper.is_set():
             if not self._dirty.wait(1):
                 continue
@@ -156,3 +144,10 @@ class DataManager(MpfController):
             self.debug_log("Writing %s to: %s", self.name, self.filename)
             # save data
             FileManager.save(self.filename, data)
+            # prevent too many writes
+            time.sleep(self.min_wait_secs)
+
+        # if dirty write data one last time during shutdown
+        if self._dirty.is_set():
+            FileManager.save(self.filename, data)
+
