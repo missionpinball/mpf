@@ -760,6 +760,7 @@ mypinballs:
     __valid_in__: machine
     port: single|str|
     baud: single|int|115200
+    debug: single|bool|False
 named_colors:
     __valid_in__: machine
 opp:

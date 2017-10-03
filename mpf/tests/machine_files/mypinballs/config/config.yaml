@@ -5,6 +5,7 @@ hardware:
 
 mypinballs:
   port: /dev/ttyUSB0
+  debug: True
 
 segment_displays:
   display1:
