@@ -1,5 +1,6 @@
 """Mypinballs hardware platform."""
 import asyncio
+import logging
 
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
 
@@ -40,6 +41,7 @@ class MyPinballsHardwarePlatform(SegmentDisplayPlatform):
         self._writer = None
         self._reader = None
         self.config = None
+        self.log = logging.getLogger('mypinballs')
 
     @asyncio.coroutine
     def initialize(self):
@@ -61,6 +63,8 @@ class MyPinballsHardwarePlatform(SegmentDisplayPlatform):
 
     def send_cmd(self, cmd: bytes):
         """Send a byte command."""
+        if self.config['debug']:
+            self.log.debug("Sending cmd: %s", cmd)
         self._writer.write(cmd)
 
     def configure_segment_display(self, number: str) -> "SegmentDisplayPlatformInterface":

@@ -178,6 +178,7 @@ class HighScore(AsyncMode):
 
         self.high_scores = new_high_score_list
         self._write_scores_to_disk()
+        self._create_machine_vars()
 
     @asyncio.coroutine
     # pylint: disable-msg=too-many-arguments
@@ -219,4 +220,3 @@ class HighScore(AsyncMode):
 
     def _write_scores_to_disk(self) -> None:
         self.data_manager.save_all(data=self.high_scores)
-        self._create_machine_vars()

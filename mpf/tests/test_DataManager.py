@@ -29,7 +29,7 @@ class TestDataManager(MpfTestCase):
         with patch('mpf.file_interfaces.yaml_interface.open', open_mock, create=True):
             with patch('mpf.core.file_manager.os.path.isfile') as isfile_mock:
                 isfile_mock.return_value = True
-                manager = DataManager(self.machine, "machine_vars")
+                manager = DataManager(self.machine, "machine_vars", min_wait_secs=0)
                 self.assertTrue(isfile_mock.called)
                 self.assertTrue(open_mock.called)
 
@@ -48,7 +48,7 @@ class TestDataManager(MpfTestCase):
         with patch('mpf.file_interfaces.yaml_interface.open', open_mock, create=True):
             with patch('mpf.core.file_manager.os.path.isfile') as isfile_mock:
                 isfile_mock.return_value = True
-                manager2 = DataManager(self.machine, "machine_vars")
+                manager2 = DataManager(self.machine, "machine_vars", min_wait_secs=0)
                 self.assertTrue(isfile_mock.called)
                 self.assertTrue(open_mock.called)
 
@@ -59,7 +59,7 @@ class TestDataManager(MpfTestCase):
         open_mock = mock_open(read_data='hallo:\n  test: world\n')
         with patch('mpf.file_interfaces.yaml_interface.open', open_mock, create=True):
             with patch('mpf.core.file_manager.os.path.isfile') as isfile_mock:
-                manager = DataManager(self.machine, "machine_vars")
+                manager = DataManager(self.machine, "machine_vars", min_wait_secs=0)
                 self.assertTrue(isfile_mock.called)
                 self.assertTrue(open_mock.called)
 
@@ -71,7 +71,7 @@ class TestDataManager(MpfTestCase):
         with patch('mpf.file_interfaces.yaml_interface.open', open_mock, create=True):
             with patch('mpf.core.file_manager.os.path.isfile') as isfile_mock:
                 with patch('mpf.core.file_manager.os.mkdir') as mkdir_mock:
-                    manager = DataManager(self.machine, "absolute_test")
+                    manager = DataManager(self.machine, "absolute_test", min_wait_secs=0)
                     isfile_mock.assert_called_with('/data/test_dir/test_file.yaml')
                     mkdir_mock.assert_called_with('/data/test_dir', 511)
                     open_mock.assert_called_once_with('/data/test_dir/test_file.yaml', encoding='utf8')
@@ -83,7 +83,7 @@ class TestDataManager(MpfTestCase):
         with patch('mpf.file_interfaces.yaml_interface.open', open_mock, create=True):
             with patch('mpf.core.file_manager.os.path.isfile') as isfile_mock:
                 with patch('mpf.core.file_manager.os.mkdir') as mkdir_mock:
-                    manager = DataManager(self.machine, "relative_test")
+                    manager = DataManager(self.machine, "relative_test", min_wait_secs=0)
                     path = os.path.join(os.path.abspath(self.machine.machine_path), 'subdir/subdir2')
                     file_path = os.path.join(os.path.abspath(self.machine.machine_path), 'subdir/subdir2/test.yaml')
                     isfile_mock.assert_called_with(file_path)
@@ -96,7 +96,7 @@ class TestDataManager(MpfTestCase):
         with patch('mpf.file_interfaces.yaml_interface.open', open_mock, create=True):
             with patch('mpf.core.file_manager.os.path.isfile') as isfile_mock:
                 with patch('mpf.core.file_manager.os.mkdir') as mkdir_mock:
-                    manager = DataManager(self.machine, "disabled_test")
+                    manager = DataManager(self.machine, "disabled_test", min_wait_secs=0)
                     self.assertFalse(isfile_mock.called)
                     self.assertFalse(mkdir_mock.called)
                     self.assertFalse(open_mock.called)

@@ -223,10 +223,9 @@ class Auditor(object):
             self.machine.events.add_handler(event, self._save_audits,
                                             priority=0)
 
-    def _save_audits(self, delay_secs=3, **kwargs):
+    def _save_audits(self, **kwargs):
         del kwargs
-        self.data_manager.save_all(data=self.current_audits,
-                                   delay_secs=delay_secs)
+        self.data_manager.save_all(data=self.current_audits)
 
     def disable(self, **kwargs):
         """Disable the auditor."""

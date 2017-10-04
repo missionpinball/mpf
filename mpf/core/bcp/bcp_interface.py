@@ -344,7 +344,7 @@ class BcpInterface(MpfController):
             self.machine.events.add_handler('ball_started', self._ball_started)
             self.machine.events.add_handler('ball_ended', self._ball_ended)
             self.machine.events.add_handler('player_turn_started', self._player_turn_start)
-            self.machine.events.add_handler('player_added', self._player_add_success)
+            self.machine.events.add_handler('player_added', self._player_added)
 
         self.machine.bcp.transport.add_handler_to_transport("_core_events", client)
 
@@ -356,7 +356,7 @@ class BcpInterface(MpfController):
             self.machine.events.remove_handler_by_event('ball_started', self._ball_started)
             self.machine.events.remove_handler_by_event('ball_ended', self._ball_ended)
             self.machine.events.remove_handler_by_event('player_turn_started', self._player_turn_start)
-            self.machine.events.remove_handler_by_event('player_added', self._player_add_success)
+            self.machine.events.remove_handler_by_event('player_added', self._player_added)
 
     def _ball_started(self, ball, player, **kwargs):
         del kwargs
@@ -380,7 +380,7 @@ class BcpInterface(MpfController):
             bcp_command="player_turn_start",
             player_num=number)
 
-    def _player_add_success(self, num, player, **kwargs):
+    def _player_added(self, num, player, **kwargs):
         del player
         del kwargs
         self.machine.bcp.transport.send_to_clients_with_handler(
