@@ -54,6 +54,10 @@ class ExtraBall(ModeDevice):
 
         if self.is_ok_to_light():
             self.machine.events.post('extra_ball_{}_lit'.format(self.name))
+            '''event: extra_ball_(name)_lit
+            desc: The extra ball called (name) has just been lit.
+            '''
+
             if self.group:
                 self.group.light()
         else:
@@ -67,6 +71,9 @@ class ExtraBall(ModeDevice):
         if self.is_ok_to_award():
             self.player['extra_ball_{}_num_awarded'.format(self.name)] += 1
             self.machine.events.post('extra_ball_{}_awarded'.format(self.name))
+            '''event: extra_ball_(name)_awarded
+            desc: The extra ball called (name) has just been awarded.
+            '''
 
             try:
                 self.group.award()
@@ -74,6 +81,9 @@ class ExtraBall(ModeDevice):
                 # If this EB is in a group, the group will handle this stuff
                 self.player.extra_balls += 1
                 self.machine.events.post('extra_ball_awarded')
+                '''event: extra_ball_awarded
+                desc: An extra ball has just been awarded.
+                '''
 
         else:  # EB cannot be awarded
             self._award_disabled()
@@ -124,8 +134,15 @@ class ExtraBall(ModeDevice):
 
     def _award_disabled(self):
         self.machine.events.post('extra_ball_award_disabled')
+        '''event: extra_ball_award_disabled
+        desc: The award for an extra ball has just been disabled.
+        '''
+
         self.machine.events.post(
             'extra_ball_{}_award_disabled'.format(self.name))
+        '''event: extra_ball_(name)_award_disabled
+        desc: The award for the extra ball called (name) has just been disabled.
+        '''
 
         if self.group:
             # still need to send this even if EBs are disabled since we
