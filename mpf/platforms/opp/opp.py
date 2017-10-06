@@ -13,6 +13,7 @@ from mpf.platforms.opp.opp_coil import OPPSolenoidCard
 from mpf.platforms.opp.opp_incand import OPPIncandCard
 from mpf.platforms.opp.opp_neopixel import OPPNeopixelCard
 from mpf.platforms.opp.opp_switch import OPPInputCard
+from mpf.platforms.opp.opp_switch import OPPMatrixCard
 from mpf.platforms.opp.opp_rs232_intf import OppRs232Intf
 from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings, \
     DriverConfig, SwitchConfig
@@ -59,6 +60,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         self.inpDict = dict()               # type: Dict[str, OPPSwitch]
         # TODO: remove this or opp_inputs
         self.inpAddrDict = dict()           # type: Dict[str, OPPInputCard]
+        self.matrixInpAddrDict = dict()     # type: Dict[str, OPPMatrixCard]
         self.read_input_msg = {}            # type: Dict[str, bytearray]
         self.opp_neopixels = []             # type: List[OPPNeopixelCard]
         # TODO: remove this or opp_neopixels
@@ -92,7 +94,8 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             ord(OppRs232Intf.EOM_CMD): self.eom_resp,
             ord(OppRs232Intf.GET_GEN2_CFG): self.get_gen2_cfg_resp,
             ord(OppRs232Intf.READ_GEN2_INP_CMD): self.read_gen2_inp_resp_initial,
-            ord(OppRs232Intf.GET_GET_VERS_CMD): self.vers_resp,
+            ord(OppRs232Intf.GET_VERS_CMD): self.vers_resp,
+            ord(OppRs232Intf.READ_MATRIX_INP): self.read_matrix_inp_resp_initial,
         }
 
     @asyncio.coroutine
@@ -100,6 +103,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Initialise connections to OPP hardware."""
         yield from self._connect_to_hardware()
         self.opp_commands[ord(OppRs232Intf.READ_GEN2_INP_CMD)] = self.read_gen2_inp_resp
+        self.opp_commands[ord(OppRs232Intf.READ_MATRIX_INP)] = self.read_matrix_inp_resp
         self._poll_task = self.machine.clock.loop.create_task(self._poll_sender())
         self._poll_task.add_done_callback(self._done)
 
@@ -123,8 +127,8 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             msg: Message to parse.
         """
         if len(msg) >= 1:
-            if ((msg[0] >= ord(OppRs232Intf.CARD_ID_GEN2_CARD)) and
-                    (msg[0] < (ord(OppRs232Intf.CARD_ID_GEN2_CARD) + 0x20))):
+            # Verify valid Gen2 address
+            if (msg[0] & 0xe0) == 0x20:
                 if len(msg) >= 2:
                     cmd = msg[1]
                 else:
@@ -147,6 +151,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
             # TODO: This means synchronization is lost.  Send EOM characters
             #  until they come back
+            self.opp_connection[chain_serial].lost_synch()
 
     @asyncio.coroutine
     def _connect_to_hardware(self):
@@ -183,12 +188,9 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         This is done once per game loop if changes have been made.
 
-        It is currently assumed that the oversampling will guarantee proper communication
-        with the boards.  If this does not end up being the case, this will be changed
-        to update all the incandescents each loop.
-
-        Note:  This could be made much more efficient by supporting a command
-        that simply sets the state of all 32 of the LEDs as either on or off.
+        It is currently assumed that the UART oversampling will guarantee proper
+        communication with the boards.  If this does not end up being the case,
+        this will be changed to update all the incandescents each loop.
         """
         for incand in self.opp_incands:
             whole_msg = bytearray()
@@ -208,7 +210,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                 whole_msg.extend(msg)
 
             if len(whole_msg) != 0:
-                whole_msg.extend(OppRs232Intf.EOM_CMD)
+                # Note:  No need to send EOM at end of cmds
                 send_cmd = bytes(whole_msg)
 
                 self.send_to_processor(incand.chain_serial, send_cmd)
@@ -220,17 +222,28 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         return "opp_coils"
 
     def get_hw_switch_states(self):
-        """Get initial hardware switch states."""
+        """Get initial hardware switch states.
+        
+        This changes switches from active low to active high
+        """
         hw_states = dict()
         for opp_inp in self.opp_inputs:
-            curr_bit = 1
-            for index in range(0, 32):
-                if (curr_bit & opp_inp.mask) != 0:
-                    if (curr_bit & opp_inp.oldState) == 0:
-                        hw_states[opp_inp.chain_serial + '-' + opp_inp.cardNum + '-' + str(index)] = 1
+            if not opp_inp.isMatrix:
+                curr_bit = 1
+                for index in range(0, 32):
+                    if (curr_bit & opp_inp.mask) != 0:
+                        if (curr_bit & opp_inp.oldState) == 0:
+                            hw_states[opp_inp.chain_serial + '-' + opp_inp.cardNum + '-' + str(index)] = 1
+                        else:
+                            hw_states[opp_inp.chain_serial + '-' + opp_inp.cardNum + '-' + str(index)] = 0
+                    curr_bit <<= 1
+            else:
+                for index in range(0, 64):
+                    if ((1 << (index & 0x1f)) & opp_inp.oldState[(index & 0x20) >> 5]) == 0:
+                        hw_states[opp_inp.chain_serial + '-' + opp_inp.cardNum + '-' + str(index + 32)] = 1
                     else:
-                        hw_states[opp_inp.chain_serial + '-' + opp_inp.cardNum + '-' + str(index)] = 0
-                curr_bit <<= 1
+                        hw_states[opp_inp.chain_serial + '-' + opp_inp.cardNum + '-' + str(index + 32)] = 0
+                
         return hw_states
 
     def inv_resp(self, chain_serial, msg):
@@ -265,6 +278,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
     def _parse_gen2_board(self, chain_serial, msg, read_input_msg):
         has_neo = False
+        has_matrix = False
         wing_index = 0
         sol_mask = 0
         inp_mask = 0
@@ -277,8 +291,12 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                 inp_mask |= (0xff << (8 * wing_index))
             elif msg[2 + wing_index] == ord(OppRs232Intf.WING_INCAND):
                 incand_mask |= (0xff << (8 * wing_index))
+            elif msg[2 + wing_index] == ord(OppRs232Intf.WING_SW_MATRIX_OUT):
+                has_matrix = True
             elif msg[2 + wing_index] == ord(OppRs232Intf.WING_NEO):
                 has_neo = True
+            elif msg[2 + wing_index] == ord(OppRs232Intf.WING_HI_SIDE_INCAND):
+                incand_mask |= (0xff << (8 * wing_index))
             wing_index += 1
         if incand_mask != 0:
             self.opp_incands.append(OPPIncandCard(chain_serial, msg[0], incand_mask, self.incandDict, self.machine))
@@ -301,6 +319,25 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             inp_msg.extend(OppRs232Intf.calc_crc8_whole_msg(inp_msg))
             read_input_msg.extend(inp_msg)
 
+        if has_matrix:
+            # Create the matrix object, and add to the command to read all matrix inputs
+            self.opp_inputs.append(OPPMatrixCard(chain_serial, msg[0], self.inpDict,
+                                   self.matrixInpAddrDict))
+
+            # Add command to read all matrix inputs to read input message
+            inp_msg = bytearray()
+            inp_msg.append(msg[0])
+            inp_msg.extend(OppRs232Intf.READ_MATRIX_INP)
+            inp_msg.append(0)
+            inp_msg.append(0)
+            inp_msg.append(0)
+            inp_msg.append(0)
+            inp_msg.append(0)
+            inp_msg.append(0)
+            inp_msg.append(0)
+            inp_msg.append(0)
+            inp_msg.extend(OppRs232Intf.calc_crc8_whole_msg(inp_msg))
+            read_input_msg.extend(inp_msg)
         if has_neo:
             self.opp_neopixels.append(OPPNeopixelCard(chain_serial, msg[0], self.neoCardDict, self))
 
@@ -316,22 +353,22 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         curr_index = 0
         read_input_msg = bytearray()
         while True:
-            # check that message is long enough
-            if len(msg) < curr_index + 6:
+            # check that message is long enough, must include crc8
+            if len(msg) < curr_index + 7:
                 self.log.warning("Msg is too short: %s.", "".join(" 0x%02x" % b for b in msg))
                 self.opp_connection[chain_serial].lost_synch()
+                break
             # Verify the CRC8 is correct
             crc8 = OppRs232Intf.calc_crc8_part_msg(msg, curr_index, 6)
             if msg[curr_index + 6] != ord(crc8):
                 self.badCRC += 1
                 self.log.warning("Msg contains bad CRC:%s.", "".join(" 0x%02x" % b for b in msg))
                 break
-            else:
-                self._parse_gen2_board(chain_serial, msg[curr_index:curr_index + 6], read_input_msg)
+            self._parse_gen2_board(chain_serial, msg[curr_index:curr_index + 6], read_input_msg)
 
-            if msg[curr_index + 7] == ord(OppRs232Intf.EOM_CMD):
+            if (len(msg) > curr_index + 7) and (msg[curr_index + 7] == ord(OppRs232Intf.EOM_CMD)):
                 break
-            elif msg[curr_index + 8] == ord(OppRs232Intf.GET_GEN2_CFG):
+            elif (len(msg) > curr_index + 8) and (msg[curr_index + 8] == ord(OppRs232Intf.GET_GEN2_CFG)):
                 curr_index += 7
             else:
                 self.log.warning("Malformed GET_GEN2_CFG response:%s.",
@@ -351,40 +388,40 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """
         # Multiple get version responses can be received at once
         self.log.debug("Received Version Response:%s", "".join(" 0x%02x" % b for b in msg))
-        end = False
         curr_index = 0
-        while not end:
+        while True:
+            # check that message is long enough, must include crc8
+            if len(msg) < curr_index + 7:
+                self.log.warning("Msg is too short: %s.", "".join(" 0x%02x" % b for b in msg))
+                self.opp_connection[chain_serial].lost_synch()
+                break
             # Verify the CRC8 is correct
             crc8 = OppRs232Intf.calc_crc8_part_msg(msg, curr_index, 6)
             if msg[curr_index + 6] != ord(crc8):
                 self.badCRC += 1
-                hex_string = "".join(" 0x%02x" % b for b in msg)
-                self.log.warning("Msg contains bad CRC:%s.", hex_string)
-                end = True
+                self.log.warning("Msg contains bad CRC:%s.", "".join(" 0x%02x" % b for b in msg))
+                break
+            version = (msg[curr_index + 2] << 24) | \
+                (msg[curr_index + 3] << 16) | \
+                (msg[curr_index + 4] << 8) | \
+                msg[curr_index + 5]
+            self.log.debug("Firmware version: %d.%d.%d.%d", msg[curr_index + 2],
+                           msg[curr_index + 3], msg[curr_index + 4],
+                           msg[curr_index + 5])
+            if version < self.minVersion:
+                self.minVersion = version
+            if version == BAD_FW_VERSION:
+                raise AssertionError("Original firmware sent only to Brian before adding "
+                                     "real version numbers. The firmware must be updated before "
+                                     "MPF will work.")
+            if (len(msg) > curr_index + 7) and (msg[curr_index + 7] == ord(OppRs232Intf.EOM_CMD)):
+                break
+            elif (len(msg) > curr_index + 8) and (msg[curr_index + 8] == ord(OppRs232Intf.GET_VERS_CMD)):
+                curr_index += 7
             else:
-                version = (msg[curr_index + 2] << 24) | \
-                    (msg[curr_index + 3] << 16) | \
-                    (msg[curr_index + 4] << 8) | \
-                    msg[curr_index + 5]
-                self.log.debug("Firmware version: %d.%d.%d.%d", msg[curr_index + 2],
-                               msg[curr_index + 3], msg[curr_index + 4],
-                               msg[curr_index + 5])
-                if version < self.minVersion:
-                    self.minVersion = version
-                if version == BAD_FW_VERSION:
-                    raise AssertionError("Original firmware sent only to Brian before adding "
-                                         "real version numbers. The firmware must be updated before "
-                                         "MPF will work.")
-            if not end:
-                if msg[curr_index + 7] == ord(OppRs232Intf.EOM_CMD):
-                    end = True
-                elif msg[curr_index + 8] == ord(OppRs232Intf.GET_GET_VERS_CMD):
-                    curr_index += 7
-                else:
-                    hex_string = "".join(" 0x%02x" % b for b in msg)
-                    self.log.warning("Malformed GET_VERS_CMD response:%s.", hex_string)
-                    end = True
-                    self.opp_connection[chain_serial].lost_synch()
+                self.log.warning("Malformed GET_VERS_CMD response:%s.", "".join(" 0x%02x" % b for b in msg))
+                self.opp_connection[chain_serial].lost_synch()
+                break
 
     def read_gen2_inp_resp_initial(self, chain_serial, msg):
         """Read initial switch states.
@@ -394,7 +431,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             msg: Message to parse.
         """
         # Verify the CRC8 is correct
-        if len(msg) < 6:
+        if len(msg) < 7:
             raise AssertionError("Received too short initial input response: " + "".join(" 0x%02x" % b for b in msg))
         crc8 = OppRs232Intf.calc_crc8_part_msg(msg, 0, 6)
         if msg[6] != ord(crc8):
@@ -419,8 +456,8 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         # Single read gen2 input response.  Receive function breaks them down
 
         # Verify the CRC8 is correct
-        if len(msg) < 6:
-            self.log.warning("Msg too shortC: %s.", "".join(" 0x%02x" % b for b in msg))
+        if len(msg) < 7:
+            self.log.warning("Msg too short: %s.", "".join(" 0x%02x" % b for b in msg))
             self.opp_connection[chain_serial].lost_synch()
             return
 
@@ -453,6 +490,69 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                                 platform=self)
                     curr_bit <<= 1
             opp_inp.oldState = new_state
+
+    def read_matrix_inp_resp_initial(self, chain_serial, msg):
+        """Read initial matrix switch states.
+
+        Args:
+            chain_serial: Serial of the chain which received the message.
+            msg: Message to parse.
+        """
+        # Verify the CRC8 is correct
+        if len(msg) < 11:
+            raise AssertionError("Received too short initial input response: " + "".join(" 0x%02x" % b for b in msg))
+        crc8 = OppRs232Intf.calc_crc8_part_msg(msg, 0, 10)
+        if msg[10] != ord(crc8):
+            self.badCRC += 1
+            self.log.warning("Msg contains bad CRC:%s.", "".join(" 0x%02x" % b for b in msg))
+        else:
+            opp_inp = self.matrixInpAddrDict[chain_serial + '-' + str(msg[0])]
+            opp_inp.oldState[0] = (msg[2] << 24) | (msg[3] << 16) | (msg[4] << 8) | msg[5]
+            opp_inp.oldState[1] = (msg[6] << 24) | (msg[7] << 16) | (msg[8] << 8) | msg[9]
+
+    def read_matrix_inp_resp(self, chain_serial, msg):
+        """Read matrix switch changes.
+
+        Args:
+            chain_serial: Serial of the chain which received the message.
+            msg: Message to parse.
+        """
+        # Single read gen2 input response.  Receive function breaks them down
+
+        # Verify the CRC8 is correct
+        if len(msg) < 11:
+            self.log.warning("Msg too short: %s.", "".join(" 0x%02x" % b for b in msg))
+            self.opp_connection[chain_serial].lost_synch()
+            return
+
+        crc8 = OppRs232Intf.calc_crc8_part_msg(msg, 0, 10)
+        if msg[10] != ord(crc8):
+            self.badCRC += 1
+            self.log.warning("Msg contains bad CRC:%s.", "".join(" 0x%02x" % b for b in msg))
+        else:
+            opp_inp = self.matrixInpAddrDict[chain_serial + '-' + str(msg[0])]
+            new_state = [(msg[2] << 24) | (msg[3] << 16) | (msg[4] << 8) | msg[5], \
+                (msg[6] << 24) | (msg[7] << 16) | (msg[8] << 8) | msg[9]]
+
+            # Using a bank so 32 bit python works properly
+            for bank in range(0, 2):
+                changes = opp_inp.oldState[bank] ^ new_state[bank]
+                if changes != 0:
+                    curr_bit = 1
+                    for index in range(0, 32):
+                        if (curr_bit & changes) != 0:
+                            if (curr_bit & new_state[bank]) == 0:
+                                self.machine.switch_controller.process_switch_by_num(
+                                    state=1,
+                                    num=opp_inp.chain_serial + '-' + opp_inp.cardNum + '-' + str(index),
+                                    platform=self)
+                            else:
+                                self.machine.switch_controller.process_switch_by_num(
+                                    state=0,
+                                    num=opp_inp.chain_serial + '-' + opp_inp.cardNum + '-' + str(index),
+                                    platform=self)
+                        curr_bit <<= 1
+                opp_inp.oldState[bank] = new_state[bank]
 
     def _get_dict_index(self, input_str):
         if not isinstance(input_str, str):
@@ -604,22 +704,22 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             for chain_serial in self.read_input_msg:
                 self.send_to_processor(chain_serial, self.read_input_msg[chain_serial])
                 yield from self.opp_connection[chain_serial].writer.drain()
-                # the line above saturates the link and seems to overhelm the hardware. limit it to 100Hz
+                # the line above saturates the link and seems to overwhelm the hardware. limit it to 100Hz
                 yield from asyncio.sleep(1 / self.config['poll_hz'], loop=self.machine.clock.loop)
 
     def _verify_coil_and_switch_fit(self, switch, coil):
         chain_serial, card, solenoid = coil.hw_driver.number.split('-')
         sw_chain_serial, sw_card, sw_num = switch.hw_switch.number.split('-')
-        matching_sw = ((int(solenoid) & 0x0c) << 1) | (int(solenoid) & 0x03)
         if self.minVersion >= 0x00020000:
             if chain_serial != sw_chain_serial or card != sw_card:
                 raise AssertionError('Invalid switch being configured for driver. Driver = %s '
-                                     'Switch = %s. For Firmware 2.0+ driver and switch have to be on the same board.'
+                                     'Switch = %s. For Firmware 0.2.0+ driver and switch have to be on the same board.'
                                      % (coil.hw_driver.number, switch.hw_switch.number))
         else:
+            matching_sw = ((int(solenoid) & 0x0c) << 1) | (int(solenoid) & 0x03)
             if chain_serial != sw_chain_serial or card != sw_card or matching_sw != int(sw_num):
                 raise AssertionError('Invalid switch being configured for driver. Driver = %s '
-                                     'Switch = %s. For Firmware <2.0 they have to be on the same board and have the '
+                                     'Switch = %s. For Firmware < 0.2.0 they have to be on the same board and have the '
                                      'same number' % (coil.hw_driver.number, switch.hw_switch.number))
 
     def set_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
@@ -730,6 +830,9 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             self._remove_switch_coil_mapping(switch_num, coil.hw_driver)
 
         # disable rule if there are no more switches
+        # Technically not necessary unless the solenoid parameters are
+        # changing.  MPF may not know when initial kick and hold values
+        # are changed, so this might need to be called each time.
         if not coil.hw_driver.switches:
             coil.hw_driver.remove_switch_rule()
 
@@ -791,7 +894,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
         self.send_get_gen2_cfg_cmd()
         resp = yield from self.readuntil(b'\xff', 6)
 
-        # resp will contain the gen2 cfg reponses.  That will end up creating all the
+        # resp will contain the gen2 cfg responses.  That will end up creating all the
         # correct objects.
         self.platform.process_received_message(self.chain_serial, resp)
 
@@ -843,7 +946,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
         for card_addr in self.platform.gen2AddrArr[self.chain_serial]:
             msg = bytearray()
             msg.append(card_addr)
-            msg.extend(OppRs232Intf.GET_GET_VERS_CMD)
+            msg.extend(OppRs232Intf.GET_VERS_CMD)
             msg.append(0)
             msg.append(0)
             msg.append(0)
@@ -869,7 +972,7 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
     def _parse_msg(self, msg):
         self.partMsg += msg
         strlen = len(self.partMsg)
-        messaged_found = 0
+        message_found = 0
         # Split into individual responses
         while strlen >= 7:
             if self._lost_synch:
@@ -885,12 +988,18 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
 
             # Check if this is a gen2 card address
             if (self.partMsg[0] & 0xe0) == 0x20:
-                # Only command expect to receive back is
+                # Check if read input
                 if self.partMsg[1] == ord(OppRs232Intf.READ_GEN2_INP_CMD):
                     self.platform.process_received_message(self.chain_serial, self.partMsg[:7])
-                    messaged_found += 1
+                    message_found += 1
                     self.partMsg = self.partMsg[7:]
                     strlen -= 7
+                # Check if read matrix input
+                elif self.partMsg[1] == ord(OppRs232Intf.READ_MATRIX_INP):
+                    self.platform.process_received_message(self.chain_serial, self.partMsg[:11])
+                    message_found += 1
+                    self.partMsg = self.partMsg[11:]
+                    strlen -= 11
                 else:
                     # Lost synch
                     self.partMsg = self.partMsg[2:]
@@ -906,4 +1015,4 @@ class OPPSerialCommunicator(BaseSerialCommunicator):
                 strlen -= 1
                 self._lost_synch = True
 
-        return messaged_found
+        return message_found

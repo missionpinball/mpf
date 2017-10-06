@@ -16,6 +16,7 @@ class OPPInputCard(object):
         self.log = logging.getLogger('OPPInputCard')
         self.chain_serial = chain_serial
         self.addr = addr
+        self.isMatrix = False
         self.oldState = 0
         self.mask = mask
         self.cardNum = str(addr - ord(OppRs232Intf.CARD_ID_GEN2_CARD))
@@ -28,6 +29,28 @@ class OPPInputCard(object):
                 inp_dict[self.chain_serial + "-" + self.cardNum + '-' + str(index)] =\
                     OPPSwitch(self, self.chain_serial + "-" + self.cardNum + '-' + str(index))
 
+class OPPMatrixCard(object):
+
+    """OPP matrix input card."""
+
+    # pylint: disable-msg=too-many-arguments
+    def __init__(self, chain_serial, addr, inp_dict, inp_addr_dict):
+        """Initialise OPP matrix input card."""
+        self.log = logging.getLogger('OPPMatrixCard')
+        self.chain_serial = chain_serial
+        self.addr = addr
+        self.isMatrix = True
+        self.oldState = [0, 0]
+        self.cardNum = str(addr - ord(OppRs232Intf.CARD_ID_GEN2_CARD))
+
+        self.log.debug("Creating OPP Matrix Input at hardware address: 0x%02x", addr)
+
+        inp_addr_dict[chain_serial + '-' + str(addr)] = self
+        
+        # Matrix inputs are inputs 32 - 95 (OPP only supports 8x8 input switch matrices)
+        for index in range(32, 96):
+            inp_dict[self.chain_serial + "-" + self.cardNum + '-' + str(index)] =\
+                OPPSwitch(self, self.chain_serial + "-" + self.cardNum + '-' + str(index))
 
 class OPPSwitch(SwitchPlatformInterface):
 

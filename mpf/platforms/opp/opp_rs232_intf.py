@@ -7,8 +7,8 @@ class OppRs232Intf:
 
     GET_SER_NUM_CMD = b'\x00'
     GET_PROD_ID_CMD = b'\x01'
-    GET_GET_VERS_CMD = b'\x02'
-    GET_SET_SER_NUM_CMD = b'\x03'
+    GET_VERS_CMD = b'\x02'
+    SET_SER_NUM_CMD = b'\x03'
     RESET_CMD = b'\x04'
     GO_BOOT_CMD = b'\x05'
     CFG_SOL_CMD = b'\x06'
@@ -28,14 +28,14 @@ class OppRs232Intf:
     CFG_IND_INP_CMD = b'\x15'
     SET_IND_NEO_CMD = b'\x16'
     SET_SOL_INP_CMD = b'\x17'
+    UPGRADE_OTHER_BRD = b'\x18'
+    READ_MATRIX_INP = b'\x19'
 
     INV_CMD = b'\xf0'
     ILLEGAL_CMD = b'\xfe'
     EOM_CMD = b'\xff'
 
     CARD_ID_TYPE_MASK = b'\xf0'
-    CARD_ID_SOL_CARD = b'\x00'
-    CARD_ID_INP_CARD = b'\x10'
     CARD_ID_GEN2_CARD = b'\x20'
 
     NUM_G2_WING_PER_BRD = 4
@@ -45,16 +45,25 @@ class OppRs232Intf:
     WING_SW_MATRIX_OUT = b'\x04'
     WING_SW_MATRIX_IN = b'\x05'
     WING_NEO = b'\x06'
+    WING_HI_SIDE_INCAND = b'\x07'
 
     NUM_G2_INP_PER_BRD = 32
     CFG_INP_STATE = b'\x00'
     CFG_INP_FALL_EDGE = b'\x01'
     CFG_INP_RISE_EDGE = b'\x02'
 
+    # Solenoid configuration constants
+    CFG_BYTES_PER_SOL = 3
+    INIT_KICK_OFFSET = 1
+    DUTY_CYCLE_OFFSET = 2
     NUM_G2_SOL_PER_BRD = 16
+    
+    CFG_SOL_DISABLE = b'\x00'
     CFG_SOL_USE_SWITCH = b'\x01'
     CFG_SOL_AUTO_CLR = b'\x02'
     CFG_SOL_ON_OFF = b'\x04'
+    CFG_SOL_DLY_KICK = b'\x08'
+    CFG_SOL_USE_MTRX_INP = b'\x10'
 
     CFG_SOL_INP_REMOVE = b'\x80'
 
@@ -74,14 +83,6 @@ class OppRs232Intf:
     INCAND_SET_ON = b'\x01'
     INCAND_SET_BLINK_SLOW = b'\x02'
     INCAND_SET_BLINK_FAST = b'\x04'
-
-    # Solenoid configuration constants
-    CFG_BYTES_PER_SOL = 3
-    INIT_KICK_OFFSET = 1
-    DUTY_CYCLE_OFFSET = 2
-    # CFG_SOL_USE_SWITCH  = '\x01'
-    # CFG_SOL_AUTO_CLR    = '\x02'
-    CFG_SOL_DISABLE = b'\x00'
 
     CRC8_LOOKUP = [
         0x00, 0x07, 0x0e, 0x09, 0x1c, 0x1b, 0x12, 0x15, 0x38, 0x3f, 0x36, 0x31, 0x24, 0x23, 0x2a, 0x2d,
