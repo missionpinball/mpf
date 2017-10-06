@@ -1,0 +1,88 @@
+#config_version=4
+
+hardware:
+    platform: opp
+    driverboards: gen2
+
+opp:
+    ports: com1
+    baud: 115200
+    debug: True
+
+switches:
+    s_test:
+        number: 0-0
+    s_test_no_debounce:
+        number: 0-1
+        debounce: quick
+    s_test_nc:
+        number: 0-2
+        type: 'NC'
+    s_flipper:
+        number: 0-3
+    s_test_card2:
+        number: 0-8
+    s_matrix_test:
+        number: 3-48
+
+coils:
+    c_test:
+        number: 0-0
+        pulse_ms: 23
+    c_test_allow_enable:
+        number: 0-1
+        pulse_ms: 23
+        recycle_factor: 3
+        allow_enable: true
+    c_flipper_hold:
+        number: 0-2
+        allow_enable: true
+    c_flipper_main:
+        number: 0-3
+        pulse_ms: 10
+        hold_power: 3
+    c_holdpower_16:
+        number: 1-12
+        hold_power16: 1
+    c_matrix_test:
+        number: 3-0
+        pulse_ms: 42
+
+matrix_lights:
+  test_light1:
+    number: 0-16
+  test_light2:
+    number: 0-17
+
+leds:
+  test_led1:
+    number: 1-0
+  test_led2:
+    number: 1-1
+
+autofire_coils:
+    ac_slingshot_test:
+        coil: c_test
+        switch: s_test
+
+    ac_slingshot_test2:
+        coil: c_test_allow_enable
+        switch: s_test_no_debounce
+
+    ac_matrix_slingshot_test:
+        coil: c_matrix_test
+        switch: s_matrix_test
+        
+flippers:
+    f_test_single:
+        debug: true
+        #main_coil_overwrite:
+        #    pulse_ms: 11
+        main_coil: c_flipper_main
+        activation_switch: s_flipper
+
+    f_test_hold:
+        debug: true
+        main_coil: c_flipper_main
+        hold_coil: c_flipper_hold
+        activation_switch: s_flipper
