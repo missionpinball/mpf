@@ -67,6 +67,10 @@ class PlatformController(MpfController):
         pulse_duration = driver.driver.get_and_verify_pulse_ms(pulse_setting.duration if pulse_setting else None)
         pulse_power = driver.driver.get_and_verify_pulse_power(pulse_setting.power if pulse_setting else None)
         hold_power = driver.driver.get_and_verify_hold_power(hold_settings.power if hold_settings else None)
+
+        if hold_power == 0.0:
+            raise AssertionError("Cannot enable driver with hold_power 0.0")
+
         return DriverSettings(
             hw_driver=driver.driver.hw_driver,
             pulse_settings=PulseSettings(duration=pulse_duration, power=pulse_power),
