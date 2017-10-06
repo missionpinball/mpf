@@ -77,8 +77,8 @@ class Driver(SystemWideDevice):
 
         config = DriverConfig(
             default_pulse_ms=self.get_and_verify_pulse_ms(None),
-            default_pulse_power=self.config['default_pulse_power'],
-            default_hold_power=self.config['default_hold_power'],
+            default_pulse_power=self.get_and_verify_pulse_power(None),
+            default_hold_power=self.get_and_verify_hold_power(None),
             default_recycle=self.config['default_recycle'],
             max_pulse_ms=self.config['max_pulse_ms'],
             max_pulse_power=self.config['max_pulse_power'],
@@ -118,8 +118,17 @@ class Driver(SystemWideDevice):
 
         If hold_power is None it will use the default_hold_power. Additionally it will verify the limits.
         """
+        if hold_power is None and self.config['default_hold_power'] :
+            hold_power = self.config['default_hold_power']
+
+        if hold_power is None and self.config['max_hold_power']:
+            hold_power = self.config['max_hold_power']
+
+        if hold_power is None and self.config['allow_enable']:
+            hold_power = 1.0
+
         if hold_power is None:
-            hold_power = self.config['default_hold_power'] if self.config['default_hold_power'] is not None else 1.0
+            hold_power = 0.0
 
         if hold_power and 0 > hold_power > 1:
             raise AssertionError("Hold_power has to be between 0 and 1 but is {}".format(hold_power))
@@ -183,6 +192,9 @@ class Driver(SystemWideDevice):
 
         pulse_power = self.get_and_verify_pulse_power(pulse_power)
         hold_power = self.get_and_verify_hold_power(hold_power)
+
+        if hold_power == 0.0:
+            raise AssertionError("Cannot enable driver with hold_power 0.0")
 
         self.time_when_done = -1
         self.time_last_changed = self.machine.clock.get_time()
