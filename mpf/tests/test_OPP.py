@@ -32,6 +32,7 @@ class MockOppSocket(MockSerial):
         # print("Serial received: " + "".join("\\x%02x" % b for b in msg) + " len: " + str(len(msg)))
         if msg not in self.expected_commands:
             self.crashed = True
+            self.expected_commands = {"crashed"}
             print("Unexpected command: " + "".join("\\x%02x" % b for b in msg) + " len: " + str(len(msg)))
             raise AssertionError("Unexpected command: " + "".join("\\x%02x" % b for b in msg) +
                                  " len: " + str(len(msg)))
@@ -115,12 +116,13 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
             self._crc_message(b'\x23\x02\x00\x00\x00\x00'):
                 self._crc_message(board_version, False) + self._crc_message(board_version, False) +
                 self._crc_message(board_version),   # get version
-            self._crc_message(b'\x20\x17\x00\x80'): False,           # configure coil 0 - remove inputs
-            self._crc_message(b'\x20\x17\x01\x81'): False,           # configure coil 1 - remove inputs
-            self._crc_message(b'\x20\x17\x02\x82'): False,           # configure coil 2 - remove inputs
-            self._crc_message(b'\x20\x17\x03\x83'): False,           # configure coil 3 - remove inputs
-            self._crc_message(b'\x21\x17\x18\x8c'): False,           # configure coil 1-12 - remove inputs
-            self._crc_message(b'\x23\x17\x00\x80'): False,           # configure coil 3-0 - remove inputs
+
+            self._crc_message(b'\x20\x14\x00\x02\x17\x00'): False,  # configure coil 0
+            self._crc_message(b'\x20\x14\x01\x04\x17\x00'): False,  # configure coil 1
+            self._crc_message(b'\x20\x14\x02\x04\x0a\x00'): False,  # configure coil 2
+            self._crc_message(b'\x20\x14\x03\x00\x0a\x06'): False,  # configure coil 3
+            self._crc_message(b'\x21\x14\x0c\x00\x0a\x01'): False,  # configure coil 1-12
+            self._crc_message(b'\x23\x14\x00\x02\x2a\x00'): False,  # configure coil 3-0
         }
         self.serialMock.permanent_commands = {
             b'\xff': b'\xff',
@@ -175,8 +177,7 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
-        # enable a coil
-        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x01\x04\x17\x00')] = False
+        # enable a coil (which is already configured right)
         self.serialMock.expected_commands[self._crc_message(b'\x20\x07\x00\x02\x00\x02', False)] = False
         self.machine.coils.c_test_allow_enable.enable()
         self._wait_for_processing()
@@ -232,6 +233,11 @@ class TestOPP(OPPCommon, MpfTestCase):
                 self._crc_message(board1_config, False) + self._crc_message(board2_config),     # get config
             self._crc_message(b'\x20\x02\x00\x00\x00\x00', False) + self._crc_message(b'\x21\x02\x00\x00\x00\x00'):
                 self._crc_message(board1_version, False) + self._crc_message(board2_version),   # get version
+            self._crc_message(b'\x20\x14\x00\x02\x17\x00'): False,  # configure coil 0
+            self._crc_message(b'\x20\x14\x01\x00\x17\x0f'): False,  # configure coil 1
+            self._crc_message(b'\x20\x14\x02\x00\x0a\x0f'): False,  # configure coil 2
+            self._crc_message(b'\x20\x14\x03\x00\x0a\x06'): False,  # configure coil 3
+            self._crc_message(b'\x21\x14\x0c\x00\x0a\x01'): False,  # configure coil 1-12
         }
         self.serialMock.permanent_commands = {
             b'\xff': b'\xff',
@@ -296,6 +302,9 @@ class TestOPP(OPPCommon, MpfTestCase):
         # enable coil (not allowed)
         with self.assertRaises(AssertionError):
             self.machine.coils.c_test.enable()
+
+        self.assertFalse(self.serialMock.expected_commands)
+        self.assertFalse(self.serialMock.crashed)
 
         # disable coil
         self.serialMock.expected_commands[self._crc_message(b'\x20\x07\x00\x00\x00\x01', False)] = False

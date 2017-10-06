@@ -7,6 +7,8 @@ boards.
 import logging
 import asyncio
 
+from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, HoldSettings
+
 from mpf.platforms.base_serial_communicator import BaseSerialCommunicator
 
 from mpf.platforms.opp.opp_coil import OPPSolenoidCard
@@ -601,12 +603,12 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         opp_sol.config = config
         opp_sol.platform_settings = platform_settings
         self.log.debug("Configure driver %s", number)
+        default_pulse = PulseSettings(config.default_pulse_power, config.default_pulse_ms)
+        default_hold = HoldSettings(config.default_hold_power)
+        opp_sol.reconfigure_driver(default_pulse, default_hold)
 
-        _, _, coil_num_str = number.split("-")
-        coil_num = int(coil_num_str)
-        # calculate the default input and remove it by default
-        switch_num = int(coil_num - (coil_num % 4)) * 2 + (coil_num % 4)
-        self._remove_switch_coil_mapping(switch_num, opp_sol)
+        # Removing the default input is not necessary since the
+        # CFG_SOL_USE_SWITCH is not being set
 
         return opp_sol
 
