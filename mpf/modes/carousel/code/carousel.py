@@ -49,10 +49,6 @@ class Carousel(Mode):
 
         self._update_highlighted_item(None)
 
-    def mode_stop(self, **kwargs):
-        """Stop mode."""
-        super().mode_stop(**kwargs)
-
     def _register_handlers(self, events, handler):
         for event in events:
             self.add_mode_event_handler(event, handler)

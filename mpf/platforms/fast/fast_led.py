@@ -31,7 +31,7 @@ class FASTDirectLED:
         for index in [1, 0, 2]:
             color = self.colors[index]
             if callable(color):
-                brightness, fade_ms = color(self.hardware_fade_ms)
+                brightness, fade_ms = color(self.hardware_fade_ms)  # pylint: disable-msg=not-callable
                 result += hex(int(brightness * 255))[2:].zfill(2)
                 if fade_ms >= self.hardware_fade_ms:
                     self.dirty = True

@@ -95,7 +95,7 @@ class Tilt(Mode):
                 callback=self.slam_tilt)
 
     # ignore false positives about self.player
-    # pylint: disable-msg=unsubscriptable-object
+    # pylint: disable-msg=unsubscriptable-object,unsupported-assignment-operation
     def tilt_warning(self, **kwargs):
         """Process a tilt warning.
 

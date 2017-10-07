@@ -12,6 +12,7 @@ from mpf.core.async_mode import AsyncMode
 from mpf.core.player import Player
 
 
+# pylint: disable-msg=too-many-instance-attributes
 class Game(AsyncMode):
 
     """Base mode that runs an active game on a pinball machine.
@@ -41,7 +42,7 @@ class Game(AsyncMode):
 
     @asyncio.coroutine
     def _run(self):
-        """Main game mode method (basic game loop)."""
+        """Run the basic game loop."""
         # Init the game (game start process)
         # Initialize member variables
         self.player = None
@@ -116,7 +117,10 @@ class Game(AsyncMode):
         self.debug_log("Game started")
 
     def ball_ending(self):
-        """DEPRECATED in v0.50. Use ``end_ball()`` instead."""
+        """Handle ball ending.
+
+        DEPRECATED in v0.50. Use ``end_ball()`` instead.
+        """
         # TODO: Remove this function as it has been deprecated and replaced
         self.warning_log("game.ball_ending() function has been deprecated. "
                          "Please use game.end_ball() instead.")
@@ -273,7 +277,7 @@ class Game(AsyncMode):
 
     @asyncio.coroutine
     def _start_ball(self, is_extra_ball=False):
-        """Called when a new ball is starting.
+        """Perform ball start procedure.
 
         Note this method is called for each ball that starts, even if it's
         after a Shoot Again scenario for the same player.
@@ -407,7 +411,10 @@ class Game(AsyncMode):
         desc: The game has ended.'''
 
     def game_ending(self):
-        """DEPRECATED in v0.50. Use ``end_game()`` instead."""
+        """Handle game ending.
+
+        DEPRECATED in v0.50. Use ``end_game()`` instead.
+        """
         # TODO: Remove this function as it has been deprecated and replaced
         self.warning_log("game.game_ending() function has been deprecated. "
                          "Please use game.end_game() instead.")
@@ -449,7 +456,10 @@ class Game(AsyncMode):
 
     @asyncio.coroutine
     def _award_extra_ball(self):
-        """An extra ball has been awarded so the same player should shoot again."""
+        """Award an extra ball to the player.
+
+        Player gained an extra ball during play. Same player should shoot again.
+        """
         self.debug_log("Awarded extra ball to Player %s. Shoot Again", self.player.index + 1)
         self.player.extra_balls -= 1
         yield from self._start_ball(is_extra_ball=True)
@@ -495,9 +505,9 @@ class Game(AsyncMode):
         '''
 
     def _player_add_request_complete(self, ev_result=True, **kwargs) -> bool:
-        """Callback from our request player add event.
+        """Handle result of player_add_request callback.
 
-        Don't call it directly.
+        Callback from our request player add event. Don't call it directly.
         """
         del kwargs
         if ev_result is False:
@@ -537,7 +547,7 @@ class Game(AsyncMode):
         return True
 
     def _player_adding_complete(self, player, **kwargs):
-        """The player_adding queue event has completed (this is the callback function).
+        """Handle result of the player_adding queue event.
 
         The add player process can now finish.
         """
@@ -579,14 +589,16 @@ class Game(AsyncMode):
 
         return True
 
-    def _player_added(self, player, num):
+    @staticmethod
+    def _player_added(player, num):
         # Now that the player_added event has been posted, enable player
         # variable events and send all initial values
+        del num
         player.enable_events(True, True)
 
     @asyncio.coroutine
     def _start_player_turn(self):
-        """Called at the beginning of a player's turn.
+        """Start the players turn.
 
         Note this method is only called when a different player's turn is up.
         So if the same player shoots again due to an extra ball, this method

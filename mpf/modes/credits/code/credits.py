@@ -353,6 +353,8 @@ class Credits(Mode):
         self._audit(value, audit_class)
         self._reset_timeouts()
 
+    # credits is a built-in in python
+    # pylint: disable-msg=redefined-builtin
     def _credit_event_callback(self, credits, audit_class, **kwargs):
         del kwargs
         self.info_log("Credit event hit. Credit Added. Credits: %s. Type: %s", credits, audit_class)

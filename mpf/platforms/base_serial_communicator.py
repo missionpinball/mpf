@@ -21,8 +21,9 @@ class BaseSerialCommunicator(object):
         self.debug = self.platform.config['debug']
         self.port = port
         self.baud = baud
-        self.reader = None  # type: asyncio.StreamReader
-        self.writer = None  # type: asyncio.StreamWriter
+        self.reader = None      # type: asyncio.StreamReader
+        self.writer = None      # type: asyncio.StreamWriter
+        self.read_task = None   # type: asyncio.coroutine
 
     @asyncio.coroutine
     def connect(self):
@@ -54,7 +55,7 @@ class BaseSerialCommunicator(object):
         future.result()
 
     @asyncio.coroutine
-    def readuntil(self, separator, min_chars: int=0):
+    def readuntil(self, separator, min_chars: int = 0):
         """Read until separator.
 
         Args:
@@ -104,10 +105,9 @@ class BaseSerialCommunicator(object):
         while True:
             try:
                 resp = yield from self.reader.read(100)
-            # pylint: disable-msg=broad-except
             except asyncio.CancelledError:
                 raise
-            except Exception as e:
+            except Exception as e:  # pylint: disable-msg=broad-except
                 self.log.warning("Serial error: {}".format(e))
                 resp = None
 

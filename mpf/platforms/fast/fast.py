@@ -280,7 +280,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         self.hw_switch_data = hw_states
 
-    def convert_number_from_config(self, number):
+    @staticmethod
+    def convert_number_from_config(number):
         """Convert a number from config format to hex."""
         return Util.int_to_hex_string(number)
 
@@ -372,7 +373,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         board = int(board_str)
         servo = int(servo_str)
-        if 0 > board:
+        if board < 0:
             raise AssertionError("Board needs to be positive.")
 
         if servo < 0 or servo > 5:

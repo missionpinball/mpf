@@ -119,6 +119,7 @@ class HighScore(AsyncMode):
                 except KeyError:
                     self.high_scores[entries] = list()
 
+    # pylint: disable-msg=too-many-nested-blocks
     @asyncio.coroutine
     def _run(self) -> Generator[int, None, None]:
         """Run high score mode."""
