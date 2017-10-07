@@ -38,6 +38,7 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         self.machine = machine
         self.name = name.lower()
         self.tags = []          # type: List[str]
+        self.platform = None
         """List of tags applied to this device."""
 
         self.label = None       # type: str
@@ -52,7 +53,7 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         return self.name < other.name
 
     def device_added_to_mode(self, mode: "Mode") -> None:
-        """Called when a device is created by a mode.
+        """Add a device to a running mode.
 
         Args:
             mode: Mode which loaded the device
@@ -85,7 +86,7 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         del is_mode_config
         return config
 
-    def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str=None) -> dict:
+    def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None) -> dict:
         """Return the parsed and validated config.
 
         Args:
@@ -141,5 +142,5 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         return cls.collection, cls.config_section
 
     def _initialize(self):
-        """Default initialize method."""
+        """Initialise device."""
         pass

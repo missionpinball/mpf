@@ -179,14 +179,14 @@ class BallHold(SystemWideDevice, ModeDevice):
         Args:
             balls_to_release: number of ball to release from hold
         """
-        if len(self.hold_queue) == 0:
+        if not self.hold_queue:
             return 0
 
         remaining_balls_to_release = balls_to_release
 
         self.debug_log("Releasing up to %s balls from hold", balls_to_release)
         balls_released = 0
-        while len(self.hold_queue) > 0:
+        while self.hold_queue:
             device, balls_held = self.hold_queue.pop()
             balls = balls_held
             balls_in_device = device.balls
@@ -242,7 +242,7 @@ class BallHold(SystemWideDevice, ModeDevice):
         return balls
 
     def _hold_ball(self, device, new_balls, unclaimed_balls, **kwargs):
-        """Callback for _ball_enter event of hold_devices."""
+        """Handle result of _ball_enter event of hold_devices."""
         del new_balls
         del kwargs
         # if full do not take any balls

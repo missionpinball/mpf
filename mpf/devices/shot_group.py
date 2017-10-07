@@ -67,7 +67,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         return config
 
     def device_added_system_wide(self):
-        """Called when a device is added system wide."""
+        """Add device system wide."""
         super().device_added_system_wide()
 
         self._created_system_wide = True
@@ -83,10 +83,10 @@ class ShotGroup(ModeDevice, SystemWideDevice):
 
         config = self._get_mode_config(mode)
         if not config['enable_events'] or 'mode_{}_started'.format(mode.name) in config['enable_events']:
-            self.enable(mode)
+            self.enable(mode=mode)
         else:
             # manually call disable here so it disables the member shots
-            self.disable(mode)
+            self.disable(mode=mode)
 
     def _enable_related_device_debugging(self):
         self.debug_log(
@@ -179,12 +179,13 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         state: The name of the state the profile was in when it was hit'''
 
     @event_handler(10)
-    def enable(self, mode=None, profile=None, **kwargs):
+    def enable(self, **kwargs):
         """Enable this shot group.
 
         Also enables all the shots in this group.
         """
-        del kwargs
+        mode = kwargs.get("mode", None)
+        profile = kwargs.get("profile", None)
 
         if mode:
             self._enable_from_mode(mode, profile)
@@ -234,7 +235,7 @@ class ShotGroup(ModeDevice, SystemWideDevice):
         self.debug_log('Disabling from mode: %s', mode)
 
         for shot in self.config['shots']:
-            shot.disable(mode)
+            shot.disable(mode=mode)
             shot.deregister_group(self)
 
     @event_handler(9)

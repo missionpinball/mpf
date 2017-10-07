@@ -4,12 +4,13 @@ import os
 import re
 from copy import deepcopy
 
-from mpf.file_interfaces.yaml_roundtrip import YamlRoundtrip, MpfRoundTripLoader
-from ruamel import yaml
-from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from typing import Dict
 from typing import Tuple
 
+from ruamel import yaml
+from ruamel.yaml.comments import CommentedMap, CommentedSeq
+
+from mpf.file_interfaces.yaml_roundtrip import YamlRoundtrip, MpfRoundTripLoader
 from mpf.core.utility_functions import Util
 from mpf.migrator.migrator import VersionMigrator
 from mpf.core.rgb_color import named_rgb_colors, RGBColor
@@ -619,7 +620,7 @@ class V4Migrator(VersionMigrator):
                     YamlRoundtrip.del_key_with_comments(self.fc[section_name],
                                                         name, self.log)
 
-            if len(self.fc[section_name]) == 0:
+            if not self.fc[section_name]:
                 self.log.debug("%s: is now empty. Will remove it.",
                                section_name)
                 YamlRoundtrip.del_key_with_comments(self.fc, section_name,

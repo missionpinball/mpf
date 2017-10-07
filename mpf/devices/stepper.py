@@ -6,6 +6,7 @@ from mpf.core.events import event_handler
 from mpf.core.system_wide_device import SystemWideDevice
 
 
+# pylint: disable-msg=too-many-instance-attributes
 @DeviceMonitor(_position="position")
 class Stepper(SystemWideDevice):
 
@@ -32,6 +33,8 @@ class Stepper(SystemWideDevice):
         self._isMoving = False
         self._move_complete_pollrate = 100  # ms
         self._resetPosition = 0
+        self._position = None
+        self._max_velocity = None
 
         self.delay = DelayManager(machine.delayRegistry)
         super().__init__(machine, name)

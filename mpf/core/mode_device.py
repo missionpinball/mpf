@@ -17,7 +17,7 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
         self.loaded_in_mode = None      # type: Mode
 
     def device_added_to_mode(self, mode: Mode) -> None:
-        """Called when a device is created by a mode.
+        """Add device to a running mode.
 
         Args:
             mode: Mode which loaded the device
@@ -26,7 +26,7 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
         self._initialize()
 
     def device_loaded_in_mode(self, mode: Mode, player: Player) -> None:
-        """Called when a mode is loaded which contains this device.
+        """Load device in running mode.
 
         Args:
             mode: Mode which loaded the device
@@ -50,7 +50,7 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
         pass
 
     def add_control_events_in_mode(self, mode: Mode) -> None:
-        """Called on mode start if this device has any mode control events.
+        """Add control events in mode if this device has any mode control events.
 
         Args:
             mode: Mode which loaded the device

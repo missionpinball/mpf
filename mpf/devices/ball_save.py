@@ -46,7 +46,7 @@ class BallSave(SystemWideDevice, ModeDevice):
         """Return true if this device can exist outside of a game."""
         return True
 
-    def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str=None) -> dict:
+    def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None) -> dict:
         """Make sure timer_start_events are not in enable_events."""
         config = super().validate_and_parse_config(config, is_mode_config, debug_prefix)
 

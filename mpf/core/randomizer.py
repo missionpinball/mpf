@@ -19,7 +19,7 @@ class Randomizer(object):
         self.data = None
         self._uuid = uuid4()
 
-        if isinstance(items, list) or isinstance(items, tuple):
+        if isinstance(items, (list, tuple)):
             for i in items:
                 if isinstance(i, (tuple, list)):
                     this_item = i[0]

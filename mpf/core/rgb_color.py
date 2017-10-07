@@ -166,7 +166,7 @@ class RGBColor(object):
 
     """One RGB Color."""
 
-    def __init__(self, color: Union["RGBColor", str, List[int], Tuple[int, int, int]]=None) -> None:
+    def __init__(self, color: Union["RGBColor", str, List[int], Tuple[int, int, int]] = None) -> None:
         """Initialise color."""
         if isinstance(color, RGBColor):
             self._color = color.rgb
@@ -461,7 +461,7 @@ class RGBColorCorrectionProfile(object):
 
     """Encapsulates a named RGB color correction profile and its associated lookup tables."""
 
-    def __init__(self, name: str=None) -> None:
+    def __init__(self, name: str = None) -> None:
         """Create a linear correction profile that does not alter color values by default.
 
         Args:

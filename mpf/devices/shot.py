@@ -70,14 +70,14 @@ class Shot(ModeDevice, SystemWideDevice):
         return config
 
     def device_added_system_wide(self):
-        """Called when a device is added system wide."""
+        """Add device system wide."""
         super().device_added_system_wide()
         self._created_system_wide = True
 
         self.update_profile(profile=self.config['profile'], enable=False)
 
     def device_loaded_in_mode(self, mode: Mode, player: Player):
-        """Called when this shot is dynamically added to a mode that was already started.
+        """Add device to a mode that was already started.
 
         Automatically enables the shot and calls the the method
         that's usually called when a player's turn starts since that was missed
@@ -86,11 +86,11 @@ class Shot(ModeDevice, SystemWideDevice):
         self.player_turn_started(player)
 
         if not self.config['enable_events']:
-            self.enable(mode)
+            self.enable(mode=mode)
 
     def _validate_config(self):
-        if len(self.config['switch_sequence']) and (len(self.config['switch']) or len(self.config['switches']) or
-                                                    len(self.config['sequence'])):
+        if self.config['switch_sequence'] and (self.config['switch'] or self.config['switches'] or
+                                               self.config['sequence']):
             raise AssertionError("Config error in shot {}. A shot can have "
                                  "either switch_sequence, sequence or "
                                  "switch/switches".format(self))
@@ -384,8 +384,7 @@ class Shot(ModeDevice, SystemWideDevice):
         # mark the playfield active no matter what
         self.config['playfield'].mark_playfield_active_from_device_action()
         # Stop if there is an active delay but no sequence
-        if (self.active_delays and
-                not len(self.config['sequence'])):
+        if self.active_delays and not self.config['sequence']:
             return
 
         profile = self.get_profile_by_key('enable', True)
@@ -675,9 +674,10 @@ class Shot(ModeDevice, SystemWideDevice):
         self._update_show(mode=mode, show_step=show_step)
 
     @event_handler(10)
-    def enable(self, mode=None, profile=None, **kwargs):
+    def enable(self, **kwargs):
         """Enable shot."""
-        del kwargs
+        mode = kwargs.get("mode", None)
+        profile = kwargs.get("profile", None)
 
         self.debug_log("Received command to enable this shot from mode: %s "
                        "with profile: %s", mode, profile)

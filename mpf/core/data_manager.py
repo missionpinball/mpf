@@ -3,9 +3,9 @@
 import copy
 import os
 import errno
-import _thread
 import threading
 import time
+import _thread
 
 from mpf.core.file_manager import FileManager
 from mpf.core.mpf_controller import MpfController
@@ -105,14 +105,12 @@ class DataManager(MpfController):
         self.data = data
         self._trigger_save()
 
-    def save_key(self, key, value, delay_secs=0):
+    def save_key(self, key, value):
         """Update an individual key and then write the entire dictionary to disk.
 
         Args:
             key: String name of the key to add/update.
             value: Value of the key
-            delay_secs: Optional number of seconds to wait before writing the
-                data to disk. Default is 0.
         """
         try:
             self.data[key] = value

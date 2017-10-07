@@ -49,7 +49,7 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         """Do not auto enable this device in modes."""
         pass
 
-    def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str=None) -> dict:
+    def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None) -> dict:
         """Validate logic block config."""
         del is_mode_config
         del debug_prefix
@@ -282,7 +282,7 @@ class Counter(LogicBlock):
         """Return start count."""
         return self.config['starting_count'].evaluate([])
 
-    def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str=None) -> dict:
+    def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None) -> dict:
         """Validate logic block config."""
         if 'events_when_hit' not in config:
             # for compatibility post the same default as previously for
@@ -439,7 +439,7 @@ class Sequence(LogicBlock):
                 # increase priority with steps to prevent advancing multiple steps at once
                 self.machine.events.add_handler(event, self.hit, step=step, priority=step)
 
-    def hit(self, step: int=None, **kwargs):
+    def hit(self, step: int = None, **kwargs):
         """Increase the hit progress towards completion.
 
         Automatically called

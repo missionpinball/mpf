@@ -449,7 +449,7 @@ class ModeController(MpfController):
             self.stop_methods.remove((callback, priority))
 
     def set_mode_state(self, mode: Mode, active: bool):
-        """Called when a mode goes active or inactive."""
+        """Remember mode state."""
         if active:
             self.active_modes.append(mode)
         else:

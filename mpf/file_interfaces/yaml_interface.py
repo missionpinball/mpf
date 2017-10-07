@@ -7,6 +7,9 @@ import copy
 import logging
 import re
 
+from typing import Any, Iterable
+from typing import Dict
+
 import collections
 import ruamel.yaml as yaml
 from ruamel.yaml.reader import Reader
@@ -15,8 +18,6 @@ from ruamel.yaml.scanner import Scanner
 from ruamel.yaml.parser_ import Parser
 from ruamel.yaml.composer import Composer
 from ruamel.yaml.constructor import Constructor, ConstructorError
-from typing import Any, Iterable
-from typing import Dict
 
 from mpf.core.file_manager import FileInterface, FileManager
 from mpf.core.utility_functions import Util
@@ -28,10 +29,6 @@ log = logging.getLogger('YAML Interface')
 class MpfResolver(BaseResolver):
 
     """Resolver with mentioned fixes."""
-
-    def __init__(self):
-        """Initialise."""
-        super().__init__()
 
 MpfResolver.add_implicit_resolver(
     # Process any item beginning with a plus sign (+) as a string
@@ -109,10 +106,6 @@ MpfResolver.add_implicit_resolver(
 class MpfConstructor(Constructor):
 
     """Constructor with fix."""
-
-    def __init__(self):
-        """Initialise."""
-        super().__init__()
 
     def construct_mapping(self, node, deep=False):
         """Construct mapping but raise error when a section is defined twice.
@@ -274,8 +267,7 @@ class YamlInterface(FileInterface):
             elif halt_on_error:
                 raise ValueError("Error found in file %s" % filename)
 
-        # pylint: disable-msg=broad-except
-        except Exception:   # pragma: no cover
+        except Exception:   # pylint: disable-msg=broad-except
             self.log.debug("Couldn't load from file: %s", filename)
 
             if halt_on_error:
@@ -294,6 +286,6 @@ class YamlInterface(FileInterface):
     def save(self, filename: str, data: dict) -> None:   # pragma: no cover
         """Save config to yaml file."""
         with open(filename, 'w', encoding='utf8') as output_file:
-                output_file.write(yaml.dump(data, default_flow_style=False))
+            output_file.write(yaml.dump(data, default_flow_style=False))
 
 file_interface_class = YamlInterface

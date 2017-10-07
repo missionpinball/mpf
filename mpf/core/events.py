@@ -59,7 +59,7 @@ class EventManager(MpfController):
         else:
             return event_string.lower(), None
 
-    def add_handler(self, event: str, handler: Any, priority: int=1, **kwargs) -> EventHandlerKey:
+    def add_handler(self, event: str, handler: Any, priority: int = 1, **kwargs) -> EventHandlerKey:
         """Register an event handler to respond to an event.
 
         If you add a handlers for an event for which it has already been
@@ -181,7 +181,7 @@ class EventManager(MpfController):
                 )
             devices.append(cls)
 
-    def replace_handler(self, event: str, handler: Any, priority: int=1,
+    def replace_handler(self, event: str, handler: Any, priority: int = 1,
                         **kwargs: dict) -> EventHandlerKey:
         """Check to see if a handler (optionally with kwargs) is registered for an event and replaces it if so.
 
@@ -261,8 +261,8 @@ class EventManager(MpfController):
                     self.debug_log("Removing method %s from event %s", (str(handler).split(' '))[2], event)
                     events_to_delete_if_empty.append(event)
 
-        for event in events_to_delete_if_empty:
-            self._remove_event_if_empty(event)
+        for this_event in events_to_delete_if_empty:
+            self._remove_event_if_empty(this_event)
 
     def remove_handler_by_key(self, key: EventHandlerKey) -> None:
         """Remove a registered event handler by key.
@@ -449,7 +449,6 @@ class EventManager(MpfController):
                 methods if certain ones don't need them.)
 
         Examples:
-
             Post the queue event called *pizza_time*, and then call
             ``self.pizza_done`` when done:
 
@@ -519,9 +518,9 @@ class EventManager(MpfController):
 
         self.event_queue.append(posted_event)
         self.debug_log("+============= EVENTS QUEUE =============")
-        for event in list(self.event_queue):    # type: ignore
-            self.debug_log("| %s, %s, %s, %s", event[0], event[1],
-                           event[2], event[3])
+        for this_event in list(self.event_queue):    # type: ignore
+            self.debug_log("| %s, %s, %s, %s", this_event[0], this_event[1],
+                           this_event[2], this_event[3])
         self.debug_log("+========================================")
 
     @asyncio.coroutine
@@ -658,10 +657,10 @@ class EventManager(MpfController):
 
     def process_event_queue(self) -> None:
         """Check if there are any other events that need to be processed, and then process them."""
-        while len(self.event_queue) > 0 or len(self.callback_queue) > 0:
+        while self.event_queue or self.callback_queue:
             # first process all events. if they post more events we will
             # process them in the same loop.
-            while len(self.event_queue) > 0:
+            while self.event_queue:
                 event = self.event_queue.popleft()
                 if event.type == "queue":
                     self._process_queue_event(event=event[0],
@@ -676,7 +675,7 @@ class EventManager(MpfController):
             # when all events are processed run the _last_ callback. afterwards
             # continue with the loop and run all events. this makes sure all
             # events are completed before running the callback
-            if len(self.callback_queue) > 0:
+            if self.callback_queue:
                 callback, kwargs = self.callback_queue.pop()
                 callback(**kwargs)
 
@@ -719,7 +718,7 @@ class QueuedEvent(object):
 
 
 def event_handler(relative_priority):
-    """Decorator for event handlers."""
+    """Decorate an event handler."""
     def decorator(func):
         """Decorate a function with relative priority."""
         func.relative_priority = relative_priority

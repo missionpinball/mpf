@@ -221,7 +221,7 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
         del settings
         return True
 
-    def register_player_events(self, config, mode: Mode=None, priority=0):
+    def register_player_events(self, config, mode: Mode = None, priority=0):
         """Register events for standalone player."""
         # config is localized
         key_list = list()
@@ -267,7 +267,7 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
         self.machine.events.remove_handlers_by_keys(key_list)
 
     def config_play_callback(self, settings, calling_context, priority=0, mode=None, **kwargs):
-        """Callback for standalone player."""
+        """Handle play callback for standalone player."""
         # called when a config_player event is posted
         if mode:
             if not mode.active:
@@ -287,7 +287,7 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
 
     # pylint: disable-msg=too-many-arguments
     def show_play_callback(self, settings, priority, calling_context, show_tokens, context):
-        """Callback if used in a show."""
+        """Handle show callback."""
         # called from a show step
         if context not in self.instances:
             self.instances[context] = dict()
@@ -304,7 +304,7 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
                   show_tokens=show_tokens, context=context)
 
     def show_stop_callback(self, context):
-        """Callback if show stops."""
+        """Handle show stop."""
         self.unload_player_events(self._show_keys[context + self.config_file_section])
         del self._show_keys[context + self.config_file_section]
 

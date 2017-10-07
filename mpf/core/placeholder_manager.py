@@ -100,8 +100,8 @@ class TextTemplate:
 
     """Legacy text placeholder."""
 
-    var_finder = re.compile("(?<=\()[a-zA-Z_0-9|]+(?=\))")
-    string_finder = re.compile("(?<=\$)[a-zA-Z_0-9]+")
+    var_finder = re.compile("(?<=\\()[a-zA-Z_0-9|]+(?=\\))")
+    string_finder = re.compile("(?<=\\$)[a-zA-Z_0-9]+")
 
     def __init__(self, machine: "MachineController", text: str) -> None:
         """Initialise placeholder."""

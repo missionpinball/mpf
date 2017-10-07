@@ -46,7 +46,9 @@ class Attract(Mode):
                 playfield.ball_search.start()
 
     def start_button_pressed(self):
-        """Called when the a switch tagged with *start* is activated.
+        """Handle start button press.
+
+        Called when the a switch tagged with *start* is activated.
 
         Note that in MPF, the game start process is initiated when the start
         button is *released*, so when the button is first pressed, MPF just
@@ -58,7 +60,9 @@ class Attract(Mode):
         self.start_button_pressed_time = self.machine.clock.get_time()
 
     def start_button_released(self):
-        """Called when the a switch tagged with *start* is deactivated.
+        """Handle start button release.
+
+        Called when the a switch tagged with *start* is deactivated.
 
         Since this is the Attract mode, this method posts a boolean event
         called *request_to_start_game*. If that event comes back True, this
@@ -85,7 +89,9 @@ class Attract(Mode):
         '''
 
     def result_of_start_request(self, ev_result=True):
-        """Called after the *request_to_start_game* event is posted.
+        """Handle the result of the start request.
+
+        Called after the *request_to_start_game* event is posted.
 
         If `result` is True, this method posts the event
         *game_start*. If False, nothing happens, as the game start

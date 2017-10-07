@@ -35,7 +35,7 @@ class DualWoundCoil(SystemWideDevice):
         self.config['hold_coil'].disable()
 
     @event_handler(3)
-    def pulse(self, milliseconds: int=None, power: float=None, **kwargs):
+    def pulse(self, milliseconds: int = None, power: float = None, **kwargs):
         """Pulse this driver.
 
         Args:

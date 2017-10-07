@@ -382,7 +382,7 @@ class SwitchController(MpfController):
         if obj.hw_state == hw_state:
             self.process_switch(obj.name, state, logical)
 
-    def wait_for_switch(self, switch_name: str, state: int=1, only_on_change=True, ms=0):
+    def wait_for_switch(self, switch_name: str, state: int = 1, only_on_change=True, ms=0):
         """Wait for a switch to change into a state.
 
         Args:
@@ -397,7 +397,7 @@ class SwitchController(MpfController):
         """
         return self.wait_for_any_switch([switch_name], state, only_on_change, ms)
 
-    def wait_for_any_switch(self, switch_names: List[str], state: int=1, only_on_change=True, ms=0):
+    def wait_for_any_switch(self, switch_names: List[str], state: int = 1, only_on_change=True, ms=0):
         """Wait for the first switch in the list to change into state.
 
         Args:

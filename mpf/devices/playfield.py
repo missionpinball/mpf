@@ -113,7 +113,7 @@ class Playfield(SystemWideDevice):
 
     @property
     def balls(self):
-        """The number of balls on the playfield."""
+        """Return the number of balls on the playfield."""
         return self._balls
 
     @balls.setter
@@ -158,7 +158,7 @@ class Playfield(SystemWideDevice):
 
     @classmethod
     def get_additional_ball_capacity(cls):
-        """The number of ball which can be added.
+        """Return the number of ball which can be added.
 
         Used to find out how many more balls this device can hold. Since this
         is the playfield device, this method always returns 999.
@@ -353,7 +353,7 @@ class Playfield(SystemWideDevice):
 
     @classmethod
     def is_playfield(cls):
-        """True since it is a playfield."""
+        """Return true since it is a playfield."""
         return True
 
     def add_incoming_ball(self, incoming_ball: IncomingBall):

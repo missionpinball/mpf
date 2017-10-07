@@ -143,7 +143,7 @@ class Player(object):
             send_all_variables: Flag indicating whether or not to send an event
                 with the current value of every player variable.
         """
-        self._events_enabled = enable
+        self._events_enabled = enable   # noqa
 
         # Send all current player variable values as events (if requested)
         if enable and send_all_variables:
@@ -158,6 +158,7 @@ class Player(object):
                 else:
                     self._send_variable_event(name, value, value, 0, self.vars['number'])
 
+    # pylint: disable-msg=too-many-arguments
     def _send_variable_event(self, name: str, value, prev_value, change, player_num: int):
         """Send a player variable event performs any monitor callbacks if configured.
 

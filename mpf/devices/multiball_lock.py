@@ -211,7 +211,7 @@ class MultiballLock(ModeDevice):
         return balls
 
     def _lock_ball(self, unclaimed_balls: int, device: "BallDevice", **kwargs):
-        """Callback for _ball_enter event of lock_devices."""
+        """Handle result of the _ball_enter event of lock_devices."""
         del kwargs
         # if full do not take any balls
         if self.is_virtually_full:

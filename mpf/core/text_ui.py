@@ -15,6 +15,7 @@ if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController
 
 
+# pylint: disable-msg=too-many-instance-attributes
 class TextUi(MpfController):
 
     """Handles the text-based UI."""
@@ -92,8 +93,7 @@ class TextUi(MpfController):
             self.columns[i] = int(self.screen.width * percent)
 
         height, width = self.screen.dimensions
-        title = 'Mission Pinball Framework v{}'.format(
-            mpf._version.__version__)
+        title = 'Mission Pinball Framework v{}'.format(mpf._version.__version__)    # noqa
         padding = int((self.screen.width - len(title)) / 2)
 
         self.screen.print_at((' ' * padding) + title + (' ' * (padding + 1)),

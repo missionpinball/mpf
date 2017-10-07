@@ -231,7 +231,7 @@ class Mode(LogMixin):
         '''
 
     def _started(self) -> None:
-        """Called after the mode_<name>_starting queue event has finished."""
+        """Handle result of mode_<name>_starting queue event."""
         self.info_log('Started. Priority: %s', self.priority)
 
         self.active = True
@@ -249,7 +249,7 @@ class Mode(LogMixin):
         '''
 
     def _mode_started_callback(self, **kwargs) -> None:
-        """Called after the mode_<name>_started queue event has finished."""
+        """Handle result of mode_<name>_started queue event."""
         del kwargs
         self.mode_start(**self.start_event_kwargs)
 
@@ -260,7 +260,7 @@ class Mode(LogMixin):
 
         self.debug_log('Mode Start process complete.')
 
-    def stop(self, callback: Callable[[], None]=None, **kwargs) -> bool:
+    def stop(self, callback: Callable[[], None] = None, **kwargs) -> bool:
         """Stop this mode.
 
         Args:
@@ -502,13 +502,13 @@ class Mode(LogMixin):
         for device in device_list:
             device.add_control_events_in_mode(self)
 
-    def _control_event_handler(self, callback: Callable[..., None], ms_delay: int=0, **kwargs) -> None:
+    def _control_event_handler(self, callback: Callable[..., None], ms_delay: int = 0, **kwargs) -> None:
         del kwargs
         self.debug_log("_control_event_handler: callback: %s,", callback)
 
         self.delay.add(ms=ms_delay, callback=callback, mode=self)
 
-    def add_mode_event_handler(self, event: str, handler: Callable, priority: int=0, **kwargs):
+    def add_mode_event_handler(self, event: str, handler: Callable, priority: int = 0, **kwargs):
         """Register an event handler which is automatically removed when this mode stops.
 
         This method is similar to the Event Manager's add_handler() method,

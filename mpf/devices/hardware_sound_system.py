@@ -15,6 +15,7 @@ class HardwareSoundSystem(SystemWideDevice):
         """Initialise hardware sound system."""
         super().__init__(machine, name)
         self.hw_device = None       # type: HardwareSoundPlatformInterface
+        self.platform = None
 
     def _initialize(self):
         """Configure hardware."""

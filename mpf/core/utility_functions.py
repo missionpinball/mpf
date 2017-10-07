@@ -4,9 +4,9 @@ import re
 from fractions import Fraction
 from functools import reduce
 
+from typing import Dict, Iterable, List, Tuple, Callable, Any, Union
 import asyncio
 from ruamel.yaml.compat import ordereddict
-from typing import Dict, Iterable, List, Tuple, Callable, Any, Union
 
 
 class Util(object):
@@ -15,6 +15,7 @@ class Util(object):
 
     hex_matcher = re.compile("(?:[a-fA-F0-9]{6,8})")
 
+    # pylint: disable-msg=too-many-return-statements
     @staticmethod
     def convert_to_simply_type(value):
         """Convert value to a simple type."""
@@ -30,8 +31,8 @@ class Util(object):
 
         elif isinstance(value, dict):
             new_dict = dict()
-            for key, value in value.items():
-                new_dict[Util.convert_to_simply_type(key)] = Util.convert_to_simply_type(value)
+            for key, this_value in value.items():
+                new_dict[Util.convert_to_simply_type(key)] = Util.convert_to_simply_type(this_value)
 
             return new_dict
 
@@ -113,7 +114,7 @@ class Util(object):
         elif string is None:
             return []  # If it's None, make it into an empty list
 
-        elif isinstance(string, int) or isinstance(string, float):
+        elif isinstance(string, (int, float)):
             return [string]
 
         elif str(type(string)) == "<class 'ruamel.yaml.comments.CommentedSeq'>":
@@ -268,7 +269,7 @@ class Util(object):
         return output[0:output_length:]
 
     @staticmethod
-    def hex_string_to_int(inputstring: str, maxvalue: int=255) -> int:
+    def hex_string_to_int(inputstring: str, maxvalue: int = 255) -> int:
         """Take a string input of hex numbers and an integer.
 
         Args:
@@ -451,13 +452,13 @@ class Util(object):
             raise ValueError("Invalid pwm value. (Expected value 0-8)")
 
     @staticmethod
-    def power_to_on_off(power: float, max_period: int=20) -> Tuple[int, int]:
+    def power_to_on_off(power: float, max_period: int = 20) -> Tuple[int, int]:
         """Convert a float value to on/off times."""
         if power > 1.0 or power < 0.0:
             raise ValueError("power has to be between 0 and 1")
 
         # special case for 0%
-        if 0.0 == power:
+        if power == 0.0:
             return 0, 0
 
         fraction = Fraction.from_float(power).limit_denominator(max_period)
@@ -468,7 +469,7 @@ class Util(object):
         return on_ms, off_ms
 
     @staticmethod
-    def normalize_hex_string(source_hex: str, num_chars: int=2) -> str:
+    def normalize_hex_string(source_hex: str, num_chars: int = 2) -> str:
         """Take an incoming hex value and convert it to uppercase and fills in leading zeros.
 
         Args:
@@ -476,7 +477,8 @@ class Util(object):
             num_chars: Total number of characters that will be returned. Default
                 is two.
 
-        Returns: String, uppercase, zero padded to the num_chars.
+        Returns:
+            String, uppercase, zero padded to the num_chars.
 
         Example usage: Send "c" as source_hex, returns "0C".
 

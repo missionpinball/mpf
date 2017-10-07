@@ -54,7 +54,7 @@ class DelayManager(MpfController):
         self.registry = registry
         self.registry.add_delay_manager(self)
 
-    def add(self, ms: int, callback: Callable[..., None], name: str=None,
+    def add(self, ms: int, callback: Callable[..., None], name: str = None,
             **kwargs) -> str:
         """Add a delay.
 

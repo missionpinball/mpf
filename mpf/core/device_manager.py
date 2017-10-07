@@ -120,7 +120,7 @@ class DeviceManager(MpfController):
         """Stop all devices in the machine."""
         for device_type in self.machine.config['mpf']['device_modules']:
             device_cls = Util.string_to_class(device_type)
-            collection_name, config = device_cls.get_config_info()
+            collection_name, _ = device_cls.get_config_info()
             for device in getattr(self.machine, collection_name):
                 if hasattr(device, "stop_device"):
                     device.stop_device()
@@ -206,6 +206,7 @@ class DeviceManager(MpfController):
             for device_name in config:
                 collection[device_name].device_added_system_wide()
 
+    # pylint: disable-msg=too-many-nested-blocks
     def get_device_control_events(self, config):
         """Scan a config dictionary for control_events.
 
@@ -321,19 +322,19 @@ class DeviceCollectionType(Sized, Container[KT], Generic[KT, VT], Iterable[VT], 
     """Type for a device collection."""
 
     def values(self) -> Iterable[VT]:
-        """Dummy for type annotations."""
+        """Annotate dummy for type annotations."""
         pass
 
     def items_tagged(self, tag: str) -> Iterable[VT]:
-        """Dummy for type annotations."""
+        """Annotate dummy for type annotations."""
         pass
 
     def __getitem__(self, key: KT) -> VT:
-        """Dummy for type annotations."""
+        """Annotate dummy for type annotations."""
         pass
 
     def __getattr__(self, key: str) -> VT:
-        """Dummy for type annotations."""
+        """Annotate dummy for type annotations."""
         pass
 
 
@@ -378,6 +379,7 @@ class DeviceCollection(CaseInsensitiveDict):
         Args:
             tag: A string of the tag name which specifies what devices are
                 returned.
+
         Returns:
             A list of device objects. If no devices are found with that tag, it
             will return an empty list.
@@ -394,6 +396,7 @@ class DeviceCollection(CaseInsensitiveDict):
         Args:
             tag: A string of the tag name which specifies what devices are
                 returned.
+
         Returns:
             A list of string names of devices. If no devices are found with
             that tag, it will return an empty list.
@@ -411,6 +414,7 @@ class DeviceCollection(CaseInsensitiveDict):
             tag: A string of the tag name which specifies what devices are
                 returned. All devices will be returned except those with this
                 tag.
+
         Returns:
             A list of device objects. If no devices are found with that tag, it
             will return an empty list.
@@ -426,6 +430,7 @@ class DeviceCollection(CaseInsensitiveDict):
 
         Args:
             name: The string of the device name you want to check.
+
         Returns:
             True or False, depending on whether the name is a valid device or
             not.
@@ -464,7 +469,10 @@ class DeviceCollection(CaseInsensitiveDict):
         return [x.name for x in multilist]
 
     def multilist_to_objects(self, multilist):
-        """Same as multilist_to_names() method, except it returns a list of objects instead of a list of strings."""
+        """Convert list of devices to a list of objects.
+         
+        Same as multilist_to_names() method, except it return a list of objects instead of a list of strings.
+        """
         multilist = Util.string_to_list(multilist)
         final_list = list()
 

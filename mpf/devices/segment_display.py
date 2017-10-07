@@ -40,7 +40,7 @@ class SegmentDisplay(SystemWideDevice):
         # configure hardware
         self.hw_display = self.platform.configure_segment_display(self.config['number'])
 
-    def add_text(self, text: str, priority: int=0, key: str=None) -> None:
+    def add_text(self, text: str, priority: int = 0, key: str = None) -> None:
         """Add text to display stack."""
         self._text_stack.append(TextStack(text, priority, key))
         self._update_stack()

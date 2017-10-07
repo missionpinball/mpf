@@ -50,7 +50,7 @@ class Motor(SystemWideDevice):
                 switch.name, self._reached_position, callback_kwargs={"position": position})
 
     def _reached_position(self, position, **kwargs):
-        """Called when motor reached a certain position."""
+        """Handle that motor reached a certain position."""
         del kwargs
         self.debug_log("Motor is in position %s", position)
 

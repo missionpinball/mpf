@@ -41,6 +41,12 @@ class Timer(ModeDevice):
         self.tick_secs = None               # type: float
         self.player = None                  # type: Player
         self.end_value = None               # type: int
+        self.max_value = None               # type: int
+        self.ticks_remaining = None         # type: int
+        self.direction = None               # type: str
+        self.timer = None                   # type: PeriodicTask
+        self.event_keys = list()            # type: List[EventHandlerKey]
+        self.delay = None                   # type: DelayManager
 
     def device_added_to_mode(self, mode: Mode):
         """Device added in mode."""
@@ -52,8 +58,8 @@ class Timer(ModeDevice):
         self.max_value = self.config['max_value']
         self.direction = self.config['direction'].lower()
         self.tick_secs = None
-        self.timer = None               # type: PeriodicTask
-        self.event_keys = list()        # type: List[EventHandlerKey]
+        self.timer = None
+        self.event_keys = list()
         self.delay = DelayManager(self.machine.delayRegistry)
 
         self.restart_on_complete = self.config['restart_on_complete']

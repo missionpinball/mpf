@@ -63,7 +63,9 @@ class BasePlatform(metaclass=abc.ABCMeta):
         pass
 
     def tick(self):
-        """Called once per machine loop.
+        """Run task.
+
+        Called periodically.
 
         Subclass this method in a platform module to perform periodic updates
         to the platform hardware, e.g. reading switches, sending driver or
@@ -279,9 +281,9 @@ class LightsPlatform(BasePlatform, metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     def light_sync(self):
-        """Called after channels of a light were updated.
+        """Update lights synchonously.
 
-        Can be used if multiple channels need to be flushed at once.
+        Called after channels of a light were updated. Can be used if multiple channels need to be flushed at once.
         """
         pass
 

@@ -341,7 +341,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         self.member_target_change()
 
     def member_target_change(self):
-        """A member drop target has changed state.
+        """Handle that a member drop target has changed state.
 
         This method causes this group to update its down and up counts and
         complete status.

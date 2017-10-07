@@ -245,7 +245,7 @@ class Diverter(SystemWideDevice):
             self.diverting_ejects_count = 0
 
             # If there are ejects waiting for the other target switch diverter
-            if len(self.eject_attempt_queue) > 0:
+            if self.eject_attempt_queue:
                 if not self.eject_state:
                     self.eject_state = True
                     self.debug_log(
@@ -260,12 +260,12 @@ class Diverter(SystemWideDevice):
                     self.disable()
                 # And perform those ejects
                 if self.config['allow_multiple_concurrent_ejects_to_same_side']:
-                    while len(self.eject_attempt_queue) > 0:
+                    while self.eject_attempt_queue:
                         self.diverting_ejects_count += 1
                         queue = self.eject_attempt_queue.pop()
                         queue.clear()
                 else:
-                    if len(self.eject_attempt_queue) > 0:
+                    if self.eject_attempt_queue:
                         self.diverting_ejects_count += 1
                         queue = self.eject_attempt_queue.pop()
                         queue.clear()

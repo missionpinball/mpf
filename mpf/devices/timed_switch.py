@@ -19,7 +19,7 @@ class TimedSwitch(SystemWideDevice, ModeDevice):
         super().__init__(machine, name)
         self.active_switches = set()
 
-    def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str=None) -> dict:
+    def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None) -> dict:
         """Validate and parse config."""
         config = super().validate_and_parse_config(config, is_mode_config, debug_prefix)
 

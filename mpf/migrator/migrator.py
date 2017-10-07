@@ -8,10 +8,10 @@ import logging
 import importlib
 from copy import deepcopy
 
-from mpf.file_interfaces.yaml_roundtrip import YamlRoundtrip
 from ruamel import yaml
 from ruamel.yaml.comments import CommentedSeq, CommentedMap
 
+from mpf.file_interfaces.yaml_roundtrip import YamlRoundtrip
 from mpf._version import version
 from mpf.core.file_manager import FileManager
 from mpf.core.utility_functions import Util
@@ -113,7 +113,7 @@ class Migrator(object):
         round2_files = list()
 
         for file in self.file_list:
-            file_content = FileManager.load(file, round_trip=True)
+            file_content = FileManager.load(file)
 
             if isinstance(file_content, CommentedMap):
                 migrated_content = self.migrator.migrate_file(file,
@@ -125,7 +125,7 @@ class Migrator(object):
                 round2_files.append(file)
 
         for file in round2_files:
-            file_content = FileManager.load(file, round_trip=True)
+            file_content = FileManager.load(file)
             migrated_content = self.migrator.migrate_file(file, file_content)
             if migrated_content:
                 self.num_show_files += 1
@@ -141,7 +141,7 @@ class Migrator(object):
     def save_file(self, file_name, file_contents):
         """Save file."""
         self.log.info("Writing file: %s", file_name)
-        FileManager.save(file_name, file_contents, include_comments=True)
+        FileManager.save(file_name, file_contents)
 
 
 class VersionMigrator(object):

@@ -27,8 +27,7 @@ from mpf.devices.ball_device.switch_counter import SwitchCounter
 @DeviceMonitor("available_balls", _state="state", counted_balls="balls")
 class BallDevice(SystemWideDevice):
 
-    """
-    Base class for a 'Ball Device' in a pinball machine.
+    """Base class for a 'Ball Device' in a pinball machine.
 
     A ball device is anything that can hold one or more balls, such as a
     trough, an eject hole, a VUK, a catapult, etc.
@@ -291,7 +290,7 @@ class BallDevice(SystemWideDevice):
 
     def _source_device_balls_available(self, **kwargs):
         del kwargs
-        if len(self._ball_requests):
+        if self._ball_requests:
             (target, player_controlled) = self._ball_requests.popleft()
             if self._setup_or_queue_eject_to_target(target, player_controlled):
                 return False
@@ -420,9 +419,9 @@ class BallDevice(SystemWideDevice):
         self._validate_config()
 
         if self.config['eject_coil']:
-            self.ejector = PulseCoilEjector(self)   # pylint: disable-msg=redefined-variable-type
+            self.ejector = PulseCoilEjector(self)
         elif self.config['hold_coil']:
-            self.ejector = HoldCoilEjector(self)    # pylint: disable-msg=redefined-variable-type
+            self.ejector = HoldCoilEjector(self)
 
         if self.ejector and self.config['ball_search_order']:
             self.config['captures_from'].ball_search.register(
@@ -572,7 +571,7 @@ class BallDevice(SystemWideDevice):
         return True
 
     def setup_player_controlled_eject(self, target=None):
-        """Setup a player controlled eject."""
+        """Set up a player controlled eject."""
         self.debug_log("Setting up player-controlled eject. Balls: %s, "
                        "Target: %s, player_controlled_eject_event: %s",
                        1, target,
@@ -587,7 +586,7 @@ class BallDevice(SystemWideDevice):
             self.eject(target=target)
 
     def setup_eject_chain(self, path, player_controlled=False):
-        """Setup an eject chain."""
+        """Set up an eject chain."""
         path = deque(path)
         if self.available_balls <= 0:
             raise AssertionError("Tried to setup an eject chain, but there are"
@@ -611,7 +610,7 @@ class BallDevice(SystemWideDevice):
         '''
 
     def setup_eject_chain_next_hop(self, path, player_controlled):
-        """Setup one hop of the eject chain."""
+        """Set up one hop of the eject chain."""
         next_hop = path.popleft()
         self.debug_log("Adding eject chain")
 
@@ -626,7 +625,7 @@ class BallDevice(SystemWideDevice):
         self.outgoing_balls_handler.add_eject_to_queue(eject)
 
         # check if we traversed the whole path
-        if len(path) > 0:
+        if path:
             next_hop.setup_eject_chain_next_hop(path, player_controlled)
 
     def find_next_trough(self):

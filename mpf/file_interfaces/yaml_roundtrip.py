@@ -45,7 +45,7 @@ class YamlRoundtrip(YamlInterface):     # pragma: no cover
 
     @staticmethod
     def rename_key(old_key, new_key, commented_map, logger=None):
-        """Used to rename a key in YAML file data that was loaded with the RoundTripLoader (e.g. that contains comments.
+        """Rename a key in YAML file data that was loaded with the RoundTripLoader (e.g. that contains comments).
 
         Comments are retained for the renamed key. Order of keys is also maintained.
 

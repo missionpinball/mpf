@@ -54,7 +54,7 @@ class ScoreReelController(MpfController):
         self.machine.events.add_handler('game_starting', self.game_starting)
 
     def rotate_player(self, **kwargs):
-        """Called when a new player's turn starts.
+        """Start a new player's turn.
 
         The main purpose of this method is to map the current player to their
         ScoreReelGroup in the backbox. It will do this by comparing length of
@@ -117,7 +117,7 @@ class ScoreReelController(MpfController):
         self.player_to_scorereel_map.append(self.player_to_scorereel_map[0])
 
     def score_change(self, value, change, **kwargs):
-        """Called whenever the score changes and adds the score increase to the current active ScoreReelGroup.
+        """Handle score changes and add the score increase to the current active ScoreReelGroup.
 
         This method is the handler for the score change event, so it's called
         automatically.

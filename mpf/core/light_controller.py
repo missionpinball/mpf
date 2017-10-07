@@ -76,7 +76,8 @@ class LightController(MpfController):
             self._monitor_update_task = self.machine.clock.loop.create_task(self._monitor_update_lights())
             self._monitor_update_task.add_done_callback(self._done)
 
-    def _done(self, future: asyncio.Future):
+    @staticmethod
+    def _done(future: asyncio.Future):
         try:
             future.result()
         except asyncio.CancelledError:

@@ -11,11 +11,11 @@ import threading
 from platform import platform, python_version, system, release, version, system_alias, machine
 
 import copy
+from typing import Any, Callable, Dict, List, Set, Generator
 
 import asyncio
 
 from pkg_resources import iter_entry_points
-from typing import Any, Callable, Dict, List, Set, Generator
 
 from mpf._version import __version__, version as mpf_version, extended_version as mpf_extended_version
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
@@ -39,7 +39,7 @@ if MYPY:   # pragma: no cover
     from mpf.core.settings_controller import SettingsController
     from mpf.core.shot_profile_manager import ShotProfileManager
     from mpf.core.bcp.bcp import Bcp
-    from mpf.core.tui import TextUi
+    from mpf.core.text_ui import TextUi
     from mpf.assets.show import Show
     from mpf.core.assets import BaseAssetManager
     from mpf.devices.switch import Switch
@@ -58,7 +58,7 @@ if MYPY:   # pragma: no cover
     from mpf.devices.logic_blocks import Accrual, Sequence, Counter
     from mpf.devices.servo import Servo
     from mpf.devices.segment_display import SegmentDisplay
-    from logging import Logger
+    from logging import Logger  # noqa
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -75,6 +75,7 @@ class MachineController(LogMixin):
         machine_path: The root path of this machine_files folder
     """
 
+    # pylint: disable-msg=too-many-statements
     def __init__(self, mpf_path: str, machine_path: str, options: dict) -> None:
         """Initialize machine controller."""
         super().__init__()
@@ -781,7 +782,7 @@ class MachineController(LogMixin):
         """Return true if machine variable exists."""
         return name in self.machine_vars
 
-    def configure_machine_var(self, name: str, persist: bool, expire_secs: int=None) -> None:
+    def configure_machine_var(self, name: str, persist: bool, expire_secs: int = None) -> None:
         """Create a new machine variable.
 
         Args:
@@ -875,7 +876,7 @@ class MachineController(LogMixin):
         except KeyError:
             pass
 
-    def remove_machine_var_search(self, startswith: str='', endswith: str='') -> None:
+    def remove_machine_var_search(self, startswith: str = '', endswith: str = '') -> None:
         """Remove a machine variable by matching parts of its name.
 
         Args:

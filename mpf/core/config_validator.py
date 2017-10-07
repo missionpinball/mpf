@@ -113,7 +113,7 @@ class ConfigValidator(object):
 
         return this_spec
 
-    # pylint: disable-msg=too-many-arguments
+    # pylint: disable-msg=too-many-arguments,too-many-branches
     def validate_config(self, config_spec, source, section_name=None,
                         base_spec=None, add_missing_keys=True, prefix=None):
         """Validate a config dict against spec."""

@@ -148,7 +148,7 @@ class Light(SystemWideDevice):
                                      format(self.name)) from e
 
             # copy platform and platform_settings to all channels
-            for channel, settings in enumerate(channel_list):
+            for channel, _ in enumerate(channel_list):
                 channel_list[channel]['subtype'] = self.config['subtype']
                 channel_list[channel]['platform'] = self.config['platform']
                 channel_list[channel]['platform_settings'] = self.config['platform_settings']
@@ -222,7 +222,9 @@ class Light(SystemWideDevice):
         self._color_correction_profile = profile
 
     def color(self, color, fade_ms=None, priority=0, key=None):
-        """Add or update a color entry in this light's stack, which is how you tell this light what color you want it to be.
+        """Add or update a color entry in this light's stack.
+
+        Calling this methods is how you tell this light what color you want it to be.
 
         Args:
             color: RGBColor() instance, or a string color name, hex value, or

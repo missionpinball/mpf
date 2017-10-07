@@ -57,7 +57,7 @@ class Driver(SystemWideDevice):
 
             check_set.add(key)
 
-    def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str=None) -> dict:
+    def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None) -> dict:
         """Return the parsed and validated config.
 
         Args:
@@ -165,7 +165,7 @@ class Driver(SystemWideDevice):
         return pulse_ms
 
     @event_handler(2)
-    def enable(self, pulse_ms: int=None, pulse_power: float=None, hold_power: float=None, **kwargs):
+    def enable(self, pulse_ms: int = None, pulse_power: float = None, hold_power: float = None, **kwargs):
         """Enable a driver by holding it 'on'.
 
         Args:
@@ -231,7 +231,7 @@ class Driver(SystemWideDevice):
             self.hw_driver.pulse(PulseSettings(power=pulse_power, duration=pulse_ms))
         else:
             self.debug_log("Enabling Driver for %sms (%s pulse_power)", pulse_ms, pulse_power)
-            self.delay.reset(name='timed_disable'.format(self.name),
+            self.delay.reset(name='timed_disable',
                              ms=pulse_ms,
                              callback=self.disable)
             self.hw_driver.enable(PulseSettings(power=pulse_power, duration=0),
@@ -241,7 +241,7 @@ class Driver(SystemWideDevice):
                                                      pulse_ms=pulse_ms, pulse_power=pulse_power)
 
     @event_handler(3)
-    def pulse(self, pulse_ms: int=None, pulse_power: float=None, max_wait_ms: int=None, **kwargs) -> int:
+    def pulse(self, pulse_ms: int = None, pulse_power: float = None, max_wait_ms: int = None, **kwargs) -> int:
         """Pulse this driver.
 
         Args:

@@ -21,10 +21,6 @@ class PlatformController(MpfController):
 
     """Manages all platforms and rules."""
 
-    def __init__(self, machine):
-        """Initialise platform controller."""
-        super().__init__(machine)
-
     @staticmethod
     def _check_and_get_platform(switch: Switch, driver: Driver) -> DriverPlatform:
         if driver.platform != switch.platform:
@@ -34,7 +30,7 @@ class PlatformController(MpfController):
 
     def _setup_switch_callback_for_psu(self, switch: Switch, driver: Driver, switch_settings: SwitchSettings,
                                        driver_settings: DriverSettings) -> Optional[SwitchHandler]:
-        """Setup a switch handler which informs the PSU about pulses performed by the rule."""
+        """Set up a switch handler which informs the PSU about pulses performed by the rule."""
         if driver_settings.pulse_settings.duration == 0:
             return None
 
@@ -204,6 +200,7 @@ class PlatformController(MpfController):
         return HardwareRule(platform=platform, switch_settings=[enable_settings], driver_settings=driver_settings,
                             switch_key=switch_key)
 
+    # pylint: disable-msg=too-many-arguments
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchRuleSettings,
                                                                  disable_switch: SwitchRuleSettings,
                                                                  driver: DriverRuleSettings,
