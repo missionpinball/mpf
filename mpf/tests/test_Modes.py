@@ -1,4 +1,7 @@
 from unittest.mock import MagicMock
+
+from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
+
 from mpf.tests.MpfTestCase import MpfTestCase
 
 
@@ -38,7 +41,8 @@ class TestModes(MpfTestCase):
         self.machine.events.add_handler('mode_mode1_stopping', self.mode1_stopping_event_handler)
         self.machine.events.add_handler('mode_mode1_stopped', self.mode1_stopped_event_handler)
 
-        # start mode 1
+        # start mode 1. It should only start once
+        self.machine.events.post('start_mode1')
         self.machine.events.post('start_mode1')
         self.advance_time_and_run()
         self.assertTrue(self.machine.mode_controller.is_active('mode1'))
@@ -212,3 +216,38 @@ class TestModes(MpfTestCase):
         self.assertTrue(self.machine.modes.mode1.active)
         self.assertFalse(self.machine.modes.mode2.active)
         self.assertFalse(self.machine.modes.mode3.active)
+
+
+class TestModesInGame(MpfFakeGameTestCase):
+
+    def getConfigFile(self):
+        return 'test_modes_in_game.yaml'
+
+    def getMachinePath(self):
+        return 'tests/machine_files/mode_tests/'
+
+    def test_restart_on_next_ball(self):
+        """Test restart_on_next_ball."""
+        self.mock_event("mode_mode_restart_on_next_ball_will_start")
+        self.assertModeNotRunning("mode_restart_on_next_ball")
+        self.start_game()
+
+        self.assertModeNotRunning("mode_restart_on_next_ball")
+        self.drain_ball()
+
+        # mode shoud not be started
+        self.assertModeNotRunning("mode_restart_on_next_ball")
+
+        # start it
+        self.post_event("start_mode_restart_on_next_ball")
+        self.advance_time_and_run()
+
+        # it should run
+        self.assertModeRunning("mode_restart_on_next_ball")
+        self.assertEventCalled("mode_mode_restart_on_next_ball_will_start", 1)
+
+        # check that mode is restarted on next ball
+        self.mock_event("mode_mode_restart_on_next_ball_will_start")
+        self.drain_ball()
+        self.assertModeRunning("mode_restart_on_next_ball")
+        self.assertEventCalled("mode_mode_restart_on_next_ball_will_start", 1)

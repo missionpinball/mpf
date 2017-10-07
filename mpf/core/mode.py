@@ -47,6 +47,7 @@ class Mode(LogMixin):
         self.path = path
         self.priority = 0
         self._active = False
+        self._starting = False
         self._mode_start_wait_queue = None      # type: QueuedEvent
         self.stop_methods = list()              # type: List[Tuple[Callable[[Any], None], Any]]
         self.start_callback = None              # type: Callable[[], None]
@@ -160,6 +161,12 @@ class Mode(LogMixin):
             self.debug_log("Mode is already active. Aborting start.")
             return
 
+        if self._starting:
+            self.debug_log("Mode already starting. Aborting start.")
+            return
+
+        self._starting = True
+
         self.machine.events.post('mode_' + self.name + '_will_start')
         '''event: mode_(name)_will_start
 
@@ -228,6 +235,7 @@ class Mode(LogMixin):
         self.info_log('Started. Priority: %s', self.priority)
 
         self.active = True
+        self._starting = False
 
         self.machine.events.post('mode_' + self.name + '_started',
                                  callback=self._mode_started_callback)
