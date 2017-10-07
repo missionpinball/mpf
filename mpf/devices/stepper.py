@@ -44,7 +44,7 @@ class Stepper(SystemWideDevice):
                                             self._position_event,
                                             position=position)
 
-        self.hw_stepper = self.platform.configure_stepper(self.config)
+        self.hw_stepper = self.platform.configure_stepper(self.config['number'], self.config)
         self._position = self.config['reset_position']
         self._max_pos = self.config['pos_max']
         self._min_pos = self.config['pos_min']

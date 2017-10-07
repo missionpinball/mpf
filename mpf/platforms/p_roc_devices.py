@@ -46,8 +46,8 @@ class PROCDriver(DriverPlatformInterface):
         """Return board of the driver."""
         if not self.pdbconfig:
             return "P-Roc"
-        else:
-            return "P-Roc Board {}".format(str(self.pdbconfig.get_coil_bank(self.string_number)))
+
+        return "P-Roc Board {}".format(str(self.pdbconfig.get_coil_bank(self.string_number)))
 
     @classmethod
     def get_pwm_on_off_ms(cls, coil: HoldSettings):

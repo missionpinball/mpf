@@ -240,7 +240,7 @@ class AuxPort(object):
         """Reset aux port."""
         commands = [self.platform.pinproc.aux_command_disable()]
 
-        for j in range(1, 255):
+        for _ in range(1, 255):
             commands += [self.platform.pinproc.aux_command_jump(0)]
 
         self.platform.proc.aux_send_commands(0, commands)
@@ -407,9 +407,12 @@ class AuxAlphanumericDisplay(object):
         input_strings = [self.texts[0] + self.texts[1], self.texts[2] + self.texts[3]]
         self.display(input_strings)
 
-    def display(self, input_strings, intensities=[[1] * 16] * 2):
+    def display(self, input_strings, intensities=None):
         """Set display text."""
         strings = []
+
+        if intensities is None:
+            intensities = [[1] * 16] * 2
 
         # Make sure strings are at least 16 chars.
         # Then convert each string to a list of chars.

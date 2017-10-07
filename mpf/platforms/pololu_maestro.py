@@ -30,7 +30,7 @@ class PololuMaestroHardwarePlatform(ServoPlatform):
 
     @asyncio.coroutine
     def initialize(self):
-        """Method is called after all hardware platforms were instantiated."""
+        """Initialise platform."""
         yield from super().initialize()
 
         # validate our config (has to be in intialize since config_processor
@@ -110,9 +110,8 @@ class PololuServo(ServoPlatformInterface):
         Speed of 0 is unrestricted.
 
         Args:
-            speed:
+            speed: speed to set
 
-        Returns:
         """
         lsb = speed & 0x7f  # 7 bits for least significant byte
         msb = (speed >> 7) & 0x7f  # shift 7 and take next 7 bits for msb

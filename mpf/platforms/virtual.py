@@ -14,13 +14,15 @@ from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInt
 from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface
 
 from mpf.core.platform import ServoPlatform, SwitchPlatform, DriverPlatform, AccelerometerPlatform, I2cPlatform, \
-    DmdPlatform, RgbDmdPlatform, LightsPlatform, DriverConfig, SwitchConfig, SegmentDisplayPlatform, StepperPlatform
+    DmdPlatform, RgbDmdPlatform, LightsPlatform, DriverConfig, SwitchConfig, SegmentDisplayPlatform, StepperPlatform, \
+    HardwareSoundPlatform
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
 
 class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, LightsPlatform, SwitchPlatform,
-                              DriverPlatform, DmdPlatform, RgbDmdPlatform, SegmentDisplayPlatform, StepperPlatform):
+                              DriverPlatform, DmdPlatform, RgbDmdPlatform, SegmentDisplayPlatform, StepperPlatform,
+                              HardwareSoundPlatform):
 
     """Base class for the virtual hardware platform."""
 
@@ -61,8 +63,9 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         """Configure a servo device in paltform."""
         return VirtualServo(number)
 
-    def configure_stepper(self, number: str):
+    def configure_stepper(self, number: str, config: dict):
         """Configure a smart stepper / axis device in platform."""
+        del config
         return VirtualStepper(number)
 
     def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
@@ -142,6 +145,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         del subtype
         return VirtualLight(number, platform_settings)
 
+    # pylint: disable-msg=no-self-use
     def configure_hardware_sound_system(self) -> "HardwareSoundPlatformInterface":
         """Configure virtual hardware sound system."""
         return VirtualSound()

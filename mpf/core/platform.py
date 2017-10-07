@@ -252,7 +252,7 @@ class StepperPlatform(BasePlatform, metaclass=abc.ABCMeta):
         self.features['has_steppers'] = True
 
     @abc.abstractmethod
-    def configure_stepper(self, number: str) -> "StepperPlatformInterface":
+    def configure_stepper(self, number: str, config: dict) -> "StepperPlatformInterface":
         """Configure a smart stepper (axis) device in paltform.
 
         Args:

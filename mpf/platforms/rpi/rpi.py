@@ -186,7 +186,7 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform)
         return RpiSwitch(config, number)
 
     def _switch_changed(self, gpio, level, tick):
-        """Callback for switch change."""
+        """Process switch change."""
         del tick
         self.machine.switch_controller.process_switch_by_num(str(gpio), level, self)
 

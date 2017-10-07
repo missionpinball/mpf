@@ -379,7 +379,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
 
                 # generate super secret "key"
                 key = bytearray()
-                for i in range(16):
+                for _ in range(16):
                     key.append(random.randint(0, 255))
 
                 # send SendKey message

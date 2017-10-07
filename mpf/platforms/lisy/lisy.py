@@ -94,7 +94,7 @@ class LisyDisplay(SegmentDisplayPlatformInterface):
     def set_text(self, text: str, flashing: bool):
         """Set text to display."""
         # no flashing supported yet
-        assert(flashing is False)
+        assert flashing is False
         self.platform.send_string(LisyDefines.DisplaysSetDisplay0To + self.number, text)
 
 
@@ -359,7 +359,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, Segme
         """Configure hardware sound."""
         return LisySound(self)
 
-    def send_byte(self, cmd: int, byte: bytes=None):
+    def send_byte(self, cmd: int, byte: bytes = None):
         """Send a command with optional payload."""
         if byte is not None:
             cmd_str = bytes([cmd])
@@ -384,7 +384,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, Segme
         return ord(data)
 
     @asyncio.coroutine
-    def readuntil(self, separator, min_chars: int=0):
+    def readuntil(self, separator, min_chars: int = 0):
         """Read until separator.
 
         Args:

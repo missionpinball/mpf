@@ -27,7 +27,7 @@ class I2CServoControllerHardwarePlatform(ServoPlatform):
 
     @asyncio.coroutine
     def initialize(self):
-        """Method is called after all hardware platforms were instantiated."""
+        """Initialise platform."""
         yield from super().initialize()
 
         # validate our config (has to be in intialize since config_processor

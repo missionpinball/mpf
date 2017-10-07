@@ -209,7 +209,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             model = model.strip('\x00')
 
             # Iterate as many boards as possible
-            if not len(model) or model == '!Node Not Found!':
+            if not model or model == '!Node Not Found!':
                 break
 
             self.platform.register_io_board(FastIoBoard(int(node_id, 16), model, fw, int(sw, 16), int(dr, 16)))

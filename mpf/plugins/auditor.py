@@ -110,7 +110,7 @@ class Auditor(object):
                 self.machine.set_machine_var("audits_{}_{}".format(category, name), value)
 
     def audit(self, audit_class, event, **kwargs):
-        """Called to log an auditable event.
+        """Log an auditable event.
 
         Args:
             audit_class: A string of the section we want this event to be
@@ -142,7 +142,7 @@ class Auditor(object):
         self.audit('shots', name)
 
     def audit_event(self, eventname, **kwargs):
-        """Registered as an event handlers to log an event to the audit log.
+        """Record this event in the audit log.
 
         Args:
             eventname: The string name of the event.
@@ -154,7 +154,7 @@ class Auditor(object):
         self.current_audits['events'][eventname] += 1
 
     def audit_player(self, **kwargs):
-        """Called to write player data to the audit log.
+        """Write player data to the audit log.
 
         Typically this is only called at the end of a game.
 

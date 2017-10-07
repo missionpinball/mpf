@@ -33,7 +33,7 @@ class TrinamicsStepRocker(StepperPlatform):
 
     @asyncio.coroutine
     def initialize(self):
-        """Method is called after all hardware platforms were instantiated."""
+        """Initialise trinamics steprocker platform."""
         yield from super().initialize()
 
         # validate our config (has to be in intialize since config_processor
@@ -45,27 +45,28 @@ class TrinamicsStepRocker(StepperPlatform):
         """Close serial."""
         self.TMCL.stop()
 
-    def configure_stepper(self, config):
+    def configure_stepper(self, number: str, config: dict) -> "TrinamicsTMCLStepper":
         """Configure a smart stepper device in platform.
 
         Args:
             config (dict): Configuration of device
         """
-        return TrinamicsTMCLStepper(config, self.TMCL)
+        return TrinamicsTMCLStepper(config['number'], config, self.TMCL)
 
 
+# pylint: disable-msg=too-many-instance-attributes
 class TrinamicsTMCLStepper(StepperPlatformInterface):
 
     """A stepper on a TMCL based controller such as Trinamics StepRocker."""
 
-    def __init__(self, config, tmcl_device):
+    def __init__(self, number, config, tmcl_device):
         """Initialise stepper."""
         self._pulse_div = 5     # tbd add to config
         self._ramp_div = 9      # tbd add to config
         self._clockFreq = 16000000.0
         self.config = config
         self.log = logging.getLogger('TMCL Stepper')
-        self._mn = int(self.config['number'])
+        self._mn = int(number)
         self.TMCL = tmcl_device
         self._move_current = int(2.55 * self.config['move_current'])    # percent to 0...255(100%)
         self._hold_current = int(2.55 * self.config['hold_current'])    # percent to 0...255(100%)
@@ -123,15 +124,16 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
             ret = self.TMCL.rfs(self._mn, 'STATUS')
             if ret != 0:  # This is reversed from manual but is how it works
                 return False
-            else:
-                self._homingActive = False
-                return True
-        else:   # check normal move status
-            ret = self.TMCL.gap(self._mn, 8)
-            if ret == 1:
-                return True
-            else:
-                return False
+
+            self._homingActive = False
+            return True
+
+        # check normal move status
+        ret = self.TMCL.gap(self._mn, 8)
+        if ret == 1:
+            return True
+
+        return False
 
     # Private Utility Functions
     @staticmethod
@@ -197,6 +199,7 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
                     retsingle[name] = self.TMCL.gap(mn, par)
         return retmotor, retsingle
 
+    # pylint: disable-msg=too-many-arguments
     def _set_important_parameters(self, maxspeed=2000, maxaccel=2000,
                                   maxcurrent=72, standbycurrent=32,
                                   microstep_resolution=1, store=False):

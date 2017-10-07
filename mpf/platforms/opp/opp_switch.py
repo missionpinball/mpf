@@ -29,6 +29,7 @@ class OPPInputCard(object):
                 inp_dict[self.chain_serial + "-" + self.cardNum + '-' + str(index)] =\
                     OPPSwitch(self, self.chain_serial + "-" + self.cardNum + '-' + str(index))
 
+
 class OPPMatrixCard(object):
 
     """OPP matrix input card."""
@@ -46,11 +47,12 @@ class OPPMatrixCard(object):
         self.log.debug("Creating OPP Matrix Input at hardware address: 0x%02x", addr)
 
         inp_addr_dict[chain_serial + '-' + str(addr)] = self
-        
+
         # Matrix inputs are inputs 32 - 95 (OPP only supports 8x8 input switch matrices)
         for index in range(32, 96):
             inp_dict[self.chain_serial + "-" + self.cardNum + '-' + str(index)] =\
                 OPPSwitch(self, self.chain_serial + "-" + self.cardNum + '-' + str(index))
+
 
 class OPPSwitch(SwitchPlatformInterface):
 

@@ -57,7 +57,7 @@ class OppRs232Intf:
     INIT_KICK_OFFSET = 1
     DUTY_CYCLE_OFFSET = 2
     NUM_G2_SOL_PER_BRD = 16
-    
+
     CFG_SOL_DISABLE = b'\x00'
     CFG_SOL_USE_SWITCH = b'\x01'
     CFG_SOL_AUTO_CLR = b'\x02'

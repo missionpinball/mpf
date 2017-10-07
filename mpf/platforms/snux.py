@@ -22,7 +22,7 @@ class SnuxHardwarePlatform(DriverPlatform):
     """Overlay platform for the snux hardware board."""
 
     def __init__(self, machine: MachineController) -> None:
-        """Initalize the board."""
+        """Initalise the board."""
         super().__init__(machine)
 
         self.log = logging.getLogger('Platform.Snux')
@@ -54,12 +54,12 @@ class SnuxHardwarePlatform(DriverPlatform):
 
     @property
     def a_side_busy(self):
-        """True when A side cannot be switches off right away."""
+        """Return if A side cannot be switches off right away."""
         return self.drivers_holding_a_side or self.a_side_done_time > self.machine.clock.get_time() or self.a_side_queue
 
     @property
     def c_side_active(self):
-        """True when C side cannot be switches off right away."""
+        """Return if C side cannot be switches off right away."""
         return self.drivers_holding_c_side or self.c_side_done_time > self.machine.clock.get_time()
 
     def _null_log_handler(self, *args, **kwargs):
@@ -396,7 +396,7 @@ class SnuxDriver(DriverPlatformInterface):
         return -1
 
     def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
-        """"Enable driver."""
+        """Enable driver."""
         self.overlay.driver_action(self.platform_driver, pulse_settings, hold_settings)
 
     def disable(self):

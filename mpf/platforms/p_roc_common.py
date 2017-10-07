@@ -12,6 +12,7 @@ from mpf.platforms.interfaces.light_platform_interface import LightPlatformInter
 from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings, \
     SwitchConfig
 
+# pylint: disable-msg=ungrouped-imports
 try:    # pragma: no cover
     import pinproc
     pinproc_imported = True
@@ -693,8 +694,8 @@ class PDBCoil(object):
             return self.banknum
         elif self.coil_type == 'pdb':
             return self.boardnum * 2 + self.banknum
-        else:
-            return -1
+
+        return -1
 
     def output(self):
         """Return the output number."""
@@ -781,7 +782,7 @@ class PDBLight(object):
         x/y/z, or aliasX.  That is, remove the two character prefix if present.
         """
         addrs = string.rsplit(':')
-        if len(addrs) is not 2:
+        if len(addrs) != 2:
             return []
         addrs_out = []
         for addr in addrs:
@@ -819,11 +820,11 @@ class PDBLED(LightPlatformInterface):
         self.log.debug("Creating PD-LED item: board: %s, "
                        "RGB output: %s", self.board, self.address)
 
-    def _normalise_color(self, value):
+    def _normalise_color(self, value: int) -> int:
         if self.polarity:
             return 255 - value
-        else:
-            return value
+
+        return value
 
     def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
         """Set or fade this LED to the color passed.

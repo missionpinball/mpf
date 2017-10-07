@@ -117,7 +117,7 @@ class Driver(SystemWideDevice):
 
         If hold_power is None it will use the default_hold_power. Additionally it will verify the limits.
         """
-        if hold_power is None and self.config['default_hold_power'] :
+        if hold_power is None and self.config['default_hold_power']:
             hold_power = self.config['default_hold_power']
 
         if hold_power is None and self.config['max_hold_power']:

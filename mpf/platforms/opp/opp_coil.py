@@ -1,7 +1,7 @@
 """OPP solenoid wings."""
 import logging
 from collections import namedtuple
-from typing import Optional
+from typing import Optional, Dict
 
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
@@ -22,7 +22,7 @@ class OPPSolenoid(DriverPlatformInterface):
         self.switch_rule = None        # type: SwitchRule
         self.switches = []
         self._config_state = None
-        self.platform_settings = None
+        self.platform_settings = dict()     # type: Dict
 
     def get_board_name(self):
         """Return OPP chain and addr."""
