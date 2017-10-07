@@ -98,10 +98,13 @@ class NativeTypeTemplate:
 
 class TextTemplate:
 
+    """Legacy text placeholder."""
+
     var_finder = re.compile("(?<=\()[a-zA-Z_0-9|]+(?=\))")
     string_finder = re.compile("(?<=\$)[a-zA-Z_0-9]+")
 
     def __init__(self, machine: "MachineController", text: str) -> None:
+        """Initialise placeholder."""
         self.machine = machine
         self.text = text
         self.vars = self.var_finder.findall(text)
@@ -167,11 +170,9 @@ class TextTemplate:
 
             elif self.machine.game and self.machine.game.player:
                 if var_string.startswith('player|'):
-                    text = text.replace('(' + var_string + ')',
-                                        str(self.machine.game.player[var_string.split('|')[1]]))
+                    text = text.replace('(' + var_string + ')', str(self.machine.game.player[var_string.split('|')[1]]))
                 elif var_string.startswith('player') and '|' in var_string:
-                    player_num, var_name = var_string.lstrip('player').split(
-                            '|')
+                    player_num, var_name = var_string.lstrip('player').split('|')
                     try:
                         value = self.machine.game.player_list[int(player_num) - 1][var_name]
 

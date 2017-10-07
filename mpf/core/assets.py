@@ -678,6 +678,7 @@ class AssetPool(object):
 
     @property
     def loaded(self):
+        """Return if loaded."""
         for asset in self.assets:
             if not asset[0].loaded:
                 return False
@@ -686,6 +687,7 @@ class AssetPool(object):
 
     @property
     def loading(self):
+        """Return if loading."""
         for asset in self.assets:
             if asset[0].loading:
                 return True
@@ -694,6 +696,7 @@ class AssetPool(object):
 
     @property
     def unloading(self):
+        """Return if unloading."""
         for asset in self.assets:
             if asset[0].unloading:
                 return True
@@ -730,7 +733,7 @@ class AssetPool(object):
         return False
 
     def unload(self):
-        """Unloads all assets in the pool."""
+        """Unload all assets in the pool."""
         for asset in self.assets:
             if asset[0].loaded:
                 asset[0].unload()

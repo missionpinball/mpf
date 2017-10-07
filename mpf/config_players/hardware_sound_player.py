@@ -1,3 +1,4 @@
+"""Config player for sounds on an external sound card."""
 from mpf.config_players.device_config_player import DeviceConfigPlayer
 
 MYPY = False
@@ -7,13 +8,13 @@ if MYPY:   # pragma: no cover
 
 class HardwareSoundPlayer(DeviceConfigPlayer):
 
-    """Generates texts """
+    """Plays sounds on an external sound card."""
 
     config_file_section = 'hardware_sound_player'
     show_section = 'hardware_sound_players'
 
     def play(self, settings, context, calling_context, priority=0, **kwargs):
-        """Show text on display"""
+        """Play sound on external card."""
         del kwargs
         del context
         del calling_context

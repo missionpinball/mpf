@@ -1,1 +1,1 @@
-"""Trinamics TMCL Library"""
+"""Trinamics TMCL Library."""

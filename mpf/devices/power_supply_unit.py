@@ -43,7 +43,7 @@ class PowerSupplyUnit(SystemWideDevice):
         """Notify PSU about pulse."""
         if self._busy_until:
             self._busy_until = max(
-                    self._busy_until,
-                    self.machine.clock.get_time() + (pulse_ms + self.config['release_wait_ms']) / 1000.0)
+                self._busy_until,
+                self.machine.clock.get_time() + (pulse_ms + self.config['release_wait_ms']) / 1000.0)
         else:
             self._busy_until = self.machine.clock.get_time() + ((pulse_ms + self.config['release_wait_ms']) / 1000.0)

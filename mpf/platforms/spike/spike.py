@@ -521,7 +521,8 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
         return (256 - (checksum % 256)) % 256
 
     @asyncio.coroutine
-    def send_cmd_and_wait_for_response(self, node, cmd, data, response_len) -> Generator[int, None, Optional[bytearray]]:
+    def send_cmd_and_wait_for_response(self, node, cmd, data, response_len)\
+            -> Generator[int, None, Optional[bytearray]]:
         """Send cmd and wait for response."""
         if node > 15:
             raise AssertionError("Node must be 0-15.")

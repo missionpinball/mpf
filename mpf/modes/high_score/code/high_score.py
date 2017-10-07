@@ -36,8 +36,8 @@ class HighScore(AsyncMode):
 
         # if data is invalid. do not use it
         if self.high_scores and not self._validate_data(self.high_scores):
-           self.log.warning("High score data failed validation. Resetting to defaults.")
-           self.high_scores = None
+            self.log.warning("High score data failed validation. Resetting to defaults.")
+            self.high_scores = None
 
         # Load defaults if no high_scores are stored
         if not self.high_scores:

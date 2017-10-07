@@ -55,7 +55,7 @@ class TestTrinamicsStepRocker(MpfTestCase):
 
         stepper.home()
         self.machine.clock.loop.run_until_complete(move_complete)
-        self.assertEqual( 0, stepper.currentPosition())
+        self.assertEqual(0, stepper.current_position())
 
     def test_AbsPositionTest(self):
         stepper = self.machine.steppers.positionStepper
@@ -63,22 +63,22 @@ class TestTrinamicsStepRocker(MpfTestCase):
         #home
         stepper.home()
         self.machine.clock.loop.run_until_complete(self.machine.events.wait_for_event('stepper_positionStepper_ready'))
-        self.assertEqual( 0.0, stepper.currentPosition())
+        self.assertEqual(0.0, stepper.current_position())
 
         # min/max in test file is 0,1 scaling setup for 1.0 = 1 revolution
         stepper.move_abs_pos(0.5)
         self.machine.clock.loop.run_until_complete(self.machine.events.wait_for_event('stepper_positionStepper_ready'))
-        self.assertEqual( 0.5, stepper.currentPosition())
+        self.assertEqual(0.5, stepper.current_position())
 
         # Go to max
         stepper.move_abs_pos(1.0)
         self.machine.clock.loop.run_until_complete(self.machine.events.wait_for_event('stepper_positionStepper_ready'))
-        self.assertEqual( 1.0, stepper.currentPosition())
+        self.assertEqual(1.0, stepper.current_position())
 
         # Go to min
         stepper.move_abs_pos(0.0)
         self.machine.clock.loop.run_until_complete(self.machine.events.wait_for_event('stepper_positionStepper_ready'))
-        self.assertEqual( 0.0, stepper.currentPosition())
+        self.assertEqual(0.0, stepper.current_position())
 
     def setUp(self):
         #self.MockTMCLLib = MagicMock(spec=mpf.platforms.trinamics_steprocker.TMCLDevice)

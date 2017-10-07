@@ -266,7 +266,7 @@ class BallSearch(MpfController):
 
         This method is called when the ball search process Did not find the
         missing ball. It executes the failed action which depending on the specification of *ball_search_failed_action*,
-        either adds a replacement ball, ends the game, or ends the current ball. 
+        either adds a replacement ball, ends the game, or ends the current ball.
         """
         self.info_log("Ball Search failed to find ball. Giving up!")
         self.disable()

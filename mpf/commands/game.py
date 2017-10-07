@@ -23,7 +23,6 @@ class Command(object):
 
     def __init__(self, mpf_path, machine_path, args):
         """Run mpf game."""
-
         signal.signal(signal.SIGINT, self.exit)
 
         parser = argparse.ArgumentParser(

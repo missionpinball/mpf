@@ -31,3 +31,4 @@ pylint:
 
 ignore-paths:
   - docs
+  - mpf/platforms/trinamics/

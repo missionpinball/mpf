@@ -60,11 +60,10 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
     def configure_servo(self, number: str):
         """Configure a servo device in paltform."""
         return VirtualServo(number)
-        
-    def configure_stepper(self, number: str):
-        """Configure a smart stepper / axis device in platform"""
-        return VirtualStepper(number)
 
+    def configure_stepper(self, number: str):
+        """Configure a smart stepper / axis device in platform."""
+        return VirtualStepper(number)
 
     def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
         """Configure driver."""
@@ -324,39 +323,43 @@ class VirtualServo(ServoPlatformInterface):
         """Go to position."""
         self.current_position = position
 
+
 class VirtualStepper(StepperPlatformInterface):
-    """ Virtual Stepper"""
+
+    """Virtual Stepper."""
+
     def __init__(self, number):
         """Initialise servo."""
         self.log = logging.getLogger('VirtualStepper')
         self.number = number
-        self.current_position = 0
+        self._current_position = 0
         self.velocity = 0
-        self.direction = 0 #clockwise
+        self.direction = 0  # clockwise
 
     def home(self):
-        """Home an axis, resetting 0 position"""
-        self.current_position = 0
+        """Home an axis, resetting 0 position."""
+        self._current_position = 0
 
     def move_abs_pos(self, position):
-        """Move axis to a certain absolute position"""
-        self.current_position = position
+        """Move axis to a certain absolute position."""
+        self._current_position = position
 
     def move_rel_pos(self, position):
-        """Move axis to a relative position"""
-        self.current_position += position
+        """Move axis to a relative position."""
+        self._current_position += position
 
-    def move_vel_mode(self, velocity ):
-        """Move at a specific velocity indefinitely"""
+    def move_vel_mode(self, velocity):
+        """Move at a specific velocity indefinitely."""
         self.velocity = velocity
 
-    def currentPosition(self): 
-        """Current Position of Stepper""" 
-        return self.current_position
+    def current_position(self):
+        """Return current position of stepper."""
+        return self._current_position
 
     def stop(self):
-        """ Stops motor """
+        """Stop motor."""
         self.velocity = 0
+
 
 class VirtualDriver(DriverPlatformInterface):
 

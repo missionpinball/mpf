@@ -70,7 +70,7 @@ assets:
         load: single|str|preload
         file: single|str|None
         priority: single|int|0
-    bitmap_fonts: 
+    bitmap_fonts:
         descriptor: ignore
     images: # no image-specific config items
         __allow_others__:
@@ -1113,7 +1113,7 @@ sound_loop_sets:
     fade_in: single|secs|0
     fade_out: single|secs|0
     mode_end_action: single|enum(stop,stop_looping)|stop
-        
+
 sound_player:
     __valid_in__: machine, mode, show
     action: single|enum(play,stop,stop_looping,load,unload)|play
@@ -1203,7 +1203,7 @@ steppers:
     acceleration_limit: single|float|1.0
     homing_direction: single|enum(clockwise,counterclockwise)|clockwise
     homing_speed: single|float|1.0
-    fullstep_per_userunit: single|float|1.0    
+    fullstep_per_userunit: single|float|1.0
     ball_search_min: single|float|0.0
     ball_search_max: single|float|1.0
     ball_search_wait: single|ms|5s
@@ -1403,7 +1403,7 @@ widgets:
         width: single|num|
         height: single|num|
         source_display: single|str|dmd
-        effects: ignore        
+        effects: ignore
     ellipse:
         width: single|num|
         height: single|num|

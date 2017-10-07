@@ -148,6 +148,7 @@ class BCPClientSocket(BaseBcpClient):
                                             'goodbye': self._receive_goodbye}
 
     def __repr__(self):
+        """Return str representation."""
         return self.module_name
 
     def connect(self, config):

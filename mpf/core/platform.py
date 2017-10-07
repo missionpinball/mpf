@@ -241,6 +241,7 @@ class ServoPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
+
 class StepperPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
     """Baseclass for smart servo (axis) platforms in MPF."""
@@ -258,6 +259,7 @@ class StepperPlatform(BasePlatform, metaclass=abc.ABCMeta):
             number: Number of the smart servo
         """
         raise NotImplementedError
+
 
 class LightsPlatform(BasePlatform, metaclass=abc.ABCMeta):
 

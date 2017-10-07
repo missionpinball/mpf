@@ -1,4 +1,3 @@
-
 import serial
 
 class TMCLError(Exception):

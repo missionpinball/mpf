@@ -3,7 +3,6 @@ from mpf.core.delays import DelayManager
 
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.events import event_handler
-from mpf.core.platform import StepperPlatform
 from mpf.core.system_wide_device import SystemWideDevice
 
 
@@ -23,7 +22,7 @@ class Stepper(SystemWideDevice):
         """Initialise stepper."""
         self.hw_stepper = None
         self.platform = None        # type: Stepper
-        self._cachedPosition = 0 # in user units
+        self._cachedPosition = 0    # in user units
         self._ball_search_started = False
         self._min_pos = 0
         self._max_pos = 1
@@ -31,9 +30,9 @@ class Stepper(SystemWideDevice):
         self._cachedVelocity = 0
         self._isHomed = False
         self._isMoving = False
-        self._move_complete_pollrate = 100 #ms
+        self._move_complete_pollrate = 100  # ms
         self._resetPosition = 0
-    
+
         self.delay = DelayManager(machine.delayRegistry)
         super().__init__(machine, name)
 
@@ -54,20 +53,21 @@ class Stepper(SystemWideDevice):
 
         mode = self.config['mode']
         if mode == 'position':
-             self.positionMode = True
+            self.positionMode = True
         elif mode == 'velocity':
-             self.positionMode = False
+            self.positionMode = False
         else:
-             raise AssertionError("Operating Mode not defined")
+            raise AssertionError("Operating Mode not defined")
 
         if self.config['include_in_ball_search']:
             self.machine.events.add_handler("ball_search_started",
                                             self._ball_search_start)
             self.machine.events.add_handler("ball_search_stopped",
                                             self._ball_search_stop)
-    def currentPosition(self):
-        """ return position in user units (vs microsteps) """
-        return self.hw_stepper.currentPosition()
+
+    def current_position(self):
+        """Return position in user units (vs microsteps)."""
+        return self.hw_stepper.current_position()
 
     def move_abs_pos(self, position):
         """Move servo to position."""
@@ -75,32 +75,32 @@ class Stepper(SystemWideDevice):
             return
         if not self.positionMode:
             raise RuntimeError("Cannot do a position move in velocity mode")
-        if position >= self._min_pos and position <= self._max_pos:
+        if self._min_pos <= position <= self._max_pos:
             self.hw_stepper.move_abs_pos(position)
-            if self._isMoving is False: #already moving, don't re-kickoff polling
+            if self._isMoving is False:     # already moving, don't re-kickoff polling
                 self._isMoving = True
-                self._scheduleMoveCompleteCheck()
+                self._schedule_move_complete_check()
         else:
             raise ValueError("move_abs: position argument beyond limits")
 
     def home(self):
-        """Home an axis, resetting 0 position"""
+        """Home an axis, resetting 0 position."""
         if self.positionMode:
             self.hw_stepper.home()
             self._isHomed = False
-            if self._isMoving is False: #already moving, don't re-kickoff polling
+            if self._isMoving is False:     # already moving, don't re-kickoff polling
                 self._isMoving = True
-                self._scheduleHomeCompleteCheck()
+                self._schedule_home_complete_check()
         else:
             raise RuntimeError("Cannot home in velocity mode")
 
     def move_rel_pos(self, delta):
-        """Move axis to a relative position"""
-        start = self.currentPosition()
-        self.move_abs_pos( start + delta )
+        """Move axis to a relative position."""
+        start = self.current_position()
+        self.move_abs_pos(start + delta)
 
     def move_vel_mode(self, velocity):
-        """Move at a specific velocity indefinitely"""
+        """Move at a specific velocity indefinitely."""
         if self.positionMode:
             raise RuntimeError("Cannot do a velocity move in position mode")
         if velocity <= self._max_velocity:
@@ -110,39 +110,39 @@ class Stepper(SystemWideDevice):
             raise ValueError("move_vel_mode: velocity argument is above limit")
 
     def stop(self):
-        """ Stops motor """
+        """Stop motor."""
         self.hw_stepper.stop()
         self._isMoving = False
         self._cachedVelocity = 0.0
         self.delay.remove('stepper_move_complete_check')
         self.delay.remove('stepper_home_complete_check')
 
-    def _scheduleMoveCompleteCheck(self):
+    def _schedule_move_complete_check(self):
         self.delay.add(name='stepper_move_complete_check',
                        ms=self._move_complete_pollrate,
-                       callback=self.check_mv_complete)
+                       callback=self._check_mv_complete)
 
-    def check_mv_complete(self):
-        #TODO add timeout that stops this with error event if it hasn't made it in some amount of time
-        if self._isMoving == False:
+    def _check_mv_complete(self):
+        # TODO add timeout that stops this with error event if it hasn't made it in some amount of time
+        if not self._isMoving:
             return
         if self.hw_stepper.is_move_complete():
             self._isMoving = False
-            self._cachedPosition = self.currentPosition()
+            self._cachedPosition = self.current_position()
             self.machine.events.post('stepper_' + self.name + "_ready")
             '''event: stepper_(name)_ready'''
         else:
-            #reschedule
-            self._scheduleMoveCompleteCheck()
+            # reschedule
+            self._schedule_move_complete_check()
 
-    def _scheduleHomeCompleteCheck(self):
+    def _schedule_home_complete_check(self):
         self.delay.add(name='stepper_home_complete_check',
                        ms=self._move_complete_pollrate,
-                       callback=self.check_home_complete)
+                       callback=self._check_home_complete)
 
-    def check_home_complete(self):
-        #TODO add timeout that stops this with error event if it hasn't made it in some amount of time
-        if self._isHomed == True:
+    def _check_home_complete(self):
+        # TODO add timeout that stops this with error event if it hasn't made it in some amount of time
+        if self._isHomed:
             return
         if self.hw_stepper.is_move_complete():
             self._isMoving = False
@@ -150,18 +150,17 @@ class Stepper(SystemWideDevice):
             self.machine.events.post('stepper_' + self.name + "_ready")
             '''event: stepper_(name)_ready'''
         else:
-            #reschedule
-            self._scheduleHomeCompleteCheck()
-
+            # reschedule
+            self._schedule_home_complete_check()
 
     @event_handler(1)
     def reset(self, **kwargs):
-        """Stop Motor"""
+        """Stop Motor."""
         del kwargs
         self.stop()
         if self.positionMode:
             self.home()
-            self.move_abs_pos(self._resetPosition)               
+            self.move_abs_pos(self._resetPosition)
 
     @event_handler(5)
     def _position_event(self, position, **kwargs):
@@ -194,4 +193,3 @@ class Stepper(SystemWideDevice):
             self.move_abs_pos(self._cachedPosition)
         else:
             self.move_vel_mode(self._cachedVelocity)
-    

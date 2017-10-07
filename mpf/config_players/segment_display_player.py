@@ -1,3 +1,4 @@
+"""Config player for text on segment displays."""
 from mpf.core.delays import DelayManager
 
 from mpf.config_players.device_config_player import DeviceConfigPlayer
@@ -10,7 +11,7 @@ if MYPY:   # pragma: no cover
 
 class SegmentDisplayPlayer(DeviceConfigPlayer):
 
-    """Generates texts """
+    """Generates texts on segment displays."""
 
     config_file_section = 'segment_display_player'
     show_section = 'segment_displays'
@@ -22,7 +23,7 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
         self.delay = DelayManager(self.machine.delayRegistry)
 
     def play(self, settings, context, calling_context, priority=0, **kwargs):
-        """Show text on display"""
+        """Show text on display."""
         del kwargs
         instance_dict = self._get_instance_dict(context)    # type: Dict[str, SegmentDisplay]
         full_context = self._get_full_context(context)
@@ -70,7 +71,6 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
 
     def clear_context(self, context):
         """Remove all texts."""
-        full_context = self._get_full_context(context)
         instance_dict = self._get_instance_dict(context)
         for display, keys in instance_dict.items():
             for key in dict(keys).keys():

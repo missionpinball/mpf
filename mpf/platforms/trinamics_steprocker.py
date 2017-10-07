@@ -1,10 +1,9 @@
-
-import mpf.platforms.trinamics.TMCL
-
 """Trinamics StepRocker controller platform."""
 import asyncio
 import logging
-import serial
+
+from mpf.platforms.trinamics import TMCL
+
 from mpf.platforms.trinamics.TMCL import TMCLDevice
 from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface
 
@@ -42,7 +41,6 @@ class TrinamicsStepRocker(StepperPlatform):
         self.config = self.machine.config_validator.validate_config("trinamics_steprocker", self.config)
         self.TMCL = TMCLDevice(self.config['port'], False)
 
-
     def stop(self):
         """Close serial."""
         self.TMCL.stop()
@@ -53,89 +51,92 @@ class TrinamicsStepRocker(StepperPlatform):
         Args:
             config (dict): Configuration of device
         """
-        return TrinamicsTMCLStepper( config, self.TMCL )
+        return TrinamicsTMCLStepper(config, self.TMCL)
 
 
 class TrinamicsTMCLStepper(StepperPlatformInterface):
 
-    """A stepper on a TMCL based controller such as Trinamics StepRocker"""
+    """A stepper on a TMCL based controller such as Trinamics StepRocker."""
 
-    def __init__(self, config, TMCLDevice ):
+    def __init__(self, config, tmcl_device):
         """Initialise stepper."""
-        self._pulse_div = 5 #tbd add to config
-        self._ramp_div =  9 #tbd add to config
+        self._pulse_div = 5     # tbd add to config
+        self._ramp_div = 9      # tbd add to config
         self._clockFreq = 16000000.0
         self.config = config
         self.log = logging.getLogger('TMCL Stepper')
         self._mn = int(self.config['number'])
-        self.TMCL = TMCLDevice
-        self._move_current = int(2.55 * self.config['move_current']) #percent to 0...255(100%)
-        self._hold_current = int(2.55 * self.config['hold_current']) #percent to 0...255(100%)
+        self.TMCL = tmcl_device
+        self._move_current = int(2.55 * self.config['move_current'])    # percent to 0...255(100%)
+        self._hold_current = int(2.55 * self.config['hold_current'])    # percent to 0...255(100%)
         self._microstep_per_fullstep = self.config['microstep_per_fullstep']
         self._fullstep_per_userunit = self.config['fullstep_per_userunit']
-        self._velocity_limit = self.UU_To_VelocityCmd(self.config['velocity_limit'])
-        self._acceleration_limit = self.UU_To_AccelCmd(self.config['acceleration_limit'])
+        self._velocity_limit = self._uu_to_velocity_cmd(self.config['velocity_limit'])
+        self._acceleration_limit = self._uu_to_accel_cmd(self.config['acceleration_limit'])
         mode = self.config['mode']
         if mode == 'position':
             self._home_direction = self.config['homing_direction']
-            self._homing_speed = self.UU_To_VelocityCmd(self.config['homing_speed'])
+            self._homing_speed = self._uu_to_velocity_cmd(self.config['homing_speed'])
 
         self._set_important_parameters(self._velocity_limit, self._acceleration_limit,
-                                             self._move_current, self._hold_current, 
-                                             self._getMicroStepMode(self._microstep_per_fullstep), False)
-        # apply pulse and ramp divisors as well                                             
+                                       self._move_current, self._hold_current,
+                                       self._get_micro_step_mode(self._microstep_per_fullstep), False)
+        # apply pulse and ramp divisors as well
         self.TMCL.sap(self._mn, 154, self._pulse_div)
         self.TMCL.sap(self._mn, 153, self._ramp_div)
         self._homingActive = False
 
-
     # Public Stepper Platform Interface
     def home(self):
-        """Home an axis, resetting 0 position"""
-        self.TMCL.rfs(self._mn,'STOP') # in case in progress
+        """Home an axis, resetting 0 position."""
+        self.TMCL.rfs(self._mn, 'STOP')  # in case in progress
         self._set_home_parameters()
-        self.TMCL.rfs(self._mn,'START')
+        self.TMCL.rfs(self._mn, 'START')
         self._homingActive = True
 
     def move_abs_pos(self, position):
-        """Move axis to a certain absolute position"""
-        microStepPos = self._UU_To_Microsteps(position)
-        self.TMCL.mvp(self._mn,"ABS",microStepPos)
+        """Move axis to a certain absolute position."""
+        microstep_pos = self._uu_to_microsteps(position)
+        self.TMCL.mvp(self._mn, "ABS", microstep_pos)
 
     def move_rel_pos(self, position):
-        """Move axis to a relative position"""
-        microStepRel = self._UU_To_Microsteps(position)
-        self.TMCL.mvp(self._mn,"REL",microStepPos)
+        """Move axis to a relative position."""
+        microstep_rel = self._uu_to_microsteps(position)
+        self.TMCL.mvp(self._mn, "REL", microstep_rel)
 
     def move_vel_mode(self, velocity):
-        """Move at a specific velocity and direction (pos = clockwise, neg = counterclockwise)"""
+        """Move at a specific velocity and direction (pos = clockwise, neg = counterclockwise)."""
         self._rotate(velocity)
 
-    def currentPosition(self):
-        microSteps = self.TMCL.gap(self._mn, 1)
-        return self._MicroSteps_To_UU(microSteps)
+    def current_position(self):
+        """Return current position."""
+        microsteps = self.TMCL.gap(self._mn, 1)
+        return self._microsteps_to_uu(microsteps)
 
-    def stop(self):
-        self.TMCL.mst(self._mn)        
+    def stop(self) -> None:
+        """Stop stepper."""
+        self.TMCL.mst(self._mn)
 
-    def is_move_complete(self):
-        if self._homingActive == True:
-            ret = self.TMCL.rfs(self._mn,'STATUS') 
+    def is_move_complete(self) -> bool:
+        """Return true if move is complete."""
+        if self._homingActive:
+            ret = self.TMCL.rfs(self._mn, 'STATUS')
             if ret != 0:  # This is reversed from manual but is how it works
-                 return False
+                return False
             else:
                 self._homingActive = False
-                return True  
-        else: # check normal move status
+                return True
+        else:   # check normal move status
             ret = self.TMCL.gap(self._mn, 8)
             if ret == 1:
                 return True
             else:
                 return False
 
-    #Private Utility Functions
-    def _getMicroStepMode(self, microsteps_per_fullstep : int) -> int:
-        retVal = int({
+    # Private Utility Functions
+    @staticmethod
+    def _get_micro_step_mode(microsteps_per_fullstep: int) -> int:
+        return int({
             1: 0,
             2: 1,
             4: 2,
@@ -145,43 +146,42 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
             64: 6,
             128: 7,
             256: 8
-        }.get(microsteps_per_fullstep,0))
-        return retVal
-    
-    def _UU_To_Microsteps(self , userunits ):
+        }.get(microsteps_per_fullstep, 0))
+
+    def _uu_to_microsteps(self, userunits) -> float:
         return userunits * self._fullstep_per_userunit * self._microstep_per_fullstep
-    def _MicroSteps_To_UU(self, microsteps):
+
+    def _microsteps_to_uu(self, microsteps) -> float:
         return microsteps / (self._fullstep_per_userunit * self._microstep_per_fullstep)
 
-    def _ToVelocityCmd( self, microStepsPerSec ):
-        ret =  (microStepsPerSec * 2**self._pulse_div * 2048.0 * 32.0) / self._clockFreq
+    def _to_velocity_cmd(self, microsteps_per_sec) -> int:
+        ret = (microsteps_per_sec * 2 ** self._pulse_div * 2048.0 * 32.0) / self._clockFreq
         if abs(ret) > 2047:
             raise ValueError("Scaled Velocity too high, lower pulse_div")
         if ret < 1:
             raise ValueError("Scaled Velocity too low, raise pulse_div")
         return int(ret)
 
-    def _ToAccelerationCmd( self, microStepsPerSS ):
-        ret = (2 ** (self._pulse_div + self._ramp_div + 29) * microStepsPerSS) /  self._clockFreq ** 2
+    def _to_acceleration_cmd(self, microsteps_per_ss) -> int:
+        ret = (2 ** (self._pulse_div + self._ramp_div + 29) * microsteps_per_ss) / self._clockFreq ** 2
         if ret > 2047:
             raise ValueError("Acceleration too high, lower ramps_div")
         if ret < 1:
             raise ValueError("Acceleration too low, raise ramps_div")
         return int(ret)
-    
-    def UU_To_VelocityCmd( self, userUnit ) :
-        microStepsPerSec = userUnit * self._fullstep_per_userunit * self._microstep_per_fullstep
-        return self._ToVelocityCmd(microStepsPerSec)
 
-    def UU_To_AccelCmd( self, userUnit ) :
-        microStepsPerSec = userUnit * self._fullstep_per_userunit * self._microstep_per_fullstep
-        return self._ToAccelerationCmd(microStepsPerSec)
+    def _uu_to_velocity_cmd(self, user_unit):
+        microsteps_per_sec = user_unit * self._fullstep_per_userunit * self._microstep_per_fullstep
+        return self._to_velocity_cmd(microsteps_per_sec)
+
+    def _uu_to_accel_cmd(self, user_unit):
+        microsteps_per_sec = user_unit * self._fullstep_per_userunit * self._microstep_per_fullstep
+        return self._to_acceleration_cmd(microsteps_per_sec)
 
     def _get_globals(self):
         ret = {}
         for key, value in TMCL.GLOBAL_PARAMETER.iteritems():
-            #print "GGP:",key+value
-            bank, par, name, _, _ = key+value
+            bank, par, name, _, _ = key + value
             ret[name] = self.TMCL.ggp(bank, par)
         return ret
 
@@ -190,8 +190,7 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
         retsingle = {}
         for mn in range(3):
             for key, value in TMCL.AXIS_PARAMETER.iteritems():
-                par, name, _, _ = (key,)+value
-                #print "GAP:", mn, (key,)+value
+                par, name, _, _ = (key,) + value
                 if par not in TMCL.SINGLE_AXIS_PARAMETERS:
                     retmotor[mn][name] = self.TMCL.gap(mn, par)
                 elif mn == 0:
@@ -199,8 +198,8 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
         return retmotor, retsingle
 
     def _set_important_parameters(self, maxspeed=2000, maxaccel=2000,
-                                maxcurrent=72, standbycurrent=32, 
-                                microstep_resolution=1,store=False):
+                                  maxcurrent=72, standbycurrent=32,
+                                  microstep_resolution=1, store=False):
         self.TMCL.sap(self._mn, 140, int(microstep_resolution))
         self.TMCL.sap(self._mn, 4, int(maxspeed))
         self.TMCL.sap(self._mn, 5, int(maxaccel))
@@ -215,29 +214,26 @@ class TrinamicsTMCLStepper(StepperPlatformInterface):
         self.TMCL.stap(self._mn, 7)
 
     def _set_home_parameters(self):
-        #self.TMCL.sap(self._mn, 9,  ) #ref. switch status
-        #self.TMCL.sap(self._mn, 10, ) #right limit switch status
-        #self.TMCL.sap(self._mn, 11, ) #left limit switch status
-        #self.TMCL.sap(self._mn, 12, ) #right limit switch disable
-        #self.TMCL.sap(self._mn, 13, ) #left limit switch disable
-        #self.TMCL.sap(self._mn, 141, ) #ref. switch tolerance
-        #self.TMCL.sap(self._mn, 149, ) #soft stop flag
-        self.TMCL.sap(self._mn, 194, self._homing_speed) #referencing search speed
+        # self.TMCL.sap(self._mn, 9,  ) #ref. switch status
+        # self.TMCL.sap(self._mn, 10, ) #right limit switch status
+        # self.TMCL.sap(self._mn, 11, ) #left limit switch status
+        # self.TMCL.sap(self._mn, 12, ) #right limit switch disable
+        # self.TMCL.sap(self._mn, 13, ) #left limit switch disable
+        # self.TMCL.sap(self._mn, 141, ) #ref. switch tolerance
+        # self.TMCL.sap(self._mn, 149, ) #soft stop flag
+        self.TMCL.sap(self._mn, 194, self._homing_speed)    # referencing search speed
         if self._home_direction == 'clockwise':
-            self.TMCL.sap(self._mn, 193, 8) #ref. search mode
+            self.TMCL.sap(self._mn, 193, 8)     # ref. search mode
         elif self._home_direction == 'counterclockwise':
             self.TMCL.sap(self._mn, 193, 7)
-        #self.TMCL.sap(self._mn, 195, ) #referencing switch speed
-        #self.TMCL.sap(self._mn, 196, ) # distance end switches 
+        # self.TMCL.sap(self._mn, 195, ) #referencing switch speed
+        # self.TMCL.sap(self._mn, 196, ) # distance end switches
 
     def _rotate(self, velocity):
         if velocity == 0:
-            self.TMCL.mst(self._mn) #motor stop
+            self.TMCL.mst(self._mn)     # motor stop
         if velocity > 0:
-            self.TMCL.ror(self._mn, self.UU_To_VelocityCmd(velocity))
+            self.TMCL.ror(self._mn, self._uu_to_velocity_cmd(velocity))
         else:
-            self.TMCL.rol(self._mn, self.UU_To_VelocityCmd(abs(velocity))) 
+            self.TMCL.rol(self._mn, self._uu_to_velocity_cmd(abs(velocity)))
         return velocity
-
-     
-

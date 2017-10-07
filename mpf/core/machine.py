@@ -109,7 +109,7 @@ class MachineController(LogMixin):
         self.config = None      # type: Any
 
         # add some type hints
-        MYPY = False
+        MYPY = False    # noqa
         if MYPY:   # pragma: no cover
             # controllers
             self.events = None                          # type: EventManager

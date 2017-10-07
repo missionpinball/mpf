@@ -229,11 +229,15 @@ class PROCDMD(DmdPlatformInterface):
 
 class AuxPort(object):
 
+    """Aux port on the P-Roc."""
+
     def __init__(self, platform):
+        """Initialise aux port."""
         self.platform = platform
         self._commands = []
 
     def reset(self):
+        """Reset aux port."""
         commands = [self.platform.pinproc.aux_command_disable()]
 
         for j in range(1, 255):
@@ -269,6 +273,7 @@ class PRocAlphanumericDisplay(SegmentDisplayPlatformInterface):
     """Since AuxAlphanumericDisplay updates all four displays wrap it and set the correct offset."""
 
     def __init__(self, display, index):
+        """Initialise alpha numeric display."""
         super().__init__(index)
         self.display = display
 
@@ -278,7 +283,9 @@ class PRocAlphanumericDisplay(SegmentDisplayPlatformInterface):
         self.display.set_text(text, self.number)
 
 
-class AuxAlphanumericDisplay():
+class AuxAlphanumericDisplay(object):
+
+    """An alpha numeric display connected to the aux port on the P-Roc."""
 
     # Start at ASCII table offset 32: ' '
     asciiSegments = [0x0000,  # ' '
@@ -377,18 +384,18 @@ class AuxAlphanumericDisplay():
                      0x5500,  # 'x' Broken Letter x NOT CREATED YET
                      0x2500,  # 'y' Broken Letter y NOT CREATED YET
                      0x4409   # 'z' Broken Letter z NOT CREATED YET
-                    ]
+                     ]
 
-    strobes = [8,9,10,11,12]
-    full_intensity_delay = 350 # microseconds
-    inter_char_delay = 40 # microseconds
+    strobes = [8, 9, 10, 11, 12]
+    full_intensity_delay = 350  # microseconds
+    inter_char_delay = 40       # microseconds
 
     def __init__(self, platform, aux_controller):
-        """Initializes the animation."""
+        """Initialise the alphanumeric display."""
         self.platform = platform
         self.aux_controller = aux_controller
         self.aux_index = aux_controller.reserve_index()
-        self.texts = ["        "]*4
+        self.texts = ["        "] * 4
 
     def set_text(self, text, index):
         """Set text for display."""
@@ -400,7 +407,7 @@ class AuxAlphanumericDisplay():
         input_strings = [self.texts[0] + self.texts[1], self.texts[2] + self.texts[3]]
         self.display(input_strings)
 
-    def display(self, input_strings, intensities=[[1]*16]*2):
+    def display(self, input_strings, intensities=[[1] * 16] * 2):
         """Set display text."""
         strings = []
 
@@ -408,45 +415,51 @@ class AuxAlphanumericDisplay():
         # Then convert each string to a list of chars.
         for j in range(0, 2):
             input_strings[j] = input_strings[j]
-            if len(input_strings[j]) < 16: input_strings[j] += ' '*(16-len(input_strings[j]))
+            if len(input_strings[j]) < 16:
+                input_strings[j] += ' ' * (16 - len(input_strings[j]))
             strings += [list(input_strings[j])]
 
         # Make sure insensities are 1 or less
-        for i in range(0,16):
-            for j in range(0,2):
-                if intensities[j][i] > 1: intensities[j][i] = 1
+        for i in range(0, 16):
+            for j in range(0, 2):
+                if intensities[j][i] > 1:
+                    intensities[j][i] = 1
 
         commands = []
-        segs = []
         char_on_time = []
         char_off_time = []
 
         # Initialize a 2x16 array for segments value
-        segs = [[0] * 16 for i in range(2)]
+        segs = [[0] * 16 for _ in range(2)]
 
         # Loop through each character
-        for i in range(0,16):
+        for i in range(0, 16):
 
             # Activate the character position (this goes to both displayas)
-            commands += [self.platform.pinproc.aux_command_output_custom(i,0,self.strobes[0],False,0)]
+            commands += [self.platform.pinproc.aux_command_output_custom(i, 0, self.strobes[0], False, 0)]
 
-            for j in range(0,2):
-                segs[j][i] = self.asciiSegments[ord(strings[j][i])-32]
+            for j in range(0, 2):
+                segs[j][i] = self.asciiSegments[ord(strings[j][i]) - 32]
 
                 # Check for commas or periods.
                 # If found, squeeze comma into previous character.
                 # No point checking the last character (plus, this avoids an
                 # indexing error by not checking i+1 on the 16th char.
-                if (i<15):
-                    comma_dot = strings[j][i+1]
+                if i < 15:
+                    comma_dot = strings[j][i + 1]
                     if comma_dot == "," or comma_dot == ".":
-                        segs[j][i] |= self.asciiSegments[ord(comma_dot)-32]
+                        segs[j][i] |= self.asciiSegments[ord(comma_dot) - 32]
                         strings[j].remove(comma_dot)
                         # Append a space to ensure there are enough chars.
                         strings[j].append(' ')
-                                #character is 16 bits long, characters are loaded in 2 lots of 8 bits, for each display (4 enable lines total)
-                commands += [self.platform.pinproc.aux_command_output_custom(segs[j][i] & 0xff,0,self.strobes[j*2+1],False, 0)] #first 8 bits of characater data
-                commands += [self.platform.pinproc.aux_command_output_custom((segs[j][i]>> 8) & 0xff,0,self.strobes[j*2+2],False, 0)] #second 8 bits of characater data
+                # character is 16 bits long, characters are loaded in 2 lots of 8 bits,
+                # for each display (4 enable lines total)
+                commands += [self.platform.pinproc.aux_command_output_custom(
+                    segs[j][i] & 0xff, 0,
+                    self.strobes[j * 2 + 1], False, 0)]     # first 8 bits of characater data
+                commands += [self.platform.pinproc.aux_command_output_custom(
+                    (segs[j][i] >> 8) & 0xff, 0,
+                    self.strobes[j * 2 + 2], False, 0)]     # second 8 bits of characater data
 
                 char_on_time += [intensities[j][i] * self.full_intensity_delay]
                 char_off_time += [self.inter_char_delay + (self.full_intensity_delay - char_on_time[j])]
@@ -464,21 +477,21 @@ class AuxAlphanumericDisplay():
 
             # Not sure if the hardware will like a delay of 0
             # Use 2 to be extra safe.  2 microseconds won't affect display.
-            if between_delay == 0: between_delay = 2
+            if between_delay == 0:
+                between_delay = 2
 
             # Delay until it's time to turn off the character with the lowest intensity
             commands += [self.platform.pinproc.aux_command_delay(char_on_time[first])]
-            commands += [self.platform.pinproc.aux_command_output_custom(0,0,self.strobes[first*2+1],False,0)]
-            commands += [self.platform.pinproc.aux_command_output_custom(0,0,self.strobes[first*2+2],False,0)]
+            commands += [self.platform.pinproc.aux_command_output_custom(0, 0, self.strobes[first * 2 + 1], False, 0)]
+            commands += [self.platform.pinproc.aux_command_output_custom(0, 0, self.strobes[first * 2 + 2], False, 0)]
 
             # Delay until it's time to turn off the other character.
             commands += [self.platform.pinproc.aux_command_delay(between_delay)]
-            commands += [self.platform.pinproc.aux_command_output_custom(0,0,self.strobes[second*2+1],False,0)]
-            commands += [self.platform.pinproc.aux_command_output_custom(0,0,self.strobes[second*2+2],False,0)]
+            commands += [self.platform.pinproc.aux_command_output_custom(0, 0, self.strobes[second * 2 + 1], False, 0)]
+            commands += [self.platform.pinproc.aux_command_output_custom(0, 0, self.strobes[second * 2 + 2], False, 0)]
 
             # Delay for the inter-digit delay.
             commands += [self.platform.pinproc.aux_command_delay(char_off_time[second])]
 
         # Send the new list of commands to the Aux port controller.
         self.aux_controller.update(self.aux_index, commands)
-

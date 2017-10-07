@@ -36,6 +36,7 @@ class MyPinballsHardwarePlatform(SegmentDisplayPlatform):
     """Hardware platform for MyPinballs 7-segment controller."""
 
     def __init__(self, machine):
+        """Initialise mypinballs hardware."""
         super().__init__(machine)
 
         self._writer = None

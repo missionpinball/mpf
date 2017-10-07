@@ -89,7 +89,7 @@ class RpiServo(ServoPlatformInterface):
 class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform):
 
     """Control the hardware of a Raspberry Pi.
-    
+
     Works locally and remotely via network.
     """
 
@@ -128,7 +128,7 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform)
 
     @asyncio.coroutine
     def _run(self):
-        """Handles the command queue."""
+        """Handle the command queue."""
         while True:
             # get next command
             cmd = yield from self._cmd_queue.get()

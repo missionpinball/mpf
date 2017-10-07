@@ -1,8 +1,6 @@
 """MPF plugin for an auditor which records switch events, high scores, shots, etc."""
 
 import logging
-from typing import Any
-from typing import Set
 
 from mpf.core.switch_controller import MonitoredSwitchChange
 from mpf.devices.shot import Shot
@@ -10,6 +8,7 @@ from mpf.devices.shot import Shot
 MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController
+    from typing import Any, Set
 
 
 class Auditor(object):

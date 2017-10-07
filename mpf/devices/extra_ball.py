@@ -28,7 +28,7 @@ class ExtraBall(ModeDevice):
     @property
     def enabled(self):
         """Return whether this extra ball group is enabled.
-        
+
         This takes into consideration the enabled setting plus the max balls
         per game setting.
         """

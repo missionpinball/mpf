@@ -1,5 +1,4 @@
 """Contains the Light class."""
-import asyncio
 from functools import partial
 from operator import itemgetter
 
@@ -182,7 +181,6 @@ class Light(SystemWideDevice):
             except AssertionError as e:
                 raise AssertionError("Failed to configure light {} in platform. See error above".
                                      format(self.name)) from e
-
 
     def _initialize(self):
         self._load_hw_drivers()

@@ -90,7 +90,6 @@ class Driver(SystemWideDevice):
         except AssertionError as e:
             raise AssertionError("Failed to configure driver {} in platform. See error above".format(self.name)) from e
 
-
     def get_and_verify_pulse_power(self, pulse_power: Optional[float]) -> float:
         """Return the pulse power to use.
 

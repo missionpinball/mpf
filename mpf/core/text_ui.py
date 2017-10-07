@@ -16,11 +16,11 @@ if MYPY:   # pragma: no cover
 
 
 class TextUi(MpfController):
-    """Handles the text-based UI"""
+
+    """Handles the text-based UI."""
 
     def __init__(self, machine: "MachineController") -> None:
         """Initialize TextUi."""
-
         super().__init__(machine)
 
         self.screen = None
@@ -72,8 +72,7 @@ class TextUi(MpfController):
         self.machine.bcp.interface.register_command_callback(
             "status_report", self._bcp_status_report)
 
-        for bd in [x for x in self.machine.ball_devices if not
-                x.is_playfield()]:
+        for bd in [x for x in self.machine.ball_devices if not x.is_playfield()]:
             self.ball_devices.append(bd)
 
         self.ball_devices.sort()
@@ -100,14 +99,14 @@ class TextUi(MpfController):
         self.screen.print_at((' ' * padding) + title + (' ' * (padding + 1)),
                              0, 0, colour=7, bg=1)
 
-        self.screen.print_at('<CTRL+C> TO EXIT', width-16, 0, colour=0, bg=1)
+        self.screen.print_at('<CTRL+C> TO EXIT', width - 16, 0, colour=0, bg=1)
 
         self.screen.print_at('ACTIVE MODES', self.columns[0], 2)
         self.screen.print_at('SWITCHES', int((width * .5) - 8), 2)
         self.screen.print_at('BALL COUNTS', self.columns[3], 2)
         self.screen.print_at('-' * width, 0, 3)
 
-        self.screen.print_at(self.machine.machine_path, 0, height-2, colour=3)
+        self.screen.print_at(self.machine.machine_path, 0, height - 2, colour=3)
 
         if 0 < self._asset_percent < 100:
             self.screen.print_at(' ' * width, 0, int(height / 2) + 1, bg=3)
@@ -131,10 +130,10 @@ class TextUi(MpfController):
             len(self.ball_devices) + len(self.machine.playfields)) + 7
 
         self.screen.print_at('CURRENT PLAYER', self.columns[3],
-                             self.player_start_row-2)
+                             self.player_start_row - 2)
         self.screen.print_at('-' * (int(self.screen.width * .75) + 1),
                              self.columns[3],
-                             self.player_start_row-1)
+                             self.player_start_row - 1)
         self._update_player()
 
     def _update_stats(self):
@@ -146,13 +145,13 @@ class TextUi(MpfController):
         hours, mins = divmod(mins, 60)
         time_string = 'RUNNING {:d}:{:02d}:{:02d}'.format(hours, mins, sec)
         self.screen.print_at(time_string, width - len(time_string),
-                             height-2, colour=2)
+                             height - 2, colour=2)
 
         # System Stats
         system_str = 'Free Memory (MB): {} CPU:{:3d}%'.format(
             round(virtual_memory().available / 1048576),
             round(cpu_percent(interval=None, percpu=False)))
-        self.screen.print_at(system_str, width-len(system_str), height-1,
+        self.screen.print_at(system_str, width - len(system_str), height - 1,
                              colour=2)
 
         # MPF process stats
@@ -161,7 +160,7 @@ class TextUi(MpfController):
             round(self.mpf_process.memory_info().rss / 1048576),
             round(self.mpf_process.memory_info().vms / 1048576))
 
-        self.screen.print_at(stats_str, 0, height-1, colour=6)
+        self.screen.print_at(stats_str, 0, height - 1, colour=6)
 
         # MC process stats
         if self._bcp_status != (0, 0, 0):
@@ -170,8 +169,7 @@ class TextUi(MpfController):
                 round(self._bcp_status[1] / 1048576),
                 round(self._bcp_status[2] / 1048576))
 
-            self.screen.print_at(bcp_string,
-                len(stats_str) - 2, height-1, colour=5)
+            self.screen.print_at(bcp_string, len(stats_str) - 2, height - 1, colour=5)
 
     def _update_switch_layout(self):
         start_row = 4
@@ -219,9 +217,9 @@ class TextUi(MpfController):
 
         for i, mode in enumerate(modes):
             self.screen.print_at(' ' * (self.columns[0] - 1),
-                                 self.columns[0], i+4)
+                                 self.columns[0], i + 4)
             self.screen.print_at('{} ({})'.format(mode.name, mode.priority),
-                                 self.columns[0], i+4)
+                                 self.columns[0], i + 4)
 
         self.screen.print_at(' ' * (int(self.screen.width * .25) - 1),
                              self.columns[0], len(modes) + 4)
@@ -248,9 +246,10 @@ class TextUi(MpfController):
             row += 1
 
     def _update_player(self, **kwargs):
+        del kwargs
         for i in range(3):
             self.screen.print_at(
-                ' ' * (int(self.screen.width * (1/len(self.columns))) + 1),
+                ' ' * (int(self.screen.width * (1 / len(self.columns))) + 1),
                 self.columns[3],
                 self.player_start_row + i)
         try:
@@ -267,9 +266,10 @@ class TextUi(MpfController):
             self._update_player_no_game()
 
     def _update_player_no_game(self, **kwargs):
+        del kwargs
         for i in range(3):
             self.screen.print_at(
-                ' ' * (int(self.screen.width * (1/len(self.columns))) + 1),
+                ' ' * (int(self.screen.width * (1 / len(self.columns))) + 1),
                 self.columns[3],
                 self.player_start_row + i)
 
@@ -307,14 +307,7 @@ class TextUi(MpfController):
 
     def _asset_load_change(self, percent, **kwargs):
         del kwargs
-        self._show_asset_loading(percent)
-
-    def _show_asset_loading(self, percent=None):
-        if percent is None:
-            percent = self._asset_percent
-        else:
-            self._asset_percent = percent
-
+        self._asset_percent = percent
         self._draw_screen()
 
     def _asset_load_complete(self, **kwargs):
@@ -328,7 +321,7 @@ class TextUi(MpfController):
         self._update_ball_devices()
 
     def stop(self, **kwargs):
-        """Stop the Text UI and restore the original console screen"""
+        """Stop the Text UI and restore the original console screen."""
         del kwargs
 
         if self.screen:

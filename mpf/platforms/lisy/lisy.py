@@ -94,7 +94,7 @@ class LisyDisplay(SegmentDisplayPlatformInterface):
     def set_text(self, text: str, flashing: bool):
         """Set text to display."""
         # no flashing supported yet
-        assert(flashing == False)
+        assert(flashing is False)
         self.platform.send_string(LisyDefines.DisplaysSetDisplay0To + self.number, text)
 
 

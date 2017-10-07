@@ -21,6 +21,7 @@ class LogMixin(object):
         self._debug_to_file = False
 
         logging.addLevelName(11, "INFO")
+
     def configure_logging(self, logger: str, console_level: str='basic',
                           file_level: str='basic'):
         """Configure logging.

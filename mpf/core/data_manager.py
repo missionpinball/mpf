@@ -150,4 +150,3 @@ class DataManager(MpfController):
         # if dirty write data one last time during shutdown
         if self._dirty.is_set():
             FileManager.save(self.filename, data)
-
