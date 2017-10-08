@@ -144,6 +144,8 @@ class TestAssets(MpfTestCase):
         self.assertFalse(self.machine.shows['show10'].unloading)
 
         # Start the mode and make sure those assets load
+        self.mock_event("loading_assets")
+        self.mock_event("asset_loading_complete")
         self.machine.modes['mode1'].start()
         self.advance_time_and_run()
 
@@ -156,6 +158,9 @@ class TestAssets(MpfTestCase):
             self.assertTrue(self.machine.shows['show9'].loading)
             time.sleep(.0001)
             self.advance_time_and_run(.1)
+
+        self.assertEventCalled("loading_assets")
+        self.assertEventCalled("asset_loading_complete")
 
         self.assertTrue(self.machine.shows['show9'].loaded)
         self.assertFalse(self.machine.shows['show9'].loading)

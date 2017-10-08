@@ -75,6 +75,9 @@ class BaseAssetManager(MpfController, LogMixin):
         self.machine.events.add_handler('assets_to_load',
                                         self._bcp_client_asset_load)
 
+        # prevent excessive loading_assets events
+        self._last_asset_event_time = None
+
     def get_next_id(self) -> int:
         """Return the next free id."""
         self._next_id += 1
@@ -522,6 +525,13 @@ class BaseAssetManager(MpfController, LogMixin):
         total = self.num_assets_to_load + self.num_bcp_assets_to_load
         remaining = total - self.num_assets_loaded - self.num_bcp_assets_loaded
 
+        # limit loading_assets events to max 5 per second
+        if remaining and self._last_asset_event_time and \
+                self._last_asset_event_time > self.machine.clock.get_time() + 0.2:
+            return
+
+        self._last_asset_event_time = self.machine.clock.get_time()
+
         self.machine.events.post(
             'loading_assets', total=total,
             loaded=self.num_assets_loaded + self.num_bcp_assets_loaded,
@@ -552,6 +562,7 @@ class BaseAssetManager(MpfController, LogMixin):
         '''
 
         if not remaining:
+            self._last_asset_event_time = None
             self.machine.events.post('asset_loading_complete')
             '''event: asset_loading_complete
             desc: Posted when the asset manager has loaded all the assets in
