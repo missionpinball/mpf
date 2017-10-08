@@ -65,7 +65,7 @@ class BallSearch(MpfController):
         the event.'''
 
     def request_to_start_game(self, **kwargs):
-        """Method registered for the *request_to_start_game* event.
+        """Handle result of the *request_to_start_game* event.
 
         If ball search is running, this method will return *False* to prevent
         the game from starting while ball search is running.

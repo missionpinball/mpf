@@ -29,6 +29,7 @@ class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
 
         return validated_config
 
+    # pylint: disable-msg=no-self-use
     def get_string_config(self, string):
         """Parse string config."""
         return {string: dict()}
@@ -62,13 +63,13 @@ class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
             devices = [device]
 
         return_dict = dict()
-        for device in devices:
-            return_dict[device] = device_settings
+        for this_device in devices:
+            return_dict[this_device] = device_settings
 
         return return_dict
 
     @abc.abstractmethod
-    def play(self, settings, context, calling_context, priority=0, **kwargs):
+    def play(self, settings, context: str, calling_context: str, priority: int = 0, **kwargs):
         """Directly play player."""
         # **kwargs since this is an event callback
         raise NotImplementedError

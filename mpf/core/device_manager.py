@@ -470,7 +470,7 @@ class DeviceCollection(CaseInsensitiveDict):
 
     def multilist_to_objects(self, multilist):
         """Convert list of devices to a list of objects.
-         
+
         Same as multilist_to_names() method, except it return a list of objects instead of a list of strings.
         """
         multilist = Util.string_to_list(multilist)

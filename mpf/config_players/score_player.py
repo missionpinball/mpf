@@ -27,7 +27,7 @@ class ScorePlayer(ConfigPlayer):
         return False
 
     def play(self, settings: dict, context: str, calling_context: str,
-             priority: int=0, **kwargs) -> None:
+             priority: int = 0, **kwargs) -> None:
         """Score variable."""
         for var, s in settings.items():
             block_item = var + ":" + calling_context

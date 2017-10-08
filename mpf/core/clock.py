@@ -83,7 +83,9 @@ class ClockBase(LogMixin):
 
     def open_connection(self, host=None, port=None, *,
                         limit=None, **kwds):
-        """A wrapper for create_connection() returning a (reader, writer) pair.
+        """Open connection using asyncio.
+
+        Wrapper for create_connection() returning a (reader, writer) pair.
 
         The reader returned is a StreamReader instance; the writer is a
         StreamWriter instance.
@@ -108,7 +110,9 @@ class ClockBase(LogMixin):
     @asyncio.coroutine
     def open_serial_connection(self, limit=None, **kwargs) ->\
             Generator[int, None, Tuple[asyncio.StreamReader, asyncio.StreamWriter]]:
-        """A wrapper for create_serial_connection() returning a (reader, writer) pair.
+        """Open a serial connection using asyncio.
+
+        A wrapper for create_serial_connection() returning a (reader, writer) pair.
 
         The reader returned is a StreamReader instance; the writer is a StreamWriter instance.
 

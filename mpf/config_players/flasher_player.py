@@ -31,7 +31,8 @@ class FlasherPlayer(DeviceConfigPlayer):
         light.color("white", fade_ms=0, key=key)
         self.delay.add(duration_ms, self._remove_flash, light=light, key=key)
 
-    def _remove_flash(self, light, key):
+    @staticmethod
+    def _remove_flash(light, key):
         light.remove_from_stack_by_key(key=key)
 
     def get_express_config(self, value):

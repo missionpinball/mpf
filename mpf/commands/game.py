@@ -2,12 +2,12 @@
 
 import argparse
 import errno
-import logging
 import os
 import signal
 import socket
 import sys
 from datetime import datetime
+import logging
 from logging.handlers import QueueHandler, SysLogHandler
 from queue import Queue
 
@@ -21,6 +21,7 @@ class Command(object):
 
     """Runs the mpf game."""
 
+    # pylint: disable-msg=too-many-locals,too-many-statements
     def __init__(self, mpf_path, machine_path, args):
         """Run mpf game."""
         signal.signal(signal.SIGINT, self.exit)
@@ -207,13 +208,13 @@ class Command(object):
         except Exception as e:
             self.exit(exception=e)
 
-    def exit(self, signal=None, frame=None, exception=None):
-        """Called when MPF exits (either cleanly or from a crash.
+    def exit(self, signum=None, frame=None, exception=None):
+        """Handle MPF exit from either a clean shutdown or from a crash.
 
         Cleanly shuts down logging and restores the console window if the Text
         UI option is used.
         """
-        del signal, frame
+        del signum, frame
 
         if self.args.text_ui:
             # restore the console to the old state

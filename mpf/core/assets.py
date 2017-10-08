@@ -214,7 +214,7 @@ class BaseAssetManager(MpfController, LogMixin):
         if not wait_for_assets:
             self.machine.clear_boot_hold('assets')
 
-    def _create_assets_from_disk(self, config: dict, mode: Optional[Mode]=None) -> dict:
+    def _create_assets_from_disk(self, config: dict, mode: Optional[Mode] = None) -> dict:
         """Walk a folder (and subfolders) and finds all the assets.
 
         Check to see if those assets have config entries in the passed config file, and
@@ -222,13 +222,13 @@ class BaseAssetManager(MpfController, LogMixin):
         defaults based on the subfolder it was in or the general defaults.
         Then it creates the asset objects based on the built-up config.
 
-            Args:
-                config: A config dictionary.
-                mode: Optional reference to the mode object which is used when
-                    assets are being created from mode folders.
+        Args:
+            config: A config dictionary.
+            mode: Optional reference to the mode object which is used when
+                  assets are being created from mode folders.
 
-            Returns: An updated config dictionary. (See the "How it works"
-                section below for details.
+        Returns:
+            An updated config dictionary. (See the "How it works" section below for details.)
 
         Note that this method merely creates the asset object so they can be
         referenced in MPF. It does not actually load the asset files into
@@ -317,8 +317,8 @@ class BaseAssetManager(MpfController, LogMixin):
         return config
 
     # pylint: disable-msg=too-many-locals
-    def _create_asset_config_entries(self, asset_class: AssetClass, config, mode_name: Optional[str]=None,
-                                     path: Optional[str]=None) -> dict:
+    def _create_asset_config_entries(self, asset_class: AssetClass, config, mode_name: Optional[str] = None,
+                                     path: Optional[str] = None) -> dict:
         """Scan a folder (and subfolders).
 
         Automatically creates or updates entries in the config dict for any asset files it finds.
@@ -381,12 +381,12 @@ class BaseAssetManager(MpfController, LogMixin):
         ignore_files = ("desktop.ini", "Thumbs.db")
 
         # walk files in the asset root directory (include all subfolders)
-        for path, _, files in os.walk(root_path, followlinks=True):
+        for this_path, _, files in os.walk(root_path, followlinks=True):
             # Determine the first-level sub-folder of the current path relative to the
             # asset root path.  The first level sub-folder is used to determine the
             # default asset keys based on the assets config section.
-            relative_path = PurePath(path).relative_to(root_path)
-            if len(relative_path.parts) > 0:
+            relative_path = PurePath(this_path).relative_to(root_path)
+            if relative_path.parts:
                 first_level_subfolder = relative_path.parts[0]
             else:
                 first_level_subfolder = None
@@ -397,7 +397,7 @@ class BaseAssetManager(MpfController, LogMixin):
             # loop over valid files in the current path
             for file_name in valid_files:
                 name = os.path.splitext(file_name)[0].lower()
-                full_file_path = os.path.join(path, file_name)
+                full_file_path = os.path.join(this_path, file_name)
 
                 # determine default group based on first level sub-folder and location groups
                 # configured in the assets section
@@ -475,7 +475,7 @@ class BaseAssetManager(MpfController, LogMixin):
                     key_name='{}_start'.format(mode.name),
                     priority=priority))
 
-    def load_assets_by_load_key(self, key_name: str, priority: int=0) -> Set["Asset"]:
+    def load_assets_by_load_key(self, key_name: str, priority: int = 0) -> Set["Asset"]:
         """Load all the assets with a given load key.
 
         Args:
@@ -904,14 +904,14 @@ class Asset(object):
         raise NotImplementedError
 
     def is_loaded(self):
-        """Called when asset has been loaded."""
+        """Handle that asset has been loaded."""
         self._call_callbacks()
         self.loading = False
         self.loaded = True
         self.unloading = False
 
     def unload(self):
-        """Called when the asset has been unloaded."""
+        """Handle that asset has been unloaded."""
         self.unloading = True
         self.loaded = False
         self.loading = False

@@ -10,9 +10,10 @@ class QueueEventPlayer(ConfigPlayer):
 
     config_file_section = 'queue_event_player'
 
-    def play(self, settings, context, priority=0, **kwargs):
+    def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Post queue events."""
         del kwargs
+        del calling_context
         if settings['events_when_finished']:
             self.machine.events.post_queue(
                 settings['queue_event'],

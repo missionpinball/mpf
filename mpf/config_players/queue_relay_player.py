@@ -8,8 +8,9 @@ class QueueRelayPlayer(ConfigPlayer):
 
     config_file_section = 'queue_relay_player'
 
-    def play(self, settings, context, priority=0, **kwargs):
+    def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Block queue event."""
+        del calling_context
         try:
             queue = kwargs['queue']
         except KeyError:

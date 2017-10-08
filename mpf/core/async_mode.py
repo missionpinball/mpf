@@ -49,7 +49,7 @@ class AsyncMode(Mode, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     @asyncio.coroutine
     def _run(self) -> Generator[int, None, None]:
-        """Main task which runs as long as the mode is active.
+        """Start main task which runs as long as the mode is active.
 
         Overwrite this function in your mode.
 

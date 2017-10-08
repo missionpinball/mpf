@@ -417,7 +417,7 @@ class BcpInterface(MpfController):
             self.warning_log("Received invalid BCP command: %s from client: %s", cmd, client.name)
 
     def _bcp_receive_error(self, client, **kwargs):
-        """A remote BCP host has sent a BCP error message, indicating that a command from MPF was not recognized.
+        """Handle a BCP error message from a remote BCP host indicating that a command from MPF was not recognized.
 
         This method only posts a warning to the log. It doesn't do anything else
         at this point.
@@ -430,7 +430,7 @@ class BcpInterface(MpfController):
         self.machine.bcp.transport.send_to_clients_with_handler("_monitor_drivers", "driver_event", **kwargs)
 
     def _bcp_receive_reset_complete(self, client, **kwargs):
-        """A remote BCP host has sent a BCP reset_complete message indicating their reset process has completed."""
+        """Handle a BCP reset_complete message from a remote BCP host indicating their reset process has completed."""
         del kwargs
         self.debug_log("Received reset_complete from client: %s %s", client.name)
         self._client_reset_complete_status[client] = True
@@ -469,7 +469,7 @@ class BcpInterface(MpfController):
 
         # Will hold the queue event until all clients respond with a "reset_complete" command
         clients = self.machine.bcp.transport.get_all_clients()
-        if len(clients) > 0:
+        if clients:
             queue.wait()
             self._client_reset_queue = queue
             self._client_reset_complete_status.clear()

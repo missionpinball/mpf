@@ -99,7 +99,7 @@ class Bcp(MpfController):
             settings = self.machine.config_validator.validate_config("bcp:servers", settings)
             server = BcpServer(self.machine, settings['ip'], settings['port'], settings['type'])
             server_future = Util.ensure_future(server.start(), loop=self.machine.clock.loop)
-            server_future.add_done_callback(lambda x: self.servers.append(server))
+            server_future.add_done_callback(lambda x, s=server: self.servers.append(s))
             servers_start_futures.append(server_future)
 
         # block init until all servers were started

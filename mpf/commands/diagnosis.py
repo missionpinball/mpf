@@ -22,12 +22,12 @@ class Command(object):
             from mpfmc._version import version as mc_version
             print("MPF-MC version: {}".format(mc_version))
 
-        except:
+        except ImportError:
             print("MPF-MC not found")
 
         print("\nSerial ports found:")
         iterator = list_ports.comports()
-        for n, (port, desc, hwid) in enumerate(iterator, 1):
+        for _, (port, desc, hwid) in enumerate(iterator, 1):
             sys.stdout.write("{:20}\n".format(port))
             sys.stdout.write("    desc: {}\n".format(desc))
             sys.stdout.write("    hwid: {}\n".format(hwid))

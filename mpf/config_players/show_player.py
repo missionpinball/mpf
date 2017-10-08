@@ -10,9 +10,9 @@ class ShowPlayer(DeviceConfigPlayer):
     show_section = 'shows'
 
     # pylint: disable-msg=too-many-arguments
-    def play(self, settings, context, calling_context,
-             priority=0, queue=None, **kwargs):
+    def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Play, start, stop, pause, resume or advance show based on config."""
+        queue = kwargs.get("queue", None)
         for show, show_settings in settings.items():
             show_settings = dict(show_settings)
             if 'hold' in show_settings and show_settings['hold'] is not None:

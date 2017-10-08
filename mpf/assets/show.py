@@ -461,7 +461,7 @@ class RunningShow(object):
             self._show_loaded = False
 
     def show_loaded(self, show):
-        """Called when a deferred show was loaded.
+        """Handle that a deferred show was loaded.
 
         Start playing the show as if it started earlier.
         """
@@ -519,6 +519,7 @@ class RunningShow(object):
 
                     target[token_path[-1]] = replacement
 
+        # pylint: disable-msg=too-many-nested-blocks
         for token, replacement in kwargs.items():
             if token in self.show.token_keys:
                 key_name = '({})'.format(token)

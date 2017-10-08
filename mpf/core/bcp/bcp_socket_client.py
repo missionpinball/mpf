@@ -92,7 +92,7 @@ def encode_command_string(bcp_command, **kwargs):
     json_needed = False
 
     for k, v in kwargs.items():
-        if isinstance(v, dict) or isinstance(v, list):
+        if isinstance(v, (dict, list)):
             json_needed = True
             break
 
@@ -201,18 +201,18 @@ class BCPClientSocket(BaseBcpClient):
 
         self._sender.close()
 
-    def send(self, bcp_command, bcp_command_args):
+    def send(self, bcp_command, kwargs):
         """Send a message to the BCP host.
 
         Args:
             bcp_command: command to send
-            bcp_command_args: parameters to command
+            kwargs: parameters to command
         """
         try:
-            bcp_string = encode_command_string(bcp_command, **bcp_command_args)
+            bcp_string = encode_command_string(bcp_command, **kwargs)
         # pylint: disable-msg=broad-except
         except Exception as e:
-            self.warning_log("Failed to encode bcp_command %s with args %s. %s", bcp_command, bcp_command_args, e)
+            self.warning_log("Failed to encode bcp_command %s with args %s. %s", bcp_command, kwargs, e)
             return
 
         if self.debug_log:

@@ -185,7 +185,7 @@ class BallController(MpfController):
             self.info_log("%s contains %s balls. Tags %s", device.name, device.balls, device.tags)
 
     def request_to_start_game(self, **kwargs) -> bool:
-        """Method registered for the *request_to_start_game* event.
+        """Handle result of the *request_to_start_game* event.
 
         Checks to make sure that the balls are in all the right places and
         returns. If too many balls are missing (based on the config files 'Min
@@ -244,7 +244,7 @@ class BallController(MpfController):
             for device in self.machine.ball_devices.items_tagged(tag):
                 devices.add(device)
 
-        if len(devices) == 0:
+        if not devices:
             # didn't find any devices matching that tag, so we return True
             return True
 
@@ -263,7 +263,7 @@ class BallController(MpfController):
             return False
 
     def collect_balls(self, target='home, trough') -> None:
-        """Used to ensure that all balls are in contained in ball devices with the tag or list of tags you pass.
+        """Ensure that all balls are in contained in ball devices with the tag or list of tags you pass.
 
         Typically this would be used after a game ends, or when the machine is
         reset or first starts up, to ensure that all balls are in devices
