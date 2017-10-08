@@ -104,7 +104,30 @@ class TestP3Roc(MpfTestCase):
         self.pinproc.driver_update_group_config = MagicMock()
         super().setUp()
 
-    def test_pulse(self):
+    def test_platform(self):
+        self._test_accelerometer()
+        self._test_pulse()
+        self._test_pdb_matrix_light()
+        self._test_enable_exception()
+        self._test_allow_enable_disable()
+        self._test_hw_rule_pulse()
+        self._test_hw_rule_pulse_inverted_switch()
+        self._test_hw_rule_pulse_disable_on_release()
+        self._test_hw_rule_hold_pwm()
+        self._test_hw_rule_hold_allow_enable()
+        self._test_hw_rule_multiple_pulse()
+        self._test_servo_via_i2c()
+        self._test_initial_switches()
+        self._test_switches()
+        self._test_flipper_single_coil()
+        self._test_flipper_two_coils()
+        self._test_flipper_two_coils_with_eos()
+        self._test_pdb_gi_light()
+        self._test_hw_rule_hold_no_allow_enable()
+        self._test_leds()
+        self._test_leds_inverted()
+
+    def _test_pulse(self):
         self.assertEqual("P-Roc Board 1", self.machine.coils.c_test.hw_driver.get_board_name())
         # pulse coil A1-B1-2
         self.machine.coils.c_test.pulse()
@@ -113,12 +136,12 @@ class TestP3Roc(MpfTestCase):
             number, 23)
         assert not self.machine.coils.c_test.hw_driver.proc.driver_schedule.called
 
-    def test_enable_exception(self):
+    def _test_enable_exception(self):
         # enable coil which does not have allow_enable
         with self.assertRaises(AssertionError):
             self.machine.coils.c_test.enable()
 
-    def test_allow_enable_disable(self):
+    def _test_allow_enable_disable(self):
         self.machine.coils.c_test_allow_enable.enable()
         number = self.machine.coils.c_test_allow_enable.hw_driver.number
         self.machine.coils.c_test_allow_enable.hw_driver.proc.driver_schedule.assert_called_with(
@@ -127,7 +150,7 @@ class TestP3Roc(MpfTestCase):
         self.machine.coils.c_test_allow_enable.disable()
         self.machine.coils.c_test_allow_enable.hw_driver.proc.driver_disable.assert_called_with(number)
 
-    def test_hw_rule_pulse(self):
+    def _test_hw_rule_pulse(self):
         self.machine.coils.c_slingshot_test.hw_driver.state = MagicMock(return_value=8)
         self.machine.autofires.ac_slingshot_test.enable()
         self.machine.coils.c_slingshot_test.platform.proc.switch_update_rule.assert_any_call(
@@ -159,7 +182,7 @@ class TestP3Roc(MpfTestCase):
 
         self.machine.coils.c_slingshot_test.platform.proc.driver_disable.assert_called_with(8)
 
-    def test_hw_rule_pulse_inverted_switch(self):
+    def _test_hw_rule_pulse_inverted_switch(self):
         self.machine.coils.c_coil_pwm_test.hw_driver.state = MagicMock(return_value=8)
         self.machine.coils.c_coil_pwm_test.platform.proc.switch_update_rule = MagicMock()
         self.machine.autofires.ac_switch_nc_test.enable()
@@ -184,9 +207,9 @@ class TestP3Roc(MpfTestCase):
         self.machine.autofires.ac_switch_nc_test.disable()
         self.machine.coils.c_coil_pwm_test.platform.proc.driver_disable.assert_called_with(8)
 
-    def test_hw_rule_pulse_disable_on_release(self):
+    def _test_hw_rule_pulse_disable_on_release(self):
         self.machine.coils.c_test.hw_driver.state = MagicMock(return_value=8)
-        self.machine.platform_controller.set_pulse_on_hit_and_release_rule(
+        rule = self.machine.platform_controller.set_pulse_on_hit_and_release_rule(
             SwitchRuleSettings(switch=self.machine.switches.s_test, debounce=True, invert=False),
             DriverRuleSettings(driver=self.machine.coils.c_test, recycle=False),
             PulseRuleSettings(duration=23, power=1.0))
@@ -225,7 +248,9 @@ class TestP3Roc(MpfTestCase):
         p_roc_common.pinproc.driver_state_pulse.assert_called_with(8, 23)
         p_roc_common.pinproc.driver_state_disable.assert_called_with(8)
 
-    def test_hw_rule_hold_pwm(self):
+        self.machine.platform_controller.clear_hw_rule(rule)
+
+    def _test_hw_rule_hold_pwm(self):
         return  # currently not cupported
         self.machine.coils.c_coil_pwm_test.hw_driver.state = MagicMock(return_value=8)
         self.machine.default_platform.set_hw_rule(
@@ -281,9 +306,11 @@ class TestP3Roc(MpfTestCase):
 
         p_roc_common.pinproc.driver_state_disable.assert_called_with(8)
 
-    def test_hw_rule_hold_allow_enable(self):
+        self.machine.default_platform.clear_hw_rule("s_test", "c_coil_pwm_test")
+
+    def _test_hw_rule_hold_allow_enable(self):
         self.machine.coils.c_test_allow_enable.hw_driver.state = MagicMock(return_value=8)
-        self.machine.platform_controller.set_pulse_on_hit_and_enable_and_release_rule(
+        rule = self.machine.platform_controller.set_pulse_on_hit_and_enable_and_release_rule(
             SwitchRuleSettings(switch=self.machine.switches.s_test, debounce=True, invert=False),
             DriverRuleSettings(driver=self.machine.coils.c_test_allow_enable, recycle=False),
             PulseRuleSettings(duration=23, power=1.0))
@@ -321,8 +348,9 @@ class TestP3Roc(MpfTestCase):
 
         p_roc_common.pinproc.driver_state_pulse.assert_called_with(8, 0)
         p_roc_common.pinproc.driver_state_disable.assert_called_with(8)
+        self.machine.platform_controller.clear_hw_rule(rule)
 
-    def test_hw_rule_hold_no_allow_enable(self):
+    def _test_hw_rule_hold_no_allow_enable(self):
         # enable coil which does not have allow_enable
         with self.assertRaises(AssertionError):
             self.machine.platform_controller.set_pulse_on_hit_and_enable_and_release_rule(
@@ -330,7 +358,7 @@ class TestP3Roc(MpfTestCase):
                 DriverRuleSettings(driver=self.machine.coils.c_test, recycle=False),
                 PulseRuleSettings(duration=23, power=1.0))
 
-    def test_hw_rule_multiple_pulse(self):
+    def _test_hw_rule_multiple_pulse(self):
         self.machine.coils.c_test.hw_driver.state = MagicMock(return_value=8)
         self.machine.platform_controller.set_pulse_on_hit_rule(
             SwitchRuleSettings(switch=self.machine.switches.s_test, debounce=True, invert=False),
@@ -419,7 +447,7 @@ class TestP3Roc(MpfTestCase):
 
         p_roc_common.pinproc.driver_state_pulse.assert_called_with(9, 23)
 
-    def test_servo_via_i2c(self):
+    def _test_servo_via_i2c(self):
         # assert on init
         self.machine.default_platform.proc.write_data.assert_has_calls([
             call(7, 0x8000, 0x11),
@@ -446,12 +474,12 @@ class TestP3Roc(MpfTestCase):
             call(7, 0x8015, 2)
         ])
 
-    def test_initial_switches(self):
+    def _test_initial_switches(self):
         self.assertFalse(self.machine.switch_controller.is_active("s_test"))
         self.assertFalse(self.machine.switch_controller.is_active("s_test_000"))
         self.assertTrue(self.machine.switch_controller.is_active("s_flipper"))
 
-    def test_switches(self):
+    def _test_switches(self):
         self.assertFalse(self.machine.switch_controller.is_active("s_test"))
         # closed debounced -> switch active
         self.machine.default_platform.proc.get_events = MagicMock(return_value=[
@@ -478,7 +506,7 @@ class TestP3Roc(MpfTestCase):
         self.advance_time_and_run(.01)
         self.assertFalse(self.machine.switch_controller.is_active("s_test_no_debounce"))
 
-    def test_accelerometer(self):
+    def _test_accelerometer(self):
         # verify init
         self.machine.default_platform.proc.write_data.assert_has_calls([
             call(6, 0x0000, 0x000F),
@@ -502,7 +530,7 @@ class TestP3Roc(MpfTestCase):
         # check correct decoding of 2 complement
         self.machine.accelerometers.p3_roc_accelerometer.update_acceleration.assert_called_with(1.0, 0.0, -2.0)
 
-    def test_flipper_single_coil(self):
+    def _test_flipper_single_coil(self):
         # enable
         self.machine.default_platform.proc.switch_update_rule = MagicMock()
         self.machine.flippers.f_test_single.enable()
@@ -553,7 +581,7 @@ class TestP3Roc(MpfTestCase):
         ], any_order=True)
         self.assertEqual(4, self.machine.default_platform.proc.switch_update_rule.call_count)
 
-    def test_flipper_two_coils(self):
+    def _test_flipper_two_coils(self):
         # we pulse the main coil (20)
         # hold coil (21) is pulsed + enabled
         self.machine.default_platform.proc.switch_update_rule = MagicMock()
@@ -614,7 +642,7 @@ class TestP3Roc(MpfTestCase):
 
         self.machine.flippers.f_test_hold.disable()
 
-    def test_flipper_two_coils_with_eos(self):
+    def _test_flipper_two_coils_with_eos(self):
         self.machine.default_platform.proc.switch_update_rule = MagicMock()
         self.machine.flippers.f_test_hold_eos.enable()
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
@@ -701,7 +729,7 @@ class TestP3Roc(MpfTestCase):
             call(2, 'closed_debounced', {'notifyHost': True, 'reloadActive': False}, []),
         ], any_order=True)
 
-    def test_pdb_matrix_light(self):
+    def _test_pdb_matrix_light(self):
         # very simple check for matrix config
         self.pinproc.driver_update_group_config.assert_has_calls(
             [call(4, 100, 5, 0, 0, True, True, True, True)]
@@ -729,7 +757,7 @@ class TestP3Roc(MpfTestCase):
         self.advance_time_and_run(.02)
         self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_disable.assert_called_with(32)
 
-    def test_pdb_gi_light(self):
+    def _test_pdb_gi_light(self):
         # test gi on
         device = self.machine.lights.test_gi
         num = self.machine.coils.test_gi.hw_driver.number
@@ -763,7 +791,7 @@ class TestP3Roc(MpfTestCase):
         device.hw_drivers["white"].driver.hw_driver.proc.driver_disable.assert_has_calls([
             call(num)])
 
-    def test_leds(self):
+    def _test_leds(self):
         device = self.machine.lights.test_led
         device.hw_drivers['red'].proc.led_color = MagicMock()
 
@@ -792,7 +820,7 @@ class TestP3Roc(MpfTestCase):
             call(2, 2, 23),
             call(2, 3, 42)], True)
 
-    def test_leds_inverted(self):
+    def _test_leds_inverted(self):
         device = self.machine.lights.test_led_inverted
         device.hw_drivers['red'].proc.led_color = MagicMock()
         # test led on
