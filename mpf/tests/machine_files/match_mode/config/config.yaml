@@ -1,0 +1,18 @@
+#config_version=5
+
+game:
+  balls_per_game: 1
+
+credits:
+  free_play: no
+  events:
+    - event: add_credit
+      type: award
+      credits: 1
+    - event: match_has_match
+      type: award
+      credits: winners
+
+modes:
+  - match
+  - credits
