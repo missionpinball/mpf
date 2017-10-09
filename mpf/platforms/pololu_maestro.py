@@ -95,6 +95,8 @@ class PololuServo(ServoPlatformInterface):
         # Send Pololu intro, device number, command, channel, and target
         # lsb/msb
         cmd = self.cmd_header + bytes([0x04, self.number, lsb, msb])
+        if self.config['debug']:
+            self.log.debug("Sending cmd: %s", "".join(" 0x%02x" % b for b in cmd))
         self.serial.write(cmd)
 
     def set_speed(self, speed):
