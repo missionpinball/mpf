@@ -41,7 +41,13 @@ class SegmentDisplay(SystemWideDevice):
         self.hw_display = self.platform.configure_segment_display(self.config['number'])
 
     def add_text(self, text: str, priority: int = 0, key: str = None) -> None:
-        """Add text to display stack."""
+        """Add text to display stack.
+
+        This will replace texts with the same key.
+        """
+        # remove old text in case it has the same key
+        self._text_stack[:] = [x for x in self._text_stack if x.key != key]
+        # add new text
         self._text_stack.append(TextStack(text, priority, key))
         self._update_stack()
 

@@ -39,9 +39,6 @@ class SegmentDisplayPlayer(DeviceConfigPlayer):
                 key += s['key']
 
             if action == "add":
-                # in case it is already there
-                self._remove(instance_dict=instance_dict, key=key,
-                             display=display)
                 # add text
                 display.add_text(s['text'], priority + s['priority'], key)
 
