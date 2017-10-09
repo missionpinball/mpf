@@ -329,7 +329,7 @@ class Credits(Mode):
             self.machine.events.add_handler(
                 event=event_settings['event'],
                 handler=self._credit_event_callback,
-                credits=event_settings['credits'].evaluate([]),
+                credits=event_settings['credits'],
                 audit_class=event_settings['type'])
 
     def _disable_credit_handlers(self):
@@ -352,10 +352,10 @@ class Credits(Mode):
         self._reset_timeouts()
 
     def _credit_event_callback(self, credits, audit_class, **kwargs):
-        del kwargs
-        self.info_log("Credit event hit. Credit Added. Credits: %s. Type: %s", credits, audit_class)
-        self._add_credit_units(credit_units=credits * self.credit_units_per_game, price_tiering=False)
-        self._audit(credits, audit_class)
+        credits_value = credits.evaluate(kwargs)
+        self.info_log("Credit event hit. Credit Added. Credits: %s. Type: %s", credits_value, audit_class)
+        self._add_credit_units(credit_units=credits_value * self.credit_units_per_game, price_tiering=False)
+        self._audit(credits_value, audit_class)
         self._reset_timeouts()
 
     def _service_credit_callback(self):
