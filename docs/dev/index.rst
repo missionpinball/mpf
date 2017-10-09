@@ -10,3 +10,4 @@ components to MPF.
    dev_environment
    plugins
    hardware
+   event_annotations
