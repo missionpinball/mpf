@@ -838,6 +838,7 @@ pololu_maestro:
     servo_max: single|int|9000
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
+    debug: single|bool|False
 random_event_player:
     __valid_in__: machine, mode, show
     events: ignore
