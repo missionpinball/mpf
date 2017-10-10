@@ -74,7 +74,6 @@ class BasePlatform(metaclass=abc.ABCMeta):
         """
         pass
 
-    @abc.abstractmethod
     def stop(self):
         """Stop the platform.
 
@@ -162,6 +161,49 @@ class SegmentDisplayPlatform(BasePlatform, metaclass=abc.ABCMeta):
         method will will receive the text to show.
         """
         raise NotImplementedError
+
+
+# pylint: disable-msg=abstract-method
+class SegmentDisplaySoftwareFlashPlatform(SegmentDisplayPlatform, metaclass=abc.ABCMeta):
+
+    """SegmentDisplayPlatform with software flash support."""
+
+    def __init__(self, machine):
+        """Initialise software flash support."""
+        super().__init__(machine)
+        self._display_flash_task = self.machine.clock.loop.create_task(self._display_flash())
+        self._display_flash_task.add_done_callback(self._display_flash_task_done)
+        self._displays = set()
+
+    @asyncio.coroutine
+    def _display_flash(self):
+        wait_time = 1 / (self.config['display_flash_frequency'] * 2)
+        while True:
+            # set on
+            yield from asyncio.sleep(wait_time, loop=self.machine.clock.loop)
+            for display in self._displays:
+                display.set_software_flash(True)
+            # set off
+            yield from asyncio.sleep(wait_time, loop=self.machine.clock.loop)
+            for display in self._displays:
+                display.set_software_flash(False)
+
+    @staticmethod
+    def _display_flash_task_done(future):
+        try:
+            future.result()
+        except asyncio.CancelledError:
+            pass
+
+    def stop(self):
+        """Cancel flash task."""
+        super().stop()
+        if self._display_flash_task:
+            self._display_flash_task.cancel()
+
+    def _handle_software_flash(self, display):
+        """Register display for flash task."""
+        self._displays.add(display)
 
 
 class AccelerometerPlatform(BasePlatform, metaclass=abc.ABCMeta):

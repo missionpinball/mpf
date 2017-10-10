@@ -4,7 +4,7 @@ from typing import Generator, Dict
 
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareSoundPlatformInterface
-from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
+from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplaySoftwareFlashPlatformInterface
 
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 
@@ -15,7 +15,7 @@ from mpf.platforms.lisy.defines import LisyDefines
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade
 
 from mpf.core.platform import SwitchPlatform, LightsPlatform, DriverPlatform, SwitchSettings, DriverSettings, \
-    DriverConfig, SwitchConfig, SegmentDisplayPlatform, HardwareSoundPlatform
+    DriverConfig, SwitchConfig, SegmentDisplaySoftwareFlashPlatform, HardwareSoundPlatform
 
 
 class LisySwitch(SwitchPlatformInterface):
@@ -82,7 +82,7 @@ class LisyLight(LightPlatformSoftwareFade):
             self.platform.send_byte(LisyDefines.LampsSetLampOff, bytes([self.number]))
 
 
-class LisyDisplay(SegmentDisplayPlatformInterface):
+class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
 
     """A segment display in the LISY platform."""
 
@@ -91,10 +91,8 @@ class LisyDisplay(SegmentDisplayPlatformInterface):
         super().__init__(number)
         self.platform = platform
 
-    def set_text(self, text: str, flashing: bool):
+    def _set_text(self, text: str):
         """Set text to display."""
-        # no flashing supported yet
-        assert flashing is False
         self.platform.send_string(LisyDefines.DisplaysSetDisplay0To + self.number, text)
 
 
@@ -115,7 +113,8 @@ class LisySound(HardwareSoundPlatformInterface):
         self.platform.send_byte(LisyDefines.SoundStopAllSounds)
 
 
-class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, SegmentDisplayPlatform,
+class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
+                           SegmentDisplaySoftwareFlashPlatform,
                            HardwareSoundPlatform, LogMixin):
 
     """LISY platform."""
@@ -141,6 +140,8 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, Segme
         self.config = self.machine.config_validator.validate_config("lisy", self.machine.config['lisy'])
 
         self.configure_logging("lisy", self.config['console_log'], self.config['file_log'])
+
+        yield from super().initialize()
 
         if self.config['connection'] == "serial":
             self.log.info("Connecting to %s at %sbps", self.config['port'], self.config['baud'])
@@ -231,6 +232,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, Segme
 
     def stop(self):
         """Stop platform."""
+        super().stop()
         if self._poll_task:
             self._poll_task.cancel()
 
@@ -347,13 +349,15 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, Segme
 
         return LisyDriver(config=config, number=number, platform=self)
 
-    def configure_segment_display(self, number: str) -> SegmentDisplayPlatformInterface:
+    def configure_segment_display(self, number: str) -> SegmentDisplaySoftwareFlashPlatformInterface:
         """Configure a segment display."""
         if 0 < int(number) >= self._number_of_displays:
             raise AssertionError("Invalid display number {}. Hardware only supports {} displays (indexed with 0)".
                                  format(number, self._number_of_displays))
 
-        return LisyDisplay(int(number), self)
+        display = LisyDisplay(int(number), self)
+        self._handle_software_flash(display)
+        return display
 
     def configure_hardware_sound_system(self) -> HardwareSoundPlatformInterface:
         """Configure hardware sound."""

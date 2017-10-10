@@ -633,6 +633,7 @@ lisy:
     baud: single|int|None
     poll_hz: single|int|1000
     console_log: single|enum(none,basic,full)|none
+    display_flash_frequency: single|float|1.0
     file_log: single|enum(none,basic,full)|basic
     connection: single|enum(network,serial)|network
     network_port: single|int|None

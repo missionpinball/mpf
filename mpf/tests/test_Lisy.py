@@ -231,6 +231,29 @@ class TestLisy(MpfTestCase):
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
+        # set player 1 display to flashing
+        self.serialMock.expected_commands = {
+            b'\x1F42000\x00': None,
+        }
+        self.machine.segment_displays.player1_display.set_flashing(True)
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
+        self.serialMock.expected_commands = {
+            b'\x1F42000\x00': None,
+            b'\x1F\x00': None
+        }
+
+        self.advance_time_and_run(1)
+        self.assertFalse(self.serialMock.expected_commands)
+
+        self.serialMock.expected_commands = {
+            b'\x1F42000\x00': None,
+        }
+        self.machine.segment_displays.player1_display.set_flashing(False)
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
         # test sound
         self.serialMock.expected_commands = {
             b'\x32\x02': None
