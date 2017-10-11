@@ -436,7 +436,7 @@ class SwitchController(MpfController):
     @staticmethod
     def _wait_handler(_future: asyncio.Future, **kwargs):
         if not _future.done():
-            _future.set_result(result=kwargs)
+            _future.set_result(kwargs)
 
     def _cancel_timed_handlers(self, name, state):
         # now check if the opposite state is in the active timed switches list

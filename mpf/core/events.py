@@ -323,7 +323,7 @@ class EventManager(MpfController):
 
         if _future.cancelled():
             return
-        _future.set_result(result=kwargs)
+        _future.set_result(kwargs)
 
     def does_event_exist(self, event_name: str) -> bool:
         """Check to see if any handlers are registered for the event name that is passed.

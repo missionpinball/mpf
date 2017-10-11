@@ -5,6 +5,8 @@ import logging
 import asyncio
 from typing import Dict
 
+import sys
+
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 
 from mpf.exceptions.ConfigFileError import ConfigFileError
@@ -82,6 +84,12 @@ class SmartMatrixDevice(DmdPlatformInterface):
         connector = self.machine.clock.open_serial_connection(
             url=self.config['port'], baudrate=self.config['baud'], limit=0)
         self.reader, self.writer = yield from connector
+
+    def set_brightness(self, brightness: float):
+        """Set brightness."""
+        if brightness < 0.0 or brightness > 1.0:
+            raise AssertionError("Brightness has to be between 0 and 1.")
+        self.writer.write(bytearray([0xBA, 0x11, 0x00, 0x03, 20, int(brightness * 255), 00, 00]))
 
     def stop(self):
         """Stop device."""
