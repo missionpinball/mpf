@@ -208,7 +208,7 @@ class ExtraBallGroup(SystemWideDevice):
         Note that this event is posted if an extra ball is lit during play
         and also when a player's turn starts if they have a lit extra ball.
 
-        See also the :doc:`extra_ball_lit_awarded` for a similar event that
+        See also the :doc:`extra_ball_name_lit` for a similar event that
         is only posted when an extra ball is lit during play, and not
         if the player starts their turn with the extra ball lit.
         '''
