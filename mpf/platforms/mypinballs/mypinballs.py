@@ -54,6 +54,9 @@ class MyPinballsHardwarePlatform(SegmentDisplayPlatform):
             url=self.config['port'], baudrate=self.config['baud'])
         self._reader, self._writer = yield from connector
 
+        # send a newline to end any previous command in the queue
+        self.send_cmd(b'\n')
+
         # reset all displays to empty
         self.send_cmd(b'9\n')
 
