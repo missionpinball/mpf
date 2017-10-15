@@ -85,7 +85,9 @@ class MyPinballsPlatformTest(MpfTestCase):
         # all display are reset at startup
         self.serialMock.expected_commands = {
             b'\n': False,
-            b'9\n': False,
+            b'3:1\n': False,
+            b'3:2\n': False,
+            b'3:6\n': False,
         }
         self.serialMock.permanent_commands = {}
         super().setUp()

@@ -16,6 +16,9 @@ class MyPinballsSegmentDisplay(SegmentDisplayPlatformInterface):
         super().__init__(number)
         self.platform = platform        # type: MyPinballsHardwarePlatform
 
+        # clear the display
+        self.set_text("", False)
+
     def set_text(self, text: str, flashing: bool):
         """Set digits to display."""
         if not text:
@@ -56,9 +59,6 @@ class MyPinballsHardwarePlatform(SegmentDisplayPlatform):
 
         # send a newline to end any previous command in the queue
         self.send_cmd(b'\n')
-
-        # reset all displays to empty
-        self.send_cmd(b'9\n')
 
     def stop(self):
         """Stop platform."""
