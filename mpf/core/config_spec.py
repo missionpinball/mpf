@@ -614,9 +614,9 @@ lights:
     default_fade_ms: single|ms|None
     default_on_color: single|color|ffffff
     channels: single|dict|None
-    x: single|int|None
-    y: single|int|None
-    z: single|int|None
+    x: single|float|None
+    y: single|float|None
+    z: single|float|None
 light_channels:
     number: single|str|
     subtype: single|str|None
