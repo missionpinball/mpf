@@ -56,6 +56,7 @@ class BcpPluginPlayer(DeviceConfigPlayer):
                 element=element,
                 name='{}_clear'.format(self.show_section),
                 context=context)
+        self._reset_instance_dict(context)
 
     def get_express_config(self, value):
         """Raise error."""
