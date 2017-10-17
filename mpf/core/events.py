@@ -59,6 +59,15 @@ class EventManager(MpfController):
         else:
             return event_string.lower(), None
 
+    def add_async_handler(self, event: str, handler: Any, priority: int = 1, **kwargs) -> EventHandlerKey:
+        """Register a coroutine as event handler."""
+        return self.add_handler(event, partial(self._async_handler_coroutine, handler), priority, **kwargs)
+
+    def _async_handler_coroutine(self, _coroutine, queue, **kwargs):
+        queue.wait()
+        task = self.machine.clock.loop.create_task(_coroutine(**kwargs))
+        task.add_done_callback(lambda future: queue.clear())
+
     def add_handler(self, event: str, handler: Any, priority: int = 1, **kwargs) -> EventHandlerKey:
         """Register an event handler to respond to an event.
 
