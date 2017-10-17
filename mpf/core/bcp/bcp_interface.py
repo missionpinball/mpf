@@ -443,26 +443,6 @@ class BcpInterface(MpfController):
             self._client_reset_complete_status.clear()
             self.debug_log("Received reset_complete from all clients. Clearing wait from queue event.")
 
-    def bcp_mode_start(self, config, priority, mode, **kwargs):
-        """Send BCP 'mode_start' to the connected BCP hosts.
-
-        Schedule automatic sending of 'mode_stop' when the mode stops.
-        """
-        del config
-        del kwargs
-        self.machine.bcp.transport.send_to_all_clients('mode_start',
-                                                       name=mode.name,
-                                                       priority=priority)
-
-        return self.bcp_mode_stop, mode.name
-
-    def bcp_mode_stop(self, name, **kwargs):
-        """Send BCP 'mode_stop' to the connected BCP hosts."""
-        del kwargs
-        self.machine.bcp.transport.send_to_clients_with_handler('_modes',
-                                                                'mode_stop',
-                                                                name=name)
-
     def bcp_reset(self, queue, **kwargs):
         """Send the 'reset' command to the remote BCP host."""
         del kwargs
