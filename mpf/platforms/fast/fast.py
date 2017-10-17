@@ -204,6 +204,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             msg = 'RS:' + ','.join(["%s%s" % (led.number, led.current_color) for led in dirty_leds])
             self.rgb_connection.send(msg)
 
+    @asyncio.coroutine
     def get_hw_switch_states(self):
         """Return hardware states."""
         return self.hw_switch_data

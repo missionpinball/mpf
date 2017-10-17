@@ -329,6 +329,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
         return LisySwitch(config=config, number=number)
 
+    @asyncio.coroutine
     def get_hw_switch_states(self):
         """Return current switch states."""
         return self._inputs

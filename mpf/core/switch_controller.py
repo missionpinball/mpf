@@ -49,7 +49,7 @@ class SwitchController(MpfController):
         # NC so 1 = active and 0 = inactive.
 
         # register for events
-        self.machine.events.add_handler('init_phase_2', self._initialize_switches, 1000)
+        self.machine.events.add_async_handler('init_phase_2', self._initialize_switches, 1000)
         # priority 1000 so this fires first
 
         self.machine.events.add_handler('machine_reset_phase_3', self.log_active_switches)
@@ -67,14 +67,16 @@ class SwitchController(MpfController):
 
         self.set_state(name, 0, reset_time=True)
 
+    @asyncio.coroutine
     def _initialize_switches(self, **kwargs):
         del kwargs
-        self.update_switches_from_hw()
+        yield from self.update_switches_from_hw()
 
         for switch in self.machine.switches:
             # Populate self.switches
             self.set_state(switch.name, switch.state, reset_time=True)
 
+    @asyncio.coroutine
     def update_switches_from_hw(self):
         """Update the states of all the switches be re-reading the states from the hardware platform.
 
@@ -90,7 +92,7 @@ class SwitchController(MpfController):
             switches.add((switch, switch.hw_switch.number))
 
         for platform in platforms:
-            switch_states = platform.get_hw_switch_states()
+            switch_states = yield from platform.get_hw_switch_states()
 
             for switch, number in switches:
                 # if two platforms have the same number choose the right switch

@@ -388,6 +388,7 @@ class SwitchPlatform(BasePlatform, metaclass=abc.ABCMeta):
         return config
 
     @abc.abstractmethod
+    @asyncio.coroutine
     def get_hw_switch_states(self):
         """Get all hardware switch states.
 

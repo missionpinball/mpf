@@ -11,6 +11,7 @@ https://github.com/preble/pyprocgame
 """
 
 import logging
+import asyncio
 
 from mpf.core.platform import I2cPlatform, AccelerometerPlatform, DriverConfig, SwitchConfig
 from mpf.platforms.interfaces.accelerometer_platform_interface import AccelerometerPlatformInterface
@@ -161,6 +162,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         proc_num = self.pdbconfig.get_proc_switch_number(str(number))
         return self._configure_switch(config, proc_num)
 
+    @asyncio.coroutine
     def get_hw_switch_states(self):
         """Read in and set the initial switch state.
 

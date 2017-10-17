@@ -93,6 +93,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
 
         return VirtualSwitch(config, number)
 
+    @asyncio.coroutine
     def get_hw_switch_states(self):
         """Return hw switch states."""
         if not self.initial_states_sent:

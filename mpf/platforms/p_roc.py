@@ -14,6 +14,7 @@ https://github.com/preble/pyprocgame
 """
 
 import logging
+import asyncio
 
 from mpf.core.platform import DmdPlatform, DriverConfig, SwitchConfig, SegmentDisplayPlatform
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
@@ -118,6 +119,7 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
             proc_num = self.pinproc.decode(self.machine_type, str(number))
         return self._configure_switch(config, proc_num)
 
+    @asyncio.coroutine
     def get_hw_switch_states(self):
         """Read in and set the initial switch state.
 

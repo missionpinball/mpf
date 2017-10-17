@@ -264,6 +264,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
         del platform_config
         return SpikeSwitch(config, number, self)
 
+    @asyncio.coroutine
     def get_hw_switch_states(self):
         """Return current switch states."""
         hw_states = dict()

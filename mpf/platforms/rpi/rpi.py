@@ -157,6 +157,7 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform)
         """Configure a servo."""
         return RpiServo(number, self)
 
+    @asyncio.coroutine
     def get_hw_switch_states(self):
         """Return current switch states."""
         hw_states = dict()

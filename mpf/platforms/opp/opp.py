@@ -218,6 +218,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         """Return coil config section."""
         return "opp_coils"
 
+    @asyncio.coroutine
     def get_hw_switch_states(self):
         """Get initial hardware switch states.
 
