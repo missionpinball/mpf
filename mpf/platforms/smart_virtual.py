@@ -420,19 +420,18 @@ class SmartVirtualDriver(VirtualDriver):
 
     def disable(self):
         """Disable driver."""
+        super().disable()
         if self.action:
-            self.log.debug("Disabling driver")
             self.action.disable(self)
 
     def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable driver."""
-        del pulse_settings, hold_settings
+        super().enable(pulse_settings, hold_settings)
         if self.action:
-            self.log.debug("Enabling driver")
             self.action.enable(self)
 
     def pulse(self, pulse_settings: PulseSettings):
         """Pulse driver."""
+        super().pulse(pulse_settings)
         if self.action:
-            self.log.debug("Pulsing driver for %sms", pulse_settings.duration)
             self.action.pulse(self, pulse_settings.duration)

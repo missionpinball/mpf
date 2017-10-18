@@ -386,13 +386,16 @@ class VirtualDriver(DriverPlatformInterface):
 
     def disable(self):
         """Disable virtual coil."""
+        self.log.debug("Disabling driver")
         self.state = "disabled"
 
     def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable virtual coil."""
         del pulse_settings, hold_settings
+        self.log.debug("Enabling driver")
         self.state = "enabled"
 
     def pulse(self, pulse_settings: PulseSettings):
         """Pulse virtual coil."""
+        self.log.debug("Pulsing driver for %sms", pulse_settings.duration)
         self.state = "pulsed_" + str(pulse_settings.duration)
