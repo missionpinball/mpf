@@ -719,6 +719,7 @@ motors:
     reset_events: dict|str:ms|machine_reset_phase_3, ball_starting
     go_to_position: dict|str:str|None
     motor_coil: single|machine(coils)|
+    include_in_ball_search: single|bool|True
 mpf:
     __valid_in__: machine                           # todo add to validator
     default_pulse_ms: single|int|10
