@@ -14,3 +14,8 @@ class DmdPlatformInterface(metaclass=abc.ABCMeta):
             data: bytes to send to DMD
         """
         raise NotImplementedError('implement')
+
+    @abc.abstractmethod
+    def set_brightness(self, brightness: float):
+        """Set brightness of DMD."""
+        raise NotImplementedError('implement')

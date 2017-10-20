@@ -858,7 +858,7 @@ rgb_dmds:
     fps: single|int|30
     source_display: single|str|dmd
     only_send_changes: single|bool|False
-    brightness: single|float|0.5
+    brightness: single|template_float|1.0
     gamma: single|float|2.2
 score_reels:
     __valid_in__: machine

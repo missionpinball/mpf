@@ -214,6 +214,11 @@ class PROCDMD(DmdPlatformInterface):
 
             self.proc.dmd_update_config(high_cycles=dmd_timing)
 
+    def set_brightness(self, brightness: float):
+        """Set brightness."""
+        # currently not supported. can be implemented using dmd_timing_cycles
+        assert brightness == 1.0
+
     def update(self, data):
         """Update the DMD with a new frame.
 

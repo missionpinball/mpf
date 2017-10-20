@@ -26,3 +26,11 @@ class TestDmd(MpfBcpTestCase):
         self.machine_run()
 
         self.assertEqual(b'1337', self.machine.rgb_dmds.test_dmd.hw_device.data)
+
+        display = self.machine.rgb_dmds.test_dmd
+        self.assertEqual(1.0, display.hw_device.brightness)
+
+        self.machine.settings.set_setting_value("dmd_brightness", 0.75)
+        self.advance_time_and_run()
+
+        self.assertEqual(0.75, display.hw_device.brightness)

@@ -267,6 +267,7 @@ class VirtualDmd(DmdPlatformInterface):
     def __init__(self):
         """Initialise virtual DMD."""
         self.data = None
+        self.brightness = None
 
     def update(self, data: bytes):
         """Update data on the DMD.
@@ -275,6 +276,10 @@ class VirtualDmd(DmdPlatformInterface):
             data: bytes to send to DMD
         """
         self.data = data
+
+    def set_brightness(self, brightness: float):
+        """Set brightness."""
+        self.brightness = brightness
 
 
 class VirtualSwitch(SwitchPlatformInterface):
