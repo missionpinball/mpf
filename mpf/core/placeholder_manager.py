@@ -1,14 +1,20 @@
 """Templates and placeholders."""
 import ast
+import asyncio
 import operator as op
 import abc
 import re
+from typing import Tuple, List, Any
+
+from mpf.core.utility_functions import Util
 
 from mpf.core.mpf_controller import MpfController
 
 MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController
+    from mpf.core.player import Player
+
 
 # supported operators
 operators = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul,
@@ -18,6 +24,20 @@ operators = {ast.Add: op.add, ast.Sub: op.sub, ast.Mult: op.mul,
 bool_operators = {ast.And: lambda a, b: a and b, ast.Or: lambda a, b: a or b}
 
 comparisons = {ast.Eq: op.eq, ast.Lt: op.lt, ast.Gt: op.gt, ast.LtE: op.le, ast.GtE: op.ge, ast.NotEq: op.ne}
+
+
+class TemplateEvalError(Exception):
+
+    """An error occurred during a template evaluation."""
+
+    def __init__(self, subscriptions):
+        """Remember subscriptions."""
+        super().__init__(subscriptions)
+        self.subscriptions = subscriptions
+
+    def __str__(self):
+        """Return description."""
+        return "<TemplateEvalError with subscriptions {}>".format(self.subscriptions)
 
 
 class BaseTemplate(metaclass=abc.ABCMeta):
@@ -48,7 +68,16 @@ class BoolTemplate(BaseTemplate):
             if fail_on_missing_params:
                 raise
             return self.default_value
+        except TemplateEvalError:
+            return self.default_value
         return bool(result)
+
+    def evaluate_and_subscribe(self, parameters) -> Tuple[bool, asyncio.Future]:
+        """Evaluate template to bool and subscribe."""
+        result, subscriptions = self.placeholder_manager.evaluate_and_subscribe_template(self.template, parameters)
+        if isinstance(result, TemplateEvalError):
+            result = self.default_value
+        return bool(result), subscriptions
 
 
 class FloatTemplate(BaseTemplate):
@@ -63,7 +92,17 @@ class FloatTemplate(BaseTemplate):
             if fail_on_missing_params:
                 raise
             return self.default_value
+        except TemplateEvalError:
+            return self.default_value
         return float(result)
+
+    def evaluate_and_subscribe(self, parameters) -> Tuple[float, asyncio.Future]:
+        """Evaluate template to float and subscribe."""
+        result, subscriptions = self.placeholder_manager.evaluate_and_subscribe_template(self.template, parameters)
+        if isinstance(result, TemplateEvalError):
+            result = self.default_value
+
+        return float(result), subscriptions
 
 
 class IntTemplate(BaseTemplate):
@@ -78,22 +117,38 @@ class IntTemplate(BaseTemplate):
             if fail_on_missing_params:
                 raise
             return self.default_value
+        except TemplateEvalError:
+            return self.default_value
         return int(result)
+
+    def evaluate_and_subscribe(self, parameters) -> Tuple[int, asyncio.Future]:
+        """Evaluate template to int and subscribe."""
+        result, subscriptions = self.placeholder_manager.evaluate_and_subscribe_template(self.template, parameters)
+        if isinstance(result, TemplateEvalError):
+            result = self.default_value
+        return int(result), subscriptions
 
 
 class NativeTypeTemplate:
 
     """Native type template which encapsulates an int/float/bool."""
 
-    def __init__(self, value):
+    def __init__(self, value, machine):
         """Set value."""
         self.value = value
+        self.machine = machine
 
     def evaluate(self, parameters, fail_on_missing_params=False):
         """Return value."""
         del parameters
         del fail_on_missing_params
         return self.value
+
+    def evaluate_and_subscribe(self, parameters) -> Tuple[int, asyncio.Future]:
+        """Evaluate and subscribe template."""
+        del parameters
+        future = asyncio.Future(loop=self.machine.clock.loop)
+        return self.value, future
 
 
 class TextTemplate:
@@ -196,6 +251,26 @@ class TextTemplate:
         return text
 
 
+class BasePlaceholder(object):
+
+    """Base class for placeholder variables."""
+
+    # pylint: disable-msg=no-self-use
+    def subscribe(self):
+        """Subscribe to placeholder."""
+        raise AssertionError("Not possible to subscribe this.")
+
+    # pylint: disable-msg=no-self-use
+    def subscribe_attribute(self, item):
+        """Subscribe to attribute."""
+        raise AssertionError("Not possible to subscribe to attribute {}.".format(item))
+
+    # pylint: disable-msg=no-self-use
+    def subscribe_item(self, item):
+        """Subscribe to item."""
+        raise AssertionError("Not possible to subscribe to item {}.".format(item))
+
+
 class DeviceClassPlaceholder:
 
     """Wrap a monitorable device."""
@@ -275,13 +350,50 @@ class ModePlaceholder:
         return ModeClassPlaceholder(self._machine.modes[item])
 
 
-class MachinePlaceholder:
+class PlayerPlaceholder(BasePlaceholder):
+
+    """Wraps the player."""
+
+    def __init__(self, player, machine):
+        """Initialise placeholder."""
+        self._player = player       # type: Player
+        self._machine = machine     # type: MachineController
+
+    def subscribe(self):
+        """Subscribe to player changes."""
+        return self._machine.events.wait_for_any_event(["player_turn_ended", "player_turn_started"])
+
+    def subscribe_attribute(self, item):
+        """Subscribe player variable changes."""
+        return self._machine.events.wait_for_event('player_{}'.format(item))
+
+    def __getitem__(self, item):
+        """Array access."""
+        return self._player[item]
+
+    def __getattr__(self, item):
+        """Attribute access."""
+        return getattr(self._player, item)
+
+
+class MachinePlaceholder(BasePlaceholder):
 
     """Wraps the machine."""
 
     def __init__(self, machine):
         """Initialise placeholder."""
-        self._machine = machine
+        self._machine = machine     # type: MachineController
+
+    def subscribe(self):
+        """Subscribe to machine changes.
+
+        Will never return.
+        """
+        return asyncio.Future(loop=self._machine.clock.loop)
+
+    def subscribe_attribute(self, item):
+        """Subscribe to machine variable."""
+        return self._machine.events.wait_for_event('machine_var_{}'.format(item))
 
     def __getitem__(self, item):
         """Array access."""
@@ -290,6 +402,31 @@ class MachinePlaceholder:
     def __getattr__(self, item):
         """Attribute access."""
         return self._machine.get_machine_var(item)
+
+
+class SettingsPlaceholder(BasePlaceholder):
+
+    """Wraps settings."""
+
+    def __init__(self, machine):
+        """Initialise placeholder."""
+        self._machine = machine  # type: MachineController
+
+    def subscribe(self):
+        """Subscribe to settings controller changes.
+
+        Will never return.
+        """
+        return asyncio.Future(loop=self._machine.clock.loop)
+
+    def subscribe_attribute(self, item):
+        """Subscribe to machine variable for this setting."""
+        return self._machine.events.wait_for_event(
+            'machine_var_{}'.format(self._machine.settings.get_setting_machine_var(item)))
+
+    def __getattr__(self, item):
+        """Attribute access."""
+        return self._machine.settings.get_setting_value(item)
 
 
 class BasePlaceholderManager(MpfController):
@@ -321,99 +458,125 @@ class BasePlaceholderManager(MpfController):
     def _parse_template(template_str):
         return ast.parse(template_str, mode='eval').body
 
-    def _eval_subscript2(self, node, variables):
+    @staticmethod
+    def _eval_num(node, variables, subscribe):
+        del variables
+        del subscribe
+        return node.n, []
+
+    @staticmethod
+    def _eval_str(node, variables, subscribe):
+        del variables
+        del subscribe
+        return node.s, []
+
+    @staticmethod
+    def _eval_name_constant(node, variables, subscribe):
+        del variables
+        del subscribe
+        return node.value, []
+
+    def _eval_if(self, node, variables, subscribe):
+        value, subscription = self._eval(node.test, variables, subscribe)
+        if value:
+            ret_value, ret_subscription = self._eval(node.body, variables, subscribe)
+            return ret_value, subscription + ret_subscription
+        else:
+            ret_value, ret_subscription = self._eval(node.orelse, variables, subscribe)
+            return ret_value, subscription + ret_subscription
+
+    def _eval_bin_op(self, node, variables, subscribe):
+        left_value, left_subscription = self._eval(node.left, variables, subscribe)
+        right_value, right_subscription = self._eval(node.right, variables, subscribe)
+        try:
+            ret_value = operators[type(node.op)](left_value, right_value)
+        except TypeError:
+            raise TemplateEvalError(left_subscription + right_subscription)
+        return ret_value, left_subscription + right_subscription
+
+    def _eval_unary_op(self, node, variables, subscribe):
+        value, subscription = self._eval(node.operand, variables, subscribe)
+        return operators[type(node.op)](value), subscription
+
+    def _eval_compare(self, node, variables, subscribe):
+        if len(node.ops) > 1:
+            raise AssertionError("Only single comparisons are supported.")
+        left_value, left_subscription = self._eval(node.left, variables, subscribe)
+        right_value, right_subscription = self._eval(node.comparators[0], variables, subscribe)
+        try:
+            return comparisons[type(node.ops[0])](left_value, right_value), left_subscription + right_subscription
+        except TypeError:
+            raise TemplateEvalError(left_subscription + right_subscription)
+
+    def _eval_bool_op(self, node, variables, subscribe):
+        result, subscription = self._eval(node.values[0], variables, subscribe)
+        for i in range(1, len(node.values)):
+            value, new_subscription = self._eval(node.values[i], variables, subscribe)
+            subscription += new_subscription
+            try:
+                result = bool_operators[type(node.op)](result, value)
+            except TypeError:
+                raise TemplateEvalError(subscription)
+        return result, subscription
+
+    def _eval_attribute(self, node, variables, subscribe):
+        slice_value, subscription = self._eval(node.value, variables, subscribe)
+        ret_value = getattr(slice_value, node.attr)
+        if subscribe:
+            return ret_value, subscription + [slice_value.subscribe_attribute(node.attr)]
+        else:
+            return ret_value, subscription + []
+
+    def _eval_subscript(self, node, variables, subscribe):
+        value, subscription = self._eval(node.value, variables, subscribe)
         if isinstance(node.slice, ast.Index):
-            return self._eval(node.value, variables)[self._eval(node.slice.value, variables)]
+            slice_value, slice_subscript = self._eval(node.slice.value, variables, subscribe)
+            return value[slice_value], subscription + slice_subscript
         elif isinstance(node.slice, ast.Slice):
-            return self._eval(node.value, variables)[self._eval(node.slice.lower, variables):
-                                                     self._eval(node.slice.upper, variables):
-                                                     self._eval(node.slice.step, variables)]
+            lower, lower_subscription = self._eval(node.slice.lower, variables, subscribe)
+            upper, upper_subscription = self._eval(node.slice.upper, variables, subscribe)
+            step, step_subscription = self._eval(node.slice.step, variables, subscribe)
+            return value[lower:upper:step], subscription + lower_subscription + upper_subscription + step_subscription
         else:
             raise TypeError(type(node))
 
-    @staticmethod
-    def _eval_num(node, variables):
-        del variables
-        return node.n
-
-    @staticmethod
-    def _eval_str(node, variables):
-        del variables
-        return node.s
-
-    @staticmethod
-    def _eval_name_constant(node, variables):
-        del variables
-        return node.value
-
-    def _eval_if(self, node, variables):
-        if self._eval(node.test, variables):
-            return self._eval(node.body, variables)
-        else:
-            return self._eval(node.orelse, variables)
-
-    def _eval_bin_op(self, node, variables):
-        return operators[type(node.op)](self._eval(node.left, variables), self._eval(node.right, variables))
-
-    def _eval_unary_op(self, node, variables):
-        return operators[type(node.op)](self._eval(node.operand, variables))
-
-    def _eval_compare(self, node, variables):
-        if len(node.ops) > 1:
-            raise AssertionError("Only single comparisons are supported.")
-        try:
-            return comparisons[type(node.ops[0])](self._eval(node.left, variables),
-                                                  self._eval(node.comparators[0], variables))
-        except TypeError as e:
-            raise ValueError("Comparison failed: {}".format(e))
-
-    def _eval_bool_op(self, node, variables):
-        result = self._eval(node.values[0], variables)
-        for i in range(1, len(node.values)):
-            result = bool_operators[type(node.op)](result,
-                                                   self._eval(node.values[i], variables))
-        return result
-
-    def _eval_attribute(self, node, variables):
-        return getattr(self._eval(node.value, variables), node.attr)
-
-    def _eval_subscript(self, node, variables):
-        return self._eval_subscript2(node, variables)
-
-    def _eval_name(self, node, variables):
+    def _eval_name(self, node, variables, subscribe):
         var = self.get_global_parameters(node.id)
         if var:
-            return var
+            if subscribe:
+                return var, [var.subscribe()]
+            else:
+                return var, []
         elif node.id in variables:
-            return variables[node.id]
+            return variables[node.id], []
         else:
             raise ValueError("Missing variable {}".format(node.id))
 
-    def _eval(self, node, variables):
+    def _eval(self, node, variables, subscribe) -> Tuple[Any, List]:
         if node is None:
-            return None
+            return None, []
 
         elif type(node) in self._eval_methods:  # pylint: disable-msg=unidiomatic-typecheck
-            return self._eval_methods[type(node)](node, variables)
+            return self._eval_methods[type(node)](node, variables, subscribe)
         else:
             raise TypeError(type(node))
 
     def build_float_template(self, template_str, default_value=0.0):
         """Build a float template from a string."""
         if isinstance(template_str, (float, int)):
-            return NativeTypeTemplate(float(template_str))
+            return NativeTypeTemplate(float(template_str), self.machine)
         return FloatTemplate(self._parse_template(template_str), self, default_value)
 
     def build_int_template(self, template_str, default_value=0):
         """Build a int template from a string."""
         if isinstance(template_str, (float, int)):
-            return NativeTypeTemplate(int(template_str))
+            return NativeTypeTemplate(int(template_str), self.machine)
         return IntTemplate(self._parse_template(template_str), self, default_value)
 
     def build_bool_template(self, template_str, default_value=False):
         """Build a bool template from a string."""
         if isinstance(template_str, bool):
-            return NativeTypeTemplate(template_str)
+            return NativeTypeTemplate(template_str, self.machine)
         return BoolTemplate(self._parse_template(template_str), self, default_value)
 
     def get_global_parameters(self, name):
@@ -422,7 +585,24 @@ class BasePlaceholderManager(MpfController):
 
     def evaluate_template(self, template, parameters):
         """Evaluate template."""
-        return self._eval(template, parameters)
+        return self._eval(template, parameters, False)[0]
+
+    def evaluate_and_subscribe_template(self, template, parameters):
+        """Evaluate and subscribe template."""
+        try:
+            value, subscriptions = self._eval(template, parameters, True)
+        except TemplateEvalError as e:
+            value = e
+            subscriptions = e.subscriptions
+
+        if not subscriptions:
+            future = asyncio.Future(loop=self.machine.clock.loop)
+        elif len(subscriptions) == 1:
+            future = subscriptions
+        else:
+            future = Util.any(subscriptions, loop=self.machine.clock.loop)
+        future = Util.ensure_future(future, loop=self.machine.clock.loop)
+        return value, future
 
 
 class PlaceholderManager(BasePlaceholderManager):
@@ -433,7 +613,7 @@ class PlaceholderManager(BasePlaceholderManager):
     def get_global_parameters(self, name):
         """Return global params."""
         if name == "settings":
-            return self.machine.settings
+            return SettingsPlaceholder(self.machine)
         elif name == "machine":
             return MachinePlaceholder(self.machine)
         elif name == "device":
@@ -442,7 +622,7 @@ class PlaceholderManager(BasePlaceholderManager):
             return ModePlaceholder(self.machine)
         elif self.machine.game:
             if name == "current_player":
-                return self.machine.game.player
+                return PlayerPlaceholder(self.machine.game.player, self.machine)
             elif name == "players":
                 return self.machine.game.player_list
             elif name == "game":

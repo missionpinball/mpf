@@ -65,6 +65,10 @@ class SettingsController(MpfController):
         """Return setting."""
         return self.get_setting_value(item)
 
+    def get_setting_machine_var(self, setting_name):
+        """Return machine var name."""
+        return self._settings[setting_name].machine_var
+
     def get_setting_value(self, setting_name):
         """Return the current value of a setting."""
         if setting_name not in self._settings:
