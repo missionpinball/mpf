@@ -1,6 +1,10 @@
 """Base class for serial communicator."""
 import asyncio
 
+MYPY = False
+if MYPY:   # pragma: no cover
+    from typing import Generator
+
 
 class BaseSerialCommunicator(object):
 
@@ -23,7 +27,7 @@ class BaseSerialCommunicator(object):
         self.baud = baud
         self.reader = None      # type: asyncio.StreamReader
         self.writer = None      # type: asyncio.StreamWriter
-        self.read_task = None   # type: asyncio.coroutine
+        self.read_task = None   # type: Generator[int, None, None]
 
     @asyncio.coroutine
     def connect(self):

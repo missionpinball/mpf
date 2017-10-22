@@ -13,6 +13,9 @@ from mpf.core.mpf_controller import MpfController
 MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController
+    from mpf.devices.switch import Switch
+    from typing import Dict, List
+    from mpf.devices.ball_device.ball_device import BallDevice
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -34,8 +37,9 @@ class TextUi(MpfController):
         self._tick_task = self.machine.clock.schedule_interval(self._tick, 1)
         self.screen = Screen.open()
         self.mpf_process = Process()
-        self.ball_devices = list()
-        self.switches = OrderedDict()
+        self.ball_devices = list()      # type: List[BallDevice]
+
+        self.switches = OrderedDict()   # type: Dict[Switch, Tuple[str, int, int]]
         self.player_start_row = 0
         self.column_positions = [0, .25, .5, .75]
         self.columns = [0] * len(self.column_positions)

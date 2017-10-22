@@ -9,6 +9,7 @@ from mpf.core.logging import LogMixin
 MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.core.mode import Mode
+    from mpf.platforms.smart_virtual import SmartVirtualHardwarePlatform
 
 
 class Device(LogMixin, metaclass=abc.ABCMeta):
@@ -38,7 +39,7 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         self.machine = machine
         self.name = name.lower()
         self.tags = []          # type: List[str]
-        self.platform = None
+        self.platform = None    # type: SmartVirtualHardwarePlatform
         """List of tags applied to this device."""
 
         self.label = None       # type: str

@@ -147,7 +147,7 @@ class NativeTypeTemplate:
     def evaluate_and_subscribe(self, parameters) -> Tuple[int, asyncio.Future]:
         """Evaluate and subscribe template."""
         del parameters
-        future = asyncio.Future(loop=self.machine.clock.loop)
+        future = asyncio.Future(loop=self.machine.clock.loop)   # type: asyncio.Future
         return self.value, future
 
 

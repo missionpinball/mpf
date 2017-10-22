@@ -260,7 +260,7 @@ class Mode(LogMixin):
 
         self.debug_log('Mode Start process complete.')
 
-    def stop(self, callback: Callable[[], None] = None, **kwargs) -> bool:
+    def stop(self, callback: Any = None, **kwargs) -> bool:
         """Stop this mode.
 
         Args:

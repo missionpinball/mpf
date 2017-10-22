@@ -2,10 +2,8 @@
 import abc
 from collections import namedtuple
 from typing import Any
+from mpf.core.platform import DriverConfig
 
-MYPY = False
-if MYPY:   # pragma: no cover
-    from mpf.core.platform import DriverConfig
 
 PulseSettings = namedtuple("PulseSettings", ["power", "duration"])
 HoldSettings = namedtuple("HoldSettings", ["power"])
@@ -20,7 +18,7 @@ class DriverPlatformInterface(metaclass=abc.ABCMeta):
     methods are implemented to support driver operations in MPF.
     """
 
-    def __init__(self, config, number):
+    def __init__(self, config: DriverConfig, number: "Any") -> None:
         """Initialise driver."""
         self.number = number    # type: Any
         self.config = config    # type: DriverConfig
