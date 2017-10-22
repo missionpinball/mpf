@@ -195,6 +195,7 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         self.completed = False
         self._state.value = self.get_start_value()
         self.debug_log("Resetting")
+        self.post_update_event()
 
     def restart(self, **kwargs):
         """Restart this logic block by calling reset() and enable().
