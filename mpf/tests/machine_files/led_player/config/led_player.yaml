@@ -2,6 +2,7 @@
 
 modes:
  - mode1
+ - mode2
 
 lights:
   led1:
@@ -25,8 +26,9 @@ lights:
     number:
     default_on_color: red
 
-
 light_player:
+  "{machine.a == 7}":
+    led1: red
   event1:
     led1:
       color: red
