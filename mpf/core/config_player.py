@@ -251,6 +251,10 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
 
     def handle_subscription_change(self, value, settings, priority, context):
         """Handle the change of a subscription."""
+        del value
+        del settings
+        del priority
+        del context
         raise AssertionError("Subscriptions are not supported in this player.")
 
     def register_player_events(self, config, mode: Mode = None, priority=0):
