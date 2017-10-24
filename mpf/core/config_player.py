@@ -249,6 +249,7 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
             partial(self._update_subscription, template, subscription_list, settings, priority, context))
         self.handle_subscription_change(value, settings, priority, context)
 
+    # pylint: disable-msg=no-self-use
     def handle_subscription_change(self, value, settings, priority, context):
         """Handle the change of a subscription."""
         del value
