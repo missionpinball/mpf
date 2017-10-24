@@ -33,7 +33,7 @@ class RgbDmd(SystemWideDevice):
     def _initialize(self):
         self.platform = self.machine.get_platform_sections("rgb_dmd", self.config['platform'])
         self.hw_device = self.platform.configure_rgb_dmd(self.name)
-        self._update_brightness(None)
+        #self._update_brightness(None)
 
     def _update_brightness(self, future):
         del future
