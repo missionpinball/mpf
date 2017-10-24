@@ -18,10 +18,6 @@ displays:
 
 rgb_dmds:
   smartmatrix_1:
-    brightness: .5
-    fps: 25
-    gamma: 2.5
+    hardware_brightness: .5
   smartmatrix_2:
-    brightness: .5
-    fps: 25
-    gamma: 2.5
+    hardware_brightness: .5

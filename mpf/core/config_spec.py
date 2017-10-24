@@ -860,6 +860,7 @@ rgb_dmds:
     only_send_changes: single|bool|False
     brightness: single|float|1.0
     gamma: single|float|2.2
+    hardware_brightness: single|template_float|1.0
 score_reels:
     __valid_in__: machine
     coil_inc: single|machine(coils)|None
