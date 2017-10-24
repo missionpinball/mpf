@@ -3,6 +3,8 @@
 import logging
 
 import asyncio
+import serial
+import threading
 from typing import Dict
 
 import sys
@@ -72,37 +74,56 @@ class SmartMatrixDevice(DmdPlatformInterface):
     def __init__(self, config, machine):
         """Initialise smart matrix device."""
         self.config = config
-        self.reader = None
         self.writer = None
+        self.port = None
+        self.control_data_queue = None
+        self.current_frame = None
+        self.new_frame_event = None
         self.machine = machine
         self.log = logging.getLogger('SmartMatrixDevice')
+
+    def _feed_hardware(self):
+        """Feed hardware in separate thread."""
+        while not self.machine.thread_stopper.is_set():
+            # wait for new frame
+            if not self.new_frame_event.wait(1):
+                continue
+            # clear event
+            self.new_frame_event.clear()
+
+            # check if we need to send any control data
+            while self.control_data_queue:
+                self.port.write(self.control_data_queue.pop())
+
+            # send frame
+            if self.config['old_cookie']:
+                self.port.write(bytearray([0x01]) + self.current_frame)
+            else:
+                self.port.write(bytearray([0xBA, 0x11, 0x00, 0x03, 0x04, 0x00, 0x00, 0x00]) + self.current_frame)
+
+        # close port before exit
+        self.port.close()
 
     @asyncio.coroutine
     def connect(self):
         """Connect to SmartMatrix device."""
         self.log.info("Connecting to SmartMatrix RGB DMD on %s baud %s", self.config['port'], self.config['baud'])
-        connector = self.machine.clock.open_serial_connection(
-            url=self.config['port'], baudrate=self.config['baud'], limit=0)
-        self.reader, self.writer = yield from connector
+        self.port = serial.Serial(self.config['port'], self.config['baud'])
+        self.new_frame_event = threading.Event()
+        self.control_data_queue = []
+        self.writer = self.machine.clock.loop.run_in_executor(None, self._feed_hardware)
 
     def set_brightness(self, brightness: float):
         """Set brightness."""
         if brightness < 0.0 or brightness > 1.0:
             raise AssertionError("Brightness has to be between 0 and 1.")
-        self.writer.write(bytearray([0xBA, 0x11, 0x00, 0x03, 20, int(brightness * 255), 00, 00]))
+        self.control_data_queue.insert(0, bytearray([0xBA, 0x11, 0x00, 0x03, 20, int(brightness * 255), 00, 00]))
 
     def stop(self):
-        """Stop device."""
-        if self.writer:
-            self.log.info("Disconnecting from SmartMatrix RGB DMD hardware.")
-            self.writer.close()
-            self.writer = None
+        """Stop platform."""
+        pass
 
     def update(self, data):
         """Update DMD data."""
-        if self.writer:
-            if self.config['old_cookie']:
-                self.writer.write(bytearray([0x01]))
-            else:
-                self.writer.write(bytearray([0xBA, 0x11, 0x00, 0x03, 0x04, 0x00, 0x00, 0x00]))
-            self.writer.write(bytearray(data))
+        self.current_frame = bytearray(data)
+        self.new_frame_event.set()
