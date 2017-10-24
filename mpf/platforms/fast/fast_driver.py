@@ -21,7 +21,7 @@ class FASTDriver(DriverPlatformInterface):
         super().__init__(config, number)
         self.log = logging.getLogger('FASTDriver')
         self.autofire = None                        # type: str
-        self._config_state = None
+        self.config_state = None
         self.machine = platform.machine
         self.platform = platform
         self.driver_settings = dict()               # type: Dict[str, str]
@@ -125,6 +125,7 @@ class FASTDriver(DriverPlatformInterface):
                 self.get_pwm_for_cmd(hold_settings.power),
                 self.get_recycle_ms_for_cmd(self.config.default_recycle, pulse_settings.duration)
             )
+            self.config_state = None
 
         self.log.debug("Sending Enable Command: %s", cmd)
         self.send(cmd)
@@ -135,8 +136,8 @@ class FASTDriver(DriverPlatformInterface):
         config_state = (pulse_settings.duration, pulse_settings.power)
 
         # reconfigure if we have to
-        if self._config_state != config_state:
-            self._config_state = config_state
+        if self.config_state != config_state:
+            self.config_state = config_state
 
             cmd = '{}{},81,00,10,{},{},00,00,00'.format(
                 self.get_config_cmd(),
@@ -151,7 +152,7 @@ class FASTDriver(DriverPlatformInterface):
 
         # restore autofire
         if self.autofire:
-            self._config_state = None
+            self.config_state = None
             self.send(self.autofire)
 
         return Util.hex_string_to_int(hex_ms_string)

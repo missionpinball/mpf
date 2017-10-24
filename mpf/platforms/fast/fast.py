@@ -626,6 +626,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
 
         driver.autofire = cmd
+        driver.config_state = None
         enable_switch.hw_switch.configure_debounce(enable_switch.debounce)
         self.debug_log("Writing hardware rule: %s", cmd)
 
@@ -672,6 +673,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
 
         driver.autofire = cmd
+        driver.config_state = None
         enable_switch.hw_switch.configure_debounce(enable_switch.debounce)
         self.debug_log("Writing hardware rule: %s", cmd)
 
@@ -698,6 +700,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
 
         driver.autofire = cmd
+        driver.config_state = None
         enable_switch.hw_switch.configure_debounce(enable_switch.debounce)
         self.debug_log("Writing hardware rule: %s", cmd)
 
@@ -727,6 +730,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         cmd = '{}{},81'.format(driver.get_config_cmd(), driver.number)
 
         driver.autofire = None
+        driver.config_state = None
 
         self.debug_log("Clearing hardware rule: %s", cmd)
 
