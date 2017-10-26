@@ -130,6 +130,8 @@ class Tilt(Mode):
     def reset_warnings(self, **kwargs):
         """Reset the tilt warnings for the current player."""
         del kwargs
+        if not self.player:
+            return
         try:
             self.player[self.tilt_config['tilt_warnings_player_var']] = 0
         except AttributeError:
