@@ -258,6 +258,14 @@ class Game(AsyncMode):
             queue.wait()
             self._stopping_queue = queue
 
+    @property
+    def is_game_mode(self):
+        """Return false.
+
+        We are the game and not a mode within the game.
+        """
+        return False
+
     def _game_mode_stopped(self, mode):
         """Mark game mode stopped and clear the wait on stop if this was the last one."""
         self._stopping_modes.remove(mode)
@@ -286,6 +294,12 @@ class Game(AsyncMode):
         opportunity to do things before the ball actually starts. Once that
         event is clear, this method calls :meth:`ball_started`.
         """
+        event_args = {
+                "player": self.player.number,
+                "ball": self.player.ball,
+                "balls_remaining": self.balls_per_game - self.player.ball,
+                "is_extra_ball": is_extra_ball}
+
         self.debug_log("***************************************************")
         self.debug_log("****************** BALL STARTING ******************")
         self.debug_log("**                                               **")
@@ -297,17 +311,12 @@ class Game(AsyncMode):
         self.debug_log("***************************************************")
         self.debug_log("***************************************************")
 
-        yield from self.machine.events.post_async('ball_will_start',
-                                                  is_extra_ball=is_extra_ball)
+        yield from self.machine.events.post_async('ball_will_start', **event_args)
         '''event: ball_will_start
         desc: The ball is about to start. This event is posted just before
         :doc:`ball_starting`.'''
 
-        yield from self.machine.events.post_queue_async(
-            'ball_starting',
-            balls_remaining=self.balls_per_game - self.player.ball,
-            is_extra_ball=is_extra_ball)
-
+        yield from self.machine.events.post_queue_async('ball_starting', **event_args)
         '''event: ball_starting
         desc: A ball is starting. This is a queue event, so the ball won't
         actually start until the queue is cleared.'''
@@ -319,9 +328,7 @@ class Game(AsyncMode):
 
         self.debug_log("ball_started for Ball %s", self.player.ball)
 
-        yield from self.machine.events.post_async('ball_started',
-                                                  ball=self.player.ball,
-                                                  player=self.player.number)
+        yield from self.machine.events.post_async('ball_started', **event_args)
         '''event: ball_started
         desc: A new ball has started.
         args:

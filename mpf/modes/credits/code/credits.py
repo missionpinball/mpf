@@ -421,9 +421,9 @@ class Credits(Mode):
             self.credit_units_for_pricing_tiers = 0
             self.reset_pricing_tier_count_this_game = True
 
-    def _ball_starting(self, **kwargs):
+    def _ball_starting(self, player, ball, **kwargs):
         del kwargs
-        if self.player.number == 1 and self.player.ball == 2:
+        if player == 1 and ball == 2:
             self._reset_pricing_tier_credits()
 
     def _set_free_play_string(self):
