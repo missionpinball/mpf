@@ -2,3 +2,9 @@
 
 modes:
   - high_score
+  - tilt
+
+switches:
+  s_tilt:
+    tags: tilt_warning
+    number:

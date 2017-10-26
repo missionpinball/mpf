@@ -105,7 +105,7 @@ class Tilt(Mode):
         del kwargs
         self.last_tilt_warning_switch = self.machine.clock.get_time()
 
-        if not self.machine.game or not self.machine.game.player:
+        if not self.machine.game or not self.machine.game.player or self.machine.game.ending:
             return
 
         self.info_log("Tilt Warning")
@@ -138,7 +138,7 @@ class Tilt(Mode):
     def reset_warnings(self, **kwargs):
         """Reset the tilt warnings for the current player."""
         del kwargs
-        if not self.machine.game or not self.machine.game.player:
+        if not self.machine.game or not self.machine.game.player or self.machine.game.ending:
             return
 
         try:
@@ -154,7 +154,7 @@ class Tilt(Mode):
         current ball, and wait for all the balls to drain.
         """
         del kwargs
-        if not self.machine.game or self.machine.game.tilted:
+        if not self.machine.game or self.machine.game.tilted or self.machine.game.ending:
             return
 
         self.machine.game.tilted = True

@@ -29,6 +29,7 @@ class Game(AsyncMode):
         self.machine.game = None
         self.slam_tilted = False
         self.tilted = False
+        self.ending = False
         self.player = None
         self.num_players = None
         self._stopping_modes = []
@@ -50,6 +51,7 @@ class Game(AsyncMode):
         self.machine.game = self
         self.slam_tilted = False
         self.tilted = False
+        self.ending = False
         self.num_players = 0
         self._balls_in_play = 0
         self._stopping_modes = []
@@ -72,11 +74,31 @@ class Game(AsyncMode):
         yield from self._start_game()
 
         # Game loop
-        while True:
-            # Wait for end ball event to be set
-            yield from self._end_ball_event.wait()
-            yield from self._end_ball()
-            self._end_ball_event.clear()
+        while not self.ending:
+            yield from self._start_player_turn()
+            # run the ball
+            yield from self._run_ball()
+
+            # run any extra balls
+            while self.player.extra_balls and not self.slam_tilted:
+                yield from self._award_extra_ball()
+
+            yield from self._end_player_turn()
+
+            if self.slam_tilted or self.player.ball >= self.balls_per_game and self.player.number == self.num_players:
+                self.ending = True
+            else:
+                yield from self._rotate_players()
+
+        yield from self._end_game()
+
+    @asyncio.coroutine
+    def _run_ball(self, is_extra_ball=False):
+        self._end_ball_event.clear()
+        yield from self._start_ball(is_extra_ball)
+        # Wait for end ball event to be set
+        yield from self._end_ball_event.wait()
+        yield from self._end_ball()
 
     @asyncio.coroutine
     def _start_game(self):
@@ -107,8 +129,6 @@ class Game(AsyncMode):
         # Wait for player to be added before game can start
         # TODO: Add timeout to wait
         yield from self._at_least_one_player_event.wait()
-
-        yield from self._start_player_turn()
 
         yield from self.machine.events.post_async('game_started')
         '''event: game_started
@@ -176,23 +196,6 @@ class Game(AsyncMode):
         shoot again.'''
 
         self.debug_log("Ball has ended")
-
-        if self.slam_tilted:
-            yield from self._end_player_turn()
-            yield from self._end_game()
-            return
-
-        if self.player.extra_balls:
-            yield from self._award_extra_ball()
-            return
-
-        yield from self._end_player_turn()
-
-        if self.player.ball >= self.balls_per_game and self.player.number == self.num_players:
-            yield from self._end_game()
-        else:
-            yield from self._rotate_players()
-            yield from self._start_player_turn()
 
     @property
     def balls_in_play(self) -> int:
@@ -430,13 +433,10 @@ class Game(AsyncMode):
     def end_game(self):
         """End the current game.
 
-        This method posts the event *game_will_end* and the queue event *game_ending*, giving other modules
-        an opportunity to finish up whatever they need to do before the game
-        ends.
-
+        This triggers the game end manually.
         """
-        self.machine.events.post('game_will_end')
-        self.machine.events.post_queue('game_ending', callback=self._game_ending_completed)
+        self.ending = True
+        self.end_ball()
 
     def _game_ending_completed(self, **kwargs):
         del kwargs
@@ -469,7 +469,7 @@ class Game(AsyncMode):
         """
         self.debug_log("Awarded extra ball to Player %s. Shoot Again", self.player.index + 1)
         self.player.extra_balls -= 1
-        yield from self._start_ball(is_extra_ball=True)
+        yield from self._run_ball(is_extra_ball=True)
 
     def request_player_add(self, **kwargs):
         """Request to add a player to an active game.
@@ -660,8 +660,6 @@ class Game(AsyncMode):
         player: The player object whose turn is starting.
         number: The player number
         '''
-
-        yield from self._start_ball()
 
     @asyncio.coroutine
     def _end_player_turn(self):
