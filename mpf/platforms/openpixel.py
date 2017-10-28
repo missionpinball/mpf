@@ -243,7 +243,7 @@ class OpenPixelClient(object):
 
     def blank_all(self):
         """Blank all channels."""
-        for channel_index, pixel_list in enumerate(self.channels):
+        for channel_index in range(len(self.channels)):
             self.channels[channel_index] = [0] * len(self.channels[channel_index])
             self.msg[channel_index] = None
             self._update_pixels(channel_index)
