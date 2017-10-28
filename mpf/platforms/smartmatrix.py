@@ -3,11 +3,9 @@
 import logging
 
 import asyncio
-import serial
 import threading
 from typing import Dict
-
-import sys
+import serial
 
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 
