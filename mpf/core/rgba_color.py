@@ -8,8 +8,7 @@ class RGBAColor(RGBColor):
 
     """RGB Color with alpha channel."""
 
-    def __init__(self, color: Union[RGBColor, str, List[int], Tuple[int, int, int], Tuple[int, int, int, int],
-                                    List[int]]) -> None:
+    def __init__(self, color: Union[RGBColor, str, Tuple[int, int, int], Tuple[int, int, int, int], List[int]]) -> None:
         """Initialise RGBA color."""
         if isinstance(color, (tuple, list)) and len(color) == 4:
             self.opacity = color[3]
