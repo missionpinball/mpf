@@ -3,7 +3,7 @@
 rgb_dmds:
   test_dmd:
     label: Test
-    brightness: settings.dmd_brightness
+    hardware_brightness: settings.dmd_brightness
 
 settings:
   dmd_brightness:

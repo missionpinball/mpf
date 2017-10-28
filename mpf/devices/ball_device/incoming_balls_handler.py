@@ -138,9 +138,15 @@ class IncomingBallsHandler(BallDeviceStateHandler):
             # sleep until we have incoming balls
             yield from self._has_incoming_balls.wait()
 
+            # the incoming balls may have been removed in the meantime
+            if not self._incoming_balls:
+                continue
+
+            # wait for timeouts on incoming balls
             futures = [incoming_ball.wait_for_timeout() for incoming_ball in self._incoming_balls]
             yield from Util.first(futures, loop=self.machine.clock.loop)
 
+            # handle timeouts
             timeouts = []
             for incoming_ball in self._incoming_balls:
                 if incoming_ball.is_timeouted:

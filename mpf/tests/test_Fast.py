@@ -252,7 +252,8 @@ class TestFast(MpfTestCase):
 
     def _test_pulse(self):
         self.net_cpu.expected_commands = {
-            "DN:04,89,00,10,17,FF,00,00,1B": "DN:P"
+            "DN:04,81,00,10,17,FF,00,00,00": "DN:P",
+            "TN:04,01": "TN:P"
         }
         # pulse coil 4
         self.machine.coils.c_test.pulse()
@@ -366,7 +367,8 @@ class TestFast(MpfTestCase):
 
     def _test_hw_rule_pulse_pwm32(self):
         self.net_cpu.expected_commands = {
-            "DN:11,89,00,10,0A,AAAAAAAA,00,00,00": "DN:P"
+            "DN:11,81,00,10,0A,AAAAAAAA,00,00,00": "DN:P",
+            "TN:11,01": "TN:P"
         }
         self.machine.coils.c_pulse_pwm32_mask.pulse()
         self.advance_time_and_run(.1)
@@ -493,7 +495,8 @@ class TestFast(MpfTestCase):
     def test_flipper_single_coil(self):
         # manual flip no hw rule
         self.net_cpu.expected_commands = {
-            "DN:20,89,00,10,0A,FF,00,00,00": "DN:P"
+            "DN:20,81,00,10,0A,FF,00,00,00": "DN:P",
+            "TN:20,01": "TN:P",
         }
         self.machine.coils.c_flipper_main.pulse()
         self.advance_time_and_run(.1)
@@ -515,7 +518,7 @@ class TestFast(MpfTestCase):
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
-        # enable
+        # flipper rule enable
         self.net_cpu.expected_commands = {
             "DN:20,01,01,18,0B,FF,01,00,00": "DN:P",
             "SN:01,01,02,02": "SN:P"
@@ -526,8 +529,9 @@ class TestFast(MpfTestCase):
 
         # manual flip with hw rule in action
         self.net_cpu.expected_commands = {
-            "TN:20,01": "TN:P",  # pulse
-            "TN:20,00": "TN:P"   # reenable autofire rule
+            "DN:20,01,01,18,0B,FF,01,00,00": "DN:P",    # configure pulse
+            "TN:20,01": "TN:P",                         # pulse
+            "DN:20,81,00,10,0A,FF,00,00,00": "DN:P"     # restore rule
         }
         self.machine.coils.c_flipper_main.pulse()
         self.advance_time_and_run(.1)
