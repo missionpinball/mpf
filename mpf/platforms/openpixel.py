@@ -122,10 +122,12 @@ class OpenPixelClient(object):
         self.log = logging.getLogger('OpenPixelClient')
 
         self.machine = machine
-        self.dirty = True
         self.update_every_tick = False
         self.socket_sender = None
-        self.channels = list()
+        self.max_fade_ms = None
+        self.channels = []
+        self.dirty_leds = []
+        self.msg = []
         self.openpixel_config = config
 
     @asyncio.coroutine
@@ -133,6 +135,8 @@ class OpenPixelClient(object):
         """Connect to the hardware."""
         connector = self.machine.clock.open_connection(self.openpixel_config['host'], self.openpixel_config['port'])
         _, self.socket_sender = yield from connector
+
+        self.max_fade_ms = int(1 / self.machine.config['mpf']['default_light_hw_update_hz'])
 
         # Update the FadeCandy at a regular interval
         self.machine.clock.schedule_interval(self.tick, 1 / self.machine.config['mpf']['default_light_hw_update_hz'])
@@ -155,11 +159,12 @@ class OpenPixelClient(object):
             channels_to_add = channel + 1 - len(self.channels)
 
             self.channels += [list() for _ in range(channels_to_add)]
+            self.dirty_leds += [dict() for _ in range(channels_to_add)]
+            self.msg += [None for _ in range(channels_to_add)]
 
         if len(self.channels[channel]) < led + 1:
 
             leds_to_add = led + 1 - len(self.channels[channel])
-
             self.channels[channel] += [0 for _ in range(leds_to_add)]
 
     def set_pixel_color(self, channel, pixel, callback: Callable[[int], Tuple[float, int]]):
@@ -170,28 +175,33 @@ class OpenPixelClient(object):
             pixel: Int of the number for this pixel on that channel.
             callback: callback to get brightness
         """
-        self.channels[channel][pixel] = callback
-        self.dirty = True
+        self.dirty_leds[channel][pixel] = callback
 
     def tick(self):
         """Update pixels.
 
         Called periodically.
         """
-        if self.update_every_tick or self.dirty:
-            for channel_index, pixel_list in enumerate(self.channels):
-                self.update_pixels(pixel_list, channel_index)
+        for channel_index in range(len(self.channels)):
+            self._handle_dirty_leds(channel_index)
+            self._update_pixels(channel_index)
 
-            self.dirty = False
+    def _handle_dirty_leds(self, channel):
+        if not self.dirty_leds[channel]:
+            return
 
-    @staticmethod
-    def _add_pixel(msg, max_fade_ms, brightness):
-        if callable(brightness):
-            brightness = brightness(max_fade_ms)[0] * 255
-        brightness = min(255, max(0, int(brightness)))
-        msg.append(brightness)
+        # invalidate cached message
+        self.msg[channel] = None
 
-    def update_pixels(self, pixels, channel=0):
+        for pixel, callback in dict(self.dirty_leds[channel]).items():
+            brightness, remaining_fade = callback(self.max_fade_ms)
+            value = min(255, max(0, int(brightness * 255)))
+            self.channels[channel][pixel] = value
+            # fade is done
+            if remaining_fade <= 0:
+                del self.dirty_leds[channel][pixel]
+
+    def _update_pixels(self, channel):
         """Send the list of pixel colors to the OPC server.
 
         Args:
@@ -210,9 +220,13 @@ class OpenPixelClient(object):
         the channel and you just want to update LED #10, then you need to send
         pixel data for the first 10 pixels.)
         """
+        # if we got a cached message just send it
+        if self.msg[channel]:
+            self.send(self.msg[channel])
+            return
         # Build the OPC message
         msg = bytearray()
-        max_fade_ms = int(1 / self.machine.config['mpf']['default_light_hw_update_hz'])
+        pixels = self.channels[channel]
         len_hi_byte = int(len(pixels) / 256)
         len_lo_byte = (len(pixels)) % 256
         header = bytes([channel, 0, len_hi_byte, len_lo_byte])
@@ -220,16 +234,19 @@ class OpenPixelClient(object):
         for i in range(int(len(pixels) / 3)):
             # send GRB because that is the default color order for WS2812
 
-            self._add_pixel(msg, max_fade_ms, pixels[i * 3 + 1])
-            self._add_pixel(msg, max_fade_ms, pixels[i * 3])
-            self._add_pixel(msg, max_fade_ms, pixels[i * 3 + 2])
+            msg.append(pixels[i * 3 + 1])
+            msg.append(pixels[i * 3])
+            msg.append(pixels[i * 3 + 2])
 
+        self.msg[channel] = bytes(msg)
         self.send(bytes(msg))
 
     def blank_all(self):
         """Blank all channels."""
         for channel_index, pixel_list in enumerate(self.channels):
-            self.update_pixels([0] * len(pixel_list), channel_index)
+            self.channels[channel_index] = [0] * len(self.channels[channel_index])
+            self.msg[channel_index] = None
+            self._update_pixels(channel_index)
 
     def send(self, message):
         """Send a message to the socket.
