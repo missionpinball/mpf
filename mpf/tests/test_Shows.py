@@ -220,9 +220,15 @@ class TestShows(MpfTestCase):
         self.assertLightChannel("light_02", 120)
         self.assertLightChannel("gi_01", 255)
 
+        self.assertFalse(self.machine.shows['show_from_mode'].running)
+        self.machine.set_machine_var("test", 42)
+        self.advance_time_and_run(.01)
+        self.assertTrue(self.machine.shows['show_from_mode'].running)
+
         # Stop the mode (and therefore the show)
         self.machine.events.post('stop_mode1')
         self.machine_run()
+        self.assertFalse(self.machine.shows['show_from_mode'].running)
         self.assertFalse(self.machine.mode_controller.is_active('mode1'))
         self.assertTrue(running_show1._stopped)
         self.assertFalse([x for x in self.machine.shows['test_show1'].running

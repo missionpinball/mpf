@@ -269,7 +269,7 @@ class Show(Asset):
              events_when_looped=None, events_when_paused=None,
              events_when_resumed=None, events_when_advanced=None,
              events_when_stepped_back=None, events_when_updated=None,
-             events_when_completed=None) -> "RunningShow":
+             events_when_completed=None, start_time=None) -> "RunningShow":
         """Play a Show.
 
         There are many parameters you can use here which
@@ -354,9 +354,13 @@ class Show(Asset):
         else:
             show_steps = False
 
+        if not start_time:
+            start_time = self.machine.clock.get_time()
+
         running_show = RunningShow(machine=self.machine,
                                    show=self,
                                    show_steps=show_steps,
+                                   start_time=start_time,
                                    priority=int(priority),
                                    speed=float(speed),
                                    start_step=int(start_step),
@@ -407,7 +411,8 @@ class RunningShow(object):
                  events_when_stopped, events_when_looped,
                  events_when_paused, events_when_resumed,
                  events_when_advanced, events_when_stepped_back,
-                 events_when_updated, events_when_completed):
+                 events_when_updated, events_when_completed,
+                 start_time):
         """Initialise an instance of a show."""
         self.machine = machine
         self.show = show
@@ -434,7 +439,7 @@ class RunningShow(object):
         self.next_step_index = None
         self.current_step_index = None
 
-        self.next_step_time = self.machine.clock.get_time()
+        self.next_step_time = start_time
 
         self.manual_advance = manual_advance
 
@@ -659,7 +664,8 @@ class RunningShow(object):
                     context="show_" + str(self.id),
                     calling_context=self.current_step_index,
                     priority=self.priority,
-                    show_tokens=self.show_tokens)
+                    show_tokens=self.show_tokens,
+                    start_time=self.next_step_time)
 
                 if item_type not in self._players:
                     self._players.append(item_type)
