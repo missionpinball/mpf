@@ -138,7 +138,14 @@ class OpenPixelClient(object):
 
         self.max_fade_ms = int(1 / self.machine.config['mpf']['default_light_hw_update_hz'])
 
-        # Update the FadeCandy at a regular interval
+        self.machine.events.add_handler("init_phase_3", self._start_loop)
+
+    def _start_loop(self, **kwargs):
+        del kwargs
+        # blank all channels
+        self.blank_all()
+
+        # Update at a regular interval
         self.machine.clock.schedule_interval(self.tick, 1 / self.machine.config['mpf']['default_light_hw_update_hz'])
 
     def add_pixel(self, channel, led):
@@ -168,7 +175,7 @@ class OpenPixelClient(object):
             self.channels[channel] += [0 for _ in range(leds_to_add)]
 
     def set_pixel_color(self, channel, pixel, callback: Callable[[int], Tuple[float, int]]):
-        """Set an invidual pixel color.
+        """Set an individual pixel color.
 
         Args:
             channel: Int of the OPC channel for this pixel.
@@ -183,6 +190,8 @@ class OpenPixelClient(object):
         Called periodically.
         """
         for channel_index in range(len(self.channels)):
+            if not self.update_every_tick and not self.dirty_leds[channel_index]:
+                continue
             self._handle_dirty_leds(channel_index)
             self._update_pixels(channel_index)
 
@@ -221,10 +230,13 @@ class OpenPixelClient(object):
         pixel data for the first 10 pixels.)
         """
         # if we got a cached message just send it
-        if self.msg[channel]:
-            self.send(self.msg[channel])
-            return
-        # Build the OPC message
+        if not self.msg[channel]:
+            self.msg[channel] = bytes(self._build_message(channel))
+
+        self.send(self.msg[channel])
+
+    def _build_message(self, channel):
+        """Build the OPC message."""
         msg = bytearray()
         pixels = self.channels[channel]
         len_hi_byte = int(len(pixels) / 256)
@@ -237,16 +249,13 @@ class OpenPixelClient(object):
             msg.append(pixels[i * 3 + 1])
             msg.append(pixels[i * 3])
             msg.append(pixels[i * 3 + 2])
-
-        self.msg[channel] = bytes(msg)
-        self.send(bytes(msg))
+        return msg
 
     def blank_all(self):
         """Blank all channels."""
         for channel_index in range(len(self.channels)):
             self.channels[channel_index] = [0] * len(self.channels[channel_index])
-            self.msg[channel_index] = None
-            self._update_pixels(channel_index)
+            self.send(bytes(self._build_message(channel_index)))
 
     def send(self, message):
         """Send a message to the socket.
