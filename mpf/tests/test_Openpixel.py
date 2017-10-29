@@ -42,33 +42,42 @@ class TestOpenpixel(MpfTestCase):
         return len(message)
 
     def assertOpenPixelLedsSent(self, leds1, leds2):
-        self.assertEqual([self._build_message(0, leds1),
-                          self._build_message(1, leds2)],
-                         self._messages)
+        if leds1 is not None and leds2 is not None:
+            self.assertEqual([self._build_message(0, leds1),
+                              self._build_message(1, leds2)],
+                             self._messages)
+        elif leds1 is not None:
+            self.assertEqual([self._build_message(0, leds1)],
+                             self._messages)
+        elif leds2 is not None:
+            self.assertEqual([self._build_message(1, leds2)],
+                             self._messages)
+        else:
+            raise AssertionError("Invalid assert")
         self._messages = []
 
     def test_led_color(self):
         # test led on channel 0. position 99
         self.machine.lights.test_led.on()
         self.advance_time_and_run(1)
-        self.assertOpenPixelLedsSent({99: (255, 255, 255)}, {})
+        self.assertOpenPixelLedsSent({99: (255, 255, 255)}, None)
 
         # test led 20 ond channel 0
         self.machine.lights.test_led2.color(RGBColor((255, 0, 0)))
         self.advance_time_and_run(1)
-        self.assertOpenPixelLedsSent({20: (255, 0, 0), 99: (255, 255, 255)}, {})
+        self.assertOpenPixelLedsSent({20: (255, 0, 0), 99: (255, 255, 255)}, None)
 
         self.machine.lights.test_led.off()
         self.advance_time_and_run(1)
-        self.assertOpenPixelLedsSent({20: (255, 0, 0), 99: (0, 0, 0)}, {})
+        self.assertOpenPixelLedsSent({20: (255, 0, 0), 99: (0, 0, 0)}, None)
         self._messages = []
 
         # test led color
         self.machine.lights.test_led.color(RGBColor((2, 23, 42)))
         self.advance_time_and_run(1)
-        self.assertOpenPixelLedsSent({20: (255, 0, 0), 99: (2, 23, 42)}, {})
+        self.assertOpenPixelLedsSent({20: (255, 0, 0), 99: (2, 23, 42)}, None)
 
         # test led on channel 1
         self.machine.lights.test_led3.on()
         self.advance_time_and_run(1)
-        self.assertOpenPixelLedsSent({20: (255, 0, 0), 99: (2, 23, 42)}, {99: (255, 255, 255)})
+        self.assertOpenPixelLedsSent(None, {99: (255, 255, 255)})
