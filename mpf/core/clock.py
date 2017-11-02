@@ -68,9 +68,9 @@ class ClockBase(LogMixin):
     def _create_event_loop(self):
         return asyncio.get_event_loop()
 
-    def run(self):
+    def run(self, stop_future):
         """Run the clock."""
-        self.loop.run_forever()
+        self.loop.run_until_complete(stop_future)
 
     def get_time(self):
         """Get the last tick made by the clock."""

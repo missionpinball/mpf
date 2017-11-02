@@ -871,9 +871,7 @@ class MpfTestCase(unittest.TestCase):
         else:
             # fire all delays
             self.advance_time_and_run(300)
-        self.machine.stop()
         self.machine._do_stop()
-        self.machine.clock.loop.close()
         self.machine = None
 
         self.restore_sys_path()
