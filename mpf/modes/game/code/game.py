@@ -298,10 +298,10 @@ class Game(AsyncMode):
         event is clear, this method calls :meth:`ball_started`.
         """
         event_args = {
-                "player": self.player.number,
-                "ball": self.player.ball,
-                "balls_remaining": self.balls_per_game - self.player.ball,
-                "is_extra_ball": is_extra_ball}
+            "player": self.player.number,
+            "ball": self.player.ball,
+            "balls_remaining": self.balls_per_game - self.player.ball,
+            "is_extra_ball": is_extra_ball}
 
         self.debug_log("***************************************************")
         self.debug_log("****************** BALL STARTING ******************")

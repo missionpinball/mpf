@@ -58,6 +58,8 @@ if MYPY:   # pragma: no cover
     from mpf.devices.logic_blocks import Accrual, Sequence, Counter
     from mpf.devices.servo import Servo
     from mpf.devices.segment_display import SegmentDisplay
+    from mpf.devices.shot_group import ShotGroup
+    from mpf.devices.shot import Shot
     from logging import Logger  # noqa
 
 
@@ -128,6 +130,8 @@ class MachineController(LogMixin):
 
             # devices
             self.shows = None                           # type: DeviceCollectionType[str, Show]
+            self.shots = None                           # type: DeviceCollectionType[str, Shot]
+            self.shot_groups = None                     # type: DeviceCollectionType[str, ShotGroup]
             self.switches = None                        # type: DeviceCollectionType[str, Switch]
             self.coils = None                           # type: DeviceCollectionType[str, Driver]
             self.lights = None                          # type: DeviceCollectionType[str, Light]

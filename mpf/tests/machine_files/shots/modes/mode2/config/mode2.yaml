@@ -4,12 +4,6 @@ mode:
   priority: 200
 
 shots:
-  shot_21:
-    profile: mode2_shot_21
-  shot_22:
-    profile: mode2_shot_22
-  shot_26:
-    profile: mode2_shot_26
   mode2_shot_rainbow:
     switch: switch_27
     show_tokens:

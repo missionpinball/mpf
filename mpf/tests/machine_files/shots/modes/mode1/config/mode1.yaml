@@ -2,7 +2,6 @@
 
 mode:
   priority: 100
-  game_mode: False
 
 shots:
   mode1_shot_1:
@@ -18,14 +17,6 @@ shots:
   shot_sequence3:
     switch_sequence: switch_1, switch_2
     time: 3s
-  shot_21:
-    profile: mode1_shot_21
-  shot_22:
-    profile: mode1_shot_22
-  shot_23:
-    profile: mode1_shot_23
-  shot_26:
-    profile: mode1_shot_26
 
 shot_groups:
     mode_group:
