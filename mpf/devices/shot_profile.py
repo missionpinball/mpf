@@ -1,5 +1,5 @@
 """Shot profiles."""
-from mpfmc.core.mode import Mode
+from mpf.core.mode import Mode
 
 from mpf.core.system_wide_device import SystemWideDevice
 
