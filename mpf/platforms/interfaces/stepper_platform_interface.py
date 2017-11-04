@@ -17,29 +17,29 @@ class StepperPlatformInterface(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def home(self):
         """Home an axis, resetting 0 position."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @abc.abstractmethod
     def move_abs_pos(self, position):
         """Move axis to a certain absolute position."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @abc.abstractmethod
     def move_rel_pos(self, position):
         """Move axis to a relative position."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @abc.abstractmethod
     def move_vel_mode(self, velocity):
         """Move at a specific velocity (pos = clockwise, neg = counterclockwise)."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @abc.abstractmethod
     def current_position(self):
         """Return the current position of the stepper."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @abc.abstractmethod
     def stop(self):
         """Stop a motor."""
-        raise NotImplementedError()
+        raise NotImplementedError

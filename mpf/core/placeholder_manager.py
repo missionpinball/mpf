@@ -53,7 +53,7 @@ class BaseTemplate(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def evaluate(self, parameters, fail_on_missing_params=False):
         """Evaluate template."""
-        pass
+        raise NotImplementedError
 
 
 class BoolTemplate(BaseTemplate):

@@ -9,9 +9,9 @@ class HardwareSoundPlatformInterface(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def play_sound(self, number: int):
         """Play a sound."""
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def stop_all_sounds(self):
         """Play a sound."""
-        pass
+        raise NotImplementedError

@@ -14,4 +14,4 @@ class ServoPlatformInterface(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def go_to_position(self, position):
         """Move servo to a certain position."""
-        raise NotImplementedError()
+        raise NotImplementedError

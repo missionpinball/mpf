@@ -15,7 +15,7 @@ class SegmentDisplayPlatformInterface(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def set_text(self, text: str, flashing: bool) -> None:
         """Set a text to the display."""
-        pass
+        raise NotImplementedError
 
 
 class SegmentDisplaySoftwareFlashPlatformInterface(SegmentDisplayPlatformInterface):
@@ -64,4 +64,4 @@ class SegmentDisplaySoftwareFlashPlatformInterface(SegmentDisplayPlatformInterfa
     @abc.abstractmethod
     def _set_text(self, text: str) -> None:
         """Set a text to the display."""
-        pass
+        raise NotImplementedError

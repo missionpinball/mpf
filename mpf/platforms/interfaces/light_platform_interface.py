@@ -18,7 +18,7 @@ class LightPlatformInterface(metaclass=abc.ABCMeta):
         This is a callback because the platform may send the brightness later on and we do not want to introduce latency
         between setting and sending the color.
         """
-        pass
+        raise NotImplementedError
 
 
 class LightPlatformDirectFade(LightPlatformInterface, metaclass=abc.ABCMeta):
@@ -72,7 +72,7 @@ class LightPlatformDirectFade(LightPlatformInterface, metaclass=abc.ABCMeta):
         Returns:
             None
         """
-        raise NotImplementedError('set_brightness_and_fade method must be defined to use this base class')
+        raise NotImplementedError
 
 
 class LightPlatformSoftwareFade(LightPlatformDirectFade, metaclass=abc.ABCMeta):
@@ -107,4 +107,4 @@ class LightPlatformSoftwareFade(LightPlatformDirectFade, metaclass=abc.ABCMeta):
         Returns:
             None
         """
-        raise NotImplementedError('set_brightness method must be defined to use this base class')
+        raise NotImplementedError
