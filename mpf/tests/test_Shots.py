@@ -406,6 +406,31 @@ class TestShots(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertLightColor("led_14", "purple")
 
+    def test_enable_persist(self):
+        self.start_game()
+
+        self.start_mode("mode1")
+        self.assertFalse(self.machine.shots.mode1_shot_17.enabled)
+        self.assertTrue(self.machine.shots.mode1_shot_1.enabled)
+
+        self.stop_mode("mode1")
+        self.start_mode("mode1")
+        self.assertFalse(self.machine.shots.mode1_shot_17.enabled)
+        self.assertTrue(self.machine.shots.mode1_shot_1.enabled)
+
+        self.post_event("custom_enable_17")
+        self.assertTrue(self.machine.shots.mode1_shot_17.enabled)
+        self.post_event("custom_disable_1")
+        self.assertFalse(self.machine.shots.mode1_shot_1.enabled)
+
+        self.stop_mode("mode1")
+        self.assertFalse(self.machine.shots.mode1_shot_17.enabled)
+        self.assertFalse(self.machine.shots.mode1_shot_1.enabled)
+
+        self.start_mode("mode1")
+        self.assertTrue(self.machine.shots.mode1_shot_17.enabled)
+        self.assertFalse(self.machine.shots.mode1_shot_1.enabled)
+
     def test_control_events(self):
         # test control events from machine-wide shot
         shot16 = self.machine.shots.shot_16

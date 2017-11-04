@@ -8,6 +8,9 @@ shots:
     switch: switch_3
     show_tokens:
       light: light_3
+    start_enabled: True
+    enable_events: custom_enable_1
+    disable_events: custom_disable_1
   mode1_shot_17:
     switch: switch_17
     enable_events: custom_enable_17
