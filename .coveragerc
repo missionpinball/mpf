@@ -13,6 +13,7 @@ omit =
     mpf/tests/*
     mpf/__main__.py
     mpf/migrator/*
+    mpf/platforms/trinamics/TMCL.py
 
 [run]
 source = mpf
