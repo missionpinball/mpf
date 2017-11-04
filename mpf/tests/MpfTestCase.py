@@ -108,6 +108,20 @@ class MpfTestCase(unittest.TestCase):
         self._events = {}
         self.expected_duration = 0.5
 
+    def start_mode(self, mode):
+        """Start mode."""
+        self.assertModeNotRunning(mode)
+        self.machine.modes[mode].start()
+        self.machine_run()
+        self.assertModeRunning(mode)
+
+    def stop_mode(self, mode):
+        """Stop mode."""
+        self.assertModeRunning(mode)
+        self.machine.modes[mode].stop()
+        self.machine_run()
+        self.assertModeNotRunning(mode)
+
     def getConfigFile(self):
         """Return a string name of the machine config file to use for the tests
         in this class.

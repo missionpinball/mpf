@@ -222,3 +222,7 @@ class TestTilt(MpfTestCase):
         self.advance_time_and_run(1)
 
         self.assertEqual(None, self.machine.game)
+
+        # test that it does not crash outside the game
+        self.post_event("tilt_reset_warnings")
+        self.advance_time_and_run()

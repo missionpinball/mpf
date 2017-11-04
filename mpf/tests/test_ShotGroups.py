@@ -25,280 +25,90 @@ class TestShotGroups(MpfFakeGameTestCase):
         self.hit_and_release_switch("switch_4")
 
     def test_events_and_complete(self):
+        self.mock_event("test_group_complete")
+        self.mock_event("test_group_hit")
+
         self.start_game()
 
-        self.mock_event("test_group_default_lit_complete")
-        self.mock_event("test_group_default_unlit_complete")
-        self.mock_event("test_group_default_lit_hit")
-        self.mock_event("test_group_default_unlit_hit")
-        self.mock_event("test_group_default_hit")
+        # it should post events. here for the initial profile state (on mode start)
+        self.assertEventNotCalled("test_group_hit")
+        self.assertEventCalledWith("test_group_complete", state="unlit")
+        self.mock_event("test_group_complete")
         self.mock_event("test_group_hit")
 
         self.hit_and_release_switch("switch_1")
 
-        # it should post events. here for the previous(?) profile state
-        self.assertEqual(0, self._events['test_group_default_lit_hit'])
-        self.assertEqual(1, self._events['test_group_default_unlit_hit'])
-        self.assertEqual(1, self._events['test_group_default_hit'])
-        self.assertEqual(1, self._events['test_group_hit'])
-
-        self.hit_and_release_switch("switch_1")
-
-        # it posts the opposite state
-        self.assertEqual(0, self._events['test_group_default_lit_complete'])
-        self.assertEqual(0, self._events['test_group_default_unlit_complete'])
-        self.assertEqual(1, self._events['test_group_default_lit_hit'])
-        self.assertEqual(1, self._events['test_group_default_unlit_hit'])
-        self.assertEqual(2, self._events['test_group_default_hit'])
-        self.assertEqual(2, self._events['test_group_hit'])
+        # it posts nothing because the the there is no common state
+        self.assertEventCalled("test_group_hit")
+        self.assertEventNotCalled("test_group_complete")
 
         self.hit_and_release_switch("switch_2")
         self.hit_and_release_switch("switch_3")
         self.hit_and_release_switch("switch_4")
 
-        self.assertEqual(1, self._events['test_group_default_lit_complete'])
-        self.assertEqual(0, self._events['test_group_default_unlit_complete'])
-        self.assertEqual(1, self._events['test_group_default_lit_hit'])
-        self.assertEqual(4, self._events['test_group_default_unlit_hit'])
-        self.assertEqual(5, self._events['test_group_default_hit'])
-        self.assertEqual(5, self._events['test_group_hit'])
+        self.assertEventCalled("test_group_hit")
+        self.assertEventCalledWith("test_group_complete", state="lit")
 
         self.stop_game()
 
     def test_rotate(self):
         self.start_game()
 
-        self.mock_event("test_group_default_lit_complete")
-
-        self.assertEqual("unlit", self.machine.shots.shot_1.get_profile_by_key('mode', None)[
-            'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_2.get_profile_by_key('mode', None)[
-            'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_3.get_profile_by_key('mode', None)[
-            'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_4.get_profile_by_key('mode', None)[
-            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_1.state_name)
+        self.assertEqual("unlit", self.machine.shots.shot_2.state_name)
+        self.assertEqual("unlit", self.machine.shots.shot_3.state_name)
+        self.assertEqual("unlit", self.machine.shots.shot_4.state_name)
 
         self.hit_and_release_switch("switch_1")
 
-        self.assertEqual("lit", self.machine.shots.shot_1.get_profile_by_key('mode', None)[
-            'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_2.get_profile_by_key('mode', None)[
-            'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_3.get_profile_by_key('mode', None)[
-            'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_4.get_profile_by_key('mode', None)[
-            'current_state_name'])
+        self.assertEqual("lit", self.machine.shots.shot_1.state_name)
+        self.assertEqual("unlit", self.machine.shots.shot_2.state_name)
+        self.assertEqual("unlit", self.machine.shots.shot_3.state_name)
+        self.assertEqual("unlit", self.machine.shots.shot_4.state_name)
 
         self.hit_and_release_switch("s_rotate_r")
 
-        self.assertEqual("unlit", self.machine.shots.shot_1.get_profile_by_key('mode', None)[
-            'current_state_name'])
-        self.assertEqual("lit", self.machine.shots.shot_2.get_profile_by_key('mode', None)[
-            'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_3.get_profile_by_key('mode', None)[
-            'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_4.get_profile_by_key('mode', None)[
-            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_1.state_name)
+        self.assertEqual("lit", self.machine.shots.shot_2.state_name)
+        self.assertEqual("unlit", self.machine.shots.shot_3.state_name)
+        self.assertEqual("unlit", self.machine.shots.shot_4.state_name)
 
         self.hit_and_release_switch("switch_1")
 
-        self.assertEqual("lit", self.machine.shots.shot_1.get_profile_by_key('mode', None)[
-            'current_state_name'])
-        self.assertEqual("lit", self.machine.shots.shot_2.get_profile_by_key('mode', None)[
-            'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_3.get_profile_by_key('mode', None)[
-            'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_4.get_profile_by_key('mode', None)[
-            'current_state_name'])
+        self.assertEqual("lit", self.machine.shots.shot_1.state_name)
+        self.assertEqual("lit", self.machine.shots.shot_2.state_name)
+        self.assertEqual("unlit", self.machine.shots.shot_3.state_name)
+        self.assertEqual("unlit", self.machine.shots.shot_4.state_name)
 
         self.hit_and_release_switch("s_rotate_r")
 
-        self.assertEqual("unlit", self.machine.shots.shot_1.get_profile_by_key('mode', None)[
-            'current_state_name'])
-        self.assertEqual("lit", self.machine.shots.shot_2.get_profile_by_key('mode', None)[
-            'current_state_name'])
-        self.assertEqual("lit", self.machine.shots.shot_3.get_profile_by_key('mode', None)[
-            'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_4.get_profile_by_key('mode', None)[
-            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_1.state_name)
+        self.assertEqual("lit", self.machine.shots.shot_2.state_name)
+        self.assertEqual("lit", self.machine.shots.shot_3.state_name)
+        self.assertEqual("unlit", self.machine.shots.shot_4.state_name)
 
         self.hit_and_release_switch("s_rotate_r")
 
-        self.assertEqual("unlit", self.machine.shots.shot_1.get_profile_by_key('mode', None)[
-            'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_2.get_profile_by_key('mode', None)[
-            'current_state_name'])
-        self.assertEqual("lit", self.machine.shots.shot_3.get_profile_by_key('mode', None)[
-            'current_state_name'])
-        self.assertEqual("lit", self.machine.shots.shot_4.get_profile_by_key('mode', None)[
-            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_1.state_name)
+        self.assertEqual("unlit", self.machine.shots.shot_2.state_name)
+        self.assertEqual("lit", self.machine.shots.shot_3.state_name)
+        self.assertEqual("lit", self.machine.shots.shot_4.state_name)
 
         self.hit_and_release_switch("s_rotate_r")
 
-        self.assertEqual("lit", self.machine.shots.shot_1.get_profile_by_key('mode', None)[
-            'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_2.get_profile_by_key('mode', None)[
-            'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_3.get_profile_by_key('mode', None)[
-            'current_state_name'])
-        self.assertEqual("lit", self.machine.shots.shot_4.get_profile_by_key('mode', None)[
-            'current_state_name'])
+        self.assertEqual("lit", self.machine.shots.shot_1.state_name)
+        self.assertEqual("unlit", self.machine.shots.shot_2.state_name)
+        self.assertEqual("unlit", self.machine.shots.shot_3.state_name)
+        self.assertEqual("lit", self.machine.shots.shot_4.state_name)
 
         self.hit_and_release_switch("s_rotate_l")
 
-        self.assertEqual("unlit", self.machine.shots.shot_1.get_profile_by_key('mode', None)[
-            'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_2.get_profile_by_key('mode', None)[
-            'current_state_name'])
-        self.assertEqual("lit", self.machine.shots.shot_3.get_profile_by_key('mode', None)[
-            'current_state_name'])
-        self.assertEqual("lit", self.machine.shots.shot_4.get_profile_by_key('mode', None)[
-            'current_state_name'])
+        self.assertEqual("unlit", self.machine.shots.shot_1.state_name)
+        self.assertEqual("unlit", self.machine.shots.shot_2.state_name)
+        self.assertEqual("lit", self.machine.shots.shot_3.state_name)
+        self.assertEqual("lit", self.machine.shots.shot_4.state_name)
 
-    def test_shot_group_in_mode(self):
-        self.start_game()
-
-        self.hit_and_release_switch("switch_1")
-
-        self.assertEqual("lit", self.machine.shots.shot_1.get_profile_by_key('mode', None)[
-            'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_2.get_profile_by_key('mode', None)[
-            'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_3.get_profile_by_key('mode', None)[
-            'current_state_name'])
-        self.assertEqual("unlit", self.machine.shots.shot_4.get_profile_by_key('mode', None)[
-            'current_state_name'])
-
-        # Start the mode
-        self.machine.modes.mode_shot_groups.start()
-        self.advance_time_and_run()
-
-        self.assertEqual("one", self.machine.shots.shot_1.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
-            'current_state_name'])
-        self.assertEqual("one", self.machine.shots.shot_2.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
-            'current_state_name'])
-        self.assertEqual("one", self.machine.shots.shot_3.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
-            'current_state_name'])
-        self.assertEqual("unlit",
-                         self.machine.shots.shot_4.get_profile_by_key(
-                             'mode', None)[
-            'current_state_name'])
-
-        self.hit_and_release_switch("switch_1")
-        self.assertEqual("two", self.machine.shots.shot_1.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
-            'current_state_name'])
-        self.assertEqual("one", self.machine.shots.shot_2.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
-            'current_state_name'])
-        self.assertEqual("one", self.machine.shots.shot_3.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
-            'current_state_name'])
-        self.assertEqual("unlit",
-                         self.machine.shots.shot_4.get_profile_by_key(
-                             'mode', None)[
-            'current_state_name'])
-
-        self.hit_and_release_switch("s_rotate_l")
-        self.assertEqual("one", self.machine.shots.shot_1.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
-            'current_state_name'])
-        self.assertEqual("one", self.machine.shots.shot_2.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
-            'current_state_name'])
-        self.assertEqual("two", self.machine.shots.shot_3.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
-            'current_state_name'])
-        self.assertEqual("lit",
-                         self.machine.shots.shot_4.get_profile_by_key(
-                             'mode', None)[
-            'current_state_name'])
-
-        self.hit_and_release_switch("s_rotate_l")
-        self.assertEqual("one", self.machine.shots.shot_1.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
-            'current_state_name'])
-        self.assertEqual("two", self.machine.shots.shot_2.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
-            'current_state_name'])
-        self.assertEqual("one", self.machine.shots.shot_3.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
-            'current_state_name'])
-        self.assertEqual("unlit",
-                         self.machine.shots.shot_4.get_profile_by_key(
-                             'mode', None)[
-            'current_state_name'])
-
-        self.hit_and_release_switch("s_rotate_l")
-        self.assertEqual("two", self.machine.shots.shot_1.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
-            'current_state_name'])
-        self.assertEqual("one", self.machine.shots.shot_2.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
-            'current_state_name'])
-        self.assertEqual("one", self.machine.shots.shot_3.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
-            'current_state_name'])
-        self.assertEqual("unlit",
-                         self.machine.shots.shot_4.get_profile_by_key(
-                             'mode', None)[
-            'current_state_name'])
-
-        self.hit_and_release_switch("s_rotate_l")
-        self.assertEqual("one", self.machine.shots.shot_1.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
-            'current_state_name'])
-        self.assertEqual("one", self.machine.shots.shot_2.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
-            'current_state_name'])
-        self.assertEqual("two", self.machine.shots.shot_3.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
-            'current_state_name'])
-        self.assertEqual("unlit",
-                         self.machine.shots.shot_4.get_profile_by_key(
-                             'mode', None)[
-            'current_state_name'])
-
-        self.hit_and_release_switch("s_rotate_r")
-        self.assertEqual("two", self.machine.shots.shot_1.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
-            'current_state_name'])
-        self.assertEqual("one", self.machine.shots.shot_2.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
-            'current_state_name'])
-        self.assertEqual("one", self.machine.shots.shot_3.get_profile_by_key('mode', self.machine.modes.mode_shot_groups)[
-            'current_state_name'])
-        self.assertEqual("unlit",
-                         self.machine.shots.shot_4.get_profile_by_key(
-                             'mode', None)[
-            'current_state_name'])
-
-    def test_rotate_with_shows_in_progress(self):
-        # also tests profile from shot_group with no profile in shots
-        self.start_game()
-        self.advance_time_and_run()
-
-        # advance the shots a bit
-
-        self.assertLightColor("led_10", 'off')
-        self.assertLightColor("led_11", 'off')
-
-        self.hit_and_release_switch('switch_10')
-        self.advance_time_and_run()
-        self.assertLightColor("led_10", 'red')
-        self.assertLightColor("led_11", 'off')
-
-        self.hit_and_release_switch('switch_10')
-        self.advance_time_and_run()
-        self.assertLightColor("led_10", 'orange')
-        self.assertLightColor("led_11", 'off')
-
-        self.hit_and_release_switch('switch_11')
-        self.advance_time_and_run()
-        self.assertLightColor("led_10", 'orange')
-        self.assertLightColor("led_11", 'red')
-
-        # rotate
-        self.machine.events.post('rotate_11_left')
-        self.advance_time_and_run()
-        self.assertLightColor("led_10", 'red')
-        self.assertLightColor("led_11", 'orange')
-
-        # make sure they don't auto advance since the shows should be set to
-        # manual advance
-        self.advance_time_and_run()
-        self.assertLightColor("led_10", 'red')
-        self.assertLightColor("led_11", 'orange')
-
-        self.advance_time_and_run()
-        self.assertLightColor("led_10", 'red')
-        self.assertLightColor("led_11", 'orange')
-
-    def test_no_profile_in_shot_group_uses_profile_from_shot(self):
+    def test_profile_from_shot(self):
         self.start_game()
         self.advance_time_and_run()
 
@@ -337,7 +147,6 @@ class TestShotGroups(MpfFakeGameTestCase):
         # game start
         self.assertFalse(shot32.enabled)
         self.assertFalse(shot33.enabled)
-        self.assertFalse(group32.enabled)
 
         # test enabling via event
         self.machine.events.post('group32_enable')
@@ -345,42 +154,20 @@ class TestShotGroups(MpfFakeGameTestCase):
 
         self.assertTrue(shot32.enabled)
         self.assertTrue(shot33.enabled)
-        self.assertTrue(group32.enabled)
-
-        # test advance event
-        self.assertEqual(shot32.profiles[0]['current_state_name'], 'unlit')
-        self.assertLightColor("led_32", 'off')
-        self.assertEqual(shot33.profiles[0]['current_state_name'], 'unlit')
-        self.assertLightColor("led_33", 'off')
-
-        self.machine.events.post('group32_advance')
-        self.advance_time_and_run()
-        self.assertEqual(shot32.profiles[0]['current_state_name'], 'red')
-        self.assertEqual(shot33.profiles[0]['current_state_name'], 'red')
-        self.assertLightColor("led_32", 'red')
-        self.assertLightColor("led_33", 'red')
-
-        # test reset event
-        self.machine.events.post('group32_reset')
-        self.advance_time_and_run()
-        self.assertEqual(shot32.profiles[0]['current_state_name'], 'unlit')
-        self.assertEqual(shot33.profiles[0]['current_state_name'], 'unlit')
-        self.assertLightColor("led_32", 'off')
-        self.assertLightColor("led_33", 'off')
 
         # test rotate without rotation enabled
         shot32.advance()
         self.advance_time_and_run()
-        self.assertEqual(shot32.profiles[0]['current_state_name'], 'red')
-        self.assertEqual(shot33.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(shot32.state_name, 'red')
+        self.assertEqual(shot33.state_name, 'unlit')
         self.assertLightColor("led_32", 'red')
         self.assertLightColor("led_33", 'off')
         self.assertFalse(group32.rotation_enabled)
 
         self.machine.events.post('group32_rotate')
         self.advance_time_and_run()
-        self.assertEqual(shot32.profiles[0]['current_state_name'], 'red')
-        self.assertEqual(shot33.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(shot32.state_name, 'red')
+        self.assertEqual(shot33.state_name, 'unlit')
         self.assertLightColor("led_32", 'red')
         self.assertLightColor("led_33", 'off')
 
@@ -390,10 +177,10 @@ class TestShotGroups(MpfFakeGameTestCase):
         self.assertTrue(group32.rotation_enabled)
 
         # test that rotate works now
-        self.machine.events.post('group32_rotate')
+        self.machine.events.post('group32_rotate_left')
         self.advance_time_and_run()
-        self.assertEqual(shot32.profiles[0]['current_state_name'], 'unlit')
-        self.assertEqual(shot33.profiles[0]['current_state_name'], 'red')
+        self.assertEqual(shot32.state_name, 'unlit')
+        self.assertEqual(shot33.state_name, 'red')
         self.assertLightColor("led_32", 'off')
         self.assertLightColor("led_33", 'red')
 
@@ -403,79 +190,14 @@ class TestShotGroups(MpfFakeGameTestCase):
         self.assertFalse(group32.rotation_enabled)
 
         # test that rotate works now
-        self.machine.events.post('group32_rotate')
+        self.machine.events.post('group32_rotate_left')
         self.advance_time_and_run()
 
         # test that rotate did not happen
-        self.assertEqual(shot32.profiles[0]['current_state_name'], 'unlit')
-        self.assertEqual(shot33.profiles[0]['current_state_name'], 'red')
+        self.assertEqual(shot32.state_name, 'unlit')
+        self.assertEqual(shot33.state_name, 'red')
         self.assertLightColor("led_32", 'off')
         self.assertLightColor("led_33", 'red')
-
-        # test disable event
-        self.machine.events.post('group32_disable')
-        self.advance_time_and_run()
-        self.assertFalse(shot32.enabled)
-        self.assertFalse(shot33.enabled)
-        self.assertFalse(group32.enabled)
-
-    def test_state_names_to_rotate(self):
-        shot34 = self.machine.shots.shot_34
-        shot35 = self.machine.shots.shot_35
-        shot36 = self.machine.shots.shot_36
-        group34 = self.machine.shot_groups.shot_group_34
-
-        self.start_game()
-
-        # create some mixed states to test
-        shot34.advance()
-        shot35.advance(4)  # also tests profile base show advances properly
-        self.advance_time_and_run()
-        self.assertEqual(shot34.profiles[0]['current_state_name'], 'red')
-        self.assertEqual(shot35.profiles[0]['current_state_name'], 'green')
-        self.assertEqual(shot36.profiles[0]['current_state_name'], 'unlit')
-        self.assertLightColor("led_34", 'red')
-        self.assertLightColor("led_35", 'green')
-        self.assertLightColor("led_36", 'off')
-
-        # rotate, only the red and green states should be rotated
-        group34.rotate()
-        self.advance_time_and_run()
-        self.assertEqual(shot34.profiles[0]['current_state_name'], 'green')
-        self.assertEqual(shot35.profiles[0]['current_state_name'], 'red')
-        self.assertEqual(shot36.profiles[0]['current_state_name'], 'unlit')
-        self.assertLightColor("led_34", 'green')
-        self.assertLightColor("led_35", 'red')
-        self.assertLightColor("led_36", 'off')
-
-    def test_state_names_to_not_rotate(self):
-        shot37 = self.machine.shots.shot_37
-        shot38 = self.machine.shots.shot_38
-        shot39 = self.machine.shots.shot_39
-        group37 = self.machine.shot_groups.shot_group_37
-
-        self.start_game()
-
-        # create some mixed states to test
-        shot37.advance()
-        shot38.advance(2)
-        self.advance_time_and_run()
-        self.assertEqual(shot37.profiles[0]['current_state_name'], 'red')
-        self.assertEqual(shot38.profiles[0]['current_state_name'], 'orange')
-        self.assertEqual(shot39.profiles[0]['current_state_name'], 'unlit')
-        self.assertLightColor("led_37", 'red')
-        self.assertLightColor("led_38", 'orange')
-        self.assertLightColor("led_39", 'off')
-
-        # rotate, only the red and green states should be rotated
-        group37.rotate()
-        self.advance_time_and_run()
-        self.assertEqual(shot37.profiles[0]['current_state_name'], 'orange')
-        self.assertEqual(shot38.profiles[0]['current_state_name'], 'red')
-        self.assertEqual(shot39.profiles[0]['current_state_name'], 'unlit')
-        self.assertLightColor("led_37", 'orange')
-        self.assertLightColor("led_38", 'red')
-        self.assertLightColor("led_39", 'off')
 
     def test_rotation_pattern(self):
         shot40 = self.machine.shots.shot_40
@@ -487,121 +209,57 @@ class TestShotGroups(MpfFakeGameTestCase):
 
         shot40.advance()
         self.advance_time_and_run()
-        self.assertEqual(shot40.profiles[0]['current_state_name'], 'red')
-        self.assertEqual(shot41.profiles[0]['current_state_name'], 'unlit')
-        self.assertEqual(shot42.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(shot40.state_name, 'red')
+        self.assertEqual(shot41.state_name, 'unlit')
+        self.assertEqual(shot42.state_name, 'unlit')
         self.assertLightColor("led_40", 'red')
         self.assertLightColor("led_41", 'off')
         self.assertLightColor("led_42", 'off')
 
         group40.rotate()
         self.advance_time_and_run()
-        self.assertEqual(shot40.profiles[0]['current_state_name'], 'unlit')
-        self.assertEqual(shot41.profiles[0]['current_state_name'], 'red')
-        self.assertEqual(shot42.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(shot40.state_name, 'unlit')
+        self.assertEqual(shot41.state_name, 'red')
+        self.assertEqual(shot42.state_name, 'unlit')
         self.assertLightColor("led_40", 'off')
         self.assertLightColor("led_41", 'red')
         self.assertLightColor("led_42", 'off')
 
         group40.rotate()
         self.advance_time_and_run()
-        self.assertEqual(shot40.profiles[0]['current_state_name'], 'unlit')
-        self.assertEqual(shot41.profiles[0]['current_state_name'], 'unlit')
-        self.assertEqual(shot42.profiles[0]['current_state_name'], 'red')
+        self.assertEqual(shot40.state_name, 'unlit')
+        self.assertEqual(shot41.state_name, 'unlit')
+        self.assertEqual(shot42.state_name, 'red')
         self.assertLightColor("led_40", 'off')
         self.assertLightColor("led_41", 'off')
         self.assertLightColor("led_42", 'red')
 
         group40.rotate()
         self.advance_time_and_run()
-        self.assertEqual(shot40.profiles[0]['current_state_name'], 'unlit')
-        self.assertEqual(shot41.profiles[0]['current_state_name'], 'red')
-        self.assertEqual(shot42.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(shot40.state_name, 'unlit')
+        self.assertEqual(shot41.state_name, 'red')
+        self.assertEqual(shot42.state_name, 'unlit')
         self.assertLightColor("led_40", 'off')
         self.assertLightColor("led_41", 'red')
         self.assertLightColor("led_42", 'off')
 
         group40.rotate()
         self.advance_time_and_run()
-        self.assertEqual(shot40.profiles[0]['current_state_name'], 'red')
-        self.assertEqual(shot41.profiles[0]['current_state_name'], 'unlit')
-        self.assertEqual(shot42.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(shot40.state_name, 'red')
+        self.assertEqual(shot41.state_name, 'unlit')
+        self.assertEqual(shot42.state_name, 'unlit')
         self.assertLightColor("led_40", 'red')
         self.assertLightColor("led_41", 'off')
         self.assertLightColor("led_42", 'off')
 
         group40.rotate()
         self.advance_time_and_run()
-        self.assertEqual(shot40.profiles[0]['current_state_name'], 'unlit')
-        self.assertEqual(shot41.profiles[0]['current_state_name'], 'red')
-        self.assertEqual(shot42.profiles[0]['current_state_name'], 'unlit')
+        self.assertEqual(shot40.state_name, 'unlit')
+        self.assertEqual(shot41.state_name, 'red')
+        self.assertEqual(shot42.state_name, 'unlit')
         self.assertLightColor("led_40", 'off')
         self.assertLightColor("led_41", 'red')
         self.assertLightColor("led_42", 'off')
-
-    def test_block_in_shot_group_profile(self):
-        self.mock_event('shot_43_hit')
-        self.mock_event('shot_43_default_hit')
-        self.mock_event('shot_43_default_unlit_hit')
-        self.mock_event('shot_43_profile_43_hit')
-        self.mock_event('shot_43_profile_43_one_hit')
-
-        self.start_game()
-        self.machine.modes.mode_shot_groups.start()
-
-        self.hit_and_release_switch('switch_43')
-
-        # events from the mode should be posted
-        self.assertEqual(1, self._events['shot_43_hit'])
-        self.assertEqual(1, self._events['shot_43_profile_43_hit'])
-        self.assertEqual(1, self._events['shot_43_profile_43_one_hit'])
-
-        # shot group in mode config is set to block, so base events should not
-        # have been posted
-        self.assertEqual(0, self._events['shot_43_default_unlit_hit'])
-        self.assertEqual(0, self._events['shot_43_default_hit'])
-
-    def test_profile_in_shot_group_overwrites_profile_in_shot(self):
-        self.mock_event('shot_45_rainbow_hit')  # from the shot config
-        self.mock_event('shot_45_rainbow_no_hold_hit')  # from the shot_group
-
-        self.start_game()
-
-        self.hit_and_release_switch('switch_45')
-
-        self.assertEqual(0, self._events['shot_45_rainbow_hit'])
-        self.assertEqual(1, self._events['shot_45_rainbow_no_hold_hit'])
-
-        # also test this with a shot profile in base and a shot_group
-        # profile in a higher mode
-        # todo
-
-    def test_control_events_in_mode(self):
-        pass  # todo
-
-    def test_gas(self):
-        self.start_game()
-
-        self.machine.modes.mode_shot_groups.start()
-        self.advance_time_and_run()
-
-        self.assertLightColor("l_gas_g", 'off')
-        self.assertLightColor("l_gas_a", 'off')
-        self.assertLightColor("l_gas_s", 'off')
-
-        self.hit_and_release_switch('s_gas_g')
-        self.advance_time_and_run()
-
-        self.assertLightColor("l_gas_g", 'white')
-        self.assertLightColor("l_gas_a", 'off')
-        self.assertLightColor("l_gas_s", 'off')
-
-        self.machine.events.post('s_upper_left_flipper_active')
-        self.advance_time_and_run()
-
-        self.assertLightColor("l_gas_g", 'off')
-        self.assertLightColor("l_gas_a", 'off')
-        self.assertLightColor("l_gas_s", 'white')
 
     def test_profile_on_second_ball(self):
         self.start_game()
@@ -611,39 +269,37 @@ class TestShotGroups(MpfFakeGameTestCase):
 
         shot = self.machine.shots.lane_special_left
 
-        self.assertEqual('prof_toggle', shot.profiles[0]['profile'])
-        self.assertEqual('unlit_toggle', shot.profiles[0]['current_state_name'])
+        self.assertEqual('unlit_toggle', shot.state_name)
 
         # toggle on
         self.hit_and_release_switch("s_special_left")
         self.advance_time_and_run(.1)
         self.assertLightChannel("l_special_left", 255)
-        self.assertEqual('lit_toggle', shot.profiles[0]['current_state_name'])
+        self.assertEqual('lit_toggle', shot.state_name)
 
         # toggle off
         self.hit_and_release_switch("s_special_left")
         self.advance_time_and_run(.1)
         self.assertLightChannel("l_special_left", 0)
-        self.assertEqual('unlit_toggle', shot.profiles[0]['current_state_name'])
+        self.assertEqual('unlit_toggle', shot.state_name)
 
         # drain ball and try on the second ball
         self.drain_ball()
         self.assertBallNumber(2)
 
-        self.assertEqual('prof_toggle', shot.profiles[0]['profile'])
-        self.assertEqual('unlit_toggle', shot.profiles[0]['current_state_name'])
+        self.assertEqual('unlit_toggle', shot.state_name)
 
         # toggle on
         self.hit_and_release_switch("s_special_left")
         self.advance_time_and_run(.1)
         self.assertLightChannel("l_special_left", 255)
-        self.assertEqual('lit_toggle', shot.profiles[0]['current_state_name'])
+        self.assertEqual('lit_toggle', shot.state_name)
 
         # toggle off
         self.hit_and_release_switch("s_special_left")
         self.advance_time_and_run(.1)
         self.assertLightChannel("l_special_left", 0)
-        self.assertEqual('unlit_toggle', shot.profiles[0]['current_state_name'])
+        self.assertEqual('unlit_toggle', shot.state_name)
 
         self.drain_ball()
         self.assertBallNumber(3)
@@ -652,43 +308,22 @@ class TestShotGroups(MpfFakeGameTestCase):
         self.hit_and_release_switch("s_special_left")
         self.advance_time_and_run(.1)
         self.assertLightChannel("l_special_left", 255)
-        self.assertEqual('lit_toggle', shot.profiles[0]['current_state_name'])
+        self.assertEqual('lit_toggle', shot.state_name)
 
         # toggle off
         self.hit_and_release_switch("s_special_left")
         self.advance_time_and_run(.1)
         self.assertLightChannel("l_special_left", 0)
-        self.assertEqual('unlit_toggle', shot.profiles[0]['current_state_name'])
-
-    def test_profile_in_mode(self):
-        self.start_game()
-        self.advance_time_and_run()
-        self.assertLightChannel("l_special_right", 0)
-        shot = self.machine.shots.lane_special_right
+        self.assertEqual('unlit_toggle', shot.state_name)
 
         # toggle on
-        self.hit_and_release_switch("s_special_right")
+        self.hit_and_release_switch("s_special_left")
         self.advance_time_and_run(.1)
-        self.assertLightChannel("l_special_right", 255)
-        self.assertEqual('lit2', shot.profiles[0]['current_state_name'])
+        self.assertLightChannel("l_special_left", 255)
+        self.assertEqual('lit_toggle', shot.state_name)
 
-        # toggle off
-        self.hit_and_release_switch("s_special_right")
-        self.advance_time_and_run(.1)
-        self.assertLightChannel("l_special_right", 0)
-        self.assertEqual('unlit2', shot.profiles[0]['current_state_name'])
+        self.drain_ball()
+        self.assertGameIsNotRunning()
 
-        self.assertEqual('prof_toggle2', shot.profiles[0]['profile'])
-        self.assertEqual('unlit2', shot.profiles[0]['current_state_name'])
-
-        # toggle on
-        self.hit_and_release_switch("s_special_right")
-        self.advance_time_and_run(.1)
-        self.assertLightChannel("l_special_right", 255)
-        self.assertEqual('lit2', shot.profiles[0]['current_state_name'])
-
-        # toggle off
-        self.hit_and_release_switch("s_special_right")
-        self.advance_time_and_run(.1)
-        self.assertLightChannel("l_special_right", 0)
-        self.assertEqual('unlit2', shot.profiles[0]['current_state_name'])
+        # shot should turn off after game
+        self.assertLightChannel("l_special_left", 0)

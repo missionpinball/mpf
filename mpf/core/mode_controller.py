@@ -70,8 +70,8 @@ class ModeController(MpfController):
                                         self._player_turn_start,
                                         priority=1000000)
 
-        self.machine.events.add_handler('player_turn_stopped',
-                                        self._player_turn_stop,
+        self.machine.events.add_handler('player_turn_ended',
+                                        self._player_turn_ended,
                                         priority=1000000)
 
     def create_mode_devices(self):
@@ -305,12 +305,16 @@ class ModeController(MpfController):
     def _player_turn_start(self, player, **kwargs):
         del kwargs
         for mode in self.machine.modes:
+            if not mode.is_game_mode:
+                continue
             mode.player = player
 
-    def _player_turn_stop(self, player, **kwargs):
+    def _player_turn_ended(self, player, **kwargs):
         del kwargs
         del player
         for mode in self.machine.modes:
+            if not mode.is_game_mode:
+                continue
             mode.player = None
 
     def _ball_starting(self, queue, **kwargs):

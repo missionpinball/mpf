@@ -55,6 +55,35 @@ class TestHighScoreMode(MpfBcpTestCase):
         self.advance_time_and_run()
         self.assertFalse(self.machine.modes.high_score.active)
 
+    def test_tilt_during_high_score(self):
+        self.mock_event("high_score_enter_initials")
+        self.machine.modes.high_score.high_scores = OrderedDict(
+            score=[('BRI', 7050550),
+                   ('GHK', 93060),
+                   ('JK', 87890),
+                   ('QC', 87890),
+                   ('MPF', 1000)])
+
+        self.start_game()
+        self.advance_time_and_run()
+        self.machine.game.player_list[0].score = 8000000
+        self.machine.game.end_game()
+        self.advance_time_and_run()
+        self.assertTrue(self.machine.modes.high_score.active)
+
+        self.assertEqual(1, self._events['high_score_enter_initials'])
+
+        # tilt the machine
+        self.hit_and_release_switch("s_tilt")
+        self.advance_time_and_run()
+        self.hit_and_release_switch("s_tilt")
+        self.advance_time_and_run()
+        self.hit_and_release_switch("s_tilt")
+        self.advance_time_and_run()
+
+        # high score should not end
+        self.assertTrue(self.machine.modes.high_score.active)
+
     def test_1_high_score(self):
         self.mock_event("high_score_enter_initials")
         self.machine.modes.high_score.high_scores = OrderedDict(

@@ -2,30 +2,21 @@
 
 mode:
   priority: 100
-  game_mode: False
 
 shots:
   mode1_shot_1:
     switch: switch_3
     show_tokens:
       light: light_3
+    start_enabled: True
+    enable_events: custom_enable_1
+    disable_events: custom_disable_1
   mode1_shot_17:
     switch: switch_17
     enable_events: custom_enable_17
     disable_events: custom_disable_17
     reset_events: custom_reset_17
     hit_events: custom_hit_17
-  shot_sequence3:
-    switch_sequence: switch_1, switch_2
-    time: 3s
-  shot_21:
-    profile: mode1_shot_21
-  shot_22:
-    profile: mode1_shot_22
-  shot_23:
-    profile: mode1_shot_23
-  shot_26:
-    profile: mode1_shot_26
 
 shot_groups:
     mode_group:

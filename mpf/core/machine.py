@@ -37,7 +37,6 @@ if MYPY:   # pragma: no cover
     from mpf.core.scriptlet import Scriptlet
     from mpf.core.mode_controller import ModeController
     from mpf.core.settings_controller import SettingsController
-    from mpf.core.shot_profile_manager import ShotProfileManager
     from mpf.core.bcp.bcp import Bcp
     from mpf.core.text_ui import TextUi
     from mpf.assets.show import Show
@@ -58,6 +57,8 @@ if MYPY:   # pragma: no cover
     from mpf.devices.logic_blocks import Accrual, Sequence, Counter
     from mpf.devices.servo import Servo
     from mpf.devices.segment_display import SegmentDisplay
+    from mpf.devices.shot_group import ShotGroup
+    from mpf.devices.shot import Shot
     from logging import Logger  # noqa
 
 
@@ -116,7 +117,6 @@ class MachineController(LogMixin):
             self.events = None                          # type: EventManager
             self.switch_controller = None               # type: SwitchController
             self.mode_controller = None                 # type: ModeController
-            self.shot_profile_manager = None            # type: ShotProfileManager
             self.settings = None                        # type: SettingsController
             self.bcp = None                             # type: Bcp
             self.asset_manager = None                   # type: BaseAssetManager
@@ -128,6 +128,8 @@ class MachineController(LogMixin):
 
             # devices
             self.shows = None                           # type: DeviceCollectionType[str, Show]
+            self.shots = None                           # type: DeviceCollectionType[str, Shot]
+            self.shot_groups = None                     # type: DeviceCollectionType[str, ShotGroup]
             self.switches = None                        # type: DeviceCollectionType[str, Switch]
             self.coils = None                           # type: DeviceCollectionType[str, Driver]
             self.lights = None                          # type: DeviceCollectionType[str, Light]

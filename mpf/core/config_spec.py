@@ -946,37 +946,27 @@ settings:
     default: single|str|
     machine_var: single|str|None
 shots:
-    __valid_in__: machine, mode
-    profile: single|str|default
+    __valid_in__: mode
+    profile: single|machine(shot_profiles)|default
     switch: list|machine(switches)|None
     switches: list|machine(switches)|None
-    switch_sequence: list|machine(switches)|None
-    sequence: list|str|None
-    cancel_switch: list|machine(switches)|None
+    start_enabled: single|bool|None
     delay_switch: dict|machine(switches):ms|None
-    time: single|ms|0
+    persist_enable: single|bool|True
     playfield: single|machine(playfields)|playfield
     enable_events: dict|str:ms|None
     disable_events: dict|str:ms|None
     reset_events: dict|str:ms|None
     advance_events: dict|str:ms|None
     hit_events: dict|str:ms|None
-    remove_active_profile_events: dict|str:ms|None
     show_tokens: dict|str:str|None
 shot_groups:
-    __valid_in__: machine, mode
+    __valid_in__: mode
     shots: list|machine(shots)|None
-    profile: single|str|None    # TODO: convert from str to machine(profiles)
-    enable_events: dict|str:ms|None
-    disable_events: dict|str:ms|None
-    reset_events: dict|str:ms|None
     rotate_left_events: dict|str:ms|None
     rotate_right_events: dict|str:ms|None
-    rotate_events: dict|str:ms|None
     enable_rotation_events: dict|str:ms|None
     disable_rotation_events: dict|str:ms|None
-    advance_events: dict|str:ms|None
-    remove_active_profile_events: dict|str:ms|None
 shot_profiles:
     __valid_in__: machine, mode
     loop: single|bool|False
@@ -985,7 +975,6 @@ shot_profiles:
     state_names_to_rotate: list|str|None
     state_names_to_not_rotate: list|str|None
     rotation_pattern: list|str|R
-    player_variable: single|str|None
     show_when_disabled: single|bool|False
     block: single|bool|true
     states:
