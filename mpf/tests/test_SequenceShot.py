@@ -11,27 +11,27 @@ class TestShots(MpfTestCase):
         return 'tests/machine_files/sequence_shot/'
 
     def test_simple_sequence(self):
-        self.mock_event("sequence1_complete")
+        self.mock_event("sequence1_hit")
         self.post_event("event1")
         self.machine_run()
         self.post_event("event2")
         self.machine_run()
-        self.assertEventNotCalled("sequence1_complete")
+        self.assertEventNotCalled("sequence1_hit")
         self.post_event("event3")
         self.machine_run()
-        self.assertEventCalled("sequence1_complete")
-        self.mock_event("sequence1_complete")
+        self.assertEventCalled("sequence1_hit")
+        self.mock_event("sequence1_hit")
         self.post_event("event1")
         self.machine_run()
         self.post_event("event2")
         self.machine_run()
-        self.assertEventNotCalled("sequence1_complete")
+        self.assertEventNotCalled("sequence1_hit")
         self.post_event("event3")
         self.machine_run()
-        self.assertEventCalled("sequence1_complete")
+        self.assertEventCalled("sequence1_hit")
 
     def test_delay(self):
-        self.mock_event("sequence1_complete")
+        self.mock_event("sequence1_hit")
         self.post_event("delay1")
         # no success after delay
         self.machine_run()
@@ -41,7 +41,7 @@ class TestShots(MpfTestCase):
         self.machine_run()
         self.post_event("event3")
         self.machine_run()
-        self.assertEventNotCalled("sequence1_complete")
+        self.assertEventNotCalled("sequence1_hit")
 
         # works after delay
         self.advance_time_and_run(1.5)
@@ -49,13 +49,13 @@ class TestShots(MpfTestCase):
         self.machine_run()
         self.post_event("event2")
         self.machine_run()
-        self.assertEventNotCalled("sequence1_complete")
+        self.assertEventNotCalled("sequence1_hit")
         self.post_event("event3")
         self.machine_run()
-        self.assertEventCalled("sequence1_complete")
+        self.assertEventCalled("sequence1_hit")
 
     def test_delay_switch(self):
-        self.mock_event("sequence2_complete")
+        self.mock_event("sequence2_hit")
         self.hit_and_release_switch("seq2_delay")
         self.machine_run()
         self.hit_and_release_switch("seq2_1")
@@ -64,7 +64,7 @@ class TestShots(MpfTestCase):
         self.machine_run()
         self.hit_and_release_switch("seq2_3")
         self.machine_run()
-        self.assertEventNotCalled("sequence2_complete")
+        self.assertEventNotCalled("sequence2_hit")
 
         # works after delay
         self.advance_time_and_run(1.5)
@@ -72,56 +72,56 @@ class TestShots(MpfTestCase):
         self.machine_run()
         self.hit_and_release_switch("seq2_2")
         self.machine_run()
-        self.assertEventNotCalled("sequence2_complete")
+        self.assertEventNotCalled("sequence2_hit")
         self.hit_and_release_switch("seq2_3")
         self.machine_run()
-        self.assertEventCalled("sequence2_complete")
+        self.assertEventCalled("sequence2_hit")
 
     def test_simple_switch_sequence(self):
-        self.mock_event("sequence2_complete")
+        self.mock_event("sequence2_hit")
         self.hit_and_release_switch("seq2_1")
         self.machine_run()
         self.hit_and_release_switch("seq2_2")
         self.machine_run()
-        self.assertEventNotCalled("sequence2_complete")
+        self.assertEventNotCalled("sequence2_hit")
         self.hit_and_release_switch("seq2_3")
         self.machine_run()
-        self.assertEventCalled("sequence2_complete")
+        self.assertEventCalled("sequence2_hit")
 
     def test_cancel(self):
-        self.mock_event("sequence1_complete")
+        self.mock_event("sequence1_hit")
         self.post_event("event1")
         self.machine_run()
         self.post_event("event2")
         self.machine_run()
-        self.assertEventNotCalled("sequence1_complete")
+        self.assertEventNotCalled("sequence1_hit")
         self.post_event("cancel")
         self.machine_run()
         self.post_event("event3")
         self.machine_run()
-        self.assertEventNotCalled("sequence1_complete")
+        self.assertEventNotCalled("sequence1_hit")
 
     def test_cancel_switch(self):
-        self.mock_event("sequence2_complete")
+        self.mock_event("sequence2_hit")
         self.hit_and_release_switch("seq2_1")
         self.machine_run()
         self.hit_and_release_switch("seq2_2")
         self.machine_run()
-        self.assertEventNotCalled("sequence2_complete")
+        self.assertEventNotCalled("sequence2_hit")
         self.hit_and_release_switch("seq2_cancel")
         self.hit_and_release_switch("seq2_3")
         self.machine_run()
-        self.assertEventNotCalled("sequence2_complete")
+        self.assertEventNotCalled("sequence2_hit")
 
     def test_single_step_sequence(self):
-        self.mock_event("sequence3_complete")
+        self.mock_event("sequence3_hit")
         self.post_event("event3_1")
         self.machine_run()
-        self.assertEventCalled("sequence3_complete")
+        self.assertEventCalled("sequence3_hit")
 
     def test_interleaved_sequences(self):
         """"Two balls pass through the sequence."""
-        self.mock_event("sequence1_complete")
+        self.mock_event("sequence1_hit")
 
         self.post_event("event1")
         self.advance_time_and_run(.2)
@@ -133,17 +133,17 @@ class TestShots(MpfTestCase):
         self.post_event("event2")
         self.advance_time_and_run(.1)
 
-        self.assertEventNotCalled("sequence1_complete")
+        self.assertEventNotCalled("sequence1_hit")
         self.post_event("event3")
         self.advance_time_and_run(.2)
-        self.assertEventCalled("sequence1_complete")
-        self.mock_event("sequence1_complete")
+        self.assertEventCalled("sequence1_hit")
+        self.mock_event("sequence1_hit")
         self.post_event("event3")
-        self.assertEventCalled("sequence1_complete")
+        self.assertEventCalled("sequence1_hit")
 
     def test_sequence_timeout(self):
         """Ball rolls up a ramp and back down."""
-        self.mock_event("sequence1_complete")
+        self.mock_event("sequence1_hit")
         self.mock_event("sequence1_timeout")
         self.post_event("event1")
         self.advance_time_and_run(.2)
@@ -153,7 +153,7 @@ class TestShots(MpfTestCase):
         self.advance_time_and_run(.2)
         self.post_event("event1")
         self.advance_time_and_run(.1)
-        self.assertEventNotCalled("sequence1_complete")
+        self.assertEventNotCalled("sequence1_hit")
         self.assertEventNotCalled("sequence1_timeout")
         self.advance_time_and_run(2.5)
         self.assertEventCalled("sequence1_timeout", times=1)

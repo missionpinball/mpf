@@ -162,7 +162,10 @@ class SequenceShot(SystemWideDevice, ModeDevice):
 
     def _completed(self):
         """Post sequence complete event."""
-        self.machine.events.post("{}_complete".format(self.name))
+        self.machine.events.post("{}_hit".format(self.name))
+        '''event: (sequence_shot)__hit
+        desc: The sequence_shot called (sequence_shot) was just completed.
+        '''
 
     def cancel(self, **kwargs):
         """Reset all sequences."""
