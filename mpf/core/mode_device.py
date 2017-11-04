@@ -71,6 +71,4 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
         Args:
             mode: Mode which stopped
         """
-        del mode
-        raise NotImplementedError(
-            '{} does not have a device_removed_from_mode() method'.format(self))
+        pass

@@ -32,11 +32,6 @@ class ShotGroup(ModeDevice):
         self.profile = None
         self.rotation_pattern = None
 
-    @property
-    def can_exist_outside_of_game(self):
-        """Return true if this device can exist outside of a game."""
-        return False
-
     def device_loaded_in_mode(self, mode: Mode, player: Player):
         """Add device in mode."""
         super().device_loaded_in_mode(mode, player)
@@ -49,7 +44,7 @@ class ShotGroup(ModeDevice):
 
     def device_removed_from_mode(self, mode):
         """Disable device when mode stops."""
-        del mode
+        super().device_removed_from_mode(mode)
         self.machine.events.remove_handler(self.hit)
 
     def _check_for_complete(self):

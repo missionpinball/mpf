@@ -950,12 +950,8 @@ shots:
     profile: single|machine(shot_profiles)|default
     switch: list|machine(switches)|None
     switches: list|machine(switches)|None
-    switch_sequence: list|machine(switches)|None
-    sequence: list|str|None
     start_enabled: single|bool|None
-    cancel_switch: list|machine(switches)|None
     delay_switch: dict|machine(switches):ms|None
-    time: single|ms|0
     persist_enable: single|bool|True
     playfield: single|machine(playfields)|playfield
     enable_events: dict|str:ms|None

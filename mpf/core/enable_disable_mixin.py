@@ -3,7 +3,7 @@ import abc
 
 from mpf.core.events import event_handler
 
-from mpf.core.device import Device
+from mpf.core.mode_device import ModeDevice
 from mpf.core.machine import MachineController
 
 MYPY = False
@@ -12,13 +12,14 @@ if MYPY:   # pragma: no cover
     from mpf.core.player import Player
 
 
-class EnableDisableMixin(Device, metaclass=abc.ABCMeta):
+class EnableDisableMixin(ModeDevice, metaclass=abc.ABCMeta):
 
     """Implements enable and disable_events."""
 
     def __init__(self, machine: MachineController, name: str) -> None:
         """Remember the enable state."""
         self._enabled = None    # type: bool
+        self.player = None
         super().__init__(machine, name)
 
     def _enable(self):
@@ -40,9 +41,9 @@ class EnableDisableMixin(Device, metaclass=abc.ABCMeta):
     def enable(self, **kwargs) -> None:
         """Enable device."""
         del kwargs
-        if self._enabled is True:
+        if self.enabled is True:
             return
-        self._enabled = True
+        self.enabled = True
         self._enable()
 
     def add_control_events_in_mode(self, mode) -> None:
@@ -53,9 +54,9 @@ class EnableDisableMixin(Device, metaclass=abc.ABCMeta):
     def disable(self, **kwargs):
         """Disable device."""
         del kwargs
-        if self._enabled is False:
+        if self.enabled is False:
             return
-        self._enabled = False
+        self.enabled = False
         self._disable()
 
     def _load_enable_based_on_config_default(self) -> None:
@@ -71,33 +72,51 @@ class EnableDisableMixin(Device, metaclass=abc.ABCMeta):
 
         if start_enabled:
             self._enable()
-            self._enabled = True
+            self.enabled = True
         else:
-            self._enabled = False
+            self.enabled = False
 
     @property
     def enabled(self):
         """Return true if enabled."""
-        return self._enabled
+        if 'persist_enable' in self.config and self.config['persist_enable']:
+            # in case the mode is not running the device is disabled
+            if not self.player:
+                return False
+            return self.player["{}_{}_enabled".format(self.class_label, self.name)]
+        else:
+            return self._enabled
 
-    def _load_enable_from_player(self) -> None:
-        """Load enable from player."""
-        if self._enabled is None:
-            self._load_enable_based_on_config_default()
+    @enabled.setter
+    def enabled(self, value):
+        """Set enabled enabled."""
+        if 'persist_enable' in self.config and self.config['persist_enable']:
+            self.player["{}_{}_enabled".format(self.class_label, self.name)] = value
+        else:
+            self._enabled = value
+
+    @property
+    def persist_enabled(self):
+        """Return if enabled is persisted."""
+        return 'persist_enable' in self.config and self.config['persist_enable']
 
     def device_loaded_in_mode(self, mode: "Mode", player: "Player") -> None:
         """Check enable on mode start."""
-        del mode
-        del player
-        if self._enabled is None:
-            if 'persist_enable' in self.config and self.config['persist_enable']:
-                self._load_enable_from_player()
-            else:
+        super().device_loaded_in_mode(mode, player)
+        self.player = player
+        if self.persist_enabled:
+            if not player.is_player_var("{}_{}_enabled".format(self.class_label, self.name)):
                 self._load_enable_based_on_config_default()
+            elif self.enabled:
+                self._enable()
+        else:
+            self._load_enable_based_on_config_default()
 
     def device_removed_from_mode(self, mode) -> None:
         """Forget enable state."""
         del mode
+        self._disable()
+        self.player = None
         self._enabled = None
 
     def device_added_system_wide(self) -> None:

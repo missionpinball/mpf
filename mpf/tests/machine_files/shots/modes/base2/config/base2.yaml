@@ -27,16 +27,10 @@ shots:
     switch: switch_1
     show_tokens:
       led: led_1
-  shot_sequence:
-    switch_sequence: switch_1, switch_2, switch_3
+  shot_delay:
+    switch: switch_1
     delay_switch:
       s_delay: 2s
-    time: 2s
-    cancel_switch: switch_4
-  shot_sequence2:
-    switch_sequence: switch_1, switch_2
-    time: 3s
-    profile: rainbow
   default_show_light:
     switch: switch_5
     show_tokens:
@@ -125,10 +119,10 @@ shots:
     show_tokens:
       leds: led_26
     profile: profile_26
-  shot_27:  # only one switch in sequence
-    switch_sequence: switch_1
+  shot_27:
+    switch: switch_1
   shot_28:
-    sequence: event1, event2
+    hit_events: event1
 
 
 shot_profiles:

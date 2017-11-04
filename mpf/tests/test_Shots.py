@@ -137,93 +137,22 @@ class TestShots(MpfTestCase):
         self.shot_15_hit.assert_called_once_with(profile='default',
                                                  state='lit')
 
-    def test_shot_sequence(self):
-        self.mock_event("shot_sequence_hit")
-        self.start_game()
-
-        # test too slow hit
-        self.hit_and_release_switch("switch_1")
-        self.advance_time_and_run(3)
-        self.hit_and_release_switch("switch_2")
-        self.advance_time_and_run(1)
-        self.hit_and_release_switch("switch_3")
-        self.advance_time_and_run(1)
-        self.assertEqual(0, self._events["shot_sequence_hit"])
-
-        # test fast enough hit
-        self.hit_and_release_switch("switch_1")
-        self.advance_time_and_run(1)
-        self.hit_and_release_switch("switch_2")
-        self.hit_and_release_switch("switch_3")
-        self.advance_time_and_run(1)
-        self.assertEqual(1, self._events["shot_sequence_hit"])
-
-    def test_shot_sequence_two_switches(self):
-        self.mock_event("shot_sequence2_hit")   # system-wide
-        self.mock_event("shot_sequence3_hit")   # mode
-        self.start_game()
-        self.machine.modes.mode1.start()
-        self.advance_time_and_run()
-
-        self.assertTrue(self.machine.shots["shot_sequence2"].enabled)
-        self.assertTrue(self.machine.shots["shot_sequence3"].enabled)
-
-        self.hit_and_release_switch("switch_1")
-        self.advance_time_and_run(.1)
-        self.assertEventNotCalled("shot_sequence2_hit")
-        self.assertEventNotCalled("shot_sequence3_hit")
-
-        self.hit_and_release_switch("switch_2")
-        self.advance_time_and_run(.1)
-        self.assertEventCalled("shot_sequence2_hit")
-        self.assertEventCalled("shot_sequence3_hit")
-
-    def test_shot_sequence_delay(self):
-        self.mock_event("shot_sequence_hit")
+    def test_shot_with_delay(self):
+        self.mock_event("shot_delay_hit")
         self.start_game()
 
         # test delay at the beginning. should not count
         self.hit_and_release_switch("s_delay")
         self.advance_time_and_run(.5)
         self.hit_and_release_switch("switch_1")
-        self.advance_time_and_run(.5)
-        self.hit_and_release_switch("switch_2")
-        self.advance_time_and_run(.5)
-        self.hit_and_release_switch("switch_3")
         self.advance_time_and_run(1)
-        self.assertEqual(0, self._events["shot_sequence_hit"])
+        self.assertEventNotCalled("shot_delay_hit")
+        self.advance_time_and_run(3)
 
-        self.advance_time_and_run(10)
-
-        # test delay_switch after first switch. should still count
+        # test that shot works without delay
         self.hit_and_release_switch("switch_1")
         self.advance_time_and_run(.5)
-        self.hit_and_release_switch("s_delay")
-        self.advance_time_and_run(.5)
-        self.hit_and_release_switch("switch_2")
-        self.advance_time_and_run(.5)
-        self.hit_and_release_switch("switch_3")
-        self.advance_time_and_run(1)
-        self.assertEqual(1, self._events["shot_sequence_hit"])
-
-    def test_shot_sequence_cancel(self):
-        self.mock_event("shot_sequence_hit")
-        self.start_game()
-
-        # start the sequence
-        self.hit_and_release_switch("switch_1")
-        self.advance_time_and_run(.5)
-        self.hit_and_release_switch("switch_2")
-        self.advance_time_and_run(.5)
-
-        # hit the cancel switch
-        self.hit_and_release_switch("switch_4")
-
-        # hit the final switch in the sequence, shot should not be hit since it
-        # was canceled
-        self.hit_and_release_switch("switch_3")
-        self.advance_time_and_run(1)
-        self.assertEqual(0, self._events["shot_sequence_hit"])
+        self.assertEventCalled("shot_delay_hit")
 
     def test_profile_advancing_no_loop(self):
         self.start_game()
@@ -247,11 +176,7 @@ class TestShots(MpfTestCase):
         self.start_game()
         self.assertModeRunning("base2")
         self.mock_event("shot_28_hit")
-        self.post_event("event2")
         self.post_event("event1")
-        self.assertEventNotCalled("shot_28_hit")
-
-        self.post_event("event2")
         self.assertEventCalled("shot_28_hit")
 
     def test_profile_advancing_with_loop(self):
@@ -811,31 +736,37 @@ class TestShots(MpfTestCase):
 
         self.machine.modes.mode2.start()
         self.advance_time_and_run()
+        self.assertTrue(self.machine.shots.mode2_shot_rainbow_start_step.enabled)
 
         # step1 red
         self.assertLightColor("led_28", "red")
+        self.assertEqual("red", self.machine.shots.mode2_shot_rainbow_start_step.state_name)
 
         self.hit_and_release_switch("switch_28")
         self.advance_time_and_run()
 
         # step2 orange
         self.assertLightColor("led_28", "orange")
+        self.assertEqual("orange", self.machine.shots.mode2_shot_rainbow_start_step.state_name)
 
         self.machine.modes.mode2.stop()
         self.advance_time_and_run()
 
         # mode stopped. led off
         self.assertLightColor("led_28", "black")
-
+        self.assertFalse(self.machine.shots.mode2_shot_rainbow_start_step.enabled)
 
         self.machine.modes.mode2.start()
         self.advance_time_and_run()
 
         # back to step2. orange
+        self.assertEqual("orange", self.machine.shots.mode2_shot_rainbow_start_step.state_name)
         self.assertLightColor("led_28", "orange")
+        self.assertTrue(self.machine.shots.mode2_shot_rainbow_start_step.enabled)
 
         self.hit_and_release_switch("switch_28")
         self.advance_time_and_run()
 
         # step3
+        self.assertEqual("yellow", self.machine.shots.mode2_shot_rainbow_start_step.state_name)
         self.assertLightColor("led_28", "yellow")

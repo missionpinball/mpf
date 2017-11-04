@@ -35,16 +35,9 @@ class Shot(EnableDisableMixin, ModeDevice):
 
         self.active_sequences = list()
         """List of tuples: (id, current_position_index, next_switch)"""
-        self.player = None
         self.active_delays = set()
-        self.switch_handlers_active = False
         self.running_show = None
         self.mode = None
-
-    @property
-    def can_exist_outside_of_game(self):
-        """Return true if this device can exist outside of a game."""
-        return False
 
     def device_loaded_in_mode(self, mode: Mode, player: Player):
         """Add device to a mode that was already started.
@@ -53,73 +46,34 @@ class Shot(EnableDisableMixin, ModeDevice):
         that's usually called when a player's turn starts since that was missed
         since the mode started after that.
         """
-        self.player = player
         self.mode = mode
         super().device_loaded_in_mode(mode, player)
         self._update_show()
 
-    def _validate_config(self):
-        if self.config['switch_sequence'] and (self.config['switch'] or self.config['switches'] or
-                                               self.config['sequence']):
-            raise AssertionError("Config error in shot {}. A shot can have "
-                                 "either switch_sequence, sequence or "
-                                 "switch/switches".format(self))
-
     def _initialize(self):
-        self._validate_config()
-
-        if self.config['switch_sequence']:
-            self.config['sequence'] = [self.machine.switch_controller.get_active_event_for_switch(x.name)
-                                       for x in self.config['switch_sequence']]
-            self.config['switch_sequence'] = []
-
         for switch in self.config['switch']:
             if switch not in self.config['switches']:
                 self.config['switches'].append(switch)
 
     def _register_switch_handlers(self):
-        if self.switch_handlers_active:
-            return
-
         for switch in self.config['switches']:
             self.machine.switch_controller.add_switch_handler(
                 switch.name, self.hit, 1)
-
-        for event in self.config['sequence']:
-            self.machine.events.add_handler(event, self._sequence_advance, event_name=event)
-
-        for switch in self.config['cancel_switch']:
-            self.machine.switch_controller.add_switch_handler(
-                switch.name, self._cancel_switch_hit, 1)
 
         for switch in list(self.config['delay_switch'].keys()):
             self.machine.switch_controller.add_switch_handler(
                 switch.name, self._delay_switch_hit, 1, return_info=True)
 
-        self.switch_handlers_active = True
-
     def _remove_switch_handlers(self):
-        if not self.switch_handlers_active:
-            return
-
-        self._reset_all_sequences()
         self.delay.clear()
 
         for switch in self.config['switches']:
             self.machine.switch_controller.remove_switch_handler(
                 switch.name, self.hit, 1)
 
-        self.machine.events.remove_handler(self._sequence_advance)
-
-        for switch in self.config['cancel_switch']:
-            self.machine.switch_controller.remove_switch_handler(
-                switch.name, self._cancel_switch_hit, 1)
-
         for switch in list(self.config['delay_switch'].keys()):
             self.machine.switch_controller.remove_switch_handler(
                 switch.name, self._delay_switch_hit, 1)
-
-        self.switch_handlers_active = False
 
     @event_handler(6)
     def advance(self, force=False, **kwargs):
@@ -202,11 +156,11 @@ class Shot(EnableDisableMixin, ModeDevice):
                 if (self.running_show.show.name == state_settings['show'] and
                         self.running_show.manual_advance == bool(state_settings['manual_advance'])):
                     if (self.running_show.manual_advance and
-                            self.running_show.current_step_index == state_settings['start_step']):
+                            self.running_show.current_step_index + 1 == state_settings['start_step']):
                         # manual advance and correct step. stay there.
                         return
                     elif (self.running_show.manual_advance and
-                            self.running_show.current_step_index + 1 == state_settings['start_step']):
+                            self.running_show.current_step_index + 2 == state_settings['start_step']):
                         # show it one step behind. advance it.
                         self.running_show.advance()
                         return
@@ -300,7 +254,7 @@ class Shot(EnableDisableMixin, ModeDevice):
         # mark the playfield active no matter what
         self.config['playfield'].mark_playfield_active_from_device_action()
         # Stop if there is an active delay but no sequence
-        if self.active_delays and not self.config['sequence']:
+        if self.active_delays:
             return
 
         profile_settings = self._get_profile_settings()
@@ -396,89 +350,6 @@ class Shot(EnableDisableMixin, ModeDevice):
             for callback in self.machine.monitors['shots']:
                 callback(name=self.name, profile=profile, state=state)
 
-    def _sequence_advance(self, event_name, **kwargs):
-        # Since we can track multiple simulatenous sequences (e.g. two balls
-        # going into an orbit in a row), we first have to see whether this
-        # switch is starting a new sequence or continuing an existing one
-        del kwargs
-
-        self.debug_log("Sequence advance: %s", event_name)
-
-        if event_name == self.config['sequence'][0]:
-            if len(self.config['sequence']) > 1:
-                # if there is more than one step
-                self._start_new_sequence()
-            else:
-                # only one step means we complete instantly
-                self.hit()
-
-        else:
-            # Get the seq_id of the first sequence this switch is next for.
-            # This is not a loop because we only want to advance 1 sequence
-            seq_id = next((x[0] for x in self.active_sequences if
-                           x[2] == event_name), None)
-
-            if seq_id:
-                # advance this sequence
-                self._advance_sequence(seq_id)
-
-    def _start_new_sequence(self):
-        # If the sequence hasn't started, make sure we're not within the
-        # delay_switch hit window
-
-        if self.active_delays:
-            self.debug_log("There's a delay switch timer in effect from "
-                           "switch(es) %s. Sequence will not be started.",
-                           self.active_delays)
-            return
-
-        # create a new sequence
-        seq_id = uuid.uuid4()
-        next_event = self.config['sequence'][1]
-
-        self.debug_log("Setting up a new sequence. Next: %s", next_event)
-
-        self.active_sequences.append((seq_id, 0, next_event))
-
-        # if this sequence has a time limit, set that up
-        if self.config['time']:
-            self.debug_log("Setting up a sequence timer for %sms",
-                           self.config['time'])
-
-            self.delay.reset(name=seq_id,
-                             ms=self.config['time'],
-                             callback=self._reset_sequence,
-                             seq_id=seq_id)
-
-    def _advance_sequence(self, seq_id):
-        # get this sequence
-        seq_id, current_position_index, next_event = next(
-            x for x in self.active_sequences if x[0] == seq_id)
-
-        # Remove this sequence from the list
-        self.active_sequences.remove((seq_id, current_position_index,
-                                      next_event))
-
-        if current_position_index == (len(self.config['sequence']) - 2):  # complete
-
-            self.debug_log("Sequence complete!")
-
-            self.delay.remove(seq_id)
-            self.hit()
-
-        else:
-            current_position_index += 1
-            next_event = self.config['sequence'][current_position_index + 1]
-
-            self.debug_log("Advancing the sequence. Next: %s",
-                           next_event)
-
-            self.active_sequences.append(
-                (seq_id, current_position_index, next_event))
-
-    def _cancel_switch_hit(self):
-        self._reset_all_sequences()
-
     def _delay_switch_hit(self, switch_name, state, ms):
         del state
         del ms
@@ -492,20 +363,6 @@ class Shot(EnableDisableMixin, ModeDevice):
 
     def _release_delay(self, switch):
         self.active_delays.remove(switch)
-
-    def _reset_sequence(self, seq_id):
-        self.debug_log("Resetting this sequence")
-
-        self.active_sequences = [x for x in self.active_sequences
-                                 if x[0] != seq_id]
-
-    def _reset_all_sequences(self):
-        seq_ids = [x[0] for x in self.active_sequences]
-
-        for seq_id in seq_ids:
-            self.delay.remove(seq_id)
-
-        self.active_sequences = list()
 
     def jump(self, state, force=True):
         """Jump to a certain state in the active shot profile.
@@ -543,7 +400,6 @@ class Shot(EnableDisableMixin, ModeDevice):
         del kwargs
         self.debug_log("Resetting.")
 
-        self._reset_all_sequences()
         self.jump(state=0)
 
     def _enable(self):

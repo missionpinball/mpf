@@ -37,7 +37,6 @@ if MYPY:   # pragma: no cover
     from mpf.core.scriptlet import Scriptlet
     from mpf.core.mode_controller import ModeController
     from mpf.core.settings_controller import SettingsController
-    from mpf.core.shot_profile_manager import ShotProfileManager
     from mpf.core.bcp.bcp import Bcp
     from mpf.core.text_ui import TextUi
     from mpf.assets.show import Show
@@ -118,7 +117,6 @@ class MachineController(LogMixin):
             self.events = None                          # type: EventManager
             self.switch_controller = None               # type: SwitchController
             self.mode_controller = None                 # type: ModeController
-            self.shot_profile_manager = None            # type: ShotProfileManager
             self.settings = None                        # type: SettingsController
             self.bcp = None                             # type: Bcp
             self.asset_manager = None                   # type: BaseAssetManager
