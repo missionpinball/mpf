@@ -32,6 +32,7 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         """Initialize logic block."""
         super().__init__(machine, name)
         self._state = None          # type: LogicBlockState
+        self._start_enabled = None  # type: bool
 
         self.player_state_variable = "{}_state".format(self.name)
         '''player_var: (logic_block)_state
@@ -44,6 +45,12 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         The state that's stored in this variable include whether the logic
         block is enabled and whether it's complete.
         '''
+
+    def _initialize(self):
+        if self.config['start_enabled'] is not None:
+            self._start_enabled = self.config['start_enabled']
+        else:
+            self._start_enabled = not self.config['enable_events']
 
     def add_control_events_in_mode(self, mode: Mode) -> None:
         """Do not auto enable this device in modes."""
@@ -91,14 +98,14 @@ class LogicBlock(SystemWideDevice, ModeDevice):
             if not player.is_player_var(self.player_state_variable):
                 player[self.player_state_variable] = LogicBlockState(self.get_start_value())
                 # enable device ONLY when we create a new entry in the player
-                if not self.config['enable_events']:
+                if self._start_enabled:
                     mode.add_mode_event_handler("mode_{}_started".format(mode.name),
                                                 self.enable, priority=100)
 
             self._state = player[self.player_state_variable]
         else:
             self._state = LogicBlockState(self.get_start_value())
-            if not self.config['enable_events']:
+            if self._start_enabled:
                 mode.add_mode_event_handler("mode_{}_started".format(mode.name),
                                             self.enable, priority=100)
 
@@ -272,6 +279,7 @@ class Counter(LogicBlock):
         self.hit_value = -1
 
     def _initialize(self):
+        super()._initialize()
         self.hit_value = self.config['count_interval']
 
         if self.config['direction'] == 'down' and self.hit_value > 0:
@@ -368,6 +376,7 @@ class Accrual(LogicBlock):
         self.debug_log("Creating Accrual LogicBlock")
 
     def _initialize(self):
+        super()._initialize()
         self.setup_event_handlers()
 
     def get_start_value(self) -> List[bool]:
@@ -427,6 +436,7 @@ class Sequence(LogicBlock):
 
     def _initialize(self):
         """Initialise sequence."""
+        super()._initialize()
         self.setup_event_handlers()
 
     def get_start_value(self) -> int:

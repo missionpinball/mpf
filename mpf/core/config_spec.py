@@ -646,6 +646,7 @@ logic_blocks_common:
     reset_on_complete: single|bool|True
     disable_on_complete: single|bool|True
     persist_state: single|bool|False
+    start_enabled: single|bool|None
     events_when_complete: list|str|None
     events_when_hit: list|str|None
     console_log: single|enum(none,basic,full)|none

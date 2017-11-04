@@ -15,6 +15,7 @@ show_player:
   mode_mode1_stopped:
     test_show1:
       action: stop
+  "{machine.test == 42}": show_from_mode
 
 shows:
   show_from_mode:

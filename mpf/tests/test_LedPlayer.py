@@ -1,9 +1,9 @@
 """Test led player."""
 from mpf.core.rgb_color import RGBColor
-from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
 
-class TestLedPlayer(MpfTestCase):
+class TestLedPlayer(MpfFakeGameTestCase):
 
     def getConfigFile(self):
         return 'led_player.yaml'
@@ -44,6 +44,17 @@ class TestLedPlayer(MpfTestCase):
         self.assertEqual(self.machine.config['light_player']['event4'][led2]['fade_ms'], None)
 
     def test_led_player(self):
+        self.assertLightColor("led1", 'black')
+        self.machine.set_machine_var("a", 6)
+        self.advance_time_and_run()
+        self.assertLightColor("led1", 'black')
+        self.machine.set_machine_var("a", 7)
+        self.advance_time_and_run()
+        self.assertLightColor("led1", 'red')
+        self.machine.set_machine_var("a", 8)
+        self.advance_time_and_run()
+        self.assertLightColor("led1", 'black')
+
         # led_player just sets these colors and that's it.
         self.machine.events.post('event1')
         self.advance_time_and_run(1)
@@ -214,6 +225,44 @@ class TestLedPlayer(MpfTestCase):
         self.advance_time_and_run(.5)
         self.assertLightColor("led1", 'red')
 
+    def test_led_player_in_game_mode(self):
+        self.assertLightColor("led4", 'black')
+        self.assertLightColor("led5", 'black')
+        self.machine.set_machine_var("test", 23)
+        self.advance_time_and_run()
+        self.assertLightColor("led4", 'black')
+        self.assertLightColor("led5", 'black')
+
+        self.start_game()
+        self.assertLightColor("led4", 'red')
+        self.assertLightColor("led5", 'black')
+
+        self.machine.game.player.test = 42
+        self.advance_time_and_run()
+        self.assertLightColor("led4", 'red')
+        self.assertLightColor("led5", 'red')
+
+        self.machine.game.player.test = 43
+        self.machine.set_machine_var("test", 24)
+        self.advance_time_and_run()
+
+        self.assertLightColor("led4", 'black')
+        self.assertLightColor("led5", 'black')
+
+        self.machine.game.player.test = 42
+        self.advance_time_and_run()
+        self.assertLightColor("led4", 'black')
+        self.assertLightColor("led5", 'red')
+
+        self.stop_game()
+        self.assertLightColor("led4", 'black')
+        self.assertLightColor("led5", 'black')
+
+        self.machine.set_machine_var("test", 23)
+        self.advance_time_and_run()
+        self.assertLightColor("led4", 'black')
+        self.assertLightColor("led5", 'black')
+
     def test_led_player_in_mode(self):
         # post event1 to get the leds set in the base config
         self.machine.events.post('event1')
@@ -234,9 +283,17 @@ class TestLedPlayer(MpfTestCase):
         self.assertLightColor("led3", 'red')
         self.assertEqual(0, self.machine.lights.led3.stack[0]['priority'])
 
+        # mode not loaded. does nothing
+        self.assertLightColor("led4", 'black')
+        self.machine.set_machine_var("test", 23)
+        self.advance_time_and_run()
+        self.assertLightColor("led4", 'black')
+
         # start the mode, priority 100
         self.machine.modes['mode1'].start()
         self.advance_time_and_run()
+
+        self.assertLightColor("led4", 'red')
 
         # post event5
         self.machine.events.post('event5')
@@ -261,6 +318,7 @@ class TestLedPlayer(MpfTestCase):
         # stop the mode, LEDs should revert
         self.machine.modes['mode1'].stop()
         self.advance_time_and_run()
+        self.assertLightColor("led4", 'black')
 
         self.assertLightColor("led1", 'red')
         self.assertEqual(200, self.machine.lights.led1.stack[0]['priority'])

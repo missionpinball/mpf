@@ -32,6 +32,47 @@ class LightPlayer(DeviceConfigPlayer):
             else:
                 self._light_color(light, instance_dict, full_context, **s)
 
+    def _remove(self, settings, context, priority):
+        instance_dict = self._get_instance_dict(context)
+        full_context = self._get_full_context(context)
+
+        for light, s in settings.items():
+            s = deepcopy(s)
+            try:
+                s['priority'] += priority
+            except KeyError:
+                s['priority'] = priority
+            if isinstance(light, str):
+                light_names = Util.string_to_list(light)
+                for light_name in light_names:
+                    self._light_remove_named(light_name, instance_dict, full_context)
+            else:
+                self._light_remove(light, instance_dict, full_context)
+
+    def _light_remove_named(self, light_name, instance_dict, full_context):
+        try:
+            lights = [self.machine.lights[light_name]]
+        except KeyError:
+            lights = self.machine.lights.items_tagged(light_name)
+
+        for light in lights:
+            self._light_remove(light, instance_dict, full_context)
+
+    @staticmethod
+    def _light_remove(light, instance_dict, full_context):
+        light.remove_from_stack_by_key(full_context)
+        try:
+            del instance_dict[light.name]
+        except KeyError:
+            pass
+
+    def handle_subscription_change(self, value, settings, priority, context):
+        """Handle subscriptions."""
+        if value:
+            self.play(settings, context, "", priority)
+        else:
+            self._remove(settings, context, priority)
+
     def _light_named_color(self, light_name, instance_dict,
                            full_context, color, **s):
         try:

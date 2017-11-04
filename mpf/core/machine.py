@@ -164,6 +164,7 @@ class MachineController(LogMixin):
         self.default_platform = None        # type: SmartVirtualHardwarePlatform
 
         self.clock = self._load_clock()
+        self.stop_future = asyncio.Future(loop=self.clock.loop)
 
     @asyncio.coroutine
     def initialise(self) -> Generator[int, None, None]:
@@ -198,9 +199,6 @@ class MachineController(LogMixin):
 
     def _exception_handler(self, loop, context):    # pragma: no cover
         """Handle asyncio loop exceptions."""
-        # stop machine
-        self.stop()
-
         # call original exception handler
         loop.set_exception_handler(None)
         loop.call_exception_handler(context)
@@ -707,9 +705,11 @@ class MachineController(LogMixin):
     def stop(self, **kwargs) -> None:
         """Perform a graceful exit of MPF."""
         del kwargs
-        if self._done:
+        if self.stop_future.done():
             return
+        self.stop_future.set_result(True)
 
+    def _do_stop(self) -> None:
         self.log.info("Shutting down...")
         self.events.post('shutdown')
         '''event: shutdown
@@ -717,37 +717,31 @@ class MachineController(LogMixin):
         chance to shut down gracefully.
 
         '''
+
         self.events.process_event_queue()
         self.thread_stopper.set()
         self.device_manager.stop_devices()
         self._platform_stop()
 
         self.clock.loop.stop()
-
-    def _do_stop(self) -> None:
-        if self._done:
-            return
-
-        self._done = True
-        self.clock.loop.stop()
         # this is needed to properly close all sockets
         self.clock.loop.run_forever()
+        self.clock.loop.close()
 
     def _run_loop(self) -> None:    # pragma: no cover
         # Main machine run loop with when the default platform interface
         # specifies the MPF should control the main timer
 
         try:
-            self.clock.run()
+            self.clock.run(self.stop_future)
         except KeyboardInterrupt:
-            self.stop()
+            print("Shutdown because of keyboard interrupts")
+
+        self._do_stop()
 
         if self._exception:
             print("Shutdown because of an exception:")
             raise self._exception['exception']
-
-        self._do_stop()
-        self.clock.loop.close()
 
     def _platform_stop(self) -> None:
         """Stop all platforms."""
