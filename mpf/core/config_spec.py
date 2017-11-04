@@ -965,6 +965,9 @@ shot_groups:
     shots: list|machine(shots)|None
     rotate_left_events: dict|str:ms|None
     rotate_right_events: dict|str:ms|None
+    enable_events: dict|str:ms|None
+    disable_events: dict|str:ms|None
+    reset_events: dict|str:ms|None
     enable_rotation_events: dict|str:ms|None
     disable_rotation_events: dict|str:ms|None
 shot_profiles:

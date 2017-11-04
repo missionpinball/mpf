@@ -66,6 +66,33 @@ class ShotGroup(ModeDevice):
         are in the same state.
         '''
 
+    def enable(self, **kwargs):
+        """Enable all member shots.
+
+        Args:
+            kwargs: passed to member shots
+        """
+        for shot in self.config['shots']:
+            shot.enable(**kwargs)
+
+    def disable(self, **kwargs):
+        """Disable all member shots.
+
+        Args:
+            kwargs: passed to member shots
+        """
+        for shot in self.config['shots']:
+            shot.disable(**kwargs)
+
+    def reset(self, **kwargs):
+        """Reset all member shots.
+
+        Args:
+            kwargs: passed to member shots
+        """
+        for shot in self.config['shots']:
+            shot.reset(**kwargs)
+
     def hit(self, **kwargs):
         """One of the member shots in this shot group was hit.
 

@@ -155,6 +155,20 @@ class TestShotGroups(MpfFakeGameTestCase):
         self.assertTrue(shot32.enabled)
         self.assertTrue(shot33.enabled)
 
+        # test disabling via event
+        self.machine.events.post('group32_disable')
+        self.advance_time_and_run()
+
+        self.assertFalse(shot32.enabled)
+        self.assertFalse(shot33.enabled)
+
+        # test enabling via event
+        self.machine.events.post('group32_enable')
+        self.advance_time_and_run()
+
+        self.assertTrue(shot32.enabled)
+        self.assertTrue(shot33.enabled)
+
         # test rotate without rotation enabled
         shot32.advance()
         self.advance_time_and_run()
@@ -198,6 +212,18 @@ class TestShotGroups(MpfFakeGameTestCase):
         self.assertEqual(shot33.state_name, 'red')
         self.assertLightColor("led_32", 'off')
         self.assertLightColor("led_33", 'red')
+
+        # test reset
+        # test enabling via event
+        self.machine.events.post('group32_reset')
+        self.advance_time_and_run()
+
+        self.assertTrue(shot32.enabled)
+        self.assertTrue(shot33.enabled)
+        self.assertEqual(shot32.state_name, 'unlit')
+        self.assertEqual(shot33.state_name, 'unlit')
+        self.assertLightColor("led_32", 'off')
+        self.assertLightColor("led_33", 'off')
 
     def test_rotation_pattern(self):
         shot40 = self.machine.shots.shot_40

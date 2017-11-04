@@ -36,14 +36,12 @@ shots:
     show_tokens:
       leds: led_32
     start_enabled: False
-    enable_events: group32_enable
     profile: rainbow
   shot_33:
     switch: switch_33
     show_tokens:
       leds: led_33
     start_enabled: False
-    enable_events: group32_enable
     profile: rainbow
   shot_34:
     switch: switch_34
@@ -176,6 +174,9 @@ shot_groups:
     shots: shot_30, shot_31
   shot_group_32:
     shots: shot_32, shot_33
+    enable_events: group32_enable
+    disable_events: group32_disable
+    reset_events: group32_reset
     rotate_left_events: group32_rotate_left
     rotate_right_events: group32_rotate_right
     enable_rotation_events: group32_enable_rotation
