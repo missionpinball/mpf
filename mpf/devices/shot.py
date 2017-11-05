@@ -248,11 +248,12 @@ class Shot(EnableDisableMixin, ModeDevice):
         """
         del kwargs
 
+        # mark the playfield active no matter what
+        self.config['playfield'].mark_playfield_active_from_device_action()
+
         if not self.enabled:
             return
 
-        # mark the playfield active no matter what
-        self.config['playfield'].mark_playfield_active_from_device_action()
         # Stop if there is an active delay but no sequence
         if self.active_delays:
             return
