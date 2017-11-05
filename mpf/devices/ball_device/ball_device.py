@@ -288,6 +288,11 @@ class BallDevice(SystemWideDevice):
         """Wait until this device is ready to receive a ball."""
         return self.ball_count_handler.wait_for_ready_to_receive(source)
 
+    @property
+    def requested_balls(self):
+        """Return the number of requested balls."""
+        return len(self._ball_requests)
+
     def _source_device_balls_available(self, **kwargs):
         del kwargs
         if self._ball_requests:
