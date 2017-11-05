@@ -32,6 +32,10 @@ class ShotGroup(ModeDevice):
         self.profile = None
         self.rotation_pattern = None
 
+    def add_control_events_in_mode(self, mode) -> None:
+        """Remove enable here."""
+        pass
+
     def device_loaded_in_mode(self, mode: Mode, player: Player):
         """Add device in mode."""
         super().device_loaded_in_mode(mode, player)
