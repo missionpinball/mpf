@@ -1222,6 +1222,7 @@ sequence_shots:
     delay_switch_list: dict|machine(switches):ms|None
     delay_event_list: dict|str:ms|None
     sequence_timeout: single|ms|0
+    playfield: single|machine(playfields)|playfield
 switches:
     __valid_in__: machine
     number: single|str|

@@ -95,6 +95,9 @@ class SequenceShot(SystemWideDevice, ModeDevice):
         # switch is starting a new sequence or continuing an existing one
         del kwargs
 
+        # mark playfield active
+        self.config['playfield'].mark_playfield_active_from_device_action()
+
         self.debug_log("Sequence advance: %s", event_name)
 
         if event_name == self._sequence_events[0]:
