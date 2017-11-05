@@ -203,6 +203,7 @@ class MachineController(LogMixin):
 
         # remember exception
         self._exception = context
+        self.stop()
 
     # pylint: disable-msg=no-self-use
     def _load_clock(self) -> ClockBase:  # pragma: no cover
@@ -697,6 +698,7 @@ class MachineController(LogMixin):
         except RuntimeError:
             # do not show a runtime useless runtime error
             self.error_log("Failed to initialise MPF")
+            self._shutdown()
             return
         self._run_loop()
 
@@ -717,6 +719,10 @@ class MachineController(LogMixin):
         '''
 
         self.events.process_event_queue()
+        self._shutdown()
+
+    def _shutdown(self) -> None:
+        """Shutdown the machine."""
         self.thread_stopper.set()
         self.device_manager.stop_devices()
         self._platform_stop()
