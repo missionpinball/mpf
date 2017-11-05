@@ -377,7 +377,7 @@ class VirtualDriver(DriverPlatformInterface):
 
     def __init__(self, config, number):
         """Initialise virtual driver to disabled."""
-        self.log = logging.getLogger('VirtualDriver')
+        self.log = logging.getLogger("VirtualDriver.{}".format(number))
         super().__init__(config, number)
         self.state = "disabled"
 
