@@ -31,13 +31,26 @@ class BcpPluginPlayer(DeviceConfigPlayer):
         # since bcp is connecting in init_phase_2 we have to postpone this
         self.machine.events.add_handler('init_phase_3', self._initialise_system_wide)
 
+    def show_play_callback(self, settings, priority, calling_context, show_tokens, context, start_time):
+        """Add bcp context dict."""
+        bcp_context = context + "_bcp"
+        if bcp_context not in self.instances:
+            self.instances[bcp_context] = dict()
+
+        if self.config_file_section not in self.instances[bcp_context]:
+            self.instances[bcp_context][self.config_file_section] = dict()
+        super().show_play_callback(settings, priority, calling_context, show_tokens, context, start_time)
+
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Trigger remote player via BCP."""
-        context_dics = self._get_instance_dict(context)
+        context_dict = self._get_instance_dict(context + "_bcp")
+
+        if not self.machine.options['bcp']:
+            return
 
         for element, s in settings.items():
             client = self._get_bcp_client(s)
-            context_dics[element] = client
+            context_dict[element] = client
             self.machine.bcp.interface.bcp_trigger_client(
                 client=client,
                 name='{}_play'.format(self.show_section),
@@ -49,14 +62,14 @@ class BcpPluginPlayer(DeviceConfigPlayer):
 
     def clear_context(self, context):
         """Clear the context at remote player via BCP."""
-        context_dics = self._get_instance_dict(context)
-        for element, client in context_dics.items():
+        context_dict = self._get_instance_dict(context + "_bcp")
+        for element, client in context_dict.items():
             self.machine.bcp.interface.bcp_trigger_client(
                 client=client,
                 element=element,
                 name='{}_clear'.format(self.show_section),
                 context=context)
-        self._reset_instance_dict(context)
+        self._reset_instance_dict(context + "_bcp")
 
     def get_express_config(self, value):
         """Raise error."""
