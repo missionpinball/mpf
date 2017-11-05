@@ -172,6 +172,52 @@ class TestBallDevice(MpfTestCase):
         self.assertEqual(0, self._missing)
         self.assertEqual(1, self._captured)
 
+    def test_eject_retry(self):
+        self.hit_switch_and_run("s_ball_switch1", 1)
+        self.hit_switch_and_run("s_ball_switch2", 1)
+        self.assertAvailableBallsOnPlayfield(0)
+
+        coil2 = self.machine.coils['eject_coil2'].hw_driver
+
+        self.mock_event('balldevice_test_launcher_ball_request')
+        self.mock_event('balldevice_1_ball_missing')
+        self.mock_event('balldevice_captured_from_playfield')
+
+        # launcher should eject
+        self.hit_switch_and_run("s_ball_switch_launcher", 1)
+        self.assertEqual("pulsed_10", coil2.state)
+        coil2.state = None
+        self.assertEventCalled('balldevice_captured_from_playfield')
+        self.mock_event('balldevice_captured_from_playfield')
+
+        # it leaves the switch
+        self.release_switch_and_run("s_ball_switch_launcher", 1)
+        self.assertEqual(None, coil2.state)
+
+        # it comes back (before timeout)
+        self.hit_switch_and_run("s_ball_switch_launcher", 1)
+        self.assertEqual(None, coil2.state)
+
+        # retry after timeout
+        self.advance_time_and_run(5)
+        self.assertEqual("pulsed_10", coil2.state)
+        coil2.state = None
+
+        # ball leaves launcher
+        self.release_switch_and_run("s_ball_switch_launcher", 1)
+        self.advance_time_and_run(1)
+
+        # arrives at target
+        self.hit_switch_and_run("s_ball_switch_target1", 1)
+
+        self.assertEqual(None, coil2.state)
+
+        self.assertEventNotCalled('balldevice_captured_from_playfield')
+        self.assertEventNotCalled('balldevice_1_ball_missing')
+        self.assertEventNotCalled('balldevice_test_launcher_ball_request')
+        self.assertAvailableBallsOnPlayfield(1)
+        self.assertBallsOnPlayfield(0)
+
     def test_ball_eject_timeout_and_ball_missing(self):
         self._requesting = 0
         coil2 = self.machine.coils['eject_coil2']

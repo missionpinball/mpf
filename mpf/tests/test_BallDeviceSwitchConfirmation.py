@@ -614,51 +614,52 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
         self.assertEqual(1, self.machine.ball_controller.num_balls_known)
 
     def test_ball_return_in_launcher(self):
-        self._requesting = 0
-        coil2 = self.machine.coils['eject_coil2']
-        device2 = self.machine.ball_devices['test_launcher']
-        coil2.pulse = MagicMock()
-        self._missing = 0
+        # add two initial balls to trough
+        self.hit_switch_and_run("s_ball_switch1", 1)
+        self.hit_switch_and_run("s_ball_switch2", 1)
+        self.assertEqual(2, self.machine.ball_devices["test_trough"].balls)
+        self.assertEqual(2, self.machine.ball_controller.num_balls_known)
+        self.assertBallsOnPlayfield(0, "playfield")
+        self.assertAvailableBallsOnPlayfield(0, "playfield")
 
-        self.machine.events.add_handler(
-            'balldevice_test_launcher_ball_request', self._requesting_ball)
-        self.machine.events.add_handler('balldevice_1_ball_missing',
-                                        self._missing_ball)
-        self.machine.events.add_handler('balldevice_captured_from_playfield',
-                                        self._captured_from_pf)
+        self.hit_switch_and_run("s_ball_switch_target1", 1)
 
-        self.machine.switch_controller.process_switch("s_ball_switch_launcher",
-                                                      1)
+        self.release_switch_and_run("s_ball_switch_target1", 1)
+        self.assertBallsOnPlayfield(0, "playfield")
+        self.assertAvailableBallsOnPlayfield(1, "playfield")
+
+        self.machine.ball_devices.test_target1.request_ball()
+        self.assertEqual(1, self.machine.ball_devices.test_target1.available_balls)
+
+        self.advance_time_and_run()
+        self.assertEqual("pulsed_10", self.machine.coils.eject_coil1.hw_driver.state)
+        self.release_switch_and_run("s_ball_switch2", 1)
+        self.advance_time_and_run(8)
+
+        self.hit_switch_and_run("s_ball_switch_launcher", 1)
         # launcher should eject
         self.advance_time_and_run(1)
-        self.assertTrue(coil2.pulse.called)
-        coil2.pulse = MagicMock()
-        self._captured = 0
+        self.assertEqual("pulsed_10", self.machine.coils.eject_coil2.hw_driver.state)
+        self.machine.coils.eject_coil2.hw_driver.state = None
 
         # it leaves the switch
-        self.machine.switch_controller.process_switch("s_ball_switch_launcher",
-                                                      0)
-        self.advance_time_and_run(3)
+        self.release_switch_and_run("s_ball_switch_launcher", 3)
 
         # switch goes active again
-        self.machine.switch_controller.process_switch("s_ball_switch_launcher",
-                                                      1)
-        self.advance_time_and_run(1)
-        assert not coil2.pulse.called
+        self.hit_switch_and_run("s_ball_switch_launcher", 1)
+        self.assertEqual(None, self.machine.coils.eject_coil2.hw_driver.state)
+        self.assertEqual(1, self.machine.ball_devices.test_target1.available_balls)
 
-        # switch and inactive
-        self.machine.switch_controller.process_switch("s_ball_switch_launcher",
-                                                      0)
-        self.advance_time_and_run(3)
-        assert not coil2.pulse.called
+        self.advance_time_and_run(9)
+        self.assertEqual("pulsed_10", self.machine.coils.eject_coil2.hw_driver.state)
+        self.assertEqual(1, self.machine.ball_devices.test_target1.available_balls)
 
-        # confirm should have failed
-        self.assertEqual("failed_confirm", device2._state)
+        self.release_switch_and_run("s_ball_switch_launcher", 1)
 
-        # it comes back and the device should retry
-        self.machine.switch_controller.process_switch("s_ball_switch_launcher",
-                                                      1)
-        self.advance_time_and_run(1)
-        self.assertTrue(coil2.pulse.called)
+        self.hit_and_release_switch("s_launcher_confirm")
+        self.advance_time_and_run()
 
-        self.assertEqual(0, self._captured)
+        self.hit_switch_and_run("s_ball_switch_target1", 1)
+
+        self.assertBallsOnPlayfield(1, "playfield")
+        self.assertAvailableBallsOnPlayfield(1, "playfield")
