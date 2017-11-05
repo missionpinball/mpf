@@ -53,11 +53,6 @@ class AflRunner(object):
         """Return config file."""
         return "config.yaml"
 
-    @staticmethod
-    def get_absolute_machine_path():
-        """Return an absolute path based on machine_path."""
-        return "/home/kantert/cloud/flipper/src/good_vs_evil"
-
     def get_options(self):
         """Return option arrays."""
         mpfconfig = os.path.abspath(os.path.join(
@@ -98,7 +93,18 @@ class AflRunner(object):
             self.get_options(), self.machine_config_patches, self.machine_config_defaults, self.clock, dict(),
             True)
 
-        self.loop.run_until_complete(self.machine.initialise())
+        try:
+            self.loop.run_until_complete(self.machine.initialise())
+        except RuntimeError as e:
+            try:
+                self.machine.stop()
+            except Exception:
+                pass
+            if self._exception and "exception" in self._exception:
+                raise self._exception['exception']
+            elif self._exception:
+                raise Exception(self._exception, e)
+            raise e
 
         self.machine.events.process_event_queue()
         self.advance_time_and_run(1)
