@@ -64,10 +64,19 @@ class ShotGroup(ModeDevice):
         self.debug_log(
             "Shot group is complete with state: %s", state)
 
-        self.machine.events.post(self.name + '_complete', state=state)
+        self.machine.events.post('{}_complete'.format(self.name), state=state)
         '''event: (shot_group)_complete
         desc: All the member shots in the shot group called (shot_group)
         are in the same state.
+
+        args:
+          state: name of the common state of all shots.
+        '''
+
+        self.machine.events.post('{}_{}_complete'.format(self.name, state))
+        '''event: (shot_group)_(state)_complete
+        desc: All the member shots in the shot group called (shot_group)
+        are in the same state named (state).
         '''
 
     def enable(self, **kwargs):
