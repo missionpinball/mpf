@@ -380,11 +380,11 @@ class MachineController(LogMixin):
 
     def _get_mpfcache_file_name(self):
         cache_dir = tempfile.gettempdir()
-        path_hash = hashlib.md5(bytes(self.machine_path, 'UTF-8')).hexdigest()
+        path_hash = str(hashlib.md5(bytes(self.machine_path, 'UTF-8')).hexdigest())
         for configfile in self.options['configfile']:
-            path_hash += '-'.join(hashlib.md5(bytes(os.path.abspath(configfile), 'UTF-8')).hexdigest())
+            path_hash += "-" + hashlib.md5(bytes(os.path.abspath(configfile), 'UTF-8')).hexdigest()
         result = os.path.join(cache_dir, path_hash)
-        return result
+        return result + ".mpf_cache"
 
     def _load_config(self) -> None:     # pragma: no cover
         if self.options['no_load_cache']:
