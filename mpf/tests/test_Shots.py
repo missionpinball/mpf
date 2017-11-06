@@ -91,17 +91,17 @@ class TestShots(MpfTestCase):
         self.advance_time_and_run()
 
         self.shot_1_hit.assert_called_once_with(profile='default',
-                                                state='unlit')
+                                                state='unlit', advancing=True)
         self.shot_1_default_hit.assert_called_once_with(profile='default',
-                                                        state='unlit')
+                                                        state='unlit', advancing=True)
         self.shot_1_default_unlit_hit.assert_called_once_with(
-            profile='default', state='unlit')
+            profile='default', state='unlit', advancing=True)
 
         # hit the mode shot and make sure it was called
         self.hit_and_release_switch('switch_3')
         self.advance_time_and_run()
         self.mode1_shot_1_hit.assert_called_once_with(profile='default',
-                                                      state='unlit')
+                                                      state='unlit', advancing=True)
 
         # stop the mode
         self.machine.modes.mode1.stop()
@@ -129,13 +129,13 @@ class TestShots(MpfTestCase):
         # hit shot_15 via switch_13
         self.hit_and_release_switch('switch_13')
         self.shot_15_hit.assert_called_once_with(profile='default',
-                                                 state='unlit')
+                                                 state='unlit', advancing=True)
 
         # hit shot_15 via switch_14
         self.shot_15_hit.reset_mock()
         self.hit_and_release_switch('switch_14')
         self.shot_15_hit.assert_called_once_with(profile='default',
-                                                 state='lit')
+                                                 state='lit', advancing=False)
 
     def test_shot_with_delay(self):
         self.mock_event("shot_delay_hit")

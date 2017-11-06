@@ -76,7 +76,7 @@ class Shot(EnableDisableMixin, ModeDevice):
                 switch.name, self._delay_switch_hit, 1)
 
     @event_handler(6)
-    def advance(self, force=False, **kwargs):
+    def advance(self, force=False, **kwargs) -> bool:
         """Advance a shot profile forward.
 
         If this profile is at the last step and configured to loop, it will
@@ -86,7 +86,7 @@ class Shot(EnableDisableMixin, ModeDevice):
         del kwargs
 
         if not self.enabled and not force:
-            return
+            return False
 
         profile_name = self.config['profile'].name
         state = self._get_state()
@@ -100,12 +100,13 @@ class Shot(EnableDisableMixin, ModeDevice):
                 self._set_state(0)
 
             else:
-                return
+                return False
         else:
             self.debug_log("Advancing shot by one step.")
             self._set_state(state + 1)
 
         self._update_show()
+        return True
 
     def _stop_show(self):
         if not self.running_show:
@@ -266,9 +267,19 @@ class Shot(EnableDisableMixin, ModeDevice):
         state = profile_settings['name']
 
         self.debug_log("Hit! Profile: %s, State: %s",
-                       self.config['profile'].name, state)
+                       self.profile_name, state)
 
-        self.machine.events.post('{}_hit'.format(self.name), profile=self.config['profile'].name, state=state)
+        if self.profile.config['advance_on_hit']:
+            self.debug_log("Advancing shot because advance_on_hit is True.")
+            advancing = self.advance()
+        else:
+            self.debug_log('Not advancing shot')
+            advancing = False
+
+        self._notify_monitors(self.config['profile'].name, state)
+
+        self.machine.events.post('{}_hit'.format(self.name),
+                                 profile=self.profile_name, state=state, advancing=advancing)
         '''event: (shot)_hit
         desc: The shot called (shot) was just hit.
 
@@ -280,8 +291,8 @@ class Shot(EnableDisableMixin, ModeDevice):
         profile: The name of the profile that was active when hit.
         state: The name of the state the profile was in when it was hit'''
 
-        self.machine.events.post('{}_{}_hit'.format(self.name, self.config['profile'].name),
-                                 profile=self.config['profile'].name, state=state)
+        self.machine.events.post('{}_{}_hit'.format(self.name, self.profile_name),
+                                 profile=self.profile_name, state=state, advancing=advancing)
         '''event: (shot)_(profile)_hit
         desc: The shot called (shot) was just hit with the profile (profile)
         active.
@@ -299,8 +310,8 @@ class Shot(EnableDisableMixin, ModeDevice):
         profile: The name of the profile that was active when hit.
         state: The name of the state the profile was in when it was hit'''
 
-        self.machine.events.post('{}_{}_{}_hit'.format(self.name, self.config['profile'].name, state),
-                                 profile=self.config['profile'].name, state=state)
+        self.machine.events.post('{}_{}_{}_hit'.format(self.name, self.profile_name, state),
+                                 profile=self.profile_name, state=state, advancing=advancing)
         '''event: (shot)_(profile)_(state)_hit
         desc: The shot called (shot) was just hit with the profile (profile)
         active in the state (state).
@@ -319,7 +330,7 @@ class Shot(EnableDisableMixin, ModeDevice):
         state: The name of the state the profile was in when it was hit'''
 
         self.machine.events.post('{}_{}_hit'.format(self.name, state),
-                                 profile=self.config['profile'].name, state=state)
+                                 profile=self.profile_name, state=state, advancing=advancing)
         '''event: (shot)_(state)_hit
         desc: The shot called (shot) was just hit while in the profile (state).
 
@@ -335,16 +346,6 @@ class Shot(EnableDisableMixin, ModeDevice):
         args:
         profile: The name of the profile that was active when hit.
         state: The name of the state the profile was in when it was hit'''
-
-        advance = self.config['profile'].config['advance_on_hit']
-
-        if advance:
-            self.debug_log("Advancing shot because advance_on_hit is True.")
-            self.advance()
-        else:
-            self.debug_log('Not advancing shot')
-
-        self._notify_monitors(self.config['profile'].name, state)
 
     def _notify_monitors(self, profile, state):
         if Shot.monitor_enabled and "shots" in self.machine.monitors:
