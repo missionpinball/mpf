@@ -44,12 +44,12 @@ class ShotGroup(ModeDevice):
         self.rotation_pattern = deque(self.profile.config['rotation_pattern'])
         self.rotation_enabled = not self.config['enable_rotation_events']
         for shot in self.config['shots']:
-            self.machine.events.add_handler("{}_hit".format(shot.name), self.hit)
+            self.machine.events.add_handler("{}_hit".format(shot.name), self._hit)
 
     def device_removed_from_mode(self, mode):
         """Disable device when mode stops."""
         super().device_removed_from_mode(mode)
-        self.machine.events.remove_handler(self.hit)
+        self.machine.events.remove_handler(self._hit)
 
     def _check_for_complete(self):
         """Check if all shots in this group are in the same state."""
@@ -106,14 +106,15 @@ class ShotGroup(ModeDevice):
         for shot in self.config['shots']:
             shot.reset(**kwargs)
 
-    def hit(self, **kwargs):
+    def _hit(self, advancing, **kwargs):
         """One of the member shots in this shot group was hit.
 
         Args:
-            kwargs: unused
+            kwarg: unused
         """
         del kwargs
-        self._check_for_complete()
+        if advancing:
+            self._check_for_complete()
 
         self.machine.events.post(self.name + '_hit')
         '''event: (shot_group)_hit
