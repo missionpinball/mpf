@@ -656,7 +656,7 @@ class TestBallDeviceSwitchConfirmation(MpfTestCase):
 
         self.release_switch_and_run("s_ball_switch_launcher", 1)
 
-        self.hit_and_release_switch("s_launcher_confirm")
+        self._hit_confirm()
         self.advance_time_and_run()
 
         self.hit_switch_and_run("s_ball_switch_target1", 1)
