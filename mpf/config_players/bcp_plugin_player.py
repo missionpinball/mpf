@@ -31,6 +31,7 @@ class BcpPluginPlayer(DeviceConfigPlayer):
         # since bcp is connecting in init_phase_2 we have to postpone this
         self.machine.events.add_handler('init_phase_3', self._initialise_system_wide)
 
+    # pylint: disable-msg=too-many-arguments
     def show_play_callback(self, settings, priority, calling_context, show_tokens, context, start_time):
         """Add bcp context dict."""
         bcp_context = context + "_bcp"

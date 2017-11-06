@@ -98,6 +98,7 @@ class AflRunner(object):
         except RuntimeError as e:
             try:
                 self.machine.stop()
+            # pylint: disable-msg=broad-except
             except Exception:
                 pass
             if self._exception and "exception" in self._exception:
