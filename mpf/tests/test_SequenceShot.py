@@ -160,3 +160,56 @@ class TestShots(MpfTestCase):
         self.advance_time_and_run(.5)
         # second timeout from interleaved sequence. can we prevent this?
         self.assertEventCalled("sequence1_timeout", times=2)
+
+    def test_mode_seqence(self):
+        """"Test sequence in mode."""
+        self.mock_event("sequence_mode_event_hit")
+        self.mock_event("sequence_mode_switch_hit")
+
+        self.post_event("event1")
+        self.advance_time_and_run(.2)
+        self.post_event("event2")
+        self.advance_time_and_run(.2)
+
+        self.hit_and_release_switch("seq2_1")
+        self.machine_run()
+        self.hit_and_release_switch("seq2_2")
+        self.machine_run()
+
+        self.assertEventNotCalled("sequence_mode_event_hit")
+        self.assertEventNotCalled("sequence_mode_switch_hit")
+
+        self.start_mode("mode1")
+        self.assertEventNotCalled("sequence_mode_event_hit")
+        self.assertEventNotCalled("sequence_mode_switch_hit")
+
+        self.post_event("event1")
+        self.advance_time_and_run(.2)
+        self.post_event("event2")
+        self.advance_time_and_run(.2)
+
+        self.hit_and_release_switch("seq2_1")
+        self.machine_run()
+        self.hit_and_release_switch("seq2_2")
+        self.machine_run()
+
+        self.assertEventCalled("sequence_mode_event_hit")
+        self.assertEventCalled("sequence_mode_switch_hit")
+        self.mock_event("sequence_mode_event_hit")
+        self.mock_event("sequence_mode_switch_hit")
+
+        self.stop_mode("mode1")
+
+        self.post_event("event1")
+        self.advance_time_and_run(.2)
+        self.post_event("event2")
+        self.advance_time_and_run(.2)
+
+        self.hit_and_release_switch("seq2_1")
+        self.machine_run()
+        self.hit_and_release_switch("seq2_2")
+        self.machine_run()
+
+        self.assertEventNotCalled("sequence_mode_event_hit")
+        self.assertEventNotCalled("sequence_mode_switch_hit")
+

@@ -6,6 +6,7 @@ from typing import List, Dict, Set
 
 import mpf.core.delays
 from mpf.core.mode import Mode
+from mpf.core.player import Player
 from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
 
@@ -41,9 +42,9 @@ class SequenceShot(SystemWideDevice, ModeDevice):
         super().device_added_system_wide()
         self._register_handlers()
 
-    def device_added_to_mode(self, mode: Mode):
+    def device_loaded_in_mode(self, mode: Mode, player: Player):
         """Register switch handlers on mode start."""
-        super().device_added_to_mode(mode)
+        super().device_loaded_in_mode(mode, player)
         self._register_handlers()
 
     def device_removed_from_mode(self, mode):
@@ -85,7 +86,7 @@ class SequenceShot(SystemWideDevice, ModeDevice):
             self.machine.switch_controller.remove_switch_handler(
                 switch.name, self.cancel, 1)
 
-        for switch in list(self.config['delay_switch'].keys()):
+        for switch in list(self.config['delay_switch_list'].keys()):
             self.machine.switch_controller.remove_switch_handler(
                 switch.name, self._delay_switch_hit, 1)
 
