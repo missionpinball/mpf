@@ -521,7 +521,10 @@ class BasePlaceholderManager(MpfController):
 
     def _eval_attribute(self, node, variables, subscribe):
         slice_value, subscription = self._eval(node.value, variables, subscribe)
-        ret_value = getattr(slice_value, node.attr)
+        if isinstance(slice_value, dict) and node.attr in slice_value:
+            ret_value = slice_value[node.attr]
+        else:
+            ret_value = getattr(slice_value, node.attr)
         if subscribe:
             return ret_value, subscription + [slice_value.subscribe_attribute(node.attr)]
         else:
