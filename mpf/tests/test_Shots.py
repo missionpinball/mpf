@@ -62,6 +62,33 @@ class TestShots(MpfTestCase):
         self.assertIn('shot_4', self.machine.shots)
         self.assertIn('led_1', self.machine.shots)
 
+    def test_mode_priorities(self):
+        self.start_game()
+
+        # Start the mode
+        self.start_mode("mode1")
+        # check shot states
+        self.assertTrue(self.machine.shots.mode1_shot_2.enabled)
+        self.assertFalse(self.machine.shots.mode2_shot_2.enabled)
+        self.assertLightColor("light_2", "aliceblue")
+        self.hit_and_release_switch('switch_2')
+        self.assertLightColor("light_2", "antiquewhite")
+
+        self.start_mode("mode2")
+        self.assertTrue(self.machine.shots.mode1_shot_2.enabled)
+        self.assertTrue(self.machine.shots.mode2_shot_2.enabled)
+
+        # mode2 takes priority
+        self.assertLightColor("light_2", "red")
+
+        # Stop the mode
+        self.stop_mode("mode2")
+        self.assertTrue(self.machine.shots.mode1_shot_2.enabled)
+        self.assertFalse(self.machine.shots.mode2_shot_2.enabled)
+
+        # check if color returns to mode1_shot_2 color
+        self.assertLightColor("light_2", "antiquewhite")
+
     def test_hits(self):
         self.assertFalse(self.machine.shots.mode1_shot_1.enabled)
 

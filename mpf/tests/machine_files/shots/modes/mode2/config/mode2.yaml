@@ -14,6 +14,12 @@ shots:
     show_tokens:
       leds: led_28
     profile: rainbow_start_step
+  mode2_shot_2:
+    switch: switch_2
+    show_tokens:
+      leds: light_2
+    profile: rainbow_start_step
+
 shot_profiles:
   mode2_shot_21:
     block: false

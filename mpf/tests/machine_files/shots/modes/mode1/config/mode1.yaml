@@ -6,8 +6,6 @@ mode:
 shots:
   mode1_shot_1:
     switch: switch_3
-    show_tokens:
-      light: light_3
     start_enabled: True
     enable_events: custom_enable_1
     disable_events: custom_disable_1
@@ -17,38 +15,22 @@ shots:
     disable_events: custom_disable_17
     reset_events: custom_reset_17
     hit_events: custom_hit_17
+  mode1_shot_2:
+    switch: switch_2
+    show_tokens:
+      leds: light_2
+    start_enabled: True
+    profile: mode1_shot_2
 
 shot_groups:
     mode_group:
       shots: mode1_shot_17,mode1_shot_1
 
 shot_profiles:
-  mode1_shot_21:
-    block: true
-    states:
-      - name: mode1_one
-      - name: mode1_two
-      - name: mode1_three
-  mode1_shot_22:
-    block: false
-    states:
-      - name: mode1_one
-      - name: mode1_two
-      - name: mode1_three
-  mode1_shot_23:
+  mode1_shot_2:
+    show: rainbow2
     states:
     - name: mode1_one
-      show: rainbow2
     - name: mode1_two
-      show: rainbow2
     - name: mode1_three
-      show: rainbow2
-  mode1_shot_26:
-    block: false
-    states:
-    - name: mode1_one
-      show: rainbow2
-    - name: mode1_two
-      show: rainbow2
-    - name: mode1_three
-      show: rainbow2
+
