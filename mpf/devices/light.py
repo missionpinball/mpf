@@ -74,11 +74,6 @@ class Light(SystemWideDevice):
             RGBColor() of the destination this light is fading to. If
             a command comes in with no fade, then this will be the same as the
             'color' below.
-        color:
-            The current color of the light based on this command. This value
-            is updated automatically as fades progress, and it's the value
-            that's actually written to the hardware (prior to color
-            correction).
         key:
             An arbitrary unique identifier to keep multiple entries in the
             stack separate. If a new color command comes in with a key that
@@ -253,14 +248,14 @@ class Light(SystemWideDevice):
         if fade_ms is None:
             fade_ms = self.default_fade_ms
 
-        if priority < self._get_priority_from_key(key):
-            self.debug_log("Incoming priority is lower than an existing "
-                           "stack item with the same key. Not adding to "
-                           "stack.")
+        start_time = self.machine.clock.get_time()
 
-            return
+        color_changes = not self.stack or self.stack[0]['priority'] <= priority
 
-        self._add_to_stack(color, fade_ms, priority, key)
+        self._add_to_stack(color, fade_ms, priority, key, start_time)
+
+        if color_changes:
+            self._schedule_update()
 
     def on(self, fade_ms=None, brightness=None, priority=0, key=None, **kwargs):
         """Turn light on.
@@ -290,38 +285,47 @@ class Light(SystemWideDevice):
         self.color(color=RGBColor(), fade_ms=fade_ms, priority=priority,
                    key=key)
 
-    def _add_to_stack(self, color, fade_ms, priority, key):
-        curr_color = self.get_color()
+    # pylint: disable-msg=too-many-arguments
+    def _add_to_stack(self, color, fade_ms, priority, key, start_time):
+        """Add color to stack."""
+        # handle None to make keys sortable
+        if not key:
+            key = ""
+
+        if priority < self._get_priority_from_key(key):
+            self.debug_log("Incoming priority is lower than an existing "
+                           "stack item with the same key. Not adding to "
+                           "stack.")
+            return
+
+        if self.stack and priority == self.stack[0]['priority']:
+            self.debug_log("Light stack contains two entries with the same priority. %s", self.stack)
+
+        color_below = self.get_color()
+
+        if fade_ms:
+            dest_time = start_time + (fade_ms / 1000)
+        else:
+            dest_time = 0
 
         self._remove_from_stack_by_key(key)
 
-        if fade_ms:
-            new_color = curr_color
-            dest_time = self.machine.clock.get_time() + (fade_ms / 1000)
-        else:
-            new_color = color
-            dest_time = 0
-
         self.stack.append(dict(priority=priority,
-                               start_time=self.machine.clock.get_time(),
-                               start_color=curr_color,
+                               start_time=start_time,
+                               start_color=color_below,
                                dest_time=dest_time,
                                dest_color=color,
-                               color=new_color,
                                key=key))
 
-        self.stack.sort(key=itemgetter('priority', 'start_time'), reverse=True)
+        self.stack.sort(key=itemgetter('priority', 'key'), reverse=True)
 
         self.debug_log("+-------------- Adding to stack ----------------+")
         self.debug_log("priority: %s", priority)
         self.debug_log("start_time: %s", self.machine.clock.get_time())
-        self.debug_log("start_color: %s", curr_color)
+        self.debug_log("start_color: %s", color_below)
         self.debug_log("dest_time: %s", dest_time)
         self.debug_log("dest_color: %s", color)
-        self.debug_log("color: %s", new_color)
         self.debug_log("key: %s", key)
-
-        self._schedule_update()
 
     def remove_from_stack_by_key(self, key):
         """Remove a group of color settings from the stack.
@@ -334,10 +338,18 @@ class Light(SystemWideDevice):
         were removed, the light will be updated with whatever's below it. If no
         settings remain after these are removed, the light will turn off.
         """
+        color_changes = not self.stack or self.stack[0]['key'] == key
+
         self._remove_from_stack_by_key(key)
-        self._schedule_update()
+
+        if color_changes:
+            self._schedule_update()
 
     def _remove_from_stack_by_key(self, key):
+        """Remove a key from stack."""
+        # tune the common case
+        if not self.stack:
+            return
         self.debug_log("Removing key '%s' from stack", key)
         self.stack[:] = [x for x in self.stack if x['key'] != key]
 

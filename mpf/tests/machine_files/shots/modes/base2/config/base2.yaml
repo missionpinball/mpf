@@ -20,9 +20,6 @@ shots:
       light: tag1
   shot_4:
     switch: switch_1
-    show_tokens:
-      light: light_1, light_2
-      led: led_1
   led_1:
     switch: switch_1
     show_tokens:
@@ -34,19 +31,19 @@ shots:
   default_show_light:
     switch: switch_5
     show_tokens:
-      light: light_1
+      light: light_4
   default_show_lights:
     switch: switch_6
     show_tokens:
-      lights: light_1, light_2
+      lights: light_5, light_6
   default_show_led:
     switch: switch_7
     show_tokens:
-      led: led_1
+      led: led_4
   default_show_leds:
     switch: switch_8
     show_tokens:
-      leds: led_1, led_2
+      leds: led_5, led_6
   show_in_profile_root:
     switch: switch_9
     show_tokens:

@@ -159,7 +159,7 @@ class TestLedPlayer(MpfFakeGameTestCase):
         # when a show ends with hold, the final step of the show will cache
         # the led settings
         self.assertEqual(RGBColor('red'),
-                         self.machine.lights.led1.stack[0]['color'])
+                         self.machine.lights.led1.stack[0]['dest_color'])
         self.assertEqual(0, self.machine.lights.led1.stack[0]['priority'])
 
     def test_show_hold_leds(self):
@@ -169,7 +169,7 @@ class TestLedPlayer(MpfFakeGameTestCase):
         self.assertLightColor("led1", 'red')
 
         self.assertEqual(RGBColor('red'),
-                         self.machine.lights.led1.stack[0]['color'])
+                         self.machine.lights.led1.stack[0]['dest_color'])
         self.assertEqual(0, self.machine.lights.led1.stack[0]['priority'])
 
     def test_show_no_hold_leds(self):

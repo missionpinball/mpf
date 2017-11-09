@@ -71,6 +71,15 @@ lights:
   light_3:
     number:
     subtype: matrix
+  light_4:
+    number:
+    subtype: matrix
+  light_5:
+    number:
+    subtype: matrix
+  light_6:
+    number:
+    subtype: matrix
   led_1:
     number:
   led_2:
@@ -78,6 +87,10 @@ lights:
   led_3:
     number:
   led_4:
+    number:
+  led_5:
+    number:
+  led_6:
     number:
   led_11:
     number:

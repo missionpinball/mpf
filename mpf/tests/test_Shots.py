@@ -231,41 +231,41 @@ class TestShots(MpfTestCase):
 
     def test_default_show_light(self):
         self.start_game()
-        self.assertLightChannel("light_1", 0)
+        self.assertLightChannel("light_4", 0)
 
         self.hit_and_release_switch("switch_5")
         self.advance_time_and_run()
-        self.assertLightChannel("light_1", 255)
+        self.assertLightChannel("light_4", 255)
 
     def test_default_show_lights(self):
         self.start_game()
-        self.assertLightChannel("light_1", 0)
-        self.assertLightChannel("light_2", 0)
+        self.assertLightChannel("light_5", 0)
+        self.assertLightChannel("light_6", 0)
 
         self.hit_and_release_switch("switch_6")
         self.advance_time_and_run()
-        self.assertLightChannel("light_1", 255)
-        self.assertLightChannel("light_2", 255)
+        self.assertLightChannel("light_5", 255)
+        self.assertLightChannel("light_6", 255)
 
     def test_default_show_led(self):
         self.start_game()
-        self.assertLightColor("led_1", "off")
+        self.assertLightColor("led_4", "off")
 
         self.hit_and_release_switch("switch_7")
         self.advance_time_and_run()
 
-        self.assertLightColor("led_1", "white")
+        self.assertLightColor("led_4", "white")
 
     def test_default_show_leds(self):
         self.start_game()
-        self.assertLightColor("led_1", "off")
-        self.assertLightColor("led_2", "off")
+        self.assertLightColor("led_5", "off")
+        self.assertLightColor("led_6", "off")
 
         self.hit_and_release_switch("switch_8")
         self.advance_time_and_run()
 
-        self.assertLightColor("led_1", "white")
-        self.assertLightColor("led_2", "white")
+        self.assertLightColor("led_5", "white")
+        self.assertLightColor("led_6", "white")
 
     def test_show_in_shot_profile_root(self):
         self.start_game()

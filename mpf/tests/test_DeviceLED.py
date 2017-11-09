@@ -28,7 +28,7 @@ class TestLed(MpfTestCase):
         self.assertEqual(color_setting['dest_time'], 0)
         self.assertEqual(color_setting['dest_color'], RGBColor('red'))
         self.assertEqual(led1.get_color(), RGBColor('red'))
-        self.assertIsNone(color_setting['key'])
+        self.assertFalse(color_setting['key'])
 
         # test get_color()
         self.assertEqual(led1.get_color(), RGBColor('red'))
@@ -43,7 +43,7 @@ class TestLed(MpfTestCase):
         self.assertEqual(color_setting['dest_time'], 0)
         self.assertEqual(color_setting['dest_color'], RGBColor('blue'))
         self.assertEqual(led1.get_color(), RGBColor('blue'))
-        self.assertIsNone(color_setting['key'])
+        self.assertFalse(color_setting['key'])
         self.assertEqual(len(led1.stack), 1)
 
         # set it to green, at a higher priority, but with no key. Stack should
@@ -60,7 +60,7 @@ class TestLed(MpfTestCase):
         self.assertEqual(color_setting['dest_time'], 0)
         self.assertEqual(color_setting['dest_color'], RGBColor('green'))
         self.assertEqual(led1.get_color(), RGBColor('green'))
-        self.assertIsNone(color_setting['key'])
+        self.assertFalse(color_setting['key'])
 
         # set led1 orange, lower priority, but with a key, so led should stay
         # green, but stack len should be 2
@@ -75,7 +75,7 @@ class TestLed(MpfTestCase):
         self.assertEqual(color_setting['dest_time'], 0)
         self.assertEqual(color_setting['dest_color'], RGBColor('green'))
         self.assertEqual(led1.get_color(), RGBColor('green'))
-        self.assertIsNone(color_setting['key'])
+        self.assertFalse(color_setting['key'])
 
         # remove the orange key from the stack
         led1.remove_from_stack_by_key('test')
@@ -103,21 +103,21 @@ class TestLed(MpfTestCase):
         self.assertLightColor("led1", "blue")
 
         # verify the stack is right
-        # order should be priority, then insertion order (recent is higher), so
+        # order should be priority, then key, so
         # should be: blue, green, red, orange
-        self.assertEqual(RGBColor('blue'), led1.stack[0]['color'])
-        self.assertEqual(RGBColor('green'), led1.stack[1]['color'])
-        self.assertEqual(RGBColor('red'), led1.stack[2]['color'])
-        self.assertEqual(RGBColor('orange'), led1.stack[3]['color'])
+        self.assertEqual(RGBColor('blue'), led1.stack[0]['dest_color'])
+        self.assertEqual(RGBColor('red'), led1.stack[1]['dest_color'])
+        self.assertEqual(RGBColor('green'), led1.stack[2]['dest_color'])
+        self.assertEqual(RGBColor('orange'), led1.stack[3]['dest_color'])
 
         # test that a replacement key slots in properly
         led1.color('red', priority=300, key='red')
         self.advance_time_and_run()
         self.assertLightColor("led1", "red")
-        self.assertEqual(RGBColor('red'), led1.stack[0]['color'])
-        self.assertEqual(RGBColor('blue'), led1.stack[1]['color'])
-        self.assertEqual(RGBColor('green'), led1.stack[2]['color'])
-        self.assertEqual(RGBColor('orange'), led1.stack[3]['color'])
+        self.assertEqual(RGBColor('red'), led1.stack[0]['dest_color'])
+        self.assertEqual(RGBColor('blue'), led1.stack[1]['dest_color'])
+        self.assertEqual(RGBColor('green'), led1.stack[2]['dest_color'])
+        self.assertEqual(RGBColor('orange'), led1.stack[3]['dest_color'])
 
     def test_named_colors(self):
         led1 = self.machine.lights.led1
@@ -141,7 +141,7 @@ class TestLed(MpfTestCase):
                          color_setting['start_time'] + 2)
         self.assertEqual(color_setting['dest_color'], RGBColor('red'))
         self.assertEqual(led1.get_color(), RGBColor('off'))
-        self.assertIsNone(color_setting['key'])
+        self.assertFalse(color_setting['key'])
 
         # advance to half way through the fade
         self.advance_time_and_run(1)
@@ -153,7 +153,7 @@ class TestLed(MpfTestCase):
                          color_setting['start_time'] + 2)
         self.assertEqual(color_setting['dest_color'], RGBColor('red'))
         self.assertEqual(led1.get_color(), RGBColor((127, 0, 0)))
-        self.assertIsNone(color_setting['key'])
+        self.assertFalse(color_setting['key'])
         self.assertLightColor("led1", [127, 0, 0])
 
         # advance to after the fade is done
@@ -164,7 +164,7 @@ class TestLed(MpfTestCase):
         self.assertEqual(color_setting['start_color'], RGBColor('off'))
         self.assertEqual(color_setting['dest_color'], RGBColor('red'))
         self.assertEqual(led1.get_color(), RGBColor('red'))
-        self.assertIsNone(color_setting['key'])
+        self.assertFalse(color_setting['key'])
         self.assertLightColor("led1", "red")
 
         led = self.machine.lights.led4
@@ -179,17 +179,15 @@ class TestLed(MpfTestCase):
     def test_restore_to_fade_in_progress(self):
         led1 = self.machine.lights.led1
 
-        led1.color('red', fade_ms=4000)
+        led1.color('red', fade_ms=4000, priority=50)
         self.advance_time_and_run(0.02)
         self.advance_time_and_run(1)
 
         # fade is 25% complete
         self.assertLightColor("led1", [65, 0, 0])
 
-        # higher priority color which goes on top of fade (higher priority
-        # becuase it was added after the first, even though the priorities are
-        # the same)
-        led1.color('blue', key='test')
+        # higher priority color which goes on top of fade
+        led1.color('blue', key='test', priority=100)
         self.advance_time_and_run(1)
         self.assertLightColor("led1", 'blue')
         self.assertFalse(led1.fade_in_progress)
@@ -211,7 +209,7 @@ class TestLed(MpfTestCase):
 
         led1 = self.machine.lights.led1
 
-        led1.color('red', fade_ms=4000)
+        led1.color('red', fade_ms=4000, priority=50)
         self.advance_time_and_run(0.02)
         self.advance_time_and_run(1)
 
@@ -219,7 +217,7 @@ class TestLed(MpfTestCase):
         self.assertLightColor("led1", [65, 0, 0])
 
         # start a blue 2s fade
-        led1.color('blue', key='test', fade_ms=2000)
+        led1.color('blue', key='test', fade_ms=2000, priority=100)
 
         # advance 1s, since we're half way to the blue fade from the 25% red,
         # we should now be at 12.5% red and 50% blue
