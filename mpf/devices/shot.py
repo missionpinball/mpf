@@ -66,6 +66,7 @@ class Shot(EnableDisableMixin, ModeDevice):
 
     def _remove_switch_handlers(self):
         self.delay.clear()
+        self.active_delays = set()
 
         for switch in self.config['switches']:
             self.machine.switch_controller.remove_switch_handler(
