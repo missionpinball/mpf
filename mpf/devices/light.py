@@ -301,13 +301,12 @@ class Light(SystemWideDevice):
         if self.stack and priority == self.stack[0]['priority']:
             self.debug_log("Light stack contains two entries with the same priority. %s", self.stack)
 
-        color_below = self.get_color()
-
         if fade_ms:
             dest_time = start_time + (fade_ms / 1000)
         else:
             dest_time = 0
 
+        color_below = self.get_color_below(priority, key)
         self._remove_from_stack_by_key(key)
 
         self.stack.append(dict(priority=priority,
@@ -413,9 +412,9 @@ class Light(SystemWideDevice):
 
             return self._color_correction_profile.apply(color)
 
-    def _get_color_and_fade(self, max_fade_ms: int) -> Tuple[RGBColor, int]:
+    def _get_color_and_fade(self, stack, max_fade_ms: int) -> Tuple[RGBColor, int]:
         try:
-            color_settings = self.stack[0]
+            color_settings = stack[0]
         except IndexError:
             # no stack
             return RGBColor('off'), -1
@@ -445,7 +444,7 @@ class Light(SystemWideDevice):
         return RGBColor.blend(color_settings['start_color'], color_settings['dest_color'], ratio), max_fade_ms
 
     def _get_brightness_and_fade(self, max_fade_ms: int, color: str) -> Tuple[float, int]:
-        uncorrected_color, fade_ms = self._get_color_and_fade(max_fade_ms)
+        uncorrected_color, fade_ms = self._get_color_and_fade(self.stack, max_fade_ms)
         corrected_color = self.gamma_correct(uncorrected_color)
         corrected_color = self.color_correct(corrected_color)
 
@@ -462,6 +461,18 @@ class Light(SystemWideDevice):
         """Getter for color."""
         return self.get_color()
 
+    def get_color_below(self, priority, key):
+        """Return an RGBColor() instance of the 'color' setting of the highest color below a certain key.
+
+        Similar to get_color.
+        """
+        stack = []
+        for i, entry in enumerate(self.stack):
+            if entry['priority'] <= priority and entry["key"] <= key:
+                stack = self.stack[i:]
+
+        return self._get_color_and_fade(stack, 0)[0]
+
     def get_color(self):
         """Return an RGBColor() instance of the 'color' setting of the highest color setting in the stack.
 
@@ -470,7 +481,7 @@ class Light(SystemWideDevice):
 
         Also note the color returned is the "raw" color that does has not had the color correction profile applied.
         """
-        return self._get_color_and_fade(0)[0]
+        return self._get_color_and_fade(self.stack, 0)[0]
 
     @property
     def fade_in_progress(self) -> bool:
