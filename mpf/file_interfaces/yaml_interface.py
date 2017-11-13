@@ -254,24 +254,17 @@ class YamlInterface(FileInterface):
 
             with open(filename, encoding='utf8') as f:
                 config = self.process(f)
-        except yaml.YAMLError as exc:   # pragma: no cover
-            if hasattr(exc, 'problem_mark'):
-                mark = exc.problem_mark
-                self.log.debug("YAML error found in file %s. Line %s, "
-                               "Position %s", filename, mark.line + 1,
-                               mark.column + 1)
-                if halt_on_error:
-                    raise ValueError("YAML error found in file {}. Line {}, "
-                                     "Position {}".format(filename, mark.line + 1, mark.column + 1))
-
-            elif halt_on_error:
-                raise ValueError("Error found in file %s" % filename)
-
-        except Exception:   # pylint: disable-msg=broad-except
-            self.log.debug("Couldn't load from file: %s", filename)
+        except Exception as e:   # pylint: disable-msg=broad-except
+            if hasattr(e, 'problem_mark'):
+                mark = e.problem_mark
+                msg = "YAML error found in file {}. Line {}, Position {}: {}".format(filename, mark.line + 1, mark.column + 1, e)
+            else:
+                msg = "Error found in file {}: {}".format(filename, e)
 
             if halt_on_error:
-                raise ValueError("Error found in file %s" % filename)
+                raise ValueError(msg)
+            else:
+                self.log.warn(msg)
 
         if self.cache and config:
             self.file_cache[filename] = copy.deepcopy(config)

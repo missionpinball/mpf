@@ -162,13 +162,12 @@ class FileManager(object):
         ext = os.path.splitext(file)[1]
 
         try:
-            config = FileManager.file_interfaces[ext].load(file,
-                                                           verify_version,
-                                                           halt_on_error)
+            interface = FileManager.file_interfaces[ext]
         except KeyError:
             raise AssertionError("No config file processor available for file type {}".format(ext))
 
-        return config
+
+        return interface.load(file, verify_version, halt_on_error)
 
     @staticmethod
     def save(filename, data):

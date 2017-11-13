@@ -149,17 +149,17 @@ class ModeController(MpfController):
                 self._machine_mode_folders[mode_string],
                 'config',
                 self._machine_mode_folders[mode_string] + '.yaml')
+        except KeyError:
+            mode_config_file = False
+            pass
 
-            if os.path.isfile(mode_config_file):
-                config = Util.dict_merge(config,
-                                         ConfigProcessor.load_config_file(
-                                             mode_config_file, 'mode'))
-                found_config = True
+        if mode_config_file and os.path.isfile(mode_config_file):
+            config = Util.dict_merge(config,
+                                     ConfigProcessor.load_config_file(
+                                         mode_config_file, 'mode'))
+            found_config = True
 
             self.debug_log("Loading config from %s", mode_config_file)
-
-        except KeyError:
-            pass
 
         # validate config
         if 'mode' not in config:
