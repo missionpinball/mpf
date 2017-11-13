@@ -57,24 +57,18 @@ class Shot(EnableDisableMixin, ModeDevice):
 
     def _register_switch_handlers(self):
         for switch in self.config['switches']:
-            self.machine.switch_controller.add_switch_handler(
-                switch.name, self.hit, 1)
+            self.machine.events.add_handler("{}_active".format(switch.name), self.hit, priority=self.mode.priority)
 
         for switch in list(self.config['delay_switch'].keys()):
-            self.machine.switch_controller.add_switch_handler(
-                switch.name, self._delay_switch_hit, 1, return_info=True)
+            self.machine.events.add_handler("{}_active".format(switch.name), self._delay_switch_hit,
+                                            switch_name=switch.name, priority=self.mode.priority)
 
     def _remove_switch_handlers(self):
         self.delay.clear()
         self.active_delays = set()
 
-        for switch in self.config['switches']:
-            self.machine.switch_controller.remove_switch_handler(
-                switch.name, self.hit, 1)
-
-        for switch in list(self.config['delay_switch'].keys()):
-            self.machine.switch_controller.remove_switch_handler(
-                switch.name, self._delay_switch_hit, 1)
+        self.machine.events.remove_handler(self.hit)
+        self.machine.events.remove_handler(self._delay_switch_hit)
 
     @event_handler(6)
     def advance(self, force=False, **kwargs) -> bool:
@@ -353,9 +347,9 @@ class Shot(EnableDisableMixin, ModeDevice):
             for callback in self.machine.monitors['shots']:
                 callback(name=self.name, profile=profile, state=state)
 
-    def _delay_switch_hit(self, switch_name, state, ms):
-        del state
-        del ms
+    @event_handler(4)
+    def _delay_switch_hit(self, switch_name, **kwargs):
+        del kwargs
         self.delay.reset(name=switch_name + '_delay_timer',
                          ms=self.config['delay_switch']
                                        [self.machine.switches[switch_name]],

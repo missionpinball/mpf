@@ -28,6 +28,10 @@ shots:
     switch: switch_1
     delay_switch:
       s_delay: 2s
+  shot_delay_same_switch:
+    switch: switch_15
+    delay_switch:
+      switch_15: 2s
   default_show_light:
     switch: switch_5
     show_tokens:

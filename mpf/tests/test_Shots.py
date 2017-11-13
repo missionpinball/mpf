@@ -166,6 +166,7 @@ class TestShots(MpfTestCase):
 
     def test_shot_with_delay(self):
         self.mock_event("shot_delay_hit")
+        self.mock_event("shot_delay_same_switch_hit")
         self.start_game()
 
         # test delay at the beginning. should not count
@@ -176,10 +177,50 @@ class TestShots(MpfTestCase):
         self.assertEventNotCalled("shot_delay_hit")
         self.advance_time_and_run(3)
 
+        # test shot with same switch for delay and hit
+        self.hit_and_release_switch("switch_15")
+        self.advance_time_and_run(.5)
+        self.assertEventCalled("shot_delay_same_switch_hit")
+        self.mock_event("shot_delay_same_switch_hit")
+        self.hit_and_release_switch("switch_15")
+        self.advance_time_and_run(.5)
+        self.assertEventNotCalled("shot_delay_same_switch_hit")
+
+        self.advance_time_and_run(3)
+        self.hit_and_release_switch("switch_15")
+        self.advance_time_and_run(.5)
+        self.assertEventCalled("shot_delay_same_switch_hit")
+        self.mock_event("shot_delay_same_switch_hit")
+
         # test that shot works without delay
         self.hit_and_release_switch("switch_1")
         self.advance_time_and_run(.5)
         self.assertEventCalled("shot_delay_hit")
+        self.mock_event("shot_delay_hit")
+
+        self.hit_and_release_switch("switch_1")
+        self.advance_time_and_run(.5)
+        self.assertEventCalled("shot_delay_hit")
+        self.mock_event("shot_delay_hit")
+        self.hit_and_release_switch("s_delay")
+
+        self.machine.modes.base2.stop()
+        self.advance_time_and_run()
+        self.hit_and_release_switch("switch_1")
+        self.advance_time_and_run(.5)
+        self.assertEventNotCalled("shot_delay_hit")
+
+        self.machine.modes.base2.start()
+        self.advance_time_and_run()
+        self.hit_and_release_switch("switch_1")
+        self.advance_time_and_run(.5)
+        self.assertEventCalled("shot_delay_hit")
+
+        self.advance_time_and_run(3)
+        self.hit_and_release_switch("switch_15")
+        self.advance_time_and_run(.5)
+        self.assertEventCalled("shot_delay_same_switch_hit")
+        self.mock_event("shot_delay_same_switch_hit")
 
     def test_profile_advancing_no_loop(self):
         self.start_game()
