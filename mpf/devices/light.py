@@ -314,7 +314,7 @@ class Light(SystemWideDevice):
                                start_color=color_below,
                                dest_time=dest_time,
                                dest_color=color,
-                               key=key))
+                               key=str(key)))
 
         self.stack.sort(key=itemgetter('priority', 'key'), reverse=True)
 
