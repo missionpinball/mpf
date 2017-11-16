@@ -151,7 +151,6 @@ class ModeController(MpfController):
                 self._machine_mode_folders[mode_string] + '.yaml')
         except KeyError:
             mode_config_file = False
-            pass
 
         if mode_config_file and os.path.isfile(mode_config_file):
             config = Util.dict_merge(config,

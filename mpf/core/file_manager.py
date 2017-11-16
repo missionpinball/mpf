@@ -166,7 +166,6 @@ class FileManager(object):
         except KeyError:
             raise AssertionError("No config file processor available for file type {}".format(ext))
 
-
         return interface.load(file, verify_version, halt_on_error)
 
     @staticmethod

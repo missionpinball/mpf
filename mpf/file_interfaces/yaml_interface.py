@@ -257,14 +257,15 @@ class YamlInterface(FileInterface):
         except Exception as e:   # pylint: disable-msg=broad-except
             if hasattr(e, 'problem_mark'):
                 mark = e.problem_mark
-                msg = "YAML error found in file {}. Line {}, Position {}: {}".format(filename, mark.line + 1, mark.column + 1, e)
+                msg = "YAML error found in file {}. Line {}," \
+                      "Position {}: {}".format(filename, mark.line + 1, mark.column + 1, e)
             else:
                 msg = "Error found in file {}: {}".format(filename, e)
 
             if halt_on_error:
                 raise ValueError(msg)
             else:
-                self.log.warn(msg)
+                self.log.warning(msg)
 
         if self.cache and config:
             self.file_cache[filename] = copy.deepcopy(config)
