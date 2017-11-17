@@ -5,6 +5,8 @@ import logging
 import random
 from typing import Optional, Generator
 
+from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
+
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformDirectFade
 
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
@@ -12,7 +14,7 @@ from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInt
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 from mpf.platforms.spike.spike_defines import SpikeNodebus
 from mpf.core.platform import SwitchPlatform, DriverPlatform, LightsPlatform, SwitchSettings, DriverSettings, \
-    DriverConfig, SwitchConfig
+    DriverConfig, SwitchConfig, DmdPlatform
 
 
 class SpikeSwitch(SwitchPlatformInterface):
@@ -53,6 +55,58 @@ class SpikeLight(LightPlatformDirectFade):
             raise AssertionError("Fade time out of bound.")
         data = bytearray([fade_time, brightness])
         self.platform.send_cmd_async(self.node, SpikeNodebus.SetLed + self.number, data)
+
+
+class SpikeDMD(DmdPlatformInterface):
+
+    """The DMD on the SPIKE system."""
+
+    def __init__(self, platform):
+        """Initialise DMD."""
+        self.platform = platform
+        self.data = None
+
+    def update(self, data: bytes):
+        """Remember the last frame data."""
+        self.data = data
+        self.send_update()
+
+    def send_update(self):
+        """Send update to platform."""
+        if len(self.data) != 128 * 32:
+            raise AssertionError("Invalid frame length for SPIKE. Should be 128*32 pixels.")
+        frame1 = bytearray()
+        frame2 = bytearray()
+        frame3 = bytearray()
+        frame4 = bytearray()
+        # we build four frames for a 128*32 pixel display. one bit per pixel each = 512bytes
+        for i in range(512):
+            pixel1 = 0
+            pixel2 = 0
+            pixel3 = 0
+            pixel4 = 0
+            for p in range(8):
+                pixel_data = self.data[i * 8 + p]
+                pixel1 += 1 if pixel_data & 0x01 else 0
+                pixel2 += 1 if pixel_data & 0x02 else 0
+                pixel3 += 1 if pixel_data & 0x04 else 0
+                pixel4 += 1 if pixel_data & 0x08 else 0
+                pixel1 *= 2
+                pixel2 *= 2
+                pixel3 *= 2
+                pixel4 *= 2
+
+            frame1.append(int(pixel1 / 2))
+            frame2.append(int(pixel2 / 2))
+            frame3.append(int(pixel3 / 2))
+            frame4.append(int(pixel4 / 2))
+        self.platform.send_cmd_raw(bytes([0x80, 0x00, 0x90]) + bytes(frame1) + bytes(frame2) + bytes(frame3) +
+                                   bytes(frame4))
+
+    def set_brightness(self, brightness: float):
+        """Set brightness of the DMD."""
+        # we do not yet know how that works in SPIKE
+        pass
 
 
 class SpikeDriver(DriverPlatformInterface):
@@ -141,11 +195,12 @@ class SpikeDriver(DriverPlatformInterface):
         return "Spike Node {}".format(self.node)
 
 
-class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
+# pylint: disable-msg=too-many-arguments
+class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform):
 
     """Stern Spike Platform."""
 
-    # pylint: disable-msg=too-many-arguments
+    # pylint: disable-msg=too-many-instance-attributes
     def _write_rule(self, node, enable_switch_index, disable_switch_index, coil_index, pulse_settings: PulseSettings,
                     hold_settings: Optional[HoldSettings], param1, param2, param3):
         """Write a hardware rule to Stern Spike.
@@ -287,6 +342,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
         self._poll_task = None
         self._sender_task = None
         self._send_key_task = None
+        self.dmd = None
 
         self._nodes = None
         self._bus_busy = asyncio.Lock(loop=self.machine.clock.loop)
@@ -322,7 +378,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
         self.log.info("Connecting to %s at %sbps", port, baud)
 
         connector = self.machine.clock.open_serial_connection(
-            url=port, baudrate=baud, limit=0)
+            url=port, baudrate=baud, limit=1024)
         self._reader, self._writer = yield from connector
 
         yield from self._initialize()
@@ -482,9 +538,11 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
     @asyncio.coroutine
     def _send_raw(self, data):
         if self.debug:
-            self.log.debug("Sending: %s", "".join("0x%02x " % b for b in data))
-        self._writer.write(("".join("%02x " % b for b in data).encode()))
-        self._writer.write("\n\r".encode())
+            self.log.debug("Sending: %s", "".join("%02x " % b for b in data))
+        for start in range(0, len(data), 256):
+            block = data[start:start + 256]
+            self._writer.write(("".join("%02x " % b for b in block).encode()))
+            self._writer.write("\n\r".encode())
         yield from self._writer.drain()
 
     @asyncio.coroutine
@@ -582,6 +640,11 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
             if wait_ms:
                 yield from self._send_raw(bytearray([1, wait_ms]))
 
+    def send_cmd_raw(self, data, wait_ms=0):
+        """Send raw command."""
+        # queue command
+        self._cmd_queue.put_nowait((data, wait_ms))
+
     def send_cmd_async(self, node, cmd, data):
         """Send cmd which does not require a response."""
         cmd_str = self._create_cmd_str(node, cmd, data)
@@ -602,6 +665,13 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform):
             result += pow(256, i) * int(state[i])
 
         return result
+
+    def configure_dmd(self):
+        """Configure a DMD."""
+        if self.dmd:
+            raise AssertionError("Can only configure dmd once.")
+        self.dmd = SpikeDMD(self)
+        return self.dmd
 
     @asyncio.coroutine
     def _initialize(self) -> Generator[int, None, None]:
