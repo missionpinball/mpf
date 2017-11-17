@@ -68,3 +68,7 @@ flippers:
         activation_switch: s_flipper
         use_eos: True
         eos_switch: s_flipper_eos
+
+physical_dmds:
+  spike_dmd:
+    fps: 5
