@@ -291,6 +291,8 @@ class Light(SystemWideDevice):
         # handle None to make keys sortable
         if not key:
             key = ""
+        else:
+            key = str(key)
 
         if priority < self._get_priority_from_key(key):
             self.debug_log("Incoming priority is lower than an existing "
@@ -314,7 +316,7 @@ class Light(SystemWideDevice):
                                start_color=color_below,
                                dest_time=dest_time,
                                dest_color=color,
-                               key=str(key)))
+                               key=key))
 
         self.stack.sort(key=itemgetter('priority', 'key'), reverse=True)
 
@@ -337,6 +339,7 @@ class Light(SystemWideDevice):
         were removed, the light will be updated with whatever's below it. If no
         settings remain after these are removed, the light will turn off.
         """
+        key = str(key)
         color_changes = not self.stack or self.stack[0]['key'] == key
 
         self._remove_from_stack_by_key(key)
