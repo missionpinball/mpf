@@ -30,7 +30,7 @@ class TestBallDeviceRouting(MpfTestCase):
         launcher = self.machine.ball_devices['test_launcher']
         target1 = self.machine.ball_devices['test_target1']
 
-        self.machine.events.add_handler('balldevice_1_ball_missing',
+        self.machine.events.add_handler('balldevice_ball_missing',
                                         self._missing_ball)
         self.machine.events.add_handler('balldevice_captured_from_playfield',
                                         self._captured_from_pf)
@@ -61,7 +61,7 @@ class TestBallDeviceRouting(MpfTestCase):
         c_drain1 = self.machine.coils['c_drain1']
         c_drain1.pulse = MagicMock()
 
-        self.machine.events.add_handler('balldevice_1_ball_missing',
+        self.machine.events.add_handler('balldevice_ball_missing',
                                         self._missing_ball)
         self.machine.events.add_handler('balldevice_captured_from_playfield',
                                         self._captured_from_pf)

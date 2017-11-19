@@ -43,7 +43,7 @@ class TestBallDeviceTriggerEvents(MpfTestCase):
 
         self.machine.events.add_handler('balldevice_captured_from_playfield',
                                         self._captured_from_pf)
-        self.machine.events.add_handler('balldevice_1_ball_missing',
+        self.machine.events.add_handler('balldevice_ball_missing',
                                         self._missing_ball)
         self._enter = 0
         self._captured = 0
@@ -113,7 +113,7 @@ class TestBallDeviceTriggerEvents(MpfTestCase):
 
         self.machine.events.add_handler('balldevice_captured_from_playfield',
                                         self._captured_from_pf)
-        self.machine.events.add_handler('balldevice_1_ball_missing',
+        self.machine.events.add_handler('balldevice_ball_missing',
                                         self._missing_ball)
         self._enter = 0
         self._captured = 0
@@ -180,7 +180,7 @@ class TestBallDeviceTriggerEvents(MpfTestCase):
 
         self.machine.events.add_handler('balldevice_captured_from_playfield',
                                         self._captured_from_pf)
-        self.machine.events.add_handler('balldevice_1_ball_missing',
+        self.machine.events.add_handler('balldevice_ball_missing',
                                         self._missing_ball)
         self._enter = 0
         self._captured = 0

@@ -498,16 +498,19 @@ class BallDevice(SystemWideDevice):
         self.debug_log("%s ball(s) missing from device. Mechanical eject?"
                        " %s", abs(balls), self.config['mechanical_eject'])
 
-        yield from self.machine.events.post_async('balldevice_{}_ball_missing'.format(abs(balls)))
-        '''event: balldevice_(balls)_ball_missing.
-        desc: The number of (balls) is missing. Note this event is
+        yield from self.machine.events.post_async('balldevice_{}_ball_missing'.format(self.name), balls=abs(balls))
+        '''event: balldevice_(name)_ball_missing.
+        desc: The device (name) is missing a ball. Note this event is
         posted in addition to the generic *balldevice_ball_missing* event.
+        args:
+            balls: The number of balls that are missing
         '''
-        yield from self.machine.events.post_async('balldevice_ball_missing', balls=abs(balls))
+        yield from self.machine.events.post_async('balldevice_ball_missing', balls=abs(balls), name=self.name)
         '''event: balldevice_ball_missing
         desc: A ball is missing from a device.
         args:
             balls: The number of balls that are missing
+            name: Name of device which lost the ball
         '''
 
     @property
