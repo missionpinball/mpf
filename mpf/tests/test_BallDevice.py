@@ -804,6 +804,7 @@ class TestBallDevice(MpfTestCase):
         # it should keep the balls
         coil1.pulse = MagicMock()
         self.assertEqual(2, device1.balls)
+        self.assertEqual(2, device1.available_balls)
 
         # steal a ball from trough
         self.machine.switch_controller.process_switch("s_ball_switch1", 0)
@@ -816,6 +817,7 @@ class TestBallDevice(MpfTestCase):
 
         # count should be on less and one ball missing
         self.assertEqual(1, device1.balls)
+        self.assertEqual(1, device1.available_balls)
 
         # request an ball
         playfield.add_ball()
