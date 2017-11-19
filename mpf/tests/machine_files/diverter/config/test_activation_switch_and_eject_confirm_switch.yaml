@@ -19,22 +19,22 @@ coils:
         number: 10
 
 switches:
-    s_ball_switch3:
-        number: 10
-    s_ball_switch4:
-        number: 11
+    s_ball_switch10:
+        number:
+    s_ball_switch11:
+        number:
     s_diverter:
         number: 12
 
 ball_devices:
     test_trough2:
         eject_coil: eject_coil3
-        ball_switches: s_ball_switch3, s_ball_switch4
+        ball_switches: s_ball_switch10, s_ball_switch11
         confirm_eject_type: switch
         confirm_eject_switch: s_diverter
         eject_targets: test_target, playfield
         tags: trough, drain, home
 
 virtual_platform_start_active_switches:
-  - s_ball_switch3
-  - s_ball_switch4
+  - s_ball_switch10
+  - s_ball_switch11
