@@ -174,6 +174,7 @@ class BallDevice(SystemWideDevice):
             self.outgoing_balls_handler.add_eject_to_queue(eject)
         else:
             # handle lost balls
+            self.available_balls -= 1
             self.config['ball_missing_target'].add_missing_balls(1)
             yield from self._balls_missing(1)
 
