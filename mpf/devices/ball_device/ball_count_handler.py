@@ -278,16 +278,28 @@ class BallCountHandler(BallDeviceStateHandler):
             if not self.ball_device.counter.is_jammed() or new_balls != 1:
                 # otherwise handle balls
                 old_ball_count = self._ball_count
-                self._set_ball_count(new_balls)
                 if new_balls > old_ball_count:
                     self.debug_log("BCH: Found %s new balls", new_balls - old_ball_count)
+                    self._set_ball_count(new_balls)
                     # handle new balls via incoming balls handler
                     for _ in range(new_balls - old_ball_count):
                         yield from self.ball_device.incoming_balls_handler.ball_arrived()
                 elif new_balls < old_ball_count:
-                    self.debug_log("BCH: Lost %s balls", old_ball_count - new_balls)
-                    for _ in range(old_ball_count - new_balls):
-                        yield from self.ball_device.lost_idle_ball()
+                    if self.ball_device.config['mechanical_eject']:
+                        self._set_ball_count(new_balls)
+                        yield from self.ball_device.handle_mechanial_eject_during_idle()
+                    else:
+                        try:
+                            yield from asyncio.wait_for(self.ball_device.counter.wait_for_ball_activity(),
+                                                        loop=self.machine.clock.loop,
+                                                        timeout=self.ball_device.config['idle_missing_ball_timeout'])
+                        except asyncio.TimeoutError:
+                            self.debug_log("BCH: Lost %s balls", old_ball_count - new_balls)
+                            self._set_ball_count(new_balls)
+                            for _ in range(old_ball_count - new_balls):
+                                yield from self.ball_device.lost_idle_ball()
+                        else:
+                            self._revalidate.set()
 
             self._is_counting.release()
             self._count_valid.set()

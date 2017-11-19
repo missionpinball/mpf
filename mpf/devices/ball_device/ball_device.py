@@ -161,22 +161,24 @@ class BallDevice(SystemWideDevice):
         self._balls_added_callback(1, unclaimed_balls)
 
     @asyncio.coroutine
+    def handle_mechanial_eject_during_idle(self):
+        """Handle mechanical eject."""
+        # handle lost balls via outgoing balls handler (if mechanical eject)
+        self.config['eject_targets'][0].available_balls += 1
+        eject = OutgoingBall(self.config['eject_targets'][0])
+        eject.eject_timeout = self.config['eject_timeouts'][eject.target] / 1000
+        eject.max_tries = self.config['max_eject_attempts']
+        eject.mechanical = True
+        eject.already_left = True
+        self.outgoing_balls_handler.add_eject_to_queue(eject)
+
+    @asyncio.coroutine
     def lost_idle_ball(self):
         """Lost an ball while the device was idle."""
-        if self.config['mechanical_eject']:
-            # handle lost balls via outgoing balls handler (if mechanical eject)
-            self.config['eject_targets'][0].available_balls += 1
-            eject = OutgoingBall(self.config['eject_targets'][0])
-            eject.eject_timeout = self.config['eject_timeouts'][eject.target] / 1000
-            eject.max_tries = self.config['max_eject_attempts']
-            eject.mechanical = True
-            eject.already_left = True
-            self.outgoing_balls_handler.add_eject_to_queue(eject)
-        else:
-            # handle lost balls
-            self.available_balls -= 1
-            self.config['ball_missing_target'].add_missing_balls(1)
-            yield from self._balls_missing(1)
+        # handle lost balls
+        self.available_balls -= 1
+        self.config['ball_missing_target'].add_missing_balls(1)
+        yield from self._balls_missing(1)
 
     @asyncio.coroutine
     def lost_ejected_ball(self, target):

@@ -807,9 +807,37 @@ class TestBallDevice(MpfTestCase):
         self.assertEqual(2, device1.balls)
         self.assertEqual(2, device1.available_balls)
 
+        # steal a ball from trough (only for a while)
+        self.machine.switch_controller.process_switch("s_ball_switch1", 0)
+        self.advance_time_and_run(3)
+        assert not coil1.pulse.called
+        self.assertEqual(0, self._missing)
+        self.assertEqual(0, self._captured)
+        self.assertEqual(0, playfield.balls)
+        self.assertEqual(0, playfield.available_balls)
+
+        # still waiting
+        self.assertEqual(2, device1.balls)
+        self.assertEqual(2, device1.available_balls)
+
+        # put it back
+        self.machine.switch_controller.process_switch("s_ball_switch1", 1)
+        self.advance_time_and_run(1)
+        assert not coil1.pulse.called
+        self.assertEqual(0, self._missing)
+        self.assertEqual(0, self._captured)
+        self.assertEqual(0, playfield.balls)
+        self.assertEqual(0, playfield.available_balls)
+
+        # count should be back
+        self.assertEqual(2, device1.balls)
+        self.assertEqual(2, device1.available_balls)
+
+        self.assertEqual(2, self.machine.ball_controller.num_balls_known)
+
         # steal a ball from trough
         self.machine.switch_controller.process_switch("s_ball_switch1", 0)
-        self.advance_time_and_run(1)
+        self.advance_time_and_run(6)
         assert not coil1.pulse.called
         self.assertEqual(1, self._missing)
         self.assertEqual(0, self._captured)
@@ -863,7 +891,7 @@ class TestBallDevice(MpfTestCase):
 
         # steal a ball from trough
         self.machine.switch_controller.process_switch("s_ball_switch1", 0)
-        self.advance_time_and_run(1)
+        self.advance_time_and_run(6)
         assert not coil1.pulse.called
         self.assertEqual(1, self._missing)
         self.assertEqual(0, self._captured)

@@ -121,6 +121,7 @@ ball_devices:
     entrance_switch: single|machine(switches)|None
     entrance_switch_full_timeout: single|ms|0
     entrance_events: dict|str:ms|None
+    idle_missing_ball_timeout: single|secs|5s
     jam_switch: single|machine(switches)|None
     confirm_eject_type: single|enum(target,switch,event,fake)|target
     captures_from: single|machine(playfields)|playfield
