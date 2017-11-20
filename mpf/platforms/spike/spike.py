@@ -65,12 +65,30 @@ class SpikeDMD(DmdPlatformInterface):
         """Initialise DMD."""
         self.platform = platform
         self.data = None
+        self.new_frame_event = asyncio.Event(loop=platform.machine.clock.loop)
+        self.dmd_task = platform.machine.clock.loop.create_task(self._dmd_send())
+        self.dmd_task.add_done_callback(self._done)
+
+    @staticmethod
+    def _done(future):
+        try:
+            future.result()
+        except asyncio.CancelledError:
+            pass
 
     def update(self, data: bytes):
         """Remember the last frame data."""
         self.data = data
-        self.send_update()
+        self.new_frame_event.set()
 
+    @asyncio.coroutine
+    def _dmd_send(self):
+        while True:
+            yield from self.new_frame_event.wait()
+            self.new_frame_event.clear()
+            yield from self.send_update()
+
+    @asyncio.coroutine
     def send_update(self):
         """Send update to platform."""
         if len(self.data) != 128 * 32:
@@ -100,8 +118,8 @@ class SpikeDMD(DmdPlatformInterface):
             frame2.append(int(pixel2 / 2))
             frame3.append(int(pixel3 / 2))
             frame4.append(int(pixel4 / 2))
-        self.platform.send_cmd_raw(bytes([0x80, 0x00, 0x90]) + bytes(frame1) + bytes(frame2) + bytes(frame3) +
-                                   bytes(frame4))
+        yield from self.platform.send_cmd_raw(bytes([0x80, 0x00, 0x90]) + bytes(frame1) + bytes(frame2) +
+                                              bytes(frame3) + bytes(frame4))
 
     def set_brightness(self, brightness: float):
         """Set brightness of the DMD."""
@@ -378,8 +396,9 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
         self.log.info("Connecting to %s at %sbps", port, baud)
 
         connector = self.machine.clock.open_serial_connection(
-            url=port, baudrate=baud, limit=1024)
+            url=port, baudrate=baud, rtscts=True)
         self._reader, self._writer = yield from connector
+        self._writer.transport.set_write_buffer_limits(4096, 1024)
 
         yield from self._initialize()
 
@@ -640,10 +659,13 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
             if wait_ms:
                 yield from self._send_raw(bytearray([1, wait_ms]))
 
+    @asyncio.coroutine
     def send_cmd_raw(self, data, wait_ms=0):
         """Send raw command."""
-        # queue command
-        self._cmd_queue.put_nowait((data, wait_ms))
+        with (yield from self._bus_busy):
+            yield from self._send_raw(data)
+            if wait_ms:
+                yield from self._send_raw(bytearray([1, wait_ms]))
 
     def send_cmd_async(self, node, cmd, data):
         """Send cmd which does not require a response."""
