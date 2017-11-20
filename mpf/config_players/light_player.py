@@ -28,6 +28,9 @@ class LightPlayer(DeviceConfigPlayer):
             if isinstance(light, str):
                 light_names = Util.string_to_list(light)
                 for light_name in light_names:
+                    # skip non-replaces placeholders
+                    if light_name[0:1] == "(" and light_name[-1:] == ")":
+                        continue
                     self._light_named_color(light_name, instance_dict, full_context, **s)
             else:
                 self._light_color(light, instance_dict, full_context, **s)
@@ -79,6 +82,9 @@ class LightPlayer(DeviceConfigPlayer):
             lights = [self.machine.lights[light_name]]
         except KeyError:
             lights = self.machine.lights.items_tagged(light_name)
+
+        if not lights:
+            raise AssertionError("Could not find light or tag {} in {}".format(light_name, full_context))
 
         for light in lights:
             self._light_color(light, instance_dict, full_context, color, **s)
