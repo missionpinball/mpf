@@ -47,6 +47,7 @@ class FASTDirectLEDChannel(LightPlatformInterface):
 
     def __init__(self, led: FASTDirectLED, channel) -> None:
         """Initialise LED."""
+        super().__init__("{}-{}".format(led.number, channel))
         self.led = led
         self.channel = int(channel)
 

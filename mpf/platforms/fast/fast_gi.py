@@ -11,9 +11,8 @@ class FASTGIString(LightPlatformSoftwareFade):
 
     def __init__(self, number, sender, machine, software_fade_ms: int) -> None:
         """Initialise GI string."""
-        super().__init__(machine.clock.loop, software_fade_ms)
+        super().__init__(number, machine.clock.loop, software_fade_ms)
         self.log = logging.getLogger('FASTGIString.0x' + str(number))
-        self.number = number
         self.send = sender
 
     def set_brightness(self, brightness: float):

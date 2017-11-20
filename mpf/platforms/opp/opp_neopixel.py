@@ -49,7 +49,7 @@ class OPPLightChannel(LightPlatformSoftwareFade):
 
     def __init__(self, led, index, hardware_fade_ms, loop):
         """Initialise led channel."""
-        super().__init__(loop, hardware_fade_ms)
+        super().__init__("{}-{}".format(led.number, index), loop, hardware_fade_ms)
         self.led = led
         self.index = index
 

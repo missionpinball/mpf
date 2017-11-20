@@ -70,8 +70,7 @@ class LisyLight(LightPlatformSoftwareFade):
 
     def __init__(self, number, platform):
         """Initialise Lisy Light."""
-        super().__init__(platform.machine.clock.loop, 50)
-        self.number = number
+        super().__init__(number, platform.machine.clock.loop, 50)
         self.platform = platform
 
     def set_brightness(self, brightness: float):

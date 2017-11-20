@@ -11,7 +11,7 @@ class FASTMatrixLight(LightPlatformSoftwareFade):
 
     def __init__(self, number, sender, machine, fade_interval_ms: int) -> None:
         """Initialise light."""
-        super().__init__(machine.clock.loop, fade_interval_ms)
+        super().__init__(number, machine.clock.loop, fade_interval_ms)
         self.log = logging.getLogger('FASTMatrixLight')
         self.number = number
         self.send = sender

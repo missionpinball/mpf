@@ -8,6 +8,7 @@ from typing import Tuple
 from mpf.core.platform import LightsPlatform
 
 from mpf.core.device_monitor import DeviceMonitor
+from mpf.core.machine import MachineController
 from mpf.core.rgb_color import RGBColor
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade
@@ -19,7 +20,7 @@ class DriverLight(LightPlatformSoftwareFade):
 
     def __init__(self, driver, loop, software_fade_ms):
         """Initialise coil as light."""
-        super().__init__(loop, software_fade_ms)
+        super().__init__(driver.hw_driver.number, loop, software_fade_ms)
         self.driver = driver
 
     def set_brightness(self, brightness: float):
@@ -82,6 +83,27 @@ class Light(SystemWideDevice):
             from the stack (e.g. when shows or modes end and they want to
             remove their commands from the light).
         """
+
+    @classmethod
+    def device_class_init(cls, machine: MachineController):
+        """Register handler for duplicate light number checks."""
+        machine.events.add_handler("init_phase_4",
+                                   cls._check_duplicate_light_numbers,
+                                   machine=machine)
+
+    @staticmethod
+    def _check_duplicate_light_numbers(machine, **kwargs):
+        del kwargs
+        check_set = set()
+        for light in machine.lights:
+            for driver in light.hw_drivers.values():
+                key = (light.platform, driver.number, type(driver))
+                if key in check_set:
+                    raise AssertionError(
+                        "Duplicate light number {} {} for light {}".format(
+                            type(driver), driver.number, light))
+
+                check_set.add(key)
 
     def _map_channels_to_colors(self, channel_list) -> dict:
         if self.config['type']:

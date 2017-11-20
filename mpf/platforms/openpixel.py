@@ -79,9 +79,7 @@ class OpenpixelHardwarePlatform(LightsPlatform):
 
     def configure_light(self, number, subtype, platform_settings) -> LightPlatformInterface:
         """Configure an LED."""
-        opc_channel, channel_number = number.split("-")
-
-        return OpenPixelLED(self.opc_client, opc_channel, channel_number, self.debug)
+        return OpenPixelLED(number, self.opc_client, self.debug)
 
     @asyncio.coroutine
     def _setup_opc_client(self):
@@ -93,9 +91,11 @@ class OpenPixelLED(LightPlatformInterface):
 
     """One LED on the openpixel platform."""
 
-    def __init__(self, opc_client, channel, channel_number, debug):
+    def __init__(self, number, opc_client, debug):
         """Initialise Openpixel LED obeject."""
+        super().__init__(number)
         self.log = logging.getLogger('OpenPixelLED')
+        channel, channel_number = number.split("-")
 
         self.opc_client = opc_client
         self.debug = debug

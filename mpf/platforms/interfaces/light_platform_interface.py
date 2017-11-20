@@ -3,12 +3,16 @@ import abc
 import asyncio
 from asyncio import AbstractEventLoop
 
-from typing import Callable, Tuple
+from typing import Callable, Tuple, Any
 
 
 class LightPlatformInterface(metaclass=abc.ABCMeta):
 
     """Interface for a light in hardware platforms."""
+
+    def __init__(self, number: Any) -> None:
+        """Initialise light."""
+        self.number = number
 
     @abc.abstractmethod
     def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
@@ -25,8 +29,9 @@ class LightPlatformDirectFade(LightPlatformInterface, metaclass=abc.ABCMeta):
 
     """Implement a light which can set fade and brightness directly."""
 
-    def __init__(self, loop: AbstractEventLoop) -> None:
+    def __init__(self, number, loop: AbstractEventLoop) -> None:
         """Initialise light."""
+        super().__init__(number)
         self.loop = loop
         self.task = None    # type: asyncio.Task
 
@@ -79,9 +84,9 @@ class LightPlatformSoftwareFade(LightPlatformDirectFade, metaclass=abc.ABCMeta):
 
     """Implement a light which cannot fade on its own."""
 
-    def __init__(self, loop: AbstractEventLoop, software_fade_ms: int) -> None:
+    def __init__(self, number, loop: AbstractEventLoop, software_fade_ms: int) -> None:
         """Initialise light with software fade."""
-        super().__init__(loop)
+        super().__init__(number, loop)
         self.software_fade_ms = software_fade_ms
 
     def get_max_fade_ms(self) -> int:

@@ -811,9 +811,10 @@ class PDBLED(LightPlatformInterface):
 
     def __init__(self, board, address, polarity, proc_driver):
         """Initialise PDB LED."""
-        self.log = logging.getLogger('PDBLED')
         self.board = board
         self.address = address
+        super().__init__("{}-{}".format(self.board, self.address))
+        self.log = logging.getLogger('PDBLED')
         self.proc = proc_driver
         self.polarity = polarity
 

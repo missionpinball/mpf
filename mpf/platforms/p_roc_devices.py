@@ -99,9 +99,9 @@ class PROCMatrixLight(LightPlatformSoftwareFade):
 
     def __init__(self, number, proc_driver, machine):
         """Initialise matrix light device."""
-        super().__init__(machine.clock.loop, int(1 / machine.config['mpf']['default_light_hw_update_hz'] * 1000))
+        super().__init__(number, machine.clock.loop,
+                         int(1 / machine.config['mpf']['default_light_hw_update_hz'] * 1000))
         self.log = logging.getLogger('PROCMatrixLight')
-        self.number = number
         self.proc = proc_driver
 
     def set_brightness(self, brightness: float):

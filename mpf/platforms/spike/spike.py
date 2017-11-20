@@ -36,9 +36,8 @@ class SpikeLight(LightPlatformDirectFade):
 
     def __init__(self, node, number, platform):
         """Initialise light."""
-        super().__init__(platform.machine.clock.loop)
+        super().__init__(number, platform.machine.clock.loop)
         self.node = node
-        self.number = number
         self.platform = platform
 
     def get_max_fade_ms(self):

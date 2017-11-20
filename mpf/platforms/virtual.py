@@ -143,8 +143,9 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
 
     def configure_light(self, number, subtype, platform_settings):
         """Configure light channel."""
-        del subtype
-        return VirtualLight(number, platform_settings)
+        if not subtype:
+            subtype = "led"
+        return VirtualLight("{}-{}".format(subtype, number), platform_settings)
 
     # pylint: disable-msg=no-self-use
     def configure_hardware_sound_system(self) -> "HardwareSoundPlatformInterface":
@@ -298,8 +299,8 @@ class VirtualLight(LightPlatformInterface):
 
     def __init__(self, number, settings):
         """Initialise LED."""
+        super().__init__(number)
         self.settings = settings
-        self.number = number
         self.color_and_fade_callback = None
 
     @property

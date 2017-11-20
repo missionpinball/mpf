@@ -36,9 +36,8 @@ class OPPIncand(LightPlatformSoftwareFade):
 
     def __init__(self, incand_card, number, hardware_fade_ms, loop):
         """Initialise Incandescent wing card driver."""
-        super().__init__(loop, hardware_fade_ms)
+        super().__init__(number, loop, hardware_fade_ms)
         self.incandCard = incand_card
-        self.number = number
 
     def set_brightness(self, brightness: float):
         """Enable (turns on) this driver.
