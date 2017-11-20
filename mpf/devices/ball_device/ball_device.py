@@ -11,6 +11,7 @@ from mpf.devices.ball_device.ball_device_ejector import BallDeviceEjector
 
 from mpf.devices.ball_device.entrance_switch_counter import EntranceSwitchCounter
 from mpf.devices.ball_device.hold_coil_ejector import HoldCoilEjector
+from mpf.devices.ball_device.enable_coil_ejector import EnableCoilEjector
 
 from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
@@ -427,7 +428,10 @@ class BallDevice(SystemWideDevice):
         self._validate_config()
 
         if self.config['eject_coil']:
-            self.ejector = PulseCoilEjector(self)
+            if self.config['eject_coil_enable_time']:
+                self.ejector = EnableCoilEjector(self)
+            else:
+                self.ejector = PulseCoilEjector(self)
         elif self.config['hold_coil']:
             self.ejector = HoldCoilEjector(self)
 
