@@ -22,9 +22,15 @@ class ClockTestCase(unittest.TestCase):
         global counter
         counter = 0
 
+        try:
+            import uvloop
+        except ImportError:
+            pass
+        else:
+            asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
-        self.clock = ClockBase()
+        self.clock = ClockBase(loop=self.loop)
         self.callback_order = []
 
     def tearDown(self):

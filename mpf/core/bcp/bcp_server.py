@@ -1,5 +1,6 @@
 """Bcp server for clients which connect and disconnect randomly."""
 import asyncio
+import socket
 
 from mpf.core.utility_functions import Util
 from mpf.core.mpf_controller import MpfController
@@ -21,7 +22,7 @@ class BcpServer(MpfController):
     def start(self):
         """Start the server."""
         self._server = yield from self.machine.clock.start_server(
-            self._accept_client, self._ip, self._port, loop=self.machine.clock.loop)
+            self._accept_client, self._ip, self._port)
 
     def stop(self):
         """Stop the BCP server, i.e. closes the listening socket(s)."""
