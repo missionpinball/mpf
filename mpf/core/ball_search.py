@@ -201,6 +201,11 @@ class BallSearch(MpfController):
 
         desc: The ball search process has been begun.
         '''
+
+        self.machine.events.post('ball_search_phase_1'.format(self.phase),
+                                 iteration=1)
+        # see description below
+
         self._run()
 
     def stop(self):
@@ -208,7 +213,7 @@ class BallSearch(MpfController):
         if not self.started:
             return
 
-        self.debug_log("Stopping ball search")
+        self.info_log("Stopping ball search")
 
         self.started = False
         self.delay.remove('run')
@@ -234,6 +239,14 @@ class BallSearch(MpfController):
                 element = next(self.iterator)
             except StopIteration:
                 self.iteration += 1
+                self.machine.events.post('ball_search_phase_{}'.format(self.phase),
+                                         iteration=self.iteration)
+                '''event: 'ball_search_phase_(num)
+
+                desc: The ball search phase (num) has started.
+                args:
+                    iteration: Current iteration of phase (num)
+                '''
                 # give up at some point
                 if self.iteration > self.playfield.config[
                         'ball_search_phase_{}_searches'.format(self.phase)]:
