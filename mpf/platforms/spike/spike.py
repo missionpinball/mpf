@@ -34,10 +34,12 @@ class SpikeLight(LightPlatformDirectFade):
 
     """A light on a Stern Spike node board."""
 
-    def __init__(self, node, number, platform):
+    def __init__(self, number, platform):
         """Initialise light."""
         super().__init__(number, platform.machine.clock.loop)
-        self.node = node
+        node, index = number.split("-")
+        self.node = int(node)
+        self.index = int(index)
         self.platform = platform
 
     def get_max_fade_ms(self):
@@ -53,7 +55,7 @@ class SpikeLight(LightPlatformDirectFade):
         if 0 > fade_time > 255:
             raise AssertionError("Fade time out of bound.")
         data = bytearray([fade_time, brightness])
-        self.platform.send_cmd_async(self.node, SpikeNodebus.SetLed + self.number, data)
+        self.platform.send_cmd_async(self.node, SpikeNodebus.SetLed + self.index, data)
 
 
 class SpikeDMD(DmdPlatformInterface):
@@ -328,8 +330,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
     def configure_light(self, number, subtype, platform_settings) -> SpikeLight:
         """Configure a light on Stern Spike."""
         del platform_settings, subtype
-        node, number = number.split("-")
-        return SpikeLight(int(node), int(number), self)
+        return SpikeLight(number, self)
 
     def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict):
         """Configure switch on Stern Spike."""
