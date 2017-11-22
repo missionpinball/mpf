@@ -97,7 +97,8 @@ class Light(SystemWideDevice):
         check_set = set()
         for light in machine.lights:
             for driver in light.hw_drivers.values():
-                key = (light.platform, driver.number, type(driver))
+                # Spike platforms identify unique addresses by node + number, so include node if available
+                key = (light.platform, getattr(driver, "node", None), driver.number, type(driver))
                 if key in check_set:
                     raise AssertionError(
                         "Duplicate light number {} {} for light {}".format(
