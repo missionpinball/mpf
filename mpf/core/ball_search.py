@@ -202,8 +202,7 @@ class BallSearch(MpfController):
         desc: The ball search process has been begun.
         '''
 
-        self.machine.events.post('ball_search_phase_1'.format(self.phase),
-                                 iteration=1)
+        self.machine.events.post('ball_search_phase_1', iteration=1)
         # see description below
 
         self._run()
