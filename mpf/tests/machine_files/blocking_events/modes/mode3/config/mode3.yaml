@@ -1,0 +1,10 @@
+#config_version=5
+
+mode:
+  priority: 300
+  game_mode: False
+
+blocking:
+  event1:
+    block: 1
+

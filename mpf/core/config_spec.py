@@ -198,6 +198,9 @@ bitmap_fonts:
     file: single|str|None
     load: single|str|None
     descriptor: ignore
+blocking:
+    __valid_in__: mode
+    __allow_others__:
 bonus_mode_settings:
     display_delay_ms: single|ms|2000
     hurry_up_delay_ms: single|ms|500
@@ -981,7 +984,6 @@ shot_profiles:
     state_names_to_not_rotate: list|str|None
     rotation_pattern: list|str|R
     show_when_disabled: single|bool|False
-    block: single|bool|true
     states:
         show: single|str|None
         name: single|str|

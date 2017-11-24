@@ -22,13 +22,11 @@ shots:
 
 shot_profiles:
   mode2_shot_21:
-    block: false
     states:
       - name: mode2_one
       - name: mode2_two
       - name: mode2_three
   mode2_shot_22:
-    block: false
     states:
       - name: mode2_one
       - name: mode2_two
@@ -60,7 +58,6 @@ shot_profiles:
         start_step: 6
         manual_advance: True
   mode2_shot_26:
-    block: false
     states:
     - name: mode2_one
       show: rainbow3

@@ -4,6 +4,7 @@ from collections import deque, namedtuple
 import uuid
 
 import asyncio
+from enum import Enum
 from functools import partial
 from unittest.mock import MagicMock
 
@@ -18,7 +19,8 @@ if MYPY:   # pragma: no cover
     from typing import Deque
 
 EventHandlerKey = namedtuple("EventHandlerKey", ["key", "event"])
-RegisteredHandler = namedtuple("RegisteredHandler", ["callback", "priority", "kwargs", "key", "condition"])
+RegisteredHandler = namedtuple("RegisteredHandler", ["callback", "priority", "kwargs", "key", "condition",
+                                                     "blocking_facility"])
 PostedEvent = namedtuple("PostedEvent", ["event", "type", "callback", "kwargs"])
 
 
@@ -59,16 +61,19 @@ class EventManager(MpfController):
         else:
             return event_string.lower(), None
 
-    def add_async_handler(self, event: str, handler: Any, priority: int = 1, **kwargs) -> EventHandlerKey:
+    def add_async_handler(self, event: str, handler: Any, priority: int = 1, blocking_facility: Any = None,
+                          **kwargs) -> EventHandlerKey:
         """Register a coroutine as event handler."""
-        return self.add_handler(event, partial(self._async_handler_coroutine, handler), priority, **kwargs)
+        return self.add_handler(event, partial(self._async_handler_coroutine, handler), priority, blocking_facility,
+                                **kwargs)
 
     def _async_handler_coroutine(self, _coroutine, queue, **kwargs):
         queue.wait()
         task = self.machine.clock.loop.create_task(_coroutine(**kwargs))
         task.add_done_callback(lambda future: queue.clear())
 
-    def add_handler(self, event: str, handler: Any, priority: int = 1, **kwargs) -> EventHandlerKey:
+    def add_handler(self, event: str, handler: Any, priority: int = 1, blocking_facility: Any = None,
+                    **kwargs) -> EventHandlerKey:
         """Register an event handler to respond to an event.
 
         If you add a handlers for an event for which it has already been
@@ -137,7 +142,8 @@ class EventManager(MpfController):
         if hasattr(handler, "relative_priority") and not isinstance(handler, MagicMock):
             priority += handler.relative_priority
 
-        self.registered_handlers[event].append(RegisteredHandler(handler, priority, kwargs, key, condition))
+        self.registered_handlers[event].append(RegisteredHandler(handler, priority, kwargs, key, condition,
+                                                                 blocking_facility))
 
         try:
             self.debug_log("Registered %s as a handler for '%s', priority: %s, "
@@ -590,6 +596,12 @@ class EventManager(MpfController):
             # use slice above so we don't process new handlers that came
             # in while we were processing previous handlers
 
+            if '_min_priority' in kwargs and handler.blocking_facility and \
+                (kwargs['_min_priority']['all'] > handler.priority or (
+                    handler.blocking_facility in kwargs['_min_priority'] and
+                    kwargs['_min_priority'][handler.blocking_facility] > handler.priority)):
+                continue
+
             # merge the post's kwargs with the registered handler's kwargs
             # in case of conflict, handler kwargs will win
             merged_kwargs = dict(list(kwargs.items()) + list(handler.kwargs.items()))
@@ -616,11 +628,12 @@ class EventManager(MpfController):
                 kwargs['ev_result'] = False
 
                 self.debug_log("Aborting future event processing")
-
                 break
 
             elif ev_type == 'relay' and isinstance(result, dict):
                 kwargs.update(result)
+            elif isinstance(result, dict) and '_min_priority' in result:
+                kwargs['_min_priority'] = result['_min_priority']
 
         return result
 
