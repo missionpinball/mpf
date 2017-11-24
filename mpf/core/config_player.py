@@ -29,7 +29,7 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
         self.machine = machine      # type: MachineController
 
         # MPF only
-        if hasattr(self.machine, "show_controller"):
+        if hasattr(self.machine, "show_controller") and self.show_section:
             self.machine.show_controller.show_players[self.show_section] = self
 
         self._add_handlers()
@@ -46,7 +46,7 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
 
     def __repr__(self):
         """Return string representation."""
-        return 'ConfigPlayer.{}'.format(self.show_section)
+        return 'ConfigPlayer.{}/{}'.format(self.config_file_section, self.show_section)
 
     def _initialize_in_mode(self, **kwargs):
         del kwargs
@@ -326,7 +326,8 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
         else:
             context = "_global"
 
-        self.play(settings=settings, context=context, calling_context=calling_context, priority=priority, **kwargs)
+        return self.play(settings=settings, context=context, calling_context=calling_context, priority=priority,
+                         **kwargs)
 
     # pylint: disable-msg=too-many-arguments
     def show_play_callback(self, settings, priority, calling_context, show_tokens, context, start_time):
