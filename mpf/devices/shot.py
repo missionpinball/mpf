@@ -37,7 +37,6 @@ class Shot(EnableDisableMixin, ModeDevice):
         """List of tuples: (id, current_position_index, next_switch)"""
         self.active_delays = set()
         self.running_show = None
-        self.mode = None
 
     def device_loaded_in_mode(self, mode: Mode, player: Player):
         """Add device to a mode that was already started.
@@ -46,7 +45,6 @@ class Shot(EnableDisableMixin, ModeDevice):
         that's usually called when a player's turn starts since that was missed
         since the mode started after that.
         """
-        self.mode = mode
         super().device_loaded_in_mode(mode, player)
         self._update_show()
 
@@ -57,11 +55,13 @@ class Shot(EnableDisableMixin, ModeDevice):
 
     def _register_switch_handlers(self):
         for switch in self.config['switches']:
-            self.machine.events.add_handler("{}_active".format(switch.name), self.hit, priority=self.mode.priority)
+            self.machine.events.add_handler("{}_active".format(switch.name), self.hit, priority=self.mode.priority,
+                                            blocking_facility="shot")
 
         for switch in list(self.config['delay_switch'].keys()):
             self.machine.events.add_handler("{}_active".format(switch.name), self._delay_switch_hit,
-                                            switch_name=switch.name, priority=self.mode.priority)
+                                            switch_name=switch.name, priority=self.mode.priority,
+                                            blocking_facility="shot")
 
     def _remove_switch_handlers(self):
         self.delay.clear()
@@ -350,6 +350,9 @@ class Shot(EnableDisableMixin, ModeDevice):
     @event_handler(4)
     def _delay_switch_hit(self, switch_name, **kwargs):
         del kwargs
+        if not self.enabled:
+            return
+
         self.delay.reset(name=switch_name + '_delay_timer',
                          ms=self.config['delay_switch']
                                        [self.machine.switches[switch_name]],

@@ -482,14 +482,16 @@ class Mode(LogMixin):
                 self.add_mode_event_handler(
                     event=event,
                     handler=method,
-                    priority=int(priority) + 2)
+                    priority=int(priority) + 2,
+                    blocking_facility=device.class_label)
             else:
                 self.add_mode_event_handler(
                     event=event,
                     handler=self._control_event_handler,
                     priority=int(priority) + 2,
                     callback=method,
-                    ms_delay=delay)
+                    ms_delay=delay,
+                    blocking_facility=device.class_label)
 
         # get all devices in the mode
         device_list = set()
