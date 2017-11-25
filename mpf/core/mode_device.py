@@ -14,7 +14,7 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialise mode device."""
         super().__init__(machine, name)
-        self.loaded_in_mode = None      # type: Mode
+        self.mode = None    # type: Mode
 
     def device_added_to_mode(self, mode: Mode) -> None:
         """Add device to a running mode.
@@ -28,11 +28,14 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
     def device_loaded_in_mode(self, mode: Mode, player: Player) -> None:
         """Load device in running mode.
 
+        The mode just started.
+
         Args:
             mode: Mode which loaded the device
             player: Current active player
         """
-        pass
+        del player
+        self.mode = mode
 
     @property
     def can_exist_outside_of_game(self) -> bool:
@@ -71,4 +74,5 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
         Args:
             mode: Mode which stopped
         """
-        pass
+        del mode
+        self.mode = None

@@ -53,7 +53,7 @@ class TestBcpInterface(MpfBcpTestCase):
         self.assertIn(
             ('monitored_event', dict(event_name='test2', event_type=None,
                                      event_callback=None, event_kwargs={},
-                                     registered_handlers=[RegisteredHandler(callback='handler', priority=1, kwargs={}, key='abc', condition=None)])),
+                                     registered_handlers=[RegisteredHandler(callback='handler', priority=1, kwargs={}, key='abc', condition=None, blocking_facility=None)])),
             self._bcp_client.send_queue)
 
         self._bcp_client.send_queue.clear()
