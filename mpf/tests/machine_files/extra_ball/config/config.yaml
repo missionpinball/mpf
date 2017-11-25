@@ -49,3 +49,6 @@ extra_ball_groups:
   no_memory:
     lit_memory: false
     max_per_game: 2
+
+event_player:
+  ball_started{current_player.ball==1 and not is_extra_ball}: first_ball

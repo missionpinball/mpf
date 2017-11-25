@@ -18,9 +18,13 @@ class TestExtraBall(MpfGameTestCase):
         self.mock_event('extra_ball_eb1_awarded')
         self.mock_event('extra_ball_award_disabled')
         self.mock_event('extra_ball_eb1_award_disabled')
+        self.mock_event("first_ball")
 
         self.fill_troughs()
         self.start_game()
+
+        self.assertEventCalled("first_ball")
+        self.mock_event("first_ball")
 
         # start mode
         self.post_event("start_mode1")
@@ -85,6 +89,7 @@ class TestExtraBall(MpfGameTestCase):
         self.drain_ball()
         self.advance_time_and_run()
         self.assertEqual(1, self.machine.game.player.number)
+        self.assertEventNotCalled("first_ball")
 
         # EB disabled events should be posted
         self.mock_event('extra_ball_awarded')
