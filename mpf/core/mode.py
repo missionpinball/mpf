@@ -83,13 +83,6 @@ class Mode(LogMixin):
         player in the 'restart_modes_on_next_ball' player variable.
         '''
 
-        if "ball_starting" in self.config['mode']['start_events']:
-            raise AssertionError("Please use ball_started instead of ball_starting to start mode {}.".format(self.name))
-
-        if "player_turn_starting" in self.config['mode']['start_events']:
-            raise AssertionError("Please use player_turn_started instead of player_turn_starting to start mode {}.".
-                                 format(self.name))
-
     @staticmethod
     def get_config_spec() -> str:
         """Return config spec for mode_settings."""

@@ -1,7 +1,8 @@
 # config_version=5
 mode:
   priority: 200
-  start_events: ball_started
+  start_events: ball_starting
+  stop_events: ball_ending
 
 light_player:
   "{machine.test == 23}":
