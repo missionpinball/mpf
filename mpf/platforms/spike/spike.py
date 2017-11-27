@@ -399,7 +399,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
         connector = self.machine.clock.open_serial_connection(
             url=port, baudrate=baud, rtscts=flow_control)
         self._reader, self._writer = yield from connector
-        self._writer.transport.set_write_buffer_limits(4096, 1024)
+        self._writer.transport.set_write_buffer_limits(2048, 1024)
 
         yield from self._initialize()
 
@@ -561,8 +561,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
             self.log.debug("Sending: %s", "".join("%02x " % b for b in data))
         for start in range(0, len(data), 256):
             block = data[start:start + 256]
-            self._writer.write(("".join("%02x " % b for b in block).encode()))
-            self._writer.write("\n\r".encode())
+            self._writer.write(block)
         yield from self._writer.drain()
 
     @asyncio.coroutine

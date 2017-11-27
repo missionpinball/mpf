@@ -38,9 +38,7 @@ class MockSpikeSocket(MockSerial):
             self.queue.append(b'MPF Spike Bridge!\r\n')
             return len(encoded_msg)
 
-        msg = bytearray()
-        for i in range(int(len(encoded_msg) / 3)):
-            msg.append(int(encoded_msg[i * 3:(i * 3) + 2], 16))
+        msg = encoded_msg
 
         msg = bytes(msg)
 
