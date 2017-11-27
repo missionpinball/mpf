@@ -377,13 +377,14 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform, DmdPla
 
         port = self.config['port']
         baud = self.config['baud']
+        flow_control = self.config['flow_control']
         self.debug = self.config['debug']
         self._nodes = self.config['nodes']
 
         if 0 not in self._nodes:
             raise AssertionError("Please include CPU node 0 in nodes for Spike.")
 
-        self.machine.clock.loop.run_until_complete(self._connect_to_hardware(port, baud))
+        self.machine.clock.loop.run_until_complete(self._connect_to_hardware(port, baud, flow_control))
 
         self._poll_task = self.machine.clock.loop.create_task(self._poll())
         self._poll_task.add_done_callback(self._done)
@@ -396,11 +397,11 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform, DmdPla
             self._send_key_task.add_done_callback(self._done)
 
     @asyncio.coroutine
-    def _connect_to_hardware(self, port, baud):
+    def _connect_to_hardware(self, port, baud, flow_control):
         self.log.info("Connecting to %s at %sbps", port, baud)
 
         connector = self.machine.clock.open_serial_connection(
-            url=port, baudrate=baud, rtscts=True)
+            url=port, baudrate=baud, rtscts=flow_control)
         self._reader, self._writer = yield from connector
         self._writer.transport.set_write_buffer_limits(4096, 1024)
 
