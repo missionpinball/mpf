@@ -83,6 +83,10 @@ class Shot(EnableDisableMixin, ModeDevice):
         if not self.enabled and not force:
             return False
 
+        if not self.player:
+            # no player no state
+            return False
+
         profile_name = self.config['profile'].name
         state = self._get_state()
 
@@ -112,6 +116,9 @@ class Shot(EnableDisableMixin, ModeDevice):
     @property
     def state_name(self):
         """Return current state name."""
+        if not self.player:
+            # no player no state
+            return "None"
         return self.config['profile'].config['states'][self._get_state()]['name']
 
     @property
@@ -247,7 +254,7 @@ class Shot(EnableDisableMixin, ModeDevice):
         # mark the playfield active no matter what
         self.config['playfield'].mark_playfield_active_from_device_action()
 
-        if not self.enabled:
+        if not self.enabled or not self.player:
             return
 
         # Stop if there is an active delay but no sequence
@@ -380,6 +387,10 @@ class Shot(EnableDisableMixin, ModeDevice):
 
         if not self.enabled and not force:
             self.debug_log("Profile is disabled and force is False. Not jumping")
+            return
+
+        if not self.player:
+            # no player no state
             return
 
         current_state = self._get_state()
