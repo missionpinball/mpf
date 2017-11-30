@@ -87,7 +87,10 @@ class LightPlayer(DeviceConfigPlayer):
             raise AssertionError("Could not find light or tag {} in {}".format(light_name, full_context))
 
         for light in lights:
-            self._light_color(light, instance_dict, full_context, color, **s)
+            if color == "stop":
+                self._light_remove(light, instance_dict, full_context)
+            else:
+                self._light_color(light, instance_dict, full_context, color, **s)
 
     @staticmethod
     def _light_color(light, instance_dict, full_context, color, **s):
