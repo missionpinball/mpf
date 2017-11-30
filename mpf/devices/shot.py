@@ -203,8 +203,9 @@ class Shot(EnableDisableMixin, ModeDevice):
                 self._play_show(settings=state_settings, start_step=start_step)
 
         # if neither if/elif above happens, it means the current step has no
-        # show but the previous step had one. That means we do nothing for the
-        # show. Leave it alone doing whatever it was doing before.
+        # show but the previous step had one. We stop the previous show if there is one
+        elif self.running_show:
+            self._stop_show()
 
     def _play_show(self, settings, start_step=None):
         s = copy(settings)
