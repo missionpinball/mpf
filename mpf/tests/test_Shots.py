@@ -418,36 +418,6 @@ class TestShots(MpfTestCase):
         self.advance_time_and_run(1)
         self.assertLightColor("led_12", "blue")
 
-    def test_step_with_no_show_after_step_with_show(self):
-        self.start_game()
-
-        # start_game() advances the time 1 sec, so by now we're already on
-        # step 2 of the rainbow show
-
-        # profile step 1, show1 is running
-        self.assertLightColor("led_13", "orange")
-
-        # step 2 has no show, so rainbow should still be running
-        self.hit_and_release_switch("switch_13")
-        self.advance_time_and_run(1)
-        self.assertLightColor("led_13", "yellow")
-
-        # make sure it's still advancing even with no switch hits
-        self.advance_time_and_run(1)
-        self.assertLightColor("led_13", "green")
-
-        # hit the shot again, we switch to show 2
-        self.hit_and_release_switch("switch_13")
-        self.advance_time_and_run(0.1)
-        self.assertLightColor("led_13", "aliceblue")
-
-        # make sure that show is running with no more hits
-        self.advance_time_and_run(1)
-        self.assertLightColor("led_13", "antiquewhite")
-
-        self.advance_time_and_run(1)
-        self.assertLightColor("led_13", "aquamarine")
-
     def test_show_ending_no_loop(self):
         # tests that if a show is set to loops: 0, that it truly stops on the
         # last step. Note that loops here is really a setting of the show
