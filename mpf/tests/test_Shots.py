@@ -519,6 +519,13 @@ class TestShots(MpfTestCase):
         self.assertEqual(1, self._events["shot_16_hit"])  # still 1 from before
         self.assertEqual(shot16.state_name, 'lit')
 
+        self.post_event("custom_enable_16")
+        self.assertTrue(self.machine.shots.shot_16.enabled)
+
+        self.post_event('custom_hit_16')
+        self.assertEqual(2, self._events["shot_16_hit"])
+        self.assertEqual(shot16.state_name, 'lit')
+
         # mode1 is not active, so make sure none of the events from
         # mode1_shot_17
 
