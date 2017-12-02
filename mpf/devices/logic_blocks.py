@@ -94,6 +94,7 @@ class LogicBlock(SystemWideDevice, ModeDevice):
 
     def device_loaded_in_mode(self, mode: Mode, player: Player):
         """Restore internal state from player if persist_state is set or create new state."""
+        super().device_loaded_in_mode(mode, player)
         if self.config['persist_state']:
             if not player.is_player_var(self.player_state_variable):
                 player[self.player_state_variable] = LogicBlockState(self.get_start_value())
@@ -113,6 +114,7 @@ class LogicBlock(SystemWideDevice, ModeDevice):
 
     def device_removed_from_mode(self, mode: Mode):
         """Unset internal state to prevent leakage."""
+        super().device_removed_from_mode(mode)
         self._state = None
 
     @property
