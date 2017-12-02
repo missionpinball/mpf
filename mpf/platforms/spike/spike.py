@@ -683,6 +683,8 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform, DmdPla
     def _initialize(self) -> None:
         # send ctrl+c to stop whatever is running
         self._writer.write(b'\x03reset\n')
+        # wait for the serial
+        yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
         # flush input
         self._writer.transport.serial.reset_input_buffer()
         # pylint: disable-msg=protected-access
@@ -694,6 +696,9 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform, DmdPla
         data = yield from self._reader.read(100)
         if data[-len(welcome_str):] != welcome_str:
             raise AssertionError("Expected '{}' got '{}'".format(welcome_str, data[:len(welcome_str)]))
+
+        # increase baud rate
+        self._writer.transport.serial.baudrate = 921600
 
         yield from self.send_cmd_sync(0, SpikeNodebus.Reset, bytearray())
         yield from self.send_cmd_sync(0, SpikeNodebus.SetTraffic, bytearray([34]))
