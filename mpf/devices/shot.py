@@ -37,6 +37,7 @@ class Shot(EnableDisableMixin, ModeDevice):
         """List of tuples: (id, current_position_index, next_switch)"""
         self.active_delays = set()
         self.running_show = None
+        self._handlers = []
 
     def device_loaded_in_mode(self, mode: Mode, player: Player):
         """Add device to a mode that was already started.
@@ -54,21 +55,25 @@ class Shot(EnableDisableMixin, ModeDevice):
                 self.config['switches'].append(switch)
 
     def _register_switch_handlers(self):
+        self._handlers = []
         for switch in self.config['switches']:
-            self.machine.events.add_handler("{}_active".format(switch.name), self.hit, priority=self.mode.priority,
-                                            blocking_facility="shot")
+            self._handlers.append(self.machine.events.add_handler("{}_active".format(switch.name),
+                                                                  self.hit, priority=self.mode.priority,
+                                                                  blocking_facility="shot"))
 
         for switch in list(self.config['delay_switch'].keys()):
-            self.machine.events.add_handler("{}_active".format(switch.name), self._delay_switch_hit,
-                                            switch_name=switch.name, priority=self.mode.priority,
-                                            blocking_facility="shot")
+            self._handlers.append(self.machine.events.add_handler("{}_active".format(switch.name),
+                                                                  self._delay_switch_hit,
+                                                                  switch_name=switch.name,
+                                                                  priority=self.mode.priority,
+                                                                  blocking_facility="shot"))
 
     def _remove_switch_handlers(self):
         self.delay.clear()
         self.active_delays = set()
 
-        self.machine.events.remove_handler(self.hit)
-        self.machine.events.remove_handler(self._delay_switch_hit)
+        self.machine.events.remove_handlers_by_keys(self._handlers)
+        self._handlers = []
 
     @event_handler(6)
     def advance(self, force=False, **kwargs) -> bool:
