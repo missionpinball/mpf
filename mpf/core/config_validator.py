@@ -285,6 +285,8 @@ class ConfigValidator(object):
                     validation_failure_info[0], config))
 
     def _validate_type_subconfig(self, item, param, validation_failure_info):
+        if item is None:
+            return None
         try:
             attribute, base_spec_str = param.split(",", 1)
             base_spec = base_spec_str.split(",")
