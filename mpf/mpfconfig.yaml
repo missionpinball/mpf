@@ -84,6 +84,7 @@ mpf:
         - mpf.devices.sequence_shot.SequenceShot
         - mpf.devices.hardware_sound_system.HardwareSoundSystem
         - mpf.devices.stepper.Stepper
+        - mpf.devices.state_machine.StateMachine
 
     plugins:
         mpf.plugins.auditor.Auditor

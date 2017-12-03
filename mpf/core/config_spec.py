@@ -987,9 +987,6 @@ shot_profiles:
     states:
         show: single|str|None
         name: single|str|
-        # These settings are same as show_player. Could probably get fancy with
-        # the validator to make this automatically pull them in.
-        action: single|enum(play,stop,pause,resume,advance,step_back,update)|play
         priority: single|int|0
         speed: single|float|1
         start_step: single|int|1
@@ -997,6 +994,30 @@ shot_profiles:
         sync_ms: single|int|None
         manual_advance: single|bool|None
         show_tokens: dict|str:str|None
+state_machines:
+    __valid_in__: machine, mode
+    states: dict|str:subconfig(state_machine_states)|
+    transitions: list|subconfig(state_machine_transitions)|
+    persist_state: single|bool|False
+state_machine_transitions:
+    source: list|str|
+    target: single|str|
+    events: list|str|
+    events_when_transitioning: list|str|None
+state_machine_states:
+    label: single|str|None
+    show_when_active: single|subconfig(show_config)|None
+    events_when_started: list|str|None
+    events_when_stopped: list|str|None
+show_config:
+    show: single|str|
+    show_tokens: dict|str:str|None
+    manual_advance: single|bool|None
+    sync_ms: single|int|None
+    loops: single|int|-1
+    priority: single|int|0
+    speed: single|float|1
+    start_step: single|int|1
 show_player:
     __valid_in__: machine, mode, show
     action: single|enum(play,stop,pause,resume,advance,step_back,update)|play
