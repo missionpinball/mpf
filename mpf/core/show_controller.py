@@ -86,3 +86,17 @@ class ShowController(MpfController):
     def notify_show_stopping(self, show):
         """Remove a running show."""
         self.running_shows.remove(show)
+
+    def play_show_with_config(self, config, mode=None, start_time=None):
+        """Play and return a show from config.
+
+        Will add the mode priority if a mode is passed.
+        """
+        show = self.machine.shows[config['show']]
+        priority = config['priority'] + mode.priority if mode else config['priority']
+        running_show = show.play(priority=priority, speed=config['speed'],
+                                 start_step=config['start_step'], loops=config['loops'],
+                                 sync_ms=config['sync_ms'], manual_advance=config['manual_advance'],
+                                 show_tokens=config['show_tokens'], start_time=start_time)
+
+        return running_show
