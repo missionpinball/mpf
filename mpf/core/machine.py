@@ -33,6 +33,7 @@ if MYPY:   # pragma: no cover
     from mpf.modes.game.code.game import Game
     from mpf.core.events import EventManager
     from mpf.core.switch_controller import SwitchController
+    from mpf.core.show_controller import ShowController
 
     from mpf.core.scriptlet import Scriptlet
     from mpf.core.mode_controller import ModeController
@@ -121,6 +122,7 @@ class MachineController(LogMixin):
             self.bcp = None                             # type: Bcp
             self.asset_manager = None                   # type: BaseAssetManager
             self.ball_controller = None                 # type: BallController
+            self.show_controller = None                 # type: ShowController
             self.placeholder_manager = None             # type: PlaceholderManager
             self.device_manager = None                  # type: DeviceManager
             self.auditor = None                         # type: Auditor
