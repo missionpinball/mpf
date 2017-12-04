@@ -30,6 +30,32 @@ class TestShots(MpfTestCase):
         self.advance_time_and_run()
         self.assertIsNone(self.machine.game)
 
+    def test_block(self):
+        self.start_game()
+        self.assertEqual("unlit", self.machine.shots.shot_3.state_name)
+
+        self.hit_and_release_switch("switch_3")
+        self.advance_time_and_run(.1)
+        self.assertTrue(self.machine.shots.shot_3.enabled)
+        self.assertEqual("lit", self.machine.shots.shot_3.state_name)
+
+        self.machine.shots.shot_3.reset()
+        self.assertEqual("unlit", self.machine.shots.shot_3.state_name)
+
+        # Start the mode and make sure those shots load
+        self.start_mode("mode1")
+
+        self.assertTrue(self.machine.shots.shot_3.enabled)
+        self.assertTrue(self.machine.shots.mode1_shot_3.enabled)
+        self.assertEqual("unlit", self.machine.shots.shot_3.state_name)
+        self.assertEqual("mode1_one", self.machine.shots.mode1_shot_3.state_name)
+
+        self.hit_and_release_switch("switch_3")
+        self.advance_time_and_run(.1)
+
+        self.assertEqual("unlit", self.machine.shots.shot_3.state_name)
+        self.assertEqual("mode1_two", self.machine.shots.mode1_shot_3.state_name)
+
     def test_loading_shots(self):
         # Make sure machine-wide shots load & mode-specific shots do not
         self.assertIn('shot_1', self.machine.shots)

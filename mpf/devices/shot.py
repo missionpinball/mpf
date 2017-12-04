@@ -254,8 +254,6 @@ class Shot(EnableDisableMixin, ModeDevice):
         Note that the shot must be enabled in order for this hit to be
         processed.
         """
-        del kwargs
-
         # mark the playfield active no matter what
         self.config['playfield'].mark_playfield_active_from_device_action()
 
@@ -353,6 +351,12 @@ class Shot(EnableDisableMixin, ModeDevice):
         args:
         profile: The name of the profile that was active when hit.
         state: The name of the state the profile was in when it was hit'''
+
+        if self.profile.config['block']:
+            min_priority = kwargs.get("_min_priority", {"all": 0})
+            min_shots = min_priority.get("shot", 0)
+            min_priority["shot"] = self.mode.priority if self.mode.priority > min_shots else min_shots
+            return {"_min_priority": min_priority}
 
     def _notify_monitors(self, profile, state):
         if Shot.monitor_enabled and "shots" in self.machine.monitors:

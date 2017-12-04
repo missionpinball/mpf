@@ -2,7 +2,7 @@
 mode:
     start_events: player_turn_started
     stop_events: player_turn_stopped
-    priority: 100
+    priority: 50
 
 shots:
   shot_1:

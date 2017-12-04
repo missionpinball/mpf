@@ -984,6 +984,7 @@ shot_profiles:
     state_names_to_not_rotate: list|str|None
     rotation_pattern: list|str|R
     show_when_disabled: single|bool|False
+    block: single|bool|False
     states:
         show: single|str|None
         name: single|str|

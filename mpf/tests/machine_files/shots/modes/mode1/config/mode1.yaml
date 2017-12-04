@@ -21,6 +21,9 @@ shots:
       leds: light_2
     start_enabled: True
     profile: mode1_shot_2
+  mode1_shot_3:
+    switch: switch_3
+    profile: mode1_shot_3
 
 shot_groups:
     mode_group:
@@ -33,4 +36,12 @@ shot_profiles:
     - name: mode1_one
     - name: mode1_two
     - name: mode1_three
+  mode1_shot_3:
+    show: rainbow2
+    block: True
+    states:
+    - name: mode1_one
+    - name: mode1_two
+    - name: mode1_three
+
 
