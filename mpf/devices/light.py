@@ -205,17 +205,23 @@ class Light(SystemWideDevice):
         self.config['default_on_color'] = RGBColor(self.config['default_on_color'])
 
         if self.config['color_correction_profile'] is not None:
-            if self.config['color_correction_profile'] in (
-                    self.machine.light_controller.light_color_correction_profiles):
-                profile = self.machine.light_controller.light_color_correction_profiles[
-                    self.config['color_correction_profile']]
+            profile_name = self.config['color_correction_profile']
+        elif 'light_settings' in self.machine.config and \
+                self.machine.config['light_settings']['default_color_correction_profile'] is not None:
+            profile_name = self.machine.config['light_settings']['default_color_correction_profile']
+        else:
+            profile_name = None
+
+        if profile_name:
+            if profile_name in self.machine.light_controller.light_color_correction_profiles:
+                profile = self.machine.light_controller.light_color_correction_profiles[profile_name]
 
                 if profile is not None:
                     self._set_color_correction_profile(profile)
             else:   # pragma: no cover
                 error = "Color correction profile '{}' was specified for light '{}'"\
                         " but the color correction profile does not exist."\
-                    .format(self.config['color_correction_profile'], self.name)
+                        .format(profile_name, self.name)
                 self.error_log(error)
                 raise ValueError(error)
 

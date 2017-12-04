@@ -6,10 +6,42 @@ from mpf.tests.MpfTestCase import MpfTestCase
 class TestLed(MpfTestCase):
 
     def getConfigFile(self):
-        return 'led.yaml'
+        if self._testMethodName == "test_default_color_correction":
+            return 'light_default_color_correction.yaml'
+        else:
+            return 'led.yaml'
 
     def getMachinePath(self):
         return 'tests/machine_files/led/'
+
+    def test_default_color_correction(self):
+        led = self.machine.lights.led1
+        led.color(RGBColor("white"))
+        self.advance_time_and_run()
+        # color is uncorrected
+        self.assertLightColor("led1", RGBColor("white"))
+        # corrected color
+        self.assertEqual(RGBColor([210, 184, 159]), led.color_correct(led.get_color()))
+        # check hardware
+        self.assertEqual(210 / 255.0, led.hw_drivers["red"].current_brightness)
+        self.assertEqual(184 / 255.0, led.hw_drivers["green"].current_brightness)
+        self.assertEqual(159 / 255.0, led.hw_drivers["blue"].current_brightness)
+
+        led.color(RGBColor([128, 128, 128]))
+        self.advance_time_and_run()
+        self.assertLightColor("led1", [128, 128, 128])
+        self.assertEqual(RGBColor([96, 83, 70]), led.color_correct(led.get_color()))
+        self.assertEqual(96 / 255.0, led.hw_drivers["red"].current_brightness)
+        self.assertEqual(83 / 255.0, led.hw_drivers["green"].current_brightness)
+        self.assertEqual(70 / 255.0, led.hw_drivers["blue"].current_brightness)
+
+        led.color(RGBColor("black"))
+        self.advance_time_and_run()
+        self.assertLightColor("led1", [0, 0, 0])
+        self.assertEqual(RGBColor([0, 0, 0]), led.color_correct(led.get_color()))
+        self.assertEqual(0 / 255.0, led.hw_drivers["red"].current_brightness)
+        self.assertEqual(0 / 255.0, led.hw_drivers["green"].current_brightness)
+        self.assertEqual(0 / 255.0, led.hw_drivers["blue"].current_brightness)
 
     def test_color_and_stack(self):
         led1 = self.machine.lights.led1
