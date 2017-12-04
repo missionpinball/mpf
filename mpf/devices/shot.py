@@ -231,7 +231,6 @@ class Shot(EnableDisableMixin, ModeDevice):
 
         s.pop('show')
         s.pop('name')
-        s.pop('action')
 
         self.debug_log("Playing show: %s. %s", show_name, s)
 
