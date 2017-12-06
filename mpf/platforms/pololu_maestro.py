@@ -60,7 +60,7 @@ class PololuServo(ServoPlatformInterface):
         self.number = number
         self.config = config
         self.serial = serial_port
-        self.cmd_header = chr(0xaa) + chr(0xc)
+        self.cmd_header = bytes([0xaa, 0xc])
 
     def go_to_position(self, position):
         """Set channel to a specified target value.
@@ -94,7 +94,9 @@ class PololuServo(ServoPlatformInterface):
         msb = (value >> 7) & 0x7f  # shift 7 and take next 7 bits for msb
         # Send Pololu intro, device number, command, channel, and target
         # lsb/msb
-        cmd = self.cmd_header + chr(0x04) + chr(self.number) + chr(lsb) + chr(msb)
+        cmd = self.cmd_header + bytes([0x04, self.number, lsb, msb])
+        if self.config['debug']:
+            self.log.debug("Sending cmd: %s", "".join(" 0x%02x" % b for b in cmd))
         self.serial.write(cmd)
 
     def set_speed(self, speed):
@@ -115,7 +117,7 @@ class PololuServo(ServoPlatformInterface):
         """
         lsb = speed & 0x7f  # 7 bits for least significant byte
         msb = (speed >> 7) & 0x7f  # shift 7 and take next 7 bits for msb
-        cmd = self.cmd_header + chr(0x07) + chr(self.number) + chr(lsb) + chr(msb)
+        cmd = self.cmd_header + bytes([0x07, self.number, lsb, msb])
         self.serial.write(cmd)
 
     def set_acceleration(self, accel):
@@ -130,5 +132,5 @@ class PololuServo(ServoPlatformInterface):
         """
         lsb = accel & 0x7f  # 7 bits for least significant byte
         msb = (accel >> 7) & 0x7f  # shift 7 and take next 7 bits for msb
-        cmd = self.cmd_header + chr(0x09) + chr(self.number) + chr(lsb) + chr(msb)
+        cmd = self.cmd_header + bytes([0x09, self.number, lsb, msb])
         self.serial.write(cmd)

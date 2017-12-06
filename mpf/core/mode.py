@@ -32,6 +32,7 @@ class Mode(LogMixin):
         self.path = path
         self.priority = 0
         self._active = False
+        self._starting = False
         self._mode_start_wait_queue = None
         self.stop_methods = list()
         self.timers = dict()
@@ -179,6 +180,23 @@ class Mode(LogMixin):
         if self._active:
             self.debug_log("Mode is already active. Aborting start.")
             return
+
+        if self._starting:
+            self.debug_log("Mode already starting. Aborting start.")
+            return
+
+        self._starting = True
+
+        self.machine.events.post('mode_' + self.name + '_will_start')
+        '''event: mode_(name)_will_start
+
+        desc: Posted when a mode is about to start. The "name" part is replaced
+        with the actual name of the mode, so the actual event posted is
+        something like *mode_attract_will_start*, *mode_base_will_start*, etc.
+
+        This is posted before the "mode_(name)_starting" event.
+        '''
+
         if self.config['mode']['use_wait_queue'] and 'queue' in kwargs:
 
             self.debug_log("Registering a mode start wait queue")
@@ -237,6 +255,7 @@ class Mode(LogMixin):
         self.info_log('Started. Priority: %s', self.priority)
 
         self.active = True
+        self._starting = False
 
         if 'timers' in self.config:
             self._setup_timers()

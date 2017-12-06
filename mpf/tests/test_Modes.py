@@ -1,4 +1,7 @@
 from unittest.mock import MagicMock
+
+from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
+
 from mpf.tests.MpfTestCase import MpfTestCase
 
 
@@ -23,7 +26,23 @@ class TestModes(MpfTestCase):
         self.assertIn('Mode4', self.machine.modes)
 
     def test_mode_start_stop(self):
-        # start mode 1
+        # Setup mocked event handlers for mode start/stop sequence
+        self.mode1_will_start_event_handler = MagicMock()
+        self.mode1_starting_event_handler = MagicMock()
+        self.mode1_started_event_handler = MagicMock()
+        self.mode1_will_stop_event_handler = MagicMock()
+        self.mode1_stopping_event_handler = MagicMock()
+        self.mode1_stopped_event_handler = MagicMock()
+
+        self.machine.events.add_handler('mode_mode1_will_start', self.mode1_will_start_event_handler)
+        self.machine.events.add_handler('mode_mode1_starting', self.mode1_starting_event_handler)
+        self.machine.events.add_handler('mode_mode1_started', self.mode1_started_event_handler)
+        self.machine.events.add_handler('mode_mode1_will_stop', self.mode1_will_stop_event_handler)
+        self.machine.events.add_handler('mode_mode1_stopping', self.mode1_stopping_event_handler)
+        self.machine.events.add_handler('mode_mode1_stopped', self.mode1_stopped_event_handler)
+
+        # start mode 1. It should only start once
+        self.machine.events.post('start_mode1')
         self.machine.events.post('start_mode1')
         self.advance_time_and_run()
         self.assertTrue(self.machine.mode_controller.is_active('mode1'))
@@ -34,6 +53,8 @@ class TestModes(MpfTestCase):
         self.assertFalse(self.machine.modes.mode2.active)
         self.assertIn(self.machine.modes.mode1,
                       self.machine.mode_controller.active_modes)
+
+        self.assertEqual(1, self.mode1_starting_event_handler.called)
 
         # test config via include
         self.assertEqual(123, self.machine.modes.mode1.config['mode_settings']['test'])
@@ -186,3 +207,38 @@ class TestModes(MpfTestCase):
         self.assertTrue(self.machine.modes.mode1.active)
         self.assertFalse(self.machine.modes.mode2.active)
         self.assertFalse(self.machine.modes.mode3.active)
+
+
+class TestModesInGame(MpfFakeGameTestCase):
+
+    def getConfigFile(self):
+        return 'test_modes_in_game.yaml'
+
+    def getMachinePath(self):
+        return 'tests/machine_files/mode_tests/'
+
+    def test_restart_on_next_ball(self):
+        """Test restart_on_next_ball."""
+        self.mock_event("mode_mode_restart_on_next_ball_will_start")
+        self.assertModeNotRunning("mode_restart_on_next_ball")
+        self.start_game()
+
+        self.assertModeNotRunning("mode_restart_on_next_ball")
+        self.drain_ball()
+
+        # mode shoud not be started
+        self.assertModeNotRunning("mode_restart_on_next_ball")
+
+        # start it
+        self.post_event("start_mode_restart_on_next_ball")
+        self.advance_time_and_run()
+
+        # it should run
+        self.assertModeRunning("mode_restart_on_next_ball")
+        self.assertEventCalled("mode_mode_restart_on_next_ball_will_start", 1)
+
+        # check that mode is restarted on next ball
+        self.mock_event("mode_mode_restart_on_next_ball_will_start")
+        self.drain_ball()
+        self.assertModeRunning("mode_restart_on_next_ball")
+        self.assertEventCalled("mode_mode_restart_on_next_ball_will_start", 1)

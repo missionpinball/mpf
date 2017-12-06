@@ -6,12 +6,13 @@ import random
 from typing import Generator
 
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface
+from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 
 from mpf.platforms.interfaces.matrix_light_platform_interface import MatrixLightPlatformInterface
 
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
 from mpf.platforms.spike.spike_defines import SpikeNodebus
-from mpf.core.platform import SwitchPlatform, MatrixLightsPlatform, DriverPlatform
+from mpf.core.platform import SwitchPlatform, MatrixLightsPlatform, DriverPlatform, DmdPlatform
 
 
 class SpikeSwitch(SwitchPlatformInterface):
@@ -42,6 +43,76 @@ class SpikeLight(MatrixLightPlatformInterface):
         fade_time = 12  # 10ms fade time by default
         data = bytearray([fade_time, brightness])
         self.platform.send_cmd_async(self.node, SpikeNodebus.SetLed + self.number, data)
+
+
+class SpikeDMD(DmdPlatformInterface):
+
+    """The DMD on the SPIKE system."""
+
+    def __init__(self, platform):
+        """Initialise DMD."""
+        self.platform = platform
+        self.data = None
+        self.new_frame_event = asyncio.Event(loop=platform.machine.clock.loop)
+        self.dmd_task = platform.machine.clock.loop.create_task(self._dmd_send())
+        self.dmd_task.add_done_callback(self._done)
+
+    @staticmethod
+    def _done(future):
+        try:
+            future.result()
+        except asyncio.CancelledError:
+            pass
+
+    def update(self, data: bytes):
+        """Remember the last frame data."""
+        self.data = data
+        self.new_frame_event.set()
+
+    @asyncio.coroutine
+    def _dmd_send(self):
+        while True:
+            yield from self.new_frame_event.wait()
+            self.new_frame_event.clear()
+            yield from self.send_update()
+
+    @asyncio.coroutine
+    def send_update(self):
+        """Send update to platform."""
+        if len(self.data) != 128 * 32:
+            raise AssertionError("Invalid frame length for SPIKE. Should be 128*32 pixels.")
+        frame1 = bytearray()
+        frame2 = bytearray()
+        frame3 = bytearray()
+        frame4 = bytearray()
+        # we build four frames for a 128*32 pixel display. one bit per pixel each = 512bytes
+        for i in range(512):
+            pixel1 = 0
+            pixel2 = 0
+            pixel3 = 0
+            pixel4 = 0
+            for p in range(8):
+                pixel_data = self.data[i * 8 + p]
+                pixel1 += 1 if pixel_data & 0x01 else 0
+                pixel2 += 1 if pixel_data & 0x02 else 0
+                pixel3 += 1 if pixel_data & 0x04 else 0
+                pixel4 += 1 if pixel_data & 0x08 else 0
+                pixel1 *= 2
+                pixel2 *= 2
+                pixel3 *= 2
+                pixel4 *= 2
+
+            frame1.append(int(pixel1 / 2))
+            frame2.append(int(pixel2 / 2))
+            frame3.append(int(pixel3 / 2))
+            frame4.append(int(pixel4 / 2))
+        yield from self.platform.send_cmd_raw(bytes([0x80, 0x00, 0x90]) + bytes(frame1) + bytes(frame2) +
+                                              bytes(frame3) + bytes(frame4))
+
+    def set_brightness(self, brightness: float):
+        """Set brightness of the DMD."""
+        # we do not yet know how that works in SPIKE
+        pass
 
 
 class SpikeDriver(DriverPlatformInterface):
@@ -163,8 +234,8 @@ class SpikeDriver(DriverPlatformInterface):
         """Return name for service mode."""
         return "Spike Node {}".format(self.node)
 
-
-class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
+# pylint: disable-msg=too-many-arguments
+class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform, DmdPlatform):
 
     """Stern Spike Platform."""
 
@@ -294,6 +365,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
         self._poll_task = None
         self._sender_task = None
         self._send_key_task = None
+        self.dmd = None
 
         self._nodes = None
         self._bus_busy = asyncio.Lock(loop=self.machine.clock.loop)
@@ -305,13 +377,14 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
 
         port = self.config['port']
         baud = self.config['baud']
+        flow_control = self.config['flow_control']
         self.debug = self.config['debug']
         self._nodes = self.config['nodes']
 
         if 0 not in self._nodes:
             raise AssertionError("Please include CPU node 0 in nodes for Spike.")
 
-        self.machine.clock.loop.run_until_complete(self._connect_to_hardware(port, baud))
+        self.machine.clock.loop.run_until_complete(self._connect_to_hardware(port, baud, flow_control))
 
         self._poll_task = self.machine.clock.loop.create_task(self._poll())
         self._poll_task.add_done_callback(self._done)
@@ -324,12 +397,13 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
             self._send_key_task.add_done_callback(self._done)
 
     @asyncio.coroutine
-    def _connect_to_hardware(self, port, baud):
+    def _connect_to_hardware(self, port, baud, flow_control):
         self.log.info("Connecting to %s at %sbps", port, baud)
 
         connector = self.machine.clock.open_serial_connection(
-            url=port, baudrate=baud, limit=0)
+            url=port, baudrate=baud, rtscts=flow_control)
         self._reader, self._writer = yield from connector
+        self._writer.transport.set_write_buffer_limits(2048, 1024)
 
         yield from self._initialize()
 
@@ -475,9 +549,10 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
     @asyncio.coroutine
     def _send_raw(self, data):
         if self.debug:
-            self.log.debug("Sending: %s", "".join("0x%02x " % b for b in data))
-        self._writer.write(("".join("%02x " % b for b in data).encode()))
-        self._writer.write("\n\r".encode())
+            self.log.debug("Sending: %s", "".join("%02x " % b for b in data))
+        for start in range(0, len(data), 256):
+            block = data[start:start + 256]
+            self._writer.write(block)
         yield from self._writer.drain()
 
     @asyncio.coroutine
@@ -568,6 +643,14 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
             if wait_ms:
                 yield from self._send_raw(bytearray([1, wait_ms]))
 
+    @asyncio.coroutine
+    def send_cmd_raw(self, data, wait_ms=0):
+        """Send raw command."""
+        with (yield from self._bus_busy):
+            yield from self._send_raw(data)
+            if wait_ms:
+                yield from self._send_raw(bytearray([1, wait_ms]))
+
     def send_cmd_async(self, node, cmd, data):
         """Send cmd which does not require a response."""
         cmd_str = self._create_cmd_str(node, cmd, data)
@@ -589,10 +672,19 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
 
         return result
 
+    def configure_dmd(self):
+        """Configure a DMD."""
+        if self.dmd:
+            raise AssertionError("Can only configure dmd once.")
+        self.dmd = SpikeDMD(self)
+        return self.dmd
+
     @asyncio.coroutine
     def _initialize(self) -> None:
         # send ctrl+c to stop whatever is running
         self._writer.write(b'\x03reset\n')
+        # wait for the serial
+        yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
         # flush input
         self._writer.transport.serial.reset_input_buffer()
         # pylint: disable-msg=protected-access
@@ -604,6 +696,9 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform):
         data = yield from self._reader.read(100)
         if data[-len(welcome_str):] != welcome_str:
             raise AssertionError("Expected '{}' got '{}'".format(welcome_str, data[:len(welcome_str)]))
+
+        # increase baud rate
+        self._writer.transport.serial.baudrate = 921600
 
         yield from self.send_cmd_sync(0, SpikeNodebus.Reset, bytearray())
         yield from self.send_cmd_sync(0, SpikeNodebus.SetTraffic, bytearray([34]))

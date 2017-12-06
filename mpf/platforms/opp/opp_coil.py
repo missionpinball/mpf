@@ -92,7 +92,7 @@ class OPPSolenoidCard(object):
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, chain_serial, addr, mask, sol_dict, platform):
-        """Initialise OPP solennoid card."""
+        """Initialise OPP solenoid card."""
         self.log = logging.getLogger('OPPSolenoid')
         self.chain_serial = chain_serial
         self.addr = addr

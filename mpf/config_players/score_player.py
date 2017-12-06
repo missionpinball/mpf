@@ -23,6 +23,9 @@ class ScorePlayer(ConfigPlayer):
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Score variable."""
         for var, s in settings.items():
+            if var == "block":
+                raise AssertionError('Do not use "block" as variable name in score_player.')
+
             block_item = var + ":" + calling_context
             if self._is_blocked(block_item, context, priority):
                 continue

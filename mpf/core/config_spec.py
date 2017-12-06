@@ -809,6 +809,7 @@ pololu_maestro:
     servo_max: single|int|9000
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
+    debug: single|bool|False
 random_event_player:
     __valid_in__: machine, mode, show
     events: ignore
@@ -1076,6 +1077,7 @@ spike:
     debug: single|bool|False
     port: single|str|
     baud: single|int|
+    flow_control: single|bool|False
     nodes: list|int|
     poll_hz: single|int|1000
     use_send_key: single|bool|False
