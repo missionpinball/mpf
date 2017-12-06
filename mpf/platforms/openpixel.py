@@ -207,7 +207,7 @@ class OpenPixelClient(object):
             value = min(255, max(0, int(brightness * 255)))
             self.channels[channel][pixel] = value
             # fade is done
-            if remaining_fade > self.max_fade_ms:
+            if remaining_fade < self.max_fade_ms:
                 del self.dirty_leds[channel][pixel]
 
     def _update_pixels(self, channel):
