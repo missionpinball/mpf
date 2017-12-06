@@ -463,7 +463,7 @@ class Light(SystemWideDevice):
         target_time = current_time + (max_fade_ms / 1000.0)
         # check if fade will be done before max_fade_ms
         if target_time > color_settings['dest_time']:
-            return color_settings['dest_time'], int((color_settings['dest_time'] - current_time) / 1000)
+            return color_settings['dest_color'], int((color_settings['dest_time'] - current_time) * 1000)
 
         # figure out the ratio of how far along we are
         try:
