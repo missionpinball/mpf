@@ -135,7 +135,7 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
         self.assertFalse(self.serialMock.expected_commands)
 
     def testDualWoundCoils(self):
-        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x02\x04\x0a\x00')] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x02\x04\x0a\x0f')] = False
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x02\x0a\x00')] = False
         self.serialMock.expected_commands[self._crc_message(b'\x20\x17\x03\x03')] = False
         self.serialMock.expected_commands[self._crc_message(b'\x20\x17\x03\x02')] = False
