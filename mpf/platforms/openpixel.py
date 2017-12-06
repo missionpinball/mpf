@@ -136,7 +136,7 @@ class OpenPixelClient(object):
         connector = self.machine.clock.open_connection(self.openpixel_config['host'], self.openpixel_config['port'])
         _, self.socket_sender = yield from connector
 
-        self.max_fade_ms = int(1 / self.machine.config['mpf']['default_light_hw_update_hz'])
+        self.max_fade_ms = int(1 / self.machine.config['mpf']['default_light_hw_update_hz'] * 1000)
 
         self.machine.events.add_handler("init_phase_3", self._start_loop)
 
@@ -207,7 +207,7 @@ class OpenPixelClient(object):
             value = min(255, max(0, int(brightness * 255)))
             self.channels[channel][pixel] = value
             # fade is done
-            if remaining_fade <= 0:
+            if remaining_fade > self.max_fade_ms:
                 del self.dirty_leds[channel][pixel]
 
     def _update_pixels(self, channel):
