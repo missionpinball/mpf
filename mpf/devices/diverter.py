@@ -246,18 +246,6 @@ class Diverter(SystemWideDevice):
 
             # If there are ejects waiting for the other target switch diverter
             if self.eject_attempt_queue:
-                if not self.eject_state:
-                    self.eject_state = True
-                    self.debug_log(
-                        "Enabling diverter since eject target is on the "
-                        "active target list")
-                    self.enable()
-                elif self.eject_state:
-                    self.eject_state = False
-                    self.debug_log(
-                        "Disabling diverter since eject target is on the "
-                        "inactive target list")
-                    self.disable()
                 # And perform those ejects
                 if self.config['allow_multiple_concurrent_ejects_to_same_side']:
                     while self.eject_attempt_queue:

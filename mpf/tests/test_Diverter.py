@@ -256,8 +256,6 @@ class TestDiverter(MpfTestCase):
 
         self.hit_and_release_switch("s_playfield")
         self.advance_time_and_run(3)
-        self.assertFalse(diverter.enabled)
-        self.assertFalse(diverter.active)
         # wait for cooldown
         self.assertFalse(self.machine.coils.eject_coil3.pulse.called)
         self.assertEqual(1, diverter.diverting_ejects_count)
