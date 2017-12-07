@@ -272,7 +272,7 @@ class BallCountHandler(BallDeviceStateHandler):
                 yield from self._is_counting.acquire()
                 new_balls = yield from self.ball_device.counter.count_balls()
 
-            self.debug_log("Counting idle")
+            self.debug_log("BCH: Counting. New count: %s Old count: %s", new_balls, self._ball_count)
 
             # when jammed do not trust other switches except the jam. keep old count
             if not self.ball_device.counter.is_jammed() or new_balls != 1:
