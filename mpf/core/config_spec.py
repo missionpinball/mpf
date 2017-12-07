@@ -689,6 +689,8 @@ mode:
     priority: single|int|100
     start_events: list|str|None
     stop_events: list|str|None
+    events_when_stopped: list|str|None
+    events_when_started: list|str|None
     start_priority: single|int|0
     stop_priority: single|int|0
     game_mode: single|bool|True

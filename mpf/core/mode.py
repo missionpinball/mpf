@@ -237,6 +237,9 @@ class Mode(LogMixin):
         self.active = True
         self._starting = False
 
+        for event_name in self.config['mode']['events_when_started']:
+            self.machine.events.post(event_name)
+
         self.machine.events.post('mode_' + self.name + '_started',
                                  callback=self._mode_started_callback)
         '''event: mode_(name)_started
@@ -332,6 +335,9 @@ class Mode(LogMixin):
                 item[0](item[1])
 
         self.stop_methods = list()
+
+        for event_name in self.config['mode']['events_when_stopped']:
+            self.machine.events.post(event_name)
 
         self.machine.events.post('mode_' + self.name + '_stopped',
                                  callback=self._mode_stopped_callback)
