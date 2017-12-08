@@ -140,7 +140,7 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
 
     def testDualWoundCoils(self):
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x02\x04\x0a\x00')] = False
-        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x02\x0a\x00')] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x03\x0a\x00')] = False
         self.serialMock.expected_commands[self._crc_message(b'\x20\x17\x03\x03')] = False
         self.serialMock.expected_commands[self._crc_message(b'\x20\x17\x03\x02')] = False
         self.machine.flippers.f_test_hold.enable()
@@ -148,9 +148,9 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
         self.assertFalse(self.serialMock.expected_commands)
 
         # enable a coil (when a rule is active)
-        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x00\x0a\x06')] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x01\x0a\x06')] = False
         self.serialMock.expected_commands[self._crc_message(b'\x20\x07\x00\x08\x00\x08', False)] = False
-        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x02\x0a\x00')] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x03\x0a\x00')] = False
         self.machine.coils.c_flipper_main.enable()
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
@@ -162,9 +162,9 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
         self.assertFalse(self.serialMock.expected_commands)
 
         # pulse it with other settings (when rule is active)
-        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x02\x2a\x00')] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x03\x2a\x00')] = False
         self.serialMock.expected_commands[self._crc_message(b'\x20\x07\x00\x08\x00\x08', False)] = False
-        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x02\x0a\x00')] = False
+        self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x03\x0a\x00')] = False
         self.machine.coils.c_flipper_main.pulse(42)
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
@@ -214,7 +214,7 @@ class TestOPP(OPPCommon, MpfTestCase):
 
     def getConfigFile(self):
         return 'config.yaml'
-        
+
     def setUp(self):
         self.expected_duration = 1.5
         opp.serial_imported = True

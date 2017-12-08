@@ -150,13 +150,13 @@ class OPPSolenoid(DriverPlatformInterface):
         # Before version 0.2.0.0 set solenoid input wasn't available.
         # CFG_SOL_USE_SWITCH was used to enable/disable a solenoid.  This
         # will work as long as switches are added using _add_switch_coil_mapping
-        if self.switch_rule and self.solCard.platform.minVersion < 0x00020000:
-            cmd += ord(OppRs232Intf.CFG_SOL_USE_SWITCH)
-        elif (self.solCard.platform.minVersion  >= 0x00020000):
-            # If driver is using matching switch set CFG_SOL_USE_SWITCH
-            # in case config happens after set switch command
-            matching_sw = ((int(solenoid) & 0x0c) << 1) | (int(solenoid) & 0x03)
-            if matching_sw in self.switches:
+        if self.switch_rule:
+            if self.solCard.platform.minVersion < 0x00020000:
+                cmd += ord(OppRs232Intf.CFG_SOL_USE_SWITCH)
+            elif str(((int(solenoid) & 0x0c) << 1) | (int(solenoid) & 0x03)) in\
+                    [switch.split('-')[2] for switch in self.switches]:
+                # If driver is using matching switch set CFG_SOL_USE_SWITCH
+                # in case config happens after set switch command
                 cmd += ord(OppRs232Intf.CFG_SOL_USE_SWITCH)
 
         pulse_len = pulse_settings.duration

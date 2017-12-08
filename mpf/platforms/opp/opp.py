@@ -769,8 +769,8 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         self.log.debug("Setting HW Rule. Driver: %s", driver_obj.hw_driver.number)
 
-        driver_obj.hw_driver.set_switch_rule(driver_obj.pulse_settings, driver_obj.hold_settings, driver_obj.recycle)
         driver_obj.hw_driver.switches.append(switch_obj.hw_switch.number)
+        driver_obj.hw_driver.set_switch_rule(driver_obj.pulse_settings, driver_obj.hold_settings, driver_obj.recycle)
         _, _, switch_num = switch_obj.hw_switch.number.split("-")
         switch_num = int(switch_num)
         self._add_switch_coil_mapping(switch_num, driver_obj.hw_driver)
