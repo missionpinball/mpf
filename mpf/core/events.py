@@ -157,7 +157,8 @@ class EventManager(MpfController):
         # event post.
         self.registered_handlers[event].sort(key=lambda x: x.priority, reverse=True)
 
-        self._verify_handlers(event, self.registered_handlers[event])
+        if self._info_to_console or self._info_to_file or True:
+            self._verify_handlers(event, self.registered_handlers[event])
 
         return EventHandlerKey(key, event)
 
@@ -187,9 +188,10 @@ class EventManager(MpfController):
             if cls in devices:
                 handlers = [h for h in sorted_handlers if h.priority == priority and
                             inspect.ismethod(h.callback) and
+                            h.condition == handler.condition and
                             h.callback.__self__ == handler.callback.__self__]
 
-                self.ignorable_runtime_exception(
+                self.info_log(
                     "Duplicate handler for class {} on event {} with priority {}. Handlers: {}".format(
                         cls, event, priority, handlers
                     )
