@@ -231,7 +231,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                         hw_states[opp_inp.chain_serial + '-' + opp_inp.cardNum + '-' + str(index + 32)] = 1
                     else:
                         hw_states[opp_inp.chain_serial + '-' + opp_inp.cardNum + '-' + str(index + 32)] = 0
-                
+
         return hw_states
 
     def inv_resp(self, chain_serial, msg):
@@ -541,7 +541,7 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
                                     platform=self)
                         curr_bit <<= 1
                 opp_inp.oldState[bank] = new_state[bank]
-            
+
     def reconfigure_driver(self, driver, use_hold: bool):
         """Reconfigure a driver.
 
@@ -574,13 +574,13 @@ class HardwarePlatform(MatrixLightsPlatform, LedPlatform, SwitchPlatform, Driver
         # Before version 0.2.0.0 set solenoid input wasn't available.
         # CFG_SOL_USE_SWITCH was used to enable/disable a solenoid.  This
         # will work as long as switches are added using _add_switch_coil_mapping
-        if (self.minVersion < 0x00020000) and driver.hw_driver.use_switch:
-            cmd += ord(OppRs232Intf.CFG_SOL_USE_SWITCH)
-        elif (self.minVersion >= 0x00020000):
-            # If driver is using matching switch set CFG_SOL_USE_SWITCH
-            # in case config happens after set switch command
-            matching_sw = ((int(solenoid) & 0x0c) << 1) | (int(solenoid) & 0x03)
-            if matching_sw in driver.hw_driver.switches:
+        if driver.hw_driver.use_switch:
+            if self.minVersion < 0x00020000:
+                cmd += ord(OppRs232Intf.CFG_SOL_USE_SWITCH)
+            elif str(((int(solenoid) & 0x0c) << 1) | (int(solenoid) & 0x03)) in\
+                    [switch.split('-')[2] for switch in driver.hw_driver.switches]:
+                # If driver is using matching switch set CFG_SOL_USE_SWITCH
+                # in case config happens after set switch command
                 cmd += ord(OppRs232Intf.CFG_SOL_USE_SWITCH)
 
         pulse_len = self._get_pulse_ms_value(driver)
