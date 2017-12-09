@@ -132,29 +132,28 @@ class BallCountHandler(BallDeviceStateHandler):
             yield from self.wait_for_ball_count_changed()
 
     @asyncio.coroutine
-    def start_eject(self):
+    def start_eject(self, already_left=False) -> Generator[int, None, EjectTracker]:
         """Start eject."""
         yield from self.ball_device.incoming_balls_handler.start_eject()
         yield from self._is_counting.acquire()
         self._eject_started.set()
         self.debug_log("Entered eject mode.")
 
-    @asyncio.coroutine
-    def end_eject(self):
-        """End eject."""
-        self.debug_log("Exited eject mode.")
-        self._eject_started.clear()
-        self._is_counting.release()
-        self.ball_device.incoming_balls_handler.end_eject()
-
-    @asyncio.coroutine
-    def track_eject(self, already_left=False) -> Generator[int, None, EjectTracker]:
-        """Start an eject."""
         eject_process = EjectTracker(self, already_left)
         if already_left:
             self._set_ball_count(self._ball_count + 1)
             yield from eject_process.will_eject()
         return eject_process
+
+    @asyncio.coroutine
+    def end_eject(self, ball_left):
+        """End eject."""
+        self.debug_log("Exited eject mode. Eject success: %s", ball_left)
+        if ball_left:
+            self._set_ball_count(self._ball_count - 1)
+        self._eject_started.clear()
+        self._is_counting.release()
+        self.ball_device.incoming_balls_handler.end_eject()
 
     @asyncio.coroutine
     def _run(self):
@@ -227,17 +226,3 @@ class BallCountHandler(BallDeviceStateHandler):
         """Received an entrance during eject."""
         yield from self.ball_device.incoming_balls_handler.ball_arrived()
         self._set_ball_count(self._ball_count + 1)
-
-    def eject_success(self):
-        """Eject successful."""
-        self.debug_log("Received eject success.")
-        self._set_ball_count(self._ball_count - 1)
-
-    def ball_lost(self):
-        """Eject failed. Lost ball."""
-        self.ball_device.log.warning("Received eject failed. Eject lost ball.")
-        self._set_ball_count(self._ball_count - 1)
-
-    def ball_returned(self):
-        """Eject failed. Ball returned."""
-        self.debug_log("Received eject failed. Ball returned.")

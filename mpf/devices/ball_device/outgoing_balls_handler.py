@@ -86,15 +86,14 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                 self.debug_log("Got eject request")
 
                 if eject_request.already_left:
-                    yield from self.ball_device.ball_count_handler.start_eject()
-                    ball_eject_process = yield from self.ball_device.ball_count_handler.track_eject(already_left=True)
+                    ball_eject_process = yield from self.ball_device.ball_count_handler.start_eject(already_left=True)
                     # no prepare eject because this cannot be blocked
                     yield from self._post_ejecting_event(eject_request, 1)
                     incoming_ball_at_target = self._add_incoming_ball_to_target(eject_request.target)
                     result = yield from self._handle_confirm(eject_request, ball_eject_process,
                                                              incoming_ball_at_target, 1)
                     if result:
-                        yield from self.ball_device.ball_count_handler.end_eject()
+                        yield from self.ball_device.ball_count_handler.end_eject(True)
                         continue
 
                 if not (yield from self._ejecting(eject_request)):
@@ -342,8 +341,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         # inform the counter that we are ejecting now
         self.debug_log("Ejecting ball to %s", eject_request.target)
         yield from self._post_ejecting_event(eject_request, eject_try)
-        yield from self.ball_device.ball_count_handler.start_eject()
-        ball_eject_process = yield from self.ball_device.ball_count_handler.track_eject()
+        ball_eject_process = yield from self.ball_device.ball_count_handler.start_eject()
         try:
             yield from ball_eject_process.will_eject()
             self.debug_log("Wait for ball to leave device")
@@ -375,7 +373,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             except asyncio.TimeoutError:
                 # timeout. ball did not leave. failed
                 ball_eject_process.ball_returned()
-                yield from self.ball_device.ball_count_handler.end_eject()
+                yield from self.ball_device.ball_count_handler.end_eject(False)
                 return False
 
             if trigger and trigger.done():
@@ -388,7 +386,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             incoming_ball_at_target = self._add_incoming_ball_to_target(eject_request.target)
             result = yield from self._handle_confirm(eject_request, ball_eject_process, incoming_ball_at_target,
                                                      eject_try)
-            yield from self.ball_device.ball_count_handler.end_eject()
+            yield from self.ball_device.ball_count_handler.end_eject(result)
             return result
         except asyncio.CancelledError:
             ball_eject_process.cancel()

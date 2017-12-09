@@ -40,7 +40,6 @@ class SwitchCounter(PhysicalBallCounter):
 
     def trigger_recount(self):
         """Trigger a count."""
-        self.trigger_activity()
         self._trigger_recount.set()
 
     @asyncio.coroutine
@@ -71,6 +70,7 @@ class SwitchCounter(PhysicalBallCounter):
                 # count did not change
                 continue
             # update count
+            self.trigger_activity()
             self._last_count = new_count
             for queue in self._activity_queues:
                 queue.put_nowait(new_count - self._last_count)

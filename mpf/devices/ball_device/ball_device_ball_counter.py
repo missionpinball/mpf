@@ -113,17 +113,14 @@ class EjectTracker:
     def eject_success(self):
         """Mark eject successful."""
         self._task.cancel()
-        self._ball_count_handler.eject_success()
 
     def ball_lost(self):
         """Mark eject failed and ball lost."""
         self._task.cancel()
-        self._ball_count_handler.ball_lost()
 
     def ball_returned(self):
         """Mark eject failed and ball returned."""
         self._task.cancel()
-        self._ball_count_handler.ball_returned()
 
 
 class PhysicalBallCounter:
