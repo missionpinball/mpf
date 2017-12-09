@@ -351,6 +351,8 @@ class TimeTravelLoop(base_events.BaseEventLoop):
         if len(self._ready) == 0:
             if not self._timers.is_empty():
                 self._time = self._timers.pop_closest()
+            elif not self._selector.select(0):
+                raise AssertionError("Ran into an infinite loop. No socket ready and nothing scheduled.")
 
         super()._run_once()
 
