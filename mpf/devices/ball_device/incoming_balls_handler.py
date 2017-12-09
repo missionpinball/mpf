@@ -124,6 +124,7 @@ class IncomingBallsHandler(BallDeviceStateHandler):
         self._has_incoming_balls = asyncio.Event(loop=self.machine.clock.loop)
         self._has_no_incoming_balls = asyncio.Event(loop=self.machine.clock.loop)
         self._has_no_incoming_balls.set()
+        self._is_timeouting = asyncio.Lock(loop=self.machine.clock.loop)
 
     def get_num_incoming_balls(self):
         """Return number of incoming ball."""
@@ -152,6 +153,8 @@ class IncomingBallsHandler(BallDeviceStateHandler):
             futures = [incoming_ball.wait_for_timeout() for incoming_ball in self._incoming_balls]
             yield from Util.first(futures, loop=self.machine.clock.loop)
 
+            yield from self._is_timeouting.acquire()
+
             # handle timeouts
             timeouts = []
             for incoming_ball in self._incoming_balls:
@@ -164,6 +167,16 @@ class IncomingBallsHandler(BallDeviceStateHandler):
 
             for incoming_ball in timeouts:
                 yield from self.ball_device.lost_incoming_ball(source=incoming_ball.source)
+
+            self._is_timeouting.release()
+
+    def start_eject(self):
+        """Stop counting because eject counter will do that."""
+        return self._is_timeouting.acquire()
+
+    def end_eject(self):
+        """Restart counting because eject ended."""
+        self._is_timeouting.release()
 
     def add_incoming_ball(self, incoming_ball: IncomingBall):
         """Add incoming balls."""

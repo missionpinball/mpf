@@ -6,10 +6,8 @@ import asyncio
 
 from mpf.core.events import QueuedEvent
 from mpf.devices.ball_device.ball_count_handler import BallCountHandler
-from mpf.devices.ball_device.ball_device_ball_counter import BallDeviceBallCounter
 from mpf.devices.ball_device.ball_device_ejector import BallDeviceEjector
 
-from mpf.devices.ball_device.entrance_switch_counter import EntranceSwitchCounter
 from mpf.devices.ball_device.hold_coil_ejector import HoldCoilEjector
 from mpf.devices.ball_device.enable_coil_ejector import EnableCoilEjector
 
@@ -22,7 +20,6 @@ from mpf.core.utility_functions import Util
 from mpf.devices.ball_device.incoming_balls_handler import IncomingBallsHandler, IncomingBall
 from mpf.devices.ball_device.outgoing_balls_handler import OutgoingBallsHandler, OutgoingBall
 from mpf.devices.ball_device.pulse_coil_ejector import PulseCoilEjector
-from mpf.devices.ball_device.switch_counter import SwitchCounter
 
 
 @DeviceMonitor("available_balls", _state="state", counted_balls="balls")
@@ -63,7 +60,6 @@ class BallDevice(SystemWideDevice):
         # each tuple is (target device, boolean player_controlled flag)
 
         self.ejector = None                     # type: BallDeviceEjector
-        self.counter = None                     # type: BallDeviceBallCounter
         self.ball_count_handler = None          # type: BallCountHandler
         self.incoming_balls_handler = None      # type: IncomingBallsHandler
         self.outgoing_balls_handler = None      # type: OutgoingBallsHandler
@@ -86,7 +82,7 @@ class BallDevice(SystemWideDevice):
     def entrance(self, **kwargs):
         """Event handler for entrance events."""
         del kwargs
-        self.counter.received_entrance_event()
+        self.ball_count_handler.counter.received_entrance_event()
 
     def _initialize(self):
         """Initialize right away."""
@@ -98,7 +94,7 @@ class BallDevice(SystemWideDevice):
         self.outgoing_balls_handler = OutgoingBallsHandler(self)
 
         # delay ball counters because we have to wait for switches to be ready
-        self.machine.events.add_handler('init_phase_2', self._create_ball_counters)
+        self.machine.events.add_handler('init_phase_2', self._initialize_late)
 
         # check to make sure no switches from this device are tagged with
         # playfield_active, because ball devices have their own logic for
@@ -125,14 +121,9 @@ class BallDevice(SystemWideDevice):
                     "'playfield_active' tag from that switch.".format(
                         self.name, switch.name))
 
-    def _create_ball_counters(self, queue: QueuedEvent, **kwargs):
+    def _initialize_late(self, queue: QueuedEvent, **kwargs):
         """Create ball counters."""
         del kwargs
-        if self.config['ball_switches']:
-            self.counter = SwitchCounter(self, self.config)
-        else:
-            self.counter = EntranceSwitchCounter(self, self.config)
-
         queue.wait()
         complete_future = Util.ensure_future(self._initialize_async(), loop=self.machine.clock.loop)
         complete_future.add_done_callback(lambda x: queue.clear())

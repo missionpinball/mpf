@@ -207,7 +207,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             self._current_target = eject_request.target
 
             # prevent physical races with eject confirm
-            if self._current_target.is_playfield():
+            if self._current_target.is_playfield() and not self.ball_device.ball_count_handler.is_full:
                 yield from self.ball_device.incoming_balls_handler.wait_for_no_incoming_balls()
 
             if not self.ball_device.ball_count_handler.has_ball:
@@ -430,6 +430,21 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             yield from self._handle_eject_success(ball_eject_process, eject_request)
             return True
 
+    # pylint: disable-msg=too-many-arguments
+    @asyncio.coroutine
+    def _handle_playfield_timeout_confirm(self, eject_request, ball_return_future, unknown_balls_future,
+                                          incoming_ball_at_target, ball_eject_process):
+        yield from asyncio.sleep(0.1, loop=self.machine.clock.loop)
+
+        if not ball_return_future.done() and not unknown_balls_future.done():
+            # if target is playfield mark eject as confirmed
+            self.debug_log("Confirming eject because target is playfield and ball did not return.")
+            incoming_ball_at_target.ball_arrived()
+            yield from self._handle_eject_success(ball_eject_process, eject_request)
+            return True
+
+        return False
+
     @asyncio.coroutine
     def _handle_late_confirm_or_missing(self, eject_request: OutgoingBall, ball_eject_process: EjectTracker,
                                         incoming_ball_at_target: IncomingBall,
@@ -450,16 +465,9 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                 yield from self._handle_eject_success(ball_eject_process, eject_request)
                 return True
         else:
-            # TODO: remove hack when moving code below
-            yield from asyncio.sleep(0.1, loop=self.machine.clock.loop)
-
-            # TODO: move this to a better location
-            if not ball_return_future.done() and not unknown_balls_future.done() and \
-                    eject_request.target.is_playfield():
-                # if target is playfield mark eject as confirmed
-                self.debug_log("Confirming eject because target is playfield and ball did not return.")
-                incoming_ball_at_target.ball_arrived()
-                yield from self._handle_eject_success(ball_eject_process, eject_request)
+            if (yield from self._handle_playfield_timeout_confirm(
+                    eject_request, ball_return_future, unknown_balls_future,
+                    incoming_ball_at_target, ball_eject_process)):
                 return True
 
         try:

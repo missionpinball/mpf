@@ -2,8 +2,7 @@
 import asyncio
 
 from mpf.core.utility_functions import Util
-from mpf.devices.ball_device.ball_count_handler import EjectTracker
-from mpf.devices.ball_device.ball_device_ball_counter import BallDeviceBallCounter
+from mpf.devices.ball_device.ball_device_ball_counter import BallDeviceBallCounter, EjectTracker
 
 
 class SwitchCounter(BallDeviceBallCounter):

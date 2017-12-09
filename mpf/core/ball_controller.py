@@ -80,7 +80,7 @@ class BallController(MpfController):
             if device.is_playfield():
                 continue
 
-            balls += device.counter.count_balls_sync()
+            balls += device.ball_count_handler.counter.count_balls_sync()
         return balls
 
     def add_captured_ball(self, source: BallDevice) -> None:
@@ -129,7 +129,7 @@ class BallController(MpfController):
             futures = []
             for device in self.machine.ball_devices:
                 if not device.is_playfield():
-                    futures.append(Util.ensure_future(device.counter.wait_for_ball_activity(),
+                    futures.append(Util.ensure_future(device.ball_count_handler.counter.wait_for_ball_activity(),
                                                       loop=self.machine.clock.loop))
 
             try:
