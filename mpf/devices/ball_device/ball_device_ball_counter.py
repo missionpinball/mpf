@@ -7,6 +7,13 @@ import asyncio
 # TODO: rename to hardware counter
 from typing import Generator
 
+from mpf.core.utility_functions import Util
+
+MYPY = False
+if MYPY:
+    from mpf.devices.ball_device.ball_device import BallDevice
+    from mpf.core.machine import MachineController
+
 
 class EjectTracker:
 
@@ -119,15 +126,31 @@ class EjectTracker:
         self._ball_count_handler.ball_returned()
 
 
-class BallDeviceBallCounter:
+class PhysicalBallCounter:
 
     """Ball counter for ball device."""
 
-    def __init__(self, ball_device, config):
+    def __init__(self, ball_device, config) -> None:
         """Initialise ball counter."""
-        self.ball_device = ball_device
+        self.ball_device = ball_device              # type: BallDevice
         self.config = config
-        self.machine = self.ball_device.machine
+        self.machine = self.ball_device.machine     # type: MachineController
+
+        self._last_count = -1
+        self._count_stable = asyncio.Event(loop=self.machine.clock.loop)
+        self._activity_queues = []
+        self._ball_change_futures = []
+
+    def invalidate_count(self):
+        """Invalidate the count."""
+        self._count_stable.clear()
+
+    def trigger_activity(self):
+        """Trigger all activity futures."""
+        for future in self._ball_change_futures:
+            if not future.done():
+                future.set_result(True)
+        self._ball_change_futures = []
 
     def debug_log(self, *args, **kwargs):
         """Debug log."""
@@ -144,19 +167,13 @@ class BallDeviceBallCounter:
     @asyncio.coroutine
     def count_balls(self) -> Generator[int, None, int]:
         """Return the current ball count."""
-        while True:
-            # register the waiter before counting to prevent races
-            waiter = self.wait_for_ball_activity()
-            try:
-                balls = self.count_balls_sync()
-                waiter.cancel()
-                return balls
-            except ValueError:
-                yield from waiter
+        # wait until count is stable
+        yield from self._count_stable.wait()
+        return self._last_count
 
-    def wait_for_ball_activity(self):
-        """Wait for ball activity."""
-        raise NotImplementedError()
+    def wait_for_count_stable(self):
+        """Wait for stable count."""
+        return Util.ensure_future(self._count_stable.wait(), loop=self.machine.clock.loop)
 
     def wait_for_ready_to_receive(self):
         """Wait until the counter is ready to count an incoming ball."""
@@ -165,6 +182,18 @@ class BallDeviceBallCounter:
     def received_entrance_event(self):
         """Handle entrance event."""
         raise NotImplementedError()
+
+    def register_change_stream(self):
+        """Register queue which returns all changes."""
+        queue = asyncio.Queue(loop=self.machine.clock.loop)
+        self._activity_queues.append(queue)
+        return queue
+
+    def wait_for_ball_activity(self):
+        """Wait for (settled) ball activity in device."""
+        future = asyncio.Future(loop=self.machine.clock.loop)
+        self._ball_change_futures.append(future)
+        return future
 
     @asyncio.coroutine
     def wait_for_ball_count_changes(self, old_count: int):

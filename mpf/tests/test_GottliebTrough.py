@@ -294,7 +294,7 @@ class TestGottliebTrough(MpfTestCase):
         # to the plunger even though the ball hasn't made it into the trough
         # yet
 
-        self.machine.ball_devices.trough.ball_count_handler.counter._entrance_count = 3
+        self.machine.ball_devices.trough.ball_count_handler.counter._last_count = 3
         self.machine.ball_devices.trough.available_balls = 3
         self.machine.ball_controller.num_balls_known = 3
         self.machine.ball_devices.trough.ball_count_handler._set_ball_count(3)

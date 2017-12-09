@@ -3,7 +3,7 @@ import asyncio
 
 from typing import Generator
 
-from mpf.devices.ball_device.ball_device_ball_counter import BallDeviceBallCounter, EjectTracker
+from mpf.devices.ball_device.ball_device_ball_counter import PhysicalBallCounter, EjectTracker
 from mpf.devices.ball_device.entrance_switch_counter import EntranceSwitchCounter
 from mpf.devices.ball_device.switch_counter import SwitchCounter
 
@@ -27,7 +27,7 @@ class BallCountHandler(BallDeviceStateHandler):
         self._has_balls = asyncio.Event(loop=self.machine.clock.loop)
         self._ball_count = 0
         self._ball_count_changed_futures = []
-        self.counter = None  # type: BallDeviceBallCounter
+        self.counter = None  # type: PhysicalBallCounter
 
     def wait_for_ball_count_changed(self):
         """Wait until ball count changed."""
@@ -60,9 +60,9 @@ class BallCountHandler(BallDeviceStateHandler):
     def initialise(self):
         """Initialise handler."""
         if self.ball_device.config['ball_switches']:
-            self.counter = SwitchCounter(self, self.ball_device.config)
+            self.counter = SwitchCounter(self.ball_device, self.ball_device.config)
         else:
-            self.counter = EntranceSwitchCounter(self, self.ball_device.config)
+            self.counter = EntranceSwitchCounter(self.ball_device, self.ball_device.config)
 
         self._ball_count = yield from self.counter.count_balls()
         if self._ball_count > 0:

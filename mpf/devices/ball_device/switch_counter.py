@@ -2,10 +2,10 @@
 import asyncio
 
 from mpf.core.utility_functions import Util
-from mpf.devices.ball_device.ball_device_ball_counter import BallDeviceBallCounter, EjectTracker
+from mpf.devices.ball_device.ball_device_ball_counter import PhysicalBallCounter, EjectTracker
 
 
-class SwitchCounter(BallDeviceBallCounter):
+class SwitchCounter(PhysicalBallCounter):
 
     """Determine ball count by counting switches.
 
@@ -16,27 +16,71 @@ class SwitchCounter(BallDeviceBallCounter):
     def __init__(self, ball_device, config):
         """Initialise ball counter."""
         super().__init__(ball_device, config)
+        self._entrances = []
+        self._trigger_recount = asyncio.Event(loop=self.machine.clock.loop)
         # TODO: use ball_switches and jam_switch!
         # Register switch handlers with delays for entrance & exit counts
         for switch in self.config['ball_switches']:
             self.machine.switch_controller.add_switch_handler(
                 switch_name=switch.name, state=1,
                 ms=self.config['entrance_count_delay'],
-                callback=self._switch_changed)
-        for switch in self.config['ball_switches']:
+                callback=self.trigger_recount)
+            self.machine.switch_controller.add_switch_handler(
+                switch_name=switch.name, state=1,
+                callback=self.invalidate_count)
             self.machine.switch_controller.add_switch_handler(
                 switch_name=switch.name, state=0,
                 ms=self.config['exit_count_delay'],
-                callback=self._switch_changed)
+                callback=self.trigger_recount)
+            self.machine.switch_controller.add_switch_handler(
+                switch_name=switch.name, state=0,
+                callback=self.invalidate_count)
 
-        self._futures = []
+        self.machine.clock.loop.create_task(self._run())
 
-    def _switch_changed(self, **kwargs):
-        del kwargs
-        for future in self._futures:
-            if not future.done():
-                future.set_result(True)
-        self._futures = []
+    def trigger_recount(self):
+        """Trigger a count."""
+        self.trigger_activity()
+        self._trigger_recount.set()
+
+    @asyncio.coroutine
+    def _recount(self):
+        while True:
+            yield from self._trigger_recount.wait()
+            self._trigger_recount.clear()
+            try:
+                balls = self.count_balls_sync()
+                return balls
+            except ValueError:
+                continue
+
+    @asyncio.coroutine
+    def _run(self):
+        self._trigger_recount.set()
+        while True:
+            new_count = yield from self._recount()
+            self._count_stable.set()
+
+            if new_count > self._last_count:
+                # new ball
+                pass
+            elif new_count < self._last_count:
+                # lost ball
+                pass
+            else:
+                # count did not change
+                continue
+            # update count
+            self._last_count = new_count
+            for queue in self._activity_queues:
+                queue.put_nowait(new_count - self._last_count)
+
+    def received_entrance_event(self):
+        """Handle entrance event."""
+        entrance_time = self.machine.clock.get_time()
+        entrance_timeout = self.config['entrance_event_timeout']
+        self._entrances = [entrance for entrance in self._entrances if entrance > entrance_time - entrance_timeout]
+        self._entrances.append(entrance_time)
 
     def _count_switches_sync(self):
         """Return active switches or raise ValueError if switches are unstable."""
@@ -66,12 +110,6 @@ class SwitchCounter(BallDeviceBallCounter):
         self.debug_log("Counted %s balls. Active switches: %s", ball_count, switches)
         return ball_count
 
-    def wait_for_ball_activity(self):
-        """Wait for ball count changes."""
-        future = asyncio.Future(loop=self.machine.clock.loop)
-        self._futures.append(future)
-        return future
-
     def is_jammed(self):
         """Return true if the jam switch is currently active."""
         return self.config['jam_switch'] and self.machine.switch_controller.is_active(
@@ -87,7 +125,7 @@ class SwitchCounter(BallDeviceBallCounter):
         """Return eject_process dict."""
         # count active switches
         while True:
-            waiter = self.wait_for_ball_activity()
+            waiter = self.wait_for_count_stable()
             try:
                 active_switches = self._count_switches_sync()
                 waiter.cancel()
@@ -103,7 +141,6 @@ class SwitchCounter(BallDeviceBallCounter):
 
         jam_active_before_eject = self.is_jammed()
         jam_active_after_eject = False
-        active_switches = active_switches
         count = len(active_switches)
         while True:
             ball_count_change = Util.ensure_future(self.wait_for_ball_count_changes(count),
@@ -127,10 +164,16 @@ class SwitchCounter(BallDeviceBallCounter):
                     jam_active_after_eject = True
                     count += 1
                 if new_count > count:
-                    # TODO: add some magic to detect entrances
-                    pass
-                if new_count > count:
-                    eject_tracker.track_unknown_balls(new_count - count)
+                    for _ in range(new_count - count):
+                        try:
+                            last_entrance = self._entrances.pop(0)
+                        except IndexError:
+                            last_entrance = -1000
+
+                        if last_entrance > self.machine.clock.get_time() - self.config['entrance_event_timeout']:
+                            eject_tracker.track_ball_entrance()
+                        else:
+                            eject_tracker.track_unknown_balls(1)
                 elif count > new_count:
                     eject_tracker.track_lost_balls(count - new_count)
                 count = new_count
@@ -143,7 +186,6 @@ class SwitchCounter(BallDeviceBallCounter):
                 switch_name=switch_name, state=0))
 
         if not waiters:
-            # TODO: raise exception and handle this in ball_device
             self.ball_device.log.warning("No switch is active. Cannot wait on empty list.")
             future = asyncio.Future(loop=self.machine.clock.loop)
             future.set_result(True)
