@@ -146,8 +146,9 @@ class BallCountHandler(BallDeviceStateHandler):
         return eject_process
 
     @asyncio.coroutine
-    def end_eject(self, ball_left):
+    def end_eject(self, eject_process: EjectTracker, ball_left):
         """End eject."""
+        eject_process.cancel()
         self.debug_log("Exited eject mode. Eject success: %s", ball_left)
         if ball_left:
             self._set_ball_count(self._ball_count - 1)
@@ -162,24 +163,13 @@ class BallCountHandler(BallDeviceStateHandler):
             ball_changes = Util.ensure_future(self.counter.wait_for_ball_activity(),
                                               loop=self.machine.clock.loop)
             revalidate_future = Util.ensure_future(self._revalidate.wait(), loop=self.machine.clock.loop)
-            event = yield from Util.first([ball_changes, revalidate_future, self._eject_started.wait()],
-                                          loop=self.machine.clock.loop)
+            yield from Util.first([ball_changes, revalidate_future, self._eject_started.wait()],
+                                  loop=self.machine.clock.loop)
             self._revalidate.clear()
 
             # get lock and update count
-            if self._is_counting.locked():
-                self.debug_log("Waiting for eject to end")
-                yield from self._is_counting.acquire()
-                new_balls = yield from self.counter.count_balls()
-                self.debug_log("Eject ended")
-            elif event == revalidate_future:
-                yield from self._is_counting.acquire()
-                new_balls = yield from self.counter.count_balls()
-            else:
-                if event != ball_changes:
-                    raise AssertionError("Event order problem")
-                yield from self._is_counting.acquire()
-                new_balls = yield from self.counter.count_balls()
+            yield from self._is_counting.acquire()
+            new_balls = yield from self.counter.count_balls()
 
             self.debug_log("BCH: Counting. New count: %s Old count: %s", new_balls, self._ball_count)
 

@@ -110,18 +110,6 @@ class EjectTracker:
         """Set device ready."""
         self._ready.set_result("ready")
 
-    def eject_success(self):
-        """Mark eject successful."""
-        self._task.cancel()
-
-    def ball_lost(self):
-        """Mark eject failed and ball lost."""
-        self._task.cancel()
-
-    def ball_returned(self):
-        """Mark eject failed and ball returned."""
-        self._task.cancel()
-
 
 class PhysicalBallCounter:
 
