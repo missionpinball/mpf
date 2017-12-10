@@ -2,7 +2,8 @@
 import asyncio
 
 from mpf.core.utility_functions import Util
-from mpf.devices.ball_device.ball_device_ball_counter import PhysicalBallCounter, EjectTracker
+from mpf.devices.ball_device.ball_device_ball_counter import PhysicalBallCounter, EjectTracker, BallEntranceActivity, \
+    BallLostActivity
 
 
 class EntranceSwitchCounter(PhysicalBallCounter):
@@ -58,7 +59,7 @@ class EntranceSwitchCounter(PhysicalBallCounter):
             self._last_count += 1
             self._count_stable.set()
             self.trigger_activity()
-            # TODO: add queue here
+            self.record_activity(BallEntranceActivity())
 
     def _entrance_switch_full_handler(self):
         # a ball is sitting on the entrance_switch. assume the device is full
@@ -70,7 +71,8 @@ class EntranceSwitchCounter(PhysicalBallCounter):
                            "device is full. Adding %s balls and setting balls"
                            "to %s", new_balls, self.config['ball_capacity'])
             self._last_count += new_balls
-            # TODO: add queue here
+            for _ in range(new_balls):
+                self.record_activity(BallEntranceActivity())
 
     def count_balls_sync(self) -> int:
         """Return the number of balls entered."""
@@ -89,11 +91,21 @@ class EntranceSwitchCounter(PhysicalBallCounter):
 
         return self._last_count
 
-    def _wait_for_ball_to_leave(self):
+    @asyncio.coroutine
+    def wait_for_ball_to_leave(self):
         """Wait for a ball to leave."""
+        yield from self.wait_for_count_stable()
         # wait 10ms
-        done_future = asyncio.sleep(0.01, loop=self.machine.clock.loop)
-        return Util.ensure_future(done_future, loop=self.machine.clock.loop)
+        done_future = Util.ensure_future(asyncio.sleep(0.01, loop=self.machine.clock.loop),
+                                         loop=self.machine.clock.loop)
+        done_future.add_done_callback(self._ball_left)
+        return done_future
+
+    def _ball_left(self, future):
+        del future
+        self._last_count -= 1
+        self.record_activity(BallLostActivity())
+        self.trigger_activity()
 
     def wait_for_ready_to_receive(self):
         """Wait until the entrance switch is inactive."""
@@ -105,7 +117,7 @@ class EntranceSwitchCounter(PhysicalBallCounter):
     def track_eject(self, eject_tracker: EjectTracker, already_left):
         """Remove one ball from count."""
         # TODO: add queue here for left ball
-        ball_left = self._wait_for_ball_to_leave() if not already_left else None
+        ball_left = self.wait_for_ball_to_leave() if not already_left else None
         ball_activity = self.wait_for_ball_activity()
         # we are stable from here on
         eject_tracker.set_ready()

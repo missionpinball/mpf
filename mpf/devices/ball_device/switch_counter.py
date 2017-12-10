@@ -2,7 +2,8 @@
 import asyncio
 
 from mpf.core.utility_functions import Util
-from mpf.devices.ball_device.ball_device_ball_counter import PhysicalBallCounter, EjectTracker
+from mpf.devices.ball_device.ball_device_ball_counter import PhysicalBallCounter, EjectTracker, BallLostActivity, \
+    BallEntranceActivity, UnknownBallActivity
 
 
 class SwitchCounter(PhysicalBallCounter):
@@ -60,20 +61,33 @@ class SwitchCounter(PhysicalBallCounter):
             new_count = yield from self._recount()
             self._count_stable.set()
 
+            if self._last_count is None:
+                self._last_count = new_count
+            elif self._last_count < 0:
+                raise AssertionError("Count may never be negativ")
+
             if new_count > self._last_count:
                 # new ball
-                pass
+                for _ in range(new_count - self._last_count):
+                    try:
+                        last_entrance = self._entrances.pop(0)
+                    except IndexError:
+                        last_entrance = -1000
+
+                    if last_entrance > self.machine.clock.get_time() - self.config['entrance_event_timeout']:
+                        self.record_activity(BallEntranceActivity())
+                    else:
+                        self.record_activity(UnknownBallActivity())
             elif new_count < self._last_count:
                 # lost ball
-                pass
+                for _ in range(self._last_count - new_count):
+                    self.record_activity(BallLostActivity())
             else:
                 # count did not change
                 continue
             # update count
-            self.trigger_activity()
             self._last_count = new_count
-            for queue in self._activity_queues:
-                queue.put_nowait(new_count - self._last_count)
+            self.trigger_activity()
 
     def received_entrance_event(self):
         """Handle entrance event."""
@@ -107,7 +121,7 @@ class SwitchCounter(PhysicalBallCounter):
         switches = self._count_switches_sync()
         ball_count = len(switches)
 
-        self.debug_log("Counted %s balls. Active switches: %s", ball_count, switches)
+        self.debug_log("Counted %s balls. Active switches: %s. Old: %s", ball_count, switches, self._last_count)
         return ball_count
 
     def is_jammed(self):
@@ -133,7 +147,7 @@ class SwitchCounter(PhysicalBallCounter):
             except ValueError:
                 yield from waiter
 
-        ball_left_future = Util.ensure_future(self._wait_for_ball_to_leave(active_switches),
+        ball_left_future = Util.ensure_future(self.wait_for_ball_to_leave(),
                                               loop=self.machine.clock.loop) if not already_left else None
 
         # all switches are stable. we are ready now
@@ -178,8 +192,18 @@ class SwitchCounter(PhysicalBallCounter):
                     eject_tracker.track_lost_balls(count - new_count)
                 count = new_count
 
-    def _wait_for_ball_to_leave(self, active_switches):
+    @asyncio.coroutine
+    def wait_for_ball_to_leave(self):
         """Wait for any active switch to become inactive."""
+        while True:
+            waiter = self.wait_for_count_stable()
+            try:
+                active_switches = self._count_switches_sync()
+                waiter.cancel()
+                break
+            except ValueError:
+                yield from waiter
+
         waiters = []
         for switch_name in active_switches:
             waiters.append(self.machine.switch_controller.wait_for_switch(
@@ -191,4 +215,14 @@ class SwitchCounter(PhysicalBallCounter):
             future.set_result(True)
             return future
 
-        return Util.first(waiters, self.machine.clock.loop)
+        done_future = Util.ensure_future(Util.first(waiters, self.machine.clock.loop),
+                                         loop=self.machine.clock.loop)
+        done_future.add_done_callback(self._ball_left)
+        return done_future
+
+    def _ball_left(self, future):
+        if future.cancelled():
+            return
+        self._last_count -= 1
+        self.record_activity(BallLostActivity())
+        self.trigger_recount()

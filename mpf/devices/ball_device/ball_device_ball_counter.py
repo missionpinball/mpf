@@ -13,6 +13,7 @@ MYPY = False
 if MYPY:
     from mpf.devices.ball_device.ball_device import BallDevice
     from mpf.core.machine import MachineController
+    from mpf.devices.ball_device.ball_count_handler import BallCountHandler
 
 
 class EjectTracker:
@@ -23,7 +24,7 @@ class EjectTracker:
         """Initialise eject tracker."""
         self.machine = ball_counter_handler.machine
         self._already_left = already_left
-        self._ball_count_handler = ball_counter_handler
+        self._ball_count_handler = ball_counter_handler     # type: BallCountHandler
         self._task = None
         self._event_queue = asyncio.Queue(loop=self._ball_count_handler.machine.clock.loop)
         self._ball_left = asyncio.Future(loop=self._ball_count_handler.machine.clock.loop)
@@ -36,15 +37,41 @@ class EjectTracker:
     @asyncio.coroutine
     def will_eject(self):
         """Start process."""
-        self._task = self.machine.clock.loop.create_task(
-            self._ball_count_handler.counter.track_eject(self, self._already_left))
+        yield from self._ball_count_handler.counter.wait_for_count_stable()
+        ball_changes = self._ball_count_handler.counter.register_change_stream()
+        if not self._already_left:
+            ball_left = yield from self._ball_count_handler.counter.wait_for_ball_to_leave()
+            self._ball_left = Util.ensure_future(ball_left,
+                                                 loop=self.machine.clock.loop)
+
+        self._task = self.machine.clock.loop.create_task(self._run(ball_changes))
         self._task.add_done_callback(self._done)
-        yield from self.wait_for_ready()
+
+    @asyncio.coroutine
+    def _run(self, ball_changes):
+        already_left = self._already_left
+        while True:
+            change = yield from ball_changes.get()
+            if isinstance(change, BallLostActivity) and not already_left and self._ball_left.done():
+                already_left = True
+                self._ball_count_handler.ball_device.debug_log("Got ball left during eject")
+                continue
+
+            if isinstance(change, BallLostActivity):
+                self.track_lost_balls(1)
+            elif isinstance(change, BallEntranceActivity):
+                yield from self.track_ball_entrance()
+            elif isinstance(change, UnknownBallActivity):
+                self.track_unknown_balls(1)
+            else:
+                raise AssertionError("Unknown activity {}".format(change))
 
     def cancel(self):
         """Cancel eject tracker."""
         if self._task:
             self._task.cancel()
+        if not self._ball_left.done():
+            self._ball_left.cancel()
 
     @staticmethod
     def _done(future):
@@ -56,11 +83,6 @@ class EjectTracker:
     def is_jammed(self):
         """Return true if currently jammed."""
         return self._ball_count_handler.counter.is_jammed()
-
-    def track_ball_left(self):
-        """Track ball left."""
-        self._ball_count_handler.ball_device.debug_log("Got ball left during eject")
-        self._ball_left.set_result(True)
 
     def track_ball_returned(self):
         """Track ball returned."""
@@ -100,6 +122,8 @@ class EjectTracker:
 
     def wait_for_ball_left(self):
         """Wait until a ball left."""
+        if self._already_left:
+            raise AssertionError("Invalid wait. Ball left before eject.")
         return asyncio.shield(self._ball_left, loop=self.machine.clock.loop)
 
     def wait_for_ready(self):
@@ -110,8 +134,29 @@ class EjectTracker:
         """Set device ready."""
         self._ready.set_result("ready")
 
+class BallActivity(object):
 
-class PhysicalBallCounter:
+    """An acticity in a ball device."""
+
+    pass
+
+class BallLostActivity(BallActivity):
+    pass
+
+
+class NewBallActivity(BallActivity):
+    pass
+
+
+class BallEntranceActivity(NewBallActivity):
+    pass
+
+
+class UnknownBallActivity(NewBallActivity):
+    pass
+
+
+class PhysicalBallCounter(object):
 
     """Ball counter for ball device."""
 
@@ -121,7 +166,7 @@ class PhysicalBallCounter:
         self.config = config
         self.machine = self.ball_device.machine     # type: MachineController
 
-        self._last_count = -1
+        self._last_count = None                     # type: int
         self._count_stable = asyncio.Event(loop=self.machine.clock.loop)
         self._activity_queues = []
         self._ball_change_futures = []
@@ -164,6 +209,10 @@ class PhysicalBallCounter:
         """Wait until the counter is ready to count an incoming ball."""
         raise NotImplementedError()
 
+    def wait_for_ball_to_leave(self):
+        """Wait until a ball left."""
+        raise NotImplementedError()
+
     def received_entrance_event(self):
         """Handle entrance event."""
         raise NotImplementedError()
@@ -173,6 +222,11 @@ class PhysicalBallCounter:
         queue = asyncio.Queue(loop=self.machine.clock.loop)
         self._activity_queues.append(queue)
         return queue
+
+    def record_activity(self, type):
+        """Record an activity."""
+        for queue in self._activity_queues:
+            queue.put_nowait(type)
 
     def wait_for_ball_activity(self):
         """Wait for (settled) ball activity in device."""

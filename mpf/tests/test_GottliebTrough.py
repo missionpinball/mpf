@@ -224,6 +224,7 @@ class TestGottliebTrough(MpfTestCase):
         self.release_switch_and_run("outhole", 1)
         self.hit_switch_and_run("trough_entry", 4)
 
+        self.assertEqual(4, self.machine.ball_controller.num_balls_known)
         self.assertEqual('idle', self.machine.ball_devices.outhole._state)
         self.assertEqual('idle', self.machine.ball_devices.trough._state)
         self.assertEqual('ejecting', self.machine.ball_devices.plunger._state)

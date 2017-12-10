@@ -203,6 +203,8 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         """Perform main eject loop."""
         eject_try = 0
         while True:
+            # make sure the count is currently valid. process incoming and lost balls
+            yield from self.ball_device.ball_count_handler.wait_for_count_is_valid()
             self._current_target = eject_request.target
 
             # prevent physical races with eject confirm
@@ -414,7 +416,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                                   loop=self.machine.clock.loop, cancel_others=False)
         except asyncio.TimeoutError:
             self.ball_device.set_eject_state("failed_confirm")
-            self.debug_log("Got timeout before confirm")
+            self.debug_log("Got timeout (%ss) before confirm from %s", timeout, eject_request.target)
             return (yield from self._handle_late_confirm_or_missing(eject_request, ball_eject_process,
                                                                     incoming_ball_at_target, eject_try))
         else:
@@ -451,6 +453,12 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                                                   loop=self.machine.clock.loop)
         eject_success_future = incoming_ball_at_target.wait_for_confirm()
         timeout = self.ball_device.config['ball_missing_timeouts'][eject_request.target] / 1000
+
+        # if ball_eject_process.is_jammed():
+        #     # ball returned. eject failed
+        #     eject_request.already_left = False
+        #     incoming_ball_at_target.did_not_arrive()
+        #     return False
 
         # assume that the ball may have skipped the target device by now
         incoming_ball_at_target.set_can_skip()
