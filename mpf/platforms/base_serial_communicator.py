@@ -33,9 +33,14 @@ class BaseSerialCommunicator(object):
         connector = self.machine.clock.open_serial_connection(
             url=port, baudrate=baud, limit=0)
         self.reader, self.writer = yield from connector
+        # defaults are slightly high for our usecase
+        self.writer.transport.set_write_buffer_limits(2048, 1024)
 
         # read everything which is sitting in the serial
         self.writer.transport.serial.reset_input_buffer()
+        # clear buffer
+        # pylint: disable-msg=protected-access
+        self.reader._buffer = bytearray()
 
         yield from self._identify_connection()
 
