@@ -224,8 +224,8 @@ class TestOPP(OPPCommon, MpfTestCase):
         board2_config = b'\x21\x0d\x06\x02\x02\x01'      # wing1: neo, wing2: inputs, wing3: inputs, wing4: solenoids
         board1_version = b'\x20\x02\x00\x01\x01\x00'     # 0.1.1.0
         board2_version = b'\x21\x02\x00\x01\x01\x00'     # 0.1.1.0
-        inputs1_message = b"\x20\x08\x00\x00\x00\x0c"     # inputs 0+1 off, 2+3 on, 8 on
-        inputs2_message = b"\x21\x08\x00\x00\x00\x00"
+        inputs1_message = b'\x20\x08\x00\x00\x00\x0c'    # inputs 0+1 off, 2+3 on, 8 on
+        inputs2_message = b'\x21\x08\x00\x00\x00\x00'
 
         self.serialMock.expected_commands = {
             b'\xf0\xff': b'\xf0\x20\x21\xff',     # boards 20 + 21 installed
@@ -269,10 +269,11 @@ class TestOPP(OPPCommon, MpfTestCase):
         # switch change
         permanent_commands = copy.deepcopy(self.serialMock.permanent_commands)
 
-        inputs_message = b"\x20\x08\x00\x00\x01\x08"  # inputs 0+1+2 off, 3 on, 8 off
+        inputs1_message = b"\x20\x08\x00\x00\x01\x08"  # inputs 0+1+2 off, 3 on, 8 off
+        inputs2_message = b'\x21\x08\x00\x00\x00\x00'
         self.serialMock.permanent_commands = {
             self._crc_message(b'\x20\x08\x00\x00\x00\x00', False) + self._crc_message(b'\x21\x08\x00\x00\x00\x00'):
-                self._crc_message(inputs_message)
+                self._crc_message(inputs1_message, False) + self._crc_message(inputs2_message)
         }
 
         while self.machine.switch_controller.is_active("s_test_nc"):

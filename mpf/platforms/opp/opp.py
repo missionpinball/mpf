@@ -68,12 +68,13 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         self.gen2AddrArr = {}               # type: Dict[str, List[int]]
         self.badCRC = 0
         self.minVersion = 0xffffffff
-        self._poll_task = None              # type: asyncio.Task
+        self._poll_task = {}                # type: Dict[str, asyncio.Task]
 
         self.features['tickless'] = True
 
         self.config = self.machine.config['opp']
         self.machine.config_validator.validate_config("opp", self.config)
+        self._poll_response_received = {}
 
         self.machine_type = (
             self.machine.config['hardware']['driverboards'].lower())
@@ -101,16 +102,21 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         yield from self._connect_to_hardware()
         self.opp_commands[ord(OppRs232Intf.READ_GEN2_INP_CMD)] = self.read_gen2_inp_resp
         self.opp_commands[ord(OppRs232Intf.READ_MATRIX_INP)] = self.read_matrix_inp_resp
-        self._poll_task = self.machine.clock.loop.create_task(self._poll_sender())
-        self._poll_task.add_done_callback(self._done)
+        for chain_serial in self.read_input_msg:
+            self._poll_task[chain_serial] = self.machine.clock.loop.create_task(self._poll_sender(chain_serial))
+            self._poll_task[chain_serial].add_done_callback(self._done)
 
     def stop(self):
         """Stop hardware and close connections."""
-        if self._poll_task:
-            self._poll_task.cancel()
+        for task in self._poll_task.values():
+            task.cancel()
+
+        self._poll_task = {}
 
         for connections in self.serial_connections:
             connections.stop()
+
+        self.serial_connections = []
 
     def __repr__(self):
         """Return string representation."""
@@ -376,6 +382,8 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         read_input_msg.extend(OppRs232Intf.EOM_CMD)
         self.read_input_msg[chain_serial] = bytes(read_input_msg)
+        self._poll_response_received[chain_serial] = asyncio.Event(loop=self.machine.clock.loop)
+        self._poll_response_received[chain_serial].set()
 
     def vers_resp(self, chain_serial, msg):
         """Process version response.
@@ -489,6 +497,9 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                     curr_bit <<= 1
             opp_inp.oldState = new_state
 
+        # we can continue to poll
+        self._poll_response_received[chain_serial].set()
+
     def read_matrix_inp_resp_initial(self, chain_serial, msg):
         """Read initial matrix switch states.
 
@@ -552,6 +563,9 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
                                     platform=self)
                         curr_bit <<= 1
                 opp_inp.oldState[bank] = new_state[bank]
+
+        # we can continue to poll
+        self._poll_response_received[chain_serial].set()
 
     def _get_dict_index(self, input_str):
         if not isinstance(input_str, str):
@@ -697,14 +711,23 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         future.result()
 
     @asyncio.coroutine
-    def _poll_sender(self):
+    def _poll_sender(self, chain_serial):
         """Poll switches."""
         while True:
-            for chain_serial in self.read_input_msg:
-                self.send_to_processor(chain_serial, self.read_input_msg[chain_serial])
-                yield from self.opp_connection[chain_serial].writer.drain()
-                # the line above saturates the link and seems to overwhelm the hardware. limit it to 100Hz
-                yield from asyncio.sleep(1 / self.config['poll_hz'], loop=self.machine.clock.loop)
+            # wait for previous poll response
+            timeout = 1 / self.config['poll_hz'] * 25
+            try:
+                yield from asyncio.wait_for(self._poll_response_received[chain_serial].wait(), timeout,
+                                            loop=self.machine.clock.loop)
+            except asyncio.TimeoutError:
+                self.log.warning("Poll took more than %sms for %s", timeout * 1000, chain_serial)
+            else:
+                self._poll_response_received[chain_serial].clear()
+            # send poll
+            self.send_to_processor(chain_serial, self.read_input_msg[chain_serial])
+            yield from self.opp_connection[chain_serial].writer.drain()
+            # the line above saturates the link and seems to overwhelm the hardware. limit it to 100Hz
+            yield from asyncio.sleep(1 / self.config['poll_hz'], loop=self.machine.clock.loop)
 
     def _verify_coil_and_switch_fit(self, switch, coil):
         chain_serial, card, solenoid = coil.hw_driver.number.split('-')
