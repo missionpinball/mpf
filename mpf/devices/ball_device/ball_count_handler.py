@@ -3,7 +3,7 @@ import asyncio
 
 from typing import Generator
 
-from mpf.devices.ball_device.ball_device_ball_counter import PhysicalBallCounter, EjectTracker
+from mpf.devices.ball_device.physical_ball_counter import PhysicalBallCounter, EjectTracker
 from mpf.devices.ball_device.entrance_switch_counter import EntranceSwitchCounter
 from mpf.devices.ball_device.switch_counter import SwitchCounter
 
@@ -174,7 +174,7 @@ class BallCountHandler(BallDeviceStateHandler):
             self.debug_log("BCH: Counting. New count: %s Old count: %s", new_balls, self._ball_count)
 
             # when jammed do not trust other switches except the jam. keep old count
-            if not self.counter.is_jammed() or new_balls != 1:
+            if not self.counter.is_count_unreliable():
                 # otherwise handle balls
                 old_ball_count = self._ball_count
                 if new_balls > old_ball_count:

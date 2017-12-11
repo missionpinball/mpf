@@ -2,8 +2,8 @@
 import asyncio
 
 from mpf.core.utility_functions import Util
-from mpf.devices.ball_device.ball_device_ball_counter import PhysicalBallCounter, EjectTracker, BallLostActivity, \
-    BallEntranceActivity, UnknownBallActivity
+from mpf.devices.ball_device.physical_ball_counter import PhysicalBallCounter, EjectTracker, BallLostActivity, \
+    BallEntranceActivity, UnknownBallActivity, BallReturnActivity
 
 
 class SwitchCounter(PhysicalBallCounter):
@@ -19,7 +19,6 @@ class SwitchCounter(PhysicalBallCounter):
         super().__init__(ball_device, config)
         self._entrances = []
         self._trigger_recount = asyncio.Event(loop=self.machine.clock.loop)
-        # TODO: use ball_switches and jam_switch!
         # Register switch handlers with delays for entrance & exit counts
         for switch in self.config['ball_switches']:
             self.machine.switch_controller.add_switch_handler(
@@ -38,6 +37,7 @@ class SwitchCounter(PhysicalBallCounter):
                 callback=self.invalidate_count)
 
         self.machine.clock.loop.create_task(self._run())
+        self._is_unreliable = False
 
     def trigger_recount(self):
         """Trigger a count."""
@@ -66,6 +66,22 @@ class SwitchCounter(PhysicalBallCounter):
             elif self._last_count < 0:
                 raise AssertionError("Count may never be negativ")
 
+            if new_count == self._last_count:
+                # count did not change
+                continue
+
+            if self.is_jammed() and new_count == 1:
+                # only jam is active. keep previous count
+                self.debug_log("Counter is jammed. Only jam is active. Will no longer trust count.")
+                # ball potentially returned
+                if not self._is_unreliable:
+                    self.record_activity(BallReturnActivity())
+                    self._is_unreliable = True
+                    self._last_count += 1
+                continue
+            else:
+                self._is_unreliable = False
+
             if new_count > self._last_count:
                 # new ball
                 for _ in range(new_count - self._last_count):
@@ -82,9 +98,7 @@ class SwitchCounter(PhysicalBallCounter):
                 # lost ball
                 for _ in range(self._last_count - new_count):
                     self.record_activity(BallLostActivity())
-            else:
-                # count did not change
-                continue
+
             # update count
             self._last_count = new_count
             self.trigger_activity()
@@ -129,68 +143,14 @@ class SwitchCounter(PhysicalBallCounter):
         return self.config['jam_switch'] and self.machine.switch_controller.is_active(
             self.config['jam_switch'].name, ms=self.config['entrance_count_delay'])
 
+    def is_count_unreliable(self):
+        """Return true if only the jam switch is active and the count is unknown."""
+        return self._is_unreliable
+
     def wait_for_ready_to_receive(self):
         """Wait until there is at least on inactive switch."""
         # future returns when ball_count != number of switches
         return self.wait_for_ball_count_changes(len(self.config['ball_switches']))
-
-    @asyncio.coroutine
-    def track_eject(self, eject_tracker: EjectTracker, already_left):
-        """Return eject_process dict."""
-        # count active switches
-        while True:
-            waiter = self.wait_for_count_stable()
-            try:
-                active_switches = self._count_switches_sync()
-                waiter.cancel()
-                break
-            except ValueError:
-                yield from waiter
-
-        ball_left_future = Util.ensure_future(self.wait_for_ball_to_leave(),
-                                              loop=self.machine.clock.loop) if not already_left else None
-
-        # all switches are stable. we are ready now
-        eject_tracker.set_ready()
-
-        jam_active_before_eject = self.is_jammed()
-        jam_active_after_eject = False
-        count = len(active_switches)
-        while True:
-            ball_count_change = Util.ensure_future(self.wait_for_ball_count_changes(count),
-                                                   loop=self.machine.clock.loop)
-            if ball_left_future:
-                futures = [ball_count_change, ball_left_future]
-            else:
-                futures = [ball_count_change]
-            yield from Util.any(futures, loop=self.machine.clock.loop)
-
-            if ball_left_future and ball_left_future.done():
-                ball_left_future = None
-                eject_tracker.track_ball_left()
-                count -= 1
-                ball_count_change.cancel()
-            elif ball_count_change.done():
-                new_count = ball_count_change.result()
-                # check jam first
-                if not jam_active_after_eject and not jam_active_before_eject and self.is_jammed():
-                    eject_tracker.track_ball_returned()
-                    jam_active_after_eject = True
-                    count += 1
-                if new_count > count:
-                    for _ in range(new_count - count):
-                        try:
-                            last_entrance = self._entrances.pop(0)
-                        except IndexError:
-                            last_entrance = -1000
-
-                        if last_entrance > self.machine.clock.get_time() - self.config['entrance_event_timeout']:
-                            eject_tracker.track_ball_entrance()
-                        else:
-                            eject_tracker.track_unknown_balls(1)
-                elif count > new_count:
-                    eject_tracker.track_lost_balls(count - new_count)
-                count = new_count
 
     @asyncio.coroutine
     def wait_for_ball_to_leave(self):

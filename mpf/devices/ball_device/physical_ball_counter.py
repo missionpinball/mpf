@@ -4,7 +4,6 @@ The duty of this device is to maintain the current ball count of the device.
 """
 import asyncio
 
-# TODO: rename to hardware counter
 from typing import Generator
 
 from mpf.core.utility_functions import Util
@@ -63,6 +62,8 @@ class EjectTracker:
                 yield from self.track_ball_entrance()
             elif isinstance(change, UnknownBallActivity):
                 self.track_unknown_balls(1)
+            elif isinstance(change, BallReturnActivity):
+                self.track_ball_returned()
             else:
                 raise AssertionError("Unknown activity {}".format(change))
 
@@ -134,25 +135,49 @@ class EjectTracker:
         """Set device ready."""
         self._ready.set_result("ready")
 
+
 class BallActivity(object):
 
     """An acticity in a ball device."""
 
     pass
 
+
 class BallLostActivity(BallActivity):
+
+    """A ball was lost/ejected from device."""
+
     pass
 
 
 class NewBallActivity(BallActivity):
+
+    """A new ball was found in the device."""
+
     pass
 
 
 class BallEntranceActivity(NewBallActivity):
+
+    """A new ball entered the device (did not return)."""
+
+    pass
+
+
+class BallReturnActivity(NewBallActivity):
+
+    """A ball returned."""
+
     pass
 
 
 class UnknownBallActivity(NewBallActivity):
+
+    """A unknown new ball was found in the device.
+
+    This could be a returned or entered ball.
+    """
+
     pass
 
 
@@ -194,6 +219,10 @@ class PhysicalBallCounter(object):
         """Return true if device is jammed."""
         raise NotImplementedError()
 
+    def is_count_unreliable(self) -> bool:
+        """Return true if device is jammed and cannot count."""
+        raise NotImplementedError()
+
     @asyncio.coroutine
     def count_balls(self) -> Generator[int, None, int]:
         """Return the current ball count."""
@@ -223,10 +252,10 @@ class PhysicalBallCounter(object):
         self._activity_queues.append(queue)
         return queue
 
-    def record_activity(self, type):
+    def record_activity(self, activity_type):
         """Record an activity."""
         for queue in self._activity_queues:
-            queue.put_nowait(type)
+            queue.put_nowait(activity_type)
 
     def wait_for_ball_activity(self):
         """Wait for (settled) ball activity in device."""

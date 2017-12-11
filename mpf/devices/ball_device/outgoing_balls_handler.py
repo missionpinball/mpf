@@ -492,6 +492,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                 return True
             elif event == ball_return_future:
                 # ball returned. eject failed
+                self.debug_log("Ball returned. Eject failed.")
                 eject_request.already_left = False
                 incoming_ball_at_target.did_not_arrive()
                 return False
