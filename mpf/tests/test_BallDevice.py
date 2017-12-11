@@ -1375,7 +1375,7 @@ class TestBallDevice(MpfTestCase):
         self.assertEqual(0, self._captured)
         self.assertEqual(0, device1.balls)
         self.assertEqual(0, playfield.balls)
-        self.assertRaises(ValueError, device1.counter.count_balls_sync)
+        self.assertRaises(ValueError, device1.ball_count_handler.counter.count_balls_sync)
 
         # the the other one
         self.machine.switch_controller.process_switch("s_ball_switch1", 0)
@@ -1390,7 +1390,7 @@ class TestBallDevice(MpfTestCase):
         self.assertEqual(0, self._captured)
         self.assertEqual(0, device1.balls)
         self.assertEqual(0, playfield.balls)
-        self.assertRaises(ValueError, device1.counter.count_balls_sync)
+        self.assertRaises(ValueError, device1.ball_count_handler.counter.count_balls_sync)
 
         self.advance_time_and_run(1)
         # but finally both are stable
