@@ -276,8 +276,3 @@ class PhysicalBallCounter(object):
                 return current_count
 
             yield from self.wait_for_ball_activity()
-
-    @asyncio.coroutine
-    def track_eject(self, eject_tracker: EjectTracker, already_left):
-        """Return eject_process dict."""
-        raise NotImplementedError()
