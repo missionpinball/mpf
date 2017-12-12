@@ -108,9 +108,9 @@ class BallDevice(SystemWideDevice):
                 switch_set.add(switch)
 
         if self.config['entrance_switch']:
-            switch_set.add(self.config['jam_switch'])
+            switch_set.add(self.config['entrance_switch'])
 
-        if self.config['entrance_switch']:
+        if self.config['jam_switch']:
             switch_set.add(self.config['jam_switch'])
 
         for switch in switch_set:
