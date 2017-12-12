@@ -573,7 +573,11 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform, DmdPla
         if self.debug:
             self.log.debug("Data: %s", data)
         for i in range(msg_len):
-            result.append(int(data[i * 3:(i * 3) + 2], 16))
+            try:
+                result.append(int(data[i * 3:(i * 3) + 2], 16))
+            except ValueError:
+                self.log.warning("Read/encoding error.")
+                return bytearray()
 
         return result
 
