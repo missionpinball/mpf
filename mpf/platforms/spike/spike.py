@@ -682,6 +682,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform, DmdPla
     @asyncio.coroutine
     def _initialize(self) -> None:
         # send ctrl+c to stop whatever is running
+        self.log.debug("Resetting console")
         self._writer.write(b'\x03reset\n')
         # wait for the serial
         yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
@@ -690,16 +691,20 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform, DmdPla
         # pylint: disable-msg=protected-access
         self._reader._buffer = bytearray()
         # start mpf-spike-bridge
+        self.log.debug("Starting MPF bridge")
         self._writer.write("/bin/bridge\r\n".encode())
         welcome_str = b'MPF Spike Bridge!\r\n'
         yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
         data = yield from self._reader.read(100)
         if data[-len(welcome_str):] != welcome_str:
             raise AssertionError("Expected '{}' got '{}'".format(welcome_str, data[:len(welcome_str)]))
+        self.log.debug("Bridge started")
 
         # increase baud rate
+        self.log.debug("Increasing baudrate to 921600")
         self._writer.transport.serial.baudrate = 921600
 
+        self.log.debug("Resetting node bus and configuring traffic.")
         yield from self.send_cmd_sync(0, SpikeNodebus.Reset, bytearray())
         yield from self.send_cmd_sync(0, SpikeNodebus.SetTraffic, bytearray([34]))
         yield from self.send_cmd_sync(0, SpikeNodebus.SetTraffic, bytearray([17]))
@@ -717,25 +722,32 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform, DmdPla
         for node in self._nodes:
             if node == 0:
                 continue
+            self.log.debug("GetVersion on node %s", node)
             fw_version = yield from self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetVersion, bytearray(), 12)
             if fw_version:
                 self.log.debug("Node: %s Version: %s", node, "".join("0x%02x " % b for b in fw_version))
             yield from self.send_cmd_and_wait_for_response(node, SpikeNodebus.INIT_BOARD, bytearray(), 4)
 
         for node in self._nodes:
+            self.log.debug("Initial read inputs on node %s", node)
             initial_inputs = yield from self._read_inputs(node)
             self._inputs[node] = self._input_to_int(initial_inputs)
 
         for node in self._nodes:
             if node == 0:
                 continue
+            self.log.debug("GetStatus and GetCoilCurrent on node %s", node)
             yield from self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetStatus, bytearray(), 10)
             yield from self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetCoilCurrent, bytearray([0]), 12)
 
+        self.log.debug("Configuring traffic.")
         yield from self.send_cmd_sync(0, SpikeNodebus.SetTraffic, bytearray([17]))
         yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
 
         for node in self._nodes:
             if node == 0:
                 continue
+            self.log.debug("GetStatus on node %s", node)
             yield from self.send_cmd_and_wait_for_response(node, SpikeNodebus.GetStatus, bytearray(), 10)
+
+        self.log.info("SPIKE init done.")
