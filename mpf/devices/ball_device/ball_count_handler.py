@@ -169,7 +169,14 @@ class BallCountHandler(BallDeviceStateHandler):
 
             # get lock and update count
             yield from self._is_counting.acquire()
+
             new_balls = yield from self.counter.count_balls()
+
+            # try to re-order the device if count is unstable
+            if self.counter.is_count_unreliable():
+                self.debug_log("BCH: Count is unstable. Trying to reorder balls.")
+                yield from self.ball_device.ejector.reorder_balls()
+                new_balls = yield from self.counter.count_balls()
 
             self.debug_log("BCH: Counting. New count: %s Old count: %s", new_balls, self._ball_count)
 

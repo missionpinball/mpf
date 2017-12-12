@@ -66,10 +66,6 @@ class SwitchCounter(PhysicalBallCounter):
             elif self._last_count < 0:
                 raise AssertionError("Count may never be negativ")
 
-            if new_count == self._last_count:
-                # count did not change
-                continue
-
             if self.is_jammed() and new_count == 1:
                 # only jam is active. keep previous count
                 self.debug_log("Counter is jammed. Only jam is active. Will no longer trust count.")
@@ -81,6 +77,10 @@ class SwitchCounter(PhysicalBallCounter):
                 continue
             else:
                 self._is_unreliable = False
+
+            if new_count == self._last_count:
+                # count did not change
+                continue
 
             if new_count > self._last_count:
                 # new ball

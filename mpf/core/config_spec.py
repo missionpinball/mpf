@@ -112,6 +112,7 @@ ball_devices:
     eject_coil: single|machine(coils)|None
     eject_coil_jam_pulse: single|ms|None
     eject_coil_retry_pulse: single|ms|None
+    eject_coil_reorder_pulse: single|ms|None
     eject_coil_max_wait_ms: single|ms|200ms
     eject_coil_enable_time: single|ms|None
     retries_before_increasing_pulse: single|int|4

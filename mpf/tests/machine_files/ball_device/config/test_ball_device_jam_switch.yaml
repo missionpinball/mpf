@@ -41,6 +41,7 @@ ball_devices:
         eject_targets: plunger
         confirm_eject_type: target
         eject_coil_jam_pulse: 5
+        eject_coil_reorder_pulse: 2
         eject_coil_retry_pulse: 15
     plunger:
         eject_coil: plunger_eject
