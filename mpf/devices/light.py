@@ -367,8 +367,11 @@ class Light(SystemWideDevice):
         were removed, the light will be updated with whatever's below it. If no
         settings remain after these are removed, the light will turn off.
         """
+        if not self.stack:
+            return
+
         key = str(key)
-        color_changes = not self.stack or self.stack[0]['key'] == key
+        color_changes = self.stack[0]['key'] == key
 
         self._remove_from_stack_by_key(key)
 
