@@ -73,7 +73,6 @@ class SwitchCounter(PhysicalBallCounter):
                 if not self._is_unreliable:
                     self.record_activity(BallReturnActivity())
                     self._is_unreliable = True
-                    self._last_count += 1
                 continue
             else:
                 self._is_unreliable = False
