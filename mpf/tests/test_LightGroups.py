@@ -3,13 +3,13 @@ from mpf.core.rgb_color import RGBColor
 from mpf.tests.MpfTestCase import MpfTestCase
 
 
-class TestLedPlayer(MpfTestCase):
+class TestLightGroups(MpfTestCase):
 
     def getConfigFile(self):
-        return 'led_groups.yaml'
+        return 'light_groups.yaml'
 
     def getMachinePath(self):
-        return 'tests/machine_files/led/'
+        return 'tests/machine_files/light/'
 
     def test_color(self):
         self.machine.light_stripes['stripe1'].color(RGBColor("red"))

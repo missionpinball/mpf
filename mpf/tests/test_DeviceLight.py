@@ -3,16 +3,16 @@ from mpf.core.rgb_color import RGBColor
 from mpf.tests.MpfTestCase import MpfTestCase
 
 
-class TestLed(MpfTestCase):
+class TestDeviceLight(MpfTestCase):
 
     def getConfigFile(self):
         if self._testMethodName == "test_default_color_correction":
             return 'light_default_color_correction.yaml'
         else:
-            return 'led.yaml'
+            return 'light.yaml'
 
     def getMachinePath(self):
-        return 'tests/machine_files/led/'
+        return 'tests/machine_files/light/'
 
     def test_default_color_correction(self):
         led = self.machine.lights.led1

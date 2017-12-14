@@ -6,10 +6,10 @@ from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 class TestLedPlayer(MpfFakeGameTestCase):
 
     def getConfigFile(self):
-        return 'led_player.yaml'
+        return 'light_player.yaml'
 
     def getMachinePath(self):
-        return 'tests/machine_files/led_player/'
+        return 'tests/machine_files/light_player/'
 
     def test_config_player_config_processing(self):
         led1 = self.machine.lights.led1
@@ -43,7 +43,7 @@ class TestLedPlayer(MpfFakeGameTestCase):
         self.assertEqual(self.machine.config['light_player']['event4'][led2]['color'], '00ffff')
         self.assertEqual(self.machine.config['light_player']['event4'][led2]['fade_ms'], None)
 
-    def test_led_player(self):
+    def test_light_player(self):
         self.assertLightColor("led1", 'black')
         self.machine.set_machine_var("a", 6)
         self.advance_time_and_run()
