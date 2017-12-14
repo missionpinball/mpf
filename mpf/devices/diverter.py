@@ -322,7 +322,7 @@ class Diverter(SystemWideDevice):
                            "active target list")
             self.enable()
         elif not desired_state:
-            self.debug_log("Enabling diverter since eject target is on the "
+            self.debug_log("Disabling diverter since eject target is on the "
                            "inactive target list")
             self.disable()
 
