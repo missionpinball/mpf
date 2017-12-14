@@ -151,6 +151,7 @@ class TestFast(MpfTestCase):
         self.assertFalse(self.dmd_cpu.expected_commands)
 
     def setUp(self):
+        self.expected_duration = 2
         self.net_cpu = MockFastNet()
         self.rgb_cpu = MockFastRgb()
         self.dmd_cpu = MockFastDmd()

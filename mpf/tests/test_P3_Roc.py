@@ -46,6 +46,7 @@ class TestP3Roc(MpfTestCase):
         return False
 
     def setUp(self):
+        self.expected_duration = 2
         p_roc_common.pinproc_imported = True
         p_roc_common.pinproc = MockPinProcModule()
         self.pinproc = MagicMock()

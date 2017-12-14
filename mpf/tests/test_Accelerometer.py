@@ -5,6 +5,12 @@ from mpf.tests.MpfTestCase import MpfTestCase
 
 
 class TestAccelerometer(MpfTestCase):
+
+    def __init__(self, methodName):
+        super().__init__(methodName)
+        # this is the first test. give it some more time
+        self.expected_duration = 2
+
     def getConfigFile(self):
         return 'config.yaml'
 

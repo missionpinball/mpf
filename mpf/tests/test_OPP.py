@@ -54,8 +54,9 @@ class MockOppSocket(MockSerial):
 
 class OPPCommon(MpfTestCase):
 
-#    def getConfigFile(self):
-#        return 'config.yaml'
+    def __init__(self, methodName):
+        super().__init__(methodName)
+        self.expected_duration = 2
 
     def getMachinePath(self):
         return 'tests/machine_files/opp/'

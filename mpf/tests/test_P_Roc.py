@@ -102,6 +102,7 @@ class TestPRoc(MpfTestCase):
             raise AssertionError("Invalid type")
 
     def setUp(self):
+        self.expected_duration = 2
         p_roc_common.pinproc_imported = True
         p_roc_common.pinproc = MockPinProcModule()
         p_roc.pinproc = p_roc_common.pinproc
