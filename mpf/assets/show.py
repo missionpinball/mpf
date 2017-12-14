@@ -425,15 +425,15 @@ class RunningShow(object):
         self.sync_ms = sync_ms
         self.show_tokens = show_tokens
 
-        self._events = dict(play=events_when_played,
-                            stop=events_when_stopped,
-                            loop=events_when_looped,
-                            pause=events_when_paused,
-                            resume=events_when_resumed,
-                            advance=events_when_advanced,
-                            step_back=events_when_stepped_back,
-                            update=events_when_updated,
-                            complete=events_when_completed)
+        self.events = dict(play=events_when_played,
+                           stop=events_when_stopped,
+                           loop=events_when_looped,
+                           pause=events_when_paused,
+                           resume=events_when_resumed,
+                           advance=events_when_advanced,
+                           step_back=events_when_stepped_back,
+                           update=events_when_updated,
+                           complete=events_when_completed)
 
         self._delay_handler = None
         self.next_step_index = None
@@ -504,8 +504,8 @@ class RunningShow(object):
             self._run_next_step(post_events='play')
 
     def _post_events(self, action):
-        if self._events[action]:  # Should make sure this is a list? todo
-            for event in self._events[action]:
+        if self.events[action]:  # Should make sure this is a list? todo
+            for event in self.events[action]:
                 self.machine.events.post(event)
 
     def __repr__(self):

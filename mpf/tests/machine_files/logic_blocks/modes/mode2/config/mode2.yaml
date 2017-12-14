@@ -22,9 +22,15 @@ shows:
     - duration: -1
       lights:
         led1: on
+        led2: stop
+        led3: stop
     - duration: -1
       lights:
+        led1: stop
         led2: on
+        led3: stop
     - duration: -1
       lights:
+        led1: stop
+        led2: stop
         led3: on
