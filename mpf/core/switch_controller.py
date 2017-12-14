@@ -584,9 +584,8 @@ class SwitchController(MpfController):
 
         entry_key = str(switch_name) + '-' + str(state)
 
-        if entry_key in self.registered_switches:
-            for dummy_index, settings in enumerate(
-                    self.registered_switches[entry_key]):
+        if entry_key in self.registered_switches.keys():
+            for _, settings in enumerate(list(self.registered_switches[entry_key])):
                 if settings.ms == ms and settings.callback == callback:
                     self.registered_switches[entry_key].remove(settings)
 
