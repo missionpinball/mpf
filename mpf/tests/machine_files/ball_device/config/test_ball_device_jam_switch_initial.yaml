@@ -1,0 +1,6 @@
+#config_version=5
+config:
+ - test_ball_device_jam_switch.yaml
+
+virtual_platform_start_active_switches:
+  - s_trough_jam

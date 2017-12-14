@@ -7,7 +7,10 @@ class TestBallDeviceJamSwitch(MpfTestCase):
     max_wait_ms = 200
 
     def getConfigFile(self):
-        return 'test_ball_device_jam_switch.yaml'
+        if self._testMethodName == "test_reorder_on_startup":
+            return 'test_ball_device_jam_switch_initial.yaml'
+        else:
+            return 'test_ball_device_jam_switch.yaml'
 
     def getMachinePath(self):
         return 'tests/machine_files/ball_device/'
@@ -33,6 +36,17 @@ class TestBallDeviceJamSwitch(MpfTestCase):
 
         self.trough_coil.pulse = MagicMock()
         self.plunger_coil.pulse = MagicMock()
+
+    def test_reorder_on_startup(self):
+        # test reorder on startup with a jammed trough with no ball switches active
+        self.assertEqual("pulsed_2", self.machine.coils.trough_eject.hw_driver.state)
+        self.advance_time_and_run(.1)
+        self.machine.switch_controller.process_switch('s_trough_2', 1)
+        self.machine.switch_controller.process_switch('s_trough_3', 1)
+        self.machine.switch_controller.process_switch('s_trough_4', 1)
+        self.machine.switch_controller.process_switch('s_trough_jam', 1)
+        self.advance_time_and_run(1)
+        self.assertEqual(4, self.machine.ball_devices.trough.balls)
 
     def test_eject_with_jam_switch(self):
         # Tests the proper operation of a trough eject with a jam switch

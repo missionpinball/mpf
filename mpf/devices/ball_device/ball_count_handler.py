@@ -65,6 +65,13 @@ class BallCountHandler(BallDeviceStateHandler):
             self.counter = EntranceSwitchCounter(self.ball_device, self.ball_device.config)
 
         self._ball_count = yield from self.counter.count_balls()
+        # on start try to reorder balls if count is unstable
+        if self.counter.is_count_unreliable():
+            self.debug_log("BCH: Count is unstable. Trying to reorder balls.")
+            yield from self.ball_device.ejector.reorder_balls()
+            # recount
+            self._ball_count = yield from self.counter.count_balls()
+
         if self._ball_count > 0:
             self._has_balls.set()
         self.ball_device.counted_balls = self._ball_count
@@ -158,10 +165,10 @@ class BallCountHandler(BallDeviceStateHandler):
 
     @asyncio.coroutine
     def _run(self):
+        changes = self.counter.register_change_stream()
         while True:
             # wait for ball changes
-            ball_changes = Util.ensure_future(self.counter.wait_for_ball_activity(),
-                                              loop=self.machine.clock.loop)
+            ball_changes = Util.ensure_future(changes.get(), loop=self.machine.clock.loop)
             revalidate_future = Util.ensure_future(self._revalidate.wait(), loop=self.machine.clock.loop)
             yield from Util.first([ball_changes, revalidate_future, self._eject_started.wait()],
                                   loop=self.machine.clock.loop)
