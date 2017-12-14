@@ -50,7 +50,7 @@ Writing Tests
 * :doc:`testing/index`
 * :doc:`testing/running_mpf_tests`
 * :doc:`testing/writing_mpf_tests`
-* :doc:`testing/your_game`
+* :doc:`testing/writing_machine_tests`
 * :doc:`testing/fuzz_testing`
 
 Extending, Adding to, and Enhancing MPF
