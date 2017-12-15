@@ -488,6 +488,7 @@ class Light(SystemWideDevice):
 
             return self._color_correction_profile.apply(color)
 
+    # pylint: disable-msg=too-many-return-statements
     def _get_color_and_fade(self, stack, max_fade_ms: int) -> Tuple[RGBColor, int]:
         try:
             color_settings = stack[0]
