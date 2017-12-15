@@ -679,7 +679,7 @@ class SpikePlatform(SwitchPlatform, LightsPlatform, DriverPlatform, DmdPlatform)
 
     @staticmethod
     def _input_to_int(state):
-        if state is False:
+        if state is False or state is None:
             return 0
 
         result = 0
