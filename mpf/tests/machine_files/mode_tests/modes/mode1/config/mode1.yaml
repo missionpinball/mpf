@@ -7,6 +7,8 @@ mode:
   stop_on_ball_end: false
   game_mode: False
 
+mode_settings:
+  this: true
 
 config:
   - test.yaml
