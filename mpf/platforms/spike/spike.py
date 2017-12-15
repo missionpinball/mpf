@@ -484,6 +484,15 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform, DmdPla
                     self._reader._buffer = bytearray()
                     continue
 
+            if not result:
+                self.log.warning("Empty poll result. Spike desynced.")
+                # give it a break of 50ms
+                yield from asyncio.sleep(.05, loop=self.machine.clock.loop)
+                # clear buffer
+                # pylint: disable-msg=protected-access
+                self._reader._buffer = bytearray()
+                continue
+
             ready_node = result[0]
 
             if 0 < ready_node <= 0x0F or ready_node == 0xF0:
