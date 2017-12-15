@@ -340,6 +340,9 @@ class ModeController(MpfController):
 
         for mode in self.active_modes:
 
+            if not mode.is_game_mode:
+                continue
+
             if mode.auto_stop_on_ball_end:
                 self.debug_log("Adding mode '%s' to ball ending queue", mode.name)
                 self.mode_stop_count += 1
