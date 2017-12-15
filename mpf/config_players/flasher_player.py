@@ -33,7 +33,7 @@ class FlasherPlayer(DeviceConfigPlayer):
 
     @staticmethod
     def _remove_flash(light, key):
-        light.remove_from_stack_by_key(key=key)
+        light.remove_from_stack_by_key(key=key, fade_ms=0)
 
     def get_express_config(self, value):
         """Parse express config."""

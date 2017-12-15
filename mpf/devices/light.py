@@ -5,6 +5,8 @@ from operator import itemgetter
 from typing import Set
 from typing import Tuple
 
+from mpf.core.delays import DelayManager
+
 from mpf.core.platform import LightsPlatform
 
 from mpf.core.device_monitor import DeviceMonitor
@@ -46,6 +48,7 @@ class Light(SystemWideDevice):
         self.platforms = set()      # type: Set[LightsPlatform]
         super().__init__(machine, name)
         self.machine.light_controller.initialise_light_subsystem()
+        self.delay = DelayManager(self.machine.delayRegistry)
 
         self.default_fade_ms = None
 
@@ -323,9 +326,9 @@ class Light(SystemWideDevice):
             key = str(key)
 
         if priority < self._get_priority_from_key(key):
-            self.debug_log("Incoming priority is lower than an existing "
-                           "stack item with the same key. Not adding to "
-                           "stack.")
+            self.debug_log("Incoming priority %s is lower than an existing "
+                           "stack item with the same key %s. Not adding to "
+                           "stack.", priority, key)
             return
 
         if self.stack and priority == self.stack[0]['priority']:
@@ -356,7 +359,7 @@ class Light(SystemWideDevice):
         self.debug_log("dest_color: %s", color)
         self.debug_log("key: %s", key)
 
-    def remove_from_stack_by_key(self, key):
+    def remove_from_stack_by_key(self, key, fade_ms=None):
         """Remove a group of color settings from the stack.
 
         Args:
@@ -368,15 +371,54 @@ class Light(SystemWideDevice):
         settings remain after these are removed, the light will turn off.
         """
         if not self.stack:
+            # no stack
             return
 
+        if fade_ms is None:
+            fade_ms = self.default_fade_ms
+
         key = str(key)
-        color_changes = self.stack[0]['key'] == key
+
+        priority = None
+        color_changes = True
+        stack = []
+        for i, entry in enumerate(self.stack):
+            if entry["key"] == key:
+                stack = self.stack[i:]
+                priority = entry["priority"]
+                break
+            elif entry["key"] != key and entry["dest_color"] is not None:
+                # no transparency above key
+                color_changes = False
+
+        # key not in stack
+        if not stack:
+            return
+
+        if fade_ms:
+            color_of_key = self._get_color_and_fade(stack, 0)[0]
 
         self._remove_from_stack_by_key(key)
+        if fade_ms:
+            start_time = self.machine.clock.get_time()
+            self.stack.append(dict(priority=priority,
+                                   start_time=start_time,
+                                   start_color=color_of_key,
+                                   dest_time=start_time + fade_ms / 1000.0,
+                                   dest_color=None,
+                                   key=key))
+            self.delay.reset(ms=fade_ms, callback=partial(self._remove_fade_out, key=key), name="remove_fade")
+            self.stack.sort(key=itemgetter('priority', 'key'), reverse=True)
 
         if color_changes:
             self._schedule_update()
+
+    def _remove_fade_out(self, key):
+        """Remove a timed out fade out."""
+        if not self.stack:
+            return
+        self.debug_log("Removing key '%s' from stack", key)
+        self.stack[:] = [x for x in self.stack if x['key'] != key or x['dest_color'] is not None]
 
     def _remove_from_stack_by_key(self, key):
         """Remove a key from stack."""
@@ -453,20 +495,33 @@ class Light(SystemWideDevice):
             # no stack
             return RGBColor('off'), -1
 
+        dest_color = color_settings['dest_color']
+
         # no fade
         if not color_settings['dest_time']:
-            return color_settings['dest_color'], -1
+            # if we are transparent just return the lower layer
+            if dest_color is None:
+                return self._get_color_and_fade(stack[1:], max_fade_ms)
+            return dest_color, -1
 
         current_time = self.machine.clock.get_time()
 
         # fade is done
         if current_time >= color_settings['dest_time']:
+            # if we are transparent just return the lower layer
+            if dest_color is None:
+                return self._get_color_and_fade(stack[1:], max_fade_ms)
             return color_settings['dest_color'], -1
+
+        if dest_color is None:
+            dest_color, lower_fade_ms = self._get_color_and_fade(stack[1:], max_fade_ms)
+            if lower_fade_ms > 0:
+                max_fade_ms = min(lower_fade_ms, max_fade_ms)
 
         target_time = current_time + (max_fade_ms / 1000.0)
         # check if fade will be done before max_fade_ms
         if target_time > color_settings['dest_time']:
-            return color_settings['dest_color'], int((color_settings['dest_time'] - current_time) * 1000)
+            return dest_color, int((color_settings['dest_time'] - current_time) * 1000)
 
         # figure out the ratio of how far along we are
         try:
@@ -475,7 +530,7 @@ class Light(SystemWideDevice):
         except ZeroDivisionError:
             ratio = 1.0
 
-        return RGBColor.blend(color_settings['start_color'], color_settings['dest_color'], ratio), max_fade_ms
+        return RGBColor.blend(color_settings['start_color'], dest_color, ratio), max_fade_ms
 
     def _get_brightness_and_fade(self, max_fade_ms: int, color: str) -> Tuple[float, int]:
         uncorrected_color, fade_ms = self._get_color_and_fade(self.stack, max_fade_ms)

@@ -43,6 +43,53 @@ class TestDeviceLight(MpfTestCase):
         self.assertEqual(0 / 255.0, led.hw_drivers["green"].current_brightness)
         self.assertEqual(0 / 255.0, led.hw_drivers["blue"].current_brightness)
 
+    def test_consecutive_fades(self):
+        self.assertLightColor("led1", [0, 0, 0])
+        led = self.machine.lights["led1"]
+        led.color(RGBColor("red"), fade_ms=1000, key="one")
+        self.advance_time_and_run(.5)
+        self.assertLightColor("led1", [127, 0, 0])
+        self.advance_time_and_run(1)
+        self.assertLightColor("led1", "red")
+
+        # play another color with the same key
+        led.color(RGBColor("red"), fade_ms=1000, key="one")
+        self.advance_time_and_run(.1)
+        self.assertLightColor("led1", "red")
+        self.advance_time_and_run(1)
+
+        # remove key and play again
+        led.remove_from_stack_by_key("one", fade_ms=1000)
+        led.color(RGBColor("red"), fade_ms=1000, key="one")
+        self.advance_time_and_run(.1)
+        self.assertLightColor("led1", "red")
+        self.advance_time_and_run(1)
+
+        led.remove_from_stack_by_key("one", fade_ms=1000)
+        self.assertLightColor("led1", "red")
+        self.advance_time_and_run(.5)
+        self.assertLightColor("led1", [128, 0, 0])
+        self.advance_time_and_run(.6)
+        self.assertLightColor("led1", [0, 0, 0])
+        self.assertFalse(led.stack)
+
+        led.color(RGBColor("blue"), key="lower", priority=1, fade_ms=10000)
+        led.color(RGBColor("red"), key="upper", priority=2, fade_ms=1000)
+        self.advance_time_and_run(.5)
+        self.assertLightColor("led1", [127, 0, 0])
+        self.advance_time_and_run(.5)
+        self.assertLightColor("led1", "red")
+        self.advance_time_and_run(2) # lower is at 3/10
+        led.remove_from_stack_by_key("upper", fade_ms=4000)
+        self.assertLightColor("led1", "red")
+        self.advance_time_and_run(2) # lower is at 5/10 -> [0, 0, 127]. upper at 2/4 (50% alpha)
+        self.assertLightColor("led1", [128, 0, 63])
+        self.advance_time_and_run(2)  # lower is at 7/10. upper is gone
+        self.assertLightColor("led1", [0, 0, 178])
+        self.advance_time_and_run(3)  # lower is at 10/10. upper is gone
+        self.assertLightColor("led1", [0, 0, 255])
+        self.assertEqual(1, len(led.stack))
+
     def test_color_and_stack(self):
         led1 = self.machine.lights.led1
 

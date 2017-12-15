@@ -48,22 +48,22 @@ class LightPlayer(DeviceConfigPlayer):
             if isinstance(light, str):
                 light_names = Util.string_to_list(light)
                 for light_name in light_names:
-                    self._light_remove_named(light_name, instance_dict, full_context)
+                    self._light_remove_named(light_name, instance_dict, full_context, s.get("fade_ms", None))
             else:
-                self._light_remove(light, instance_dict, full_context)
+                self._light_remove(light, instance_dict, full_context, s.get("fade_ms", None))
 
-    def _light_remove_named(self, light_name, instance_dict, full_context):
+    def _light_remove_named(self, light_name, instance_dict, full_context, fade_ms):
         try:
             lights = [self.machine.lights[light_name]]
         except KeyError:
             lights = self.machine.lights.items_tagged(light_name)
 
         for light in lights:
-            self._light_remove(light, instance_dict, full_context)
+            self._light_remove(light, instance_dict, full_context, fade_ms)
 
     @staticmethod
-    def _light_remove(light, instance_dict, full_context):
-        light.remove_from_stack_by_key(full_context)
+    def _light_remove(light, instance_dict, full_context, fade_ms):
+        light.remove_from_stack_by_key(full_context, fade_ms)
         try:
             del instance_dict[light.name]
         except KeyError:
@@ -91,7 +91,7 @@ class LightPlayer(DeviceConfigPlayer):
 
     def _light_color(self, light, instance_dict, full_context, color, **s):
         if color == "stop":
-            self._light_remove(light, instance_dict, full_context)
+            self._light_remove(light, instance_dict, full_context, s.get("fade_ms", None))
             return
         if color == "on":
             color = light.config['default_on_color']
