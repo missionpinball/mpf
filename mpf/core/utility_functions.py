@@ -86,6 +86,8 @@ class Util(object):
             for num, item in enumerate(source_dict):
                 source_dict[num] = Util.keys_to_lower(item)
             return source_dict
+        else:
+            raise AssertionError("Source dict has invalid format.")
 
     @staticmethod
     def string_to_list(string: Union[str, List[str], None]) -> List[str]:
@@ -719,6 +721,7 @@ class Util(object):
 
         if not done:
             raise asyncio.TimeoutError()
+        # pylint: disable-msg=stop-iteration-return
         return next(iter(done))
 
     @staticmethod

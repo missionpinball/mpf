@@ -306,8 +306,8 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
                 `7/5`. This `proc_num` is an int between 0 and 255.
         """
         if proc_num == -1:
-            raise AssertionError("Switch %s cannot be controlled by the "
-                                 "P-ROC/P3-ROC.", str(proc_num))
+            raise AssertionError("Switch {} cannot be controlled by the "
+                                 "P-ROC/P3-ROC.".format(proc_num))
 
         switch = PROCSwitch(config, proc_num, config.debounce == "quick")
         # The P3-ROC needs to be configured to notify the host computers of
@@ -405,8 +405,8 @@ class PDBConfig(object):
             # for a case that probably won't happen, just ignore these banks.
             if group_ctr >= num_proc_banks or lamp_dict['sink_bank'] >= 16:
                 raise AssertionError("Lamp matrix banks can't be mapped to index "
-                                     "%d because that's outside of the banks the "
-                                     "P-ROC/P3-ROC can control.", lamp_dict['sink_bank'])
+                                     "{} because that's outside of the banks the "
+                                     "P-ROC/P3-ROC can control.".format(lamp_dict['sink_bank']))
             else:
                 self.log.debug("Driver group %02d (lamp sink): slow_time=%d "
                                "enable_index=%d row_activate_index=%d "

@@ -388,6 +388,7 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
         return ord(data)
 
     @asyncio.coroutine
+    # pylint: disable-msg=inconsistent-return-statements
     def readuntil(self, separator, min_chars: int = 0):
         """Read until separator.
 

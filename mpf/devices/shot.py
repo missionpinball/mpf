@@ -258,16 +258,16 @@ class Shot(EnableDisableMixin, ModeDevice):
         self.config['playfield'].mark_playfield_active_from_device_action()
 
         if not self.enabled or not self.player:
-            return
+            return None
 
         # Stop if there is an active delay but no sequence
         if self.active_delays:
-            return
+            return None
 
         profile_settings = self._get_profile_settings()
 
         if not profile_settings:
-            return
+            return None
 
         state = profile_settings['name']
 
@@ -357,6 +357,8 @@ class Shot(EnableDisableMixin, ModeDevice):
             min_shots = min_priority.get("shot", 0)
             min_priority["shot"] = self.mode.priority if self.mode.priority > min_shots else min_shots
             return {"_min_priority": min_priority}
+
+        return None
 
     def _notify_monitors(self, profile, state):
         if Shot.monitor_enabled and "shots" in self.machine.monitors:

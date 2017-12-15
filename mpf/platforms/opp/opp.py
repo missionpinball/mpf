@@ -640,7 +640,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         if number not in self.inpDict:
             raise AssertionError("A request was made to configure an OPP switch "
-                                 "with number %s which doesn't exist", number)
+                                 "with number {} which doesn't exist".format(number))
 
         return self.inpDict[number]
 
@@ -677,7 +677,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             index = chain_serial + '-' + card
             if index not in self.neoCardDict:
                 raise AssertionError("A request was made to configure an OPP neopixel "
-                                     "with card number %s which doesn't exist", card)
+                                     "with card number {} which doesn't exist".format(card))
 
             neo = self.neoCardDict[index]
             channel = neo.add_channel(int(pixel_num), self.neoDict, index_str)
@@ -685,8 +685,8 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         elif subtype == "matrix":
             if number not in self.incandDict:
                 raise AssertionError("A request was made to configure a OPP matrix "
-                                     "light (incand board), with number %s "
-                                     "which doesn't exist", number)
+                                     "light (incand board), with number {} "
+                                     "which doesn't exist".format(number))
 
             return self.incandDict[number]
         else:

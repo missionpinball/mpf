@@ -264,6 +264,7 @@ class PhysicalBallCounter(object):
         return future
 
     @asyncio.coroutine
+    # pylint: disable-msg=inconsistent-return-statements
     def wait_for_ball_count_changes(self, old_count: int):
         """Wait for ball count changes and return the new count.
 

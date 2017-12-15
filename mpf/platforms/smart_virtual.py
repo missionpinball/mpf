@@ -356,9 +356,9 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
         """Add ball to device."""
         self.log.debug("Adding ball to %s", device.name)
         if LogMixin.unit_test and device.balls >= device.config['ball_capacity']:
-            raise AssertionError("KABOOM! We just added a ball to %s which has a capacity "
-                                 "of %s but already had %s ball(s)", device.name,
-                                 device.config['ball_capacity'], device.balls)
+            raise AssertionError("KABOOM! We just added a ball to {} which has a capacity "
+                                 "of {} but already had {} ball(s)".format(
+                                     device.name, device.config['ball_capacity'], device.balls))
 
         if device.config['entrance_switch']:
 

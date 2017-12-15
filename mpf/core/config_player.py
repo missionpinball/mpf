@@ -317,7 +317,7 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
                 # It's possible that an earlier event could have stopped the
                 # mode before this event was handled, so just double-check to
                 # make sure the mode is still active before proceeding.
-                return
+                return None
 
             # calculate the base priority, which is a combination of the mode
             # priority and any priority value

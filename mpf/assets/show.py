@@ -626,7 +626,7 @@ class RunningShow(object):
         if self._show_loaded:
             self._run_next_step(post_events='step_back')
 
-    def _run_next_step(self, post_events=None):
+    def _run_next_step(self, post_events=None) -> None:
         """Run the next show step."""
         if post_events:
             self._post_events(post_events)
@@ -647,7 +647,7 @@ class RunningShow(object):
             else:
                 self.stop()
                 self._post_events('complete')
-                return False
+                return
 
         self.current_step_index = self.next_step_index
 
@@ -680,5 +680,3 @@ class RunningShow(object):
             self.next_step_time += time_to_next_step
             self._delay_handler = self.machine.clock.schedule_once(self._run_next_step,
                                                                    self.next_step_time - self.machine.clock.get_time())
-
-            return time_to_next_step

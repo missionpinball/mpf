@@ -332,7 +332,7 @@ class ModeController(MpfController):
         del kwargs
 
         if not self.active_modes:
-            return ()
+            return
 
         self.queue = queue
         self.queue.wait()

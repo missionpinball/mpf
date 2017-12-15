@@ -442,6 +442,7 @@ class DeviceCollection(CaseInsensitiveDict):
         for name, obj in self.items():
             if obj.config['number'] == number:
                 return self[name]
+        raise AssertionError("Object not found for number {}".format(number))
 
     def multilist_to_names(self, multilist):
         """Convert list of devices to string list.

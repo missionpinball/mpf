@@ -48,6 +48,8 @@ class EnableCoilEjector(BallDeviceEjector):
             # round 3: all devices except trough. release balls
             if 'trough' not in self.ball_device.config['tags']:
                 return self._fire_coil_for_search(True)
+        # no action by default
+        return False
 
     def _fire_coil_for_search(self, only_pulse):
         if only_pulse and self.ball_device.config['eject_coil_jam_pulse']:

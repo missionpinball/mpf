@@ -203,7 +203,7 @@ class Timer(ModeDevice):
         self.info_log("Starting Timer.")
 
         if self._check_for_done():
-            return()
+            return
 
         self.running = True
 

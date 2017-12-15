@@ -686,6 +686,8 @@ class AssetPool(object):
             return self._get_random_force_next_asset()
         elif self.config['type'] == 'random_force_all':
             return self._get_random_force_all_asset()
+        else:
+            raise AssertionError("Invalid type {}".format(self.config['type']))
 
     @property
     def loaded(self):

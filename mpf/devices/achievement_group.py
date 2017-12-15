@@ -255,7 +255,7 @@ class AchievementGroup(ModeDevice):
         self.debug_log("Checking for all complete")
         if not self._enabled:
             self.debug_log("Group is not enabled. Aborting...")
-            return
+            return False
 
         if not [x for x in self.config['achievements'] if x.state != "completed"]:
             self._all_complete()
@@ -267,7 +267,7 @@ class AchievementGroup(ModeDevice):
         self.debug_log("Checking for no more enabled")
         if not self._enabled:
             self.debug_log("Group is disabled. Aborting...")
-            return
+            return False
 
         if not [x for x in self.config['achievements'] if x.state == "enabled"]:
             self._no_more_enabled()

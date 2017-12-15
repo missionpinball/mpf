@@ -158,8 +158,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             self.platform.debug_log("Setting RGB buffer size: %s",
                                     self.max_messages_in_flight)
         else:
-            raise AttributeError("Unrecognized FAST processor type: %s",
-                                 self.remote_processor)
+            raise AttributeError("Unrecognized FAST processor type: {}".format(self.remote_processor))
 
         if StrictVersion(min_version) > StrictVersion(self.remote_firmware):
             raise AssertionError('Firmware version mismatch. MPF requires'

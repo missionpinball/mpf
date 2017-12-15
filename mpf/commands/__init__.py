@@ -59,8 +59,9 @@ class CommandLineUtility(object):
 
             if self.argv[1] in self.external_commands:
                 command = self.argv.pop(1)
-                return self.external_commands[command](self.mpf_path,
-                                                       *self.parse_args())
+                self.external_commands[command](self.mpf_path,
+                                                *self.parse_args())
+                return
             elif self.argv[1] in commands:
                 command = self.argv.pop(1)
 
@@ -146,10 +147,9 @@ class CommandLineUtility(object):
             else:
                 wrong_path = os.path.abspath(os.curdir)
 
-            print("Error: Could not find machine in folder: '{}'.".format(wrong_path))
-            print("Either start MPF from within your machine root folder or provide the path after the command.")
-
-            sys.exit(2)
+            raise AssertionError("Error: Could not find machine in folder: '{}'."
+                                 "Either start MPF from within your machine root folder or provide the path after the"
+                                 "command.".format(wrong_path))
 
 
 def run_from_command_line(args=None):

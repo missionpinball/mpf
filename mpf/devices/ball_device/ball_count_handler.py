@@ -115,6 +115,7 @@ class BallCountHandler(BallDeviceStateHandler):
         self.debug_log("A ball arrived. Progressing.")
 
     @asyncio.coroutine
+    # pylint: disable-msg=inconsistent-return-statements
     def wait_for_ready_to_receive(self, source):
         """Wait until this device is ready to receive a ball."""
         while True:

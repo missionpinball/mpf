@@ -107,8 +107,8 @@ class OPPSolenoid(DriverPlatformInterface):
         """Set and apply a switch rule."""
         new_rule = SwitchRule(pulse_settings, hold_settings, recycle)
         if self.switch_rule and self.switch_rule != new_rule:
-            raise AssertionError("Cannot set two rule with different driver settings in opp. Old: {} New: {}",
-                                 self.switch_rule, new_rule)
+            raise AssertionError("Cannot set two rule with different driver settings in opp. Old: {} New: {}".format(
+                self.switch_rule, new_rule))
         self.switch_rule = new_rule
         self.apply_switch_rule()
 

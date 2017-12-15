@@ -138,6 +138,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             yield from self._failed_eject(eject_request, 1, True)
 
         self.debug_log("No longer expecting incoming ball which may skip the device.")
+        return False
 
     def find_available_ball_in_path(self, start: "BallDevice") -> bool:
         """Try to remove available ball at the end of the path."""
@@ -199,6 +200,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         return False
 
     @asyncio.coroutine
+    # pylint: disable-msg=inconsistent-return-statements
     def _ejecting(self, eject_request: OutgoingBall):
         """Perform main eject loop."""
         eject_try = 0
@@ -501,8 +503,8 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                 self.debug_log("Got unknown balls. Assuming a ball returned.")
                 incoming_ball_at_target.did_not_arrive()
                 return False
-            else:
-                raise AssertionError("Invalid state")
+        # throw an error if we got here
+        raise AssertionError("Invalid state")
 
     @asyncio.coroutine
     def _handle_eject_success(self, eject_request: OutgoingBall):

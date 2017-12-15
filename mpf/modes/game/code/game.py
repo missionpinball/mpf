@@ -510,6 +510,7 @@ class Game(AsyncMode):
         game. Any registered handler can deny the player add request by
         returning *False* to this event.
         '''
+        return True
 
     def _player_add_request_complete(self, ev_result=True, **kwargs) -> bool:
         """Handle result of player_add_request callback.

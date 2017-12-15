@@ -219,6 +219,7 @@ class BCPClientSocket(BaseBcpClient):
             self.debug_log('Sending "%s"', bcp_string)
         self._sender.write((bcp_string + '\n').encode())
 
+    # pylint: disable-msg=inconsistent-return-statements
     @asyncio.coroutine
     def read_message(self):
         """Read the next message."""
@@ -256,6 +257,7 @@ class BCPClientSocket(BaseBcpClient):
 
         if cmd in self._bcp_client_socket_commands:
             self._bcp_client_socket_commands[cmd](**kwargs)
+            return None
         else:
             return cmd, kwargs
 

@@ -74,6 +74,7 @@ class DropTarget(SystemWideDevice):
         elif self.complete and self.knockdown_coil:
             self.knockdown_coil.pulse()
             return True
+        return False
 
     def _ball_search_phase2(self):
         if self.reset_coil and self.knockdown_coil:

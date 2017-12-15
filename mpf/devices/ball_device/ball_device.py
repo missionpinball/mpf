@@ -288,12 +288,11 @@ class BallDevice(SystemWideDevice):
         """Return the number of requested balls."""
         return len(self._ball_requests)
 
-    def _source_device_balls_available(self, **kwargs):
+    def _source_device_balls_available(self, **kwargs) -> None:
         del kwargs
         if self._ball_requests:
             (target, player_controlled) = self._ball_requests.popleft()
-            if self._setup_or_queue_eject_to_target(target, player_controlled):
-                return False
+            self._setup_or_queue_eject_to_target(target, player_controlled)
 
     # ---------------------- End of state handling code -----------------------
 

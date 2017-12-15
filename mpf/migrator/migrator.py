@@ -241,6 +241,7 @@ class VersionMigrator(object):
                 return self.fc
 
         self.log.debug("Ignoring data file: %s. (Error is ok)", self.file_name)
+        return False
 
     # pylint: disable-msg=no-self-use
     def is_show_file(self):

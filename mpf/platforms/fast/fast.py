@@ -478,9 +478,9 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             try:
                 number = self._parse_switch_number(number)
             except ValueError:
-                raise AssertionError("Could not parse switch number %s. Seems "
+                raise AssertionError("Could not parse switch number {}. Seems "
                                      "to be not a valid switch number for the"
-                                     "FAST platform.", number)
+                                     "FAST platform.".format(number))
 
         # convert the switch number into a tuple which is:
         # (switch number, connection)

@@ -316,11 +316,9 @@ class ConfigValidator(object):
             return 'yes'
 
         else:
-            self.validation_error(item, validation_failure_info,
-                                  "Entry \"{}\" is not valid for enum. Valid values are: {}".format(
-                                      item,
-                                      str(param)
-                                  ))
+            return self.validation_error(item, validation_failure_info,
+                                         "Entry \"{}\" is not valid for enum. Valid values are: {}".format(
+                                             item, str(param)))
 
     def _validate_type_machine(self, item, param, validation_failure_info):
         if item is None:
@@ -331,7 +329,7 @@ class ConfigValidator(object):
         if item in section:
             return section[item]
         else:
-            self.validation_error(item, validation_failure_info)
+            return self.validation_error(item, validation_failure_info)
 
     @classmethod
     def _validate_type_list(cls, item, validation_failure_info):
@@ -546,7 +544,7 @@ class ConfigValidator(object):
         if item is None:
             return None
         if not Util.is_power2(item):
-            self.validation_error(item, validation_failure_info, "Could not convert {} to pow2".format(item))
+            return self.validation_error(item, validation_failure_info, "Could not convert {} to pow2".format(item))
         else:
             return item
 

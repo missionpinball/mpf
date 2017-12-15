@@ -1073,8 +1073,7 @@ class V4Migrator(VersionMigrator):
 
     def is_show_file(self):
         """Verify we have a show file and that it's an old version."""
-        if 'tocks' in self.fc[0]:
-            return True
+        return 'tocks' in self.fc[0]
 
     def _migrate_show_file(self):
         self.log.debug("Migrating show file: %s", self.file_name)

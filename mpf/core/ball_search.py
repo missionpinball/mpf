@@ -88,7 +88,7 @@ class BallSearch(MpfController):
 
             return False
         else:
-            return
+            return True
 
     def register(self, priority, callback, name):
         """Register a callback for sequential ball search.
