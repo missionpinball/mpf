@@ -1,6 +1,7 @@
 """Mode timers."""
 from typing import List
 
+from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.delays import DelayManager
 from mpf.core.mode_device import ModeDevice
 from mpf.core.player import Player
@@ -14,6 +15,7 @@ if MYPY:   # pragma: no cover
 
 
 # pylint: disable-msg=too-many-instance-attributes
+@DeviceMonitor("running", "ticks", "end_value", "max_value", "start_value")
 class Timer(ModeDevice):
 
     """Parent class for a mode timer.
