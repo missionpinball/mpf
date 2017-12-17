@@ -556,11 +556,13 @@ class Light(SystemWideDevice):
 
         Similar to get_color.
         """
+        if not self.stack:
+            return RGBColor("off")
+
         stack = []
         for i, entry in enumerate(self.stack):
             if entry['priority'] <= priority and entry["key"] <= key:
-                stack = self.stack[i:]
-
+                stack = self.stack[i-1:]
         return self._get_color_and_fade(stack, 0)[0]
 
     def get_color(self):
