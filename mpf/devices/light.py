@@ -281,7 +281,7 @@ class Light(SystemWideDevice):
 
         start_time = self.machine.clock.get_time()
 
-        color_changes = not self.stack or self.stack[0]['priority'] <= priority
+        color_changes = not self.stack or self.stack[0]['priority'] <= priority or self.stack[0]['dest_color'] is None
 
         self._add_to_stack(color, fade_ms, priority, key, start_time)
 
@@ -331,8 +331,9 @@ class Light(SystemWideDevice):
                            "stack.", priority, key)
             return
 
-        if self.stack and priority == self.stack[0]['priority']:
-            self.debug_log("Light stack contains two entries with the same priority. %s", self.stack)
+        if self.stack and priority == self.stack[0]['priority'] and key == self.stack[0]['key']:
+            self.debug_log("Light stack contains two entries with the same priority %s but different keys: ",
+                           priority, self.stack)
 
         if fade_ms:
             dest_time = start_time + (fade_ms / 1000)
@@ -417,7 +418,7 @@ class Light(SystemWideDevice):
         """Remove a timed out fade out."""
         if not self.stack:
             return
-        self.debug_log("Removing key '%s' from stack", key)
+        self.debug_log("Removing fadeout for key '%s' from stack", key)
         self.stack[:] = [x for x in self.stack if x['key'] != key or x['dest_color'] is not None]
 
     def _remove_from_stack_by_key(self, key):
@@ -517,7 +518,7 @@ class Light(SystemWideDevice):
         if dest_color is None:
             dest_color, lower_fade_ms = self._get_color_and_fade(stack[1:], max_fade_ms)
             if lower_fade_ms > 0:
-                max_fade_ms = min(lower_fade_ms, max_fade_ms)
+                max_fade_ms = lower_fade_ms
 
         target_time = current_time + (max_fade_ms / 1000.0)
         # check if fade will be done before max_fade_ms
@@ -562,7 +563,8 @@ class Light(SystemWideDevice):
         stack = []
         for i, entry in enumerate(self.stack):
             if entry['priority'] <= priority and entry["key"] <= key:
-                stack = self.stack[i-1:]
+                stack = self.stack[i:]
+                break
         return self._get_color_and_fade(stack, 0)[0]
 
     def get_color(self):

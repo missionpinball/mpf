@@ -120,22 +120,24 @@ class TestFadecandy(MpfTestCase):
         self._messages = []
         self.advance_time_and_run(.1)
         self.assertOpenPixelLedsSent({}, {})
+        self.machine.lights.test_led.color("blue", priority=5, fade_ms=20, key="test2")
+        self.advance_time_and_run()
 
-        self.machine.lights.test_led.on(priority=1, fade_ms=1000, key="test")
+        self.machine.lights.test_led.on(priority=10, fade_ms=1000, key="test")
         self.advance_time_and_run(2)
         self._messages = []
         self.advance_time_and_run(.1)
         self.assertOpenPixelLedsSent({99: (255, 255, 255)}, {})
         # test crossfade on same key
         self._messages = []
-        self.machine.lights.test_led.on(priority=1, fade_ms=1000, key="test")
+        self.machine.lights.test_led.on(priority=10, fade_ms=1000, key="test")
         self.advance_time_and_run(.1)
         self.assertOpenPixelLedsSent({99: (255, 255, 255)}, {})
 
         # test remove and readd
         self._messages = []
         self.machine.lights.test_led.remove_from_stack_by_key(fade_ms=1000, key="test")
-        self.machine.lights.test_led.on(priority=1, fade_ms=1000, key="test")
+        self.machine.lights.test_led.on(priority=10, fade_ms=1000, key="test")
         self.advance_time_and_run(.1)
         self.assertOpenPixelLedsSent({99: (255, 255, 255)}, {})
 
@@ -144,9 +146,9 @@ class TestFadecandy(MpfTestCase):
         self.advance_time_and_run(.5)
         self._messages = []
         self.advance_time_and_run(.1)
-        message = self._build_message(0, {99: (113, 113, 113)})
+        message = self._build_message(0, {99: (113, 113, 255)})
         self.assertIn(message, self._messages)
         self.advance_time_and_run(.5)
         self._messages = []
         self.advance_time_and_run(.1)
-        self.assertOpenPixelLedsSent({99: (0, 0, 0)}, {})
+        self.assertOpenPixelLedsSent({99: (0, 0, 255)}, {})
