@@ -554,6 +554,9 @@ class Timer(ModeDevice):
         if self.max_value and self.ticks > self.max_value:
             self.ticks = self.max_value
 
+        self._remove_system_timer()
+        self._create_system_timer()
+
         self._check_for_done()
 
     def device_removed_from_mode(self, mode: Mode):
