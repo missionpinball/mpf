@@ -487,6 +487,19 @@ class BallDevice(SystemWideDevice):
             self.machine.events.post_boolean('balldevice_balls_available')
 
         self.machine.events.post('balldevice_{}_ball_entered'.format(self.name), new_balls=new_balls, device=self)
+        '''event: balldevice_(name)_ball_entered
+
+        desc: A ball (or balls) have just entered the ball device called
+        "name".
+
+        The ball was also added to balls and available_balls of the device.
+
+        args:
+
+        new_balls: The number of new balls that have not been claimed (by locks or similar).
+        device: A reference to the ball device object that is posting this
+        event.
+        '''
 
     @asyncio.coroutine
     def _balls_missing(self, balls):
