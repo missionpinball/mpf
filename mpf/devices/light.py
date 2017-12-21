@@ -388,9 +388,13 @@ class Light(SystemWideDevice):
                 stack = self.stack[i:]
                 priority = entry["priority"]
                 break
-            elif entry["key"] != key and entry["dest_color"] is not None:
+            elif entry["dest_color"] is not None:
                 # no transparency above key
                 color_changes = False
+
+        # this is already a fadeout. do not fade out the fade out.
+        if stack[0]["dest_color"] is None:
+            fade_ms = None
 
         # key not in stack
         if not stack:
@@ -418,8 +422,23 @@ class Light(SystemWideDevice):
         """Remove a timed out fade out."""
         if not self.stack:
             return
-        self.debug_log("Removing fadeout for key '%s' from stack", key)
-        self.stack[:] = [x for x in self.stack if x['key'] != key or x['dest_color'] is not None]
+
+        found = False
+        color_change = True
+        for i, entry in enumerate(self.stack):
+            if entry["key"] == key and entry["dest_color"] is None:
+                found = True
+                break
+            elif entry["dest_color"] is not None:
+                # found entry above the removed which is non-transparent
+                color_change = False
+
+        if found:
+            self.debug_log("Removing fadeout for key '%s' from stack", key)
+            self.stack[:] = [x for x in self.stack if x['key'] != key or x['dest_color'] is not None]
+
+        if found and color_change:
+            self._schedule_update()
 
     def _remove_from_stack_by_key(self, key):
         """Remove a key from stack."""

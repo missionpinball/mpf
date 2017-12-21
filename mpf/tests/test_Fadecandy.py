@@ -152,3 +152,17 @@ class TestFadecandy(MpfTestCase):
         self._messages = []
         self.advance_time_and_run(.1)
         self.assertOpenPixelLedsSent({99: (0, 0, 255)}, {})
+
+        # fade over fade
+        self.machine.lights.test_led.on(priority=10, key="test")
+        self.machine.lights.test_led.remove_from_stack_by_key(fade_ms=10000, key="test2")
+        self.advance_time_and_run(.1)
+        self._messages = []
+        self.advance_time_and_run(.1)
+        self.assertOpenPixelLedsSent({99: (255, 255, 255)}, {})
+        self.machine.lights.test_led.remove_from_stack_by_key(fade_ms=1000, key="test")
+        self.advance_time_and_run(.5)
+        self.advance_time_and_run(20)
+        self._messages = []
+        self.advance_time_and_run(.1)
+        self.assertOpenPixelLedsSent({99: (0, 0, 0)}, {})
