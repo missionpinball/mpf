@@ -392,13 +392,13 @@ class Light(SystemWideDevice):
                 # no transparency above key
                 color_changes = False
 
-        # this is already a fadeout. do not fade out the fade out.
-        if stack[0]["dest_color"] is None:
-            fade_ms = None
-
         # key not in stack
         if not stack:
             return
+
+        # this is already a fadeout. do not fade out the fade out.
+        if stack[0]["dest_color"] is None:
+            fade_ms = None
 
         if fade_ms:
             color_of_key = self._get_color_and_fade(stack, 0)[0]
