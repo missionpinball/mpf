@@ -49,6 +49,18 @@ class BallCountHandler(BallDeviceStateHandler):
         else:
             self._has_balls.clear()
 
+        self.machine.events.post("balldevice_{}_ball_count_changed".format(self.ball_device.name), balls=count)
+        '''event: balldevice_(name)_ball_count_changed
+
+        desc: The ball count for device (name) just changed.
+
+        This event may also be called without a change in some circumstances.
+
+        args:
+
+        balls: The number of new balls in this device.
+        '''
+
         for future in self._ball_count_changed_futures:
             if not future.done():
                 future.set_result(count)
