@@ -425,7 +425,7 @@ class Light(SystemWideDevice):
 
         found = False
         color_change = True
-        for i, entry in enumerate(self.stack):
+        for _, entry in enumerate(self.stack):
             if entry["key"] == key and entry["dest_color"] is None:
                 found = True
                 break
