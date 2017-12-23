@@ -1077,6 +1077,7 @@ spike:
     debug: single|bool|False
     port: single|str|
     baud: single|int|
+    runtime_baud: single|int|921600
     flow_control: single|bool|False
     nodes: list|int|
     poll_hz: single|int|1000

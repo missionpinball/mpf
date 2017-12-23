@@ -676,7 +676,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform, DmdPla
 
     @staticmethod
     def _input_to_int(state):
-        if state is False:
+        if state is False or state is None or len(state) < 8:
             return 0
 
         result = 0
@@ -705,7 +705,7 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform, DmdPla
         self._reader._buffer = bytearray()
         # start mpf-spike-bridge
         self.log.debug("Starting MPF bridge")
-        self._writer.write("/bin/bridge\r\n".encode())
+        self._writer.write("/bin/bridge {}\r\n".format(self.config['runtime_baud']).encode())
         welcome_str = b'MPF Spike Bridge!\r\n'
         yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
         data = yield from self._reader.read(100)
@@ -713,9 +713,10 @@ class SpikePlatform(SwitchPlatform, MatrixLightsPlatform, DriverPlatform, DmdPla
             raise AssertionError("Expected '{}' got '{}'".format(welcome_str, data[:len(welcome_str)]))
         self.log.debug("Bridge started")
 
-        # increase baud rate
-        self.log.debug("Increasing baudrate to 921600")
-        self._writer.transport.serial.baudrate = 921600
+        if self.config['runtime_baud']:
+            # increase baud rate
+            self.log.debug("Increasing baudrate to %s", self.config['runtime_baud'])
+            self._writer.transport.serial.baudrate = self.config['runtime_baud']
 
         self.log.debug("Resetting node bus and configuring traffic.")
         yield from self.send_cmd_sync(0, SpikeNodebus.Reset, bytearray())
