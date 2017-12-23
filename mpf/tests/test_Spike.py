@@ -34,7 +34,7 @@ class MockSpikeSocket(MockSerial):
         if encoded_msg == '\n\r'.encode() or encoded_msg == b'\x03reset\n':
             return len(encoded_msg)
 
-        if encoded_msg == "/bin/bridge\r\n".encode():
+        if encoded_msg == "/bin/bridge 921600\r\n".encode():
             self.queue.append(b'MPF Spike Bridge!\r\n')
             return len(encoded_msg)
 
