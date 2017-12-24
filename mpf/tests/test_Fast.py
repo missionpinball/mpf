@@ -1,6 +1,4 @@
 from mpf.core.platform import SwitchConfig
-from mpf.core.platform_controller import DriverRuleSettings
-from mpf.core.platform_controller import SwitchRuleSettings
 from mpf.core.rgb_color import RGBColor
 from mpf.tests.MpfTestCase import MpfTestCase
 
@@ -530,19 +528,27 @@ class TestFast(MpfTestCase):
 
         # manual flip with hw rule in action
         self.net_cpu.expected_commands = {
-            "DN:20,01,01,18,0B,FF,01,00,00": "DN:P",    # configure pulse
+            "DN:20,81,00,10,0A,FF,00,00,00": "DN:P",    # configure pulse
             "TN:20,01": "TN:P",                         # pulse
-            "DN:20,81,00,10,0A,FF,00,00,00": "DN:P"     # restore rule
+            "DN:20,01,01,18,0B,FF,01,00,00": "DN:P",    # restore rule
         }
         self.machine.coils.c_flipper_main.pulse()
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
-        # manual enable with hw rule
+        # manual flip with hw rule in action without reconfigure (same pulse)
+        self.net_cpu.expected_commands = {
+            "TN:20,01": "TN:P",                         # pulse
+        }
+        self.machine.coils.c_flipper_main.pulse(11)
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.net_cpu.expected_commands)
+
+        # manual enable with hw rule (same pulse)
         self.net_cpu.expected_commands = {
             "TN:20,03": "TN:P"
         }
-        self.machine.coils.c_flipper_main.enable()
+        self.machine.coils.c_flipper_main.enable(pulse_ms=11)
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
@@ -555,11 +561,46 @@ class TestFast(MpfTestCase):
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
-        # disable
+        # manual enable with hw rule (different pulse)
+        self.net_cpu.expected_commands = {
+            "DN:20,C1,00,18,0A,FF,01,00": "DN:P",       # configure pwm + enable
+        }
+        self.machine.coils.c_flipper_main.enable()
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.net_cpu.expected_commands)
+
+        # manual disable with hw rule
+        self.net_cpu.expected_commands = {
+            "TN:20,02": "TN:P",
+            "DN:20,01,01,18,0B,FF,01,00,00": "DN_P",    # configure rules
+            "TN:20,00": "TN:P"                          # reenable autofire rule
+        }
+        self.machine.coils.c_flipper_main.disable()
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.net_cpu.expected_commands)
+
+        # disable rule
         self.net_cpu.expected_commands = {
             "DN:20,81": "DN:P"
         }
         self.machine.flippers.f_test_single.disable()
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.net_cpu.expected_commands)
+
+        # manual flip no hw rule
+        self.net_cpu.expected_commands = {
+            "DN:20,81,00,10,0A,FF,00,00,00": "DN:P",
+            "TN:20,01": "TN:P",
+        }
+        self.machine.coils.c_flipper_main.pulse()
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.net_cpu.expected_commands)
+
+        # manual flip again with cached config
+        self.net_cpu.expected_commands = {
+            "TN:20,01": "TN:P",
+        }
+        self.machine.coils.c_flipper_main.pulse()
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 

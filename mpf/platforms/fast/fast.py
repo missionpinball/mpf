@@ -627,12 +627,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             driver.get_pwm_for_cmd(coil.pulse_settings.power),
             driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
 
-        driver.autofire = cmd
-        driver.config_state = None
         enable_switch.hw_switch.configure_debounce(enable_switch.debounce)
-        self.debug_log("Writing hardware rule: %s", cmd)
-
-        self.net_connection.send(cmd)
+        driver.set_autofire(cmd, coil.pulse_settings.duration, coil.pulse_settings.power, 0)
 
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch, disable_switch, coil):
         """Set pulse on hit and enable and release and disable rule on driver."""
@@ -674,12 +670,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             driver.get_pwm_for_cmd(coil.pulse_settings.power),
             driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
 
-        driver.autofire = cmd
-        driver.config_state = None
         enable_switch.hw_switch.configure_debounce(enable_switch.debounce)
-        self.debug_log("Writing hardware rule: %s", cmd)
-
-        self.net_connection.send(cmd)
+        driver.set_autofire(cmd, coil.pulse_settings.duration, coil.pulse_settings.power, 0)
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit and enable and relase rule on driver."""
@@ -701,12 +693,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             driver.get_pwm_for_cmd(coil.hold_settings.power),
             driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
 
-        driver.autofire = cmd
-        driver.config_state = None
         enable_switch.hw_switch.configure_debounce(enable_switch.debounce)
-        self.debug_log("Writing hardware rule: %s", cmd)
-
-        self.net_connection.send(cmd)
+        driver.set_autofire(cmd, coil.pulse_settings.duration, coil.pulse_settings.power, coil.hold_settings.power)
 
     def clear_hw_rule(self, switch, coil):
         """Clear a hardware rule.
@@ -729,11 +717,4 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         driver = coil.hw_driver
 
-        cmd = '{}{},81'.format(driver.get_config_cmd(), driver.number)
-
-        driver.autofire = None
-        driver.config_state = None
-
-        self.debug_log("Clearing hardware rule: %s", cmd)
-
-        self.net_connection.send(cmd)
+        driver.clear_autofire(driver.get_config_cmd(), driver.number)
