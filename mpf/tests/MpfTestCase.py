@@ -331,9 +331,13 @@ class MpfTestCase(unittest.TestCase):
             except Exception:
                 pass
             if self._exception and "exception" in self._exception:
-                raise self._exception['exception']
+                exception = self._exception['exception']
+                self._exception = None
+                raise exception
             elif self._exception:
-                raise Exception(self._exception, e)
+                exception = self._exception['exception']
+                self._exception = None
+                raise Exception(exception, e)
             raise e
 
     def machine_run(self):

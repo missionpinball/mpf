@@ -168,6 +168,9 @@ class MockSerial(MockFd):
     def nonblocking(self):
         pass
 
+    def flush(self):
+        pass
+
     @property
     def in_waiting(self):
         if self.read_ready():
