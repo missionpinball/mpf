@@ -696,12 +696,18 @@ class MachineController(LogMixin):
         """Start the main machine run loop."""
         self.info_log("Starting the main run loop.")
         try:
-            self.clock.loop.run_until_complete(self.initialise())
+            init = Util.ensure_future(self.initialise(), loop=self.clock.loop)
+            self.clock.loop.run_until_complete(Util.first([init, self.stop_future], loop=self.clock.loop))
         except RuntimeError:
             # do not show a runtime useless runtime error
             self.error_log("Failed to initialise MPF")
             self._shutdown()
             return
+        if init.cancelled():
+            self.error_log("Failed to initialise MPF")
+            self._shutdown()
+            return
+
         self._run_loop()
 
     def stop(self, **kwargs) -> None:
