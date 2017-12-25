@@ -734,6 +734,8 @@ mpf:
     __valid_in__: machine                           # todo add to validator
     default_pulse_ms: single|int|10
     default_flash_ms: single|int|50
+    default_ball_search: single|bool|False
+    default_light_hw_update_hz: single|int|50
     auto_create_switch_events: single|bool|True
     switch_event_active: single|str|%_active
     switch_event_inactive: single|str|%_inactive
@@ -742,6 +744,13 @@ mpf:
     save_machine_vars_to_disk: single|bool|true
     default_show_sync_ms: single|int|0
     default_platform_hz: single|float|1000
+    core_modules: ignore
+    config_players: ignore
+    device_modules: ignore
+    plugins: ignore
+    platforms: ignore
+    paths: ignore
+    device_collection_control_events: ignore
 mpf-mc:
     __valid_in__: machine                           # todo add to validator
 multiballs:

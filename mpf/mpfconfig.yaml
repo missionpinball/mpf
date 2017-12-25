@@ -121,18 +121,7 @@ mpf:
         config: config
         modes: modes
 
-    default_pulse_ms: 10
-    default_flash_ms: 50
-    auto_create_switch_events: True
-    switch_event_active: "%_active"
-    switch_event_inactive: "%_inactive"
-    switch_tag_event: sw_%
     allow_invalid_config_sections: false
-    save_machine_vars_to_disk: true
-    default_light_hw_update_hz: 50
-    default_platform_hz: 1000
-    default_ball_search: False
-    default_show_sync_ms: 0
 
     device_collection_control_events:
         autofires:

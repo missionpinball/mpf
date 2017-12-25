@@ -1,8 +1,7 @@
 #config_version=5
 
 mpf:
-  default_matrix_light_hw_update_hz: 1
-  default_led_hw_update_hz: 1
+  default_light_hw_update_hz: 1
 
 lights:
     led_01:

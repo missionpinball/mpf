@@ -178,14 +178,14 @@ class MachineController(LogMixin):
         self._load_core_modules()
         # order is specified in mpfconfig.yaml
 
+        self._validate_config()
+
         self._initialize_credit_string()
 
         # This is called so hw platforms have a chance to register for events,
         # and/or anything else they need to do with core modules since
         # they're not set up yet when the hw platforms are constructed.
         yield from self._initialize_platforms()
-
-        self._validate_config()
 
         self._register_config_players()
         self._register_system_events()
@@ -286,6 +286,7 @@ class MachineController(LogMixin):
         """Validate game and machine config."""
         self.validate_machine_config_section('machine')
         self.validate_machine_config_section('game')
+        self.validate_machine_config_section('mpf')
 
     def validate_machine_config_section(self, section: str) -> None:
         """Validate a config section."""
