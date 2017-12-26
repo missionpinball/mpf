@@ -171,8 +171,8 @@ show_player:
     show_assoc_tokens:
       speed: 1
       show_tokens:
-         line1Num: tag1
-         line1Color: red
+         line1num: tag1
+         line1color: red
   stop_show_assoc_tokens:
     show_assoc_tokens:
       action: stop
