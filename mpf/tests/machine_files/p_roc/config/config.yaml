@@ -4,7 +4,7 @@ hardware:
     driverboards: pdb
     platform: p_roc
 
-P_ROC:
+p_roc:
   dmd_timing_cycles: 1, 2, 3, 4
 
 switches:

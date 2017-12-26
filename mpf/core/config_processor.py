@@ -26,6 +26,9 @@ class ConfigProcessor(object):
         if not ConfigValidator.config_spec:
             ConfigValidator.load_config_spec()
 
+        if not config:
+            return dict()
+
         for k in config.keys():
             try:
                 if config_type not in ConfigValidator.config_spec[k][

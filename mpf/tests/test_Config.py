@@ -14,8 +14,6 @@ class TestConfig(MpfTestCase):
 
         self.add_to_config_validator('test_section',
                                      dict(__valid_in__='machine'))
-        self.add_to_config_validator('test_section_1',
-                                     dict(__valid_in__='machine'))
 
         super().setUp()
 
@@ -49,18 +47,15 @@ class TestConfig(MpfTestCase):
         self.assertEqual('+5', self.machine.config['test_section']['str_plus5'])
         self.assertEqual('+0.5', self.machine.config['test_section']['str_plus0point5'])
 
-        # keys should be all lowercase
+        # keys should keep case
         self.assertIn('case_sensitive_1', self.machine.config['test_section'])
-        self.assertIn('case_sensitive_2', self.machine.config['test_section'])
+        self.assertIn('Case_sensitive_2', self.machine.config['test_section'])
         self.assertIn('case_sensitive_3', self.machine.config['test_section'])
 
         # values should be case sensitive
         self.assertEqual(self.machine.config['test_section']['case_sensitive_1'], 'test')
-        self.assertEqual(self.machine.config['test_section']['case_sensitive_2'], 'test')
+        self.assertEqual(self.machine.config['test_section']['Case_sensitive_2'], 'test')
         self.assertEqual(self.machine.config['test_section']['case_sensitive_3'], 'Test')
-
-        # key should be lowercase even though it's uppercase in the config
-        self.assertIn('test_section_1', self.machine.config)
 
     def test_config_validator(self):
         validation_failure_info = (("key", "entry"), "subkey")

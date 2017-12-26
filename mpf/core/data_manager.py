@@ -73,6 +73,9 @@ class DataManager(MpfController):
             self.debug_log("Didn't find the %s file. No prob. We'll create "
                            "it when we save.", self.name)
 
+        if not self.data:
+            self.data = {}
+
     def get_data(self, section=None):
         """Return the value of this DataManager's data.
 
