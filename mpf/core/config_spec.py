@@ -880,6 +880,9 @@ rgb_dmds:
     brightness: single|float|1.0
     gamma: single|float|2.2
     hardware_brightness: single|template_float|1.0
+smbus2:
+    __valid_in__: machine
+    bus: single|int|
 score_reels:
     __valid_in__: machine
     coil_inc: single|machine(coils)|None

@@ -1,0 +1,7 @@
+#config_version=5
+
+hardware:
+    platform: smbus2
+
+smbus2:
+    bus: 1

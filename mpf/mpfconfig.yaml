@@ -109,6 +109,7 @@ mpf:
         virtual: mpf.platforms.virtual.VirtualHardwarePlatform
         spike: mpf.platforms.spike.spike.SpikePlatform
         trinamics_steprocker: mpf.platforms.trinamics_steprocker.TrinamicsStepRocker
+        smbus2: mpf.platforms.smbus2.Smbus2
 
     paths:
         scriptlets: scriptlets
