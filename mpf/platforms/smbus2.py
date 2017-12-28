@@ -32,6 +32,7 @@ class Smbus2(I2cPlatform):
 
         self.smbus = SMBus(self.config['bus'])  # type: SMBus
 
+    @asyncio.coroutine
     def i2c_read8(self, address, register):
         """Read a byte from I2C."""
         return self.smbus.read_byte_data(address, register)

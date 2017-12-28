@@ -26,5 +26,5 @@ class TestSmbus2(MpfTestCase):
         self.smbus.write_byte_data.assert_called_once_with(17, 23, 1337)
 
         self.smbus.read_byte_data = MagicMock(return_value=1337)
-        self.assertEqual(1337, self.machine.default_platform.i2c_read8(17, 23))
+        self.assertEqual(1337, self.loop.run_until_complete(self.machine.default_platform.i2c_read8(17, 23)))
         self.smbus.read_byte_data.assert_called_once_with(17, 23)

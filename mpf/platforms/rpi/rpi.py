@@ -1,6 +1,6 @@
 """Platform to control the hardware of a Raspberry Pi."""
 import asyncio
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from mpf.core.delays import DelayManager
 
@@ -11,7 +11,7 @@ from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInt
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
 from mpf.core.platform import SwitchPlatform, DriverPlatform, ServoPlatform, SwitchSettings, \
-    DriverSettings, DriverConfig, SwitchConfig
+    DriverSettings, DriverConfig, SwitchConfig, I2cPlatform
 
 # apiogpio is not a requirement for MPF so we fail with a nice error when loading
 try:
@@ -86,7 +86,7 @@ class RpiServo(ServoPlatformInterface):
         self.platform.send_command(self.platform.pi.set_servo_pulsewidth(self.gpio, position_translated))
 
 
-class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform):
+class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform, I2cPlatform):
 
     """Control the hardware of a Raspberry Pi.
 
@@ -106,6 +106,7 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform)
 
         self._cmd_queue = None  # type: asyncio.Queue
         self._cmd_task = None   # type: asyncio.Task
+        self._i2c_handles = {}  # type: Dict[Tuple[int, int], Any]
 
     def initialize(self):
         """Initialise platform."""
@@ -220,3 +221,35 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform)
         self.send_command(self.pi.set_mode(int(number), apigpio.OUTPUT))
 
         return RpiDriver(number, config, self)
+
+    @staticmethod
+    def _get_i2c_bus_address(address):
+        """Split and return bus + address."""
+        if isinstance(address, int):
+            return 0, address
+        return address.split("-")
+
+    @asyncio.coroutine
+    def _get_i2c_handle(self, address):
+        """Get or open handle for i2c device via pigpio."""
+        bus_address, device_address = self._get_i2c_bus_address(address)
+        if (bus_address, device_address) in self._i2c_handles:
+            return self._i2c_handles[(bus_address, device_address)]
+        handle = yield from self.pi.i2c_open(bus_address, device_address)
+        self._i2c_handles[(bus_address, device_address)] = handle
+        return handle
+
+    def i2c_write8(self, address, register, value):
+        """Write to i2c via pigpio."""
+        self.send_command(self._i2c_write8_async(address, register, value))
+
+    @asyncio.coroutine
+    def _i2c_write8_async(self, address, register, value):
+        handle = yield from self._get_i2c_handle(address)
+        yield from self.pi.i2c_write_byte_data(handle, register, value)
+
+    @asyncio.coroutine
+    def i2c_read8(self, address, register):
+        """Read from i2c via pigpio."""
+        handle = yield from self._get_i2c_handle(address)
+        return (yield from self.pi.i2c_read_byte_data(handle, register))
