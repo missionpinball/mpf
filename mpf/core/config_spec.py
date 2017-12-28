@@ -319,6 +319,8 @@ displays:
     height: single|int|600
     default: single|bool|False
     fps: single|int|0
+    round_anchor_x: single|str|center
+    round_anchor_y: single|str|middle
 display_light_player:
     __valid_in__: machine, mode, show
     action: single|enum(play,stop)|play
@@ -1406,6 +1408,8 @@ widgets:
         y: single|str|None
         anchor_x: single|str|center
         anchor_y: single|str|center
+        round_anchor_x: single|str|None
+        round_anchor_y: single|str|None
         opacity: single|float|1.0
         z: single|int|0
         animations: ignore
