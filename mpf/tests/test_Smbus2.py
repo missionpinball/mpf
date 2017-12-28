@@ -1,4 +1,5 @@
-from mpf.tests.MpfTestCase import MpfTestCase, patch, MagicMock
+from mpf.platforms import smbus2
+from mpf.tests.MpfTestCase import MpfTestCase, MagicMock
 
 
 class TestSmbus2(MpfTestCase):
@@ -14,11 +15,11 @@ class TestSmbus2(MpfTestCase):
         return False
 
     def setUp(self):
+        smbus2.SMBus = MagicMock()
         self.smbus = MagicMock()
-        with patch("smbus2.SMBus") as SMBus:
-            SMBus.return_value = self.smbus
-            super().setUp()
-            SMBus.assert_called_once_with(1)
+        smbus2.SMBus.return_value = self.smbus
+        super().setUp()
+        smbus2.SMBus.assert_called_once_with(1)
 
     def test_i2c(self):
         self.machine.default_platform.i2c_write8(17, 23, 1337)
