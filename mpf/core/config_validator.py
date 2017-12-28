@@ -115,7 +115,7 @@ class ConfigValidator(object):
 
     # pylint: disable-msg=too-many-arguments,too-many-branches
     def validate_config(self, config_spec, source, section_name=None,
-                        base_spec=None, add_missing_keys=True, prefix=None):
+                        base_spec=None, add_missing_keys=True, prefix=None) -> Dict[str, Any]:
         """Validate a config dict against spec."""
         # config_spec, str i.e. "device:shot"
         # source is dict

@@ -256,16 +256,6 @@ class I2cPlatform(BasePlatform, metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
-    @abc.abstractmethod
-    def i2c_read16(self, address, register):
-        """Read an 16-bit value from an address and register via I2C.
-
-        Args:
-            address (int): I2C Address
-            register (int): Register
-        """
-        raise NotImplementedError
-
 
 class ServoPlatform(BasePlatform, metaclass=abc.ABCMeta):
 
