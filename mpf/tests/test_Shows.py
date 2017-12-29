@@ -124,11 +124,9 @@ class TestShows(MpfTestCase):
         self.assertTrue(self.machine.modes.mode1.active)
         self.assertIn(self.machine.modes.mode1,
                       self.machine.mode_controller.active_modes)
-        self.assertTrue(self.machine.shows['test_show1'].running)
 
         # Grab the running show instance
-        running_show1 = [x for x in self.machine.shows['test_show1'].running if
-                         x.name.startswith('test_show1')][0]
+        running_show1 = self.machine.show_player.instances['mode1']['show_player']['test_show1']
         self.assertIsNotNone(running_show1)
 
         # Make sure the show is running at the proper priority (of the mode)
@@ -220,19 +218,18 @@ class TestShows(MpfTestCase):
         self.assertLightChannel("light_02", 120)
         self.assertLightChannel("gi_01", 255)
 
-        self.assertFalse(self.machine.shows['show_from_mode'].running)
+        self.assertNotIn("show_from_mode", self.machine.show_player.instances['mode1']['show_player'])
         self.machine.set_machine_var("test", 42)
         self.advance_time_and_run(.01)
-        self.assertTrue(self.machine.shows['show_from_mode'].running)
+        self.assertTrue(self.machine.show_player.instances['mode1']['show_player']['show_from_mode'])
 
         # Stop the mode (and therefore the show)
         self.machine.events.post('stop_mode1')
         self.machine_run()
-        self.assertFalse(self.machine.shows['show_from_mode'].running)
+        self.assertNotIn("show_from_mode", self.machine.show_player.instances['mode1']['show_player'])
         self.assertFalse(self.machine.mode_controller.is_active('mode1'))
         self.assertTrue(running_show1._stopped)
-        self.assertFalse([x for x in self.machine.shows['test_show1'].running
-                          if x.name.startswith('test_show1')])
+        self.assertNotIn("test_show1", self.machine.show_player.instances['mode1']['show_player'])
         self.advance_time_and_run(5)
 
         # Make sure the lights and LEDs have reverted back to their prior
@@ -272,7 +269,7 @@ class TestShows(MpfTestCase):
         self.assertTrue(self.machine.modes.mode2.active)
         self.assertIn(self.machine.modes.mode2,
                       self.machine.mode_controller.active_modes)
-        self.assertTrue(self.machine.shows['test_show2'].running)
+        self.assertTrue(self.machine.show_player.instances['mode2']['show_player']['test_show2'])
         self.machine_run()
 
         # Make sure event callback and trigger have been called
@@ -324,7 +321,7 @@ class TestShows(MpfTestCase):
         self.assertTrue(self.machine.modes.mode3.active)
         self.assertIn(self.machine.modes.mode3,
                       self.machine.mode_controller.active_modes)
-        self.assertTrue(self.machine.shows['test_show3'].running)
+        self.machine.show_player.instances['mode3']['show_player']['test_show3']
         self.machine_run()
 
         # Make sure flasher device callback has been called (in first step
