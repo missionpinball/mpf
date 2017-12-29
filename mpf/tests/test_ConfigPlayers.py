@@ -131,7 +131,7 @@ class TestConfigPlayers(MpfTestCase):
         # self.assertEqual(play_call.key, 'show1.1')
         self.assertEqual(play_call.kwargs, {'show_tokens': {}})  # todo
 
-        self.assertEqual(1, len(self.machine.show_controller.running_shows))
+        self.assertEqual(1, len(self.machine.show_player.instances['_global']['show_player']))
 
         # todo add tests for mode 1 show, make sure the mode is passed
         # todo make sure it stops when the mode ends, that banana clear is

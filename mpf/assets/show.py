@@ -492,7 +492,6 @@ class RunningShow(object):
             self._replace_tokens(**self.show_tokens)
 
         self.show.running.add(self)
-        self.machine.show_controller.notify_show_starting(self)
 
         # Figure out the show start time
         if self.sync_ms:
@@ -560,7 +559,6 @@ class RunningShow(object):
         if not self._show_loaded:
             return
 
-        self.machine.show_controller.notify_show_stopping(self)
         self.show.running.remove(self)
         self._remove_delay_handler()
 

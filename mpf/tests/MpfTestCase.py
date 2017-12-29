@@ -754,30 +754,6 @@ class MpfTestCase(unittest.TestCase):
 
         self.assertTrue(self.machine.shots[shot_name].profiles[0]['enable'])
 
-    def assertShowRunning(self, show_name):
-        """Assert that at least one instance of a show is currently running.
-        
-        Args:
-            show_name: String name of the show to check.
-        
-        """
-        for running_show in self.machine.show_controller.running_shows:
-            if self.machine.shows[show_name] == running_show.show:
-                return
-
-        self.fail("Show {} not running".format(show_name))
-
-    def assertShowNotRunning(self, show_name):
-        """Assert that there are no running instances of a show.
-        
-        Args:
-            show_name: String name of the show to check.
-        
-        """
-        for running_show in self.machine.show_controller.running_shows:
-            if self.machine.shows[show_name] == running_show.show:
-                self.fail("Show {} should not be running".format(show_name))
-
     def assertColorAlmostEqual(self, color1, color2, delta=6):
         """Assert that two color are almost equal.
         

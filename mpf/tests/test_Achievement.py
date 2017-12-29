@@ -16,22 +16,15 @@ class TestAchievement(MpfFakeGameTestCase):
         self.mock_event("achievement_achievement1_state_stopped")
         self.mock_event("achievement_achievement1_state_completed")
 
-        self.assertShowNotRunning("achievement1_disabled")
-        self.assertShowNotRunning("achievement1_enabled")
-        self.assertShowNotRunning("achievement1_started")
-        self.assertShowNotRunning("achievement1_completed")
+        achievement = self.machine.achievements['achievement1']
+
+        self.assertEqual(None, achievement._show)
 
         self.start_two_player_game()
         self.assertModeRunning('base')
 
-        achievement = self.machine.achievements['achievement1']
-
         # start disabled
-        self.assertShowRunning("achievement1_disabled")
-        self.assertShowNotRunning("achievement1_enabled")
-        self.assertShowNotRunning("achievement1_started")
-        self.assertShowNotRunning("achievement1_stopped")
-        self.assertShowNotRunning("achievement1_completed")
+        self.assertEqual("achievement1_disabled", achievement._show.name)
         self.assertEqual("disabled", achievement._state)
         self.assertEqual(1, self._events['achievement_achievement1_state_disabled'])
         self.assertEqual(0, self._events['achievement_achievement1_state_enabled'])
@@ -51,11 +44,7 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertEqual(1, self._events['achievement_achievement1_state_enabled'])
         self.assertEqual(0, self._events['achievement_achievement1_state_started'])
         self.assertEqual(0, self._events['achievement_achievement1_state_completed'])
-        self.assertShowNotRunning("achievement1_disabled")
-        self.assertShowRunning("achievement1_enabled")
-        self.assertShowNotRunning("achievement1_stopped")
-        self.assertShowNotRunning("achievement1_started")
-        self.assertShowNotRunning("achievement1_completed")
+        self.assertEqual("achievement1_enabled", achievement._show.name)
         self.assertFalse(self._last_event_kwargs['achievement_achievement1_state_enabled']['restore'])
 
         self.post_event("achievement1_start")
@@ -64,50 +53,30 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertEqual(1, self._events['achievement_achievement1_state_enabled'])
         self.assertEqual(1, self._events['achievement_achievement1_state_started'])
         self.assertEqual(0, self._events['achievement_achievement1_state_completed'])
-        self.assertShowNotRunning("achievement1_disabled")
-        self.assertShowNotRunning("achievement1_enabled")
-        self.assertShowNotRunning("achievement1_stopped")
-        self.assertShowRunning("achievement1_started")
-        self.assertShowNotRunning("achievement1_completed")
+        self.assertEqual("achievement1_started", achievement._show.name)
         self.assertFalse(self._last_event_kwargs['achievement_achievement1_state_started']['restore'])
 
         self.drain_ball()
 
         self.assertPlayerNumber(2)
         self.assertBallNumber(1)
-        self.assertShowRunning("achievement1_disabled")
-        self.assertShowNotRunning("achievement1_enabled")
-        self.assertShowNotRunning("achievement1_stopped")
-        self.assertShowNotRunning("achievement1_started")
-        self.assertShowNotRunning("achievement1_completed")
+        self.assertEqual("achievement1_disabled", achievement._show.name)
         self.assertEqual("disabled", achievement._state)
         self.assertFalse(self._last_event_kwargs['achievement_achievement1_state_disabled']['restore'])
 
         self.post_event("achievement1_enable")
-        self.assertShowNotRunning("achievement1_disabled")
-        self.assertShowRunning("achievement1_enabled")
-        self.assertShowNotRunning("achievement1_stopped")
-        self.assertShowNotRunning("achievement1_started")
-        self.assertShowNotRunning("achievement1_completed")
+        self.assertEqual("achievement1_enabled", achievement._show.name)
         self.assertEqual("enabled", achievement._state)
 
         self.drain_ball()
         self.assertPlayerNumber(1)
         self.assertBallNumber(2)
-        self.assertShowNotRunning("achievement1_disabled")
-        self.assertShowNotRunning("achievement1_enabled")
-        self.assertShowNotRunning("achievement1_stopped")
-        self.assertShowRunning("achievement1_started")
-        self.assertShowNotRunning("achievement1_completed")
+        self.assertEqual("achievement1_started", achievement._show.name)
         self.assertEqual("started", achievement._state)
         self.assertTrue(self._last_event_kwargs['achievement_achievement1_state_started']['restore'])
 
         self.post_event("achievement1_complete")
-        self.assertShowNotRunning("achievement1_disabled")
-        self.assertShowNotRunning("achievement1_enabled")
-        self.assertShowNotRunning("achievement1_stopped")
-        self.assertShowNotRunning("achievement1_started")
-        self.assertShowRunning("achievement1_completed")
+        self.assertEqual("achievement1_completed", achievement._show.name)
         self.assertEqual("completed", achievement._state)
         self.assertFalse(self._last_event_kwargs['achievement_achievement1_state_completed']['restore'])
 
@@ -120,11 +89,7 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertPlayerNumber(2)
         self.assertBallNumber(2)
 
-        self.assertShowNotRunning("achievement1_disabled")
-        self.assertShowRunning("achievement1_enabled")
-        self.assertShowNotRunning("achievement1_started")
-        self.assertShowNotRunning("achievement1_stopped")
-        self.assertShowNotRunning("achievement1_completed")
+        self.assertEqual("achievement1_enabled", achievement._show.name)
         self.assertEqual("enabled", achievement._state)
         self.assertTrue(self._last_event_kwargs['achievement_achievement1_state_enabled']['restore'])
 
@@ -139,30 +104,18 @@ class TestAchievement(MpfFakeGameTestCase):
 
         self.post_event("achievement1_stop")
         self.assertEqual("stopped", achievement._state)
-        self.assertShowNotRunning("achievement1_disabled")
-        self.assertShowNotRunning("achievement1_enabled")
-        self.assertShowNotRunning("achievement1_started")
-        self.assertShowRunning("achievement1_stopped")
-        self.assertShowNotRunning("achievement1_completed")
+        self.assertEqual("achievement1_stopped", achievement._show.name)
 
         self.drain_ball()
         self.assertPlayerNumber(1)
         self.assertBallNumber(3)
 
-        self.assertShowNotRunning("achievement1_disabled")
-        self.assertShowNotRunning("achievement1_enabled")
-        self.assertShowNotRunning("achievement1_started")
-        self.assertShowNotRunning("achievement1_stopped")
-        self.assertShowRunning("achievement1_completed")
+        self.assertEqual("achievement1_completed", achievement._show.name)
         self.assertEqual("completed", achievement._state)
         self.assertTrue(self._last_event_kwargs['achievement_achievement1_state_completed']['restore'])
 
         self.post_event("achievement1_reset")
-        self.assertShowRunning("achievement1_disabled")
-        self.assertShowNotRunning("achievement1_enabled")
-        self.assertShowNotRunning("achievement1_started")
-        self.assertShowNotRunning("achievement1_stopped")
-        self.assertShowNotRunning("achievement1_completed")
+        self.assertEqual("achievement1_disabled", achievement._show.name)
         self.assertEqual("disabled", achievement._state)
         self.assertFalse(self._last_event_kwargs['achievement_achievement1_state_disabled']['restore'])
 
@@ -171,11 +124,7 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertBallNumber(3)
 
         self.assertEqual("stopped", achievement._state)
-        self.assertShowNotRunning("achievement1_disabled")
-        self.assertShowNotRunning("achievement1_enabled")
-        self.assertShowNotRunning("achievement1_started")
-        self.assertShowRunning("achievement1_stopped")
-        self.assertShowNotRunning("achievement1_completed")
+        self.assertEqual("achievement1_stopped", achievement._show.name)
         self.assertTrue(self._last_event_kwargs['achievement_achievement1_state_stopped']['restore'])
 
         self.post_event("achievement1_start")
@@ -184,30 +133,21 @@ class TestAchievement(MpfFakeGameTestCase):
         self.drain_ball()
         self.assertGameIsNotRunning()
 
-        self.assertShowNotRunning("achievement1_disabled")
-        self.assertShowNotRunning("achievement1_enabled")
-        self.assertShowNotRunning("achievement1_started")
-        self.assertShowNotRunning("achievement1_stopped")
-        self.assertShowNotRunning("achievement1_completed")
+        self.assertEqual(None, achievement._show)
 
     def test_one_player_no_restart(self):
         self.mock_event("test_event")
         self.mock_event("test_event2")
-        self.assertShowNotRunning("achievement2_enabled")
-        self.assertShowNotRunning("achievement2_started")
-        self.assertShowNotRunning("achievement2_completed")
+        achievement = self.machine.achievements['achievement2']
+        self.assertEqual(None, achievement._show)
         self.assertLightColor('led1', 'off')
 
         self.start_game()
 
-        achievement = self.machine.achievements['achievement2']
-
         # enable
         self.post_event('achievement2_enable', 1)
 
-        self.assertShowRunning("achievement2_enabled")
-        self.assertShowNotRunning("achievement2_started")
-        self.assertShowNotRunning("achievement2_completed")
+        self.assertEqual("achievement2_enabled", achievement._show.name)
         self.assertEqual("enabled", achievement._state)
         self.assertLightColor('led1', 'yellow')
 
@@ -215,9 +155,7 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertPlayerNumber(1)
         self.assertBallNumber(2)
 
-        self.assertShowNotRunning("achievement2_enabled")
-        self.assertShowNotRunning("achievement2_started")
-        self.assertShowNotRunning("achievement2_completed")
+        self.assertEqual(None, achievement._show)
         self.assertEqual("disabled", achievement._state)
         self.assertLightColor('led1', 'off')
 
@@ -229,9 +167,7 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertEqual(0, self._events['test_event2'])
 
         self.post_event("achievement2_start", 2)
-        self.assertShowNotRunning("achievement2_enabled")
-        self.assertShowRunning("achievement2_started")
-        self.assertShowNotRunning("achievement2_completed")
+        self.assertEqual("achievement2_started", achievement._show.name)
         self.assertEqual("started", achievement._state)
         self.assertLightColor('led1', 'green')
 
@@ -242,9 +178,7 @@ class TestAchievement(MpfFakeGameTestCase):
         self.assertBallNumber(3)
 
         self.assertEqual("stopped", achievement._state)
-        self.assertShowNotRunning("achievement2_enabled")
-        self.assertShowNotRunning("achievement2_started")
-        self.assertShowNotRunning("achievement2_completed")
+        self.assertEqual(None, achievement._show)
         self.assertLightColor('led1', 'off')  # no show when stopped
 
         # restart after stop is False

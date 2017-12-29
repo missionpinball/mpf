@@ -167,6 +167,8 @@ show_player:
   resume_test_show1:
     test_show1:
       action: resume
+  stop_test_show1:
+    test_show1: stop
   play_show_assoc_tokens:
     show_assoc_tokens:
       speed: 1

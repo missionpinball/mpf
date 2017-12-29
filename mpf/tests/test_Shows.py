@@ -535,50 +535,42 @@ class TestShows(MpfTestCase):
         self.assertEqual(copied_show[3]['lights'][self.machine.lights.led_01],
                          dict(color='midnightblue', fade_ms=500, priority=0))
 
-    def _stop_shows(self):
-        while self.machine.show_controller.running_shows:
-            for show in self.machine.show_controller.running_shows:
-                show.stop()
-                self.advance_time_and_run()
-        self.assertFalse(self.machine.show_controller.running_shows)
-
     def test_show_player(self):
         # Basic show
         self.machine.events.post('play_test_show1')
         self.advance_time_and_run()
-        self.assertEqual(1, len(self.machine.show_controller.get_running_shows(
-                         'test_show1')))
-        self._stop_shows()
+        self.assertEqual(1, len(self.machine.show_player.instances['_global']['show_player']))
+        self.post_event("stop_test_show1")
 
         # Test priority
         self.machine.events.post('play_with_priority')
         self.advance_time_and_run()
-        self.assertEqual(15, self.machine.show_controller.running_shows[0].priority)
-        self._stop_shows()
+        self.assertEqual(15, self.machine.show_player.instances['_global']['show_player']['test_show1'].priority)
+        self.post_event("stop_test_show1")
 
         # Test speed
         self.machine.events.post('play_with_speed')
         self.advance_time_and_run()
-        self.assertEqual(2, self.machine.show_controller.running_shows[0].speed)
-        self._stop_shows()
+        self.assertEqual(2, self.machine.show_player.instances['_global']['show_player']['test_show1'].speed)
+        self.post_event("stop_test_show1")
 
         # Test start step
         self.machine.events.post('play_with_start_step')
         self.advance_time_and_run(.1)
-        self.assertEqual(2, self.machine.show_controller.running_shows[0].next_step_index)
-        self._stop_shows()
+        self.assertEqual(2, self.machine.show_player.instances['_global']['show_player']['test_show1'].next_step_index)
+        self.post_event("stop_test_show1")
 
         # Test start step
         self.machine.events.post('play_with_neg_start_step')
         self.advance_time_and_run(.1)
-        self.assertEqual(4, self.machine.show_controller.running_shows[0].next_step_index)
-        self._stop_shows()
+        self.assertEqual(4, self.machine.show_player.instances['_global']['show_player']['test_show1'].next_step_index)
+        self.post_event("stop_test_show1")
 
         # Test loops
         self.machine.events.post('play_with_loops')
         self.advance_time_and_run(.1)
-        self.assertEqual(2, self.machine.show_controller.running_shows[0].loops)
-        self._stop_shows()
+        self.assertEqual(2, self.machine.show_player.instances['_global']['show_player']['test_show1'].loops)
+        self.post_event("stop_test_show1")
 
         # Test sync_ms 1000ms
         self.machine.events.post('play_with_sync_ms_1000')
@@ -586,46 +578,46 @@ class TestShows(MpfTestCase):
 
         # should be 0 +/- the duration of a frame
 
-        self.assertAlmostEqual(0.0, self.machine.show_controller.running_shows[0].next_step_time % 1.0, delta=(1 / 30))
-        self._stop_shows()
+        self.assertAlmostEqual(0.0, self.machine.show_player.instances['_global']['show_player']['test_show1'].next_step_time % 1.0, delta=(1 / 30))
+        self.post_event("stop_test_show1")
 
         # Test sync_ms 500ms
         self.machine.events.post('play_with_sync_ms_500')
         self.advance_time_and_run(.1)
-        self.assertAlmostEqual(0.0, self.machine.show_controller.running_shows[0].next_step_time % 0.5, delta=(1 / 30))
-        self._stop_shows()
+        self.assertAlmostEqual(0.0, self.machine.show_player.instances['_global']['show_player']['test_show1'].next_step_time % 0.5, delta=(1 / 30))
+        self.post_event("stop_test_show1")
 
         # Test manual advance
         self.machine.events.post('play_with_manual_advance')
         self.advance_time_and_run(10)
-        self.assertEqual(1, self.machine.show_controller.running_shows[0].next_step_index)
+        self.assertEqual(1, self.machine.show_player.instances['_global']['show_player']['test_show1'].next_step_index)
 
     def test_pause_resume_shows(self):
         self.machine.events.post('play_test_show1')
         # make sure show is advancing
         self.advance_time_and_run(1)
-        self.assertEqual(2, self.machine.show_controller.running_shows[0].next_step_index)
+        self.assertEqual(2, self.machine.show_player.instances['_global']['show_player']['test_show1'].next_step_index)
         self.advance_time_and_run(1)
-        self.assertEqual(3, self.machine.show_controller.running_shows[0].next_step_index)
+        self.assertEqual(3, self.machine.show_player.instances['_global']['show_player']['test_show1'].next_step_index)
 
         self.machine.events.post('pause_test_show1')
 
         # make sure show stops advancing
         self.advance_time_and_run(1)
-        self.assertEqual(3, self.machine.show_controller.running_shows[0].next_step_index)
+        self.assertEqual(3, self.machine.show_player.instances['_global']['show_player']['test_show1'].next_step_index)
         self.advance_time_and_run(1)
-        self.assertEqual(3, self.machine.show_controller.running_shows[0].next_step_index)
+        self.assertEqual(3, self.machine.show_player.instances['_global']['show_player']['test_show1'].next_step_index)
         self.advance_time_and_run(1)
-        self.assertEqual(3, self.machine.show_controller.running_shows[0].next_step_index)
+        self.assertEqual(3, self.machine.show_player.instances['_global']['show_player']['test_show1'].next_step_index)
 
         # make sure show starts advanving again
         self.machine.events.post('resume_test_show1')
         self.advance_time_and_run(0.1)
-        self.assertEqual(4, self.machine.show_controller.running_shows[0].next_step_index)
+        self.assertEqual(4, self.machine.show_player.instances['_global']['show_player']['test_show1'].next_step_index)
         self.advance_time_and_run(1)
-        self.assertEqual(5, self.machine.show_controller.running_shows[0].next_step_index)
+        self.assertEqual(5, self.machine.show_player.instances['_global']['show_player']['test_show1'].next_step_index)
         self.advance_time_and_run(2)
-        self.assertEqual(1, self.machine.show_controller.running_shows[0].next_step_index)
+        self.assertEqual(1, self.machine.show_player.instances['_global']['show_player']['test_show1'].next_step_index)
 
     def test_show_from_mode_config(self):
         self.assertIn('show_from_mode', self.machine.shows)
