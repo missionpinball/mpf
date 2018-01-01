@@ -344,9 +344,7 @@ class BaseAssetManager(MpfController, LogMixin):
         Note that for each file found, this method will scan through the
         entire config dict to see if any entry exists for that file based on an
         entry's 'file:' setting. If it's not found, an entry is created based
-        on the file name. (This auto-created entry uses the lower-case stem of
-        the file, e.g. a file called Image1.png will result in an asset entry
-        called 'image1'.)
+        on the file name.
 
         Examples (based on images):
 
@@ -399,7 +397,7 @@ class BaseAssetManager(MpfController, LogMixin):
 
             # loop over valid files in the current path
             for file_name in valid_files:
-                name = os.path.splitext(file_name)[0].lower()
+                name = os.path.splitext(file_name)[0]
                 full_file_path = os.path.join(this_path, file_name)
 
                 # determine default group based on first level sub-folder and location groups
