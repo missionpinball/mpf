@@ -10,6 +10,8 @@ class BcpServer(MpfController):
 
     """Server socket which listens for incoming BCP clients."""
 
+    config_name = "bcp_server"
+
     def __init__(self, machine, ip, port, server_type):
         """Initialise BCP server."""
         super().__init__(machine)

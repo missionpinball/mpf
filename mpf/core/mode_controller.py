@@ -27,6 +27,8 @@ class ModeController(MpfController):
 
     """Responsible for loading, unloading, and managing all modes in MPF."""
 
+    config_name = "mode_controller"
+
     def __init__(self, machine: MachineController) -> None:
         """Initialise mode controller.
 

@@ -28,6 +28,8 @@ class EventManager(MpfController):
 
     """Handles all the events and manages the handlers in MPF."""
 
+    config_name = "event_manager"
+
     def __init__(self, machine: "MachineController") -> None:
         """Initialize EventManager."""
         super().__init__(machine)

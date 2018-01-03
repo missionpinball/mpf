@@ -24,6 +24,8 @@ class ScoreReelController(MpfController):
           counting up). Decrementing support will be added in the future.
     """
 
+    config_name = "score_reel_controller"
+
     def __init__(self, machine):
         """Initialise score reel controller."""
         super().__init__(machine)

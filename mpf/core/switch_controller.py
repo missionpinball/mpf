@@ -27,6 +27,7 @@ class SwitchController(MpfController):
     """Tracks all switches in the machine, receives switch activity, and converts switch changes into events."""
 
     log = logging.getLogger('SwitchController')
+    config_name = "switch_controller"
 
     def __init__(self, machine: MachineController) -> None:
         """Initialise switch controller."""

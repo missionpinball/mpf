@@ -15,6 +15,8 @@ class DeviceManager(MpfController):
 
     """Manages all the devices in MPF."""
 
+    config_name = "device_manager"
+
     def __init__(self, machine):
         """Initialize device manager."""
         super().__init__(machine)
