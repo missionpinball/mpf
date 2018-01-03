@@ -1188,6 +1188,13 @@ sound_system:
             events_when_stopped: list|str|None
             events_when_paused: list|str|None
             events_when_resumed: list|str|None
+            ducking:
+                target: list|str|
+                delay: single|secs|0
+                attack: single|secs|10ms
+                attenuation: single|gain|1.0
+                release_point: single|secs|0
+                release: single|secs|10ms
         standard:
             simultaneous_sounds: single|int|8
         sound_loop:
