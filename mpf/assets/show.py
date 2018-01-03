@@ -544,6 +544,11 @@ class RunningShow(object):
 
                     keys_replaced[key_name] = replacement
 
+    @property
+    def stopped(self):
+        """Return if stopped."""
+        return self._stopped
+
     def stop(self):
         """Stop show."""
         if self._stopped:
