@@ -218,6 +218,7 @@ class Achievement(ModeDevice):
         self._mode = None
         if self._show:
             self._show.stop()
+            self._show = None
 
     def add_to_group(self, group):
         """Add this achievement to an achievement group.

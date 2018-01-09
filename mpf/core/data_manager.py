@@ -15,6 +15,8 @@ class DataManager(MpfController):
 
     """Handles key value data loading and saving for the machine."""
 
+    config_name = "data_manager"
+
     def __init__(self, machine, name, min_wait_secs=1):
         """Initialise data manger.
 

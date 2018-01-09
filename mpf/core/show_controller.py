@@ -13,6 +13,8 @@ class ShowController(MpfController):
 
     """
 
+    config_name = "show_controller"
+
     def __init__(self, machine):
         """Initialise show controller.
 
@@ -50,21 +52,6 @@ class ShowController(MpfController):
         for show, settings in config.items():
             self.register_show(show, settings)
 
-    def get_running_shows(self, name):
-        """Return a list of running shows by show name or instance name.
-
-        Args:
-            name: String name of the running shows you want to get. This can
-                be a show name (which will return all running instances of that
-                show) or a key (which will also return all running
-                show instances that have that instance name).
-
-        Returns:
-            A list of RunningShow() objects.
-
-        """
-        return [x for x in self.running_shows if x.name == name]
-
     def register_show(self, name, settings):
         """Register a named show."""
         if name in self.machine.shows:
@@ -77,15 +64,6 @@ class ShowController(MpfController):
                                             name=name,
                                             data=settings,
                                             file=None)
-
-    def notify_show_starting(self, show):
-        """Register a running show."""
-        self.running_shows.append(show)
-        self.running_shows.sort(key=lambda x: x.priority)
-
-    def notify_show_stopping(self, show):
-        """Remove a running show."""
-        self.running_shows.remove(show)
 
     def play_show_with_config(self, config, mode=None, start_time=None):
         """Play and return a show from config.

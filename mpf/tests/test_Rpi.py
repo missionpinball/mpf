@@ -32,6 +32,8 @@ class MockApigpio():
             self.pull_ups = {}
             self.servos = {}
             self.outputs = {}
+            self.i2c_write = []
+            self.i2c_read = []
 
         @asyncio.coroutine
         def connect(self, address):
@@ -69,6 +71,24 @@ class MockApigpio():
         @asyncio.coroutine
         def stop(self):
             pass
+
+        @asyncio.coroutine
+        def i2c_open(self, bus, address):
+            return bus, address
+
+        @asyncio.coroutine
+        def i2c_close(self, handle):
+            return
+
+        @asyncio.coroutine
+        def i2c_write_byte_data(self, handle, register, data):
+            """Write byte to i2c register on handle."""
+            self.i2c_write.append((handle, register, data))
+
+        @asyncio.coroutine
+        def i2c_read_byte_data(self, handle, register):
+            """Write byte to i2c register on handle."""
+            return self.i2c_read.pop(0)
 
 
 class TestRpi(MpfTestCase):
@@ -163,3 +183,10 @@ class TestRpi(MpfTestCase):
         self.machine.servos["servo1"].go_to_position(1.0)
         self.machine_run()
         self.assertEqual(2000, self.pi.servos[10])
+
+        self.machine.default_platform.i2c_write8(123, 43, 1337)
+        self.machine_run()
+        self.assertEqual(((0, 123), 43, 1337), self.pi.i2c_write[0])
+        self.pi.i2c_read.append(1337)
+        result = self.loop.run_until_complete(self.machine.default_platform.i2c_read8("0-123", 43))
+        self.assertEqual(1337, result)

@@ -14,6 +14,8 @@ class LightController(MpfController):
 
     """Handles light updates and light monitoring."""
 
+    config_name = "light_controller"
+
     def __init__(self, machine: MachineController) -> None:
         """Initialise lights controller."""
         super().__init__(machine)

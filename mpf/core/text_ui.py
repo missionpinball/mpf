@@ -23,6 +23,8 @@ class TextUi(MpfController):
 
     """Handles the text-based UI."""
 
+    config_name = "text_ui"
+
     def __init__(self, machine: "MachineController") -> None:
         """Initialize TextUi."""
         super().__init__(machine)

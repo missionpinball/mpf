@@ -37,7 +37,7 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         """
         super().__init__()
         self.machine = machine
-        self.name = name.lower()
+        self.name = name
         self.tags = []          # type: List[str]
         self.platform = None    # type: SmartVirtualHardwarePlatform
         """List of tags applied to this device."""

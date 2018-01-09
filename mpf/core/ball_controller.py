@@ -15,6 +15,8 @@ class BallController(MpfController):
 
     """Tracks and manages all the balls in a pinball machine."""
 
+    config_name = "ball_controller"
+
     def __init__(self, machine: MachineController) -> None:
         """Initialise ball controller.
 

@@ -132,6 +132,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         """
         if msg == "!SRE":
             # ignore system interrupt
+            self.log.info("Received system interrupt.")
             return
 
         if msg[2:3] == ':':

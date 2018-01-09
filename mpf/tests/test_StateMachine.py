@@ -17,7 +17,7 @@ class TestStateMachine(MpfFakeGameTestCase):
         self.mock_event("going_to_step2")
         self.post_event("state_machine_proceed")
         self.assertEqual("step1", self.machine.state_machines.my_state.state)
-        self.assertShowRunning("on")
+        self.assertEqual("on", self.machine.state_machines.my_state._show.name)
         self.assertEventCalled("step1_start")
         self.mock_event("step1_start")
         self.assertEventNotCalled("step1_stop")
@@ -30,7 +30,7 @@ class TestStateMachine(MpfFakeGameTestCase):
 
         self.post_event("state_machine_proceed2")
         self.assertEqual("step2", self.machine.state_machines.my_state.state)
-        self.assertShowNotRunning("on")
+        self.assertEqual(None, self.machine.state_machines.my_state._show)
         self.assertEventNotCalled("step1_start")
         self.assertEventCalled("step1_stop")
         self.assertEventCalled("going_to_step2")

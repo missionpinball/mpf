@@ -21,6 +21,8 @@ class PlatformController(MpfController):
 
     """Manages all platforms and rules."""
 
+    config_name = "platform_controller"
+
     @staticmethod
     def _check_and_get_platform(switch: Switch, driver: Driver) -> DriverPlatform:
         if driver.platform != switch.platform:

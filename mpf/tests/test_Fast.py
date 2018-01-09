@@ -173,13 +173,13 @@ class TestFast(MpfTestCase):
             'NN:03': 'NN:03,FP-I/O-1616-2   ,01.00,10,10,04,06,00,00,00,00',     # 1616 board
             'NN:04': 'NN:04,,,,,,,,,,',     # no board
             "SA:": "SA:01,00,09,050000000000000000",
-            "SN:01,01,0A,0A": "SN:P",
-            "SN:02,01,0A,0A": "SN:P",
-            "SN:03,01,0A,0A": "SN:P",
-            "SN:16,01,0A,0A": "SN:P",
+            "SN:01,01,04,04": "SN:P",
+            "SN:02,01,04,04": "SN:P",
+            "SN:03,01,04,04": "SN:P",
+            "SN:16,01,04,04": "SN:P",
             "SN:07,01,1A,05": "SN:P",
-            "SN:1A,01,0A,0A": "SN:P",
-            "SN:39,01,0A,0A": "SN:P",
+            "SN:1A,01,04,04": "SN:P",
+            "SN:39,01,04,04": "SN:P",
             "DN:04,00,00,00": "DN:P",
             "DN:06,00,00,00": "DN:P",
             "DN:07,00,00,00": "DN:P",
@@ -417,7 +417,7 @@ class TestFast(MpfTestCase):
     def _test_switch_configure(self):
         # last switch on first board
         self.net_cpu.expected_commands = {
-            "SN:1F,01,0A,0A": "SN:P"
+            "SN:1F,01,04,04": "SN:P"
         }
         self.machine.default_platform.configure_switch('0-31', SwitchConfig(debounce='auto', invert=0), {})
         self.advance_time_and_run(.1)
@@ -428,7 +428,7 @@ class TestFast(MpfTestCase):
             self.machine.default_platform.configure_switch('0-32', SwitchConfig(debounce='auto', invert=0), {})
 
         self.net_cpu.expected_commands = {
-            "SN:47,01,0A,0A": "SN:P"
+            "SN:47,01,04,04": "SN:P"
         }
         self.machine.default_platform.configure_switch('3-15', SwitchConfig(debounce='auto', invert=0), {})
         self.advance_time_and_run(.1)

@@ -68,10 +68,12 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         """Write an 8-bit value to the I2C bus of the P3-Roc."""
         self.proc.write_data(7, address << 9 | register, value)
 
+    @asyncio.coroutine
     def i2c_read8(self, address, register):
         """Read an 8-bit value from the I2C bus of the P3-Roc."""
         return self.proc.read_data(7, address << 9 | register) & 0xFF
 
+    @asyncio.coroutine
     def i2c_read16(self, address, register):
         """Read an 16-bit value from the I2C bus of the P3-Roc."""
         return self.proc.read_data(7, address << 9 | 1 << 8 | register)

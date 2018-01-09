@@ -31,6 +31,8 @@ class BcpInterface(MpfController):
 
     """
 
+    config_name = "bcp_interface"
+
     def __init__(self, machine):
         """Initialise BCP."""
         super().__init__(machine)

@@ -46,10 +46,10 @@ class I2CServoControllerHardwarePlatform(ServoPlatform):
                                  0x04)  # configure output
         self.platform.i2c_write8(self.config['address'], 0xFE,
                                  130)  # set approx 50Hz
-        time.sleep(.01)  # needed according to datasheet to sync PLL
+        yield from asyncio.sleep(.01, loop=self.machine.clock.loop)     # needed according to datasheet to sync PLL
         self.platform.i2c_write8(self.config['address'], 0x00,
                                  0x01)  # no more sleep
-        time.sleep(.01)  # needed to end sleep according to datasheet
+        yield from asyncio.sleep(.01, loop=self.machine.clock.loop)     # needed to end sleep according to datasheet
 
     def configure_servo(self, number: str):
         """Configure servo."""

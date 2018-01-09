@@ -60,7 +60,7 @@ class ShowPlayer(DeviceConfigPlayer):
 
         start_step = show_settings['start_step'].evaluate({})
 
-        if key in instance_dict:
+        if key in instance_dict and not instance_dict[key].stopped:
             # this is an optimization for the case where we only advance a show or do not change it at all
             # pylint: disable-msg=too-many-boolean-expressions
             if (show == instance_dict[key].show.name and

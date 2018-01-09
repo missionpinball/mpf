@@ -319,6 +319,8 @@ displays:
     height: single|int|600
     default: single|bool|False
     fps: single|int|0
+    round_anchor_x: single|str|center
+    round_anchor_y: single|str|middle
 display_light_player:
     __valid_in__: machine, mode, show
     action: single|enum(play,stop)|play
@@ -880,6 +882,9 @@ rgb_dmds:
     brightness: single|float|1.0
     gamma: single|float|2.2
     hardware_brightness: single|template_float|1.0
+smbus2:
+    __valid_in__: machine
+    bus: single|int|
 score_reels:
     __valid_in__: machine
     coil_inc: single|machine(coils)|None
@@ -1183,6 +1188,13 @@ sound_system:
             events_when_stopped: list|str|None
             events_when_paused: list|str|None
             events_when_resumed: list|str|None
+            ducking:
+                target: list|str|
+                delay: single|secs|0
+                attack: single|secs|10ms
+                attenuation: single|gain|1.0
+                release_point: single|secs|0
+                release: single|secs|10ms
         standard:
             simultaneous_sounds: single|int|8
         sound_loop:
@@ -1403,6 +1415,8 @@ widgets:
         y: single|str|None
         anchor_x: single|str|center
         anchor_y: single|str|center
+        round_anchor_x: single|str|None
+        round_anchor_y: single|str|None
         opacity: single|float|1.0
         z: single|int|0
         animations: ignore

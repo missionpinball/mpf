@@ -52,9 +52,6 @@ class Show(Asset):
         self.token_values = dict()
         self.token_keys = dict()
 
-        self.running = set()
-        '''Set of RunningShow() instances which represents running instances
-        of this show.'''
         self.name = name
         self.total_steps = None
         self.show_steps = None
@@ -491,9 +488,6 @@ class RunningShow(object):
         if self.show_tokens and self.show.tokens:
             self._replace_tokens(**self.show_tokens)
 
-        self.show.running.add(self)
-        self.machine.show_controller.notify_show_starting(self)
-
         # Figure out the show start time
         if self.sync_ms:
             delay_secs = (self.sync_ms / 1000.0) - (self.next_step_time % (self.sync_ms / 1000.0))
@@ -550,6 +544,11 @@ class RunningShow(object):
 
                     keys_replaced[key_name] = replacement
 
+    @property
+    def stopped(self):
+        """Return if stopped."""
+        return self._stopped
+
     def stop(self):
         """Stop show."""
         if self._stopped:
@@ -560,8 +559,6 @@ class RunningShow(object):
         if not self._show_loaded:
             return
 
-        self.machine.show_controller.notify_show_stopping(self)
-        self.show.running.remove(self)
         self._remove_delay_handler()
 
         # clear context in used players
