@@ -1,5 +1,8 @@
 """Event Config Player."""
 from copy import deepcopy
+
+from mpf.core.placeholder_manager import TextTemplate
+
 from mpf.config_players.flat_config_player import FlatConfigPlayer
 from mpf.core.delays import DelayManager
 from mpf.core.utility_functions import Util
@@ -36,7 +39,8 @@ class EventPlayer(FlatConfigPlayer):
                 self._post_event(event, s)
 
     def _post_event(self, event, s):
-        self.machine.events.post(event, **s)
+        event_name_placeholder = TextTemplate(self.machine, event.replace(".", "|"))
+        self.machine.events.post(event_name_placeholder.evaluate(), **s)
 
     def get_list_config(self, value):
         """Parse list."""

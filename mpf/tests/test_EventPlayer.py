@@ -135,3 +135,17 @@ class TestEventPlayer(MpfTestCase):
 
         self.assertEventCalled('mode1_active')
         self.assertEventNotCalled('mode1_not_active')
+
+    def test_event_placeholder(self):
+        self.mock_event('my_event__123')
+        self.mock_event('my_event_hello_world_123')
+
+        self.post_event("play_placeholder_event")
+        self.assertEventCalled("my_event__123")
+        self.mock_event('my_event__123')
+        self.assertEventNotCalled("my_event_hello_world_123")
+
+        self.machine.set_machine_var("test", "hello_world")
+        self.post_event("play_placeholder_event")
+        self.assertEventNotCalled("my_event__123")
+        self.assertEventCalled("my_event_hello_world_123")
