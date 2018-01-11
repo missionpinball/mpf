@@ -48,9 +48,9 @@ class AutofireCoil(SystemWideDevice):
         # pulse is handled via rule but add a handler so that we take notice anyway
         self.config['switch'].add_handler(self._hit)
         if self.config['enable_timeouts']:
-            self._timeout_watch_time = self.config['timeout_watch_time']
+            self._timeout_watch_time = self.config['timeout_watch_time']/1000
             self._timeout_max_hits = self.config['timeout_max_hits']
-            self._timeout_disable_time = self.config['timeout_disable_time']
+            self._timeout_disable_time = self.config['timeout_disable_time']/1000
             self._timeout_hits = []
             from time import time as _time
             from threading import Timer as _Timer
