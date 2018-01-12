@@ -6,6 +6,8 @@ from mpf.core.platform_controller import SwitchRuleSettings, DriverRuleSettings,
 
 from mpf.core.system_wide_device import SystemWideDevice
 
+from time import time as _time
+
 MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController
@@ -50,10 +52,8 @@ class AutofireCoil(SystemWideDevice):
         if self.config['enable_timeouts']:
             self._timeout_watch_time = self.config['timeout_watch_time']/1000
             self._timeout_max_hits = self.config['timeout_max_hits']
-            self._timeout_disable_time = self.config['timeout_disable_time']/1000
+            self._timeout_disable_time = self.config['timeout_disable_time']
             self._timeout_hits = []
-            from time import time as _time
-            from threading import Timer as _Timer
 
     @event_handler(10)
     def enable(self, **kwargs):
@@ -105,6 +105,8 @@ class AutofireCoil(SystemWideDevice):
 
         """
         del kwargs
+        
+        self.delay.remove("_timeout_enable_delay")
 
         if not self._enabled:
             return
@@ -126,8 +128,7 @@ class AutofireCoil(SystemWideDevice):
                     break
             if len(self._timeout_hits)>self._timeout_max_hits:
                 self.disable()
-                _timeout_timer=_Timer(self._timeout_disable_time,self.enable)
-                _timeout_timer.start()
+                self.delay.add(self._timeout_disable_time,self.enable,"_timeout_enable_delay")
 
     def _ball_search(self, phase, iteration):
         del phase
