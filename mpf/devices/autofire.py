@@ -1,12 +1,12 @@
 """Contains the base class for autofire coil devices."""
+from time import time as _time
+
 from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.events import event_handler
 from mpf.core.platform_controller import SwitchRuleSettings, DriverRuleSettings, PulseRuleSettings, HardwareRule
 
 from mpf.core.system_wide_device import SystemWideDevice
-
-from time import time as _time
 
 MYPY = False
 if MYPY:   # pragma: no cover
@@ -42,6 +42,11 @@ class AutofireCoil(SystemWideDevice):
         super().__init__(machine, name)
         self.delay = DelayManager(self.machine.delayRegistry)
         self._ball_search_in_progress = False
+        if self.config['enable_timeouts']:
+            self._timeout_watch_time = self.config['timeout_watch_time'] / 1000
+            self._timeout_max_hits = self.config['timeout_max_hits']
+            self._timeout_disable_time = self.config['timeout_disable_time']
+            self._timeout_hits = []
 
     def _initialize(self) -> None:
         if self.config['ball_search_order']:
@@ -49,11 +54,6 @@ class AutofireCoil(SystemWideDevice):
                 self.config['ball_search_order'], self._ball_search, self.name)
         # pulse is handled via rule but add a handler so that we take notice anyway
         self.config['switch'].add_handler(self._hit)
-        if self.config['enable_timeouts']:
-            self._timeout_watch_time = self.config['timeout_watch_time']/1000
-            self._timeout_max_hits = self.config['timeout_max_hits']
-            self._timeout_disable_time = self.config['timeout_disable_time']
-            self._timeout_hits = []
 
     @event_handler(10)
     def enable(self, **kwargs):
@@ -105,7 +105,7 @@ class AutofireCoil(SystemWideDevice):
 
         """
         del kwargs
-        
+
         self.delay.remove("_timeout_enable_delay")
 
         if not self._enabled:
@@ -122,13 +122,13 @@ class AutofireCoil(SystemWideDevice):
         if self.config['enable_timeouts']:
             self._timeout_hits.append(_time())
             while True:
-                if self._timeout_hits[-1]-self._timeout_hits[0]>self._timeout_watch_time:
+                if self._timeout_hits[-1] - self._timeout_hits[0] > self._timeout_watch_time:
                     self._timeout_hits.pop(0)
                 else:
                     break
-            if len(self._timeout_hits)>self._timeout_max_hits:
+            if len(self._timeout_hits) > self._timeout_max_hits:
                 self.disable()
-                self.delay.add(self._timeout_disable_time,self.enable,"_timeout_enable_delay")
+                self.delay.add(self._timeout_disable_time, self.enable, "_timeout_enable_delay")
 
     def _ball_search(self, phase, iteration):
         del phase
