@@ -20,10 +20,13 @@ autofire_coils:
     ac_test:
         coil: c_test
         switch: s_test
+        enable_timeouts: False
     ac_test_inverted:
         coil: c_test2
         switch: s_test_nc
+        enable_timeouts: False
     ac_test_inverted2:
         coil: c_test2
         switch: s_test
         reverse_switch: True
+        enable_timeouts: False
