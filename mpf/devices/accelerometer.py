@@ -44,7 +44,7 @@ class Accelerometer(SystemWideDevice):
         """Initialise and configure accelerometer."""
         self.platform = self.machine.get_platform_sections(
             'accelerometers', self.config['platform'])
-        self.hw_device = self.platform.configure_accelerometer(self.config, self)
+        self.hw_device = self.platform.configure_accelerometer(self.config['platform_settings'], self)
 
     @classmethod
     def _calculate_vector_length(cls, x: float, y: float, z: float) -> float:
@@ -72,13 +72,15 @@ class Accelerometer(SystemWideDevice):
             dy = y - self.history[1]
             dz = z - self.history[2]
 
-            alpha = 0.95
+            alpha = self.config['alpha']
             self.history = (self.history[0] * alpha + x * (1 - alpha),
                             self.history[1] * alpha + y * (1 - alpha),
                             self.history[2] * alpha + z * (1 - alpha))
 
         self._handle_hits(dx, dy, dz)
-        self._handle_level()
+        # only check level when we are in a stedy state
+        if math.fabs(dx) + math.fabs(dy) + math.fabs(dz) < 0.05:
+            self._handle_level()
 
     def get_level_xyz(self) -> float:
         """Return current 3D level."""
@@ -102,6 +104,7 @@ class Accelerometer(SystemWideDevice):
                                      0.0, self.value[1], self.value[2])
 
     def _handle_level(self) -> None:
+
         deviation_xyz = self.get_level_xyz()
         deviation_xz = self.get_level_xz()
         deviation_yz = self.get_level_yz()

@@ -13,7 +13,8 @@ accelerometers:
     level_x: single|int|0
     level_y: single|int|0
     level_z: single|int|1
-    number: single|str|
+    alpha: single|float|0.8
+    platform_settings: dict|str:str|None
 achievement_groups:
     __valid_in__: mode
     achievements: list|machine(achievements)|
@@ -822,6 +823,8 @@ p3_roc:
     debug: single|bool|False
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
+p3_roc_accelerometer:
+    number: single|int|1
 psus:
     __valid_in__: machine
     voltage: single|int|None

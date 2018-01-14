@@ -67,7 +67,8 @@ servos:
 
 accelerometers:
     p3_roc_accelerometer:
-        number: 1
+        platform_settings:
+          number: 1
 
 flippers:
     f_test_single:
