@@ -695,7 +695,7 @@ class MachineController(LogMixin):
 
     def run(self) -> None:
         """Start the main machine run loop."""
-        self.info_log("Starting the main run loop.")
+        self.info_log("Initialise MPF.")
         try:
             init = Util.ensure_future(self.initialise(), loop=self.clock.loop)
             self.clock.loop.run_until_complete(Util.first([init, self.stop_future], cancel_others=False,
@@ -705,10 +705,12 @@ class MachineController(LogMixin):
             self.error_log("Failed to initialise MPF")
             self._shutdown()
             return
-        if init.cancelled():
-            self.error_log("Failed to initialise MPF")
+        if init.exception():
+            self.error_log("Failed to initialise MPF: %s", init.exception())
             self._shutdown()
             return
+
+        self.info_log("Starting the main run loop.")
 
         self._run_loop()
 
@@ -734,7 +736,8 @@ class MachineController(LogMixin):
     def _shutdown(self) -> None:
         """Shutdown the machine."""
         self.thread_stopper.set()
-        self.device_manager.stop_devices()
+        if hasattr(self, "device_manager"):
+            self.device_manager.stop_devices()
         self._platform_stop()
 
         self.clock.loop.stop()
