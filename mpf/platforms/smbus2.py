@@ -40,3 +40,7 @@ class Smbus2(I2cPlatform):
     def i2c_write8(self, address, register, value):
         """Write a byte to I2C."""
         return self.smbus.write_byte_data(address, register, value)
+
+    def i2c_read_block(self, address, register, count):
+        """Read a block from I2C."""
+        return self.smbus.read_i2c_block_data(address, register, count)

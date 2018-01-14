@@ -108,6 +108,7 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
         self._cmd_task = None   # type: asyncio.Task
         self._i2c_handles = {}  # type: Dict[Tuple[int, int], Any]
 
+    @asyncio.coroutine
     def initialize(self):
         """Initialise platform."""
         # load config
@@ -140,8 +141,11 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
         """Stop platform."""
         if self._cmd_task:
             self._cmd_task.cancel()
+            self._cmd_task = None
 
-        self.machine.clock.loop.run_until_complete(self.pi.stop())
+        if self.pi:
+            self.machine.clock.loop.run_until_complete(self.pi.stop())
+            self.pi = None
 
     @staticmethod
     def _done(future):  # pragma: no cover
@@ -227,7 +231,8 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
         """Split and return bus + address."""
         if isinstance(address, int):
             return 0, address
-        return address.split("-")
+        bus, address = address.split("-")
+        return int(bus), int(address)
 
     @asyncio.coroutine
     def _get_i2c_handle(self, address):
@@ -253,3 +258,10 @@ class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform,
         """Read from i2c via pigpio."""
         handle = yield from self._get_i2c_handle(address)
         return (yield from self.pi.i2c_read_byte_data(handle, register))
+
+    @asyncio.coroutine
+    def i2c_read_block(self, address, register, count):
+        """Read block via I2C."""
+        handle = yield from self._get_i2c_handle(address)
+        data = yield from self.pi.i2c_read_i2c_block_data(handle, register, count)
+        return data

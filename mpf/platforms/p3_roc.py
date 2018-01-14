@@ -74,6 +74,23 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         return self.proc.read_data(7, address << 9 | register) & 0xFF
 
     @asyncio.coroutine
+    def i2c_read_block(self, address, register, count):
+        """Read block via I2C."""
+        result = []
+        position = 0
+        while position < count:
+            if count - position == 1:
+                data = yield from self.i2c_read8(address, register + position)
+                result.append(data)
+                position += 1
+            else:
+                data = yield from self.i2c_read16(address, register)
+                result.append((data >> 8) & 0xFF)
+                result.append(data & 0xFF)
+                position += 2
+        return result
+
+    @asyncio.coroutine
     def i2c_read16(self, address, register):
         """Read an 16-bit value from the I2C bus of the P3-Roc."""
         return self.proc.read_data(7, address << 9 | 1 << 8 | register)
@@ -92,11 +109,14 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
 
     def configure_accelerometer(self, config, callback):
         """Configure the accelerometer on the P3-ROC."""
-        if config['number'] != "1":
-            raise AssertionError("P3-ROC only has one accelerometer. Use number 1")
+        config = self.machine.config_validator.validate_config("p3_roc_accelerometer", config)
+        if config['number'] != 1:
+            raise AssertionError("P3-ROC only has one accelerometer. Use number 1. Found: {}".format(config))
 
         self.accelerometer_device = PROCAccelerometer(callback)
         self._configure_accelerometer()
+
+        return self.accelerometer_device
 
     def _configure_accelerometer(self):
 

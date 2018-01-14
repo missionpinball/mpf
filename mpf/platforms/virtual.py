@@ -198,6 +198,13 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         del register
         return None
 
+    def i2c_read_block(self, address, register, count):
+        """Read I2C block."""
+        del address
+        del register
+        del count
+        return None
+
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
         """Set rule."""
         pass
