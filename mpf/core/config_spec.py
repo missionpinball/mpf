@@ -689,6 +689,9 @@ machine_vars:
     persist: single|bool|True
 mc_scriptlets:
     __valid_in__: machine  # used by the MC, ignored by MPF
+mma8451_accelerometer:
+    i2c_platform: single|str|None
+    i2c_address: single|str|29
 mode:
     __valid_in__: mode
     priority: single|int|100
