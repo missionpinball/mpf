@@ -186,6 +186,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         """Write to I2C."""
         pass
 
+    @asyncio.coroutine
     def i2c_read8(self, address, register):
         """Read I2C."""
         del address
@@ -198,6 +199,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         del register
         return None
 
+    @asyncio.coroutine
     def i2c_read_block(self, address, register, count):
         """Read I2C block."""
         del address
