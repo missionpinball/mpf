@@ -628,6 +628,8 @@ class AssetPool(object):
 
     """Pool of assets."""
 
+    # pylint: disable=too-many-instance-attributes
+    # Could possibly combine some or make @properties?
     def __init__(self, mc, name, config, member_cls):
         """Initialise asset pool."""
         self.machine = mc
@@ -766,8 +768,9 @@ class AssetPool(object):
         result = [asset for asset in self.assets
                   if not asset[2] or asset[2].evaluate([])]
         # Avoid crashes, return None as the asset if no conditions evaluate true
-        if len(result) == 0:
-            self.warning_log("AssetPool {}: All conditional assets evaluated False and no other assets defined.".format(self.name))
+        if not result:
+            self.machine.log.warning("AssetPool {}: {}".format(
+                self.name, "All conditional assets evaluated False and no other assets defined."))
             result.append((None, 0))
         return result
 
@@ -788,7 +791,7 @@ class AssetPool(object):
                 if self._asset_sequence[0].name in truthy_asset_names:
                     break
                 elif x == len(self._asset_sequence) - 1:
-                    self.warning_log("AssetPool {}: All assets in sequence evaluated False.".format(self.name))
+                    self.machine.log.warning("AssetPool {}: All assets in sequence evaluated False.".format(self.name))
                     return None
                 else:
                     self._asset_sequence.rotate(-1)
@@ -830,6 +833,7 @@ class AssetPool(object):
                 index_value += asset[1]
 
         return assets[-1]
+
 
 class Asset(object):
 

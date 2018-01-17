@@ -4,6 +4,7 @@ from mpf.config_players.flat_config_player import FlatConfigPlayer
 from mpf.core.delays import DelayManager
 from mpf.core.utility_functions import Util
 
+
 class EventPlayer(FlatConfigPlayer):
 
     """Posts events based on config."""
