@@ -4,7 +4,6 @@ from mpf.config_players.flat_config_player import FlatConfigPlayer
 from mpf.core.delays import DelayManager
 from mpf.core.utility_functions import Util
 
-
 class EventPlayer(FlatConfigPlayer):
 
     """Posts events based on config."""
@@ -22,18 +21,17 @@ class EventPlayer(FlatConfigPlayer):
         del kwargs
         for event, s in settings.items():
             s = deepcopy(s)
-            if '|' in event:
-                event, delay = event.split("|")
-                delay = Util.string_to_ms(delay)
+            event_dict = self.machine.placeholder_manager.parse_conditional_template(event)
+
+            if event_dict['condition'] and not event_dict['condition'].evaluate([]):
+                break
+
+            if event_dict['number']:
+                delay = Util.string_to_ms(event_dict['number'])
                 self.delay.add(callback=self._post_event, ms=delay,
-                               event=event, s=s)
-            elif ':' in event:
-                event, delay = event.split(":")
-                delay = Util.string_to_ms(delay)
-                self.delay.add(callback=self._post_event, ms=delay,
-                               event=event, s=s)
+                               event=event_dict['name'], s=s)
             else:
-                self._post_event(event, s)
+                self._post_event(event_dict['name'], s)
 
     def _post_event(self, event, s):
         self.machine.events.post(event, **s)

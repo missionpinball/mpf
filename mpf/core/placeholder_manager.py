@@ -607,6 +607,33 @@ class BasePlaceholderManager(MpfController):
         future = Util.ensure_future(future, loop=self.machine.clock.loop)
         return value, future
 
+    def parse_conditional_template(self, template, default_number=None):
+        # The following regex will make a dict for event name, condition, and delay
+            # e.g. some_event_name_string{variable.condition==True}|delay
+            #      ^ string at start     ^ condition in braces     ^ pipe- or colon-delimited delay
+        match = re.search("(?P<name>[^{}:\|]*)(\{(?P<condition>.+)\})?([|:]?(?P<number>.+))?", template)
+        if match:
+            match_dict = match.groupdict()
+            
+            # Create a Template object for the condition
+            if match_dict['condition'] is not None:
+                match_dict['condition'] = self.build_bool_template(match_dict['condition'])
+            
+            if default_number is not None:
+                # Fill in the default number if the template has none
+                if match_dict['number'] is None:
+                    match_dict['number'] = default_number
+                else:
+                    # Type-conform the template number to the default_number type
+                    try:
+                        match_dict['number'] = type(default_number)(match_dict['number'])
+                    # Gracefully fall back if the number can't be parsed
+                    except ValueError:
+                        self.warning_log("Condition '{}' has invalid number value '{}'".format(template, match_dict['number']))
+                        match_dict['number'] = default_number
+            return match_dict
+        else:
+            raise AssertionError("Invalid template string {}".format(template))
 
 class PlaceholderManager(BasePlaceholderManager):
 

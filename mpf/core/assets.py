@@ -642,6 +642,7 @@ class AssetPool(object):
         self._asset_sequence = deque()
         self._assets_sent = set()
         self._total_weights = 0
+        self._has_conditions = False
 
         if 'load' not in config:
             config['load'] = 'on_demand'
@@ -650,22 +651,18 @@ class AssetPool(object):
             config['type'] = 'sequence'
 
         for asset in Util.string_to_list(self.config[self.member_cls.config_section]):
-            try:
-                name, number = asset.split('|')
-                if not number:
-                    number = 1
-                else:
-                    number = int(number)
-            except ValueError:
-                name = asset
-                number = 1
+            asset_dict = self.machine.placeholder_manager.parse_conditional_template(asset, default_number=1)
+
+            # For efficiency, track whether any assets have conditions
+            if asset_dict['condition']:
+                self._has_conditions = True
 
             try:
                 self.assets.append((
-                    getattr(self.machine, self.member_cls.attribute)[name],
-                    number))
+                    getattr(self.machine, self.member_cls.attribute)[asset_dict['name']],
+                    asset_dict['number'], asset_dict['condition']))
             except KeyError:    # pragma: no cover
-                raise ValueError("No asset named {}".format(name))
+                raise ValueError("No asset named {}".format(asset_dict['name']))
 
         self._configure_return_asset()
 
@@ -762,33 +759,67 @@ class AssetPool(object):
 
         self._callbacks = set()
 
-    def _get_random_asset(self):
-        return self._pick_weighed_random(self.assets)[0]
+    def _get_conditional_assets(self):
+        if not self._has_conditions:
+            return self.assets
 
-    def _get_sequence_asset(self):
+        result = [asset for asset in self.assets
+                  if not asset[2] or asset[2].evaluate([])]
+        # Avoid crashes, return None as the asset if no conditions evaluate true
+        if len(result) == 0:
+            self.warning_log("AssetPool {}: All conditional assets evaluated False and no other assets defined.".format(self.name))
+            result.append((None, 0))
+        return result
+
+    def _get_random_asset(self) -> AssetClass:
+        conditional_assets = self._get_conditional_assets()  # Store to variable to avoid calling twice
+        # If any asset in the group has a condition, recalculate the total weight based on what's valid
+        if self._has_conditions:
+            self._total_weights = sum([x[1] for x in conditional_assets])
+        return self._pick_weighed_random(conditional_assets)[0]
+
+    def _get_sequence_asset(self) -> AssetClass:
         self._asset_sequence.rotate(-1)
+        if self._has_conditions:
+            # Get the names of all assets that evaluate true
+            truthy_asset_names = [asset[0].name for asset in self._get_conditional_assets()]
+            # Skip any assets that have falsey conditions
+            for x in range(len(self._asset_sequence)):
+                if self._asset_sequence[0].name in truthy_asset_names:
+                    break
+                elif x == len(self._asset_sequence) - 1:
+                    self.warning_log("AssetPool {}: All assets in sequence evaluated False.".format(self.name))
+                    return None
+                else:
+                    self._asset_sequence.rotate(-1)
         return self._asset_sequence[0]
 
-    def _get_random_force_next_asset(self):
-        self._total_weights = sum([x[1] for x in self.assets
+    def _get_random_force_next_asset(self) -> AssetClass:
+        conditional_assets = self._get_conditional_assets()  # Store to variable to avoid calling twice
+        self._total_weights = sum([x[1] for x in conditional_assets
                                    if x is not self._last_asset])
 
-        self._last_asset = self._pick_weighed_random([x for x in self.assets
+        self._last_asset = self._pick_weighed_random([x for x in conditional_assets
                                                       if
                                                       x is not
                                                       self._last_asset])
         return self._last_asset[0]
 
-    def _get_random_force_all_asset(self):
-        if len(self._assets_sent) == len(self.assets):
+    def _get_random_force_all_asset(self) -> AssetClass:
+        conditional_assets = self._get_conditional_assets()  # Store to variable to avoid calling twice
+        if len(self._assets_sent) == len(conditional_assets):
             self._assets_sent = set()
 
-        asset = self._pick_weighed_random([x for x in self.assets
+        asset = self._pick_weighed_random([x for x in conditional_assets
                                            if x not in self._assets_sent])
-        self._assets_sent.add(asset)
+        if asset[0] is not None:
+            self._assets_sent.add(asset)
         return asset[0]
 
-    def _pick_weighed_random(self, assets):
+    def _pick_weighed_random(self, assets: List[Tuple[AssetClass, int]]) -> Tuple[AssetClass, int]:
+        if not assets or assets[0][0] is None:
+            return (None, 0)
+
         value = random.randint(1, self._total_weights)
         index_value = assets[0][1]
 
@@ -799,7 +830,6 @@ class AssetPool(object):
                 index_value += asset[1]
 
         return assets[-1]
-
 
 class Asset(object):
 
