@@ -95,3 +95,15 @@ show_pools:
       - show2
       - show3
     type: random_force_all
+  group7:
+    shows:
+      - show1
+      - show2{mode.mode1.active}
+      - show3{mode.mode1.stopping}
+    type: random
+  group8:
+    shows:
+      - show1{mode.mode1.active}
+      - show2
+      - show3{mode.mode1.stopping}
+    type: sequence
