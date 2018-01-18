@@ -25,7 +25,7 @@ class EventPlayer(FlatConfigPlayer):
             event_dict = self.machine.placeholder_manager.parse_conditional_template(event)
 
             if event_dict['condition'] and not event_dict['condition'].evaluate([]):
-                break
+                continue
 
             if event_dict['number']:
                 delay = Util.string_to_ms(event_dict['number'])
