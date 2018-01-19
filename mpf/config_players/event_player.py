@@ -19,12 +19,11 @@ class EventPlayer(FlatConfigPlayer):
 
     def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Post (delayed) events."""
-        del kwargs
         for event, s in settings.items():
             s = deepcopy(s)
             event_dict = self.machine.placeholder_manager.parse_conditional_template(event)
 
-            if event_dict['condition'] and not event_dict['condition'].evaluate([]):
+            if event_dict['condition'] and not event_dict['condition'].evaluate(kwargs):
                 continue
 
             if event_dict['number']:
