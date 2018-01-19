@@ -35,12 +35,13 @@ class Smbus2(I2cPlatform):
     @asyncio.coroutine
     def i2c_read8(self, address, register):
         """Read a byte from I2C."""
-        return self.smbus.read_byte_data(address, register)
+        return self.smbus.read_byte_data(int(address), int(register))
 
     def i2c_write8(self, address, register, value):
         """Write a byte to I2C."""
-        return self.smbus.write_byte_data(address, register, value)
+        return self.smbus.write_byte_data(int(address), int(register), int(value))
 
+    @asyncio.coroutine
     def i2c_read_block(self, address, register, count):
         """Read a block from I2C."""
-        return self.smbus.read_i2c_block_data(address, register, count)
+        return self.smbus.read_i2c_block_data(int(address), int(register), int(count))
