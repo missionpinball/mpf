@@ -39,8 +39,8 @@ class EventPlayer(FlatConfigPlayer):
                 self._post_event(event, s)
 
     def _post_event(self, event, s):
-        event_name_placeholder = TextTemplate(self.machine, event.replace(".", "|"))
-        self.machine.events.post(event_name_placeholder.evaluate(), **s)
+        event_name_placeholder = TextTemplate(self.machine, event)
+        self.machine.events.post(event_name_placeholder.evaluate({}), **s)
 
     def get_list_config(self, value):
         """Parse list."""

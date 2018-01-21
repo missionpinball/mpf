@@ -24,7 +24,7 @@ segment_display_player:
     display4:
       text: ""
     display5:
-      text: "(player|ball)"
+      text: "{current_player.ball:d}"
 
   # clear only display5 after game
   game_ended:
@@ -60,14 +60,14 @@ segment_display_player:
   # show score when adding players
   player_added.1{num==1}:
     display1:
-      text: "(player1|score)"
+      text: "{players[1].score:d}"
   player_added.2{num==2}:
     display2:
-      text: "(player2|score)"
+      text: "{players[2].score:d}"
   player_added.3{num==3}:
     display3:
-      text: "(player3|score)"
+      text: "{players[3].score:d}"
   player_added.4{num==4}:
     display4:
-      text: "(player4|score)"
+      text: "{players[4].score:d}"
 
