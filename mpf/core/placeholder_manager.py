@@ -1,5 +1,6 @@
 """Templates and placeholders."""
 import ast
+import string
 import asyncio
 import operator as op
 import abc
@@ -129,6 +130,43 @@ class IntTemplate(BaseTemplate):
         return int(result), subscriptions
 
 
+class StringTemplate(BaseTemplate):
+
+    """String template."""
+
+    def evaluate(self, parameters, fail_on_missing_params=False):
+        """Evaluate template to string."""
+        try:
+            result = self.placeholder_manager.evaluate_template(self.template, parameters)
+        except ValueError:
+            if fail_on_missing_params:
+                raise
+            return self.default_value
+        return str(result)
+
+
+class RawTemplate(BaseTemplate):
+
+    """Raw template."""
+
+    def evaluate(self, parameters, fail_on_missing_params=False):
+        """Evaluate template."""
+        try:
+            result = self.placeholder_manager.evaluate_template(self.template, parameters)
+        except (ValueError, IndexError):
+            if fail_on_missing_params:
+                raise
+            return self.default_value
+        return result
+
+    def evaluate_and_subscribe(self, parameters) -> Tuple[bool, asyncio.Future]:
+        """Evaluate template to bool and subscribe."""
+        result, subscriptions = self.placeholder_manager.evaluate_and_subscribe_template(self.template, parameters)
+        if isinstance(result, TemplateEvalError):
+            result = self.default_value
+        return result, subscriptions
+
+
 class NativeTypeTemplate:
 
     """Native type template which encapsulates an int/float/bool."""
@@ -151,6 +189,41 @@ class NativeTypeTemplate:
         return self.value, future
 
 
+class MpfFormatter(string.Formatter):
+
+    """String formater which replaces placeholders."""
+
+    def __init__(self, machine, parameters, subscribe):
+        """Initialise formatter."""
+        self.machine = machine
+        self.parameters = parameters
+        self.subscriptions = []
+        self.subscribe = subscribe
+
+    def get_value(self, key, args, kwargs):
+        """Return value of placeholder."""
+        placeholder = self.machine.placeholder_manager.build_raw_template(key)
+        if self.subscribe:
+            value, future = placeholder.evaluate_and_subscribe(self.parameters)
+            if future:
+                self.subscriptions.append(future)
+            return value
+        else:
+            return placeholder.evaluate(self.parameters)
+
+    def get_field(self, field_name, args, kwargs):
+        """Return value of field."""
+        obj = self.get_value(field_name, args, kwargs)
+        return obj, field_name
+
+    def format_field(self, value, format_spec):
+        """Format field."""
+        # don't crash on None for int
+        if value is None and format_spec[0:1] == "d":
+            value = 0
+        return super().format_field(value, format_spec)
+
+
 class TextTemplate:
 
     """Legacy text placeholder."""
@@ -165,9 +238,24 @@ class TextTemplate:
         self.vars = self.var_finder.findall(text)
         self._change_callback = None
 
-    def evaluate(self) -> str:
+    def evaluate(self, parameters) -> str:
         """Evaluate placeholder to string."""
-        return self._evaluate_text()
+        f = MpfFormatter(self.machine, parameters, False)
+        return f.format(self.text)
+
+    def evaluate_and_subscribe(self, parameters) -> Tuple[bool, asyncio.Future]:
+        """Evaluate placeholder to string and subscribe to changes."""
+        f = MpfFormatter(self.machine, parameters, True)
+        value = f.format(self.text)
+        subscriptions = f.subscriptions
+        if not subscriptions:
+            future = asyncio.Future(loop=self.machine.clock.loop)
+        elif len(subscriptions) == 1:
+            future = subscriptions
+        else:
+            future = Util.any(subscriptions, loop=self.machine.clock.loop)
+        future = Util.ensure_future(future, loop=self.machine.clock.loop)
+        return value, future
 
     def monitor_changes(self, callback):
         """Monitor variables for changes and call callback on changes."""
@@ -210,7 +298,7 @@ class TextTemplate:
                 elif source.lower() == 'machine':
                     self._add_machine_var_handler(name=variable_name)
 
-    def _evaluate_text(self) -> str:
+    def evaluate_text(self) -> str:
         """Evaluate placeholder to string."""
         text = self.text
         for var_string in self.vars:
@@ -582,6 +670,14 @@ class BasePlaceholderManager(MpfController):
             return NativeTypeTemplate(template_str, self.machine)
         return BoolTemplate(self._parse_template(template_str), self, default_value)
 
+    def build_string_template(self, template_str, default_value=""):
+        """Build a string template from a string."""
+        return StringTemplate(self._parse_template(template_str), self, default_value)
+
+    def build_raw_template(self, template_str, default_value=None):
+        """Build a raw template from a string."""
+        return RawTemplate(self._parse_template(template_str), self, default_value)
+
     def get_global_parameters(self, name):
         """Return global params."""
         raise NotImplementedError()
@@ -612,30 +708,30 @@ class BasePlaceholderManager(MpfController):
         # The following regex will make a dict for event name, condition, and number
         # e.g. some_event_name_string{variable.condition==True}|num
         #      ^ string at start     ^ condition in braces     ^ pipe- or colon-delimited value
-        match = re.search(r"(?P<name>[^{}:\|]*)(\{(?P<condition>.+)\})?([|:]?(?P<number>.+))?", template)
-        if match:
-            match_dict = match.groupdict()
-
-            # Create a Template object for the condition
-            if match_dict['condition'] is not None:
-                match_dict['condition'] = self.build_bool_template(match_dict['condition'])
-
-            if default_number is not None:
-                # Fill in the default number if the template has none
-                if match_dict['number'] is None:
-                    match_dict['number'] = default_number
-                else:
-                    # Type-conform the template number to the default_number type
-                    try:
-                        match_dict['number'] = type(default_number)(match_dict['number'])
-                    # Gracefully fall back if the number can't be parsed
-                    except ValueError:
-                        self.warning_log("Condition '{}' has invalid number value '{}'".format(
-                                         template, match_dict['number']))
-                        match_dict['number'] = default_number
-            return match_dict
-        else:
+        match = re.search(r"^(?P<name>[^{}:\|]*)(\{(?P<condition>.+)\})?([|:](?P<number>.+))?$", template)
+        if not match:
             raise AssertionError("Invalid template string {}".format(template))
+
+        match_dict = match.groupdict()
+
+        # Create a Template object for the condition
+        if match_dict['condition'] is not None:
+            match_dict['condition'] = self.build_bool_template(match_dict['condition'])
+
+        if default_number is not None:
+            # Fill in the default number if the template has none
+            if match_dict['number'] is None:
+                match_dict['number'] = default_number
+            else:
+                # Type-conform the template number to the default_number type
+                try:
+                    match_dict['number'] = type(default_number)(match_dict['number'])
+                # Gracefully fall back if the number can't be parsed
+                except ValueError:
+                    self.warning_log("Condition '{}' has invalid number value '{}'".format(
+                                     template, match_dict['number']))
+                    match_dict['number'] = default_number
+        return match_dict
 
 
 class PlaceholderManager(BasePlaceholderManager):

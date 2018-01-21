@@ -91,7 +91,7 @@ class SegmentDisplay(SystemWideDevice):
         if not self._current_placeholder:
             new_text = ""
         else:
-            new_text = self._current_placeholder.evaluate()
+            new_text = self._current_placeholder.evaluate_text()
 
         # set text to display if it changed
         if new_text != self.text:
