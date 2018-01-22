@@ -226,7 +226,7 @@ class MpfFormatter(string.Formatter):
 
 class TextTemplate:
 
-    """Legacy text placeholder."""
+    """Text placeholder."""
 
     var_finder = re.compile("(?<=\\()[a-zA-Z_0-9|]+(?=\\))")
     string_finder = re.compile("(?<=\\$)[a-zA-Z_0-9]+")
@@ -251,92 +251,11 @@ class TextTemplate:
         if not subscriptions:
             future = asyncio.Future(loop=self.machine.clock.loop)
         elif len(subscriptions) == 1:
-            future = subscriptions
+            future = subscriptions[0]
         else:
             future = Util.any(subscriptions, loop=self.machine.clock.loop)
         future = Util.ensure_future(future, loop=self.machine.clock.loop)
         return value, future
-
-    def monitor_changes(self, callback):
-        """Monitor variables for changes and call callback on changes."""
-        self._change_callback = callback
-        self._setup_variable_monitors()
-
-    def stop_monitor(self):
-        """Stop monitoring for changes."""
-        self._change_callback = None
-        self.machine.events.remove_handler(self._var_changes)
-
-    def _add_player_var_handler(self, name: str) -> None:
-        self.machine.events.add_handler('player_{}'.format(name), self._var_changes)
-
-    def _add_current_player_handler(self) -> None:
-        self.machine.events.add_handler('player_turn_started', self._var_changes)
-
-    def _add_machine_var_handler(self, name: str) -> None:
-        self.machine.events.add_handler('machine_var_{}'.format(name), self._var_changes)
-
-    def _var_changes(self, **kwargs) -> None:
-        del kwargs
-        if self._change_callback:
-            self._change_callback()
-
-    def _setup_variable_monitors(self) -> None:
-        for var_string in self.vars:
-            if '|' not in var_string:
-                self._add_player_var_handler(name=var_string)
-                self._add_current_player_handler()
-            else:
-                source, variable_name = var_string.split('|')
-                if source.lower().startswith('player'):
-
-                    if source.lstrip('player'):  # we have player num
-                        self._add_player_var_handler(name=variable_name)
-                    else:  # no player num
-                        self._add_player_var_handler(name=var_string)
-                        self._add_current_player_handler()
-                elif source.lower() == 'machine':
-                    self._add_machine_var_handler(name=variable_name)
-
-    def evaluate_text(self) -> str:
-        """Evaluate placeholder to string."""
-        text = self.text
-        for var_string in self.vars:
-            if var_string.startswith('machine|'):
-                _, var_name = var_string.split('|')
-                if self.machine.is_machine_var(var_name):
-                    replacement = str(self.machine.get_machine_var(var_name))
-                else:
-                    replacement = ''
-
-                text = text.replace('(' + var_string + ')', replacement)
-
-            elif self.machine.game and self.machine.game.player:
-                if var_string.startswith('player|'):
-                    text = text.replace('(' + var_string + ')', str(self.machine.game.player[var_string.split('|')[1]]))
-                elif var_string.startswith('player') and '|' in var_string:
-                    player_num, var_name = var_string.lstrip('player').split('|')
-                    try:
-                        value = self.machine.game.player_list[int(player_num) - 1][var_name]
-
-                        if value is not None:
-                            text = text.replace('(' + var_string + ')', str(value))
-                        else:
-                            text = text.replace('(' + var_string + ')', '')
-                    except IndexError:
-                        text = text.replace('(' + var_string + ')', '')
-                elif self.machine.game.player.is_player_var(var_string):
-                    value = self.machine.game.player[var_string]
-                    if value is not None:
-                        text = text.replace('(' + var_string + ')', str(value))
-                    else:
-                        text = text.replace('(' + var_string + ')', '')
-            else:
-                # set var to empty otherwise
-                if var_string.startswith('player') or var_string.startswith('player') and '|' in var_string:
-                    text = text.replace('(' + var_string + ')', '')
-
-        return text
 
 
 class BasePlaceholder(object):
@@ -442,10 +361,10 @@ class PlayerPlaceholder(BasePlaceholder):
 
     """Wraps the player."""
 
-    def __init__(self, player, machine):
+    def __init__(self, machine, number=None):
         """Initialise placeholder."""
-        self._player = player       # type: Player
         self._machine = machine     # type: MachineController
+        self._number = number
 
     def subscribe(self):
         """Subscribe to player changes."""
@@ -457,11 +376,52 @@ class PlayerPlaceholder(BasePlaceholder):
 
     def __getitem__(self, item):
         """Array access."""
-        return self._player[item]
+        if self._machine.game and self._machine.game.player:
+            if self._number is not None:
+                if len(self._machine.game.player_list) <= self._number:
+                    raise ValueError("Player not in game")
+                return self._machine.game.player_list[self._number][item]
+            else:
+                return self._machine.game.player[item]
+        else:
+            raise ValueError("Not in a game")
 
     def __getattr__(self, item):
         """Attribute access."""
-        return getattr(self._player, item)
+        if self._machine.game and self._machine.game.player:
+            if self._number is not None:
+                if len(self._machine.game.player_list) <= self._number:
+                    raise ValueError("Player not in game")
+                return getattr(self._machine.game.player_list[self._number], item)
+            else:
+                return getattr(self._machine.game.player, item)
+        else:
+            raise ValueError("Not in a game")
+
+
+class PlayersPlaceholder(BasePlaceholder):
+
+    """Wraps the player list."""
+
+    def __init__(self, machine):
+        """Initialise placeholder."""
+        self._machine = machine     # type: MachineController
+
+    def subscribe(self):
+        """Subscribe to player list changes."""
+        return self._machine.events.wait_for_any_event(["player_added", "game_ended"])
+
+    def subscribe_attribute(self, item):
+        """Subscribe player variable changes."""
+        return self._machine.events.wait_for_event('player_{}'.format(item))
+
+    def __getitem__(self, item):
+        """Array access."""
+        return PlayerPlaceholder(self._machine, item)
+
+    def __getattr__(self, item):
+        """Attribute access."""
+        return PlayerPlaceholder(self._machine, item)
 
 
 class MachinePlaceholder(BasePlaceholder):
@@ -612,7 +572,13 @@ class BasePlaceholderManager(MpfController):
         if isinstance(slice_value, dict) and node.attr in slice_value:
             ret_value = slice_value[node.attr]
         else:
-            ret_value = getattr(slice_value, node.attr)
+            try:
+                ret_value = getattr(slice_value, node.attr)
+            except ValueError:
+                if subscribe:
+                    raise TemplateEvalError(subscription + [slice_value.subscribe_attribute(node.attr)])
+                else:
+                    raise
         if subscribe:
             return ret_value, subscription + [slice_value.subscribe_attribute(node.attr)]
         else:
@@ -622,7 +588,10 @@ class BasePlaceholderManager(MpfController):
         value, subscription = self._eval(node.value, variables, subscribe)
         if isinstance(node.slice, ast.Index):
             slice_value, slice_subscript = self._eval(node.slice.value, variables, subscribe)
-            return value[slice_value], subscription + slice_subscript
+            try:
+                return value[slice_value], subscription + slice_subscript
+            except ValueError:
+                raise TemplateEvalError(subscription + slice_subscript)
         elif isinstance(node.slice, ast.Slice):
             lower, lower_subscription = self._eval(node.slice.lower, variables, subscribe)
             upper, upper_subscription = self._eval(node.slice.upper, variables, subscribe)
@@ -697,7 +666,7 @@ class BasePlaceholderManager(MpfController):
         if not subscriptions:
             future = asyncio.Future(loop=self.machine.clock.loop)
         elif len(subscriptions) == 1:
-            future = subscriptions
+            future = subscriptions[0]
         else:
             future = Util.any(subscriptions, loop=self.machine.clock.loop)
         future = Util.ensure_future(future, loop=self.machine.clock.loop)
@@ -749,11 +718,12 @@ class PlaceholderManager(BasePlaceholderManager):
             return DevicesPlaceholder(self.machine)
         elif name == "mode":
             return ModePlaceholder(self.machine)
+        elif name == "current_player":
+            return PlayerPlaceholder(self.machine)
+        elif name == "players":
+            return PlayersPlaceholder(self.machine)
         elif self.machine.game:
-            if name == "current_player":
-                return PlayerPlaceholder(self.machine.game.player, self.machine)
-            elif name == "players":
-                return self.machine.game.player_list
-            elif name == "game":
+            if name == "game":
                 return self.machine.game
+
         return False

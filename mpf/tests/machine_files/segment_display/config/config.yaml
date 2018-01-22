@@ -30,15 +30,15 @@ segment_display_player:
 
   test_score:
     display1:
-      text: "1: (player1|score)"
+      text: "1: {players[0].score:d}"
     display2:
-      text: "2: (machine|test)"
+      text: "2: {machine.test:d}"
 
   test_score_two_player:
     display1:
-      text: "(player1|score)"
+      text: "{players[0].score:d}"
     display2:
-      text: "(player2|score)"
+      text: "{players[1].score:d}"
 
   test_flash:
     display1:
