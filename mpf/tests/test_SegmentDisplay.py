@@ -1,7 +1,7 @@
 from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
 
-class TestShots(MpfFakeGameTestCase):
+class TestSegmentDisplay(MpfFakeGameTestCase):
 
     def getConfigFile(self):
         if self._testMethodName == "test_game":
@@ -164,13 +164,13 @@ class TestShots(MpfFakeGameTestCase):
         self.post_event("test_score")
         self.advance_time_and_run()
 
-        self.assertEqual("1: ", display1.hw_display.text)
-        self.assertEqual("2: ", display2.hw_display.text)
+        self.assertEqual("1: 0", display1.hw_display.text)
+        self.assertEqual("2: 0", display2.hw_display.text)
 
         self.machine.set_machine_var("test", 42)
         self.advance_time_and_run()
 
-        self.assertEqual("1: ", display1.hw_display.text)
+        self.assertEqual("1: 0", display1.hw_display.text)
         self.assertEqual("2: 42", display2.hw_display.text)
 
         self.start_game()
@@ -225,13 +225,13 @@ class TestShots(MpfFakeGameTestCase):
 
         # first display shows score. second empty
         self.assertEqual("0", display1.hw_display.text)
-        self.assertEqual("", display2.hw_display.text)
+        self.assertEqual("0", display2.hw_display.text)
 
         # player scores
         self.machine.game.player.score += 42
         self.advance_time_and_run(.01)
         self.assertEqual("42", display1.hw_display.text)
-        self.assertEqual("", display2.hw_display.text)
+        self.assertEqual("0", display2.hw_display.text)
 
         # add player
         self.add_player()

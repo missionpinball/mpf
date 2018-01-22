@@ -70,7 +70,6 @@ class SegmentDisplay(SystemWideDevice):
             self.hw_display.set_text("", flashing=False)
             if self._current_placeholder:
                 self.text = ""
-                self._current_placeholder.stop_monitor()
                 self._current_placeholder = None
             return
 
@@ -79,19 +78,18 @@ class SegmentDisplay(SystemWideDevice):
         # get top entry
         top_entry = self._text_stack[0]
 
-        if self._current_placeholder:
-            self._current_placeholder.stop_monitor()
-
         self._current_placeholder = TextTemplate(self.machine, top_entry.text)
-        self._current_placeholder.monitor_changes(self._update_display)
         self._update_display()
 
-    def _update_display(self) -> None:
+    def _update_display(self, *args, **kwargs) -> None:
         """Update display to current text."""
+        del args
+        del kwargs
         if not self._current_placeholder:
             new_text = ""
         else:
-            new_text = self._current_placeholder.evaluate_text()
+            new_text, future = self._current_placeholder.evaluate_and_subscribe({})
+            future.add_done_callback(self._update_display)
 
         # set text to display if it changed
         if new_text != self.text:
