@@ -583,6 +583,10 @@ kickbacks:
     switch_overwrite: dict|str:str|None
     ball_search_order: single|int|100
     playfield: single|machine(playfields)|playfield
+    enable_timeouts: single|bool|False
+    timeout_watch_time: single|ms|0
+    timeout_max_hits: single|int|0
+    timeout_disable_time: single|ms|0
 kivy_config:
     __valid_in__: machine                           # todo add to validator
 led_player:
