@@ -48,8 +48,10 @@ class TestSmartMatrix(MpfTestCase):
 
     def test_smart_matrix(self):
         # test new cookie
+        self.serial_mocks["com4"].write = MagicMock()
+        self.serial_mocks["com5"].write = MagicMock()
         self.machine.rgb_dmds.smartmatrix_1.update([0x00, 0x01, 0x02, 0x03])
-        self.advance_time_and_run()
+        self.advance_time_and_run(.1)
         start = time.time()
         while self.serial_mocks["com4"].write.call_count < 2 and time.time() < start + 10:
             time.sleep(.001)
@@ -59,6 +61,7 @@ class TestSmartMatrix(MpfTestCase):
             ])
 
         self.machine.rgb_dmds.smartmatrix_2.update([0x00, 0x01, 0x02, 0x03])
+        self.advance_time_and_run(.1)
         start = time.time()
         while self.serial_mocks["com5"].write.call_count < 2 and time.time() < start + 10:
             time.sleep(.001)
