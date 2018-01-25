@@ -33,7 +33,7 @@ class Smbus2(I2cPlatform):
         if isinstance(address, int):
             return 0, address
         bus, address = address.split("-")
-        return int(bus), int(address)
+        return bus, int(address)
 
     def _get_i2c_bus(self, bus) -> SMBus:
         """Get or open handle for i2c bus."""
