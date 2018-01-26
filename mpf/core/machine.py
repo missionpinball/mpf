@@ -61,6 +61,7 @@ if MYPY:   # pragma: no cover
     from mpf.devices.shot_group import ShotGroup
     from mpf.devices.shot import Shot
     from logging import Logger  # noqa
+    from mpf.devices.autofire import AutofireCoil
 
 
 # pylint: disable-msg=too-many-instance-attributes
@@ -129,6 +130,7 @@ class MachineController(LogMixin):
             self.tui = None                             # type: TextUi
 
             # devices
+            self.autofires = None                       # type: DeviceCollectionType[str, AutofireCoil]
             self.shows = None                           # type: DeviceCollectionType[str, Show]
             self.shots = None                           # type: DeviceCollectionType[str, Shot]
             self.shot_groups = None                     # type: DeviceCollectionType[str, ShotGroup]
