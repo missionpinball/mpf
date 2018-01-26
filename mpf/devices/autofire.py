@@ -1,6 +1,4 @@
 """Contains the base class for autofire coil devices."""
-from time import time as _time
-
 from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.events import event_handler
@@ -123,13 +121,11 @@ class AutofireCoil(SystemWideDevice):
         if not self._ball_search_in_progress:
             self.config['playfield'].mark_playfield_active_from_device_action()
         if self._timeout_watch_time:
-            self._timeout_hits.append(_time())
-            while True:
-                if self._timeout_hits[-1] - self._timeout_hits[0] > self._timeout_watch_time:
-                    self._timeout_hits.pop(0)
-                else:
-                    break
-            if len(self._timeout_hits) > self._timeout_max_hits:
+            current_time = self.machine.clock.get_time()
+            self._timeout_hits = [t for t in self._timeout_hits if t > current_time - self._timeout_watch_time / 1000.0]
+            self._timeout_hits.append(current_time)
+
+            if len(self._timeout_hits) >= self._timeout_max_hits:
                 self.disable()
                 self.delay.add(self._timeout_disable_time, self.enable, "_timeout_enable_delay")
 
