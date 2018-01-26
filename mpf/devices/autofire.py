@@ -40,6 +40,10 @@ class AutofireCoil(SystemWideDevice):
         super().__init__(machine, name)
         self.delay = DelayManager(self.machine.delayRegistry)
         self._ball_search_in_progress = False
+        self._timeout_watch_time = None
+        self._timeout_max_hits = None
+        self._timeout_disable_time = None
+        self._timeout_hits = []
 
     def _initialize(self) -> None:
         if self.config['ball_search_order']:
@@ -47,6 +51,10 @@ class AutofireCoil(SystemWideDevice):
                 self.config['ball_search_order'], self._ball_search, self.name)
         # pulse is handled via rule but add a handler so that we take notice anyway
         self.config['switch'].add_handler(self._hit)
+        if self.config['timeout_watch_time']:
+            self._timeout_watch_time = self.config['timeout_watch_time'] / 1000
+            self._timeout_max_hits = self.config['timeout_max_hits']
+            self._timeout_disable_time = self.config['timeout_disable_time']
 
     @event_handler(10)
     def enable(self, **kwargs):
@@ -99,6 +107,8 @@ class AutofireCoil(SystemWideDevice):
         """
         del kwargs
 
+        self.delay.remove("_timeout_enable_delay")
+
         if not self._enabled:
             return
         self._enabled = False
@@ -110,6 +120,14 @@ class AutofireCoil(SystemWideDevice):
         """Rule was triggered."""
         if not self._ball_search_in_progress:
             self.config['playfield'].mark_playfield_active_from_device_action()
+        if self._timeout_watch_time:
+            current_time = self.machine.clock.get_time()
+            self._timeout_hits = [t for t in self._timeout_hits if t > current_time - self._timeout_watch_time / 1000.0]
+            self._timeout_hits.append(current_time)
+
+            if len(self._timeout_hits) >= self._timeout_max_hits:
+                self.disable()
+                self.delay.add(self._timeout_disable_time, self.enable, "_timeout_enable_delay")
 
     def _ball_search(self, phase, iteration):
         del phase

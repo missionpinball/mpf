@@ -67,3 +67,58 @@ class TestAutofire(MpfTestCase):
             SwitchSettings(hw_switch=self.machine.switches.s_test.hw_switch, invert=True, debounce=False),
             DriverSettings(hw_driver=self.machine.coils.c_test2.hw_driver,
                            pulse_settings=PulseSettings(power=1.0, duration=23), hold_settings=None, recycle=True))
+
+    def test_timeout(self):
+        self.machine.autofires.ac_test_timeout.enable()
+        self.machine_run()
+
+        # 9 hits are ok
+        for _ in range(9):
+            self.hit_and_release_switch("s_test")
+            self.machine_run()
+
+        self.assertTrue(self.machine.autofires.ac_test_timeout._enabled)
+
+        # 10th hit should disable it
+        self.hit_and_release_switch("s_test")
+        self.machine_run()
+        self.assertFalse(self.machine.autofires.ac_test_timeout._enabled)
+
+        # reenable after 500ms
+        self.advance_time_and_run(.6)
+        self.assertTrue(self.machine.autofires.ac_test_timeout._enabled)
+
+        # exire the older hits
+        self.advance_time_and_run(1)
+
+        # 9 hits are ok
+        for _ in range(9):
+            self.hit_and_release_switch("s_test")
+            self.machine_run()
+
+        self.assertTrue(self.machine.autofires.ac_test_timeout._enabled)
+
+        # wait 1s
+        self.advance_time_and_run(1)
+
+        # another 9 hits are ok
+        for _ in range(9):
+            self.hit_and_release_switch("s_test")
+            self.machine_run()
+
+        self.assertTrue(self.machine.autofires.ac_test_timeout._enabled)
+
+        # 10th hit should disable it
+        self.hit_and_release_switch("s_test")
+        self.machine_run()
+        self.assertFalse(self.machine.autofires.ac_test_timeout._enabled)
+
+        self.advance_time_and_run(.2)
+
+        # disable manually while disabled by too many hits
+        self.machine.autofires.ac_test_timeout.disable()
+        self.assertFalse(self.machine.autofires.ac_test_timeout._enabled)
+
+        # should not reenable
+        self.advance_time_and_run(.4)
+        self.assertFalse(self.machine.autofires.ac_test_timeout._enabled)
