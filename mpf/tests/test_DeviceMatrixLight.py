@@ -6,13 +6,10 @@ from mpf.tests.MpfTestCase import MpfTestCase
 class TestDeviceMatrixLight(MpfTestCase):
 
     def getConfigFile(self):
-        return 'test_shows.yaml'
+        return 'matrix_lights.yaml'
 
     def getMachinePath(self):
-        return 'tests/machine_files/shows/'
-
-    def get_platform(self):
-        return 'smart_virtual'
+        return 'tests/machine_files/light/'
 
     def _synchronise_light_update(self):
         ts = Light._updater_task.get_next_call_time()
@@ -36,7 +33,7 @@ class TestDeviceMatrixLight(MpfTestCase):
         self.assertLightChannel("light_01", 0)
         self.assertLightChannel("light_02", 0)
 
-        light1.color([128, 128, 128])
+        light1.on(128)
         self.advance_time_and_run(1)
         self.assertEqual([128, 128, 128], light1.get_color())
         self.assertAlmostEqual(self.machine.clock.get_time() - 1,
@@ -44,7 +41,7 @@ class TestDeviceMatrixLight(MpfTestCase):
         self.assertLightChannel("light_01", 128)
         self.assertEqual(0, light1.stack[0]['priority'])
 
-        light2.color([255, 255, 255])
+        light2.on(255)
         self.advance_time_and_run(1)
         self.assertLightChannel("light_02", 255)
         self.assertEqual([255, 255, 255], light2.get_color())

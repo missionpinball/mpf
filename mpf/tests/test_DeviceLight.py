@@ -16,9 +16,22 @@ class TestDeviceLight(MpfTestCase):
 
     def test_default_on_color(self):
         led = self.machine.lights.led1
-        led.color("on")
 
+        # color on should map to red
+        led.color("on")
         self.assertLightColor("led1", RGBColor("red"))
+
+        # turn off again
+        led.off()
+        self.assertLightColor("led1", RGBColor("black"))
+
+        # on should also map to red
+        led.on()
+        self.assertLightColor("led1", RGBColor("red"))
+
+        # on with half brightness should map to dimmed red
+        led.on(127)
+        self.assertLightColor("led1", RGBColor("red%50"))
 
     def test_default_color_correction(self):
         led = self.machine.lights.led1
