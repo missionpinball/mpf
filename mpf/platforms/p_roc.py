@@ -68,6 +68,12 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
         """Return string representation."""
         return '<Platform.P-ROC>'
 
+    def get_info_string(self):
+        """Dump infos about boards."""
+        infos = "Firmware Version: {} Firmware Revision: {} Hardware Board ID: {}".format(
+            self.version, self.revision, self.hardware_version)
+        return infos
+
     def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
         """Create a P-ROC driver.
 

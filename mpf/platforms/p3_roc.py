@@ -145,6 +145,22 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         # flush data to proc
         self.proc.flush()
 
+    def get_info_string(self):
+        """Dump infos about boards."""
+        infos = "Firmware Version: {} Firmware Revision: {} Hardware Board ID: {}".format(
+            self.version, self.revision, self.hardware_version)
+
+        input_boards = set()
+        for switch, state in enumerate(self.proc.switch_get_states()):
+            if state != 3:
+                input_boards.add(switch // 16)
+
+        infos += "SW-16 boards found:\n"
+        for input_board in input_boards:
+            infos += " - Board: {} Switches: 16".format(input_board)
+
+        return infos
+
     def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
         """Create a P3-ROC driver.
 
