@@ -273,7 +273,9 @@ class Light(SystemWideDevice):
                        "priority: %s, key: %s", color, fade_ms, priority,
                        key)
 
-        if not isinstance(color, RGBColor):
+        if isinstance(color, str) and color == "on":
+            color = self.config['default_on_color']
+        elif not isinstance(color, RGBColor):
             color = RGBColor(color)
 
         if fade_ms is None:
@@ -288,7 +290,7 @@ class Light(SystemWideDevice):
         if color_changes:
             self._schedule_update()
 
-    def on(self, fade_ms=None, brightness=None, priority=0, key=None, **kwargs):
+    def on(self, brightness=None, fade_ms=None, priority=0, key=None, **kwargs):
         """Turn light on.
 
         Args:
@@ -297,10 +299,9 @@ class Light(SystemWideDevice):
             fade_ms: duration of fade
         """
         del kwargs
+        color = self.config['default_on_color']
         if brightness is not None:
-            color = (brightness, brightness, brightness)
-        else:
-            color = self.config['default_on_color']
+            color *= brightness / 255
         self.color(color=color, fade_ms=fade_ms,
                    priority=priority, key=key)
 

@@ -93,9 +93,7 @@ class LightPlayer(DeviceConfigPlayer):
         if color == "stop":
             self._light_remove(light, instance_dict, full_context, s.get("fade_ms", None))
             return
-        if color == "on":
-            color = light.config['default_on_color']
-        else:
+        if color != "on":
             # hack to keep compatibility for matrix_light values
             if len(color) == 1:
                 color = "0" + color + "0" + color + "0" + color

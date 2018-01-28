@@ -1,0 +1,10 @@
+#config_version=5
+lights:
+    light_01:
+        number: 0
+        subtype: matrix
+        debug: True
+    light_02:
+        number: 1
+        subtype: matrix
+        debug: True
