@@ -51,8 +51,11 @@ class OpenpixelHardwarePlatform(LightsPlatform):
     def stop(self):
         """Stop platform."""
         # disconnect sender
-        self.opc_client.blank_all()
-        self.opc_client.socket_sender.close()
+        if self.opc_client:
+            self.opc_client.blank_all()
+            if self.opc_client.socket_sender:
+                self.opc_client.socket_sender.close()
+                self.opc_client.socket_sender = None
 
     def parse_light_number_to_channels(self, number: str, subtype: str):
         """Parse number to three channels."""

@@ -8,6 +8,7 @@ import tempfile
 
 import sys
 import threading
+import traceback
 from platform import platform, python_version, system, release, version, system_alias, machine
 
 import copy
@@ -695,8 +696,8 @@ class MachineController(LogMixin):
 
         self.monitors[monitor_class].add(monitor)
 
-    def run(self) -> None:
-        """Start the main machine run loop."""
+    def initialise_mpf(self):
+        """Initialise MPF."""
         self.info_log("Initialise MPF.")
         try:
             init = Util.ensure_future(self.initialise(), loop=self.clock.loop)
@@ -708,12 +709,16 @@ class MachineController(LogMixin):
             self._shutdown()
             return
         if init.exception():
-            self.error_log("Failed to initialise MPF: %s", init.exception())
+            self.error_log("Failed to initialise MPF:")
+            traceback.print_tb(init.exception().__traceback__)  # noqa
             self._shutdown()
             return
 
-        self.info_log("Starting the main run loop.")
+    def run(self) -> None:
+        """Start the main machine run loop."""
+        self.initialise_mpf()
 
+        self.info_log("Starting the main run loop.")
         self._run_loop()
 
     def stop(self, **kwargs) -> None:
