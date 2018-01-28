@@ -63,9 +63,9 @@ class ClockBase(LogMixin):
 
         self.debug_log("Starting tickless clock")
         if not loop:
-            self.loop = self._create_event_loop()
+            self.loop = self._create_event_loop()   # type: asyncio.BaseEventLoop
         else:
-            self.loop = loop
+            self.loop = loop                        # type: asyncio.BaseEventLoop
 
     # pylint: disable-msg=no-self-use
     def _create_event_loop(self):
