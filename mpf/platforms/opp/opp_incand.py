@@ -19,14 +19,14 @@ class OPPIncandCard(object):
         self.oldState = 0
         self.newState = 0
         self.mask = mask
+        self.cardNum = str(addr - ord(OppRs232Intf.CARD_ID_GEN2_CARD))
         hardware_fade_ms = int(1 / machine.config['mpf']['default_light_hw_update_hz'] * 1000)
 
         self.log.debug("Creating OPP Incand at hardware address: 0x%02x", addr)
 
-        card = str(addr - ord(OppRs232Intf.CARD_ID_GEN2_CARD))
         for index in range(0, 32):
             if ((1 << index) & mask) != 0:
-                number = card + '-' + str(index)
+                number = self.cardNum + '-' + str(index)
                 incand_dict[chain_serial + '-' + number] = OPPIncand(self, number, hardware_fade_ms, machine.clock.loop)
 
 

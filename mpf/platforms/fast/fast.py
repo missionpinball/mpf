@@ -76,6 +76,36 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                               '-L': self.receive_local_closed,  # local sw cls
                               }
 
+    def get_info_string(self):
+        """Dump infos about boards."""
+        infos = ""
+        if not self.net_connection:
+            infos += "No connection to the NET CPU.\n"
+        else:
+            infos = "NET CPU: {} {} {}\n".format(
+                self.net_connection.remote_processor,
+                self.net_connection.remote_model,
+                self.net_connection.remote_firmware)
+        if not self.rgb_connection:
+            infos += "No connection to the RGB CPU.\n"
+        else:
+            infos = "RGB CPU: {} {} {}\n".format(
+                self.rgb_connection.remote_processor,
+                self.rgb_connection.remote_model,
+                self.rgb_connection.remote_firmware)
+        if not self.dmd_connection:
+            infos += "No connection to the DMD CPU.\n"
+        else:
+            infos = "DMD CPU: {} {} {}\n".format(
+                self.dmd_connection.remote_processor,
+                self.dmd_connection.remote_model,
+                self.dmd_connection.remote_firmware)
+
+        infos += "\nBoards:\n"
+        for board in self.io_boards.values():
+            infos += board.get_description_string() + "\n"
+        return infos
+
     @asyncio.coroutine
     def initialize(self):
         """Initialise platform."""

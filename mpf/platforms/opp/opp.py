@@ -156,6 +156,33 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             #  until they come back
             self.opp_connection[chain_serial].lost_synch()
 
+    def get_info_string(self):
+        """Dump infos about boards."""
+        if not self.serial_connections:
+            return "No connection to any CPU board."
+
+        infos = "Connected CPUs:\n"
+        for connection in self.serial_connections:
+            infos += " - Port: {} at {} baud\n".format(connection.port, connection.baud)
+
+        infos += "\nIncand cards:\n"
+        for incand in self.opp_incands:
+            infos += " - CPU: {} Card: {} Mask: {}".format(incand.chain_serial, incand.cardNum, incand.mask)
+
+        infos += "\nInput cards:\n"
+        for inputs in self.opp_inputs:
+            infos += " - CPU: {} Card: {} Mask: {}".format(inputs.chain_serial, inputs.cardNum, inputs.mask)
+
+        infos += "\nInput coils:\n"
+        for outputs in self.opp_solenoid:
+            infos += " - CPU: {} Card: {} Mask: {}".format(outputs.chain_serial, outputs.cardNum, outputs.mask)
+
+        infos += "\nLEDs:\n"
+        for leds in self.opp_neopixels:
+            infos += " - CPU: {} Card: {}".format(leds.chain_serial, leds.cardNum)
+
+        return infos
+
     @asyncio.coroutine
     def _connect_to_hardware(self):
         """Connect to each port from the config.

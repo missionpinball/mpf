@@ -67,9 +67,18 @@ class CommandLineUtility(object):
 
         _module = import_module('mpf.commands.%s' % command)
 
+        if hasattr(_module, "subcommand") and _module.subcommand:
+            subcommand = self.argv.pop(1)
+        else:
+            subcommand = None
+
         machine_path, remaining_args = self.parse_args()
 
-        _module.Command(self.mpf_path, machine_path, remaining_args)
+        obj = _module.Command(self.mpf_path, machine_path, remaining_args)
+
+        if subcommand is not None:
+            method = getattr(obj, subcommand)
+            method()
 
     def parse_args(self):
         """Parse command line arguments."""
