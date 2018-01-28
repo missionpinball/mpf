@@ -16,28 +16,28 @@ class OPPNeopixelCard(object):
         self.chain_serial = chain_serial
         self.addr = addr
         self.platform = platform
-        self.card = str(addr - ord(OppRs232Intf.CARD_ID_GEN2_CARD))
+        self.cardNum = str(addr - ord(OppRs232Intf.CARD_ID_GEN2_CARD))
         self.numPixels = 0
         self.numColorEntries = 0
         self.colorTableDict = dict()
-        neo_card_dict[chain_serial + '-' + self.card] = self
+        neo_card_dict[chain_serial + '-' + self.cardNum] = self
 
         self.log.debug("Creating OPP Neopixel card at hardware address: 0x%02x", addr)
 
     def add_channel(self, pixel_number, neo_dict, index):
         """Add a channel."""
         hardware_fade_ms = int(1 / self.platform.machine.config['mpf']['default_light_hw_update_hz'] * 1000)
-        if self.card + '-' + str(pixel_number) not in neo_dict:
+        if self.cardNum + '-' + str(pixel_number) not in neo_dict:
             self.add_neopixel(pixel_number, neo_dict)
 
-        return OPPLightChannel(neo_dict[self.card + '-' + str(pixel_number)], int(index), hardware_fade_ms,
+        return OPPLightChannel(neo_dict[self.cardNum + '-' + str(pixel_number)], int(index), hardware_fade_ms,
                                self.platform.machine.clock.loop)
 
     def add_neopixel(self, number, neo_dict):
         """Add a LED channel."""
         if number > self.numPixels:
             self.numPixels = number + 1
-        pixel_number = self.card + '-' + str(number)
+        pixel_number = self.cardNum + '-' + str(number)
         pixel = OPPNeopixel(pixel_number, self)
         neo_dict[pixel_number] = pixel
         return pixel

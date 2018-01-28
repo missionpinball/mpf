@@ -13,3 +13,13 @@ class FastIoBoard:
         self.firmware_version = firmware_version
         self.switch_count = switch_count
         self.driver_count = driver_count
+
+    def get_description_string(self) -> str:
+        """Return description string."""
+        return "Board {} - Model: {} Firmware: {} Switches: {} Drivers: {}".format(
+            self.node_id,
+            self.model_string,
+            self.firmware_version,
+            self.switch_count,
+            self.driver_count
+        )

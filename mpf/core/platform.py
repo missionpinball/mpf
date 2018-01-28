@@ -48,6 +48,10 @@ class BasePlatform(metaclass=abc.ABCMeta):
         self.features['hardware_sounds'] = False
         self.features['has_steppers'] = False
 
+    def get_info_string(self) -> str:
+        """Return information string about this platform."""
+        return "Not implemented"
+
     def debug_log(self, msg, *args, **kwargs):
         """Log when debug is set to True for platform."""
         if self.debug:

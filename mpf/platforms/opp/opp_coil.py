@@ -189,13 +189,13 @@ class OPPSolenoidCard(object):
         self.mask = mask
         self.platform = platform
         self.state = 0
+        self.cardNum = str(addr - ord(OppRs232Intf.CARD_ID_GEN2_CARD))
 
         self.log.debug("Creating OPP Solenoid at hardware address: 0x%02x", addr)
 
-        card = str(addr - ord(OppRs232Intf.CARD_ID_GEN2_CARD))
         for index in range(0, 16):
             if ((1 << index) & mask) != 0:
-                number = chain_serial + '-' + card + '-' + str(index)
+                number = chain_serial + '-' + self.cardNum + '-' + str(index)
                 opp_sol = OPPSolenoid(self, number)
                 opp_sol.config = {}
                 sol_dict[number] = opp_sol
