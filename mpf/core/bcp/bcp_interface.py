@@ -58,6 +58,7 @@ class BcpInterface(MpfController):
             monitor_start=self._bcp_receive_monitor_start,
             monitor_stop=self._bcp_receive_monitor_stop,
             set_machine_var=self._bcp_receive_set_machine_var,
+            service=self._service,
         )
 
         self.machine.events.add_handler('machine_reset_phase_1', self.bcp_reset)
@@ -95,6 +96,26 @@ class BcpInterface(MpfController):
         """Set machine var via bcp."""
         del client
         self.machine.set_machine_var(name, value)
+
+    def _service(self, client, subcommand, **kwargs):
+        """Run service command."""
+        del kwargs
+        if subcommand == "start":
+            self.machine.service.start_service()
+        elif subcommand == "stop":
+            self.machine.clock.loop.create_task(self.machine.service.stop_service())
+        elif subcommand == "list_switches":
+            pass
+        elif subcommand == "list_coils":
+            pass
+        elif subcommand == "list_lights":
+            pass
+        elif subcommand == "monitor_switches":
+            pass
+        elif subcommand == "pulse_coil":
+            pass
+        elif subcommand == "color_light":
+            pass
 
     def _bcp_receive_monitor_start(self, client, category):
         """Start monitoring the specified category."""
