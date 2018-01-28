@@ -273,7 +273,9 @@ class Light(SystemWideDevice):
                        "priority: %s, key: %s", color, fade_ms, priority,
                        key)
 
-        if not isinstance(color, RGBColor):
+        if isinstance(color, str) and color == "on":
+            color = self.config['default_on_color']
+        elif not isinstance(color, RGBColor):
             color = RGBColor(color)
 
         if fade_ms is None:

@@ -14,6 +14,12 @@ class TestDeviceLight(MpfTestCase):
     def getMachinePath(self):
         return 'tests/machine_files/light/'
 
+    def test_default_on_color(self):
+        led = self.machine.lights.led1
+        led.color("on")
+
+        self.assertLightColor("led1", RGBColor("red"))
+
     def test_default_color_correction(self):
         led = self.machine.lights.led1
         led.color(RGBColor("white"))
