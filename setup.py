@@ -16,12 +16,12 @@ else:
     raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE,))
 
 platform = sys.platform
-install_requires=['ruamel.yaml>=0.10,<0.11',
-                  'pyserial>=3.2.0',
-                  'pyserial-asyncio>=0.3',
-                  'typing',
-                  'asciimatics',
-                  'psutil']
+install_requires = ['ruamel.yaml>=0.10,<0.11',
+                    'pyserial>=3.2.0',
+                    'pyserial-asyncio>=0.3',
+                    'typing',
+                    'asciimatics',
+                    'psutil']
 
 
 if platform == 'win32':
