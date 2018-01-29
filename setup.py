@@ -1,6 +1,7 @@
 """Mission Pinball Framework (mpf) setup.py."""
 
 import re
+import sys
 
 from setuptools import setup
 
@@ -13,6 +14,19 @@ if mo:
     verstr = mo.group(1)
 else:
     raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE,))
+
+platform = sys.platform
+install_requires = ['ruamel.yaml>=0.10,<0.11',
+                    'pyserial>=3.2.0',
+                    'pyserial-asyncio>=0.3',
+                    'typing',
+                    'asciimatics',
+                    'psutil']
+
+
+if platform == 'win32':
+    # asciimatic depends on pypiwin32 but newer version will not install
+    install_requires += ['pypiwin32<=219']
 
 setup(
 
@@ -68,12 +82,7 @@ community.''',
 
     zip_safe=False,
 
-    install_requires=['ruamel.yaml>=0.10,<0.11',
-                      'pyserial>=3.2.0',
-                      'pyserial-asyncio>=0.3',
-                      'typing',
-                      'asciimatics',
-                      'psutil'],
+    install_requires=install_requires,
 
     tests_require=[],
     test_suite="mpf.tests",
