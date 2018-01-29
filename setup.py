@@ -14,6 +14,18 @@ if mo:
 else:
     raise RuntimeError("Unable to find version string in %s." % (VERSIONFILE,))
 
+install_requires=['ruamel.yaml>=0.10,<0.11',
+                  'pyserial>=3.2.0',
+                  'pyserial-asyncio>=0.3',
+                  'typing',
+                  'asciimatics',
+                  'psutil']
+
+
+if platform == 'win32':
+    # asciimatic depends on pypiwin32 but newer version will not install
+    install_requires += ['pypiwin32<=219']
+
 setup(
 
     name='mpf',
@@ -68,12 +80,7 @@ community.''',
 
     zip_safe=False,
 
-    install_requires=['ruamel.yaml>=0.10,<0.11',
-                      'pyserial>=3.2.0',
-                      'pyserial-asyncio>=0.3',
-                      'typing',
-                      'asciimatics',
-                      'psutil'],
+    install_requires=install_requires,
 
     tests_require=[],
     test_suite="mpf.tests",
