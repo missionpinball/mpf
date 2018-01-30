@@ -168,6 +168,7 @@ class MultiballLock(ModeDevice):
     def _unregister_handlers(self):
         # unregister ball_enter handlers
         self.machine.events.remove_handler(self._lock_ball)
+        self.machine.events.remove_handler(self._post_events)
 
     @property
     def is_virtually_full(self):
@@ -284,6 +285,7 @@ class MultiballLock(ModeDevice):
         del kwargs
         for event in self._events[device]:
             self.machine.events.post(**event)
+        self._events[device] = []
 
     def _request_new_balls(self, balls):
         """Request new ball to playfield."""
