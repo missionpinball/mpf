@@ -113,6 +113,7 @@ class ShotGroup(ModeDevice):
             kwarg: {
                 profile: the current profile of the member shot that was hit
                 state: the current state of the member shot that was hit
+                advancing: boolean of whether the state is advancing
             }
         """
         if advancing:
@@ -123,10 +124,10 @@ class ShotGroup(ModeDevice):
         desc: A member shots in the shot group called (shot_group)
         has been hit.
         '''
-        self.machine.events.post("{}_{}_{}_hit".format(self.name, kwargs['profile'], kwargs['state']))
+        self.machine.events.post("{}_{}_hit".format(self.name, kwargs['state']))
         '''event: (shot_group)_(state)_hit
-        desc: A member shot with profile (profile) and state (state)
-        in the shot group (shot_group) has been hit.
+        desc: A member shot with state (state) in the shot group (shot_group)
+        has been hit.
         '''
 
     @event_handler(9)
