@@ -110,9 +110,11 @@ class ShotGroup(ModeDevice):
         """One of the member shots in this shot group was hit.
 
         Args:
-            kwarg: unused
+            kwarg: {
+                profile: the current profile of the member shot that was hit
+                state: the current state of the member shot that was hit
+            }
         """
-        del kwargs
         if advancing:
             self._check_for_complete()
 
@@ -120,6 +122,11 @@ class ShotGroup(ModeDevice):
         '''event: (shot_group)_hit
         desc: A member shots in the shot group called (shot_group)
         has been hit.
+        '''
+        self.machine.events.post("{}_{}_{}_hit".format(self.name, kwargs['profile'], kwargs['state']))
+        '''event: (shot_group)_(state)_hit
+        desc: A member shot with profile (profile) and state (state)
+        in the shot group (shot_group) has been hit.
         '''
 
     @event_handler(9)
