@@ -139,6 +139,9 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
 
         self.assertFalse(self.serialMock.expected_commands)
 
+        # check that it does not crash
+        self.assertTrue(self.machine.default_platform.get_info_string())
+
     def testDualWoundCoils(self):
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x02\x04\x0a\x00')] = False
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x03\x03\x0a\x00')] = False
@@ -258,6 +261,9 @@ class TestOPP(OPPCommon, MpfTestCase):
         self._test_autofires()
         self._test_switches()
         self._test_flippers()
+
+        # check that it does not crash
+        self.assertTrue(self.machine.default_platform.get_info_string())
 
     def _test_switches(self):
         # initial switches

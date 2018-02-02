@@ -65,7 +65,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         # TODO: refactor this into the OPPNeopixelCard
         self.neoDict = dict()               # type: Dict[str, OPPNeopixel]
         self.numGen2Brd = 0
-        self.gen2AddrArr = {}               # type: Dict[str, List[int]]
+        self.gen2AddrArr = {}               # type: Dict[str, Dict[int, int]]
         self.badCRC = 0
         self.minVersion = 0xffffffff
         self._poll_task = {}                # type: Dict[str, asyncio.Task]
@@ -156,6 +156,19 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             #  until they come back
             self.opp_connection[chain_serial].lost_synch()
 
+    @staticmethod
+    def _get_numbers(mask):
+        number = 0
+        ref = 1
+        result = []
+        while mask > ref:
+            if mask & ref:
+                result.append(number)
+            number += 1
+            ref = ref << 1
+
+        return result
+
     def get_info_string(self):
         """Dump infos about boards."""
         if not self.serial_connections:
@@ -164,22 +177,33 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         infos = "Connected CPUs:\n"
         for connection in self.serial_connections:
             infos += " - Port: {} at {} baud\n".format(connection.port, connection.baud)
+            for board_id, board_firmware in self.gen2AddrArr[connection.chain_serial].items():
+                if board_firmware is None:
+                    infos += " -> Board: 0x{:02x} Firmware: broken\n".format(board_id)
+                else:
+                    infos += " -> Board: 0x{:02x} Firmware: 0x{:02x}\n".format(board_id, board_firmware)
 
         infos += "\nIncand cards:\n"
         for incand in self.opp_incands:
-            infos += " - CPU: {} Card: {} Mask: {}".format(incand.chain_serial, incand.cardNum, incand.mask)
+            infos += " - CPU: {} Board: 0x{:02x} Card: {} Numbers: {}\n".format(incand.chain_serial, incand.addr,
+                                                                                incand.cardNum,
+                                                                                self._get_numbers(incand.mask))
 
         infos += "\nInput cards:\n"
         for inputs in self.opp_inputs:
-            infos += " - CPU: {} Card: {} Mask: {}".format(inputs.chain_serial, inputs.cardNum, inputs.mask)
+            infos += " - CPU: {} Board: 0x{:02x} Card: {} Numbers: {}\n".format(inputs.chain_serial, inputs.addr,
+                                                                                inputs.cardNum,
+                                                                                self._get_numbers(inputs.mask))
 
-        infos += "\nInput coils:\n"
+        infos += "\nSolenoid cards:\n"
         for outputs in self.opp_solenoid:
-            infos += " - CPU: {} Card: {} Mask: {}".format(outputs.chain_serial, outputs.cardNum, outputs.mask)
+            infos += " - CPU: {} Board: 0x{:02x} Card: {} Numbers: {}\n".format(outputs.chain_serial, outputs.addr,
+                                                                                outputs.cardNum,
+                                                                                self._get_numbers(outputs.mask))
 
         infos += "\nLEDs:\n"
         for leds in self.opp_neopixels:
-            infos += " - CPU: {} Card: {}".format(leds.chain_serial, leds.cardNum)
+            infos += " - CPU: {} Board: 0x{:02x} Card: {}".format(leds.chain_serial, leds.addr, leds.cardNum)
 
         return infos
 
@@ -284,17 +308,18 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             chain_serial: Serial of the chain which received the message.
             msg: Message to parse.
         """
-        # TODO: use chain_serial/move to serial communicator
-        self.log.debug("Received Inventory Response:%s", "".join(" 0x%02x" % b for b in msg))
+        self.log.debug("Received Inventory Response: %s for %s", "".join(" 0x%02x" % b for b in msg), chain_serial)
 
         index = 1
-        self.gen2AddrArr[chain_serial] = []
+        self.gen2AddrArr[chain_serial] = {}
         while msg[index] != ord(OppRs232Intf.EOM_CMD):
             if (msg[index] & ord(OppRs232Intf.CARD_ID_TYPE_MASK)) == ord(OppRs232Intf.CARD_ID_GEN2_CARD):
                 self.numGen2Brd += 1
-                self.gen2AddrArr[chain_serial].append(msg[index])
+                self.gen2AddrArr[chain_serial][msg[index]] = None
+            else:
+                self.log.warning("Invalid inventory response %s for %s.", msg[index], chain_serial)
             index += 1
-        self.log.debug("Found %d Gen2 OPP boards.", self.numGen2Brd)
+        self.log.debug("Found %d Gen2 OPP boards on %s.", self.numGen2Brd, chain_serial)
 
     @staticmethod
     def eom_resp(chain_serial, msg):
@@ -441,6 +466,12 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             self.log.debug("Firmware version: %d.%d.%d.%d", msg[curr_index + 2],
                            msg[curr_index + 3], msg[curr_index + 4],
                            msg[curr_index + 5])
+            if msg[curr_index] not in self.gen2AddrArr[chain_serial]:
+                self.log.warning("Got firmware response for %s but not in inventory at %s", msg[curr_index],
+                                 chain_serial)
+            else:
+                self.gen2AddrArr[chain_serial][msg[curr_index]] = version
+
             if version < self.minVersion:
                 self.minVersion = version
             if version == BAD_FW_VERSION:

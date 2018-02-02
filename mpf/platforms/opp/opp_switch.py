@@ -40,6 +40,7 @@ class OPPMatrixCard(object):
         self.log = logging.getLogger('OPPMatrixCard')
         self.chain_serial = chain_serial
         self.addr = addr
+        self.mask = 0xFFFFFFFFFFFFFFFF << 32  # create fake mask
         self.isMatrix = True
         self.oldState = [0, 0]
         self.cardNum = str(addr - ord(OppRs232Intf.CARD_ID_GEN2_CARD))
