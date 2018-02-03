@@ -55,3 +55,7 @@ class FASTDirectLEDChannel(LightPlatformInterface):
         """Set brightness via callback."""
         self.led.dirty = True
         self.led.colors[self.channel] = color_and_fade_callback
+
+    def get_board_name(self):
+        """Return the board of this light."""
+        return "FAST LED CPU"

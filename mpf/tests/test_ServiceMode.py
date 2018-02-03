@@ -186,7 +186,7 @@ class TestServiceMode(MpfFakeGameTestCase):
 
         for color in ["white", "red", "green", "blue", "yellow", "white"]:
             self.assertEventCalledWith("service_light_test_start",
-                                       board_name='',
+                                       board_name='Virtual',
                                        light_label='%',
                                        light_name='l_light1',
                                        light_num='1',
@@ -201,7 +201,7 @@ class TestServiceMode(MpfFakeGameTestCase):
         self.advance_time_and_run()
 
         self.assertEventCalledWith("service_light_test_start",
-                                   board_name='',
+                                   board_name='Virtual',
                                    light_label='%',
                                    light_name='l_light5',
                                    light_num='5',
@@ -214,7 +214,7 @@ class TestServiceMode(MpfFakeGameTestCase):
         self.advance_time_and_run()
 
         self.assertEventCalledWith("service_light_test_start",
-                                   board_name='',
+                                   board_name='Virtual',
                                    light_label='%',
                                    light_name='l_light1',
                                    light_num='1',
@@ -257,28 +257,28 @@ class TestServiceMode(MpfFakeGameTestCase):
         self.hit_and_release_switch("s_service_enter")
         self.advance_time_and_run()
         self.machine.coils.c_test2.pulse.assert_called_with()
-       
+
         self.hit_and_release_switch("s_service_up")
         self.advance_time_and_run()
         self.assertEventCalledWith("service_coil_test_start", board_name='Virtual', coil_label='Third coil',
                                    coil_name='c_test5', coil_num='3')
-        
+
         self.hit_and_release_switch("s_service_up")
         self.advance_time_and_run()
         self.assertEventCalledWith("service_coil_test_start", board_name='Virtual', coil_label='Fourth coil',
                                    coil_name='c_test6', coil_num='10')
-        
+
         self.hit_and_release_switch("s_service_up")
         self.advance_time_and_run()
         self.assertEventCalledWith("service_coil_test_start", board_name='Virtual', coil_label='Fifth coil',
                                    coil_name='c_test4', coil_num='100')
-        
+
         self.hit_and_release_switch("s_service_up")
         self.advance_time_and_run()
         self.assertEventCalledWith("service_coil_test_start", board_name='Virtual', coil_label='Sixth coil',
                                    coil_name='c_test3', coil_num='1000')
-        
-        
+
+
 
         # wrap to first
         self.hit_and_release_switch("s_service_up")

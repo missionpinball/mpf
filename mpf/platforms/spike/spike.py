@@ -29,6 +29,10 @@ class SpikeSwitch(SwitchPlatformInterface):
         self.index = int(self.index)
         self.platform = platform
 
+    def get_board_name(self):
+        """Return name for service mode."""
+        return "Spike Node {}".format(self.node)
+
 
 class SpikeLight(LightPlatformDirectFade):
 
@@ -56,6 +60,10 @@ class SpikeLight(LightPlatformDirectFade):
             raise AssertionError("Fade time out of bound.")
         data = bytearray([fade_time, brightness])
         self.platform.send_cmd_async(self.node, SpikeNodebus.SetLed + self.index, data)
+
+    def get_board_name(self):
+        """Return name for service mode."""
+        return "Spike Node {}".format(self.node)
 
 
 class SpikeDMD(DmdPlatformInterface):

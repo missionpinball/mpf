@@ -25,6 +25,21 @@ class FASTSwitch(SwitchPlatformInterface):
         self._configured_debounce = False
         self.configure_debounce(config.debounce in ("normal", "auto"))
 
+    def get_board_name(self):
+        """Return the board of this switch."""
+        if self.platform.machine_type == 'wpc':
+            return "FAST WPC"
+        else:
+            switch_index = 0
+            number = Util.hex_string_to_int(self.number)
+            for board_obj in self.platform.io_boards.values():
+                if switch_index <= number < switch_index + board_obj.switch_count:
+                    return "FAST Board {}".format(str(board_obj.node_id))
+                switch_index += board_obj.switch_count
+
+            # fall back if not found
+            return "FAST Unknown Board"
+
     def configure_debounce(self, debounce):
         """Configure debounce settings."""
         if debounce:

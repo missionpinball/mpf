@@ -24,6 +24,11 @@ class LightPlatformInterface(metaclass=abc.ABCMeta):
         """
         raise NotImplementedError
 
+    @abc.abstractmethod
+    def get_board_name(self):
+        """Return the name of the board of this light."""
+        raise NotImplementedError
+
 
 class LightPlatformDirectFade(LightPlatformInterface, metaclass=abc.ABCMeta):
 

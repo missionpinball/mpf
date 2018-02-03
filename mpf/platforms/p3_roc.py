@@ -147,7 +147,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
 
     def get_info_string(self):
         """Dump infos about boards."""
-        infos = "Firmware Version: {} Firmware Revision: {} Hardware Board ID: {}".format(
+        infos = "Firmware Version: {} Firmware Revision: {} Hardware Board ID: {}\n".format(
             self.version, self.revision, self.hardware_version)
 
         input_boards = set()
@@ -157,7 +157,7 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
 
         infos += "SW-16 boards found:\n"
         for input_board in input_boards:
-            infos += " - Board: {} Switches: 16".format(input_board)
+            infos += " - Board: {} Switches: 16\n".format(input_board)
 
         return infos
 

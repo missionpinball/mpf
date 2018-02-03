@@ -57,6 +57,10 @@ class OPPLightChannel(LightPlatformSoftwareFade):
         """Set brightness."""
         self.led.set_channel(self.index, int(brightness * 255))
 
+    def get_board_name(self):
+        """Return OPP chain and addr."""
+        return "OPP {} Board {}".format(str(self.led.neoCard.chain_serial), "0x%02x" % self.led.neoCard.addr)
+
 
 class OPPNeopixel:
 

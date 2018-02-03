@@ -70,7 +70,7 @@ class PRocHardwarePlatform(PROCBasePlatform, DmdPlatform, SegmentDisplayPlatform
 
     def get_info_string(self):
         """Dump infos about boards."""
-        infos = "Firmware Version: {} Firmware Revision: {} Hardware Board ID: {}".format(
+        infos = "Firmware Version: {} Firmware Revision: {} Hardware Board ID: {}\n".format(
             self.version, self.revision, self.hardware_version)
         return infos
 

@@ -21,6 +21,7 @@ install_requires = ['ruamel.yaml>=0.10,<0.11',
                     'pyserial-asyncio>=0.3',
                     'typing',
                     'asciimatics',
+                    'terminaltables',
                     'psutil']
 
 
@@ -81,6 +82,7 @@ community.''',
     packages=['mpf'],
 
     zip_safe=False,
+
 
     install_requires=install_requires,
 

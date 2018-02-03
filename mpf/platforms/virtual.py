@@ -301,6 +301,10 @@ class VirtualSwitch(SwitchPlatformInterface):
         super().__init__(config, number)
         self.log = logging.getLogger('VirtualSwitch')
 
+    def get_board_name(self):
+        """Return the name of the board of this switch."""
+        return "Virtual"
+
 
 class VirtualLight(LightPlatformInterface):
 
@@ -327,6 +331,10 @@ class VirtualLight(LightPlatformInterface):
     def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
         """Store CB function."""
         self.color_and_fade_callback = color_and_fade_callback
+
+    def get_board_name(self):
+        """Return the name of the board of this light."""
+        return "Virtual"
 
 
 class VirtualServo(ServoPlatformInterface):

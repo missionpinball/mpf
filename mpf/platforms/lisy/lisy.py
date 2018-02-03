@@ -22,7 +22,9 @@ class LisySwitch(SwitchPlatformInterface):
 
     """A switch in the LISY platform."""
 
-    pass
+    def get_board_name(self):
+        """Return board name."""
+        return "LISY"
 
 
 class LisyDriver(DriverPlatformInterface):
@@ -79,6 +81,10 @@ class LisyLight(LightPlatformSoftwareFade):
             self.platform.send_byte(LisyDefines.LampsSetLampOn, bytes([self.number]))
         else:
             self.platform.send_byte(LisyDefines.LampsSetLampOff, bytes([self.number]))
+
+    def get_board_name(self):
+        """Return board name."""
+        return "LISY"
 
 
 class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):

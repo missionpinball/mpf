@@ -32,6 +32,10 @@ class DriverLight(LightPlatformSoftwareFade):
         else:
             self.driver.enable(hold_power=brightness)
 
+    def get_board_name(self):
+        """Return board name of underlaying driver."""
+        return self.driver.hw_driver.get_board_name()
+
 
 @DeviceMonitor(_color="color")
 class Light(SystemWideDevice):
@@ -93,6 +97,14 @@ class Light(SystemWideDevice):
         machine.events.add_handler("init_phase_4",
                                    cls._check_duplicate_light_numbers,
                                    machine=machine)
+
+    def get_hw_numbers(self):
+        """Return a list of all hardware driver numbers."""
+        numbers = []
+        for driver in self.hw_drivers.values():
+            numbers.append(driver.number)
+
+        return numbers
 
     @staticmethod
     def _check_duplicate_light_numbers(machine, **kwargs):

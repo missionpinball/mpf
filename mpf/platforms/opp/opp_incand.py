@@ -51,3 +51,7 @@ class OPPIncand(LightPlatformSoftwareFade):
             self.incandCard.newState &= ~curr_bit
         else:
             self.incandCard.newState |= curr_bit
+
+    def get_board_name(self):
+        """Return OPP chain and addr."""
+        return "OPP {} Board {}".format(str(self.incandCard.chain_serial), "0x%02x" % self.incandCard.addr)

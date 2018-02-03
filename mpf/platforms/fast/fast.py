@@ -535,7 +535,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                                 int(1 / self.machine.config['mpf']['default_light_hw_update_hz'] * 1000))
         elif subtype == "matrix":
             return FASTMatrixLight(number, self.net_connection.send, self.machine,
-                                   int(1 / self.machine.config['mpf']['default_light_hw_update_hz'] * 1000))
+                                   int(1 / self.machine.config['mpf']['default_light_hw_update_hz'] * 1000), self)
         elif not subtype or subtype == "led":
             if not self.flag_led_tick_registered:
                 # Update leds every frame
