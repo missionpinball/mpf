@@ -352,7 +352,7 @@ class MachineController(LogMixin):
             if ('expire' in settings and settings['expire'] and
                     settings['expire'] < current_time):
 
-                settings['value'] = 0
+                continue
 
             self.set_machine_var(name=name, value=settings['value'])
 
@@ -378,9 +378,9 @@ class MachineController(LogMixin):
         for name, element in config.items():
             if name not in self.machine_vars:
                 element = self.config_validator.validate_config("machine_vars", copy.deepcopy(element))
-                self.configure_machine_var(name=name, persist=element['persist'])
                 self.set_machine_var(name=name,
                                      value=Util.convert_to_type(element['initial_value'], element['value_type']))
+            self.configure_machine_var(name=name, persist=element.get('persist', False))
 
     def _set_machine_path(self) -> None:
         """Add the machine folder to sys.path so we can import modules from it."""
@@ -777,13 +777,13 @@ class MachineController(LogMixin):
     def _write_machine_var_to_disk(self, name: str) -> None:
         """Write value to disk."""
         if self.machine_vars[name]['persist'] and self.config['mpf']['save_machine_vars_to_disk']:
-            disk_var = CaseInsensitiveDict()
-            disk_var['value'] = self.machine_vars[name]['value']
+            self._write_machine_vars_to_disk()
 
-            if self.machine_vars[name]['expire_secs']:
-                disk_var['expire'] = self.clock.get_time() + self.machine_vars[name]['expire_secs']
-
-            self.machine_var_data_manager.save_key(name, disk_var)
+    def _write_machine_vars_to_disk(self):
+        """Update machine vars on disk."""
+        self.machine_var_data_manager.save_all(
+            {name: {"value": var["value"], "expire": var['expire_secs']}
+             for name, var in self.machine_vars.items() if var["persist"]})
 
     def get_machine_var(self, name: str) -> Any:
         """Return the value of a machine variable.
@@ -814,21 +814,16 @@ class MachineController(LogMixin):
                 disk so it's available the next time MPF boots.
             expire_secs: Optional number of seconds you'd like this variable
                 to persist on disk for. When MPF boots, if the expiration time
-                of the variable is in the past, it will be loaded with a value
-                of 0. For example, this lets you write the number of credits on
+                of the variable is in the past, it will not be loaded.
+                For example, this lets you write the number of credits on
                 the machine to disk to persist even during power off, but you
                 could set it so that those only stay persisted for an hour.
         """
         if name not in self.machine_vars:
-            var = CaseInsensitiveDict()
-
-            var['value'] = None
-            var['persist'] = persist
-            var['expire_secs'] = expire_secs
-            self.machine_vars[name] = var
+            self.machine_vars[name] = {'value': None, 'persist': persist, 'expire_secs': expire_secs}
         else:
             self.machine_vars[name]['persist'] = persist
-            self.machine_vars[name]['expire_sec'] = expire_secs
+            self.machine_vars[name]['expire_secs'] = expire_secs
 
     def set_machine_var(self, name: str, value: Any) -> None:
         """Set the value of a machine variable.
@@ -895,7 +890,7 @@ class MachineController(LogMixin):
         """
         try:
             del self.machine_vars[name]
-            self.machine_var_data_manager.remove_key(name)
+            self._write_machine_vars_to_disk()
         except KeyError:
             pass
 
@@ -912,7 +907,8 @@ class MachineController(LogMixin):
         for var in list(self.machine_vars.keys()):
             if var.startswith(startswith) and var.endswith(endswith):
                 del self.machine_vars[var]
-                self.machine_var_data_manager.remove_key(var)
+
+        self._write_machine_vars_to_disk()
 
     def get_platform_sections(self, platform_section: str, overwrite: str) -> "SmartVirtualHardwarePlatform":
         """Return platform section."""

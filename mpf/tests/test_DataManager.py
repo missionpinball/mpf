@@ -38,7 +38,7 @@ class TestDataManager(MpfTestCase):
         open_mock = mock_open(read_data="")
         with patch('mpf.file_interfaces.yaml_interface.open', open_mock, create=True):
             with patch('mpf.core.data_manager.os.replace') as move_mock:
-                manager.save_key("hallo", "world")
+                manager.save_all({"hallo": "world"})
                 while not move_mock.called:
                     time.sleep(.00001)
                 open_mock().write.assert_called_once_with('hallo: world\n')

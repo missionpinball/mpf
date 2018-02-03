@@ -110,31 +110,6 @@ class DataManager(MpfController):
         self.data = data
         self._trigger_save()
 
-    def save_key(self, key, value):
-        """Update an individual key and then write the entire dictionary to disk.
-
-        Args:
-            key: String name of the key to add/update.
-            value: Value of the key
-        """
-        try:
-            self.data[key] = value
-        except TypeError:
-            self.debug_log.warning('In-memory copy of %s is invalid. Re-creating', self.filename)
-            # todo should we reload from disk here?
-            self.data = dict()
-            self.data[key] = value
-
-        self._trigger_save()
-
-    def remove_key(self, key):
-        """Remove key by name."""
-        try:
-            del self.data[key]
-            self._trigger_save()
-        except KeyError:
-            pass
-
     def _writing_thread(self):  # pragma: no cover
         # prevent early writes at start-up
         time.sleep(self.min_wait_secs)
