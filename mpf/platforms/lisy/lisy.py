@@ -22,7 +22,9 @@ class LisySwitch(SwitchPlatformInterface):
 
     """A switch in the LISY platform."""
 
-    pass
+    def get_board_name(self):
+        """Return board name."""
+        return "LISY"
 
 
 class LisyDriver(DriverPlatformInterface):

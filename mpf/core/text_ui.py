@@ -1,4 +1,5 @@
 """Contains the TextUI class."""
+import asyncio
 from collections import OrderedDict
 from datetime import datetime
 import logging
@@ -87,6 +88,7 @@ class TextUi(MpfController):
 
         self._update_switch_layout()
 
+    @asyncio.coroutine
     def _bcp_status_report(self, client, cpu, rss, vms):
         del client
         self._bcp_status = cpu, rss, vms

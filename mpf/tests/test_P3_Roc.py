@@ -128,8 +128,10 @@ class TestP3Roc(MpfTestCase):
         self._test_leds()
         self._test_leds_inverted()
 
+        self.assertTrue(self.machine.default_platform.get_info_string())
+
     def _test_pulse(self):
-        self.assertEqual("P-Roc Board 1", self.machine.coils.c_test.hw_driver.get_board_name())
+        self.assertEqual("PD-16 Board 1 Bank 1", self.machine.coils.c_test.hw_driver.get_board_name())
         # pulse coil A1-B1-2
         self.machine.coils.c_test.pulse()
         number = self.machine.coils.c_test.hw_driver.number

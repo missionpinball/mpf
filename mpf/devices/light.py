@@ -94,6 +94,14 @@ class Light(SystemWideDevice):
                                    cls._check_duplicate_light_numbers,
                                    machine=machine)
 
+    def get_hw_numbers(self):
+        """Return a list of all hardware driver numbers."""
+        numbers = []
+        for driver in self.hw_drivers.values():
+            numbers.append(driver.number)
+
+        return numbers
+
     @staticmethod
     def _check_duplicate_light_numbers(machine, **kwargs):
         del kwargs

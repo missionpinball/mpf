@@ -24,7 +24,9 @@ class RpiSwitch(SwitchPlatformInterface):
 
     """A switch on a RPI."""
 
-    pass
+    def get_board_name(self):
+        """Return name."""
+        return "Raspberry Pi"
 
 
 class RpiDriver(DriverPlatformInterface):

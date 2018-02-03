@@ -315,7 +315,7 @@ class PROCBasePlatform(LightsPlatform, SwitchPlatform, DriverPlatform, metaclass
             raise AssertionError("Switch {} cannot be controlled by the "
                                  "P-ROC/P3-ROC.".format(proc_num))
 
-        switch = PROCSwitch(config, proc_num, config.debounce == "quick")
+        switch = PROCSwitch(config, proc_num, config.debounce == "quick", self)
         # The P3-ROC needs to be configured to notify the host computers of
         # switch events. (That notification can be for open or closed,
         # debounced or nondebounced.)
@@ -486,6 +486,43 @@ class PDBConfig(object):
         self._configure_lamp_banks(proc, lamp_source_bank_list, False)
         self._configure_lamp_banks(proc, lamp_source_bank_list, True)
 
+    def is_pdb_address(self, addr):
+        """Return True if the given address is a valid PDB address."""
+        try:
+            self.decode_pdb_address(addr=addr)
+            return True
+        except ValueError:
+            return False
+
+    @staticmethod
+    def decode_pdb_address(addr):
+        """Decode Ax-By-z or x/y/z into PDB address, bank number, and output number.
+
+        Raises a ValueError exception if it is not a PDB address, otherwise returns
+        a tuple of (addr, bank, number).
+
+        """
+        if '-' in addr:  # Ax-By-z form
+            params = addr.rsplit('-')
+            if len(params) != 3:
+                raise ValueError('pdb address must have 3 components')
+            board = int(params[0][1:])
+            bank = int(params[1][1:])
+            output = int(params[2][0:])
+            return board, bank, output
+
+        elif '/' in addr:  # x/y/z form
+            params = addr.rsplit('/')
+            if len(params) != 3:
+                raise ValueError('pdb address must have 3 components')
+            board = int(params[0])
+            bank = int(params[1])
+            output = int(params[2])
+            return board, bank, output
+
+        else:
+            raise ValueError('PDB address delimiter (- or /) not found.')
+
     def _load_lamp_lists_from_config(self, config):
         lamp_source_bank_list = []
         lamp_list = []
@@ -583,15 +620,6 @@ class PDBConfig(object):
                            "1 = %d", True, lamp_source_bank_list[0],
                            lamp_source_bank_list[1])
 
-    def get_coil_bank(self, number_str):
-        """Return the bank of a coil.
-
-        Args:
-            number_str (str): PDB string
-        """
-        coil = PDBCoil(self, number_str)
-        return coil.boardnum
-
     def get_proc_coil_number(self, number_str):
         """Get the actual number of a coil from the bank index config.
 
@@ -644,8 +672,6 @@ class PDBSwitch(object):
 
     def __init__(self, pdb, number_str):
         """Find out the number of the switch."""
-        del pdb  # unused. why?
-
         upper_str = number_str.upper()
         if upper_str.startswith('SD'):  # only P-ROC
             self.sw_number = int(upper_str[2:])
@@ -653,7 +679,7 @@ class PDBSwitch(object):
             self.sw_number = self.parse_matrix_num(upper_str)
         else:   # only P3-Roc
             try:
-                (boardnum, banknum, inputnum) = decode_pdb_address(number_str)
+                (boardnum, banknum, inputnum) = pdb.decode_pdb_address(number_str)
                 self.sw_number = boardnum * 16 + banknum * 8 + inputnum
             except ValueError:
                 try:
@@ -682,15 +708,15 @@ class PDBCoil(object):
 
     def __init__(self, pdb, number_str):
         """Find out number fo coil."""
-        del pdb
         upper_str = number_str.upper()
+        self.pdb = pdb
         if self.is_direct_coil(upper_str):
             self.coil_type = 'dedicated'
             self.banknum = (int(number_str[1:]) - 1) / 8
             self.outputnum = int(number_str[1:])
         elif self.is_pdb_coil(number_str):
             self.coil_type = 'pdb'
-            (self.boardnum, self.banknum, self.outputnum) = decode_pdb_address(number_str)
+            (self.boardnum, self.banknum, self.outputnum) = pdb.decode_pdb_address(number_str)
         else:
             self.coil_type = 'unknown'
 
@@ -718,10 +744,9 @@ class PDBCoil(object):
             return False
         return True
 
-    @classmethod
-    def is_pdb_coil(cls, string):
+    def is_pdb_coil(self, string):
         """Return true if string looks like PDB address."""
-        return is_pdb_address(string)
+        return self.pdb.is_pdb_address(string)
 
 
 class PDBLight(object):
@@ -730,7 +755,7 @@ class PDBLight(object):
 
     def __init__(self, pdb, number_str):
         """Find out light number."""
-        del pdb
+        self.pdb = pdb
         upper_str = number_str.upper()
         if self.is_direct_lamp(upper_str):
             self.lamp_type = 'dedicated'
@@ -739,8 +764,8 @@ class PDBLight(object):
             # C-Ax-By-z:R-Ax-By-z  or  C-x/y/z:R-x/y/z
             self.lamp_type = 'pdb'
             source_addr, sink_addr = self.split_matrix_addr_parts(number_str)
-            (self.source_boardnum, self.source_banknum, self.source_outputnum) = decode_pdb_address(source_addr)
-            (self.sink_boardnum, self.sink_banknum, self.sink_outputnum) = decode_pdb_address(sink_addr)
+            (self.source_boardnum, self.source_banknum, self.source_outputnum) = pdb.decode_pdb_address(source_addr)
+            (self.sink_boardnum, self.sink_banknum, self.sink_outputnum) = pdb.decode_pdb_address(sink_addr)
         else:
             self.lamp_type = 'unknown'
 
@@ -806,7 +831,7 @@ class PDBLight(object):
         if len(params) != 2:
             return False
         for addr in params:
-            if not is_pdb_address(addr):
+            if not self.pdb.is_pdb_address(addr):
                 return False
         return True
 
@@ -848,41 +873,3 @@ class PDBLED(LightPlatformInterface):
         else:
             # fade to color
             self.proc.led_fade(self.board, self.address, self._normalise_color(int(brightness * 255)), int(fade_ms / 4))
-
-
-def is_pdb_address(addr):
-    """Return True if the given address is a valid PDB address."""
-    try:
-        decode_pdb_address(addr=addr)
-        return True
-    except ValueError:
-        return False
-
-
-def decode_pdb_address(addr):
-    """Decode Ax-By-z or x/y/z into PDB address, bank number, and output number.
-
-    Raises a ValueError exception if it is not a PDB address, otherwise returns
-    a tuple of (addr, bank, number).
-
-    """
-    if '-' in addr:  # Ax-By-z form
-        params = addr.rsplit('-')
-        if len(params) != 3:
-            raise ValueError('pdb address must have 3 components')
-        board = int(params[0][1:])
-        bank = int(params[1][1:])
-        output = int(params[2][0:])
-        return board, bank, output
-
-    elif '/' in addr:  # x/y/z form
-        params = addr.rsplit('/')
-        if len(params) != 3:
-            raise ValueError('pdb address must have 3 components')
-        board = int(params[0])
-        bank = int(params[1])
-        output = int(params[2])
-        return board, bank, output
-
-    else:
-        raise ValueError('PDB address delimiter (- or /) not found.')

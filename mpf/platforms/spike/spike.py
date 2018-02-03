@@ -29,6 +29,10 @@ class SpikeSwitch(SwitchPlatformInterface):
         self.index = int(self.index)
         self.platform = platform
 
+    def get_board_name(self):
+        """Return name for service mode."""
+        return "Spike Node {}".format(self.node)
+
 
 class SpikeLight(LightPlatformDirectFade):
 

@@ -1,4 +1,6 @@
 """Support for physical DMDs."""
+import asyncio
+
 from mpf.core.machine import MachineController
 from mpf.core.platform import DmdPlatform
 
@@ -35,6 +37,7 @@ class Dmd(SystemWideDevice):
         self.hw_device = self.platform.configure_dmd()
 
     @classmethod
+    @asyncio.coroutine
     def _bcp_receive_dmd_frame(cls, client, name, rawbytes, **kwargs):
         """Update dmd from BCP."""
         del client

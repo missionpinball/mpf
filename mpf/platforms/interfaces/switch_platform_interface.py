@@ -17,3 +17,8 @@ class SwitchPlatformInterface(metaclass=abc.ABCMeta):
         """Initialise default attributes for switches."""
         self.config = config    # type: SwitchConfig
         self.number = number    # type: Any
+
+    @abc.abstractmethod
+    def get_board_name(self):
+        """Return the name of the board of this driver."""
+        raise NotImplementedError

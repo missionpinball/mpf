@@ -11,15 +11,26 @@ class PROCSwitch(SwitchPlatformInterface):
 
     """P-ROC switch object which is use to store the configure rules and config."""
 
-    def __init__(self, config, number, notify_on_nondebounce):
+    def __init__(self, config, number, notify_on_nondebounce, platform):
         """Initialise P-ROC switch."""
         super().__init__(config, number)
+        self.string_number = number
         self.log = logging.getLogger('PROCSwitch')
         self.notify_on_nondebounce = notify_on_nondebounce
         self.hw_rules = {"closed_debounced": [],
                          "closed_nondebounced": [],
                          "open_debounced": [],
                          "open_nondebounced": []}
+        self.pdbconfig = getattr(platform, "pdbconfig", None)
+
+    def get_board_name(self):
+        """Return board of the switch."""
+        if not self.pdbconfig:
+            return "P-Roc"
+
+        board, bank, _ = self.pdbconfig.decode_pdb_address(self.string_number)
+
+        return "SW-16 Board {} Bank {}".format(board, bank)
 
 
 class PROCDriver(DriverPlatformInterface):
@@ -47,7 +58,9 @@ class PROCDriver(DriverPlatformInterface):
         if not self.pdbconfig:
             return "P-Roc"
 
-        return "P-Roc Board {}".format(str(self.pdbconfig.get_coil_bank(self.string_number)))
+        board, bank, _ = self.pdbconfig.decode_pdb_address(self.string_number)
+
+        return "PD-16 Board {} Bank {}".format(board, bank)
 
     @classmethod
     def get_pwm_on_off_ms(cls, coil: HoldSettings):

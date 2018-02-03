@@ -65,7 +65,7 @@ class BcpTransportManager:
                 self.unregister_transport(transport)
                 return
 
-            self._machine.bcp.interface.process_bcp_message(cmd, kwargs, transport)
+            yield from self._machine.bcp.interface.process_bcp_message(cmd, kwargs, transport)
 
     def unregister_transport(self, transport: BaseBcpClient):
         """Unregister client."""

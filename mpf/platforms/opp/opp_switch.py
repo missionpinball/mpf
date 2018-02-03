@@ -62,3 +62,7 @@ class OPPSwitch(SwitchPlatformInterface):
         """Initialise input."""
         super().__init__({}, number)
         self.card = card
+
+    def get_board_name(self):
+        """Return OPP chain and addr."""
+        return "OPP {} Board {}".format(str(self.card.chain_serial), "0x%02x" % self.card.addr)

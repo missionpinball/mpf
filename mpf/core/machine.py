@@ -35,6 +35,7 @@ if MYPY:   # pragma: no cover
     from mpf.core.events import EventManager
     from mpf.core.switch_controller import SwitchController
     from mpf.core.show_controller import ShowController
+    from mpf.core.service_controller import ServiceController
 
     from mpf.core.scriptlet import Scriptlet
     from mpf.core.mode_controller import ModeController
@@ -129,6 +130,7 @@ class MachineController(LogMixin):
             self.device_manager = None                  # type: DeviceManager
             self.auditor = None                         # type: Auditor
             self.tui = None                             # type: TextUi
+            self.service = None                         # type: ServiceController
 
             # devices
             self.autofires = None                       # type: DeviceCollectionType[str, AutofireCoil]

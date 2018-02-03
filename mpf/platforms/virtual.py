@@ -301,6 +301,10 @@ class VirtualSwitch(SwitchPlatformInterface):
         super().__init__(config, number)
         self.log = logging.getLogger('VirtualSwitch')
 
+    def get_board_name(self):
+        """Return the name of the board of this switch."""
+        return "Virtual"
+
 
 class VirtualLight(LightPlatformInterface):
 
