@@ -26,3 +26,7 @@ class FASTGIString(LightPlatformSoftwareFade):
 
         self.send('GI:{},{}'.format(self.number,
                                     Util.int_to_hex_string(brightness)))
+
+    def get_board_name(self):
+        """Return the board of this light."""
+        return "FAST WPC"

@@ -110,6 +110,10 @@ class OpenPixelLED(LightPlatformInterface):
         """Set brightness using callback."""
         self.opc_client.set_pixel_color(self.opc_channel, self.channel_number, color_and_fade_callback)
 
+    def get_board_name(self):
+        """Return name for service mode."""
+        return "OPC Channel {}".format(self.channel_number)
+
 
 class OpenPixelClient(object):
 

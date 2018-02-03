@@ -127,3 +127,8 @@ class PROCMatrixLight(LightPlatformSoftwareFade):
             self.proc.driver_patter(self.number, pwm_on_ms, pwm_off_ms, 0, True)
         else:
             self.proc.driver_disable(self.number)
+
+    def get_board_name(self):
+        """Return board of the light."""
+        # TODO: Implement this for PDB matrixes
+        return "P-Roc Matrix"

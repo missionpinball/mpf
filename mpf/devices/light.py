@@ -32,6 +32,10 @@ class DriverLight(LightPlatformSoftwareFade):
         else:
             self.driver.enable(hold_power=brightness)
 
+    def get_board_name(self):
+        """Return board name of underlaying driver."""
+        return self.driver.hw_driver.get_board_name()
+
 
 @DeviceMonitor(_color="color")
 class Light(SystemWideDevice):

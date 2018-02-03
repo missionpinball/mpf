@@ -105,7 +105,7 @@ class ServiceController(MpfController):
             raise AssertionError("Not in service mode!")
         light_map = []
         for light in self.machine.lights.values():
-            light_map.append(LightMap("", light))
+            light_map.append(LightMap(next(iter(light.hw_drivers.values())).get_board_name(), light))
 
         # sort by board + driver number
         light_map.sort(key=lambda x: (self._natural_key_sort(x[0]), self._natural_key_sort(str(x[1].config['number']))))

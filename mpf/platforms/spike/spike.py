@@ -61,6 +61,10 @@ class SpikeLight(LightPlatformDirectFade):
         data = bytearray([fade_time, brightness])
         self.platform.send_cmd_async(self.node, SpikeNodebus.SetLed + self.index, data)
 
+    def get_board_name(self):
+        """Return name for service mode."""
+        return "Spike Node {}".format(self.node)
+
 
 class SpikeDMD(DmdPlatformInterface):
 

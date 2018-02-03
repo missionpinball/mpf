@@ -332,6 +332,10 @@ class VirtualLight(LightPlatformInterface):
         """Store CB function."""
         self.color_and_fade_callback = color_and_fade_callback
 
+    def get_board_name(self):
+        """Return the name of the board of this light."""
+        return "Virtual"
+
 
 class VirtualServo(ServoPlatformInterface):
 

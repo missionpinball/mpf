@@ -82,6 +82,10 @@ class LisyLight(LightPlatformSoftwareFade):
         else:
             self.platform.send_byte(LisyDefines.LampsSetLampOff, bytes([self.number]))
 
+    def get_board_name(self):
+        """Return board name."""
+        return "LISY"
+
 
 class LisyDisplay(SegmentDisplaySoftwareFlashPlatformInterface):
 

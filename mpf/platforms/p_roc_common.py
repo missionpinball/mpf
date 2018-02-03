@@ -873,3 +873,7 @@ class PDBLED(LightPlatformInterface):
         else:
             # fade to color
             self.proc.led_fade(self.board, self.address, self._normalise_color(int(brightness * 255)), int(fade_ms / 4))
+
+    def get_board_name(self):
+        """Return board of the light."""
+        return "PD-LED Board {}".format(self.board)
