@@ -192,7 +192,10 @@ class ModeController(MpfController):
                 self.machine.config['mpf']['paths']['modes'] + '.' +
                 self._machine_mode_folders[mode_string] + '.code.' +
                 file_name)
-        except ImportError:
+        except ImportError as e:
+            # do not hide import error in mode
+            if e.name != file_name:
+                raise e
             return None
 
         return getattr(i, class_name, None)
@@ -205,7 +208,10 @@ class ModeController(MpfController):
         """
         try:
             return Util.string_to_class(code_path)
-        except ImportError:
+        except ImportError as e:
+            # do not hide import error in mode
+            if e.name != code_path.split('.')[-1]:
+                raise e
             return None
 
     def _load_mode_code(self, mode_string: str, code_path: str) -> Callable[..., Mode]:
