@@ -7,6 +7,7 @@ from mpf.core.player import Player
 from mpf.core.utility_functions import Util
 from mpf.core.mpf_controller import MpfController
 from mpf.core.switch_controller import MonitoredSwitchChange
+from mpf.exceptions.DriverLimitsError import DriverLimitsError
 
 
 class BcpInterface(MpfController):
@@ -102,7 +103,6 @@ class BcpInterface(MpfController):
     @asyncio.coroutine
     def _service(self, client, subcommand, **kwargs):
         """Run service command."""
-        del kwargs
         if subcommand == "start":
             self.machine.service.start_service()
         elif subcommand == "stop":
@@ -123,9 +123,60 @@ class BcpInterface(MpfController):
         elif subcommand == "monitor_switches":
             pass
         elif subcommand == "coil_pulse":
-            pass
+            self._coil_pulse(client, kwargs)
+        elif subcommand == "coil_enable":
+            self._coil_enable(client, kwargs)
+        elif subcommand == "coil_disable":
+            self._coil_disable(client, kwargs)
         elif subcommand == "light_color":
             pass
+
+    def _coil_pulse(self, client, kwargs):
+        try:
+            coil_name = kwargs.get("coil")
+        except KeyError:
+            self.machine.bcp.transport.send_to_client(client, "coil_pulse", error="Missing parameter")
+            return
+        try:
+            coil = self.machine.coils[coil_name]
+        except KeyError:
+            self.machine.bcp.transport.send_to_client(client, "coil_pulse", error="Coil not found")
+            return
+        coil.pulse()
+        self.machine.bcp.transport.send_to_client(client, "coil_pulse", error=False)
+
+    def _coil_disable(self, client, kwargs):
+        try:
+            coil_name = kwargs.get("coil")
+        except KeyError:
+            self.machine.bcp.transport.send_to_client(client, "coil_disable", error="Missing parameter")
+            return
+        try:
+            coil = self.machine.coils[coil_name]
+        except KeyError:
+            self.machine.bcp.transport.send_to_client(client, "coil_disable", error="Coil not found")
+            return
+        coil.disable()
+        self.machine.bcp.transport.send_to_client(client, "coil_disable", error=False)
+
+    def _coil_enable(self, client, kwargs):
+        try:
+            coil_name = kwargs.get("coil")
+        except KeyError:
+            self.machine.bcp.transport.send_to_client(client, "coil_enable", error="Missing parameter")
+            return
+        try:
+            coil = self.machine.coils[coil_name]
+        except KeyError:
+            self.machine.bcp.transport.send_to_client(client, "coil_enable", error="Coil not found")
+            return
+        try:
+            coil.enable()
+        except DriverLimitsError as e:
+            self.machine.bcp.transport.send_to_client(client, "coil_enable", error=str(e))
+            return
+
+        self.machine.bcp.transport.send_to_client(client, "coil_enable", error=False)
 
     @asyncio.coroutine
     def _bcp_receive_monitor_start(self, client, category):

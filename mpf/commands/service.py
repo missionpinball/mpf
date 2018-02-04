@@ -18,6 +18,12 @@ class ServiceCli(cmd.Cmd):
         """Initialise service cli."""
         super().__init__()
         self.bcp_client = bcp_client
+        self._known_coils = None
+
+    def _build_known_coils(self, list_coils_response):
+        self._known_coils = []
+        for coil in list_coils_response[1]["coils"]:
+            self._known_coils.append(coil[2])
 
     def do_list_coils(self, args):
         """List all coils."""
@@ -25,9 +31,11 @@ class ServiceCli(cmd.Cmd):
         self.bcp_client.send("service", {"subcommand": "list_coils"})
         message = asyncio.get_event_loop().run_until_complete(self.bcp_client.wait_for_response("list_coils"))
         data = [["Board", "Number", "Name"]]
+        self._known_coils = []
         for coil in message[1]["coils"]:
             data.append([coil[0], coil[1], coil[2]])
 
+        self._build_known_coils(message)
         table = AsciiTable(data)
         print(table.table)
 
@@ -55,20 +63,62 @@ class ServiceCli(cmd.Cmd):
         table = AsciiTable(data)
         print(table.table)
 
+    def complete_coil_pulse(self, text, line, start_index, end_index):
+        """Autocomplete coil names."""
+        return self.complete_coil_xxx(text, line, start_index, end_index)
+
+    def complete_coil_enable(self, text, line, start_index, end_index):
+        """Autocomplete coil names."""
+        return self.complete_coil_xxx(text, line, start_index, end_index)
+
+    def complete_coil_disable(self, text, line, start_index, end_index):
+        """Autocomplete coil names."""
+        return self.complete_coil_xxx(text, line, start_index, end_index)
+
+    def complete_coil_xxx(self, text, line, start_index, end_index):
+        """Autocomplete coils."""
+        del line
+        del start_index
+        del end_index
+        if not self._known_coils:
+            self.bcp_client.send("service", {"subcommand": "list_coils"})
+            message = asyncio.get_event_loop().run_until_complete(self.bcp_client.wait_for_response("list_coils"))
+            self._build_known_coils(message)
+
+        if text:
+            return [
+                coil for coil in self._known_coils
+                if coil.startswith(text)
+            ]
+        else:
+            return self._known_coils
+
     def do_coil_pulse(self, args):
         """Pulse a coil."""
-        pass
-        # TODO: implement
+        self.bcp_client.send("service", {"subcommand": "coil_pulse", "coil": args})
+        message = asyncio.get_event_loop().run_until_complete(self.bcp_client.wait_for_response("coil_pulse"))
+        if message[1]["error"]:
+            print("Error: {}".format(message[1]["error"]))
+        else:
+            print("Success")
 
     def do_coil_enable(self, args):
         """Enable a coil (if possible for coil)."""
-        pass
-        # TODO: implement
+        self.bcp_client.send("service", {"subcommand": "coil_enable", "coil": args})
+        message = asyncio.get_event_loop().run_until_complete(self.bcp_client.wait_for_response("coil_enable"))
+        if message[1]["error"]:
+            print("Error: {}".format(message[1]["error"]))
+        else:
+            print("Success")
 
     def do_coil_disable(self, args):
         """Disable a coil."""
-        pass
-        # TODO: implement
+        self.bcp_client.send("service", {"subcommand": "coil_disable", "coil": args})
+        message = asyncio.get_event_loop().run_until_complete(self.bcp_client.wait_for_response("coil_disable"))
+        if message[1]["error"]:
+            print("Error: {}".format(message[1]["error"]))
+        else:
+            print("Success")
 
     def do_light_color(self, args):
         """Color a light."""

@@ -520,7 +520,7 @@ class EventManager(MpfController):
         if self._debug_to_console or self._debug_to_file:
             self.debug_log("Event: ===='%s'==== Type: %s, Callback: %s, "
                            "Args: %s", event, ev_type, callback, kwargs)
-        else:
+        elif not kwargs.get("_silent", False):
             self.info_log("Event: ======'%s'====== Args=%s", event, kwargs)
 
         # fast path for events without handler
@@ -532,7 +532,7 @@ class EventManager(MpfController):
 
         posted_event = PostedEvent(event, ev_type, callback, kwargs)
 
-        if self.monitor_events:
+        if self.monitor_events and not kwargs.get("_silent", False):
             self.machine.bcp.interface.monitor_posted_event(posted_event)
 
         self.event_queue.append(posted_event)

@@ -6,6 +6,7 @@ from mpf.core.events import event_handler
 from mpf.core.machine import MachineController
 from mpf.core.platform import DriverPlatform, DriverConfig
 from mpf.core.system_wide_device import SystemWideDevice
+from mpf.exceptions.DriverLimitsError import DriverLimitsError
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
 
@@ -108,8 +109,8 @@ class Driver(SystemWideDevice):
             max_pulse_power = self.config['default_pulse_power']
 
         if pulse_power > max_pulse_power:
-            raise AssertionError("Driver may {} not be pulsed with pulse_power {} because max_pulse_power is {}".
-                                 format(self.name, pulse_power, max_pulse_power))
+            raise DriverLimitsError("Driver may {} not be pulsed with pulse_power {} because max_pulse_power is {}".
+                                    format(self.name, pulse_power, max_pulse_power))
         return pulse_power
 
     def get_and_verify_hold_power(self, hold_power: Optional[float]) -> float:
@@ -141,8 +142,8 @@ class Driver(SystemWideDevice):
             max_hold_power = self.config['default_hold_power']
 
         if hold_power > max_hold_power:
-            raise AssertionError("Driver {} may not be enabled with hold_power {} because max_hold_power is {}".
-                                 format(self.name, hold_power, max_hold_power))
+            raise DriverLimitsError("Driver {} may not be enabled with hold_power {} because max_hold_power is {}".
+                                    format(self.name, hold_power, max_hold_power))
         return hold_power
 
     def get_and_verify_pulse_ms(self, pulse_ms: Optional[int]) -> int:
@@ -193,7 +194,7 @@ class Driver(SystemWideDevice):
         hold_power = self.get_and_verify_hold_power(hold_power)
 
         if hold_power == 0.0:
-            raise AssertionError("Cannot enable driver with hold_power 0.0")
+            raise DriverLimitsError("Cannot enable driver with hold_power 0.0")
 
         self.time_when_done = -1
         self.time_last_changed = self.machine.clock.get_time()
