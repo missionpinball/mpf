@@ -123,20 +123,15 @@ class BcpInterface(MpfController):
         elif subcommand == "monitor_switches":
             pass
         elif subcommand == "coil_pulse":
-            self._coil_pulse(client, kwargs)
+            self._coil_pulse(client, kwargs.get("coil"))
         elif subcommand == "coil_enable":
-            self._coil_enable(client, kwargs)
+            self._coil_enable(client, kwargs.get("coil"))
         elif subcommand == "coil_disable":
-            self._coil_disable(client, kwargs)
+            self._coil_disable(client, kwargs.get("coil"))
         elif subcommand == "light_color":
-            pass
+            self._light_color(client, kwargs.get("light"), kwargs.get("color"))
 
-    def _coil_pulse(self, client, kwargs):
-        try:
-            coil_name = kwargs.get("coil")
-        except KeyError:
-            self.machine.bcp.transport.send_to_client(client, "coil_pulse", error="Missing parameter")
-            return
+    def _coil_pulse(self, client, coil_name):
         try:
             coil = self.machine.coils[coil_name]
         except KeyError:
@@ -145,12 +140,7 @@ class BcpInterface(MpfController):
         coil.pulse()
         self.machine.bcp.transport.send_to_client(client, "coil_pulse", error=False)
 
-    def _coil_disable(self, client, kwargs):
-        try:
-            coil_name = kwargs.get("coil")
-        except KeyError:
-            self.machine.bcp.transport.send_to_client(client, "coil_disable", error="Missing parameter")
-            return
+    def _coil_disable(self, client, coil_name):
         try:
             coil = self.machine.coils[coil_name]
         except KeyError:
@@ -159,12 +149,7 @@ class BcpInterface(MpfController):
         coil.disable()
         self.machine.bcp.transport.send_to_client(client, "coil_disable", error=False)
 
-    def _coil_enable(self, client, kwargs):
-        try:
-            coil_name = kwargs.get("coil")
-        except KeyError:
-            self.machine.bcp.transport.send_to_client(client, "coil_enable", error="Missing parameter")
-            return
+    def _coil_enable(self, client, coil_name):
         try:
             coil = self.machine.coils[coil_name]
         except KeyError:
@@ -177,6 +162,20 @@ class BcpInterface(MpfController):
             return
 
         self.machine.bcp.transport.send_to_client(client, "coil_enable", error=False)
+
+    def _light_color(self, client, light_name, color_name):
+        try:
+            light = self.machine.lights[light_name]
+        except KeyError:
+            self.machine.bcp.transport.send_to_client(client, "light_color", error="Light not found")
+            return
+        try:
+            light.color(color_name)
+        except DriverLimitsError as e:
+            self.machine.bcp.transport.send_to_client(client, "light_color", error=str(e))
+            return
+
+        self.machine.bcp.transport.send_to_client(client, "light_color", error=False)
 
     @asyncio.coroutine
     def _bcp_receive_monitor_start(self, client, category):

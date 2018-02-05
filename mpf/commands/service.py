@@ -19,11 +19,17 @@ class ServiceCli(cmd.Cmd):
         super().__init__()
         self.bcp_client = bcp_client
         self._known_coils = None
+        self._known_lights = None
 
     def _build_known_coils(self, list_coils_response):
         self._known_coils = []
         for coil in list_coils_response[1]["coils"]:
             self._known_coils.append(coil[2])
+
+    def _build_known_lights(self, list_lights_response):
+        self._known_lights = []
+        for light in list_lights_response[1]["lights"]:
+            self._known_lights.append(light[2])
 
     def do_list_coils(self, args):
         """List all coils."""
@@ -31,7 +37,6 @@ class ServiceCli(cmd.Cmd):
         self.bcp_client.send("service", {"subcommand": "list_coils"})
         message = asyncio.get_event_loop().run_until_complete(self.bcp_client.wait_for_response("list_coils"))
         data = [["Board", "Number", "Name"]]
-        self._known_coils = []
         for coil in message[1]["coils"]:
             data.append([coil[0], coil[1], coil[2]])
 
@@ -60,6 +65,7 @@ class ServiceCli(cmd.Cmd):
         for light in message[1]["lights"]:
             data.append([light[0], light[1], light[2], light[3]])
 
+        self._build_known_lights(message)
         table = AsciiTable(data)
         print(table.table)
 
@@ -74,6 +80,32 @@ class ServiceCli(cmd.Cmd):
     def complete_coil_disable(self, text, line, start_index, end_index):
         """Autocomplete coil names."""
         return self.complete_coil_xxx(text, line, start_index, end_index)
+
+    def complete_light_color(self, text, line, start_index, end_index):
+        """Autocomplete light names."""
+        return self.complete_light_xxx(text, line, start_index, end_index)
+
+    def complete_light_off(self, text, line, start_index, end_index):
+        """Autocomplete light names."""
+        return self.complete_light_xxx(text, line, start_index, end_index)
+
+    def complete_light_xxx(self, text, line, start_index, end_index):
+        """Autocomplete lights."""
+        del line
+        del start_index
+        del end_index
+        if not self._known_lights:
+            self.bcp_client.send("service", {"subcommand": "list_lights"})
+            message = asyncio.get_event_loop().run_until_complete(self.bcp_client.wait_for_response("list_lights"))
+            self._build_known_lights(message)
+
+        if text:
+            return [
+                light for light in self._known_lights
+                if light.startswith(text)
+            ]
+        else:
+            return self._known_lights
 
     def complete_coil_xxx(self, text, line, start_index, end_index):
         """Autocomplete coils."""
@@ -122,13 +154,26 @@ class ServiceCli(cmd.Cmd):
 
     def do_light_color(self, args):
         """Color a light."""
-        pass
-        # TODO: implement
+        try:
+            light_name, color_name = args.split(" ", 2)
+        except IndexError:
+            print("Expects: light_color <light_name> <color_name>")
+            return
+        self.bcp_client.send("service", {"subcommand": "light_color", "light": light_name, "color": color_name})
+        message = asyncio.get_event_loop().run_until_complete(self.bcp_client.wait_for_response("light_color"))
+        if message[1]["error"]:
+            print("Error: {}".format(message[1]["error"]))
+        else:
+            print("Success")
 
     def do_light_off(self, args):
         """Turn off a light."""
-        pass
-        # TODO: implement
+        self.bcp_client.send("service", {"subcommand": "light_color", "light": args, "color": "off"})
+        message = asyncio.get_event_loop().run_until_complete(self.bcp_client.wait_for_response("light_color"))
+        if message[1]["error"]:
+            print("Error: {}".format(message[1]["error"]))
+        else:
+            print("Success")
 
     def do_monitor_switches(self, args):
         """Monitor switches."""
