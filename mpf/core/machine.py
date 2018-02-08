@@ -561,11 +561,9 @@ class MachineController(LogMixin):
     def _load_scriptlets(self) -> None:
         """Load scriptlets."""
         if 'scriptlets' in self.config:
-            self.config['scriptlets'] = self.config['scriptlets'].split(' ')
-
             self.debug_log("Loading scriptlets...")
 
-            for scriptlet in self.config['scriptlets']:
+            for scriptlet in Util.string_to_list(self.config['scriptlets']):
 
                 self.debug_log("Loading '%s' scriptlet", scriptlet)
 
