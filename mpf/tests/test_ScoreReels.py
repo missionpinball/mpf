@@ -73,19 +73,19 @@ class TestScoreReels(MpfGameTestCase):
         self.assertEqual(0, player1_100.pulse.call_count)
         self.assertEqual(1, player1_10.pulse.call_count)
 
-        self.advance_time_and_run(.01)
+        self.advance_time_and_run(.02)
         self.assertEqual(0, player1_10k.pulse.call_count)
         self.assertEqual(0, player1_1k.pulse.call_count)
         self.assertEqual(1, player1_100.pulse.call_count)
         self.assertEqual(1, player1_10.pulse.call_count)
 
-        self.advance_time_and_run(.01)
+        self.advance_time_and_run(.02)
         self.assertEqual(0, player1_10k.pulse.call_count)
         self.assertEqual(1, player1_1k.pulse.call_count)
         self.assertEqual(1, player1_100.pulse.call_count)
         self.assertEqual(1, player1_10.pulse.call_count)
 
-        self.advance_time_and_run(.01)
+        self.advance_time_and_run(.02)
         self.assertEqual(1, player1_10k.pulse.call_count)
         self.assertEqual(1, player1_1k.pulse.call_count)
         self.assertEqual(1, player1_100.pulse.call_count)
