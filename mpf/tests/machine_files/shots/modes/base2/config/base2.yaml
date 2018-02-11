@@ -1,0 +1,246 @@
+#config_version=5
+mode:
+    start_events: player_turn_started
+    stop_events: player_turn_stopped
+    priority: 50
+
+shots:
+  shot_1:
+    switch: switch_1
+    show_tokens:
+      light: light_1
+  shot_2:
+    switch: switch_2
+    show_tokens:
+      light: light_2
+    profile: three_states_loop
+  shot_3:
+    switch: switch_3
+    show_tokens:
+      light: tag1
+  shot_4:
+    switch: switch_1
+  led_1:
+    switch: switch_1
+    show_tokens:
+      led: led_1
+  shot_delay:
+    switch: switch_1
+    delay_switch:
+      s_delay: 2s
+  shot_delay_same_switch:
+    switch: switch_15
+    delay_switch:
+      switch_15: 2s
+  default_show_light:
+    switch: switch_5
+    show_tokens:
+      light: light_4
+  default_show_lights:
+    switch: switch_6
+    show_tokens:
+      lights: light_5, light_6
+  default_show_led:
+    switch: switch_7
+    show_tokens:
+      led: led_4
+  default_show_leds:
+    switch: switch_8
+    show_tokens:
+      leds: led_5, led_6
+  show_in_profile_root:
+    switch: switch_9
+    show_tokens:
+      leds: led_3
+    profile: rainbow
+  shot_11:
+    switch: switch_11
+    show_tokens:
+      leds: led_11
+    profile: profile_11
+  shot_12:
+    switch: switch_12
+    show_tokens:
+      leds: led_12
+    profile: profile_12
+  shot_13:
+    switch: switch_13
+    show_tokens:
+      leds: led_13
+    profile: profile_13
+  shot_14:
+    switch: switch_14
+    show_tokens:
+      leds: led_14
+    profile: profile_14
+  shot_15:
+    switches: switch_13, switch_14
+  shot_16:
+    switch: switch_16
+    enable_events: custom_enable_16
+    disable_events: custom_disable_16
+    reset_events: custom_reset_16
+    hit_events: custom_hit_16
+    advance_events: custom_advance_16
+  shot_17:
+    switch: switch_17
+    profile: profile_17
+  shot_19:
+    switch: switch_19
+    profile: profile_19
+    start_enabled: False
+    show_tokens:
+      leds: led_19
+  shot_20:
+    switch: switch_20
+    profile: profile_20
+    start_enabled: False
+    show_tokens:
+      leds: led_20
+  shot_21:
+    switch: switch_21
+    profile: profile_21
+  shot_22:
+    switch: switch_22
+    profile: profile_22
+  shot_23:
+    show_tokens:
+      leds: led_23
+    profile: profile_23
+  shot_24:
+    show_tokens:
+      leds: led_24
+    profile: profile_24
+  shot_25:
+    show_tokens:
+      leds: led_25
+    profile: profile_25
+  shot_26:
+    switch: switch_26
+    show_tokens:
+      leds: led_26
+    profile: profile_26
+  shot_27:
+    switch: switch_1
+  shot_28:
+    hit_events: event1
+
+
+shot_profiles:
+    prof_toggle2:
+        states:
+            - name: unlit2
+              show: off
+            - name: lit2
+              show: on
+        loop: true
+
+    three_states_loop:
+      loop: True
+      states:
+        - name: one
+        - name: two
+        - name: three
+    rainbow:
+      show: rainbow
+      states:
+        - name: red
+        - name: orange
+        - name: yellow
+        - name: green
+        - name: blue
+        - name: purple
+    profile_11:
+      loop: true
+      states:
+        - name: step1
+          show: rainbow
+        - name: step2
+          show: rainbow2
+    profile_12:
+      show: rainbow
+      states:
+        - name: one
+        - name: two
+        - name: three
+          show: rainbow2
+          loops: -1
+        - name: four
+        - name: five
+    profile_13:
+      states:
+        - name: one
+          show: rainbow
+        - name: two
+        - name: three
+          show: rainbow2
+    profile_14:
+      states:
+        - name: one
+          show: rainbow_stay_on
+          loops: 0
+        - name: two
+    profile_17:
+      advance_on_hit: false
+      states:
+        - name: one
+        - name: two
+        - name: three
+        - name: four
+        - name: five
+    profile_19:
+      show_when_disabled: true
+      states:
+        - name: one
+          show: rainbow
+        - name: two
+          show: rainbow2
+    profile_20:
+      show_when_disabled: false
+      states:
+        - name: one
+          show: rainbow
+        - name: two
+          show: rainbow2
+    profile_21:
+      states:
+        - name: base_one
+        - name: base_two
+        - name: base_three
+    profile_22:
+      states:
+        - name: base_one
+        - name: base_two
+        - name: base_three
+    profile_23:
+        states:
+        - name: base_one
+          show: rainbow
+        - name: base_two
+          show: rainbow
+        - name: base_three
+          show: rainbow
+    profile_24:
+        states:
+        - name: base_one
+          show: rainbow_stay_on
+          loops: 0
+        - name: base_two
+          show: rainbow_stay_on
+    profile_25:
+        states:
+        - name: base_one
+          show: rainbow
+          loops: 0
+        - name: base_two
+          show: rainbow
+    profile_26:
+        states:
+        - name: base_one
+          show: rainbow
+        - name: base_two
+          show: rainbow
+        - name: base_three
+          show: rainbow
+
+

@@ -1,0 +1,85 @@
+#config_version=5
+
+segment_displays:
+  display1:
+    number: 1
+  display2:
+    number: 2
+  display3:
+    number: 3
+  display4:
+    number: 4
+  display5:
+    number: 5
+
+segment_display_player:
+  # empty all displays on game start and setup display5
+  game_start:
+    display1:
+      text: ""
+    display2:
+      text: ""
+    display3:
+      text: ""
+    display4:
+      text: ""
+    display5:
+      text: "{current_player.ball:d}"
+
+  # clear only display5 after game
+  game_ended{machine.player1_score > 0}:
+    display1:
+      text: "{machine.player1_score:d}"
+  game_ended{machine.player2_score > 0}:
+    display2:
+      text: "{machine.player2_score:d}"
+  game_ended{machine.player3_score > 0}:
+    display3:
+      text: "{machine.player3_score:d}"
+  game_ended{machine.player4_score > 0}:
+    display4:
+      text: "{machine.player4_score:d}"
+  game_ended:
+    display5:
+      text: ""
+
+  # flash display on player turn
+  player_turn_started.1{number==1}:
+    display1:
+      action: flash
+  player_turn_ended.2{number==1}:
+    display1:
+      action: no_flash
+  player_turn_started.3{number==2}:
+    display2:
+      action: flash
+  player_turn_ended.4{number==2}:
+    display2:
+      action: no_flash
+  player_turn_started.5{number==3}:
+    display3:
+      action: flash
+  player_turn_ended.6{number==3}:
+    display3:
+      action: no_flash
+  player_turn_started.7{number==4}:
+    display4:
+      action: flash
+  player_turn_ended.8{number==4}:
+    display4:
+      action: no_flash
+
+  # show score when adding players
+  player_added.1{num==1}:
+    display1:
+      text: "{players[0].score:d}"
+  player_added.2{num==2}:
+    display2:
+      text: "{players[1].score:d}"
+  player_added.3{num==3}:
+    display3:
+      text: "{players[2].score:d}"
+  player_added.4{num==4}:
+    display4:
+      text: "{players[3].score:d}"
+

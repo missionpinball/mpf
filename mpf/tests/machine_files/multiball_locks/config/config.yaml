@@ -1,4 +1,4 @@
-#config_version=4
+#config_version=5
 
 game:
     balls_per_game: 2
@@ -27,11 +27,16 @@ switches:
     s_lock2:
         number:
 
+playfields:
+    playfield:
+        default_source_device: bd_trough
+        tags: default
+
 ball_devices:
     bd_trough:
         eject_coil: eject_coil1
         ball_switches: s_ball_switch1, s_ball_switch2, s_ball_switch3, s_ball_switch4, s_ball_switch5, s_ball_switch6
-        tags: trough, drain, home, ball_add_live
+        tags: trough, drain, home
         eject_timeouts: 2s
     bd_lock:
         eject_coil: eject_coil2
@@ -44,9 +49,3 @@ multiballs:
         shoot_again: 0
         start_events: mb_start
         ball_locks: bd_lock
-
-modes:
-    - min_virtual_physical
-    - no_virtual
-    - physical_only
-    - virtual_only

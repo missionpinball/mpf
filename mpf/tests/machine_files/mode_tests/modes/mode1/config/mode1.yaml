@@ -1,4 +1,4 @@
-#config_version=4
+#config_version=5
 mode:
   start_events: start_mode1
   stop_events: stop_mode1
@@ -7,6 +7,8 @@ mode:
   stop_on_ball_end: false
   game_mode: False
 
+mode_settings:
+  this: true
 
 config:
   - test.yaml

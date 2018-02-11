@@ -169,14 +169,14 @@ class BallLock(SystemWideDevice, ModeDevice):
         Args:
             balls_to_release: number of ball to release from lock
         """
-        if len(self.lock_queue) == 0:
+        if not self.lock_queue:
             return 0
 
         remaining_balls_to_release = balls_to_release
 
         self.debug_log("Releasing up to %s balls from lock", balls_to_release)
         balls_released = 0
-        while len(self.lock_queue) > 0:
+        while self.lock_queue:
             device, balls_locked = self.lock_queue.pop()
             balls = balls_locked
             balls_in_device = device.balls
@@ -232,7 +232,7 @@ class BallLock(SystemWideDevice, ModeDevice):
         return balls
 
     def _lock_ball(self, device, new_balls, unclaimed_balls, **kwargs):
-        """Callback for _ball_enter event of lock_devices."""
+        """Handle result of _ball_enter event of lock_devices."""
         del new_balls
         del kwargs
         # if full do not take any balls

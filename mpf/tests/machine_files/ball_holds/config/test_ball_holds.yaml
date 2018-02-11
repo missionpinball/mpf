@@ -1,4 +1,4 @@
-#config_version=4
+#config_version=5
 
 game:
     balls_per_game: 1
@@ -40,6 +40,11 @@ switches:
         tags: playfield_active
         number:
 
+playfields:
+    playfield:
+        default_source_device: test_launcher
+        tags: default
+
 ball_devices:
     test_trough:
         eject_coil: eject_coil1
@@ -54,7 +59,6 @@ ball_devices:
         debug: true
         confirm_eject_type: target
         eject_timeouts: 6s, 10s
-        tags: ball_add_live
     test_hold:
         eject_coil: eject_coil3
         ball_switches: s_ball_switch_hold1, s_ball_switch_hold2, s_ball_switch_hold3

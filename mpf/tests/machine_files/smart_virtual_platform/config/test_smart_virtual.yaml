@@ -1,4 +1,4 @@
-#config_version=4
+#config_version=5
 
 virtual_platform_start_active_switches:
   - trough1
@@ -112,7 +112,7 @@ ball_devices:
         confirm_eject_type: target
         debug: true
     plunger:
-        tags: ball_add_live, home
+        tags: home
         ball_switches: plunger
         eject_coil: plunger
         debug: true
@@ -152,7 +152,6 @@ ball_devices:
         confirm_eject_type: target
         debug: true
     plunger2:
-        tags: ball_add_live
         ball_switches: plunger2
         mechanical_eject: True
         debug: true

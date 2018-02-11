@@ -1,4 +1,9 @@
-#config_version=4
+#config_version=5
+
+playfields:
+    playfield:
+        default_source_device: trough
+        tags: default
 
 coils:
     c_eject:
@@ -15,5 +20,5 @@ ball_devices:
     trough:
         eject_coil: c_eject
         ball_switches: s_trough
-        tags: home, trough, drain, ball_add_live
+        tags: home, trough, drain
         debug: True

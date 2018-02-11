@@ -1,5 +1,7 @@
 """Interface for switches."""
 import abc
+from typing import Any
+from mpf.core.platform import SwitchConfig
 
 
 class SwitchPlatformInterface(metaclass=abc.ABCMeta):
@@ -11,7 +13,12 @@ class SwitchPlatformInterface(metaclass=abc.ABCMeta):
     methods are implemented to support switch operations in MPF.
     """
 
-    def __init__(self, config, number):
+    def __init__(self, config: SwitchConfig, number: Any) -> None:
         """Initialise default attributes for switches."""
-        self.config = config
-        self.number = number
+        self.config = config    # type: SwitchConfig
+        self.number = number    # type: Any
+
+    @abc.abstractmethod
+    def get_board_name(self):
+        """Return the name of the board of this driver."""
+        raise NotImplementedError

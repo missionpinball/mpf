@@ -1,7 +1,7 @@
-from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.MpfGameTestCase import MpfGameTestCase
 
 
-class TestScoring(MpfTestCase):
+class TestScoring(MpfGameTestCase):
 
     def getConfigFile(self):
         return 'config.yaml'
@@ -11,18 +11,11 @@ class TestScoring(MpfTestCase):
 
     def test_scoring(self):
         # start game with two players
-        self.machine.ball_controller.num_balls_known = 0
         self.hit_switch_and_run("s_ball_switch1", 1)
         self.advance_time_and_run(2)
 
         # start game with two players
-        self.hit_and_release_switch("s_start")
-        self.advance_time_and_run()
-        self.hit_and_release_switch("s_start")
-        self.advance_time_and_run()
-        self.assertNotEqual(None, self.machine.game)
-        self.assertEqual(2, self.machine.game.num_players)
-        self.assertEqual(1, self.machine.game.player.number)
+        self.start_two_player_game()
 
         self.advance_time_and_run(1)
         self.release_switch_and_run("s_ball_switch1", 20)
@@ -167,3 +160,96 @@ class TestScoring(MpfTestCase):
         # it should not crash
         self.post_event("test_event1")
         self.advance_time_and_run()
+
+    def test_blocking(self):
+        self.machine.set_machine_var("player1_score", 42)
+        self.machine.set_machine_var("player2_score", 23)
+
+        # start game
+        self.hit_switch_and_run("s_ball_switch1", 1)
+        self.advance_time_and_run(2)
+        self.start_game()
+
+        self.advance_time_and_run(1)
+        self.release_switch_and_run("s_ball_switch1", 20)
+
+        # start mode 1
+        self.post_event("start_mode1", 1)
+
+        # test scoring
+        self.post_event("test_score_mode", 1)
+        # should score 100
+        self.assertPlayerVarEqual(100, "score")
+
+        # start mode 2
+        self.post_event("start_mode2", 1)
+
+        # test scoring
+        self.post_event("test_score_mode", 1)
+        # should score 1000 (+ 100 from the previous)
+        self.assertPlayerVarEqual(1100, "score")
+
+        self.post_event("stop_mode2", 1)
+
+        # test scoring
+        self.post_event("test_score_mode", 1)
+        # should score 100 again (+ 1100 from the previous)
+        self.assertPlayerVarEqual(1200, "score")
+
+        self.post_event("stop_mode1")
+        # we still see the old score here
+        self.assertMachineVarEqual(42, "player1_score")
+
+        self.machine.game.end_ball()
+        self.advance_time_and_run()
+        self.machine.game.end_ball()
+        self.advance_time_and_run(10)
+        self.assertGameIsNotRunning()
+
+        self.assertMachineVarEqual(1200, "player1_score")
+        self.assertFalse(self.machine.is_machine_var("player2_score"))
+        self.assertFalse(self.machine.is_machine_var("player3_score"))
+        self.assertFalse(self.machine.is_machine_var("player4_score"))
+
+    def test_blocking_multiple_with_logic_block(self):
+        # this test was adapted from a real game
+        # start game
+        self.hit_switch_and_run("s_ball_switch1", 1)
+        self.advance_time_and_run(2)
+        self.start_game()
+
+        self.advance_time_and_run(1)
+        self.release_switch_and_run("s_ball_switch1", 20)
+
+        # start mode 1
+        self.post_event("start_mode1", 1)
+
+        # hit target 3 times for 10 points each
+        # and complete the logic block
+        for x in range(0, 3):
+            self.hit_and_release_switch("s_counter_target")
+        self.assertPlayerVarEqual(30, "score")
+
+        # start mode_for_logic_block
+        self.post_event("counter_target_complete")
+
+        # both modes running now
+        self.assertModeRunning('mode_for_logic_block')
+        self.assertModeRunning('mode1')
+
+        # hit the target while in the new mode
+        self.hit_and_release_switch("s_counter_target")
+        self.assertPlayerVarEqual(130, "score")
+
+        # trigger the end of the counter_targer mode
+        # which also blocks its mode1 scoring this once
+        self.hit_and_release_switch("s_kills_counter_target")
+        self.assertPlayerVarEqual(630, "score")
+
+        # only mode1 running now
+        self.assertModeNotRunning('mode_for_logic_block')
+        self.assertModeRunning('mode1')
+
+        # target only scores 10 again... or does it???
+        self.hit_and_release_switch("s_counter_target")
+        self.assertPlayerVarEqual(640, "score")

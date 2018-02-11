@@ -68,7 +68,16 @@ community.''',
 
     zip_safe=False,
 
-    install_requires=['ruamel.yaml>=0.10, <0.11', 'pyserial>=3.2.0', 'pyserial-asyncio>=0.3', 'typing'],
+
+    install_requires=['ruamel.yaml>=0.10,<0.11',
+                      'pyserial>=3.2.0',
+                      'pyserial-asyncio>=0.3',
+                      'typing',
+                      'asciimatics',
+                      'terminaltables',
+                      'psutil',
+                      # asciimatic depends on pypiwin32 but newer version will not install
+                      'pypiwin32<=219;platform_system=="Windows"'],
 
     tests_require=[],
     test_suite="mpf.tests",

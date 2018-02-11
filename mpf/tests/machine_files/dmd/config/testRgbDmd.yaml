@@ -1,0 +1,19 @@
+#config_version=5
+
+rgb_dmds:
+  test_dmd:
+    label: Test
+    hardware_brightness: settings.dmd_brightness
+
+settings:
+  dmd_brightness:
+    label: DMD Brightness
+    values:
+      0.1: "10%"
+      0.25: "25%"
+      0.5: "50%"
+      0.75: "75%"
+      1.0: "100% (default)"
+    default: 1.0
+    key_type: float
+    sort: 100

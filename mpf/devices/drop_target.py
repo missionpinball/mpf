@@ -1,17 +1,20 @@
 """Contains the base classes for drop targets and drop target banks."""
 from typing import List
-from typing import Set, TYPE_CHECKING
+from typing import Set
 
 from mpf.core.machine import MachineController
-
-if TYPE_CHECKING:
-    from mpf.devices.driver import Driver
+from mpf.core.mode import Mode
+from mpf.core.player import Player
 
 from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.events import event_handler
 from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
+
+MYPY = False
+if MYPY:   # pragma: no cover
+    from mpf.devices.driver import Driver
 
 
 @DeviceMonitor("complete")
@@ -71,6 +74,7 @@ class DropTarget(SystemWideDevice):
         elif self.complete and self.knockdown_coil:
             self.knockdown_coil.pulse()
             return True
+        return False
 
     def _ball_search_phase2(self):
         if self.reset_coil and self.knockdown_coil:
@@ -276,6 +280,17 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         self.reset_coil = self.config['reset_coil']
         self.reset_coils = self.config['reset_coils']
 
+    def device_loaded_in_mode(self, mode: Mode, player: Player):
+        """Add targets."""
+        self._add_targets_to_bank()
+
+    def device_added_system_wide(self):
+        """Add targets."""
+        super().device_added_system_wide()
+        self._add_targets_to_bank()
+
+    def _add_targets_to_bank(self):
+        """Add targets to bank."""
         for target in self.drop_targets:
             target.add_to_bank(self)
 
@@ -327,7 +342,7 @@ class DropTargetBank(SystemWideDevice, ModeDevice):
         self.member_target_change()
 
     def member_target_change(self):
-        """A member drop target has changed state.
+        """Handle that a member drop target has changed state.
 
         This method causes this group to update its down and up counts and
         complete status.

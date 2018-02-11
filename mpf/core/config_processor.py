@@ -16,8 +16,8 @@ class ConfigProcessor(object):
         pass
 
     @staticmethod
-    def load_config_file(filename, config_type, verify_version=True, halt_on_error=True,
-                         ignore_unknown_sections=False):   # pragma: no cover
+    def load_config_file(filename, config_type: str, verify_version=True, halt_on_error=True,
+                         ignore_unknown_sections=False) -> dict:   # pragma: no cover
         """Load a config file."""
         # config_type is str 'machine' or 'mode', which specifies whether this
         # file being loaded is a machine config or a mode config file
@@ -25,6 +25,9 @@ class ConfigProcessor(object):
 
         if not ConfigValidator.config_spec:
             ConfigValidator.load_config_spec()
+
+        if not config:
+            return dict()
 
         for k in config.keys():
             try:

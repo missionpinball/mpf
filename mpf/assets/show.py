@@ -7,6 +7,8 @@ from mpf.core.utility_functions import Util
 from mpf.file_interfaces.yaml_interface import YamlInterface
 from mpf._version import __show_version__, __version__
 
+__api__ = ['Show', 'RunningShow', 'ShowPool']
+
 
 class ShowPool(AssetPool):
 
@@ -50,9 +52,6 @@ class Show(Asset):
         self.token_values = dict()
         self.token_keys = dict()
 
-        self.running = set()
-        '''Set of RunningShow() instances which represents running instances
-        of this show.'''
         self.name = name
         self.total_steps = None
         self.show_steps = None
@@ -82,8 +81,7 @@ class Show(Asset):
                 # special case with an empty last step (but longer than 1 step)
                 if 'time' in step and len(step) == 1 and step_num != 0:
                     return False
-                else:
-                    return 1
+                return 1
             elif 'time' in data[step_num + 1]:
                 next_step_time = data[step_num + 1]['time']
                 if str(next_step_time)[0] == "+":
@@ -109,7 +107,6 @@ class Show(Asset):
             data = self.load_show_from_disk()
 
         # Pylint complains about the change from dict to list. This is intended and fine.
-        # pylint: disable-msg=redefined-variable-type
         if isinstance(data, dict):
             data = list(data)
         elif not isinstance(data, list):    # pragma: no cover
@@ -236,8 +233,8 @@ class Show(Asset):
             for i in data:
                 new_list.append(self.get_show_steps(i))
             return new_list
-        else:
-            return data
+
+        return data
 
     def _check_token(self, path, data, token_type):
         if not isinstance(data, str):
@@ -269,7 +266,7 @@ class Show(Asset):
              events_when_looped=None, events_when_paused=None,
              events_when_resumed=None, events_when_advanced=None,
              events_when_stepped_back=None, events_when_updated=None,
-             events_when_completed=None) -> "RunningShow":
+             events_when_completed=None, start_time=None) -> "RunningShow":
         """Play a Show.
 
         There are many parameters you can use here which
@@ -322,7 +319,8 @@ class Show(Asset):
                 False.
             show_tokens: Replacement tokens for the show
 
-        Returns: The RunningShow() instance if this show plays now, or False if
+        Returns:
+            The RunningShow() instance if this show plays now, or False if
             the show is not loaded. (In this case the show will be loaded and
             will automatically play once its loaded.)
         """
@@ -353,9 +351,13 @@ class Show(Asset):
         else:
             show_steps = False
 
+        if not start_time:
+            start_time = self.machine.clock.get_time()
+
         running_show = RunningShow(machine=self.machine,
                                    show=self,
                                    show_steps=show_steps,
+                                   start_time=start_time,
                                    priority=int(priority),
                                    speed=float(speed),
                                    start_step=int(start_step),
@@ -406,7 +408,8 @@ class RunningShow(object):
                  events_when_stopped, events_when_looped,
                  events_when_paused, events_when_resumed,
                  events_when_advanced, events_when_stepped_back,
-                 events_when_updated, events_when_completed):
+                 events_when_updated, events_when_completed,
+                 start_time):
         """Initialise an instance of a show."""
         self.machine = machine
         self.show = show
@@ -419,21 +422,21 @@ class RunningShow(object):
         self.sync_ms = sync_ms
         self.show_tokens = show_tokens
 
-        self._events = dict(play=events_when_played,
-                            stop=events_when_stopped,
-                            loop=events_when_looped,
-                            pause=events_when_paused,
-                            resume=events_when_resumed,
-                            advance=events_when_advanced,
-                            step_back=events_when_stepped_back,
-                            update=events_when_updated,
-                            complete=events_when_completed)
+        self.events = dict(play=events_when_played,
+                           stop=events_when_stopped,
+                           loop=events_when_looped,
+                           pause=events_when_paused,
+                           resume=events_when_resumed,
+                           advance=events_when_advanced,
+                           step_back=events_when_stepped_back,
+                           update=events_when_updated,
+                           complete=events_when_completed)
 
         self._delay_handler = None
         self.next_step_index = None
         self.current_step_index = None
 
-        self.next_step_time = self.machine.clock.get_time()
+        self.next_step_time = start_time
 
         self.manual_advance = manual_advance
 
@@ -460,7 +463,7 @@ class RunningShow(object):
             self._show_loaded = False
 
     def show_loaded(self, show):
-        """Called when a deferred show was loaded.
+        """Handle that a deferred show was loaded.
 
         Start playing the show as if it started earlier.
         """
@@ -485,9 +488,6 @@ class RunningShow(object):
         if self.show_tokens and self.show.tokens:
             self._replace_tokens(**self.show_tokens)
 
-        self.show.running.add(self)
-        self.machine.show_controller.notify_show_starting(self)
-
         # Figure out the show start time
         if self.sync_ms:
             delay_secs = (self.sync_ms / 1000.0) - (self.next_step_time % (self.sync_ms / 1000.0))
@@ -498,8 +498,8 @@ class RunningShow(object):
             self._run_next_step(post_events='play')
 
     def _post_events(self, action):
-        if self._events[action]:  # Should make sure this is a list? todo
-            for event in self._events[action]:
+        if self.events[action]:  # Should make sure this is a list? todo
+            for event in self.events[action]:
                 self.machine.events.post(event)
 
     def __repr__(self):
@@ -518,6 +518,7 @@ class RunningShow(object):
 
                     target[token_path[-1]] = replacement
 
+        # pylint: disable-msg=too-many-nested-blocks
         for token, replacement in kwargs.items():
             if token in self.show.token_keys:
                 key_name = '({})'.format(token)
@@ -543,6 +544,11 @@ class RunningShow(object):
 
                     keys_replaced[key_name] = replacement
 
+    @property
+    def stopped(self):
+        """Return if stopped."""
+        return self._stopped
+
     def stop(self):
         """Stop show."""
         if self._stopped:
@@ -553,8 +559,6 @@ class RunningShow(object):
         if not self._show_loaded:
             return
 
-        self.machine.show_controller.notify_show_stopping(self)
-        self.show.running.remove(self)
         self._remove_delay_handler()
 
         # clear context in used players
@@ -619,7 +623,7 @@ class RunningShow(object):
         if self._show_loaded:
             self._run_next_step(post_events='step_back')
 
-    def _run_next_step(self, post_events=None):
+    def _run_next_step(self, post_events=None) -> None:
         """Run the next show step."""
         if post_events:
             self._post_events(post_events)
@@ -640,7 +644,7 @@ class RunningShow(object):
             else:
                 self.stop()
                 self._post_events('complete')
-                return False
+                return
 
         self.current_step_index = self.next_step_index
 
@@ -657,7 +661,8 @@ class RunningShow(object):
                     context="show_" + str(self.id),
                     calling_context=self.current_step_index,
                     priority=self.priority,
-                    show_tokens=self.show_tokens)
+                    show_tokens=self.show_tokens,
+                    start_time=self.next_step_time)
 
                 if item_type not in self._players:
                     self._players.append(item_type)
@@ -672,5 +677,3 @@ class RunningShow(object):
             self.next_step_time += time_to_next_step
             self._delay_handler = self.machine.clock.schedule_once(self._run_next_step,
                                                                    self.next_step_time - self.machine.clock.get_time())
-
-            return time_to_next_step

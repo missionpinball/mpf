@@ -12,8 +12,12 @@ from typing import Tuple
 from mpf.core.platform import LightsPlatform
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 
+MYPY = False
+if MYPY:   # pragma: no cover
+    from mpf.core.machine import MachineController
 
-class HardwarePlatform(LightsPlatform):
+
+class OpenpixelHardwarePlatform(LightsPlatform):
 
     """Base class for the open pixel hardware platform.
 
@@ -22,13 +26,13 @@ class HardwarePlatform(LightsPlatform):
 
     """
 
-    def __init__(self, machine):
+    def __init__(self, machine: "MachineController") -> None:
         """Instantiate openpixel hardware platform."""
-        super(HardwarePlatform, self).__init__(machine)
+        super().__init__(machine)
 
         self.log = logging.getLogger("OpenPixel")
         self.debug_log("Configuring Open Pixel hardware interface.")
-        self.opc_client = None
+        self.opc_client = None      # type: OpenPixelClient
         self.features['tickless'] = True
 
     def __repr__(self):
@@ -47,7 +51,11 @@ class HardwarePlatform(LightsPlatform):
     def stop(self):
         """Stop platform."""
         # disconnect sender
-        self.opc_client.socket_sender.close()
+        if self.opc_client:
+            self.opc_client.blank_all()
+            if self.opc_client.socket_sender:
+                self.opc_client.socket_sender.close()
+                self.opc_client.socket_sender = None
 
     def parse_light_number_to_channels(self, number: str, subtype: str):
         """Parse number to three channels."""
@@ -74,9 +82,7 @@ class HardwarePlatform(LightsPlatform):
 
     def configure_light(self, number, subtype, platform_settings) -> LightPlatformInterface:
         """Configure an LED."""
-        opc_channel, channel_number = number.split("-")
-
-        return OpenPixelLED(self.opc_client, opc_channel, channel_number, self.debug)
+        return OpenPixelLED(number, self.opc_client, self.debug)
 
     @asyncio.coroutine
     def _setup_opc_client(self):
@@ -88,9 +94,11 @@ class OpenPixelLED(LightPlatformInterface):
 
     """One LED on the openpixel platform."""
 
-    def __init__(self, opc_client, channel, channel_number, debug):
+    def __init__(self, number, opc_client, debug):
         """Initialise Openpixel LED obeject."""
+        super().__init__(number)
         self.log = logging.getLogger('OpenPixelLED')
+        channel, channel_number = number.split("-")
 
         self.opc_client = opc_client
         self.debug = debug
@@ -101,6 +109,10 @@ class OpenPixelLED(LightPlatformInterface):
     def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
         """Set brightness using callback."""
         self.opc_client.set_pixel_color(self.opc_channel, self.channel_number, color_and_fade_callback)
+
+    def get_board_name(self):
+        """Return name for service mode."""
+        return "OPC Channel {}".format(self.channel_number)
 
 
 class OpenPixelClient(object):
@@ -117,18 +129,30 @@ class OpenPixelClient(object):
         self.log = logging.getLogger('OpenPixelClient')
 
         self.machine = machine
-        self.dirty = True
         self.update_every_tick = False
         self.socket_sender = None
-        self.channels = list()
+        self.max_fade_ms = None
+        self.channels = []
+        self.dirty_leds = []
+        self.msg = []
         self.openpixel_config = config
 
     @asyncio.coroutine
     def connect(self):
+        """Connect to the hardware."""
         connector = self.machine.clock.open_connection(self.openpixel_config['host'], self.openpixel_config['port'])
         _, self.socket_sender = yield from connector
 
-        # Update the FadeCandy at a regular interval
+        self.max_fade_ms = int(1 / self.machine.config['mpf']['default_light_hw_update_hz'] * 1000)
+
+        self.machine.events.add_handler("init_phase_3", self._start_loop)
+
+    def _start_loop(self, **kwargs):
+        del kwargs
+        # blank all channels
+        self.blank_all()
+
+        # Update at a regular interval
         self.machine.clock.schedule_interval(self.tick, 1 / self.machine.config['mpf']['default_light_hw_update_hz'])
 
     def add_pixel(self, channel, led):
@@ -149,40 +173,51 @@ class OpenPixelClient(object):
             channels_to_add = channel + 1 - len(self.channels)
 
             self.channels += [list() for _ in range(channels_to_add)]
+            self.dirty_leds += [dict() for _ in range(channels_to_add)]
+            self.msg += [None for _ in range(channels_to_add)]
 
         if len(self.channels[channel]) < led + 1:
 
             leds_to_add = led + 1 - len(self.channels[channel])
-
             self.channels[channel] += [0 for _ in range(leds_to_add)]
 
     def set_pixel_color(self, channel, pixel, callback: Callable[[int], Tuple[float, int]]):
-        """Set an invidual pixel color.
+        """Set an individual pixel color.
 
         Args:
             channel: Int of the OPC channel for this pixel.
             pixel: Int of the number for this pixel on that channel.
             callback: callback to get brightness
         """
-        self.channels[channel][pixel] = callback
-        self.dirty = True
+        self.dirty_leds[channel][pixel] = callback
 
     def tick(self):
-        """Called once per machine loop to update the pixels."""
-        if self.update_every_tick or self.dirty:
-            for channel_index, pixel_list in enumerate(self.channels):
-                self.update_pixels(pixel_list, channel_index)
+        """Update pixels.
 
-            self.dirty = False
+        Called periodically.
+        """
+        for channel_index in range(len(self.channels)):
+            if not self.update_every_tick and not self.dirty_leds[channel_index]:
+                continue
+            self._handle_dirty_leds(channel_index)
+            self._update_pixels(channel_index)
 
-    @staticmethod
-    def _add_pixel(msg, max_fade_ms, brightness):
-        if callable(brightness):
-            brightness = brightness(max_fade_ms)[0] * 255
-        brightness = min(255, max(0, int(brightness)))
-        msg.append(brightness)
+    def _handle_dirty_leds(self, channel):
+        if not self.dirty_leds[channel]:
+            return
 
-    def update_pixels(self, pixels, channel=0):
+        # invalidate cached message
+        self.msg[channel] = None
+
+        for pixel, callback in dict(self.dirty_leds[channel]).items():
+            brightness, remaining_fade = callback(self.max_fade_ms)
+            value = min(255, max(0, int(brightness * 255)))
+            self.channels[channel][pixel] = value
+            # fade is done
+            if remaining_fade < self.max_fade_ms:
+                del self.dirty_leds[channel][pixel]
+
+    def _update_pixels(self, channel):
         """Send the list of pixel colors to the OPC server.
 
         Args:
@@ -201,9 +236,16 @@ class OpenPixelClient(object):
         the channel and you just want to update LED #10, then you need to send
         pixel data for the first 10 pixels.)
         """
-        # Build the OPC message
+        # if we got a cached message just send it
+        if not self.msg[channel]:
+            self.msg[channel] = bytes(self._build_message(channel))
+
+        self.send(self.msg[channel])
+
+    def _build_message(self, channel):
+        """Build the OPC message."""
         msg = bytearray()
-        max_fade_ms = int(1 / self.machine.config['mpf']['default_light_hw_update_hz'])
+        pixels = self.channels[channel]
         len_hi_byte = int(len(pixels) / 256)
         len_lo_byte = (len(pixels)) % 256
         header = bytes([channel, 0, len_hi_byte, len_lo_byte])
@@ -211,11 +253,16 @@ class OpenPixelClient(object):
         for i in range(int(len(pixels) / 3)):
             # send GRB because that is the default color order for WS2812
 
-            self._add_pixel(msg, max_fade_ms, pixels[i * 3 + 1])
-            self._add_pixel(msg, max_fade_ms, pixels[i * 3])
-            self._add_pixel(msg, max_fade_ms, pixels[i * 3 + 2])
+            msg.append(pixels[i * 3 + 1])
+            msg.append(pixels[i * 3])
+            msg.append(pixels[i * 3 + 2])
+        return msg
 
-        self.send(bytes(msg))
+    def blank_all(self):
+        """Blank all channels."""
+        for channel_index in range(len(self.channels)):
+            self.channels[channel_index] = [0] * len(self.channels[channel_index])
+            self.send(bytes(self._build_message(channel_index)))
 
     def send(self, message):
         """Send a message to the socket.

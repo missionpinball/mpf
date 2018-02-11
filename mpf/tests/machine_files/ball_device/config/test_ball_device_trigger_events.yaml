@@ -1,4 +1,9 @@
-#config_version=4
+#config_version=5
+
+playfields:
+    playfield:
+        default_source_device: test_launcher
+        tags: default
 
 coils:
     eject_coil1:
@@ -13,8 +18,6 @@ coils:
         number:
     c_diverter:
         number:
-
-
 
 switches:
     s_ball_switch1:
@@ -49,7 +52,6 @@ ball_devices:
         eject_timeouts: 6s, 10s
         eject_targets: playfield, test_target
         confirm_eject_type: target
-        tags: ball_add_live
         player_controlled_eject_event: sw_launch
     test_target:
         eject_coil: eject_coil3

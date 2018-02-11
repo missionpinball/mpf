@@ -37,7 +37,7 @@ class TestDiverter(MpfTestCase):
 
         self.machine.events.add_handler("balldevice_test_trough_ball_eject_attempt", self._block_device)
 
-        self.machine.ball_devices.test_trough.tags.append("ball_add_live")
+        self.machine.playfield.config['default_source_device'] = self.machine.ball_devices.test_trough
         self.machine.playfield.add_ball()
 
         self.advance_time_and_run(20)
@@ -61,8 +61,7 @@ class TestDiverter(MpfTestCase):
         self.assertFalse(diverter.active)
 
         self.hit_switch_and_run("s_ball_switch1", 1)
-        self.machine.ball_devices.test_trough.tags.remove("ball_add_live")
-        self.machine.ball_devices.test_target.tags.append("ball_add_live")
+        self.machine.playfield.config['default_source_device'] = self.machine.ball_devices.test_target
         self.machine.playfield.add_ball()
 
         self.advance_time_and_run(3)
@@ -76,6 +75,7 @@ class TestDiverter(MpfTestCase):
 
         self.advance_time_and_run(4)
         assert not self.machine.coils.c_diverter.enable.called
+        self.assertEqual(0, diverter.diverting_ejects_count)
 
     def test_hold_activation_time(self):
         diverter = self.machine.diverters.d_test_hold_activation_time
@@ -86,7 +86,7 @@ class TestDiverter(MpfTestCase):
         self.assertFalse(diverter.enabled)
         self.assertFalse(diverter.active)
 
-        self.machine.ball_devices.test_trough.tags.append("ball_add_live")
+        self.machine.playfield.config['default_source_device'] = self.machine.ball_devices.test_trough
         self.machine.playfield.add_ball()
 
         self.advance_time_and_run(1)
@@ -110,8 +110,7 @@ class TestDiverter(MpfTestCase):
         self.assertFalse(diverter.active)
 
         self.hit_switch_and_run("s_ball_switch1", 1)
-        self.machine.ball_devices.test_trough.tags.remove("ball_add_live")
-        self.machine.ball_devices.test_target.tags.append("ball_add_live")
+        self.machine.playfield.config['default_source_device'] = self.machine.ball_devices.test_target
         self.machine.playfield.add_ball()
 
         self.advance_time_and_run(3)
@@ -139,7 +138,7 @@ class TestDiverter(MpfTestCase):
         self.assertFalse(diverter.active)
 
         # test active side
-        self.machine.ball_devices.test_trough.tags.append("ball_add_live")
+        self.machine.playfield.config['default_source_device'] = self.machine.ball_devices.test_trough
         self.machine.playfield.add_ball()
 
         self.advance_time_and_run(1)
@@ -164,8 +163,7 @@ class TestDiverter(MpfTestCase):
 
         self.hit_switch_and_run("s_ball_switch1", 1)
         # test inactive side
-        self.machine.ball_devices.test_trough.tags.remove("ball_add_live")
-        self.machine.ball_devices.test_target.tags.append("ball_add_live")
+        self.machine.playfield.config['default_source_device'] = self.machine.ball_devices.test_target
         self.machine.playfield.add_ball()
 
         self.advance_time_and_run(3)
@@ -181,6 +179,49 @@ class TestDiverter(MpfTestCase):
         assert not self.machine.coils.c_diverter.enable.called
 
         self.hit_switch_and_run("s_ball_switch1", 1)
+
+    def test_missing_ball_at_source(self):
+        diverter = self.machine.diverters.d_test
+        trough1 = self.machine.ball_devices.test_trough
+        target = self.machine.ball_devices.test_target
+
+        self.machine.default_platform.actions[trough1].set_result("missing")
+        trough1.eject(1, target)
+        self.advance_time_and_run(1)
+        self.assertEqual(1, diverter.diverting_ejects_count)
+
+        self.advance_time_and_run(100)
+
+        self.assertEqual(0, diverter.diverting_ejects_count)
+
+    def test_eject_to_oposide_sides2(self):
+        diverter = self.machine.diverters.d_test_hold
+        trough1 = self.machine.ball_devices.test_trough
+        trough2 = self.machine.ball_devices.test_trough2
+        playfield = self.machine.playfield
+        target = self.machine.ball_devices.test_target
+
+        self.assertEqual(3, trough1.balls)
+        self.assertEqual(3, trough2.balls)
+
+        trough1.eject(1, playfield)
+        trough2.eject(1, target)
+        trough1.eject(1, playfield)
+        trough2.eject(1, playfield)
+        trough1.eject(1, target)
+        trough2.eject(1, target)
+
+        self.advance_time_and_run(100)
+
+        self.assertEqual("idle", trough1._state)
+        self.assertEqual("idle", trough2._state)
+
+        self.assertEqual(0, diverter.diverting_ejects_count)
+
+        self.assertEqual(3, playfield.balls)
+        self.assertEqual(3, target.balls)
+        self.assertEqual(0, trough1.balls)
+        self.assertEqual(0, trough2.balls)
 
     def test_eject_to_oposide_sides(self):
         diverter = self.machine.diverters.d_test_hold
@@ -215,10 +256,14 @@ class TestDiverter(MpfTestCase):
 
         self.hit_and_release_switch("s_playfield")
         self.advance_time_and_run(3)
+        # wait for cooldown
+        self.assertFalse(self.machine.coils.eject_coil3.pulse.called)
+        self.assertEqual(1, diverter.diverting_ejects_count)
+        self.advance_time_and_run(3)
+        self.assertTrue(self.machine.coils.eject_coil3.pulse.called)
+        self.assertEqual(1, diverter.diverting_ejects_count)
         self.assertFalse(diverter.enabled)
         self.assertFalse(diverter.active)
-        self.assertTrue(self.machine.coils.eject_coil3.pulse.called)
-        self.assertEqual(0, diverter.diverting_ejects_count)
 
         self.machine.coils.eject_coil1.pulse = MagicMock(wraps=pulse1)
         self.machine.coils.eject_coil3.pulse = MagicMock(wraps=pulse3)
@@ -228,6 +273,9 @@ class TestDiverter(MpfTestCase):
 
         self.assertEqual("idle", trough1._state)
         self.assertEqual("idle", trough2._state)
+        self.assertEqual(2, trough1.balls)
+        self.assertEqual(1, trough2.balls)
+
         self.assertEqual("idle", target._state)
         self.assertEqual(0, diverter.diverting_ejects_count)
 
@@ -250,11 +298,19 @@ class TestDiverter(MpfTestCase):
 
         self.hit_and_release_switch("s_playfield")
         self.advance_time_and_run(3)
+        self.assertFalse(diverter.enabled)
+        self.assertFalse(diverter.active)
+
+        # wait for cooldown
+        self.advance_time_and_run(3)
 
         self.assertTrue(diverter.enabled)
         self.assertTrue(diverter.active)
 
         self.assertTrue(self.machine.coils.eject_coil1.pulse.called)
+        self.advance_time_and_run(20)
+
+        self.assertEqual(0, diverter.diverting_ejects_count)
 
     def test_pulsed_activation_time(self):
         diverter = self.machine.diverters.d_test_pulse
@@ -277,7 +333,7 @@ class TestDiverter(MpfTestCase):
         self.assertFalse(diverter.enabled)
         self.assertFalse(diverter.active)
 
-        self.machine.ball_devices.test_trough.tags.append("ball_add_live")
+        self.machine.playfield.config['default_source_device'] = self.machine.ball_devices.test_trough
         self.machine.playfield.add_ball()
 
         self.advance_time_and_run(1)
@@ -296,8 +352,7 @@ class TestDiverter(MpfTestCase):
         self.assertTrue(self.machine.coils.c_diverter_disable.pulse.called)
 
         self.hit_switch_and_run("s_ball_switch1", 1)
-        self.machine.ball_devices.test_trough.tags.remove("ball_add_live")
-        self.machine.ball_devices.test_target.tags.append("ball_add_live")
+        self.machine.playfield.config['default_source_device'] = self.machine.ball_devices.test_target
         self.machine.playfield.add_ball()
 
         self.advance_time_and_run(3)
@@ -311,6 +366,7 @@ class TestDiverter(MpfTestCase):
 
         self.advance_time_and_run(4)
         assert not self.machine.coils.c_diverter.pulse.called
+        self.assertEqual(0, diverter.diverting_ejects_count)
 
     def test_diverter_with_switch(self):
         diverter = self.machine.diverters.d_test
@@ -388,7 +444,7 @@ class TestDiverter(MpfTestCase):
         self.assertFalse(diverter.enabled)
         self.assertFalse(diverter.active)
 
-        self.machine.ball_devices.test_trough2.tags.append("ball_add_live")
+        self.machine.playfield.config['default_source_device'] = self.machine.ball_devices.test_trough2
         self.machine.playfield.add_ball()
 
         self.advance_time_and_run(.01)
@@ -412,8 +468,7 @@ class TestDiverter(MpfTestCase):
         self.assertFalse(diverter.active)
 
         self.hit_switch_and_run("s_ball_switch1", 1)
-        self.machine.ball_devices.test_trough2.tags.remove("ball_add_live")
-        self.machine.ball_devices.test_target.tags.append("ball_add_live")
+        self.machine.playfield.config['default_source_device'] = self.machine.ball_devices.test_target
         self.machine.ball_devices.test_trough2.eject(1, self.machine.ball_devices.test_target)
 
         self.advance_time_and_run(.01)
@@ -427,6 +482,7 @@ class TestDiverter(MpfTestCase):
 
         self.advance_time_and_run(4)
         assert not self.machine.coils.c_diverter.enable.called
+        self.assertEqual(0, diverter.diverting_ejects_count)
 
     def test_diverter_dual_wound_coil(self):
         diverter = self.machine.diverters.d_test_dual_wound
@@ -442,7 +498,7 @@ class TestDiverter(MpfTestCase):
         self.assertFalse(diverter.active)
 
         # test active side
-        self.machine.ball_devices.test_trough.tags.append("ball_add_live")
+        self.machine.playfield.config['default_source_device'] = self.machine.ball_devices.test_trough
         self.machine.playfield.add_ball()
 
         self.advance_time_and_run(1)
@@ -469,8 +525,7 @@ class TestDiverter(MpfTestCase):
 
         self.hit_switch_and_run("s_ball_switch1", 1)
         # test inactive side
-        self.machine.ball_devices.test_trough.tags.remove("ball_add_live")
-        self.machine.ball_devices.test_target.tags.append("ball_add_live")
+        self.machine.playfield.config['default_source_device'] = self.machine.ball_devices.test_target
         self.machine.playfield.add_ball()
 
         self.advance_time_and_run(3)

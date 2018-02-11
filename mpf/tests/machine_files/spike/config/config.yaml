@@ -1,4 +1,4 @@
-#config_version=4
+#config_version=5
 
 hardware:
   platform: spike
@@ -30,6 +30,8 @@ lights:
     number: 0-0
   l_1_3:
     number: 1-3
+  l_8_3:
+    number: 8-3
   l_8_30:
     number: 8-40
 
@@ -46,11 +48,17 @@ switches:
     number: 8-15
   s_pop:
     number: 8-4
+  s_pop2:
+    number: 8-5
+    type: NC
 
 autofire_coils:
   ac_pops:
     coil: c_pop
     switch: s_pop
+  ac_pops2:
+    coil: c_pop
+    switch: s_pop2
 
 flippers:
     f_test_single:
@@ -68,3 +76,7 @@ flippers:
         activation_switch: s_flipper
         use_eos: True
         eos_switch: s_flipper_eos
+
+dmds:
+  spike_dmd:
+    fps: 5

@@ -1,0 +1,15 @@
+#config_version=5
+
+machine_vars:
+  test1:
+    initial_value: 4
+    value_type: int
+    persist: True
+  test2:
+    initial_value: '5'
+    value_type: str
+    persist: True
+  test3:
+    initial_value: 6
+    value_type: int
+    persist: False

@@ -1,6 +1,10 @@
 """Base class for serial communicator."""
 import asyncio
 
+MYPY = False
+if MYPY:   # pragma: no cover
+    from typing import Generator
+
 
 class BaseSerialCommunicator(object):
 
@@ -21,11 +25,13 @@ class BaseSerialCommunicator(object):
         self.debug = self.platform.config['debug']
         self.port = port
         self.baud = baud
-        self.reader = None  # type: asyncio.StreamReader
-        self.writer = None  # type: asyncio.StreamWriter
+        self.reader = None      # type: asyncio.StreamReader
+        self.writer = None      # type: asyncio.StreamWriter
+        self.read_task = None   # type: Generator[int, None, None]
 
     @asyncio.coroutine
     def connect(self):
+        """Connect to the hardware."""
         yield from self._connect_to_hardware(self.port, self.baud)
 
     @asyncio.coroutine
@@ -35,9 +41,14 @@ class BaseSerialCommunicator(object):
         connector = self.machine.clock.open_serial_connection(
             url=port, baudrate=baud, limit=0)
         self.reader, self.writer = yield from connector
+        # defaults are slightly high for our usecase
+        self.writer.transport.set_write_buffer_limits(2048, 1024)
 
         # read everything which is sitting in the serial
         self.writer.transport.serial.reset_input_buffer()
+        # clear buffer
+        # pylint: disable-msg=protected-access
+        self.reader._buffer = bytearray()
 
         yield from self._identify_connection()
 
@@ -53,7 +64,8 @@ class BaseSerialCommunicator(object):
         future.result()
 
     @asyncio.coroutine
-    def readuntil(self, separator, min_chars: int=0):
+    # pylint: disable-msg=inconsistent-return-statements
+    def readuntil(self, separator, min_chars: int = 0):
         """Read until separator.
 
         Args:
@@ -103,8 +115,9 @@ class BaseSerialCommunicator(object):
         while True:
             try:
                 resp = yield from self.reader.read(100)
-            # pylint: disable-msg=broad-except
-            except Exception as e:
+            except asyncio.CancelledError:
+                raise
+            except Exception as e:  # pylint: disable-msg=broad-except
                 self.log.warning("Serial error: {}".format(e))
                 resp = None
 

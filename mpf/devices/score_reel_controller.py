@@ -29,6 +29,8 @@ class ScoreReelController(object):
           counting up). Decrementing support will be added in the future.
     """
 
+    config_name = "score_reel_controller"
+
     def __init__(self, machine):
         """Initialise score reel controller."""
         self.machine = machine
@@ -60,7 +62,7 @@ class ScoreReelController(object):
         self.machine.events.add_handler('ball_ending', self._ball_ending, 900)
 
     def _rotate_player(self, **kwargs):
-        """Called when a new player's turn starts.
+        """Start a new player's turn.
 
         The main purpose of this method is to map the current player to their
         ScoreReelGroup in the backbox. It will do this by comparing length of
@@ -118,8 +120,8 @@ class ScoreReelController(object):
 
         self.player_to_scorereel_map.append(self.player_to_scorereel_map[0])
 
-    def _score_change(self, value, **kwargs):
-        """Called whenever the score changes and adds the score increase to the current active ScoreReelGroup.
+    def _score_change(self, value, change, **kwargs):
+        """Handle score changes and add the score increase to the current active ScoreReelGroup.
 
         This method is the handler for the score change event, so it's called
         automatically.

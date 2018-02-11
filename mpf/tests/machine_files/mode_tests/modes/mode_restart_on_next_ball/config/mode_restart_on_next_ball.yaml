@@ -1,0 +1,4 @@
+#config_version=5
+mode:
+  start_events: start_mode_restart_on_next_ball
+  restart_on_next_ball: True

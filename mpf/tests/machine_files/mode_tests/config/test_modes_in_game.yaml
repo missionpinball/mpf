@@ -1,0 +1,4 @@
+#config_version=5
+
+modes:
+  - mode_restart_on_next_ball

@@ -25,17 +25,17 @@ be called on mode_start or mode_stop.
 
 class ModeController(MpfController):
 
-    """Parent class for the Mode Controller.
+    """Responsible for loading, unloading, and managing all modes in MPF."""
 
-    There is one instance of this in MPF and it's responsible for loading, unloading, and managing all modes.
-
-    Args:
-        machine: The main MachineController instance.
-
-    """
+    config_name = "mode_controller"
 
     def __init__(self, machine: MachineController) -> None:
-        """Initialise mode controller."""
+        """Initialise mode controller.
+
+        Args:
+            machine: The main MachineController instance.
+
+        """
         super().__init__(machine)
 
         # ball ending event queue
@@ -55,8 +55,9 @@ class ModeController(MpfController):
         self.stop_methods = list()                  # type: List[Tuple[Callable[[Mode], None], int]]
 
         if 'modes' in self.machine.config:
-            self.machine.events.add_handler('init_phase_2',
-                                            self._load_modes)
+            # priority needs to be higher than device_manager::_load_device_modules
+            self.machine.events.add_handler('init_phase_1', self.load_modes, priority=10)
+            self.machine.events.add_handler('init_phase_2', self.initialise_modes)
 
         self.machine.events.add_handler('ball_ending', self._ball_ending,
                                         priority=0)
@@ -71,28 +72,39 @@ class ModeController(MpfController):
                                         self._player_turn_start,
                                         priority=1000000)
 
-        self.machine.events.add_handler('player_turn_stopped',
-                                        self._player_turn_stop,
+        self.machine.events.add_handler('player_turn_ended',
+                                        self._player_turn_ended,
                                         priority=1000000)
 
-    def _load_modes(self, **kwargs):
-        # Loads the modes from the modes: section of the machine configuration
-        # file.
+    def create_mode_devices(self):
+        """Create mode devices."""
+        for mode in self.machine.modes:
+            mode.create_mode_devices()
 
-        # todo if we get the config validator to validate files pre-merge, then
-        # we can handle proper merging if people don't use dashes in their list
-        # of modes
+    def load_mode_devices(self):
+        """Load mode devices."""
+        for mode in self.machine.modes:
+            mode.load_mode_devices()
+
+    def initialise_modes(self, **kwargs):
+        """Initialise modes."""
+        del kwargs
+        for mode in self.machine.modes:
+            mode.initialise_mode()
+
+    def load_modes(self, **kwargs):
+        """Load the modes from the modes: section of the machine configuration file."""
         del kwargs
 
         self._build_mode_folder_dicts()
 
         for mode in set(self.machine.config['modes']):
 
-            if mode not in self.machine.modes:
-                self.machine.modes[mode] = self._load_mode(mode.lower())
-            else:
-                raise ValueError('Mode {} already exists. Cannot load again.'.
-                                 format(mode))
+            if mode in self.machine.modes:
+                raise AssertionError('Mode {} already exists. Cannot load again.'.format(mode))
+
+            # load mode
+            self.machine.modes[mode] = self._load_mode(mode.lower())
 
     def _find_mode_path(self, mode_string):
         if mode_string in self._machine_mode_folders:
@@ -110,6 +122,7 @@ class ModeController(MpfController):
 
     def _load_mode_config(self, mode_string):
         config = dict()
+        found_config = False
         # Is there an MPF default config for this mode? If so, load it first
         try:
             mpf_mode_config = os.path.join(
@@ -122,6 +135,7 @@ class ModeController(MpfController):
             if os.path.isfile(mpf_mode_config):
                 config = ConfigProcessor.load_config_file(mpf_mode_config,
                                                           config_type='mode')
+                found_config = True
 
             self.debug_log("Loading config from %s", mpf_mode_config)
 
@@ -137,27 +151,30 @@ class ModeController(MpfController):
                 self._machine_mode_folders[mode_string],
                 'config',
                 self._machine_mode_folders[mode_string] + '.yaml')
+        except KeyError:
+            mode_config_file = False
 
-            if os.path.isfile(mode_config_file):
-                config = Util.dict_merge(config,
-                                         ConfigProcessor.load_config_file(
-                                             mode_config_file, 'mode'))
+        if mode_config_file and os.path.isfile(mode_config_file):
+            config = Util.dict_merge(config,
+                                     ConfigProcessor.load_config_file(
+                                         mode_config_file, 'mode'))
+            found_config = True
 
             self.debug_log("Loading config from %s", mode_config_file)
-
-        except KeyError:
-            pass
 
         # validate config
         if 'mode' not in config:
             config['mode'] = dict()
+
+        if not found_config:
+            raise AssertionError("Did not find any config for mode {}.".format(mode_string))
 
         return config
 
     def _load_mode_config_spec(self, mode_string, mode_class):
         self.machine.config_validator.load_mode_config_spec(mode_string, mode_class.get_config_spec())
 
-    def _load_mode_from_machine_folder(self, mode_string: str, code_path: str) -> Optional[Mode]:
+    def _load_mode_from_machine_folder(self, mode_string: str, code_path: str) -> Optional[Callable[..., Mode]]:
         """Load mode from machine folder and return it."""
         # this will only work for file_name.class_name
         try:
@@ -175,23 +192,29 @@ class ModeController(MpfController):
                 self.machine.config['mpf']['paths']['modes'] + '.' +
                 self._machine_mode_folders[mode_string] + '.code.' +
                 file_name)
-        except ImportError:
+        except ImportError as e:
+            # do not hide import error in mode
+            if e.name != file_name:
+                raise e
             return None
 
         return getattr(i, class_name, None)
 
     @staticmethod
-    def _load_mode_from_full_path(code_path: str) -> Optional[Mode]:
+    def _load_mode_from_full_path(code_path: str) -> Optional[Callable[..., Mode]]:
         """Load mode from full path.
 
         This is used for built-in modes like attract and game.
         """
         try:
             return Util.string_to_class(code_path)
-        except ImportError:
+        except ImportError as e:
+            # do not hide import error in mode
+            if e.name != code_path.split('.')[-1]:
+                raise e
             return None
 
-    def _load_mode_code(self, mode_string: str, code_path: str) -> Mode:
+    def _load_mode_code(self, mode_string: str, code_path: str) -> Callable[..., Mode]:
         """Load code for mode."""
         # First check the machine folder
         mode_class = self._load_mode_from_machine_folder(mode_string, code_path)
@@ -207,7 +230,7 @@ class ModeController(MpfController):
 
         raise AssertionError("Could not load code for mode {} from {}".format(mode_string, code_path))
 
-    def _load_mode(self, mode_string):
+    def _load_mode(self, mode_string) -> Mode:
         """Load a mode, reads in its config, and creates the Mode object.
 
         Args:
@@ -289,12 +312,16 @@ class ModeController(MpfController):
     def _player_turn_start(self, player, **kwargs):
         del kwargs
         for mode in self.machine.modes:
+            if not mode.is_game_mode:
+                continue
             mode.player = player
 
-    def _player_turn_stop(self, player, **kwargs):
+    def _player_turn_ended(self, player, **kwargs):
         del kwargs
         del player
         for mode in self.machine.modes:
+            if not mode.is_game_mode:
+                continue
             mode.player = None
 
     def _ball_starting(self, queue, **kwargs):
@@ -313,13 +340,16 @@ class ModeController(MpfController):
         del kwargs
 
         if not self.active_modes:
-            return ()
+            return
 
         self.queue = queue
         self.queue.wait()
         self.mode_stop_count = 0
 
         for mode in self.active_modes:
+
+            if not mode.is_game_mode:
+                continue
 
             if mode.auto_stop_on_ball_end:
                 self.debug_log("Adding mode '%s' to ball ending queue", mode.name)
@@ -373,7 +403,7 @@ class ModeController(MpfController):
 
     def register_start_method(self, start_method, config_section_name=None,
                               priority=0, **kwargs):
-        """Register a method which is called when the mode is started.
+        """Register a method which is called anytime a mode is started.
 
         Used by core components, plugins, etc. to register themselves with
         the Mode Controller for anything that they a mode to do when it starts.
@@ -390,8 +420,6 @@ class ModeController(MpfController):
             **kwargs: Any additional keyword arguments specified will be passed
                 to the start_method.
 
-        Note that these methods will be called every single time this mode is
-        started.
         """
         if not callable(start_method):
             raise ValueError("Cannot add start method '{}' as it is not"
@@ -435,7 +463,7 @@ class ModeController(MpfController):
             self.stop_methods.remove((callback, priority))
 
     def set_mode_state(self, mode: Mode, active: bool):
-        """Called when a mode goes active or inactive."""
+        """Remember mode state."""
         if active:
             self.active_modes.append(mode)
         else:

@@ -31,6 +31,18 @@ class MockPinProcModule(MagicMock):
     SwitchNeverDebounceFirst = 192
     SwitchNeverDebounceLast = 255
 
+    def aux_command_jump(self, number):
+        return "jump" + str(number)
+
+    def aux_command_disable(self):
+        return "disable"
+
+    def aux_command_output_custom(self, arg1, arg2, arg3, arg4, arg5):
+        return "output_custom_" + str(arg1) + "_" + str(arg2) + "_" + str(arg3) + "_" + str(arg4) + "_" + str(arg5)
+
+    def aux_command_delay(self, delay):
+        return "delay_" + str(delay)
+
     def decode(self, machine_type, device_str):
         if machine_type == MockPinProcModule.MachineTypePDB:
             # for PDB it will just return str as int
@@ -90,6 +102,7 @@ class TestPRoc(MpfTestCase):
             raise AssertionError("Invalid type")
 
     def setUp(self):
+        self.expected_duration = 2
         p_roc_common.pinproc_imported = True
         p_roc_common.pinproc = MockPinProcModule()
         p_roc.pinproc = p_roc_common.pinproc
@@ -97,13 +110,77 @@ class TestPRoc(MpfTestCase):
         p_roc_common.pinproc.PinPROC = MagicMock(return_value=self.pinproc)
         p_roc_common.pinproc.normalize_machine_type = self._normalize
         p_roc_common.pinproc.driver_state_pulse = MagicMock(
-            return_value="driver_state_pulse")
+            return_value={'driverNum': 8,
+                          'outputDriveTime': 0,
+                          'polarity': True,
+                          'state': False,
+                          'waitForFirstTimeSlot': False,
+                          'timeslots': 0,
+                          'patterOnTime': 0,
+                          'patterOffTime': 0,
+                          'patterEnable': False,
+                          'futureEnable': False})
+
+        p_roc_common.pinproc.driver_state_pulsed_patter = MagicMock(
+            return_value={'driverNum': 9,
+                          'outputDriveTime': 0,
+                          'polarity': True,
+                          'state': False,
+                          'waitForFirstTimeSlot': False,
+                          'timeslots': 0,
+                          'patterOnTime': 0,
+                          'patterOffTime': 0,
+                          'patterEnable': False,
+                          'futureEnable': False})
+
+        p_roc_common.pinproc.driver_state_disable = MagicMock(
+            return_value={'driverNum': 10,
+                          'outputDriveTime': 0,
+                          'polarity': True,
+                          'state': False,
+                          'waitForFirstTimeSlot': False,
+                          'timeslots': 0,
+                          'patterOnTime': 0,
+                          'patterOffTime': 0,
+                          'patterEnable': False,
+                          'futureEnable': False})
+
+        p_roc_common.pinproc.driver_state_patter = MagicMock(
+            return_value={'driverNum': 11,
+                          'outputDriveTime': 0,
+                          'polarity': True,
+                          'state': False,
+                          'waitForFirstTimeSlot': False,
+                          'timeslots': 0,
+                          'patterOnTime': 0,
+                          'patterOffTime': 0,
+                          'patterEnable': False,
+                          'futureEnable': False})
+
         self.pinproc.switch_get_states = MagicMock(return_value=[0, 1] + [0] * 100)
         self.pinproc.read_data = MagicMock(return_value=0x12345678)
+        self.pinproc.aux_send_commands = MagicMock()
         super().setUp()
 
-    def test_pulse_and_hold(self):
-        self.assertEqual("P-Roc Board 1", self.machine.coils.c_test.hw_driver.get_board_name())
+        self.pinproc.aux_send_commands.assert_called_with(0, ["disable"] + ["jump0"] * 254)
+
+    def test_platform(self):
+        self._test_initial_switches()
+        self._test_switches()
+        self._test_pulse_and_hold()
+        self._test_pdb_matrix_light()
+        self._test_alpha_display()
+        self._test_allow_enable()
+        self._test_hw_rule_pulse()
+        self._test_dmd_update()
+        self._test_pdb_gi_light()
+        self._test_enable_exception()
+
+        # test that this does not crash
+        self.assertTrue(self.machine.default_platform.get_info_string())
+
+    def _test_pulse_and_hold(self):
+        self.assertEqual("PD-16 Board 1 Bank 1", self.machine.coils.c_test.hw_driver.get_board_name())
         # pulse coil A1-B1-2
         self.machine.coils.c_test.pulse()
         # A1-B1-2 -> address 16 + 8 + 2 = 26 in P3-Roc
@@ -113,25 +190,53 @@ class TestPRoc(MpfTestCase):
             number, 23)
         assert not self.machine.coils.c_test.hw_driver.proc.driver_schedule.called
 
-    def test_enable_exception(self):
+    def _test_alpha_display(self):
+        self.pinproc.aux_send_commands = MagicMock()
+        self.machine.segment_displays.display1.add_text("1234", key="score")
+        self.advance_time_and_run(.1)
+        self.pinproc.aux_send_commands.assert_has_calls([
+            call(0, ['disable', 'output_custom_0_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_1_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_2_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_3_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_4_0_8_False_0', 'output_custom_6_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_5_0_8_False_0', 'output_custom_91_0_9_False_0', 'output_custom_8_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_6_0_8_False_0', 'output_custom_79_0_9_False_0', 'output_custom_8_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_7_0_8_False_0', 'output_custom_102_0_9_False_0', 'output_custom_8_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_8_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_9_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_10_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_11_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_12_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_13_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_14_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_15_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40']),
+            call(0, ["jump1"])
+        ], any_order=False)
+
+        self.pinproc.aux_send_commands = MagicMock()
+        self.machine.segment_displays.display1.remove_text_by_key("score")
+        self.advance_time_and_run(.1)
+        self.pinproc.aux_send_commands.assert_has_calls([
+            call(0, ['disable', 'output_custom_0_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_1_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_2_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_3_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_4_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_5_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_6_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_7_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_8_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_9_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_10_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_11_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_12_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_13_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_14_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40', 'output_custom_15_0_8_False_0', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_350', 'output_custom_0_0_11_False_0', 'output_custom_0_0_12_False_0', 'delay_2', 'output_custom_0_0_9_False_0', 'output_custom_0_0_10_False_0', 'delay_40']),
+            call(0, ["jump1"])
+        ], any_order=False)
+
+    def _test_enable_exception(self):
         # enable coil which does not have allow_enable
         with self.assertRaises(AssertionError):
             self.machine.coils.c_test.enable()
 
-    def test_allow_enable(self):
+    def _test_allow_enable(self):
         self.machine.coils.c_test_allow_enable.enable()
         number = self.machine.coils.c_test_allow_enable.hw_driver.number
         self.machine.coils.c_test.hw_driver.proc.driver_schedule.assert_called_with(
             number=number, cycle_seconds=0, now=True, schedule=0xffffffff)
 
-    def test_hw_rule_pulse(self):
+    def _test_hw_rule_pulse(self):
+        self.machine.coils.c_slingshot_test.hw_driver.state = MagicMock(return_value=8)
         self.machine.autofires.ac_slingshot_test.enable()
         self.machine.coils.c_slingshot_test.platform.proc.switch_update_rule.assert_any_call(
             40, 'closed_nondebounced',
             {'notifyHost': False, 'reloadActive': True},
-            ["driver_state_pulse"], False)
+            [{'patterEnable': False,
+              'patterOnTime': 0,
+              'timeslots': 0,
+              'futureEnable': False,
+              'state': False,
+              'patterOffTime': 0,
+              'outputDriveTime': 0,
+              'driverNum': 8,
+              'polarity': True,
+              'waitForFirstTimeSlot': False}], False)
+        self.machine.autofires.ac_slingshot_test.disable()
 
-    def test_initial_switches(self):
+    def _test_initial_switches(self):
         self.assertMachineVarEqual(4660, "p_roc_version")
         self.assertMachineVarEqual(22136, "p_roc_revision")
 
@@ -142,7 +247,7 @@ class TestPRoc(MpfTestCase):
         self.assertFalse(self.machine.switch_controller.is_active("s_test_000"))
         self.assertTrue(self.machine.switch_controller.is_active("s_direct"))
 
-    def test_switches(self):
+    def _test_switches(self):
         self.machine.default_platform.proc.switch_update_rule.assert_has_calls([
             call(23, 'closed_debounced', {'notifyHost': True, 'reloadActive': False}, [], False),
             call(23, 'open_debounced', {'notifyHost': True, 'reloadActive': False}, [], False),
@@ -176,7 +281,7 @@ class TestPRoc(MpfTestCase):
         self.advance_time_and_run(.01)
         self.assertFalse(self.machine.switch_controller.is_active("s_test_no_debounce"))
 
-    def test_dmd_update(self):
+    def _test_dmd_update(self):
         # test configure
         self.machine.default_platform.configure_dmd()
 
@@ -215,7 +320,7 @@ class TestPRoc(MpfTestCase):
         # should not be rendered
         assert not dmd.dmd.set_data.called
 
-    def test_pdb_matrix_light(self):
+    def _test_pdb_matrix_light(self):
         # very simple check for matrix config
         self.pinproc.driver_update_group_config.assert_has_calls(
             [call(4, 100, 5, 0, 0, True, True, True, True)]
@@ -223,10 +328,18 @@ class TestPRoc(MpfTestCase):
 
         # test enable of matrix light
         assert not self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_patter.called
+        assert not self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_schedule.called
         self.machine.lights.test_pdb_light.on()
         self.advance_time_and_run(.02)
+        self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_schedule.assert_called_with(
+            cycle_seconds=0, schedule=4294967295, now=True, number=32
+        )
+
+        self.machine.lights.test_pdb_light.on(brightness=128)
+        self.advance_time_and_run(.02)
+
         self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_patter.assert_called_with(
-            32, 8, 0, 0, True
+            32, 1, 1, 0, True
         )
 
         # test disable of matrix light
@@ -235,7 +348,35 @@ class TestPRoc(MpfTestCase):
         self.advance_time_and_run(.1)
         self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_disable.assert_called_with(32)
 
-    def test_pdb_gi_light(self):
+        self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_patter = MagicMock()
+        self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_schedule = MagicMock()
+        self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_disable = MagicMock()
+
+        self.post_event("play_test_show")
+        self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_schedule.assert_called_with(
+            cycle_seconds=0, schedule=4294967295, now=True, number=32
+        )
+
+        self.advance_time_and_run(1)
+        self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_patter.assert_called_with(
+            32, 3, 1, 0, True
+        )
+
+        self.advance_time_and_run(1)
+        self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_disable.assert_called_with(32)
+        self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_disable = MagicMock()
+
+        self.advance_time_and_run(1)
+        self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_schedule.assert_called_with(
+            cycle_seconds=0, schedule=4294967295, now=True, number=32
+        )
+        self.advance_time_and_run(10)
+        self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_schedule.assert_called_with(
+            cycle_seconds=0, schedule=4294967295, now=True, number=32
+        )
+        assert not self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_disable.called
+
+    def _test_pdb_gi_light(self):
         # test gi on
         device = self.machine.lights.test_gi
         num = self.machine.coils.test_gi.hw_driver.number
@@ -258,7 +399,7 @@ class TestPRoc(MpfTestCase):
         device.color([245, 245, 245])
         self.advance_time_and_run(.1)
         device.hw_drivers["white"].driver.hw_driver.proc.driver_patter.assert_has_calls([
-            call(num, 7, 1, 0, True)])
+            call(num, 19, 1, 0, True)])
         device.hw_drivers["white"].driver.hw_driver.proc.driver_patter = MagicMock()
         device.hw_drivers["white"].driver.hw_driver.proc.driver_schedule = MagicMock()
 

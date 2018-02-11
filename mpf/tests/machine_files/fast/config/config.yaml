@@ -1,4 +1,4 @@
-#config_version=4
+#config_version=5
 
 hardware:
     platform: fast
@@ -11,13 +11,14 @@ fast:
 switches:
     s_test:
         number: 7
-        debounce_open: 1A
-        debounce_close: 5
+        platform_settings:
+            debounce_open: 26
+            debounce_close: 5
     s_test_nc:
-        number: 1A
+        number: 26
         type: 'NC'
     s_slingshot_test:
-        number: 16
+        number: 22
     s_flipper:
         number: 1
     s_flipper_eos:
@@ -41,15 +42,15 @@ coils:
     c_slingshot_test:
         number: 7
     c_pulse_pwm32_mask:
-        number: 11
+        number: 17
         default_pulse_power: 0.53
         default_hold_power: 0.40
     c_long_pulse:
-        number: 12
+        number: 18
         default_pulse_ms: 2000
         max_hold_power: 1.0
     c_flipper_main:
-        number: 20
+        number: 32
         default_pulse_ms: 10
         default_hold_power: 0.125
     c_flipper_hold:
@@ -84,6 +85,8 @@ autofire_coils:
 servos:
     servo1:
         number: 3
+    servo20:
+        number: 3-2
 
 flippers:
     f_test_single:
@@ -109,10 +112,10 @@ flippers:
 
 lights:
   test_pdb_light:
-    number: 23
+    number: 35
     subtype: matrix
   test_gi:
-    number: 2A
+    number: 42
     subtype: gi
   test_led:
     number: 2-23

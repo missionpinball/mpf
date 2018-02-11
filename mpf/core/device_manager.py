@@ -1,14 +1,21 @@
 """Contains the DeviceManager base class."""
 from collections import OrderedDict
+from typing import Sized, Iterable, Container, Generic, TypeVar
 
 from mpf.core.utility_functions import Util
 from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.mpf_controller import MpfController
 
+MYPY = False
+if MYPY:   # pragma: no cover
+    from mpf.core.device import Device
+
 
 class DeviceManager(MpfController):
 
-    """Manages devices in a MPF machine."""
+    """Manages all the devices in MPF."""
+
+    config_name = "device_manager"
 
     def __init__(self, machine):
         """Initialize device manager."""
@@ -19,8 +26,13 @@ class DeviceManager(MpfController):
         self.collections = OrderedDict()
         self.device_classes = OrderedDict()  # collection_name: device_class
 
+        # this has to happen before mode load (which is priority 10)
         self.machine.events.add_handler('init_phase_1',
-                                        self._load_device_modules)
+                                        self._load_device_config_spec, priority=20)
+
+        # this has to happen after mode load
+        self.machine.events.add_handler('init_phase_1',
+                                        self._load_device_modules, priority=5)
 
         self.machine.events.add_handler('init_phase_2',
                                         self.create_machinewide_device_control_events,
@@ -35,25 +47,43 @@ class DeviceManager(MpfController):
         return self._monitorable_devices
 
     def register_monitorable_device(self, device):
-        """Register a monitorable device."""
+        """Register a monitorable device.
+
+        Args:
+            device: The device to register.
+        """
         if device.collection not in self._monitorable_devices:
             self._monitorable_devices[device.collection] = {}
         self._monitorable_devices[device.collection][device.name] = device
 
     def notify_device_changes(self, device, notify, old, value):
-        """Notify subscribers about changes in a registered device."""
+        """Notify subscribers about changes in a registered device.
+
+        Args:
+            device: The device that changed.
+            notify:
+            old: The old value.
+            value: The new value.
+
+        """
         self.machine.bcp.interface.notify_device_changes(device, notify, old, value)
 
-    def _load_device_modules(self, **kwargs):
+    def _load_device_config_spec(self, **kwargs):
         del kwargs
-        self.debug_log("Loading devices...")
         for device_type in self.machine.config['mpf']['device_modules']:
-            device_cls = Util.string_to_class(device_type)
+            device_cls = Util.string_to_class(device_type)      # type: Device
 
             if device_cls.get_config_spec():
                 # add specific config spec if device has any
                 self.machine.config_validator.load_device_config_spec(
                     device_cls.config_section, device_cls.get_config_spec())
+
+    def _load_device_modules(self, **kwargs):
+        del kwargs
+        # step 1: create devices in machine collection
+        self.debug_log("Creating devices...")
+        for device_type in self.machine.config['mpf']['device_modules']:
+            device_cls = Util.string_to_class(device_type)      # type: Device
 
             collection_name, config = device_cls.get_config_info()
 
@@ -79,20 +109,28 @@ class DeviceManager(MpfController):
             except KeyError:
                 pass
 
+        self.machine.mode_controller.create_mode_devices()
+
+        # step 2: load config and validate devices
         self.load_devices_config(validate=True)
+        self.machine.mode_controller.load_mode_devices()
+
+        # step 3: initialise devices (mode devices will be initialised when mode is started)
         self.initialize_devices()
 
     def stop_devices(self):
         """Stop all devices in the machine."""
         for device_type in self.machine.config['mpf']['device_modules']:
             device_cls = Util.string_to_class(device_type)
-            collection_name, config = device_cls.get_config_info()
+            collection_name, _ = device_cls.get_config_info()
+            if not hasattr(self.machine, collection_name):
+                continue
             for device in getattr(self.machine, collection_name):
                 if hasattr(device, "stop_device"):
                     device.stop_device()
 
     def create_devices(self, collection_name, config):
-        """Create devices for collection."""
+        """Create devices for a collection."""
         cls = self.device_classes[collection_name]
 
         collection = getattr(self.machine, collection_name)
@@ -172,6 +210,7 @@ class DeviceManager(MpfController):
             for device_name in config:
                 collection[device_name].device_added_system_wide()
 
+    # pylint: disable-msg=too-many-nested-blocks
     def get_device_control_events(self, config):
         """Scan a config dictionary for control_events.
 
@@ -194,7 +233,7 @@ class DeviceManager(MpfController):
                 for device, settings in iter(config[self.collections[collection].config_section].items()):
 
                     control_events = [x for x in settings if
-                                      x.endswith('_events')]
+                                      x.endswith('_events') and x != "control_events"]
 
                     for control_event in control_events:
                         # get events from this device's config
@@ -278,6 +317,31 @@ class DeviceManager(MpfController):
                                                                 method))
 
 
+KT = TypeVar('KT')      # key type.
+VT = TypeVar('VT')      # Value type.
+
+
+class DeviceCollectionType(Sized, Container[KT], Generic[KT, VT], Iterable[VT], extra=dict):    # noqa
+
+    """Type for a device collection."""
+
+    def values(self) -> Iterable[VT]:
+        """Annotate dummy for type annotations."""
+        pass
+
+    def items_tagged(self, tag: str) -> Iterable[VT]:
+        """Annotate dummy for type annotations."""
+        pass
+
+    def __getitem__(self, key: KT) -> VT:
+        """Annotate dummy for type annotations."""
+        pass
+
+    def __getattr__(self, key: str) -> VT:
+        """Annotate dummy for type annotations."""
+        pass
+
+
 class DeviceCollection(CaseInsensitiveDict):
 
     """A collection of Devices.
@@ -319,6 +383,7 @@ class DeviceCollection(CaseInsensitiveDict):
         Args:
             tag: A string of the tag name which specifies what devices are
                 returned.
+
         Returns:
             A list of device objects. If no devices are found with that tag, it
             will return an empty list.
@@ -335,6 +400,7 @@ class DeviceCollection(CaseInsensitiveDict):
         Args:
             tag: A string of the tag name which specifies what devices are
                 returned.
+
         Returns:
             A list of string names of devices. If no devices are found with
             that tag, it will return an empty list.
@@ -352,6 +418,7 @@ class DeviceCollection(CaseInsensitiveDict):
             tag: A string of the tag name which specifies what devices are
                 returned. All devices will be returned except those with this
                 tag.
+
         Returns:
             A list of device objects. If no devices are found with that tag, it
             will return an empty list.
@@ -367,6 +434,7 @@ class DeviceCollection(CaseInsensitiveDict):
 
         Args:
             name: The string of the device name you want to check.
+
         Returns:
             True or False, depending on whether the name is a valid device or
             not.
@@ -378,6 +446,7 @@ class DeviceCollection(CaseInsensitiveDict):
         for name, obj in self.items():
             if obj.config['number'] == number:
                 return self[name]
+        raise AssertionError("Object not found for number {}".format(number))
 
     def multilist_to_names(self, multilist):
         """Convert list of devices to string list.
@@ -405,7 +474,10 @@ class DeviceCollection(CaseInsensitiveDict):
         return [x.name for x in multilist]
 
     def multilist_to_objects(self, multilist):
-        """Same as multilist_to_names() method, except it returns a list of objects instead of a list of strings."""
+        """Convert list of devices to a list of objects.
+
+        Same as multilist_to_names() method, except it return a list of objects instead of a list of strings.
+        """
         multilist = Util.string_to_list(multilist)
         final_list = list()
 

@@ -72,6 +72,3 @@ class RandomEventPlayer(ConfigPlayer):
     def get_list_config(self, value):
         """Parse list."""
         return {"events": value}
-
-
-player_cls = RandomEventPlayer

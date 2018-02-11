@@ -1,7 +1,7 @@
 """OPP solenoid wings."""
 import logging
 from collections import namedtuple
-from typing import Optional
+from typing import Optional, Dict
 
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
@@ -22,7 +22,7 @@ class OPPSolenoid(DriverPlatformInterface):
         self.switch_rule = None        # type: SwitchRule
         self.switches = []
         self._config_state = None
-        self.platform_settings = None
+        self.platform_settings = dict()     # type: Dict
 
     def get_board_name(self):
         """Return OPP chain and addr."""
@@ -36,6 +36,8 @@ class OPPSolenoid(DriverPlatformInterface):
         if not recycle:
             return 0
         elif self.platform_settings['recycle_factor']:
+            if self.platform_settings['recycle_factor'] > 7:
+                raise AssertionError("Maximum recycle_factor allowed is 7")
             return self.platform_settings['recycle_factor']
         else:
             # default to two times pulse_ms
@@ -105,8 +107,8 @@ class OPPSolenoid(DriverPlatformInterface):
         """Set and apply a switch rule."""
         new_rule = SwitchRule(pulse_settings, hold_settings, recycle)
         if self.switch_rule and self.switch_rule != new_rule:
-            raise AssertionError("Cannot set two rule with different driver settings in opp. Old: {} New: {}",
-                                 self.switch_rule, new_rule)
+            raise AssertionError("Cannot set two rule with different driver settings in opp. Old: {} New: {}".format(
+                self.switch_rule, new_rule))
         self.switch_rule = new_rule
         self.apply_switch_rule()
 
@@ -135,17 +137,28 @@ class OPPSolenoid(DriverPlatformInterface):
             cmd = 0
             hold = int(hold_settings.power * 16)
             if hold >= 16:
-                hold = 15
                 if self.solCard.platform.minVersion >= 0x00020000:
                     # set flag for full power
                     cmd += ord(OppRs232Intf.CFG_SOL_ON_OFF)
+                    hold = 0
+                else:
+                    hold = 15
 
         minimum_off = self.get_minimum_off_time(recycle)
-
-        if self.switch_rule:
-            cmd += ord(OppRs232Intf.CFG_SOL_USE_SWITCH)
-
         _, _, solenoid = self.number.split('-')
+
+        # Before version 0.2.0.0 set solenoid input wasn't available.
+        # CFG_SOL_USE_SWITCH was used to enable/disable a solenoid.  This
+        # will work as long as switches are added using _add_switch_coil_mapping
+        if self.switch_rule:
+            if self.solCard.platform.minVersion < 0x00020000:
+                cmd += ord(OppRs232Intf.CFG_SOL_USE_SWITCH)
+            elif str(((int(solenoid) & 0x0c) << 1) | (int(solenoid) & 0x03)) in\
+                    [switch.split('-')[2] for switch in self.switches]:
+                # If driver is using matching switch set CFG_SOL_USE_SWITCH
+                # in case config happens after set switch command
+                cmd += ord(OppRs232Intf.CFG_SOL_USE_SWITCH)
+
         pulse_len = pulse_settings.duration
 
         msg = bytearray()
@@ -169,20 +182,20 @@ class OPPSolenoidCard(object):
 
     # pylint: disable-msg=too-many-arguments
     def __init__(self, chain_serial, addr, mask, sol_dict, platform):
-        """Initialise OPP solennoid card."""
+        """Initialise OPP solenoid card."""
         self.log = logging.getLogger('OPPSolenoid')
         self.chain_serial = chain_serial
         self.addr = addr
         self.mask = mask
         self.platform = platform
         self.state = 0
+        self.cardNum = str(addr - ord(OppRs232Intf.CARD_ID_GEN2_CARD))
 
         self.log.debug("Creating OPP Solenoid at hardware address: 0x%02x", addr)
 
-        card = str(addr - ord(OppRs232Intf.CARD_ID_GEN2_CARD))
         for index in range(0, 16):
             if ((1 << index) & mask) != 0:
-                number = chain_serial + '-' + card + '-' + str(index)
+                number = chain_serial + '-' + self.cardNum + '-' + str(index)
                 opp_sol = OPPSolenoid(self, number)
                 opp_sol.config = {}
                 sol_dict[number] = opp_sol

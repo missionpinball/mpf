@@ -14,18 +14,28 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
     def __init__(self, machine: MachineController, name: str) -> None:
         """Initialise mode device."""
         super().__init__(machine, name)
-        self.loaded_in_mode = None      # type: Mode
+        self.mode = None    # type: Mode
 
-    def device_added_to_mode(self, mode: Mode, player: Player) -> None:
-        """Called when a device is created by a mode.
+    def device_added_to_mode(self, mode: Mode) -> None:
+        """Add device to a running mode.
+
+        Args:
+            mode: Mode which loaded the device
+        """
+        del mode
+        self._initialize()
+
+    def device_loaded_in_mode(self, mode: Mode, player: Player) -> None:
+        """Load device in running mode.
+
+        The mode just started.
 
         Args:
             mode: Mode which loaded the device
             player: Current active player
         """
-        del mode
         del player
-        self._initialize()
+        self.mode = mode
 
     @property
     def can_exist_outside_of_game(self) -> bool:
@@ -43,7 +53,7 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
         pass
 
     def add_control_events_in_mode(self, mode: Mode) -> None:
-        """Called on mode start if this device has any mode control events.
+        """Add control events in mode if this device has any mode control events.
 
         Args:
             mode: Mode which loaded the device
@@ -65,5 +75,4 @@ class ModeDevice(Device, metaclass=abc.ABCMeta):
             mode: Mode which stopped
         """
         del mode
-        raise NotImplementedError(
-            '{} does not have a device_removed_from_mode() method'.format(self))
+        self.mode = None

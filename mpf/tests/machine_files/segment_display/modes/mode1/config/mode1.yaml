@@ -1,0 +1,12 @@
+#config_version=5
+
+mode:
+  priority: 100
+
+segment_display_player:
+  mode_mode1_started:
+    display1:
+      text: "MODE1"
+    display2:
+      text: "MODE1"
+      expire: 10s

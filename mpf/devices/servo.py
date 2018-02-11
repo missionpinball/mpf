@@ -36,7 +36,7 @@ class Servo(SystemWideDevice):
                                             self._position_event,
                                             position=position)
 
-        self.hw_servo = self.platform.configure_servo(self.config)
+        self.hw_servo = self.platform.configure_servo(self.config['number'])
         self._position = self.config['reset_position']
 
         if self.config['include_in_ball_search']:

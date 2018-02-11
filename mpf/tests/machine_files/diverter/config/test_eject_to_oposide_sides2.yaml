@@ -1,0 +1,40 @@
+#config_version=5
+
+config:
+- config.yaml
+
+diverters:
+    d_test_hold:
+        activation_coil: c_diverter
+        type: hold
+        feeder_devices: test_trough, test_trough2
+        targets_when_active: playfield
+        targets_when_inactive: test_target
+        allow_multiple_concurrent_ejects_to_same_side: False
+        cool_down_time: 3s
+        debug: True
+
+coils:
+    eject_coil3:
+        number: 10
+
+switches:
+    s_ball_switch4:
+        number: 10
+    s_ball_switch5:
+        number: 11
+    s_ball_switch6:
+        number: 12
+
+ball_devices:
+    test_trough2:
+        eject_coil: eject_coil3
+        ball_switches: s_ball_switch4, s_ball_switch5, s_ball_switch6
+        confirm_eject_type: target
+        eject_targets: test_target, playfield
+        tags: trough, drain, home
+
+virtual_platform_start_active_switches:
+  - s_ball_switch4
+  - s_ball_switch5
+  - s_ball_switch6

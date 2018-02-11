@@ -19,7 +19,5 @@ class TriggerPlayer(DeviceConfigPlayer):
     def get_express_config(self, value):
         """Not supported."""
         del value
-        raise NotImplementedError("Trigger Player does not support express config")
-
-
-player_cls = TriggerPlayer
+        raise NotImplementedError(
+            "Trigger Player does not support express config")

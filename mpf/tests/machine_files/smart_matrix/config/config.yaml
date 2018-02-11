@@ -1,7 +1,23 @@
-# config_version=4
+# config_version=5
 hardware:
   rgb_dmd: smartmatrix
 
 smartmatrix:
+  smartmatrix_1:
     port: com4
     baud: 3400000
+  smartmatrix_2:
+    port: com5
+    baud: 3400000
+    old_cookie: true
+
+displays:
+  dmd:
+    width: 128
+    height: 32
+
+rgb_dmds:
+  smartmatrix_1:
+    hardware_brightness: .5
+  smartmatrix_2:
+    hardware_brightness: .5

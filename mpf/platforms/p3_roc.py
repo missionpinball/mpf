@@ -11,13 +11,19 @@ https://github.com/preble/pyprocgame
 """
 
 import logging
+import asyncio
 
-from mpf.core.platform import I2cPlatform, AccelerometerPlatform, DriverConfig
+from mpf.core.platform import I2cPlatform, AccelerometerPlatform, DriverConfig, SwitchConfig
+from mpf.platforms.interfaces.accelerometer_platform_interface import AccelerometerPlatformInterface
 from mpf.platforms.p_roc_common import PDBConfig, PROCBasePlatform
 from mpf.platforms.p_roc_devices import PROCDriver
 
+MYPY = False
+if MYPY:   # pragma: no cover
+    from mpf.devices.accelerometer import Accelerometer
 
-class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
+
+class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
 
     """Platform class for the P3-ROC hardware controller.
 
@@ -30,7 +36,7 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
 
     def __init__(self, machine):
         """Initialise and connect P3-Roc."""
-        super(HardwarePlatform, self).__init__(machine)
+        super().__init__(machine)
         self.log = logging.getLogger('P3-ROC')
         self.debug_log("Configuring P3-ROC hardware.")
 
@@ -52,7 +58,7 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
         self.pdbconfig = PDBConfig(self.proc, self.machine.config, self.pinproc.DriverCount)
 
         self.acceleration = [0] * 3
-        self.accelerometer_device = None
+        self.accelerometer_device = None    # type: PROCAccelerometer
 
     def __repr__(self):
         """Return string representation."""
@@ -62,10 +68,29 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
         """Write an 8-bit value to the I2C bus of the P3-Roc."""
         self.proc.write_data(7, address << 9 | register, value)
 
+    @asyncio.coroutine
     def i2c_read8(self, address, register):
         """Read an 8-bit value from the I2C bus of the P3-Roc."""
         return self.proc.read_data(7, address << 9 | register) & 0xFF
 
+    @asyncio.coroutine
+    def i2c_read_block(self, address, register, count):
+        """Read block via I2C."""
+        result = []
+        position = 0
+        while position < count:
+            if count - position == 1:
+                data = yield from self.i2c_read8(address, register + position)
+                result.append(data)
+                position += 1
+            else:
+                data = yield from self.i2c_read16(address, register)
+                result.append((data >> 8) & 0xFF)
+                result.append(data & 0xFF)
+                position += 2
+        return result
+
+    @asyncio.coroutine
     def i2c_read16(self, address, register):
         """Read an 16-bit value from the I2C bus of the P3-Roc."""
         return self.proc.read_data(7, address << 9 | 1 << 8 | register)
@@ -84,11 +109,14 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
 
     def configure_accelerometer(self, config, callback):
         """Configure the accelerometer on the P3-ROC."""
-        if config['number'] != "1":
-            raise AssertionError("P3-ROC only has one accelerometer. Use number 1")
+        config = self.machine.config_validator.validate_config("p3_roc_accelerometer", config)
+        if config['number'] != 1:
+            raise AssertionError("P3-ROC only has one accelerometer. Use number 1. Found: {}".format(config))
 
         self.accelerometer_device = PROCAccelerometer(callback)
         self._configure_accelerometer()
+
+        return self.accelerometer_device
 
     def _configure_accelerometer(self):
 
@@ -117,6 +145,22 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
         # flush data to proc
         self.proc.flush()
 
+    def get_info_string(self):
+        """Dump infos about boards."""
+        infos = "Firmware Version: {} Firmware Revision: {} Hardware Board ID: {}\n".format(
+            self.version, self.revision, self.hardware_version)
+
+        input_boards = set()
+        for switch, state in enumerate(self.proc.switch_get_states()):
+            if state != 3:
+                input_boards.add(switch // 16)
+
+        infos += "SW-16 boards found:\n"
+        for input_board in input_boards:
+            infos += " - Board: {} Switches: 16\n".format(input_board)
+
+        return infos
+
     def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
         """Create a P3-ROC driver.
 
@@ -143,23 +187,20 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
 
         return proc_driver_object
 
-    def configure_switch(self, config):
+    def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict):
         """Configure a P3-ROC switch.
 
         Args:
             config: Dictionary of settings for the switch. In the case
                 of the P3-ROC, it uses the following:
 
-        Returns:
-            switch : A reference to the switch object that was just created.
-            proc_num : Integer of the actual hardware switch number the P3-ROC
-                uses to refer to this switch. Typically your machine
-                configuration files would specify a switch number like `SD12` or
-                `7/5`. This `proc_num` is an int between 0 and 255.
+        Returns: A configured switch object.
         """
-        proc_num = self.pdbconfig.get_proc_switch_number(str(config['number']))
+        del platform_config
+        proc_num = self.pdbconfig.get_proc_switch_number(str(number))
         return self._configure_switch(config, proc_num)
 
+    @asyncio.coroutine
     def get_hw_switch_states(self):
         """Read in and set the initial switch state.
 
@@ -234,14 +275,14 @@ class HardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform):
         self.proc.flush()
 
 
-class PROCAccelerometer(object):
+class PROCAccelerometer(AccelerometerPlatformInterface):
 
     """The accelerometer on the P3-Roc."""
 
-    def __init__(self, callback):
+    def __init__(self, callback: "Accelerometer") -> None:
         """Remember the callback."""
-        self.callback = callback
+        self.callback = callback    # type: Accelerometer
 
-    def update_acceleration(self, x, y, z):
+    def update_acceleration(self, x: float, y: float, z: float) -> None:
         """Call the callback."""
         self.callback.update_acceleration(x, y, z)

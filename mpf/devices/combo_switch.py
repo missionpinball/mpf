@@ -2,7 +2,9 @@
 
 from mpf.core.delays import DelayManager, DelayManagerRegistry
 from mpf.core.device_monitor import DeviceMonitor
+from mpf.core.mode import Mode
 from mpf.core.mode_device import ModeDevice
+from mpf.core.player import Player
 from mpf.core.system_wide_device import SystemWideDevice
 
 
@@ -26,18 +28,31 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
         self.delay_registry = DelayManagerRegistry(self.machine)
         self.delay = DelayManager(self.delay_registry)
 
-    def validate_and_parse_config(self, config: dict, is_mode_config: bool) -> dict:
+    def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None) -> dict:
         """Validate and parse config."""
-        config = super().validate_and_parse_config(config, is_mode_config)
+        config = super().validate_and_parse_config(config, is_mode_config, debug_prefix)
 
         for state in self.states:
+            if not config['events_when_{}'.format(state)]:
+                config['events_when_{}'.format(state)] = [
+                    "{}_{}".format(self.name, state)]
+        for state in ["switches_1", "switches_2"]:
             if not config['events_when_{}'.format(state)]:
                 config['events_when_{}'.format(state)] = [
                     "{}_{}".format(self.name, state)]
 
         return config
 
-    def _initialize(self):
+    def device_added_system_wide(self):
+        """Add event handlers."""
+        super().device_added_system_wide()
+        self._add_switch_handlers()
+
+    def device_loaded_in_mode(self, mode: Mode, player: Player):
+        """Add event handlers."""
+        self._add_switch_handlers()
+
+    def _add_switch_handlers(self):
         if self.config['tag_1']:
             for tag in self.config['tag_1']:
                 for switch in self.machine.switches.items_tagged(tag):
@@ -156,6 +171,7 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
         self.debug_log('Switches_1 has passed the hold time and is now '
                        'active')
         self._switches_1_active = self.machine.clock.get_time()
+        self.delay.remove("switch_2_only")
 
         if self._switches_2_active:
             if (self.config['max_offset_time'] >= 0 and
@@ -171,11 +187,15 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
                 return
 
             self._switch_state('both')
+        elif self.config['max_offset_time'] >= 0:
+            self.delay.add_if_doesnt_exist(self.config['max_offset_time'] * 1000, self._post_only_one_active_event,
+                                           "switch_1_only", number=1)
 
     def _activate_switches_2(self):
         self.debug_log('Switches_2 has passed the hold time and is now '
                        'active')
         self._switches_2_active = self.machine.clock.get_time()
+        self.delay.remove("switch_1_only")
 
         if self._switches_1_active:
             if (self.config['max_offset_time'] >= 0 and
@@ -189,6 +209,13 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
                 return
 
             self._switch_state('both')
+        elif self.config['max_offset_time'] >= 0:
+            self.delay.add_if_doesnt_exist(self.config['max_offset_time'] * 1000, self._post_only_one_active_event,
+                                           "switch_2_only", number=2)
+
+    def _post_only_one_active_event(self, number):
+        for event in self.config['events_when_switches_{}'.format(number)]:
+            self.machine.events.post(event)
 
     def _release_switches_1(self):
         self.debug_log('Switches_1 has passed the release time and is now '
@@ -239,6 +266,18 @@ class ComboSwitch(SystemWideDevice, ModeDevice):
 
             Either switch 1 or switch 2 has been released for at
             least the ``release_time:`` but the other switch is still active.
+
+            ..rubric:: switches_1
+
+            Only switches_1 is active. max_offset_time has passed and this hit
+            cannot become both later on. Only emmited when ``max_offset_time:``
+            is defined.
+
+            ..rubric:: switches_2
+
+            Only switches_2 is active. max_offset_time has passed and this hit
+            cannot become both later on. Only emmited when ``max_offset_time:``
+            is defined.
 
             ..rubric:: inactive
 

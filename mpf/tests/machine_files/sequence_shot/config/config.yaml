@@ -1,0 +1,39 @@
+#config_version=5
+
+modes:
+  - mode1
+
+switches:
+  seq2_1:
+    number:
+  seq2_2:
+    number:
+  seq2_3:
+    number:
+  seq2_cancel:
+    number:
+  seq2_delay:
+    number:
+
+sequence_shots:
+    sequence1:
+        event_sequence:
+            - event1
+            - event2
+            - event3
+        cancel_events: cancel
+        delay_event_list:
+            delay1: 1s
+        sequence_timeout: 3s
+    sequence2:
+        switch_sequence:
+            - seq2_1
+            - seq2_2
+            - seq2_3
+        cancel_switches: seq2_cancel
+        delay_switch_list:
+            seq2_delay: 1s
+        sequence_timeout: 3s
+    sequence3:
+        event_sequence:
+            - event3_1

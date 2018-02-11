@@ -1,8 +1,8 @@
-from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.MpfGameTestCase import MpfGameTestCase
 from unittest.mock import MagicMock
 
 
-class TestBallSearch(MpfTestCase):
+class TestBallSearch(MpfGameTestCase):
 
     def getConfigFile(self):
         if self._testMethodName == "test_missing_initial" or self._testMethodName == "test_missing_initial2":
@@ -88,6 +88,16 @@ class TestBallSearch(MpfTestCase):
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
         self.machine.switch_controller.process_switch("s_ball_switch2", 1)
         self.machine.switch_controller.process_switch("s_ball_switch3", 1)
+
+        # motor moves to reset position
+        self.assertEqual("enabled", self.machine.coils["c_motor_run"].hw_driver.state)
+
+        self.machine.switch_controller.process_switch("s_position_down", 1)
+        self.advance_time_and_run(1)
+
+        # and stops
+        self.assertEqual("disabled", self.machine.coils["c_motor_run"].hw_driver.state)
+
         self.advance_time_and_run(1)
 
         self.machine.switch_controller.process_switch("s_start", 1)
@@ -155,6 +165,21 @@ class TestBallSearch(MpfTestCase):
         self.advance_time_and_run(5)
         self.assertEqual(0.0, self.machine.servos.servo1.hw_servo.current_position)
 
+        # test motor. should be running
+        self.assertEqual("enabled", self.machine.coils["c_motor_run"].hw_driver.state)
+
+        # it leaves the down position
+        self.machine.switch_controller.process_switch("s_position_down", 0)
+        self.advance_time_and_run(1)
+
+        # moves by the original position
+        self.machine.switch_controller.process_switch("s_position_down", 0)
+        self.advance_time_and_run(1)
+
+        # it leaves the down position again
+        self.machine.switch_controller.process_switch("s_position_down", 0)
+        self.advance_time_and_run(0)
+
         # ball drains
         self.machine.switch_controller.process_switch("s_ball_switch1", 1)
         self.advance_time_and_run(1)
@@ -163,6 +188,14 @@ class TestBallSearch(MpfTestCase):
 
         # servo should return to its position
         self.assertEqual(0.7, self.machine.servos.servo1.hw_servo.current_position)
+
+        # motor keeps running
+        self.assertEqual("enabled", self.machine.coils["c_motor_run"].hw_driver.state)
+
+        # until it reaches its original position
+        self.machine.switch_controller.process_switch("s_position_down", 1)
+        self.advance_time_and_run(1)
+        self.assertEqual("disabled", self.machine.coils["c_motor_run"].hw_driver.state)
 
     def test_ball_search_iterations_and_give_up_with_new_ball(self):
         self.machine.ball_controller.num_balls_known = 0
@@ -363,6 +396,33 @@ class TestBallSearch(MpfTestCase):
         self.machine.switch_controller.process_switch("s_start", 0)
         self.advance_time_and_run(1)
         self.assertNotEqual(None, self.machine.game)
+
+    def test_give_up_with_end_ball(self):
+        self.machine.playfields.playfield.config['ball_search_failed_action'] = "end_ball"
+
+        self.machine.ball_controller.num_balls_known = 0
+        self.machine.switch_controller.process_switch("s_ball_switch1", 1)
+        self.machine.switch_controller.process_switch("s_ball_switch2", 1)
+        self.machine.switch_controller.process_switch("s_ball_switch3", 1)
+        self.advance_time_and_run(1)
+
+        self.start_game()
+        self.advance_time_and_run(10)
+        self.assertBallNumber(1)
+        self.assertBallsOnPlayfield(1)
+        self.assertBallsInPlay(1)
+        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.enabled)
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
+
+        self.advance_time_and_run(30)
+        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.enabled)
+        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)
+
+        # wait for ball search to fail
+        self.advance_time_and_run(100)
+        self.assertBallNumber(2)
+        self.advance_time_and_run(10)
+        self.assertBallsOnPlayfield(1)
 
     def test_give_up_with_no_more_balls(self):
         self.machine.ball_controller.num_balls_known = 0

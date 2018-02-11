@@ -1,0 +1,86 @@
+#config_version=5
+
+machine:
+  balls_installed: 5
+  min_balls: 1
+
+virtual_platform_start_active_switches: s_trough_1 s_trough_2 s_trough_3 s_trough_4 s_trough_5
+
+switches:
+  s_start:
+    number: s13
+    label:
+    tags: start, player, high_score_select
+  s_ball_launch:
+    number: s11
+    label:
+    tags: plunger, player
+  s_shooter_lane:
+    number: s27
+    label:
+    tags:
+  s_trough_1:
+    number: s31
+    label:
+    tags:
+    type: NC
+  s_trough_2:
+    number: s32
+    label:
+    tags:
+    type: NC
+  s_trough_3:
+    number: s33
+    label:
+    tags:
+    type: NC
+  s_trough_4:
+    number: s34
+    label:
+    tags:
+    type: NC
+  s_trough_5:
+    number: s35
+    label:
+    tags:
+    type: NC
+  s_trough_jam:
+    number: s36
+    label:
+    tags:
+    type: NC
+  s_standup:
+    number: s38
+    label:
+    tags: playfield_active
+
+coils:
+  c_trough_eject:
+    number: c01
+    label:
+    tags:
+    default_pulse_ms: 25
+  c_plunger_lane:
+    number: c03
+    label:
+    tags:
+    default_pulse_ms: 25
+
+ball_devices:
+  trough:
+    tags: trough, home, drain
+    ball_switches: s_trough_1, s_trough_2, s_trough_3, s_trough_4, s_trough_5, s_trough_jam
+    eject_coil: c_trough_eject
+    confirm_eject_type: target
+    eject_targets: shooter_lane
+    jam_switch: s_trough_jam
+
+  shooter_lane:
+    ball_switches: s_shooter_lane
+    eject_coil: c_plunger_lane
+    player_controlled_eject_event: sw_plunger
+
+playfields:
+    playfield:
+        default_source_device: shooter_lane
+        tags: default

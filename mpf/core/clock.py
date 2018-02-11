@@ -47,7 +47,7 @@ class ClockBase(LogMixin):
 
     """A clock object with event support."""
 
-    def __init__(self, machine=None):
+    def __init__(self, machine=None, loop=None):
         """Initialise clock."""
         super().__init__()
         self.machine = machine
@@ -62,28 +62,38 @@ class ClockBase(LogMixin):
             self.configure_logging('Clock', None, None)
 
         self.debug_log("Starting tickless clock")
-        self.loop = self._create_event_loop()
+        if not loop:
+            self.loop = self._create_event_loop()   # type: asyncio.BaseEventLoop
+        else:
+            self.loop = loop                        # type: asyncio.BaseEventLoop
 
     # pylint: disable-msg=no-self-use
     def _create_event_loop(self):
+        try:
+            import uvloop
+        except ImportError:
+            pass
+        else:
+            asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
         return asyncio.get_event_loop()
 
-    def run(self):
+    def run(self, stop_future):
         """Run the clock."""
-        self.loop.run_forever()
+        self.loop.run_until_complete(stop_future)
 
     def get_time(self):
         """Get the last tick made by the clock."""
         return self.loop.time()
 
-    @asyncio.coroutine
     def start_server(self, client_connected_cb, host=None, port=None, **kwd):
         """Start a server."""
-        yield from asyncio.streams.start_server(client_connected_cb, host, port, **kwd)
+        return asyncio.start_server(client_connected_cb, host, port, loop=self.loop, **kwd)
 
     def open_connection(self, host=None, port=None, *,
                         limit=None, **kwds):
-        """A wrapper for create_connection() returning a (reader, writer) pair.
+        """Open connection using asyncio.
+
+        Wrapper for create_connection() returning a (reader, writer) pair.
 
         The reader returned is a StreamReader instance; the writer is a
         StreamWriter instance.
@@ -108,7 +118,9 @@ class ClockBase(LogMixin):
     @asyncio.coroutine
     def open_serial_connection(self, limit=None, **kwargs) ->\
             Generator[int, None, Tuple[asyncio.StreamReader, asyncio.StreamWriter]]:
-        """A wrapper for create_serial_connection() returning a (reader, writer) pair.
+        """Open a serial connection using asyncio.
+
+        A wrapper for create_serial_connection() returning a (reader, writer) pair.
 
         The reader returned is a StreamReader instance; the writer is a StreamWriter instance.
 
@@ -185,7 +197,7 @@ class ClockBase(LogMixin):
         Args:
             event: Event to cancel
         """
-        if isinstance(event, (asyncio.Handle, PeriodicTask)):
+        try:
             event.cancel()
-        else:
-            raise AssertionError("Broken unschedule")
+        except:     # pylint: disable-msg=broad-except
+            raise AssertionError("Broken unschedule: {} {}".format(event, type(event)))

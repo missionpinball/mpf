@@ -26,29 +26,74 @@ class LightPlayer(DeviceConfigPlayer):
             except KeyError:
                 s['priority'] = priority
             if isinstance(light, str):
-                if light in self.machine.lights:
-                    self._light_named_color(light, instance_dict, full_context, **s)
-                else:
-                    light_list = Util.string_to_list(light)
-                    if len(light_list) > 1:
-                        for light1 in light_list:
-                            self._light_named_color(light1, instance_dict, full_context, **s)
-                    else:
-                        # TODO: this case fails silently if leds do not exist
-                        for light1 in self.machine.lights.items_tagged(light):
-                            self._light_color(light1, instance_dict, full_context, **s)
+                light_names = Util.string_to_list(light)
+                for light_name in light_names:
+                    # skip non-replaces placeholders
+                    if not light_name or light_name[0:1] == "(" and light_name[-1:] == ")":
+                        continue
+                    self._light_named_color(light_name, instance_dict, full_context, **s)
             else:
                 self._light_color(light, instance_dict, full_context, **s)
 
-    def _light_named_color(self, light_name, instance_dict, full_context, color, **s):
-        light = self.machine.lights[light_name]
-        self._light_color(light, instance_dict, full_context, color, **s)
+    def _remove(self, settings, context, priority):
+        instance_dict = self._get_instance_dict(context)
+        full_context = self._get_full_context(context)
+
+        for light, s in settings.items():
+            s = deepcopy(s)
+            try:
+                s['priority'] += priority
+            except KeyError:
+                s['priority'] = priority
+            if isinstance(light, str):
+                light_names = Util.string_to_list(light)
+                for light_name in light_names:
+                    self._light_remove_named(light_name, instance_dict, full_context, s.get("fade_ms", None))
+            else:
+                self._light_remove(light, instance_dict, full_context, s.get("fade_ms", None))
+
+    def _light_remove_named(self, light_name, instance_dict, full_context, fade_ms):
+        try:
+            lights = [self.machine.lights[light_name]]
+        except KeyError:
+            lights = self.machine.lights.items_tagged(light_name)
+
+        for light in lights:
+            self._light_remove(light, instance_dict, full_context, fade_ms)
 
     @staticmethod
-    def _light_color(light, instance_dict, full_context, color, **s):
-        if color == "on":
-            color = light.config['default_on_color']
+    def _light_remove(light, instance_dict, full_context, fade_ms):
+        light.remove_from_stack_by_key(full_context, fade_ms)
+        try:
+            del instance_dict[light.name]
+        except KeyError:
+            pass
+
+    def handle_subscription_change(self, value, settings, priority, context):
+        """Handle subscriptions."""
+        if value:
+            self.play(settings, context, "", priority)
         else:
+            self._remove(settings, context, priority)
+
+    def _light_named_color(self, light_name, instance_dict,
+                           full_context, color, **s):
+        try:
+            lights = [self.machine.lights[light_name]]
+        except KeyError:
+            lights = self.machine.lights.items_tagged(light_name)
+
+        if not lights:
+            raise AssertionError("Could not find light or tag {} in {}".format(light_name, full_context))
+
+        for light in lights:
+            self._light_color(light, instance_dict, full_context, color, **s)
+
+    def _light_color(self, light, instance_dict, full_context, color, **s):
+        if color == "stop":
+            self._light_remove(light, instance_dict, full_context, s.get("fade_ms", None))
+            return
+        if color != "on":
             # hack to keep compatibility for matrix_light values
             if len(color) == 1:
                 color = "0" + color + "0" + color + "0" + color
@@ -85,5 +130,3 @@ class LightPlayer(DeviceConfigPlayer):
         super().get_full_config(value)
         value['fade_ms'] = value.pop('fade')
         return value
-
-player_cls = LightPlayer

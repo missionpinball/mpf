@@ -1,5 +1,5 @@
 """Device that implements a ball save."""
-from typing import TYPE_CHECKING, Optional
+from typing import Optional
 
 from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
@@ -8,7 +8,8 @@ from mpf.core.mode import Mode
 from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
 
-if TYPE_CHECKING:
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController
     from mpf.devices.playfield import Playfield
 
@@ -45,9 +46,9 @@ class BallSave(SystemWideDevice, ModeDevice):
         """Return true if this device can exist outside of a game."""
         return True
 
-    def validate_and_parse_config(self, config: dict, is_mode_config: bool) -> dict:
+    def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None) -> dict:
         """Make sure timer_start_events are not in enable_events."""
-        config = super().validate_and_parse_config(config, is_mode_config)
+        config = super().validate_and_parse_config(config, is_mode_config, debug_prefix)
 
         for event in config['timer_start_events']:
             if event in config['enable_events']:

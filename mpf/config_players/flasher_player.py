@@ -21,7 +21,9 @@ class FlasherPlayer(DeviceConfigPlayer):
 
         for flasher, s in settings.items():
             if isinstance(flasher, str):
-                self._flash(self.machine.lights[flasher], duration_ms=s['ms'], key=context)
+                self._flash(self.machine.lights[flasher],
+                            duration_ms=s['ms'],
+                            key=context)
             else:
                 self._flash(flasher, duration_ms=s['ms'], key=context)
 
@@ -29,11 +31,10 @@ class FlasherPlayer(DeviceConfigPlayer):
         light.color("white", fade_ms=0, key=key)
         self.delay.add(duration_ms, self._remove_flash, light=light, key=key)
 
-    def _remove_flash(self, light, key):
-        light.remove_from_stack_by_key(key=key)
+    @staticmethod
+    def _remove_flash(light, key):
+        light.remove_from_stack_by_key(key=key, fade_ms=0)
 
     def get_express_config(self, value):
         """Parse express config."""
         return dict(ms=value)
-
-player_cls = FlasherPlayer

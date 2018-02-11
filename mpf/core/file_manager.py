@@ -61,12 +61,11 @@ class FileInterface(object):
         """
         raise NotImplementedError
 
-    def load(self, filename, verify_version=False, halt_on_error=True,
-             round_trip=False):
+    def load(self, filename, verify_version=False, halt_on_error=True):
         """Load file."""
         raise NotImplementedError
 
-    def save(self, filename, data, **kwargs):
+    def save(self, filename, data):
         """Save file."""
         raise NotImplementedError
 
@@ -142,7 +141,7 @@ class FileManager(object):
             return None
 
     @staticmethod
-    def load(filename, verify_version=False, halt_on_error=True, round_trip=False):
+    def load(filename, verify_version=False, halt_on_error=True):
         """Load a file by name."""
         if not FileManager.initialized:
             FileManager.init()
@@ -163,17 +162,14 @@ class FileManager(object):
         ext = os.path.splitext(file)[1]
 
         try:
-            config = FileManager.file_interfaces[ext].load(file,
-                                                           verify_version,
-                                                           halt_on_error,
-                                                           round_trip)
+            interface = FileManager.file_interfaces[ext]
         except KeyError:
             raise AssertionError("No config file processor available for file type {}".format(ext))
 
-        return config
+        return interface.load(file, verify_version, halt_on_error)
 
     @staticmethod
-    def save(filename, data, **kwargs):
+    def save(filename, data):
         """Save data to file."""
         ext = os.path.splitext(filename)[1]
 
@@ -181,8 +177,7 @@ class FileManager(object):
         temp_file = os.path.dirname(filename) + os.sep + "_" + os.path.basename(filename)
 
         try:
-            FileManager.file_interfaces[ext].save(temp_file, data,
-                                                  **kwargs)
+            FileManager.file_interfaces[ext].save(temp_file, data)
         except KeyError:
             raise AssertionError("No config file processor available for file type {}".format(ext))
 

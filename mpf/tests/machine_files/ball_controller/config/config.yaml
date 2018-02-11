@@ -1,4 +1,4 @@
-#config_version=4
+#config_version=5
 
 game:
     balls_per_game: 1
@@ -34,6 +34,11 @@ switches:
         number:
         tags: playfield_active
 
+playfields:
+    playfield:
+        default_source_device: test_launcher
+        tags: default
+
 ball_devices:
     test_trough:
         eject_coil: eject_coil1
@@ -44,7 +49,6 @@ ball_devices:
     test_launcher:
         eject_coil: eject_coil2
         ball_switches: s_ball_switch_launcher
-        tags: ball_add_live
         debug: true
     test_vuk:
         eject_coil: eject_coil3

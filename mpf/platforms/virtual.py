@@ -3,20 +3,26 @@ import asyncio
 import logging
 from typing import Callable, Tuple
 
+from mpf.platforms.interfaces.hardware_sound_platform_interface import HardwareSoundPlatformInterface
+from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
+
 from mpf.exceptions.ConfigFileError import ConfigFileError
 from mpf.platforms.interfaces.dmd_platform import DmdPlatformInterface
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformInterface
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 from mpf.platforms.interfaces.switch_platform_interface import SwitchPlatformInterface
+from mpf.platforms.interfaces.stepper_platform_interface import StepperPlatformInterface
 
-from mpf.core.platform import ServoPlatform, SwitchPlatform, DriverPlatform, AccelerometerPlatform, I2cPlatform,\
-    DmdPlatform, RgbDmdPlatform, LightsPlatform, DriverConfig
+from mpf.core.platform import ServoPlatform, SwitchPlatform, DriverPlatform, AccelerometerPlatform, I2cPlatform, \
+    DmdPlatform, RgbDmdPlatform, LightsPlatform, DriverConfig, SwitchConfig, SegmentDisplayPlatform, StepperPlatform, \
+    HardwareSoundPlatform
 from mpf.core.utility_functions import Util
 from mpf.platforms.interfaces.driver_platform_interface import DriverPlatformInterface, PulseSettings, HoldSettings
 
 
 class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform, LightsPlatform, SwitchPlatform,
-                       DriverPlatform, DmdPlatform, RgbDmdPlatform):
+                              DriverPlatform, DmdPlatform, RgbDmdPlatform, SegmentDisplayPlatform, StepperPlatform,
+                              HardwareSoundPlatform):
 
     """Base class for the virtual hardware platform."""
 
@@ -53,9 +59,14 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         """Stop platform."""
         pass
 
-    def configure_servo(self, config):
+    def configure_servo(self, number: str):
         """Configure a servo device in paltform."""
-        return VirtualServo(config['number'])
+        return VirtualServo(number)
+
+    def configure_stepper(self, number: str, config: dict):
+        """Configure a smart stepper / axis device in platform."""
+        del config
+        return VirtualStepper(number)
 
     def configure_driver(self, config: DriverConfig, number: str, platform_settings: dict):
         """Configure driver."""
@@ -69,25 +80,20 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
 
         return driver
 
-    def configure_switch(self, config):
+    def configure_switch(self, number: str, config: SwitchConfig, platform_config: dict):
         """Configure switch."""
-        # We want to have the virtual platform set all the initial switch states
-        # to inactive, so we have to check the config.
-
-        state = 0
-
-        if config['type'].upper() == 'NC':
-            state = 1
-
         # switch needs a number to be distingishable from other switches
-        if config['number'] is None:
-            config['number'] = self._next_switch
+        if number is None:
+            number = self._next_switch
             self._next_switch += 1
 
-        self.hw_switches[config['number']] = state
+        # We want to have the virtual platform set all the initial switch states
+        # to inactive, so we have to check the config.
+        self.hw_switches[number] = config.invert
 
-        return VirtualSwitch(config)
+        return VirtualSwitch(config, number)
 
+    @asyncio.coroutine
     def get_hw_switch_states(self):
         """Return hw switch states."""
         if not self.initial_states_sent:
@@ -125,35 +131,10 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
 
     def validate_switch_section(self, switch, config):
         """Validate switch sections."""
-        sections = ["device"]
-        for platform in self._get_platforms():
-            if hasattr(platform, "get_switch_config_section") and platform.get_switch_config_section():
-                sections.append(platform.get_switch_config_section())
-        self.machine.config_validator.validate_config(
-            "switches", config, switch.name,
-            base_spec=sections)
         return config
-
-    def validate_switch_overwrite_section(self, switch, config_overwrite):
-        """Validate switch overwrite sections."""
-        sections = []
-        for platform in self._get_platforms():
-            if hasattr(platform, "get_switch_overwrite_section") and platform.get_switch_overwrite_section():
-                sections.append(platform.get_switch_overwrite_section())
-        self.machine.config_validator.validate_config(
-            "switch_overwrites", config_overwrite, switch.name,
-            base_spec=sections)
-        return config_overwrite
 
     def validate_coil_section(self, driver, config):
         """Validate coil sections."""
-        sections = []
-        for platform in self._get_platforms():
-            if hasattr(platform, "get_coil_config_section") and platform.get_coil_config_section():
-                sections.append(platform.get_coil_config_section())
-        self.machine.config_validator.validate_config(
-            sections.pop(), config, driver.name,
-            base_spec=sections)
         return config
 
     def configure_accelerometer(self, config, callback):
@@ -162,8 +143,14 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
 
     def configure_light(self, number, subtype, platform_settings):
         """Configure light channel."""
-        del subtype
-        return VirtualLight(number, platform_settings)
+        if not subtype:
+            subtype = "led"
+        return VirtualLight("{}-{}".format(subtype, number), platform_settings)
+
+    # pylint: disable-msg=no-self-use
+    def configure_hardware_sound_system(self) -> "HardwareSoundPlatformInterface":
+        """Configure virtual hardware sound system."""
+        return VirtualSound()
 
     def parse_light_number_to_channels(self, number: str, subtype: str):
         """Parse channel str to a list of channels."""
@@ -199,6 +186,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         """Write to I2C."""
         pass
 
+    @asyncio.coroutine
     def i2c_read8(self, address, register):
         """Read I2C."""
         del address
@@ -209,6 +197,14 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         """Read I2C."""
         del address
         del register
+        return None
+
+    @asyncio.coroutine
+    def i2c_read_block(self, address, register, count):
+        """Read I2C block."""
+        del address
+        del register
+        del count
         return None
 
     def set_pulse_on_hit_and_enable_and_release_rule(self, enable_switch, coil):
@@ -231,9 +227,47 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
         """Configure DMD."""
         return VirtualDmd()
 
-    def configure_rgb_dmd(self):
+    def configure_rgb_dmd(self, name: str):
         """Configure DMD."""
+        del name
         return VirtualDmd()
+
+    def configure_segment_display(self, number: str) -> SegmentDisplayPlatformInterface:
+        """Configure segment display."""
+        return VirtualSegmentDisplay(number)
+
+
+class VirtualSegmentDisplay(SegmentDisplayPlatformInterface):
+
+    """Virtual segment display."""
+
+    def __init__(self, number):
+        """Initialise virtual segment display."""
+        super().__init__(number)
+        self.text = ''
+        self.flashing = False
+
+    def set_text(self, text: str, flashing: bool):
+        """Set text."""
+        self.text = text
+        self.flashing = flashing
+
+
+class VirtualSound(HardwareSoundPlatformInterface):
+
+    """Virtual hardware sound interface."""
+
+    def __init__(self):
+        """Initialise virtual hardware sound."""
+        self.playing = None
+
+    def play_sound(self, number: int):
+        """Play virtual sound."""
+        self.playing = number
+
+    def stop_all_sounds(self):
+        """Stop sound."""
+        self.playing = None
 
 
 class VirtualDmd(DmdPlatformInterface):
@@ -243,6 +277,7 @@ class VirtualDmd(DmdPlatformInterface):
     def __init__(self):
         """Initialise virtual DMD."""
         self.data = None
+        self.brightness = None
 
     def update(self, data: bytes):
         """Update data on the DMD.
@@ -252,15 +287,23 @@ class VirtualDmd(DmdPlatformInterface):
         """
         self.data = data
 
+    def set_brightness(self, brightness: float):
+        """Set brightness."""
+        self.brightness = brightness
+
 
 class VirtualSwitch(SwitchPlatformInterface):
 
     """Represents a switch in a pinball machine used with virtual hardware."""
 
-    def __init__(self, config):
+    def __init__(self, config, number):
         """Initialise switch."""
-        super().__init__(config, config['number'])
+        super().__init__(config, number)
         self.log = logging.getLogger('VirtualSwitch')
+
+    def get_board_name(self):
+        """Return the name of the board of this switch."""
+        return "Virtual"
 
 
 class VirtualLight(LightPlatformInterface):
@@ -269,8 +312,8 @@ class VirtualLight(LightPlatformInterface):
 
     def __init__(self, number, settings):
         """Initialise LED."""
+        super().__init__(number)
         self.settings = settings
-        self.number = number
         self.color_and_fade_callback = None
 
     @property
@@ -282,12 +325,16 @@ class VirtualLight(LightPlatformInterface):
         """Return brightness for a max_fade long fade."""
         if self.color_and_fade_callback:
             return self.color_and_fade_callback(max_fade)[0]
-        else:
-            return 0
+
+        return 0
 
     def set_fade(self, color_and_fade_callback: Callable[[int], Tuple[float, int]]):
         """Store CB function."""
         self.color_and_fade_callback = color_and_fade_callback
+
+    def get_board_name(self):
+        """Return the name of the board of this light."""
+        return "Virtual"
 
 
 class VirtualServo(ServoPlatformInterface):
@@ -305,13 +352,50 @@ class VirtualServo(ServoPlatformInterface):
         self.current_position = position
 
 
+class VirtualStepper(StepperPlatformInterface):
+
+    """Virtual Stepper."""
+
+    def __init__(self, number):
+        """Initialise servo."""
+        self.log = logging.getLogger('VirtualStepper')
+        self.number = number
+        self._current_position = 0
+        self.velocity = 0
+        self.direction = 0  # clockwise
+
+    def home(self):
+        """Home an axis, resetting 0 position."""
+        self._current_position = 0
+
+    def move_abs_pos(self, position):
+        """Move axis to a certain absolute position."""
+        self._current_position = position
+
+    def move_rel_pos(self, position):
+        """Move axis to a relative position."""
+        self._current_position += position
+
+    def move_vel_mode(self, velocity):
+        """Move at a specific velocity indefinitely."""
+        self.velocity = velocity
+
+    def current_position(self):
+        """Return current position of stepper."""
+        return self._current_position
+
+    def stop(self):
+        """Stop motor."""
+        self.velocity = 0
+
+
 class VirtualDriver(DriverPlatformInterface):
 
     """A virtual driver object."""
 
     def __init__(self, config, number):
         """Initialise virtual driver to disabled."""
-        self.log = logging.getLogger('VirtualDriver')
+        self.log = logging.getLogger("VirtualDriver.{}".format(number))
         super().__init__(config, number)
         self.state = "disabled"
 
@@ -325,13 +409,16 @@ class VirtualDriver(DriverPlatformInterface):
 
     def disable(self):
         """Disable virtual coil."""
+        self.log.debug("Disabling driver")
         self.state = "disabled"
 
     def enable(self, pulse_settings: PulseSettings, hold_settings: HoldSettings):
         """Enable virtual coil."""
         del pulse_settings, hold_settings
+        self.log.debug("Enabling driver")
         self.state = "enabled"
 
     def pulse(self, pulse_settings: PulseSettings):
         """Pulse virtual coil."""
+        self.log.debug("Pulsing driver for %sms", pulse_settings.duration)
         self.state = "pulsed_" + str(pulse_settings.duration)

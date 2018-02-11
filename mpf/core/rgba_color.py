@@ -8,8 +8,7 @@ class RGBAColor(RGBColor):
 
     """RGB Color with alpha channel."""
 
-    def __init__(self, color: Union[RGBColor, str, List[int], Tuple[int, int, int], Tuple[int, int, int, int],
-                                    List[int]]) -> None:
+    def __init__(self, color: Union[RGBColor, str, Tuple[int, int, int], Tuple[int, int, int, int], List[int]]) -> None:
         """Initialise RGBA color."""
         if isinstance(color, (tuple, list)) and len(color) == 4:
             self.opacity = color[3]
@@ -25,3 +24,13 @@ class RGBAColor(RGBColor):
     def __str__(self):
         """Return string representation."""
         return "{} Opacity: {}".format(self._color, self.opacity)
+
+    @property
+    def rgba(self) -> Tuple[int, int, int, int]:
+        """Return an RGB representation of the color."""
+        return self._color[0], self._color[1], self._color[2], self.opacity
+
+    @rgba.setter
+    def rgba(self, value: Tuple[int, int, int, int]):
+        self._color = value[0:3]
+        self.opacity = value[3]

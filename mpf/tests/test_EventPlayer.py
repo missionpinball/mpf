@@ -97,6 +97,49 @@ class TestEventPlayer(MpfTestCase):
         self.assertEventCalled("condition_ok")
         self.assertEventCalled("condition_ok2")
 
+    def test_handler_condition(self):
+        # test neither condition passing
+        self.mock_event("event_always")
+        self.mock_event("event_if_modeactive")
+        self.mock_event("event_if_modestopping")
+
+        self.assertEqual(0, self._events["event_always"])
+        self.assertEqual(0, self._events["event_if_modeactive"])
+        self.assertEqual(0, self._events["event_if_modestopping"])
+        self.post_event("test_conditional_handlers")
+        self.assertEqual(1, self._events["event_always"])
+        self.assertEqual(0, self._events["event_if_modeactive"])
+        self.assertEqual(0, self._events["event_if_modestopping"])
+
+        # test one condition passing
+        self.mock_event("event_always")
+        self.mock_event("event_if_modeactive")
+        self.mock_event("event_if_modestopping")
+
+        self.machine.modes.mode1.start()
+        self.advance_time_and_run()
+        self.assertEqual(0, self._events["event_always"])
+        self.assertEqual(0, self._events["event_if_modeactive"])
+        self.assertEqual(0, self._events["event_if_modestopping"])
+        self.post_event("test_conditional_handlers")
+        self.assertEqual(1, self._events["event_always"])
+        self.assertEqual(1, self._events["event_if_modeactive"])
+        self.assertEqual(0, self._events["event_if_modestopping"])
+
+        # test both conditions passing
+        self.mock_event("event_always")
+        self.mock_event("event_if_modeactive")
+        self.mock_event("event_if_modestopping")
+
+        self.machine.modes.mode1.stop()
+        self.assertEqual(0, self._events["event_always"])
+        self.assertEqual(0, self._events["event_if_modeactive"])
+        self.assertEqual(0, self._events["event_if_modestopping"])
+        self.post_event("test_conditional_handlers")
+        self.assertEqual(1, self._events["event_always"])
+        self.assertEqual(1, self._events["event_if_modeactive"])
+        self.assertEqual(1, self._events["event_if_modestopping"])
+
     def test_event_time_delays(self):
         self.mock_event('td1')
         self.mock_event('td2')
@@ -135,3 +178,17 @@ class TestEventPlayer(MpfTestCase):
 
         self.assertEventCalled('mode1_active')
         self.assertEventNotCalled('mode1_not_active')
+
+    def test_event_placeholder(self):
+        self.mock_event('my_event_None_123')
+        self.mock_event('my_event_hello_world_123')
+
+        self.post_event("play_placeholder_event")
+        self.assertEventCalled("my_event_None_123")
+        self.mock_event('my_event_None_123')
+        self.assertEventNotCalled("my_event_hello_world_123")
+
+        self.machine.set_machine_var("test", "hello_world")
+        self.post_event("play_placeholder_event")
+        self.assertEventNotCalled("my_event_None_123")
+        self.assertEventCalled("my_event_hello_world_123")

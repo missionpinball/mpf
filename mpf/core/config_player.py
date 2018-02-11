@@ -1,9 +1,17 @@
 
 """Base class used for things that "play" from the config files, such as WidgetPlayer, SlidePlayer, etc."""
 import abc
+from functools import partial
 
+from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
 from mpf.exceptions.ConfigFileError import ConfigFileError
+
+MYPY = False
+if MYPY:   # pragma: no cover
+    from mpf.core.placeholder_manager import BoolTemplate
+    from typing import Dict
+    import asyncio
 
 
 class ConfigPlayer(object, metaclass=abc.ABCMeta):
@@ -18,10 +26,10 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
         """Initialise config player."""
         self.device_collection = None
 
-        self.machine = machine
+        self.machine = machine      # type: MachineController
 
         # MPF only
-        if hasattr(self.machine, "show_controller"):
+        if hasattr(self.machine, "show_controller") and self.show_section:
             self.machine.show_controller.show_players[self.show_section] = self
 
         self._add_handlers()
@@ -33,12 +41,12 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
         self._show_keys = {}
 
     def _add_handlers(self):
-        self.machine.events.add_handler('init_phase_1', self._initialize_in_mode, priority=2)
+        self.machine.events.add_handler('init_phase_1', self._initialize_in_mode, priority=20)
         self.machine.events.add_handler('init_phase_1', self._initialise_system_wide, priority=1)
 
     def __repr__(self):
         """Return string representation."""
-        return 'ConfigPlayer.{}'.format(self.show_section)
+        return 'ConfigPlayer.{}/{}'.format(self.config_file_section, self.show_section)
 
     def _initialize_in_mode(self, **kwargs):
         del kwargs
@@ -200,7 +208,6 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
 
     @staticmethod
     def _parse_event_priority(event, priority):
-
         # todo should we move this to EventManager so we can use the dot
         # priority shift notation for all event handlers?
 
@@ -220,60 +227,97 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
         del settings
         return True
 
-    def register_player_events(self, config, mode: Mode=None, priority=0):
+    # pylint: disable-msg=too-many-arguments
+    def _create_subscription(self, template_str, subscription_list, settings, priority, mode):
+        template = self.machine.placeholder_manager.build_bool_template(template_str)
+        if mode:
+            context = mode.name
+            actual_priority = priority + mode.priority
+        else:
+            context = "_global"
+            actual_priority = priority
+
+        self._update_subscription(template, subscription_list, settings, actual_priority, context, None)
+
+    # pylint: disable-msg=too-many-arguments
+    def _update_subscription(self, template, subscription_list, settings, priority, context, future):
+        if future and future.cancelled():
+            return
+        value, subscription = template.evaluate_and_subscribe([])
+        subscription_list[template] = subscription
+        subscription.add_done_callback(
+            partial(self._update_subscription, template, subscription_list, settings, priority, context))
+        self.handle_subscription_change(value, settings, priority, context)
+
+    # pylint: disable-msg=no-self-use
+    def handle_subscription_change(self, value, settings, priority, context):
+        """Handle the change of a subscription."""
+        del value
+        del settings
+        del priority
+        del context
+        raise AssertionError("Subscriptions are not supported in this player.")
+
+    def register_player_events(self, config, mode: Mode = None, priority=0):
         """Register events for standalone player."""
         # config is localized
         key_list = list()
+        subscription_list = dict()      # type: Dict[BoolTemplate, asyncio.Future]
 
         if config:
             for event, settings in config.items():
-                event, actual_priority = self._parse_event_priority(event, priority)
-
-                if mode and event in mode.config['mode']['start_events']:
-                    self.machine.log.error(
-                        "{0} mode's {1}: section contains a \"{2}:\" event "
-                        "which is also in the start_events: for the {0} mode. "
-                        "Change the {1}: {2}: event name to "
-                        "\"mode_{0}_started:\"".format(
-                            mode.name, self.config_file_section, event))
-
-                    raise ValueError(
-                        "{0} mode's {1}: section contains a \"{2}:\" event "
-                        "which is also in the start_events: for the {0} mode. "
-                        "Change the {1}: {2}: event name to "
-                        "\"mode_{0}_started:\"".format(
-                            mode.name, self.config_file_section, event))
-
                 # prevent runtime crashes
                 if (not mode or (mode and not mode.is_game_mode)) and not self.is_entry_valid_outside_mode(settings):
                     raise ConfigFileError("Section not valid outside of game modes. {} {}:{} Mode: {}".format(
                         self, event, settings, mode
                     ))
+                if event.startswith("{") and event.endswith("}"):
+                    condition = event[1:-1]
+                    self._create_subscription(condition, subscription_list, settings, priority, mode)
+                else:
+                    event, actual_priority = self._parse_event_priority(event, priority)
 
-                key_list.append(
-                    self.machine.events.add_handler(
-                        event=event,
-                        handler=self.config_play_callback,
-                        calling_context=event,
-                        priority=actual_priority,
-                        mode=mode,
-                        settings=settings))
+                    if mode and event in mode.config['mode']['start_events']:
+                        self.machine.log.error(
+                            "{0} mode's {1}: section contains a \"{2}:\" event "
+                            "which is also in the start_events: for the {0} mode. "
+                            "Change the {1}: {2}: event name to "
+                            "\"mode_{0}_started:\"".format(
+                                mode.name, self.config_file_section, event))
 
-        return key_list
+                        raise ValueError(
+                            "{0} mode's {1}: section contains a \"{2}:\" event "
+                            "which is also in the start_events: for the {0} mode. "
+                            "Change the {1}: {2}: event name to "
+                            "\"mode_{0}_started:\"".format(
+                                mode.name, self.config_file_section, event))
+
+                    key_list.append(
+                        self.machine.events.add_handler(
+                            event=event,
+                            handler=self.config_play_callback,
+                            calling_context=event,
+                            priority=actual_priority,
+                            mode=mode,
+                            settings=settings))
+
+        return key_list, subscription_list
 
     def unload_player_events(self, key_list):
         """Remove event for standalone player."""
-        self.machine.events.remove_handlers_by_keys(key_list)
+        for future in key_list[1].values():
+            future.cancel()
+        self.machine.events.remove_handlers_by_keys(key_list[0])
 
     def config_play_callback(self, settings, calling_context, priority=0, mode=None, **kwargs):
-        """Callback for standalone player."""
+        """Handle play callback for standalone player."""
         # called when a config_player event is posted
         if mode:
             if not mode.active:
                 # It's possible that an earlier event could have stopped the
                 # mode before this event was handled, so just double-check to
                 # make sure the mode is still active before proceeding.
-                return
+                return None
 
             # calculate the base priority, which is a combination of the mode
             # priority and any priority value
@@ -282,11 +326,12 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
         else:
             context = "_global"
 
-        self.play(settings=settings, context=context, calling_context=calling_context, priority=priority, **kwargs)
+        return self.play(settings=settings, context=context, calling_context=calling_context, priority=priority,
+                         **kwargs)
 
     # pylint: disable-msg=too-many-arguments
-    def show_play_callback(self, settings, priority, calling_context, show_tokens, context):
-        """Callback if used in a show."""
+    def show_play_callback(self, settings, priority, calling_context, show_tokens, context, start_time):
+        """Handle show callback."""
         # called from a show step
         if context not in self.instances:
             self.instances[context] = dict()
@@ -300,10 +345,10 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
         self._show_keys[context + self.config_file_section] = event_keys
 
         self.play(settings=settings, priority=priority, calling_context=calling_context,
-                  show_tokens=show_tokens, context=context)
+                  show_tokens=show_tokens, context=context, start_time=start_time)
 
     def show_stop_callback(self, context):
-        """Callback if show stops."""
+        """Handle show stop."""
         self.unload_player_events(self._show_keys[context + self.config_file_section])
         del self._show_keys[context + self.config_file_section]
 

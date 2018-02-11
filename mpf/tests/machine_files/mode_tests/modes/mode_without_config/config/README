@@ -1,0 +1,1 @@
+This is file is just a placeholder. The folder should be empty but we need a file to commit it to git.

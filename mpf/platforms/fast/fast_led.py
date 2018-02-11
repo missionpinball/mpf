@@ -31,7 +31,7 @@ class FASTDirectLED:
         for index in [1, 0, 2]:
             color = self.colors[index]
             if callable(color):
-                brightness, fade_ms = color(self.hardware_fade_ms)
+                brightness, fade_ms = color(self.hardware_fade_ms)  # pylint: disable-msg=not-callable
                 result += hex(int(brightness * 255))[2:].zfill(2)
                 if fade_ms >= self.hardware_fade_ms:
                     self.dirty = True
@@ -47,6 +47,7 @@ class FASTDirectLEDChannel(LightPlatformInterface):
 
     def __init__(self, led: FASTDirectLED, channel) -> None:
         """Initialise LED."""
+        super().__init__("{}-{}".format(led.number, channel))
         self.led = led
         self.channel = int(channel)
 
@@ -54,3 +55,7 @@ class FASTDirectLEDChannel(LightPlatformInterface):
         """Set brightness via callback."""
         self.led.dirty = True
         self.led.colors[self.channel] = color_and_fade_callback
+
+    def get_board_name(self):
+        """Return the board of this light."""
+        return "FAST LED CPU"

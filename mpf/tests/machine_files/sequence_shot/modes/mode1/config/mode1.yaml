@@ -1,0 +1,24 @@
+#config_version=5
+
+mode:
+  priority: 100
+  game_mode: False
+
+sequence_shots:
+    sequence_mode_event:
+        event_sequence:
+            - event1
+            - event2
+        cancel_events: cancel
+        delay_event_list:
+            delay1: 1s
+        sequence_timeout: 3s
+    sequence_mode_switch:
+        switch_sequence:
+            - seq2_1
+            - seq2_2
+        cancel_switches: seq2_cancel
+        delay_switch_list:
+            seq2_delay: 1s
+        sequence_timeout: 3s
+

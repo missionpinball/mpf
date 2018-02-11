@@ -28,7 +28,7 @@ class BaseBcpClient(MpfController, metaclass=abc.ABCMeta):
         raise NotImplementedError("implement")
 
     def accept_connection(self, receiver, sender):
-        """Created client for incoming connection."""
+        """Handle incoming connection from remote client."""
         raise NotImplementedError("implement")
 
     def send(self, bcp_command, kwargs):

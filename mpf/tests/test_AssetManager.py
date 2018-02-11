@@ -11,7 +11,8 @@ class TestAssets(MpfTestCase):
         return 'test_asset_loading.yaml'
 
     def test_asset_loading(self):
-        self.expected_duration = 1.0
+        # TODO: instantiate a fresh machine between test groups
+        self.expected_duration = 1.5
         self._test_machine_wide_asset_loading()
         self._test_random_asset_group()
         self._test_random_asset_group_with_weighting()
@@ -19,6 +20,8 @@ class TestAssets(MpfTestCase):
         self._test_random_force_next()
         self._test_sequence_asset_group()
         self._test_sequence_asset_group_with_count()
+        self._test_conditional_random_asset_group()
+        self._test_conditional_sequence_asset_group()
 
     def _test_machine_wide_asset_loading(self):
 
@@ -144,6 +147,8 @@ class TestAssets(MpfTestCase):
         self.assertFalse(self.machine.shows['show10'].unloading)
 
         # Start the mode and make sure those assets load
+        self.mock_event("loading_assets")
+        self.mock_event("asset_loading_complete")
         self.machine.modes['mode1'].start()
         self.advance_time_and_run()
 
@@ -156,6 +161,9 @@ class TestAssets(MpfTestCase):
             self.assertTrue(self.machine.shows['show9'].loading)
             time.sleep(.0001)
             self.advance_time_and_run(.1)
+
+        self.assertEventCalled("loading_assets")
+        self.assertEventCalled("asset_loading_complete")
 
         self.assertTrue(self.machine.shows['show9'].loaded)
         self.assertFalse(self.machine.shows['show9'].loading)
@@ -299,3 +307,88 @@ class TestAssets(MpfTestCase):
             this_set.add(self.machine.shows['group6'].show)
 
             self.assertEqual(len(this_set), 3)
+
+    def _test_conditional_random_asset_group(self):
+
+        # make sure the asset group was created
+        self.assertIn('group1', self.machine.shows)
+
+        # ONE valid show
+        # Request the show 1,000 times and ensure that only one show was picked
+        res = list()
+        for x in range(1000):
+            res.append(self.machine.shows['group7'].show)
+
+        self.assertEqual(1000, res.count(self.machine.shows['show1']))
+        self.assertEqual(0, res.count(self.machine.shows['show2']))
+        self.assertEqual(0, res.count(self.machine.shows['show3']))
+
+        # TWO valid shows
+        # Request the show 10,000 times and ensure that two shows are fairly split
+        self.machine.modes.mode1.start()
+        self.advance_time_and_run()
+        res = list()
+        for x in range(10000):
+            res.append(self.machine.shows['group7'].show)
+
+        self.assertAlmostEqual(5000, res.count(self.machine.shows['show1']),
+                               delta=250)
+        self.assertAlmostEqual(5000, res.count(self.machine.shows['show2']),
+                               delta=250)
+        self.assertEqual(0, res.count(self.machine.shows['show3']))
+
+        # THREE valid shows
+        # Request the show 10,000 times and ensure that all three shows are fairly split
+        self.machine.modes.mode1.stop()
+        res = list()
+        for x in range(10000):
+            res.append(self.machine.shows['group7'].show)
+
+        self.assertAlmostEqual(3333, res.count(self.machine.shows['show1']),
+                               delta=250)
+        self.assertAlmostEqual(3333, res.count(self.machine.shows['show2']),
+                               delta=250)
+        self.assertAlmostEqual(3333, res.count(self.machine.shows['show3']),
+                               delta=250)
+
+    def _test_conditional_sequence_asset_group(self):
+        # These tests are not independent, and mode1 is still running/stopping from the above test :(
+        self.advance_time_and_run()
+        self.assertIn('group8', self.machine.shows)
+
+        # ONE valid show
+        self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show2'])
+        self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show2'])
+        self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show2'])
+        self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show2'])
+        self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show2'])
+        self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show2'])
+        self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show2'])
+        self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show2'])
+        self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show2'])
+
+        # TWO valid shows
+        self.machine.modes.mode1.start()
+        self.advance_time_and_run()
+        self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show1'])
+        self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show2'])
+        self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show1'])
+        self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show2'])
+        self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show1'])
+        self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show2'])
+        self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show1'])
+        self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show2'])
+        
+        # THREE valid shows
+        self.machine.modes.mode1.stop()
+        self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show3'])
+        self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show1'])
+        self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show2'])
+        self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show3'])
+        self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show1'])
+        self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show2'])
+        self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show3'])
+        self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show1'])
+        self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show2'])
+        self.assertIs(self.machine.shows['group8'].show, self.machine.shows['show3'])
+                        

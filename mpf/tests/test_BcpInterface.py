@@ -53,7 +53,7 @@ class TestBcpInterface(MpfBcpTestCase):
         self.assertIn(
             ('monitored_event', dict(event_name='test2', event_type=None,
                                      event_callback=None, event_kwargs={},
-                                     registered_handlers=[RegisteredHandler(callback='handler', priority=1, kwargs={}, key='abc', condition=None)])),
+                                     registered_handlers=[RegisteredHandler(callback='handler', priority=1, kwargs={}, key='abc', condition=None, blocking_facility=None)])),
             self._bcp_client.send_queue)
 
         self._bcp_client.send_queue.clear()
@@ -366,3 +366,10 @@ class TestBcpInterface(MpfBcpTestCase):
         self._bcp_client.receive_queue.put_nowait(('switch', {'name': 's_test', 'state': -1}))
         self.advance_time_and_run()
         self.assertFalse(self.machine.switch_controller.is_active('s_test'))
+
+    def test_double_reset_complete(self):
+        # Test when a BCP server sends reset_complete twice (was causing MPF to crash)
+        self._bcp_client.receive_queue.put_nowait(('reset_complete', {}))
+        self.advance_time_and_run()
+        self._bcp_client.receive_queue.put_nowait(('reset_complete', {}))
+        self.advance_time_and_run()

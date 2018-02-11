@@ -1,0 +1,15 @@
+#config_version=5
+
+light_settings:
+    default_color_correction_profile: correction_profile_1
+    color_correction_profiles:
+        correction_profile_1:
+            gamma: 1
+            whitepoint: [0.9, 0.8, 0.7]
+            linear_slope: 0.75
+            linear_cutoff: 0.1
+
+lights:
+  led1:
+    number: 1
+

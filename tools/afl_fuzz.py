@@ -5,7 +5,6 @@ import asyncio
 import os
 import sys
 
-import time
 import logging
 
 import mpf.core
@@ -28,8 +27,11 @@ class AflRunner(object):
         self.machine_config_patches['mpf'] = dict()
         self.machine_config_patches['mpf']['default_platform_hz'] = 1
         self.machine_config_patches['bcp'] = []
+        self.machine_config_defaults = {}
         self.switch_list = []
         self.use_virtual = use_virtual
+        self._invalid_input = False
+        self._exception = None
 
     def _exception_handler(self, loop, context):
         try:
@@ -43,18 +45,15 @@ class AflRunner(object):
         """Return platform."""
         if self.use_virtual:
             return "virtual"
-        else:
-            return "smart_virtual"
 
-    def getConfigFile(self):    # noqa
+        return "smart_virtual"
+
+    @staticmethod
+    def get_config_file():
         """Return config file."""
         return "config.yaml"
 
-    def getAbsoluteMachinePath(self):   # noqa
-        """Return an absolute path based on machine_path."""
-        return "/home/kantert/cloud/flipper/src/good_vs_evil"
-
-    def getOptions(self):   # noqa
+    def get_options(self):
         """Return option arrays."""
         mpfconfig = os.path.abspath(os.path.join(
             mpf.core.__path__[0], os.pardir, 'mpfconfig.yaml'))
@@ -62,11 +61,12 @@ class AflRunner(object):
         return {
             'force_platform': self.get_platform(),
             'mpfconfigfile': mpfconfig,
-            'configfile': Util.string_to_list(self.getConfigFile()),
+            'configfile': Util.string_to_list(self.get_config_file()),
             'debug': True,
             'bcp': False,
             'no_load_cache': False,
             'create_config_cache': True,
+            'text_ui': False,
         }
 
     def advance_time_and_run(self, delta=1.0):
@@ -90,11 +90,22 @@ class AflRunner(object):
         self.machine = TestMachineController(
             os.path.abspath(os.path.join(
                 mpf.core.__path__[0], os.pardir)), machine_path,
-            self.getOptions(), self.machine_config_patches, self.clock, dict(),
+            self.get_options(), self.machine_config_patches, self.machine_config_defaults, self.clock, dict(),
             True)
 
-        start = time.time()
-        self.loop.run_until_complete(self.machine.initialise())
+        try:
+            self.loop.run_until_complete(self.machine.initialise())
+        except RuntimeError as e:
+            try:
+                self.machine.stop()
+            # pylint: disable-msg=broad-except
+            except Exception:
+                pass
+            if self._exception and "exception" in self._exception:
+                raise self._exception['exception']
+            elif self._exception:
+                raise Exception(self._exception, e)
+            raise e
 
         self.machine.events.process_event_queue()
         self.advance_time_and_run(1)
@@ -123,9 +134,23 @@ class AflRunner(object):
                 self.machine.switch_controller.process_switch_obj(switch, 1, True)
                 self.machine.switch_controller.process_switch_obj(switch, 0, True)
 
-    def run(self, actions):
+    def _abort(self, **kwargs):
+        """Abort fuzzer run."""
+        del kwargs
+        self._invalid_input = True
+
+    def run(self, actions, find_logic_bugs):
         """Run fuzzer."""
+        if find_logic_bugs:
+            self.machine.events.add_handler("balldevice_ball_missing", self._abort)
+            self.machine.events.add_handler("found_new_ball", self._abort)
+            self.machine.events.add_handler("mode_game_stopped", self._abort)
+
         for action in actions:
+            if self._invalid_input:
+                # bail out if we hit an invalid input. afl will notice this
+                return
+
             if action & 0b10000000:
                 ms = int(action & 0b01111111)
                 ms *= ms
@@ -140,14 +165,35 @@ class AflRunner(object):
                 self.machine.switch_controller.process_switch_by_num(switch_obj.hw_switch.number, state,
                                                                      self.machine.default_platform)
 
+        if find_logic_bugs:
+            self.advance_time_and_run(60)
+            if self._invalid_input:
+                # might happen late
+                return
+
+            balls = 0
+            for playfield in self.machine.playfields:
+                balls += playfield.balls
+
+            if balls != self.machine.game.balls_in_play:
+                print("Balls in play:", self.machine.game.balls_in_play)
+                print("Playfields:")
+                for playfield in self.machine.playfields:
+                    print(playfield.name, playfield.balls)
+                print("Devices:")
+                for device in self.machine.ball_devices:
+                    print(device.name, device.balls, device.available_balls)
+                raise AssertionError("Balls in play do not match balls on playfields.")
+
     def dump(self, wait, add_balls, start_game, actions):
+        """Dump fuzzer input."""
         if add_balls:
             for device in self.machine.ball_devices:
                 if "trough" in device.tags:
                     for switch in device.config['ball_switches']:
                         print("Enable switch {}".format(switch.name))
                     if device.config['entrance_switch']:
-                        print("Enable switch {}".format(switch.name))
+                        print("Enable switch {}".format(device.config['entrance_switch'].name))
             print("Advance time 10s")
 
         if start_game:
@@ -201,6 +247,10 @@ parser.add_argument("-G",
                     action="store_true", dest="start_game",
                     help="Start game")
 
+parser.add_argument("-L",
+                    action="store_true", dest="find_logic_bugs",
+                    help="Find game logic bugs only")
+
 parser.add_argument("-v",
                     action="store_true", dest="use_virtual",
                     help="Use virtual instead of smart_virtual for low-level fuzzing")
@@ -225,7 +275,7 @@ runner.setUp(args.machine_path)
 if args.dump:
     action_str = sys.stdin.buffer.read(-1)
     runner.dump(int(args.wait), args.add_balls, args.start_game, action_str)
-    os._exit(-1)
+    os._exit(-1)    # NOQA
 
 if args.add_balls:
     runner.add_balls()
@@ -238,17 +288,20 @@ if args.start_game:
 if int(args.wait) > 0:
     runner.advance_time_and_run(int(args.wait))
 
+if args.start_game and not runner.machine.game:
+    raise AssertionError("Failed to start a game.")
+
 # keep effort minimal after those two lines. everything before this will execute only once.
 # everything after this on every run
 
-import afl  # noqa
+import afl  # NOQA
 afl.init()
 
 action_str = sys.stdin.buffer.read(-1)
 
-runner.run(action_str)
+runner.run(action_str, args.find_logic_bugs)
 
 if args.debug:
     runner.advance_time_and_run(10)
 else:
-    os._exit(0)
+    os._exit(0)  # NOQA

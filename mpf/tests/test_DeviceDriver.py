@@ -54,3 +54,15 @@ class TestDeviceDriver(MpfTestCase):
         self.machine.coils.coil_01.enable(pulse_power=0.7, hold_power=0.3)
         self.machine.coils.coil_01.hw_driver.enable.assert_called_with(PulseSettings(power=0.7, duration=30),
                                                                        HoldSettings(power=0.3))
+
+        # test long pulse with delay
+        self.machine.coils.coil_03.hw_driver.pulse = MagicMock()
+        self.machine.coils.coil_03.hw_driver.enable = MagicMock()
+        self.machine.coils.coil_03.hw_driver.disable = MagicMock()
+        self.machine.coils.coil_03.pulse(pulse_ms=500)
+        self.machine.coils.coil_03.hw_driver.enable.assert_called_with(PulseSettings(power=1.0, duration=0),
+                                                                       HoldSettings(power=1.0))
+        self.machine.coils.coil_03.hw_driver.pulse.assert_not_called()
+        self.advance_time_and_run(.5)
+
+        self.machine.coils.coil_03.hw_driver.disable.assert_called_with()

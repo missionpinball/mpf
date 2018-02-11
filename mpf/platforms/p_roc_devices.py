@@ -11,15 +11,26 @@ class PROCSwitch(SwitchPlatformInterface):
 
     """P-ROC switch object which is use to store the configure rules and config."""
 
-    def __init__(self, config, number, notify_on_nondebounce):
+    def __init__(self, config, number, notify_on_nondebounce, platform):
         """Initialise P-ROC switch."""
         super().__init__(config, number)
+        self.string_number = number
         self.log = logging.getLogger('PROCSwitch')
         self.notify_on_nondebounce = notify_on_nondebounce
         self.hw_rules = {"closed_debounced": [],
                          "closed_nondebounced": [],
                          "open_debounced": [],
                          "open_nondebounced": []}
+        self.pdbconfig = getattr(platform, "pdbconfig", None)
+
+    def get_board_name(self):
+        """Return board of the switch."""
+        if not self.pdbconfig:
+            return "P-Roc"
+
+        board, bank, _ = self.pdbconfig.decode_pdb_address(self.string_number)
+
+        return "SW-16 Board {} Bank {}".format(board, bank)
 
 
 class PROCDriver(DriverPlatformInterface):
@@ -46,13 +57,15 @@ class PROCDriver(DriverPlatformInterface):
         """Return board of the driver."""
         if not self.pdbconfig:
             return "P-Roc"
-        else:
-            return "P-Roc Board {}".format(str(self.pdbconfig.get_coil_bank(self.string_number)))
+
+        board, bank, _ = self.pdbconfig.decode_pdb_address(self.string_number)
+
+        return "PD-16 Board {} Bank {}".format(board, bank)
 
     @classmethod
     def get_pwm_on_off_ms(cls, coil: HoldSettings):
         """Find out the pwm_on_ms and pwm_off_ms for this driver."""
-        return Util.pwm8_to_on_off(int(coil.power * 8))
+        return Util.power_to_on_off(coil.power)
 
     def disable(self):
         """Disable (turn off) this driver."""
@@ -99,15 +112,23 @@ class PROCMatrixLight(LightPlatformSoftwareFade):
 
     def __init__(self, number, proc_driver, machine):
         """Initialise matrix light device."""
-        super().__init__(machine.clock.loop, int(1 / machine.config['mpf']['default_light_hw_update_hz'] * 1000))
+        super().__init__(number, machine.clock.loop,
+                         int(1 / machine.config['mpf']['default_light_hw_update_hz'] * 1000))
         self.log = logging.getLogger('PROCMatrixLight')
-        self.number = number
         self.proc = proc_driver
 
     def set_brightness(self, brightness: float):
         """Enable (turns on) this driver."""
-        if brightness > 0:
-            pwm_on_ms, pwm_off_ms = (Util.pwm8_to_on_off(int(brightness * 8)))
+        if brightness >= 1:
+            self.proc.driver_schedule(number=self.number, schedule=0xffffffff,
+                                      cycle_seconds=0, now=True)
+        elif brightness > 0:
+            pwm_on_ms, pwm_off_ms = Util.power_to_on_off(brightness)
             self.proc.driver_patter(self.number, pwm_on_ms, pwm_off_ms, 0, True)
         else:
             self.proc.driver_disable(self.number)
+
+    def get_board_name(self):
+        """Return board of the light."""
+        # TODO: Implement this for PDB matrixes
+        return "P-Roc Matrix"

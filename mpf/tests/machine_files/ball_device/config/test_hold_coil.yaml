@@ -1,4 +1,9 @@
-#config_version=4
+#config_version=5
+
+playfields:
+    playfield:
+        default_source_device: test
+        tags: default
 
 coils:
     hold_coil:
@@ -9,7 +14,6 @@ coils:
         number:
     hold_coil4:
         number:
-
 
 switches:
     s_entrance:

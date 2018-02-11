@@ -158,8 +158,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             self.platform.debug_log("Setting RGB buffer size: %s",
                                     self.max_messages_in_flight)
         else:
-            raise AttributeError("Unrecognized FAST processor type: %s",
-                                 self.remote_processor)
+            raise AttributeError("Unrecognized FAST processor type: {}".format(self.remote_processor))
 
         if StrictVersion(min_version) > StrictVersion(self.remote_firmware):
             raise AssertionError('Firmware version mismatch. MPF requires'
@@ -193,19 +192,23 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         firmware_ok = True
 
         for board_id in range(128):
-            self.writer.write('NN:{0}\r'.format(board_id).encode())
+            self.writer.write('NN:{:02X}\r'.format(board_id).encode())
             msg = ''
             while not msg.startswith('NN:'):
                 msg = (yield from self.readuntil(b'\r')).decode()
                 if not msg.startswith('NN:'):
                     self.platform.debug_log("Got unexpected message from FAST: {}".format(msg))
+
+            if msg == 'NN:F\r':
+                break
+
             node_id, model, fw, dr, sw, _, _, _, _, _, _ = msg.split(',')
             node_id = node_id[3:]
 
             model = model.strip('\x00')
 
             # Iterate as many boards as possible
-            if not len(model):
+            if not model or model == '!Node Not Found!':
                 break
 
             self.platform.register_io_board(FastIoBoard(int(node_id, 16), model, fw, int(sw, 16), int(dr, 16)))

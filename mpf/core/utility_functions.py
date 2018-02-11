@@ -1,11 +1,12 @@
 """Contains the Util class which includes many utility functions."""
 from copy import deepcopy
 import re
+from fractions import Fraction
 from functools import reduce
 
+from typing import Dict, Iterable, List, Tuple, Callable, Any, Union
 import asyncio
 from ruamel.yaml.compat import ordereddict
-from typing import Dict, Iterable, List, Tuple
 
 
 class Util(object):
@@ -14,6 +15,7 @@ class Util(object):
 
     hex_matcher = re.compile("(?:[a-fA-F0-9]{6,8})")
 
+    # pylint: disable-msg=too-many-return-statements
     @staticmethod
     def convert_to_simply_type(value):
         """Convert value to a simple type."""
@@ -29,8 +31,8 @@ class Util(object):
 
         elif isinstance(value, dict):
             new_dict = dict()
-            for key, value in value.items():
-                new_dict[Util.convert_to_simply_type(key)] = Util.convert_to_simply_type(value)
+            for key, this_value in value.items():
+                new_dict[Util.convert_to_simply_type(key)] = Util.convert_to_simply_type(this_value)
 
             return new_dict
 
@@ -84,9 +86,11 @@ class Util(object):
             for num, item in enumerate(source_dict):
                 source_dict[num] = Util.keys_to_lower(item)
             return source_dict
+        else:
+            raise AssertionError("Source dict has invalid format.")
 
     @staticmethod
-    def string_to_list(string: str) -> List[str]:
+    def string_to_list(string: Union[str, List[str], None]) -> List[str]:
         """Convert a comma-separated and/or space-separated string into a Python list.
 
         Args:
@@ -112,14 +116,17 @@ class Util(object):
         elif string is None:
             return []  # If it's None, make it into an empty list
 
+        elif isinstance(string, (int, float)):
+            return [string]
+
         elif str(type(string)) == "<class 'ruamel.yaml.comments.CommentedSeq'>":
             # If it's a ruamel CommentedSeq, just pretend its a list
             # I did it as a str comparison so I didn't have to
             # import the actual ruamel.yaml classes
             return string
         else:
-            # if we're passed anything else, just make it into a list
-            return [string]
+            # if we're passed anything else raise an error
+            raise AssertionError("Incorrect type in list for element {}".format(string))
 
     @staticmethod
     def string_to_lowercase_list(string: str) -> List[str]:
@@ -264,7 +271,7 @@ class Util(object):
         return output[0:output_length:]
 
     @staticmethod
-    def hex_string_to_int(inputstring: str, maxvalue: int=255) -> int:
+    def hex_string_to_int(inputstring: str, maxvalue: int = 255) -> int:
         """Take a string input of hex numbers and an integer.
 
         Args:
@@ -447,29 +454,24 @@ class Util(object):
             raise ValueError("Invalid pwm value. (Expected value 0-8)")
 
     @staticmethod
-    def pwm8_to_on_off(source_int: int) -> Tuple[int, int]:
-        """Convert a PWM8 value to on/off times."""
-        lookup_table = {
-            0: (0, 0),  # 0-0
-            1: (1, 7),  # 1-7
-            2: (1, 3),  # 2-6
-            3: (3, 5),  # 3-5
-            4: (1, 1),  # 4-4
-            5: (5, 3),  # 5-3
-            6: (3, 1),  # 6-2
-            7: (7, 1),  # 7-1
-            8: (8, 0),  # 8-0
-        }
+    def power_to_on_off(power: float, max_period: int = 20) -> Tuple[int, int]:
+        """Convert a float value to on/off times."""
+        if power > 1.0 or power < 0.0:
+            raise ValueError("power has to be between 0 and 1")
 
-        source_int = int(source_int)
+        # special case for 0%
+        if power == 0.0:
+            return 0, 0
 
-        if 0 <= source_int <= 8:
-            return lookup_table[source_int]
-        else:
-            raise ValueError("Invalid pwm value. (Expected value 0-8)")
+        fraction = Fraction.from_float(power).limit_denominator(max_period)
+
+        on_ms = fraction.numerator
+        off_ms = fraction.denominator - fraction.numerator
+
+        return on_ms, off_ms
 
     @staticmethod
-    def normalize_hex_string(source_hex: str, num_chars: int=2) -> str:
+    def normalize_hex_string(source_hex: str, num_chars: int = 2) -> str:
         """Take an incoming hex value and convert it to uppercase and fills in leading zeros.
 
         Args:
@@ -477,7 +479,8 @@ class Util(object):
             num_chars: Total number of characters that will be returned. Default
                 is two.
 
-        Returns: String, uppercase, zero padded to the num_chars.
+        Returns:
+            String, uppercase, zero padded to the num_chars.
 
         Example usage: Send "c" as source_hex, returns "0C".
 
@@ -562,7 +565,7 @@ class Util(object):
         return Util.string_to_ms(time_string) / 1000.0
 
     @staticmethod
-    def string_to_class(class_string):
+    def string_to_class(class_string: str) -> Callable[..., Any]:
         """Convert a string like mpf.core.events.EventManager into a Python class.
 
         Args:
@@ -718,6 +721,7 @@ class Util(object):
 
         if not done:
             raise asyncio.TimeoutError()
+        # pylint: disable-msg=stop-iteration-return
         return next(iter(done))
 
     @staticmethod

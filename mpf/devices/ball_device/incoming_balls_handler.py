@@ -55,11 +55,17 @@ class IncomingBall:
         self._external_confirm_future.add_done_callback(self._external_confirm)
 
     def _external_confirm(self, future):
-        del future
+        """Handle exteral confirm done."""
+        # do not handle canceled external confirm
+        if future.cancelled():
+            return
+        # cancel current timeout
         self._timeout_future.cancel()
+        # set up a timeout for ball missing at target
         timeout = self._source.config['ball_missing_timeouts'][self._target] / 1000
         self._timeout_future = Util.ensure_future(asyncio.sleep(timeout, loop=self._source.machine.clock.loop),
                                                   loop=self._source.machine.clock.loop)
+        # set confirmed for source
         self._confirm_future.set_result(True)
 
     @property
@@ -116,10 +122,17 @@ class IncomingBallsHandler(BallDeviceStateHandler):
         # list of incoming balls sorted by their expiring time
         self._incoming_balls = []
         self._has_incoming_balls = asyncio.Event(loop=self.machine.clock.loop)
+        self._has_no_incoming_balls = asyncio.Event(loop=self.machine.clock.loop)
+        self._has_no_incoming_balls.set()
+        self._is_timeouting = asyncio.Lock(loop=self.machine.clock.loop)
 
     def get_num_incoming_balls(self):
         """Return number of incoming ball."""
         return len(self._incoming_balls)
+
+    def wait_for_no_incoming_balls(self):
+        """Wait until there are no incoming balls."""
+        return self._has_no_incoming_balls.wait()
 
     @asyncio.coroutine
     def _run(self):
@@ -127,13 +140,22 @@ class IncomingBallsHandler(BallDeviceStateHandler):
         while True:
             if not self._incoming_balls:
                 self._has_incoming_balls.clear()
+                self._has_no_incoming_balls.set()
 
             # sleep until we have incoming balls
             yield from self._has_incoming_balls.wait()
 
+            # the incoming balls may have been removed in the meantime
+            if not self._incoming_balls:
+                continue
+
+            # wait for timeouts on incoming balls
             futures = [incoming_ball.wait_for_timeout() for incoming_ball in self._incoming_balls]
             yield from Util.first(futures, loop=self.machine.clock.loop)
 
+            yield from self._is_timeouting.acquire()
+
+            # handle timeouts
             timeouts = []
             for incoming_ball in self._incoming_balls:
                 if incoming_ball.is_timeouted:
@@ -146,11 +168,22 @@ class IncomingBallsHandler(BallDeviceStateHandler):
             for incoming_ball in timeouts:
                 yield from self.ball_device.lost_incoming_ball(source=incoming_ball.source)
 
+            self._is_timeouting.release()
+
+    def start_eject(self):
+        """Stop counting because eject counter will do that."""
+        return self._is_timeouting.acquire()
+
+    def end_eject(self):
+        """Restart counting because eject ended."""
+        self._is_timeouting.release()
+
     def add_incoming_ball(self, incoming_ball: IncomingBall):
         """Add incoming balls."""
         self.debug_log("Adding incoming ball from %s", incoming_ball.source)
         self._incoming_balls.append(incoming_ball)
         self._has_incoming_balls.set()
+        self._has_no_incoming_balls.clear()
 
         if self.ball_device.config['mechanical_eject']:
             incoming_ball.wait_for_can_skip().add_done_callback(

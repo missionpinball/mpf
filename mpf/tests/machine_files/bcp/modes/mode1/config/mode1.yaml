@@ -1,0 +1,6 @@
+#config_version=5
+
+mode:
+  start_events: start_mode1
+  stop_events: stop_mode1
+  game_mode: False

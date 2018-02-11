@@ -12,11 +12,7 @@ SettingEntry = namedtuple("SettingEntry", ["name", "label", "sort", "machine_var
 
 class SettingsController(MpfController):
 
-    """Manages operator controllable settings.
-
-    Attributes:
-        _settings(dict[str, SettingEntry]): Available settings
-    """
+    """Manages operator controllable settings."""
 
     # needed here so the auto-detection of child classes works
     module_name = 'SettingsController'
@@ -28,6 +24,7 @@ class SettingsController(MpfController):
 
         # start with default settings
         self._settings = {}     # type: Dict[str, SettingEntry]
+        """Dictionary of available settings."""
 
         self._add_entries_from_config()
 
@@ -67,6 +64,10 @@ class SettingsController(MpfController):
     def __getattr__(self, item):
         """Return setting."""
         return self.get_setting_value(item)
+
+    def get_setting_machine_var(self, setting_name):
+        """Return machine var name."""
+        return self._settings[setting_name].machine_var
 
     def get_setting_value(self, setting_name):
         """Return the current value of a setting."""

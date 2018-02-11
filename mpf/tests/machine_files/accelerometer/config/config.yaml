@@ -1,8 +1,7 @@
-#config_version=4
+#config_version=5
 
 accelerometers:
     test_accelerometer:
-        number: 1
         level_x: 0
         level_y: 0
         level_z: 1

@@ -1,6 +1,4 @@
 """Contains the base class for autofire coil devices."""
-from typing import TYPE_CHECKING
-
 from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.events import event_handler
@@ -8,22 +6,27 @@ from mpf.core.platform_controller import SwitchRuleSettings, DriverRuleSettings,
 
 from mpf.core.system_wide_device import SystemWideDevice
 
-if TYPE_CHECKING:
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController
 
 
 @DeviceMonitor(_enabled="enabled")
 class AutofireCoil(SystemWideDevice):
 
-    """Coils in the pinball machine which should fire automatically based on switch hits using hardware switch rules.
+    """Autofire coils which fire based on switch hits with a hardware rule.
 
-    autofire_coils are used when you want the coils to respond "instantly"
-    without waiting for the lag of the python game code running on the host
-    computer.
+    Coils in the pinball machine which should fire automatically based on
+    switch hits using defined hardware switch rules.
 
-    Examples of autofire_coils are pop bumpers, slingshots, and flippers.
+    Autofire coils work with rules written to the hardware pinball controller
+    that allow them to respond "instantly" to switch hits versus waiting for
+    the lag of USB and the host computer.
 
-    Args: Same as Device.
+    Examples of Autofire Coils are pop bumpers, slingshots, and kicking
+    targets. (Flippers use the same autofire rules under the hood, but flipper
+    devices have their own device type in MPF.
+
     """
 
     config_section = 'autofire_coils'
@@ -37,6 +40,10 @@ class AutofireCoil(SystemWideDevice):
         super().__init__(machine, name)
         self.delay = DelayManager(self.machine.delayRegistry)
         self._ball_search_in_progress = False
+        self._timeout_watch_time = None
+        self._timeout_max_hits = None
+        self._timeout_disable_time = None
+        self._timeout_hits = []
 
     def _initialize(self) -> None:
         if self.config['ball_search_order']:
@@ -44,10 +51,29 @@ class AutofireCoil(SystemWideDevice):
                 self.config['ball_search_order'], self._ball_search, self.name)
         # pulse is handled via rule but add a handler so that we take notice anyway
         self.config['switch'].add_handler(self._hit)
+        if self.config['timeout_watch_time']:
+            self._timeout_watch_time = self.config['timeout_watch_time'] / 1000
+            self._timeout_max_hits = self.config['timeout_max_hits']
+            self._timeout_disable_time = self.config['timeout_disable_time']
 
     @event_handler(10)
     def enable(self, **kwargs):
-        """Enable the autofire coil rule."""
+        """Enable the autofire device.
+
+        This causes the coil to respond to the switch hits. This is typically
+        called when a ball starts to enable the slingshots, pops, etc.
+
+        Note that there are several options for both the coil and the switch
+        which can be incorporated into this rule, including recycle times,
+        switch debounce, reversing the switch (fire the coil when the switch
+        goes inactive), etc. These rules vary by hardware platform. See the
+        user documentation for the hardware platform for details.
+
+        Args:
+            **kwargs: Not used, just included so this method can be used as an
+                event callback.
+
+        """
         del kwargs
 
         if self._enabled:
@@ -69,8 +95,19 @@ class AutofireCoil(SystemWideDevice):
 
     @event_handler(1)
     def disable(self, **kwargs):
-        """Disable the autofire coil rule."""
+        """Disable the autofire device.
+
+        This is typically called at the end of a ball and when a tilt event
+        happens.
+
+        Args:
+            **kwargs: Not used, just included so this method can be used as an
+                event callback.
+
+        """
         del kwargs
+
+        self.delay.remove("_timeout_enable_delay")
 
         if not self._enabled:
             return
@@ -83,6 +120,14 @@ class AutofireCoil(SystemWideDevice):
         """Rule was triggered."""
         if not self._ball_search_in_progress:
             self.config['playfield'].mark_playfield_active_from_device_action()
+        if self._timeout_watch_time:
+            current_time = self.machine.clock.get_time()
+            self._timeout_hits = [t for t in self._timeout_hits if t > current_time - self._timeout_watch_time / 1000.0]
+            self._timeout_hits.append(current_time)
+
+            if len(self._timeout_hits) >= self._timeout_max_hits:
+                self.disable()
+                self.delay.add(self._timeout_disable_time, self.enable, "_timeout_enable_delay")
 
     def _ball_search(self, phase, iteration):
         del phase
@@ -93,5 +138,5 @@ class AutofireCoil(SystemWideDevice):
         return True
 
     def _ball_search_ignore_done(self):
-        """We no longer expect any fake hits """
+        """We no longer expect any fake hits."""
         self._ball_search_in_progress = False

@@ -63,7 +63,7 @@ class TestBallLock(MpfTestCase):
         playfield = self.machine.ball_devices['playfield']
 
         self.machine.events.add_handler('balldevice_captured_from_playfield', self._captured_from_pf)
-        self.machine.events.add_handler('balldevice_1_ball_missing', self._missing_ball)
+        self.machine.events.add_handler('balldevice_ball_missing', self._missing_ball)
 
         self._enter = 0
         self._captured = 0
@@ -224,7 +224,7 @@ class TestBallLock(MpfTestCase):
         playfield = self.machine.ball_devices['playfield']
 
         self.machine.events.add_handler('balldevice_captured_from_playfield', self._captured_from_pf)
-        self.machine.events.add_handler('balldevice_1_ball_missing', self._missing_ball)
+        self.machine.events.add_handler('balldevice_ball_missing', self._missing_ball)
         self.machine.events.add_handler('collecting_balls_complete', self._collecting_balls_complete_handler)
 
         lock_logic.enable()
@@ -314,7 +314,7 @@ class TestBallLock(MpfTestCase):
         playfield = self.machine.ball_devices['playfield']
 
         self.machine.events.add_handler('balldevice_captured_from_playfield', self._captured_from_pf)
-        self.machine.events.add_handler('balldevice_1_ball_missing', self._missing_ball)
+        self.machine.events.add_handler('balldevice_ball_missing', self._missing_ball)
         self.machine.events.add_handler('collecting_balls_complete', self._collecting_balls_complete_handler)
 
         self._enter = 0

@@ -1,0 +1,10 @@
+Testing Tutorial Step 1. Installing MPF
+=======================================
+
+`Step 1 of the MPF Tutorial <http://docs.missionpinball.org/en/dev/tutorial/1_install_mpf.html>`_ is just about
+getting MPF installed, so there's nothing to do yet for testing. Really we just include Step 1 here because if
+we didn't it would be confusing as to why the tutorial starts on Step 2. :)
+
+Note that if you download the `MPF Example repo <https://github.com/missionpinball/mpf-examples>`_, the tutorial
+folder in there which contains all the complete tutorial files for every step also includes test folders with all
+the complete tests.

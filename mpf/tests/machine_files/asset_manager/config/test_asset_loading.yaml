@@ -1,8 +1,7 @@
-#config_version=4
+#config_version=5
 
 mpf:
-  default_matrix_light_hw_update_hz: 1
-  default_led_hw_update_hz: 1
+  default_light_hw_update_hz: 1
 
 lights:
     led_01:
@@ -96,3 +95,15 @@ show_pools:
       - show2
       - show3
     type: random_force_all
+  group7:
+    shows:
+      - show1
+      - show2{mode.mode1.active}
+      - show3{mode.mode1.stopping}
+    type: random
+  group8:
+    shows:
+      - show1{mode.mode1.active}
+      - show2
+      - show3{mode.mode1.stopping}
+    type: sequence

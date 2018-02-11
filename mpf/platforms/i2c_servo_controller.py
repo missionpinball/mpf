@@ -8,7 +8,7 @@ from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInter
 from mpf.core.platform import ServoPlatform
 
 
-class HardwarePlatform(ServoPlatform):
+class I2CServoControllerHardwarePlatform(ServoPlatform):
 
     """Supports the PCA9685/PCA9635 chip via I2C."""
 
@@ -27,7 +27,7 @@ class HardwarePlatform(ServoPlatform):
 
     @asyncio.coroutine
     def initialize(self):
-        """Method is called after all hardware platforms were instantiated."""
+        """Initialise platform."""
         yield from super().initialize()
 
         # validate our config (has to be in intialize since config_processor
@@ -46,20 +46,20 @@ class HardwarePlatform(ServoPlatform):
                                  0x04)  # configure output
         self.platform.i2c_write8(self.config['address'], 0xFE,
                                  130)  # set approx 50Hz
-        time.sleep(.01)  # needed according to datasheet to sync PLL
+        yield from asyncio.sleep(.01, loop=self.machine.clock.loop)     # needed according to datasheet to sync PLL
         self.platform.i2c_write8(self.config['address'], 0x00,
                                  0x01)  # no more sleep
-        time.sleep(.01)  # needed to end sleep according to datasheet
+        yield from asyncio.sleep(.01, loop=self.machine.clock.loop)     # needed to end sleep according to datasheet
 
-    def configure_servo(self, config):
+    def configure_servo(self, number: str):
         """Configure servo."""
-        number = int(config['number'])
+        number_int = int(number)
 
         # check bounds
-        if number < 0 or number > 15:
+        if number_int < 0 or number_int > 15:
             raise AssertionError("invalid number")
 
-        return I2cServo(number, self.config, self.platform)
+        return I2cServo(number_int, self.config, self.platform)
 
     def stop(self):
         """Stop platform."""

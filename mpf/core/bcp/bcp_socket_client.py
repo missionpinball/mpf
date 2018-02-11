@@ -92,7 +92,7 @@ def encode_command_string(bcp_command, **kwargs):
     json_needed = False
 
     for k, v in kwargs.items():
-        if isinstance(v, dict) or isinstance(v, list):
+        if isinstance(v, (dict, list)):
             json_needed = True
             break
 
@@ -120,9 +120,77 @@ def encode_command_string(bcp_command, **kwargs):
     return str(urlunparse(('', '', bcp_command.lower(), '', kwarg_string, '')))
 
 
+class AsyncioBcpClientSocket():
+
+    """Simple asyncio bcp client."""
+
+    def __init__(self, sender, receiver):
+        """Initialise BCP client socket."""
+        self._sender = sender
+        self._receiver = receiver
+        self._receive_buffer = b''
+
+    # pylint: disable-msg=inconsistent-return-statements
+    @asyncio.coroutine
+    def read_message(self):
+        """Read the next message."""
+        while True:
+            message = yield from self._receiver.readline()
+
+            # handle EOF
+            if not message:
+                raise BrokenPipeError()
+
+            # strip newline
+            message = message[0:-1]
+
+            if b'&bytes=' in message:
+                message, bytes_needed = message.split(b'&bytes=')
+                bytes_needed = int(bytes_needed)
+
+                rawbytes = yield from self._receiver.readexactly(bytes_needed)
+
+                message_obj = self._process_command(message, rawbytes)
+
+            else:  # no bytes in the message
+                message_obj = self._process_command(message)
+
+            if message_obj:
+                return message_obj
+
+    def send(self, bcp_command, kwargs):
+        """Send a message to the BCP host.
+
+        Args:
+            bcp_command: command to send
+            kwargs: parameters to command
+        """
+        bcp_string = encode_command_string(bcp_command, **kwargs)
+        self._sender.write((bcp_string + '\n').encode())
+
+    @asyncio.coroutine
+    def wait_for_response(self, bcp_command):
+        """Wait for a command and ignore all others."""
+        while True:
+            cmd, args = yield from self.read_message()
+            if cmd == "reset":
+                self.send("reset_complete", {})
+                continue
+            if cmd == bcp_command:
+                return cmd, args
+
+    @staticmethod
+    def _process_command(message, rawbytes=None):
+        cmd, kwargs = decode_command_string(message.decode())
+        if rawbytes:
+            kwargs['rawbytes'] = rawbytes
+
+        return cmd, kwargs
+
+
 class BCPClientSocket(BaseBcpClient):
 
-    """Parent class for a BCP client socket.
+    """MPF version of the AsyncioBcpClientSocket.
 
     (There can be multiple of these to connect to multiple BCP media controllers simultaneously.)
 
@@ -146,6 +214,10 @@ class BCPClientSocket(BaseBcpClient):
 
         self._bcp_client_socket_commands = {'hello': self._receive_hello,
                                             'goodbye': self._receive_goodbye}
+
+    def __repr__(self):
+        """Return str representation."""
+        return self.module_name
 
     def connect(self, config):
         """Actively connect to server."""
@@ -197,24 +269,25 @@ class BCPClientSocket(BaseBcpClient):
 
         self._sender.close()
 
-    def send(self, bcp_command, bcp_command_args):
+    def send(self, bcp_command, kwargs):
         """Send a message to the BCP host.
 
         Args:
             bcp_command: command to send
-            bcp_command_args: parameters to command
+            kwargs: parameters to command
         """
         try:
-            bcp_string = encode_command_string(bcp_command, **bcp_command_args)
+            bcp_string = encode_command_string(bcp_command, **kwargs)
         # pylint: disable-msg=broad-except
         except Exception as e:
-            self.warning_log("Failed to encode bcp_command %s with args %s. %s", bcp_command, bcp_command_args, e)
+            self.warning_log("Failed to encode bcp_command %s with args %s. %s", bcp_command, kwargs, e)
             return
 
         if self.debug_log:
             self.debug_log('Sending "%s"', bcp_string)
         self._sender.write((bcp_string + '\n').encode())
 
+    # pylint: disable-msg=inconsistent-return-statements
     @asyncio.coroutine
     def read_message(self):
         """Read the next message."""
@@ -252,6 +325,7 @@ class BCPClientSocket(BaseBcpClient):
 
         if cmd in self._bcp_client_socket_commands:
             self._bcp_client_socket_commands[cmd](**kwargs)
+            return None
         else:
             return cmd, kwargs
 

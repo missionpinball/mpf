@@ -1,0 +1,7 @@
+#config_version=5
+mode:
+  priority: 1000
+  start_events: game_ending
+  code: mpf.modes.match.code.match.Match
+  game_mode: False
+  use_wait_queue: true

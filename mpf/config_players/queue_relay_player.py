@@ -8,19 +8,24 @@ class QueueRelayPlayer(ConfigPlayer):
 
     config_file_section = 'queue_relay_player'
 
-    def play(self, settings, context, priority=0, **kwargs):
+    def play(self, settings, context, calling_context, priority=0, **kwargs):
         """Block queue event."""
+        del calling_context
         try:
             queue = kwargs['queue']
         except KeyError:
-            raise AssertionError("Can only use queue relay player with queue event.")
+            raise AssertionError(
+                "Can only use queue relay player with queue event.")
 
         instance_dict = self._get_instance_dict(context)
 
         p = settings['priority']
         if priority:
             p += priority
-        handler = self.machine.events.add_handler(settings['wait_for'], self._callback, p, context=context, queue=queue)
+        handler = self.machine.events.add_handler(settings['wait_for'],
+                                                  self._callback, p,
+                                                  context=context,
+                                                  queue=queue)
         instance_dict[queue] = handler
         queue.wait()
 
@@ -48,6 +53,3 @@ class QueueRelayPlayer(ConfigPlayer):
     def get_express_config(self, value):
         """No express config."""
         raise AssertionError("Not supported")
-
-
-player_cls = QueueRelayPlayer

@@ -22,6 +22,7 @@ named_rgb_colors = CaseInsensitiveDict(
     off=(0, 0, 0),
     aliceblue=(240, 248, 255),
     antiquewhite=(250, 235, 215),
+    aqua=(0, 255, 255),
     aquamarine=(127, 255, 212),
     azure=(240, 255, 255),
     beige=(245, 245, 220),
@@ -64,6 +65,7 @@ named_rgb_colors = CaseInsensitiveDict(
     firebrick=(178, 34, 34),
     floralwhite=(255, 250, 240),
     forestgreen=(34, 139, 34),
+    fuchsia=(255, 0, 255),
     gainsboro=(220, 220, 220),
     ghostwhite=(248, 248, 255),
     gold=(255, 215, 0),
@@ -166,7 +168,7 @@ class RGBColor(object):
 
     """One RGB Color."""
 
-    def __init__(self, color: Union["RGBColor", str, List[int], Tuple[int, int, int]]=None) -> None:
+    def __init__(self, color: Union["RGBColor", str, List[int], Tuple[int, int, int]] = None) -> None:
         """Initialise color."""
         if isinstance(color, RGBColor):
             self._color = color.rgb
@@ -430,7 +432,7 @@ class RGBColor(object):
         return rgb
 
     @staticmethod
-    def add_color(name, color):
+    def add_color(name: str, color: Union["RGBColor", str, List[int], Tuple[int, int, int]]):
         """Add (or updates if it already exists) a color.
 
         Note that this is not
@@ -461,7 +463,7 @@ class RGBColorCorrectionProfile(object):
 
     """Encapsulates a named RGB color correction profile and its associated lookup tables."""
 
-    def __init__(self, name: str=None) -> None:
+    def __init__(self, name: str = None) -> None:
         """Create a linear correction profile that does not alter color values by default.
 
         Args:

@@ -1,4 +1,4 @@
-#config_version=4
+#config_version=5
 
 modes:
     - attract
@@ -17,6 +17,19 @@ coils:
     c_test2:
         number: 2
         label: Second coil
+    c_test3:
+        number: 1000
+        label: Sixth coil
+    c_test4:
+        number: 100
+        label: Fifth coil
+    c_test5:
+        number: 3
+        label: Third coil
+    c_test6:
+        number: 10
+        label: Fourth coil
+
 
 switches:
     s_door_open:
@@ -34,3 +47,9 @@ switches:
     s_service_down:
         number:
         tags: service_down
+
+lights:
+    l_light1:
+      number: 1
+    l_light5:
+      number: 5

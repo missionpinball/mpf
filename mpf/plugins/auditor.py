@@ -5,17 +5,22 @@ import logging
 from mpf.core.switch_controller import MonitoredSwitchChange
 from mpf.devices.shot import Shot
 
+MYPY = False
+if MYPY:   # pragma: no cover
+    from mpf.core.machine import MachineController
+    from typing import Any, Set
+
 
 class Auditor(object):
 
-    """Base class for the auditor.
+    """Writes switch events, regular events, and player variables to an audit log file."""
 
-    Args:
-        machine: A refence to the machine controller object.
-    """
+    def __init__(self, machine: "MachineController") -> None:
+        """Initialise auditor.
 
-    def __init__(self, machine):
-        """Initialise auditor."""
+        Args:
+            machine: A reference to the machine controller object.
+        """
         if 'auditor' not in machine.config:
             machine.log.debug('"Auditor:" section not found in machine '
                               'configuration, so the auditor will not be '
@@ -26,9 +31,9 @@ class Auditor(object):
         self.machine = machine
 
         self.machine.auditor = self
-        self.switchnames_to_audit = set()
-        self.config = None
-        self.current_audits = None
+        self.switchnames_to_audit = set()       # type: Set[str]
+        self.config = None                      # type: Any
+        self.current_audits = None              # type: Any
 
         self.enabled = False
         """Attribute that's viewed by other core components to let them know
@@ -53,7 +58,7 @@ class Auditor(object):
 
         self.current_audits = self.data_manager.get_data()
 
-        if not self.current_audits:
+        if not isinstance(self.current_audits, dict):
             self.current_audits = dict()
 
         # Make sure we have all the sections we need in our audit dict
@@ -98,14 +103,20 @@ class Auditor(object):
         # Add the switches monitor
         self.machine.switch_controller.add_monitor(self.audit_switch)
 
+        for category, audits in self.current_audits.items():
+            if not isinstance(audits, dict):
+                continue
+            for name, value in audits.items():
+                self.machine.set_machine_var("audits_{}_{}".format(category, name), value)
+
     def audit(self, audit_class, event, **kwargs):
-        """Called to log an auditable event.
+        """Log an auditable event.
 
         Args:
             audit_class: A string of the section we want this event to be
-            logged to.
+                logged to.
             event: A string name of the event we're auditing.
-            **kawargs: Not used, but included since some of the audit events
+            **kwargs: Not used, but included since some of the audit events
                 might include random kwargs.
         """
         del kwargs
@@ -117,6 +128,7 @@ class Auditor(object):
             self.current_audits[audit_class][event] = 0
 
         self.current_audits[audit_class][event] += 1
+        self.machine.set_machine_var("audits_{}_{}".format(audit_class, event), self.current_audits[audit_class][event])
 
     def audit_switch(self, change: MonitoredSwitchChange):
         """Record switch change."""
@@ -130,11 +142,11 @@ class Auditor(object):
         self.audit('shots', name)
 
     def audit_event(self, eventname, **kwargs):
-        """Registered as an event handlers to log an event to the audit log.
+        """Record this event in the audit log.
 
         Args:
             eventname: The string name of the event.
-            **kwargs, not used, but included since some types of events include
+            **kwargs: not used, but included since some types of events include
                 kwargs.
         """
         del kwargs
@@ -142,12 +154,12 @@ class Auditor(object):
         self.current_audits['events'][eventname] += 1
 
     def audit_player(self, **kwargs):
-        """Called to write player data to the audit log.
+        """Write player data to the audit log.
 
         Typically this is only called at the end of a game.
 
         Args:
-            **kwargs, not used, but included since some types of events include
+            **kwargs: not used, but included since some types of events include
                 kwargs.
         """
         del kwargs
@@ -210,10 +222,9 @@ class Auditor(object):
             self.machine.events.add_handler(event, self._save_audits,
                                             priority=0)
 
-    def _save_audits(self, delay_secs=3, **kwargs):
+    def _save_audits(self, **kwargs):
         del kwargs
-        self.data_manager.save_all(data=self.current_audits,
-                                   delay_secs=delay_secs)
+        self.data_manager.save_all(data=self.current_audits)
 
     def disable(self, **kwargs):
         """Disable the auditor."""

@@ -1,0 +1,15 @@
+#config_version=5
+# actived when all 5 drop targets have dropped
+# user wants to continue hitting those
+# hitting the special kills the mode
+mode:
+  start_events: counter_target_complete # from logic_block
+  # priority higher that mode1 priority
+  priority: 300
+  stop_events: s_kills_counter_target_active
+
+scoring:
+  s_counter_target_active:
+    score: 100|block
+  s_kills_counter_target_active:
+    score: 500|block

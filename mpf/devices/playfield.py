@@ -22,8 +22,12 @@ class Playfield(SystemWideDevice):
         """Create the playfield."""
         super().__init__(machine, name)
         self.ball_search = BallSearch(self.machine, self)
+        """An instance of :class:`mpf.core.ball_search.BallSearch` which
+        handles ball search for this playfield."""
 
         self.delay = DelayManager(self.machine.delayRegistry)
+        """An instance of :class:`mpf.core.delays.DelayManager` which
+        handles delays for this playfield."""
 
         self.machine.ball_devices[name] = self
 
@@ -109,7 +113,7 @@ class Playfield(SystemWideDevice):
 
     @property
     def balls(self):
-        """The number of balls on the playfield."""
+        """Return the number of balls on the playfield."""
         return self._balls
 
     @balls.setter
@@ -154,7 +158,7 @@ class Playfield(SystemWideDevice):
 
     @classmethod
     def get_additional_ball_capacity(cls):
-        """The number of ball which can be added.
+        """Return the number of ball which can be added.
 
         Used to find out how many more balls this device can hold. Since this
         is the playfield device, this method always returns 999.
@@ -181,9 +185,8 @@ class Playfield(SystemWideDevice):
 
         The source_device arg is included to give you an options for specifying
         the source of the ball(s) to be added. This argument is optional, so if
-        you don't supply them then MPF will look for a device
-        tagged with 'ball_add_live'. If you don't provide a source and you don't
-        have a device with the 'ball_add_live' tag, MPF will quit.
+        you don't supply them then MPF will use the default_source_device of
+        this playfield.
 
         This method does *not* increase the game controller's count of the
         number of balls in play. So if you want to add balls (like in a
@@ -230,20 +233,8 @@ class Playfield(SystemWideDevice):
                                  "doesn't  make sense. Not adding any balls...")
 
         # Figure out which device we'll get a ball from
-
-        if source_device:
-            pass
-        else:
-            for device in self.machine.ball_devices.items_tagged('ball_add_live'):
-                if self in device.config['eject_targets']:
-                    source_device = device
-                    break
-
         if not source_device:
-            raise AssertionError("Received request to add a ball to the playfield"
-                                 ", but no source device was passed and no ball "
-                                 "devices are tagged with 'ball_add_live'. Cannot"
-                                 " add a ball.")
+            source_device = self.config['default_source_device']
 
         self.debug_log("Received request to add %s ball(s). Source device: %s."
                        " Player-controlled: %s", balls,
@@ -362,7 +353,7 @@ class Playfield(SystemWideDevice):
 
     @classmethod
     def is_playfield(cls):
-        """True since it is a playfield."""
+        """Return true since it is a playfield."""
         return True
 
     def add_incoming_ball(self, incoming_ball: IncomingBall):

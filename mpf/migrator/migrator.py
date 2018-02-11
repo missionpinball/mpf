@@ -11,10 +11,10 @@ from copy import deepcopy
 from ruamel import yaml
 from ruamel.yaml.comments import CommentedSeq, CommentedMap
 
+from mpf.file_interfaces.yaml_roundtrip import YamlRoundtrip
 from mpf._version import version
 from mpf.core.file_manager import FileManager
 from mpf.core.utility_functions import Util
-from mpf.file_interfaces.yaml_interface import YamlInterface
 from mpf.core.config_validator import mpf_config_spec
 
 EXTENSION = '.yaml'
@@ -113,7 +113,7 @@ class Migrator(object):
         round2_files = list()
 
         for file in self.file_list:
-            file_content = FileManager.load(file, round_trip=True)
+            file_content = FileManager.load(file)
 
             if isinstance(file_content, CommentedMap):
                 migrated_content = self.migrator.migrate_file(file,
@@ -125,7 +125,7 @@ class Migrator(object):
                 round2_files.append(file)
 
         for file in round2_files:
-            file_content = FileManager.load(file, round_trip=True)
+            file_content = FileManager.load(file)
             migrated_content = self.migrator.migrate_file(file, file_content)
             if migrated_content:
                 self.num_show_files += 1
@@ -141,7 +141,7 @@ class Migrator(object):
     def save_file(self, file_name, file_contents):
         """Save file."""
         self.log.info("Writing file: %s", file_name)
-        FileManager.save(file_name, file_contents, include_comments=True)
+        FileManager.save(file_name, file_contents)
 
 
 class VersionMigrator(object):
@@ -241,6 +241,7 @@ class VersionMigrator(object):
                 return self.fc
 
         self.log.debug("Ignoring data file: %s. (Error is ok)", self.file_name)
+        return False
 
     # pylint: disable-msg=no-self-use
     def is_show_file(self):
@@ -353,7 +354,7 @@ class VersionMigrator(object):
         if not key:  # single item
             if first_key in self.fc:
 
-                YamlInterface.del_key_with_comments(self.fc, first_key,
+                YamlRoundtrip.del_key_with_comments(self.fc, first_key,
                                                     self.log)
                 return True
 
@@ -369,7 +370,7 @@ class VersionMigrator(object):
                     # lowest level key
                     dic = dic[key.pop(0)]
 
-                YamlInterface.del_key_with_comments(dic, final_key, self.log)
+                YamlRoundtrip.del_key_with_comments(dic, final_key, self.log)
                 return True
         except (KeyError, IndexError):
             pass
@@ -406,7 +407,7 @@ class VersionMigrator(object):
 
                 self.log.debug('Renaming key: %s: -> %s:',
                                ':'.join(rename['old']), rename['new'])
-                YamlInterface.rename_key(rename['old'][-1], rename['new'],
+                YamlRoundtrip.rename_key(rename['old'][-1], rename['new'],
                                          found_section)
 
             else:  # searching for a single key anywhere
@@ -420,7 +421,7 @@ class VersionMigrator(object):
         elif isinstance(target, dict):
 
             if old in target:
-                YamlInterface.rename_key(old, new, target, self.log)
+                YamlRoundtrip.rename_key(old, new, target, self.log)
 
             for item in target.values():
                 self._recursive_rename(old, new, item)
@@ -466,7 +467,7 @@ class VersionMigrator(object):
 
         for key in key_list:
             try:
-                YamlInterface.rename_key(key, key.lower(), dic, self.log)
+                YamlRoundtrip.rename_key(key, key.lower(), dic, self.log)
             except AttributeError:
                 pass
 

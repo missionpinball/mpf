@@ -48,9 +48,9 @@ class Achievement(ModeDevice):
         self.debug_log('New state: %s', value)
         self._player.achievements[self.name] = value
 
-    def validate_and_parse_config(self, config: dict, is_mode_config: bool) -> dict:
+    def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None) -> dict:
         """Validate and parse config."""
-        config = super().validate_and_parse_config(config, is_mode_config)
+        config = super().validate_and_parse_config(config, is_mode_config, debug_prefix)
 
         states = ['disabled', 'enabled', 'started', 'stopped', 'selected',
                   'completed']
@@ -180,14 +180,13 @@ class Achievement(ModeDevice):
         for group in self._group_memberships:
             group.member_state_changed()
 
-    def device_added_to_mode(self, mode: Mode, player: Player):
+    def device_loaded_in_mode(self, mode: Mode, player: Player):
         """Load device on mode start and restore state.
 
         Args:
             mode: mode which was contains the device
             player: player which is currently active
         """
-        super().device_added_to_mode(mode, player)
         self._player = player
         self._mode = mode
         if not self._player.achievements:
@@ -219,6 +218,7 @@ class Achievement(ModeDevice):
         self._mode = None
         if self._show:
             self._show.stop()
+            self._show = None
 
     def add_to_group(self, group):
         """Add this achievement to an achievement group.

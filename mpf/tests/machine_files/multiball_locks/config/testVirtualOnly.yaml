@@ -1,0 +1,5 @@
+#config_version=5
+config: config.yaml
+
+modes:
+    - virtual_only

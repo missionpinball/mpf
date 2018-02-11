@@ -1,14 +1,16 @@
 """Contains the Light class."""
-import asyncio
 from functools import partial
 from operator import itemgetter
 
 from typing import Set
 from typing import Tuple
 
+from mpf.core.delays import DelayManager
+
 from mpf.core.platform import LightsPlatform
 
 from mpf.core.device_monitor import DeviceMonitor
+from mpf.core.machine import MachineController
 from mpf.core.rgb_color import RGBColor
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade
@@ -20,7 +22,7 @@ class DriverLight(LightPlatformSoftwareFade):
 
     def __init__(self, driver, loop, software_fade_ms):
         """Initialise coil as light."""
-        super().__init__(loop, software_fade_ms)
+        super().__init__(driver.hw_driver.number, loop, software_fade_ms)
         self.driver = driver
 
     def set_brightness(self, brightness: float):
@@ -29,6 +31,10 @@ class DriverLight(LightPlatformSoftwareFade):
             self.driver.disable()
         else:
             self.driver.enable(hold_power=brightness)
+
+    def get_board_name(self):
+        """Return board name of underlaying driver."""
+        return self.driver.hw_driver.get_board_name()
 
 
 @DeviceMonitor(_color="color")
@@ -46,6 +52,7 @@ class Light(SystemWideDevice):
         self.platforms = set()      # type: Set[LightsPlatform]
         super().__init__(machine, name)
         self.machine.light_controller.initialise_light_subsystem()
+        self.delay = DelayManager(self.machine.delayRegistry)
 
         self.default_fade_ms = None
 
@@ -56,32 +63,62 @@ class Light(SystemWideDevice):
         in to set this light to a certain color (and/or fade). Each entry in the
         list contains the following key/value pairs:
 
-        priority: The relative priority of this color command. Higher numbers
+        priority:
+            The relative priority of this color command. Higher numbers
             take precedent, and the highest priority entry will be the command
             that's currently active. In the event of a tie, whichever entry was
             added last wins (based on 'start_time' below).
-        start_time: The clock time when this command was added. Primarily used
+        start_time:
+            The clock time when this command was added. Primarily used
             to calculate fades, but also used as a tie-breaker for multiple
             entries with the same priority.
-        start_color: RGBColor() of the color of this light when this command came
-            in.
-        dest_time: Clock time that represents when a fade (from start_color to
+        start_color:
+            RGBColor() of the color of this light when this command came in.
+        dest_time:
+            Clock time that represents when a fade (from start_color to
             dest_color) will be done. If this is 0, that means there is no
             fade. When a fade is complete, this value is reset to 0.
-        dest_color: RGBColor() of the destination this light is fading to. If
+        dest_color:
+            RGBColor() of the destination this light is fading to. If
             a command comes in with no fade, then this will be the same as the
             'color' below.
-        color: The current color of the light based on this command. This value
-            is updated automatically as fades progress, and it's the value
-            that's actually written to the hardware (prior to color
-            correction).
-        key: An arbitrary unique identifier to keep multiple entries in the
+        key:
+            An arbitrary unique identifier to keep multiple entries in the
             stack separate. If a new color command comes in with a key that
             already exists for an entry in the stack, that entry will be
             replaced by the new entry. The key is also used to remove entries
             from the stack (e.g. when shows or modes end and they want to
             remove their commands from the light).
         """
+
+    @classmethod
+    def device_class_init(cls, machine: MachineController):
+        """Register handler for duplicate light number checks."""
+        machine.events.add_handler("init_phase_4",
+                                   cls._check_duplicate_light_numbers,
+                                   machine=machine)
+
+    def get_hw_numbers(self):
+        """Return a list of all hardware driver numbers."""
+        numbers = []
+        for driver in self.hw_drivers.values():
+            numbers.append(driver.number)
+
+        return numbers
+
+    @staticmethod
+    def _check_duplicate_light_numbers(machine, **kwargs):
+        del kwargs
+        check_set = set()
+        for light in machine.lights:
+            for driver in light.hw_drivers.values():
+                key = (light.platform, driver.number, type(driver))
+                if key in check_set:
+                    raise AssertionError(
+                        "Duplicate light number {} {} for light {}".format(
+                            type(driver), driver.number, light))
+
+                check_set.add(key)
 
     def _map_channels_to_colors(self, channel_list) -> dict:
         if self.config['type']:
@@ -136,9 +173,14 @@ class Light(SystemWideDevice):
         elif not self.config['channels']:
             # get channels from number + platform
             platform = self.machine.get_platform_sections('lights', self.config['platform'])
-            channel_list = platform.parse_light_number_to_channels(self.config['number'], self.config['subtype'])
+            try:
+                channel_list = platform.parse_light_number_to_channels(self.config['number'], self.config['subtype'])
+            except AssertionError as e:
+                raise AssertionError("Failed to parse light number {} in platform. See error above".
+                                     format(self.name)) from e
+
             # copy platform and platform_settings to all channels
-            for channel, settings in enumerate(channel_list):
+            for channel, _ in enumerate(channel_list):
                 channel_list[channel]['subtype'] = self.config['subtype']
                 channel_list[channel]['platform'] = self.config['platform']
                 channel_list[channel]['platform_settings'] = self.config['platform_settings']
@@ -166,7 +208,11 @@ class Light(SystemWideDevice):
         else:
             platform = self.machine.get_platform_sections('lights', channel['platform'])
             self.platforms.add(platform)
-            return platform.configure_light(channel['number'], channel['subtype'], channel['platform_settings'])
+            try:
+                return platform.configure_light(channel['number'], channel['subtype'], channel['platform_settings'])
+            except AssertionError as e:
+                raise AssertionError("Failed to configure light {} in platform. See error above".
+                                     format(self.name)) from e
 
     def _initialize(self):
         self._load_hw_drivers()
@@ -174,17 +220,23 @@ class Light(SystemWideDevice):
         self.config['default_on_color'] = RGBColor(self.config['default_on_color'])
 
         if self.config['color_correction_profile'] is not None:
-            if self.config['color_correction_profile'] in (
-                    self.machine.light_controller.light_color_correction_profiles):
-                profile = self.machine.light_controller.light_color_correction_profiles[
-                    self.config['color_correction_profile']]
+            profile_name = self.config['color_correction_profile']
+        elif 'light_settings' in self.machine.config and \
+                self.machine.config['light_settings']['default_color_correction_profile'] is not None:
+            profile_name = self.machine.config['light_settings']['default_color_correction_profile']
+        else:
+            profile_name = None
+
+        if profile_name:
+            if profile_name in self.machine.light_controller.light_color_correction_profiles:
+                profile = self.machine.light_controller.light_color_correction_profiles[profile_name]
 
                 if profile is not None:
                     self._set_color_correction_profile(profile)
             else:   # pragma: no cover
                 error = "Color correction profile '{}' was specified for light '{}'"\
                         " but the color correction profile does not exist."\
-                    .format(self.config['color_correction_profile'], self.name)
+                        .format(profile_name, self.name)
                 self.error_log(error)
                 raise ValueError(error)
 
@@ -208,7 +260,9 @@ class Light(SystemWideDevice):
         self._color_correction_profile = profile
 
     def color(self, color, fade_ms=None, priority=0, key=None):
-        """Add or update a color entry in this light's stack, which is how you tell this light what color you want it to be.
+        """Add or update a color entry in this light's stack.
+
+        Calling this methods is how you tell this light what color you want it to be.
 
         Args:
             color: RGBColor() instance, or a string color name, hex value, or
@@ -231,22 +285,24 @@ class Light(SystemWideDevice):
                        "priority: %s, key: %s", color, fade_ms, priority,
                        key)
 
-        if not isinstance(color, RGBColor):
+        if isinstance(color, str) and color == "on":
+            color = self.config['default_on_color']
+        elif not isinstance(color, RGBColor):
             color = RGBColor(color)
 
         if fade_ms is None:
             fade_ms = self.default_fade_ms
 
-        if priority < self._get_priority_from_key(key):
-            self.debug_log("Incoming priority is lower than an existing "
-                           "stack item with the same key. Not adding to "
-                           "stack.")
+        start_time = self.machine.clock.get_time()
 
-            return
+        color_changes = not self.stack or self.stack[0]['priority'] <= priority or self.stack[0]['dest_color'] is None
 
-        self._add_to_stack(color, fade_ms, priority, key)
+        self._add_to_stack(color, fade_ms, priority, key, start_time)
 
-    def on(self, fade_ms=None, brightness=None, priority=0, key=None, **kwargs):
+        if color_changes:
+            self._schedule_update()
+
+    def on(self, brightness=None, fade_ms=None, priority=0, key=None, **kwargs):
         """Turn light on.
 
         Args:
@@ -255,10 +311,9 @@ class Light(SystemWideDevice):
             fade_ms: duration of fade
         """
         del kwargs
+        color = self.config['default_on_color']
         if brightness is not None:
-            color = (brightness, brightness, brightness)
-        else:
-            color = self.config['default_on_color']
+            color *= brightness / 255
         self.color(color=color, fade_ms=fade_ms,
                    priority=priority, key=key)
 
@@ -274,40 +329,51 @@ class Light(SystemWideDevice):
         self.color(color=RGBColor(), fade_ms=fade_ms, priority=priority,
                    key=key)
 
-    def _add_to_stack(self, color, fade_ms, priority, key):
-        curr_color = self.get_color()
+    # pylint: disable-msg=too-many-arguments
+    def _add_to_stack(self, color, fade_ms, priority, key, start_time):
+        """Add color to stack."""
+        # handle None to make keys sortable
+        if not key:
+            key = ""
+        else:
+            key = str(key)
 
-        self._remove_from_stack_by_key(key)
+        if priority < self._get_priority_from_key(key):
+            self.debug_log("Incoming priority %s is lower than an existing "
+                           "stack item with the same key %s. Not adding to "
+                           "stack.", priority, key)
+            return
+
+        if self.stack and priority == self.stack[0]['priority'] and key == self.stack[0]['key']:
+            self.debug_log("Light stack contains two entries with the same priority %s but different keys: ",
+                           priority, self.stack)
 
         if fade_ms:
-            new_color = curr_color
-            dest_time = self.machine.clock.get_time() + (fade_ms / 1000)
+            dest_time = start_time + (fade_ms / 1000)
         else:
-            new_color = color
             dest_time = 0
 
+        color_below = self.get_color_below(priority, key)
+        self._remove_from_stack_by_key(key)
+
         self.stack.append(dict(priority=priority,
-                               start_time=self.machine.clock.get_time(),
-                               start_color=curr_color,
+                               start_time=start_time,
+                               start_color=color_below,
                                dest_time=dest_time,
                                dest_color=color,
-                               color=new_color,
                                key=key))
 
-        self.stack.sort(key=itemgetter('priority', 'start_time'), reverse=True)
+        self.stack.sort(key=itemgetter('priority', 'key'), reverse=True)
 
         self.debug_log("+-------------- Adding to stack ----------------+")
         self.debug_log("priority: %s", priority)
         self.debug_log("start_time: %s", self.machine.clock.get_time())
-        self.debug_log("start_color: %s", curr_color)
+        self.debug_log("start_color: %s", color_below)
         self.debug_log("dest_time: %s", dest_time)
         self.debug_log("dest_color: %s", color)
-        self.debug_log("color: %s", new_color)
         self.debug_log("key: %s", key)
 
-        self._schedule_update()
-
-    def remove_from_stack_by_key(self, key):
+    def remove_from_stack_by_key(self, key, fade_ms=None):
         """Remove a group of color settings from the stack.
 
         Args:
@@ -318,10 +384,80 @@ class Light(SystemWideDevice):
         were removed, the light will be updated with whatever's below it. If no
         settings remain after these are removed, the light will turn off.
         """
+        if not self.stack:
+            # no stack
+            return
+
+        if fade_ms is None:
+            fade_ms = self.default_fade_ms
+
+        key = str(key)
+
+        priority = None
+        color_changes = True
+        stack = []
+        for i, entry in enumerate(self.stack):
+            if entry["key"] == key:
+                stack = self.stack[i:]
+                priority = entry["priority"]
+                break
+            elif entry["dest_color"] is not None:
+                # no transparency above key
+                color_changes = False
+
+        # key not in stack
+        if not stack:
+            return
+
+        # this is already a fadeout. do not fade out the fade out.
+        if stack[0]["dest_color"] is None:
+            fade_ms = None
+
+        if fade_ms:
+            color_of_key = self._get_color_and_fade(stack, 0)[0]
+
         self._remove_from_stack_by_key(key)
-        self._schedule_update()
+        if fade_ms:
+            start_time = self.machine.clock.get_time()
+            self.stack.append(dict(priority=priority,
+                                   start_time=start_time,
+                                   start_color=color_of_key,
+                                   dest_time=start_time + fade_ms / 1000.0,
+                                   dest_color=None,
+                                   key=key))
+            self.delay.reset(ms=fade_ms, callback=partial(self._remove_fade_out, key=key), name="remove_fade")
+            self.stack.sort(key=itemgetter('priority', 'key'), reverse=True)
+
+        if color_changes:
+            self._schedule_update()
+
+    def _remove_fade_out(self, key):
+        """Remove a timed out fade out."""
+        if not self.stack:
+            return
+
+        found = False
+        color_change = True
+        for _, entry in enumerate(self.stack):
+            if entry["key"] == key and entry["dest_color"] is None:
+                found = True
+                break
+            elif entry["dest_color"] is not None:
+                # found entry above the removed which is non-transparent
+                color_change = False
+
+        if found:
+            self.debug_log("Removing fadeout for key '%s' from stack", key)
+            self.stack[:] = [x for x in self.stack if x['key'] != key or x['dest_color'] is not None]
+
+        if found and color_change:
+            self._schedule_update()
 
     def _remove_from_stack_by_key(self, key):
+        """Remove a key from stack."""
+        # tune the common case
+        if not self.stack:
+            return
         self.debug_log("Removing key '%s' from stack", key)
         self.stack[:] = [x for x in self.stack if x['key'] != key]
 
@@ -385,27 +521,41 @@ class Light(SystemWideDevice):
 
             return self._color_correction_profile.apply(color)
 
-    def _get_color_and_fade(self, max_fade_ms: int) -> Tuple[RGBColor, int]:
+    # pylint: disable-msg=too-many-return-statements
+    def _get_color_and_fade(self, stack, max_fade_ms: int) -> Tuple[RGBColor, int]:
         try:
-            color_settings = self.stack[0]
+            color_settings = stack[0]
         except IndexError:
             # no stack
             return RGBColor('off'), -1
 
+        dest_color = color_settings['dest_color']
+
         # no fade
         if not color_settings['dest_time']:
-            return color_settings['dest_color'], -1
+            # if we are transparent just return the lower layer
+            if dest_color is None:
+                return self._get_color_and_fade(stack[1:], max_fade_ms)
+            return dest_color, -1
 
         current_time = self.machine.clock.get_time()
 
         # fade is done
         if current_time >= color_settings['dest_time']:
+            # if we are transparent just return the lower layer
+            if dest_color is None:
+                return self._get_color_and_fade(stack[1:], max_fade_ms)
             return color_settings['dest_color'], -1
+
+        if dest_color is None:
+            dest_color, lower_fade_ms = self._get_color_and_fade(stack[1:], max_fade_ms)
+            if lower_fade_ms > 0:
+                max_fade_ms = lower_fade_ms
 
         target_time = current_time + (max_fade_ms / 1000.0)
         # check if fade will be done before max_fade_ms
         if target_time > color_settings['dest_time']:
-            return color_settings['dest_time'], int((color_settings['dest_time'] - current_time) / 1000)
+            return dest_color, int((color_settings['dest_time'] - current_time) * 1000)
 
         # figure out the ratio of how far along we are
         try:
@@ -414,10 +564,10 @@ class Light(SystemWideDevice):
         except ZeroDivisionError:
             ratio = 1.0
 
-        return RGBColor.blend(color_settings['start_color'], color_settings['dest_color'], ratio), max_fade_ms
+        return RGBColor.blend(color_settings['start_color'], dest_color, ratio), max_fade_ms
 
     def _get_brightness_and_fade(self, max_fade_ms: int, color: str) -> Tuple[float, int]:
-        uncorrected_color, fade_ms = self._get_color_and_fade(max_fade_ms)
+        uncorrected_color, fade_ms = self._get_color_and_fade(self.stack, max_fade_ms)
         corrected_color = self.gamma_correct(uncorrected_color)
         corrected_color = self.color_correct(corrected_color)
 
@@ -434,6 +584,21 @@ class Light(SystemWideDevice):
         """Getter for color."""
         return self.get_color()
 
+    def get_color_below(self, priority, key):
+        """Return an RGBColor() instance of the 'color' setting of the highest color below a certain key.
+
+        Similar to get_color.
+        """
+        if not self.stack:
+            return RGBColor("off")
+
+        stack = []
+        for i, entry in enumerate(self.stack):
+            if entry['priority'] <= priority and entry["key"] <= key:
+                stack = self.stack[i:]
+                break
+        return self._get_color_and_fade(stack, 0)[0]
+
     def get_color(self):
         """Return an RGBColor() instance of the 'color' setting of the highest color setting in the stack.
 
@@ -442,7 +607,7 @@ class Light(SystemWideDevice):
 
         Also note the color returned is the "raw" color that does has not had the color correction profile applied.
         """
-        return self._get_color_and_fade(0)[0]
+        return self._get_color_and_fade(self.stack, 0)[0]
 
     @property
     def fade_in_progress(self) -> bool:

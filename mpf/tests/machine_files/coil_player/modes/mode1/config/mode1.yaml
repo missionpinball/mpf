@@ -1,0 +1,9 @@
+#config_version=5
+mode:
+  start_events: start_mode1
+  stop_events: stop_mode1
+  game_mode: False
+
+coil_player:
+  event1_mode:
+    coil_3: enable

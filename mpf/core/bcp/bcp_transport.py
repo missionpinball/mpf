@@ -37,8 +37,10 @@ class BcpTransportManager:
         """Get clients which registered for a certain handler."""
         return self._handlers.get(handler, [])
 
-    def register_transport(self, transport):
+    def register_transport(self, transport, future=None, **kwargs):
         """Register a client."""
+        del future
+        del kwargs
         self._transports.append(transport)
         self._readers[transport] = self._machine.clock.loop.create_task(self._receive_loop(transport))
         self._readers[transport].add_done_callback(self._done)
@@ -63,7 +65,7 @@ class BcpTransportManager:
                 self.unregister_transport(transport)
                 return
 
-            self._machine.bcp.interface.process_bcp_message(cmd, kwargs, transport)
+            yield from self._machine.bcp.interface.process_bcp_message(cmd, kwargs, transport)
 
     def unregister_transport(self, transport: BaseBcpClient):
         """Unregister client."""
@@ -119,6 +121,6 @@ class BcpTransportManager:
     def shutdown(self, **kwargs):
         """Prepare the BCP clients for MPF shutdown."""
         del kwargs
-        for client in self._transports:
+        for client in list(self._transports):
             client.stop()
             self.unregister_transport(client)

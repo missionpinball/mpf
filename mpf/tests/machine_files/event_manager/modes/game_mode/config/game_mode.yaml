@@ -1,4 +1,4 @@
-#config_version=4
+#config_version=5
 mode:
   start_events: game_mode_start
   stop_events: game_mode_end

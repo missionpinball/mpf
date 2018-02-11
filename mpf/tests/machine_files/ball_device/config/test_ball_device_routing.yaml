@@ -1,7 +1,12 @@
-#config_version=4
+#config_version=5
 
 game:
     balls_per_game: 1
+
+playfields:
+    playfield:
+        default_source_device: test_target1
+        tags: default
 
 coils:
     c_trough1:
@@ -47,7 +52,6 @@ ball_devices:
     test_target1:
         eject_coil: c_target1
         ball_switches: s_target1
-        tags: ball_add_live
     test_trough2:
         eject_coil: c_trough2
         ball_switches: s_trough2_1, s_trough2_2

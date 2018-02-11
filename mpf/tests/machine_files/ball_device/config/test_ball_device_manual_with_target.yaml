@@ -1,4 +1,9 @@
-#config_version=4
+#config_version=5
+
+playfields:
+    playfield:
+        default_source_device: test_launcher
+        tags: default
 
 coils:
     eject_coil1:
@@ -54,7 +59,6 @@ ball_devices:
         eject_targets: playfield, test_target
         mechanical_eject: true
         confirm_eject_type: target
-        tags: ball_add_live
     test_target:
         eject_coil: eject_coil3
         ball_switches: s_ball_switch_target

@@ -1,4 +1,6 @@
 """Standard pulse ejector."""
+import asyncio
+
 from mpf.devices.ball_device.ball_device_ejector import BallDeviceEjector
 
 
@@ -31,6 +33,22 @@ class PulseCoilEjector(BallDeviceEjector):
         """Cannot eject all balls."""
         raise NotImplementedError()
 
+    @asyncio.coroutine
+    def reorder_balls(self):
+        """Reorder balls without ejecting."""
+        if not self.ball_device.config['eject_coil_reorder_pulse']:
+            self.ball_device.log.warning("Cannot reorder device because eject_coil_reorder_pulse is not configured")
+            return
+
+        max_wait_ms = self.ball_device.config['eject_coil_max_wait_ms']
+        wait_ms = self.ball_device.config['eject_coil'].pulse(
+            self.ball_device.config['eject_coil_reorder_pulse'],
+            max_wait_ms=max_wait_ms)
+
+        # wait for wait_ms + pulse_ms + 2s for sanity
+        duration = wait_ms / 1000.0 + self.ball_device.config['eject_coil_reorder_pulse'] / 1000.0 + 2.0
+        yield from asyncio.sleep(duration, loop=self.ball_device.machine.clock.loop)
+
     def ball_search(self, phase, iteration):
         """Run ball search."""
         del iteration
@@ -47,6 +65,8 @@ class PulseCoilEjector(BallDeviceEjector):
             # round 3: all devices except trough. normal pulse
             if 'trough' not in self.ball_device.config['tags']:
                 return self._fire_coil_for_search(True)
+        # no action by default
+        return False
 
     def _fire_coil_for_search(self, full_power):
         if not full_power and self.ball_device.config['eject_coil_jam_pulse']:

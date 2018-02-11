@@ -1,15 +1,9 @@
-#config_version=4
+#config_version=5
 
 mode:
   priority: 200
 
 shots:
-  shot_21:
-    profile: mode2_shot_21
-  shot_22:
-    profile: mode2_shot_22
-  shot_26:
-    profile: mode2_shot_26
   mode2_shot_rainbow:
     switch: switch_27
     show_tokens:
@@ -20,15 +14,19 @@ shots:
     show_tokens:
       leds: led_28
     profile: rainbow_start_step
+  mode2_shot_2:
+    switch: switch_2
+    show_tokens:
+      leds: light_2
+    profile: rainbow_start_step
+
 shot_profiles:
   mode2_shot_21:
-    block: false
     states:
       - name: mode2_one
       - name: mode2_two
       - name: mode2_three
   mode2_shot_22:
-    block: false
     states:
       - name: mode2_one
       - name: mode2_two
@@ -60,7 +58,6 @@ shot_profiles:
         start_step: 6
         manual_advance: True
   mode2_shot_26:
-    block: false
     states:
     - name: mode2_one
       show: rainbow3

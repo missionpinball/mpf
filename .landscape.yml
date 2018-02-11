@@ -13,13 +13,20 @@ doc-warnings: true
 
 pep257:
    disable:
-    - D211
+    - D211  # in conflict with D203
+    - D213  # in conflict with D212
+    - D406  # Section name should end with a newline
+    - D407  # Missing dashed underline after section
+    - D413  # Missing blank line after last section
 
 pylint:
   disable:
     - pointless-string-statement  # pointless statement, which is how our event docstrings are seen
     - invalid-name  # we got ms and dt as defaults for a lot of functions
     - too-few-public-methods
+    - cyclic-import     # remove when type checking is supported https://github.com/PyCQA/pylint/issues/647
+    - unused-import     # remove when type checking is supported https://github.com/PyCQA/pylint/issues/647
+    - no-else-return
 
   options:
     max-attributes: 12
@@ -30,3 +37,5 @@ pylint:
 
 ignore-paths:
   - docs
+  - mpf/platforms/trinamics/
+  - _mpf-mc                     # ignore mc in subpath on travis

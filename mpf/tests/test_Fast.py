@@ -1,5 +1,4 @@
-from mpf.core.platform_controller import DriverRuleSettings
-from mpf.core.platform_controller import SwitchRuleSettings
+from mpf.core.platform import SwitchConfig
 from mpf.core.rgb_color import RGBColor
 from mpf.tests.MpfTestCase import MpfTestCase
 
@@ -127,14 +126,30 @@ class TestFast(MpfTestCase):
         return 'tests/machine_files/fast/'
 
     def get_platform(self):
-        return 'fast'
+        return False
 
     def _mock_loop(self):
         self.clock.mock_serial("com4", self.net_cpu)
         self.clock.mock_serial("com5", self.rgb_cpu)
         self.clock.mock_serial("com6", self.dmd_cpu)
 
+    def tearDown(self):
+        self.dmd_cpu.expected_commands = {
+            b'BL:AA55\r': "!SRE"
+        }
+        self.rgb_cpu.expected_commands = {
+            "BL:AA55": "!SRE"
+        }
+        self.net_cpu.expected_commands = {
+            "BL:AA55": "!SRE"
+        }
+        super().tearDown()
+        self.assertFalse(self.net_cpu.expected_commands)
+        self.assertFalse(self.rgb_cpu.expected_commands)
+        self.assertFalse(self.dmd_cpu.expected_commands)
+
     def setUp(self):
+        self.expected_duration = 2
         self.net_cpu = MockFastNet()
         self.rgb_cpu = MockFastRgb()
         self.dmd_cpu = MockFastDmd()
@@ -150,20 +165,21 @@ class TestFast(MpfTestCase):
             "RF:00": "RF:P",
         }
         self.net_cpu.expected_commands = {
+            'RE:': '!SRE',
             'ID:': 'ID:NET FP-CPU-002-1 00.90',
-            'NN:0': 'NN:00,FP-I/O-3208-2   ,01.00,08,20,04,06,00,00,00,00',     # 3208 board
-            'NN:1': 'NN:01,FP-I/O-0804-1   ,01.00,04,08,04,06,00,00,00,00',     # 0804 board
-            'NN:2': 'NN:02,FP-I/O-1616-2   ,01.00,10,10,04,06,00,00,00,00',     # 1616 board
-            'NN:3': 'NN:03,FP-I/O-1616-2   ,01.00,10,10,04,06,00,00,00,00',     # 1616 board
-            'NN:4': 'NN:04,,,,,,,,,,',     # no board
+            'NN:00': 'NN:00,FP-I/O-3208-2   ,01.00,08,20,04,06,00,00,00,00',     # 3208 board
+            'NN:01': 'NN:01,FP-I/O-0804-1   ,01.00,04,08,04,06,00,00,00,00',     # 0804 board
+            'NN:02': 'NN:02,FP-I/O-1616-2   ,01.00,10,10,04,06,00,00,00,00',     # 1616 board
+            'NN:03': 'NN:03,FP-I/O-1616-2   ,01.00,10,10,04,06,00,00,00,00',     # 1616 board
+            'NN:04': 'NN:04,,,,,,,,,,',     # no board
             "SA:": "SA:01,00,09,050000000000000000",
-            "SN:01,01,0A,0A": "SN:P",
-            "SN:02,01,0A,0A": "SN:P",
-            "SN:03,01,0A,0A": "SN:P",
-            "SN:16,01,0A,0A": "SN:P",
+            "SN:01,01,04,04": "SN:P",
+            "SN:02,01,04,04": "SN:P",
+            "SN:03,01,04,04": "SN:P",
+            "SN:16,01,04,04": "SN:P",
             "SN:07,01,1A,05": "SN:P",
-            "SN:1A,01,0A,0A": "SN:P",
-            "SN:39,01,0A,0A": "SN:P",
+            "SN:1A,01,04,04": "SN:P",
+            "SN:39,01,04,04": "SN:P",
             "DN:04,00,00,00": "DN:P",
             "DN:06,00,00,00": "DN:P",
             "DN:07,00,00,00": "DN:P",
@@ -171,7 +187,8 @@ class TestFast(MpfTestCase):
             "DN:12,00,00,00": "DN:P",
             "DN:20,00,00,00": "DN:P",
             "DN:21,00,00,00": "DN:P",
-            "XO:03,7F": "XO:P"
+            "XO:03,7F": "XO:P",
+            "XO:14,7F": "XO:P"
         }
 
         super().setUp()
@@ -229,12 +246,13 @@ class TestFast(MpfTestCase):
 
         # only 8 + 4 + 16 + 16 = 44 = 0x2C driver exist
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_driver(self.machine.coils.c_test.hw_driver.config, '2C',
+            self.machine.default_platform.configure_driver(self.machine.coils.c_test.hw_driver.config, '44',
                                                            {"connection": "network", "recycle_ms": 10})
 
     def _test_pulse(self):
         self.net_cpu.expected_commands = {
-            "DN:04,89,00,10,17,FF,00,00,1B": "DN:P"
+            "DN:04,81,00,10,17,FF,00,00,00": "DN:P",
+            "TN:04,01": "TN:P"
         }
         # pulse coil 4
         self.machine.coils.c_test.pulse()
@@ -348,7 +366,8 @@ class TestFast(MpfTestCase):
 
     def _test_hw_rule_pulse_pwm32(self):
         self.net_cpu.expected_commands = {
-            "DN:11,89,00,10,0A,AAAAAAAA,00,00,00": "DN:P"
+            "DN:11,81,00,10,0A,AAAAAAAA,00,00,00": "DN:P",
+            "TN:11,01": "TN:P"
         }
         self.machine.coils.c_pulse_pwm32_mask.pulse()
         self.advance_time_and_run(.1)
@@ -398,30 +417,30 @@ class TestFast(MpfTestCase):
     def _test_switch_configure(self):
         # last switch on first board
         self.net_cpu.expected_commands = {
-            "SN:1F,01,0A,0A": "SN:P"
+            "SN:1F,01,04,04": "SN:P"
         }
-        self.machine.default_platform.configure_switch({'number': '0-31', 'debounce': 'auto'})
+        self.machine.default_platform.configure_switch('0-31', SwitchConfig(debounce='auto', invert=0), {})
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         # next should not work
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_switch({'number': '0-32', 'debounce': 'auto'})
+            self.machine.default_platform.configure_switch('0-32', SwitchConfig(debounce='auto', invert=0), {})
 
         self.net_cpu.expected_commands = {
-            "SN:47,01,0A,0A": "SN:P"
+            "SN:47,01,04,04": "SN:P"
         }
-        self.machine.default_platform.configure_switch({'number': '3-15', 'debounce': 'auto'})
+        self.machine.default_platform.configure_switch('3-15', SwitchConfig(debounce='auto', invert=0), {})
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
         # invalid board
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_switch({'number': '4-0', 'debounce': 'auto'})
+            self.machine.default_platform.configure_switch('4-0', SwitchConfig(debounce='auto', invert=0), {})
 
-        # last switch is 0x47
+        # last switch is 0x47. 0x48 = 72
         with self.assertRaises(AssertionError):
-            self.machine.default_platform.configure_switch({'number': '48', 'debounce': 'auto'})
+            self.machine.default_platform.configure_switch('72', SwitchConfig(debounce='auto', invert=0), {})
 
     def _test_switch_changes(self):
         self.assertFalse(self.machine.switch_controller.is_active("s_flipper"))
@@ -475,7 +494,8 @@ class TestFast(MpfTestCase):
     def test_flipper_single_coil(self):
         # manual flip no hw rule
         self.net_cpu.expected_commands = {
-            "DN:20,89,00,10,0A,FF,00,00,00": "DN:P"
+            "DN:20,81,00,10,0A,FF,00,00,00": "DN:P",
+            "TN:20,01": "TN:P",
         }
         self.machine.coils.c_flipper_main.pulse()
         self.advance_time_and_run(.1)
@@ -497,7 +517,7 @@ class TestFast(MpfTestCase):
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
-        # enable
+        # flipper rule enable
         self.net_cpu.expected_commands = {
             "DN:20,01,01,18,0B,FF,01,00,00": "DN:P",
             "SN:01,01,02,02": "SN:P"
@@ -508,18 +528,27 @@ class TestFast(MpfTestCase):
 
         # manual flip with hw rule in action
         self.net_cpu.expected_commands = {
-            "TN:20,01": "TN:P",  # pulse
-            "TN:20,00": "TN:P"   # reenable autofire rule
+            "DN:20,81,00,10,0A,FF,00,00,00": "DN:P",    # configure pulse
+            "TN:20,01": "TN:P",                         # pulse
+            "DN:20,01,01,18,0B,FF,01,00,00": "DN:P",    # restore rule
         }
         self.machine.coils.c_flipper_main.pulse()
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
-        # manual enable with hw rule
+        # manual flip with hw rule in action without reconfigure (same pulse)
+        self.net_cpu.expected_commands = {
+            "TN:20,01": "TN:P",                         # pulse
+        }
+        self.machine.coils.c_flipper_main.pulse(11)
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.net_cpu.expected_commands)
+
+        # manual enable with hw rule (same pulse)
         self.net_cpu.expected_commands = {
             "TN:20,03": "TN:P"
         }
-        self.machine.coils.c_flipper_main.enable()
+        self.machine.coils.c_flipper_main.enable(pulse_ms=11)
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
@@ -532,11 +561,46 @@ class TestFast(MpfTestCase):
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 
-        # disable
+        # manual enable with hw rule (different pulse)
+        self.net_cpu.expected_commands = {
+            "DN:20,C1,00,18,0A,FF,01,00": "DN:P",       # configure pwm + enable
+        }
+        self.machine.coils.c_flipper_main.enable()
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.net_cpu.expected_commands)
+
+        # manual disable with hw rule
+        self.net_cpu.expected_commands = {
+            "TN:20,02": "TN:P",
+            "DN:20,01,01,18,0B,FF,01,00,00": "DN_P",    # configure rules
+            "TN:20,00": "TN:P"                          # reenable autofire rule
+        }
+        self.machine.coils.c_flipper_main.disable()
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.net_cpu.expected_commands)
+
+        # disable rule
         self.net_cpu.expected_commands = {
             "DN:20,81": "DN:P"
         }
         self.machine.flippers.f_test_single.disable()
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.net_cpu.expected_commands)
+
+        # manual flip no hw rule
+        self.net_cpu.expected_commands = {
+            "DN:20,81,00,10,0A,FF,00,00,00": "DN:P",
+            "TN:20,01": "TN:P",
+        }
+        self.machine.coils.c_flipper_main.pulse()
+        self.advance_time_and_run(.1)
+        self.assertFalse(self.net_cpu.expected_commands)
+
+        # manual flip again with cached config
+        self.net_cpu.expected_commands = {
+            "TN:20,01": "TN:P",
+        }
+        self.machine.coils.c_flipper_main.pulse()
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
 

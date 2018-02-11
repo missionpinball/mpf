@@ -1,6 +1,5 @@
 """An achievement group which manages and groups achievements."""
 from random import choice
-from typing import TYPE_CHECKING
 
 from mpf.core.events import event_handler
 from mpf.core.machine import MachineController
@@ -9,7 +8,8 @@ from mpf.core.mode_device import ModeDevice
 from mpf.core.player import Player
 from mpf.core.device_monitor import DeviceMonitor
 
-if TYPE_CHECKING:
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.devices.achievement import Achievement
     from mpf.assets.show import RunningShow
 
@@ -255,7 +255,7 @@ class AchievementGroup(ModeDevice):
         self.debug_log("Checking for all complete")
         if not self._enabled:
             self.debug_log("Group is not enabled. Aborting...")
-            return
+            return False
 
         if not [x for x in self.config['achievements'] if x.state != "completed"]:
             self._all_complete()
@@ -267,7 +267,7 @@ class AchievementGroup(ModeDevice):
         self.debug_log("Checking for no more enabled")
         if not self._enabled:
             self.debug_log("Group is disabled. Aborting...")
-            return
+            return False
 
         if not [x for x in self.config['achievements'] if x.state == "enabled"]:
             self._no_more_enabled()
@@ -296,15 +296,13 @@ class AchievementGroup(ModeDevice):
         self.debug_log("No member is started")
         return False
 
-    def device_added_to_mode(self, mode: Mode, player: Player):
+    def device_loaded_in_mode(self, mode: Mode, player: Player):
         """Load device on mode start and restore state.
 
         Args:
             mode: mode which was contains the device
             player: player which is currently active
         """
-        super().device_added_to_mode(mode, player)
-
         self._mode = mode
 
         for ach in self.config['achievements']:

@@ -1,4 +1,5 @@
 """RPC Interface for BCP clients."""
+import asyncio
 from copy import deepcopy
 
 from mpf.core.events import PostedEvent
@@ -6,6 +7,7 @@ from mpf.core.player import Player
 from mpf.core.utility_functions import Util
 from mpf.core.mpf_controller import MpfController
 from mpf.core.switch_controller import MonitoredSwitchChange
+from mpf.exceptions.DriverLimitsError import DriverLimitsError
 
 
 class BcpInterface(MpfController):
@@ -31,6 +33,8 @@ class BcpInterface(MpfController):
 
     """
 
+    config_name = "bcp_interface"
+
     def __init__(self, machine):
         """Initialise BCP."""
         super().__init__(machine)
@@ -44,7 +48,7 @@ class BcpInterface(MpfController):
         self.config = machine.config['bcp']
 
         self._client_reset_queue = None
-        self._client_reset_complete_status = None
+        self._client_reset_complete_status = {}
 
         self.bcp_receive_commands = dict(
             reset_complete=self._bcp_receive_reset_complete,
@@ -56,6 +60,7 @@ class BcpInterface(MpfController):
             monitor_start=self._bcp_receive_monitor_start,
             monitor_stop=self._bcp_receive_monitor_stop,
             set_machine_var=self._bcp_receive_set_machine_var,
+            service=self._service,
         )
 
         self.machine.events.add_handler('machine_reset_phase_1', self.bcp_reset)
@@ -89,11 +94,90 @@ class BcpInterface(MpfController):
         if not self.machine.bcp.transport.get_transports_for_handler(event):
             self.machine.events.remove_handler_by_event(event=event, handler=self.bcp_trigger)
 
+    @asyncio.coroutine
     def _bcp_receive_set_machine_var(self, client, name, value):
         """Set machine var via bcp."""
         del client
         self.machine.set_machine_var(name, value)
 
+    @asyncio.coroutine
+    def _service(self, client, subcommand, **kwargs):
+        """Run service command."""
+        if subcommand == "start":
+            self.machine.service.start_service()
+        elif subcommand == "stop":
+            yield from self.machine.service.stop_service()
+            self.machine.bcp.transport.send_to_client(client, "service_stop")
+        elif subcommand == "list_switches":
+            self.machine.bcp.transport.send_to_client(client, "list_switches",
+                                                      switches=[(s[0], s[1].hw_switch.number, s[1].name, s[1].state) for
+                                                                s in self.machine.service.get_switch_map()])
+        elif subcommand == "list_coils":
+            self.machine.bcp.transport.send_to_client(client, "list_coils",
+                                                      coils=[(s[0], s[1].hw_driver.number, s[1].name) for s in
+                                                             self.machine.service.get_coil_map()])
+        elif subcommand == "list_lights":
+            self.machine.bcp.transport.send_to_client(client, "list_lights",
+                                                      lights=[(s[0], s[1].get_hw_numbers(), s[1].name, s[1].get_color())
+                                                              for s in self.machine.service.get_light_map()])
+        elif subcommand == "monitor_switches":
+            pass
+        elif subcommand == "coil_pulse":
+            self._coil_pulse(client, kwargs.get("coil"))
+        elif subcommand == "coil_enable":
+            self._coil_enable(client, kwargs.get("coil"))
+        elif subcommand == "coil_disable":
+            self._coil_disable(client, kwargs.get("coil"))
+        elif subcommand == "light_color":
+            self._light_color(client, kwargs.get("light"), kwargs.get("color"))
+
+    def _coil_pulse(self, client, coil_name):
+        try:
+            coil = self.machine.coils[coil_name]
+        except KeyError:
+            self.machine.bcp.transport.send_to_client(client, "coil_pulse", error="Coil not found")
+            return
+        coil.pulse()
+        self.machine.bcp.transport.send_to_client(client, "coil_pulse", error=False)
+
+    def _coil_disable(self, client, coil_name):
+        try:
+            coil = self.machine.coils[coil_name]
+        except KeyError:
+            self.machine.bcp.transport.send_to_client(client, "coil_disable", error="Coil not found")
+            return
+        coil.disable()
+        self.machine.bcp.transport.send_to_client(client, "coil_disable", error=False)
+
+    def _coil_enable(self, client, coil_name):
+        try:
+            coil = self.machine.coils[coil_name]
+        except KeyError:
+            self.machine.bcp.transport.send_to_client(client, "coil_enable", error="Coil not found")
+            return
+        try:
+            coil.enable()
+        except DriverLimitsError as e:
+            self.machine.bcp.transport.send_to_client(client, "coil_enable", error=str(e))
+            return
+
+        self.machine.bcp.transport.send_to_client(client, "coil_enable", error=False)
+
+    def _light_color(self, client, light_name, color_name):
+        try:
+            light = self.machine.lights[light_name]
+        except KeyError:
+            self.machine.bcp.transport.send_to_client(client, "light_color", error="Light not found")
+            return
+        try:
+            light.color(color_name)
+        except DriverLimitsError as e:
+            self.machine.bcp.transport.send_to_client(client, "light_color", error=str(e))
+            return
+
+        self.machine.bcp.transport.send_to_client(client, "light_color", error=False)
+
+    @asyncio.coroutine
     def _bcp_receive_monitor_start(self, client, category):
         """Start monitoring the specified category."""
         category = str.lower(category)
@@ -120,6 +204,7 @@ class BcpInterface(MpfController):
                                                       cmd="monitor_start?category={}".format(category),
                                                       error="Invalid category value")
 
+    @asyncio.coroutine
     def _bcp_receive_monitor_stop(self, client, category):
         """Stop monitoring the specified category."""
         category = str.lower(category)
@@ -344,7 +429,7 @@ class BcpInterface(MpfController):
             self.machine.events.add_handler('ball_started', self._ball_started)
             self.machine.events.add_handler('ball_ended', self._ball_ended)
             self.machine.events.add_handler('player_turn_started', self._player_turn_start)
-            self.machine.events.add_handler('player_added', self._player_add_success)
+            self.machine.events.add_handler('player_added', self._player_added)
 
         self.machine.bcp.transport.add_handler_to_transport("_core_events", client)
 
@@ -356,7 +441,7 @@ class BcpInterface(MpfController):
             self.machine.events.remove_handler_by_event('ball_started', self._ball_started)
             self.machine.events.remove_handler_by_event('ball_ended', self._ball_ended)
             self.machine.events.remove_handler_by_event('player_turn_started', self._player_turn_start)
-            self.machine.events.remove_handler_by_event('player_added', self._player_add_success)
+            self.machine.events.remove_handler_by_event('player_added', self._player_added)
 
     def _ball_started(self, ball, player, **kwargs):
         del kwargs
@@ -380,7 +465,7 @@ class BcpInterface(MpfController):
             bcp_command="player_turn_start",
             player_num=number)
 
-    def _player_add_success(self, num, player, **kwargs):
+    def _player_added(self, num, player, **kwargs):
         del player
         del kwargs
         self.machine.bcp.transport.send_to_clients_with_handler(
@@ -388,6 +473,7 @@ class BcpInterface(MpfController):
             bcp_command="player_added",
             player_num=num)
 
+    @asyncio.coroutine
     def process_bcp_message(self, cmd, kwargs, client):
         """Process BCP message.
 
@@ -411,13 +497,14 @@ class BcpInterface(MpfController):
             except TypeError as e:
                 self.machine.bcp.transport.send_to_client(client, "error", cmd=cmd, error=str(e), kwargs=kwargs)
             else:
-                callback(client=client, **kwargs)
+                yield from callback(client=client, **kwargs)
 
         else:
             self.warning_log("Received invalid BCP command: %s from client: %s", cmd, client.name)
 
+    @asyncio.coroutine
     def _bcp_receive_error(self, client, **kwargs):
-        """A remote BCP host has sent a BCP error message, indicating that a command from MPF was not recognized.
+        """Handle a BCP error message from a remote BCP host indicating that a command from MPF was not recognized.
 
         This method only posts a warning to the log. It doesn't do anything else
         at this point.
@@ -429,38 +516,20 @@ class BcpInterface(MpfController):
         """Notify all observers about driver event."""
         self.machine.bcp.transport.send_to_clients_with_handler("_monitor_drivers", "driver_event", **kwargs)
 
+    @asyncio.coroutine
     def _bcp_receive_reset_complete(self, client, **kwargs):
-        """A remote BCP host has sent a BCP reset_complete message indicating their reset process has completed."""
+        """Handle a BCP reset_complete message from a remote BCP host indicating their reset process has completed."""
         del kwargs
         self.debug_log("Received reset_complete from client: %s %s", client.name)
         self._client_reset_complete_status[client] = True
 
         # Check if reset_complete status is True from all clients
         if all(status is True for item, status in self._client_reset_complete_status.items()):
-            self._client_reset_queue.clear()
-            self._client_reset_queue = None
-            self._client_reset_complete_status = None
+            if self._client_reset_queue:
+                self._client_reset_queue.clear()
+                self._client_reset_queue = None
+            self._client_reset_complete_status.clear()
             self.debug_log("Received reset_complete from all clients. Clearing wait from queue event.")
-
-    def bcp_mode_start(self, config, priority, mode, **kwargs):
-        """Send BCP 'mode_start' to the connected BCP hosts.
-
-        Schedule automatic sending of 'mode_stop' when the mode stops.
-        """
-        del config
-        del kwargs
-        self.machine.bcp.transport.send_to_all_clients('mode_start',
-                                                       name=mode.name,
-                                                       priority=priority)
-
-        return self.bcp_mode_stop, mode.name
-
-    def bcp_mode_stop(self, name, **kwargs):
-        """Send BCP 'mode_stop' to the connected BCP hosts."""
-        del kwargs
-        self.machine.bcp.transport.send_to_clients_with_handler('_modes',
-                                                                'mode_stop',
-                                                                name=name)
 
     def bcp_reset(self, queue, **kwargs):
         """Send the 'reset' command to the remote BCP host."""
@@ -468,11 +537,13 @@ class BcpInterface(MpfController):
 
         # Will hold the queue event until all clients respond with a "reset_complete" command
         clients = self.machine.bcp.transport.get_all_clients()
-        if len(clients) > 0:
+        if clients:
             queue.wait()
             self._client_reset_queue = queue
-            self._client_reset_complete_status = {}
+            self._client_reset_complete_status.clear()
             for client in clients:
+                if not client.name:
+                    continue
                 self._client_reset_complete_status[client] = False
 
             # Send the reset command
@@ -480,6 +551,7 @@ class BcpInterface(MpfController):
                            "to be received from all clients).")
             self.machine.bcp.transport.send_to_all_clients("reset")
 
+    @asyncio.coroutine
     def _bcp_receive_switch(self, client, name, state, **kwargs):
         """Process an incoming switch state change request from a remote BCP host.
 
@@ -508,11 +580,13 @@ class BcpInterface(MpfController):
                                                       state=state,
                                                       logical=True)
 
+    @asyncio.coroutine
     def _bcp_receive_register_trigger(self, client, event, **kwargs):
         """Register a trigger for a client."""
         del kwargs
         self.add_registered_trigger_event_for_client(client, event)
 
+    @asyncio.coroutine
     def _bcp_receive_deregister_trigger(self, client, event, **kwargs):
         """Deregister a trigger for a client."""
         del kwargs
@@ -544,6 +618,15 @@ class BcpInterface(MpfController):
         self.machine.bcp.transport.send_to_clients_with_handler(
             handler=name, bcp_command='trigger', name=name, **kwargs)
 
+    def bcp_trigger_client(self, client, name, **kwargs):
+        """Send BCP 'trigger' to a specific client."""
+        # ignore events which already came from bcp to prevent loops
+        if "_from_bcp" in kwargs:
+            return
+
+        self.machine.bcp.transport.send_to_client(client=client, bcp_command='trigger', name=name, **kwargs)
+
+    @asyncio.coroutine
     def _bcp_receive_trigger(self, client, name, callback=None, **kwargs):
         """Process an incoming trigger command from a remote BCP host."""
         del client

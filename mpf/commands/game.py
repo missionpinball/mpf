@@ -2,13 +2,16 @@
 
 import argparse
 import errno
-import logging
 import os
+import signal
 import socket
 import sys
 from datetime import datetime
+import logging
 from logging.handlers import QueueHandler, SysLogHandler
 from queue import Queue
+
+from asciimatics.screen import Screen
 
 from mpf.core.machine import MachineController
 from mpf.core.utility_functions import Util
@@ -18,8 +21,11 @@ class Command(object):
 
     """Runs the mpf game."""
 
+    # pylint: disable-msg=too-many-locals,too-many-statements
     def __init__(self, mpf_path, machine_path, args):
         """Run mpf game."""
+        signal.signal(signal.SIGINT, self.exit)
+
         parser = argparse.ArgumentParser(
             description='Starts the MPF game engine')
 
@@ -57,7 +63,8 @@ class Command(object):
                                  "mpf/mpfconfig.yaml")
 
         parser.add_argument("-f",
-                            action="store_true", dest="force_assets_load", default=False,
+                            action="store_true", dest="force_assets_load",
+                            default=False,
                             help="Load all assets upon startup.  Useful for "
                             "ensuring all assets are set up properly "
                             "during development.")
@@ -65,9 +72,11 @@ class Command(object):
         parser.add_argument("-l",
                             action="store", dest="logfile",
                             metavar='file_name',
-                            default=os.path.join("logs",
-                                                 datetime.now().strftime(
-                                                     "%Y-%m-%d-%H-%M-%S-mpf-" + socket.gethostname() + ".log")),
+                            default=os.path.join(
+                                "logs",
+                                datetime.now().strftime(
+                                    "%Y-%m-%d-%H-%M-%S-mpf-" +
+                                    socket.gethostname() + ".log")),
                             help="The name (and path) of the log file")
 
         parser.add_argument("-p",
@@ -75,6 +84,10 @@ class Command(object):
                             help="Pause the terminal window on exit. Useful "
                             "when launching in a separate window so you can "
                             "see any errors before the window closes.")
+
+        parser.add_argument("-t",
+                            action="store_false", dest='text_ui', default=True,
+                            help="Use the ASCII test-based UI")
 
         parser.add_argument("-v",
                             action="store_const", dest="loglevel",
@@ -99,9 +112,11 @@ class Command(object):
 
         parser.add_argument("--syslog_address",
                             action="store", dest="syslog_address",
-                            help="Log to the specified syslog address. This can be a domain socket such as /dev/og on "
-                                 "Linux or /var/run/syslog on Mac. Alternatively, you an specify host:port for remote "
-                                 "logging over UDP.")
+                            help="Log to the specified syslog address. This "
+                                 "can be a domain socket such as /dev/og on "
+                                 "Linux or /var/run/syslog on Mac. "
+                                 "Alternatively, you an specify host:port for "
+                                 "remote logging over UDP.")
 
         parser.add_argument("-X",
                             action="store_const", dest="force_platform",
@@ -118,8 +133,8 @@ class Command(object):
                             metavar='mc_file_name',
                             default=None, help=argparse.SUPPRESS)
 
-        args = parser.parse_args(args)
-        args.configfile = Util.string_to_list(args.configfile)
+        self.args = parser.parse_args(args)
+        self.args.configfile = Util.string_to_list(self.args.configfile)
 
         # Configure logging. Creates a logfile and logs to the console.
         # Formatting options are documented here:
@@ -131,64 +146,94 @@ class Command(object):
             if exception.errno != errno.EEXIST:
                 raise
 
-        full_logfile_path = os.path.join(machine_path, args.logfile)
+        full_logfile_path = os.path.join(machine_path, self.args.logfile)
 
         try:
             os.remove(full_logfile_path)
         except OSError:
             pass
 
-        # define a Handler which writes INFO messages or higher to the sys.stderr
-        console_log = logging.StreamHandler()
-        console_log.setLevel(args.consoleloglevel)
+        if self.args.text_ui:
+            console_log = logging.NullHandler()
+            console_log.setLevel(logging.ERROR)
+        else:
+            console_log = logging.StreamHandler()
+            console_log.setLevel(self.args.consoleloglevel)
 
         # tell the handler to use this format
-        console_log.setFormatter(logging.Formatter('%(name)s : %(message)s'))
+        console_log.setFormatter(logging.Formatter(
+            '%(levelname)s : %(name)s : %(message)s'))
 
         # initialise async handler for console
         console_log_queue = Queue()
         console_queue_handler = QueueHandler(console_log_queue)
-        console_queue_listener = logging.handlers.QueueListener(console_log_queue, console_log)
-        console_queue_listener.start()
+        self.console_queue_listener = logging.handlers.QueueListener(
+            console_log_queue, console_log)
+        self.console_queue_listener.start()
 
         # initialise file log
         file_log = logging.FileHandler(full_logfile_path)
-        file_log.setFormatter(logging.Formatter('%(asctime)s : %(name)s : %(message)s'))
+        file_log.setFormatter(logging.Formatter(
+            '%(asctime)s : %(levelname)s : %(name)s : %(message)s'))
 
         # initialise async handler for file log
         file_log_queue = Queue()
         file_queue_handler = QueueHandler(file_log_queue)
-        file_queue_listener = logging.handlers.QueueListener(file_log_queue, file_log)
-        file_queue_listener.start()
+        self.file_queue_listener = logging.handlers.QueueListener(
+            file_log_queue, file_log)
+        self.file_queue_listener.start()
 
         # add loggers
         logger = logging.getLogger()
         logger.addHandler(console_queue_handler)
         logger.addHandler(file_queue_handler)
-        logger.setLevel(args.loglevel)
+        logger.setLevel(self.args.loglevel)
 
-        if args.syslog_address:
+        if self.args.syslog_address:
             try:
-                host, port = args.syslog_address.split(":")
+                host, port = self.args.syslog_address.split(":")
             except ValueError:
-                syslog_logger = SysLogHandler(args.syslog_address)
+                syslog_logger = SysLogHandler(self.args.syslog_address)
             else:
                 syslog_logger = SysLogHandler((host, int(port)))
 
             logger.addHandler(syslog_logger)
 
         try:
-            MachineController(mpf_path, machine_path, vars(args)).run()
+            MachineController(mpf_path, machine_path, vars(self.args)).run()
             logging.info("MPF run loop ended.")
+            self.exit()
+
         # pylint: disable-msg=broad-except
         except Exception as e:
-            logging.exception(e)
+            self.exit(exception=e)
+
+    def exit(self, signum=None, frame=None, exception=None):
+        """Handle MPF exit from either a clean shutdown or from a crash.
+
+        Cleanly shuts down logging and restores the console window if the Text
+        UI option is used.
+        """
+        del signum, frame
+
+        if self.args.text_ui:
+            # restore the console to the old state
+            Screen.open().close(True)
+
+        if exception:
+            logger = logging.getLogger()
+
+            if self.args.text_ui:
+                # Re-enable console logging to show the exception
+                logger.addHandler(logging.StreamHandler())
+
+            logging.exception(exception)
 
         logging.shutdown()
-        # stop threads
-        console_queue_listener.stop()
-        file_queue_listener.stop()
+        self.console_queue_listener.stop()
+        self.file_queue_listener.stop()
 
-        if args.pause:
+        if self.args.pause:
             input('Press ENTER to continue...')
+
         sys.exit()

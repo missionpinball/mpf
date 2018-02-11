@@ -48,3 +48,13 @@ class TestModesConfigValidation(MpfTestCase):
         self.assertTrue("broken_mode2" in self.machine.modes)
 
         super().tearDown()
+
+    def test_mode_without_config(self):
+        self.config = 'test_mode_without_config.yaml'
+        with self.assertRaises(AssertionError) as context:
+            super(TestModesConfigValidation, self).setUp()
+
+        self.loop.close()
+
+        self.assertEqual('Did not find any config for mode mode_without_config.',
+                         str(context.exception))

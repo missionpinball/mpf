@@ -14,6 +14,11 @@ class FASTDMD(DmdPlatformInterface):
         # Clear the DMD
         # todo
 
+    def set_brightness(self, brightness: float):
+        """Set brightness."""
+        # not supported
+        assert brightness == 1.0
+
     def update(self, data: bytes):
         """Update data on the DMD.
 

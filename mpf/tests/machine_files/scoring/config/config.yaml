@@ -1,4 +1,4 @@
-#config_version=4
+#config_version=5
 
 # minimal config to start game
 game:
@@ -16,14 +16,24 @@ switches:
         number:
     s_ball_switch2:
         number:
+    s_counter_target:
+        number:
+    s_kills_counter_target:
+        number:
+
+playfields:
+    playfield:
+        default_source_device: test_trough
+        tags: default
 
 ball_devices:
     test_trough:
         ball_switches: s_ball_switch1, s_ball_switch2
         eject_coil: eject_coil1
-        tags: trough, drain, home, ball_add_live
+        tags: trough, drain, home
 
 modes:
   - mode1
   - mode2
   - mode3
+  - mode_for_logic_block

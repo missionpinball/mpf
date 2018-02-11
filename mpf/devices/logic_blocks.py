@@ -32,6 +32,7 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         """Initialize logic block."""
         super().__init__(machine, name)
         self._state = None          # type: LogicBlockState
+        self._start_enabled = None  # type: bool
 
         self.player_state_variable = "{}_state".format(self.name)
         '''player_var: (logic_block)_state
@@ -45,13 +46,20 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         block is enabled and whether it's complete.
         '''
 
+    def _initialize(self):
+        if self.config['start_enabled'] is not None:
+            self._start_enabled = self.config['start_enabled']
+        else:
+            self._start_enabled = not self.config['enable_events']
+
     def add_control_events_in_mode(self, mode: Mode) -> None:
         """Do not auto enable this device in modes."""
         pass
 
-    def validate_and_parse_config(self, config: dict, is_mode_config: bool) -> dict:
+    def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None) -> dict:
         """Validate logic block config."""
         del is_mode_config
+        del debug_prefix
         if 'events_when_complete' not in config:
             config['events_when_complete'] = ['logicblock_' + self.name + '_complete']
 
@@ -84,21 +92,21 @@ class LogicBlock(SystemWideDevice, ModeDevice):
 
         self.post_update_event()
 
-    def device_added_to_mode(self, mode: Mode, player: Player):
+    def device_loaded_in_mode(self, mode: Mode, player: Player):
         """Restore internal state from player if persist_state is set or create new state."""
-        super().device_added_to_mode(mode, player)
+        super().device_loaded_in_mode(mode, player)
         if self.config['persist_state']:
             if not player.is_player_var(self.player_state_variable):
                 player[self.player_state_variable] = LogicBlockState(self.get_start_value())
                 # enable device ONLY when we create a new entry in the player
-                if not self.config['enable_events']:
+                if self._start_enabled:
                     mode.add_mode_event_handler("mode_{}_started".format(mode.name),
                                                 self.enable, priority=100)
 
             self._state = player[self.player_state_variable]
         else:
             self._state = LogicBlockState(self.get_start_value())
-            if not self.config['enable_events']:
+            if self._start_enabled:
                 mode.add_mode_event_handler("mode_{}_started".format(mode.name),
                                             self.enable, priority=100)
 
@@ -106,6 +114,7 @@ class LogicBlock(SystemWideDevice, ModeDevice):
 
     def device_removed_from_mode(self, mode: Mode):
         """Unset internal state to prevent leakage."""
+        super().device_removed_from_mode(mode)
         self._state = None
 
     @property
@@ -143,12 +152,9 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         self.machine.events.post("logicblock_{}_updated".format(self.name), value=value)
         '''event: logicblock_(name)_updated
 
-        desc: The logic block called "name" has just been completed.
+        desc: The logic block called "name" has changed.
 
-        Note that this is the default completion event for logic blocks, but
-        this can be changed in a logic block's "events_when_complete:" setting,
-        so this might not be the actual event that's posted for all logic
-        blocks in your machine.
+        This might happen when the block advanced, it was resetted or restored.
         '''
 
     def enable(self, **kwargs):
@@ -198,6 +204,7 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         self.completed = False
         self._state.value = self.get_start_value()
         self.debug_log("Resetting")
+        self.post_update_event()
 
     def restart(self, **kwargs):
         """Restart this logic block by calling reset() and enable().
@@ -274,6 +281,7 @@ class Counter(LogicBlock):
         self.hit_value = -1
 
     def _initialize(self):
+        super()._initialize()
         self.hit_value = self.config['count_interval']
 
         if self.config['direction'] == 'down' and self.hit_value > 0:
@@ -285,7 +293,7 @@ class Counter(LogicBlock):
         """Return start count."""
         return self.config['starting_count'].evaluate([])
 
-    def validate_and_parse_config(self, config: dict, is_mode_config: bool) -> dict:
+    def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None) -> dict:
         """Validate logic block config."""
         if 'events_when_hit' not in config:
             # for compatibility post the same default as previously for
@@ -295,14 +303,14 @@ class Counter(LogicBlock):
             # this is the one moving forward
             config['events_when_hit'].append('logicblock_' + self.name + '_hit')
 
-        return super().validate_and_parse_config(config, is_mode_config)
+        return super().validate_and_parse_config(config, is_mode_config, debug_prefix)
 
     def count(self, **kwargs):
         """Increase the hit progress towards completion.
 
-        Automatically called
-        when one of the `count_events`s is posted. Can also manually be
-        called.
+        This method is also automatically called when one of the
+        ``count_events`` is posted.
+
         """
         del kwargs
         if not self.enabled:
@@ -370,6 +378,7 @@ class Accrual(LogicBlock):
         self.debug_log("Creating Accrual LogicBlock")
 
     def _initialize(self):
+        super()._initialize()
         self.setup_event_handlers()
 
     def get_start_value(self) -> List[bool]:
@@ -429,6 +438,7 @@ class Sequence(LogicBlock):
 
     def _initialize(self):
         """Initialise sequence."""
+        super()._initialize()
         self.setup_event_handlers()
 
     def get_start_value(self) -> int:
@@ -439,9 +449,10 @@ class Sequence(LogicBlock):
         """Add the handlers for the current step."""
         for step, events in enumerate(self.config['events']):
             for event in Util.string_to_list(events):
-                self.machine.events.add_handler(event, self.hit, step=step)
+                # increase priority with steps to prevent advancing multiple steps at once
+                self.machine.events.add_handler(event, self.hit, step=step, priority=step)
 
-    def hit(self, step: int=None, **kwargs):
+    def hit(self, step: int = None, **kwargs):
         """Increase the hit progress towards completion.
 
         Automatically called

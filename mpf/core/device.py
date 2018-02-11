@@ -1,15 +1,15 @@
 """Contains the Device base class."""
 import abc
 
-from typing import List
-from typing import TYPE_CHECKING
+from typing import List, Any
 
 from mpf.core.machine import MachineController
 from mpf.core.logging import LogMixin
 
-if TYPE_CHECKING:
-    from mpf.core.config_validator import ConfigDict
-    from mpf.core.platform import BasePlatform
+MYPY = False
+if MYPY:   # pragma: no cover
+    from mpf.core.mode import Mode
+    from mpf.platforms.smart_virtual import SmartVirtualHardwarePlatform
 
 
 class Device(LogMixin, metaclass=abc.ABCMeta):
@@ -37,10 +37,29 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         """
         super().__init__()
         self.machine = machine
-        self.name = name.lower()
+        self.name = name
         self.tags = []          # type: List[str]
+        self.platform = None    # type: SmartVirtualHardwarePlatform
+        """List of tags applied to this device."""
+
         self.label = None       # type: str
-        self.config = dict()    # type: ignore
+        self.config = dict()    # type: Any
+        """Validated dictionary of this device's settings. Note that this will
+        map to the YAML-based config specified in the Config Spec section of
+        the User Documentation.
+        """
+
+    def __lt__(self, other):
+        """Compare two devices."""
+        return self.name < other.name
+
+    def device_added_to_mode(self, mode: "Mode") -> None:
+        """Add a device to a running mode.
+
+        Args:
+            mode: Mode which loaded the device
+        """
+        raise AssertionError("Cannot use device {} in mode {}.".format(self.name, mode.name))
 
     @classmethod
     def get_config_spec(cls):
@@ -68,7 +87,7 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         del is_mode_config
         return config
 
-    def validate_and_parse_config(self, config: dict, is_mode_config: bool) -> dict:
+    def validate_and_parse_config(self, config: dict, is_mode_config: bool, debug_prefix: str = None) -> dict:
         """Return the parsed and validated config.
 
         Args:
@@ -79,7 +98,7 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
         """
         del is_mode_config
         self.machine.config_validator.validate_config(
-            self.config_section, config, self.name, "device")
+            self.config_section, config, self.name, "device", prefix=debug_prefix)
 
         self._configure_device_logging(config)
 
@@ -118,8 +137,11 @@ class Device(LogMixin, metaclass=abc.ABCMeta):
 
         Returns (str, str): Tuple with (collection, config_section)
         """
+        if not cls.collection or not cls.config_section:
+            raise AssertionError("Implement collection and config_section in {}".format(cls))
+
         return cls.collection, cls.config_section
 
     def _initialize(self):
-        """Default initialize method."""
+        """Initialise device."""
         pass

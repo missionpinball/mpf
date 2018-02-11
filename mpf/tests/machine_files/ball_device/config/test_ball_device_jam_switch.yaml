@@ -1,10 +1,15 @@
-#config_version=4
+#config_version=5
 
 coils:
     trough_eject:
         number:
     plunger_eject:
         number:
+
+playfields:
+    playfield:
+        default_source_device: plunger
+        tags: default
 
 switches:
     s_trough_1:
@@ -36,11 +41,11 @@ ball_devices:
         eject_targets: plunger
         confirm_eject_type: target
         eject_coil_jam_pulse: 5
+        eject_coil_reorder_pulse: 2
         eject_coil_retry_pulse: 15
     plunger:
         eject_coil: plunger_eject
         ball_switches: s_plunger
         debug: true
         mechanical_eject: true
-        tags: ball_add_live
         player_controlled_eject_event: sw_launch

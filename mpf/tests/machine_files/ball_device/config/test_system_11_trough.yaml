@@ -1,8 +1,13 @@
-#config_version=4
+#config_version=5
 
 game:
     balls_per_game: 3
     allow_start_with_ball_in_drain: True
+
+playfields:
+    playfield:
+        default_source_device: plunger
+        tags: default
 
 coils:
     outhole:
@@ -46,9 +51,7 @@ ball_devices:
         confirm_eject_type: target
         debug: true
     plunger:
-        tags: ball_add_live
         ball_switches: plunger
         mechanical_eject: true
         eject_timeouts: 4s
-#        ball_missing_timeouts: 1s
         debug: true

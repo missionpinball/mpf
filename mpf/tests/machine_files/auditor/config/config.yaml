@@ -1,4 +1,4 @@
-#config_version=4
+#config_version=5
 
 game:
     balls_per_game: 1
@@ -16,8 +16,13 @@ coils:
     c_eject:
         number:
 
+playfields:
+    playfield:
+        default_source_device: s_trough
+        tags: default
+
 ball_devices:
     s_trough:
         ball_switches: s_ball
         eject_coil: c_eject
-        tags: trough, drain, home, ball_add_live
+        tags: trough, drain, home

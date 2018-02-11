@@ -1,4 +1,4 @@
-#config_version=4
+#config_version=5
 
 switches:
     s_test:
@@ -27,3 +27,9 @@ autofire_coils:
         coil: c_test2
         switch: s_test
         reverse_switch: True
+    ac_test_timeout:
+        coil: c_test
+        switch: s_test
+        timeout_watch_time: 1s
+        timeout_max_hits: 10
+        timeout_disable_time: 500ms

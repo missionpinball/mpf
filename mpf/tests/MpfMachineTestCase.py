@@ -11,7 +11,8 @@ class BaseMpfMachineTestCase(MpfTestCase):
         mc_players = {
             "sound_player": "mpfmc.config_players.plugins.sound_player",
             "widget_player": "mpfmc.config_players.plugins.widget_player",
-            "slide_player": "mpfmc.config_players.plugins.slide_player"
+            "slide_player": "mpfmc.config_players.plugins.slide_player",
+            "display_lights": "mpfmc.config_players.plugins.display_light_player"
         }
 
         for name, module in mc_players.items():
@@ -43,6 +44,9 @@ class BaseMpfMachineTestCase(MpfTestCase):
 class MpfMachineTestCase(BaseMpfMachineTestCase):
 
     """MPF only machine test case."""
+
+    def get_use_bcp(self):
+        return True
 
     def __init__(self, methodName='runTest'):
         super().__init__(methodName)

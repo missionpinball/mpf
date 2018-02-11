@@ -1,0 +1,84 @@
+#config_version=5
+
+modes:
+ - mode1
+ - mode2
+
+lights:
+  led1:
+    debug: True
+    number:
+    tags: tag1
+  led2:
+    debug: True
+    number:
+    tags: tag1
+  led3:
+    debug: True
+    number:
+    tags:
+  led4:
+    debug: True
+    number:
+    tags:
+  led5:
+    debug: True
+    number:
+    default_on_color: red
+
+light_player:
+  "{machine.a == 7}":
+    led1: red
+  event1:
+    led1:
+      color: red
+      fade: 0
+      priority: 200
+    led2:
+      color: ff0000
+      fade: 0
+    led3:
+      color: red
+      fade: 0
+  event2:
+    tag1:
+      color: blue
+      fade: 200ms
+      priority: 100
+  event3:
+    led1: lime-f500
+    led2: lime - f 500ms
+    led3: 00ff00-f.5s
+  event4:
+    tag1: 00ffff
+  event5:
+    led5: on
+
+shows:
+  show1:
+  - time: 0
+    lights:
+      led1: red
+      led2: red
+      led3: red
+  show2:
+  - time: 0
+    lights:
+      led1: red
+      led2: red
+      led3: red
+  - time: 1
+  show3:
+  - time: 0
+    lights:
+      led1: blue
+      led2: blue
+      led3: blue
+  - time: 1
+  show2_stay_on:
+  - time: 0
+    duration: -1
+    lights:
+      led1: red
+      led2: red
+      led3: red

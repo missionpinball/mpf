@@ -4,20 +4,23 @@ from collections import deque, namedtuple
 import uuid
 
 import asyncio
+from enum import Enum
 from functools import partial
 from unittest.mock import MagicMock
 
-from typing import Dict, Any, TYPE_CHECKING, Tuple, Optional, Generator, Callable
-from typing import List
+from typing import Dict, Any, Tuple, Optional, Generator, Callable, List
 
 from mpf.core.mpf_controller import MpfController
 
-if TYPE_CHECKING:
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController
     from mpf.core.placeholder_manager import BaseTemplate
+    from typing import Deque
 
 EventHandlerKey = namedtuple("EventHandlerKey", ["key", "event"])
-RegisteredHandler = namedtuple("RegisteredHandler", ["callback", "priority", "kwargs", "key", "condition"])
+RegisteredHandler = namedtuple("RegisteredHandler", ["callback", "priority", "kwargs", "key", "condition",
+                                                     "blocking_facility"])
 PostedEvent = namedtuple("PostedEvent", ["event", "type", "callback", "kwargs"])
 
 
@@ -25,13 +28,15 @@ class EventManager(MpfController):
 
     """Handles all the events and manages the handlers in MPF."""
 
+    config_name = "event_manager"
+
     def __init__(self, machine: "MachineController") -> None:
         """Initialize EventManager."""
         super().__init__(machine)
 
         self.registered_handlers = {}       # type: Dict[str, List[RegisteredHandler]]
-        self.event_queue = deque([])        # type: deque[PostedEvent]
-        self.callback_queue = deque([])     # type: deque[Tuple[Any, dict]]
+        self.event_queue = deque([])        # type: Deque[PostedEvent]
+        self.callback_queue = deque([])     # type: Deque[Tuple[Any, dict]]
         self.monitor_events = False
         self._queue_tasks = []              # type: List[asyncio.Task]
 
@@ -58,7 +63,19 @@ class EventManager(MpfController):
         else:
             return event_string.lower(), None
 
-    def add_handler(self, event: str, handler: Any, priority: int=1, **kwargs) -> EventHandlerKey:
+    def add_async_handler(self, event: str, handler: Any, priority: int = 1, blocking_facility: Any = None,
+                          **kwargs) -> EventHandlerKey:
+        """Register a coroutine as event handler."""
+        return self.add_handler(event, partial(self._async_handler_coroutine, handler), priority, blocking_facility,
+                                **kwargs)
+
+    def _async_handler_coroutine(self, _coroutine, queue, **kwargs):
+        queue.wait()
+        task = self.machine.clock.loop.create_task(_coroutine(**kwargs))
+        task.add_done_callback(lambda future: queue.clear())
+
+    def add_handler(self, event: str, handler: Any, priority: int = 1, blocking_facility: Any = None,
+                    **kwargs) -> EventHandlerKey:
         """Register an event handler to respond to an event.
 
         If you add a handlers for an event for which it has already been
@@ -72,7 +89,7 @@ class EventManager(MpfController):
                 Note that all event strings will be converted to lowercase.
             handler: The callable method that will be called when the event is
                 fired. Since it's possible for events to have kwargs attached
-                to them, the handler method must include **kwargs in its
+                to them, the handler method must include ``**kwargs`` in its
                 signature.
             priority: An arbitrary integer value that defines what order the
                 handlers will be called in. The default is 1, so if you have a
@@ -91,7 +108,10 @@ class EventManager(MpfController):
             the handler via ``remove_handler_by_key``.
 
         For example:
-        ``my_handler = self.machine.events.add_handler('ev', self.test))``
+
+        .. code::
+
+            my_handler = self.machine.events.add_handler('ev', self.test))
 
         Then later to remove all the handlers that a module added, you could:
         for handler in handler_list:
@@ -124,7 +144,8 @@ class EventManager(MpfController):
         if hasattr(handler, "relative_priority") and not isinstance(handler, MagicMock):
             priority += handler.relative_priority
 
-        self.registered_handlers[event].append(RegisteredHandler(handler, priority, kwargs, key, condition))
+        self.registered_handlers[event].append(RegisteredHandler(handler, priority, kwargs, key, condition,
+                                                                 blocking_facility))
 
         try:
             self.debug_log("Registered %s as a handler for '%s', priority: %s, "
@@ -138,7 +159,8 @@ class EventManager(MpfController):
         # event post.
         self.registered_handlers[event].sort(key=lambda x: x.priority, reverse=True)
 
-        self._verify_handlers(event, self.registered_handlers[event])
+        if self._info_to_console or self._info_to_file or True:
+            self._verify_handlers(event, self.registered_handlers[event])
 
         return EventHandlerKey(key, event)
 
@@ -168,16 +190,18 @@ class EventManager(MpfController):
             if cls in devices:
                 handlers = [h for h in sorted_handlers if h.priority == priority and
                             inspect.ismethod(h.callback) and
+                            h.condition == handler.condition and
                             h.callback.__self__ == handler.callback.__self__]
 
-                self.ignorable_runtime_exception(
+                self.info_log(
                     "Duplicate handler for class {} on event {} with priority {}. Handlers: {}".format(
                         cls, event, priority, handlers
                     )
                 )
             devices.append(cls)
 
-    def replace_handler(self, event: str, handler: Any, priority: int=1, **kwargs: dict) -> EventHandlerKey:
+    def replace_handler(self, event: str, handler: Any, priority: int = 1,
+                        **kwargs: dict) -> EventHandlerKey:
         """Check to see if a handler (optionally with kwargs) is registered for an event and replaces it if so.
 
         Args:
@@ -199,7 +223,6 @@ class EventManager(MpfController):
         # If we don't have kwargs, then we'll look for just the handler meth.
         # If we have kwargs, we'll look for that combination. If it finds it,
         # remove it.
-
         event = event.lower()
 
         if event in self.registered_handlers:
@@ -239,7 +262,8 @@ class EventManager(MpfController):
         Args:
             event: The name of the event you want to remove the handler from.
                 This string will be converted to lowercase.
-            handler: The handler method you want to remove.
+            handler:
+                The handler method you want to remove.
 
         Note that keyword arguments for the handler are not taken into
         consideration. In other words, this method only removes the registered
@@ -256,8 +280,8 @@ class EventManager(MpfController):
                     self.debug_log("Removing method %s from event %s", (str(handler).split(' '))[2], event)
                     events_to_delete_if_empty.append(event)
 
-        for event in events_to_delete_if_empty:
-            self._remove_event_if_empty(event)
+        for this_event in events_to_delete_if_empty:
+            self._remove_event_if_empty(this_event)
 
     def remove_handler_by_key(self, key: EventHandlerKey) -> None:
         """Remove a registered event handler by key.
@@ -318,7 +342,7 @@ class EventManager(MpfController):
 
         if _future.cancelled():
             return
-        _future.set_result(result=kwargs)
+        _future.set_result(kwargs)
 
     def does_event_exist(self, event_name: str) -> bool:
         """Check to see if any handlers are registered for the event name that is passed.
@@ -375,10 +399,10 @@ class EventManager(MpfController):
             callback: An optional method which will be called when the final
                 handler is done processing this event. Default is None.
             **kwargs: One or more options keyword/value pairs that will be
-                passed to each handler. (Just make sure your handlers are
-                expecting them. You can add **kwargs to your handler methods if
-                certain ones don't need them.)
-
+                passed to each handler. (The event manager will enforce that
+                handlers have ``**kwargs`` in their signatures when they're
+                registered to prevent run-time crashes from unexpected kwargs
+                that were included in ``post()`` calls.
         """
         self._post(event, ev_type=None, callback=callback, **kwargs)
 
@@ -440,8 +464,17 @@ class EventManager(MpfController):
                 registered waits have cleared their waits.
             **kwargs: One or more options keyword/value pairs that will be
                 passed to each handler. (Just make sure your handlers are
-                expecting them. You can add **kwargs to your handler methods if
-                certain ones don't need them.)
+                expecting them. You can add ``**kwargs`` to your handler
+                methods if certain ones don't need them.)
+
+        Examples:
+            Post the queue event called *pizza_time*, and then call
+            ``self.pizza_done`` when done:
+
+            .. code::
+
+                 self.machine.events.post_queue('pizza_time', self.pizza_done)
+
         """
         self._post(event, ev_type='queue', callback=callback, **kwargs)
 
@@ -461,8 +494,8 @@ class EventManager(MpfController):
                 done processing this event. Default is None.
             **kwargs: One or more options keyword/value pairs that will be
                 passed to each handler. (Just make sure your handlers are
-                expecting them. You can add **kwargs to your handler methods if
-                certain ones don't need them.)
+                expecting them. You can add ``**kwargs`` to your handler
+                methods if certain ones don't need them.)
 
         Events are processed serially (e.g. one at a time), so if the event
         core is in the process of handling another event, this event is
@@ -487,7 +520,7 @@ class EventManager(MpfController):
         if self._debug_to_console or self._debug_to_file:
             self.debug_log("Event: ===='%s'==== Type: %s, Callback: %s, "
                            "Args: %s", event, ev_type, callback, kwargs)
-        else:
+        elif not kwargs.get("_silent", False):
             self.info_log("Event: ======'%s'====== Args=%s", event, kwargs)
 
         # fast path for events without handler
@@ -499,14 +532,14 @@ class EventManager(MpfController):
 
         posted_event = PostedEvent(event, ev_type, callback, kwargs)
 
-        if self.monitor_events:
+        if self.monitor_events and not kwargs.get("_silent", False):
             self.machine.bcp.interface.monitor_posted_event(posted_event)
 
         self.event_queue.append(posted_event)
         self.debug_log("+============= EVENTS QUEUE =============")
-        for event in list(self.event_queue):    # type: ignore
-            self.debug_log("| %s, %s, %s, %s", event[0], event[1],
-                           event[2], event[3])
+        for this_event in list(self.event_queue):    # type: ignore
+            self.debug_log("| %s, %s, %s, %s", this_event[0], this_event[1],
+                           this_event[2], this_event[3])
         self.debug_log("+========================================")
 
     @asyncio.coroutine
@@ -567,6 +600,12 @@ class EventManager(MpfController):
             # use slice above so we don't process new handlers that came
             # in while we were processing previous handlers
 
+            if '_min_priority' in kwargs and handler.blocking_facility and \
+                (kwargs['_min_priority']['all'] > handler.priority or (
+                    handler.blocking_facility in kwargs['_min_priority'] and
+                    kwargs['_min_priority'][handler.blocking_facility] > handler.priority)):
+                continue
+
             # merge the post's kwargs with the registered handler's kwargs
             # in case of conflict, handler kwargs will win
             merged_kwargs = dict(list(kwargs.items()) + list(handler.kwargs.items()))
@@ -593,11 +632,12 @@ class EventManager(MpfController):
                 kwargs['ev_result'] = False
 
                 self.debug_log("Aborting future event processing")
-
                 break
 
             elif ev_type == 'relay' and isinstance(result, dict):
                 kwargs.update(result)
+            elif isinstance(result, dict) and '_min_priority' in result:
+                kwargs['_min_priority'] = result['_min_priority']
 
         return result
 
@@ -643,10 +683,10 @@ class EventManager(MpfController):
 
     def process_event_queue(self) -> None:
         """Check if there are any other events that need to be processed, and then process them."""
-        while len(self.event_queue) > 0 or len(self.callback_queue) > 0:
+        while self.event_queue or self.callback_queue:
             # first process all events. if they post more events we will
             # process them in the same loop.
-            while len(self.event_queue) > 0:
+            while self.event_queue:
                 event = self.event_queue.popleft()
                 if event.type == "queue":
                     self._process_queue_event(event=event[0],
@@ -661,7 +701,7 @@ class EventManager(MpfController):
             # when all events are processed run the _last_ callback. afterwards
             # continue with the loop and run all events. this makes sure all
             # events are completed before running the callback
-            if len(self.callback_queue) > 0:
+            if self.callback_queue:
                 callback, kwargs = self.callback_queue.pop()
                 callback(**kwargs)
 
@@ -704,7 +744,7 @@ class QueuedEvent(object):
 
 
 def event_handler(relative_priority):
-    """Decorator for event handlers."""
+    """Decorate an event handler."""
     def decorator(func):
         """Decorate a function with relative priority."""
         func.relative_priority = relative_priority

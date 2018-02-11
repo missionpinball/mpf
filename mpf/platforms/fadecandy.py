@@ -6,21 +6,24 @@ import struct
 
 from mpf.core.utility_functions import Util
 from mpf.platforms.openpixel import OpenPixelClient
-from mpf.platforms.openpixel import HardwarePlatform as OPHardwarePlatform
+from mpf.platforms.openpixel import OpenpixelHardwarePlatform
+
+MYPY = False
+if MYPY:   # pragma: no cover
+    from mpf.core.machine import MachineController
 
 
-class HardwarePlatform(OPHardwarePlatform):
+class FadecandyHardwarePlatform(OpenpixelHardwarePlatform):
 
-    """Base class for the open pixel hardware platform.
+    """Base class for the FadeCandy hardware platform."""
 
-    Args:
-        machine: The main ``MachineController`` object.
+    def __init__(self, machine: "MachineController") -> None:
+        """Initialise Fadecandy.
 
-    """
-
-    def __init__(self, machine):
-        """Initialise Fadecandy."""
-        super(HardwarePlatform, self).__init__(machine)
+        Args:
+            machine: The main ``MachineController`` object.
+        """
+        super().__init__(machine)
 
         self.log = logging.getLogger("FadeCandy")
         self.debug_log("Configuring FadeCandy hardware interface.")
@@ -39,18 +42,19 @@ class FadeCandyOPClient(OpenPixelClient):
 
     """Base class of an OPC client which connects to a FadeCandy server.
 
-    Args:
-        machine: The main ``MachineController`` instance.
-        config: Dictionary which contains configuration settings for the OPC
-            client.
-
     This class implements some FadeCandy-specific features that are not
     available with generic OPC implementations.
 
     """
 
     def __init__(self, machine, config):
-        """Initialise Fadecandy client."""
+        """Initialise Fadecandy client.
+
+        Args:
+            machine: The main ``MachineController`` instance.
+            config: Dictionary which contains configuration settings for the
+                OPC client.
+        """
         super().__init__(machine, config)
 
         self.log = logging.getLogger('FadeCandyClient')
@@ -77,6 +81,7 @@ class FadeCandyOPClient(OpenPixelClient):
 
     @asyncio.coroutine
     def connect(self):
+        """Connect to the hardware."""
         yield from super().connect()
         self.set_global_color_correction()
         self.write_firmware_options()

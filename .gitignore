@@ -51,8 +51,8 @@ mypy_coverage/
 
 # Sphinx documentation
 docs/_build/
-docs/mpf
-docs/contents.rst
+docs/api
+docs/examples
 
 # PyBuilder
 target/
@@ -65,6 +65,9 @@ __mpfcache__
 data/
 logs/
 audits.yaml
+
+# editor temp
+.*.swp
 
 # MPF build files
 build_scripts/wheels

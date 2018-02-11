@@ -21,14 +21,23 @@ class ClockTestCase(unittest.TestCase):
     def setUp(self):
         global counter
         counter = 0
-        if not asyncio.get_event_loop:
-            self.skipTest("Clock broken")
-            return
-        self.clock = ClockBase()
+
+        try:
+            import uvloop
+        except ImportError:
+            pass
+        else:
+            asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+        self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
+        self.clock = ClockBase(loop=self.loop)
         self.callback_order = []
 
+    def tearDown(self):
+        self.loop.close()
+
     def advance_time_and_run(self, delta=1.0):
-        asyncio.get_event_loop().run_until_complete(asyncio.sleep(delay=delta))
+        self.loop.run_until_complete(asyncio.sleep(delay=delta, loop=self.loop))
 
     def callback1(self, number):
         self.callback_order.append(number)

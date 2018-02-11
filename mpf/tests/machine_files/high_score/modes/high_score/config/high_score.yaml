@@ -1,4 +1,4 @@
-#config_version=4
+#config_version=5
 high_score:
   _overwrite: True
   categories:

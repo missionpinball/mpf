@@ -1,11 +1,9 @@
 """Base class for MPF controllers."""
 import abc
-import re
-
-from typing import TYPE_CHECKING
 
 from mpf.core.logging import LogMixin
-if TYPE_CHECKING:
+MYPY = False
+if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController
 
 
@@ -32,8 +30,7 @@ class MpfController(LogMixin, metaclass=abc.ABCMeta):
             self.module_name = self.__class__.__name__
 
         if not self.config_name:
-            x = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', self.module_name)
-            self.config_name = re.sub('([a-z0-9])([A-Z])', r'\1_\2', x).lower()
+            raise AssertionError("Please specify a config name for {}".format(self))
 
         self.configure_logging(
             self.module_name,

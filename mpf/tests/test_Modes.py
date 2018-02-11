@@ -1,8 +1,9 @@
 from unittest.mock import MagicMock
-from mpf.tests.MpfTestCase import MpfTestCase
+
+from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
 
-class TestModes(MpfTestCase):
+class TestModes(MpfFakeGameTestCase):
 
     def getConfigFile(self):
         return 'test_modes.yaml'
@@ -38,7 +39,8 @@ class TestModes(MpfTestCase):
         self.machine.events.add_handler('mode_mode1_stopping', self.mode1_stopping_event_handler)
         self.machine.events.add_handler('mode_mode1_stopped', self.mode1_stopped_event_handler)
 
-        # start mode 1
+        # start mode 1. It should only start once
+        self.machine.events.post('start_mode1')
         self.machine.events.post('start_mode1')
         self.advance_time_and_run()
         self.assertTrue(self.machine.mode_controller.is_active('mode1'))
@@ -90,11 +92,10 @@ class TestModes(MpfTestCase):
 
         # default priorities
         self.machine.modes.mode1.start()
-        self.machine.modes.mode2.start()
         self.advance_time_and_run()
         self.assertEqual(self.machine.modes.mode1.priority, 200)
-        self.assertEqual(self.machine.modes.mode2.priority, 100)
         self.assertEqual(self.machine.modes.attract.priority, 10)
+        self.assertEqual(self.machine.modes.mode1.config['mode_settings']['this'], True)
 
         # test the stop priorities
         found_it = False
@@ -103,14 +104,6 @@ class TestModes(MpfTestCase):
                 found_it = True
                 # 201 because stop priorities are always +1 over mode priority
                 self.assertEqual(handler.priority, 201)
-        self.assertTrue(found_it)
-
-        found_it = False
-        for handler in self.machine.events.registered_handlers['stop_mode2']:
-            if handler.callback == self.machine.modes.mode2.stop:
-                found_it = True
-                # base priority 100, +1 default bump, +2 stop_priority config
-                self.assertEqual(handler.priority, 103)
         self.assertTrue(found_it)
 
         # pass a priority at start
@@ -124,10 +117,8 @@ class TestModes(MpfTestCase):
         # test the order of the active modes list
         self.assertEqual(self.machine.modes.mode1,
                          self.machine.mode_controller.active_modes[0])
-        self.assertEqual(self.machine.modes.mode2,
-                         self.machine.mode_controller.active_modes[1])
         self.assertEqual(self.machine.modes.attract,
-                         self.machine.mode_controller.active_modes[2])
+                         self.machine.mode_controller.active_modes[1])
 
     def test_mode_start_with_callback(self):
         self.mode_start_callback = MagicMock()
@@ -211,3 +202,38 @@ class TestModes(MpfTestCase):
         self.assertTrue(self.machine.modes.mode1.active)
         self.assertFalse(self.machine.modes.mode2.active)
         self.assertFalse(self.machine.modes.mode3.active)
+
+
+class TestModesInGame(MpfFakeGameTestCase):
+
+    def getConfigFile(self):
+        return 'test_modes_in_game.yaml'
+
+    def getMachinePath(self):
+        return 'tests/machine_files/mode_tests/'
+
+    def test_restart_on_next_ball(self):
+        """Test restart_on_next_ball."""
+        self.mock_event("mode_mode_restart_on_next_ball_will_start")
+        self.assertModeNotRunning("mode_restart_on_next_ball")
+        self.start_game()
+
+        self.assertModeNotRunning("mode_restart_on_next_ball")
+        self.drain_ball()
+
+        # mode shoud not be started
+        self.assertModeNotRunning("mode_restart_on_next_ball")
+
+        # start it
+        self.post_event("start_mode_restart_on_next_ball")
+        self.advance_time_and_run()
+
+        # it should run
+        self.assertModeRunning("mode_restart_on_next_ball")
+        self.assertEventCalled("mode_mode_restart_on_next_ball_will_start", 1)
+
+        # check that mode is restarted on next ball
+        self.mock_event("mode_mode_restart_on_next_ball_will_start")
+        self.drain_ball()
+        self.assertModeRunning("mode_restart_on_next_ball")
+        self.assertEventCalled("mode_mode_restart_on_next_ball_will_start", 1)

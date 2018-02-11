@@ -1,0 +1,16 @@
+#config_version=5
+
+hardware:
+  segment_displays: mypinballs
+
+mypinballs:
+  port: /dev/ttyUSB0
+  debug: True
+
+segment_displays:
+  display1:
+    number: 1
+  display2:
+    number: 2
+  display6:
+    number: 6

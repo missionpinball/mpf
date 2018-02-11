@@ -1,4 +1,4 @@
-"""Runs mc and game."""
+"""Command which launches both the MPF core engine and MPF-MC."""
 
 from importlib import import_module
 import multiprocessing
@@ -21,11 +21,8 @@ class Command(object):
     def __init__(self, mpf_path, machine_path, args):
         """Run game and mc."""
         multiprocessing.set_start_method('spawn')
-        mpf = multiprocessing.Process(target=_start_mpf,
-                                      args=(mpf_path, machine_path, args))
         mc = multiprocessing.Process(target=_start_mc,
                                      args=(mpf_path, machine_path, args))
-        mpf.start()
         mc.start()
-        mpf.join()
+        _start_mpf(mpf_path, machine_path, args)
         mc.join()

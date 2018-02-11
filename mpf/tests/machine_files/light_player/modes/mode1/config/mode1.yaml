@@ -1,0 +1,16 @@
+# config_version=5
+mode:
+  priority: 100
+  game_mode: False
+
+light_player:
+  event5:
+    led1:
+      color: orange
+    led2:
+      color: orange
+    led3:
+      color: orange
+      priority: 200
+  "{machine.test == 23}":
+    led4: red

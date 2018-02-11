@@ -1,0 +1,15 @@
+#config_version=5
+
+hardware:
+  platform: virtual
+  accelerometers: mma8451
+
+accelerometers:
+    test_accelerometer:
+        level_x: 0
+        level_y: 0
+        level_z: 1
+        platform: mma8451
+        platform_settings:
+          i2c_platform: virtual
+

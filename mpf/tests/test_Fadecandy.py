@@ -30,6 +30,12 @@ class TestFadecandy(MpfTestCase):
 
         self.assertOpenPixelLedsSent({}, {})
 
+    def tearDown(self):
+        self._messages = []
+        super().tearDown()
+        # test that we blanked all LEDs at shutdown
+        self.assertOpenPixelLedsSent({}, {})
+
     def _mock_loop(self):
         self._mock_socket = MockSocket()
         self.clock.mock_socket("localhost", 7890, self._mock_socket)
@@ -58,9 +64,9 @@ class TestFadecandy(MpfTestCase):
         found2 = False
         for message in self._messages:
             if not (message == bank1 or message == bank2):
-                print(":".join("{:02x}".format(c) for c in message))
-                print(":".join("{:02x}".format(c) for c in bank1))
-                print(":".join("{:02x}".format(c) for c in bank2))
+                print("Received:", ":".join("{:02x}".format(c) for c in message))
+                print("Expected bank1:", ":".join("{:02x}".format(c) for c in bank1))
+                print("Expected bank2:",":".join("{:02x}".format(c) for c in bank2))
                 raise AssertionError("Invalid Message")
             if message == bank1:
                 found1 = True
@@ -106,3 +112,57 @@ class TestFadecandy(MpfTestCase):
         self._messages = []
         self.advance_time_and_run(1)
         self.assertOpenPixelLedsSent({20: (255, 0, 0), 99: (2, 23, 42)}, {99: (255, 255, 255)})
+
+        self.machine.lights.test_led.off()
+        self.machine.lights.test_led2.off()
+        self.machine.lights.test_led3.off()
+        self.advance_time_and_run(.02)
+        self._messages = []
+        self.advance_time_and_run(.1)
+        self.assertOpenPixelLedsSent({}, {})
+        self.machine.lights.test_led.color("blue", priority=5, fade_ms=20, key="test2")
+        self.advance_time_and_run()
+
+        self.machine.lights.test_led.on(priority=10, fade_ms=1000, key="test")
+        self.advance_time_and_run(2)
+        self._messages = []
+        self.advance_time_and_run(.1)
+        self.assertOpenPixelLedsSent({99: (255, 255, 255)}, {})
+        # test crossfade on same key
+        self._messages = []
+        self.machine.lights.test_led.on(priority=10, fade_ms=1000, key="test")
+        self.advance_time_and_run(.1)
+        self.assertOpenPixelLedsSent({99: (255, 255, 255)}, {})
+
+        # test remove and readd
+        self._messages = []
+        self.machine.lights.test_led.remove_from_stack_by_key(fade_ms=1000, key="test")
+        self.machine.lights.test_led.on(priority=10, fade_ms=1000, key="test")
+        self.advance_time_and_run(.1)
+        self.assertOpenPixelLedsSent({99: (255, 255, 255)}, {})
+
+        # test fade out
+        self.machine.lights.test_led.remove_from_stack_by_key(fade_ms=1000, key="test")
+        self.advance_time_and_run(.5)
+        self._messages = []
+        self.advance_time_and_run(.1)
+        message = self._build_message(0, {99: (113, 113, 255)})
+        self.assertIn(message, self._messages)
+        self.advance_time_and_run(.5)
+        self._messages = []
+        self.advance_time_and_run(.1)
+        self.assertOpenPixelLedsSent({99: (0, 0, 255)}, {})
+
+        # fade over fade
+        self.machine.lights.test_led.on(priority=10, key="test")
+        self.machine.lights.test_led.remove_from_stack_by_key(fade_ms=10000, key="test2")
+        self.advance_time_and_run(.1)
+        self._messages = []
+        self.advance_time_and_run(.1)
+        self.assertOpenPixelLedsSent({99: (255, 255, 255)}, {})
+        self.machine.lights.test_led.remove_from_stack_by_key(fade_ms=1000, key="test")
+        self.advance_time_and_run(.5)
+        self.advance_time_and_run(20)
+        self._messages = []
+        self.advance_time_and_run(.1)
+        self.assertOpenPixelLedsSent({99: (0, 0, 0)}, {})

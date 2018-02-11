@@ -11,10 +11,8 @@ class TestPololuMaestro(MpfTestCase):
     def getMachinePath(self):
         return 'tests/machine_files/pololu_maestro/'
 
-    def getOptions(self):
-        options = super().getOptions()
-        options['force_platform'] = False
-        return options
+    def get_platform(self):
+        return False
 
     def setUp(self):
         self.serial = MagicMock()
@@ -27,7 +25,7 @@ class TestPololuMaestro(MpfTestCase):
         msb = (value >> 7) & 0x7f  # shift 7 and take next 7 bits for msb
         # Send Pololu intro, device number, command, channel, and target
         # lsb/msb
-        return chr(0xaa) + chr(0xc) + chr(0x04) + chr(number) + chr(lsb) + chr(msb)
+        return bytes([0xaa, 0xc, 0x04, number, lsb, msb])
 
     def test_servo_go_to_position(self):
         # go to position 1.0 (on of the ends)

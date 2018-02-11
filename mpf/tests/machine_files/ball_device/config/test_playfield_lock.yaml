@@ -1,0 +1,23 @@
+#config_version=5
+coils:
+    eject_coil1:
+        number:
+
+switches:
+    s_ball_switch1:
+        number:
+    s_ball_switch2:
+        number:
+
+ball_devices:
+    test_device:
+        eject_coil: eject_coil1
+        ball_switches: s_ball_switch1, s_ball_switch2
+        entrance_events: entrance_event
+        debug: true
+
+ball_holds:
+    hold_test:
+        hold_devices: test_device
+        balls_to_hold: 1
+        release_one_events: release_test

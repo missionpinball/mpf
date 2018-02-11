@@ -4,3 +4,5 @@
 class ConfigFileError(AssertionError):
 
     """Error in a config file found."""
+
+    pass

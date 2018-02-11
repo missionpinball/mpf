@@ -1,0 +1,28 @@
+#config_version=5
+
+light_stripes:
+  stripe1:
+    number_start: 10
+    light_template:
+      tags: test
+    count: 5
+    debug: True
+  stripe2:
+    number_start: 200
+    number_template: 7-{}
+    count: 5
+    direction: 90
+    start_x: 10
+    start_y: 20
+    distance: 5
+    debug: True
+
+light_rings:
+  ring1:
+    number_start: 20
+    count: 12
+    radius: 3
+    start_angle: 90
+    center_x: 100
+    center_y: 50
+    debug: True

@@ -21,9 +21,7 @@ class PlatformController(MpfController):
 
     """Manages all platforms and rules."""
 
-    def __init__(self, machine):
-        """Initialise platform controller."""
-        super().__init__(machine)
+    config_name = "platform_controller"
 
     @staticmethod
     def _check_and_get_platform(switch: Switch, driver: Driver) -> DriverPlatform:
@@ -34,7 +32,7 @@ class PlatformController(MpfController):
 
     def _setup_switch_callback_for_psu(self, switch: Switch, driver: Driver, switch_settings: SwitchSettings,
                                        driver_settings: DriverSettings) -> Optional[SwitchHandler]:
-        """Setup a switch handler which informs the PSU about pulses performed by the rule."""
+        """Set up a switch handler which informs the PSU about pulses performed by the rule."""
         if driver_settings.pulse_settings.duration == 0:
             return None
 
@@ -67,6 +65,10 @@ class PlatformController(MpfController):
         pulse_duration = driver.driver.get_and_verify_pulse_ms(pulse_setting.duration if pulse_setting else None)
         pulse_power = driver.driver.get_and_verify_pulse_power(pulse_setting.power if pulse_setting else None)
         hold_power = driver.driver.get_and_verify_hold_power(hold_settings.power if hold_settings else None)
+
+        if hold_power == 0.0:
+            raise AssertionError("Cannot enable driver with hold_power 0.0")
+
         return DriverSettings(
             hw_driver=driver.driver.hw_driver,
             pulse_settings=PulseSettings(duration=pulse_duration, power=pulse_power),
@@ -93,6 +95,8 @@ class PlatformController(MpfController):
 
         Args:
             enable_switch: Switch which triggers the rule.
+            driver: .. class:: DriverRuleSettings
+            pulse_setting: .. class:: PulseRuleSettings
         """
         platform = self._check_and_get_platform(enable_switch.switch, driver.driver)
 
@@ -131,6 +135,8 @@ class PlatformController(MpfController):
         Args:
             enable_switch: Switch which triggers the rule.
             driver: Driver to trigger.
+            pulse_setting: .. class:: PulseRuleSettings
+            hold_settings: .. class:: HoldRuleSettings
         """
         platform = self._check_and_get_platform(enable_switch.switch, driver.driver)
 
@@ -163,10 +169,12 @@ class PlatformController(MpfController):
                               pulse_setting: PulseRuleSettings = None) -> HardwareRule:
         """Add pulse on hit rule to driver.
 
-        Alway do the full pulse. Even when the switch is released.
+        Always do the full pulse. Even when the switch is released.
 
         Args:
             enable_switch: Switch which triggers the rule.
+            driver: .. class:: DriverRuleSettings
+            pulse_setting: .. class:: PulseRuleSettings
         """
         platform = self._check_and_get_platform(enable_switch.switch, driver.driver)
 
@@ -194,6 +202,7 @@ class PlatformController(MpfController):
         return HardwareRule(platform=platform, switch_settings=[enable_settings], driver_settings=driver_settings,
                             switch_key=switch_key)
 
+    # pylint: disable-msg=too-many-arguments
     def set_pulse_on_hit_and_enable_and_release_and_disable_rule(self, enable_switch: SwitchRuleSettings,
                                                                  disable_switch: SwitchRuleSettings,
                                                                  driver: DriverRuleSettings,
@@ -205,8 +214,11 @@ class PlatformController(MpfController):
         Pulse and then enable driver. Cancel pulse and enable when switch is released or a disable switch is hit.
 
         Args:
-            enable_switch: Switch which triggers the rule.
-            disable_switch: Switch which disables the rule.
+            enable_switch:
+            disable_switch:
+            driver:
+            pulse_setting:
+            hold_settings:
         """
         platform = self._check_and_get_platform(enable_switch.switch, driver.driver)
         self._check_and_get_platform(disable_switch.switch, driver.driver)

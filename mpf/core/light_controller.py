@@ -5,14 +5,16 @@ from typing import Dict
 from mpf.core.machine import MachineController
 from mpf.core.settings_controller import SettingEntry
 
-from mpf.core.rgb_color import RGBColorCorrectionProfile
+from mpf.core.rgb_color import RGBColorCorrectionProfile, RGBColor
 
 from mpf.core.mpf_controller import MpfController
 
 
 class LightController(MpfController):
 
-    """Handles light updates."""
+    """Handles light updates and light monitoring."""
+
+    config_name = "light_controller"
 
     def __init__(self, machine: MachineController) -> None:
         """Initialise lights controller."""
@@ -25,6 +27,14 @@ class LightController(MpfController):
         self._initialised = False
 
         self._monitor_update_task = None                    # type: asyncio.Task
+
+        if 'named_colors' in self.machine.config:
+            self._load_named_colors()
+
+    def _load_named_colors(self):
+        """Load named colors from config."""
+        for name, color in self.machine.config['named_colors'].items():
+            RGBColor.add_color(name, color)
 
     def initialise_light_subsystem(self):
         """Initialise the light subsystem."""
@@ -68,7 +78,8 @@ class LightController(MpfController):
             self._monitor_update_task = self.machine.clock.loop.create_task(self._monitor_update_lights())
             self._monitor_update_task.add_done_callback(self._done)
 
-    def _done(self, future: asyncio.Future):
+    @staticmethod
+    def _done(future: asyncio.Future):
         try:
             future.result()
         except asyncio.CancelledError:
@@ -84,4 +95,4 @@ class LightController(MpfController):
                 if old != color:
                     self.machine.device_manager.notify_device_changes(light, "color", old, color)
                     colors[light] = color
-            yield from asyncio.sleep(1 / 30, loop=self.machine.clock.loop)
+            yield from asyncio.sleep(1 / 10, loop=self.machine.clock.loop)

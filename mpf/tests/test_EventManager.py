@@ -793,7 +793,7 @@ class TestEventManager(MpfFakeGameTestCase, MpfTestCase):
         self.delay.add(ms=0, name="second", callback=self.delay_zero_ms_next_frame, start=start)
 
     def delay_zero_ms_next_frame(self, start):
-        self.assertLessEqual(self.machine.clock.get_time(), start + self.min_frame_time)
+        self.assertLessEqual(self.machine.clock.get_time(), start)
 
     def test_zero_ms_delay(self):
         self.called = False
@@ -819,7 +819,7 @@ class TestEventManager(MpfFakeGameTestCase, MpfTestCase):
         self.post_event_with_params("test", param=3, a=True)
         self.assertEqual(1, self._called)
 
-    def test_handler_with_settings_condition(self):
+    def test_handler_with_settings_condition_invalid_setting(self):
         self._called = 0
         self.machine.events.add_handler("test{settings.test == True}", self._handler)
 
@@ -830,6 +830,11 @@ class TestEventManager(MpfFakeGameTestCase, MpfTestCase):
 
         # reset exception
         self._exception = None
+
+    def test_handler_with_settings_condition(self):
+        self._called = 0
+        self.machine.events.add_handler("test{settings.test == True}", self._handler)
+
 
         self.machine.settings._settings = {}
         self.machine.settings.add_setting(SettingEntry("test", "Test", 1, "test", "a",

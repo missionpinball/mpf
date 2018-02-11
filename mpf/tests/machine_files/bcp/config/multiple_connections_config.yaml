@@ -1,0 +1,17 @@
+#config_version=5
+
+bcp:
+    debug: True
+    connections:
+        local_display:
+            host: localhost
+            port: 5050
+            type: mpf.core.bcp.bcp_socket_client.BCPClientSocket
+            required: True
+            exit_on_close: True
+        another_display:
+            host: localhost
+            port: 9001
+            type: mpf.core.bcp.bcp_socket_client.BCPClientSocket
+            required: True
+            exit_on_close: True

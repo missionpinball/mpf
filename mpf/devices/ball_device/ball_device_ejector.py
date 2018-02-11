@@ -1,5 +1,7 @@
 """Baseclass for ball device ejectors."""
 
+import asyncio
+
 
 class BallDeviceEjector:
 
@@ -20,6 +22,14 @@ class BallDeviceEjector:
     # TODO: make this coroutine
     def eject_all_balls(self):
         """Eject all balls."""
+        raise NotImplementedError()
+
+    @asyncio.coroutine
+    def reorder_balls(self):
+        """Reorder balls without ejecting.
+
+        This might be useful when count become unstable during a jam condition.
+        """
         raise NotImplementedError()
 
     def ball_search(self, phase, iteration):

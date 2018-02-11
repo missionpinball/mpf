@@ -1,4 +1,4 @@
-#config_version=4
+#config_version=5
 
 game:
     balls_per_game: 1
@@ -26,6 +26,11 @@ switches:
     s_left_outlane:
         number:
 
+playfields:
+    playfield:
+        default_source_device: bd_launcher
+        tags: default
+
 ball_devices:
     bd_trough:
         eject_coil: eject_coil1
@@ -40,7 +45,6 @@ ball_devices:
         debug: true
         confirm_eject_type: target
         eject_timeouts: 2s
-        tags: ball_add_live
 
 ball_saves:
     default:

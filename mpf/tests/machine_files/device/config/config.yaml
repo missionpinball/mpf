@@ -1,4 +1,4 @@
-#config_version=4
+#config_version=5
 
 lights:
     light_01:
@@ -36,7 +36,7 @@ coils:
     coil_01:
         number: 1
         default_pulse_ms: 30
-        default_hold_power: 1.0
+        allow_enable: True
     coil_02:
         number: 2
         default_pulse_ms: 60

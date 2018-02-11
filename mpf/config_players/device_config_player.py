@@ -16,9 +16,11 @@ class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
         # that
         if not isinstance(settings, dict):
             if isinstance(settings, (str, int, float)):
-                settings = {settings: dict()}
+                settings = self.get_string_config(settings)
             else:
-                raise AssertionError("Invalid settings for player {}:{}".format(self.show_section, name))
+                raise AssertionError(
+                    "Invalid settings for player {}:{} {}".format(
+                        self.show_section, name, settings))
 
         # settings here are dicts of devices/settings
         for device, device_settings in settings.items():
@@ -26,6 +28,11 @@ class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
                 self._validate_config_item(device, device_settings))
 
         return validated_config
+
+    # pylint: disable-msg=no-self-use
+    def get_string_config(self, string):
+        """Parse string config."""
+        return {string: dict()}
 
     def _validate_config_item(self, device, device_settings):
         """Validate show config."""
@@ -56,13 +63,13 @@ class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
             devices = [device]
 
         return_dict = dict()
-        for device in devices:
-            return_dict[device] = device_settings
+        for this_device in devices:
+            return_dict[this_device] = device_settings
 
         return return_dict
 
     @abc.abstractmethod
-    def play(self, settings, context, calling_context, priority=0, **kwargs):
+    def play(self, settings, context: str, calling_context: str, priority: int = 0, **kwargs):
         """Directly play player."""
         # **kwargs since this is an event callback
         raise NotImplementedError

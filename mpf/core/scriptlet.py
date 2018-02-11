@@ -9,6 +9,7 @@ class Scriptlet(LogMixin):
 
     def __init__(self, machine, name):
         """Initialise scriptlet."""
+        super().__init__()
         self.machine = machine
         self.name = name
 
