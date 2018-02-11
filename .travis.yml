@@ -50,6 +50,7 @@ install:
 - if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
       curl -sS https://www.python.org/ftp/python/3.5.2/python-3.5.2-macosx10.6.pkg > python-3.5.2-macosx10.6.pkg;
       sudo installer -pkg python-3.5.2-macosx10.6.pkg -target /;
+      pip3 install --upgrade pip;
       pip3 install .;
   fi;
 - pip3 install packaging coveralls coverage setuptools --upgrade
