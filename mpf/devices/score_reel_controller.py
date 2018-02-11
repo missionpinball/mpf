@@ -131,6 +131,7 @@ class ScoreReelController(object):
                 and included only because the score change event passes it.
         """
         del kwargs
+        del change
         if self.active_scorereelgroup:
             self.active_scorereelgroup.set_value(value=value)
 
