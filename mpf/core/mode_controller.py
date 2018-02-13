@@ -1,6 +1,11 @@
 """Contains the ModeController class for MPF."""
 import importlib
+import asyncio
 import os
+import tempfile
+import hashlib
+import errno
+import pickle
 from collections import namedtuple
 
 from typing import Callable
@@ -56,7 +61,7 @@ class ModeController(MpfController):
 
         if 'modes' in self.machine.config:
             # priority needs to be higher than device_manager::_load_device_modules
-            self.machine.events.add_handler('init_phase_1', self.load_modes, priority=10)
+            self.machine.events.add_async_handler('init_phase_1', self.load_modes, priority=10)
             self.machine.events.add_handler('init_phase_2', self.initialise_modes)
 
         self.machine.events.add_handler('ball_ending', self._ball_ending,
@@ -92,6 +97,7 @@ class ModeController(MpfController):
         for mode in self.machine.modes:
             mode.initialise_mode()
 
+    @asyncio.coroutine
     def load_modes(self, **kwargs):
         """Load the modes from the modes: section of the machine configuration file."""
         del kwargs
@@ -105,6 +111,10 @@ class ModeController(MpfController):
 
             # load mode
             self.machine.modes[mode] = self._load_mode(mode.lower())
+
+            # add a very very short yield to prevent hangs in platforms (e.g. watchdog timeouts during IO)
+            yield from asyncio.sleep(.0001, loop=self.machine.clock.loop)
+            self.log.debug("Loaded mode %s", mode)
 
     def _find_mode_path(self, mode_string):
         if mode_string in self._machine_mode_folders:
@@ -120,10 +130,13 @@ class ModeController(MpfController):
                              "folder in your machine's 'modes' folder?"
                              .format(mode_string))
 
-    def _load_mode_config(self, mode_string):
-        config = dict()
-        found_config = False
-        # Is there an MPF default config for this mode? If so, load it first
+    def _get_mpfcache_file_name(self, mode):
+        cache_dir = tempfile.gettempdir()
+        path_hash = str(hashlib.md5(bytes(self.machine.machine_path + "-" + mode, 'UTF-8')).hexdigest())
+        result = os.path.join(cache_dir, path_hash)
+        return result + ".mpf_cache"
+
+    def _get_mpf_mode_config(self, mode_string):
         try:
             mpf_mode_config = os.path.join(
                 self.machine.mpf_path,
@@ -131,19 +144,14 @@ class ModeController(MpfController):
                 self._mpf_mode_folders[mode_string],
                 'config',
                 self._mpf_mode_folders[mode_string] + '.yaml')
-
-            if os.path.isfile(mpf_mode_config):
-                config = ConfigProcessor.load_config_file(mpf_mode_config,
-                                                          config_type='mode')
-                found_config = True
-
-            self.debug_log("Loading config from %s", mpf_mode_config)
-
+            if not os.path.isfile(mpf_mode_config):
+                return False
         except KeyError:
-            pass
+            return False
 
-        # Now figure out if there's a machine-specific config for this mode,
-        # and if so, merge it into the config
+        return mpf_mode_config
+
+    def _get_mode_config_file(self, mode_string):
         try:
             mode_config_file = os.path.join(
                 self.machine.machine_path,
@@ -151,23 +159,75 @@ class ModeController(MpfController):
                 self._machine_mode_folders[mode_string],
                 'config',
                 self._machine_mode_folders[mode_string] + '.yaml')
+            if not os.path.isfile(mode_config_file):
+                return False
         except KeyError:
-            mode_config_file = False
+            return False
+        return mode_config_file
 
-        if mode_config_file and os.path.isfile(mode_config_file):
+    def _load_mode_config(self, mode_string):
+        # Is there an MPF default config for this mode? If so, load it first
+        mpf_mode_config = self._get_mpf_mode_config(mode_string)
+
+        # Now figure out if there's a machine-specific config for this mode,
+        # and if so, merge it into the config
+        mode_config_file = self._get_mode_config_file(mode_string)
+
+        if not mode_config_file and not mpf_mode_config:
+            raise AssertionError("Did not find any config for mode {}.".format(mode_string))
+
+        if self.machine.options['no_load_cache']:
+            load_from_cache = False
+        else:
+            cache_file = self._get_mpfcache_file_name(mode_string)
+            try:
+                cache_time = os.path.getmtime(cache_file)
+            except OSError as exception:
+                cache_time = -1
+                if exception.errno != errno.ENOENT:
+                    raise  # some unknown error?
+                else:
+                    load_from_cache = False  # cache file doesn't exist
+
+            if (mpf_mode_config and os.path.getmtime(mpf_mode_config) > cache_time) or \
+                    (mode_config_file and os.path.getmtime(mode_config_file) > cache_time):
+                load_from_cache = False  # config is newer
+            else:
+                load_from_cache = True  # cache is newer
+
+        if load_from_cache:
+            self.log.debug("Loading cached mode config: %s", cache_file)
+
+            with open(cache_file, 'rb') as f:
+
+                try:
+                    return pickle.load(f)
+
+                # unfortunately pickle can raise all kinds of exceptions and we dont want to crash on corrupted cache
+                # pylint: disable-msg=broad-except
+                except Exception:   # pragma: no cover
+                    self.log.warning("Could not load config from cache")
+
+        config = dict()
+        if mpf_mode_config:
+            config = ConfigProcessor.load_config_file(mpf_mode_config,
+                                                      config_type='mode')
+            self.debug_log("Loading config from %s", mpf_mode_config)
+
+        if mode_config_file:
             config = Util.dict_merge(config,
                                      ConfigProcessor.load_config_file(
                                          mode_config_file, 'mode'))
-            found_config = True
-
             self.debug_log("Loading config from %s", mode_config_file)
 
         # validate config
         if 'mode' not in config:
             config['mode'] = dict()
 
-        if not found_config:
-            raise AssertionError("Did not find any config for mode {}.".format(mode_string))
+        if self.machine.options['create_config_cache']:
+            with open(cache_file, 'wb') as f:
+                pickle.dump(config, f, protocol=4)
+                self.log.debug('Config file mode cache created: %s', cache_file)
 
         return config
 
