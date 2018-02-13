@@ -110,8 +110,9 @@ class BcpInterface(MpfController):
             self.machine.bcp.transport.send_to_client(client, "service_stop")
         elif subcommand == "list_switches":
             self.machine.bcp.transport.send_to_client(client, "list_switches",
-                                                      switches=[(s[0], str(s[1].hw_switch.number), s[1].name, s[1].state) for
-                                                                s in self.machine.service.get_switch_map()])
+                                                      switches=[(s[0], str(s[1].hw_switch.number), s[1].name,
+                                                                 s[1].state)
+                                                                for s in self.machine.service.get_switch_map()])
         elif subcommand == "list_coils":
             self.machine.bcp.transport.send_to_client(client, "list_coils",
                                                       coils=[(s[0], str(s[1].hw_driver.number), s[1].name) for s in
