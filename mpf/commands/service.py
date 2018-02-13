@@ -158,7 +158,7 @@ class ServiceCli(cmd.Cmd):
             light_name, color_name = args.split(" ", 2)
         except ValueError:
             # default to white
-            ĺight_name = args
+            light_name = args
             color_name = "white"
         self.bcp_client.send("service", {"subcommand": "light_color", "light": light_name, "color": color_name})
         message = asyncio.get_event_loop().run_until_complete(self.bcp_client.wait_for_response("light_color"))
