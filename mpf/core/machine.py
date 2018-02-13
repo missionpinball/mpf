@@ -648,7 +648,9 @@ class MachineController(LogMixin):
 
             try:
                 hardware_platform = Util.string_to_class(self.config['mpf']['platforms'][name])
-            except ImportError:     # pragma: no cover
+            except ImportError as e:     # pragma: no cover
+                if e.name != name:  # do not swallow unrelated errors
+                    raise
                 raise ImportError("Cannot add hardware platform {}. This is "
                                   "not a valid platform name".format(name))
 
@@ -709,7 +711,7 @@ class MachineController(LogMixin):
             self._shutdown()
             return
         if init.exception():
-            self.error_log("Failed to initialise MPF:")
+            self.error_log("Failed to initialise MPF: %s", init.exception())
             traceback.print_tb(init.exception().__traceback__)  # noqa
             self._shutdown()
             return
