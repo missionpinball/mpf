@@ -525,7 +525,7 @@ class BaseAssetManager(MpfController, LogMixin):
 
         # limit loading_assets events to max 5 per second
         if remaining and self._last_asset_event_time and \
-                self._last_asset_event_time > self.machine.clock.get_time() + 0.2:
+                self._last_asset_event_time > self.machine.clock.get_time() - 0.2:
             return
 
         self._last_asset_event_time = self.machine.clock.get_time()
