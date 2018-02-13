@@ -72,7 +72,15 @@ class EventManager(MpfController):
     def _async_handler_coroutine(self, _coroutine, queue, **kwargs):
         queue.wait()
         task = self.machine.clock.loop.create_task(_coroutine(**kwargs))
-        task.add_done_callback(lambda future: queue.clear())
+        task.add_done_callback(partial(self._async_handler_done, queue))
+
+    @staticmethod
+    def _async_handler_done(queue, future):
+        try:
+            future.result()
+        except asyncio.CancelledError:
+            pass
+        queue.clear()
 
     def add_handler(self, event: str, handler: Any, priority: int = 1, blocking_facility: Any = None,
                     **kwargs) -> EventHandlerKey:
