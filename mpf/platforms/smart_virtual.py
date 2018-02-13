@@ -2,8 +2,7 @@
 import asyncio
 import logging
 
-from typing import List, TYPE_CHECKING
-
+from typing import List
 from mpf.core.logging import LogMixin
 from mpf.core.platform import DriverConfig
 
@@ -12,14 +11,11 @@ from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, Ho
 from mpf.core.delays import DelayManager
 from mpf.platforms.virtual import (VirtualHardwarePlatform as VirtualPlatform, VirtualDriver)
 
-if TYPE_CHECKING:
-    from mpf.core.machine import MachineController
-
-
 MYPY = False
 if MYPY:   # pragma: no cover
     from typing import Dict
     from mpf.devices.ball_device.ball_device import BallDevice
+    from mpf.core.machine import MachineController
 
 
 class BaseSmartVirtualCoilAction:
