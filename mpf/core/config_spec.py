@@ -1520,6 +1520,7 @@ widgets:
         valign: single|str|middle
         rotation: single|int|0
         scale: single|float|1.0
+        casing: single|str|None
         # outline_color: single|kivycolor|ffffffff
         # outline_width: single|int|0
         # text_size: single|int|None  # sets width of bounding box, not font
