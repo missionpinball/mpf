@@ -33,6 +33,9 @@ class ScorePlayer(ConfigPlayer):
             if var == "block":
                 raise AssertionError('Do not use "block" as variable name in score_player.')
 
+            if s['condition'] and not s['condition'].evaluate(kwargs):
+                continue
+
             block_item = var + ":" + calling_context
             if self._is_blocked(block_item, context, priority):
                 continue
@@ -102,7 +105,10 @@ class ScorePlayer(ConfigPlayer):
             raise AssertionError("Settings of score_player {} should "
                                  "be a dict. But are: {}".format(name, settings))
         for var, s in settings.items():
-            config[var] = self._parse_config(s, name)
+            var_dict = self.machine.placeholder_manager.parse_conditional_template(var)
+            score_dict = self._parse_config(s, name)
+            score_dict["condition"] = var_dict["condition"]
+            config[var_dict["name"]] = score_dict
         return config
 
     def get_express_config(self, value: Any) -> dict:
