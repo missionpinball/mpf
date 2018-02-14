@@ -943,12 +943,10 @@ segment_display_player:
     action: single|enum(add,remove,flash,no_flash)|add
     key: single|str|None
     expire: single|ms|None
-servo_controller:
-    __valid_in__: machine                           # todo add to validator
 servo_controllers:
     __valid_in__: machine
     platform: single|str|None
-    address: single|int|64
+    address: single|str|64
     servo_min: single|int|150
     servo_max: single|int|600
     debug: single|bool|False

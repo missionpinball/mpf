@@ -58,7 +58,7 @@ autofire_coils:
         coil: c_coil_pwm_test
         switch: s_test_nc
 
-servo_controller:
+servo_controllers:
     address: 0x40
 
 servos:
