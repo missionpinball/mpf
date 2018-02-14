@@ -130,12 +130,6 @@ class ModeController(MpfController):
                              "folder in your machine's 'modes' folder?"
                              .format(mode_string))
 
-    def _get_mpfcache_file_name(self, mode):
-        cache_dir = tempfile.gettempdir()
-        path_hash = str(hashlib.md5(bytes(self.machine.machine_path + "-" + mode, 'UTF-8')).hexdigest())
-        result = os.path.join(cache_dir, path_hash)
-        return result + ".mpf_cache"
-
     def _get_mpf_mode_config(self, mode_string):
         try:
             mpf_mode_config = os.path.join(
@@ -166,68 +160,27 @@ class ModeController(MpfController):
         return mode_config_file
 
     def _load_mode_config(self, mode_string):
+        config_files = []
         # Is there an MPF default config for this mode? If so, load it first
         mpf_mode_config = self._get_mpf_mode_config(mode_string)
+        if mpf_mode_config:
+            config_files.append(mpf_mode_config)
 
         # Now figure out if there's a machine-specific config for this mode,
         # and if so, merge it into the config
         mode_config_file = self._get_mode_config_file(mode_string)
+        if mode_config_file:
+            config_files.append(mode_config_file)
 
-        if not mode_config_file and not mpf_mode_config:
+        if not config_files:
             raise AssertionError("Did not find any config for mode {}.".format(mode_string))
 
-        if self.machine.options['no_load_cache']:
-            load_from_cache = False
-        else:
-            cache_file = self._get_mpfcache_file_name(mode_string)
-            try:
-                cache_time = os.path.getmtime(cache_file)
-            except OSError as exception:
-                cache_time = -1
-                if exception.errno != errno.ENOENT:
-                    raise  # some unknown error?
-                else:
-                    load_from_cache = False  # cache file doesn't exist
+        config = self.machine.config_processor.load_config_files_with_cache(
+            config_files, "mode", load_from_cache=not self.machine.options['no_load_cache'],
+            store_to_cache=self.machine.options['create_config_cache'])
 
-            if (mpf_mode_config and os.path.getmtime(mpf_mode_config) > cache_time) or \
-                    (mode_config_file and os.path.getmtime(mode_config_file) > cache_time):
-                load_from_cache = False  # config is newer
-            else:
-                load_from_cache = True  # cache is newer
-
-        if load_from_cache:
-            self.log.debug("Loading cached mode config: %s", cache_file)
-
-            with open(cache_file, 'rb') as f:
-
-                try:
-                    return pickle.load(f)
-
-                # unfortunately pickle can raise all kinds of exceptions and we dont want to crash on corrupted cache
-                # pylint: disable-msg=broad-except
-                except Exception:   # pragma: no cover
-                    self.log.warning("Could not load config from cache")
-
-        config = dict()
-        if mpf_mode_config:
-            config = ConfigProcessor.load_config_file(mpf_mode_config,
-                                                      config_type='mode')
-            self.debug_log("Loading config from %s", mpf_mode_config)
-
-        if mode_config_file:
-            config = Util.dict_merge(config,
-                                     ConfigProcessor.load_config_file(
-                                         mode_config_file, 'mode'))
-            self.debug_log("Loading config from %s", mode_config_file)
-
-        # validate config
-        if 'mode' not in config:
-            config['mode'] = dict()
-
-        if self.machine.options['create_config_cache']:
-            with open(cache_file, 'wb') as f:
-                pickle.dump(config, f, protocol=4)
-                self.log.debug('Config file mode cache created: %s', cache_file)
+        if "mode" not in config:
+            config["mode"] = dict()
 
         return config
 

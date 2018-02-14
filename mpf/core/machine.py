@@ -89,6 +89,7 @@ class MachineController(LogMixin):
 
         self.log.info("Command line arguments: %s", options)
         self.options = options
+        self.config_processor = ConfigProcessor()
 
         self.log.info("MPF path: %s", mpf_path)
         self.mpf_path = mpf_path
@@ -386,110 +387,21 @@ class MachineController(LogMixin):
         """Add the machine folder to sys.path so we can import modules from it."""
         sys.path.insert(0, self.machine_path)
 
-    def _get_mpfcache_file_name(self):
-        cache_dir = tempfile.gettempdir()
-        path_hash = str(hashlib.md5(bytes(self.machine_path, 'UTF-8')).hexdigest())
-        for configfile in self.options['configfile']:
-            path_hash += "-" + hashlib.md5(bytes(os.path.abspath(configfile), 'UTF-8')).hexdigest()
-        result = os.path.join(cache_dir, path_hash)
-        return result + ".mpf_cache"
-
     def _load_config(self) -> None:     # pragma: no cover
-        if self.options['no_load_cache']:
-            load_from_cache = False
-        else:
-            try:
-                if self._get_latest_config_mod_time() > os.path.getmtime(self._get_mpfcache_file_name()):
-                    load_from_cache = False  # config is newer
-                else:
-                    load_from_cache = True  # cache is newer
-
-            except OSError as exception:
-                if exception.errno != errno.ENOENT:
-                    raise  # some unknown error?
-                else:
-                    load_from_cache = False  # cache file doesn't exist
-
-        config_loaded = False
-        if load_from_cache:
-            config_loaded = self._load_config_from_cache()
-
-        if not config_loaded:
-            self._load_config_from_files()
-
-    def _load_config_from_files(self) -> None:
-        self.log.info("Loading config from original files")
-
-        self.config = self._get_mpf_config()
-        self.config['_mpf_version'] = __version__
+        config_files = [self.options['mpfconfigfile']]
 
         for num, config_file in enumerate(self.options['configfile']):
 
             if not (config_file.startswith('/') or
                     config_file.startswith('\\')):
 
-                config_file = os.path.join(self.machine_path, self.config['mpf']['paths']['config'], config_file)
+                config_files.append(os.path.join(self.machine_path, "config", config_file))
 
             self.log.info("Machine config file #%s: %s", num + 1, config_file)
 
-            self.config = Util.dict_merge(self.config,
-                                          ConfigProcessor.load_config_file(
-                                              config_file,
-                                              config_type='machine'))
-
-        if self.options['create_config_cache']:
-            self._cache_config()
-
-    def _get_mpf_config(self) -> dict:
-        """Return mpf config dict."""
-        return ConfigProcessor.load_config_file(self.options['mpfconfigfile'],
-                                                config_type='machine')
-
-    def _load_config_from_cache(self) -> bool:
-        """Return true if config was loaded from cache."""
-        self.log.info("Loading cached config: %s", self._get_mpfcache_file_name())
-
-        with open(self._get_mpfcache_file_name(), 'rb') as f:
-
-            try:
-                self.config = pickle.load(f)
-
-            # unfortunately pickle can raise all kinds of exceptions and we dont want to crash on corrupted cache
-            # pylint: disable-msg=broad-except
-            except Exception:   # pragma: no cover
-                self.log.warning("Could not load config from cache")
-                return False
-
-            if self.config.get('_mpf_version') != __version__:
-                self.log.info(
-                    "Cached config is from a different version of MPF.")
-                return False
-
-            return True
-
-    def _get_latest_config_mod_time(self) -> float:
-        """Return last modification time of the config file."""
-        latest_time = os.path.getmtime(self.options['mpfconfigfile'])
-
-        for root, dirs, files in os.walk(
-                os.path.join(self.machine_path, 'config')):
-            for name in files:
-                if not name.startswith('.'):
-                    if os.path.getmtime(os.path.join(root, name)) > latest_time:
-                        latest_time = os.path.getmtime(os.path.join(root, name))
-
-            for name in dirs:
-                if not name.startswith('.'):
-                    if os.path.getmtime(os.path.join(root, name)) > latest_time:
-                        latest_time = os.path.getmtime(os.path.join(root, name))
-
-        return latest_time
-
-    def _cache_config(self):    # pragma: no cover
-        """Dump config to cache."""
-        with open(self._get_mpfcache_file_name(), 'wb') as f:
-            pickle.dump(self.config, f, protocol=4)
-            self.log.info('Config file cache created: %s', self._get_mpfcache_file_name())
+        self.config = self.config_processor.load_config_files_with_cache(
+            config_files, "machine", load_from_cache=not self.options['no_load_cache'],
+            store_to_cache=self.options['create_config_cache'])
 
     def verify_system_info(self):
         """Dump information about the Python installation to the log.

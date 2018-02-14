@@ -46,7 +46,7 @@ class Command(object):
 
         parser.add_argument("-c",
                             action="store", dest="configfile",
-                            default="config", metavar='config_file',
+                            default="config.yaml", metavar='config_file',
                             help="The name of a config file to load. Default "
                                  "is "
                                  "config.yaml. Multiple files can be used "

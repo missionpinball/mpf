@@ -120,7 +120,6 @@ mpf:
         high_scores: data/high_scores.yaml
         earnings: data/earnings.yaml
         machine_files: examples
-        config: config
         modes: modes
 
     allow_invalid_config_sections: false
