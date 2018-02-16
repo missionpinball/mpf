@@ -18,6 +18,11 @@ class ShowPlayer(DeviceConfigPlayer):
         if not start_time:
             start_time = self.machine.clock.get_time()
         for show, show_settings in settings.items():
+            # Look for a conditional event in the show name
+            show_dict = self.machine.placeholder_manager.parse_conditional_template(show)
+            if show_dict['condition'] and not show_dict['condition'].evaluate(kwargs):
+                continue
+
             show_settings = dict(show_settings)
             if 'hold' in show_settings and show_settings['hold'] is not None:
                 raise AssertionError(
@@ -26,10 +31,9 @@ class ShowPlayer(DeviceConfigPlayer):
                 show_settings['priority'] += priority
             except KeyError:
                 show_settings['priority'] = priority
-
             # todo need to add this key back to the config player
 
-            self._update_show(show, show_settings, context, queue, start_time)
+            self._update_show(show_dict["name"], show_settings, context, queue, start_time)
 
     def handle_subscription_change(self, value, settings, priority, context):
         """Handle subscriptions."""
