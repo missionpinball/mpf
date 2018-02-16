@@ -1,0 +1,8 @@
+#config_version=5
+mode:
+  game_mode: False
+
+timed_switches:
+  mode_switch:
+    switches: switch2, switch3
+    time: 2s

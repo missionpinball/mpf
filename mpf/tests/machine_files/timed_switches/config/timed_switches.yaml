@@ -1,5 +1,8 @@
 #config_version=5
 
+modes:
+ - mode1
+
 switches:
   switch1:
     number:

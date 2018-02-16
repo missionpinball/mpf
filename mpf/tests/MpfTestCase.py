@@ -110,6 +110,7 @@ class MpfTestCase(unittest.TestCase):
 
     def start_mode(self, mode):
         """Start mode."""
+        self.assertIn(mode, self.machine.modes)
         self.assertModeNotRunning(mode)
         self.machine.modes[mode].start()
         self.machine_run()
