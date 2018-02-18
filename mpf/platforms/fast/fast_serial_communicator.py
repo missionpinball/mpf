@@ -179,12 +179,22 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
         If so, queries the IO boards to log them and make sure they're the  proper firmware version.
         """
+        # reset CPU early
+        self.platform.debug_log('Resetting NET CPU.')
+        self.writer.write('RE:\r'.encode())
+        msg = ''
+        while not msg.startswith('!B:02\r'):
+            msg = (yield from self.readuntil(b'\r')).decode()
+            if not msg.startswith('!B:'):
+                self.platform.log.warning("Got unexpected message from FAST: {}".format(msg))
+
+        self.platform.debug_log('Reading all switches.')
         self.writer.write('SA:\r'.encode())
         msg = ''
         while not msg.startswith('SA:'):
             msg = (yield from self.readuntil(b'\r')).decode()
             if not msg.startswith('SA:'):
-                self.platform.debug_log("Got unexpected message from FAST: {}".format(msg))
+                self.platform.log.warning("Got unexpected message from FAST: {}".format(msg))
 
         self.platform.process_received_message(msg)
         self.platform.debug_log('Querying FAST IO boards...')

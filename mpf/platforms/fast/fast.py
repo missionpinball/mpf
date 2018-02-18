@@ -136,6 +136,12 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
 
         self.serial_connections = set()
 
+    @asyncio.coroutine
+    def start(self):
+        """Start listening for commands."""
+        for connection in self.serial_connections:
+            yield from connection.start_read_loop()
+
     def __repr__(self):
         """Return str representation."""
         return '<Platform.FAST>'
@@ -211,7 +217,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             self.dmd_connection = communicator
         elif name == 'NET':
             self.net_connection = communicator
-            self.net_connection.send("RE:")
         elif name == 'RGB':
             self.rgb_connection = communicator
             self.rgb_connection.send('RF:0')

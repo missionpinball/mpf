@@ -199,6 +199,8 @@ class MachineController(LogMixin):
         yield from self._run_init_phases()
         self._init_phases_complete()
 
+        yield from self._start_platforms()
+
         # wait until all boot holds were released
         yield from self.is_init_done.wait()
         yield from self.init_done()
@@ -265,6 +267,12 @@ class MachineController(LogMixin):
         """Initialise all used hardware platforms."""
         for hardware_platform in list(self.hardware_platforms.values()):
             yield from hardware_platform.initialize()
+
+    @asyncio.coroutine
+    def _start_platforms(self) -> Generator[int, None, None]:
+        """Start all used hardware platforms."""
+        for hardware_platform in list(self.hardware_platforms.values()):
+            yield from hardware_platform.start()
             if not hardware_platform.features['tickless']:
                 self.clock.schedule_interval(hardware_platform.tick, 1 / self.config['mpf']['default_platform_hz'])
 

@@ -67,6 +67,11 @@ class BasePlatform(metaclass=abc.ABCMeta):
         """
         pass
 
+    @asyncio.coroutine
+    def start(self):
+        """Start receiving switch changes from this platform."""
+        pass
+
     def tick(self):
         """Run task.
 

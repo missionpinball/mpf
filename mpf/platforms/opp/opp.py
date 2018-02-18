@@ -106,6 +106,12 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             self._poll_task[chain_serial] = self.machine.clock.loop.create_task(self._poll_sender(chain_serial))
             self._poll_task[chain_serial].add_done_callback(self._done)
 
+    @asyncio.coroutine
+    def start(self):
+        """Start listening for commands."""
+        for connection in self.serial_connections:
+            yield from connection.start_read_loop()
+
     def stop(self):
         """Stop hardware and close connections."""
         for task in self._poll_task.values():

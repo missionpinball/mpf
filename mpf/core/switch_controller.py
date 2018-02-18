@@ -253,8 +253,8 @@ class SwitchController(MpfController):
 
         """
         if not self._initialised:
-            self.warning_log("Got early switch change for switch %s to state %s. platform: %s", num, state, platform)
-            return
+            raise AssertionError("Got early switch change for switch {} to state {}. platform: {}".format(
+                num, state, platform))
         for switch in self.machine.switches:
             if switch.hw_switch.number == num and switch.platform == platform:
                 self.process_switch_obj(obj=switch, state=state, logical=logical)
