@@ -182,11 +182,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         # reset CPU early
         self.platform.debug_log('Resetting NET CPU.')
         self.writer.write('RE:\r'.encode())
-        msg = ''
-        while not msg.startswith('!B:02\r'):
-            msg = (yield from self.readuntil(b'\r')).decode()
-            if not msg.startswith('!B:'):
-                self.platform.log.warning("Got unexpected message from FAST: {}".format(msg))
+        yield from asyncio.sleep(2, loop=self.machine.clock.loop)
 
         self.platform.debug_log('Reading all switches.')
         self.writer.write('SA:\r'.encode())
