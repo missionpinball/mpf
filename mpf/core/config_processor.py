@@ -71,7 +71,7 @@ class ConfigProcessor(object):
 
         if load_from_cache:
             for configfile in filenames:
-                if self._get_mtime_or_negative(configfile) > cache_time:
+                if not os.path.isfile(configfile) or os.path.getmtime(configfile) > cache_time:
                     load_from_cache = False
                     self.log.warning('Config file in cache changed: %s', configfile)
                     break
@@ -87,7 +87,7 @@ class ConfigProcessor(object):
         # Step 3: Check timestamps of included files vs cache
         if loaded_files:
             for configfile in loaded_files:
-                if self._get_mtime_or_negative(configfile) > cache_time:
+                if not os.path.isfile(configfile) or os.path.getmtime(configfile) > cache_time:
                     load_from_cache = False
                     self.log.warning('Config file in cache changed: %s', configfile)
                     break
