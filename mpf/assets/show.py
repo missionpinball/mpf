@@ -395,10 +395,10 @@ class Show(Asset):
 
     def load_show_from_disk(self):
         """Load show from disk."""
+        cache_file = self._get_mpfcache_file_name(self.file)
         if self.machine.options['no_load_cache']:
             load_from_cache = False
         else:
-            cache_file = self._get_mpfcache_file_name(self.file)
             try:
                 cache_time = os.path.getmtime(cache_file)
             except OSError as exception:
