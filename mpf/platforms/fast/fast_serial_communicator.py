@@ -182,7 +182,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         # reset CPU early
         self.platform.debug_log('Resetting NET CPU.')
         self.writer.write('RE:\r'.encode())
-        yield from asyncio.sleep(2, loop=self.machine.clock.loop)
+        yield from asyncio.sleep(4, loop=self.machine.clock.loop)
 
         self.platform.debug_log('Reading all switches.')
         self.writer.write('SA:\r'.encode())
