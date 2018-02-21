@@ -60,13 +60,13 @@ class TestSmartMatrix(MpfTestCase):
             call(b'\xba\x11\x00\x03\x04\x00\x00\x00\x00\x01\x02\x03')   # frame
             ])
 
+        #test old cookie
         self.machine.rgb_dmds.smartmatrix_2.update([0x00, 0x01, 0x02, 0x03])
         self.advance_time_and_run(.1)
         start = time.time()
         while self.serial_mocks["com5"].write.call_count < 2 and time.time() < start + 10:
             time.sleep(.001)
         self.serial_mocks["com5"].write.assert_has_calls([
-            call(b'\xba\x11\x00\x03\x14\x7f\x00\x00'),                  # brightness
             call(b'\x01\x00\x01\x02\x03')                               # frame
             ])
 
