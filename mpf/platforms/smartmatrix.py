@@ -115,7 +115,8 @@ class SmartMatrixDevice(DmdPlatformInterface):
         """Set brightness."""
         if brightness < 0.0 or brightness > 1.0:
             raise AssertionError("Brightness has to be between 0 and 1.")
-        self.control_data_queue.insert(0, bytearray([0xBA, 0x11, 0x00, 0x03, 20, int(brightness * 255), 00, 00]))
+        if not self.config['old_cookie']:
+            self.control_data_queue.insert(0, bytearray([0xBA, 0x11, 0x00, 0x03, 20, int(brightness * 255), 00, 00]))
 
     def stop(self):
         """Stop platform."""
