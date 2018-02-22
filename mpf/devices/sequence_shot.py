@@ -64,7 +64,7 @@ class SequenceShot(SystemWideDevice, ModeDevice):
             self._sequence_events.append(self.machine.switch_controller.get_active_event_for_switch(switch.name))
 
     def _register_handlers(self):
-        for event in self._sequence_events:
+        for event in set(self._sequence_events):
             self.machine.events.add_handler(event, self._sequence_advance, event_name=event)
 
         for switch in self.config['cancel_switches']:
