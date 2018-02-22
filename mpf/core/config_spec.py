@@ -864,6 +864,22 @@ playfield_transfers:
     transfer_events: dict|str:ms|None
     eject_target: single|machine(ball_devices)|
     captures_from: single|machine(ball_devices)|
+playlist_player:
+    __valid_in__: machine, mode, show
+    action: single|enum(play,stop,advance,restart,set_volume,set_repeat)|play
+playlists:
+    __valid_in__: machine, mode
+    crossfade_mode: single|enum(use_track_setting,override)|use_track_setting
+    crossfade_time: single|secs|0
+    shuffle: single|bool|False
+    repeat: single|bool|False
+    scope: single|enum(machine,player)|machine
+    sounds: ignore
+    events_when_played: list|str|None
+    events_when_stopped: list|str|None
+    events_when_looping: list|str|None
+    events_when_sound_changed: list|str|None
+    events_when_sound_stopped: list|str|None
 plugins:
     __valid_in__: machine                      # todo add to validator
 pololu_maestro:
@@ -1185,10 +1201,10 @@ sound_system:
     master_volume: single|gain|0.5
     tracks:
         common:
-            type: single|enum(standard,sound_loop)|standard
+            type: single|enum(standard,sound_loop,playlist)|standard
             volume: single|gain|0.5
             events_when_played: list|str|None
-            events_when_stopped: list|str|None
+            events6_when_stopped: list|str|None
             events_when_paused: list|str|None
             events_when_resumed: list|str|None
             ducking:
@@ -1202,6 +1218,8 @@ sound_system:
             simultaneous_sounds: single|int|8
         sound_loop:
             max_layers: single|int|8
+        playlist:
+            crossfade_time: single|secs|0
 sounds:
     __valid_in__: machine, mode
     file: single|str|None
