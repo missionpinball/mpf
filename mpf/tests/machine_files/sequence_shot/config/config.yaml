@@ -37,3 +37,10 @@ sequence_shots:
     sequence3:
         event_sequence:
             - event3_1
+    sequence_with_dupes:
+        event_sequence:
+            - event_1
+            - event_2
+            - event_1
+            - event_3
+            - event_1
