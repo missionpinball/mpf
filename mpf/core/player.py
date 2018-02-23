@@ -170,7 +170,7 @@ class Player(object):
         """
         self.machine.events.post('player_' + name,
                                  value=value,
-                                 prev_value=value,
+                                 prev_value=prev_value,
                                  change=change,
                                  player_num=player_num)
         '''event: player_(var_name)

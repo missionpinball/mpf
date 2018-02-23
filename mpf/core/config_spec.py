@@ -777,6 +777,7 @@ multiballs:
     __valid_in__: machine, mode
     ball_count: single|template_int|
     ball_count_type: single|enum(add,total)|total
+    replace_balls_in_play: single|bool|false
     source_playfield: single|machine(ball_devices)|playfield
     shoot_again: single|ms|10s
     ball_locks: list|machine(ball_devices)|None
@@ -790,6 +791,7 @@ multiballs:
 multiball_locks:
     __valid_in__: mode
     balls_to_lock: single|int|
+    balls_to_replace: single|int|-1
     lock_devices: list|machine(ball_devices)|
     source_playfield: single|machine(ball_devices)|playfield
     enable_events: dict|str:ms|None
