@@ -364,7 +364,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                     # do nothing
                     pass
                 else:
-                    self.ball_device.ejector.eject_one_ball(ball_eject_process.is_jammed(), eject_try)
+                    yield from self.ball_device.ejector.eject_one_ball(ball_eject_process.is_jammed(), eject_try)
 
             # wait until the ball has left
             if (self.ball_device.config['mechanical_eject'] or
@@ -380,7 +380,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                 return False
 
             if trigger and trigger.done():
-                self.ball_device.ejector.eject_one_ball(ball_eject_process.is_jammed(), eject_try)
+                yield from self.ball_device.ejector.eject_one_ball(ball_eject_process.is_jammed(), eject_try)
                 # TODO: add timeout here
                 yield from ball_left
 

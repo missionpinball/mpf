@@ -149,6 +149,14 @@ ball_devices:
     ball_search_order: single|int|200
     auto_fire_on_unexpected_ball: single|bool|True
     target_on_unexpected_ball: single|machine(ball_devices)|None
+    ejector: ignore
+ball_devices_ejector_common:
+    class: single|str|mpf.devices.ball_device.pulse_coil_ejector.PulseCoilEjector
+ball_devices_ejector_event:
+    class: ignore
+    events_when_eject_try: list|str|None
+    events_when_reoder_balls: list|str|None
+    events_when_ball_search: list|str|None
 ball_holds:
     __valid_in__: machine, mode
     balls_to_hold: single|int|None

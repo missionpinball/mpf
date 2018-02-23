@@ -10,18 +10,15 @@ class BallDeviceEjector:
     It has to implement at least one of eject_one_ball or eject_all_balls.
     """
 
-    def __init__(self, ball_device):
+    def __init__(self, config, ball_device, machine):
         """Initialise ejector."""
+        self.config = config
         self.ball_device = ball_device
+        self.machine = machine
 
-    # TODO: make this coroutine
+    @asyncio.coroutine
     def eject_one_ball(self, is_jammed, eject_try):
         """Eject one ball."""
-        raise NotImplementedError()
-
-    # TODO: make this coroutine
-    def eject_all_balls(self):
-        """Eject all balls."""
         raise NotImplementedError()
 
     @asyncio.coroutine
