@@ -8,6 +8,11 @@ class EventEjector(BallDeviceEjector):
 
     """Post an event to trigger an eject."""
 
+    def __init__(self, config, ball_device, machine):
+        """Initialise ejector."""
+        super().__init__(config, ball_device, machine)
+        self.config = self.machine.config_validator.validate_config("ball_devices_ejector_event", self.config)
+
     @asyncio.coroutine
     def eject_one_ball(self, is_jammed, eject_try):
         """Post event."""

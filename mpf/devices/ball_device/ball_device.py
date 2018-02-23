@@ -339,7 +339,7 @@ class BallDevice(SystemWideDevice):
         # perform logical validation
         # a device cannot have hold_coil and eject_coil
         if (not self.config['eject_coil'] and not self.config['hold_coil'] and
-                not self.config['mechanical_eject']):
+                not self.config['mechanical_eject'] and not self.config.get('ejector', False)):
             raise AssertionError('Configuration error in {} ball device. '
                                  'Device needs an eject_coil, a hold_coil, or '
                                  '"mechanical_eject: True"'.format(self.name))

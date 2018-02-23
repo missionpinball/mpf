@@ -3,6 +3,12 @@
 import asyncio
 
 
+MYPY = False
+if MYPY:    # pragma: no cover
+    from mpf.core.machine import MachineController
+    from mpf.devices.ball_device.ball_device import BallDevice
+
+
 class BallDeviceEjector:
 
     """Ejector for a ball device.
@@ -10,7 +16,7 @@ class BallDeviceEjector:
     It has to implement at least one of eject_one_ball or eject_all_balls.
     """
 
-    def __init__(self, config, ball_device, machine):
+    def __init__(self, config: dict, ball_device: "BallDevice", machine: "MachineController"):
         """Initialise ejector."""
         self.config = config
         self.ball_device = ball_device
