@@ -9,7 +9,6 @@ from mpf.core.mode_device import ModeDevice
 from mpf.core.player import Player
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.utility_functions import Util
-from mpf.exceptions.ConfigFileError import ConfigFileError
 
 
 class LogicBlockState(object):
@@ -88,7 +87,7 @@ class LogicBlock(SystemWideDevice, ModeDevice):
             self.enable()
 
         if self.config['persist_state']:
-            raise ConfigFileError("Cannot set persist_state for system-wide logic_blocks in {}".format(self.name))
+            self.raise_config_error("Cannot set persist_state for system-wide logic_blocks", 1)
 
         self.post_update_event()
 

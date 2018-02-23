@@ -29,7 +29,7 @@ class SmartMatrixHardwarePlatform(RgbDmdPlatform):
         self.devices = dict()       # type: Dict[str, SmartMatrixDevice]
 
         if not isinstance(self.machine.config['smartmatrix'], dict):
-            raise ConfigFileError("Smartmatrix config needs to be a dict.")
+            raise ConfigFileError("Smartmatrix config needs to be a dict.", 1, self.log.name)
 
         for name, config in self.machine.config['smartmatrix'].items():
             config = self.machine.config_validator.validate_config(

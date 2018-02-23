@@ -270,7 +270,7 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
                 if (not mode or (mode and not mode.is_game_mode)) and not self.is_entry_valid_outside_mode(settings):
                     raise ConfigFileError("Section not valid outside of game modes. {} {}:{} Mode: {}".format(
                         self, event, settings, mode
-                    ))
+                    ), 1, self.config_file_section)
                 if event.startswith("{") and event.endswith("}"):
                     condition = event[1:-1]
                     self._create_subscription(condition, subscription_list, settings, priority, mode)
