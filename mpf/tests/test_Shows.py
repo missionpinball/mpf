@@ -804,3 +804,8 @@ class TestShows(MpfTestCase):
         self.advance_time_and_run(6)
         self.assertEventCalled('test_show1_completed')
         self.assertEventCalled('test_show1_stopped')
+
+    def test_token_in_keys(self):
+        self.post_event("play_show_with_token_in_key")
+        self.advance_time_and_run()
+        self.assertLightColor("led_01", "red")

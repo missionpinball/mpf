@@ -82,7 +82,7 @@ shows:
   show_assoc_tokens:
     - time: 0
       lights:
-        (line1Num): (line1Color)
+        (line1num): (line1Color)
   show_with_time_and_duration:
     - time: +1s
     - time: 5s
@@ -240,3 +240,9 @@ show_player:
       events_when_completed: test_show1_completed
       events_when_stopped: test_show1_stopped
       loops: 0
+  play_show_with_token_in_key:
+    test_show_key_token:
+      show_tokens:
+        num: "01"
+        color: red
+

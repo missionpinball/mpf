@@ -94,31 +94,32 @@ class ShowPlayer(DeviceConfigPlayer):
             # in all other cases stop the current show
             instance_dict[key].stop()
         try:
-            show_instance = self.machine.shows[show].play(
-                show_tokens=show_settings['show_tokens'],
-                priority=show_settings['priority'],
-                speed=show_settings['speed'],
-                start_time=start_time,
-                start_step=start_step,
-                loops=show_settings['loops'],
-                sync_ms=show_settings['sync_ms'],
-                manual_advance=show_settings['manual_advance'],
-                callback=callback,
-                events_when_played=show_settings['events_when_played'],
-                events_when_stopped=show_settings['events_when_stopped'],
-                events_when_looped=show_settings['events_when_looped'],
-                events_when_paused=show_settings['events_when_paused'],
-                events_when_resumed=show_settings['events_when_resumed'],
-                events_when_advanced=show_settings['events_when_advanced'],
-                events_when_stepped_back=show_settings[
-                    'events_when_stepped_back'],
-                events_when_updated=show_settings['events_when_updated'],
-                events_when_completed=show_settings['events_when_completed']
-            )
-            instance_dict[key] = show_instance
+            show_obj = self.machine.shows[show]
         except KeyError:
             raise KeyError("Cannot play show '{}'. No show with that "
                            "name.".format(show))
+
+        instance_dict[key] = show_obj.play(
+            show_tokens=show_settings['show_tokens'],
+            priority=show_settings['priority'],
+            speed=show_settings['speed'],
+            start_time=start_time,
+            start_step=start_step,
+            loops=show_settings['loops'],
+            sync_ms=show_settings['sync_ms'],
+            manual_advance=show_settings['manual_advance'],
+            callback=callback,
+            events_when_played=show_settings['events_when_played'],
+            events_when_stopped=show_settings['events_when_stopped'],
+            events_when_looped=show_settings['events_when_looped'],
+            events_when_paused=show_settings['events_when_paused'],
+            events_when_resumed=show_settings['events_when_resumed'],
+            events_when_advanced=show_settings['events_when_advanced'],
+            events_when_stepped_back=show_settings[
+                'events_when_stepped_back'],
+            events_when_updated=show_settings['events_when_updated'],
+            events_when_completed=show_settings['events_when_completed']
+        )
 
     @staticmethod
     def _stop(key, instance_dict, show, show_settings, queue, start_time):

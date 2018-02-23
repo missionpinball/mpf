@@ -5,6 +5,7 @@ import hashlib
 import os
 import pickle
 import errno
+import re
 
 from mpf.core.assets import Asset, AssetPool
 from mpf.core.file_manager import FileManager
@@ -245,10 +246,12 @@ class Show(Asset):
         if not isinstance(data, str):
             return
 
-        if data[0:1] == "(" and data[-1:] == ")":
-            self._add_token(data[1:-1].lower(), path, token_type)
+        results = re.findall(r"\(([^)]+)\)", data)
+        if results:
+            for result in results:
+                self._add_token(data, result.lower(), path, token_type)
 
-    def _add_token(self, token, path, token_type):
+    def _add_token(self, placeholder, token, path, token_type):
 
         if token not in self.tokens:
             self.tokens.add(token)
@@ -256,7 +259,7 @@ class Show(Asset):
         if token_type == 'key':
             if token not in self.token_keys:
                 self.token_keys[token] = list()
-            self.token_keys[token].append(path)
+            self.token_keys[token].append(path + [placeholder])
 
         elif token_type == 'value':
             if token not in self.token_values:
@@ -535,7 +538,8 @@ class RunningShow(object):
             self.next_step_index = 0
 
         if self.show_tokens and self.show.tokens:
-            self._replace_tokens(**self.show_tokens)
+            self._replace_token_values(**self.show_tokens)
+            self._replace_token_keys(**self.show_tokens)
 
         # Figure out the show start time
         if self.sync_ms:
@@ -555,8 +559,7 @@ class RunningShow(object):
         """Return str representation."""
         return 'Running Show Instance: "{}" {} {}'.format(self.name, self.show_tokens, self.next_step_index)
 
-    def _replace_tokens(self, **kwargs):
-        keys_replaced = dict()
+    def _replace_token_values(self, **kwargs):
 
         for token, replacement in kwargs.items():
             if token in self.show.token_values:
@@ -567,31 +570,38 @@ class RunningShow(object):
 
                     target[token_path[-1]] = replacement
 
+    def _replace_token_keys(self, **kwargs):
+        keys_replaced = dict()
         # pylint: disable-msg=too-many-nested-blocks
         for token, replacement in kwargs.items():
             if token in self.show.token_keys:
                 key_name = '({})'.format(token)
                 for token_path in self.show.token_keys[token]:
                     target = self.show_steps
-                    for x in token_path:
-                        if x in keys_replaced:
-                            x = keys_replaced[x]
+                    token_str = ""
+                    for x in token_path[:-1]:
+                        if token_str in keys_replaced:
+                            x = keys_replaced[token_str + str(x) + "-"]
+                        token_str += str(x) + "-"
 
                         target = target[x]
+                    use_string_replace = bool(token_path[-1] != "(" + token + ")")
 
-                    if key_name in target:
-                        target[replacement] = target.pop(key_name)
+                    final_key = token_path[-1]
+                    if final_key in keys_replaced:
+                        final_key = keys_replaced[final_key]
+
+                    if use_string_replace:
+                        replaced_key = final_key.replace("(" + token + ")", replacement)
                     else:
-                        # Fallback in case the token is no lowercase. Unfortunately, this can happen since every config
-                        # player has its own config validator. Additionally, keys in dicts are not properly lowercased.
-                        for key in target:
-                            if key.lower() == key_name:
-                                target[replacement] = target.pop(key)
-                                break
-                        else:   # pragma: no cover
-                            raise KeyError("Could not find token {}".format(key_name))
+                        replaced_key = replacement
 
-                    keys_replaced[key_name] = replacement
+                    if final_key in target:
+                        target[replaced_key] = target.pop(final_key)
+                    else:
+                        raise KeyError("Could not find token {} ({}) in {}".format(final_key, key_name, target))
+
+                    keys_replaced[token_str] = replaced_key
 
     @property
     def stopped(self):
