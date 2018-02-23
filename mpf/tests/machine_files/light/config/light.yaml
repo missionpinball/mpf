@@ -19,11 +19,11 @@ lights:
   led2:
     channels:
       red:
-        number: 4
+        - number: 4
       green:
-        number: 3
+        - number: 3
       blue:
-        number: 2
+        - number: 2
     debug: True
   led_bgr_2:
     type: bgr
@@ -32,13 +32,13 @@ lights:
   led3:
     channels:
       red:
-        number: 7
+        - number: 7
       green:
-        number: 8
+        - number: 8
       blue:
-        number: 9
+        - number: 9
       white:
-        number: 10
+        - number: 10
     debug: True
   led4:
     number: 11

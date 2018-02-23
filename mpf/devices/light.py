@@ -111,14 +111,15 @@ class Light(SystemWideDevice):
         del kwargs
         check_set = set()
         for light in machine.lights:
-            for driver in light.hw_drivers.values():
-                key = (light.platform, driver.number, type(driver))
-                if key in check_set:
-                    raise AssertionError(
-                        "Duplicate light number {} {} for light {}".format(
-                            type(driver), driver.number, light))
+            for drivers in light.hw_drivers.values():
+                for driver in drivers:
+                    key = (light.platform, driver.number, type(driver))
+                    if key in check_set:
+                        raise AssertionError(
+                            "Duplicate light number {} {} for light {}".format(
+                                type(driver), driver.number, light))
 
-                check_set.add(key)
+                    check_set.add(key)
 
     def _map_channels_to_colors(self, channel_list) -> dict:
         if self.config['type']:
@@ -143,19 +144,23 @@ class Light(SystemWideDevice):
         for color_name in color_channels:
             # red channel
             if color_name == 'r':
-                channels["red"] = channel_list.pop(0)
+                full_color_name = "red"
             # green channel
             elif color_name == 'g':
-                channels["green"] = channel_list.pop(0)
+                full_color_name = "green"
             # blue channel
             elif color_name == 'b':
-                channels["blue"] = channel_list.pop(0)
+                full_color_name = "blue"
             # simple white channel
             elif color_name == 'w':
-                channels["white"] = channel_list.pop(0)
+                full_color_name = "white"
             else:
                 raise AssertionError("Invalid element {} in type {} of light {}".format(
                     color_name, self.config['type'], self.name))
+
+            if full_color_name not in channels:
+                channels[full_color_name] = []
+            channels[full_color_name].append(channel_list.pop(0))
 
         return channels
 
@@ -196,9 +201,11 @@ class Light(SystemWideDevice):
         if not channels:
             raise AssertionError("Light {} has no channels.".format(self.name))
 
-        for color, channel in channels.items():
-            channel = self.machine.config_validator.validate_config("light_channels", channel)
-            self.hw_drivers[color] = self._load_hw_driver(channel)
+        for color, channel_list in channels.items():
+            self.hw_drivers[color] = []
+            for channel in channel_list:
+                channel = self.machine.config_validator.validate_config("light_channels", channel)
+                self.hw_drivers[color].append(self._load_hw_driver(channel))
 
     def _load_hw_driver(self, channel):
         """Load one channel."""
@@ -462,8 +469,9 @@ class Light(SystemWideDevice):
         self.stack[:] = [x for x in self.stack if x['key'] != key]
 
     def _schedule_update(self):
-        for color, hw_driver in self.hw_drivers.items():
-            hw_driver.set_fade(partial(self._get_brightness_and_fade, color=color))
+        for color, hw_drivers in self.hw_drivers.items():
+            for hw_driver in hw_drivers:
+                hw_driver.set_fade(partial(self._get_brightness_and_fade, color=color))
 
         for platform in self.platforms:
             platform.light_sync()

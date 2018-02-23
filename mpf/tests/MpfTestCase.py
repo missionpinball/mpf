@@ -533,11 +533,11 @@ class MpfTestCase(unittest.TestCase):
         self.assertEqual(state, self.machine.switch_controller.is_active(name))
 
     def assertLightChannel(self, light_name, brightness, channel="white"):
-        self.assertAlmostEqual(brightness / 255.0, self.machine.lights[light_name].hw_drivers[channel].
+        self.assertAlmostEqual(brightness / 255.0, self.machine.lights[light_name].hw_drivers[channel][0].
                                current_brightness)
 
     def assertNotLightChannel(self, light_name, brightness, channel="white"):
-        self.assertNotEqual(brightness, self.machine.lights[light_name].hw_drivers[channel].
+        self.assertNotEqual(brightness, self.machine.lights[light_name].hw_drivers[channel][0].
                             current_brightness)
 
     def assertLightColor(self, light_name, color):
