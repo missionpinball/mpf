@@ -97,7 +97,10 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
         board2_config = b'\x21\x0d\x06\x02\x02\x01'      # wing1: neo, wing2: inputs, wing3: inputs, wing4: solenoids
         board3_config = b'\x22\x0d\x03\x03\x03\x07'      # wing1: lamps, wing2: lamps, wing3: lamps, wing4: hi-side lamps
         board4_config = b'\x23\x0d\x01\x01\x04\x05'      # wing1: solenoids, wing2: solenoids, wing3: matrix_out, wing4: matrix_in
-        board_version = b'\x20\x02\x00\x02\x00\x00'      # 0.2.0.0
+        board1_version = b'\x20\x02\x00\x02\x00\x00'      # 0.2.0.0
+        board2_version = b'\x21\x02\x00\x02\x00\x00'  # 0.2.0.0
+        board3_version = b'\x22\x02\x00\x02\x00\x00'  # 0.2.0.0
+        board4_version = b'\x23\x02\x00\x02\x00\x00'  # 0.2.0.0
         inputs1_message = b"\x20\x08\x00\x00\x00\x0c"    # inputs 0+1 off, 2+3 on, 8 on
         inputs2_message = b"\x21\x08\x00\x00\x00\x00"
         inputs3a_message = b"\x23\x08\x00\x00\x00\x00"
@@ -115,9 +118,8 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
             self._crc_message(b'\x21\x02\x00\x00\x00\x00', False) +
             self._crc_message(b'\x22\x02\x00\x00\x00\x00', False) +
             self._crc_message(b'\x23\x02\x00\x00\x00\x00'):
-                self._crc_message(board_version, False) + self._crc_message(board_version, False) +
-                self._crc_message(board_version),   # get version
-
+                self._crc_message(board1_version, False) + self._crc_message(board2_version, False) +
+                self._crc_message(board3_version, False) + self._crc_message(board4_version),   # get version
             self._crc_message(b'\x20\x14\x00\x02\x17\x00'): False,  # configure coil 0
             self._crc_message(b'\x20\x14\x01\x04\x17\x00'): False,  # configure coil 1
             self._crc_message(b'\x20\x14\x02\x04\x0a\x00'): False,  # configure coil 2
@@ -138,9 +140,35 @@ class TestOPPFirmware2(OPPCommon, MpfTestCase):
         self.assertEqual(0x00020000, self.machine.default_platform.minVersion)
 
         self.assertFalse(self.serialMock.expected_commands)
+        self.maxDiff = 100000
 
-        # check that it does not crash
-        self.assertTrue(self.machine.default_platform.get_info_string())
+        # test hardware scan
+        info_str = """Connected CPUs:
+ - Port: com1 at 115200 baud
+ -> Board: 0x20 Firmware: 0x20000
+ -> Board: 0x21 Firmware: 0x20000
+ -> Board: 0x22 Firmware: 0x20000
+ -> Board: 0x23 Firmware: 0x20000
+
+Incand cards:
+ - CPU: com1 Board: 0x20 Card: 0 Numbers: [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+ - CPU: com1 Board: 0x22 Card: 2 Numbers: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+
+Input cards:
+ - CPU: com1 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3, 8, 9, 10, 11, 12, 13, 14, 15]
+ - CPU: com1 Board: 0x21 Card: 1 Numbers: [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]
+ - CPU: com1 Board: 0x23 Card: 3 Numbers: [0, 1, 2, 3, 8, 9, 10, 11]
+ - CPU: com1 Board: 0x23 Card: 3 Numbers: [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95]
+
+Solenoid cards:
+ - CPU: com1 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3]
+ - CPU: com1 Board: 0x21 Card: 1 Numbers: [12, 13, 14, 15]
+ - CPU: com1 Board: 0x23 Card: 3 Numbers: [0, 1, 2, 3, 4, 5, 6, 7]
+
+LEDs:
+ - CPU: com1 Board: 0x21 Card: 1
+"""
+        self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 
     def testDualWoundCoils(self):
         self.serialMock.expected_commands[self._crc_message(b'\x20\x14\x02\x04\x0a\x00')] = False
@@ -262,8 +290,27 @@ class TestOPP(OPPCommon, MpfTestCase):
         self._test_switches()
         self._test_flippers()
 
-        # check that it does not crash
-        self.assertTrue(self.machine.default_platform.get_info_string())
+        # test hardware scan
+        info_str = """Connected CPUs:
+ - Port: com1 at 115200 baud
+ -> Board: 0x20 Firmware: 0x10100
+ -> Board: 0x21 Firmware: 0x10100
+
+Incand cards:
+ - CPU: com1 Board: 0x20 Card: 0 Numbers: [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]
+
+Input cards:
+ - CPU: com1 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3, 8, 9, 10, 11, 12, 13, 14, 15]
+ - CPU: com1 Board: 0x21 Card: 1 Numbers: [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27]
+
+Solenoid cards:
+ - CPU: com1 Board: 0x20 Card: 0 Numbers: [0, 1, 2, 3]
+ - CPU: com1 Board: 0x21 Card: 1 Numbers: [12, 13, 14, 15]
+
+LEDs:
+ - CPU: com1 Board: 0x21 Card: 1
+"""
+        self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 
     def _test_switches(self):
         # initial switches

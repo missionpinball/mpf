@@ -209,7 +209,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         infos += "\nLEDs:\n"
         for leds in self.opp_neopixels:
-            infos += " - CPU: {} Board: 0x{:02x} Card: {}".format(leds.chain_serial, leds.addr, leds.cardNum)
+            infos += " - CPU: {} Board: 0x{:02x} Card: {}\n".format(leds.chain_serial, leds.addr, leds.cardNum)
 
         return infos
 

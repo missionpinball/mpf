@@ -102,6 +102,7 @@ class TestP3Roc(MpfTestCase):
                           'futureEnable': False})
 
         self.pinproc.switch_get_states = MagicMock(return_value=[0, 1] + [0] * 100)
+        self.pinproc.read_data = MagicMock(return_value=0x12345678)
         self.pinproc.driver_update_group_config = MagicMock()
         super().setUp()
 
@@ -128,7 +129,18 @@ class TestP3Roc(MpfTestCase):
         self._test_leds()
         self._test_leds_inverted()
 
-        self.assertTrue(self.machine.default_platform.get_info_string())
+        # test hardware scan
+        info_str = """Firmware Version: 4660 Firmware Revision: 22136 Hardware Board ID: 6
+SW-16 boards found:
+ - Board: 0 Switches: 16
+ - Board: 1 Switches: 16
+ - Board: 2 Switches: 16
+ - Board: 3 Switches: 16
+ - Board: 4 Switches: 16
+ - Board: 5 Switches: 16
+ - Board: 6 Switches: 16
+"""
+        self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 
     def _test_pulse(self):
         self.assertEqual("PD-16 Board 1 Bank 1", self.machine.coils.c_test.hw_driver.get_board_name())

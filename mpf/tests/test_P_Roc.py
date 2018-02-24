@@ -176,8 +176,10 @@ class TestPRoc(MpfTestCase):
         self._test_pdb_gi_light()
         self._test_enable_exception()
 
-        # test that this does not crash
-        self.assertTrue(self.machine.default_platform.get_info_string())
+        # test hardware scan
+        info_str = """Firmware Version: 4660 Firmware Revision: 22136 Hardware Board ID: 6
+"""
+        self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 
     def _test_pulse_and_hold(self):
         self.assertEqual("PD-16 Board 1 Bank 1", self.machine.coils.c_test.hw_driver.get_board_name())
