@@ -22,28 +22,28 @@ class TestLightGroups(MpfTestCase):
 
     def test_config(self):
         # stripe 1
-        self.assertEqual("led-10-r", self.machine.lights["stripe1_light_10"].hw_drivers["red"].number)
+        self.assertEqual("led-10-r", self.machine.lights["stripe1_light_10"].hw_drivers["red"][0].number)
         self.assertListEqual(["test", "stripe1"], self.machine.lights["stripe1_light_10"].config['tags'])
-        self.assertEqual("led-11-r", self.machine.lights["stripe1_light_11"].hw_drivers["red"].number)
-        self.assertEqual("led-12-r", self.machine.lights["stripe1_light_12"].hw_drivers["red"].number)
-        self.assertEqual("led-13-r", self.machine.lights["stripe1_light_13"].hw_drivers["red"].number)
-        self.assertEqual("led-14-r", self.machine.lights["stripe1_light_14"].hw_drivers["red"].number)
+        self.assertEqual("led-11-r", self.machine.lights["stripe1_light_11"].hw_drivers["red"][0].number)
+        self.assertEqual("led-12-r", self.machine.lights["stripe1_light_12"].hw_drivers["red"][0].number)
+        self.assertEqual("led-13-r", self.machine.lights["stripe1_light_13"].hw_drivers["red"][0].number)
+        self.assertEqual("led-14-r", self.machine.lights["stripe1_light_14"].hw_drivers["red"][0].number)
         self.assertListEqual(["test", "stripe1"], self.machine.lights["stripe1_light_14"].config['tags'])
 
         # stripe 2
-        self.assertEqual("led-7-200-r", self.machine.lights["stripe2_light_200"].hw_drivers["red"].number)
+        self.assertEqual("led-7-200-r", self.machine.lights["stripe2_light_200"].hw_drivers["red"][0].number)
         self.assertEqual(10, self.machine.lights["stripe2_light_200"].config['x'])
         self.assertEqual(20, self.machine.lights["stripe2_light_200"].config['y'])
-        self.assertEqual("led-7-201-r", self.machine.lights["stripe2_light_201"].hw_drivers["red"].number)
+        self.assertEqual("led-7-201-r", self.machine.lights["stripe2_light_201"].hw_drivers["red"][0].number)
         self.assertEqual(15, self.machine.lights["stripe2_light_201"].config['x'])
         self.assertEqual(20, self.machine.lights["stripe2_light_201"].config['y'])
 
         # ring 1
-        self.assertEqual("led-20-r", self.machine.lights["ring1_light_20"].hw_drivers["red"].number)
-        self.assertEqual("led-21-r", self.machine.lights["ring1_light_21"].hw_drivers["red"].number)
-        self.assertEqual("led-22-r", self.machine.lights["ring1_light_22"].hw_drivers["red"].number)
-        self.assertEqual("led-23-r", self.machine.lights["ring1_light_23"].hw_drivers["red"].number)
-        self.assertEqual("led-24-r", self.machine.lights["ring1_light_24"].hw_drivers["red"].number)
+        self.assertEqual("led-20-r", self.machine.lights["ring1_light_20"].hw_drivers["red"][0].number)
+        self.assertEqual("led-21-r", self.machine.lights["ring1_light_21"].hw_drivers["red"][0].number)
+        self.assertEqual("led-22-r", self.machine.lights["ring1_light_22"].hw_drivers["red"][0].number)
+        self.assertEqual("led-23-r", self.machine.lights["ring1_light_23"].hw_drivers["red"][0].number)
+        self.assertEqual("led-24-r", self.machine.lights["ring1_light_24"].hw_drivers["red"][0].number)
         # 90 degree
         self.assertEqual(103, self.machine.lights["ring1_light_20"].config['x'])
         self.assertEqual(50, self.machine.lights["ring1_light_20"].config['y'])
