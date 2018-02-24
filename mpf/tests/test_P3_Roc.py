@@ -46,6 +46,8 @@ class TestP3Roc(MpfTestCase):
         return False
 
     def read_data(self, module, address):
+        if module not in self._memory or address not in self._memory[module]:
+            return 0
         return self._memory[module][address]
 
     def setUp(self):
@@ -113,6 +115,14 @@ class TestP3Roc(MpfTestCase):
                 0x00: 0,            # chip id
                 0x01: 0x00020006,   # version
                 0x03: 0x0000,       # dip switches
+            },
+            0x02: {         # switch controller
+                0x1000: 0xA3,       # SW-16 Address 0 Reg 0
+                0x1001: 0x00,       # SW-16 Address 0 Reg 1
+                0x1040: 0xA3,       # SW-16 Address 1 Reg 0
+                0x1041: 0x13,       # SW-16 Address 1 Reg 1
+                0x1080: 0xA4,       # SW-16 Address 2 Reg 0
+                0x1081: 0x00,       # SW-16 Address 2 Reg 1
             }
         }
 
@@ -144,13 +154,9 @@ class TestP3Roc(MpfTestCase):
         # test hardware scan
         info_str = """Firmware Version: 2 Firmware Revision: 6 Hardware Board ID: 0
 SW-16 boards found:
- - Board: 0 Switches: 16
- - Board: 1 Switches: 16
- - Board: 2 Switches: 16
- - Board: 3 Switches: 16
- - Board: 4 Switches: 16
- - Board: 5 Switches: 16
- - Board: 6 Switches: 16
+ - Board: 0 Switches: 16 Device Type: A3 Board ID: 0
+ - Board: 1 Switches: 16 Device Type: A3 Board ID: 13
+ - Board: 2 Switches: 16 Device Type: A4 Board ID: 0
 """
         self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 
