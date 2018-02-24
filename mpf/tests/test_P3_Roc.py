@@ -45,6 +45,9 @@ class TestP3Roc(MpfTestCase):
     def get_platform(self):
         return False
 
+    def read_data(self, module, address):
+        return self._memory[module][address]
+
     def setUp(self):
         self.expected_duration = 2
         p_roc_common.pinproc_imported = True
@@ -102,8 +105,17 @@ class TestP3Roc(MpfTestCase):
                           'futureEnable': False})
 
         self.pinproc.switch_get_states = MagicMock(return_value=[0, 1] + [0] * 100)
-        self.pinproc.read_data = MagicMock(return_value=0x12345678)
+        self.pinproc.read_data = self.read_data
         self.pinproc.driver_update_group_config = MagicMock()
+
+        self._memory = {
+            0x00: {         # manager
+                0x00: 0,            # chip id
+                0x01: 0x00020006,   # version
+                0x03: 0x0000,       # dip switches
+            }
+        }
+
         super().setUp()
 
     def test_platform(self):
@@ -130,7 +142,7 @@ class TestP3Roc(MpfTestCase):
         self._test_leds_inverted()
 
         # test hardware scan
-        info_str = """Firmware Version: 4660 Firmware Revision: 22136 Hardware Board ID: 6
+        info_str = """Firmware Version: 2 Firmware Revision: 6 Hardware Board ID: 0
 SW-16 boards found:
  - Board: 0 Switches: 16
  - Board: 1 Switches: 16

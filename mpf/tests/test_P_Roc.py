@@ -101,6 +101,9 @@ class TestPRoc(MpfTestCase):
         else:
             raise AssertionError("Invalid type")
 
+    def read_data(self, module, address):
+        return self._memory[module][address]
+
     def setUp(self):
         self.expected_duration = 2
         p_roc_common.pinproc_imported = True
@@ -158,7 +161,16 @@ class TestPRoc(MpfTestCase):
                           'futureEnable': False})
 
         self.pinproc.switch_get_states = MagicMock(return_value=[0, 1] + [0] * 100)
-        self.pinproc.read_data = MagicMock(return_value=0x12345678)
+        self.pinproc.read_data = self.read_data
+
+        self._memory = {
+            0x00: {         # manager
+                0x00: 0,            # chip id
+                0x01: 0x00020006,   # version
+                0x03: 0x0000,       # dip switches
+            }
+        }
+
         self.pinproc.aux_send_commands = MagicMock()
         super().setUp()
 
@@ -177,7 +189,7 @@ class TestPRoc(MpfTestCase):
         self._test_enable_exception()
 
         # test hardware scan
-        info_str = """Firmware Version: 4660 Firmware Revision: 22136 Hardware Board ID: 6
+        info_str = """Firmware Version: 2 Firmware Revision: 6 Hardware Board ID: 0
 """
         self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 
@@ -239,11 +251,11 @@ class TestPRoc(MpfTestCase):
         self.machine.autofires.ac_slingshot_test.disable()
 
     def _test_initial_switches(self):
-        self.assertMachineVarEqual(4660, "p_roc_version")
-        self.assertMachineVarEqual(22136, "p_roc_revision")
+        self.assertMachineVarEqual(2, "p_roc_version")
+        self.assertMachineVarEqual(6, "p_roc_revision")
 
-        self.assertEqual(0x1234, self.machine.default_platform.version)
-        self.assertEqual(0x5678, self.machine.default_platform.revision)
+        self.assertEqual(0x2, self.machine.default_platform.version)
+        self.assertEqual(0x6, self.machine.default_platform.revision)
 
         self.assertFalse(self.machine.switch_controller.is_active("s_test"))
         self.assertFalse(self.machine.switch_controller.is_active("s_test_000"))
