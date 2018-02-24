@@ -392,6 +392,18 @@ class TestDeviceLight(MpfTestCase):
         self.assertEqual(11 / 255, led.hw_drivers["white"][0].current_brightness)
         self.assertEqual('led-10', led.hw_drivers["white"][0].number)
 
+        # test www light
+        led = self.machine.lights.led_www
+        led.on(128)
+        self.advance_time_and_run(1)
+        self.assertLightColor("led_www", [128, 128, 128])
+        self.assertEqual(128 / 255, led.hw_drivers["white"][0].current_brightness)
+        self.assertEqual('led-23-r', led.hw_drivers["white"][0].number)
+        self.assertEqual(128 / 255, led.hw_drivers["white"][1].current_brightness)
+        self.assertEqual('led-23-g', led.hw_drivers["white"][1].number)
+        self.assertEqual(128 / 255, led.hw_drivers["white"][2].current_brightness)
+        self.assertEqual('led-23-b', led.hw_drivers["white"][2].number)
+
     def test_brightness_correction(self):
         led = self.machine.lights.led1
 

@@ -197,6 +197,10 @@ class Light(SystemWideDevice):
                                      format(self.name))
             # alternatively use channels from config
             channels = self.config['channels']
+            # ensure that we got lists
+            for channel in channels:
+                if not isinstance(channels[channel], list):
+                    channels[channel] = [channels[channel]]
 
         if not channels:
             raise AssertionError("Light {} has no channels.".format(self.name))

@@ -19,11 +19,11 @@ lights:
   led2:
     channels:
       red:
-        - number: 4
+        number: 4
       green:
-        - number: 3
+        number: 3
       blue:
-        - number: 2
+        number: 2
     debug: True
   led_bgr_2:
     type: bgr
@@ -46,3 +46,7 @@ lights:
   led_corrected:
     number:
     color_correction_profile: correction_profile_1
+  led_www:
+    number: 23
+    type: www
+    debug: True
