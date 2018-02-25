@@ -997,6 +997,7 @@ shots:
 shot_groups:
     __valid_in__: mode
     shots: list|machine(shots)|None
+    rotate_events: dict|str:ms|None
     rotate_left_events: dict|str:ms|None
     rotate_right_events: dict|str:ms|None
     enable_events: dict|str:ms|None
