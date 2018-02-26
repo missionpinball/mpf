@@ -82,21 +82,21 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         if not self.net_connection:
             infos += "No connection to the NET CPU.\n"
         else:
-            infos = "NET CPU: {} {} {}\n".format(
+            infos += "NET CPU: {} {} {}\n".format(
                 self.net_connection.remote_processor,
                 self.net_connection.remote_model,
                 self.net_connection.remote_firmware)
         if not self.rgb_connection:
             infos += "No connection to the RGB CPU.\n"
         else:
-            infos = "RGB CPU: {} {} {}\n".format(
+            infos += "RGB CPU: {} {} {}\n".format(
                 self.rgb_connection.remote_processor,
                 self.rgb_connection.remote_model,
                 self.rgb_connection.remote_firmware)
         if not self.dmd_connection:
             infos += "No connection to the DMD CPU.\n"
         else:
-            infos = "DMD CPU: {} {} {}\n".format(
+            infos += "DMD CPU: {} {} {}\n".format(
                 self.dmd_connection.remote_processor,
                 self.dmd_connection.remote_model,
                 self.dmd_connection.remote_firmware)
@@ -135,6 +135,12 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             connection.stop()
 
         self.serial_connections = set()
+
+    @asyncio.coroutine
+    def start(self):
+        """Start listening for commands."""
+        for connection in self.serial_connections:
+            yield from connection.start_read_loop()
 
     def __repr__(self):
         """Return str representation."""
@@ -211,7 +217,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             self.dmd_connection = communicator
         elif name == 'NET':
             self.net_connection = communicator
-            self.net_connection.send("RE:")
         elif name == 'RGB':
             self.rgb_connection = communicator
             self.rgb_connection.send('RF:0')

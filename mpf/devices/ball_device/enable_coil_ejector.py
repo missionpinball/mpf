@@ -1,20 +1,29 @@
 """Enable/disable ejector."""
+import asyncio
+
+from mpf.devices.ball_device.pulse_coil_ejector import PulseCoilEjector
+
 from mpf.core.delays import DelayManager
-from mpf.devices.ball_device.ball_device_ejector import BallDeviceEjector
 
 
-class EnableCoilEjector(BallDeviceEjector):
+class EnableCoilEjector(PulseCoilEjector):
 
     """Enable a coil to eject one ball."""
 
-    def __init__(self, ball_device):
+    def __init__(self, config, ball_device, machine):
         """Initialise ejector."""
-        super().__init__(ball_device)
+        super().__init__(config, ball_device, machine)
         self.delay = DelayManager(self.ball_device.machine.delayRegistry)
 
+    def _validate_config(self):
+        # overwrite validation from pulse_coil_ejector
+        pass
+
+    @asyncio.coroutine
     def eject_one_ball(self, is_jammed, eject_try):
         """Enable eject coil."""
         del is_jammed
+        del eject_try
         # default pulse
         self.ball_device.debug_log("Enabling eject coil for %sms, Current balls: %s.",
                                    self.ball_device.config['eject_coil_enable_time'],
@@ -28,31 +37,8 @@ class EnableCoilEjector(BallDeviceEjector):
         """Disable the coil."""
         self.ball_device.config['eject_coil'].disable()
 
-    def eject_all_balls(self):
-        """Cannot eject all balls."""
-        raise NotImplementedError()
-
-    def ball_search(self, phase, iteration):
-        """Run ball search."""
-        del iteration
-        if phase == 1:
-            # round 1: only idle + no ball
-            # only run ball search when the device is idle and contains no balls
-            if self.ball_device.state == "idle" and self.ball_device.balls == 0:
-                return self._fire_coil_for_search(True)
-        elif phase == 2:
-            # round 2: all devices except trough. only pulse
-            if 'trough' not in self.ball_device.config['tags']:
-                return self._fire_coil_for_search(False)
-        else:
-            # round 3: all devices except trough. release balls
-            if 'trough' not in self.ball_device.config['tags']:
-                return self._fire_coil_for_search(True)
-        # no action by default
-        return False
-
-    def _fire_coil_for_search(self, only_pulse):
-        if only_pulse and self.ball_device.config['eject_coil_jam_pulse']:
+    def _fire_coil_for_search(self, full_power):
+        if full_power and self.ball_device.config['eject_coil_jam_pulse']:
             self.ball_device.config['eject_coil'].pulse()
         else:
             self.ball_device.config['eject_coil'].enable()

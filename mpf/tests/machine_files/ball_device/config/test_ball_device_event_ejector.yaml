@@ -1,0 +1,26 @@
+#config_version=5
+
+game:
+    balls_per_game: 1
+
+playfields:
+    playfield:
+        default_source_device: test_trough
+
+switches:
+    s_ball_switch1:
+        number:
+    s_ball_switch2:
+        number:
+    s_playfield:
+        number:
+        tags: playfield_active
+
+ball_devices:
+    test_trough:
+        ejector:
+          class: mpf.devices.ball_device.event_ejector.EventEjector
+          events_when_eject_try: trough_eject
+        ball_switches: s_ball_switch1, s_ball_switch2
+        debug: true
+        tags: trough, drain, home

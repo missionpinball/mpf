@@ -73,6 +73,10 @@ class TestEventPlayer(MpfTestCase):
         self.assertEqual({"a": 1, "b": 2, "priority": 0}, self._last_event_kwargs['event3'])
 
         self.mock_event("event1")
+        self.post_event("play_multiple_args2")
+        self.assertEqual({"a": "b", "c": "d", "priority": 0}, self._last_event_kwargs['event1'])
+
+        self.mock_event("event1")
         self.mock_event("event2")
         self.mock_event("event3")
         self.machine.shows['test_event_show'].play(loops=0)

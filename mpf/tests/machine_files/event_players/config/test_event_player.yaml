@@ -18,6 +18,10 @@ event_player:
         event1
         event2
         event3
+    play_multiple_args2:
+        event1:
+          a: b
+          c: d
     play_multiple_args:
         event1: {"a": "b"}
         event2: {}

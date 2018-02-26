@@ -52,6 +52,9 @@ class BaseSerialCommunicator(object):
 
         yield from self._identify_connection()
 
+    @asyncio.coroutine
+    def start_read_loop(self):
+        """Start the read loop."""
         self.read_task = self.machine.clock.loop.create_task(self._socket_reader())
         self.read_task.add_done_callback(self._done)
 

@@ -149,6 +149,14 @@ ball_devices:
     ball_search_order: single|int|200
     auto_fire_on_unexpected_ball: single|bool|True
     target_on_unexpected_ball: single|machine(ball_devices)|None
+    ejector: ignore
+ball_devices_ejector_common:
+    class: single|str|mpf.devices.ball_device.pulse_coil_ejector.PulseCoilEjector
+ball_devices_ejector_event:
+    class: ignore
+    events_when_eject_try: list|str|None
+    events_when_reoder_balls: list|str|None
+    events_when_ball_search: list|str|None
 ball_holds:
     __valid_in__: machine, mode
     balls_to_hold: single|int|None
@@ -1005,6 +1013,7 @@ shots:
 shot_groups:
     __valid_in__: mode
     shots: list|machine(shots)|None
+    rotate_events: dict|str:ms|None
     rotate_left_events: dict|str:ms|None
     rotate_right_events: dict|str:ms|None
     enable_events: dict|str:ms|None
@@ -1130,35 +1139,40 @@ smart_virtual:
     file_log: single|enum(none,basic,full)|basic
 sound_loop_player:
     __valid_in__: machine, mode, show
-    common:
-        action: single|enum(play,stop,stop_looping,play_layer,stop_layer,stop_looping_layer)|play
-        track: single|str|
-    actions:
-        play:
-            sound_loop_set: single|str|
-            volume: single|gain|None
-            fade_in: single|secs|None
-            fade_out: single|secs|None
-            queue: single|bool|True
-            synchronize: single|bool|False
-            events_when_played: list|str|use_sound_loop_setting
-            events_when_stopped: list|str|use_sound_loop_setting
-            events_when_looping: list|str|use_sound_loop_setting
-            mode_end_action: single|enum(stop,stop_looping,use_sound_loop_setting)|use_sound_loop_setting
-        stop:
-            fade_out: single|secs|None
-        stop_looping:
-            none: ignore
-        play_layer:
-            layer: single|int|
-            volume: single|gain|None
-            fade_in: single|secs|0
-            queue: single|bool|True
-        stop_layer:
-            layer: single|int|
-            fade_out: single|secs|0
-        stop_looping_layer:
-            layer: single|int|
+    __allow_others__:
+    action: single|enum(play,stop,stop_looping,play_layer,stop_layer,stop_looping_layer)|play
+sound_loop_player_actions:
+    play:
+        action: ignore
+        sound_loop_set: single|str|
+        volume: single|gain|None
+        fade_in: single|secs|None
+        fade_out: single|secs|None
+        queue: single|bool|True
+        synchronize: single|bool|False
+        events_when_played: list|str|use_sound_loop_setting
+        events_when_stopped: list|str|use_sound_loop_setting
+        events_when_looping: list|str|use_sound_loop_setting
+        mode_end_action: single|enum(stop,stop_looping,use_sound_loop_setting)|use_sound_loop_setting
+    stop:
+        action: ignore
+        fade_out: single|secs|None
+    stop_looping:
+        action: ignore
+        none: ignore
+    play_layer:
+        action: ignore
+        layer: single|int|
+        volume: single|gain|None
+        fade_in: single|secs|0
+        queue: single|bool|True
+    stop_layer:
+        action: ignore
+        layer: single|int|
+        fade_out: single|secs|0
+    stop_looping_layer:
+        action: ignore
+        layer: single|int|
 sound_loop_sets:
     __valid_in__: machine, mode
     sound: single|str|

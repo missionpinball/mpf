@@ -266,13 +266,8 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
         self.log.debug("Configuring smart_virtual hardware interface.")
 
     @asyncio.coroutine
-    def initialize(self):
-        """Initialise platform."""
-        self.machine.events.add_handler('init_phase_5',
-                                        self._initialize2)
-
-    def _initialize2(self, **kwargs):
-        del kwargs
+    def start(self):
+        """Initialise platform when all devices are ready."""
         self._initialise_ball_devices()
         self._initialise_drop_targets()
         self._initialise_drop_target_banks()

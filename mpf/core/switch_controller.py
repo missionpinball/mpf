@@ -57,6 +57,9 @@ class SwitchController(MpfController):
 
         self.monitors = list()      # type: List[Callable[[MonitoredSwitchChange], None]]
 
+        # to detect early switch changes before init
+        self._initialised = False
+
     def register_switch(self, name):
         """Add the name of a switch to the switch controller for tracking.
 
@@ -104,6 +107,8 @@ class SwitchController(MpfController):
                 except (IndexError, KeyError):
                     raise AssertionError("Missing switch {} in update from hw.  Update from HW: {}, switches: {}".
                                          format(number, switch_states, switches))
+
+        self._initialised = True
 
     def verify_switches(self) -> bool:
         """Verify that switches states match the hardware.
@@ -247,6 +252,9 @@ class SwitchController(MpfController):
                 logical states that are inverted from each other.
 
         """
+        if not self._initialised:
+            raise AssertionError("Got early switch change for switch {} to state {}. platform: {}".format(
+                num, state, platform))
         for switch in self.machine.switches:
             if switch.hw_switch.number == num and switch.platform == platform:
                 self.process_switch_obj(obj=switch, state=state, logical=logical)

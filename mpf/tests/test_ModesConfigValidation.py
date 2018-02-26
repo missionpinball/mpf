@@ -37,9 +37,9 @@ class TestModesConfigValidation(MpfTestCase):
 
         self.loop.close()
 
-        self.assertEqual('Your config contains a value for the setting "'
-                         'mode:invalid_key", but this is not a valid '
-                         'setting name.', str(context.exception))
+        self.assertEqual('Config File Error in ConfigValidator: Your config contains a value for the setting '
+                         '"mode:invalid_key", but this is not a valid setting name. Error Code: CFE-ConfigValidator-2',
+                         str(context.exception))
 
     def test_missing_mode_section(self):
         self.config = 'test_missing_mode_section.yaml'

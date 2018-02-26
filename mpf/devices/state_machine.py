@@ -3,7 +3,6 @@ from mpf.core.mode import Mode
 from mpf.core.player import Player
 from mpf.core.mode_device import ModeDevice
 from mpf.core.system_wide_device import SystemWideDevice
-from mpf.exceptions.ConfigFileError import ConfigFileError
 
 
 class StateMachine(SystemWideDevice, ModeDevice):
@@ -27,7 +26,7 @@ class StateMachine(SystemWideDevice, ModeDevice):
         super().device_added_system_wide()
 
         if self.config['persist_state']:
-            raise ConfigFileError("Cannot set persist_state for system-wide state_machine in {}".format(self.name))
+            self.raise_config_error("Cannot set persist_state for system-wide state_machine", 1)
 
         self._start_state("start")
 

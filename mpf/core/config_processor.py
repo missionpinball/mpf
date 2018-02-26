@@ -25,11 +25,11 @@ class ConfigProcessor(object):
     def get_cache_filename(filenames: List[str]) -> str:   # pragma: no cover
         """Return cache file name."""
         cache_dir = tempfile.gettempdir()
-        path_hash = ""
+        filestring = ""
         for configfile in filenames:
-            path_hash += "-" + hashlib.md5(bytes(os.path.abspath(configfile), 'UTF-8')).hexdigest()
-        result = os.path.join(cache_dir, path_hash)
-        return result + ".mpf_cache"
+            filestring += str(os.path.abspath(configfile))
+        path_hash = hashlib.md5(bytes(filestring, 'UTF-8')).hexdigest()
+        return os.path.join(cache_dir, path_hash + ".mpf_cache")
 
     def _load_config_from_cache(self, cache_file) -> dict:
         """Return config from cache."""
@@ -71,7 +71,7 @@ class ConfigProcessor(object):
 
         if load_from_cache:
             for configfile in filenames:
-                if self._get_mtime_or_negative(configfile) > cache_time:
+                if not os.path.isfile(configfile) or os.path.getmtime(configfile) > cache_time:
                     load_from_cache = False
                     self.log.warning('Config file in cache changed: %s', configfile)
                     break
@@ -87,7 +87,7 @@ class ConfigProcessor(object):
         # Step 3: Check timestamps of included files vs cache
         if loaded_files:
             for configfile in loaded_files:
-                if self._get_mtime_or_negative(configfile) > cache_time:
+                if not os.path.isfile(configfile) or os.path.getmtime(configfile) > cache_time:
                     load_from_cache = False
                     self.log.warning('Config file in cache changed: %s', configfile)
                     break

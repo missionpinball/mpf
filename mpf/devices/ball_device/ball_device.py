@@ -8,9 +8,6 @@ from mpf.core.events import QueuedEvent
 from mpf.devices.ball_device.ball_count_handler import BallCountHandler
 from mpf.devices.ball_device.ball_device_ejector import BallDeviceEjector
 
-from mpf.devices.ball_device.hold_coil_ejector import HoldCoilEjector
-from mpf.devices.ball_device.enable_coil_ejector import EnableCoilEjector
-
 from mpf.core.delays import DelayManager
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.system_wide_device import SystemWideDevice
@@ -19,7 +16,6 @@ from mpf.core.utility_functions import Util
 
 from mpf.devices.ball_device.incoming_balls_handler import IncomingBallsHandler, IncomingBall
 from mpf.devices.ball_device.outgoing_balls_handler import OutgoingBallsHandler, OutgoingBall
-from mpf.devices.ball_device.pulse_coil_ejector import PulseCoilEjector
 
 
 @DeviceMonitor("available_balls", _state="state", counted_balls="balls")
@@ -343,7 +339,7 @@ class BallDevice(SystemWideDevice):
         # perform logical validation
         # a device cannot have hold_coil and eject_coil
         if (not self.config['eject_coil'] and not self.config['hold_coil'] and
-                not self.config['mechanical_eject']):
+                not self.config['mechanical_eject'] and not self.config.get('ejector', False)):
             raise AssertionError('Configuration error in {} ball device. '
                                  'Device needs an eject_coil, a hold_coil, or '
                                  '"mechanical_eject: True"'.format(self.name))
@@ -417,13 +413,26 @@ class BallDevice(SystemWideDevice):
         # validate that configuration is valid
         self._validate_config()
 
-        if self.config['eject_coil']:
-            if self.config['eject_coil_enable_time']:
-                self.ejector = EnableCoilEjector(self)
-            else:
-                self.ejector = PulseCoilEjector(self)
-        elif self.config['hold_coil']:
-            self.ejector = HoldCoilEjector(self)
+        ejector_config = self.config.get("ejector", {})
+
+        # no ejector config. support legacy config
+        if not ejector_config:
+            if self.config['eject_coil']:
+                if self.config['eject_coil_enable_time']:
+                    ejector_config["class"] = "mpf.devices.ball_device.enable_coil_ejector.EnableCoilEjector"
+                else:
+                    ejector_config["class"] = "mpf.devices.ball_device.pulse_coil_ejector.PulseCoilEjector"
+            elif self.config['hold_coil']:
+                ejector_config["class"] = "mpf.devices.ball_device.hold_coil_ejector.HoldCoilEjector"
+
+        if not ejector_config:
+            self.debug_log("Device does not have any ejector.")
+        else:
+            ejector_class = Util.string_to_class(ejector_config["class"])
+            if not ejector_class:
+                self.raise_config_error("Could not load ejector {}".format(ejector_config["class"]), 1)
+
+            self.ejector = ejector_class(ejector_config, self, self.machine)
 
         if self.ejector and self.config['ball_search_order']:
             self.config['captures_from'].ball_search.register(

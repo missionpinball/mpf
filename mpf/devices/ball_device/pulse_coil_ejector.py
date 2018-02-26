@@ -2,12 +2,28 @@
 import asyncio
 
 from mpf.devices.ball_device.ball_device_ejector import BallDeviceEjector
+from mpf.exceptions.ConfigFileError import ConfigFileError
 
 
 class PulseCoilEjector(BallDeviceEjector):
 
     """Pulse a coil to eject one ball."""
 
+    def __init__(self, config, ball_device, machine):
+        """Initialise pulse coil ejector."""
+        super().__init__(config, ball_device, machine)
+        self._validate_config()
+
+    def _validate_config(self):
+        if not self.ball_device.config['eject_coil']:
+            raise ConfigFileError("Pulse Coil Ejector needs an eject_coil.", 1,
+                                  self.ball_device.log.name + "-pulse_ejector")
+        #     if self.config['eject_coil_enable_time']:
+        if self.ball_device.config['eject_coil_enable_time']:
+            raise ConfigFileError("Pulse Coil Ejector does not support eject_coil_enable_time.", 2,
+                                  self.ball_device.log.name + "-pulse_ejector")
+
+    @asyncio.coroutine
     def eject_one_ball(self, is_jammed, eject_try):
         """Pulse eject coil."""
         max_wait_ms = self.ball_device.config['eject_coil_max_wait_ms']
@@ -28,10 +44,6 @@ class PulseCoilEjector(BallDeviceEjector):
 
         self.ball_device.debug_log("Firing eject coil. Current balls: %s.",
                                    self.ball_device.balls)
-
-    def eject_all_balls(self):
-        """Cannot eject all balls."""
-        raise NotImplementedError()
 
     @asyncio.coroutine
     def reorder_balls(self):

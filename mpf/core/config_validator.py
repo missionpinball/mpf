@@ -241,7 +241,7 @@ class ConfigValidator(object):
         else:
             raise ConfigFileError("Invalid Type '{}' in config spec {}:{}".format(item_type,
                                   validation_failure_info[0][0],
-                                  validation_failure_info[1]))
+                                  validation_failure_info[1]), 1, self.log.name)
 
     def check_for_invalid_sections(self, spec, config,
                                    validation_failure_info):
@@ -276,13 +276,13 @@ class ConfigValidator(object):
 
                             raise ConfigFileError('Your config contains a value for the '
                                                   'setting "' + path_string + '", but this is not a valid '
-                                                                              'setting name.')
+                                                                              'setting name.', 2, self.log.name)
 
         except TypeError:
             raise ConfigFileError(
                 'Error in config. Your "{}:" section contains a value that is '
                 'not a parent with sub-settings: {}'.format(
-                    validation_failure_info[0], config))
+                    validation_failure_info[0], config), 3, self.log.name)
 
     def _validate_type_subconfig(self, item, param, validation_failure_info):
         if item is None:
@@ -584,13 +584,12 @@ class ConfigValidator(object):
             raise ConfigFileError("Invalid Validator '{}' in config spec {}:{}".format(
                                   validator,
                                   validation_failure_info[0][0],
-                                  validation_failure_info[1]))
+                                  validation_failure_info[1]), 4, self.log.name)
 
-    @classmethod
-    def validation_error(cls, item, validation_failure_info, msg=""):
+    def validation_error(self, item, validation_failure_info, msg=""):
         """Raise a validation error with all relevant infos."""
         raise ConfigFileError("Config validation error: Entry {}:{}:{}:{} is not valid. {}".format(
             validation_failure_info[0][0],
             validation_failure_info[0][1],
             validation_failure_info[1],
-            item, msg))
+            item, msg), 5, self.log.name)

@@ -150,14 +150,14 @@ class P3RocHardwarePlatform(PROCBasePlatform, I2cPlatform, AccelerometerPlatform
         infos = "Firmware Version: {} Firmware Revision: {} Hardware Board ID: {}\n".format(
             self.version, self.revision, self.hardware_version)
 
-        input_boards = set()
-        for switch, state in enumerate(self.proc.switch_get_states()):
-            if state != 3:
-                input_boards.add(switch // 16)
-
         infos += "SW-16 boards found:\n"
-        for input_board in input_boards:
-            infos += " - Board: {} Switches: 16\n".format(input_board)
+
+        for board in range(0, 32):
+            device_type = self.proc.read_data(2, (1 << 12) + (board << 6))
+            board_id = self.proc.read_data(2, (1 << 12) + (board << 6) + 1)
+            if device_type != 0:
+                infos += " - Board: {} Switches: 16 Device Type: {:X} Board ID: {:X}\n".format(
+                    board, device_type, board_id)
 
         return infos
 

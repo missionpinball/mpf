@@ -165,7 +165,7 @@ class TestFast(MpfTestCase):
             "RF:00": "RF:P",
         }
         self.net_cpu.expected_commands = {
-            'RE:': '!SRE',
+            'RE:': '!B:02',
             'ID:': 'ID:NET FP-CPU-002-1 00.90',
             'NN:00': 'NN:00,FP-I/O-3208-2   ,01.00,08,20,04,06,00,00,00,00',     # 3208 board
             'NN:01': 'NN:01,FP-I/O-0804-1   ,01.00,04,08,04,06,00,00,00,00',     # 0804 board
@@ -220,6 +220,19 @@ class TestFast(MpfTestCase):
         self._test_enable_exception()
         self._test_allow_enable()
         self._test_coil_configure()
+
+        # test hardware scan
+        info_str = """NET CPU: NET FP-CPU-002-1 00.90
+RGB CPU: RGB FP-CPU-002-1 00.89
+DMD CPU: DMD FP-CPU-002-1 00.88
+
+Boards:
+Board 0 - Model: FP-I/O-3208-2    Firmware: 01.00 Switches: 32 Drivers: 8
+Board 1 - Model: FP-I/O-0804-1    Firmware: 01.00 Switches: 8 Drivers: 4
+Board 2 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
+Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
+"""
+        self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 
     def _test_coil_configure(self):
         self.assertEqual("FAST Board 0", self.machine.coils.c_test.hw_driver.get_board_name())

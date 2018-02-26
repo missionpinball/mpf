@@ -1,6 +1,8 @@
 """Contains the LogMixin class."""
 import logging
 
+from mpf.exceptions.ConfigFileError import ConfigFileError
+
 MYPY = False
 if MYPY:   # pragma: no cover
     from logging import Logger
@@ -102,6 +104,10 @@ class LogMixin(object):
             self._logging_not_configured()
 
         self.log.log(40, 'ERROR: {}'.format(msg), *args, **kwargs)
+
+    def raise_config_error(self, msg, error_no):
+        """Raise a ConfigFileError exception."""
+        raise ConfigFileError(msg, error_no, self.log.name)
 
     def ignorable_runtime_exception(self, msg: str) -> None:
         """Handle ignorable runtime exception.
