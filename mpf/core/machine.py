@@ -265,8 +265,13 @@ class MachineController(LogMixin):
     @asyncio.coroutine
     def _initialize_platforms(self) -> Generator[int, None, None]:
         """Initialise all used hardware platforms."""
+        init_done = []
+        # collect all platform init futures
         for hardware_platform in list(self.hardware_platforms.values()):
-            yield from hardware_platform.initialize()
+            init_done.append(hardware_platform.initialize())
+
+        # wait for all of them in parallel
+        yield from asyncio.wait(init_done, loop=self.clock.loop)
 
     @asyncio.coroutine
     def _start_platforms(self) -> Generator[int, None, None]:

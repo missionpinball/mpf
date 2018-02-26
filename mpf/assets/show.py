@@ -398,52 +398,9 @@ class Show(Asset):
 
     def load_show_from_disk(self):
         """Load show from disk."""
-        cache_file = self._get_mpfcache_file_name(self.file)
-        if self.machine.options['no_load_cache']:
-            load_from_cache = False
-        else:
-            try:
-                cache_time = os.path.getmtime(cache_file)
-            except OSError as exception:
-                cache_time = -1
-                if exception.errno != errno.ENOENT:
-                    raise  # some unknown error?
-                else:
-                    load_from_cache = False  # cache file doesn't exist
-
-            if os.path.getmtime(self.file) > cache_time:
-                load_from_cache = False  # config is newer
-            else:
-                load_from_cache = True  # cache is newer
-
-        if load_from_cache:
-            # self.log.debug("Loading cached mode config: %s", cache_file)
-            with open(cache_file, 'rb') as f:
-
-                try:
-                    return pickle.load(f)
-
-                # unfortunately pickle can raise all kinds of exceptions and we dont want to crash on corrupted cache
-                # pylint: disable-msg=broad-except
-                except Exception:   # pragma: no cover
-                    # self.log.warning("Could not load config from cache")
-                    pass
-
-        show_version = YamlInterface.get_show_file_version(self.file)
-
-        if show_version != int(__show_version__):   # pragma: no cover
-            raise ValueError("Show file {} cannot be loaded. MPF v{} requires "
-                             "#show_version={}".format(self.file,
-                                                       __version__,
-                                                       __show_version__))
-        config = FileManager.load(self.file)
-
-        if self.machine.options['create_config_cache']:
-            with open(cache_file, 'wb') as f:
-                pickle.dump(config, f, protocol=4)
-                # self.log.debug('Config file mode cache created: %s', cache_file)
-
-        return config
+        return self.machine.config_processor.load_config_files_with_cache(
+            [self.file], "show", load_from_cache=not self.machine.options['no_load_cache'],
+            store_to_cache=self.machine.options['create_config_cache'])
 
 
 # This class is more or less a container

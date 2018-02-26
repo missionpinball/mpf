@@ -46,22 +46,7 @@ class FileInterface(object):
         else:
             return filename, os.path.splitext(filename)[1]
 
-    @staticmethod
-    def get_config_file_version(filename):
-        """Get the config version number from a file.
-
-        Since this technique varies depending on the file type, it needs to be implemented in the child class
-
-        Args:
-            filename: The file with path to check.
-
-        Returns:
-            An int of the config file version
-
-        """
-        raise NotImplementedError
-
-    def load(self, filename, verify_version=False, halt_on_error=True):
+    def load(self, filename, expected_version_str=None, halt_on_error=True):
         """Load file."""
         raise NotImplementedError
 

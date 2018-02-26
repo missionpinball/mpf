@@ -11,6 +11,7 @@ from typing import List, Tuple
 from mpf.core.file_manager import FileManager
 from mpf.core.utility_functions import Util
 from mpf.core.config_validator import ConfigValidator
+from mpf._version import __show_version__, __config_version__
 
 
 class ConfigProcessor(object):
@@ -122,7 +123,14 @@ class ConfigProcessor(object):
         """Load a config file and return loaded files."""
         # config_type is str 'machine' or 'mode', which specifies whether this
         # file being loaded is a machine config or a mode config file
-        config = FileManager.load(filename, True, True)
+        if config_type in ("machine", "mode"):
+            expected_version_str = "#config_version={}".format(__config_version__)
+        elif config_type == "show":
+            expected_version_str = "#show_version={}".format(__show_version__)
+        else:
+            raise AssertionError("Invalid config_type {}".format(config_type))
+
+        config = FileManager.load(filename, expected_version_str, True)
         subfiles = []
 
         if not ConfigValidator.config_spec:
@@ -133,18 +141,19 @@ class ConfigProcessor(object):
 
         self.log.info('Loading config: %s', filename)
 
-        for k in config.keys():
-            try:
-                if config_type not in ConfigValidator.config_spec[k][
-                        '__valid_in__']:
-                    raise ValueError('Found a "{}:" section in config file {}, '
-                                     'but that section is not valid in {} config '
-                                     'files.'.format(k, filename, config_type))
-            except KeyError:
-                if not ignore_unknown_sections:
-                    raise ValueError('Found a "{}:" section in config file {}, '
-                                     'but that section is not valid in {} config '
-                                     'files.'.format(k, filename, config_type))
+        if config_type in ("machine", "mode"):
+            for k in config.keys():
+                try:
+                    if config_type not in ConfigValidator.config_spec[k][
+                            '__valid_in__']:
+                        raise ValueError('Found a "{}:" section in config file {}, '
+                                         'but that section is not valid in {} config '
+                                         'files.'.format(k, filename, config_type))
+                except KeyError:
+                    if not ignore_unknown_sections:
+                        raise ValueError('Found a "{}:" section in config file {}, '
+                                         'but that section is not valid in {} config '
+                                         'files.'.format(k, filename, config_type))
 
         try:
             if 'config' in config:
