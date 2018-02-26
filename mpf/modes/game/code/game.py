@@ -62,6 +62,10 @@ class Game(AsyncMode):
         self._at_least_one_player_event.clear()
         self.balls_per_game = self.machine.config['game']['balls_per_game'].evaluate([])
 
+        if not hasattr(self.machine, "playfield"):
+            raise AssertionError("The game did not fine default playfield. Did you add tags: default to one of your "
+                                 "playfield?")
+
         # Add add player switch handler
         if self.machine.config['game']['add_player_switch_tag']:
             self.add_mode_event_handler(
