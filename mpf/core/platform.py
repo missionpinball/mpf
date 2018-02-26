@@ -58,7 +58,6 @@ class BasePlatform(metaclass=abc.ABCMeta):
         if self.debug:
             self.log.debug(msg, *args, **kwargs)
 
-    @abc.abstractmethod
     @asyncio.coroutine
     def initialize(self):
         """Initialise the platform.
@@ -181,9 +180,15 @@ class SegmentDisplaySoftwareFlashPlatform(SegmentDisplayPlatform, metaclass=abc.
     def __init__(self, machine):
         """Initialise software flash support."""
         super().__init__(machine)
+        self._displays = set()
+        self._display_flash_task = None
+
+    @asyncio.coroutine
+    def initialize(self):
+        """Start flash task."""
+        yield from super().initialize()
         self._display_flash_task = self.machine.clock.loop.create_task(self._display_flash())
         self._display_flash_task.add_done_callback(self._display_flash_task_done)
-        self._displays = set()
 
     @asyncio.coroutine
     def _display_flash(self):
