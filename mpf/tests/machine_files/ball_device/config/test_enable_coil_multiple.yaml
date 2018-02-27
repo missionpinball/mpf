@@ -1,0 +1,26 @@
+#config_version=5
+
+playfields:
+    playfield:
+        default_source_device: test
+        tags: default
+
+coils:
+    eject_coil:
+        default_hold_power: 0.25
+        default_pulse_ms: 20
+        number:
+
+switches:
+    s_ball1:
+        number:
+    s_ball2:
+        number:
+
+ball_devices:
+    test:
+        eject_coil: eject_coil
+        eject_coil_enable_time: 600ms, 200ms
+        ball_switches: s_ball1, s_ball2
+        tags: home, trough
+        debug: true
