@@ -123,12 +123,7 @@ class ConfigProcessor(object):
         """Load a config file and return loaded files."""
         # config_type is str 'machine' or 'mode', which specifies whether this
         # file being loaded is a machine config or a mode config file
-        if config_type in ("machine", "mode"):
-            expected_version_str = "#config_version={}".format(__config_version__)
-        elif config_type == "show":
-            expected_version_str = "#show_version={}".format(__show_version__)
-        else:
-            raise AssertionError("Invalid config_type {}".format(config_type))
+        expected_version_str = ConfigProcessor.get_expected_version(config_type)
 
         config = FileManager.load(filename, expected_version_str, True)
         subfiles = []
@@ -175,7 +170,8 @@ class ConfigProcessor(object):
         """Load a config file."""
         # config_type is str 'machine' or 'mode', which specifies whether this
         # file being loaded is a machine config or a mode config file
-        config = FileManager.load(filename, True, True)
+        expected_version_str = ConfigProcessor.get_expected_version(config_type)
+        config = FileManager.load(filename, expected_version_str, True)
 
         if not ConfigValidator.config_spec:
             ConfigValidator.load_config_spec()
@@ -208,3 +204,13 @@ class ConfigProcessor(object):
             return config
         except TypeError:
             return dict()
+
+    @staticmethod
+    def get_expected_version(config_type: str) -> str:
+        """Return the expected config or show version tag, e.g. #config_version=5."""
+        if config_type in ("machine", "mode"):
+            return "#config_version={}".format(__config_version__)
+        elif config_type == "show":
+            return "#show_version={}".format(__show_version__)
+        else:
+            raise AssertionError("Invalid config_type {}".format(config_type))
