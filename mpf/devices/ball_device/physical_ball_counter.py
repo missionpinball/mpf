@@ -196,6 +196,10 @@ class PhysicalBallCounter(object):
         self._activity_queues = []
         self._ball_change_futures = []
 
+    def stop(self):
+        """Stop counter."""
+        pass
+
     def invalidate_count(self):
         """Invalidate the count."""
         self._count_stable.clear()

@@ -632,16 +632,16 @@ class MachineController(LogMixin):
             self.clock.loop.run_until_complete(Util.first([init, self.stop_future], cancel_others=False,
                                                           loop=self.clock.loop, timeout=timeout))
         except asyncio.TimeoutError:
-            self._shutdown()
+            self.shutdown()
             self.error_log("MPF needed more than {}s for initialisation. Aborting!".format(timeout))
             return
         except RuntimeError:
-            self._shutdown()
+            self.shutdown()
             # do not show a runtime useless runtime error
             self.error_log("Failed to initialise MPF")
             return
         if init.exception():
-            self._shutdown()
+            self.shutdown()
             self.error_log("Failed to initialise MPF: %s", init.exception())
             traceback.print_tb(init.exception().__traceback__)  # noqa
             return
@@ -670,9 +670,9 @@ class MachineController(LogMixin):
         '''
 
         self.events.process_event_queue()
-        self._shutdown()
+        self.shutdown()
 
-    def _shutdown(self) -> None:
+    def shutdown(self) -> None:
         """Shutdown the machine."""
         self.thread_stopper.set()
         if hasattr(self, "device_manager"):
