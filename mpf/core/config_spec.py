@@ -882,7 +882,7 @@ playlists:
     shuffle: single|bool|False
     repeat: single|bool|False
     scope: single|enum(machine,player)|machine
-    sounds: ignore
+    sounds: list|str|
     events_when_played: list|str|None
     events_when_stopped: list|str|None
     events_when_looping: list|str|None
@@ -1198,10 +1198,12 @@ sound_player:
     start_at: single|secs|None
     fade_in: single|secs|None
     fade_out: single|secs|None
+    about_to_finish_time: single|secs|-1
     max_queue_time: single|secs|-1
     events_when_played: list|str|use_sound_setting
     events_when_stopped: list|str|use_sound_setting
     events_when_looping: list|str|use_sound_setting
+    events_when_about_to_finish: list|str|use_sound_setting
     mode_end_action: single|enum(stop,stop_looping,use_sound_setting)|use_sound_setting
     key: single|str|None
 sound_pools:
@@ -1245,12 +1247,14 @@ sounds:
     start_at: single|secs|0
     fade_in: single|secs|0
     fade_out: single|secs|0
+    about_to_finish_time: single|secs|None
     max_queue_time: single|secs|None
     simultaneous_limit: single|int|None
     stealing_method: single|enum(skip,oldest,newest)|oldest
     events_when_played: list|str|None
     events_when_stopped: list|str|None
     events_when_looping: list|str|None
+    events_when_about_to_finish: list|str|None
     mode_end_action: single|enum(stop,stop_looping)|stop_looping
     key: single|str|None
     markers: ignore                                 # todo add subconfig
