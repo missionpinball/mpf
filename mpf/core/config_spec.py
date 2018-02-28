@@ -1126,7 +1126,7 @@ smart_virtual:
 sound_loop_player:
     __valid_in__: machine, mode, show
     __allow_others__:
-    action: single|enum(play,stop,stop_looping,play_layer,stop_layer,stop_looping_layer)|play
+    action: single|enum(play,stop,stop_looping,jump_to,play_layer,stop_layer,stop_looping_layer)|play
 sound_loop_player_actions:
     play:
         action: ignore
@@ -1134,6 +1134,7 @@ sound_loop_player_actions:
         volume: single|gain|None
         fade_in: single|secs|None
         fade_out: single|secs|None
+        start_at: single|secs|0
         queue: single|bool|True
         synchronize: single|bool|False
         events_when_played: list|str|use_sound_loop_setting
@@ -1146,6 +1147,9 @@ sound_loop_player_actions:
     stop_looping:
         action: ignore
         none: ignore
+    jump_to:
+        action: ignore
+        time: single|secs|0
     play_layer:
         action: ignore
         layer: single|int|
