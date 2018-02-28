@@ -20,6 +20,7 @@ class Command(object):
                                       "no_load_cache": False,
                                       "mpfconfigfile": os.path.join(mpf_path, "mpfconfig.yaml"),
                                       "configfile": ["config"],
+                                      "production": False,
                                       "create_config_cache": False,
                                       "force_platform": False,
                                       "text_ui": False
@@ -32,3 +33,5 @@ class Command(object):
             print("{}:".format(name))
             print(platform.get_info_string())
             print("---------")
+
+        self.mpf.shutdown()

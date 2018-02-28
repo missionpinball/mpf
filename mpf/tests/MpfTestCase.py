@@ -849,7 +849,7 @@ class MpfTestCase(unittest.TestCase):
     def tearDown(self):
         if self._exception:
             try:
-                self.machine._shutdown()
+                self.machine.shutdown()
             except:
                 pass
 

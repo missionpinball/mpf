@@ -352,6 +352,10 @@ class Game(AsyncMode):
             desc: A new ball has started, and this is a multiplayer game.
             The player number is the (number) in the event that's posted.'''
 
+        if not hasattr(self.machine, "playfield"):
+            raise AssertionError("The game did not define default playfield. Did you add tags: default to one of your "
+                                 "playfield?")
+
         self.machine.playfield.add_ball(player_controlled=True)
 
     def ball_drained(self, balls=0, **kwargs):

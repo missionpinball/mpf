@@ -85,6 +85,11 @@ class Command(object):
                             "when launching in a separate window so you can "
                             "see any errors before the window closes.")
 
+        parser.add_argument("-P",
+                            action="store_true", dest="production", default=False,
+                            help="Production mode. Will suppress errors, wait for hardware on start and "
+                                 "try to exit when startup fails. Run this inside a loop.")
+
         parser.add_argument("-t",
                             action="store_false", dest='text_ui', default=True,
                             help="Use the ASCII test-based UI")

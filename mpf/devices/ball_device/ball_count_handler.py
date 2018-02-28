@@ -35,6 +35,11 @@ class BallCountHandler(BallDeviceStateHandler):
         self._ball_count_changed_futures.append(future)
         return future
 
+    def stop(self):
+        """Stop counter."""
+        super().stop()
+        self.counter.stop()
+
     @property
     def handled_balls(self):
         """Return balls which are already handled."""

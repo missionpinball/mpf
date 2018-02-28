@@ -118,7 +118,7 @@ ball_devices:
     eject_coil_retry_pulse: single|ms|None
     eject_coil_reorder_pulse: single|ms|None
     eject_coil_max_wait_ms: single|ms|200ms
-    eject_coil_enable_time: single|ms|None
+    eject_coil_enable_time: list|ms|None
     retries_before_increasing_pulse: single|int|4
     hold_coil: single|machine(coils)|None
     hold_coil_release_time: single|ms|1s
@@ -777,6 +777,7 @@ multiballs:
     __valid_in__: machine, mode
     ball_count: single|template_int|
     ball_count_type: single|enum(add,total)|total
+    replace_balls_in_play: single|bool|false
     source_playfield: single|machine(ball_devices)|playfield
     shoot_again: single|ms|10s
     ball_locks: list|machine(ball_devices)|None
@@ -790,6 +791,7 @@ multiballs:
 multiball_locks:
     __valid_in__: mode
     balls_to_lock: single|int|
+    balls_to_replace: single|int|-1
     lock_devices: list|machine(ball_devices)|
     source_playfield: single|machine(ball_devices)|playfield
     enable_events: dict|str:ms|None
@@ -1140,7 +1142,7 @@ smart_virtual:
 sound_loop_player:
     __valid_in__: machine, mode, show
     __allow_others__:
-    action: single|enum(play,stop,stop_looping,play_layer,stop_layer,stop_looping_layer)|play
+    action: single|enum(play,stop,stop_looping,jump_to,play_layer,stop_layer,stop_looping_layer)|play
 sound_loop_player_actions:
     play:
         action: ignore
@@ -1148,6 +1150,7 @@ sound_loop_player_actions:
         volume: single|gain|None
         fade_in: single|secs|None
         fade_out: single|secs|None
+        start_at: single|secs|0
         queue: single|bool|True
         synchronize: single|bool|False
         events_when_played: list|str|use_sound_loop_setting
@@ -1160,6 +1163,9 @@ sound_loop_player_actions:
     stop_looping:
         action: ignore
         none: ignore
+    jump_to:
+        action: ignore
+        time: single|secs|0
     play_layer:
         action: ignore
         layer: single|int|

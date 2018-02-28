@@ -265,8 +265,13 @@ class MachineController(LogMixin):
     @asyncio.coroutine
     def _initialize_platforms(self) -> Generator[int, None, None]:
         """Initialise all used hardware platforms."""
+        init_done = []
+        # collect all platform init futures
         for hardware_platform in list(self.hardware_platforms.values()):
-            yield from hardware_platform.initialize()
+            init_done.append(hardware_platform.initialize())
+
+        # wait for all of them in parallel
+        yield from asyncio.wait(init_done, loop=self.clock.loop)
 
     @asyncio.coroutine
     def _start_platforms(self) -> Generator[int, None, None]:
@@ -621,19 +626,24 @@ class MachineController(LogMixin):
     def initialise_mpf(self):
         """Initialise MPF."""
         self.info_log("Initialise MPF.")
+        timeout = 30 if self.options["production"] else None
         try:
             init = Util.ensure_future(self.initialise(), loop=self.clock.loop)
             self.clock.loop.run_until_complete(Util.first([init, self.stop_future], cancel_others=False,
-                                                          loop=self.clock.loop))
+                                                          loop=self.clock.loop, timeout=timeout))
+        except asyncio.TimeoutError:
+            self.shutdown()
+            self.error_log("MPF needed more than {}s for initialisation. Aborting!".format(timeout))
+            return
         except RuntimeError:
+            self.shutdown()
             # do not show a runtime useless runtime error
             self.error_log("Failed to initialise MPF")
-            self._shutdown()
             return
         if init.exception():
+            self.shutdown()
             self.error_log("Failed to initialise MPF: %s", init.exception())
             traceback.print_tb(init.exception().__traceback__)  # noqa
-            self._shutdown()
             return
 
     def run(self) -> None:
@@ -660,9 +670,9 @@ class MachineController(LogMixin):
         '''
 
         self.events.process_event_queue()
-        self._shutdown()
+        self.shutdown()
 
-    def _shutdown(self) -> None:
+    def shutdown(self) -> None:
         """Shutdown the machine."""
         self.thread_stopper.set()
         if hasattr(self, "device_manager"):

@@ -24,14 +24,21 @@ class EnableCoilEjector(PulseCoilEjector):
         """Enable eject coil."""
         del is_jammed
         del eject_try
+
+        # If multiple eject_coil_enable_time values, they correspond to the # of balls
+        if self.ball_device.balls <= len(self.ball_device.config['eject_coil_enable_time']):
+            eject_time = self.ball_device.config['eject_coil_enable_time'][self.ball_device.balls - 1]
+        else:
+            eject_time = self.ball_device.config['eject_coil_enable_time'][-1]
+
         # default pulse
         self.ball_device.debug_log("Enabling eject coil for %sms, Current balls: %s.",
-                                   self.ball_device.config['eject_coil_enable_time'],
+                                   eject_time,
                                    self.ball_device.balls)
 
         self.ball_device.config['eject_coil'].enable()
         self.delay.reset(name="disable", callback=self._disable_coil,
-                         ms=self.ball_device.config['eject_coil_enable_time'])
+                         ms=eject_time)
 
     def _disable_coil(self):
         """Disable the coil."""
@@ -43,5 +50,5 @@ class EnableCoilEjector(PulseCoilEjector):
         else:
             self.ball_device.config['eject_coil'].enable()
             self.delay.reset(name="disable", callback=self._disable_coil,
-                             ms=self.ball_device.config['eject_coil_enable_time'])
+                             ms=self.ball_device.config['eject_coil_enable_time'][0])
         return True
