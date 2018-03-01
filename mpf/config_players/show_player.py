@@ -84,10 +84,12 @@ class ShowPlayer(DeviceConfigPlayer):
                     instance_dict[key].events["step_back"] == show_settings['events_when_stepped_back'] and
                     instance_dict[key].events["update"] == show_settings['events_when_updated'] and
                     instance_dict[key].events["complete"] == show_settings['events_when_completed']):
-                if instance_dict[key].current_step_index + 1 == start_step:
+                if instance_dict[key].current_step_index is not None and \
+                        instance_dict[key].current_step_index + 1 == start_step:
                     # the show already is at the target step
                     return
-                elif instance_dict[key].current_step_index + 2 == start_step:
+                elif instance_dict[key].current_step_index is not None and \
+                        instance_dict[key].current_step_index + 2 == start_step:
                     # advance show to target step
                     instance_dict[key].advance()
                     return
