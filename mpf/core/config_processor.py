@@ -59,8 +59,9 @@ class ConfigProcessor(object):
                 self.log.warning('Cache file not found: %s', filename)
                 return -1
 
+    # pylint: disable-msg=too-many-arguments
     def load_config_files_with_cache(self, filenames: List[str], config_type: str, load_from_cache=True,
-                                     store_to_cache=True) -> dict:   # pragma: no cover
+                                     store_to_cache=True, ignore_unknown_sections=False) -> dict:   # pragma: no cover
         """Load multiple configs with a combined cache."""
         config = dict()     # type: Any
         # Step 1: Check timestamps of the filelist vs cache
@@ -105,7 +106,8 @@ class ConfigProcessor(object):
         loaded_files = []
         for configfile in filenames:
             self.log.info('Loading config from file %s.', configfile)
-            file_config, file_subfiles = self._load_config_file_and_return_loaded_files(configfile, config_type)
+            file_config, file_subfiles = self._load_config_file_and_return_loaded_files(configfile, config_type,
+                                                                                        ignore_unknown_sections)
             loaded_files.extend(file_subfiles)
             config = Util.dict_merge(config, file_config)
 
