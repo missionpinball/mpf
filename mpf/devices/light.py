@@ -2,8 +2,7 @@
 from functools import partial
 from operator import itemgetter
 
-from typing import Set
-from typing import Tuple
+from typing import Set, Dict, List, Tuple, Any
 
 from mpf.core.delays import DelayManager
 
@@ -140,7 +139,7 @@ class Light(SystemWideDevice):
                 color_channels, channel_list, self.name
             ))
 
-        channels = {}
+        channels = {}   # type: Dict[str, List[Any]]
         for color_name in color_channels:
             # red channel
             if color_name == 'r':

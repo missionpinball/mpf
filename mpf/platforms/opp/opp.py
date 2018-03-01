@@ -74,7 +74,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         self.config = self.machine.config['opp']
         self.machine.config_validator.validate_config("opp", self.config)
-        self._poll_response_received = {}
+        self._poll_response_received = {}   # type: Dict[str, asyncio.Event]
 
         self.machine_type = (
             self.machine.config['hardware']['driverboards'].lower())

@@ -170,7 +170,7 @@ class MachineController(LogMixin):
         self.default_platform = None        # type: SmartVirtualHardwarePlatform
 
         self.clock = self._load_clock()
-        self.stop_future = asyncio.Future(loop=self.clock.loop)
+        self.stop_future = asyncio.Future(loop=self.clock.loop)     # type: asyncio.Future
 
     @asyncio.coroutine
     def initialise(self) -> Generator[int, None, None]:
