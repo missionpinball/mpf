@@ -525,7 +525,10 @@ class RunningShow(object):
                     for x in token_path[:-1]:
                         target = target[x]
 
-                    target[token_path[-1]] = replacement
+                    if target[token_path[-1]] == "(" + token + ")":
+                        target[token_path[-1]] = replacement
+                    else:
+                        target[token_path[-1]] = target[token_path[-1]].replace("(" + token + ")", replacement)
 
     def _replace_token_keys(self, **kwargs):
         keys_replaced = dict()
