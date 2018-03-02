@@ -33,7 +33,7 @@ class ShowPlayer(DeviceConfigPlayer):
                 show_settings['priority'] = priority
             # todo need to add this key back to the config player
 
-            self._update_show(show_dict["name"], show_settings, context, queue, start_time)
+            self._update_show(show_dict["name"], show_settings, context, queue, start_time, kwargs)
 
     def handle_subscription_change(self, value, settings, priority, context):
         """Handle subscriptions."""
@@ -49,12 +49,12 @@ class ShowPlayer(DeviceConfigPlayer):
                 key = show
 
             if value:
-                self._play(key, instance_dict, show, show_settings, False, None)
+                self._play(key, instance_dict, show, show_settings, False, None, {})
             else:
-                self._stop(key, instance_dict, show, show_settings, False, None)
+                self._stop(key, instance_dict, show, show_settings, False, None, {})
 
     # pylint: disable-msg=too-many-arguments
-    def _play(self, key, instance_dict, show, show_settings, queue, start_time):
+    def _play(self, key, instance_dict, show, show_settings, queue, start_time, placeholder_args):
         callback = None
         if show_settings['block_queue']:
             if not queue:
@@ -62,7 +62,7 @@ class ShowPlayer(DeviceConfigPlayer):
             queue.wait()
             callback = queue.clear
 
-        start_step = show_settings['start_step'].evaluate({})
+        start_step = show_settings['start_step'].evaluate(placeholder_args)
 
         if key in instance_dict and not instance_dict[key].stopped:
             # this is an optimization for the case where we only advance a show or do not change it at all
@@ -124,62 +124,69 @@ class ShowPlayer(DeviceConfigPlayer):
         )
 
     @staticmethod
-    def _stop(key, instance_dict, show, show_settings, queue, start_time):
+    def _stop(key, instance_dict, show, show_settings, queue, start_time, placeholder_args):
         del show
         del show_settings
         del queue
         del start_time
+        del placeholder_args
         if key in instance_dict:
             instance_dict[key].stop()
             del instance_dict[key]
 
     @staticmethod
-    def _pause(key, instance_dict, show, show_settings, queue, start_time):
+    def _pause(key, instance_dict, show, show_settings, queue, start_time, placeholder_args):
         del show
         del show_settings
         del queue
         del start_time
+        del placeholder_args
         if key in instance_dict:
             instance_dict[key].pause()
 
     @staticmethod
-    def _resume(key, instance_dict, show, show_settings, queue, start_time):
+    def _resume(key, instance_dict, show, show_settings, queue, start_time, placeholder_args):
         del show
         del show_settings
         del queue
         del start_time
+        del placeholder_args
         if key in instance_dict:
             instance_dict[key].resume()
 
     @staticmethod
-    def _advance(key, instance_dict, show, show_settings, queue, start_time):
+    def _advance(key, instance_dict, show, show_settings, queue, start_time, placeholder_args):
         del show
         del show_settings
         del queue
         del start_time
+        del placeholder_args
         if key in instance_dict:
             instance_dict[key].advance()
 
     @staticmethod
-    def _step_back(key, instance_dict, show, show_settings, queue, start_time):
+    def _step_back(key, instance_dict, show, show_settings, queue, start_time, placeholder_args):
         del show
         del show_settings
         del queue
         del start_time
+        del placeholder_args
         if key in instance_dict:
             instance_dict[key].step_back()
 
     @staticmethod
-    def _update(key, instance_dict, show, show_settings, queue, start_time):
+    def _update(key, instance_dict, show, show_settings, queue, start_time, placeholder_args):
         del show
         del queue
         del start_time
+        del placeholder_args
         if key in instance_dict:
             instance_dict[key].update(
                 show_tokens=show_settings['show_tokens'],
                 priority=show_settings['priority'])
 
-    def _update_show(self, show, show_settings, context, queue, start_time):
+    # pylint: disable-msg=too-many-arguments
+    def _update_show(self, show, show_settings, context, queue, start_time, placeholder_args):
         instance_dict = self._get_instance_dict(context)
         if 'key' in show_settings and show_settings['key']:
             key = show_settings['key']
@@ -207,7 +214,7 @@ class ShowPlayer(DeviceConfigPlayer):
         else:
             show_name = show
 
-        action(key, instance_dict, show_name, show_settings, queue, start_time)
+        action(key, instance_dict, show_name, show_settings, queue, start_time, placeholder_args)
 
     def clear_context(self, context):
         """Stop running shows from context."""
