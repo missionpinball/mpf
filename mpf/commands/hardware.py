@@ -40,7 +40,7 @@ class Command(object):
         """Upgrade firmware of platforms."""
         for name, platform in self.mpf.hardware_platforms.items():
             print("{}:".format(name))
-            print(platform.upgrade_firmware())
+            print(platform.update_firmware())
             print("---------")
 
         self.mpf.shutdown()
