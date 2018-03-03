@@ -507,6 +507,11 @@ fast:
     dmd_buffer: single|int|3
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
+    firmware_updates: list|subconfig(fast_firmware_update)|None
+fast_firmware_update:
+    type: single|enum(net,rgb)|
+    file: single|str|
+    version: single|str|
 file_shows:
     __valid_in__: machine, mode                      # todo add to validator
 flasher_player:

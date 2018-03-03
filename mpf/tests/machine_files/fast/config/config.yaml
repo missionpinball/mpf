@@ -7,6 +7,10 @@ hardware:
 fast:
     ports: com4, com5, com6
     debug: true
+    firmware_updates:
+      - type: net
+        version: "1.03"
+        file: "firmware/FAST_NET_01_03_00.txt"
 
 switches:
     s_test:
