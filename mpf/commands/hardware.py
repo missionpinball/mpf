@@ -25,7 +25,9 @@ class Command(object):
                                       "force_platform": False,
                                       "text_ui": False
                                       })
-        self.mpf.initialise_mpf()
+        self.mpf.clock.loop.run_until_complete(self.mpf.initialise_core_and_hardware())
+        if self.mpf.thread_stopper.is_set():
+            raise AssertionError("Initialisation failed!")
 
     def scan(self):
         """Scan hardware."""
