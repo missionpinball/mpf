@@ -54,8 +54,8 @@ class BasePlatform(metaclass=abc.ABCMeta):
         return "Not implemented"
 
     # pylint: disable-msg=no-self-use
-    def upgrade_firmware(self) -> str:
-        """Perform a firmware upgrade."""
+    def update_firmware(self) -> str:
+        """Perform a firmware update."""
         pass
 
     def debug_log(self, msg, *args, **kwargs):

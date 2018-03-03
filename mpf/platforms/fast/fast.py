@@ -137,7 +137,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         infos += "Update done.\n"
         return infos
 
-    def upgrade_firmware(self) -> str:
+    def update_firmware(self) -> str:
         """Upgrade the firmware of the CPUs."""
         return self._update_net()
 

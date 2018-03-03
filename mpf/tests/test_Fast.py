@@ -410,7 +410,7 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
             return True
         parse_func = self.net_cpu._parse
         self.net_cpu._parse = _catch_update
-        output = self.machine.default_platform.upgrade_firmware()
+        output = self.machine.default_platform.update_firmware()
         self.advance_time_and_run()
         self.net_cpu._parse = parse_func
         # check if we send the dummy update

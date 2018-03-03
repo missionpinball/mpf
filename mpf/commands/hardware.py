@@ -36,8 +36,8 @@ class Command(object):
 
         self.mpf.shutdown()
 
-    def upgrade(self):
-        """Upgrade platforms."""
+    def firmware_update(self):
+        """Upgrade firmware of platforms."""
         for name, platform in self.mpf.hardware_platforms.items():
             print("{}:".format(name))
             print(platform.upgrade_firmware())
