@@ -1309,6 +1309,9 @@ switches:
     events_when_deactivated: list|str|None
     platform: single|str|None
     platform_settings: single|dict|None
+    x: single|float|None
+    y: single|float|None
+    z: single|float|None
 fast_switches:
     debounce_open: single|str|None
     debounce_close: single|str|None
