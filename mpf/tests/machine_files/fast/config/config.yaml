@@ -9,8 +9,8 @@ fast:
     debug: true
     firmware_updates:
       - type: net
-        version: "1.03"
-        file: "firmware/FAST_NET_01_03_00.txt"
+        version: "1.04"
+        file: "firmware/FAST_NET_01_04_00.txt"
 
 switches:
     s_test:

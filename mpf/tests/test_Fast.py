@@ -166,7 +166,7 @@ class TestFast(MpfTestCase):
         }
         self.net_cpu.expected_commands = {
             'BC:': '!B:02',
-            'ID:': 'ID:NET FP-CPU-002-1 00.90',
+            'ID:': 'ID:NET FP-CPU-002-1 01.03',
             'NN:00': 'NN:00,FP-I/O-3208-2   ,01.00,08,20,04,06,00,00,00,00',     # 3208 board
             'NN:01': 'NN:01,FP-I/O-0804-1   ,01.00,04,08,04,06,00,00,00,00',     # 0804 board
             'NN:02': 'NN:02,FP-I/O-1616-2   ,01.00,10,10,04,06,00,00,00,00',     # 1616 board
@@ -211,7 +211,7 @@ class TestFast(MpfTestCase):
         self.assertEqual("FP-CPU-002-1", self.machine.get_machine_var("fast_dmd_model"))
         self.assertEqual("00.89", self.machine.get_machine_var("fast_rgb_firmware"))
         self.assertEqual("FP-CPU-002-1", self.machine.get_machine_var("fast_rgb_model"))
-        self.assertEqual("00.90", self.machine.get_machine_var("fast_net_firmware"))
+        self.assertEqual("01.03", self.machine.get_machine_var("fast_net_firmware"))
         self.assertEqual("FP-CPU-002-1", self.machine.get_machine_var("fast_net_model"))
 
     def test_coils(self):
@@ -222,7 +222,7 @@ class TestFast(MpfTestCase):
         self._test_coil_configure()
 
         # test hardware scan
-        info_str = """NET CPU: NET FP-CPU-002-1 00.90
+        info_str = """NET CPU: NET FP-CPU-002-1 01.03
 RGB CPU: RGB FP-CPU-002-1 00.89
 DMD CPU: DMD FP-CPU-002-1 00.88
 
@@ -415,8 +415,8 @@ Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
         self.net_cpu._parse = parse_func
         # check if we send the dummy update
         self.assertEqual(['DUMMY UPDATE\n'], commands)
-        expected_output = """NET CPU is version 00.89
-Found an update to version 1.03 for the NET CPU. Will flash file firmware/FAST_NET_01_03_00.txt
+        expected_output = """NET CPU is version 01.03
+Found an update to version 1.04 for the NET CPU. Will flash file firmware/FAST_NET_01_04_00.txt
 Update done.
 """
         self.assertEqual(expected_output, output)

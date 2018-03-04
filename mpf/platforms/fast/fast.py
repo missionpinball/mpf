@@ -114,8 +114,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         if not self.net_connection:
             infos += "No NET CPU connected. Cannot update.\n"
             return infos
-        infos += "NET CPU is version {}\n".format(self.rgb_connection.remote_firmware)
-        max_firmware = self.rgb_connection.remote_firmware
+        infos += "NET CPU is version {}\n".format(self.net_connection.remote_firmware)
+        max_firmware = self.net_connection.remote_firmware
         update_config = None
         for update in self.config['firmware_updates']:
             if StrictVersion(update['version']) > StrictVersion(max_firmware) and update['type'] == "net":
