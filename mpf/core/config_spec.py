@@ -1078,7 +1078,6 @@ show_player:
     events_when_stepped_back: list|str|None
     events_when_updated: list|str|None
     events_when_completed: list|str|None
-    __allow_others__:
 show_pools:
     __valid_in__: machine, mode                      # todo add to validator
 
