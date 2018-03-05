@@ -6,6 +6,7 @@ from mpf.core.machine import MachineController
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.utility_functions import Util
 from mpf.core.platform import SwitchConfig
+from mpf.devices.device_mixins import DevicePositionMixin
 
 MYPY = False
 if MYPY:   # pragma: no cover
@@ -14,7 +15,7 @@ if MYPY:   # pragma: no cover
 
 
 @DeviceMonitor("state", "recycle_jitter_count")
-class Switch(SystemWideDevice):
+class Switch(SystemWideDevice, DevicePositionMixin):
 
     """A switch in a pinball machine."""
 
