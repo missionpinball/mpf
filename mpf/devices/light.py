@@ -13,6 +13,7 @@ from mpf.core.machine import MachineController
 from mpf.core.rgb_color import RGBColor
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade
+from mpf.devices.device_mixins import DevicePositionMixin
 
 
 class DriverLight(LightPlatformSoftwareFade):
@@ -37,7 +38,7 @@ class DriverLight(LightPlatformSoftwareFade):
 
 
 @DeviceMonitor(_color="color")
-class Light(SystemWideDevice):
+class Light(SystemWideDevice, DevicePositionMixin):
 
     """A light in a pinball machine."""
 
