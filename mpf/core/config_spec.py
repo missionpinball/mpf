@@ -82,6 +82,8 @@ assets:
     videos:
         width: single|num|None
         height: single|num|None
+        events_when_played: list|str|None
+        events_when_stopped: list|str|None
 auditor:
     __valid_in__: machine
     save_events: list|str|ball_ended
@@ -1592,7 +1594,6 @@ widgets:
         auto_play: single|bool|True
         end_behavior: single|enum(loop,pause,stop)|stop
         control_events: list|subconfig(video_control_events)|None
-
 video_control_events:
     __valid_in__: None
     action: single|enum(play,pause,stop,seek,volume,position)|
