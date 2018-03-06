@@ -1135,7 +1135,8 @@ sound_loop_player_actions:
         fade_in: single|secs|None
         fade_out: single|secs|None
         start_at: single|secs|0
-        queue: single|bool|True
+        timing: single|enum(now,loop_end,next_beat_interval,next_time_interval)|loop_end
+        interval: single|float|1
         synchronize: single|bool|False
         events_when_played: list|str|use_sound_loop_setting
         events_when_stopped: list|str|use_sound_loop_setting
@@ -1154,6 +1155,7 @@ sound_loop_player_actions:
         action: ignore
         layer: single|int|
         volume: single|gain|None
+        timing: single|enum(now,loop_end)|loop_end
         fade_in: single|secs|0
         queue: single|bool|True
     stop_layer:
@@ -1167,6 +1169,7 @@ sound_loop_sets:
     __valid_in__: machine, mode
     sound: single|str|
     volume: single|gain|None
+    tempo: single|float|60.0
     layers:
         sound: single|str|
         volume: single|gain|None
