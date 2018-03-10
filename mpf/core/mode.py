@@ -220,7 +220,7 @@ class Mode(LogMixin):
 
         self._setup_device_control_events()
 
-        self.machine.events.post_queue(event='mode_{}_starting'.format(self.name), **kwargs,
+        self.machine.events.post_queue('mode_{}_starting'.format(self.name), **kwargs,
                                        callback=self._started)
         '''event: mode_(name)_starting
 
