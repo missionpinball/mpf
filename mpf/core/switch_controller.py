@@ -159,6 +159,8 @@ class SwitchController(MpfController):
             number of ms. If ms is not specified, returns True if the switch
             is in the state regardless of how long it's been in that state.
         """
+        if not self._initialised:
+            raise AssertionError("Cannot read switch state before init_phase_3")
         if not ms:
             ms = 0
 
