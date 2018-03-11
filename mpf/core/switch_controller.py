@@ -53,8 +53,6 @@ class SwitchController(MpfController):
         self.machine.events.add_async_handler('init_phase_2', self._initialize_switches, 1000)
         # priority 1000 so this fires first
 
-        self.machine.events.add_handler('machine_reset_phase_3', self.log_active_switches)
-
         self.monitors = list()      # type: List[Callable[[MonitoredSwitchChange], None]]
 
         # to detect early switch changes before init
@@ -79,6 +77,10 @@ class SwitchController(MpfController):
         for switch in self.machine.switches:
             # Populate self.switches
             self.set_state(switch.name, switch.state, reset_time=True)
+
+        self._initialised = True
+
+        self.log_active_switches()
 
     @asyncio.coroutine
     def update_switches_from_hw(self):
@@ -107,8 +109,6 @@ class SwitchController(MpfController):
                 except (IndexError, KeyError):
                     raise AssertionError("Missing switch {} in update from hw.  Update from HW: {}, switches: {}".
                                          format(number, switch_states, switches))
-
-        self._initialised = True
 
     def verify_switches(self) -> bool:
         """Verify that switches states match the hardware.
