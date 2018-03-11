@@ -61,7 +61,6 @@ class ScoreReelGroup(SystemWideDevice):
         self.reels.reverse()  # We want our smallest digit in the 0th element
 
         self.config['chimes'].reverse()
-        print(self.config['chimes'], self.reels)
         for i in range(len(self.config['chimes'])):
 
             if self.config['chimes'][i]:
