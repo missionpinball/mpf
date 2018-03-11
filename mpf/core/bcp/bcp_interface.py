@@ -2,6 +2,8 @@
 import asyncio
 from copy import deepcopy
 
+from mpf.core.rgb_color import ColorException
+
 from mpf.core.events import PostedEvent
 from mpf.core.player import Player
 from mpf.core.utility_functions import Util
@@ -172,7 +174,7 @@ class BcpInterface(MpfController):
             return
         try:
             light.color(color_name)
-        except DriverLimitsError as e:
+        except (DriverLimitsError, ColorException) as e:
             self.machine.bcp.transport.send_to_client(client, "light_color", error=str(e))
             return
 

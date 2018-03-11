@@ -420,7 +420,7 @@ class RGBColor(object):
         if rgb is None:
             rgb = RGBColor.hex_to_rgb(value)
             if rgb is None:
-                raise AssertionError("Invalid RGB string: {}".format(value))
+                raise ColorException("Invalid RGB string: {}".format(value))
 
         # apply brightness
         if brightness:
@@ -452,7 +452,7 @@ class RGBColor(object):
         named_rgb_colors[str(name)] = RGBColor(color).rgb
 
 
-class ColorException(Exception):
+class ColorException(AssertionError):
 
     """General exception thrown for color utilities non-exit exceptions."""
 
