@@ -167,7 +167,11 @@ class ScoreReel(SystemWideDevice):
             self.check_hw_switches()
 
             if previous_value != self.assumed_value and self.assumed_value > 0:
-                self.machine.events.post('reel_' + self.name + "_advance")
+                self.machine.events.post('reel_{}_advance'.format(self.name))
+                '''event: reel_(name)_advance
+
+                desc: The reel (name) advanced to the next position.
+                '''
             self.log.debug("Assumed value: %s", self.assumed_value)
 
         self._busy.clear()
