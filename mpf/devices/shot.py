@@ -142,6 +142,8 @@ class Shot(EnableDisableMixin, ModeDevice):
         return self.config['profile']
 
     def _get_state(self):
+        if not self.player:
+            return 0
         return self.player["shot_{}".format(self.name)]
 
     def _set_state(self, state):

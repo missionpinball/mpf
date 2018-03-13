@@ -53,6 +53,11 @@ class BasePlatform(metaclass=abc.ABCMeta):
         """Return information string about this platform."""
         return "Not implemented"
 
+    # pylint: disable-msg=no-self-use
+    def update_firmware(self) -> str:
+        """Perform a firmware update."""
+        pass
+
     def debug_log(self, msg, *args, **kwargs):
         """Log when debug is set to True for platform."""
         if self.debug:

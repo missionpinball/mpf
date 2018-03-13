@@ -6,7 +6,7 @@ import logging
 import os
 import pickle
 import tempfile
-from typing import List, Tuple
+from typing import List, Tuple, Any
 
 from mpf.core.file_manager import FileManager
 from mpf.core.utility_functions import Util
@@ -32,12 +32,12 @@ class ConfigProcessor(object):
         path_hash = hashlib.md5(bytes(filestring, 'UTF-8')).hexdigest()
         return os.path.join(cache_dir, path_hash + ".mpf_cache")
 
-    def _load_config_from_cache(self, cache_file) -> dict:
+    def _load_config_from_cache(self, cache_file) -> Tuple[Any, List[str]]:
         """Return config from cache."""
         self.log.info("Loading config from cache: %s", cache_file)
         with open(cache_file, 'rb') as f:
             try:
-                data = pickle.load(f)
+                data = pickle.load(f)   # type: Tuple[Any, List[str]]
             # unfortunately pickle can raise all kinds of exceptions and we dont want to crash on corrupted cache
             # pylint: disable-msg=broad-except
             except Exception:   # pragma: no cover
@@ -48,7 +48,7 @@ class ConfigProcessor(object):
             return None, None
         return data
 
-    def _get_mtime_or_negative(self, filename) -> int:
+    def _get_mtime_or_negative(self, filename) -> float:
         """Return mtime or -1 if file could not be found."""
         try:
             return os.path.getmtime(filename)
@@ -59,10 +59,11 @@ class ConfigProcessor(object):
                 self.log.warning('Cache file not found: %s', filename)
                 return -1
 
+    # pylint: disable-msg=too-many-arguments
     def load_config_files_with_cache(self, filenames: List[str], config_type: str, load_from_cache=True,
-                                     store_to_cache=True) -> dict:   # pragma: no cover
+                                     store_to_cache=True, ignore_unknown_sections=False) -> dict:   # pragma: no cover
         """Load multiple configs with a combined cache."""
-        config = dict()
+        config = dict()     # type: Any
         # Step 1: Check timestamps of the filelist vs cache
         cache_file = self.get_cache_filename(filenames)
         if load_from_cache:
@@ -105,7 +106,8 @@ class ConfigProcessor(object):
         loaded_files = []
         for configfile in filenames:
             self.log.info('Loading config from file %s.', configfile)
-            file_config, file_subfiles = self._load_config_file_and_return_loaded_files(configfile, config_type)
+            file_config, file_subfiles = self._load_config_file_and_return_loaded_files(configfile, config_type,
+                                                                                        ignore_unknown_sections)
             loaded_files.extend(file_subfiles)
             config = Util.dict_merge(config, file_config)
 

@@ -486,15 +486,16 @@ class ConfigValidator(object):
         del validation_failure_info
         return item
 
-    @classmethod
-    def _validate_type_kivycolor(cls, item, validation_failure_info):
-        del validation_failure_info
+    def _validate_type_kivycolor(self, item, validation_failure_info):
         # Validate colors that will be used by Kivy. The result is a 4-item
         # list, RGBA, with individual values from 0.0 - 1.0
         if not item:
             return None
 
         color_string = str(item).lower()
+
+        if color_string[:1] == "(" and color_string[-1:] == ")":
+            return color_string
 
         if color_string in named_rgb_colors:
             color = list(named_rgb_colors[color_string])
@@ -507,18 +508,20 @@ class ConfigValidator(object):
             color = Util.string_to_list(color_string)
 
         for i, x in enumerate(color):
-            color[i] = int(x) / 255
+            try:
+                color[i] = int(x) / 255
+            except ValueError:
+                self.validation_error(item, validation_failure_info, "Color could not be converted to int for kivy.")
 
         if len(color) == 3:
             color.append(1)
 
         return color
 
-    @classmethod
-    def _validate_type_color(cls, item, validation_failure_info):
+    def _validate_type_color(self, item, validation_failure_info):
         if isinstance(item, tuple):
             if len(item) != 3:
-                cls.validation_error(item, validation_failure_info, "Color needs three components")
+                self.validation_error(item, validation_failure_info, "Color needs three components")
             return item
 
         # Validates colors by name, hex, or list, into a 3-item list, RGB,

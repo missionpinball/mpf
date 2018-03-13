@@ -42,7 +42,7 @@ class TestScoreReels(MpfGameTestCase):
 
         self.advance_time_and_run()
         self._synchronise_to_reel()
-        self.machine.game.player.score += 110
+        self.machine.game.player.score = 110
         self.advance_time_and_run(.1)
         self.assertEqual(0, player1_10k.pulse.call_count)
         self.assertEqual(0, player1_1k.pulse.call_count)
@@ -66,7 +66,7 @@ class TestScoreReels(MpfGameTestCase):
         player1_10.pulse = MagicMock(return_value=10)
 
         self._synchronise_to_reel()
-        self.machine.game.player.score += 11097  # result: 11207
+        self.machine.game.player.score = 11207
         self.advance_time_and_run(.005)
         self.assertEqual(0, player1_10k.pulse.call_count)
         self.assertEqual(0, player1_1k.pulse.call_count)

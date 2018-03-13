@@ -167,7 +167,7 @@ class Mode(LogMixin):
 
         self._starting = True
 
-        self.machine.events.post('mode_' + self.name + '_will_start')
+        self.machine.events.post('mode_{}_will_start'.format(self.name), **kwargs)
         '''event: mode_(name)_will_start
 
         desc: Posted when a mode is about to start. The "name" part is replaced
@@ -220,8 +220,8 @@ class Mode(LogMixin):
 
         self._setup_device_control_events()
 
-        self.machine.events.post_queue(event='mode_' + self.name + '_starting',
-                                       callback=self._started)
+        self.machine.events.post_queue(event='mode_{}_starting'.format(self.name),
+                                       callback=self._started, **kwargs)
         '''event: mode_(name)_starting
 
         desc: The mode called "name" is starting.
@@ -230,8 +230,9 @@ class Mode(LogMixin):
         cleared.
         '''
 
-    def _started(self) -> None:
+    def _started(self, **kwargs) -> None:
         """Handle result of mode_<name>_starting queue event."""
+        del kwargs
         self.info_log('Started. Priority: %s', self.priority)
 
         self.active = True
@@ -240,8 +241,8 @@ class Mode(LogMixin):
         for event_name in self.config['mode']['events_when_started']:
             self.machine.events.post(event_name)
 
-        self.machine.events.post('mode_' + self.name + '_started',
-                                 callback=self._mode_started_callback)
+        self.machine.events.post(event='mode_{}_started'.format(self.name), callback=self._mode_started_callback,
+                                 **self.start_event_kwargs)
         '''event: mode_(name)_started
 
         desc: Posted when a mode has started. The "name" part is replaced

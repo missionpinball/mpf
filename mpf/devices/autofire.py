@@ -9,6 +9,7 @@ from mpf.core.system_wide_device import SystemWideDevice
 MYPY = False
 if MYPY:   # pragma: no cover
     from mpf.core.machine import MachineController
+    from typing import List
 
 
 @DeviceMonitor(_enabled="enabled")
@@ -43,7 +44,7 @@ class AutofireCoil(SystemWideDevice):
         self._timeout_watch_time = None
         self._timeout_max_hits = None
         self._timeout_disable_time = None
-        self._timeout_hits = []
+        self._timeout_hits = []     # type: List[float]
 
     def _initialize(self) -> None:
         if self.config['ball_search_order']:

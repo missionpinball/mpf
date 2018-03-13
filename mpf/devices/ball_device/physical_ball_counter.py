@@ -4,7 +4,7 @@ The duty of this device is to maintain the current ball count of the device.
 """
 import asyncio
 
-from typing import Generator
+from typing import Generator, List
 
 from mpf.core.utility_functions import Util
 
@@ -193,8 +193,8 @@ class PhysicalBallCounter(object):
 
         self._last_count = None                     # type: int
         self._count_stable = asyncio.Event(loop=self.machine.clock.loop)
-        self._activity_queues = []
-        self._ball_change_futures = []
+        self._activity_queues = []                  # type: List[asyncio.Queue[BallActivity]]
+        self._ball_change_futures = []              # type: List[asyncio.Future]
 
     def stop(self):
         """Stop counter."""
@@ -256,7 +256,7 @@ class PhysicalBallCounter(object):
         self._activity_queues.append(queue)
         return queue
 
-    def record_activity(self, activity_type):
+    def record_activity(self, activity_type: BallActivity) -> None:
         """Record an activity."""
         for queue in self._activity_queues:
             queue.put_nowait(activity_type)

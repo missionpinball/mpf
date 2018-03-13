@@ -12,6 +12,7 @@ from typing import Dict
 
 import collections
 import ruamel.yaml as yaml
+from ruamel.yaml.error import MarkedYAMLError
 from ruamel.yaml.reader import Reader
 from ruamel.yaml.resolver import BaseResolver, Resolver
 from ruamel.yaml.scanner import Scanner
@@ -191,13 +192,17 @@ class YamlInterface(FileInterface):
                         raise AssertionError("Version mismatch. Expected: {} Actual: {} Files: {}".format(
                             expected_version_str, version_str, filename))
                 config = self.process(f)
-        except Exception as e:   # pylint: disable-msg=broad-except
-            if hasattr(e, 'problem_mark'):
-                mark = e.problem_mark
-                msg = "YAML error found in file {}. Line {}," \
-                      "Position {}: {}".format(filename, mark.line + 1, mark.column + 1, e)
+        except MarkedYAMLError as e:
+            mark = e.problem_mark
+            msg = "YAML error found in file {}. Line {}," \
+                  "Position {}: {}".format(filename, mark.line + 1, mark.column + 1, e)
+
+            if halt_on_error:
+                raise ValueError(msg)
             else:
-                msg = "Error found in file {}: {}".format(filename, e)
+                self.log.warning(msg)
+        except Exception as e:   # pylint: disable-msg=broad-except
+            msg = "Error found in file {}: {}".format(filename, e)
 
             if halt_on_error:
                 raise ValueError(msg)

@@ -2,8 +2,7 @@
 from functools import partial
 from operator import itemgetter
 
-from typing import Set
-from typing import Tuple
+from typing import Set, Dict, List, Tuple, Any
 
 from mpf.core.delays import DelayManager
 
@@ -11,9 +10,10 @@ from mpf.core.platform import LightsPlatform
 
 from mpf.core.device_monitor import DeviceMonitor
 from mpf.core.machine import MachineController
-from mpf.core.rgb_color import RGBColor
+from mpf.core.rgb_color import RGBColor, ColorException
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.platforms.interfaces.light_platform_interface import LightPlatformSoftwareFade
+from mpf.devices.device_mixins import DevicePositionMixin
 
 
 class DriverLight(LightPlatformSoftwareFade):
@@ -38,7 +38,7 @@ class DriverLight(LightPlatformSoftwareFade):
 
 
 @DeviceMonitor(_color="color")
-class Light(SystemWideDevice):
+class Light(SystemWideDevice, DevicePositionMixin):
 
     """A light in a pinball machine."""
 
@@ -101,8 +101,9 @@ class Light(SystemWideDevice):
     def get_hw_numbers(self):
         """Return a list of all hardware driver numbers."""
         numbers = []
-        for driver in self.hw_drivers.values():
-            numbers.append(driver.number)
+        for _, drivers in sorted(self.hw_drivers.items()):
+            for driver in sorted(drivers, key=lambda x: x.number):
+                numbers.append(driver.number)
 
         return numbers
 
@@ -140,7 +141,7 @@ class Light(SystemWideDevice):
                 color_channels, channel_list, self.name
             ))
 
-        channels = {}
+        channels = {}   # type: Dict[str, List[Any]]
         for color_name in color_channels:
             # red channel
             if color_name == 'r':
@@ -588,7 +589,7 @@ class Light(SystemWideDevice):
         elif color == "white":
             brightness = min(corrected_color.red, corrected_color.green, corrected_color.blue) / 255.0
         else:
-            raise AssertionError("Invalid color {}".format(color))
+            raise ColorException("Invalid color {}".format(color))
         return brightness, fade_ms
 
     @property

@@ -2,6 +2,7 @@
 import abc
 
 from mpf.core.config_player import ConfigPlayer
+from mpf.exceptions.ConfigFileError import ConfigFileError
 
 
 class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
@@ -20,12 +21,16 @@ class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
             else:
                 raise AssertionError(
                     "Invalid settings for player {}:{} {}".format(
-                        self.show_section, name, settings))
+                        name, self.show_section, settings))
 
         # settings here are dicts of devices/settings
         for device, device_settings in settings.items():
-            validated_config.update(
-                self._validate_config_item(device, device_settings))
+            try:
+                validated_config.update(
+                    self._validate_config_item(device, device_settings))
+            except ConfigFileError:
+                raise AssertionError("Failed to load config player {}:{} {}".format(
+                    name, self.show_section, settings))
 
         return validated_config
 

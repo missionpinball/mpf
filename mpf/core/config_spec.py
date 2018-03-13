@@ -82,6 +82,8 @@ assets:
     videos:
         width: single|num|None
         height: single|num|None
+        events_when_played: list|str|None
+        events_when_stopped: list|str|None
 auditor:
     __valid_in__: machine
     save_events: list|str|ball_ended
@@ -507,6 +509,11 @@ fast:
     dmd_buffer: single|int|3
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
+    firmware_updates: list|subconfig(fast_firmware_update)|None
+fast_firmware_update:
+    type: single|enum(net,rgb)|
+    file: single|str|
+    version: single|str|
 file_shows:
     __valid_in__: machine, mode                      # todo add to validator
 flasher_player:
@@ -1089,7 +1096,6 @@ show_player:
     events_when_stepped_back: list|str|None
     events_when_updated: list|str|None
     events_when_completed: list|str|None
-    __allow_others__:
 show_pools:
     __valid_in__: machine, mode                      # todo add to validator
 
@@ -1331,6 +1337,9 @@ switches:
     events_when_deactivated: list|str|None
     platform: single|str|None
     platform_settings: single|dict|None
+    x: single|float|None
+    y: single|float|None
+    z: single|float|None
 fast_switches:
     debounce_open: single|str|None
     debounce_close: single|str|None
@@ -1607,7 +1616,6 @@ widgets:
         auto_play: single|bool|True
         end_behavior: single|enum(loop,pause,stop)|stop
         control_events: list|subconfig(video_control_events)|None
-
 video_control_events:
     __valid_in__: None
     action: single|enum(play,pause,stop,seek,volume,position)|

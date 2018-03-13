@@ -170,15 +170,14 @@ class MachineController(LogMixin):
         self.default_platform = None        # type: SmartVirtualHardwarePlatform
 
         self.clock = self._load_clock()
-        self.stop_future = asyncio.Future(loop=self.clock.loop)
+        self.stop_future = asyncio.Future(loop=self.clock.loop)     # type: asyncio.Future
 
     @asyncio.coroutine
-    def initialise(self) -> Generator[int, None, None]:
-        """Initialise machine."""
+    def initialise_core_and_hardware(self) -> Generator[int, None, None]:
+        """Load core modules and hardware."""
         self._boot_holds = set()    # type: Set[str]
         self.is_init_done = asyncio.Event(loop=self.clock.loop)
         self.register_boot_hold('init')
-
         self._load_hardware_platforms()
 
         self._load_core_modules()
@@ -186,12 +185,17 @@ class MachineController(LogMixin):
 
         self._validate_config()
 
-        self._initialize_credit_string()
-
         # This is called so hw platforms have a chance to register for events,
         # and/or anything else they need to do with core modules since
         # they're not set up yet when the hw platforms are constructed.
         yield from self._initialize_platforms()
+
+    @asyncio.coroutine
+    def initialise(self) -> Generator[int, None, None]:
+        """Initialise machine."""
+        yield from self.initialise_core_and_hardware()
+
+        self._initialize_credit_string()
 
         self._register_config_players()
         self._register_system_events()
@@ -271,7 +275,9 @@ class MachineController(LogMixin):
             init_done.append(hardware_platform.initialize())
 
         # wait for all of them in parallel
-        yield from asyncio.wait(init_done, loop=self.clock.loop)
+        results = yield from asyncio.wait(init_done, loop=self.clock.loop)
+        for result in results[0]:
+            result.result()
 
     @asyncio.coroutine
     def _start_platforms(self) -> Generator[int, None, None]:
