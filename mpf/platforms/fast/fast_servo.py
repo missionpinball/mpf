@@ -26,8 +26,12 @@ class FastServo(ServoPlatformInterface):
 
         self.net_connection.send(cmd)
 
+    @staticmethod
     def set_speed(self, speed):
-        return
+        """todo emulate speed parameter"""
+        pass
 
+    @staticmethod
     def set_acceleration(self, accel):
-        return
+        """todo emulate acceleration parameter"""
+        pass

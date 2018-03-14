@@ -353,11 +353,16 @@ class VirtualServo(ServoPlatformInterface):
         """Go to position."""
         self.current_position = position
 
+    @staticmethod
     def set_speed(self, speed):
-        self.speed = speed
+        """todo emulate speed parameter"""
+        pass
 
-    def set_acceleration(self, acceleration):
-        self.acceleration = acceleration
+    @staticmethod
+    def set_acceleration(self, accel):
+        """todo emulate acceleration parameter"""
+        pass
+
 
 class VirtualStepper(StepperPlatformInterface):
 

@@ -87,11 +87,15 @@ class RpiServo(ServoPlatformInterface):
         position_translated = 1000 + position * 1000
         self.platform.send_command(self.platform.pi.set_servo_pulsewidth(self.gpio, position_translated))
 
+    @staticmethod
     def set_speed(self, speed):
-        return
+        """todo emulate speed parameter"""
+        pass
 
+    @staticmethod
     def set_acceleration(self, accel):
-        return
+        """todo emulate acceleration parameter"""
+        pass
 
 
 class RaspberryPiHardwarePlatform(SwitchPlatform, DriverPlatform, ServoPlatform, I2cPlatform):
