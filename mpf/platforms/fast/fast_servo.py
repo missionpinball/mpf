@@ -25,3 +25,9 @@ class FastServo(ServoPlatformInterface):
             Util.int_to_hex_string(position_numeric))
 
         self.net_connection.send(cmd)
+
+    def set_speed(self, speed):
+        return
+
+    def set_acceleration(self, accel):
+        return

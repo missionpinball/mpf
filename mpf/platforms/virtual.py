@@ -346,11 +346,18 @@ class VirtualServo(ServoPlatformInterface):
         self.log = logging.getLogger('VirtualServo')
         self.number = number
         self.current_position = None
+        self.speed = None
+        self.acceleration = None
 
     def go_to_position(self, position):
         """Go to position."""
         self.current_position = position
 
+    def set_speed(self, speed):
+        self.speed = speed
+
+    def set_acceleration(self, acceleration):
+        self.acceleration = acceleration
 
 class VirtualStepper(StepperPlatformInterface):
 

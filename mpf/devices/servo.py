@@ -24,6 +24,8 @@ class Servo(SystemWideDevice):
         self.hw_servo = None
         self.platform = None        # type: ServoPlatform
         self._position = None
+        self.speed = None
+        self.acceleration = None
         self._ball_search_started = False
         self.delay = DelayManager(machine.delayRegistry)
         super().__init__(machine, name)
@@ -38,12 +40,17 @@ class Servo(SystemWideDevice):
 
         self.hw_servo = self.platform.configure_servo(self.config['number'])
         self._position = self.config['reset_position']
+        self.speed = self.config['speed']
+        self.acceleration = self.config['acceleration']
 
         if self.config['include_in_ball_search']:
             self.machine.events.add_handler("ball_search_started",
                                             self._ball_search_start)
             self.machine.events.add_handler("ball_search_stopped",
                                             self._ball_search_stop)
+
+        self.set_speed(self.speed)
+        self.set_acceleration(self.acceleration)
 
     @event_handler(1)
     def reset(self, **kwargs):
@@ -70,6 +77,12 @@ class Servo(SystemWideDevice):
 
         # call platform with calculated position
         self.hw_servo.go_to_position(position)
+
+    def set_speed(self, speed):
+        self.hw_servo.set_speed(speed)
+
+    def set_acceleration(self, acceleration):
+        self.hw_servo.set_acceleration(acceleration)
 
     def _ball_search_start(self, **kwargs):
         del kwargs

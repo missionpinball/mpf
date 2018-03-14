@@ -115,6 +115,7 @@ class PololuServo(ServoPlatformInterface):
             speed: speed to set
 
         """
+        speed = int(speed * 100)  # change normalized values for maestro
         lsb = speed & 0x7f  # 7 bits for least significant byte
         msb = (speed >> 7) & 0x7f  # shift 7 and take next 7 bits for msb
         cmd = self.cmd_header + bytes([0x07, self.number, lsb, msb])
@@ -130,6 +131,7 @@ class PololuServo(ServoPlatformInterface):
         A value of 1 will take the servo about 3s to move between 1ms to 2ms
         range.
         """
+        accel = int(accel * 255)  # change normalized values for maestro
         lsb = accel & 0x7f  # 7 bits for least significant byte
         msb = (accel >> 7) & 0x7f  # shift 7 and take next 7 bits for msb
         cmd = self.cmd_header + bytes([0x09, self.number, lsb, msb])

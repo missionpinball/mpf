@@ -974,6 +974,8 @@ servos:
     servo_max: single|float|1.0
     ball_search_min: single|float|0.0
     ball_search_max: single|float|1.0
+    speed: single|float|0.0
+    acceleration: single|float|0.0
     ball_search_wait: single|ms|5s
     include_in_ball_search: single|bool|True
     reset_position: single|float|0.5

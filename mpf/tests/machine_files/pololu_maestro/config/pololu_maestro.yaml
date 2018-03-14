@@ -15,6 +15,8 @@ servos:
     servo_min: 0.0
     servo_max: 1.0
     reset_position: 0.5
+    speed: 0.5
+    acceleration: 0.5
     reset_events: reset_servo1
     number: 1
   servo2:

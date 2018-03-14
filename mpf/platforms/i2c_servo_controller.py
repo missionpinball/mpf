@@ -101,3 +101,9 @@ class I2cServo(ServoPlatformInterface):
                                  value & 0xFF)
         self.platform.i2c_write8(self.config['address'], 0x09 + self.number * 4,
                                  value >> 8)
+
+    def set_speed(self, speed):
+        return
+
+    def set_acceleration(self, accel):
+        return
