@@ -51,8 +51,8 @@ class LightGroup(SystemWideDevice):
         """Return all lights in group as token."""
         return {'lights': self.lights}
 
-    def _create_light_at_index(self, index, x, y):
-        light = Light(self.machine, self.name + "_light_" + str(index))
+    def _create_light_at_index(self, index, x, y, relative_index):
+        light = Light(self.machine, self.name + "_light_" + str(relative_index))
         tags = [self.name]
         tags.extend(self.config['tags'])
         light_config = copy.deepcopy(self.config['light_template'])
@@ -96,7 +96,8 @@ class LightStrip(LightGroup):
             else:
                 x = y = None
 
-            self._create_light_at_index(index, x, y)
+            relative_index = index - self.config['number_start']
+            self._create_light_at_index(index, x, y, relative_index)
 
 
 class LightRing(LightGroup):
@@ -117,4 +118,5 @@ class LightRing(LightGroup):
             else:
                 x = y = None
 
-            self._create_light_at_index(index, x, y)
+            relative_index = index - self.config['number_start']
+            self._create_light_at_index(index, x, y, relative_index)
