@@ -79,11 +79,11 @@ class Servo(SystemWideDevice):
         self.hw_servo.go_to_position(position)
 
     def set_speed(self, speed):
-        """Set speed parameter"""
+        """Set speed parameter."""
         self.hw_servo.set_speed(speed)
 
     def set_acceleration(self, acceleration):
-        """Set acceleration parameter"""
+        """Set acceleration parameter."""
         self.hw_servo.set_acceleration(acceleration)
 
     def _ball_search_start(self, **kwargs):

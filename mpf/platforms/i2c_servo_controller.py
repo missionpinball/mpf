@@ -102,12 +102,12 @@ class I2cServo(ServoPlatformInterface):
         self.platform.i2c_write8(self.config['address'], 0x09 + self.number * 4,
                                  value >> 8)
 
-    @staticmethod
+    @classmethod
     def set_speed(self, speed):
-        """todo emulate speed parameter"""
+        """Todo emulate speed parameter."""
         pass
 
-    @staticmethod
+    @classmethod
     def set_acceleration(self, accel):
-        """todo emulate acceleration parameter"""
+        """Todo emulate acceleration parameter."""
         pass
