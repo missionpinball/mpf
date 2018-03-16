@@ -883,7 +883,32 @@ playfield_transfers:
     captures_from: single|machine(ball_devices)|
 playlist_player:
     __valid_in__: machine, mode, show
-    action: single|enum(play,stop,advance,restart,set_volume,set_repeat)|play
+    __allow_others__:
+    action: single|enum(play,stop,advance,set_repeat)|play
+playlist_player_actions:
+    play:
+        action: ignore
+        playlist: single|str|
+        volume: single|gain|None
+        crossfade_mode: single|enum(use_track_setting,override,use_playlist_setting)|use_playlist_setting
+        crossfade_time: single|secs|None
+        shuffle: single|bool|None
+        repeat: single|bool|None
+        scope: single|enum(machine,player,use_playlist_setting)|use_playlist_setting
+        events_when_played: list|str|use_playlist_setting
+        events_when_stopped: list|str|use_playlist_setting
+        events_when_looping: list|str|use_playlist_setting
+        events_when_sound_changed: list|str|use_playlist_setting
+        events_when_sound_stopped: list|str|use_playlist_setting
+    stop:
+        action: ignore
+        fade_out: single|secs|0
+    advance:
+        action: ignore
+        none: ignore
+    set_repeat:
+        action: ignore
+        repeat: single|bool|True
 playlists:
     __valid_in__: machine, mode
     crossfade_mode: single|enum(use_track_setting,override)|use_track_setting
