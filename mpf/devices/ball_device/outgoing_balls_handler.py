@@ -89,6 +89,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
 
             if event == eject_queue_future:
                 eject_request = yield from event
+                self._current_target = eject_request.target
                 self.debug_log("Got eject request")
 
                 if eject_request.already_left:
@@ -213,7 +214,6 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         while True:
             # make sure the count is currently valid. process incoming and lost balls
             yield from self.ball_device.ball_count_handler.wait_for_count_is_valid()
-            self._current_target = eject_request.target
 
             # prevent physical races with eject confirm
             if self._current_target.is_playfield() and not self.ball_device.ball_count_handler.is_full:
