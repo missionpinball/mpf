@@ -29,6 +29,14 @@ class BallDeviceStateHandler:
         """Debug log."""
         self.ball_device.debug_log(*args, **kwargs)
 
+    def info_log(self, *args, **kwargs):
+        """Info log."""
+        self.ball_device.info_log(*args, **kwargs)
+
+    def warning_log(self, *args, **kwargs):
+        """Warning log."""
+        self.ball_device.warning_log(*args, **kwargs)
+
     @asyncio.coroutine
     def initialise(self):
         """Initialise handler."""

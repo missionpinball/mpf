@@ -349,7 +349,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
     @asyncio.coroutine
     def _eject_ball(self, eject_request: OutgoingBall, eject_try: int) -> Generator[int, None, bool]:
         # inform the counter that we are ejecting now
-        self.debug_log("Ejecting ball to %s", eject_request.target)
+        self.info_log("Ejecting ball to %s", eject_request.target)
         yield from self._post_ejecting_event(eject_request, eject_try)
         ball_eject_process = yield from self.ball_device.ball_count_handler.start_eject()
         try:
