@@ -53,12 +53,6 @@ class LogMixin(object):
         except AttributeError:
             pass
 
-        if hasattr(self, "config") and "debug" in self.config and self.config["debug"]:
-            self._info_to_file = True
-            self._debug_to_file = True
-            self._info_to_console = True
-            self._debug_to_console = True
-
         # in unit tests always log info. debug will depend on the actual settings.
         if self.unit_test:
             self._info_to_console = True
