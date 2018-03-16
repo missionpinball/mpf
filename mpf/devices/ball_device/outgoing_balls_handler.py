@@ -61,6 +61,11 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             self._incoming_ball_which_may_skip.clear()
             self._no_incoming_ball_which_may_skip.set()
 
+    @property
+    def is_idle(self):
+        """Return true if idle."""
+        return not self._current_target and self._eject_queue.empty()
+
     @asyncio.coroutine
     def wait_for_ready_to_receive(self):
         """Wait until the outgoing balls handler is ready to receive."""
@@ -74,6 +79,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
     def _run(self):
         """Wait for eject queue."""
         while True:
+            self._current_target = None
             self.ball_device.set_eject_state("idle")
             self.debug_log("Waiting for eject request.")
             eject_queue_future = Util.ensure_future(self._eject_queue.get(), loop=self.machine.clock.loop)
