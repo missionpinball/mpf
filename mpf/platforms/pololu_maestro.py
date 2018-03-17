@@ -1,8 +1,8 @@
 """Pololu Maestro servo controller platform."""
+import math
 import asyncio
 import logging
 import serial
-import math
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 
 from mpf.core.platform import ServoPlatform
@@ -146,8 +146,8 @@ class PololuServo(ServoPlatformInterface):
             maestro_acceleration_normalized = 1  # minimum acceleration setting
         else:
             max_speed_change_per_second = math.sqrt(acceleration_limit * self.config['servo_max'])
-            maestro_acceleration_limit = self.calculate_maestro_acceleration_limit(max_speed_change_per_second)
-            max_limit_value = self.calculate_maestro_acceleration_limit(math.sqrt(1.0 * self.config['servo_max']))
+            maestro_acceleration_limit = calculate_maestro_acceleration(max_speed_change_per_second)
+            max_limit_value = calculate_maestro_acceleration(math.sqrt(1.0 * self.config['servo_max']))
             maestro_acceleration_normalized = int(255 / max_limit_value * maestro_acceleration_limit)
 
         lsb = maestro_acceleration_normalized & 0x7f  # 7 bits for least significant byte
@@ -155,6 +155,8 @@ class PololuServo(ServoPlatformInterface):
         cmd = self.cmd_header + bytes([0x09, self.number, lsb, msb])
         self.serial.write(cmd)
 
-    def calculate_maestro_acceleration_limit(self, normalized_limit):
-        """Calculate acceleration limit for the maestro based on the formula 0.25microseconds/10milliseconds/80milliseconds."""
-        return normalized_limit / 1000 / 0.25 / 80
+
+def calculate_maestro_acceleration(normalized_limit):
+    """Calculate acceleration limit for the maestro
+     based on the formula 0.25microseconds/10milliseconds/80milliseconds."""
+    return normalized_limit / 1000 / 0.25 / 80
