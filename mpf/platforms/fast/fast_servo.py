@@ -25,3 +25,13 @@ class FastServo(ServoPlatformInterface):
             Util.int_to_hex_string(position_numeric))
 
         self.net_connection.send(cmd)
+
+    @classmethod
+    def set_speed_limit(cls, speed_limit):
+        """Todo emulate speed parameter."""
+        pass
+
+    @classmethod
+    def set_acceleration_limit(cls, acceleration_limit):
+        """Todo emulate acceleration parameter."""
+        pass
