@@ -47,6 +47,7 @@ class OPPLightChannel(LightPlatformSoftwareFade):
 
     """A channel of a WS2812 LED."""
 
+    # pylint: disable-msg=too-many-arguments
     def __init__(self, chain_serial, led, index, hardware_fade_ms, loop):
         """Initialise led channel."""
         super().__init__("{}-{}-{}".format(chain_serial, led.number, index), loop, hardware_fade_ms)
