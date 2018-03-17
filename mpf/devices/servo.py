@@ -24,8 +24,8 @@ class Servo(SystemWideDevice):
         self.hw_servo = None
         self.platform = None        # type: ServoPlatform
         self._position = None
-        self.speed = None
-        self.acceleration = None
+        self.speed_limit = None
+        self.acceleration_limit = None
         self._ball_search_started = False
         self.delay = DelayManager(machine.delayRegistry)
         super().__init__(machine, name)
@@ -40,8 +40,8 @@ class Servo(SystemWideDevice):
 
         self.hw_servo = self.platform.configure_servo(self.config['number'])
         self._position = self.config['reset_position']
-        self.speed = self.config['speed']
-        self.acceleration = self.config['acceleration']
+        self.speed_limit = self.config['speed_limit']
+        self.acceleration_limit = self.config['acceleration_limit']
 
         if self.config['include_in_ball_search']:
             self.machine.events.add_handler("ball_search_started",
@@ -49,8 +49,8 @@ class Servo(SystemWideDevice):
             self.machine.events.add_handler("ball_search_stopped",
                                             self._ball_search_stop)
 
-        self.set_speed(self.speed)
-        self.set_acceleration(self.acceleration)
+        self.set_speed_limit(self.speed_limit)
+        self.set_acceleration_limit(self.acceleration_limit)
 
     @event_handler(1)
     def reset(self, **kwargs):
@@ -78,13 +78,13 @@ class Servo(SystemWideDevice):
         # call platform with calculated position
         self.hw_servo.go_to_position(position)
 
-    def set_speed(self, speed):
+    def set_speed_limit(self, speed_limit):
         """Set speed parameter."""
-        self.hw_servo.set_speed(speed)
+        self.hw_servo.set_speed_limit(speed_limit)
 
-    def set_acceleration(self, acceleration):
+    def set_acceleration_limit(self, acceleration_limit):
         """Set acceleration parameter."""
-        self.hw_servo.set_acceleration(acceleration)
+        self.hw_servo.set_acceleration_limit(acceleration_limit)
 
     def _ball_search_start(self, **kwargs):
         del kwargs

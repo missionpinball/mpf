@@ -2,6 +2,7 @@
 import asyncio
 import logging
 import serial
+import math
 from mpf.platforms.interfaces.servo_platform_interface import ServoPlatformInterface
 
 from mpf.core.platform import ServoPlatform
@@ -100,7 +101,7 @@ class PololuServo(ServoPlatformInterface):
             self.log.debug("Sending cmd: %s", "".join(" 0x%02x" % b for b in cmd))
         self.serial.write(cmd)
 
-    def set_speed(self, speed):
+    def set_speed_limit(self, speed_limit):
         """Set the speed of the channel.
 
         Speed is measured as 0.25microseconds/10milliseconds
@@ -112,27 +113,48 @@ class PololuServo(ServoPlatformInterface):
         Speed of 0 is unrestricted.
 
         Args:
-            speed: speed to set
+            speed_limit: speed_limit to set
 
         """
-        speed = int(speed * 100)  # change normalized values for maestro
-        lsb = speed & 0x7f  # 7 bits for least significant byte
-        msb = (speed >> 7) & 0x7f  # shift 7 and take next 7 bits for msb
+        if speed_limit == -1.0:
+            maestro_speed_limit = 0  # 0 is unrestricted for the maestro
+        elif speed_limit == 0:
+            maestro_speed_limit = 1  # minimum speed setting
+        else:
+            max_pos_change_per_second = speed_limit * self.config['servo_max']  # change normalized values for maestro
+            maestro_speed_limit = int(max_pos_change_per_second / 1000 / 0.25)
+
+        lsb = maestro_speed_limit & 0x7f  # 7 bits for least significant byte
+        msb = (maestro_speed_limit >> 7) & 0x7f  # shift 7 and take next 7 bits for msb
         cmd = self.cmd_header + bytes([0x07, self.number, lsb, msb])
         self.serial.write(cmd)
 
-    def set_acceleration(self, accel):
+    def set_acceleration_limit(self, acceleration_limit):
         """Set acceleration of channel.
 
         This provide soft starts and finishes when servo moves to target
         position.
 
         Valid values are from 0 to 255. 0=unrestricted, 1 is slowest start.
+        It is measured in units of 0.25microseconds/10milliseconds/80milliseconds
         A value of 1 will take the servo about 3s to move between 1ms to 2ms
         range.
         """
-        accel = int(accel * 255)  # change normalized values for maestro
-        lsb = accel & 0x7f  # 7 bits for least significant byte
-        msb = (accel >> 7) & 0x7f  # shift 7 and take next 7 bits for msb
+        if acceleration_limit == -1.0:
+            maestro_acceleration_normalized = 0  # 0 is unrestricted for the maestro
+        elif acceleration_limit == 0:
+            maestro_acceleration_normalized = 1  # minimum acceleration setting
+        else:
+            max_speed_change_per_second = math.sqrt(acceleration_limit * self.config['servo_max'])
+            maestro_acceleration_limit = self.calculate_maestro_acceleration_limit(max_speed_change_per_second)
+            max_limit_value = self.calculate_maestro_acceleration_limit(math.sqrt(1.0 * self.config['servo_max']))
+            maestro_acceleration_normalized = int(255 / max_limit_value * maestro_acceleration_limit)
+
+        lsb = maestro_acceleration_normalized & 0x7f  # 7 bits for least significant byte
+        msb = (maestro_acceleration_normalized >> 7) & 0x7f  # shift 7 and take next 7 bits for msb
         cmd = self.cmd_header + bytes([0x09, self.number, lsb, msb])
         self.serial.write(cmd)
+
+    def calculate_maestro_acceleration_limit(self, normalized_limit):
+        """Calculate acceleration limit for the maestro based on the formula 0.25microseconds/10milliseconds/80milliseconds."""
+        return normalized_limit / 1000 / 0.25 / 80

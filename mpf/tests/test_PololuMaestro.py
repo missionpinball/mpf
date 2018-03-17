@@ -53,27 +53,30 @@ class TestPololuMaestro(MpfTestCase):
 
     def test_servo_set_speed(self):
         # test setting speed in config
-        self.assertEqual(0.5, self.machine.servos.servo1.speed)
+        self.assertEqual(0.5, self.machine.servos.servo1.speed_limit)
         # test standard value
-        self.assertEqual(0.0, self.machine.servos.servo2.speed)
+        self.assertEqual(-1.0, self.machine.servos.servo2.speed_limit)
 
-        self.machine.servos.servo1.set_speed(0.0)
+        self.machine.servos.servo1.set_speed_limit(-1.0)
         self.serial.write.assert_called_with(self._build_message(0x07, 1, 0))
-        self.machine.servos.servo1.set_speed(0.5)
-        self.serial.write.assert_called_with(self._build_message(0x07, 1, 50))
-        self.machine.servos.servo1.set_speed(2.0)
-        self.serial.write.assert_called_with(self._build_message(0x07, 1, 200))
+        self.machine.servos.servo1.set_speed_limit(0.0)
+        self.serial.write.assert_called_with(self._build_message(0x07, 1, 1))
+        self.machine.servos.servo1.set_speed_limit(0.5)
+        self.serial.write.assert_called_with(self._build_message(0x07, 1, 18))
+        self.machine.servos.servo1.set_speed_limit(1.0)
 
     def test_servo_set_acceleration(self):
         # test setting acceleration in config
-        self.assertEqual(0.5, self.machine.servos.servo1.acceleration)
+        self.assertEqual(0.5, self.machine.servos.servo1.acceleration_limit)
         # test standard value
-        self.assertEqual(0.0, self.machine.servos.servo2.acceleration)
+        self.assertEqual(-1.0, self.machine.servos.servo2.acceleration_limit)
 
-        self.machine.servos.servo1.set_acceleration(0.0)
-        self.serial.write.assert_called_with(self._build_message(0x09, 1, 0))
-        self.machine.servos.servo1.set_acceleration(0.5)
-        self.serial.write.assert_called_with(self._build_message(0x09, 1, 127))
-        self.machine.servos.servo1.set_acceleration(1.0)
+        self.machine.servos.servo1.set_speed_limit(-1.0)
+        self.serial.write.assert_called_with(self._build_message(0x07, 1, 0))
+        self.machine.servos.servo1.set_speed_limit(0.0)
+        self.serial.write.assert_called_with(self._build_message(0x07, 1, 1))
+        self.machine.servos.servo1.set_acceleration_limit(0.5)
+        self.serial.write.assert_called_with(self._build_message(0x09, 1, 180))
+        self.machine.servos.servo1.set_acceleration_limit(1.0)
         self.serial.write.assert_called_with(self._build_message(0x09, 1, 255))
 
