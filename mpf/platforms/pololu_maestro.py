@@ -157,6 +157,5 @@ class PololuServo(ServoPlatformInterface):
 
 
 def calculate_maestro_acceleration(normalized_limit):
-    """Calculate acceleration limit for the maestro
-     based on the formula 0.25microseconds/10milliseconds/80milliseconds."""
+    """Calculate acceleration limit for the maestro."""
     return normalized_limit / 1000 / 0.25 / 80
