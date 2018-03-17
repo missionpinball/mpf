@@ -138,6 +138,7 @@ class ScoreReel(SystemWideDevice):
 
     @asyncio.coroutine
     def _run(self):
+        yield from self.machine.events.wait_for_event("init_phase_3")
         self.check_hw_switches()
         while True:
             yield from self._busy.wait()
@@ -146,7 +147,15 @@ class ScoreReel(SystemWideDevice):
 
     @asyncio.coroutine
     def _advance_reel(self):
-        self.log.debug("Advancing reel to value %s, current value %s", self._destination_value, self.assumed_value)
+        # check if there is any need to do something
+        if self._destination_value == self.assumed_value:
+            self.log.debug("Reel is already at value %s (will not move)", self._destination_value)
+            self._busy.clear()
+            self._ready.set()
+            return
+
+        self.log.debug("Advancing reel to value %s (current value: %s repeat_pulse_time: %sms)",
+                       self._destination_value, self.assumed_value, self.config['repeat_pulse_time'])
         while self._destination_value != self.assumed_value:
             wait_ms = self.config['coil_inc'].pulse(max_wait_ms=500)
             previous_value = self.assumed_value
@@ -158,7 +167,11 @@ class ScoreReel(SystemWideDevice):
             self.check_hw_switches()
 
             if previous_value != self.assumed_value and self.assumed_value > 0:
-                self.machine.events.post('reel_' + self.name + "_advance")
+                self.machine.events.post('reel_{}_advance'.format(self.name))
+                '''event: reel_(name)_advance
+
+                desc: The reel (name) advanced to the next position.
+                '''
             self.log.debug("Assumed value: %s", self.assumed_value)
 
         self._busy.clear()

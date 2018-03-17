@@ -16,6 +16,9 @@ lights:
     number: 1
     default_on_color: red
     debug: True
+    x: 0.4
+    y: 0.5
+    z: 0
   led2:
     channels:
       red:
@@ -25,6 +28,8 @@ lights:
       blue:
         number: 2
     debug: True
+    x: 0.6
+    y: 0.7
   led_bgr_2:
     type: bgr
     number: 42

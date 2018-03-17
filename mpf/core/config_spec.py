@@ -82,6 +82,8 @@ assets:
     videos:
         width: single|num|None
         height: single|num|None
+        events_when_played: list|str|None
+        events_when_stopped: list|str|None
 auditor:
     __valid_in__: machine
     save_events: list|str|ball_ended
@@ -507,6 +509,11 @@ fast:
     dmd_buffer: single|int|3
     console_log: single|enum(none,basic,full)|none
     file_log: single|enum(none,basic,full)|basic
+    firmware_updates: list|subconfig(fast_firmware_update)|None
+fast_firmware_update:
+    type: single|enum(net,rgb)|
+    file: single|str|
+    version: single|str|
 file_shows:
     __valid_in__: machine, mode                      # todo add to validator
 flasher_player:
@@ -874,6 +881,47 @@ playfield_transfers:
     transfer_events: dict|str:ms|None
     eject_target: single|machine(ball_devices)|
     captures_from: single|machine(ball_devices)|
+playlist_player:
+    __valid_in__: machine, mode, show
+    __allow_others__:
+    action: single|enum(play,stop,advance,set_repeat)|play
+playlist_player_actions:
+    play:
+        action: ignore
+        playlist: single|str|
+        volume: single|gain|None
+        crossfade_mode: single|enum(use_track_setting,override,use_playlist_setting)|use_playlist_setting
+        crossfade_time: single|secs|None
+        shuffle: single|bool|None
+        repeat: single|bool|None
+        scope: single|enum(machine,player,use_playlist_setting)|use_playlist_setting
+        events_when_played: list|str|use_playlist_setting
+        events_when_stopped: list|str|use_playlist_setting
+        events_when_looping: list|str|use_playlist_setting
+        events_when_sound_changed: list|str|use_playlist_setting
+        events_when_sound_stopped: list|str|use_playlist_setting
+    stop:
+        action: ignore
+        fade_out: single|secs|0
+    advance:
+        action: ignore
+        none: ignore
+    set_repeat:
+        action: ignore
+        repeat: single|bool|True
+playlists:
+    __valid_in__: machine, mode
+    crossfade_mode: single|enum(use_track_setting,override)|use_track_setting
+    crossfade_time: single|secs|0
+    shuffle: single|bool|False
+    repeat: single|bool|False
+    scope: single|enum(machine,player)|machine
+    sounds: list|str|
+    events_when_played: list|str|None
+    events_when_stopped: list|str|None
+    events_when_looping: list|str|None
+    events_when_sound_changed: list|str|None
+    events_when_sound_stopped: list|str|None
 plugins:
     __valid_in__: machine                      # todo add to validator
 pololu_maestro:
@@ -1073,7 +1121,6 @@ show_player:
     events_when_stepped_back: list|str|None
     events_when_updated: list|str|None
     events_when_completed: list|str|None
-    __allow_others__:
 show_pools:
     __valid_in__: machine, mode                      # todo add to validator
 
@@ -1191,10 +1238,12 @@ sound_player:
     start_at: single|secs|None
     fade_in: single|secs|None
     fade_out: single|secs|None
+    about_to_finish_time: single|secs|-1
     max_queue_time: single|secs|-1
     events_when_played: list|str|use_sound_setting
     events_when_stopped: list|str|use_sound_setting
     events_when_looping: list|str|use_sound_setting
+    events_when_about_to_finish: list|str|use_sound_setting
     mode_end_action: single|enum(stop,stop_looping,use_sound_setting)|use_sound_setting
     key: single|str|None
 sound_pools:
@@ -1208,10 +1257,10 @@ sound_system:
     master_volume: single|gain|0.5
     tracks:
         common:
-            type: single|enum(standard,sound_loop)|standard
+            type: single|enum(standard,sound_loop,playlist)|standard
             volume: single|gain|0.5
             events_when_played: list|str|None
-            events_when_stopped: list|str|None
+            events6_when_stopped: list|str|None
             events_when_paused: list|str|None
             events_when_resumed: list|str|None
             ducking:
@@ -1225,6 +1274,8 @@ sound_system:
             simultaneous_sounds: single|int|8
         sound_loop:
             max_layers: single|int|8
+        playlist:
+            crossfade_time: single|secs|0
 sounds:
     __valid_in__: machine, mode
     file: single|str|None
@@ -1236,12 +1287,14 @@ sounds:
     start_at: single|secs|0
     fade_in: single|secs|0
     fade_out: single|secs|0
+    about_to_finish_time: single|secs|None
     max_queue_time: single|secs|None
     simultaneous_limit: single|int|None
     stealing_method: single|enum(skip,oldest,newest)|oldest
     events_when_played: list|str|None
     events_when_stopped: list|str|None
     events_when_looping: list|str|None
+    events_when_about_to_finish: list|str|None
     mode_end_action: single|enum(stop,stop_looping)|stop_looping
     key: single|str|None
     markers: ignore                                 # todo add subconfig
@@ -1312,6 +1365,9 @@ switches:
     events_when_deactivated: list|str|None
     platform: single|str|None
     platform_settings: single|dict|None
+    x: single|float|None
+    y: single|float|None
+    z: single|float|None
 fast_switches:
     debounce_open: single|str|None
     debounce_close: single|str|None
@@ -1588,7 +1644,6 @@ widgets:
         auto_play: single|bool|True
         end_behavior: single|enum(loop,pause,stop)|stop
         control_events: list|subconfig(video_control_events)|None
-
 video_control_events:
     __valid_in__: None
     action: single|enum(play,pause,stop,seek,volume,position)|

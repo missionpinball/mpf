@@ -27,6 +27,7 @@ The MPF project homepage is here : http://missionpinball.org
 [![Build Status](https://travis-ci.org/missionpinball/mpf.svg?branch=dev)](https://travis-ci.org/missionpinball/mpf)
 [![Build status](https://ci.appveyor.com/api/projects/status/ir15w3bo3kq19na1?svg=true)](https://ci.appveyor.com/project/toomanybrians/mpf)
 [![Code Health](https://landscape.io/github/missionpinball/mpf/dev/landscape.svg?style=flat)](https://landscape.io/github/missionpinball/mpf/dev)
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/1687/badge)](https://bestpractices.coreinfrastructure.org/projects/1687)
 
 
 Installation, Documentation, and Examples

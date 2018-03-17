@@ -20,8 +20,9 @@ class AsyncMode(Mode, metaclass=abc.ABCMeta):
 
         self._task = None   # type: asyncio.Task
 
-    def _started(self) -> None:
+    def _started(self, **kwargs) -> None:
         """Start main task."""
+        del kwargs
         super()._started()
 
         self._task = self.machine.clock.loop.create_task(self._run())

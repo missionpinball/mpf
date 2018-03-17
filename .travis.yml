@@ -53,23 +53,17 @@ install:
       pip3 install --upgrade pip;
       pip3 install .;
   fi;
-- pip3 install packaging coveralls coverage setuptools --upgrade
 
 script:
 - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
     docker run -v $PWD:$PWD -w $PWD $LINUX /bin/sh -c "_mpf_installer/install-mpf-dependencies && pip3 install --upgrade coveralls && pip3 install prospector[with_pyroma] && pip3 install . && export PYTHONPATH=$PYTHONPATH:$(pwd):$(pwd)/_mpf-mc && prospector && coverage3 run --concurrency=thread -m unittest discover -s mpf/tests;";
   fi;
 - if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
+      export PYTHONPATH=$PYTHONPATH:$(pwd)/_mpf-mc;
       python3 -m unittest discover mpf/tests;
   fi;
 
-before_script:
-- if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
-      export PYTHONPATH=$PYTHONPATH:$(pwd)/_mpf-mc;
-  fi;
-
 after_success:
-
 - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
       coveralls;
   fi;

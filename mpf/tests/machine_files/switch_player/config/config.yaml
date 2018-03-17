@@ -3,8 +3,13 @@
 switches:
     s_test1:
         number:
+        x: 0.4
+        y: 0.5
+        z: 0
     s_test2:
         number:
+        x: 0.6
+        y: 0.7
     s_test3:
         number:
 

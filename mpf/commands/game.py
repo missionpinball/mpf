@@ -96,13 +96,14 @@ class Command(object):
 
         parser.add_argument("-v",
                             action="store_const", dest="loglevel",
-                            const=10,
-                            default=11,
+                            const=logging.DEBUG,
+                            default=logging.INFO,
                             help="Enables verbose logging to the"
                                  " log file")
 
         parser.add_argument("-V",
-                            action="store_true", dest="consoleloglevel",
+                            action="store_const", dest="consoleloglevel",
+                            const=logging.DEBUG,
                             default=logging.INFO,
                             help="Enables verbose logging to the console. Do "
                                  "NOT on "

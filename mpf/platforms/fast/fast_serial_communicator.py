@@ -65,7 +65,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
         self.send_queue = asyncio.Queue(loop=platform.machine.clock.loop)
 
-        super().__init__(platform, port, baud, True)
+        super().__init__(platform, port, baud)
 
     def stop(self):
         """Stop and shut down this serial connection."""
@@ -180,9 +180,16 @@ class FastSerialCommunicator(BaseSerialCommunicator):
         If so, queries the IO boards to log them and make sure they're the  proper firmware version.
         """
         # reset CPU early
-        self.platform.debug_log('Resetting NET CPU.')
-        self.writer.write('BL:AA55\r'.encode())
-        yield from asyncio.sleep(4, loop=self.machine.clock.loop)
+        if StrictVersion(self.remote_firmware) >= StrictVersion("1.03"):
+            self.platform.debug_log('Resetting NET CPU.')
+            self.writer.write('BC:\r'.encode())
+            msg = ''
+            while not msg.startswith('!B:02\r'):
+                msg = (yield from self.readuntil(b'\r')).decode()
+            if not msg.startswith('!B:'):
+                self.platform.log.warning("Got unexpected message from FAST: {}".format(msg))
+        else:
+            self.platform.log.warning("Not resetting FAST NET because firmware is currently broken.")
 
         self.platform.debug_log('Reading all switches.')
         self.writer.write('SA:\r'.encode())

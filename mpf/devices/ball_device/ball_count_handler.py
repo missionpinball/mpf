@@ -216,24 +216,32 @@ class BallCountHandler(BallDeviceStateHandler):
                     for _ in range(new_balls - old_ball_count):
                         yield from self.ball_device.incoming_balls_handler.ball_arrived()
                 elif new_balls < old_ball_count:
-                    if self.ball_device.config['mechanical_eject']:
-                        self._set_ball_count(new_balls)
-                        yield from self.ball_device.handle_mechanial_eject_during_idle()
-                    else:
-                        try:
-                            yield from asyncio.wait_for(self.counter.wait_for_ball_activity(),
-                                                        loop=self.machine.clock.loop,
-                                                        timeout=self.ball_device.config['idle_missing_ball_timeout'])
-                        except asyncio.TimeoutError:
-                            self.debug_log("BCH: Lost %s balls", old_ball_count - new_balls)
-                            self._set_ball_count(new_balls)
-                            for _ in range(old_ball_count - new_balls):
-                                yield from self.ball_device.lost_idle_ball()
-                        else:
-                            self._revalidate.set()
+                    yield from self._handle_missing_balls(new_balls, old_ball_count - new_balls)
 
             self._is_counting.release()
             self._count_valid.set()
+
+    @asyncio.coroutine
+    def _handle_missing_balls(self, new_balls, missing_balls):
+        if self.ball_device.outgoing_balls_handler.is_idle:
+            if self.ball_device.config['mechanical_eject']:
+                self.debug_log("BCH: Lost %s balls. Assuming mechanical eject.", missing_balls)
+                self._set_ball_count(new_balls)
+                yield from self.ball_device.handle_mechanial_eject_during_idle()
+            else:
+                try:
+                    yield from asyncio.wait_for(self.counter.wait_for_ball_activity(),
+                                                loop=self.machine.clock.loop,
+                                                timeout=self.ball_device.config['idle_missing_ball_timeout'])
+                except asyncio.TimeoutError:
+                    self.debug_log("BCH: Lost %s balls", missing_balls)
+                    self._set_ball_count(new_balls)
+                    for _ in range(missing_balls):
+                        yield from self.ball_device.lost_idle_ball()
+                else:
+                    self._revalidate.set()
+        else:
+            self.debug_log("Lost ball %s balls between ejects. Ignoring.", missing_balls)
 
     @asyncio.coroutine
     def wait_for_count_is_valid(self):

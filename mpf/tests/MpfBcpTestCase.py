@@ -21,7 +21,7 @@ class MockBcpClient(BaseBcpClient):
         super().__init__(machine, name, bcp)
         self.name = name
         self.receive_queue = asyncio.Queue(loop=self.machine.clock.loop)
-        self.send_queue = []
+        self.send_queue = asyncio.Queue(loop=self.machine.clock.loop)
 
     @asyncio.coroutine
     def connect(self, config):
@@ -41,9 +41,61 @@ class MockBcpClient(BaseBcpClient):
             return
         if bcp_command == "error":
             raise AssertionError("Got bcp error")
-        self.send_queue.append((bcp_command, bcp_command_args))
+        self.send_queue.put_nowait((bcp_command, bcp_command_args))
 
     def stop(self):
+        pass
+
+
+class MockExternalBcpClient(BaseBcpClient):
+
+    """Connected BCP instance."""
+
+    def __init__(self, mock_bcp_client):
+        """Initialise virtual external bcp client."""
+        self.module_name = "BCPClient"
+        self.config_name = "bcp_client"
+        super().__init__(mock_bcp_client.machine, mock_bcp_client.name, mock_bcp_client.bcp)
+        self.mock_bcp_client = mock_bcp_client  # type: MockBcpClient
+
+    def send(self, bcp_command, kwargs):
+        """Send to mock."""
+        self.mock_bcp_client.receive_queue.put_nowait((bcp_command, kwargs))
+
+    @asyncio.coroutine
+    def connect(self, config):
+        """Do not call."""
+        raise AssertionError("Do not call")
+
+    def accept_connection(self, receiver, sender):
+        """Do not call."""
+        raise AssertionError("Do not call")
+
+    def read_message(self):
+        """Read from mock client."""
+        return self.mock_bcp_client.send_queue.get()
+
+    @asyncio.coroutine
+    def wait_for_response(self, bcp_command):
+        """Wait for a command and ignore all others."""
+        while True:
+            cmd, args = yield from self.read_message()
+            if cmd == "reset":
+                self.send("reset_complete", {})
+                continue
+            if cmd == bcp_command:
+                return cmd, args
+
+    def reset_and_return_queue(self):
+        """Clear queue."""
+        queue = []
+        while not self.mock_bcp_client.send_queue.empty():
+            queue.append(self.mock_bcp_client.send_queue.get_nowait())
+
+        return queue
+
+    def stop(self):
+        """Do not call."""
         pass
 
 
@@ -53,6 +105,8 @@ class MpfBcpTestCase(MpfTestCase):
 
     def __init__(self, methodName='runTest'):
         super().__init__(methodName)
+        self._bcp_client = None             # type: MockBcpClient
+        self._bcp_external_client = None    # type: MockExternalBcpClient
 
         # use bcp mock
         self.machine_config_patches['bcp'] = \
@@ -64,3 +118,4 @@ class MpfBcpTestCase(MpfTestCase):
     def setUp(self):
         super().setUp()
         self._bcp_client = self.machine.bcp.transport.get_named_client("local_display")
+        self._bcp_external_client = MockExternalBcpClient(self._bcp_client)
