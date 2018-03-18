@@ -263,6 +263,11 @@ class MachineController(LogMixin):
         """Cleanup after init and remove boot holds."""
         del kwargs
         ConfigValidator.unload_config_spec()
+        self.events.remove_all_handlers_for_event("init_phase_1")
+        self.events.remove_all_handlers_for_event("init_phase_2")
+        self.events.remove_all_handlers_for_event("init_phase_3")
+        self.events.remove_all_handlers_for_event("init_phase_4")
+        self.events.remove_all_handlers_for_event("init_phase_5")
 
         self.clear_boot_hold('init')
 
