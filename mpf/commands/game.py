@@ -97,17 +97,16 @@ class Command(object):
         parser.add_argument("-v",
                             action="store_const", dest="loglevel",
                             const=logging.DEBUG,
-                            default=logging.INFO,
+                            default=11,
                             help="Enables verbose logging to the"
                                  " log file")
 
         parser.add_argument("-V",
                             action="store_const", dest="consoleloglevel",
                             const=logging.DEBUG,
-                            default=logging.INFO,
+                            default=11,
                             help="Enables verbose logging to the console. Do "
-                                 "NOT on "
-                                 "Windows platforms. Must also use -v for "
+                                 "NOTE: On Windows platforms you must also use -v for "
                                  "this to work.")
 
         parser.add_argument("-x",
