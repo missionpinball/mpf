@@ -38,10 +38,6 @@ class DeviceManager(MpfController):
                                         self.create_machinewide_device_control_events,
                                         priority=2)
 
-        self.machine.events.add_handler('init_phase_2',
-                                        self.create_collection_control_events,
-                                        priority=1)
-
     def get_monitorable_devices(self):
         """Return all devices which are registered as monitorable."""
         return self._monitorable_devices
@@ -277,23 +273,6 @@ class DeviceManager(MpfController):
                     event=event,
                     handler=method,
                     priority=int(priority))
-
-    def create_collection_control_events(self, **kwargs):
-        """Create control events for collection."""
-        del kwargs
-        for collection, events in iter(self.machine.config['mpf']['device_collection_control_events'].items()):
-
-            for event in events:
-                event_name = collection + '_' + event
-                self.machine.events.add_handler(event_name,
-                                                self._collection_control_event_handler,
-                                                collection=collection,
-                                                method=event)
-
-    def _collection_control_event_handler(self, collection, method, **kwargs):
-        del kwargs
-        for device in self.collections[collection]:
-            getattr(device, method)()
 
     def _control_event_handler(self, callback, ms_delay, delay_mgr=None, **kwargs):
         del kwargs

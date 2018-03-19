@@ -777,7 +777,6 @@ mpf:
     plugins: ignore
     platforms: ignore
     paths: ignore
-    device_collection_control_events: ignore
 mpf-mc:
     __valid_in__: machine                           # todo add to validator
 multiballs:

@@ -124,24 +124,6 @@ mpf:
 
     allow_invalid_config_sections: false
 
-    device_collection_control_events:
-        autofires:
-            - enable
-            - disable
-        ball_devices:
-            - stop
-            - eject_all
-        coils:
-            - disable
-        flippers:
-            - enable
-            - disable
-        lights:
-            - "off"
-        gi:
-            - enable
-            - disable
-
 # Default settings for machines. All can be overridden
 
 logging:
