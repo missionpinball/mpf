@@ -148,12 +148,17 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         """Post an event to notify about changes."""
         del kwargs
         value = self._state.value
-        self.machine.events.post("logicblock_{}_updated".format(self.name), value=value)
+        enabled = self._state.enabled
+        self.machine.events.post("logicblock_{}_updated".format(self.name), value=value, enabled=enabled)
         '''event: logicblock_(name)_updated
 
         desc: The logic block called "name" has changed.
 
         This might happen when the block advanced, it was resetted or restored.
+        
+        args:
+        value: The current value of this block.
+        enabled: Whatever this block is enabled or not.
         '''
 
     def enable(self, **kwargs):

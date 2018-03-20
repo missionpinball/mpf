@@ -27,7 +27,8 @@ class OPPIncandCard(object):
         for index in range(0, 32):
             if ((1 << index) & mask) != 0:
                 number = self.cardNum + '-' + str(index)
-                incand_dict[chain_serial + '-' + number] = OPPIncand(self, number, hardware_fade_ms, machine.clock.loop)
+                incand_dict[chain_serial + '-' + number] = OPPIncand(self, chain_serial + '-' + number,
+                                                                     hardware_fade_ms, machine.clock.loop)
 
 
 class OPPIncand(LightPlatformSoftwareFade):
@@ -45,7 +46,7 @@ class OPPIncand(LightPlatformSoftwareFade):
         Args:
             brightness: brightness 0 (off) to 255 (on) for this incandescent light. OPP only supports on (>0) or off.
         """
-        _, incand = self.number.split("-")
+        _, _, incand = self.number.split("-")
         curr_bit = (1 << int(incand))
         if brightness == 0:
             self.incandCard.newState &= ~curr_bit

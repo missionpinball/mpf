@@ -30,8 +30,8 @@ class OPPNeopixelCard(object):
         if self.cardNum + '-' + str(pixel_number) not in neo_dict:
             self.add_neopixel(pixel_number, neo_dict)
 
-        return OPPLightChannel(neo_dict[self.cardNum + '-' + str(pixel_number)], int(index), hardware_fade_ms,
-                               self.platform.machine.clock.loop)
+        return OPPLightChannel(self.chain_serial, neo_dict[self.cardNum + '-' + str(pixel_number)], int(index),
+                               hardware_fade_ms, self.platform.machine.clock.loop)
 
     def add_neopixel(self, number, neo_dict):
         """Add a LED channel."""
@@ -47,9 +47,10 @@ class OPPLightChannel(LightPlatformSoftwareFade):
 
     """A channel of a WS2812 LED."""
 
-    def __init__(self, led, index, hardware_fade_ms, loop):
+    # pylint: disable-msg=too-many-arguments
+    def __init__(self, chain_serial, led, index, hardware_fade_ms, loop):
         """Initialise led channel."""
-        super().__init__("{}-{}".format(led.number, index), loop, hardware_fade_ms)
+        super().__init__("{}-{}-{}".format(chain_serial, led.number, index), loop, hardware_fade_ms)
         self.led = led
         self.index = index
 

@@ -8,7 +8,6 @@ from mpf.commands import game, migrate, both
 class TestCommands(TestCase):
 
     def test_game(self):
-        return
         with patch("mpf.commands.game.logging"):
             with patch("mpf.commands.game.os"):
                 with patch("mpf.commands.game.sys") as sys:

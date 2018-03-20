@@ -777,7 +777,6 @@ mpf:
     plugins: ignore
     platforms: ignore
     paths: ignore
-    device_collection_control_events: ignore
 mpf-mc:
     __valid_in__: machine                           # todo add to validator
 multiballs:
@@ -1015,6 +1014,8 @@ servos:
     servo_max: single|float|1.0
     ball_search_min: single|float|0.0
     ball_search_max: single|float|1.0
+    speed_limit: single|float|-1.0
+    acceleration_limit: single|float|-1.0
     ball_search_wait: single|ms|5s
     include_in_ball_search: single|bool|True
     reset_position: single|float|0.5

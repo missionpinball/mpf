@@ -39,20 +39,6 @@ class TestDeviceCollection(MpfTestCase):
         self.assertNotIn(led3, self.machine.lights.items_tagged('tag1'))
         self.assertNotIn(led4, self.machine.lights.items_tagged('tag1'))
 
-        self.assertIn('led1', self.machine.lights.sitems_tagged('tag1'))
-        self.assertIn('led2', self.machine.lights.sitems_tagged('tag1'))
-        self.assertNotIn('led3', self.machine.lights.sitems_tagged('tag1'))
-        self.assertNotIn('led4', self.machine.lights.sitems_tagged('tag1'))
-
-        self.assertNotIn(led1, self.machine.lights.items_not_tagged('tag1'))
-        self.assertNotIn(led2, self.machine.lights.items_not_tagged('tag1'))
-        self.assertIn(led3, self.machine.lights.items_not_tagged('tag1'))
-        self.assertIn(led4, self.machine.lights.items_not_tagged('tag1'))
-
-    def test_is_valid(self):
-        self.assertTrue(self.machine.lights.is_valid('led1'))
-        self.assertFalse(self.machine.lights.is_valid('fake_name'))
-
     def test_number(self):
         led1 = self.machine.lights['led1']
         led2 = self.machine.lights['led2']
@@ -63,24 +49,3 @@ class TestDeviceCollection(MpfTestCase):
         self.assertEqual(led2, self.machine.lights.number('2'))
         self.assertEqual(led3, self.machine.lights.number('3'))
         self.assertEqual(led4, self.machine.lights.number('4'))
-
-    def test_multilists(self):
-        led1 = self.machine.lights['led1']
-
-        self.assertIn('led1', self.machine.lights.multilist_to_names(
-            ['led1']))
-        self.assertIn('led1', self.machine.lights.multilist_to_names(
-            ['led1', 'led2']))
-        self.assertIn('led1', self.machine.lights.multilist_to_names(
-            'led1, led2'))
-        self.assertIn('led1', self.machine.lights.multilist_to_names(
-            'tag1, led3'))
-
-        self.assertIn(led1, self.machine.lights.multilist_to_objects(
-            ['led1']))
-        self.assertIn(led1, self.machine.lights.multilist_to_objects(
-            ['led1', 'led2']))
-        self.assertIn(led1, self.machine.lights.multilist_to_objects(
-            'led1, led2'))
-        self.assertIn(led1, self.machine.lights.multilist_to_objects(
-            'tag1, led3'))

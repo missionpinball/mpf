@@ -346,10 +346,22 @@ class VirtualServo(ServoPlatformInterface):
         self.log = logging.getLogger('VirtualServo')
         self.number = number
         self.current_position = None
+        self.speed = None
+        self.acceleration = None
 
     def go_to_position(self, position):
         """Go to position."""
         self.current_position = position
+
+    @classmethod
+    def set_speed_limit(cls, speed_limit):
+        """Todo emulate speed parameter."""
+        pass
+
+    @classmethod
+    def set_acceleration_limit(cls, acceleration_limit):
+        """Todo emulate acceleration parameter."""
+        pass
 
 
 class VirtualStepper(StepperPlatformInterface):

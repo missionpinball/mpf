@@ -23,6 +23,9 @@ class LogMixin(object):
         self._debug_to_file = False
 
         logging.addLevelName(11, "INFO")
+        logging.addLevelName(12, "DEBUG")
+        logging.addLevelName(21, "INFO")
+        logging.addLevelName(22, "DEBUG")
 
     def configure_logging(self, logger: str, console_level: str = 'basic',
                           file_level: str = 'basic'):
@@ -67,9 +70,9 @@ class LogMixin(object):
             self._logging_not_configured()
 
         if self._debug_to_console:
-            self.log.log(20, msg, *args, **kwargs)
+            self.log.log(22, msg, *args, **kwargs)
         elif self._debug_to_file:
-            self.log.log(11, msg, *args, **kwargs)
+            self.log.log(12, msg, *args, **kwargs)
 
     def info_log(self, msg: str, *args, **kwargs) -> None:
         """Log a message at the info level.
@@ -81,7 +84,7 @@ class LogMixin(object):
             self._logging_not_configured()
 
         if self._info_to_console or self._debug_to_console:
-            self.log.log(20, msg, *args, **kwargs)
+            self.log.log(21, msg, *args, **kwargs)
         elif self._info_to_file or self._debug_to_file:
             self.log.log(11, msg, *args, **kwargs)
 

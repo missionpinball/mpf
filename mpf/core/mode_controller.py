@@ -110,7 +110,7 @@ class ModeController(MpfController):
                 raise AssertionError('Mode {} already exists. Cannot load again.'.format(mode))
 
             # load mode
-            self.machine.modes[mode] = self._load_mode(mode.lower())
+            self.machine.modes[mode] = self._load_mode(mode)
 
             # add a very very short yield to prevent hangs in platforms (e.g. watchdog timeouts during IO)
             yield from asyncio.sleep(.0001, loop=self.machine.clock.loop)
@@ -250,7 +250,7 @@ class ModeController(MpfController):
             mode_string: String name of the mode you're loading. This is the name of
                 the mode's folder in your game's machine_files/modes folder.
         """
-        mode_string = mode_string.lower()
+        mode_string = mode_string
 
         self.debug_log('Processing mode: %s', mode_string)
 
@@ -306,7 +306,7 @@ class ModeController(MpfController):
                 folder)
 
             if os.path.isdir(this_mode_folder) and not folder.startswith('_'):
-                final_mode_folders[folder.lower()] = folder
+                final_mode_folders[folder] = folder
 
         return final_mode_folders
 

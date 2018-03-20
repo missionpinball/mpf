@@ -40,6 +40,25 @@ class EventManager(MpfController):
         self.monitor_events = False
         self._queue_tasks = []              # type: List[asyncio.Task]
 
+        self.add_handler("debug_dump_stats", self._debug_dump_events)
+
+    def _debug_dump_events(self, **kwargs):
+        del kwargs
+        self.log.info("--- DEBUG DUMP EVENTS ---")
+        self.log.info("Total registered_handlers: %s. Total event_queue: %s. Total callback_queue: %s. "
+                      "Total _queue_tasks: %s", len(self.registered_handlers), len(self.event_queue),
+                      len(self.callback_queue), len(self._queue_tasks))
+        self.log.info("Registered Handlers:")
+        handlers = sorted(self.registered_handlers.items(), key=lambda x: -len(x[1]))
+        for event_name, event_list in handlers:
+            self.log.info("  Total handlers: %s (for %s)", len(event_list), event_name)
+
+        self.log.info("Queue events:")
+        for event_task in self._queue_tasks:
+            self.log.info(" %s:", event_task)
+
+        self.log.info("--- DEBUG DUMP EVENTS END ---")
+
     def get_event_and_condition_from_string(self, event_string: str) -> Tuple[str, Optional["BaseTemplate"]]:
         """Parse an event string to divide the event name from a possible placeholder / conditional in braces.
 
@@ -246,6 +265,14 @@ class EventManager(MpfController):
                         self.registered_handlers[event].remove(rh)
 
         return self.add_handler(event, handler, priority, **kwargs)
+
+    def remove_all_handlers_for_event(self, event: str) -> None:
+        """Remove all handlers for event.
+
+        Use carefully. This is currently used to remove handlers for all init events which only occur once.
+        """
+        if event in self.registered_handlers:
+            del self.registered_handlers[event]
 
     def remove_handler(self, method: Any) -> None:
         """Remove an event handler from all events a method is registered to handle.
