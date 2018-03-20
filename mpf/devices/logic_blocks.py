@@ -155,7 +155,7 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         desc: The logic block called "name" has changed.
 
         This might happen when the block advanced, it was resetted or restored.
-        
+
         args:
         value: The current value of this block.
         enabled: Whatever this block is enabled or not.
