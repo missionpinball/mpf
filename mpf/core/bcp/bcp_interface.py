@@ -201,6 +201,8 @@ class BcpInterface(MpfController):
             self._monitor_modes(client)
         elif category == "core_events":
             self._monitor_core_events(client)
+        elif category == "status_request":
+            self._monitor_status_request(client)
         else:
             self.machine.bcp.transport.send_to_client(client,
                                                       "error",
@@ -228,6 +230,8 @@ class BcpInterface(MpfController):
             self._monitor_modes_stop(client)
         elif category == "core_events":
             self._monitor_core_events_stop(client)
+        elif category == "status_request":
+            self._monitor_status_request_stop(client)
         else:
             self.machine.bcp.transport.send_to_client(client,
                                                       "error",
@@ -445,6 +449,14 @@ class BcpInterface(MpfController):
             self.machine.events.remove_handler_by_event('ball_ended', self._ball_ended)
             self.machine.events.remove_handler_by_event('player_turn_started', self._player_turn_start)
             self.machine.events.remove_handler_by_event('player_added', self._player_added)
+
+    def _monitor_status_request(self, client):
+        """Begin monitoring status_request messages via the specified client."""
+        self.machine.bcp.transport.add_handler_to_transport("_status_request", client)
+
+    def _monitor_status_request_stop(self, client):
+        """Stop monitoring status_request messages via the specified client."""
+        self.machine.bcp.transport.remove_transport_from_handle("_status_request", client)
 
     def _ball_started(self, ball, player, **kwargs):
         del kwargs
