@@ -384,3 +384,18 @@ class TestBcpInterface(MpfBcpTestCase):
         self.advance_time_and_run()
         self._bcp_external_client.send('reset_complete', {})
         self.advance_time_and_run()
+
+    def test_receive_monitor_status_request(self):
+        # Test when a BCP server sends monitor start and stop commands for status_request messages
+        client = self.machine.bcp.transport.get_named_client("local_display")
+        self.assertNotIn('_status_request', self.machine.bcp.transport._handlers)
+        self.assertFalse(self.machine.bcp.transport.get_transports_for_handler('_status_request'))
+
+        client.receive_queue.put_nowait(('monitor_start', {'category': 'status_request'}))
+        self.advance_time_and_run()
+        self.assertIn('_status_request', self.machine.bcp.transport._handlers)
+        self.assertTrue(self.machine.bcp.transport.get_transports_for_handler('_status_request'))
+
+        client.receive_queue.put_nowait(('monitor_stop', {'category': 'status_request'}))
+        self.advance_time_and_run()
+        self.assertFalse(self.machine.bcp.transport.get_transports_for_handler('_status_request'))
