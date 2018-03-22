@@ -1461,9 +1461,6 @@ transitions:
     # clearcolor
     # fs
     # vs
-trigger_player:                                    # todo
-    __valid_in__: machine, mode, show
-    __allow_others__:
 trinamics_steprocker:
     __valid_in__: machine
     port: single|str|
