@@ -399,3 +399,34 @@ class TestBcpInterface(MpfBcpTestCase):
         client.receive_queue.put_nowait(('monitor_stop', {'category': 'status_request'}))
         self.advance_time_and_run()
         self.assertFalse(self.machine.bcp.transport.get_transports_for_handler('_status_request'))
+
+    def test_triggers(self):
+        # Test triggers and the trigger player which is used to send trigger messages from MPF over BCP
+        client = self.machine.bcp.transport.get_named_client("local_display")
+
+        # First send trigger before BCP server has registered for it (should not be sent)
+        self.machine.bcp.interface.bcp_trigger("trigger_test")
+        self.advance_time_and_run()
+        queue = self._bcp_external_client.reset_and_return_queue()
+        self.assertFalse(queue)
+
+        client.receive_queue.put_nowait(('register_trigger', {'event': 'trigger_test'}))
+        self.advance_time_and_run()
+        self.machine.bcp.interface.bcp_trigger("trigger_test")
+        self.advance_time_and_run()
+        queue = self._bcp_external_client.reset_and_return_queue()
+        self.assertIn(("trigger", {"name": "trigger_test"}), queue)
+
+        # Now test the event_player to send a registered trigger
+        self.post_event("send_test_trigger")
+        self.advance_time_and_run()
+        queue = self._bcp_external_client.reset_and_return_queue()
+        self.assertIn(("trigger", {"priority": 0, "name": "trigger_test"}), queue)
+
+        # Unregister the trigger and re-test (should not be sent)
+        client.receive_queue.put_nowait(('remove_trigger', {'event': 'trigger_test'}))
+        self.advance_time_and_run()
+        self.post_event("send_test_trigger")
+        self.advance_time_and_run()
+        queue = self._bcp_external_client.reset_and_return_queue()
+        self.assertFalse(queue)
