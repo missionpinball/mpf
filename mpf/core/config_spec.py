@@ -1205,7 +1205,6 @@ sound_loop_player_actions:
         volume: single|gain|None
         timing: single|enum(now,loop_end)|loop_end
         fade_in: single|secs|0
-        queue: single|bool|True
     stop_layer:
         action: ignore
         layer: single|int|
