@@ -325,7 +325,7 @@ device:     # base for all devices
     label: single|str|%
     tags: list|str|None
     debug: single|bool|False
-    console_log: single|enum(none,basic,full)|none
+    console_log: single|enum(none,basic,full)|basic
     file_log: single|enum(none,basic,full)|basic
 displays:
     __valid_in__: machine
