@@ -23,6 +23,69 @@ class TestScoreReels(MpfGameTestCase):
         self.machine.ball_controller.num_balls_known = 3
         super().start_game()
 
+    def testOvershooting(self):
+        player1_10k = self.machine.coils.player1_10k.hw_driver
+        player1_1k = self.machine.coils.player1_1k.hw_driver
+        player1_100 = self.machine.coils.player1_100.hw_driver
+        player1_10 = self.machine.coils.player1_10.hw_driver
+        chime1 = self.machine.coils.chime1.hw_driver
+        player1_10k.pulse = MagicMock(return_value=10)
+        player1_1k.pulse = MagicMock(return_value=10)
+        player1_100.pulse = MagicMock(return_value=10)
+        player1_10.pulse = MagicMock(return_value=10)
+        chime1.pulse = MagicMock(return_value=10)
+
+        self._synchronise_to_reel()
+        # reel desyncs while idle
+        self.release_switch_and_run("score_1p_10_0", 0)
+
+        self.advance_time_and_run(.1)
+        self.assertEqual(0, player1_10k.pulse.call_count)
+        self.assertEqual(0, player1_1k.pulse.call_count)
+        self.assertEqual(0, player1_100.pulse.call_count)
+        self.assertEqual(1, player1_10.pulse.call_count)
+
+        # resynced
+        self.hit_switch_and_run("score_1p_10_0", 0)
+        self.advance_time_and_run(10)
+
+        self.assertEqual(0, player1_10k.pulse.call_count)
+        self.assertEqual(0, player1_1k.pulse.call_count)
+        self.assertEqual(0, player1_100.pulse.call_count)
+        self.assertEqual(1, player1_10.pulse.call_count)
+
+        # advance one position
+        self.machine.score_reels["score_1p_100"].set_destination_value(1)
+        self.advance_time_and_run(.02)
+        self.assertEqual(0, player1_10k.pulse.call_count)
+        self.assertEqual(0, player1_1k.pulse.call_count)
+        self.assertEqual(1, player1_100.pulse.call_count)
+        self.assertEqual(1, player1_10.pulse.call_count)
+
+        # success
+        self.release_switch_and_run("score_1p_100_0", 0)
+        self.advance_time_and_run(10)
+        self.assertEqual(0, player1_10k.pulse.call_count)
+        self.assertEqual(0, player1_1k.pulse.call_count)
+        self.assertEqual(1, player1_100.pulse.call_count)
+        self.assertEqual(1, player1_10.pulse.call_count)
+
+        # the reel jumps back (for some reason)
+        self.hit_switch_and_run("score_1p_100_0", 0)
+        self.advance_time_and_run(.1)
+        self.assertEqual(0, player1_10k.pulse.call_count)
+        self.assertEqual(0, player1_1k.pulse.call_count)
+        self.assertEqual(2, player1_100.pulse.call_count)
+        self.assertEqual(1, player1_10.pulse.call_count)
+
+        # resync
+        self.release_switch_and_run("score_1p_100_0", 0)
+        self.advance_time_and_run(10)
+        self.assertEqual(0, player1_10k.pulse.call_count)
+        self.assertEqual(0, player1_1k.pulse.call_count)
+        self.assertEqual(2, player1_100.pulse.call_count)
+        self.assertEqual(1, player1_10.pulse.call_count)
+
     def testScoring(self):
         player1_10k = self.machine.coils.player1_10k.hw_driver
         player1_1k = self.machine.coils.player1_1k.hw_driver
