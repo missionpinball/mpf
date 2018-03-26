@@ -3,7 +3,6 @@ from collections import OrderedDict
 from typing import Sized, Iterable, Container, Generic, TypeVar
 
 from mpf.core.utility_functions import Util
-from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.mpf_controller import MpfController
 
 MYPY = False

@@ -19,7 +19,6 @@ import asyncio
 from pkg_resources import iter_entry_points
 
 from mpf._version import __version__, version as mpf_version, extended_version as mpf_extended_version
-from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.clock import ClockBase
 from mpf.core.config_processor import ConfigProcessor
 from mpf.core.config_validator import ConfigValidator
@@ -108,7 +107,7 @@ class MachineController(LogMixin):
         self.scriptlets = list()    # type: List[Scriptlet]
         self.modes = DeviceCollection(self, 'modes', None)          # type: Dict[str, Mode]
         self.game = None            # type: Game
-        self.machine_vars = CaseInsensitiveDict()
+        self.machine_vars = dict()
         self.machine_var_monitor = False
         self.machine_var_data_manager = None    # type: DataManager
         self.thread_stopper = threading.Event()

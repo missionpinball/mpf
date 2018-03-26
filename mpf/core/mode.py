@@ -8,7 +8,6 @@ from typing import List
 from typing import Set
 from typing import Tuple
 
-from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.delays import DelayManager
 from mpf.core.utility_functions import Util
 from mpf.core.logging import LogMixin
@@ -122,7 +121,7 @@ class Mode(LogMixin):
         if section_name in self.machine.config:
             return_dict = copy.deepcopy(self.machine.config[section_name])
         else:
-            return_dict = CaseInsensitiveDict()
+            return_dict = dict()
 
         if section_name in self.config:
             return_dict = Util.dict_merge(return_dict,

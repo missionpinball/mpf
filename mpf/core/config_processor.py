@@ -1,4 +1,4 @@
-"""Contains the Config and CaseInsensitiveDict base classes."""
+"""Contains the ConfigProcessor."""
 
 import errno
 import hashlib
