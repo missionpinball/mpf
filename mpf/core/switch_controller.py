@@ -399,7 +399,7 @@ class SwitchController(MpfController):
 
         Args:
             switch_name: String name of the switch to wait for.
-            state: The state to wait for. 0 = inactive, 1 = active.
+            state: The state to wait for. 0 = inactive, 1 = active, 2 = opposite to current.
             only_on_change: Bool which controls whether this wait will be
                 triggered now if the switch is already in the state, or
                 whether it will wait until the switch changes into that state.
@@ -414,7 +414,7 @@ class SwitchController(MpfController):
 
         Args:
             switch_names: Iterable of strings of switch names. Whichever switch changes first will trigger this wait.
-            state: The state to wait for. 0 = inactive, 1 = active.
+            state: The state to wait for. 0 = inactive, 1 = active, 2 = opposite to current.
             only_on_change: Bool which controls whether this wait will be
                 triggered now if the switch is already in the state, or
                 whether it will wait until the switch changes into that state.
@@ -433,7 +433,11 @@ class SwitchController(MpfController):
         handlers = []   # type: List[SwitchHandler]
         future.add_done_callback(partial(self._future_done, handlers))      # type: ignore
         for switch_name in switch_names:
-            handlers.append(self.add_switch_handler(switch_name, state=state, ms=ms,
+            if state == 2:
+                handler_state = 0 if self.is_active(switch_name) else 1
+            else:
+                handler_state = state
+            handlers.append(self.add_switch_handler(switch_name, state=handler_state, ms=ms,
                                                     callback=partial(self._wait_handler,
                                                                      ms=ms,
                                                                      _future=future,
