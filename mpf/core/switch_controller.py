@@ -10,7 +10,6 @@ import asyncio
 from functools import partial
 from typing import Any, Callable, Dict, List
 
-from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.machine import MachineController
 from mpf.core.mpf_controller import MpfController
 from mpf.devices.switch import Switch
@@ -32,7 +31,7 @@ class SwitchController(MpfController):
     def __init__(self, machine: MachineController) -> None:
         """Initialise switch controller."""
         super().__init__(machine)
-        self.registered_switches = CaseInsensitiveDict()        # type: Dict[str, List[RegisteredSwitch]]
+        self.registered_switches = dict()                       # type: Dict[str, List[RegisteredSwitch]]
         # Dictionary of switches and states that have been registered for
         # callbacks.
 
@@ -44,7 +43,7 @@ class SwitchController(MpfController):
         # that tracks current switches for things like "do foo() if switch bar
         # is active for 100ms."
 
-        self.switches = CaseInsensitiveDict()                   # type: Dict[str, SwitchState]
+        self.switches = dict()                                  # type: Dict[str, SwitchState]
         # Dictionary which holds the master list of switches as well as their
         # current states. State here does factor in whether a switch is NO or
         # NC so 1 = active and 0 = inactive.
