@@ -10,7 +10,7 @@ PyPI.
 
 """
 
-__version__ = '0.50.0-dev.81'
+__version__ = '0.50.0-dev.82'
 '''The full version of MPF.'''
 
 __short_version__ = '0.50'
