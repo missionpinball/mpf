@@ -12,8 +12,6 @@ from mpf.exceptions.ConfigFileError import ConfigFileError
 from mpf.file_interfaces.yaml_interface import YamlInterface
 from mpf.core.utility_functions import Util
 
-from mpf.core.case_insensitive_dict import CaseInsensitiveDict
-
 
 class ConfigValidator(object):
 
@@ -122,7 +120,7 @@ class ConfigValidator(object):
         # section_name is str used for logging failures
 
         if source is None:
-            source = CaseInsensitiveDict()
+            source = dict()
 
         if not section_name:
             section_name = config_spec  # str
