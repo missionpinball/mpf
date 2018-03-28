@@ -50,8 +50,8 @@ install:
 - if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
       curl -sS https://www.python.org/ftp/python/3.5.4/python-3.5.4-macosx10.6.pkg > python-3.5.4-macosx10.6.pkg;
       sudo installer -pkg python-3.5.4-macosx10.6.pkg -target /;
-      curl -sS https://bootstrap.pypa.io/get-pip.py > get-pip.py
-      sudo python3 get-pip.py
+      curl -sS https://bootstrap.pypa.io/get-pip.py > get-pip.py;
+      sudo python3 get-pip.py;
       pip3 install .;
   fi;
 
