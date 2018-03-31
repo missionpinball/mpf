@@ -32,8 +32,9 @@ class QueueRelayPlayer(ConfigPlayer):
         self.machine.events.post(settings['post'], **settings['args'])
 
     def clear_context(self, context):
-        """Clear all queues."""
-        for queue in self._get_instance_dict(context):
+        """Clear all queues and remove handlers."""
+        for queue, handler in self._get_instance_dict(context).items():
+            self.machine.events.remove_handler_by_key(handler)
             queue.clear()
 
         self._reset_instance_dict(context)
@@ -46,6 +47,10 @@ class QueueRelayPlayer(ConfigPlayer):
     def _callback(self, queue, context, **kwargs):
         del kwargs
         instance_dict = self._get_instance_dict(context)
+        # bail out on error
+        if queue not in instance_dict:
+            raise AssertionError("Queue {} missing in instance dict: {}.".format(queue, instance_dict))
+
         self.machine.events.remove_handler_by_key(instance_dict[queue])
         del instance_dict[queue]
         queue.clear()
