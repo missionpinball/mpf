@@ -285,6 +285,10 @@ class BCPClientSocket(BaseBcpClient):
 
         if self.debug_log:
             self.debug_log('Sending "%s"', bcp_string)
+
+        if self._sender.transport.is_closing():
+            self.warning_log("Failed to write to bcp since transport is closing. Transport %s", self._sender.transport)
+            return
         self._sender.write((bcp_string + '\n').encode())
 
     # pylint: disable-msg=inconsistent-return-statements
