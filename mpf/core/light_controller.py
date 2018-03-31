@@ -95,4 +95,5 @@ class LightController(MpfController):
                 if old != color:
                     self.machine.device_manager.notify_device_changes(light, "color", old, color)
                     colors[light] = color
-            yield from asyncio.sleep(1 / 10, loop=self.machine.clock.loop)
+            yield from asyncio.sleep(1 / self.machine.config['mpf']['default_light_hw_update_hz'],
+                                     loop=self.machine.clock.loop)
