@@ -23,6 +23,7 @@ class ServiceCli(cmd.Cmd):
         self.loop = loop
         self._known_coils = None
         self._known_lights = None
+        self._known_shows = None
 
     def _build_known_coils(self, list_coils_response):
         self._known_coils = []
@@ -34,6 +35,11 @@ class ServiceCli(cmd.Cmd):
         for light in list_lights_response[1]["lights"]:
             self._known_lights.append(light[2])
 
+    def _build_known_shows(self, list_shows_response):
+        self._known_shows = []
+        for show in list_shows_response[1]["shows"]:
+            self._known_shows.append(show[0])
+
     def do_list_coils(self, args):
         """List all coils."""
         del args
@@ -44,6 +50,19 @@ class ServiceCli(cmd.Cmd):
             data.append([coil[0], coil[1], coil[2]])
 
         self._build_known_coils(message)
+        table = AsciiTable(data)
+        self.stdout.write(table.table + "\n")
+
+    def do_list_shows(self, args):
+        """List all shows."""
+        del args
+        self.bcp_client.send("service", {"subcommand": "list_shows"})
+        message = self.loop.run_until_complete(self.bcp_client.wait_for_response("list_shows"))
+        data = [["Name", "Token"]]
+        for show in message[1]["shows"]:
+            data.append([show[0], show[1]])
+
+        self._build_known_shows(message)
         table = AsciiTable(data)
         self.stdout.write(table.table + "\n")
 
@@ -91,6 +110,32 @@ class ServiceCli(cmd.Cmd):
     def complete_light_off(self, text, line, start_index, end_index):
         """Autocomplete light names."""
         return self.complete_light_xxx(text, line, start_index, end_index)
+
+    def complete_show_play(self, text, line, start_index, end_index):
+        """Autocomplete show names."""
+        return self.complete_show_xxx(text, line, start_index, end_index)
+
+    def complete_show_stop(self, text, line, start_index, end_index):
+        """Autocomplete show names."""
+        return self.complete_show_xxx(text, line, start_index, end_index)
+
+    def complete_show_xxx(self, text, line, start_index, end_index):
+        """Autocomplete shows."""
+        del line
+        del start_index
+        del end_index
+        if not self._known_shows:
+            self.bcp_client.send("service", {"subcommand": "list_shows"})
+            message = self.loop.run_until_complete(self.bcp_client.wait_for_response("list_shows"))
+            self._build_known_shows(message)
+
+        if text:
+            return [
+                show for show in self._known_shows
+                if show.startswith(text)
+            ]
+        else:
+            return self._known_shows
 
     def complete_light_xxx(self, text, line, start_index, end_index):
         """Autocomplete lights."""
@@ -150,6 +195,36 @@ class ServiceCli(cmd.Cmd):
         """Disable a coil."""
         self.bcp_client.send("service", {"subcommand": "coil_disable", "coil": args})
         message = self.loop.run_until_complete(self.bcp_client.wait_for_response("coil_disable"))
+        if message[1]["error"]:
+            self.stdout.write("Error: {}\n".format(message[1]["error"]))
+        else:
+            self.stdout.write("Success\n")
+
+    def do_show_play(self, args):
+        """Play a show."""
+        arguments = args.split(" ")
+        show = arguments.pop(0)
+        token = {}
+        while arguments:
+            try:
+                token_arg = arguments.pop(0)
+                token_name, token_value = token_arg.split(":", 2)
+                token[token_name] = token_value
+            except ValueError:
+                self.stdout.write("Token {} is expected as token_name:token_value.".format(token_arg))
+                return
+
+        self.bcp_client.send("service", {"subcommand": "show_play", "show": show, "token": token})
+        message = self.loop.run_until_complete(self.bcp_client.wait_for_response("show_play"))
+        if message[1]["error"]:
+            self.stdout.write("Error: {}\n".format(message[1]["error"]))
+        else:
+            self.stdout.write("Success\n")
+
+    def do_show_stop(self, args):
+        """Stop a playing show."""
+        self.bcp_client.send("service", {"subcommand": "show_stop", "show": args})
+        message = self.loop.run_until_complete(self.bcp_client.wait_for_response("show_stop"))
         if message[1]["error"]:
             self.stdout.write("Error: {}\n".format(message[1]["error"]))
         else:
@@ -225,7 +300,7 @@ class Command(object):
             cli.cmdloop()
         except KeyboardInterrupt:
             # catch ctrl+c
-            pass
+            cli.do_exit("")
 
         # print a newline for a nice exit
         print()

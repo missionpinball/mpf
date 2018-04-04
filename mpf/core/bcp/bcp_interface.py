@@ -64,6 +64,7 @@ class BcpInterface(MpfController):
             set_machine_var=self._bcp_receive_set_machine_var,
             service=self._service,
         )
+        self._shows = {}
 
         self.machine.events.add_handler('machine_reset_phase_1', self.bcp_reset)
 
@@ -103,13 +104,22 @@ class BcpInterface(MpfController):
         self.machine.set_machine_var(name, value)
 
     @asyncio.coroutine
+    def _service_stop(self, client):
+        for show in self._shows.values():
+            show.stop()
+        for light in self.machine.lights.values():
+            light.remove_from_stack_by_key("service")
+        self._shows = {}
+        yield from self.machine.service.stop_service()
+        self.machine.bcp.transport.send_to_client(client, "service_stop")
+
+    @asyncio.coroutine
     def _service(self, client, subcommand, **kwargs):
         """Run service command."""
         if subcommand == "start":
             self.machine.service.start_service()
         elif subcommand == "stop":
-            yield from self.machine.service.stop_service()
-            self.machine.bcp.transport.send_to_client(client, "service_stop")
+            yield from self._service_stop(client)
         elif subcommand == "list_switches":
             self.machine.bcp.transport.send_to_client(client, "list_switches",
                                                       switches=[(s[0], str(s[1].hw_switch.number), s[1].name,
@@ -123,6 +133,11 @@ class BcpInterface(MpfController):
             self.machine.bcp.transport.send_to_client(client, "list_lights",
                                                       lights=[(s[0], s[1].get_hw_numbers(), s[1].name, s[1].get_color())
                                                               for s in self.machine.service.get_light_map()])
+        elif subcommand == "list_shows":
+            self.machine.bcp.transport.send_to_client(client, "list_shows",
+                                                      shows=[(s.name, sorted(s.tokens))
+                                                             for s in sorted(self.machine.shows.values(),
+                                                                             key=lambda x: x.name)])
         elif subcommand == "monitor_switches":
             pass
         elif subcommand == "coil_pulse":
@@ -131,8 +146,31 @@ class BcpInterface(MpfController):
             self._coil_enable(client, kwargs.get("coil"))
         elif subcommand == "coil_disable":
             self._coil_disable(client, kwargs.get("coil"))
+        elif subcommand == "show_play":
+            self._show_play(client, kwargs.get("show"), kwargs.get("token"))
+        elif subcommand == "show_stop":
+            self._show_stop(client, kwargs.get("show"))
         elif subcommand == "light_color":
             self._light_color(client, kwargs.get("light"), kwargs.get("color"))
+
+    def _show_play(self, client, show_name, token):
+        try:
+            show = self.machine.shows[show_name]
+        except KeyError:
+            self.machine.bcp.transport.send_to_client(client, "show_play", error="Show not found")
+            return
+        if show_name in self._shows:
+            self._shows[show_name].stop()
+        self._shows[show_name] = show.play(show_tokens=token, priority=100000)
+        self.machine.bcp.transport.send_to_client(client, "show_play", error=False)
+
+    def _show_stop(self, client, show_name):
+        if show_name in self._shows:
+            self._shows[show_name].stop()
+            del self._shows[show_name]
+            self.machine.bcp.transport.send_to_client(client, "show_stop", error=False)
+        else:
+            self.machine.bcp.transport.send_to_client(client, "show_stop", error="Show not playing")
 
     def _coil_pulse(self, client, coil_name):
         try:
@@ -173,7 +211,7 @@ class BcpInterface(MpfController):
             self.machine.bcp.transport.send_to_client(client, "light_color", error="Light not found")
             return
         try:
-            light.color(color_name)
+            light.color(color_name, key="service")
         except (DriverLimitsError, ColorException) as e:
             self.machine.bcp.transport.send_to_client(client, "light_color", error=str(e))
             return

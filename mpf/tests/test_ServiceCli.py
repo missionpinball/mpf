@@ -57,6 +57,11 @@ class TestServiceCli(MpfBcpTestCase):
 
         self.assertLightColor("l_light5", "white")
 
+        cli.onecmd("light_off l_light5")
+        self.assertEqual("Success\n", self._last_write())
+
+        self.assertLightColor("l_light5", "black")
+
         self.hit_switch_and_run("s_door_open", 0)
 
         cli.onecmd("list_switches")
@@ -85,6 +90,30 @@ class TestServiceCli(MpfBcpTestCase):
 +---------+--------+---------+
 """
         self.assertEqual(expected, self._last_write())
+
+        cli.onecmd("list_shows")
+        expected = """+-----------+------------------------------------+
+| Name      | Token                              |
++-----------+------------------------------------+
+| flash     | ['led', 'leds', 'light', 'lights'] |
+| led_color | ['color', 'led', 'leds']           |
+| off       | ['led', 'leds', 'light', 'lights'] |
+| on        | ['led', 'leds', 'light', 'lights'] |
++-----------+------------------------------------+
+"""
+        self.assertEqual(expected, self._last_write())
+
+        self.assertLightColor("l_light5", "black")
+
+        cli.onecmd("show_play on led:l_light5")
+        self.assertLightColor("l_light5", "white")
+
+        cli.onecmd("show_stop on")
+        self.assertLightColor("l_light5", "black")
+
+        cli.onecmd("show_play led_color led:l_light5 color:red")
+        self.assertLightColor("l_light5", "red")
+
 
         self.assertEqual("disabled", self.machine.coils.c_test.hw_driver.state)
 
