@@ -23,7 +23,7 @@ matrix:
      env: LINUX=debian:jessie
      sudo: required
      language: python
-     python: "3.5"
+     python: "3.4"
 #   - os: linux
 #     env: LINUX=debian:experimental
 #     sudo: required
