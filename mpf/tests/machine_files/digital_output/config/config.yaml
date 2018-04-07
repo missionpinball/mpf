@@ -1,0 +1,10 @@
+#config_version=5
+
+digital_outputs:
+    light_output:
+        number: 1
+        type: light
+        light_subtype: test_subtype
+    driver_output:
+        number: 1
+        type: driver

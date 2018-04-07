@@ -247,6 +247,14 @@ coils:
     platform_settings: single|dict|None
     psu: single|machine(psus)|default
     platform: single|str|None
+digital_outputs:
+    __valid_in__: machine
+    number: single|str|
+    disable_events: dict|str:ms|None
+    enable_events: dict|str:ms|None
+    platform: single|str|None
+    type: single|enum(light,driver)|
+    light_subtype: single|str|None
 dual_wound_coils:
     __valid_in__: machine
     main_coil: single|machine(coils)|

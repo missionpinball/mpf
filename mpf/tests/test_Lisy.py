@@ -190,7 +190,7 @@ class TestLisy(MpfTestCase):
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
-        # disable flipper (using light 1)
+        # disable light (using light 3)
         self.serialMock.expected_commands = {
             b'\x0c\x03': None
         }
@@ -200,16 +200,17 @@ class TestLisy(MpfTestCase):
 
         # start ball. enable flipper (using light 1)
         self.serialMock.expected_commands = {
-            b'\x18\x65\x0a': None,  # set pulse_ms to 10ms
-            b'\x15\x65': None
+            b'\x0b\x01': None
         }
         self.post_event("ball_started")
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
+        self.advance_time_and_run()
+
         # end ball. disable flipper (using light 1)
         self.serialMock.expected_commands = {
-            b'\x16\x65': None
+            b'\x0c\x01': None
         }
         self.post_event("ball_will_end")
         self._wait_for_processing()
