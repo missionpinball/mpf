@@ -38,6 +38,7 @@ mpf:
 
     device_modules:
         - mpf.devices.driver.Driver
+        - mpf.devices.digital_output.DigitalOutput
         - mpf.devices.dual_wound_coil.DualWoundCoil
         - mpf.devices.switch.Switch
         - mpf.devices.light.Light
