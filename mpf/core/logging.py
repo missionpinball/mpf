@@ -74,7 +74,7 @@ class LogMixin(object):
         elif self._debug_to_file:
             self.log.log(12, msg, *args, **kwargs)
 
-    def info_log(self, msg: str, *args, **kwargs) -> None:
+    def info_log(self, msg: str, *args, context=None, **kwargs) -> None:
         """Log a message at the info level.
 
         Whether this message shows up in the console or log file is controlled
@@ -83,12 +83,18 @@ class LogMixin(object):
         if not self.log:
             self._logging_not_configured()
 
+        code = None
         if self._info_to_console or self._debug_to_console:
-            self.log.log(21, msg, *args, **kwargs)
+            code = 21
         elif self._info_to_file or self._debug_to_file:
-            self.log.log(11, msg, *args, **kwargs)
+            code = 11
 
-    def warning_log(self, msg: str, *args, **kwargs) -> None:
+        if context:
+            self.log.log(code, msg + " context: " + context, *args, **kwargs)
+        else:
+            self.log.log(code, msg, *args, **kwargs)
+
+    def warning_log(self, msg: str, *args, context=None, **kwargs) -> None:
         """Log a message at the warning level.
 
         These messages will always be shown in the console and the log file.
@@ -96,9 +102,12 @@ class LogMixin(object):
         if not self.log:
             self._logging_not_configured()
 
-        self.log.log(30, 'WARNING: {}'.format(msg), *args, **kwargs)
+        if context:
+            self.log.log(30, 'WARNING: {} context: {}'.format(msg, context), *args, **kwargs)
+        else:
+            self.log.log(30, 'WARNING: {}'.format(msg), *args, **kwargs)
 
-    def error_log(self, msg: str, *args, **kwargs) -> None:
+    def error_log(self, msg: str, *args, context=None, **kwargs) -> None:
         """Log a message at the error level.
 
         These messages will always be shown in the console and the log file.
@@ -106,11 +115,14 @@ class LogMixin(object):
         if not self.log:
             self._logging_not_configured()
 
-        self.log.log(40, 'ERROR: {}'.format(msg), *args, **kwargs)
+        if context:
+            self.log.log(40, 'ERROR: {} context: {}'.format(msg, context), *args, **kwargs)
+        else:
+            self.log.log(40, 'ERROR: {}'.format(msg), *args, **kwargs)
 
-    def raise_config_error(self, msg, error_no):
+    def raise_config_error(self, msg, error_no, *, context=None):
         """Raise a ConfigFileError exception."""
-        raise ConfigFileError(msg, error_no, self.log.name)
+        raise ConfigFileError(msg, error_no, self.log.name, context)
 
     def ignorable_runtime_exception(self, msg: str) -> None:
         """Handle ignorable runtime exception.

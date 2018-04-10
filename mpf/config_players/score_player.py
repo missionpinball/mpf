@@ -31,7 +31,7 @@ class ScorePlayer(ConfigPlayer):
         """Score variable."""
         for var, s in settings.items():
             if var == "block":
-                raise AssertionError('Do not use "block" as variable name in score_player.')
+                self.raise_config_error('Do not use "block" as variable name in score_player.', 1, context=context)
 
             if s['condition'] and not s['condition'].evaluate(kwargs):
                 continue
