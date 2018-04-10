@@ -17,6 +17,8 @@ class TestServiceCli(MpfBcpTestCase):
         super().setUp()
         self.mock_stdin = create_autospec(sys.stdin)
         self.mock_stdout = create_autospec(sys.stdout)
+        # we are connected as anonymous client
+        self._bcp_client.name = None
 
     def _last_write(self, n=None):
         """:return: last `n` output lines"""
@@ -114,7 +116,6 @@ class TestServiceCli(MpfBcpTestCase):
         cli.onecmd("show_play led_color led:l_light5 color:red")
         self.assertLightColor("l_light5", "red")
 
-
         self.assertEqual("disabled", self.machine.coils.c_test.hw_driver.state)
 
         cli.onecmd("coil_pulse c_test")
@@ -131,3 +132,12 @@ class TestServiceCli(MpfBcpTestCase):
         cli.onecmd("coil_disable c_test6")
         self.assertEqual("Success\n", self._last_write())
         self.assertEqual("disabled", self.machine.coils.c_test6.hw_driver.state)
+
+        self.assertLightColor("l_light1", "white")
+        self.assertLightColor("l_light5", "red")
+
+        cli.onecmd("quit")
+        self.advance_time_and_run()
+
+        self.assertLightColor("l_light1", "black")
+        self.assertLightColor("l_light5", "black")

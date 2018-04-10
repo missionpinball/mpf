@@ -173,9 +173,30 @@ class ServiceCli(cmd.Cmd):
         else:
             return self._known_coils
 
+    def _parse_args(self, args, args_with_default):
+        while args:
+            try:
+                setting_arg = args.pop(0)
+                setting_name, setting_value = setting_arg.split(":", 2)
+                if setting_name not in args_with_default:
+                    self.stdout.write("Setting {} not allowed. Allowed: {}.".format(setting_name, args_with_default))
+                    return False
+
+                args_with_default[setting_name] = setting_value
+            except ValueError:
+                self.stdout.write("Setting {} is expected as setting_name:setting_value.".format(setting_arg))
+                return False
+        return args_with_default
+
     def do_coil_pulse(self, args):
         """Pulse a coil."""
-        self.bcp_client.send("service", {"subcommand": "coil_pulse", "coil": args})
+        arguments = args.split(" ")
+        coil = arguments.pop(0)
+        args = self._parse_args(arguments, {"pulse_ms": None, "pulse_power": None})
+        if not args:
+            return
+
+        self.bcp_client.send("service", {"subcommand": "coil_pulse", "coil": coil, **args})
         message = self.loop.run_until_complete(self.bcp_client.wait_for_response("coil_pulse"))
         if message[1]["error"]:
             self.stdout.write("Error: {}\n".format(message[1]["error"]))
@@ -184,7 +205,13 @@ class ServiceCli(cmd.Cmd):
 
     def do_coil_enable(self, args):
         """Enable a coil (if possible for coil)."""
-        self.bcp_client.send("service", {"subcommand": "coil_enable", "coil": args})
+        arguments = args.split(" ")
+        coil = arguments.pop(0)
+        args = self._parse_args(arguments, {"pulse_ms": None, "pulse_power": None, "hold_power": None})
+        if not args:
+            return
+
+        self.bcp_client.send("service", {"subcommand": "coil_enable", "coil": coil, **args})
         message = self.loop.run_until_complete(self.bcp_client.wait_for_response("coil_enable"))
         if message[1]["error"]:
             self.stdout.write("Error: {}\n".format(message[1]["error"]))

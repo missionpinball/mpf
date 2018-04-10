@@ -141,9 +141,10 @@ class BcpInterface(MpfController):
         elif subcommand == "monitor_switches":
             pass
         elif subcommand == "coil_pulse":
-            self._coil_pulse(client, kwargs.get("coil"))
+            self._coil_pulse(client, kwargs.get("coil"), kwargs.get("pulse_ms"), kwargs.get("pulse_power"))
         elif subcommand == "coil_enable":
-            self._coil_enable(client, kwargs.get("coil"))
+            self._coil_enable(client, kwargs.get("coil"), kwargs.get("pulse_ms"), kwargs.get("pulse_power"),
+                              kwargs.get("hold_power"))
         elif subcommand == "coil_disable":
             self._coil_disable(client, kwargs.get("coil"))
         elif subcommand == "show_play":
@@ -172,13 +173,17 @@ class BcpInterface(MpfController):
         else:
             self.machine.bcp.transport.send_to_client(client, "show_stop", error="Show not playing")
 
-    def _coil_pulse(self, client, coil_name):
+    def _coil_pulse(self, client, coil_name, pulse_ms, pulse_power):
         try:
             coil = self.machine.coils[coil_name]
         except KeyError:
             self.machine.bcp.transport.send_to_client(client, "coil_pulse", error="Coil not found")
             return
-        coil.pulse()
+        if pulse_ms:
+            pulse_ms = int(pulse_ms)
+        if pulse_power:
+            pulse_power = float(pulse_power)
+        coil.pulse(pulse_ms=pulse_ms, pulse_power=pulse_power)
         self.machine.bcp.transport.send_to_client(client, "coil_pulse", error=False)
 
     def _coil_disable(self, client, coil_name):
@@ -190,14 +195,21 @@ class BcpInterface(MpfController):
         coil.disable()
         self.machine.bcp.transport.send_to_client(client, "coil_disable", error=False)
 
-    def _coil_enable(self, client, coil_name):
+    # pylint: disable-msg=too-many-arguments
+    def _coil_enable(self, client, coil_name, pulse_ms, pulse_power, hold_power):
         try:
             coil = self.machine.coils[coil_name]
         except KeyError:
             self.machine.bcp.transport.send_to_client(client, "coil_enable", error="Coil not found")
             return
+        if pulse_ms:
+            pulse_ms = int(pulse_ms)
+        if pulse_power:
+            pulse_power = float(pulse_power)
+        if hold_power:
+            hold_power = float(hold_power)
         try:
-            coil.enable()
+            coil.enable(pulse_ms=pulse_ms, pulse_power=pulse_power, hold_power=hold_power)
         except DriverLimitsError as e:
             self.machine.bcp.transport.send_to_client(client, "coil_enable", error=str(e))
             return
@@ -590,14 +602,15 @@ class BcpInterface(MpfController):
 
         # Will hold the queue event until all clients respond with a "reset_complete" command
         clients = self.machine.bcp.transport.get_all_clients()
-        if clients:
+        self._client_reset_complete_status.clear()
+        for client in clients:
+            if not client.name:
+                continue
+            self._client_reset_complete_status[client] = False
+
+        if self._client_reset_complete_status:
             queue.wait()
             self._client_reset_queue = queue
-            self._client_reset_complete_status.clear()
-            for client in clients:
-                if not client.name:
-                    continue
-                self._client_reset_complete_status[client] = False
 
             # Send the reset command
             self.debug_log("Sending reset to all clients (will now wait for reset_complete "
