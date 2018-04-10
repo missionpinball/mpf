@@ -134,6 +134,19 @@ class TestEventManager(MpfFakeGameTestCase, MpfTestCase):
         self.assertEqual(tuple(), self._handler1_args)
         self.assertEqual(dict(), self._handler1_kwargs)
 
+    def test_event_double_register(self):
+        # tests that a handler responds to a regular event post
+        self.machine.events.add_handler('test_event', self.event_handler1)
+        self.machine.events.add_handler('test_event', self.event_handler1)
+        self.advance_time_and_run(1)
+
+        self.machine.events.post('test_event')
+        self.advance_time_and_run(1)
+
+        self.assertEqual(2, self._handler1_called)
+        self.assertEqual(tuple(), self._handler1_args)
+        self.assertEqual(dict(), self._handler1_kwargs)
+
     def test_event_with_kwargs(self):
         # test that a kwarg can be passed to a handler which is registered for
         # a regular event post

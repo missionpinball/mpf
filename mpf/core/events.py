@@ -105,11 +105,6 @@ class EventManager(MpfController):
                     **kwargs) -> EventHandlerKey:
         """Register an event handler to respond to an event.
 
-        If you add a handlers for an event for which it has already been
-        registered, the new one will overwrite the old one. This is useful for
-        changing priorities of existing handlers. Also it's good to know that
-        you can safely add a handler over and over.
-
         Args:
             event: String name of the event you're adding a handler for. Since
                 events are text strings, they don't have to be pre-defined.
