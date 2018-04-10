@@ -196,7 +196,9 @@ class ServiceCli(cmd.Cmd):
         if not args:
             return
 
-        self.bcp_client.send("service", {"subcommand": "coil_pulse", "coil": coil, **args})
+        bcp_args = {"subcommand": "coil_pulse", "coil": coil}
+        bcp_args.update(args)
+        self.bcp_client.send("service", bcp_args)
         message = self.loop.run_until_complete(self.bcp_client.wait_for_response("coil_pulse"))
         if message[1]["error"]:
             self.stdout.write("Error: {}\n".format(message[1]["error"]))
@@ -211,7 +213,9 @@ class ServiceCli(cmd.Cmd):
         if not args:
             return
 
-        self.bcp_client.send("service", {"subcommand": "coil_enable", "coil": coil, **args})
+        bcp_args = {"subcommand": "coil_enable", "coil": coil}
+        bcp_args.update(args)
+        self.bcp_client.send("service", bcp_args)
         message = self.loop.run_until_complete(self.bcp_client.wait_for_response("coil_enable"))
         if message[1]["error"]:
             self.stdout.write("Error: {}\n".format(message[1]["error"]))
