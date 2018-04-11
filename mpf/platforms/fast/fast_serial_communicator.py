@@ -99,11 +99,13 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             msg = yield from self._read_with_timeout(.5)
 
             # ignore XX replies here.
-            if msg.startswith('XX:'):
+            while msg.startswith('XX:'):
                 msg = yield from self._read_with_timeout(.5)
 
             if msg.startswith('ID:'):
                 break
+
+            yield from asyncio.sleep(.5, loop=self.machine.clock.loop)
 
         # examples of ID responses
         # ID:DMD FP-CPU-002-1 00.87
@@ -184,10 +186,8 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             self.platform.debug_log('Resetting NET CPU.')
             self.writer.write('BC:\r'.encode())
             msg = ''
-            while not msg.startswith('!B:02\r'):
+            while not msg.startswith('BC:P\r'):
                 msg = (yield from self.readuntil(b'\r')).decode()
-            if not msg.startswith('!B:'):
-                self.platform.log.warning("Got unexpected message from FAST: {}".format(msg))
         else:
             self.platform.log.warning("Not resetting FAST NET because firmware is currently broken.")
 

@@ -92,8 +92,12 @@ class BaseSerialCommunicator(object):
     def stop(self):
         """Stop and shut down this serial connection."""
         self.log.error("Stop called on serial connection %s", self.port)
-        self.read_task.cancel()
-        self.writer.close()
+        if self.read_task:
+            self.read_task.cancel()
+            self.read_task = None
+        if self.writer:
+            self.writer.close()
+            self.writer = None
 
     def send(self, msg):
         """Send a message to the remote processor over the serial connection.
