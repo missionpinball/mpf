@@ -129,11 +129,11 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         firmware_file = os.path.join(self.machine.machine_path, update_config['file'])
         try:
             with open(firmware_file) as f:
-                update_string = f.read()
+                update_string = f.read().replace("\n", "\r")
         except FileNotFoundError:
             infos += "Could not find update file.\b"
             return infos
-        self.net_connection.send(update_string)
+        self.net_connection.writer.write(update_string.encode())
         infos += "Update done.\n"
         return infos
 
