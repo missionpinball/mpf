@@ -712,7 +712,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         # So for the flipper, Driver On Time1 will = the maximum time the coil can be held on if the EOS fails.
         # Driver On Time2 X 100mS would not be used for a flipper, so set it to 0.
         # And PWM2 should be left on full 0xff unless you need less power for some reason.
-        # No release so far :-(
         self.debug_log("Setting Pulse on hit and release with HW Rule. Switch:"
                        "%s, Driver: %s", enable_switch.hw_switch.number,
                        coil.hw_driver.number)
@@ -728,7 +727,7 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         cmd = '{}{},{},{},75,{},{},00,{},{}'.format(
             driver.get_config_cmd(),
             coil.hw_driver.number,
-            driver.get_control_for_cmd(enable_switch),
+            driver.get_control_for_cmd(enable_switch, disable_switch),
             enable_switch.hw_switch.number[0],
             disable_switch.hw_switch.number[0],
             Util.int_to_hex_string(coil.pulse_settings.duration),
