@@ -34,9 +34,6 @@ class Driver(SystemWideDevice):
         self.hw_driver = None   # type: DriverPlatformInterface
         super().__init__(machine, name)
         self.delay = DelayManager(self.machine.delayRegistry)
-
-        self.time_last_changed = -1
-        self.time_when_done = -1
         self.platform = None                # type: DriverPlatform
 
     @classmethod
@@ -200,8 +197,6 @@ class Driver(SystemWideDevice):
         if hold_power == 0.0:
             raise DriverLimitsError("Cannot enable driver with hold_power 0.0")
 
-        self.time_when_done = -1
-        self.time_last_changed = self.machine.clock.get_time()
         self.info_log("Enabling Driver with power %s (pulse_ms %sms and pulse_power %s)", hold_power, pulse_ms,
                       pulse_power)
         self.hw_driver.enable(PulseSettings(power=pulse_power, duration=pulse_ms),
@@ -215,8 +210,6 @@ class Driver(SystemWideDevice):
         """Disable this driver."""
         del kwargs
         self.info_log("Disabling Driver")
-        self.time_last_changed = self.machine.clock.get_time()
-        self.time_when_done = self.time_last_changed
         self.machine.delay.remove(name='{}_timed_enable'.format(self.name))
         self.hw_driver.disable()
         # inform bcp clients
@@ -263,12 +256,9 @@ class Driver(SystemWideDevice):
         wait_ms = self._get_wait_ms(pulse_ms, max_wait_ms)
 
         if wait_ms > 0:
+            self.debug_log("Delaying pulse by %sms pulse_ms: %sms (%s pulse_power)", wait_ms, pulse_ms, pulse_power)
             self.delay.add(wait_ms, self._pulse_now, pulse_ms=pulse_ms, pulse_power=pulse_power)
         else:
             self._pulse_now(pulse_ms, pulse_power)
-
-        # only needed for score reels
-        # self.time_last_changed = self.machine.clock.get_time()
-        self.time_when_done = self.time_last_changed + int((pulse_ms + wait_ms) / 1000.0)
 
         return wait_ms
