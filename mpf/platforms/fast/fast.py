@@ -717,10 +717,8 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
                        coil.hw_driver.number)
 
         # TODO: hold does not work here
-
-        self.set_pulse_on_hit_and_release_rule(enable_switch, coil)
-        self.set_pulse_on_hit_and_release_rule(disable_switch, coil)
         self._check_switch_coil_combincation(enable_switch, coil)
+        self._check_switch_coil_combincation(disable_switch, coil)
 
         driver = coil.hw_driver
 
