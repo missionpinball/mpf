@@ -188,6 +188,7 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             msg = ''
             while not msg.startswith('BC:P\r'):
                 msg = (yield from self.readuntil(b'\r')).decode()
+            yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
         else:
             self.platform.log.warning("Not resetting FAST NET because firmware is currently broken.")
 
