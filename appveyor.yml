@@ -25,7 +25,7 @@ install:
 build: off
 
 test_script:
- - "%PYTHON%\\python.exe setup.py test -q"
+ - "%PYTHON%\\python.exe -m unittest discover -s mpf.tests"
 
 after_test:
   - "%PYTHON%\\python.exe setup.py sdist --formats=gztar"
