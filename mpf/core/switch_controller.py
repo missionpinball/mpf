@@ -10,7 +10,6 @@ import asyncio
 from functools import partial
 from typing import Any, Callable, Dict, List
 
-from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.machine import MachineController
 from mpf.core.mpf_controller import MpfController
 from mpf.devices.switch import Switch
@@ -32,7 +31,7 @@ class SwitchController(MpfController):
     def __init__(self, machine: MachineController) -> None:
         """Initialise switch controller."""
         super().__init__(machine)
-        self.registered_switches = CaseInsensitiveDict()        # type: Dict[str, List[RegisteredSwitch]]
+        self.registered_switches = dict()                       # type: Dict[str, List[RegisteredSwitch]]
         # Dictionary of switches and states that have been registered for
         # callbacks.
 
@@ -44,7 +43,7 @@ class SwitchController(MpfController):
         # that tracks current switches for things like "do foo() if switch bar
         # is active for 100ms."
 
-        self.switches = CaseInsensitiveDict()                   # type: Dict[str, SwitchState]
+        self.switches = dict()                                  # type: Dict[str, SwitchState]
         # Dictionary which holds the master list of switches as well as their
         # current states. State here does factor in whether a switch is NO or
         # NC so 1 = active and 0 = inactive.
@@ -53,9 +52,10 @@ class SwitchController(MpfController):
         self.machine.events.add_async_handler('init_phase_2', self._initialize_switches, 1000)
         # priority 1000 so this fires first
 
-        self.machine.events.add_handler('machine_reset_phase_3', self.log_active_switches)
-
         self.monitors = list()      # type: List[Callable[[MonitoredSwitchChange], None]]
+
+        # to detect early switch changes before init
+        self._initialised = False
 
     def register_switch(self, name):
         """Add the name of a switch to the switch controller for tracking.
@@ -76,6 +76,10 @@ class SwitchController(MpfController):
         for switch in self.machine.switches:
             # Populate self.switches
             self.set_state(switch.name, switch.state, reset_time=True)
+
+        self._initialised = True
+
+        self.log_active_switches()
 
     @asyncio.coroutine
     def update_switches_from_hw(self):
@@ -154,6 +158,8 @@ class SwitchController(MpfController):
             number of ms. If ms is not specified, returns True if the switch
             is in the state regardless of how long it's been in that state.
         """
+        if not self._initialised:
+            raise AssertionError("Cannot read switch state before init_phase_3")
         if not ms:
             ms = 0
 
@@ -247,6 +253,9 @@ class SwitchController(MpfController):
                 logical states that are inverted from each other.
 
         """
+        if not self._initialised:
+            raise AssertionError("Got early switch change for switch {} to state {}. platform: {}".format(
+                num, state, platform))
         for switch in self.machine.switches:
             if switch.hw_switch.number == num and switch.platform == platform:
                 self.process_switch_obj(obj=switch, state=state, logical=logical)
@@ -390,7 +399,7 @@ class SwitchController(MpfController):
 
         Args:
             switch_name: String name of the switch to wait for.
-            state: The state to wait for. 0 = inactive, 1 = active.
+            state: The state to wait for. 0 = inactive, 1 = active, 2 = opposite to current.
             only_on_change: Bool which controls whether this wait will be
                 triggered now if the switch is already in the state, or
                 whether it will wait until the switch changes into that state.
@@ -405,7 +414,7 @@ class SwitchController(MpfController):
 
         Args:
             switch_names: Iterable of strings of switch names. Whichever switch changes first will trigger this wait.
-            state: The state to wait for. 0 = inactive, 1 = active.
+            state: The state to wait for. 0 = inactive, 1 = active, 2 = opposite to current.
             only_on_change: Bool which controls whether this wait will be
                 triggered now if the switch is already in the state, or
                 whether it will wait until the switch changes into that state.
@@ -424,7 +433,11 @@ class SwitchController(MpfController):
         handlers = []   # type: List[SwitchHandler]
         future.add_done_callback(partial(self._future_done, handlers))      # type: ignore
         for switch_name in switch_names:
-            handlers.append(self.add_switch_handler(switch_name, state=state, ms=ms,
+            if state == 2:
+                handler_state = 0 if self.is_active(switch_name) else 1
+            else:
+                handler_state = state
+            handlers.append(self.add_switch_handler(switch_name, state=handler_state, ms=ms,
                                                     callback=partial(self._wait_handler,
                                                                      ms=ms,
                                                                      _future=future,

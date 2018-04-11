@@ -45,6 +45,11 @@ class TestP3Roc(MpfTestCase):
     def get_platform(self):
         return False
 
+    def read_data(self, module, address):
+        if module not in self._memory or address not in self._memory[module]:
+            return 0
+        return self._memory[module][address]
+
     def setUp(self):
         self.expected_duration = 2
         p_roc_common.pinproc_imported = True
@@ -102,7 +107,25 @@ class TestP3Roc(MpfTestCase):
                           'futureEnable': False})
 
         self.pinproc.switch_get_states = MagicMock(return_value=[0, 1] + [0] * 100)
+        self.pinproc.read_data = self.read_data
         self.pinproc.driver_update_group_config = MagicMock()
+
+        self._memory = {
+            0x00: {         # manager
+                0x00: 0,            # chip id
+                0x01: 0x00020006,   # version
+                0x03: 0x0000,       # dip switches
+            },
+            0x02: {         # switch controller
+                0x1000: 0xA3,       # SW-16 Address 0 Reg 0
+                0x1001: 0x00,       # SW-16 Address 0 Reg 1
+                0x1040: 0xA3,       # SW-16 Address 1 Reg 0
+                0x1041: 0x13,       # SW-16 Address 1 Reg 1
+                0x1080: 0xA4,       # SW-16 Address 2 Reg 0
+                0x1081: 0x00,       # SW-16 Address 2 Reg 1
+            }
+        }
+
         super().setUp()
 
     def test_platform(self):
@@ -128,7 +151,14 @@ class TestP3Roc(MpfTestCase):
         self._test_leds()
         self._test_leds_inverted()
 
-        self.assertTrue(self.machine.default_platform.get_info_string())
+        # test hardware scan
+        info_str = """Firmware Version: 2 Firmware Revision: 6 Hardware Board ID: 0
+SW-16 boards found:
+ - Board: 0 Switches: 16 Device Type: A3 Board ID: 0
+ - Board: 1 Switches: 16 Device Type: A3 Board ID: 13
+ - Board: 2 Switches: 16 Device Type: A4 Board ID: 0
+"""
+        self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 
     def _test_pulse(self):
         self.assertEqual("PD-16 Board 1 Bank 1", self.machine.coils.c_test.hw_driver.get_board_name())
@@ -739,78 +769,78 @@ class TestP3Roc(MpfTestCase):
         )
 
         # test enable of matrix light
-        assert not self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_patter.called
-        assert not self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_schedule.called
+        assert not self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_patter.called
+        assert not self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_schedule.called
         self.machine.lights.test_pdb_light.on()
         self.advance_time_and_run(.02)
-        self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_schedule.assert_called_with(
+        self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_schedule.assert_called_with(
             cycle_seconds=0, schedule=4294967295, now=True, number=32
         )
 
-        self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_patter = MagicMock()
+        self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_patter = MagicMock()
         self.machine.lights.test_pdb_light.on(brightness=128)
         self.advance_time_and_run(.02)
-        self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_patter.assert_called_with(
+        self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_patter.assert_called_with(
             32, 1, 1, 0, True
         )
 
         # test disable of matrix light
-        assert not self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_disable.called
+        assert not self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_disable.called
         self.machine.lights.test_pdb_light.off()
         self.advance_time_and_run(.02)
-        self.machine.lights.test_pdb_light.hw_drivers["white"].proc.driver_disable.assert_called_with(32)
+        self.machine.lights.test_pdb_light.hw_drivers["white"][0].proc.driver_disable.assert_called_with(32)
 
     def _test_pdb_gi_light(self):
         # test gi on
         device = self.machine.lights.test_gi
         num = self.machine.coils.test_gi.hw_driver.number
-        device.hw_drivers["white"].driver.hw_driver.proc.driver_patter = MagicMock()
-        device.hw_drivers["white"].driver.hw_driver.proc.driver_schedule = MagicMock()
+        device.hw_drivers["white"][0].driver.hw_driver.proc.driver_patter = MagicMock()
+        device.hw_drivers["white"][0].driver.hw_driver.proc.driver_schedule = MagicMock()
         device.color("white")
         self.advance_time_and_run(.1)
-        device.hw_drivers["white"].driver.hw_driver.proc.driver_schedule.assert_has_calls([
+        device.hw_drivers["white"][0].driver.hw_driver.proc.driver_schedule.assert_has_calls([
             call(now=True, number=num, cycle_seconds=0, schedule=4294967295)])
-        device.hw_drivers["white"].driver.hw_driver.proc.driver_patter = MagicMock()
-        device.hw_drivers["white"].driver.hw_driver.proc.driver_schedule = MagicMock()
+        device.hw_drivers["white"][0].driver.hw_driver.proc.driver_patter = MagicMock()
+        device.hw_drivers["white"][0].driver.hw_driver.proc.driver_schedule = MagicMock()
 
         device.color([128, 128, 128])
         self.advance_time_and_run(.1)
-        device.hw_drivers["white"].driver.hw_driver.proc.driver_patter.assert_has_calls([
+        device.hw_drivers["white"][0].driver.hw_driver.proc.driver_patter.assert_has_calls([
             call(num, 1, 1, 0, True)])
-        device.hw_drivers["white"].driver.hw_driver.proc.driver_patter = MagicMock()
-        device.hw_drivers["white"].driver.hw_driver.proc.driver_schedule = MagicMock()
+        device.hw_drivers["white"][0].driver.hw_driver.proc.driver_patter = MagicMock()
+        device.hw_drivers["white"][0].driver.hw_driver.proc.driver_schedule = MagicMock()
 
         device.color([245, 245, 245])
         self.advance_time_and_run(.1)
-        device.hw_drivers["white"].driver.hw_driver.proc.driver_patter.assert_has_calls([
+        device.hw_drivers["white"][0].driver.hw_driver.proc.driver_patter.assert_has_calls([
             call(num, 19, 1, 0, True)])
-        device.hw_drivers["white"].driver.hw_driver.proc.driver_patter = MagicMock()
-        device.hw_drivers["white"].driver.hw_driver.proc.driver_schedule = MagicMock()
+        device.hw_drivers["white"][0].driver.hw_driver.proc.driver_patter = MagicMock()
+        device.hw_drivers["white"][0].driver.hw_driver.proc.driver_schedule = MagicMock()
 
         # test gi off
-        device.hw_drivers["white"].driver.hw_driver.proc.driver_disable = MagicMock()
+        device.hw_drivers["white"][0].driver.hw_driver.proc.driver_disable = MagicMock()
         device.color("off")
         self.advance_time_and_run(.1)
-        device.hw_drivers["white"].driver.hw_driver.proc.driver_disable.assert_has_calls([
+        device.hw_drivers["white"][0].driver.hw_driver.proc.driver_disable.assert_has_calls([
             call(num)])
 
     def _test_leds(self):
         device = self.machine.lights.test_led
-        device.hw_drivers['red'].proc.led_color = MagicMock()
+        device.hw_drivers['red'][0].proc.led_color = MagicMock()
 
         # test led on
         device.on()
         self.advance_time_and_run(1)
-        device.hw_drivers['red'].proc.led_color.assert_has_calls([
+        device.hw_drivers['red'][0].proc.led_color.assert_has_calls([
             call(2, 1, 255),
             call(2, 2, 255),
             call(2, 3, 255)], True)
-        device.hw_drivers['red'].proc.proc.led_color = MagicMock()
+        device.hw_drivers['red'][0].proc.proc.led_color = MagicMock()
 
         # test led off
         device.off()
         self.advance_time_and_run(1)
-        device.hw_drivers['red'].proc.led_color.assert_has_calls([
+        device.hw_drivers['red'][0].proc.led_color.assert_has_calls([
             call(2, 1, 0),
             call(2, 2, 0),
             call(2, 3, 0)], True)
@@ -818,27 +848,27 @@ class TestP3Roc(MpfTestCase):
         # test led color
         device.color(RGBColor((2, 23, 42)))
         self.advance_time_and_run(1)
-        device.hw_drivers['red'].proc.led_color.assert_has_calls([
+        device.hw_drivers['red'][0].proc.led_color.assert_has_calls([
             call(2, 1, 2),
             call(2, 2, 23),
             call(2, 3, 42)], True)
 
     def _test_leds_inverted(self):
         device = self.machine.lights.test_led_inverted
-        device.hw_drivers['red'].proc.led_color = MagicMock()
+        device.hw_drivers['red'][0].proc.led_color = MagicMock()
         # test led on
         device.on()
         self.advance_time_and_run(1)
-        device.hw_drivers['red'].proc.led_color.assert_has_calls([
+        device.hw_drivers['red'][0].proc.led_color.assert_has_calls([
             call(2, 4, 0),
             call(2, 5, 0),
             call(2, 6, 0)], True)
-        device.hw_drivers['red'].proc.led_color = MagicMock()
+        device.hw_drivers['red'][0].proc.led_color = MagicMock()
 
         # test led off
         device.color("off")
         self.advance_time_and_run(1)
-        device.hw_drivers['red'].proc.led_color.assert_has_calls([
+        device.hw_drivers['red'][0].proc.led_color.assert_has_calls([
             call(2, 4, 255),
             call(2, 5, 255),
             call(2, 6, 255)], True)
@@ -846,7 +876,7 @@ class TestP3Roc(MpfTestCase):
         # test led color
         device.color(RGBColor((2, 23, 42)))
         self.advance_time_and_run(1)
-        device.hw_drivers['red'].proc.led_color.assert_has_calls([
+        device.hw_drivers['red'][0].proc.led_color.assert_has_calls([
             call(2, 4, 255 - 2),
             call(2, 5, 255 -23),
             call(2, 6, 255 - 42)], True)

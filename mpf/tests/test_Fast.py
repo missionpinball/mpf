@@ -1,6 +1,6 @@
 from mpf.core.platform import SwitchConfig
 from mpf.core.rgb_color import RGBColor
-from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.MpfTestCase import MpfTestCase, MagicMock
 
 from mpf.tests.loop import MockSerial
 
@@ -165,8 +165,8 @@ class TestFast(MpfTestCase):
             "RF:00": "RF:P",
         }
         self.net_cpu.expected_commands = {
-            'RE:': '!SRE',
-            'ID:': 'ID:NET FP-CPU-002-1 00.90',
+            'BC:': '!B:02',
+            'ID:': 'ID:NET FP-CPU-002-1 01.03',
             'NN:00': 'NN:00,FP-I/O-3208-2   ,01.00,08,20,04,06,00,00,00,00',     # 3208 board
             'NN:01': 'NN:01,FP-I/O-0804-1   ,01.00,04,08,04,06,00,00,00,00',     # 0804 board
             'NN:02': 'NN:02,FP-I/O-1616-2   ,01.00,10,10,04,06,00,00,00,00',     # 1616 board
@@ -211,7 +211,7 @@ class TestFast(MpfTestCase):
         self.assertEqual("FP-CPU-002-1", self.machine.get_machine_var("fast_dmd_model"))
         self.assertEqual("00.89", self.machine.get_machine_var("fast_rgb_firmware"))
         self.assertEqual("FP-CPU-002-1", self.machine.get_machine_var("fast_rgb_model"))
-        self.assertEqual("00.90", self.machine.get_machine_var("fast_net_firmware"))
+        self.assertEqual("01.03", self.machine.get_machine_var("fast_net_firmware"))
         self.assertEqual("FP-CPU-002-1", self.machine.get_machine_var("fast_net_model"))
 
     def test_coils(self):
@@ -220,6 +220,19 @@ class TestFast(MpfTestCase):
         self._test_enable_exception()
         self._test_allow_enable()
         self._test_coil_configure()
+
+        # test hardware scan
+        info_str = """NET CPU: NET FP-CPU-002-1 01.03
+RGB CPU: RGB FP-CPU-002-1 00.89
+DMD CPU: DMD FP-CPU-002-1 00.88
+
+Boards:
+Board 0 - Model: FP-I/O-3208-2    Firmware: 01.00 Switches: 32 Drivers: 8
+Board 1 - Model: FP-I/O-0804-1    Firmware: 01.00 Switches: 8 Drivers: 4
+Board 2 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
+Board 3 - Model: FP-I/O-1616-2    Firmware: 01.00 Switches: 16 Drivers: 16
+"""
+        self.assertEqual(info_str, self.machine.default_platform.get_info_string())
 
     def _test_coil_configure(self):
         self.assertEqual("FAST Board 0", self.machine.coils.c_test.hw_driver.get_board_name())
@@ -388,6 +401,25 @@ class TestFast(MpfTestCase):
         self.machine.autofires.ac_inverted_switch.enable()
         self.advance_time_and_run(.1)
         self.assertFalse(self.net_cpu.expected_commands)
+
+    def test_firmware_update(self):
+        commands = []
+
+        def _catch_update(cmd):
+            commands.append(cmd)
+            return True
+        parse_func = self.net_cpu._parse
+        self.net_cpu._parse = _catch_update
+        output = self.machine.default_platform.update_firmware()
+        self.advance_time_and_run()
+        self.net_cpu._parse = parse_func
+        # check if we send the dummy update
+        self.assertEqual(['DUMMY UPDATE\n'], commands)
+        expected_output = """NET CPU is version 01.03
+Found an update to version 1.04 for the NET CPU. Will flash file firmware/FAST_NET_01_04_00.txt
+Update done.
+"""
+        self.assertEqual(expected_output, output)
 
     def test_servo(self):
         # go to min position

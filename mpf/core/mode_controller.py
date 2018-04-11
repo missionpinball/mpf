@@ -1,6 +1,11 @@
 """Contains the ModeController class for MPF."""
 import importlib
+import asyncio
 import os
+import tempfile
+import hashlib
+import errno
+import pickle
 from collections import namedtuple
 
 from typing import Callable
@@ -56,7 +61,7 @@ class ModeController(MpfController):
 
         if 'modes' in self.machine.config:
             # priority needs to be higher than device_manager::_load_device_modules
-            self.machine.events.add_handler('init_phase_1', self.load_modes, priority=10)
+            self.machine.events.add_async_handler('init_phase_1', self.load_modes, priority=10)
             self.machine.events.add_handler('init_phase_2', self.initialise_modes)
 
         self.machine.events.add_handler('ball_ending', self._ball_ending,
@@ -92,6 +97,7 @@ class ModeController(MpfController):
         for mode in self.machine.modes:
             mode.initialise_mode()
 
+    @asyncio.coroutine
     def load_modes(self, **kwargs):
         """Load the modes from the modes: section of the machine configuration file."""
         del kwargs
@@ -104,7 +110,11 @@ class ModeController(MpfController):
                 raise AssertionError('Mode {} already exists. Cannot load again.'.format(mode))
 
             # load mode
-            self.machine.modes[mode] = self._load_mode(mode.lower())
+            self.machine.modes[mode] = self._load_mode(mode)
+
+            # add a very very short yield to prevent hangs in platforms (e.g. watchdog timeouts during IO)
+            yield from asyncio.sleep(.0001, loop=self.machine.clock.loop)
+            self.log.debug("Loaded mode %s", mode)
 
     def _find_mode_path(self, mode_string):
         if mode_string in self._machine_mode_folders:
@@ -120,10 +130,7 @@ class ModeController(MpfController):
                              "folder in your machine's 'modes' folder?"
                              .format(mode_string))
 
-    def _load_mode_config(self, mode_string):
-        config = dict()
-        found_config = False
-        # Is there an MPF default config for this mode? If so, load it first
+    def _get_mpf_mode_config(self, mode_string):
         try:
             mpf_mode_config = os.path.join(
                 self.machine.mpf_path,
@@ -131,19 +138,14 @@ class ModeController(MpfController):
                 self._mpf_mode_folders[mode_string],
                 'config',
                 self._mpf_mode_folders[mode_string] + '.yaml')
-
-            if os.path.isfile(mpf_mode_config):
-                config = ConfigProcessor.load_config_file(mpf_mode_config,
-                                                          config_type='mode')
-                found_config = True
-
-            self.debug_log("Loading config from %s", mpf_mode_config)
-
+            if not os.path.isfile(mpf_mode_config):
+                return False
         except KeyError:
-            pass
+            return False
 
-        # Now figure out if there's a machine-specific config for this mode,
-        # and if so, merge it into the config
+        return mpf_mode_config
+
+    def _get_mode_config_file(self, mode_string):
         try:
             mode_config_file = os.path.join(
                 self.machine.machine_path,
@@ -151,23 +153,34 @@ class ModeController(MpfController):
                 self._machine_mode_folders[mode_string],
                 'config',
                 self._machine_mode_folders[mode_string] + '.yaml')
+            if not os.path.isfile(mode_config_file):
+                return False
         except KeyError:
-            mode_config_file = False
+            return False
+        return mode_config_file
 
-        if mode_config_file and os.path.isfile(mode_config_file):
-            config = Util.dict_merge(config,
-                                     ConfigProcessor.load_config_file(
-                                         mode_config_file, 'mode'))
-            found_config = True
+    def _load_mode_config(self, mode_string):
+        config_files = []
+        # Is there an MPF default config for this mode? If so, load it first
+        mpf_mode_config = self._get_mpf_mode_config(mode_string)
+        if mpf_mode_config:
+            config_files.append(mpf_mode_config)
 
-            self.debug_log("Loading config from %s", mode_config_file)
+        # Now figure out if there's a machine-specific config for this mode,
+        # and if so, merge it into the config
+        mode_config_file = self._get_mode_config_file(mode_string)
+        if mode_config_file:
+            config_files.append(mode_config_file)
 
-        # validate config
-        if 'mode' not in config:
-            config['mode'] = dict()
-
-        if not found_config:
+        if not config_files:
             raise AssertionError("Did not find any config for mode {}.".format(mode_string))
+
+        config = self.machine.config_processor.load_config_files_with_cache(
+            config_files, "mode", load_from_cache=not self.machine.options['no_load_cache'],
+            store_to_cache=self.machine.options['create_config_cache'])
+
+        if "mode" not in config:
+            config["mode"] = dict()
 
         return config
 
@@ -237,7 +250,7 @@ class ModeController(MpfController):
             mode_string: String name of the mode you're loading. This is the name of
                 the mode's folder in your game's machine_files/modes folder.
         """
-        mode_string = mode_string.lower()
+        mode_string = mode_string
 
         self.debug_log('Processing mode: %s', mode_string)
 
@@ -293,7 +306,7 @@ class ModeController(MpfController):
                 folder)
 
             if os.path.isdir(this_mode_folder) and not folder.startswith('_'):
-                final_mode_folders[folder.lower()] = folder
+                final_mode_folders[folder] = folder
 
         return final_mode_folders
 

@@ -38,4 +38,5 @@ pylint:
 ignore-paths:
   - docs
   - mpf/platforms/trinamics/
+  - tools/
   - _mpf-mc                     # ignore mc in subpath on travis

@@ -1,5 +1,7 @@
+import asyncio
+
 from mpf.platforms import smbus2
-from mpf.tests.MpfTestCase import MpfTestCase, MagicMock
+from mpf.tests.MpfTestCase import MpfTestCase, MagicMock, patch
 
 
 class TestSmbus2(MpfTestCase):
@@ -15,16 +17,25 @@ class TestSmbus2(MpfTestCase):
         return False
 
     def setUp(self):
-        smbus2.SMBus = MagicMock()
-        self.smbus = MagicMock()
-        smbus2.SMBus.return_value = self.smbus
+        smbus = patch('mpf.platforms.smbus2.SMBus2Asyncio')
+        self.smbus = smbus.start()
+        self.smbus_instance = MagicMock()
+        self.smbus.return_value = self.smbus_instance
+        self.addCleanup(self.smbus.stop)
         super().setUp()
 
     def test_i2c(self):
-        self.machine.default_platform.i2c_write8("1-17", 23, 1337)
-        self.smbus.write_byte_data.assert_called_once_with(17, 23, 1337)
-        smbus2.SMBus.assert_called_once_with('1')
+        result = asyncio.Future(loop=self.loop)
+        result.set_result(True)
+        self.smbus_instance.write_byte_data = MagicMock(return_value=result)
 
-        self.smbus.read_byte_data = MagicMock(return_value=1337)
+        self.machine.default_platform.i2c_write8("1-17", 23, 1337)
+        self.machine_run()
+        self.smbus_instance.write_byte_data.assert_called_once_with(17, 23, 1337)
+        self.smbus.assert_called_once_with('1', loop=self.loop)
+
+        result = asyncio.Future(loop=self.loop)
+        result.set_result(1337)
+        self.smbus_instance.read_byte_data = MagicMock(return_value=result)
         self.assertEqual(1337, self.loop.run_until_complete(self.machine.default_platform.i2c_read8("1-17", 23)))
-        self.smbus.read_byte_data.assert_called_once_with(17, 23)
+        self.smbus_instance.read_byte_data.assert_called_once_with(17, 23)

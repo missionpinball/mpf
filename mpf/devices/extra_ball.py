@@ -118,7 +118,7 @@ class ExtraBall(ModeDevice):
         Returns:
             True or False
         """
-        if not self.config['enabled']:
+        if not self.config['enabled'] or not self.player:
             return False
 
         if self.group and not self.group.enabled:

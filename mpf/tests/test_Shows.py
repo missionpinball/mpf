@@ -246,21 +246,22 @@ class TestShows(MpfTestCase):
         self.assertLightChannel("gi_01", 0)
 
         # --------------------------------------------------------
-        # test_show2 - Show with events and triggers
+        # test_show2 - Show with events
         # --------------------------------------------------------
 
         # Setup callback for test_event event (fired in test show) and triggers
         self.event_handler = MagicMock()
+        self.event_handler_2 = MagicMock()
         self.machine.events.add_handler('test_event', self.event_handler)
-        self.machine.bcp.bcp_trigger = MagicMock()
+        self.machine.events.add_handler('play_sound', self.event_handler_2)
 
         # Advance the clock enough to ensure the shows have time to load
         self.assertTrue(self.machine.shows['test_show2'].loaded)
         self.assertEqual(self.machine.shows['test_show2'].total_steps, 3)
 
-        # Make sure our event callback and trigger have not been fired yet
+        # Make sure our event callbacks have not been fired yet
         self.assertFalse(self.event_handler.called)
-        self.assertFalse(self.machine.bcp.bcp_trigger.called)
+        self.assertFalse(self.event_handler_2.called)
 
         # Start the mode that will trigger playback of the test_show2 show
         self.machine.events.post('start_mode2')
@@ -272,26 +273,25 @@ class TestShows(MpfTestCase):
         self.assertTrue(self.machine.show_player.instances['mode2']['show_player']['test_show2'])
         self.machine_run()
 
-        # Make sure event callback and trigger have been called
+        # Make sure event callbacks have been called
         self.assertTrue(self.event_handler.called)
-        self.assertTrue(self.machine.bcp.bcp_trigger)
-        self.machine.bcp.bcp_trigger.assert_called_with('play_sound',
-                                                        sound="test_1",
-                                                        volume=0.5, loops=-1,
-                                                        priority=0)
+        self.assertTrue(self.event_handler_2.called)
+        self.event_handler_2.assert_called_with(priority=0,
+                                                sound="test_1",
+                                                loops=-1,
+                                                volume=0.5)
 
-        # Advance to next show step and check for trigger
+        # Advance to next show step and check for event
         self.advance_time_and_run()
-        self.machine.bcp.bcp_trigger.assert_called_with('play_sound',
-                                                        sound="test_2",
-                                                        priority=0)
+        self.event_handler_2.assert_called_with(priority=0,
+                                                sound="test_2")
 
-        # Advance to next show step and check for trigger
+        # Advance to next show step and check for event
         self.advance_time_and_run()
-        self.machine.bcp.bcp_trigger.assert_called_with('play_sound',
-                                                        sound="test_3",
-                                                        volume=0.35, loops=1,
-                                                        priority=0)
+        self.event_handler_2.assert_called_with(priority=0,
+                                                sound="test_3",
+                                                loops=1,
+                                                volume=0.35)
 
         # Stop the mode (and therefore the show)
         self.machine.events.post('stop_mode2')
@@ -804,3 +804,8 @@ class TestShows(MpfTestCase):
         self.advance_time_and_run(6)
         self.assertEventCalled('test_show1_completed')
         self.assertEventCalled('test_show1_stopped')
+
+    def test_token_in_keys(self):
+        self.post_event("play_show_with_token_in_key")
+        self.advance_time_and_run()
+        self.assertLightColor("led_01", "red")

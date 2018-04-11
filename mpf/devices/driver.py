@@ -163,6 +163,10 @@ class Driver(SystemWideDevice):
         if 0 > pulse_ms > self.platform.features['max_pulse']:
             raise AssertionError("Pulse_ms {} is not valid.".format(pulse_ms))
 
+        if self.config['max_pulse_ms'] and pulse_ms > self.config['max_pulse_ms']:
+            raise DriverLimitsError("Driver {} may not be pulsed with pulse_ms {} because max_pulse_ms is {}".
+                                    format(self.name, pulse_ms, self.config['max_pulse_ms']))
+
         return pulse_ms
 
     @event_handler(2)
@@ -198,7 +202,8 @@ class Driver(SystemWideDevice):
 
         self.time_when_done = -1
         self.time_last_changed = self.machine.clock.get_time()
-        self.debug_log("Enabling Driver")
+        self.info_log("Enabling Driver with power %s (pulse_ms %sms and pulse_power %s)", hold_power, pulse_ms,
+                      pulse_power)
         self.hw_driver.enable(PulseSettings(power=pulse_power, duration=pulse_ms),
                               HoldSettings(power=hold_power))
         # inform bcp clients
@@ -209,7 +214,7 @@ class Driver(SystemWideDevice):
     def disable(self, **kwargs):
         """Disable this driver."""
         del kwargs
-        self.debug_log("Disabling Driver")
+        self.info_log("Disabling Driver")
         self.time_last_changed = self.machine.clock.get_time()
         self.time_when_done = self.time_last_changed
         self.machine.delay.remove(name='{}_timed_enable'.format(self.name))
@@ -228,10 +233,10 @@ class Driver(SystemWideDevice):
     def _pulse_now(self, pulse_ms: int, pulse_power: float) -> None:
         """Pulse this driver now."""
         if 0 < pulse_ms <= self.platform.features['max_pulse']:
-            self.debug_log("Pulsing Driver. %sms (%s pulse_power)", pulse_ms, pulse_power)
+            self.info_log("Pulsing Driver for %sms (%s pulse_power)", pulse_ms, pulse_power)
             self.hw_driver.pulse(PulseSettings(power=pulse_power, duration=pulse_ms))
         else:
-            self.debug_log("Enabling Driver for %sms (%s pulse_power)", pulse_ms, pulse_power)
+            self.info_log("Enabling Driver for %sms (%s pulse_power)", pulse_ms, pulse_power)
             self.delay.reset(name='timed_disable',
                              ms=pulse_ms,
                              callback=self.disable)

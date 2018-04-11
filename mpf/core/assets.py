@@ -13,7 +13,6 @@ from typing import List
 
 from mpf.core.mode import Mode
 
-from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.machine import MachineController
 from mpf.core.mpf_controller import MpfController
 from mpf.core.utility_functions import Util
@@ -140,7 +139,7 @@ class BaseAssetManager(MpfController, LogMixin):
         if not hasattr(self.machine, attribute):
             # some assets of different classes use the same mc attribute, like
             # images and animated_images
-            setattr(self.machine, attribute, CaseInsensitiveDict())
+            setattr(self.machine, attribute, dict())
 
         ac = AssetClass(attribute=attribute,
                         cls=asset_class,
@@ -525,7 +524,7 @@ class BaseAssetManager(MpfController, LogMixin):
 
         # limit loading_assets events to max 5 per second
         if remaining and self._last_asset_event_time and \
-                self._last_asset_event_time > self.machine.clock.get_time() + 0.2:
+                self._last_asset_event_time > self.machine.clock.get_time() - 0.2:
             return
 
         self._last_asset_event_time = self.machine.clock.get_time()

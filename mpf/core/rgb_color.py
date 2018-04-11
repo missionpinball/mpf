@@ -9,7 +9,6 @@ import random
 
 from typing import List, Union, Tuple
 
-from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.utility_functions import Util
 
 channel_min_val = 0
@@ -18,7 +17,7 @@ rgb_min = (0, 0, 0)
 rgb_max = (255, 255, 255)
 
 # Standard web color names and values
-named_rgb_colors = CaseInsensitiveDict(
+named_rgb_colors = dict(
     off=(0, 0, 0),
     aliceblue=(240, 248, 255),
     antiquewhite=(250, 235, 215),
@@ -395,7 +394,7 @@ class RGBColor(object):
         :return: RGB representation of the named color.
         :rtype: tuple
         """
-        return named_rgb_colors.get(name, default)
+        return named_rgb_colors.get(name.lower(), default)
 
     @staticmethod
     def string_to_rgb(value: str, default=rgb_min) -> Tuple[int, int, int]:
@@ -416,11 +415,11 @@ class RGBColor(object):
         if '%' in value:
             value, brightness = value.split("%")
 
-        rgb = named_rgb_colors.get(value)
+        rgb = named_rgb_colors.get(value.lower())
         if rgb is None:
             rgb = RGBColor.hex_to_rgb(value)
             if rgb is None:
-                raise AssertionError("Invalid RGB string: {}".format(value))
+                raise ColorException("Invalid RGB string: {}".format(value))
 
         # apply brightness
         if brightness:
@@ -449,10 +448,10 @@ class RGBColor(object):
                 a dictionart of red, green, blue key/value pairs.
 
         """
-        named_rgb_colors[str(name)] = RGBColor(color).rgb
+        named_rgb_colors[str(name.lower())] = RGBColor(color).rgb
 
 
-class ColorException(Exception):
+class ColorException(AssertionError):
 
     """General exception thrown for color utilities non-exit exceptions."""
 

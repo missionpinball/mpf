@@ -9,7 +9,6 @@ from mpf.core.mode_device import ModeDevice
 from mpf.core.player import Player
 from mpf.core.system_wide_device import SystemWideDevice
 from mpf.core.utility_functions import Util
-from mpf.exceptions.ConfigFileError import ConfigFileError
 
 
 class LogicBlockState(object):
@@ -88,7 +87,7 @@ class LogicBlock(SystemWideDevice, ModeDevice):
             self.enable()
 
         if self.config['persist_state']:
-            raise ConfigFileError("Cannot set persist_state for system-wide logic_blocks in {}".format(self.name))
+            self.raise_config_error("Cannot set persist_state for system-wide logic_blocks", 1)
 
         self.post_update_event()
 
@@ -100,17 +99,17 @@ class LogicBlock(SystemWideDevice, ModeDevice):
                 player[self.player_state_variable] = LogicBlockState(self.get_start_value())
                 # enable device ONLY when we create a new entry in the player
                 if self._start_enabled:
-                    mode.add_mode_event_handler("mode_{}_started".format(mode.name),
-                                                self.enable, priority=100)
+                    mode.add_mode_event_handler("mode_{}_starting".format(mode.name),
+                                                self.enable, priority=mode.priority + 1)
 
             self._state = player[self.player_state_variable]
         else:
             self._state = LogicBlockState(self.get_start_value())
             if self._start_enabled:
-                mode.add_mode_event_handler("mode_{}_started".format(mode.name),
-                                            self.enable, priority=100)
+                mode.add_mode_event_handler("mode_{}_starting".format(mode.name),
+                                            self.enable, priority=mode.priority + 1)
 
-        mode.add_mode_event_handler("mode_{}_started".format(mode.name), self.post_update_event)
+        mode.add_mode_event_handler("mode_{}_starting".format(mode.name), self.post_update_event)
 
     def device_removed_from_mode(self, mode: Mode):
         """Unset internal state to prevent leakage."""
@@ -149,12 +148,17 @@ class LogicBlock(SystemWideDevice, ModeDevice):
         """Post an event to notify about changes."""
         del kwargs
         value = self._state.value
-        self.machine.events.post("logicblock_{}_updated".format(self.name), value=value)
+        enabled = self._state.enabled
+        self.machine.events.post("logicblock_{}_updated".format(self.name), value=value, enabled=enabled)
         '''event: logicblock_(name)_updated
 
         desc: The logic block called "name" has changed.
 
         This might happen when the block advanced, it was resetted or restored.
+
+        args:
+        value: The current value of this block.
+        enabled: Whatever this block is enabled or not.
         '''
 
     def enable(self, **kwargs):

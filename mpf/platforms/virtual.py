@@ -104,7 +104,7 @@ class VirtualHardwarePlatform(AccelerometerPlatform, I2cPlatform, ServoPlatform,
                 for switch in Util.string_to_list(self.machine.config['virtual_platform_start_active_switches']):
                     if switch not in self.machine.switches:
                         raise ConfigFileError("Switch {} used in virtual_platform_start_active_switches was not found "
-                                              "in switches section.".format(switch))
+                                              "in switches section.".format(switch), 1, self.log.name)
                     initial_active_switches.append(self.machine.switches[switch].hw_switch.number)
 
                 for k in self.hw_switches:
@@ -346,10 +346,22 @@ class VirtualServo(ServoPlatformInterface):
         self.log = logging.getLogger('VirtualServo')
         self.number = number
         self.current_position = None
+        self.speed = None
+        self.acceleration = None
 
     def go_to_position(self, position):
         """Go to position."""
         self.current_position = position
+
+    @classmethod
+    def set_speed_limit(cls, speed_limit):
+        """Todo emulate speed parameter."""
+        pass
+
+    @classmethod
+    def set_acceleration_limit(cls, acceleration_limit):
+        """Todo emulate acceleration parameter."""
+        pass
 
 
 class VirtualStepper(StepperPlatformInterface):

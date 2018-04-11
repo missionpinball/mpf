@@ -19,7 +19,6 @@ import asyncio
 from pkg_resources import iter_entry_points
 
 from mpf._version import __version__, version as mpf_version, extended_version as mpf_extended_version
-from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.clock import ClockBase
 from mpf.core.config_processor import ConfigProcessor
 from mpf.core.config_validator import ConfigValidator
@@ -89,6 +88,7 @@ class MachineController(LogMixin):
 
         self.log.info("Command line arguments: %s", options)
         self.options = options
+        self.config_processor = ConfigProcessor()
 
         self.log.info("MPF path: %s", mpf_path)
         self.mpf_path = mpf_path
@@ -107,7 +107,7 @@ class MachineController(LogMixin):
         self.scriptlets = list()    # type: List[Scriptlet]
         self.modes = DeviceCollection(self, 'modes', None)          # type: Dict[str, Mode]
         self.game = None            # type: Game
-        self.machine_vars = CaseInsensitiveDict()
+        self.machine_vars = dict()
         self.machine_var_monitor = False
         self.machine_var_data_manager = None    # type: DataManager
         self.thread_stopper = threading.Event()
@@ -169,15 +169,14 @@ class MachineController(LogMixin):
         self.default_platform = None        # type: SmartVirtualHardwarePlatform
 
         self.clock = self._load_clock()
-        self.stop_future = asyncio.Future(loop=self.clock.loop)
+        self.stop_future = asyncio.Future(loop=self.clock.loop)     # type: asyncio.Future
 
     @asyncio.coroutine
-    def initialise(self) -> Generator[int, None, None]:
-        """Initialise machine."""
+    def initialise_core_and_hardware(self) -> Generator[int, None, None]:
+        """Load core modules and hardware."""
         self._boot_holds = set()    # type: Set[str]
         self.is_init_done = asyncio.Event(loop=self.clock.loop)
         self.register_boot_hold('init')
-
         self._load_hardware_platforms()
 
         self._load_core_modules()
@@ -185,18 +184,25 @@ class MachineController(LogMixin):
 
         self._validate_config()
 
-        self._initialize_credit_string()
-
         # This is called so hw platforms have a chance to register for events,
         # and/or anything else they need to do with core modules since
         # they're not set up yet when the hw platforms are constructed.
         yield from self._initialize_platforms()
+
+    @asyncio.coroutine
+    def initialise(self) -> Generator[int, None, None]:
+        """Initialise machine."""
+        yield from self.initialise_core_and_hardware()
+
+        self._initialize_credit_string()
 
         self._register_config_players()
         self._register_system_events()
         self._load_machine_vars()
         yield from self._run_init_phases()
         self._init_phases_complete()
+
+        yield from self._start_platforms()
 
         # wait until all boot holds were released
         yield from self.is_init_done.wait()
@@ -256,14 +262,32 @@ class MachineController(LogMixin):
         """Cleanup after init and remove boot holds."""
         del kwargs
         ConfigValidator.unload_config_spec()
+        self.events.remove_all_handlers_for_event("init_phase_1")
+        self.events.remove_all_handlers_for_event("init_phase_2")
+        self.events.remove_all_handlers_for_event("init_phase_3")
+        self.events.remove_all_handlers_for_event("init_phase_4")
+        self.events.remove_all_handlers_for_event("init_phase_5")
 
         self.clear_boot_hold('init')
 
     @asyncio.coroutine
     def _initialize_platforms(self) -> Generator[int, None, None]:
         """Initialise all used hardware platforms."""
+        init_done = []
+        # collect all platform init futures
         for hardware_platform in list(self.hardware_platforms.values()):
-            yield from hardware_platform.initialize()
+            init_done.append(hardware_platform.initialize())
+
+        # wait for all of them in parallel
+        results = yield from asyncio.wait(init_done, loop=self.clock.loop)
+        for result in results[0]:
+            result.result()
+
+    @asyncio.coroutine
+    def _start_platforms(self) -> Generator[int, None, None]:
+        """Start all used hardware platforms."""
+        for hardware_platform in list(self.hardware_platforms.values()):
+            yield from hardware_platform.start()
             if not hardware_platform.features['tickless']:
                 self.clock.schedule_interval(hardware_platform.tick, 1 / self.config['mpf']['default_platform_hz'])
 
@@ -386,110 +410,21 @@ class MachineController(LogMixin):
         """Add the machine folder to sys.path so we can import modules from it."""
         sys.path.insert(0, self.machine_path)
 
-    def _get_mpfcache_file_name(self):
-        cache_dir = tempfile.gettempdir()
-        path_hash = str(hashlib.md5(bytes(self.machine_path, 'UTF-8')).hexdigest())
-        for configfile in self.options['configfile']:
-            path_hash += "-" + hashlib.md5(bytes(os.path.abspath(configfile), 'UTF-8')).hexdigest()
-        result = os.path.join(cache_dir, path_hash)
-        return result + ".mpf_cache"
-
     def _load_config(self) -> None:     # pragma: no cover
-        if self.options['no_load_cache']:
-            load_from_cache = False
-        else:
-            try:
-                if self._get_latest_config_mod_time() > os.path.getmtime(self._get_mpfcache_file_name()):
-                    load_from_cache = False  # config is newer
-                else:
-                    load_from_cache = True  # cache is newer
-
-            except OSError as exception:
-                if exception.errno != errno.ENOENT:
-                    raise  # some unknown error?
-                else:
-                    load_from_cache = False  # cache file doesn't exist
-
-        config_loaded = False
-        if load_from_cache:
-            config_loaded = self._load_config_from_cache()
-
-        if not config_loaded:
-            self._load_config_from_files()
-
-    def _load_config_from_files(self) -> None:
-        self.log.info("Loading config from original files")
-
-        self.config = self._get_mpf_config()
-        self.config['_mpf_version'] = __version__
+        config_files = [self.options['mpfconfigfile']]
 
         for num, config_file in enumerate(self.options['configfile']):
 
             if not (config_file.startswith('/') or
                     config_file.startswith('\\')):
 
-                config_file = os.path.join(self.machine_path, self.config['mpf']['paths']['config'], config_file)
+                config_files.append(os.path.join(self.machine_path, "config", config_file))
 
             self.log.info("Machine config file #%s: %s", num + 1, config_file)
 
-            self.config = Util.dict_merge(self.config,
-                                          ConfigProcessor.load_config_file(
-                                              config_file,
-                                              config_type='machine'))
-
-        if self.options['create_config_cache']:
-            self._cache_config()
-
-    def _get_mpf_config(self) -> dict:
-        """Return mpf config dict."""
-        return ConfigProcessor.load_config_file(self.options['mpfconfigfile'],
-                                                config_type='machine')
-
-    def _load_config_from_cache(self) -> bool:
-        """Return true if config was loaded from cache."""
-        self.log.info("Loading cached config: %s", self._get_mpfcache_file_name())
-
-        with open(self._get_mpfcache_file_name(), 'rb') as f:
-
-            try:
-                self.config = pickle.load(f)
-
-            # unfortunately pickle can raise all kinds of exceptions and we dont want to crash on corrupted cache
-            # pylint: disable-msg=broad-except
-            except Exception:   # pragma: no cover
-                self.log.warning("Could not load config from cache")
-                return False
-
-            if self.config.get('_mpf_version') != __version__:
-                self.log.info(
-                    "Cached config is from a different version of MPF.")
-                return False
-
-            return True
-
-    def _get_latest_config_mod_time(self) -> float:
-        """Return last modification time of the config file."""
-        latest_time = os.path.getmtime(self.options['mpfconfigfile'])
-
-        for root, dirs, files in os.walk(
-                os.path.join(self.machine_path, 'config')):
-            for name in files:
-                if not name.startswith('.'):
-                    if os.path.getmtime(os.path.join(root, name)) > latest_time:
-                        latest_time = os.path.getmtime(os.path.join(root, name))
-
-            for name in dirs:
-                if not name.startswith('.'):
-                    if os.path.getmtime(os.path.join(root, name)) > latest_time:
-                        latest_time = os.path.getmtime(os.path.join(root, name))
-
-        return latest_time
-
-    def _cache_config(self):    # pragma: no cover
-        """Dump config to cache."""
-        with open(self._get_mpfcache_file_name(), 'wb') as f:
-            pickle.dump(self.config, f, protocol=4)
-            self.log.info('Config file cache created: %s', self._get_mpfcache_file_name())
+        self.config = self.config_processor.load_config_files_with_cache(
+            config_files, "machine", load_from_cache=not self.options['no_load_cache'],
+            store_to_cache=self.options['create_config_cache'])
 
     def verify_system_info(self):
         """Dump information about the Python installation to the log.
@@ -561,11 +496,9 @@ class MachineController(LogMixin):
     def _load_scriptlets(self) -> None:
         """Load scriptlets."""
         if 'scriptlets' in self.config:
-            self.config['scriptlets'] = self.config['scriptlets'].split(' ')
-
             self.debug_log("Loading scriptlets...")
 
-            for scriptlet in self.config['scriptlets']:
+            for scriptlet in Util.string_to_list(self.config['scriptlets']):
 
                 self.debug_log("Loading '%s' scriptlet", scriptlet)
 
@@ -650,7 +583,9 @@ class MachineController(LogMixin):
 
             try:
                 hardware_platform = Util.string_to_class(self.config['mpf']['platforms'][name])
-            except ImportError:     # pragma: no cover
+            except ImportError as e:     # pragma: no cover
+                if e.name != name:  # do not swallow unrelated errors
+                    raise
                 raise ImportError("Cannot add hardware platform {}. This is "
                                   "not a valid platform name".format(name))
 
@@ -701,19 +636,24 @@ class MachineController(LogMixin):
     def initialise_mpf(self):
         """Initialise MPF."""
         self.info_log("Initialise MPF.")
+        timeout = 30 if self.options["production"] else None
         try:
             init = Util.ensure_future(self.initialise(), loop=self.clock.loop)
             self.clock.loop.run_until_complete(Util.first([init, self.stop_future], cancel_others=False,
-                                                          loop=self.clock.loop))
+                                                          loop=self.clock.loop, timeout=timeout))
+        except asyncio.TimeoutError:
+            self.shutdown()
+            self.error_log("MPF needed more than {}s for initialisation. Aborting!".format(timeout))
+            return
         except RuntimeError:
+            self.shutdown()
             # do not show a runtime useless runtime error
             self.error_log("Failed to initialise MPF")
-            self._shutdown()
             return
         if init.exception():
-            self.error_log("Failed to initialise MPF:")
+            self.shutdown()
+            self.error_log("Failed to initialise MPF: %s", init.exception())
             traceback.print_tb(init.exception().__traceback__)  # noqa
-            self._shutdown()
             return
 
     def run(self) -> None:
@@ -740,9 +680,9 @@ class MachineController(LogMixin):
         '''
 
         self.events.process_event_queue()
-        self._shutdown()
+        self.shutdown()
 
-    def _shutdown(self) -> None:
+    def shutdown(self) -> None:
         """Shutdown the machine."""
         self.thread_stopper.set()
         if hasattr(self, "device_manager"):

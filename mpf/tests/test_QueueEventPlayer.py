@@ -116,3 +116,20 @@ class TestQueueEventPlayer(MpfTestCase):
         self.post_event("relay3_done")
         self.advance_time_and_run()
         self.assertTrue(self._done)
+
+        # post queue event again
+        self._done = False
+        self.machine.events.post_queue("relay3", callback=self._cb)
+        self.advance_time_and_run()
+        self.assertFalse(self._done)
+
+        # stop mode
+        self.machine.modes.mode1.stop()
+        self.advance_time_and_run()
+
+        # should trigger cb without waiting for event
+        self.assertTrue(self._done)
+
+        # relay should not crash it
+        self.post_event("relay3_done")
+        self.advance_time_and_run()

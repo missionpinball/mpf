@@ -104,10 +104,10 @@ class Flipper(SystemWideDevice):
 
         elif not self.config['use_eos']:  # two coils, no eos
             self._enable_main_coil_pulse_rule()
-            self._enable_hold_coil_rule()
+        else:
+            self._enable_single_coil_rule()
 
-        else:  # two coils, cutoff main on EOS
-            self._enable_main_coil_eos_cutoff_rule()
+        if self.config['hold_coil']:
             self._enable_hold_coil_rule()
 
     @event_handler(1)
@@ -194,7 +194,8 @@ class Flipper(SystemWideDevice):
         rule = self.machine.platform_controller.set_pulse_on_hit_and_enable_and_release_rule(
             SwitchRuleSettings(switch=self.config['activation_switch'], debounce=False, invert=False),
             DriverRuleSettings(driver=self.config['hold_coil'], recycle=False),
-            PulseRuleSettings(duration=self._get_hold_pulse_ms(), power=self._get_hold_pulse_power())
+            PulseRuleSettings(duration=self._get_hold_pulse_ms(), power=self._get_hold_pulse_power()),
+            HoldRuleSettings(power=self._get_hold_power())
         )
         self._active_rules.append(rule)
 
@@ -205,7 +206,8 @@ class Flipper(SystemWideDevice):
             SwitchRuleSettings(switch=self.config['activation_switch'], debounce=False, invert=False),
             SwitchRuleSettings(switch=self.config['eos_switch'], debounce=False, invert=False),
             DriverRuleSettings(driver=self.config['main_coil'], recycle=False),
-            PulseRuleSettings(duration=self._get_hold_pulse_ms(), power=self._get_hold_pulse_power())
+            PulseRuleSettings(duration=self._get_hold_pulse_ms(), power=self._get_hold_pulse_power()),
+            HoldRuleSettings(power=self._get_hold_power())
         )
         self._active_rules.append(rule)
 

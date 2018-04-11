@@ -17,7 +17,7 @@ class I2CServoControllerHardwarePlatform(ServoPlatform):
         super().__init__(machine)
         self.log = logging.getLogger("I2C Servo Controller Platform")
         self.log.debug("Configuring template hardware interface.")
-        self.config = self.machine.config['servo_controller']
+        self.config = self.machine.config['servo_controllers']
         self.platform = None
         self.features['tickless'] = True
 
@@ -101,3 +101,13 @@ class I2cServo(ServoPlatformInterface):
                                  value & 0xFF)
         self.platform.i2c_write8(self.config['address'], 0x09 + self.number * 4,
                                  value >> 8)
+
+    @classmethod
+    def set_speed_limit(cls, speed_limit):
+        """Todo emulate speed parameter."""
+        pass
+
+    @classmethod
+    def set_acceleration_limit(cls, acceleration_limit):
+        """Todo emulate acceleration parameter."""
+        pass

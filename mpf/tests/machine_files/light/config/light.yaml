@@ -16,6 +16,9 @@ lights:
     number: 1
     default_on_color: red
     debug: True
+    x: 0.4
+    y: 0.5
+    z: 0
   led2:
     channels:
       red:
@@ -25,6 +28,8 @@ lights:
       blue:
         number: 2
     debug: True
+    x: 0.6
+    y: 0.7
   led_bgr_2:
     type: bgr
     number: 42
@@ -32,13 +37,13 @@ lights:
   led3:
     channels:
       red:
-        number: 7
+        - number: 7
       green:
-        number: 8
+        - number: 8
       blue:
-        number: 9
+        - number: 9
       white:
-        number: 10
+        - number: 10
     debug: True
   led4:
     number: 11
@@ -46,3 +51,7 @@ lights:
   led_corrected:
     number:
     color_correction_profile: correction_profile_1
+  led_www:
+    number: 23
+    type: www
+    debug: True

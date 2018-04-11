@@ -6,7 +6,9 @@ boards.
 """
 import asyncio
 import logging
+import os
 from copy import deepcopy
+from distutils.version import StrictVersion
 
 from typing import Dict, Set
 
@@ -82,21 +84,21 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         if not self.net_connection:
             infos += "No connection to the NET CPU.\n"
         else:
-            infos = "NET CPU: {} {} {}\n".format(
+            infos += "NET CPU: {} {} {}\n".format(
                 self.net_connection.remote_processor,
                 self.net_connection.remote_model,
                 self.net_connection.remote_firmware)
         if not self.rgb_connection:
             infos += "No connection to the RGB CPU.\n"
         else:
-            infos = "RGB CPU: {} {} {}\n".format(
+            infos += "RGB CPU: {} {} {}\n".format(
                 self.rgb_connection.remote_processor,
                 self.rgb_connection.remote_model,
                 self.rgb_connection.remote_firmware)
         if not self.dmd_connection:
             infos += "No connection to the DMD CPU.\n"
         else:
-            infos = "DMD CPU: {} {} {}\n".format(
+            infos += "DMD CPU: {} {} {}\n".format(
                 self.dmd_connection.remote_processor,
                 self.dmd_connection.remote_model,
                 self.dmd_connection.remote_firmware)
@@ -105,6 +107,39 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         for board in self.io_boards.values():
             infos += board.get_description_string() + "\n"
         return infos
+
+    def _update_net(self) -> str:
+        """Update NET CPU."""
+        infos = ""
+        if not self.net_connection:
+            infos += "No NET CPU connected. Cannot update.\n"
+            return infos
+        infos += "NET CPU is version {}\n".format(self.net_connection.remote_firmware)
+        max_firmware = self.net_connection.remote_firmware
+        update_config = None
+        for update in self.config['firmware_updates']:
+            if StrictVersion(update['version']) > StrictVersion(max_firmware) and update['type'] == "net":
+                update_config = update
+
+        if not update_config:
+            infos += "Firmware is up to date. Will not update.\n"
+            return infos
+        infos += "Found an update to version {} for the NET CPU. Will flash file {}\n".format(
+            update_config['version'], update_config['file'])
+        firmware_file = os.path.join(self.machine.machine_path, update_config['file'])
+        try:
+            with open(firmware_file) as f:
+                update_string = f.read().replace("\n", "\r")
+        except FileNotFoundError:
+            infos += "Could not find update file.\b"
+            return infos
+        self.net_connection.writer.write(update_string.encode())
+        infos += "Update done.\n"
+        return infos
+
+    def update_firmware(self) -> str:
+        """Upgrade the firmware of the CPUs."""
+        return self._update_net()
 
     @asyncio.coroutine
     def initialize(self):
@@ -135,6 +170,12 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             connection.stop()
 
         self.serial_connections = set()
+
+    @asyncio.coroutine
+    def start(self):
+        """Start listening for commands."""
+        for connection in self.serial_connections:
+            yield from connection.start_read_loop()
 
     def __repr__(self):
         """Return str representation."""
@@ -211,7 +252,6 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
             self.dmd_connection = communicator
         elif name == 'NET':
             self.net_connection = communicator
-            self.net_connection.send("RE:")
         elif name == 'RGB':
             self.rgb_connection = communicator
             self.rgb_connection.send('RF:0')

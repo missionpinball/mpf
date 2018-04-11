@@ -39,8 +39,9 @@ class Multiball(SystemWideDevice, ModeDevice):
         # disable mb when mode ends
         self.disable()
 
-        # also stop mb if no shoot again is specified
-        self.stop()
+        # also stop mb if shoot again is specified (aka the MB is currently running)
+        if self.shoot_again:
+            self.stop()
 
     def _initialize(self):
         self.ball_locks = self.config['ball_locks']
@@ -58,6 +59,8 @@ class Multiball(SystemWideDevice, ModeDevice):
 
     def _handle_balls_in_play_and_balls_live(self):
         ball_count = self.config['ball_count'].evaluate([])
+        balls_to_replace = self.machine.game.balls_in_play if self.config['replace_balls_in_play'] else 0
+        self.debug_log("Going to add an additional {} balls for replace_balls_in_play".format(balls_to_replace))
 
         if self.config['ball_count_type'] == "total":
             # policy: total balls
@@ -71,6 +74,8 @@ class Multiball(SystemWideDevice, ModeDevice):
             self.machine.game.balls_in_play += self.balls_added_live
             self.balls_live_target = self.machine.game.balls_in_play
 
+        self.balls_added_live += balls_to_replace
+
     @event_handler(10)
     def start(self, **kwargs):
         """Start multiball."""
@@ -80,7 +85,7 @@ class Multiball(SystemWideDevice, ModeDevice):
 
         if self.balls_live_target > 0:
             self.debug_log("Cannot start MB because %s are still in play",
-                           self.balls_added_live)
+                           self.balls_live_target)
             return
 
         self.shoot_again = True

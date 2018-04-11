@@ -243,13 +243,13 @@ class TextTemplate:
         f = MpfFormatter(self.machine, parameters, False)
         return f.format(self.text)
 
-    def evaluate_and_subscribe(self, parameters) -> Tuple[bool, asyncio.Future]:
+    def evaluate_and_subscribe(self, parameters) -> Tuple[str, asyncio.Future]:
         """Evaluate placeholder to string and subscribe to changes."""
         f = MpfFormatter(self.machine, parameters, True)
         value = f.format(self.text)
         subscriptions = f.subscriptions
         if not subscriptions:
-            future = asyncio.Future(loop=self.machine.clock.loop)
+            future = asyncio.Future(loop=self.machine.clock.loop)   # type: asyncio.Future
         elif len(subscriptions) == 1:
             future = subscriptions[0]
         else:

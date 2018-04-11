@@ -100,7 +100,7 @@ class EnableDisableMixin(ModeDevice, metaclass=abc.ABCMeta):
         """Return if enabled is persisted."""
         return 'persist_enable' in self.config and self.config['persist_enable']
 
-    def device_loaded_in_mode(self, mode: "Mode", player: "Player") -> None:
+    def device_loaded_in_mode(self, mode: "Mode", player) -> None:
         """Check enable on mode start."""
         super().device_loaded_in_mode(mode, player)
         self.player = player

@@ -36,8 +36,14 @@ class SwitchCounter(PhysicalBallCounter):
                 switch_name=switch.name, state=0,
                 callback=self.invalidate_count)
 
-        self.machine.clock.loop.create_task(self._run())
+        self._task = self.machine.clock.loop.create_task(self._run())
         self._is_unreliable = False
+
+    def stop(self):
+        """Stop task."""
+        super().stop()
+        if self._task:
+            self._task.cancel()
 
     def trigger_recount(self):
         """Trigger a count."""

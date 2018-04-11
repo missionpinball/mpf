@@ -25,10 +25,6 @@ shots:
     switch: switch_3
     profile: mode1_shot_3
 
-shot_groups:
-    mode_group:
-      shots: mode1_shot_17,mode1_shot_1
-
 shot_profiles:
   mode1_shot_2:
     show: rainbow2

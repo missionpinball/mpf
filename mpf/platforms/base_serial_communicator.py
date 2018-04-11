@@ -11,7 +11,7 @@ class BaseSerialCommunicator(object):
     """Basic Serial Communcator for platforms."""
 
     # pylint: disable=too-many-arguments
-    def __init__(self, platform, port: str, baud: int) -> None:
+    def __init__(self, platform, port: str, baud: int, xonxoff=False) -> None:
         """Initialise Serial Connection Hardware.
 
         Args:
@@ -25,6 +25,7 @@ class BaseSerialCommunicator(object):
         self.debug = self.platform.config['debug']
         self.port = port
         self.baud = baud
+        self.xonxoff = xonxoff
         self.reader = None      # type: asyncio.StreamReader
         self.writer = None      # type: asyncio.StreamWriter
         self.read_task = None   # type: Generator[int, None, None]
@@ -32,14 +33,14 @@ class BaseSerialCommunicator(object):
     @asyncio.coroutine
     def connect(self):
         """Connect to the hardware."""
-        yield from self._connect_to_hardware(self.port, self.baud)
+        yield from self._connect_to_hardware(self.port, self.baud, self.xonxoff)
 
     @asyncio.coroutine
-    def _connect_to_hardware(self, port, baud):
+    def _connect_to_hardware(self, port, baud, xonxoff=False):
         self.log.info("Connecting to %s at %sbps", port, baud)
 
         connector = self.machine.clock.open_serial_connection(
-            url=port, baudrate=baud, limit=0)
+            url=port, baudrate=baud, limit=0, xonxoff=xonxoff)
         self.reader, self.writer = yield from connector
         # defaults are slightly high for our usecase
         self.writer.transport.set_write_buffer_limits(2048, 1024)
@@ -52,6 +53,9 @@ class BaseSerialCommunicator(object):
 
         yield from self._identify_connection()
 
+    @asyncio.coroutine
+    def start_read_loop(self):
+        """Start the read loop."""
         self.read_task = self.machine.clock.loop.create_task(self._socket_reader())
         self.read_task.add_done_callback(self._done)
 
@@ -88,8 +92,12 @@ class BaseSerialCommunicator(object):
     def stop(self):
         """Stop and shut down this serial connection."""
         self.log.error("Stop called on serial connection %s", self.port)
-        self.read_task.cancel()
-        self.writer.close()
+        if self.read_task:
+            self.read_task.cancel()
+            self.read_task = None
+        if self.writer:
+            self.writer.close()
+            self.writer = None
 
     def send(self, msg):
         """Send a message to the remote processor over the serial connection.

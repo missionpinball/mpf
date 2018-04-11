@@ -12,6 +12,7 @@ from typing import Dict
 
 import collections
 import ruamel.yaml as yaml
+from ruamel.yaml.error import MarkedYAMLError
 from ruamel.yaml.reader import Reader
 from ruamel.yaml.resolver import BaseResolver, Resolver
 from ruamel.yaml.scanner import Scanner
@@ -21,7 +22,6 @@ from ruamel.yaml.constructor import Constructor, ConstructorError
 
 from mpf.core.file_manager import FileInterface, FileManager
 from mpf.core.utility_functions import Util
-from mpf._version import __version__, __config_version__
 
 log = logging.getLogger('YAML Interface')
 
@@ -163,76 +163,12 @@ class YamlInterface(FileInterface):
     cache = False
     file_cache = dict()     # type: Dict[str, Any]
 
-    @staticmethod
-    def get_config_file_version(filename: str) -> int:
-        """Return config file version."""
-        with open(filename, encoding='utf8') as f:
-            file_version = f.readline().split('config_version=')[-1:][0]
-
-        try:
-            return int(file_version)
-        except ValueError:
-            return 0
-
-    @staticmethod
-    def get_show_file_version(filename: str) -> int:
-        """Return show file version."""
-        with open(filename, encoding='utf8') as f:
-            try:
-                file_version = f.readline().split('show_version=')[-1:][0]
-            except ValueError:  # pragma: no cover
-                return 0
-        try:
-            return int(file_version)
-        except ValueError:  # pragma: no cover
-            return 0
-
-    @staticmethod
-    def check_config_file_version(filename: str) -> bool:
-        """Check to see if the version of the file name passed matches the config version MPF needs.
-
-        Args:
-            filename: The file with path to check.
-
-        Raises:
-            exception if the version of the file doesn't match what MPF needs.
-        """
-        filename = FileManager.locate_file(filename)
-        file_interface = FileManager.get_file_interface(filename)
-        file_version = file_interface.get_config_file_version(filename)
-
-        if file_version != int(__config_version__):
-            log.error("Config file %s is version %s. MPF %s requires "
-                      "version %s", filename, file_version,
-                      __version__, __config_version__)
-
-            # TODO remove this line when migrator is done
-
-            log.error("We have not created the config file migration tool yet"
-                      " for v5. In the meantime, see https://github.com/missionpinball/mpf/issues/897"
-                      " for a list of changes between config versions 4 and 5.")
-
-            # TODO uncomment these and update links when migrator is done
-
-            # log.error("Use the Config File Migrator to automatically "
-            #           "migrate your config file to the latest version.")
-            # log.error("Migration tool: https://missionpinball.com/docs/tools/config-file-migrator/")
-            # log.error("More info on config version %s: "
-            #           "http://docs.missionpinball.org/docs/configuration-file"
-            #           "-reference/important-config-file-concepts/config_version/config-version-%s/",
-            #           __config_version__, __config_version__)
-            return False
-        else:
-            return True
-
-    def load(self, filename, verify_version=True, halt_on_error=True) -> dict:
+    def load(self, filename, expected_version_str=None, halt_on_error=True) -> dict:
         """Load a YAML file from disk.
 
         Args:
             filename: The file to load.
-            verify_version: Boolean which specifies whether this method should
-                verify whether this file's config_version is compatible with
-                this version of MPF. Default is True.
+            expected_version_str: Version string to expect or None for no check.
             halt_on_error: Boolean which controls what happens if the file
                 can't be loaded. (Not found, invalid format, etc. If True, MPF
                 will raise an error and exit. If False, an empty config
@@ -244,23 +180,29 @@ class YamlInterface(FileInterface):
         if self.cache and filename in self.file_cache:
             return copy.deepcopy(self.file_cache[filename])
 
-        if verify_version and not self.check_config_file_version(filename):
-            raise ValueError("Config file version mismatch: {}".format(filename))
-
         config = dict()     # type: dict
 
         try:
             self.log.debug("Loading file: %s", filename)
 
             with open(filename, encoding='utf8') as f:
+                if expected_version_str:
+                    version_str = f.readline().strip()
+                    if version_str != expected_version_str:
+                        raise AssertionError("Version mismatch. Expected: {} Actual: {} Files: {}".format(
+                            expected_version_str, version_str, filename))
                 config = self.process(f)
-        except Exception as e:   # pylint: disable-msg=broad-except
-            if hasattr(e, 'problem_mark'):
-                mark = e.problem_mark
-                msg = "YAML error found in file {}. Line {}," \
-                      "Position {}: {}".format(filename, mark.line + 1, mark.column + 1, e)
+        except MarkedYAMLError as e:
+            mark = e.problem_mark
+            msg = "YAML error found in file {}. Line {}," \
+                  "Position {}: {}".format(filename, mark.line + 1, mark.column + 1, e)
+
+            if halt_on_error:
+                raise ValueError(msg)
             else:
-                msg = "Error found in file {}: {}".format(filename, e)
+                self.log.warning(msg)
+        except Exception as e:   # pylint: disable-msg=broad-except
+            msg = "Error found in file {}: {}".format(filename, e)
 
             if halt_on_error:
                 raise ValueError(msg)

@@ -99,11 +99,13 @@ class FastSerialCommunicator(BaseSerialCommunicator):
             msg = yield from self._read_with_timeout(.5)
 
             # ignore XX replies here.
-            if msg.startswith('XX:'):
+            while msg.startswith('XX:'):
                 msg = yield from self._read_with_timeout(.5)
 
             if msg.startswith('ID:'):
                 break
+
+            yield from asyncio.sleep(.5, loop=self.machine.clock.loop)
 
         # examples of ID responses
         # ID:DMD FP-CPU-002-1 00.87
@@ -179,12 +181,24 @@ class FastSerialCommunicator(BaseSerialCommunicator):
 
         If so, queries the IO boards to log them and make sure they're the  proper firmware version.
         """
+        # reset CPU early
+        if StrictVersion(self.remote_firmware) >= StrictVersion("1.03"):
+            self.platform.debug_log('Resetting NET CPU.')
+            self.writer.write('BC:\r'.encode())
+            msg = ''
+            while not msg.startswith('BC:P\r'):
+                msg = (yield from self.readuntil(b'\r')).decode()
+            yield from asyncio.sleep(.1, loop=self.machine.clock.loop)
+        else:
+            self.platform.log.warning("Not resetting FAST NET because firmware is currently broken.")
+
+        self.platform.debug_log('Reading all switches.')
         self.writer.write('SA:\r'.encode())
         msg = ''
         while not msg.startswith('SA:'):
             msg = (yield from self.readuntil(b'\r')).decode()
             if not msg.startswith('SA:'):
-                self.platform.debug_log("Got unexpected message from FAST: {}".format(msg))
+                self.platform.log.warning("Got unexpected message from FAST: {}".format(msg))
 
         self.platform.process_received_message(msg)
         self.platform.debug_log('Querying FAST IO boards...')

@@ -110,6 +110,7 @@ class MpfTestCase(unittest.TestCase):
 
     def start_mode(self, mode):
         """Start mode."""
+        self.assertIn(mode, self.machine.modes)
         self.assertModeNotRunning(mode)
         self.machine.modes[mode].start()
         self.machine_run()
@@ -532,11 +533,11 @@ class MpfTestCase(unittest.TestCase):
         self.assertEqual(state, self.machine.switch_controller.is_active(name))
 
     def assertLightChannel(self, light_name, brightness, channel="white"):
-        self.assertAlmostEqual(brightness / 255.0, self.machine.lights[light_name].hw_drivers[channel].
+        self.assertAlmostEqual(brightness / 255.0, self.machine.lights[light_name].hw_drivers[channel][0].
                                current_brightness)
 
     def assertNotLightChannel(self, light_name, brightness, channel="white"):
-        self.assertNotEqual(brightness, self.machine.lights[light_name].hw_drivers[channel].
+        self.assertNotEqual(brightness, self.machine.lights[light_name].hw_drivers[channel][0].
                             current_brightness)
 
     def assertLightColor(self, light_name, color):
@@ -848,7 +849,7 @@ class MpfTestCase(unittest.TestCase):
     def tearDown(self):
         if self._exception:
             try:
-                self.machine._shutdown()
+                self.machine.shutdown()
             except:
                 pass
 

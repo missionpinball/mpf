@@ -5,6 +5,7 @@ from functools import partial
 
 from mpf.core.machine import MachineController
 from mpf.core.mode import Mode
+from mpf.core.logging import LogMixin
 from mpf.exceptions.ConfigFileError import ConfigFileError
 
 MYPY = False
@@ -14,7 +15,7 @@ if MYPY:   # pragma: no cover
     import asyncio
 
 
-class ConfigPlayer(object, metaclass=abc.ABCMeta):
+class ConfigPlayer(LogMixin, metaclass=abc.ABCMeta):
 
     """Base class for players which play things based on config."""
 
@@ -24,6 +25,7 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
 
     def __init__(self, machine):
         """Initialise config player."""
+        super().__init__()
         self.device_collection = None
 
         self.machine = machine      # type: MachineController
@@ -33,6 +35,8 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
             self.machine.show_controller.show_players[self.show_section] = self
 
         self._add_handlers()
+
+        self.configure_logging(self.config_file_section)
 
         self.mode_event_keys = dict()
         self.instances = dict()
@@ -270,7 +274,7 @@ class ConfigPlayer(object, metaclass=abc.ABCMeta):
                 if (not mode or (mode and not mode.is_game_mode)) and not self.is_entry_valid_outside_mode(settings):
                     raise ConfigFileError("Section not valid outside of game modes. {} {}:{} Mode: {}".format(
                         self, event, settings, mode
-                    ))
+                    ), 1, self.config_file_section)
                 if event.startswith("{") and event.endswith("}"):
                     condition = event[1:-1]
                     self._create_subscription(condition, subscription_list, settings, priority, mode)

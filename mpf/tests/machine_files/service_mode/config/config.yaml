@@ -27,25 +27,26 @@ coils:
         number: 3
         label: Third coil
     c_test6:
+        default_hold_power: 1.0
         number: 10
         label: Fourth coil
 
 
 switches:
     s_door_open:
-        number:
+        number: 1
         tags: service_door_open, power_off
     s_service_enter:
-        number:
+        number: 17
         tags: service_enter
     s_service_esc:
-        number:
+        number: 18
         tags: service_esc
     s_service_up:
-        number:
+        number: 19
         tags: service_up
     s_service_down:
-        number:
+        number: 20
         tags: service_down
 
 lights:

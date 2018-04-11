@@ -270,4 +270,6 @@ class OpenPixelClient(object):
         Args:
             message: Message to send
         """
+        if not self.socket_sender:
+            return
         self.socket_sender.write(message)

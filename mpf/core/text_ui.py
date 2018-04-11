@@ -292,7 +292,8 @@ class TextUi(MpfController):
             self._draw_screen()
             self._draw_player_header()
 
-        self.machine.bcp.transport.send_to_all_clients("status_request")
+        self.machine.bcp.transport.send_to_clients_with_handler(handler="_status_request",
+                                                                bcp_command="status_request")
         self._update_stats()
         self._update_ball_devices()
         self.screen.refresh()

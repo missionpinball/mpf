@@ -22,10 +22,10 @@ class FASTDriver(DriverPlatformInterface):
         self.log = logging.getLogger('FASTDriver')
         self.autofire = None                        # type: Tuple[str, Dict[str, float]]
         self._autofire_cleared = False
-        self.config_state = None
+        self.config_state = None                    # type: Tuple[float, float, float]
         self.machine = platform.machine
         self.platform = platform
-        self.driver_settings = dict()               # type: Dict[str, float]
+        self.driver_settings = dict()               # type: Dict[str, str]
         self.send = platform.net_connection.send
         self.platform_settings = platform_settings
 
@@ -76,11 +76,11 @@ class FASTDriver(DriverPlatformInterface):
             else:
                 return Util.int_to_hex_string(pulse_ms * 2)
 
-    def get_config_cmd(self):
+    def get_config_cmd(self) -> str:
         """Return config cmd str."""
         return self.driver_settings['config_cmd']
 
-    def get_trigger_cmd(self):
+    def get_trigger_cmd(self) -> str:
         """Return trigger cmd."""
         return self.driver_settings['trigger_cmd']
 
@@ -152,7 +152,7 @@ class FASTDriver(DriverPlatformInterface):
                 self.get_pwm_for_cmd(hold_settings.power),
                 self.get_recycle_ms_for_cmd(self.config.default_recycle, pulse_settings.duration)
             )
-            self.config_state = pulse_settings
+            self.config_state = (pulse_settings.duration, pulse_settings.duration, hold_settings.power)
 
         self.log.debug("Sending Enable Command: %s", cmd)
         self.send(cmd)

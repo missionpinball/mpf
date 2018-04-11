@@ -74,7 +74,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         self.config = self.machine.config['opp']
         self.machine.config_validator.validate_config("opp", self.config)
-        self._poll_response_received = {}
+        self._poll_response_received = {}   # type: Dict[str, asyncio.Event]
 
         self.machine_type = (
             self.machine.config['hardware']['driverboards'].lower())
@@ -105,6 +105,12 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
         for chain_serial in self.read_input_msg:
             self._poll_task[chain_serial] = self.machine.clock.loop.create_task(self._poll_sender(chain_serial))
             self._poll_task[chain_serial].add_done_callback(self._done)
+
+    @asyncio.coroutine
+    def start(self):
+        """Start listening for commands."""
+        for connection in self.serial_connections:
+            yield from connection.start_read_loop()
 
     def stop(self):
         """Stop hardware and close connections."""
@@ -203,7 +209,7 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
 
         infos += "\nLEDs:\n"
         for leds in self.opp_neopixels:
-            infos += " - CPU: {} Board: 0x{:02x} Card: {}".format(leds.chain_serial, leds.addr, leds.cardNum)
+            infos += " - CPU: {} Board: 0x{:02x} Card: {}\n".format(leds.chain_serial, leds.addr, leds.cardNum)
 
         return infos
 
@@ -502,6 +508,11 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             self.badCRC += 1
             self.log.warning("Msg contains bad CRC:%s.", "".join(" 0x%02x" % b for b in msg))
         else:
+            if chain_serial + '-' + str(msg[0]) not in self.inpAddrDict:
+                self.log.warning("Got input response for invalid card at initial request: %s. Msg: %s.", msg[0],
+                                 "".join(" 0x%02x" % b for b in msg))
+                return
+
             opp_inp = self.inpAddrDict[chain_serial + '-' + str(msg[0])]
             new_state = (msg[2] << 24) | \
                 (msg[3] << 16) | \
@@ -530,6 +541,11 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             self.badCRC += 1
             self.log.warning("Msg contains bad CRC:%s.", "".join(" 0x%02x" % b for b in msg))
         else:
+            if chain_serial + '-' + str(msg[0]) not in self.inpAddrDict:
+                self.log.warning("Got input response for invalid card: %s. Msg: %s.", msg[0],
+                                 "".join(" 0x%02x" % b for b in msg))
+                return
+
             opp_inp = self.inpAddrDict[chain_serial + '-' + str(msg[0])]
             new_state = (msg[2] << 24) | \
                 (msg[3] << 16) | \
@@ -573,6 +589,10 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             self.badCRC += 1
             self.log.warning("Msg contains bad CRC:%s.", "".join(" 0x%02x" % b for b in msg))
         else:
+            if chain_serial + '-' + str(msg[0]) not in self.matrixInpAddrDict:
+                self.log.warning("Got input response for invalid matrix card at initial request: %s. Msg: %s.", msg[0],
+                                 "".join(" 0x%02x" % b for b in msg))
+                return
             opp_inp = self.matrixInpAddrDict[chain_serial + '-' + str(msg[0])]
             opp_inp.oldState[0] = (msg[2] << 24) | (msg[3] << 16) | (msg[4] << 8) | msg[5]
             opp_inp.oldState[1] = (msg[6] << 24) | (msg[7] << 16) | (msg[8] << 8) | msg[9]
@@ -598,6 +618,10 @@ class OppHardwarePlatform(LightsPlatform, SwitchPlatform, DriverPlatform):
             self.badCRC += 1
             self.log.warning("Msg contains bad CRC:%s.", "".join(" 0x%02x" % b for b in msg))
         else:
+            if chain_serial + '-' + str(msg[0]) not in self.matrixInpAddrDict:
+                self.log.warning("Got input response for invalid matrix card: %s. Msg: %s.", msg[0],
+                                 "".join(" 0x%02x" % b for b in msg))
+                return
             opp_inp = self.matrixInpAddrDict[chain_serial + '-' + str(msg[0])]
             new_state = [(msg[2] << 24) | (msg[3] << 16) | (msg[4] << 8) | msg[5],
                          (msg[6] << 24) | (msg[7] << 16) | (msg[8] << 8) | msg[9]]

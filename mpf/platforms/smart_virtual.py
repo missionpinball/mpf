@@ -2,6 +2,7 @@
 import asyncio
 import logging
 
+from typing import List
 from mpf.core.logging import LogMixin
 from mpf.core.platform import DriverConfig
 
@@ -10,18 +11,18 @@ from mpf.platforms.interfaces.driver_platform_interface import PulseSettings, Ho
 from mpf.core.delays import DelayManager
 from mpf.platforms.virtual import (VirtualHardwarePlatform as VirtualPlatform, VirtualDriver)
 
-
 MYPY = False
 if MYPY:   # pragma: no cover
     from typing import Dict
     from mpf.devices.ball_device.ball_device import BallDevice
+    from mpf.core.machine import MachineController
 
 
 class BaseSmartVirtualCoilAction:
 
     """A action for a coil."""
 
-    def __init__(self, actions, machine):
+    def __init__(self, actions: List[str], machine: "MachineController") -> None:
         """Initialise switch enable action."""
         self.log = logging.getLogger("SmartVirtual Coil Action")
         self.actions = actions
@@ -146,8 +147,11 @@ class ScoreReelAdvanceAction(BaseSmartVirtualCoilAction):
         for position, switch in self.switch_map.items():
             if not switch:
                 continue
-            self.machine.switch_controller.process_switch(switch.name, 1 if self.position == position else 0,
-                                                          logical=True)
+
+            state = self.position == position
+
+            if not self.machine.switch_controller.is_state(switch.name, state):
+                self.machine.switch_controller.process_switch(switch.name, state, logical=True)
 
 
 class AddBallToTargetAction(BaseSmartVirtualCoilAction):
@@ -262,13 +266,8 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
         self.log.debug("Configuring smart_virtual hardware interface.")
 
     @asyncio.coroutine
-    def initialize(self):
-        """Initialise platform."""
-        self.machine.events.add_handler('init_phase_5',
-                                        self._initialize2)
-
-    def _initialize2(self, **kwargs):
-        del kwargs
+    def start(self):
+        """Initialise platform when all devices are ready."""
         self._initialise_ball_devices()
         self._initialise_drop_targets()
         self._initialise_drop_target_banks()

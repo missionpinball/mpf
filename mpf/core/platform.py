@@ -53,18 +53,27 @@ class BasePlatform(metaclass=abc.ABCMeta):
         """Return information string about this platform."""
         return "Not implemented"
 
+    # pylint: disable-msg=no-self-use
+    def update_firmware(self) -> str:
+        """Perform a firmware update."""
+        pass
+
     def debug_log(self, msg, *args, **kwargs):
         """Log when debug is set to True for platform."""
         if self.debug:
             self.log.debug(msg, *args, **kwargs)
 
-    @abc.abstractmethod
     @asyncio.coroutine
     def initialize(self):
         """Initialise the platform.
 
         This is called after all platforms have been created and core modules have been loaded.
         """
+        pass
+
+    @asyncio.coroutine
+    def start(self):
+        """Start receiving switch changes from this platform."""
         pass
 
     def tick(self):
@@ -176,9 +185,15 @@ class SegmentDisplaySoftwareFlashPlatform(SegmentDisplayPlatform, metaclass=abc.
     def __init__(self, machine):
         """Initialise software flash support."""
         super().__init__(machine)
+        self._displays = set()
+        self._display_flash_task = None
+
+    @asyncio.coroutine
+    def initialize(self):
+        """Start flash task."""
+        yield from super().initialize()
         self._display_flash_task = self.machine.clock.loop.create_task(self._display_flash())
         self._display_flash_task.add_done_callback(self._display_flash_task_done)
-        self._displays = set()
 
     @asyncio.coroutine
     def _display_flash(self):

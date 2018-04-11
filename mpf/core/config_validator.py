@@ -12,8 +12,6 @@ from mpf.exceptions.ConfigFileError import ConfigFileError
 from mpf.file_interfaces.yaml_interface import YamlInterface
 from mpf.core.utility_functions import Util
 
-from mpf.core.case_insensitive_dict import CaseInsensitiveDict
-
 
 class ConfigValidator(object):
 
@@ -122,7 +120,7 @@ class ConfigValidator(object):
         # section_name is str used for logging failures
 
         if source is None:
-            source = CaseInsensitiveDict()
+            source = dict()
 
         if not section_name:
             section_name = config_spec  # str
@@ -241,7 +239,7 @@ class ConfigValidator(object):
         else:
             raise ConfigFileError("Invalid Type '{}' in config spec {}:{}".format(item_type,
                                   validation_failure_info[0][0],
-                                  validation_failure_info[1]))
+                                  validation_failure_info[1]), 1, self.log.name)
 
     def check_for_invalid_sections(self, spec, config,
                                    validation_failure_info):
@@ -276,13 +274,13 @@ class ConfigValidator(object):
 
                             raise ConfigFileError('Your config contains a value for the '
                                                   'setting "' + path_string + '", but this is not a valid '
-                                                                              'setting name.')
+                                                                              'setting name.', 2, self.log.name)
 
         except TypeError:
             raise ConfigFileError(
                 'Error in config. Your "{}:" section contains a value that is '
                 'not a parent with sub-settings: {}'.format(
-                    validation_failure_info[0], config))
+                    validation_failure_info[0], config), 3, self.log.name)
 
     def _validate_type_subconfig(self, item, param, validation_failure_info):
         if item is None:
@@ -486,15 +484,16 @@ class ConfigValidator(object):
         del validation_failure_info
         return item
 
-    @classmethod
-    def _validate_type_kivycolor(cls, item, validation_failure_info):
-        del validation_failure_info
+    def _validate_type_kivycolor(self, item, validation_failure_info):
         # Validate colors that will be used by Kivy. The result is a 4-item
         # list, RGBA, with individual values from 0.0 - 1.0
         if not item:
             return None
 
         color_string = str(item).lower()
+
+        if color_string[:1] == "(" and color_string[-1:] == ")":
+            return color_string
 
         if color_string in named_rgb_colors:
             color = list(named_rgb_colors[color_string])
@@ -507,18 +506,20 @@ class ConfigValidator(object):
             color = Util.string_to_list(color_string)
 
         for i, x in enumerate(color):
-            color[i] = int(x) / 255
+            try:
+                color[i] = int(x) / 255
+            except ValueError:
+                self.validation_error(item, validation_failure_info, "Color could not be converted to int for kivy.")
 
         if len(color) == 3:
             color.append(1)
 
         return color
 
-    @classmethod
-    def _validate_type_color(cls, item, validation_failure_info):
+    def _validate_type_color(self, item, validation_failure_info):
         if isinstance(item, tuple):
             if len(item) != 3:
-                cls.validation_error(item, validation_failure_info, "Color needs three components")
+                self.validation_error(item, validation_failure_info, "Color needs three components")
             return item
 
         # Validates colors by name, hex, or list, into a 3-item list, RGB,
@@ -584,13 +585,12 @@ class ConfigValidator(object):
             raise ConfigFileError("Invalid Validator '{}' in config spec {}:{}".format(
                                   validator,
                                   validation_failure_info[0][0],
-                                  validation_failure_info[1]))
+                                  validation_failure_info[1]), 4, self.log.name)
 
-    @classmethod
-    def validation_error(cls, item, validation_failure_info, msg=""):
+    def validation_error(self, item, validation_failure_info, msg=""):
         """Raise a validation error with all relevant infos."""
         raise ConfigFileError("Config validation error: Entry {}:{}:{}:{} is not valid. {}".format(
             validation_failure_info[0][0],
             validation_failure_info[0][1],
             validation_failure_info[1],
-            item, msg))
+            item, msg), 5, self.log.name)

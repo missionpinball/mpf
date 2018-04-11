@@ -61,6 +61,11 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
             self._incoming_ball_which_may_skip.clear()
             self._no_incoming_ball_which_may_skip.set()
 
+    @property
+    def is_idle(self):
+        """Return true if idle."""
+        return not self._current_target and self._eject_queue.empty()
+
     @asyncio.coroutine
     def wait_for_ready_to_receive(self):
         """Wait until the outgoing balls handler is ready to receive."""
@@ -74,6 +79,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
     def _run(self):
         """Wait for eject queue."""
         while True:
+            self._current_target = None
             self.ball_device.set_eject_state("idle")
             self.debug_log("Waiting for eject request.")
             eject_queue_future = Util.ensure_future(self._eject_queue.get(), loop=self.machine.clock.loop)
@@ -83,6 +89,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
 
             if event == eject_queue_future:
                 eject_request = yield from event
+                self._current_target = eject_request.target
                 self.debug_log("Got eject request")
 
                 if eject_request.already_left:
@@ -207,7 +214,6 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         while True:
             # make sure the count is currently valid. process incoming and lost balls
             yield from self.ball_device.ball_count_handler.wait_for_count_is_valid()
-            self._current_target = eject_request.target
 
             # prevent physical races with eject confirm
             if self._current_target.is_playfield() and not self.ball_device.ball_count_handler.is_full:
@@ -343,7 +349,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
     @asyncio.coroutine
     def _eject_ball(self, eject_request: OutgoingBall, eject_try: int) -> Generator[int, None, bool]:
         # inform the counter that we are ejecting now
-        self.debug_log("Ejecting ball to %s", eject_request.target)
+        self.info_log("Ejecting ball to %s", eject_request.target)
         yield from self._post_ejecting_event(eject_request, eject_try)
         ball_eject_process = yield from self.ball_device.ball_count_handler.start_eject()
         try:
@@ -364,7 +370,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                     # do nothing
                     pass
                 else:
-                    self.ball_device.ejector.eject_one_ball(ball_eject_process.is_jammed(), eject_try)
+                    yield from self.ball_device.ejector.eject_one_ball(ball_eject_process.is_jammed(), eject_try)
 
             # wait until the ball has left
             if (self.ball_device.config['mechanical_eject'] or
@@ -380,7 +386,7 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
                 return False
 
             if trigger and trigger.done():
-                self.ball_device.ejector.eject_one_ball(ball_eject_process.is_jammed(), eject_try)
+                yield from self.ball_device.ejector.eject_one_ball(ball_eject_process.is_jammed(), eject_try)
                 # TODO: add timeout here
                 yield from ball_left
 

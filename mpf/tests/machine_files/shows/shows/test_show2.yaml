@@ -1,21 +1,13 @@
-# show_version=5
+#show_version=5
 - time: 0
-  triggers:
-    play_sound:
-      sound: test_1
-      volume: 0.5
-      loops: -1
   events:
     test_event:
     test_event2:
+    play_sound: {"sound": "test_1", "volume": 0.5, "loops": -1}
 - time: 1
-  triggers:
-    play_sound:
-      sound: test_2
+  events:
+    play_sound: {"sound": "test_2"}
 - time: 2
-  triggers:
-    play_sound:
-      sound: test_3
-      volume: 0.35
-      loops: 1
+  events:
+    play_sound: {"sound": "test_3", "volume": 0.35, "loops": 1}
 - time: 3

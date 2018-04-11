@@ -2,7 +2,7 @@
 
 modes:
   - mode1
-  - Mode2
+  - mode2
 
 switches:
     s_test:
@@ -47,3 +47,6 @@ ball_devices:
         debug: true
         confirm_eject_type: target
         eject_timeouts: 2s
+
+event_player:
+    send_test_trigger: trigger_test

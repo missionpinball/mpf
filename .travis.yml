@@ -23,15 +23,15 @@ matrix:
      env: LINUX=debian:jessie
      sudo: required
      language: python
-     python: "3.5"
-   - os: linux
-     env: LINUX=debian:experimental
-     sudo: required
-     language: python
-     python: "3.6"
+     python: "3.4"
+#   - os: linux
+#     env: LINUX=debian:experimental
+#     sudo: required
+#     language: python
+#     python: "3.6"
    - os: osx
      language: generic
-     osx_image: xcode8.2  # OS 10.12
+     osx_image: xcode8.3  # OS 10.12
    - os: osx
      language: generic
      osx_image: xcode8  # OS 10.11
@@ -48,27 +48,23 @@ before_install:
 
 install:
 - if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
-      curl -sS https://www.python.org/ftp/python/3.5.2/python-3.5.2-macosx10.6.pkg > python-3.5.2-macosx10.6.pkg;
-      sudo installer -pkg python-3.5.2-macosx10.6.pkg -target /;
+      curl -sS https://www.python.org/ftp/python/3.5.4/python-3.5.4-macosx10.6.pkg > python-3.5.4-macosx10.6.pkg;
+      sudo installer -pkg python-3.5.4-macosx10.6.pkg -target /;
+      curl -sS https://bootstrap.pypa.io/get-pip.py > get-pip.py;
+      sudo python3 get-pip.py;
       pip3 install .;
   fi;
-- pip3 install packaging coveralls coverage setuptools --upgrade
 
 script:
 - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
     docker run -v $PWD:$PWD -w $PWD $LINUX /bin/sh -c "_mpf_installer/install-mpf-dependencies && pip3 install --upgrade coveralls && pip3 install prospector[with_pyroma] && pip3 install . && export PYTHONPATH=$PYTHONPATH:$(pwd):$(pwd)/_mpf-mc && prospector && coverage3 run --concurrency=thread -m unittest discover -s mpf/tests;";
   fi;
 - if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
+      export PYTHONPATH=$PYTHONPATH:$(pwd)/_mpf-mc;
       python3 -m unittest discover mpf/tests;
   fi;
 
-before_script:
-- if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
-      export PYTHONPATH=$PYTHONPATH:$(pwd)/_mpf-mc;
-  fi;
-
 after_success:
-
 - if [ "${TRAVIS_OS_NAME}" == "linux" ]; then
       coveralls;
   fi;

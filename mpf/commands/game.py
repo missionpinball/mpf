@@ -46,7 +46,7 @@ class Command(object):
 
         parser.add_argument("-c",
                             action="store", dest="configfile",
-                            default="config", metavar='config_file',
+                            default="config.yaml", metavar='config_file',
                             help="The name of a config file to load. Default "
                                  "is "
                                  "config.yaml. Multiple files can be used "
@@ -85,23 +85,28 @@ class Command(object):
                             "when launching in a separate window so you can "
                             "see any errors before the window closes.")
 
+        parser.add_argument("-P",
+                            action="store_true", dest="production", default=False,
+                            help="Production mode. Will suppress errors, wait for hardware on start and "
+                                 "try to exit when startup fails. Run this inside a loop.")
+
         parser.add_argument("-t",
                             action="store_false", dest='text_ui', default=True,
                             help="Use the ASCII test-based UI")
 
         parser.add_argument("-v",
                             action="store_const", dest="loglevel",
-                            const=10,
-                            default=11,
+                            const=logging.DEBUG,
+                            default=15,
                             help="Enables verbose logging to the"
                                  " log file")
 
         parser.add_argument("-V",
-                            action="store_true", dest="consoleloglevel",
+                            action="store_const", dest="consoleloglevel",
+                            const=logging.DEBUG,
                             default=logging.INFO,
-                            help="Enables verbose logging to the console. Do "
-                                 "NOT on "
-                                 "Windows platforms. Must also use -v for "
+                            help="Enables verbose logging to the console. DO "
+                                 "NOTE: On Windows platforms you must also use -v for "
                                  "this to work.")
 
         parser.add_argument("-x",

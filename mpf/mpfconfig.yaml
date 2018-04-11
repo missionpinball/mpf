@@ -1,4 +1,4 @@
-# config_version=5
+#config_version=5
 # This file contains configuration options for the MPF itself, including
 # default settings for your machine-wide game-specific config files.
 
@@ -32,13 +32,13 @@ mpf:
         light: mpf.config_players.light_player.LightPlayer
         random_event: mpf.config_players.random_event_player.RandomEventPlayer
         show: mpf.config_players.show_player.ShowPlayer
-        trigger: mpf.config_players.trigger_player.TriggerPlayer
         score: mpf.config_players.score_player.ScorePlayer
         segment_display_player: mpf.config_players.segment_display_player.SegmentDisplayPlayer
         hardware_sound_player: mpf.config_players.hardware_sound_player.HardwareSoundPlayer
 
     device_modules:
         - mpf.devices.driver.Driver
+        - mpf.devices.digital_output.DigitalOutput
         - mpf.devices.dual_wound_coil.DualWoundCoil
         - mpf.devices.switch.Switch
         - mpf.devices.light.Light
@@ -120,28 +120,9 @@ mpf:
         high_scores: data/high_scores.yaml
         earnings: data/earnings.yaml
         machine_files: examples
-        config: config
         modes: modes
 
     allow_invalid_config_sections: false
-
-    device_collection_control_events:
-        autofires:
-            - enable
-            - disable
-        ball_devices:
-            - stop
-            - eject_all
-        coils:
-            - disable
-        flippers:
-            - enable
-            - disable
-        lights:
-            - "off"
-        gi:
-            - enable
-            - disable
 
 # Default settings for machines. All can be overridden
 

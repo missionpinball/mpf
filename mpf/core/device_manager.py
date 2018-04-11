@@ -3,7 +3,6 @@ from collections import OrderedDict
 from typing import Sized, Iterable, Container, Generic, TypeVar
 
 from mpf.core.utility_functions import Util
-from mpf.core.case_insensitive_dict import CaseInsensitiveDict
 from mpf.core.mpf_controller import MpfController
 
 MYPY = False
@@ -37,10 +36,6 @@ class DeviceManager(MpfController):
         self.machine.events.add_handler('init_phase_2',
                                         self.create_machinewide_device_control_events,
                                         priority=2)
-
-        self.machine.events.add_handler('init_phase_2',
-                                        self.create_collection_control_events,
-                                        priority=1)
 
     def get_monitorable_devices(self):
         """Return all devices which are registered as monitorable."""
@@ -278,23 +273,6 @@ class DeviceManager(MpfController):
                     handler=method,
                     priority=int(priority))
 
-    def create_collection_control_events(self, **kwargs):
-        """Create control events for collection."""
-        del kwargs
-        for collection, events in iter(self.machine.config['mpf']['device_collection_control_events'].items()):
-
-            for event in events:
-                event_name = collection + '_' + event
-                self.machine.events.add_handler(event_name,
-                                                self._collection_control_event_handler,
-                                                collection=collection,
-                                                method=event)
-
-    def _collection_control_event_handler(self, collection, method, **kwargs):
-        del kwargs
-        for device in self.collections[collection]:
-            getattr(device, method)()
-
     def _control_event_handler(self, callback, ms_delay, delay_mgr=None, **kwargs):
         del kwargs
 
@@ -342,7 +320,7 @@ class DeviceCollectionType(Sized, Container[KT], Generic[KT, VT], Iterable[VT], 
         pass
 
 
-class DeviceCollection(CaseInsensitiveDict):
+class DeviceCollection(dict):
 
     """A collection of Devices.
 
@@ -359,12 +337,12 @@ class DeviceCollection(CaseInsensitiveDict):
         self.config_section = config_section
 
     def __getattr__(self, attr):
-        """Return device by lowercase key."""
+        """Return device by key."""
         # We use this to allow the programmer to access a hardware item like
         # self.coils.coilname
 
         try:
-            return self[attr.lower()]
+            return self[attr]
         except KeyError:
             raise KeyError('Error: No device exists with the name:', attr)
 
@@ -372,10 +350,6 @@ class DeviceCollection(CaseInsensitiveDict):
         """Iterate collection."""
         for item in self.values():
             yield item
-
-    def __getitem__(self, key):
-        """Return device by lowercase key."""
-        return super().__getitem__(self.__class__.lower(key))
 
     def items_tagged(self, tag):
         """Return of list of device objects which have a certain tag.
@@ -388,58 +362,7 @@ class DeviceCollection(CaseInsensitiveDict):
             A list of device objects. If no devices are found with that tag, it
             will return an empty list.
         """
-        output = []
-        for item in self:
-            if tag in item.tags:
-                output.append(item)
-        return output
-
-    def sitems_tagged(self, tag):
-        """Return of list of device names (strings) which have a certain tag.
-
-        Args:
-            tag: A string of the tag name which specifies what devices are
-                returned.
-
-        Returns:
-            A list of string names of devices. If no devices are found with
-            that tag, it will return an empty list.
-        """
-        output = []
-        for item in self:
-            if tag in item.tags:
-                output.append(item.name)
-        return output
-
-    def items_not_tagged(self, tag):
-        """Return of list of device objects which do not have a certain tag.
-
-        Args:
-            tag: A string of the tag name which specifies what devices are
-                returned. All devices will be returned except those with this
-                tag.
-
-        Returns:
-            A list of device objects. If no devices are found with that tag, it
-            will return an empty list.
-        """
-        output = []
-        for item in self:
-            if tag not in item.tags:
-                output.append(item)
-        return output
-
-    def is_valid(self, name):
-        """Check to see if the name passed is a valid device.
-
-        Args:
-            name: The string of the device name you want to check.
-
-        Returns:
-            True or False, depending on whether the name is a valid device or
-            not.
-        """
-        return name.lower() in iter(self.keys())
+        return [item for item in self if tag in item.tags]
 
     def number(self, number):
         """Return a device object based on its number."""
@@ -447,48 +370,3 @@ class DeviceCollection(CaseInsensitiveDict):
             if obj.config['number'] == number:
                 return self[name]
         raise AssertionError("Object not found for number {}".format(number))
-
-    def multilist_to_names(self, multilist):
-        """Convert list of devices to string list.
-
-        Take a list of strings (including tag strings of device names from this collection, including tags, and returns
-        a list of string names.
-
-        Args:
-            multilist: List of strings, or a single string separated by commas
-                or spaces. Entries can include tag|tagname.
-
-        Returns:
-            List of strings of device names. Invalid devices in the input are
-            not included in the output.
-
-        The output list will only contain each device once. Order is not
-        guaranteed
-
-        Examples:
-            input: "led1, led2, tag|playfield"
-            return: [led1, led2, led3, led4, led5]
-
-        """
-        multilist = self.multilist_to_objects(multilist)
-        return [x.name for x in multilist]
-
-    def multilist_to_objects(self, multilist):
-        """Convert list of devices to a list of objects.
-
-        Same as multilist_to_names() method, except it return a list of objects instead of a list of strings.
-        """
-        multilist = Util.string_to_list(multilist)
-        final_list = list()
-
-        for item in multilist:
-            objects_from_tags = self.items_tagged(item)
-            if objects_from_tags:
-                for tagged_object in objects_from_tags:
-                    if tagged_object not in final_list:
-                        final_list.append(tagged_object)
-
-            else:
-                final_list.append(self[item])
-
-        return final_list

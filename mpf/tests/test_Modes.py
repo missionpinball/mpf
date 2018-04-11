@@ -14,14 +14,11 @@ class TestModes(MpfFakeGameTestCase):
     def test_loading_modes(self):
         # Tests multi-case mode listing in config and checking here
 
-        # lowercase in config, lowercase folder
+        # assert that modes did load
         self.assertIn('mode1', self.machine.modes)
-        # uppercase in config, lowercase folder
         self.assertIn('mode2', self.machine.modes)
-        # lowercase config, uppercase folder
         self.assertIn('mode3', self.machine.modes)
-        # lowercase config, lowercase folder, uppercase here
-        self.assertIn('Mode4', self.machine.modes)
+        self.assertIn('mode4', self.machine.modes)
 
     def test_mode_start_stop(self):
         # Setup mocked event handlers for mode start/stop sequence

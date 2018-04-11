@@ -1,0 +1,4 @@
+#show_version=5
+- duration: -1
+  lights:
+    led_(num): (color)
