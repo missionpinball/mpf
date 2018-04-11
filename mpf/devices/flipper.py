@@ -96,13 +96,9 @@ class Flipper(SystemWideDevice):
 
         # Apply the proper hardware rules for our config
 
-        if not self.config['hold_coil']:  # single coil
-            if self.config['use_eos']:
-                self._enable_main_coil_eos_cutoff_rule()
-            else:
-                self._enable_single_coil_rule()
-
-        elif not self.config['use_eos']:  # two coils, no eos
+        if self.config['use_eos']:
+            self._enable_main_coil_eos_cutoff_rule()
+        elif self.config['hold_coil']:
             self._enable_main_coil_pulse_rule()
         else:
             self._enable_single_coil_rule()
