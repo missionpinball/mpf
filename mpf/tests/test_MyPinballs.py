@@ -112,6 +112,14 @@ class MyPinballsPlatformTest(MpfTestCase):
         self._wait_for_processing()
         self.assertFalse(self.serialMock.expected_commands)
 
+        # change text (with same key)
+        self.serialMock.expected_commands = {
+            b'1:1:42?23\n': False,
+        }
+        self.machine.segment_displays.display1.add_text("42 23", key="score")
+        self._wait_for_processing()
+        self.assertFalse(self.serialMock.expected_commands)
+
         # set to empty
         self.serialMock.expected_commands = {
             b'3:1\n': False,

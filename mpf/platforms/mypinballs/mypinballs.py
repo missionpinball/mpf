@@ -25,6 +25,8 @@ class MyPinballsSegmentDisplay(SegmentDisplayPlatformInterface):
             # blank display
             cmd = b'3:' + bytes([ord(str(self.number))]) + b'\n'
         else:
+            # special char for spaces
+            text = text.replace(" ", "?")
             # set text
             if flashing:
                 cmd = b'2:'
