@@ -4,14 +4,14 @@ import tempfile
 
 import shutil
 
-from mpf.tests.MpfTestCase import MpfTestCase
+from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
 
 
-class MpfDocTestCase(MpfTestCase):
+class MpfDocTestCase(MpfFakeGameTestCase):
 
     def __init__(self, config_string, methodName='test_config_parsing'):
         super().__init__(methodName)
-        machine_config, mode_configs = self.prepare_config(config_string)
+        machine_config, mode_configs, self.tests = self.prepare_config(config_string)
         self.config_dir = tempfile.mkdtemp()
 
         # create machine config
@@ -42,7 +42,7 @@ class MpfDocTestCase(MpfTestCase):
         config_string = re.sub(r'^#! ([^\n]+)', '\\1', config_string, flags=re.MULTILINE)
 
         # first find sections
-        configs = re.split(r'^##! config: (\w+)\n', config_string, flags=re.MULTILINE)
+        configs = re.split(r'^##! (?:config: (\w+)|test)\n', config_string, flags=re.MULTILINE)
         machine_config = configs.pop(0)
 
         # add config_version if missing
@@ -50,12 +50,18 @@ class MpfDocTestCase(MpfTestCase):
             machine_config = "#config_version=5\n" + machine_config
 
         modes = {}
+        tests = []
         while configs:
             mode_name = configs.pop(0)
             mode_config = configs.pop(0)
-            if not mode_config.startswith("#config_version=5"):
-                mode_config = "#config_version=5\n" + mode_config
-            modes[mode_name] = mode_config
+            if not mode_name:
+                # unit test
+                tests = mode_config.splitlines()
+            else:
+                # normal mode
+                if not mode_config.startswith("#config_version=5"):
+                    mode_config = "#config_version=5\n" + mode_config
+                modes[mode_name] = mode_config
 
         # load all modes
         if modes:
@@ -63,7 +69,7 @@ class MpfDocTestCase(MpfTestCase):
             for mode in modes.keys():
                 machine_config += " - " + mode + "\n"
 
-        return machine_config, modes
+        return machine_config, modes, tests
 
     def getConfigFile(self):
         return "config.yaml"
@@ -75,4 +81,30 @@ class MpfDocTestCase(MpfTestCase):
         shutil.rmtree(config_dir)
 
     def test_config_parsing(self):
-        pass
+        line_no = 0
+        for line in self.tests:
+            line_no += 1
+            if not line or line.startswith("#"):
+                continue
+
+            parts = line.split(" ")
+            command = parts.pop(0)
+            method = getattr(self, "command_" + command)
+            if not method:
+                raise AssertionError("Unknown command {} in line {}".format(command, line_no))
+            try:
+                method(*parts)
+            except AssertionError as e:
+                raise AssertionError("Error in line {}".format(line_no), e)
+
+
+    def command_start_game(self):
+        self.start_game()
+
+    def command_post(self, event_name):
+        self.post_event(event_name)
+
+    def command_assert_player_variable(self, value, player_var):
+        if isinstance(self.machine.game.player[player_var], (int, float)):
+            value = float(value)
+        self.assertPlayerVarEqual(value, player_var=player_var)

@@ -1,24 +1,29 @@
 """Perform hardware operations."""
 import os
 
+from mpf.commands import MpfCommandLineParser
+
 from mpf.core.machine import MachineController
 
 subcommand = True
 
 
-class Command(object):
+class Command(MpfCommandLineParser):
 
     """Performs hardware operations."""
 
-    def __init__(self, mpf_path, machine_path, args):
+    def __init__(self, args, path):
         """Parse args."""
-        self.mpf_path = mpf_path
+        command_name = args.pop(1)
+        super().__init__(args=args, path=path)
+
+        machine_path, remaining_args = self.parse_args()
         self.machine_path = machine_path
-        self.args = args
+        self.args = remaining_args
         self.mpf = MachineController(self.mpf_path, self.machine_path,
                                      {"bcp": False,
                                       "no_load_cache": False,
-                                      "mpfconfigfile": os.path.join(mpf_path, "mpfconfig.yaml"),
+                                      "mpfconfigfile": os.path.join(self.mpf_path, "mpfconfig.yaml"),
                                       "configfile": ["config"],
                                       "production": False,
                                       "create_config_cache": False,
@@ -28,6 +33,9 @@ class Command(object):
         self.mpf.clock.loop.run_until_complete(self.mpf.initialise_core_and_hardware())
         if self.mpf.thread_stopper.is_set():
             raise AssertionError("Initialisation failed!")
+
+        method = getattr(self, command_name)
+        method()
 
     def scan(self):
         """Scan hardware."""
