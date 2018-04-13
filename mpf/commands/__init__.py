@@ -111,7 +111,7 @@ class CommandLineUtility(MpfCommandLineParser):
 
     def __init__(self, path=None):
         """Initialise CLI entry point."""
-        super().__init__(path=path, args=sys.argv)
+        super().__init__(path=path, args=sys.argv[:])
         self.external_commands = dict()
         self.get_external_commands()
 
