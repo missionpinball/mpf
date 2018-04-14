@@ -111,6 +111,11 @@ class EntranceSwitchCounter(PhysicalBallCounter):
         self.record_activity(BallLostActivity())
         self.trigger_activity()
 
+    @property
+    def is_ready_to_receive(self):
+        """Return true if entrance switch is inactive."""
+        return self.machine.switch_controller.is_inactive(switch_name=self.config['entrance_switch'].name)
+
     def wait_for_ready_to_receive(self):
         """Wait until the entrance switch is inactive."""
         return self.machine.switch_controller.wait_for_switch(

@@ -66,11 +66,16 @@ class OutgoingBallsHandler(BallDeviceStateHandler):
         """Return true if idle."""
         return not self._current_target and self._eject_queue.empty()
 
+    @property
+    def is_ready_to_receive(self):
+        """Return true if we can receive balls."""
+        return not self._current_target or not self._current_target.is_playfield() or not self._eject_future
+
     @asyncio.coroutine
     def wait_for_ready_to_receive(self):
         """Wait until the outgoing balls handler is ready to receive."""
         # if we are ejecting to a playfield wait until the eject finished because we cannot properly confirm otherwise
-        if self._current_target and self._current_target.is_playfield() and self._eject_future:
+        if not self.is_ready_to_receive:
             self.debug_log("Wait for eject to finish")
             yield from self._eject_future
             self.debug_log("Eject finished")

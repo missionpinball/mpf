@@ -153,6 +153,16 @@ class SwitchCounter(PhysicalBallCounter):
         """Return true if only the jam switch is active and the count is unknown."""
         return self._is_unreliable
 
+    @property
+    def is_ready_to_receive(self):
+        """Return true if count is stable and we got at least one slot."""
+        try:
+            count = self._count_switches_sync()
+        except ValueError:
+            # count not stable
+            return False
+        return count != len(self.config['ball_switches'])
+
     def wait_for_ready_to_receive(self):
         """Wait until there is at least on inactive switch."""
         # future returns when ball_count != number of switches

@@ -216,6 +216,10 @@ class MpfTestCase(unittest.TestCase):
         self.machine.events.post(event_name, **params)
         self.machine_run()
 
+    def assertNumBallsKnown(self, balls):
+        """Assert that a certain number of balls are known in the machine."""
+        self.assertEqual(balls, self.machine.ball_controller.num_balls_known)
+
     def set_num_balls_known(self, balls):
         """Set the ball controller's ``num_balls_known`` attribute.
         

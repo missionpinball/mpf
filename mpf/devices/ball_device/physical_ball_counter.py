@@ -238,6 +238,11 @@ class PhysicalBallCounter(object):
         """Wait for stable count."""
         return Util.ensure_future(self._count_stable.wait(), loop=self.machine.clock.loop)
 
+    @property
+    def is_ready_to_receive(self):
+        """Return true if the counter is ready to receive."""
+        raise NotImplementedError()
+
     def wait_for_ready_to_receive(self):
         """Wait until the counter is ready to count an incoming ball."""
         raise NotImplementedError()

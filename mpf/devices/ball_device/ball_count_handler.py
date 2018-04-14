@@ -138,23 +138,39 @@ class BallCountHandler(BallDeviceStateHandler):
         while True:
             free_space = self.ball_device.config['ball_capacity'] - self._ball_count
             incoming_balls = self.ball_device.incoming_balls_handler.get_num_incoming_balls()
-            if free_space > incoming_balls:
-                self.debug_log("Ready to receive from %s. Free space %s (Capacity: %s, Balls: %s), incoming_balls: %s",
-                               source, free_space, self.ball_device.config['ball_capacity'], self._ball_count,
-                               incoming_balls)
+            if free_space <= incoming_balls:
+                self.debug_log(
+                    "Not ready to receive from %s. Not enough space. "
+                    "Free space %s (Capacity: %s, Balls: %s), incoming_balls: %s",
+                    source, free_space, self.ball_device.config['ball_capacity'], self._ball_count,
+                    incoming_balls)
+                yield from self.wait_for_ball_count_changed()
+                continue
 
-                # wait until any eject conditions have passed which would break on an incoming ball
-                yield from self.ball_device.outgoing_balls_handler.wait_for_ready_to_receive()
-
+            if not self.counter.is_ready_to_receive:
+                self.debug_log(
+                    "Not ready to receive from %s. Waiting on counter to become ready. "
+                    "Free space %s (Capacity: %s, Balls: %s), incoming_balls: %s",
+                    source, free_space, self.ball_device.config['ball_capacity'], self._ball_count,
+                    incoming_balls)
                 # wait for the counter to be ready
                 yield from self.counter.wait_for_ready_to_receive()
-                return True
+                continue
 
-            self.debug_log("Not ready to receive from %s. Free space %s (Capacity: %s, Balls: %s), incoming_balls: %s",
+            # wait until any eject conditions have passed which would break on an incoming ball
+            if not self.ball_device.outgoing_balls_handler.is_ready_to_receive:
+                self.debug_log(
+                    "Not ready to receive from %s. Target is currently ejecting. "
+                    "Free space %s (Capacity: %s, Balls: %s), incoming_balls: %s",
+                    source, free_space, self.ball_device.config['ball_capacity'], self._ball_count,
+                    incoming_balls)
+                yield from self.ball_device.outgoing_balls_handler.wait_for_ready_to_receive()
+                continue
+
+            self.debug_log("Ready to receive from %s. Free space %s (Capacity: %s, Balls: %s), incoming_balls: %s",
                            source, free_space, self.ball_device.config['ball_capacity'], self._ball_count,
                            incoming_balls)
-
-            yield from self.wait_for_ball_count_changed()
+            return True
 
     @asyncio.coroutine
     def start_eject(self, already_left=False) -> Generator[int, None, EjectTracker]:
