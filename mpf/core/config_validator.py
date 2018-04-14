@@ -327,7 +327,9 @@ class ConfigValidator(object):
         if item in section:
             return section[item]
         else:
-            return self.validation_error(item, validation_failure_info)
+            return self.validation_error(item, validation_failure_info,
+                                         "Device {} of type {} not defined".format(item, param),
+                                         6)
 
     @classmethod
     def _validate_type_list(cls, item, validation_failure_info):
@@ -587,10 +589,10 @@ class ConfigValidator(object):
                                   validation_failure_info[0][0],
                                   validation_failure_info[1]), 4, self.log.name)
 
-    def validation_error(self, item, validation_failure_info, msg=""):
+    def validation_error(self, item, validation_failure_info, msg="", code=None):
         """Raise a validation error with all relevant infos."""
         raise ConfigFileError("Config validation error: Entry {}:{}:{}:{} is not valid. {}".format(
             validation_failure_info[0][0],
             validation_failure_info[0][1],
             validation_failure_info[1],
-            item, msg), 5, self.log.name)
+            item, msg), 5 if code is None else code, self.log.name)
