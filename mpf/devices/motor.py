@@ -14,18 +14,41 @@ class Motor(SystemWideDevice):
     def __init__(self, machine, name):
         """Initialise motor."""
         self._target_position = None
+        self._last_position = None
+        self.type = None
         super().__init__(machine, name)
 
     def _initialize(self):
         super()._initialize()
         self._target_position = self.config['reset_position']
         if self.config['reset_position'] not in self.config['position_switches']:
-            raise AssertionError("Invalid reset position")
+            self.raise_config_error("Reset position {} not in positions {}".format(
+                self.config['reset_position'], self.config['position_switches']), 1)
+
+        if not self.config['motor_left_output'] and not self.config['motor_right_output']:
+            self.raise_config_error("Need either motor_left_output or motor_right_output", 2)
+
+        if self.config['motor_left_output'] == self.config['motor_right_output']:
+            self.raise_config_error("motor_left_output and motor_right_output need to be different", 3)
+
+        if self.config['motor_left_output'] and self.config['motor_right_output']:
+            self.type = "two_directions"
+            # add handlers to stop the motor when it reaches the end to prevent damage
+            self.machine.switch_controller.add_switch_handler(
+                next(iter(self.config['position_switches'].values())).name, self._end_reached)
+            self.machine.switch_controller.add_switch_handler(
+                next(reversed(self.config['position_switches'].values())).name, self._end_reached)
+        else:
+            self.type = "one_direction"
+
+        for position, switch in self.config['position_switches'].items():
+            self.machine.switch_controller.add_switch_handler(switch.name, self._update_position,
+                                                              callback_kwargs={"position": position})
 
         # add handlers
         for event, position in self.config['go_to_position'].items():
             if position not in self.config['position_switches']:
-                raise AssertionError("Invalid position {} in go_to_position".format(position))
+                self.raise_config_error("Invalid position {} in go_to_position".format(position), 4)
             self.machine.events.add_handler(event, self.go_to_position, position=position)
 
         if self.config['include_in_ball_search']:
@@ -55,22 +78,40 @@ class Motor(SystemWideDevice):
             # already in position
             self._reached_position(position)
         else:
-            # not in position. start motor
-            self.config['motor_coil'].enable()
+            if self.type == "two_directions":
+                if self._last_position is None or list(self.config['position_switches']).index(self._last_position) > \
+                        list(self.config['position_switches']).index(position):
+                    self.config['motor_left_output'].enable()
+                    self.config['motor_right_output'].disable()
+                else:
+                    self.config['motor_left_output'].disable()
+                    self.config['motor_right_output'].enable()
+            else:
+                # not in position. start motor
+                if self.config['motor_left_output']:
+                    self.config['motor_left_output'].enable()
+                else:
+                    self.config['motor_right_output'].enable()
 
-            # remove previous handlers
-            for position_switch in self.config['position_switches'].values():
-                self.machine.switch_controller.remove_switch_handler(position_switch.name, self._reached_position)
+    def _end_reached(self, **kwargs):
+        """Stop all motors since we reached one of the end switches."""
+        del kwargs
+        self.info_log("Motor hit end switch. Stopping motor.")
+        self._stop_motor()
 
-            # add new handler for new position
-            self.machine.switch_controller.add_switch_handler(
-                switch.name, self._reached_position, callback_kwargs={"position": position})
-
-    def _reached_position(self, position, **kwargs):
+    def _update_position(self, position, **kwargs):
         """Handle that motor reached a certain position."""
         del kwargs
-        self.debug_log("Motor is in position %s", position)
+        self._last_position = position
 
+        if position == self._target_position:
+            self._reached_position(position)
+        else:
+            self.debug_log("Motor is at position %s", position)
+
+    def _reached_position(self, position):
+        """Handle that motor handled its target position."""
+        self.info_log("Motor reached position %s. Stopping motor.", position)
         self.machine.events.post("motor_{}_reached_{}".format(self.name, position))
         '''event: motor_(name)_reached_(position)
 
@@ -79,17 +120,23 @@ class Motor(SystemWideDevice):
         '''
 
         # disable motor
-        self.config['motor_coil'].disable()
+        self._stop_motor()
 
-    def _remove_handlers(self):
-        # remove previous handlers
-        for position_switch in self.config['position_switches'].values():
-            self.machine.switch_controller.remove_switch_handler(position_switch.name, self._reached_position)
+    def _stop_motor(self):
+        if self.config['motor_left_output']:
+            self.config['motor_left_output'].disable()
+
+        if self.config['motor_right_output']:
+            self.config['motor_right_output'].disable()
 
     def _ball_search_start(self, **kwargs):
         del kwargs
+        self._stop_motor()
         # simply enable motor. will move to old position afterwards.
-        self.config['motor_coil'].enable()
+        if self.config['motor_left_output']:
+            self.config['motor_left_output'].enable()
+        else:
+            self.config['motor_right_output'].enable()
 
     def _ball_search_stop(self, **kwargs):
         del kwargs

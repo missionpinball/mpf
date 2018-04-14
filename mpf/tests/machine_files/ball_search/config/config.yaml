@@ -35,9 +35,11 @@ coils:
         default_hold_power: 0.250
     autofire_coil:
         number:
+
+digital_outputs:
     c_motor_run:
         number:
-        max_hold_power: 1.0
+        type: driver
 
 playfields:
     playfield:
@@ -54,10 +56,10 @@ servos:
 
 motors:
     motor1:
-        motor_coil: c_motor_run
-        position_switches:
-            up: s_position_up
-            down: s_position_down
+        motor_left_output: c_motor_run
+        position_switches:  !!omap
+            - up: s_position_up
+            - down: s_position_down
         reset_position: down
 
 switches:

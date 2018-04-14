@@ -1,10 +1,6 @@
 """Contains the MachineController base class."""
-import errno
-import hashlib
 import logging
 import os
-import pickle
-import tempfile
 
 import sys
 import threading
@@ -61,6 +57,8 @@ if MYPY:   # pragma: no cover
     from mpf.devices.segment_display import SegmentDisplay
     from mpf.devices.shot_group import ShotGroup
     from mpf.devices.shot import Shot
+    from mpf.devices.motor import Motor
+    from mpf.devices.digital_output import DigitalOutput
     from logging import Logger  # noqa
     from mpf.devices.autofire import AutofireCoil
 
@@ -134,6 +132,8 @@ class MachineController(LogMixin):
 
             # devices
             self.autofires = None                       # type: DeviceCollectionType[str, AutofireCoil]
+            self.motors = None                          # type: DeviceCollectionType[str, Motor]
+            self.digital_outputs = None                 # type: DeviceCollectionType[str, DigitalOutput]
             self.shows = None                           # type: DeviceCollectionType[str, Show]
             self.shots = None                           # type: DeviceCollectionType[str, Shot]
             self.shot_groups = None                     # type: DeviceCollectionType[str, ShotGroup]

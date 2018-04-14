@@ -750,11 +750,12 @@ magnets:
     fling_ball_events: dict|str:ms|None
 motors:
     __valid_in__: machine
-    position_switches: dict|str:machine(switches)|
+    position_switches: omap|str:machine(switches)|
     reset_position: single|str|
     reset_events: dict|str:ms|machine_reset_phase_3, ball_starting
     go_to_position: dict|str:str|None
-    motor_coil: single|machine(coils)|
+    motor_left_output: single|machine(digital_outputs)|None
+    motor_right_output: single|machine(digital_outputs)|None
     include_in_ball_search: single|bool|True
 mpf:
     __valid_in__: machine                           # todo add to validator
