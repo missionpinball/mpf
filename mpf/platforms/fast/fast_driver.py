@@ -85,11 +85,14 @@ class FASTDriver(DriverPlatformInterface):
         return self.driver_settings['trigger_cmd']
 
     @classmethod
-    def get_control_for_cmd(cls, switch):
+    def get_control_for_cmd(cls, switch1, switch2=None):
         """Return control bytes."""
         control = 0x01  # Driver enabled
-        if switch.invert:
+        if switch1.invert:
             control += 0x10
+        if switch2 and switch2.invert:
+            control += 0x20
+
         return Util.int_to_hex_string(int(control))
 
     def reset(self):

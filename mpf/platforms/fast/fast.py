@@ -712,15 +712,29 @@ class FastHardwarePlatform(ServoPlatform, LightsPlatform, DmdPlatform,
         # So for the flipper, Driver On Time1 will = the maximum time the coil can be held on if the EOS fails.
         # Driver On Time2 X 100mS would not be used for a flipper, so set it to 0.
         # And PWM2 should be left on full 0xff unless you need less power for some reason.
-        # No release so far :-(
         self.debug_log("Setting Pulse on hit and release with HW Rule. Switch:"
                        "%s, Driver: %s", enable_switch.hw_switch.number,
                        coil.hw_driver.number)
 
-        # map this to pulse without eos for now
-        # TODO: implement correctly
-        del disable_switch
-        self.set_pulse_on_hit_and_release_rule(enable_switch, coil)
+        # TODO: hold does not work here
+        self._check_switch_coil_combincation(enable_switch, coil)
+        self._check_switch_coil_combincation(disable_switch, coil)
+
+        driver = coil.hw_driver
+
+        cmd = '{}{},{},{},75,{},{},00,{},{}'.format(
+            driver.get_config_cmd(),
+            coil.hw_driver.number,
+            driver.get_control_for_cmd(enable_switch, disable_switch),
+            enable_switch.hw_switch.number[0],
+            disable_switch.hw_switch.number[0],
+            Util.int_to_hex_string(coil.pulse_settings.duration),
+            driver.get_pwm_for_cmd(coil.pulse_settings.power),
+            driver.get_recycle_ms_for_cmd(coil.recycle, coil.pulse_settings.duration))
+
+        enable_switch.hw_switch.configure_debounce(enable_switch.debounce)
+        disable_switch.hw_switch.configure_debounce(disable_switch.debounce)
+        driver.set_autofire(cmd, coil.pulse_settings.duration, coil.pulse_settings.power, 0)
 
     def set_pulse_on_hit_rule(self, enable_switch: SwitchSettings, coil: DriverSettings):
         """Set pulse on hit rule on driver."""
