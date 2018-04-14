@@ -400,7 +400,7 @@ class SmartVirtualHardwarePlatform(VirtualPlatform):
                     break
 
             if LogMixin.unit_test and not found_switch:
-                raise AssertionError("KABOOM! We just added a ball to {} which"
+                raise AssertionError("KABOOM! We just added a ball to {} which "
                                      "was already full.".format(device.name))
 
 
