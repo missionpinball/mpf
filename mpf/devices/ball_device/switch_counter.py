@@ -77,6 +77,7 @@ class SwitchCounter(PhysicalBallCounter):
                 self.debug_log("Counter is jammed. Only jam is active. Will no longer trust count.")
                 # ball potentially returned
                 if not self._is_unreliable:
+                    self.trigger_activity()
                     self.record_activity(BallReturnActivity())
                     self._is_unreliable = True
                 continue
@@ -191,3 +192,4 @@ class SwitchCounter(PhysicalBallCounter):
         self._last_count -= 1
         self.record_activity(BallLostActivity())
         self.trigger_recount()
+        self.trigger_activity()
