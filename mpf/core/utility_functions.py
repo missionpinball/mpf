@@ -298,6 +298,8 @@ class Util(object):
         if isinstance(config, dict):
             return config
         elif isinstance(config, str):
+            if config == "None":
+                return {}
             config = Util.string_to_list(config)
 
         # 'if' instead of 'elif' to pick up just-converted str
