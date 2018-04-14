@@ -66,6 +66,7 @@ class BallDevice(SystemWideDevice):
 
     def set_eject_state(self, state):
         """Set the current device state."""
+        self.debug_log("State: %s", state)
         self._state = state
 
     @property
