@@ -601,10 +601,14 @@ class ConfigValidator(object):
                                   validation_failure_info[0][0],
                                   validation_failure_info[1]), 4, self.log.name)
 
+    def _build_error_path(self, validation_failure_info):
+        if isinstance(validation_failure_info[0], tuple):
+            return "{}:{}".format(self._build_error_path(validation_failure_info[0]), validation_failure_info[1])
+        else:
+            return "{}:{}".format(validation_failure_info[0],  validation_failure_info[1])
+
     def validation_error(self, item, validation_failure_info, msg="", code=None):
         """Raise a validation error with all relevant infos."""
-        raise ConfigFileError("Config validation error: Entry {}:{}:{} = '{}' is not valid. {}".format(
-            validation_failure_info[0][0],
-            validation_failure_info[0][1],
-            validation_failure_info[1],
+        raise ConfigFileError("Config validation error: Entry {} = \"{}\" is not valid. {}".format(
+            self._build_error_path(validation_failure_info),
             item, msg), 5 if code is None else code, self.log.name)

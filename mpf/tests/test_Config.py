@@ -1,4 +1,5 @@
 from mpf.core.utility_functions import Util
+from mpf.exceptions.ConfigFileError import ConfigFileError
 from mpf.tests.MpfTestCase import MpfTestCase
 from mpf.core.config_validator import ConfigValidator
 
@@ -90,7 +91,7 @@ class TestConfig(MpfTestCase):
 
         # test default required with source missing raises error
         validation_string = 'single|int|'  # default required
-        self.assertRaises(ValueError,
+        self.assertRaises(ConfigFileError,
                           self.machine.config_validator.validate_config_item,
                           validation_string, 'test_failure_info')  # no item
 
@@ -438,7 +439,7 @@ class TestConfig(MpfTestCase):
             self.machine.config_validator.validate_config_item(
                 validation_string, validation_failure_info, 'something else')
         self.assertEqual('Config File Error in ConfigValidator: Config validation error: Entry '
-                         'key:entry:subkey:something else is not valid. Entry "something else" is not valid for enum. '
+                         'key:entry:subkey = "something else" is not valid. Entry "something else" is not valid for enum. '
                          'Valid values are: None,test Error Code: CFE-ConfigValidator-5', str(e.exception))
 
         # test enum with 'NO' setting
