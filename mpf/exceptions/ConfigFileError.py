@@ -20,4 +20,3 @@ class ConfigFileError(AssertionError):
         else:
             return "Config File Error in {}: {} Error Code: CFE-{}-{}".format(
                 self._logger_name, super().__str__(), self._logger_name, self._error_no)
-

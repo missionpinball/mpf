@@ -28,9 +28,9 @@ class DeviceConfigPlayer(ConfigPlayer, metaclass=abc.ABCMeta):
             try:
                 validated_config.update(
                     self._validate_config_item(device, device_settings))
-            except ConfigFileError:
-                raise AssertionError("Failed to load config player {}:{} {}".format(
-                    name, self.show_section, settings))
+            except ConfigFileError as e:
+                raise ConfigFileError("Failed to load config player {}:{} {}".format(
+                    name, self.show_section, settings), 1, self.log.name) from e
 
         return validated_config
 

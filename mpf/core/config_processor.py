@@ -12,6 +12,7 @@ from mpf.core.file_manager import FileManager
 from mpf.core.utility_functions import Util
 from mpf.core.config_validator import ConfigValidator
 from mpf._version import __show_version__, __config_version__
+from mpf.exceptions.ConfigFileError import ConfigFileError
 
 
 class ConfigProcessor(object):
@@ -139,6 +140,8 @@ class ConfigProcessor(object):
         self.log.info('Loading config: %s', filename)
 
         if config_type in ("machine", "mode"):
+            if not isinstance(config, dict):
+                raise ConfigFileError("Config should be a dict: {}".format(config), self.log.name, "ConfigProcessor")
             for k in config.keys():
                 try:
                     if config_type not in ConfigValidator.config_spec[k][
