@@ -197,11 +197,9 @@ class ConfigValidator(object):
 
         if item == 'item not in config!@#':
             if default == 'default required!@#':
-                raise ValueError('Required setting missing from config file. '
-                                 'Run with verbose logging and look for the last '
-                                 'ConfigProcessor entry above this line to see where the '
-                                 'problem is. {} {}'.format(spec,
-                                                            validation_failure_info))
+                self.validation_error("None", validation_failure_info,
+                                      'Required setting {} missing from config file.'.format(
+                                          validation_failure_info[1]), 9)
             else:
                 item = default
 
@@ -605,7 +603,7 @@ class ConfigValidator(object):
 
     def validation_error(self, item, validation_failure_info, msg="", code=None):
         """Raise a validation error with all relevant infos."""
-        raise ConfigFileError("Config validation error: Entry {}:{}:{}:{} is not valid. {}".format(
+        raise ConfigFileError("Config validation error: Entry {}:{}:{} = '{}' is not valid. {}".format(
             validation_failure_info[0][0],
             validation_failure_info[0][1],
             validation_failure_info[1],
