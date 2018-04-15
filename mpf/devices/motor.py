@@ -37,7 +37,7 @@ class Motor(SystemWideDevice):
             self.machine.switch_controller.add_switch_handler(
                 next(iter(self.config['position_switches'].values())).name, self._end_reached)
             self.machine.switch_controller.add_switch_handler(
-                next(reversed(self.config['position_switches'].values())).name, self._end_reached)
+                next(reversed(list(self.config['position_switches'].values()))).name, self._end_reached)
         else:
             self.type = "one_direction"
 
