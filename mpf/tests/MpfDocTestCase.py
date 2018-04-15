@@ -5,9 +5,10 @@ import tempfile
 import shutil
 
 from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
+from mpf.tests.MpfMachineTestCase import MockConfigPlayers
 
 
-class MpfDocTestCase(MpfFakeGameTestCase):
+class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
 
     def __init__(self, config_string, methodName='test_config_parsing'):
         super().__init__(methodName)
