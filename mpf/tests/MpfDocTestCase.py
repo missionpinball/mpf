@@ -11,13 +11,19 @@ class MpfDocTestCase(MpfFakeGameTestCase):
 
     def __init__(self, config_string, methodName='test_config_parsing'):
         super().__init__(methodName)
-        machine_config, mode_configs, self.tests = self.prepare_config(config_string)
+        machine_config, mode_configs, show_configs, self.tests = self.prepare_config(config_string)
         self.config_dir = tempfile.mkdtemp()
 
         # create machine config
         os.mkdir(os.path.join(self.config_dir, "config"))
         with open(os.path.join(self.config_dir, "config", "config.yaml"), "w") as f:
             f.write(machine_config)
+
+        # create shows
+        os.mkdir(os.path.join(self.config_dir, "shows"))
+        for show_name, show_config in show_configs.items():
+            with open(os.path.join(self.config_dir, "shows", show_name + ".yaml"), "w") as f:
+                f.write(show_config)
 
         # create modes
         os.mkdir(os.path.join(self.config_dir, "modes"))
@@ -29,6 +35,9 @@ class MpfDocTestCase(MpfFakeGameTestCase):
 
         # cleanup at the end
         self.addCleanup(self._delete_tmp_dir, self.config_dir)
+
+    def get_enable_plugins(self):
+        return True
 
     def getOptions(self):
         options = super().getOptions()
@@ -42,7 +51,7 @@ class MpfDocTestCase(MpfFakeGameTestCase):
         config_string = re.sub(r'^#! ([^\n]+)', '\\1', config_string, flags=re.MULTILINE)
 
         # first find sections
-        configs = re.split(r'^##! (?:config: (\w+)|test)\n', config_string, flags=re.MULTILINE)
+        configs = re.split(r'^##! (config: \w+|test|show: \w+|mode: \w+)\n', config_string, flags=re.MULTILINE)
         machine_config = configs.pop(0)
 
         # add config_version if missing
@@ -50,18 +59,26 @@ class MpfDocTestCase(MpfFakeGameTestCase):
             machine_config = "#config_version=5\n" + machine_config
 
         modes = {}
+        shows = {}
         tests = []
         while configs:
-            mode_name = configs.pop(0)
-            mode_config = configs.pop(0)
-            if not mode_name:
+            section_type = configs.pop(0)
+            section_config = configs.pop(0)
+            if section_type.startswith("test"):
                 # unit test
-                tests = mode_config.splitlines()
-            else:
+                tests = section_config.splitlines()
+            elif section_type.startswith("mode:") or section_type.startswith("config:"):
                 # normal mode
-                if not mode_config.startswith("#config_version=5"):
-                    mode_config = "#config_version=5\n" + mode_config
-                modes[mode_name] = mode_config
+                _, mode_name = section_type.split(": ", 2)
+                if not section_config.startswith("#config_version=5"):
+                    section_config = "#config_version=5\n" + section_config
+                modes[mode_name] = section_config
+            elif section_type.startswith("show:"):
+                # show
+                _, show_name = section_type.split(": ", 2)
+                if not section_config.startswith("#show_version=5"):
+                    section_config = "#show_version=5\n" + section_config
+                shows[show_name] = section_config
 
         # load all modes
         if modes:
@@ -69,7 +86,7 @@ class MpfDocTestCase(MpfFakeGameTestCase):
             for mode in modes.keys():
                 machine_config += " - " + mode + "\n"
 
-        return machine_config, modes, tests
+        return machine_config, modes, shows, tests
 
     def getConfigFile(self):
         return "config.yaml"
