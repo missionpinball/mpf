@@ -82,7 +82,7 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
                 shows[show_name] = section_config
 
         # load all modes
-        if modes:
+        if modes and "modes:" not in machine_config:
             machine_config += "\nmodes:\n"
             for mode in modes.keys():
                 machine_config += " - " + mode + "\n"
