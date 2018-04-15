@@ -5,20 +5,41 @@ switches:
         number:
     s_position_down:
         number:
+    s_slimer_home:
+        number: 8-1
+    s_slimer_away:
+        number: 8-2
 
-coils:
+digital_outputs:
     c_motor_run:
         number:
-        max_hold_power: 1.0
+        type: driver
+    c_slimer_motor_forward:
+        number: 8-3
+        type: light
+    c_slimer_motor_backward:
+        number: 8-4
+        type: light
 
 motors:
     motorized_drop_target_bank:
-        motor_coil: c_motor_run
-        position_switches:
-            up: s_position_up
-            down: s_position_down
+        motor_left_output: c_motor_run
+        position_switches:  !!omap
+            - up: s_position_up
+            - down: s_position_down
         reset_position: down
         go_to_position:
             go_up: up
             go_down: down
             go_down2: down
+
+    ghostbusters_slimer:
+        motor_left_output: c_slimer_motor_forward
+        motor_right_output: c_slimer_motor_backward
+        position_switches:  !!omap
+            - home: s_slimer_home
+            - away: s_slimer_away
+        reset_position: home
+        go_to_position:
+            slimer_home: home
+            slimer_away: away

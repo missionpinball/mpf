@@ -50,7 +50,7 @@ class HighScore(AsyncMode):
     def _validate_data(self, data):
         try:
             for category in data:
-                if category not in [next(iter(k.keys())) for k in self.high_score_config['categories']]:
+                if category not in self.high_score_config['categories']:
                     self.log.warning("Found invalid category in high scores.")
                     return False
 
@@ -73,51 +73,50 @@ class HighScore(AsyncMode):
 
         This is used in attract mode.
         """
-        for category in self.high_score_config['categories']:
-            for entries in category:
-                try:
-                    for position, (label, (name, value)) in (
-                            enumerate(zip(category[entries],
-                                          self.high_scores[entries]))):
+        for category, entries in self.high_score_config['categories'].items():
+            try:
+                for position, (label, (name, value)) in (
+                        enumerate(zip(entries,
+                                      self.high_scores[category]))):
 
-                        self.machine.set_machine_var(
-                            name=entries + str(position + 1) + '_label',
-                            value=label)
+                    self.machine.set_machine_var(
+                        name=category + str(position + 1) + '_label',
+                        value=label)
 
-                        '''machine_var: (high_score_category)(position)_label
+                    '''machine_var: (high_score_category)(position)_label
 
-                        desc: The "label" of the high score for that specific
-                        score category and position. For example,
-                        ``score1_label`` holds the label for the #1 position
-                        of the "score" player variable (which might be "GRAND
-                        CHAMPION").
+                    desc: The "label" of the high score for that specific
+                    score category and position. For example,
+                    ``score1_label`` holds the label for the #1 position
+                    of the "score" player variable (which might be "GRAND
+                    CHAMPION").
 
-                        '''
+                    '''
 
-                        self.machine.set_machine_var(
-                            name=entries + str(position + 1) + '_name',
-                            value=name)
+                    self.machine.set_machine_var(
+                        name=category + str(position + 1) + '_name',
+                        value=name)
 
-                        '''machine_var: (high_score_category)(position)_name
+                    '''machine_var: (high_score_category)(position)_name
 
-                        desc: Holds the player's name (or initials) for the
-                        high score for that category and position.
+                    desc: Holds the player's name (or initials) for the
+                    high score for that category and position.
 
-                        '''
+                    '''
 
-                        self.machine.set_machine_var(
-                            name=entries + str(position + 1) + '_value',
-                            value=value)
+                    self.machine.set_machine_var(
+                        name=category + str(position + 1) + '_value',
+                        value=value)
 
-                        '''machine_var: (high_score_category)(position)_value
+                    '''machine_var: (high_score_category)(position)_value
 
-                        desc: Holds the numeric value for the high score
-                        for that category and position.
+                    desc: Holds the numeric value for the high score
+                    for that category and position.
 
-                        '''
+                    '''
 
-                except KeyError:
-                    self.high_scores[entries] = list()
+            except KeyError:
+                self.high_scores[category] = list()
 
     # pylint: disable-msg=too-many-nested-blocks
     @asyncio.coroutine
@@ -129,53 +128,51 @@ class HighScore(AsyncMode):
         new_high_score_list = {}
 
         # iterate highscore categories
-        for category_settings in self.high_score_config['categories']:
-            for category_name, award_names in category_settings.items():
+        for category_name, award_names in self.high_score_config['categories'].items():
+            new_list = list()
 
-                new_list = list()
+            # add the existing high scores to the list
 
-                # add the existing high scores to the list
+            # make sure we have this category in the existing high scores
+            if category_name in self.high_scores:
+                for category_high_scores in self.high_scores[category_name]:
+                    new_list.append(category_high_scores)
 
-                # make sure we have this category in the existing high scores
-                if category_name in self.high_scores:
-                    for category_high_scores in self.high_scores[category_name]:
-                        new_list.append(category_high_scores)
+            # add the players scores from this game to the list
+            for player in self.machine.game.player_list:
+                # if the player var is 0, don't add it. This prevents
+                # values of 0 being added to blank high score lists
+                if player[category_name]:
+                    new_list.append((player, player[category_name]))
 
-                # add the players scores from this game to the list
-                for player in self.machine.game.player_list:
-                    # if the player var is 0, don't add it. This prevents
-                    # values of 0 being added to blank high score lists
-                    if player[category_name]:
-                        new_list.append((player, player[category_name]))
+            # sort if from highest to lowest
+            new_list.sort(key=lambda x: x[1], reverse=True)
 
-                # sort if from highest to lowest
-                new_list.sort(key=lambda x: x[1], reverse=True)
+            # scan through and see if any of our players are in this list
+            i = 0
+            while i < len(award_names) and i < len(new_list):
+                entry = new_list[i]
+                if isinstance(entry[0], Player):
+                    player, value = entry
+                    # ask player for initials if we do not know them
+                    if not player.initials:
+                        try:
+                            player.initials = yield from self._ask_player_for_initials(player, award_names[i],
+                                                                                       value)
+                        except asyncio.TimeoutError:
+                            del new_list[i]
+                            # no entry when the player missed the timeout
+                            continue
+                    # add high score
+                    new_list[i] = (player.initials, value)
+                    # show award slide
+                    yield from self._show_award_slide(player.initials, award_names[i], value)
 
-                # scan through and see if any of our players are in this list
-                i = 0
-                while i < len(award_names) and i < len(new_list):
-                    entry = new_list[i]
-                    if isinstance(entry[0], Player):
-                        player, value = entry
-                        # ask player for initials if we do not know them
-                        if not player.initials:
-                            try:
-                                player.initials = yield from self._ask_player_for_initials(player, award_names[i],
-                                                                                           value)
-                            except asyncio.TimeoutError:
-                                del new_list[i]
-                                # no entry when the player missed the timeout
-                                continue
-                        # add high score
-                        new_list[i] = (player.initials, value)
-                        # show award slide
-                        yield from self._show_award_slide(player.initials, award_names[i], value)
+                # next entry
+                i += 1
 
-                    # next entry
-                    i += 1
-
-                # save the new list for this category and trim it so that it's the length specified in the config
-                new_high_score_list[category_name] = new_list[:len(award_names)]
+            # save the new list for this category and trim it so that it's the length specified in the config
+            new_high_score_list[category_name] = new_list[:len(award_names)]
 
         self.high_scores = new_high_score_list
         self._write_scores_to_disk()

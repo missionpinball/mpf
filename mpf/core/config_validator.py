@@ -1,6 +1,7 @@
 """Config specs and validator."""
 import logging
 import re
+from collections import OrderedDict
 from copy import deepcopy
 
 from typing import Any, Union, List
@@ -41,6 +42,7 @@ class ConfigValidator(object):
             "list": self._validate_type_list,
             "int_from_hex": self._validate_type_int_from_hex,
             "dict": self._validate_type_dict,
+            "omap": self._validate_type_omap,
             "kivycolor": self._validate_type_kivycolor,
             "color": self._validate_type_color,
             "bool_int": self._validate_type_bool_int,
@@ -227,19 +229,38 @@ class ConfigValidator(object):
 
             return new_set
 
-        elif item_type == 'dict':
-            item_dict = self.validate_item(item, validation,
-                                           validation_failure_info)
-
-            if not item_dict:
-                return dict()
-            else:
-                return item_dict
-
+        elif item_type in ('dict', 'omap'):
+            return self._validate_dict_or_omap(item_type, validation, validation_failure_info, item)
         else:
             raise ConfigFileError("Invalid Type '{}' in config spec {}:{}".format(item_type,
                                   validation_failure_info[0][0],
                                   validation_failure_info[1]), 1, self.log.name)
+
+    def _validate_dict_or_omap(self, item_type, validation, validation_failure_info, item):
+        if ':' not in validation:
+            self.validation_error(item, validation_failure_info, "Missing : in dict validator.")
+
+        validators = validation.split(':')
+
+        if item_type == "omap":
+            item_dict = OrderedDict()
+            if not isinstance(item, OrderedDict):
+                self.validation_error(item, validation_failure_info, "Item is not an ordered dict. "
+                                                                     "Did you forget to add !!omap to your entry?",
+                                      7)
+        else:
+            item_dict = dict()
+
+            # item could be str, list, or list of dicts
+            try:
+                item = Util.event_config_to_dict(item)
+            except TypeError:
+                self.validation_error(item, validation_failure_info, "Could not convert item to dict", 8)
+
+        for k, v in item.items():
+            item_dict[self.validate_item(k, validators[0], validation_failure_info)] = (
+                self.validate_item(v, validators[1], validation_failure_info))
+        return item_dict
 
     def check_for_invalid_sections(self, spec, config,
                                    validation_failure_info):
@@ -284,7 +305,7 @@ class ConfigValidator(object):
 
     def _validate_type_subconfig(self, item, param, validation_failure_info):
         if item is None:
-            return None
+            return {}
         try:
             attribute, base_spec_str = param.split(",", 1)
             base_spec = base_spec_str.split(",")
@@ -481,9 +502,18 @@ class ConfigValidator(object):
         else:
             return None
 
-    @classmethod
-    def _validate_type_dict(cls, item, validation_failure_info):
-        del validation_failure_info
+    def _validate_type_dict(self, item, validation_failure_info):
+        if not item:
+            return {}
+        if not isinstance(item, dict):
+            self.validation_error(item, validation_failure_info, "Item is not a dict.")
+        return item
+
+    def _validate_type_omap(self, item, validation_failure_info):
+        if not item:
+            return {}
+        if not isinstance(item, OrderedDict):
+            self.validation_error(item, validation_failure_info, "Item is not a ordered dict.")
         return item
 
     def _validate_type_kivycolor(self, item, validation_failure_info):
@@ -559,23 +589,7 @@ class ConfigValidator(object):
         except AttributeError:
             pass
 
-        if ':' in validator:
-            validator = validator.split(':')
-            # item could be str, list, or list of dicts
-            item = Util.event_config_to_dict(item)
-
-            return_dict = dict()
-
-            for k, v in item.items():
-                return_dict[self.validate_item(k, validator[0],
-                                               validation_failure_info)] = (
-                    self.validate_item(v, validator[1],
-                                       validation_failure_info)
-                )
-
-            return return_dict
-
-        elif '(' in validator and ')' in validator[-1:] == ')':
+        if '(' in validator and ')' in validator[-1:] == ')':
             validator_parts = validator.split('(')
             validator = validator_parts[0]
             param = validator_parts[1][:-1]

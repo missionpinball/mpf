@@ -8,8 +8,8 @@ mpf_config_spec = '''
 accelerometers:
     __valid_in__: machine
     platform: single|str|None
-    hit_limits: single|float:str|None
-    level_limits: single|float:str|None
+    hit_limits: dict|float:str|None
+    level_limits: dict|float:str|None
     level_x: single|int|0
     level_y: single|int|0
     level_z: single|int|1
@@ -98,7 +98,7 @@ autofire_coils:
     reverse_switch: single|bool|False
     enable_events: dict|str:ms|ball_started
     disable_events: dict|str:ms|ball_will_end, service_mode_entered
-    coil_overwrite: dict|subconfig(coil_overwrites)|None
+    coil_overwrite: single|subconfig(coil_overwrites)|None
     switch_overwrite: dict|str:str|None
     ball_search_order: single|int|100
     playfield: single|machine(playfields)|playfield
@@ -270,16 +270,7 @@ fast_coils:
 coil_player:
     __valid_in__: machine, mode, show
     action: single|lstr|pulse
-    # ms: single|ms|None
     power: single|float|1.0
-    # pwm_on_ms: single|int|None
-    # pwm_off_ms: single|int|None
-    # pulse_power: single|int|None
-    # hold_power: single|int|None
-    # pulse_power32: single|int|None
-    # hold_power32: single|int|None
-    # pulse_pwm_mask: single|int|None
-    # hold_pwm_mask: single|int|None
     __allow_others__:
 color_correction_profile:
     __valid_in__: machine
@@ -539,8 +530,8 @@ flippers:
     disable_events: dict|str:ms|ball_will_end, service_mode_entered
     # enable_no_hold_events: dict|str:ms|None
     # invert_events: dict|str:ms|None
-    main_coil_overwrite: dict|subconfig(coil_overwrites)|None
-    hold_coil_overwrite: dict|subconfig(coil_overwrites)|None
+    main_coil_overwrite: single|subconfig(coil_overwrites)|None
+    hold_coil_overwrite: single|subconfig(coil_overwrites)|None
     switch_overwrite: dict|str:str|None
     eos_switch_overwrite: dict|str:str|None
     power_setting_name: single|str|None
@@ -582,8 +573,8 @@ hardware_sound_player:
 high_score:
     __valid_in__: mode
     award_slide_display_time: single|ms|4s
-    categories: list|str:list|
-    defaults: dict|str:dict|None
+    categories: omap|str:list|
+    defaults: dict|str:list|None
     enter_initials_timeout: single|secs|20s
 info_lights:
     __valid_in__: machine                            # todo add to validator
@@ -602,7 +593,7 @@ kickbacks:
     reverse_switch: single|bool|False
     enable_events: dict|str:ms|None
     disable_events: dict|str:ms|ball_will_end, service_mode_entered
-    coil_overwrite: dict|subconfig(coil_overwrites)|None
+    coil_overwrite: single|subconfig(coil_overwrites)|None
     switch_overwrite: dict|str:str|None
     ball_search_order: single|int|100
     playfield: single|machine(playfields)|playfield
@@ -759,11 +750,12 @@ magnets:
     fling_ball_events: dict|str:ms|None
 motors:
     __valid_in__: machine
-    position_switches: dict|str:machine(switches)|
+    position_switches: omap|str:machine(switches)|
     reset_position: single|str|
     reset_events: dict|str:ms|machine_reset_phase_3, ball_starting
     go_to_position: dict|str:str|None
-    motor_coil: single|machine(coils)|
+    motor_left_output: single|machine(digital_outputs)|None
+    motor_right_output: single|machine(digital_outputs)|None
     include_in_ball_search: single|bool|True
 mpf:
     __valid_in__: machine                           # todo add to validator

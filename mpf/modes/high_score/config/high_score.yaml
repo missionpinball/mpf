@@ -11,7 +11,7 @@ mode:
 
 high_score:
   award_slide_display_time: 4s
-  categories:
+  categories: !!omap
   - score:
       - GRAND CHAMPION
       - HIGH SCORE 1

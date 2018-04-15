@@ -12,8 +12,8 @@ class TestMotors(MpfTestCase):
         return 'tests/machine_files/motor/'
 
     def testMotorizedDropTargetBank(self):
-        motor = self.machine.motors.motorized_drop_target_bank
-        coil = self.machine.coils.c_motor_run
+        motor = self.machine.motors["motorized_drop_target_bank"]
+        coil = self.machine.digital_outputs["c_motor_run"]
         coil.enable = MagicMock()
         coil.disable = MagicMock()
 
@@ -66,3 +66,37 @@ class TestMotors(MpfTestCase):
         assert not coil.enable.called
         coil.disable.assert_called_with()
         coil.disable = MagicMock()
+
+    def testMotorToyWithTwoEndSwitches(self):
+        slimer = self.machine.motors["ghostbusters_slimer"]
+        motor_left = self.machine.digital_outputs["c_slimer_motor_forward"].hw_driver
+        motor_right = self.machine.digital_outputs["c_slimer_motor_backward"].hw_driver
+
+        self.assertEqual(1.0, motor_left.current_brightness)
+        self.assertEqual(0.0, motor_right.current_brightness)
+
+        self.hit_switch_and_run("s_slimer_home", 1)
+        self.assertEqual(0.0, motor_left.current_brightness)
+        self.assertEqual(0.0, motor_right.current_brightness)
+
+        slimer.go_to_position("away")
+        self.advance_time_and_run()
+        self.assertEqual(0.0, motor_left.current_brightness)
+        self.assertEqual(1.0, motor_right.current_brightness)
+        self.release_switch_and_run("s_slimer_home", 1)
+        self.hit_switch_and_run("s_slimer_away", 1)
+
+        self.assertEqual(0.0, motor_left.current_brightness)
+        self.assertEqual(0.0, motor_right.current_brightness)
+
+        slimer.go_to_position("away")
+        self.assertEqual(0.0, motor_left.current_brightness)
+        self.assertEqual(0.0, motor_right.current_brightness)
+
+        slimer.go_to_position("home")
+        self.assertEqual(1.0, motor_left.current_brightness)
+        self.assertEqual(0.0, motor_right.current_brightness)
+
+        self.hit_switch_and_run("s_slimer_home", 1)
+        self.assertEqual(0.0, motor_left.current_brightness)
+        self.assertEqual(0.0, motor_right.current_brightness)
