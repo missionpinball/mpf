@@ -605,7 +605,7 @@ class ConfigValidator(object):
         if isinstance(validation_failure_info[0], tuple):
             return "{}:{}".format(self._build_error_path(validation_failure_info[0]), validation_failure_info[1])
         else:
-            return "{}:{}".format(validation_failure_info[0],  validation_failure_info[1])
+            return "{}:{}".format(validation_failure_info[0], validation_failure_info[1])
 
     def validation_error(self, item, validation_failure_info, msg="", code=None):
         """Raise a validation error with all relevant infos."""
