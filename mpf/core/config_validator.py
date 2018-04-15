@@ -230,39 +230,37 @@ class ConfigValidator(object):
             return new_set
 
         elif item_type in ('dict', 'omap'):
-            if ':' not in validation:
-                self.validation_error(item, validation_failure_info, "Missing : in dict validator.")
-
-            validators = validation.split(':')
-
-            if item_type == "omap":
-                item_dict = OrderedDict()
-                if not isinstance(item, OrderedDict):
-                    self.validation_error(item, validation_failure_info, "Item is not an ordered dict. "
-                                                                         "Did you forget to add !!omap to your entry?",
-                                          7)
-            else:
-                item_dict = dict()
-
-                # item could be str, list, or list of dicts
-                try:
-                    item = Util.event_config_to_dict(item)
-                except TypeError:
-                    self.validation_error(item, validation_failure_info, "Could not convert item to dict", 8)
-
-            for k, v in item.items():
-                item_dict[self.validate_item(k, validators[0],
-                                               validation_failure_info)] = (
-                    self.validate_item(v, validators[1],
-                                       validation_failure_info)
-                )
-
-            return item_dict
-
+            return self._validate_dict_or_omap(item_type, validation, validation_failure_info, item)
         else:
             raise ConfigFileError("Invalid Type '{}' in config spec {}:{}".format(item_type,
                                   validation_failure_info[0][0],
                                   validation_failure_info[1]), 1, self.log.name)
+
+    def _validate_dict_or_omap(self, item_type, validation, validation_failure_info, item):
+        if ':' not in validation:
+            self.validation_error(item, validation_failure_info, "Missing : in dict validator.")
+
+        validators = validation.split(':')
+
+        if item_type == "omap":
+            item_dict = OrderedDict()
+            if not isinstance(item, OrderedDict):
+                self.validation_error(item, validation_failure_info, "Item is not an ordered dict. "
+                                                                     "Did you forget to add !!omap to your entry?",
+                                      7)
+        else:
+            item_dict = dict()
+
+            # item could be str, list, or list of dicts
+            try:
+                item = Util.event_config_to_dict(item)
+            except TypeError:
+                self.validation_error(item, validation_failure_info, "Could not convert item to dict", 8)
+
+        for k, v in item.items():
+            item_dict[self.validate_item(k, validators[0], validation_failure_info)] = (
+                self.validate_item(v, validators[1], validation_failure_info))
+        return item_dict
 
     def check_for_invalid_sections(self, spec, config,
                                    validation_failure_info):
@@ -512,7 +510,6 @@ class ConfigValidator(object):
         return item
 
     def _validate_type_omap(self, item, validation_failure_info):
-        del validation_failure_info
         if not item:
             return {}
         if not isinstance(item, OrderedDict):
