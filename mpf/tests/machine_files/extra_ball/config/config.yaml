@@ -36,7 +36,6 @@ ball_devices:
         debug: true
         confirm_eject_type: target
         eject_timeouts: 2s
-        tags: ball_add_live
 
 extra_ball_groups:
   main:
