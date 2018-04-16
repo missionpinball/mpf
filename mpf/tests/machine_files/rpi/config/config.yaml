@@ -4,7 +4,6 @@ hardware:
     platform: rpi
 
 raspberry_pi:
-    __valid_in__: machine
     ip: localhost
     port: 8888
 
