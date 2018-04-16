@@ -326,9 +326,9 @@ class BallDevice(SystemWideDevice):
 
         # cannot have ball switches and capacity
         if self.config['ball_switches'] and self.config['ball_capacity']:
-            raise AssertionError("Cannot use capacity and ball switches.")
+            self.raise_config_error("Cannot use capacity and ball switches.", 3)
         elif not self.config['ball_capacity'] and not self.config['ball_switches']:
-            raise AssertionError("Need ball capcity if there are no switches.")
+            self.raise_config_error("Need ball capcity if there are no switches.", 2)
         elif self.config['ball_switches']:
             self.config['ball_capacity'] = len(self.config['ball_switches'])
 
@@ -342,62 +342,66 @@ class BallDevice(SystemWideDevice):
         # a device cannot have hold_coil and eject_coil
         if (not self.config['eject_coil'] and not self.config['hold_coil'] and
                 not self.config['mechanical_eject'] and not self.config.get('ejector', False)):
-            raise AssertionError('Configuration error in {} ball device. '
-                                 'Device needs an eject_coil, a hold_coil, or '
-                                 '"mechanical_eject: True"'.format(self.name))
+            self.raise_config_error('Configuration error in {} ball device. '
+                                    'Device needs an eject_coil, a hold_coil, or '
+                                    '"mechanical_eject: True"'.format(self.name), 4)
 
         # entrance switch + mechanical eject is not supported
         if (len(self.config['ball_switches']) > 1 and
                 self.config['mechanical_eject']):
-            raise AssertionError('Configuration error in {} ball device. '
-                                 'mechanical_eject can only be used with '
-                                 'devices that have 1 ball switch'.
-                                 format(self.name))
+            self.raise_config_error('Configuration error in {} ball device. '
+                                    'mechanical_eject can only be used with '
+                                    'devices that have 1 ball switch'.
+                                    format(self.name), 5)
 
         # make sure timeouts are reasonable:
         # exit_count_delay < all eject_timeout
         if self.config['exit_count_delay'] > min(
                 self.config['eject_timeouts'].values()):
-            raise AssertionError('Configuration error in {} ball device. '
-                                 'all eject_timeouts have to be larger than '
-                                 'exit_count_delay'.
-                                 format(self.name))
+            self.raise_config_error('Configuration error in {} ball device. '
+                                    'all eject_timeouts have to be larger than '
+                                    'exit_count_delay'.
+                                    format(self.name), 6)
 
         # entrance_count_delay < all eject_timeout
         if self.config['entrance_count_delay'] > min(
                 self.config['eject_timeouts'].values()):
-            raise AssertionError('Configuration error in {} ball device. '
-                                 'all eject_timeouts have to be larger than '
-                                 'entrance_count_delay'.
-                                 format(self.name))
+            self.raise_config_error('Configuration error in {} ball device. '
+                                    'all eject_timeouts have to be larger than '
+                                    'entrance_count_delay'.
+                                    format(self.name), 7)
 
         # all eject_timeout < all ball_missing_timeouts
         if max(self.config['eject_timeouts'].values()) > min(
                 self.config['ball_missing_timeouts'].values()):
-            raise AssertionError('Configuration error in {} ball device. '
-                                 'all ball_missing_timeouts have to be larger '
-                                 'than all eject_timeouts'.
-                                 format(self.name))
+            self.raise_config_error('Configuration error in {} ball device. '
+                                    'all ball_missing_timeouts have to be larger '
+                                    'than all eject_timeouts'.
+                                    format(self.name), 8)
 
         # all ball_missing_timeouts < incoming ball timeout
         if max(self.config['ball_missing_timeouts'].values()) > 60000:
-            raise AssertionError('Configuration error in {} ball device. '
-                                 'incoming ball timeout has to be larger '
-                                 'than all ball_missing_timeouts'.
-                                 format(self.name))
+            self.raise_config_error('Configuration error in {} ball device. '
+                                    'incoming ball timeout has to be larger '
+                                    'than all ball_missing_timeouts'.
+                                    format(self.name), 9)
 
         if (self.config['confirm_eject_type'] == "switch" and
                 not self.config['confirm_eject_switch']):
-            raise AssertionError("When using confirm_eject_type switch you " +
-                                 "to specify a confirm_eject_switch")
+            self.raise_config_error("When using confirm_eject_type switch you " +
+                                    "to specify a confirm_eject_switch", 7)
+
+        if "ball_add_live" in self.tags:
+            self.raise_config_error("Using \"tag: ball_add_live\" is deprecated. Please use default_source_device "
+                                    "in your playfield section instead.", 10)
 
         if "drain" in self.tags and "trough" not in self.tags and not self.find_next_trough():
-            raise AssertionError("No path to trough but device is tagged as drain")
+            self.raise_config_error("No path to trough but device is tagged as drain", 11)
 
         if ("drain" not in self.tags and "trough" not in self.tags and
                 not self.find_path_to_target(self._target_on_unexpected_ball)):
-            raise AssertionError("BallDevice {} has no path to target_on_unexpected_ball '{}'".format(
-                self.name, self._target_on_unexpected_ball.name))
+            self.raise_config_error("BallDevice {} has no path to target_on_unexpected_ball '{}'".format(
+                self.name, self._target_on_unexpected_ball.name), 12)
 
     def load_config(self, config):
         """Load config."""
