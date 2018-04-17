@@ -19,9 +19,7 @@ environment:
 
 install:
   - "git submodule update --init --recursive"
-  - ps: (new-object net.webclient).DownloadFile('https://bootstrap.pypa.io/get-pip.py', 'C:/get-pip.py')
-  - "%PYTHON%\\python.exe C:\\get-pip.py"
-  - "%PYTHON%\\python.exe -m pip install -U setuptools wheel mock twine"
+  - "%PYTHON%\\python.exe -m pip install -U setuptools wheel pip mock twine"
   - "%PYTHON%\\python.exe -m pip install -e ."
 
 build: off
