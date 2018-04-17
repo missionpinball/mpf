@@ -1126,6 +1126,7 @@ shows:
 slide_player:
     __valid_in__: machine, mode, show
     target: single|str|None
+    background_color: single|kivycolor|000000ff
     priority: single|int|None                      # todo should this be 0?
     show: single|bool|True
     force: single|bool|False
