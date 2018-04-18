@@ -979,14 +979,14 @@ score_reel_groups:
     reels: list|machine(score_reels)|
     chimes: list|machine(coils)|None
     lights_tag: single|str|None
-scoring:
+variable_player:
     __valid_in__: modes
-    score: single|template_int|0
+    int: single|template_int|0
+    float: single|template_float|None
+    string: single|str|None
     block: single|bool|False
     action: single|enum(add,set,add_machine,set_machine)|add
     player: single|int|None
-    string: single|str|None
-    float: single|template_float|None
 scriptlets:
     __valid_in__: machine                           # todo add to validator
 segment_displays:
