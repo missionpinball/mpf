@@ -5,7 +5,7 @@ mode:
     priority: 300
     restart_on_next_ball: True
 
-scoring:
+variable_player:
     test_event1:
         score: 1000|block
         var_a: 0|block
@@ -13,5 +13,5 @@ scoring:
         var_c: current_player.ramps * 10|block
     test_score_mode:
         score:
-           score: 1000
+           int: 1000
            block: true

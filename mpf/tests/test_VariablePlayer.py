@@ -1,15 +1,15 @@
 from mpf.tests.MpfGameTestCase import MpfGameTestCase
 
 
-class TestScoring(MpfGameTestCase):
+class TestVariablePlayer(MpfGameTestCase):
 
     def getConfigFile(self):
         return 'config.yaml'
 
     def getMachinePath(self):
-        return 'tests/machine_files/scoring/'
+        return 'tests/machine_files/variable_player/'
 
-    def test_scoring(self):
+    def test_variable_player(self):
         # start game with two players
         self.hit_switch_and_run("s_ball_switch1", 1)
         self.advance_time_and_run(2)

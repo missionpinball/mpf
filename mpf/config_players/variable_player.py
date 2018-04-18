@@ -1,4 +1,4 @@
-"""Scoring Config Player."""
+"""Variable Config Player (used for scoring and more)."""
 from collections import namedtuple
 from typing import Dict, List, Any
 
@@ -8,15 +8,15 @@ from mpf.core.machine import MachineController
 VarBlock = namedtuple("VarBlock", ["priority", "context"])
 
 
-class ScorePlayer(ConfigPlayer):
+class VariablePlayer(ConfigPlayer):
 
     """Posts events based on config."""
 
-    config_file_section = 'scoring'
-    show_section = 'score'
+    config_file_section = 'variable_player'
+    show_section = 'variables'
 
     def __init__(self, machine: MachineController) -> None:
-        """Initialise score player."""
+        """Initialise variable player."""
         super().__init__(machine)
         self.blocks = {}    # type: Dict[str, List[VarBlock]]
 
@@ -28,10 +28,10 @@ class ScorePlayer(ConfigPlayer):
 
     def play(self, settings: dict, context: str, calling_context: str,
              priority: int = 0, **kwargs) -> None:
-        """Score variable."""
+        """Variable name."""
         for var, s in settings.items():
             if var == "block":
-                self.raise_config_error('Do not use "block" as variable name in score_player.', 1, context=context)
+                self.raise_config_error('Do not use "block" as variable name in variable_player.', 1, context=context)
 
             if s['condition'] and not s['condition'].evaluate(kwargs):
                 continue
@@ -45,7 +45,7 @@ class ScorePlayer(ConfigPlayer):
                 if VarBlock(priority, context) not in self.blocks[block_item]:
                     self.blocks[block_item].append(VarBlock(priority, context))
 
-            self._score(var, s, kwargs)
+            self._set_variable(var, s, kwargs)
 
     def _is_blocked(self, block_item: str, context: str,
                     priority: int) -> bool:
@@ -55,8 +55,7 @@ class ScorePlayer(ConfigPlayer):
         first_element = priority_sorted[0]
         return first_element.priority > priority and first_element.context != context
 
-    def _score(self, var: str, entry: dict,
-               placeholder_parameters: dict) -> None:
+    def _set_variable(self, var: str, entry: dict, placeholder_parameters: dict) -> None:
         if entry['string']:
             self.machine.game.player[var] = entry['string']
             return
@@ -65,7 +64,7 @@ class ScorePlayer(ConfigPlayer):
         if entry['float']:
             value = entry['float'].evaluate(placeholder_parameters)
         else:
-            value = entry['score'].evaluate(placeholder_parameters)
+            value = entry['int'].evaluate(placeholder_parameters)
 
         if entry['action'] == "add":
             if entry['player']:
@@ -102,13 +101,13 @@ class ScorePlayer(ConfigPlayer):
         """Validate one entry of this player."""
         config = {}
         if not isinstance(settings, dict):
-            raise AssertionError("Settings of score_player {} should "
+            raise AssertionError("Settings of variable_player {} should "
                                  "be a dict. But are: {}".format(name, settings))
         for var, s in settings.items():
             var_dict = self.machine.placeholder_manager.parse_conditional_template(var)
-            score_dict = self._parse_config(s, name)
-            score_dict["condition"] = var_dict["condition"]
-            config[var_dict["name"]] = score_dict
+            value_dict = self._parse_config(s, name)
+            value_dict["condition"] = var_dict["condition"]
+            config[var_dict["name"]] = value_dict
         return config
 
     def get_express_config(self, value: Any) -> dict:
@@ -123,11 +122,11 @@ class ScorePlayer(ConfigPlayer):
             else:
                 if block_str != "block":
                     raise AssertionError(
-                        "Invalid action in scoring entry: {}".format(value))
+                        "Invalid action in variable_player entry: {}".format(value))
                 block = True
 
-        return {"score": value, "block": block}
+        return {"int": value, "block": block}
 
     def get_list_config(self, value: Any):
         """Parse list."""
-        raise AssertionError("Score player does not support lists.")
+        raise AssertionError("Variable player does not support lists.")

@@ -8,7 +8,7 @@ mode:
   priority: 300
   stop_events: s_kills_counter_target_active
 
-scoring:
+variable_player:
   s_counter_target_active:
     score: 100|block
   s_kills_counter_target_active:

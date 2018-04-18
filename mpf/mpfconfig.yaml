@@ -32,7 +32,7 @@ mpf:
         light: mpf.config_players.light_player.LightPlayer
         random_event: mpf.config_players.random_event_player.RandomEventPlayer
         show: mpf.config_players.show_player.ShowPlayer
-        score: mpf.config_players.score_player.ScorePlayer
+        variable: mpf.config_players.variable_player.VariablePlayer
         segment_display_player: mpf.config_players.segment_display_player.SegmentDisplayPlayer
         hardware_sound_player: mpf.config_players.hardware_sound_player.HardwareSoundPlayer
 
