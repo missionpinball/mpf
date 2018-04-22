@@ -1220,12 +1220,12 @@ sound_loop_sets:
     fade_in: single|secs|0
     fade_out: single|secs|0
     mode_end_action: single|enum(stop,stop_looping)|stop
-
 sound_player:
     __valid_in__: machine, mode, show
     action: single|enum(play,stop,stop_looping,load,unload)|play
     track: single|str|use_sound_setting
     volume: single|gain|None
+    pan: single|float|0
     loops: single|int|None
     priority: single|int|None
     start_at: single|secs|None
