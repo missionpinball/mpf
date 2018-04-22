@@ -139,7 +139,7 @@ class SwitchController(MpfController):
 
         return ok
 
-    def is_state(self, switch_name, state, ms=0):
+    def is_state(self, switch_name, state, ms=0.0):
         """Check if switch is in state.
 
         Query whether a switch is in a given state and (optionally)
@@ -161,7 +161,7 @@ class SwitchController(MpfController):
         if not self._initialised:
             raise AssertionError("Cannot read switch state before init_phase_3")
         if not ms:
-            ms = 0
+            ms = 0.0
 
         return self.switches[switch_name].state == state and ms <= self.ms_since_change(switch_name)
 
