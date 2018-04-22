@@ -1,6 +1,7 @@
 """Mypinballs hardware platform."""
 import asyncio
 import logging
+import re
 
 from mpf.platforms.interfaces.segment_display_platform_interface import SegmentDisplayPlatformInterface
 
@@ -25,6 +26,9 @@ class MyPinballsSegmentDisplay(SegmentDisplayPlatformInterface):
             # blank display
             cmd = b'3:' + bytes([ord(str(self.number))]) + b'\n'
         else:
+            # remove any non-numbers and spaces
+            text = re.sub(r'[^0-9 ]', "", text)
+
             # special char for spaces
             text = text.replace(" ", "?")
             # set text
