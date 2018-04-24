@@ -978,8 +978,8 @@ score_reel_groups:
     reels: list|machine(score_reels)|
     chimes: list|machine(coils)|None
     lights_tag: single|str|None
-scriptlets:
-    __valid_in__: machine                           # todo add to validator
+custom_code:
+    __valid_in__: machine
 segment_displays:
     __valid_in__: machine
     number: single|str|

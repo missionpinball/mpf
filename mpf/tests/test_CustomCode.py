@@ -1,13 +1,13 @@
 from mpf.tests.MpfTestCase import MpfTestCase
 
 
-class TestScriptlets(MpfTestCase):
+class TestCustomCode(MpfTestCase):
 
     def getConfigFile(self):
         return 'config.yaml'
 
     def getMachinePath(self):
-        return 'tests/machine_files/scriptlets/'
+        return 'tests/machine_files/custom_code/'
 
     def test_scoring(self):
         self.mock_event("test_response")
