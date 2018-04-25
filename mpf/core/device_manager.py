@@ -163,6 +163,10 @@ class DeviceManager(MpfController):
                 # Get the config section for these devices
                 collection = getattr(self.machine, collection_name)
                 config = self.machine.config[config_name]
+                if not config:
+                    self.machine.config[config_name] = config = {}
+                if not isinstance(config, dict):
+                    self.raise_config_error("Format of collection {} is invalid.".format(collection_name), 1)
 
                 # validate config
                 for device_name in config:
