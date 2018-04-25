@@ -26,3 +26,7 @@ test_section:
   case_sensitive_1: test
   Case_sensitive_2: test
   case_sensitive_3: Test
+
+
+# test an empty collection
+switches:
