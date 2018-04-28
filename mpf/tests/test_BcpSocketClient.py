@@ -31,6 +31,11 @@ class TestBcpSocketClientEncoding(unittest.TestCase):
         self.assertEqual(command, actual_command)
         self.assertEqual(kwargs, actual_kwargs)
 
+        string_in = "machine_variable?name=player1_score&prev_value=int:132990&value=&change=bool:True"
+        actual_command, actual_kwargs = decode_command_string(string_in)
+        self.assertEqual("machine_variable", actual_command)
+        self.assertEqual({'prev_value': 132990, 'value': '', 'name': 'player1_score', 'change': True}, actual_kwargs)
+
     def test_encode_command_string(self):
         # test strings
         command = 'play'
