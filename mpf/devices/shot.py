@@ -226,7 +226,7 @@ class Shot(EnableDisableMixin, ModeDevice):
             if s['manual_advance'] is None:
                 s['manual_advance'] = True
 
-        s['show_tokens'] = deepcopy(self.config['show_tokens'])
+        s['show_tokens'].update(self.config['show_tokens'])
         s['priority'] += self.mode.priority
         if start_step:
             s['start_step'] = start_step
