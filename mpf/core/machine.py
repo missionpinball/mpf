@@ -829,10 +829,16 @@ class MachineController(LogMixin):
             name: String name of the variable you want to remove.
         """
         try:
+            prev_value = self.machine_vars[name]
             del self.machine_vars[name]
             self._write_machine_vars_to_disk()
         except KeyError:
             pass
+        else:
+            if self.machine_var_monitor:
+                for callback in self.monitors['machine_vars']:
+                    callback(name=name, value=None,
+                             prev_value=prev_value, change=True)
 
     def remove_machine_var_search(self, startswith: str = '', endswith: str = '') -> None:
         """Remove a machine variable by matching parts of its name.
