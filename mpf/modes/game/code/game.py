@@ -417,7 +417,7 @@ class Game(AsyncMode):
                 '''
 
             # remove all other vars
-            for i in range(len(self.player_list) + 1, self.max_players):
+            for i in range(len(self.player_list) + 1, self.max_players + 1):
                 self.machine.remove_machine_var('player{}_score'.format(i))
 
         yield from self.machine.events.post_async('game_ended')

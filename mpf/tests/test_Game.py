@@ -1,3 +1,5 @@
+from mpf.tests.MpfFakeGameTestCase import MpfFakeGameTestCase
+
 from mpf.tests.MpfGameTestCase import MpfGameTestCase
 from unittest.mock import MagicMock
 
@@ -385,3 +387,82 @@ class TestGame(MpfGameTestCase):
         self.assertEqual('game_will_end', self._events.call_args_list[6][1]['event_name'])
         self.assertEqual('game_ending', self._events.call_args_list[7][1]['event_name'])
         self.assertEqual('game_ended', self._events.call_args_list[8][1]['event_name'])
+
+
+class TestGameLogic(MpfFakeGameTestCase):
+
+    def testLastGameScore(self):
+        # no previous scores
+        self.assertFalse(self.machine.is_machine_var("player1_score"))
+        self.assertFalse(self.machine.is_machine_var("player2_score"))
+        self.assertFalse(self.machine.is_machine_var("player3_score"))
+        self.assertFalse(self.machine.is_machine_var("player4_score"))
+
+        # four players
+        self.start_game()
+        self.add_player()
+        self.add_player()
+        self.add_player()
+        self.machine.game.player.score = 100
+        self.assertPlayerNumber(1)
+        self.drain_ball()
+        self.machine.game.player.score = 200
+        self.assertPlayerNumber(2)
+        self.drain_ball()
+        self.machine.game.player.score = 0
+        self.assertPlayerNumber(3)
+        self.drain_ball()
+        self.machine.game.player.score = 42
+        self.assertPlayerNumber(4)
+
+        # still old scores should not be set
+        self.assertFalse(self.machine.is_machine_var("player1_score"))
+        self.assertFalse(self.machine.is_machine_var("player2_score"))
+        self.assertFalse(self.machine.is_machine_var("player3_score"))
+        self.assertFalse(self.machine.is_machine_var("player4_score"))
+
+        self.stop_game()
+
+        self.assertMachineVarEqual(100, "player1_score")
+        self.assertMachineVarEqual(200, "player2_score")
+        self.assertMachineVarEqual(0, "player3_score")
+        self.assertMachineVarEqual(42, "player4_score")
+
+        # two players
+        self.start_game()
+        self.add_player()
+        self.machine.game.player.score = 100
+        self.assertPlayerNumber(1)
+        self.drain_ball()
+        self.assertPlayerNumber(2)
+        self.machine.game.player.score = 200
+        self.drain_ball()
+        # old scores should still be active
+        self.assertMachineVarEqual(100, "player1_score")
+        self.assertMachineVarEqual(200, "player2_score")
+        self.assertMachineVarEqual(0, "player3_score")
+        self.assertMachineVarEqual(42, "player4_score")
+        self.stop_game()
+
+        self.assertMachineVarEqual(100, "player1_score")
+        self.assertMachineVarEqual(200, "player2_score")
+        self.assertFalse(self.machine.is_machine_var("player3_score"))
+        self.assertFalse(self.machine.is_machine_var("player4_score"))
+
+        # start one player game
+        self.start_game()
+        self.machine.game.player.score = 1337
+        self.drain_ball()
+        self.drain_ball()
+        # still the old scores
+        self.assertMachineVarEqual(100, "player1_score")
+        self.assertMachineVarEqual(200, "player2_score")
+        self.assertFalse(self.machine.is_machine_var("player3_score"))
+        self.assertFalse(self.machine.is_machine_var("player4_score"))
+        self.drain_ball()
+        self.assertGameIsNotRunning()
+
+        self.assertMachineVarEqual(1337, "player1_score")
+        self.assertFalse(self.machine.is_machine_var("player2_score"))
+        self.assertFalse(self.machine.is_machine_var("player3_score"))
+        self.assertFalse(self.machine.is_machine_var("player4_score"))
