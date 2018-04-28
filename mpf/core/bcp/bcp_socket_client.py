@@ -39,7 +39,7 @@ def decode_command_string(bcp_string):
     bcp_command = urlsplit(bcp_string)
 
     try:
-        kwargs = parse_qs(bcp_command.query)
+        kwargs = parse_qs(bcp_command.query, keep_blank_values=True)
         if 'json' in kwargs:
             kwargs = json.loads(kwargs['json'][0])
             return bcp_command.path.lower(), kwargs
