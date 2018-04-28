@@ -135,6 +135,18 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
     def command_post(self, event_name):
         self.post_event(event_name)
 
+    def command_hit_and_release_switch(self, switch_name):
+        self.hit_and_release_switch(switch_name)
+
+    def command_hit_switch(self, switch_name):
+        self.hit_switch_and_run(switch_name, 0)
+
+    def command_release_switch(self, switch_name):
+        self.release_switch_and_run(switch_name, 0)
+
+    def command_advance_time_and_run(self, delta):
+        self.advance_time_and_run(float(delta))
+
     def command_assert_player_variable(self, value, player_var):
         if isinstance(self.machine.game.player[player_var], (int, float)):
             value = float(value)
@@ -143,6 +155,7 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
     def command_assert_light_color(self, light, color):
         self.assertLightColor(light, color)
 
+<<<<<<< HEAD
     def command_mock_event(self, name):
         self.mock_event(name)
 
@@ -151,3 +164,6 @@ class MpfDocTestCase(MockConfigPlayers, MpfFakeGameTestCase):
 
     def command_assert_event_not_called(self, name):
         self.assertEventNotCalled(name)
+=======
+
+>>>>>>> bf45e4a... add regression tests

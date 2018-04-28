@@ -1,0 +1,36 @@
+switches:
+  s_drop_lf_1:
+    number:
+
+lights:
+  l_drop_lf_1_1:
+    number:
+
+##! mode: test
+shot_profiles:
+    my_default_profile:
+        states:
+          - name: unlit
+            show: "off"
+          - name: red
+            show: led_color
+            show_tokens:
+               color: red
+          - name: blue
+            show: "flash"
+            show_tokens:
+               color: blue
+        
+shots:
+    sh_drop_lf_1:
+        switch: s_drop_lf_1
+        profile:
+            my_default_profile
+        show_tokens:
+            led: l_drop_lf_1_1
+
+##! test
+start_game
+start_mode test
+hit_and_release_switch s_drop_lf_1
+assert_light_color l_drop_lf_1_1 red
