@@ -26,6 +26,7 @@ build: off
 
 test_script:
  - "%PYTHON%\\python.exe -m unittest discover -s mpf.tests"
+ - "%PYTHON%\\python.exe test_regression.py"
 
 after_test:
   - "%PYTHON%\\python.exe setup.py sdist --formats=gztar"
