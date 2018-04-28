@@ -227,25 +227,32 @@ class LisyHardwarePlatform(SwitchPlatform, LightsPlatform, DriverPlatform,
 
                 self._inputs[str(number)] = state == 1
 
-        self._poll_task = self.machine.clock.loop.create_task(self._poll())
-        self._poll_task.add_done_callback(self._done)
-
         self._watchdog_task = self.machine.clock.loop.create_task(self._watchdog())
         self._watchdog_task.add_done_callback(self._done)
 
         self.debug_log("Init of LISY done.")
+
+    @asyncio.coroutine
+    def start(self):
+        """Start reading switch changes."""
+        self._poll_task = self.machine.clock.loop.create_task(self._poll())
+        self._poll_task.add_done_callback(self._done)
 
     def stop(self):
         """Stop platform."""
         super().stop()
         if self._poll_task:
             self._poll_task.cancel()
+            self._poll_task = None
 
         if self._watchdog_task:
             self._watchdog_task.cancel()
+            self._watchdog_task = None
 
         if self._reader:
             self._writer.close()
+            self._reader = None
+            self._writer = None
 
     @staticmethod
     def _done(future):
