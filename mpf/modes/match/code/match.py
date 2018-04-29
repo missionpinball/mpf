@@ -32,8 +32,7 @@ class Match(AsyncMode):
             match_numbers.append(player.score % 100)
         return match_numbers
 
-    @staticmethod
-    def _get_winner_number(match_numbers, match_percentage) -> int:
+    def _get_winner_number(self, match_numbers, match_percentage) -> int:
         """Find the winning number.
 
         Return the winning number.
@@ -43,8 +42,10 @@ class Match(AsyncMode):
             # we got a winner
             return random.choice(match_numbers)
 
+        step = self.config.get("mode_settings", {}).get("non_match_number_step", 1)
+
         # no winner. return some other number
-        non_winning_numbers = list(set(range(0, 100)) - set(match_numbers))
+        non_winning_numbers = list(set(range(0, 100, step)) - set(match_numbers))
         return random.choice(non_winning_numbers)
 
     @asyncio.coroutine

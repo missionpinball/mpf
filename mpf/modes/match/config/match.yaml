@@ -5,3 +5,6 @@ mode:
   code: mpf.modes.match.code.match.Match
   game_mode: False
   use_wait_queue: true
+
+mode_settings:
+  non_match_number_step: 10
