@@ -215,7 +215,7 @@ class Shot(EnableDisableMixin, ModeDevice):
             self._stop_show()
 
     def _play_show(self, settings, start_step=None):
-        s = copy(settings)
+        s = deepcopy(settings)
         if settings['show']:
             show_name = settings['show']
             if s['manual_advance'] is None:
