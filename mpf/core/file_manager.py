@@ -6,7 +6,7 @@ import importlib
 
 import mpf.file_interfaces
 
-MYPY=False
+MYPY = False
 if MYPY:    # noqa
     from typing import Dict
     from typing import List
