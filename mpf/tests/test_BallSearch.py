@@ -7,6 +7,8 @@ class TestBallSearch(MpfGameTestCase):
     def getConfigFile(self):
         if self._testMethodName == "test_missing_initial" or self._testMethodName == "test_missing_initial2":
             return 'missing_initial.yaml'
+        elif self._testMethodName == "test_mechanical_eject":
+            return 'mechanical_eject.yaml'
         else:
             return 'config.yaml'
 
@@ -533,5 +535,41 @@ class TestBallSearch(MpfGameTestCase):
         self.post_event('flipper_cradle_release', 1)
         self.advance_time_and_run(21)
         self.assertEqual(1, self.machine.ball_devices['playfield'].balls)
+        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.enabled)
+        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)
+
+    def test_mechanical_eject(self):
+        self.mock_event("ball_search_started")
+        self.hit_switch_and_run("s_ball_switch1", 0)
+        self.hit_switch_and_run("s_ball_switch2", 0)
+        self.hit_switch_and_run("s_ball_switch3", 1)
+
+        self.start_game()
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.enabled)
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
+        self.assertEqual(1, self.machine.ball_devices["test_launcher"].balls)
+        self.advance_time_and_run(40)
+        self.assertEqual(1, self.machine.ball_devices["test_launcher"].balls)
+        self.assertEqual(0, self.machine.ball_devices['playfield'].balls)
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.enabled)
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
+        self.release_switch_and_run("s_ball_switch_launcher", 15)
+        self.assertEqual(0, self.machine.ball_devices["test_launcher"].balls)
+        self.assertEqual(1, self.machine.ball_devices['playfield'].balls)
+        self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.enabled)
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
+
+        # ball returns to plunger
+        self.hit_switch_and_run("s_ball_switch_launcher", 30)
+        self.assertEqual(1, self.machine.ball_devices["test_launcher"].balls)
+        self.assertEqual(0, self.machine.ball_devices['playfield'].balls)
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.enabled)
+        self.assertEqual(False, self.machine.ball_devices['playfield'].ball_search.started)
+
+        self.assertEventNotCalled("ball_search_started")
+
+        # just to make sure we got the right event
+        self.release_switch_and_run("s_ball_switch_launcher", 40)
+        self.assertEventCalled("ball_search_started")
         self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.enabled)
         self.assertEqual(True, self.machine.ball_devices['playfield'].ball_search.started)
